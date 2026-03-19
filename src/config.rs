@@ -29,36 +29,52 @@ impl Config {
     /// - `CLAUDE_CODE_HOME` — path to Claude Code session data (default: `~/.claude`)
     /// - `UPSTREAM_BASE_URL` — Anthropic API base URL (default: `https://api.anthropic.com`)
     pub fn from_env() -> Result<Self, ConfigError> {
-        let port: u16 = env::var("ROUTER_PORT")
-            .unwrap_or_else(|_| "8080".to_string())
-            .parse()
-            .map_err(|_| ConfigError::InvalidPort)?;
-
+        let port = env::var("ROUTER_PORT").unwrap_or_else(|_| "8080".to_string());
         let host = env::var("ROUTER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+        let token_secret = env::var("TOKEN_SECRET").ok();
+        let claude_code_home = env::var("CLAUDE_CODE_HOME").unwrap_or_else(|_| {
+            let home = env::var("HOME").unwrap_or_else(|_| "/root".to_string());
+            format!("{home}/.claude")
+        });
+        let upstream_base_url = env::var("UPSTREAM_BASE_URL")
+            .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
+
+        Self::build(
+            &host,
+            &port,
+            token_secret.as_deref(),
+            &claude_code_home,
+            &upstream_base_url,
+        )
+    }
+
+    /// Build a `Config` from explicit values.
+    ///
+    /// This is the core constructor; `from_env` is a thin wrapper that reads
+    /// environment variables and delegates here.
+    pub fn build(
+        host: &str,
+        port: &str,
+        token_secret: Option<&str>,
+        claude_code_home: &str,
+        upstream_base_url: &str,
+    ) -> Result<Self, ConfigError> {
+        let port: u16 = port.parse().map_err(|_| ConfigError::InvalidPort)?;
 
         let listen_addr: SocketAddr = format!("{host}:{port}")
             .parse()
             .map_err(|_| ConfigError::InvalidAddress)?;
 
-        let token_secret = env::var("TOKEN_SECRET").map_err(|_| ConfigError::MissingTokenSecret)?;
-
-        if token_secret.is_empty() {
-            return Err(ConfigError::MissingTokenSecret);
-        }
-
-        let claude_code_home = env::var("CLAUDE_CODE_HOME").unwrap_or_else(|_| {
-            let home = env::var("HOME").unwrap_or_else(|_| "/root".to_string());
-            format!("{home}/.claude")
-        });
-
-        let upstream_base_url = env::var("UPSTREAM_BASE_URL")
-            .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
+        let token_secret = token_secret
+            .filter(|s| !s.is_empty())
+            .ok_or(ConfigError::MissingTokenSecret)?
+            .to_string();
 
         Ok(Self {
             listen_addr,
             token_secret,
-            claude_code_home,
-            upstream_base_url,
+            claude_code_home: claude_code_home.to_string(),
+            upstream_base_url: upstream_base_url.to_string(),
         })
     }
 }
@@ -94,41 +110,66 @@ mod tests {
 
     #[test]
     fn test_config_missing_token_secret() {
-        // Remove TOKEN_SECRET to ensure it fails
-        env::remove_var("TOKEN_SECRET");
-        let result = Config::from_env();
+        let result = Config::build(
+            "0.0.0.0",
+            "8080",
+            None,
+            "/tmp/claude",
+            "https://api.anthropic.com",
+        );
         assert!(result.is_err());
     }
 
     #[test]
-    fn test_config_with_valid_env() {
-        env::set_var("TOKEN_SECRET", "test-secret-key");
-        env::set_var("ROUTER_PORT", "9090");
-        env::set_var("CLAUDE_CODE_HOME", "/tmp/test-claude");
-        env::set_var("UPSTREAM_BASE_URL", "https://example.com");
+    fn test_config_empty_token_secret() {
+        let result = Config::build(
+            "0.0.0.0",
+            "8080",
+            Some(""),
+            "/tmp/claude",
+            "https://api.anthropic.com",
+        );
+        assert!(result.is_err());
+    }
 
-        let config = Config::from_env().expect("Config should load");
+    #[test]
+    fn test_config_with_valid_values() {
+        let config = Config::build(
+            "127.0.0.1",
+            "9090",
+            Some("test-secret-key"),
+            "/tmp/test-claude",
+            "https://example.com",
+        )
+        .expect("Config should build");
         assert_eq!(config.listen_addr.port(), 9090);
         assert_eq!(config.token_secret, "test-secret-key");
         assert_eq!(config.claude_code_home, "/tmp/test-claude");
         assert_eq!(config.upstream_base_url, "https://example.com");
-
-        // Clean up
-        env::remove_var("TOKEN_SECRET");
-        env::remove_var("ROUTER_PORT");
-        env::remove_var("CLAUDE_CODE_HOME");
-        env::remove_var("UPSTREAM_BASE_URL");
     }
 
     #[test]
     fn test_config_invalid_port() {
-        env::set_var("TOKEN_SECRET", "test-secret");
-        env::set_var("ROUTER_PORT", "not-a-number");
-
-        let result = Config::from_env();
+        let result = Config::build(
+            "0.0.0.0",
+            "not-a-number",
+            Some("secret"),
+            "/tmp/claude",
+            "https://api.anthropic.com",
+        );
         assert!(result.is_err());
+    }
 
-        env::remove_var("TOKEN_SECRET");
-        env::remove_var("ROUTER_PORT");
+    #[test]
+    fn test_config_default_port() {
+        let config = Config::build(
+            "0.0.0.0",
+            "8080",
+            Some("secret"),
+            "/tmp/claude",
+            "https://api.anthropic.com",
+        )
+        .expect("should build");
+        assert_eq!(config.listen_addr.port(), 8080);
     }
 }
