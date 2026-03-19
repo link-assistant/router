@@ -1,34 +1,35 @@
-//! Basic usage example for my-package.
+//! Basic usage example for Link.Assistant.Router token management.
 //!
-//! This example demonstrates the basic functionality of the package.
+//! Demonstrates issuing and validating custom tokens.
 //!
 //! Run with: `cargo run --example basic_usage`
 
-use my_package::{add, delay, multiply};
+use link_assistant_router::token::TokenManager;
 
-#[tokio::main]
-async fn main() {
-    // Example 1: Basic arithmetic
-    println!("Example 1: Basic arithmetic");
-    println!("2 + 3 = {}", add(2, 3));
-    println!("2 * 3 = {}", multiply(2, 3));
-    println!();
+fn main() {
+    let manager = TokenManager::new("example-secret-key");
 
-    // Example 2: Working with larger numbers
-    println!("Example 2: Working with larger numbers");
-    println!("1000 + 2000 = {}", add(1000, 2000));
-    println!("100 * 200 = {}", multiply(100, 200));
-    println!();
+    // Issue a token
+    let token = manager
+        .issue_token(24, "demo-user")
+        .expect("Failed to issue token");
+    println!("Issued token: {token}");
 
-    // Example 3: Working with negative numbers
-    println!("Example 3: Working with negative numbers");
-    println!("-5 + 10 = {}", add(-5, 10));
-    println!("-3 * 4 = {}", multiply(-3, 4));
-    println!();
+    // Validate the token
+    let claims = manager
+        .validate_token(&token)
+        .expect("Token should be valid");
+    println!("Token ID: {}", claims.sub);
+    println!("Label: {}", claims.label);
+    println!("Expires at: {}", claims.exp);
 
-    // Example 4: Async delay
-    println!("Example 4: Async delay");
-    println!("Waiting for 1 second...");
-    delay(1.0).await;
-    println!("Done!");
+    // Revoke the token
+    manager.revoke_token(&claims.sub).expect("Should revoke");
+    println!("Token revoked.");
+
+    // Try to validate again
+    match manager.validate_token(&token) {
+        Ok(_) => println!("Token still valid (unexpected)"),
+        Err(e) => println!("Token rejected: {e}"),
+    }
 }

@@ -1,79 +1,101 @@
-//! Integration tests for my-package.
+//! Integration tests for Link.Assistant.Router.
 //!
-//! These tests verify the public API works correctly.
+//! Tests the token system, proxy behavior, and API structure.
 
-use my_package::{add, delay, multiply};
+use link_assistant_router::oauth::OAuthProvider;
+use link_assistant_router::token::{TokenManager, TOKEN_PREFIX};
+use link_assistant_router::VERSION;
 
-mod add_integration_tests {
+mod token_integration_tests {
     use super::*;
 
     #[test]
-    fn test_add_returns_correct_sum() {
-        assert_eq!(add(10, 20), 30);
+    fn test_token_roundtrip() {
+        let mgr = TokenManager::new("integration-test-secret");
+        let token = mgr.issue_token(1, "integration-test").unwrap();
+        assert!(token.starts_with(TOKEN_PREFIX));
+
+        let claims = mgr.validate_token(&token).unwrap();
+        assert_eq!(claims.label, "integration-test");
     }
 
     #[test]
-    fn test_add_handles_large_numbers() {
-        assert_eq!(add(1_000_000_000, 2_000_000_000), 3_000_000_000);
+    fn test_different_secrets_reject() {
+        let mgr1 = TokenManager::new("secret-one");
+        let mgr2 = TokenManager::new("secret-two");
+
+        let token = mgr1.issue_token(1, "test").unwrap();
+        let result = mgr2.validate_token(&token);
+        assert!(result.is_err());
     }
 
     #[test]
-    fn test_add_handles_negative_result() {
-        assert_eq!(add(-100, 50), -50);
+    fn test_revoke_then_reject() {
+        let mgr = TokenManager::new("revocation-test-secret");
+        let token = mgr.issue_token(24, "to-revoke").unwrap();
+
+        let claims = mgr.validate_token(&token).unwrap();
+        mgr.revoke_token(&claims.sub).unwrap();
+
+        let result = mgr.validate_token(&token);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_multiple_tokens_independent() {
+        let mgr = TokenManager::new("multi-token-secret");
+        let t1 = mgr.issue_token(24, "token-1").unwrap();
+        let t2 = mgr.issue_token(24, "token-2").unwrap();
+
+        assert_ne!(t1, t2);
+
+        let c1 = mgr.validate_token(&t1).unwrap();
+        let c2 = mgr.validate_token(&t2).unwrap();
+        assert_ne!(c1.sub, c2.sub);
+        assert_eq!(c1.label, "token-1");
+        assert_eq!(c2.label, "token-2");
     }
 }
 
-mod multiply_integration_tests {
+mod oauth_integration_tests {
     use super::*;
 
     #[test]
-    fn test_multiply_returns_correct_product() {
-        assert_eq!(multiply(10, 20), 200);
+    fn test_manual_token_set_and_get() {
+        let provider = OAuthProvider::new("/tmp/nonexistent-test-dir");
+        provider.set_token("manually-set-oauth-token");
+        let token = provider.get_token().unwrap();
+        assert_eq!(token, "manually-set-oauth-token");
     }
 
     #[test]
-    fn test_multiply_handles_large_numbers() {
-        assert_eq!(multiply(1_000, 1_000_000), 1_000_000_000);
+    fn test_missing_credentials_error() {
+        let provider = OAuthProvider::new("/tmp/definitely-does-not-exist");
+        let result = provider.get_token();
+        assert!(result.is_err());
     }
 
     #[test]
-    fn test_multiply_handles_negative_numbers() {
-        assert_eq!(multiply(-10, -20), 200);
-    }
-}
+    fn test_credential_file_parsing() {
+        let dir = std::env::temp_dir().join(format!("router-int-test-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
 
-mod delay_integration_tests {
-    use super::*;
+        std::fs::write(
+            dir.join("credentials.json"),
+            r#"{"accessToken": "file-based-token"}"#,
+        )
+        .unwrap();
 
-    #[tokio::test]
-    async fn test_delay_waits_minimum_time() {
-        let start = std::time::Instant::now();
-        delay(0.05).await;
-        let elapsed = start.elapsed();
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        let token = provider.get_token().unwrap();
+        assert_eq!(token, "file-based-token");
 
-        assert!(
-            elapsed.as_secs_f64() >= 0.05,
-            "Delay should wait at least 0.05 seconds, but waited {:.4}s",
-            elapsed.as_secs_f64()
-        );
-    }
-
-    #[tokio::test]
-    async fn test_delay_zero_completes_quickly() {
-        let start = std::time::Instant::now();
-        delay(0.0).await;
-        let elapsed = start.elapsed();
-
-        assert!(
-            elapsed.as_secs_f64() < 0.1,
-            "Zero delay should complete quickly, but took {:.4}s",
-            elapsed.as_secs_f64()
-        );
+        std::fs::remove_dir_all(&dir).ok();
     }
 }
 
 mod version_tests {
-    use my_package::VERSION;
+    use super::*;
 
     #[test]
     fn test_version_is_not_empty() {
@@ -82,7 +104,6 @@ mod version_tests {
 
     #[test]
     fn test_version_matches_cargo_toml() {
-        // Version should match the one in Cargo.toml
         assert!(VERSION.starts_with("0."));
     }
 }

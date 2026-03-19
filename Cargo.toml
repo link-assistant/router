@@ -1,29 +1,47 @@
 [package]
-name = "my-package"
+name = "link-assistant-router"
 version = "0.2.0"
 edition = "2021"
-description = "A Rust package template for AI-driven development"
+description = "Link.Assistant.Router — Claude MAX OAuth proxy and token gateway for Anthropic APIs"
 readme = "README.md"
 license = "Unlicense"
-keywords = ["template", "rust", "ai-driven"]
-categories = ["development-tools"]
-repository = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
-documentation = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
+keywords = ["proxy", "anthropic", "claude", "gateway", "oauth"]
+categories = ["web-programming::http-server"]
+repository = "https://github.com/link-assistant/router"
+documentation = "https://github.com/link-assistant/router"
 rust-version = "1.70"
 
 [lib]
-name = "my_package"
+name = "link_assistant_router"
 path = "src/lib.rs"
 
 [[bin]]
-name = "my-package"
+name = "link-assistant-router"
 path = "src/main.rs"
 
 [dependencies]
-tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time"] }
+axum = { version = "0.8", features = ["macros"] }
+hyper = { version = "1.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+reqwest = { version = "0.12", features = ["stream", "json"] }
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time", "signal", "fs"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+jsonwebtoken = "9.0"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["trace", "cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+bytes = "1.0"
+futures-util = "0.3"
+http = "1.0"
+http-body-util = "0.1"
 
 [dev-dependencies]
 tokio-test = "0.4"
+tower = { version = "0.5", features = ["util"] }
 
 [lints.rust]
 unsafe_code = "forbid"
