@@ -17,8 +17,7 @@ use tracing_subscriber::EnvFilter;
 async fn main() {
     let verbose = std::env::args().any(|a| a == "--verbose")
         || std::env::var("VERBOSE")
-            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-            .unwrap_or(false);
+            .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
 
     // Initialize tracing
     let default_filter = if verbose { "debug" } else { "info" };
