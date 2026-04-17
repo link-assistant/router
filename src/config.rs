@@ -68,8 +68,7 @@ impl Config {
         });
         let upstream_base_url = env::var("UPSTREAM_BASE_URL")
             .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
-        let verbose = env::var("VERBOSE")
-            .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+        let verbose = env::var("VERBOSE").is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let api_format = env::var("UPSTREAM_API_FORMAT")
             .ok()
             .and_then(|s| ApiFormat::from_str_opt(&s));
