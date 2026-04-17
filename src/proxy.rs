@@ -1,6 +1,11 @@
-//! Transparent API proxy for forwarding requests to the Anthropic API.
+//! Transparent API proxy for forwarding requests to upstream APIs.
 //!
-//! Handles token swap (custom → OAuth), header adjustment, and
+//! Supports three API formats required by the Claude Code LLM Gateway spec:
+//! - Anthropic Messages (`/v1/messages`, `/v1/messages/count_tokens`)
+//! - Bedrock `InvokeModel` (`/invoke`, `/invoke-with-response-stream`)
+//! - Vertex AI rawPredict (`:rawPredict`, `:streamRawPredict`)
+//!
+//! Handles token swap (custom -> OAuth), header forwarding, and
 //! pass-through of streaming (SSE) responses.
 
 use axum::body::Body;
@@ -8,6 +13,7 @@ use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
+use log_lazy::LogLazy;
 use reqwest::Client;
 
 use crate::oauth::OAuthProvider;
@@ -24,10 +30,22 @@ pub struct AppState {
     pub oauth_provider: OAuthProvider,
     /// Base URL for the upstream Anthropic API.
     pub upstream_base_url: String,
+    /// Lazy logger for verbose output.
+    pub logger: LogLazy,
 }
 
-/// The API path prefix used to route requests through the proxy.
+/// The legacy API path prefix used to route requests through the proxy.
 pub const API_PREFIX: &str = "/api/latest/anthropic/";
+
+/// Headers that Claude Code LLM Gateway spec requires to be forwarded.
+pub const REQUIRED_FORWARD_HEADERS: &[&str] = &[
+    "anthropic-beta",
+    "anthropic-version",
+    "x-claude-code-session-id",
+];
+
+/// Hop-by-hop headers that must not be forwarded.
+const HOP_BY_HOP_HEADERS: &[&str] = &["host", "connection", "transfer-encoding", "keep-alive"];
 
 /// Health check endpoint.
 #[allow(clippy::unused_async)]
@@ -79,25 +97,45 @@ pub struct IssueTokenRequest {
 /// Proxy handler for upstream API forwarding.
 ///
 /// Catches all requests, validates the custom token, swaps it for OAuth
-/// credentials, and forwards the request upstream — preserving SSE streaming.
+/// credentials, and forwards the request upstream -- preserving SSE streaming.
+///
+/// Supports all three Claude Code LLM Gateway API formats:
+/// - Anthropic Messages: `/v1/messages`, `/v1/messages/count_tokens`
+/// - Bedrock `InvokeModel`: `/invoke`, `/invoke-with-response-stream`
+/// - Vertex rawPredict: paths ending in `:rawPredict`, `:streamRawPredict`
+/// - Legacy: `/api/latest/anthropic/*`
 pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl IntoResponse {
-    // Extract the downstream path after the API prefix
-    let path = req.uri().path();
-    let downstream_path = path.strip_prefix("/api/latest/anthropic").unwrap_or(path);
+    let path = req.uri().path().to_string();
+    let method = req.method().clone();
+
+    state.logger.verbose(|| format!("Incoming {method} {path}"));
+
+    // Resolve the upstream path based on which API format the request matches
+    let upstream_path = resolve_upstream_path(&path);
+
+    state
+        .logger
+        .debug(|| format!("Resolved upstream path: {upstream_path}"));
 
     // Build upstream URL
     let upstream_url = format!(
         "{}{}",
         state.upstream_base_url.trim_end_matches('/'),
-        downstream_path
+        upstream_path
     );
 
-    // Add query string if present
     let upstream_url = if let Some(query) = req.uri().query() {
         format!("{upstream_url}?{query}")
     } else {
         upstream_url
     };
+
+    // Log session tracking header if present
+    if let Some(session_id) = req.headers().get("x-claude-code-session-id") {
+        state
+            .logger
+            .verbose(|| format!("Session: {}", session_id.to_str().unwrap_or("<invalid>")));
+    }
 
     // Extract and validate the bearer token from the Authorization header
     let auth_header = req
@@ -106,22 +144,15 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.strip_prefix("Bearer "));
 
-    let custom_token = match auth_header {
-        Some(token) => token.to_string(),
-        None => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                axum::Json(serde_json::json!({
-                    "type": "error",
-                    "error": {
-                        "type": "authentication_error",
-                        "message": "Missing Authorization header with Bearer token"
-                    }
-                })),
-            )
-                .into_response();
-        }
+    let Some(token) = auth_header else {
+        state.logger.debug(|| "Missing Authorization header");
+        return error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization header with Bearer token",
+        );
     };
+    let custom_token = token.to_string();
 
     // Validate custom token
     if let Err(e) = state.token_manager.validate_token(&custom_token) {
@@ -129,17 +160,10 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
             crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
             _ => StatusCode::UNAUTHORIZED,
         };
-        return (
-            status,
-            axum::Json(serde_json::json!({
-                "type": "error",
-                "error": {
-                    "type": "authentication_error",
-                    "message": format!("{e}")
-                }
-            })),
-        )
-            .into_response();
+        state
+            .logger
+            .debug(|| format!("Token validation failed: {e}"));
+        return error_response(status, "authentication_error", &format!("{e}"));
     }
 
     // Get the real OAuth token
@@ -147,59 +171,35 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         Ok(token) => token,
         Err(e) => {
             tracing::error!("Failed to get OAuth token: {e}");
-            return (
+            return error_response(
                 StatusCode::BAD_GATEWAY,
-                axum::Json(serde_json::json!({
-                    "type": "error",
-                    "error": {
-                        "type": "api_error",
-                        "message": "Upstream authentication unavailable"
-                    }
-                })),
-            )
-                .into_response();
+                "api_error",
+                "Upstream authentication unavailable",
+            );
         }
     };
 
-    // Build upstream request
-    let method = req.method().clone();
-    let mut upstream_headers = HeaderMap::new();
-
-    // Copy relevant headers from the original request
-    for (name, value) in req.headers() {
-        let name_str = name.as_str().to_lowercase();
-        // Skip hop-by-hop headers and the original authorization
-        if matches!(
-            name_str.as_str(),
-            "host" | "authorization" | "connection" | "transfer-encoding"
-        ) {
-            continue;
-        }
-        upstream_headers.insert(name.clone(), value.clone());
-    }
-
-    // Set the real OAuth authorization
-    if let Ok(auth_val) = HeaderValue::from_str(&format!("Bearer {oauth_token}")) {
-        upstream_headers.insert("authorization", auth_val);
-    }
+    // Build upstream headers
+    let upstream_headers = build_upstream_headers(req.headers(), &oauth_token, &state.logger);
 
     // Read the request body
     let body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
         Ok(bytes) => bytes,
         Err(e) => {
-            return (
+            return error_response(
                 StatusCode::BAD_REQUEST,
-                axum::Json(serde_json::json!({
-                    "type": "error",
-                    "error": {
-                        "type": "invalid_request_error",
-                        "message": format!("Failed to read request body: {e}")
-                    }
-                })),
-            )
-                .into_response();
+                "invalid_request_error",
+                &format!("Failed to read request body: {e}"),
+            );
         }
     };
+
+    state.logger.verbose(|| {
+        format!(
+            "Forwarding {method} {upstream_url} ({} bytes)",
+            body_bytes.len()
+        )
+    });
 
     // Forward request to upstream
     let upstream_req = state
@@ -212,32 +212,26 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         Ok(resp) => resp,
         Err(e) => {
             tracing::error!("Upstream request failed: {e}");
-            return (
+            return error_response(
                 StatusCode::BAD_GATEWAY,
-                axum::Json(serde_json::json!({
-                    "type": "error",
-                    "error": {
-                        "type": "api_error",
-                        "message": format!("Upstream request failed: {e}")
-                    }
-                })),
-            )
-                .into_response();
+                "api_error",
+                &format!("Upstream request failed: {e}"),
+            );
         }
     };
 
-    // Build the response — stream it back to preserve SSE
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
 
+    state
+        .logger
+        .verbose(|| format!("Upstream responded: {status}"));
+
+    // Build the response -- stream it back to preserve SSE
     let mut response_headers = HeaderMap::new();
     for (name, value) in upstream_resp.headers() {
-        let name_str = name.as_str().to_lowercase();
-        // Skip hop-by-hop headers
-        if matches!(
-            name_str.as_str(),
-            "connection" | "transfer-encoding" | "keep-alive"
-        ) {
+        let name_lower = name.as_str().to_lowercase();
+        if HOP_BY_HOP_HEADERS.contains(&name_lower.as_str()) {
             continue;
         }
         response_headers.insert(name.clone(), value.clone());
@@ -255,4 +249,77 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     *response.headers_mut() = response_headers;
 
     response
+}
+
+/// Resolve the upstream path from the incoming request path.
+///
+/// Maps all supported API format paths to the correct upstream path:
+/// - `/v1/messages` -> `/v1/messages` (Anthropic Messages)
+/// - `/v1/messages/count_tokens` -> `/v1/messages/count_tokens` (Anthropic Messages)
+/// - `/invoke` -> `/invoke` (Bedrock)
+/// - `/invoke-with-response-stream` -> `/invoke-with-response-stream` (Bedrock)
+/// - Paths ending in `:rawPredict` or `:streamRawPredict` -> pass through (Vertex)
+/// - `/api/latest/anthropic/*` -> `/*` (legacy)
+#[must_use]
+pub fn resolve_upstream_path(path: &str) -> String {
+    // Legacy prefix: strip and forward
+    if let Some(rest) = path.strip_prefix("/api/latest/anthropic") {
+        return rest.to_string();
+    }
+
+    // All other paths (Anthropic /v1/*, Bedrock /invoke*, Vertex *:rawPredict)
+    // are forwarded as-is to the upstream
+    path.to_string()
+}
+
+/// Build the upstream request headers.
+///
+/// Copies all headers except hop-by-hop and authorization, then sets the
+/// real OAuth authorization. Ensures required LLM Gateway headers
+/// (`anthropic-beta`, `anthropic-version`, `x-claude-code-session-id`)
+/// are always forwarded.
+fn build_upstream_headers(incoming: &HeaderMap, oauth_token: &str, logger: &LogLazy) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    for (name, value) in incoming {
+        let name_lower = name.as_str().to_lowercase();
+        if name_lower == "authorization" || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str()) {
+            continue;
+        }
+        headers.insert(name.clone(), value.clone());
+    }
+
+    // Set the real OAuth authorization
+    if let Ok(auth_val) = HeaderValue::from_str(&format!("Bearer {oauth_token}")) {
+        headers.insert("authorization", auth_val);
+    }
+
+    // Log required headers for observability
+    for &header_name in REQUIRED_FORWARD_HEADERS {
+        if let Some(val) = headers.get(header_name) {
+            logger.trace(|| {
+                format!(
+                    "Forwarding {header_name}: {}",
+                    val.to_str().unwrap_or("<non-utf8>")
+                )
+            });
+        }
+    }
+
+    headers
+}
+
+/// Build an Anthropic-format error response.
+fn error_response(status: StatusCode, error_type: &str, message: &str) -> Response {
+    (
+        status,
+        axum::Json(serde_json::json!({
+            "type": "error",
+            "error": {
+                "type": error_type,
+                "message": message
+            }
+        })),
+    )
+        .into_response()
 }
