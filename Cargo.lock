@@ -759,7 +759,7 @@ checksum = "b5b646652bf6661599e1da8901b3b9522896f01e736bad5f723fe7a3a27f899d"
 
 [[package]]
 name = "link-assistant-router"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "axum",
  "bytes",
@@ -770,6 +770,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "jsonwebtoken",
+ "log-lazy",
  "reqwest",
  "serde",
  "serde_json",
@@ -799,6 +800,12 @@ name = "log"
 version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
+
+[[package]]
+name = "log-lazy"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2891f2d5625c64238aa93df2e8bcd60d5506ee13df66bcb5b91e5c06d65768b5"
 
 [[package]]
 name = "matchers"
