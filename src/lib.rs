@@ -4,6 +4,7 @@
 //! supports Claude MAX OAuth sessions, and provides multi-tenant
 //! access via custom-issued tokens.
 
+pub mod accounts;
 pub mod config;
 pub mod oauth;
 pub mod proxy;
