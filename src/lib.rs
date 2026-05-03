@@ -7,6 +7,7 @@
 pub mod config;
 pub mod oauth;
 pub mod proxy;
+pub mod storage;
 pub mod token;
 
 /// Package version (matches Cargo.toml version).
