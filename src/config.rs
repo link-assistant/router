@@ -170,15 +170,15 @@ impl Config {
             .unwrap_or_default();
         let data_dir = env::var("DATA_DIR").map_or_else(|_| default_data_dir(), PathBuf::from);
         let claude_cli_bin = env::var("CLAUDE_CLI_BIN").ok().map(PathBuf::from);
-        let enable_openai_api = env::var("ENABLE_OPENAI_API")
-            .map(|v| !matches!(v.as_str(), "0" | "false" | "FALSE" | "off"))
-            .unwrap_or(true);
-        let enable_anthropic_api = env::var("ENABLE_ANTHROPIC_API")
-            .map(|v| !matches!(v.as_str(), "0" | "false" | "FALSE" | "off"))
-            .unwrap_or(true);
-        let enable_metrics = env::var("ENABLE_METRICS")
-            .map(|v| !matches!(v.as_str(), "0" | "false" | "FALSE" | "off"))
-            .unwrap_or(true);
+        let enable_openai_api = env::var("ENABLE_OPENAI_API").map_or(true, |v| {
+            !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
+        });
+        let enable_anthropic_api = env::var("ENABLE_ANTHROPIC_API").map_or(true, |v| {
+            !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
+        });
+        let enable_metrics = env::var("ENABLE_METRICS").map_or(true, |v| {
+            !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
+        });
         let additional_account_dirs = env::var("ADDITIONAL_ACCOUNT_DIRS")
             .ok()
             .map(|raw| {
