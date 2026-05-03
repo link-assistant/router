@@ -8,6 +8,11 @@
 //! Handles token swap (custom -> OAuth), header forwarding, and
 //! pass-through of streaming (SSE) responses.
 
+// Several handlers are `async fn` purely to match axum's handler signature
+// even when their body is currently synchronous; they may grow await points
+// later, and removing `async` would force a uniform sync signature here.
+#![allow(clippy::unused_async)]
+
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
@@ -119,10 +124,7 @@ pub async fn issue_token(
 }
 
 /// List all known tokens (admin endpoint).
-pub async fn list_tokens(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
+pub async fn list_tokens(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
     if !is_admin_authorised(&state, &headers) {
         return error_response(
             StatusCode::UNAUTHORIZED,
@@ -131,7 +133,10 @@ pub async fn list_tokens(
         );
     }
     match state.token_manager.list_tokens() {
-        Ok(records) => (StatusCode::OK, axum::Json(serde_json::json!({"data": records})))
+        Ok(records) => (
+            StatusCode::OK,
+            axum::Json(serde_json::json!({"data": records})),
+        )
             .into_response(),
         Err(e) => error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -339,7 +344,8 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         selected_account.as_deref(),
     );
     if status.as_u16() == 429 {
-        if let (Some(router), Some(name)) = (state.account_router.as_ref(), selected_account.as_deref())
+        if let (Some(router), Some(name)) =
+            (state.account_router.as_ref(), selected_account.as_deref())
         {
             router.report_failure(name, "upstream returned 429");
         }
@@ -448,7 +454,7 @@ pub async fn openai_models() -> impl IntoResponse {
     (StatusCode::OK, axum::Json(openai::list_models())).into_response()
 }
 
-/// `POST /v1/chat/completions` — OpenAI Chat Completions.
+/// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
 ///
 /// Translates to Anthropic Messages, forwards via the same OAuth-substituting
 /// pipeline used by [`proxy_handler`], and converts the response back.
@@ -472,7 +478,7 @@ pub async fn openai_chat_completions(
     .await
 }
 
-/// `POST /v1/responses` — OpenAI Responses API.
+/// `POST /v1/responses` — `OpenAI` Responses API.
 pub async fn openai_responses(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -701,7 +707,11 @@ pub async fn accounts_endpoint(State(state): State<AppState>) -> impl IntoRespon
             })
         })
         .collect();
-    (StatusCode::OK, axum::Json(serde_json::json!({"accounts": snap}))).into_response()
+    (
+        StatusCode::OK,
+        axum::Json(serde_json::json!({"accounts": snap})),
+    )
+        .into_response()
 }
 
 /// Build an Anthropic-format error response.

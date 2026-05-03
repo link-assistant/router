@@ -5,7 +5,7 @@
 //! directories. Inbound requests are dispatched to a healthy account using
 //! a configurable selection strategy (round-robin by default), with
 //! cooldowns and quota windows that automatically remove an account from
-//! the rotation when it returns 429/insufficient_quota.
+//! the rotation when it returns `429/insufficient_quota`.
 //!
 //! The single-account `OAuthProvider` is reused as the building block for
 //! each account so existing tests and behaviour are preserved when only a
@@ -19,20 +19,15 @@ use std::time::{Duration, Instant};
 use crate::oauth::{OAuthError, OAuthProvider};
 
 /// Strategy used to pick the next account on each request.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SelectionStrategy {
     /// Round-robin across all healthy accounts.
+    #[default]
     RoundRobin,
     /// Always prefer the lowest-index healthy account; fall back on cooldown.
     Priority,
     /// Pick the account with the lowest used-quota count.
     LeastUsed,
-}
-
-impl Default for SelectionStrategy {
-    fn default() -> Self {
-        Self::RoundRobin
-    }
 }
 
 impl SelectionStrategy {
@@ -59,11 +54,11 @@ struct AccountState {
 
 impl AccountState {
     fn is_healthy(&self) -> bool {
-        let guard = self.cooldown_until.lock().unwrap_or_else(|e| e.into_inner());
-        match *guard {
-            Some(t) if t > Instant::now() => false,
-            _ => true,
-        }
+        let guard = self
+            .cooldown_until
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        !matches!(*guard, Some(t) if t > Instant::now())
     }
 }
 
@@ -154,12 +149,12 @@ impl AccountRouter {
                 last_error: a
                     .last_error
                     .lock()
-                    .unwrap_or_else(|e| e.into_inner())
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
                     .clone(),
                 cooldown_remaining: a
                     .cooldown_until
                     .lock()
-                    .unwrap_or_else(|e| e.into_inner())
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
                     .and_then(|t| t.checked_duration_since(Instant::now())),
             })
             .collect()
@@ -237,7 +232,7 @@ impl AccountRouter {
         let mut guard = self.inner.accounts[idx]
             .last_error
             .lock()
-            .unwrap_or_else(|e| e.into_inner());
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         *guard = Some(err.to_string());
     }
 
@@ -245,7 +240,7 @@ impl AccountRouter {
         let mut guard = self.inner.accounts[idx]
             .cooldown_until
             .lock()
-            .unwrap_or_else(|e| e.into_inner());
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         *guard = Some(Instant::now() + self.inner.cooldown);
     }
 }
@@ -296,13 +291,12 @@ mod tests {
     use std::fs;
 
     fn tempdir(slug: &str) -> PathBuf {
-        let dir =
-            std::env::temp_dir().join(format!("router-acct-{slug}-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!("router-acct-{slug}-{}", uuid::Uuid::new_v4()));
         fs::create_dir_all(&dir).unwrap();
         dir
     }
 
-    fn write_creds(dir: &PathBuf, token: &str) {
+    fn write_creds(dir: &std::path::Path, token: &str) {
         fs::write(
             dir.join("credentials.json"),
             format!("{{\"accessToken\":\"{token}\"}}"),

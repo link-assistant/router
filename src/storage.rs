@@ -30,6 +30,11 @@
 //! [`StorageError`] but never panic, and all read paths gracefully tolerate
 //! missing files (returning an empty record set).
 
+// We intentionally hold a write guard across the (insert + flush) pair for
+// atomicity; clippy's `significant_drop_tightening` would push us into
+// chained calls that lose readability without helping contention in practice.
+#![allow(clippy::significant_drop_tightening)]
+
 use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Read, Write};
@@ -498,13 +503,17 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
                 let v = inner
                     .next_atom()
                     .ok_or_else(|| "issued_at missing value".to_string())?;
-                issued_at = v.parse().map_err(|e: std::num::ParseIntError| e.to_string())?;
+                issued_at = v
+                    .parse()
+                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
             }
             "expires_at" => {
                 let v = inner
                     .next_atom()
                     .ok_or_else(|| "expires_at missing value".to_string())?;
-                expires_at = v.parse().map_err(|e: std::num::ParseIntError| e.to_string())?;
+                expires_at = v
+                    .parse()
+                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
             }
             "revoked" => {
                 let v = inner
@@ -533,7 +542,7 @@ struct LinoTokens<'a> {
 }
 
 impl<'a> LinoTokens<'a> {
-    fn new(input: &'a str) -> Self {
+    const fn new(input: &'a str) -> Self {
         Self { rest: input }
     }
 
@@ -655,8 +664,8 @@ mod tests {
         TokenRecord {
             id: id.into(),
             label: "test \"label\"".into(),
-            issued_at: 1700000000,
-            expires_at: 1700001000,
+            issued_at: 1_700_000_000,
+            expires_at: 1_700_001_000,
             revoked: false,
             account: Some("primary".into()),
         }

@@ -4,6 +4,11 @@
 //! files via `lino-arguments` (a `clap` drop-in). The struct returned here is
 //! the canonical runtime config used by the rest of the crate.
 
+// `Config` and `BuildArgs` carry one bool per documented feature toggle
+// (`enable_openai_api`, `enable_anthropic_api`, ...). Collapsing them into
+// enums would diverge from the CLI/env variable names that ship as public API.
+#![allow(clippy::struct_excessive_bools)]
+
 use std::env;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -34,9 +39,10 @@ impl ApiFormat {
 }
 
 /// Routing mode controlling how upstream requests are handled.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum RoutingMode {
     /// Forward HTTP requests directly to Anthropic / Bedrock / Vertex.
+    #[default]
     Direct,
     /// Drive a local Claude Code CLI subprocess for tool-heavy compatibility.
     Cli,
@@ -57,12 +63,6 @@ impl RoutingMode {
     }
 }
 
-impl Default for RoutingMode {
-    fn default() -> Self {
-        Self::Direct
-    }
-}
-
 impl FromStr for RoutingMode {
     type Err = ConfigError;
 
@@ -72,7 +72,7 @@ impl FromStr for RoutingMode {
 }
 
 /// Storage policy for token persistence.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum StoragePolicy {
     /// Use only the in-memory store (no persistence; tests / ephemeral runs).
     Memory,
@@ -82,13 +82,8 @@ pub enum StoragePolicy {
     /// when the `clink` adapter is enabled).
     Binary,
     /// Dual-write to both text and binary (default per issue #7).
+    #[default]
     Both,
-}
-
-impl Default for StoragePolicy {
-    fn default() -> Self {
-        Self::Both
-    }
 }
 
 impl StoragePolicy {
@@ -173,9 +168,7 @@ impl Config {
             .ok()
             .and_then(|s| StoragePolicy::from_str_opt(&s))
             .unwrap_or_default();
-        let data_dir = env::var("DATA_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| default_data_dir());
+        let data_dir = env::var("DATA_DIR").map_or_else(|_| default_data_dir(), PathBuf::from);
         let claude_cli_bin = env::var("CLAUDE_CLI_BIN").ok().map(PathBuf::from);
         let enable_openai_api = env::var("ENABLE_OPENAI_API")
             .map(|v| !matches!(v.as_str(), "0" | "false" | "FALSE" | "off"))

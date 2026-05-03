@@ -12,12 +12,13 @@
 //! - [`UsageSnapshot`] / [`usage_snapshot`] — aggregate counts and per-
 //!   account usage, served as JSON by `/v1/usage`.
 //! - [`MetricsRecorder`] — a tiny Tower-style helper that handlers can
-//!   call from `proxy_handler` and the OpenAI translators.
+//!   call from `proxy_handler` and the `OpenAI` translators.
 //!
 //! The implementation is intentionally lock-free (atomics + a single Mutex
 //! for the per-status / per-account maps) so it stays cheap on the hot path.
 
 use std::collections::HashMap;
+use std::fmt::Write as _;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 
@@ -143,7 +144,10 @@ pub fn render_prometheus(m: &Metrics) -> String {
             "link_assistant_openai_chat_completions_total",
             snap.openai_chat_completions,
         ),
-        ("link_assistant_openai_responses_total", snap.openai_responses),
+        (
+            "link_assistant_openai_responses_total",
+            snap.openai_responses,
+        ),
         (
             "link_assistant_anthropic_messages_total",
             snap.anthropic_messages,
@@ -164,17 +168,19 @@ pub fn render_prometheus(m: &Metrics) -> String {
     let mut sorted_status: Vec<_> = snap.status_counts.iter().collect();
     sorted_status.sort_by_key(|(k, _)| *k);
     for (status, count) in sorted_status {
-        out.push_str(&format!(
-            "link_assistant_status_total{{code=\"{status}\"}} {count}\n"
-        ));
+        let _ = writeln!(
+            out,
+            "link_assistant_status_total{{code=\"{status}\"}} {count}"
+        );
     }
     out.push_str("# TYPE link_assistant_account_calls_total counter\n");
     let mut sorted_accounts: Vec<_> = snap.account_calls.iter().collect();
     sorted_accounts.sort_by(|a, b| a.0.cmp(b.0));
     for (acct, count) in sorted_accounts {
-        out.push_str(&format!(
-            "link_assistant_account_calls_total{{account=\"{acct}\"}} {count}\n"
-        ));
+        let _ = writeln!(
+            out,
+            "link_assistant_account_calls_total{{account=\"{acct}\"}} {count}"
+        );
     }
     out
 }

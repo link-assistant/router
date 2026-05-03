@@ -28,6 +28,9 @@ use log_lazy::{levels, LogLazy};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
 
+type SharedState = (Arc<dyn TokenStore>, Option<AccountRouter>);
+type AnyError = Box<dyn std::error::Error>;
+
 #[tokio::main]
 async fn main() -> ExitCode {
     let cli = <Cli as lino_arguments::Parser>::parse();
@@ -92,9 +95,7 @@ fn build_logger(verbose: bool) -> LogLazy {
 /// Construct the persistent token store and the optional multi-account router
 /// for the given [`Config`]. Both are needed by both the server and the CLI
 /// subcommands.
-fn build_shared_state(
-    config: &Config,
-) -> Result<(Arc<dyn TokenStore>, Option<AccountRouter>), Box<dyn std::error::Error>> {
+fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
     if !config.data_dir.exists() {
         std::fs::create_dir_all(&config.data_dir)?;
     }
@@ -217,8 +218,8 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
         TokenOp::List => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
-                    "{:<36}  {:<10}  {:<10}  {:<10}  {}",
-                    "id", "issued_at", "expires_at", "revoked", "label"
+                    "{:<36}  {:<10}  {:<10}  {:<10}  label",
+                    "id", "issued_at", "expires_at", "revoked"
                 );
                 for r in records {
                     println!(
@@ -244,16 +245,16 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             }
         },
         TokenOp::Show { id } => match mgr.list_tokens() {
-            Ok(records) => match records.into_iter().find(|r| r.id == *id) {
-                Some(r) => {
-                    println!("{}", serde_json::to_string_pretty(&r).unwrap_or_default());
-                    ExitCode::SUCCESS
-                }
-                None => {
+            Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
+                || {
                     eprintln!("not found: {id}");
                     ExitCode::from(2)
-                }
-            },
+                },
+                |r| {
+                    println!("{}", serde_json::to_string_pretty(&r).unwrap_or_default());
+                    ExitCode::SUCCESS
+                },
+            ),
             Err(e) => {
                 eprintln!("error: {e}");
                 ExitCode::from(1)
@@ -282,10 +283,7 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
     match op {
         AccountOp::List => {
             let snap = router.health_snapshot();
-            println!(
-                "{:<16}  {:<8}  {:<6}  {}",
-                "name", "healthy", "used", "home"
-            );
+            println!("{:<16}  {:<8}  {:<6}  home", "name", "healthy", "used");
             for h in snap {
                 println!(
                     "{:<16}  {:<8}  {:<6}  {}",

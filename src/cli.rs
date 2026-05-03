@@ -14,6 +14,11 @@
 //! - `doctor` — report on environment, OAuth credential discoverability,
 //!   storage paths, and other config.
 
+// The CLI struct intentionally has many independent boolean toggles
+// (`--disable-openai-api`, `--disable-anthropic-api`, etc.). Refactoring
+// into enums would obscure the 1:1 mapping with the documented flags.
+#![allow(clippy::struct_excessive_bools)]
+
 use std::path::PathBuf;
 
 use clap::Subcommand;
@@ -69,21 +74,11 @@ pub struct Cli {
     pub api_format: Option<String>,
 
     /// Routing mode: direct, cli, hybrid.
-    #[arg(
-        long,
-        env = "ROUTING_MODE",
-        default_value = "direct",
-        global = true
-    )]
+    #[arg(long, env = "ROUTING_MODE", default_value = "direct", global = true)]
     pub routing_mode: String,
 
     /// Storage policy: memory, text, binary, both.
-    #[arg(
-        long,
-        env = "STORAGE_POLICY",
-        default_value = "both",
-        global = true
-    )]
+    #[arg(long, env = "STORAGE_POLICY", default_value = "both", global = true)]
     pub storage_policy: String,
 
     /// Data directory for the persistent token store.
@@ -157,17 +152,11 @@ pub enum TokenOp {
     /// List all known tokens.
     List,
     /// Revoke a token by id.
-    Revoke {
-        id: String,
-    },
+    Revoke { id: String },
     /// Mark a token as expired immediately (revoke alias).
-    Expire {
-        id: String,
-    },
+    Expire { id: String },
     /// Show metadata for one token.
-    Show {
-        id: String,
-    },
+    Show { id: String },
 }
 
 #[derive(Debug, Subcommand)]
@@ -183,15 +172,11 @@ impl Cli {
         let token_secret = self.token_secret.clone();
         let claude_home = self.claude_code_home.clone().unwrap_or_else(|| {
             std::env::var("HOME")
-                .map(|h| format!("{h}/.claude"))
-                .unwrap_or_else(|_| "/root/.claude".to_string())
+                .map_or_else(|_| "/root/.claude".to_string(), |h| format!("{h}/.claude"))
         });
-        let api_format = self
-            .api_format
-            .as_deref()
-            .and_then(ApiFormat::from_str_opt);
-        let routing_mode = RoutingMode::from_str_opt(&self.routing_mode)
-            .ok_or(ConfigError::InvalidRoutingMode)?;
+        let api_format = self.api_format.as_deref().and_then(ApiFormat::from_str_opt);
+        let routing_mode =
+            RoutingMode::from_str_opt(&self.routing_mode).ok_or(ConfigError::InvalidRoutingMode)?;
         let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy).unwrap_or_default();
         let data_dir = self.data_dir.clone().unwrap_or_else(default_data_dir);
         Config::build(BuildArgs {

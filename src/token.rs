@@ -132,8 +132,7 @@ impl TokenManager {
             .store
             .get(&token_data.claims.sub)
             .map_err(|e| TokenError::Storage(e.to_string()))?
-            .map(|r| r.revoked)
-            .unwrap_or(false);
+            .is_some_and(|r| r.revoked);
         if revoked {
             return Err(TokenError::Revoked);
         }

@@ -2,21 +2,21 @@
 //!
 //! Issue #7 R5 / R12 require the router to expose:
 //!
-//! - `POST /v1/chat/completions` — OpenAI Chat Completions
-//! - `POST /v1/responses` — OpenAI Responses (newer agentic API)
+//! - `POST /v1/chat/completions` — `OpenAI` Chat Completions
+//! - `POST /v1/responses` — `OpenAI` Responses (newer agentic API)
 //! - `GET  /v1/models` — model discovery
 //!
 //! These translate to / from the upstream Anthropic Messages API so any
-//! client written for the OpenAI SDK can talk to Claude MAX through us.
+//! client written for the `OpenAI` SDK can talk to Claude MAX through us.
 //!
 //! The translation surface is intentionally minimal but extensible:
 //!
-//! - `OpenAIChatCompletionRequest` mirrors the OpenAI request shape; we
+//! - `OpenAIChatCompletionRequest` mirrors the `OpenAI` request shape; we
 //!   convert it to an Anthropic `messages` payload and forward via the
 //!   existing proxy plumbing.
 //! - `to_chat_completion_response` converts the upstream Anthropic
 //!   response (whether streamed SSE chunks or a buffered JSON body) to
-//!   the OpenAI Chat Completions response shape.
+//!   the `OpenAI` Chat Completions response shape.
 //!
 //! For streaming we don't reformat each SSE chunk in this PR — that's a
 //! follow-up; instead we buffer-and-emit, which preserves correctness at
@@ -26,11 +26,11 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-/// One chat message in the OpenAI request.
+/// One chat message in the `OpenAI` request.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ChatMessage {
     pub role: String,
-    /// OpenAI permits `content` as either a string or an array of parts.
+    /// `OpenAI` permits `content` as either a string or an array of parts.
     /// We accept both via `Value` and normalise downstream.
     #[serde(default)]
     pub content: Value,
@@ -38,7 +38,7 @@ pub struct ChatMessage {
     pub name: Option<String>,
 }
 
-/// OpenAI `POST /v1/chat/completions` request body.
+/// `OpenAI` `POST /v1/chat/completions` request body.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenAIChatCompletionRequest {
     pub model: String,
@@ -61,7 +61,7 @@ pub struct OpenAIChatCompletionRequest {
     pub tool_choice: Option<Value>,
 }
 
-/// OpenAI `POST /v1/responses` request body. We accept the superset and
+/// `OpenAI` `POST /v1/responses` request body. We accept the superset and
 /// project to Anthropic Messages, so unknown keys are ignored.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenAIResponseRequest {
@@ -80,7 +80,7 @@ pub struct OpenAIResponseRequest {
     pub tools: Option<Value>,
 }
 
-/// Translate an OpenAI Chat Completions request to an Anthropic Messages
+/// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
 /// request body (returned as a JSON value).
 #[must_use]
 pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value {
@@ -121,10 +121,7 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
         }
     }
 
-    let max_tokens = req
-        .max_completion_tokens
-        .or(req.max_tokens)
-        .unwrap_or(4096);
+    let max_tokens = req.max_completion_tokens.or(req.max_tokens).unwrap_or(4096);
 
     let mut body = json!({
         "model": map_model(&req.model),
@@ -159,7 +156,7 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     body
 }
 
-/// Translate an OpenAI Responses-API request to Anthropic Messages.
+/// Translate an `OpenAI` Responses-API request to Anthropic Messages.
 #[must_use]
 pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     let mut messages: Vec<Value> = Vec::new();
@@ -201,14 +198,14 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     body
 }
 
-/// Translate the upstream Anthropic JSON response to an OpenAI Chat
+/// Translate the upstream Anthropic JSON response to an `OpenAI` Chat
 /// Completions response.
 #[must_use]
 pub fn anthropic_to_chat_completion(anthropic: &Value, requested_model: &str) -> Value {
-    let id = anthropic
-        .get("id")
-        .and_then(Value::as_str)
-        .map_or_else(|| format!("chatcmpl-{}", uuid::Uuid::new_v4()), String::from);
+    let id = anthropic.get("id").and_then(Value::as_str).map_or_else(
+        || format!("chatcmpl-{}", uuid::Uuid::new_v4()),
+        String::from,
+    );
 
     let mut content = String::new();
     let mut tool_calls: Vec<Value> = Vec::new();
@@ -248,9 +245,8 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, requested_model: &str) ->
         .and_then(Value::as_str)
         .unwrap_or("end_turn")
     {
-        "end_turn" => "stop",
         "max_tokens" => "length",
-        "stop_sequence" => "stop",
+        "end_turn" | "stop_sequence" => "stop",
         "tool_use" => "tool_calls",
         other => other,
     };
@@ -285,7 +281,7 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, requested_model: &str) ->
     })
 }
 
-/// Translate an Anthropic JSON response to an OpenAI Responses-API response.
+/// Translate an Anthropic JSON response to an `OpenAI` Responses-API response.
 #[must_use]
 pub fn anthropic_to_response(anthropic: &Value, requested_model: &str) -> Value {
     let id = anthropic
@@ -332,15 +328,16 @@ pub fn map_model(requested: &str) -> String {
         return requested.to_string();
     }
     match lower.as_str() {
-        "gpt-4" | "gpt-4-turbo" | "gpt-4o" => "claude-sonnet-4-5-20250929".to_string(),
         "gpt-4o-mini" | "gpt-4-mini" => "claude-haiku-4-5-20251001".to_string(),
         "o1" | "o1-pro" | "o3" | "o4" | "gpt-5" => "claude-opus-4-7".to_string(),
+        // Any other model (including gpt-4, gpt-4-turbo, gpt-4o, unknowns)
+        // maps to the default Sonnet tier.
         _ => "claude-sonnet-4-5-20250929".to_string(),
     }
 }
 
 /// Static `/v1/models` listing (Anthropic-issued models, presented in the
-/// OpenAI list-shape so OpenAI-SDK clients see something familiar).
+/// `OpenAI` list-shape so OpenAI-SDK clients see something familiar).
 #[must_use]
 pub fn list_models() -> Value {
     let now = chrono::Utc::now().timestamp();
@@ -430,7 +427,7 @@ fn translate_tools(tools: &Value) -> Value {
                         .get("description")
                         .cloned()
                         .unwrap_or(Value::String(String::new()));
-                    let parameters = func.get("parameters").cloned().unwrap_or(json!({}));
+                    let parameters = func.get("parameters").cloned().unwrap_or_else(|| json!({}));
                     Some(json!({
                         "name": name,
                         "description": description,
@@ -447,9 +444,9 @@ fn translate_tools(tools: &Value) -> Value {
 fn translate_tool_choice(choice: &Value) -> Value {
     match choice {
         Value::String(s) => match s.as_str() {
-            "auto" => json!({"type": "auto"}),
             "required" => json!({"type": "any"}),
             "none" => json!({"type": "none"}),
+            // "auto" plus any unrecognised string default to auto.
             _ => json!({"type": "auto"}),
         },
         Value::Object(map) => {
