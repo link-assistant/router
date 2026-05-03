@@ -2,13 +2,19 @@
 //!
 //! Issues and validates `la_sk_...` prefixed JWT tokens that map to the shared
 //! Claude MAX OAuth session.
+//!
+//! `TokenManager` wraps a [`TokenStore`] (see [`crate::storage`]) so issued
+//! tokens, their metadata, and their revocation flags survive process
+//! restarts. The default ([`TokenManager::new`]) keeps everything in memory
+//! for backwards compatibility with the legacy server boot path.
 
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::storage::{MemoryTokenStore, StorageError, TokenRecord, TokenStore};
 
 /// Prefix for all router-issued custom tokens.
 pub const TOKEN_PREFIX: &str = "la_sk_";
@@ -31,17 +37,29 @@ pub struct TokenClaims {
 #[derive(Clone)]
 pub struct TokenManager {
     secret: String,
-    revoked: Arc<RwLock<HashSet<String>>>,
+    store: Arc<dyn TokenStore>,
 }
 
 impl TokenManager {
-    /// Create a new token manager with the given signing secret.
+    /// Create a new token manager backed by an in-memory store.
     #[must_use]
     pub fn new(secret: &str) -> Self {
+        Self::with_store(secret, Arc::new(MemoryTokenStore::new()))
+    }
+
+    /// Create a new token manager backed by the provided persistent store.
+    #[must_use]
+    pub fn with_store(secret: &str, store: Arc<dyn TokenStore>) -> Self {
         Self {
             secret: secret.to_string(),
-            revoked: Arc::new(RwLock::new(HashSet::new())),
+            store,
         }
+    }
+
+    /// Borrow the underlying token store (used by admin endpoints / CLI).
+    #[must_use]
+    pub fn store(&self) -> Arc<dyn TokenStore> {
+        Arc::clone(&self.store)
     }
 
     /// Issue a new custom token with the given TTL and optional label.
@@ -51,6 +69,16 @@ impl TokenManager {
         &self,
         ttl_hours: i64,
         label: &str,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue_token_for(ttl_hours, label, None)
+    }
+
+    /// Issue a token bound to a specific account.
+    pub fn issue_token_for(
+        &self,
+        ttl_hours: i64,
+        label: &str,
+        account: Option<&str>,
     ) -> Result<String, jsonwebtoken::errors::Error> {
         let now = Utc::now();
         let exp = now + Duration::hours(ttl_hours);
@@ -65,6 +93,19 @@ impl TokenManager {
             &claims,
             &EncodingKey::from_secret(self.secret.as_bytes()),
         )?;
+        // Persist a record so list/revoke survive restarts. Storage failures
+        // are logged but do not block token issuance for in-memory tests.
+        let record = TokenRecord {
+            id: claims.sub.clone(),
+            label: claims.label.clone(),
+            issued_at: claims.iat,
+            expires_at: claims.exp,
+            revoked: false,
+            account: account.map(String::from),
+        };
+        if let Err(e) = self.store.put(record) {
+            tracing::warn!("token store put failed: {e}");
+        }
         Ok(format!("{TOKEN_PREFIX}{jwt}"))
     }
 
@@ -87,25 +128,31 @@ impl TokenManager {
             _ => TokenError::Invalid(e.to_string()),
         })?;
 
-        let is_revoked = self
-            .revoked
-            .read()
-            .map_err(|_| TokenError::Invalid("Lock poisoned".to_string()))?
-            .contains(&token_data.claims.sub);
-        if is_revoked {
+        let revoked = self
+            .store
+            .get(&token_data.claims.sub)
+            .map_err(|e| TokenError::Storage(e.to_string()))?
+            .is_some_and(|r| r.revoked);
+        if revoked {
             return Err(TokenError::Revoked);
         }
 
         Ok(token_data.claims)
     }
 
-    /// Revoke a token by its subject ID.
+    /// Revoke a token by its subject ID. Idempotent.
     pub fn revoke_token(&self, token_id: &str) -> Result<(), TokenError> {
-        self.revoked
-            .write()
-            .map_err(|_| TokenError::Invalid("Lock poisoned".to_string()))?
-            .insert(token_id.to_string());
-        Ok(())
+        match self.store.revoke(token_id) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(TokenError::Storage(e.to_string())),
+        }
+    }
+
+    /// List all known tokens (for admin / CLI inspection).
+    pub fn list_tokens(&self) -> Result<Vec<TokenRecord>, TokenError> {
+        self.store
+            .list()
+            .map_err(|e: StorageError| TokenError::Storage(e.to_string()))
     }
 }
 
@@ -120,6 +167,8 @@ pub enum TokenError {
     Revoked,
     /// Token is otherwise invalid.
     Invalid(String),
+    /// Storage backend failure.
+    Storage(String),
 }
 
 impl std::fmt::Display for TokenError {
@@ -131,6 +180,7 @@ impl std::fmt::Display for TokenError {
             Self::Expired => write!(f, "Token has expired"),
             Self::Revoked => write!(f, "Token has been revoked"),
             Self::Invalid(msg) => write!(f, "Invalid token: {msg}"),
+            Self::Storage(msg) => write!(f, "Token storage error: {msg}"),
         }
     }
 }
@@ -200,5 +250,42 @@ mod tests {
             Ok(_) | Err(TokenError::Expired) => {} // both acceptable
             Err(e) => panic!("Unexpected error: {e}"),
         }
+    }
+
+    #[test]
+    fn test_list_tokens_returns_records() {
+        let mgr = test_manager();
+        let _t1 = mgr.issue_token(1, "one").unwrap();
+        let _t2 = mgr.issue_token(1, "two").unwrap();
+        let list = mgr.list_tokens().unwrap();
+        assert_eq!(list.len(), 2);
+        let labels: Vec<_> = list.iter().map(|r| r.label.as_str()).collect();
+        assert!(labels.contains(&"one"));
+        assert!(labels.contains(&"two"));
+    }
+
+    #[test]
+    fn test_persistent_store_roundtrip() {
+        use crate::storage::TextTokenStore;
+        let dir = tempfile::tempdir().unwrap();
+        let store: Arc<dyn TokenStore> =
+            Arc::new(TextTokenStore::open(dir.path().join("t.lino")).unwrap());
+        let mgr = TokenManager::with_store("k", Arc::clone(&store));
+        let tok = mgr.issue_token(1, "persisted").unwrap();
+        let claims = mgr.validate_token(&tok).unwrap();
+
+        // re-open the same store with a fresh manager
+        let store2: Arc<dyn TokenStore> =
+            Arc::new(TextTokenStore::open(dir.path().join("t.lino")).unwrap());
+        let mgr2 = TokenManager::with_store("k", store2);
+        // record should still be there
+        assert_eq!(mgr2.list_tokens().unwrap().len(), 1);
+        // revocation persists
+        mgr2.revoke_token(&claims.sub).unwrap();
+        let store3: Arc<dyn TokenStore> =
+            Arc::new(TextTokenStore::open(dir.path().join("t.lino")).unwrap());
+        let mgr3 = TokenManager::with_store("k", store3);
+        let r = mgr3.validate_token(&tok);
+        assert!(matches!(r, Err(TokenError::Revoked)));
     }
 }

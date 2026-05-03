@@ -8,13 +8,21 @@ A Rust-based API gateway that proxies Anthropic (Claude) APIs through a Claude M
 
 ## Overview
 
-Link.Assistant.Router is a transparent proxy that sits between API clients (such as Claude Code) and the Anthropic API. It:
+Link.Assistant.Router is a transparent proxy that sits between API clients (such as Claude Code) and the Anthropic API. It is the OpenRouter-equivalent for Claude MAX accounts: every feature found in the community Claude proxies is available behind a single configurable surface.
 
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
+- **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to and from Anthropic Messages
+- **Multi-account routing** — pool any number of Claude MAX accounts; round-robin / priority / least-used; automatic cooldowns on 429
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
+- **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
+- **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
+- **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
+- **First-class CLI** — `serve`, `tokens issue|list|revoke|expire|show`, `accounts list`, `doctor` subcommands
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
+
+Every feature is **configurable** — conflicting design choices in upstream community proxies become toggles (`--routing-mode`, `--storage-policy`, `--disable-openai-api`, `--disable-anthropic-api`, `--disable-metrics`, `--experimental-compatibility`).
 
 ### Architecture
 
@@ -177,11 +185,43 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 ## API Endpoints
 
+### Always available
+
 | Endpoint | Method | Description |
 |---|---|---|
 | `/health` | GET | Health check, returns `ok` |
 | `/api/tokens` | POST | Issue a new custom token |
-| `/api/latest/anthropic/*` | ANY | Transparent proxy to Anthropic API |
+| `/api/tokens/list` | GET | (admin) List every persisted token |
+| `/api/tokens/revoke` | POST | (admin) Revoke a token by id |
+
+### Anthropic surface (`--disable-anthropic-api` to opt out)
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
+| `/v1/messages/count_tokens` | POST | Token-count helper |
+| `/invoke` | POST | Bedrock-format invoke |
+| `/invoke-with-response-stream` | POST | Bedrock streaming invoke |
+| `/api/latest/anthropic/*` | ANY | Legacy prefix; stripped and forwarded |
+| `/*:rawPredict`, `/*:streamRawPredict` | POST | Vertex rawPredict pass-through |
+
+### OpenAI surface (`--disable-openai-api` to opt out)
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages |
+| `/v1/responses` | POST | Responses API, translated to Anthropic Messages |
+| `/v1/models` | GET | OpenAI-shaped model list (Claude IDs) |
+
+`gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families auto-map to the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged.
+
+### Observability (`--disable-metrics` to opt out)
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/metrics` | GET | Prometheus text-exposition counters |
+| `/v1/usage` | GET | JSON snapshot of all counters |
+| `/v1/accounts` | GET | Multi-account health: cooldowns, last error, used-count |
 
 ### POST /api/tokens
 
@@ -242,15 +282,58 @@ Any request to `/api/latest/anthropic/*` is forwarded to the upstream Anthropic 
 
 ## Configuration
 
-All configuration is via environment variables.
+Configuration is read from CLI flags, environment variables, and an optional `.lenv` file (loaded automatically by `lino-arguments` if present in the working directory). Any flag listed in `--help` has an env-var alias and a `.lenv` key with the same name (e.g. `--token-secret` ⇔ `TOKEN_SECRET` ⇔ `token-secret = ...`).
 
-| Variable | Default | Required | Description |
+### Core
+
+| Flag / env | Default | Required | Description |
 |---|---|---|---|
-| `TOKEN_SECRET` | — | Yes | Secret key for signing/validating JWT tokens |
-| `ROUTER_PORT` | `8080` | No | Port to listen on |
-| `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
-| `CLAUDE_CODE_HOME` | `~/.claude` | No | Path to Claude Code session data directory |
-| `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
+| `--token-secret` / `TOKEN_SECRET` | — | Yes | Secret key for signing/validating JWT tokens |
+| `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
+| `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
+| `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
+| `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
+| `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
+| `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
+
+### Routing & storage
+
+| Flag / env | Default | Description |
+|---|---|---|
+| `--routing-mode` / `ROUTING_MODE` | `direct` | `direct` (OAuth substitution), `cli` (Claude CLI subprocess), or `hybrid` |
+| `--storage-policy` / `STORAGE_POLICY` | `both` | Persistent token store: `memory`, `text` (Lino), `binary`, or `both` |
+| `--data-dir` / `DATA_DIR` | platform-specific | Where `tokens.lino` / `tokens.bin` live |
+| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend |
+| `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential dirs for multi-account routing |
+
+### Feature toggles
+
+| Flag / env | Default | Description |
+|---|---|---|
+| `--disable-openai-api` / `DISABLE_OPENAI_API` | off | Hide `/v1/chat/completions`, `/v1/responses`, `/v1/models` |
+| `--disable-anthropic-api` / `DISABLE_ANTHROPIC_API` | off | Hide `/v1/messages*` and Bedrock paths |
+| `--disable-metrics` / `DISABLE_METRICS` | off | Hide `/metrics`, `/v1/usage`, `/v1/accounts` |
+| `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
+| `--admin-key` / `TOKEN_ADMIN_KEY` | (open) | Bearer key required for `/api/tokens*` admin endpoints |
+
+### CLI subcommands
+
+```bash
+# Default: starts the HTTP server (same as `serve`).
+link-assistant-router
+
+# Issue / list / revoke / show tokens locally (no HTTP needed):
+link-assistant-router tokens issue --ttl-hours 168 --label alice
+link-assistant-router tokens list
+link-assistant-router tokens revoke <id>
+link-assistant-router tokens show <id>
+
+# Inspect configured accounts:
+link-assistant-router accounts list
+
+# Print resolved configuration + credential / store probes:
+link-assistant-router doctor
+```
 
 ### Logging
 
@@ -390,8 +473,8 @@ cargo test
 ```
 
 This runs:
-- **Unit tests** in `src/config.rs`, `src/token.rs`, `src/oauth.rs` (13 tests)
-- **Integration tests** in `tests/integration_test.rs` (9 tests)
+- **Unit tests** in every module under `src/` (44 tests covering config, oauth, token, storage, accounts, openai, metrics, cli)
+- **Integration tests** in `tests/integration_test.rs` (39 tests covering API path routing, OpenAI translation, metrics rendering, and CLI parsing)
 
 ### Run specific test suites
 
@@ -497,10 +580,15 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   └── ...                   # Other CI/CD scripts
 ├── src/
 │   ├── lib.rs                # Library root — re-exports modules
-│   ├── main.rs               # Binary entry point — server setup
-│   ├── config.rs             # Environment variable configuration
+│   ├── main.rs               # Binary entry point — Cli dispatch + server setup
+│   ├── cli.rs                # `lino-arguments`-based CLI parser + subcommands
+│   ├── config.rs             # CLI/env/.lenv configuration
 │   ├── oauth.rs              # Claude Code OAuth credential reader
-│   ├── proxy.rs              # Transparent API proxy with token swap
+│   ├── accounts.rs           # Multi-account router (round-robin/priority/least-used + cooldowns)
+│   ├── storage.rs            # Persistent token store (text Lino + binary backends)
+│   ├── proxy.rs              # Transparent API proxy with token swap, OpenAI shim, ops endpoints
+│   ├── openai.rs             # OpenAI <-> Anthropic translation helpers
+│   ├── metrics.rs            # Atomic counters, Prometheus rendering, JSON snapshots
 │   └── token.rs              # Custom JWT token management (la_sk_...)
 ├── tests/
 │   └── integration_test.rs   # Integration tests
