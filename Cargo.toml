@@ -24,7 +24,7 @@ axum = { version = "0.8", features = ["macros"] }
 hyper = { version = "1.0", features = ["full"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
 reqwest = { version = "0.12", features = ["stream", "json"] }
-tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time", "signal", "fs"] }
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "process", "sync"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 jsonwebtoken = "9.0"
@@ -39,10 +39,15 @@ bytes = "1.0"
 futures-util = "0.3"
 http = "1.0"
 http-body-util = "0.1"
+lino-arguments = "0.3"
+clap = { version = "4", features = ["derive", "env"] }
+base64 = "0.22"
+async-trait = "0.1"
 
 [dev-dependencies]
 tokio-test = "0.4"
 tower = { version = "0.5", features = ["util"] }
+tempfile = "3"
 
 [lints.rust]
 unsafe_code = "forbid"

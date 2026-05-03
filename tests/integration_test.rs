@@ -246,35 +246,42 @@ mod required_headers_tests {
 }
 
 mod config_verbose_tests {
-    use link_assistant_router::config::Config;
+    use link_assistant_router::config::{
+        BuildArgs, Config, RoutingMode, StoragePolicy,
+    };
+    use std::path::PathBuf;
+
+    fn args_with_verbose(verbose: bool) -> BuildArgs<'static> {
+        BuildArgs {
+            host: "0.0.0.0",
+            port: "8080",
+            token_secret: Some("secret"),
+            claude_code_home: "/tmp/claude",
+            upstream_base_url: "https://api.anthropic.com",
+            verbose,
+            api_format: None,
+            routing_mode: RoutingMode::Direct,
+            storage_policy: StoragePolicy::Memory,
+            data_dir: PathBuf::from("/tmp/test-data"),
+            claude_cli_bin: None,
+            enable_openai_api: true,
+            enable_anthropic_api: true,
+            enable_metrics: true,
+            additional_account_dirs: vec![],
+            experimental_compatibility: false,
+            admin_key: None,
+        }
+    }
 
     #[test]
     fn test_verbose_enabled() {
-        let config = Config::build(
-            "0.0.0.0",
-            "8080",
-            Some("secret"),
-            "/tmp/claude",
-            "https://api.anthropic.com",
-            true,
-            None,
-        )
-        .expect("should build");
+        let config = Config::build(args_with_verbose(true)).expect("should build");
         assert!(config.verbose);
     }
 
     #[test]
     fn test_verbose_disabled() {
-        let config = Config::build(
-            "0.0.0.0",
-            "8080",
-            Some("secret"),
-            "/tmp/claude",
-            "https://api.anthropic.com",
-            false,
-            None,
-        )
-        .expect("should build");
+        let config = Config::build(args_with_verbose(false)).expect("should build");
         assert!(!config.verbose);
     }
 }
