@@ -5,8 +5,11 @@
 //! access via custom-issued tokens.
 
 pub mod accounts;
+pub mod cli;
 pub mod config;
+pub mod metrics;
 pub mod oauth;
+pub mod openai;
 pub mod proxy;
 pub mod storage;
 pub mod token;
