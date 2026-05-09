@@ -14,6 +14,28 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+/// Supported upstream inference providers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum UpstreamProvider {
+    /// Anthropic via Claude MAX OAuth credentials.
+    #[default]
+    Anthropic,
+    /// Gonka OpenAI-compatible inference provider.
+    Gonka,
+}
+
+impl UpstreamProvider {
+    /// Parse a provider from a free-form string.
+    #[must_use]
+    pub fn from_str_opt(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "anthropic" | "claude" => Some(Self::Anthropic),
+            "gonka" => Some(Self::Gonka),
+            _ => None,
+        }
+    }
+}
+
 /// Supported upstream API formats accepted by the router.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ApiFormat {
@@ -123,6 +145,14 @@ pub struct Config {
     pub data_dir: PathBuf,
     /// Optional path to the local `claude` CLI binary used by the CLI backend.
     pub claude_cli_bin: Option<PathBuf>,
+    /// Selected upstream inference provider.
+    pub upstream_provider: UpstreamProvider,
+    /// Gonka private key used for upstream request signing. Never log this.
+    pub gonka_private_key: Option<String>,
+    /// Gonka source node URL.
+    pub gonka_source_url: String,
+    /// Default Gonka model used when requests omit `model`.
+    pub gonka_model: String,
     /// Public base URL used for `ActivityPub` actor and collection IDs.
     pub activitypub_actor_base_url: String,
     /// Public key PEM advertised on the `ActivityPub` actor.
@@ -174,6 +204,14 @@ impl Config {
             .unwrap_or_default();
         let data_dir = env::var("DATA_DIR").map_or_else(|_| default_data_dir(), PathBuf::from);
         let claude_cli_bin = env::var("CLAUDE_CLI_BIN").ok().map(PathBuf::from);
+        let upstream_provider = env::var("UPSTREAM_PROVIDER")
+            .ok()
+            .and_then(|s| UpstreamProvider::from_str_opt(&s))
+            .unwrap_or_default();
+        let gonka_private_key = env::var("GONKA_PRIVATE_KEY").ok().filter(|s| !s.is_empty());
+        let gonka_source_url =
+            env::var("GONKA_SOURCE_URL").unwrap_or_else(|_| default_gonka_source_url());
+        let gonka_model = env::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
         let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
             .unwrap_or_else(|_| format!("http://{host}:{port}"));
         let activitypub_public_key_pem = env::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
@@ -213,6 +251,10 @@ impl Config {
             storage_policy,
             data_dir,
             claude_cli_bin,
+            upstream_provider,
+            gonka_private_key,
+            gonka_source_url,
+            gonka_model,
             activitypub_actor_base_url,
             activitypub_public_key_pem,
             enable_openai_api,
@@ -238,6 +280,12 @@ impl Config {
             .ok_or(ConfigError::MissingTokenSecret)?
             .to_string();
 
+        if args.upstream_provider == UpstreamProvider::Gonka
+            && !matches!(args.gonka_private_key.as_deref(), Some(s) if !s.is_empty())
+        {
+            return Err(ConfigError::MissingGonkaPrivateKey);
+        }
+
         Ok(Self {
             listen_addr,
             token_secret,
@@ -249,6 +297,10 @@ impl Config {
             storage_policy: args.storage_policy,
             data_dir: args.data_dir,
             claude_cli_bin: args.claude_cli_bin,
+            upstream_provider: args.upstream_provider,
+            gonka_private_key: args.gonka_private_key.filter(|s| !s.is_empty()),
+            gonka_source_url: args.gonka_source_url.trim_end_matches('/').to_string(),
+            gonka_model: args.gonka_model,
             activitypub_actor_base_url: args
                 .activitypub_actor_base_url
                 .trim_end_matches('/')
@@ -277,6 +329,10 @@ pub struct BuildArgs<'a> {
     pub storage_policy: StoragePolicy,
     pub data_dir: PathBuf,
     pub claude_cli_bin: Option<PathBuf>,
+    pub upstream_provider: UpstreamProvider,
+    pub gonka_private_key: Option<String>,
+    pub gonka_source_url: String,
+    pub gonka_model: String,
     pub activitypub_actor_base_url: String,
     pub activitypub_public_key_pem: String,
     pub enable_openai_api: bool,
@@ -304,6 +360,18 @@ pub fn default_activitypub_public_key_pem() -> String {
     "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----".to_string()
 }
 
+/// Default Gonka source URL.
+#[must_use]
+pub fn default_gonka_source_url() -> String {
+    "https://node4.gonka.ai".to_string()
+}
+
+/// Default Gonka model ID.
+#[must_use]
+pub fn default_gonka_model() -> String {
+    "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8".to_string()
+}
+
 /// Errors that can occur during configuration loading.
 #[derive(Debug)]
 pub enum ConfigError {
@@ -315,6 +383,8 @@ pub enum ConfigError {
     MissingTokenSecret,
     /// Routing mode was not recognised.
     InvalidRoutingMode,
+    /// Gonka was selected without `GONKA_PRIVATE_KEY`.
+    MissingGonkaPrivateKey,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -328,6 +398,10 @@ impl std::fmt::Display for ConfigError {
             Self::InvalidRoutingMode => {
                 write!(f, "ROUTING_MODE must be one of: direct, cli, hybrid")
             }
+            Self::MissingGonkaPrivateKey => write!(
+                f,
+                "Gonka provider requires GONKA_PRIVATE_KEY. Make sure your Gonka account is activated for inference, funded, and has a published on-chain public key."
+            ),
         }
     }
 }
@@ -351,6 +425,10 @@ mod tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            upstream_provider: UpstreamProvider::Anthropic,
+            gonka_private_key: None,
+            gonka_source_url: default_gonka_source_url(),
+            gonka_model: default_gonka_model(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
@@ -381,8 +459,62 @@ mod tests {
         assert_eq!(config.token_secret, "test-secret-key");
         assert_eq!(config.claude_code_home, "/tmp/claude");
         assert_eq!(config.upstream_base_url, "https://api.anthropic.com");
+        assert_eq!(config.upstream_provider, UpstreamProvider::Anthropic);
         assert!(!config.verbose);
         assert_eq!(config.routing_mode, RoutingMode::Direct);
+    }
+
+    #[test]
+    fn default_provider_is_anthropic() {
+        let config = build_default(Some("secret")).expect("should build");
+        assert_eq!(config.upstream_provider, UpstreamProvider::Anthropic);
+    }
+
+    #[test]
+    fn gonka_provider_requires_private_key() {
+        let result = Config::build(gonka_args(None));
+        assert!(matches!(result, Err(ConfigError::MissingGonkaPrivateKey)));
+    }
+
+    #[test]
+    fn gonka_provider_builds_with_private_key_and_defaults() {
+        let config = Config::build(gonka_args(Some("gonka-private-key")))
+            .expect("gonka config should build");
+        assert_eq!(config.upstream_provider, UpstreamProvider::Gonka);
+        assert_eq!(config.gonka_source_url, default_gonka_source_url());
+        assert_eq!(config.gonka_model, default_gonka_model());
+        assert_eq!(
+            config.gonka_private_key.as_deref(),
+            Some("gonka-private-key")
+        );
+    }
+
+    fn gonka_args(private_key: Option<&str>) -> BuildArgs<'static> {
+        BuildArgs {
+            host: "0.0.0.0",
+            port: "8080",
+            token_secret: Some("secret"),
+            claude_code_home: "/tmp/claude",
+            upstream_base_url: "https://api.anthropic.com",
+            verbose: false,
+            api_format: None,
+            routing_mode: RoutingMode::Direct,
+            storage_policy: StoragePolicy::Memory,
+            data_dir: PathBuf::from("/tmp/test-data"),
+            claude_cli_bin: None,
+            upstream_provider: UpstreamProvider::Gonka,
+            gonka_private_key: private_key.map(str::to_string),
+            gonka_source_url: default_gonka_source_url(),
+            gonka_model: default_gonka_model(),
+            activitypub_actor_base_url: "https://router.example".into(),
+            activitypub_public_key_pem: default_activitypub_public_key_pem(),
+            enable_openai_api: true,
+            enable_anthropic_api: true,
+            enable_metrics: true,
+            additional_account_dirs: vec![],
+            experimental_compatibility: false,
+            admin_key: None,
+        }
     }
 
     #[test]
@@ -399,6 +531,10 @@ mod tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            upstream_provider: UpstreamProvider::Anthropic,
+            gonka_private_key: None,
+            gonka_source_url: default_gonka_source_url(),
+            gonka_model: default_gonka_model(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,

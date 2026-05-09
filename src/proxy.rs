@@ -23,6 +23,8 @@ use reqwest::Client;
 use std::sync::Arc;
 
 use crate::accounts::AccountRouter;
+use crate::config::UpstreamProvider;
+use crate::gonka::GonkaConfig;
 use crate::oauth::OAuthProvider;
 use crate::openai;
 use crate::token::TokenManager;
@@ -41,6 +43,10 @@ pub struct AppState {
     pub account_router: Option<AccountRouter>,
     /// Base URL for the upstream Anthropic API.
     pub upstream_base_url: String,
+    /// Selected upstream inference provider.
+    pub upstream_provider: UpstreamProvider,
+    /// Gonka provider configuration when selected.
+    pub gonka: Option<GonkaConfig>,
     /// Lazy logger for verbose output.
     pub logger: LogLazy,
     /// Optional admin key (Bearer) required for `/api/tokens` issuance.
@@ -454,8 +460,15 @@ fn resolve_upstream_credentials(
 
 /// `GET /v1/models` — OpenAI-compatible model listing.
 #[allow(clippy::unused_async)]
-pub async fn openai_models() -> impl IntoResponse {
-    (StatusCode::OK, axum::Json(openai::list_models())).into_response()
+pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
+    let models = match state.upstream_provider {
+        UpstreamProvider::Anthropic => openai::list_models(),
+        UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
+            || crate::gonka::list_models(&crate::config::default_gonka_model()),
+            |gonka| crate::gonka::list_models(&gonka.model),
+        ),
+    };
+    (StatusCode::OK, axum::Json(models)).into_response()
 }
 
 /// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
@@ -465,8 +478,28 @@ pub async fn openai_models() -> impl IntoResponse {
 pub async fn openai_chat_completions(
     State(state): State<AppState>,
     headers: HeaderMap,
-    axum::Json(req): axum::Json<openai::OpenAIChatCompletionRequest>,
+    axum::Json(body): axum::Json<serde_json::Value>,
 ) -> Response {
+    if state.upstream_provider == UpstreamProvider::Gonka {
+        return forward_gonka_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
+    let req = match serde_json::from_value::<openai::OpenAIChatCompletionRequest>(body) {
+        Ok(req) => req,
+        Err(e) => {
+            return error_response(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &format!("invalid OpenAI chat completion request: {e}"),
+            );
+        }
+    };
     let requested_model = req.model.clone();
     let stream_requested = req.stream.unwrap_or(false);
     let body = openai::chat_completion_to_anthropic(&req);
@@ -486,8 +519,28 @@ pub async fn openai_chat_completions(
 pub async fn openai_responses(
     State(state): State<AppState>,
     headers: HeaderMap,
-    axum::Json(req): axum::Json<openai::OpenAIResponseRequest>,
+    axum::Json(body): axum::Json<serde_json::Value>,
 ) -> Response {
+    if state.upstream_provider == UpstreamProvider::Gonka {
+        return forward_gonka_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await;
+    }
+    let req = match serde_json::from_value::<openai::OpenAIResponseRequest>(body) {
+        Ok(req) => req,
+        Err(e) => {
+            return error_response(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &format!("invalid OpenAI responses request: {e}"),
+            );
+        }
+    };
     let requested_model = req.model.clone();
     let stream_requested = req.stream.unwrap_or(false);
     let body = openai::response_to_anthropic(&req);
@@ -507,6 +560,116 @@ pub async fn openai_responses(
 enum OpenAIShape {
     Chat,
     Response,
+}
+
+async fn forward_gonka_openai(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    path: &str,
+    surface: crate::metrics::Surface,
+) -> Response {
+    let Some(gonka) = state.gonka.as_ref() else {
+        return crate::gonka::provider_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            crate::gonka::MISSING_PRIVATE_KEY_MESSAGE,
+        );
+    };
+
+    let auth_header = headers
+        .get("authorization")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "));
+    let Some(token) = auth_header else {
+        return error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization header with Bearer token",
+        );
+    };
+    if let Err(e) = state.token_manager.validate_token(token) {
+        let status = match &e {
+            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+            _ => StatusCode::UNAUTHORIZED,
+        };
+        return error_response(status, "authentication_error", &format!("{e}"));
+    }
+
+    let body = crate::gonka::with_default_model(body, &gonka.model);
+    let serialized = match serde_json::to_vec(&body) {
+        Ok(v) => v,
+        Err(e) => {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to serialize Gonka body: {e}"),
+            );
+        }
+    };
+    let bytes_sent = serialized.len() as u64;
+
+    let mut upstream_headers = HeaderMap::new();
+    upstream_headers.insert("content-type", HeaderValue::from_static("application/json"));
+    if let Err(e) = crate::gonka::sign_headers(
+        &mut upstream_headers,
+        "POST",
+        path,
+        &serialized,
+        &gonka.private_key,
+    ) {
+        return error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &format!("failed to sign Gonka request: {e}"),
+        );
+    }
+
+    let upstream_resp = match state
+        .client
+        .post(gonka.endpoint(path))
+        .headers(upstream_headers)
+        .body(serialized)
+        .send()
+        .await
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            state.metrics.record_request(surface, 502, None);
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("Gonka upstream request failed: {e}"),
+            );
+        }
+    };
+
+    let status = StatusCode::from_u16(upstream_resp.status().as_u16())
+        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+    let content_type = upstream_resp
+        .headers()
+        .get("content-type")
+        .cloned()
+        .unwrap_or_else(|| HeaderValue::from_static("application/json"));
+    let upstream_body = match upstream_resp.bytes().await {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            state.metrics.record_request(surface, 502, None);
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("Gonka upstream body read failed: {e}"),
+            );
+        }
+    };
+    state
+        .metrics
+        .record_bytes(bytes_sent, upstream_body.len() as u64);
+    state.metrics.record_request(surface, status.as_u16(), None);
+
+    let mut response = Response::new(Body::from(upstream_body));
+    *response.status_mut() = status;
+    response.headers_mut().insert("content-type", content_type);
+    response
 }
 
 async fn forward_openai(
