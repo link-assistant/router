@@ -25,6 +25,8 @@ The release pipeline failed during the Docker image publish step, after lint, te
 | 2026-05-09T15:21:01Z | Issue #25 was opened with the failing job link and investigation requirements. |
 | 2026-05-09T15:41:27Z | Follow-up PR run `25605006038` started after `main` advanced to release `v0.13.0`. |
 | 2026-05-09T15:45:36Z | `cargo package --list` failed because Cargo updated `Cargo.lock` from `0.12.0` to `0.13.0`, leaving the checkout dirty. |
+| 2026-05-09T15:55:16Z | Follow-up PR run `25605290968` started with the synced `Cargo.lock`. |
+| 2026-05-09T15:59:03Z | Windows tests exposed an LF-only parser assumption in the new lockfile regression test. |
 
 ## Root Cause
 
@@ -68,6 +70,7 @@ The new regression test was run before and after the Dockerfile change:
 - Before fix: `cargo test dockerfile_builder_uses_supported_rust_toolchain` failed against `rust:1.82-slim`.
 - After fix: `cargo test dockerfile_builder_uses_supported_rust_toolchain` passed against `rust:1-slim-bookworm`.
 - Follow-up failure: `ci-logs/follow-up/ci-run-25605006038.log:5793` shows `cargo package --list` failed because `Cargo.lock` was dirty after the `v0.13.0` base release. The lockfile is now committed at `0.13.0`.
+- Follow-up failure: `ci-logs/follow-up/ci-run-25605290968.log:4342` shows the new lockfile regression test failed on Windows due CRLF line endings. The parser is now line-based and covered by `lockfile_package_version_handles_windows_line_endings`.
 
 Local Docker reproduction was attempted, but the prepared environment does not have the `docker` CLI installed. The release workflow's failing Buildx log remains the runtime reproduction evidence.
 
@@ -83,8 +86,10 @@ See `template-comparison.md` for the detailed comparison.
 |---|---|
 | `ci-logs/ci-run-25604352544.log` | Full failing GitHub Actions log. |
 | `ci-logs/follow-up/ci-run-25605006038.log` | Follow-up PR run showing the stale `Cargo.lock` packaging failure after `main` advanced. |
+| `ci-logs/follow-up/ci-run-25605290968.log` | Follow-up PR run showing the Windows CRLF parser issue in the new regression test. |
 | `raw/ci-run-25604352544.json` | Failing run metadata and job timeline. |
 | `raw/ci-run-25605006038.json` | Follow-up run metadata and job timeline. |
+| `raw/ci-run-25605290968.json` | Follow-up run metadata and job timeline. |
 | `raw/recent-runs.json` | Recent runs with timestamps, conclusions, and head SHAs. |
 | `raw/*-template-tree.json` | Full repository trees for the referenced templates. |
 | `raw/*-template-release.yml` | Template release workflows. |

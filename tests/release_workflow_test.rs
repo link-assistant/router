@@ -32,6 +32,16 @@ fn cargo_lock_package_version_matches_manifest() {
 }
 
 #[test]
+fn lockfile_package_version_handles_windows_line_endings() {
+    let lockfile = "[[package]]\r\nname = \"dependency\"\r\nversion = \"1.1.4\"\r\n\r\n[[package]]\r\nname = \"link-assistant-router\"\r\nversion = \"0.13.0\"\r\n";
+
+    assert_eq!(
+        lockfile_package_version(lockfile, "link-assistant-router"),
+        Some("0.13.0")
+    );
+}
+
+#[test]
 fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
     let workflow = fs::read_to_string(".github/workflows/release.yml")
         .expect("release workflow should be readable");
@@ -236,20 +246,50 @@ fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
 }
 
 fn package_version(manifest: &str) -> Option<&str> {
-    manifest.lines().find_map(|line| {
-        line.trim()
-            .strip_prefix("version = \"")
-            .and_then(|rest| rest.strip_suffix('"'))
-    })
+    manifest
+        .lines()
+        .find_map(|line| quoted_value(line.trim(), "version"))
 }
 
 fn lockfile_package_version<'a>(lockfile: &'a str, package_name: &str) -> Option<&'a str> {
-    lockfile
-        .split("\n[[package]]\n")
-        .find(|package| {
-            package
-                .lines()
-                .any(|line| line.trim() == format!("name = \"{package_name}\""))
-        })
-        .and_then(package_version)
+    let mut in_package = false;
+    let mut found_package = false;
+    let mut found_version = None;
+
+    for line in lockfile.lines() {
+        let trimmed = line.trim();
+        if trimmed == "[[package]]" {
+            if found_package {
+                return found_version;
+            }
+            in_package = true;
+            found_package = false;
+            found_version = None;
+            continue;
+        }
+
+        if !in_package {
+            continue;
+        }
+
+        if quoted_value(trimmed, "name") == Some(package_name) {
+            found_package = true;
+            if found_version.is_some() {
+                return found_version;
+            }
+        } else if let Some(version) = quoted_value(trimmed, "version") {
+            found_version = Some(version);
+            if found_package {
+                return found_version;
+            }
+        }
+    }
+
+    found_package.then_some(found_version).flatten()
+}
+
+fn quoted_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
+    let rest = line.strip_prefix(key)?.trim_start();
+    let rest = rest.strip_prefix('=')?.trim_start();
+    rest.strip_prefix('"')?.strip_suffix('"')
 }
