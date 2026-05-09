@@ -47,6 +47,10 @@ pub struct AppState {
     pub admin_key: Option<String>,
     /// Live metrics counter handle.
     pub metrics: Arc<crate::metrics::Metrics>,
+    /// Public base URL for `ActivityPub` actor documents.
+    pub activitypub_actor_base_url: String,
+    /// Public key PEM advertised by the `ActivityPub` actor.
+    pub activitypub_public_key_pem: String,
 }
 
 /// The legacy API path prefix used to route requests through the proxy.

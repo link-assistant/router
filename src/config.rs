@@ -123,6 +123,10 @@ pub struct Config {
     pub data_dir: PathBuf,
     /// Optional path to the local `claude` CLI binary used by the CLI backend.
     pub claude_cli_bin: Option<PathBuf>,
+    /// Public base URL used for `ActivityPub` actor and collection IDs.
+    pub activitypub_actor_base_url: String,
+    /// Public key PEM advertised on the `ActivityPub` actor.
+    pub activitypub_public_key_pem: String,
     /// Whether to enable the OpenAI-compatible API surface.
     pub enable_openai_api: bool,
     /// Whether to enable the Anthropic-compatible (direct) proxy surface.
@@ -170,6 +174,10 @@ impl Config {
             .unwrap_or_default();
         let data_dir = env::var("DATA_DIR").map_or_else(|_| default_data_dir(), PathBuf::from);
         let claude_cli_bin = env::var("CLAUDE_CLI_BIN").ok().map(PathBuf::from);
+        let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
+            .unwrap_or_else(|_| format!("http://{host}:{port}"));
+        let activitypub_public_key_pem = env::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
+            .unwrap_or_else(|_| default_activitypub_public_key_pem());
         let enable_openai_api = env::var("ENABLE_OPENAI_API").map_or(true, |v| {
             !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
         });
@@ -205,6 +213,8 @@ impl Config {
             storage_policy,
             data_dir,
             claude_cli_bin,
+            activitypub_actor_base_url,
+            activitypub_public_key_pem,
             enable_openai_api,
             enable_anthropic_api,
             enable_metrics,
@@ -239,6 +249,11 @@ impl Config {
             storage_policy: args.storage_policy,
             data_dir: args.data_dir,
             claude_cli_bin: args.claude_cli_bin,
+            activitypub_actor_base_url: args
+                .activitypub_actor_base_url
+                .trim_end_matches('/')
+                .to_string(),
+            activitypub_public_key_pem: args.activitypub_public_key_pem,
             enable_openai_api: args.enable_openai_api,
             enable_anthropic_api: args.enable_anthropic_api,
             enable_metrics: args.enable_metrics,
@@ -262,6 +277,8 @@ pub struct BuildArgs<'a> {
     pub storage_policy: StoragePolicy,
     pub data_dir: PathBuf,
     pub claude_cli_bin: Option<PathBuf>,
+    pub activitypub_actor_base_url: String,
+    pub activitypub_public_key_pem: String,
     pub enable_openai_api: bool,
     pub enable_anthropic_api: bool,
     pub enable_metrics: bool,
@@ -278,6 +295,13 @@ pub fn default_data_dir() -> PathBuf {
     }
     let home = env::var("HOME").unwrap_or_else(|_| "/var/lib/link-assistant-router".to_string());
     PathBuf::from(home).join(".link-assistant-router")
+}
+
+/// Development public key advertised by the `ActivityPub` actor when no key is
+/// configured. Production deployments should provide their real public key.
+#[must_use]
+pub fn default_activitypub_public_key_pem() -> String {
+    "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----".to_string()
 }
 
 /// Errors that can occur during configuration loading.
@@ -327,6 +351,8 @@ mod tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            activitypub_actor_base_url: "https://router.example".into(),
+            activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
             enable_anthropic_api: true,
             enable_metrics: true,
@@ -373,6 +399,8 @@ mod tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            activitypub_actor_base_url: "https://router.example".into(),
+            activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
             enable_anthropic_api: true,
             enable_metrics: true,

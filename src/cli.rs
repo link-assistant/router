@@ -25,7 +25,8 @@ use clap::Subcommand;
 use lino_arguments::Parser as LinoParser;
 
 use crate::config::{
-    default_data_dir, ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy,
+    default_activitypub_public_key_pem, default_data_dir, ApiFormat, BuildArgs, Config,
+    ConfigError, RoutingMode, StoragePolicy,
 };
 
 /// Top-level CLI parser.
@@ -88,6 +89,14 @@ pub struct Cli {
     /// Path to the local Claude CLI binary used by the CLI backend.
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
+
+    /// Public base URL for the `ActivityPub` actor.
+    #[arg(long, env = "ACTIVITYPUB_ACTOR_BASE_URL", global = true)]
+    pub activitypub_actor_base_url: Option<String>,
+
+    /// Public key PEM advertised by the `ActivityPub` actor.
+    #[arg(long, env = "ACTIVITYPUB_PUBLIC_KEY_PEM", global = true)]
+    pub activitypub_public_key_pem: Option<String>,
 
     /// Disable the OpenAI-compatible API surface.
     #[arg(long, env = "DISABLE_OPENAI_API", global = true)]
@@ -179,6 +188,14 @@ impl Cli {
             RoutingMode::from_str_opt(&self.routing_mode).ok_or(ConfigError::InvalidRoutingMode)?;
         let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy).unwrap_or_default();
         let data_dir = self.data_dir.clone().unwrap_or_else(default_data_dir);
+        let activitypub_actor_base_url = self
+            .activitypub_actor_base_url
+            .clone()
+            .unwrap_or_else(|| format!("http://{}:{}", self.host, self.port));
+        let activitypub_public_key_pem = self
+            .activitypub_public_key_pem
+            .clone()
+            .unwrap_or_else(default_activitypub_public_key_pem);
         Config::build(BuildArgs {
             host: &self.host,
             port: &port,
@@ -191,6 +208,8 @@ impl Cli {
             storage_policy,
             data_dir,
             claude_cli_bin: self.claude_cli_bin.clone(),
+            activitypub_actor_base_url,
+            activitypub_public_key_pem,
             enable_openai_api: !self.disable_openai_api,
             enable_anthropic_api: !self.disable_anthropic_api,
             enable_metrics: !self.disable_metrics,
@@ -220,6 +239,8 @@ mod tests {
             storage_policy: "memory".into(),
             data_dir: Some(std::path::PathBuf::from("/tmp/d")),
             claude_cli_bin: None,
+            activitypub_actor_base_url: Some("https://router.example".into()),
+            activitypub_public_key_pem: None,
             disable_openai_api: false,
             disable_anthropic_api: false,
             disable_metrics: false,
@@ -251,6 +272,8 @@ mod tests {
             storage_policy: "memory".into(),
             data_dir: None,
             claude_cli_bin: None,
+            activitypub_actor_base_url: None,
+            activitypub_public_key_pem: None,
             disable_openai_api: false,
             disable_anthropic_api: false,
             disable_metrics: false,

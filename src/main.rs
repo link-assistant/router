@@ -17,6 +17,7 @@ use std::time::Duration;
 use axum::routing::{get, post};
 use axum::Router;
 use link_assistant_router::accounts::{AccountRouter, SelectionStrategy};
+use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::metrics::Metrics;
@@ -147,10 +148,20 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         logger,
         admin_key: config.admin_key.clone(),
         metrics: Arc::clone(&metrics),
+        activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
+        activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
     };
 
     let mut app = Router::new()
         .route("/health", get(proxy::health))
+        .route("/actor/code", get(activitypub::actor))
+        .route("/inbox/code", post(activitypub::inbox))
+        .route("/outbox/code", get(activitypub::outbox))
+        .route("/actors/code/followers", get(activitypub::followers))
+        .route(
+            "/activities/follow-problemsets-code-001",
+            get(activitypub::follow_problemsets),
+        )
         .route("/api/tokens", post(proxy::issue_token))
         .route("/api/tokens/list", get(proxy::list_tokens))
         .route("/api/tokens/revoke", post(proxy::revoke_token));
