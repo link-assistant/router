@@ -4,12 +4,13 @@
 //! This script checks:
 //! 1. If there are changelog fragments to process
 //! 2. If the current version has already been published to crates.io
+//! 3. If the matching Docker Hub image tag and GitHub release exist
 //!
-//! IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
-//! NOT git tags. This is critical because:
+//! IMPORTANT: This script checks external release artifacts, NOT git tags.
+//! This is critical because:
 //! - Git tags can exist without the package being published
-//! - GitHub releases create tags but don't publish to crates.io
-//! - Only crates.io publication means users can actually install the package
+//! - GitHub releases create tags but do not publish to crates.io or Docker Hub
+//! - A crates.io publish can succeed while later Docker/GitHub release steps fail
 //!
 //! Supports both single-language and multi-language repository structures:
 //! - Single-language: Cargo.toml in repository root
@@ -19,6 +20,8 @@
 //!
 //! Environment variables:
 //!   - HAS_FRAGMENTS: 'true' if changelog fragments exist (from get-bump-type.rs)
+//!   - DOCKERHUB_IMAGE: Docker Hub image name to verify (default: konard/link-assistant-router)
+//!   - GITHUB_REPOSITORY: GitHub repository to verify (for example: link-assistant/router)
 //!
 //! Outputs (written to GITHUB_OUTPUT):
 //!   - should_release: 'true' if a release should be created
@@ -32,12 +35,12 @@
 //! serde_json = "1"
 //! ```
 
+use regex::Regex;
+use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::path::Path;
 use std::process::exit;
-use regex::Regex;
-use serde::Deserialize;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -77,6 +80,16 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
     } else {
         format!("{}/Cargo.toml", rust_root)
     }
+}
+
+fn get_dockerhub_image() -> String {
+    get_arg("dockerhub-image")
+        .or_else(|| get_arg("docker-hub-image"))
+        .unwrap_or_else(|| "konard/link-assistant-router".to_string())
+}
+
+fn get_github_repository() -> Option<String> {
+    get_arg("repository").or_else(|| env::var("GITHUB_REPOSITORY").ok().filter(|s| !s.is_empty()))
 }
 
 fn set_output(key: &str, value: &str) {
@@ -163,6 +176,71 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     }
 }
 
+fn split_docker_image(image: &str) -> Option<(&str, &str)> {
+    let mut parts = image.split('/');
+    let namespace = parts.next()?;
+    let repository = parts.next()?;
+    if parts.next().is_some() || namespace.is_empty() || repository.is_empty() {
+        None
+    } else {
+        Some((namespace, repository))
+    }
+}
+
+fn check_docker_hub_tag(image: &str, version: &str) -> bool {
+    let Some((namespace, repository)) = split_docker_image(image) else {
+        eprintln!(
+            "Warning: Could not parse Docker Hub image '{}'; expected namespace/repository",
+            image
+        );
+        return false;
+    };
+
+    let url = format!(
+        "https://hub.docker.com/v2/repositories/{}/{}/tags/{}",
+        namespace, repository, version
+    );
+
+    match ureq::get(&url)
+        .set("User-Agent", "rust-script-check-release")
+        .call()
+    {
+        Ok(response) => response.status() == 200,
+        Err(ureq::Error::Status(404, _)) => false,
+        Err(e) => {
+            eprintln!("Warning: Could not check Docker Hub tag: {}", e);
+            false
+        }
+    }
+}
+
+fn check_github_release(repository: &str, version: &str) -> bool {
+    let url = format!(
+        "https://api.github.com/repos/{}/releases/tags/v{}",
+        repository, version
+    );
+
+    let mut request = ureq::get(&url)
+        .set("User-Agent", "rust-script-check-release")
+        .set("Accept", "application/vnd.github+json");
+
+    if let Ok(token) = env::var("GITHUB_TOKEN") {
+        if !token.is_empty() {
+            let auth_header = format!("Bearer {}", token);
+            request = request.set("Authorization", &auth_header);
+        }
+    }
+
+    match request.call() {
+        Ok(response) => response.status() == 200,
+        Err(ureq::Error::Status(404, _)) => false,
+        Err(e) => {
+            eprintln!("Warning: Could not check GitHub release: {}", e);
+            false
+        }
+    }
+}
+
 fn main() {
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
@@ -190,21 +268,37 @@ fn main() {
         };
 
         let is_published = check_version_on_crates_io(&crate_name, &current_version);
+        let dockerhub_image = get_dockerhub_image();
+        let docker_published = check_docker_hub_tag(&dockerhub_image, &current_version);
+        let github_release_published = get_github_repository()
+            .map(|repository| check_github_release(&repository, &current_version))
+            .unwrap_or_else(|| {
+                eprintln!("Warning: GITHUB_REPOSITORY not set; assuming GitHub release is missing");
+                false
+            });
 
         println!(
             "Crate: {}, Version: {}, Published on crates.io: {}",
             crate_name, current_version, is_published
         );
+        println!(
+            "Docker image: {}, Tag published on Docker Hub: {}",
+            dockerhub_image, docker_published
+        );
+        println!(
+            "GitHub release v{} published: {}",
+            current_version, github_release_published
+        );
 
-        if is_published {
+        if is_published && docker_published && github_release_published {
             println!(
-                "No changelog fragments and v{} already published on crates.io",
+                "No changelog fragments and v{} is fully published",
                 current_version
             );
             set_output("should_release", "false");
         } else {
             println!(
-                "No changelog fragments but v{} not yet published to crates.io",
+                "No changelog fragments but v{} is missing at least one release artifact",
                 current_version
             );
             set_output("should_release", "true");

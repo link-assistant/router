@@ -13,21 +13,31 @@ fn main() {
         "manual-release:",
         "packages: write",
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
-        "docker/login-action@v3",
-        "docker/setup-buildx-action@v3",
-        "docker/metadata-action@v5",
-        "docker/build-push-action@v6",
+        "DOCKERHUB_IMAGE: konard/link-assistant-router",
+        "rust-script scripts/wait-for-crate.rs",
+        "docker/login-action@v4",
+        "docker/setup-buildx-action@v4",
+        "docker/metadata-action@v6",
+        "docker/build-push-action@v7",
+        "username: konard",
+        "password: ${{ secrets.DOCKERHUB_TOKEN }}",
         "ghcr.io/${{ github.repository }}",
+        "${{ env.DOCKERHUB_IMAGE }}",
         "type=raw,value=latest",
         "type=raw,value=${{ steps.current_version.outputs.version }}",
         "type=raw,value=${{ steps.version.outputs.new_version }}",
+        "org.opencontainers.image.version=${{ steps.current_version.outputs.version }}",
+        "org.opencontainers.image.version=${{ steps.version.outputs.new_version }}",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
+        "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
     ];
 
     let mut failures = Vec::new();
     for snippet in required_snippets {
         if !workflow.contains(snippet) {
-            failures.push(format!("missing required release workflow snippet: {snippet}"));
+            failures.push(format!(
+                "missing required release workflow snippet: {snippet}"
+            ));
         }
     }
 
@@ -35,8 +45,14 @@ fn main() {
         failures.push("auto and manual release jobs must both grant packages: write".to_string());
     }
 
-    if count_occurrences(&workflow, "docker/build-push-action@v6") < 2 {
-        failures.push("auto and manual release jobs must both publish a Docker image".to_string());
+    if count_occurrences(&workflow, "docker/login-action@v4") < 4 {
+        failures.push(
+            "auto and manual release jobs must both log in to GHCR and Docker Hub".to_string(),
+        );
+    }
+
+    if count_occurrences(&workflow, "docker/build-push-action@v7") < 2 {
+        failures.push("auto and manual release jobs must both publish Docker images".to_string());
     }
 
     if count_occurrences(
@@ -61,8 +77,19 @@ fn main() {
         );
     }
 
+    if count_occurrences(
+        &workflow,
+        "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
+    ) < 2
+    {
+        failures.push(
+            "auto and manual GitHub releases must include the Docker Hub release badge/link"
+                .to_string(),
+        );
+    }
+
     if failures.is_empty() {
-        println!("release workflow publishes crates and GHCR images");
+        println!("release workflow publishes crates, GHCR images, and Docker Hub images");
     } else {
         for failure in failures {
             eprintln!("Error: {failure}");
