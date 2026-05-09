@@ -56,4 +56,122 @@ fn readme_exposes_release_status_badges() {
         readme.contains("https://img.shields.io/docsrs/link-assistant-router?label=docs.rs"),
         "README should show the docs.rs badge"
     );
+    assert!(
+        readme.contains(
+            "https://img.shields.io/docker/v/konard/link-assistant-router?label=docker%20hub"
+        ),
+        "README should show the Docker Hub image version badge"
+    );
+}
+
+#[test]
+fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
+    let workflow = fs::read_to_string(".github/workflows/release.yml")
+        .expect("release workflow should be readable");
+
+    assert!(
+        workflow.contains("DOCKERHUB_IMAGE: konard/link-assistant-router"),
+        "workflow should publish the router image under the konard Docker Hub account"
+    );
+    assert_eq!(
+        workflow
+            .matches("password: ${{ secrets.DOCKERHUB_TOKEN }}")
+            .count(),
+        2,
+        "auto and manual release jobs should authenticate to Docker Hub with DOCKERHUB_TOKEN"
+    );
+    assert_eq!(
+        workflow.matches("username: konard").count(),
+        2,
+        "auto and manual release jobs should publish as the konard Docker Hub user"
+    );
+    assert_eq!(
+        workflow.matches("docker/login-action@v4").count(),
+        4,
+        "auto and manual release jobs should log in to both GHCR and Docker Hub"
+    );
+    assert_eq!(
+        workflow.matches("docker/metadata-action@v6").count(),
+        2,
+        "auto and manual release jobs should derive Docker metadata once for both registries"
+    );
+    assert_eq!(
+        workflow.matches("docker/build-push-action@v7").count(),
+        2,
+        "auto and manual release jobs should push Docker images"
+    );
+
+    let auto_publish = workflow
+        .find("- name: Publish to Crates.io")
+        .expect("auto release should publish the crate");
+    let auto_wait = workflow
+        .find("- name: Wait for Crate availability on Crates.io")
+        .expect("auto release should wait for the crate to be visible");
+    let auto_docker = workflow
+        .find("- name: Publish Docker images to registries")
+        .expect("auto release should publish Docker images");
+    let auto_github_release = workflow
+        .find("- name: Create GitHub Release")
+        .expect("auto release should create a GitHub release");
+
+    assert!(
+        auto_publish < auto_wait && auto_wait < auto_docker && auto_docker < auto_github_release,
+        "auto release should publish crates.io first, then Docker images, then the GitHub release"
+    );
+
+    let manual_release = workflow
+        .find("manual-release:")
+        .expect("manual release job should exist");
+    let manual_section = &workflow[manual_release..];
+    let manual_publish = manual_section
+        .find("- name: Publish to Crates.io")
+        .expect("manual release should publish the crate");
+    let manual_wait = manual_section
+        .find("- name: Wait for Crate availability on Crates.io")
+        .expect("manual release should wait for the crate to be visible");
+    let manual_docker = manual_section
+        .find("- name: Publish Docker images to registries")
+        .expect("manual release should publish Docker images");
+    let manual_github_release = manual_section
+        .find("- name: Create GitHub Release")
+        .expect("manual release should create a GitHub release");
+
+    assert!(
+        manual_publish < manual_wait
+            && manual_wait < manual_docker
+            && manual_docker < manual_github_release,
+        "manual release should publish crates.io first, then Docker images, then the GitHub release"
+    );
+}
+
+#[test]
+fn release_scripts_check_all_release_artifacts() {
+    let release_check = fs::read_to_string("scripts/check-release-needed.rs")
+        .expect("release check script should be readable");
+    let wait_for_crate = fs::read_to_string("scripts/wait-for-crate.rs")
+        .expect("crate availability wait script should be readable");
+    let release_script = fs::read_to_string("scripts/create-github-release.rs")
+        .expect("release script should be readable");
+
+    assert!(
+        release_check.contains("check_docker_hub_tag"),
+        "release-needed check should include Docker Hub tag state"
+    );
+    assert!(
+        release_check.contains("check_github_release"),
+        "release-needed check should include GitHub release state"
+    );
+    assert!(
+        wait_for_crate.contains("crates.io/api/v1/crates"),
+        "release workflow should have a reusable crates.io availability wait"
+    );
+    assert!(
+        release_script.contains("--docker-hub-url"),
+        "GitHub release creation should accept a Docker Hub URL"
+    );
+    assert!(
+        release_script.contains("fn docker_hub_badge")
+            && release_script.contains("badge_escape(&image_tag)"),
+        "GitHub release notes should include a version-specific Docker image badge"
+    );
 }

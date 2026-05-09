@@ -2,6 +2,7 @@
 //! Create GitHub Release from CHANGELOG.md
 //!
 //! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>
+//!   [--crates-io-url <url>] [--docker-hub-url <url>]
 //!
 //! ```cargo
 //! [dependencies]
@@ -10,13 +11,13 @@
 //! serde_json = "1"
 //! ```
 
+use regex::Regex;
+use serde::Serialize;
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::process::{Command, Stdio, exit};
-use regex::Regex;
-use serde::Serialize;
+use std::process::{exit, Command, Stdio};
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -54,10 +55,39 @@ fn get_changelog_for_version(version: &str) -> String {
     }
 }
 
-fn crates_io_badge(url: &str) -> String {
+fn badge_escape(value: &str) -> String {
+    value
+        .replace('-', "--")
+        .replace('_', "__")
+        .replace(' ', "%20")
+        .replace('/', "%2F")
+        .replace(':', "%3A")
+}
+
+fn crates_io_badge(url: &str, version: &str) -> String {
+    let version_url = format!("{}/{}", url.trim_end_matches('/'), version);
     format!(
-        "[![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)]({})",
-        url
+        "[![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)]({}) [![crates.io v{}](https://img.shields.io/badge/crates.io-v{}-orange)]({})",
+        url,
+        version,
+        badge_escape(version),
+        version_url
+    )
+}
+
+fn docker_hub_badge(url: &str, version: &str) -> String {
+    let image = url
+        .trim_end_matches('/')
+        .strip_prefix("https://hub.docker.com/r/")
+        .unwrap_or("konard/link-assistant-router");
+    let tag_url = format!("{}/tags?name={}", url.trim_end_matches('/'), version);
+    let image_tag = format!("{}:{}", image, version);
+
+    format!(
+        "[![Docker Hub {}](https://img.shields.io/badge/docker-{}-2496ED?logo=docker)]({})",
+        version,
+        badge_escape(&image_tag),
+        tag_url
     )
 }
 
@@ -89,15 +119,23 @@ fn main() {
 
     let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
     let crates_io_url = get_arg("crates-io-url");
+    let docker_hub_url = get_arg("docker-hub-url");
 
     let tag = format!("{}{}", tag_prefix, version);
     println!("Creating GitHub release for {}...", tag);
 
     let mut release_notes = get_changelog_for_version(&version);
 
-    // Add crates.io badge/link if provided so release pages visibly show registry status.
+    // Add package/image badges so release pages visibly show registry status.
+    let mut badges = Vec::new();
     if let Some(url) = crates_io_url {
-        release_notes = format!("{}\n\n{}", crates_io_badge(&url), release_notes);
+        badges.push(crates_io_badge(&url, &version));
+    }
+    if let Some(url) = docker_hub_url {
+        badges.push(docker_hub_badge(&url, &version));
+    }
+    if !badges.is_empty() {
+        release_notes = format!("{}\n\n{}", badges.join("\n"), release_notes);
     }
 
     // Create release using GitHub API with JSON input
@@ -125,10 +163,14 @@ fn main() {
         .expect("Failed to execute gh command");
 
     if let Some(ref mut stdin) = child.stdin {
-        stdin.write_all(payload_json.as_bytes()).expect("Failed to write to stdin");
+        stdin
+            .write_all(payload_json.as_bytes())
+            .expect("Failed to write to stdin");
     }
 
-    let output = child.wait_with_output().expect("Failed to wait on gh command");
+    let output = child
+        .wait_with_output()
+        .expect("Failed to wait on gh command");
 
     if output.status.success() {
         println!("Created GitHub release: {}", tag);
