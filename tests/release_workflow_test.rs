@@ -16,6 +16,38 @@ fn dockerfile_builder_uses_supported_rust_toolchain() {
 }
 
 #[test]
+fn dockerfile_builder_installs_native_tls_build_dependencies() {
+    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let builder_stage =
+        docker_builder_stage(&dockerfile).expect("Dockerfile should have a builder stage");
+    let dependency_build = builder_stage
+        .find("cargo build --release")
+        .expect("builder stage should build dependencies before copying source");
+    let setup = &builder_stage[..dependency_build];
+
+    assert!(
+        setup.contains("apt-get update"),
+        "builder stage should refresh apt metadata before installing native build dependencies"
+    );
+    assert!(
+        setup.contains("--no-install-recommends"),
+        "builder stage should avoid recommended packages for a minimal image"
+    );
+    assert!(
+        dockerfile_apt_installs(setup, "pkg-config"),
+        "builder stage should install pkg-config so openssl-sys can locate OpenSSL"
+    );
+    assert!(
+        dockerfile_apt_installs(setup, "libssl-dev"),
+        "builder stage should install OpenSSL development headers for native TLS crates"
+    );
+    assert!(
+        setup.contains("rm -rf /var/lib/apt/lists/*"),
+        "builder stage should clean apt metadata after installing packages"
+    );
+}
+
+#[test]
 fn cargo_lock_package_version_matches_manifest() {
     let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
     let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");
@@ -229,6 +261,20 @@ fn rust_builder_tag(dockerfile: &str) -> Option<&str> {
             None
         }
     })
+}
+
+fn docker_builder_stage(dockerfile: &str) -> Option<&str> {
+    let start = dockerfile.find("FROM rust:")?;
+    let rest = &dockerfile[start..];
+    let end = rest.find("\nFROM ").unwrap_or(rest.len());
+    Some(&rest[..end])
+}
+
+fn dockerfile_apt_installs(section: &str, package: &str) -> bool {
+    section
+        .lines()
+        .map(|line| line.trim().trim_end_matches('\\').trim())
+        .any(|line| line == package || line.starts_with(&format!("{package} ")))
 }
 
 fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
