@@ -31,20 +31,21 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
   # Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (for backwards compatibility)
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
-  DOCKERHUB_IMAGE: konard/link-assistant-router
+  CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
 
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
     name: Detect Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event_name != 'workflow_dispatch'
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
@@ -53,7 +54,7 @@ jobs:
       workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -67,8 +68,6 @@ jobs:
         id: changes
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: rust-script scripts/detect-code-changes.rs
 
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
@@ -76,10 +75,11 @@ jobs:
   changelog:
     name: Changelog Fragment Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -99,9 +99,10 @@ jobs:
   version-check:
     name: Version Modification Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -124,6 +125,7 @@ jobs:
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [detect-changes]
     # Note: always() is required because detect-changes is skipped on workflow_dispatch,
     # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
@@ -138,7 +140,7 @@ jobs:
         needs.detect-changes.outputs.workflow-changed == 'true'
       )
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -149,7 +151,7 @@ jobs:
         run: cargo install rust-script
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -173,21 +175,22 @@ jobs:
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     needs: [detect-changes, changelog]
     # Run if: push event, OR changelog succeeded, OR changelog was skipped (docs-only PR)
-    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    if: always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -203,21 +206,67 @@ jobs:
       - name: Run doc tests
         run: cargo test --doc --verbose
 
+  # === CODE COVERAGE ===
+  # Generate and upload code coverage using cargo-llvm-cov
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [detect-changes]
+    if: |
+      always() && !cancelled() && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-coverage-
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate code coverage
+        run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+
   # === BUILD ===
   # Build package - only runs if lint and test pass
   build:
     name: Build Package
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [lint, test]
     if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -231,7 +280,7 @@ jobs:
         run: cargo build --release --verbose
 
       - name: Check package
-        run: cargo package --list
+        run: cargo package --list --allow-dirty
 
   # === AUTO RELEASE ===
   # Automatic release on push to main using changelog fragments
@@ -246,11 +295,11 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
-      packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -295,59 +344,20 @@ jobs:
         id: publish-crate
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
         run: rust-script scripts/publish-crate.rs
-
-      - name: Wait for Crate availability on Crates.io
-        if: steps.check.outputs.should_release == 'true'
-        run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
-
-      - name: Log in to GitHub Container Registry
-        if: steps.check.outputs.should_release == 'true'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to Docker Hub
-        if: steps.check.outputs.should_release == 'true'
-        uses: docker/login-action@v4
-        with:
-          username: konard
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        if: steps.check.outputs.should_release == 'true'
-        uses: docker/setup-buildx-action@v4
-
-      - name: Extract Docker metadata
-        if: steps.check.outputs.should_release == 'true'
-        id: docker-meta
-        uses: docker/metadata-action@v6
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}
-            ${{ env.DOCKERHUB_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.current_version.outputs.version }}
-          labels: |
-            org.opencontainers.image.version=${{ steps.current_version.outputs.version }}
-
-      - name: Publish Docker images to registries
-        if: steps.check.outputs.should_release == 'true'
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
 
       - name: Create GitHub Release
         if: steps.check.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.current_version.outputs.version }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
+        run: |
+          # Use new_version from version-and-commit when available (tag-checked), else fall back to Cargo.toml version
+          RELEASE_VERSION="${{ steps.version.outputs.new_version }}"
+          if [ -z "$RELEASE_VERSION" ]; then
+            RELEASE_VERSION="${{ steps.current_version.outputs.version }}"
+          fi
+          rust-script scripts/create-github-release.rs --release-version "$RELEASE_VERSION" --repository "${{ github.repository }}"
 
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
@@ -362,11 +372,11 @@ jobs:
       github.event.inputs.release_mode == 'instant' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
-      packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -399,70 +409,26 @@ jobs:
         id: publish-crate
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
         run: rust-script scripts/publish-crate.rs
-
-      - name: Wait for Crate availability on Crates.io
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
-
-      - name: Log in to GitHub Container Registry
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to Docker Hub
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        uses: docker/login-action@v4
-        with:
-          username: konard
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        uses: docker/setup-buildx-action@v4
-
-      - name: Extract Docker metadata
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        id: docker-meta
-        uses: docker/metadata-action@v6
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}
-            ${{ env.DOCKERHUB_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.version.outputs.new_version }}
-          labels: |
-            org.opencontainers.image.version=${{ steps.version.outputs.new_version }}
-
-      - name: Publish Docker images to registries
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
 
       - name: Create GitHub Release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
+        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}"
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
     name: Create Changelog PR
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -479,7 +445,7 @@ jobs:
         run: rust-script scripts/create-changelog-fragment.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: add changelog for manual ${{ github.event.inputs.bump_type }} release'
@@ -500,3 +466,37 @@ jobs:
             1. Review the changelog fragment in this PR
             2. Merge this PR to main
             3. The automated release workflow will publish to crates.io and create a GitHub release
+
+  # === DEPLOY DOCUMENTATION ===
+  # Deploy Rust API documentation to GitHub Pages after a successful package build.
+  # Keep this independent from package/GitHub release publication so the website
+  # still updates when the release path fails.
+  deploy-docs:
+    name: Deploy Rust Documentation
+    needs: [build]
+    if: |
+      !cancelled() &&
+      needs.build.result == 'success' && (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build documentation
+        run: cargo doc --no-deps --all-features
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/doc
