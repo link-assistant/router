@@ -1,6 +1,21 @@
 use std::fs;
 
 #[test]
+fn dockerfile_builder_uses_supported_rust_toolchain() {
+    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let builder_tag = rust_builder_tag(&dockerfile).expect("Dockerfile should have a Rust builder");
+
+    assert!(
+        builder_tag.contains("bookworm"),
+        "Rust builder image should stay on bookworm to match the runtime image"
+    );
+    assert!(
+        rust_builder_tag_tracks_supported_toolchain(builder_tag),
+        "Rust builder image `{builder_tag}` should use Rust 1.85+ or track the current Rust 1.x line"
+    );
+}
+
+#[test]
 fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
     let workflow = fs::read_to_string(".github/workflows/release.yml")
         .expect("release workflow should be readable");
@@ -174,4 +189,32 @@ fn release_scripts_check_all_release_artifacts() {
             && release_script.contains("badge_escape(&image_tag)"),
         "GitHub release notes should include a version-specific Docker image badge"
     );
+}
+
+fn rust_builder_tag(dockerfile: &str) -> Option<&str> {
+    dockerfile.lines().find_map(|line| {
+        let trimmed = line.trim();
+        let rest = trimmed.strip_prefix("FROM rust:")?;
+        let mut parts = rest.split_whitespace();
+        let tag = parts.next()?;
+        if parts.next() == Some("AS") && parts.next() == Some("builder") {
+            Some(tag)
+        } else {
+            None
+        }
+    })
+}
+
+fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
+    if tag == "1-slim-bookworm" {
+        true
+    } else {
+        let version = tag.split('-').next().unwrap_or_default();
+        let mut parts = version.split('.');
+        let major = parts.next().and_then(|part| part.parse::<u64>().ok());
+        let minor = parts.next().and_then(|part| part.parse::<u64>().ok());
+
+        matches!((major, minor), (Some(1), Some(minor)) if minor >= 85)
+            || matches!(major, Some(major) if major > 1)
+    }
 }
