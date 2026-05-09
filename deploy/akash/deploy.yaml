@@ -1,0 +1,42 @@
+---
+version: "2.0"
+
+services:
+  router:
+    image: ghcr.io/link-assistant/router:latest
+    expose:
+      - port: 8080
+        as: 80
+        to:
+          - global: true
+    env:
+      - ROUTER_HOST=0.0.0.0
+      - ROUTER_PORT=8080
+      - CLAUDE_CODE_HOME=/data/claude
+      - DATA_DIR=/data/router
+      - ACTIVITYPUB_ACTOR_BASE_URL=https://router.example.com
+      - TOKEN_SECRET=replace-with-secure-secret
+      - ACTIVITYPUB_PUBLIC_KEY_PEM=replace-with-public-key-pem
+
+profiles:
+  compute:
+    router:
+      resources:
+        cpu:
+          units: 0.25
+        memory:
+          size: 512Mi
+        storage:
+          size: 2Gi
+  placement:
+    dcloud:
+      pricing:
+        router:
+          denom: uakt
+          amount: 1000
+
+deployment:
+  router:
+    dcloud:
+      profile: router
+      count: 1

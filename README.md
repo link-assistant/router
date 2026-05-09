@@ -469,6 +469,23 @@ sudo systemctl status link-assistant-router
 journalctl -u link-assistant-router -f
 ```
 
+### Akash and Kubernetes
+
+Ready-to-edit deployment templates are included for hosted environments:
+
+- [Akash SDL](deploy/akash/deploy.yaml)
+- [Kubernetes manifests](deploy/k8s/router.yaml)
+
+Replace placeholder secrets, set `ACTIVITYPUB_ACTOR_BASE_URL` to the public
+router URL, and mount or provision Claude Code credentials at
+`CLAUDE_CODE_HOME` before exposing the service.
+
+## ForgeFed Integration
+
+The router exposes ActivityPub/ForgeFed endpoints for service discovery and
+problem-source federation. See [docs/forgefed.md](docs/forgefed.md) for the
+actor document, inbox, follow activity, and deployment verification steps.
+
 ## Token System
 
 The router uses JWT-based custom tokens with the `la_sk_` prefix.

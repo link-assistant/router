@@ -1,0 +1,124 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: link-assistant
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: link-assistant-router
+  namespace: link-assistant
+type: Opaque
+stringData:
+  TOKEN_SECRET: replace-with-secure-secret
+  ACTIVITYPUB_PUBLIC_KEY_PEM: |
+    -----BEGIN PUBLIC KEY-----
+    replace-with-public-key
+    -----END PUBLIC KEY-----
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: link-assistant-router-data
+  namespace: link-assistant
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: link-assistant-router
+  namespace: link-assistant
+  labels:
+    app.kubernetes.io/name: link-assistant-router
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: link-assistant-router
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: link-assistant-router
+    spec:
+      containers:
+        - name: router
+          image: ghcr.io/link-assistant/router:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ROUTER_HOST
+              value: 0.0.0.0
+            - name: ROUTER_PORT
+              value: "8080"
+            - name: CLAUDE_CODE_HOME
+              value: /data/claude
+            - name: DATA_DIR
+              value: /data/router
+            - name: ACTIVITYPUB_ACTOR_BASE_URL
+              value: https://router.example.com
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: link-assistant-router
+                  key: TOKEN_SECRET
+            - name: ACTIVITYPUB_PUBLIC_KEY_PEM
+              valueFrom:
+                secretKeyRef:
+                  name: link-assistant-router
+                  key: ACTIVITYPUB_PUBLIC_KEY_PEM
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+          volumeMounts:
+            - name: router-data
+              mountPath: /data
+      volumes:
+        - name: router-data
+          persistentVolumeClaim:
+            claimName: link-assistant-router-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: link-assistant-router
+  namespace: link-assistant
+spec:
+  selector:
+    app.kubernetes.io/name: link-assistant-router
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: link-assistant-router
+  namespace: link-assistant
+spec:
+  rules:
+    - host: router.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: link-assistant-router
+                port:
+                  name: http

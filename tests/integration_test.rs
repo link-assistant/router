@@ -537,3 +537,38 @@ mod cli_parser_tests {
         assert!(!cli.disable_anthropic_api);
     }
 }
+
+mod support_docs_tests {
+    use std::fs;
+
+    #[test]
+    fn forgefed_docs_describe_public_actor_and_inbox() {
+        let docs = fs::read_to_string("docs/forgefed.md").expect("forgefed docs should exist");
+
+        assert!(docs.contains("/actor/code"));
+        assert!(docs.contains("/inbox/code"));
+        assert!(docs.contains("https://forgefed.org/ns"));
+        assert!(docs.contains("ACTIVITYPUB_ACTOR_BASE_URL"));
+    }
+
+    #[test]
+    fn akash_template_exposes_router_and_required_configuration() {
+        let sdl = fs::read_to_string("deploy/akash/deploy.yaml").expect("akash SDL should exist");
+
+        assert!(sdl.contains("version: \"2.0\""));
+        assert!(sdl.contains("port: 8080"));
+        assert!(sdl.contains("TOKEN_SECRET=replace-with-secure-secret"));
+        assert!(sdl.contains("ACTIVITYPUB_ACTOR_BASE_URL=https://router.example.com"));
+    }
+
+    #[test]
+    fn kubernetes_template_includes_deployment_service_and_health_probes() {
+        let manifest =
+            fs::read_to_string("deploy/k8s/router.yaml").expect("k8s manifest should exist");
+
+        assert!(manifest.contains("kind: Deployment"));
+        assert!(manifest.contains("kind: Service"));
+        assert!(manifest.contains("path: /health"));
+        assert!(manifest.contains("ACTIVITYPUB_PUBLIC_KEY_PEM"));
+    }
+}
