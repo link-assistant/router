@@ -116,6 +116,7 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
 
 async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Upstream: {}", config.upstream_base_url);
+    tracing::info!("Upstream provider: {:?}", config.upstream_provider);
     tracing::info!("Claude Code home: {}", config.claude_code_home);
     tracing::info!("Routing mode: {:?}", config.routing_mode);
     tracing::info!("Storage policy: {:?}", config.storage_policy);
@@ -145,6 +146,12 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         oauth_provider,
         account_router,
         upstream_base_url: config.upstream_base_url.clone(),
+        upstream_provider: config.upstream_provider,
+        gonka: link_assistant_router::gonka::GonkaConfig::new(
+            config.gonka_private_key.clone(),
+            &config.gonka_source_url,
+            config.gonka_model.clone(),
+        ),
         logger,
         admin_key: config.admin_key.clone(),
         metrics: Arc::clone(&metrics),

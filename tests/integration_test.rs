@@ -326,7 +326,8 @@ mod activitypub_tests {
 
 mod config_verbose_tests {
     use link_assistant_router::config::{
-        default_activitypub_public_key_pem, BuildArgs, Config, RoutingMode, StoragePolicy,
+        default_activitypub_public_key_pem, default_gonka_model, default_gonka_source_url,
+        BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
     };
     use std::path::PathBuf;
 
@@ -343,6 +344,10 @@ mod config_verbose_tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            upstream_provider: UpstreamProvider::Anthropic,
+            gonka_private_key: None,
+            gonka_source_url: default_gonka_source_url(),
+            gonka_model: default_gonka_model(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,

@@ -13,6 +13,7 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
 - **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to and from Anthropic Messages
+- **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
 - **Multi-account routing** — pool any number of Claude MAX accounts; round-robin / priority / least-used; automatic cooldowns on 429
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
@@ -37,6 +38,11 @@ Link.Assistant.Router (Rust / axum)
    v
 Anthropic API (api.anthropic.com)
 ```
+
+When `UPSTREAM_PROVIDER=gonka`, clients still authenticate to the router with
+`Authorization: Bearer la_sk_...`, but upstream OpenAI-compatible requests are
+sent to Gonka with Gonka signing headers instead of the client token. This
+project remains Link.Assistant.Router; Gonka is an optional backend.
 
 ## Quick Start
 
@@ -215,6 +221,10 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 `gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families auto-map to the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged.
 
+With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
+forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
+request omits `model`, the router uses `GONKA_MODEL`.
+
 ### Observability (`--disable-metrics` to opt out)
 
 | Endpoint | Method | Description |
@@ -292,9 +302,34 @@ Configuration is read from CLI flags, environment variables, and an optional `.l
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic` or `gonka` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
+
+### Gonka provider
+
+Gonka support is optional. Anthropic remains the default provider, and existing
+Claude MAX OAuth behavior is unchanged unless `UPSTREAM_PROVIDER=gonka` is set.
+
+```env
+TOKEN_SECRET=your-router-token-secret
+
+UPSTREAM_PROVIDER=gonka
+GONKA_PRIVATE_KEY=your_gonka_private_key
+GONKA_SOURCE_URL=https://node4.gonka.ai
+GONKA_MODEL=Qwen/Qwen3-235B-A22B-Instruct-2507-FP8
+```
+
+| Flag / env | Default | Required | Description |
+|---|---|---|---|
+| `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Yes, for Gonka | Private key used to sign Gonka upstream requests |
+| `--gonka-source-url` / `GONKA_SOURCE_URL` | `https://node4.gonka.ai` | No | Gonka source node URL |
+| `--gonka-model` / `GONKA_MODEL` | `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` | No | Default model for Gonka OpenAI-compatible requests |
+
+Your Gonka account must be activated for inference, funded, and have a
+published on-chain public key. Participant registration is only needed for
+hosting.
 
 ### Routing & storage
 

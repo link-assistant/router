@@ -26,7 +26,7 @@ use lino_arguments::Parser as LinoParser;
 
 use crate::config::{
     default_activitypub_public_key_pem, default_data_dir, ApiFormat, BuildArgs, Config,
-    ConfigError, RoutingMode, StoragePolicy,
+    ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
 };
 
 /// Top-level CLI parser.
@@ -89,6 +89,37 @@ pub struct Cli {
     /// Path to the local Claude CLI binary used by the CLI backend.
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
+
+    /// Upstream provider: anthropic or gonka.
+    #[arg(
+        long,
+        env = "UPSTREAM_PROVIDER",
+        default_value = "anthropic",
+        global = true
+    )]
+    pub upstream_provider: String,
+
+    /// Gonka private key used for request signing.
+    #[arg(long, env = "GONKA_PRIVATE_KEY", global = true)]
+    pub gonka_private_key: Option<String>,
+
+    /// Gonka source node URL.
+    #[arg(
+        long,
+        env = "GONKA_SOURCE_URL",
+        default_value = "https://node4.gonka.ai",
+        global = true
+    )]
+    pub gonka_source_url: String,
+
+    /// Default Gonka model for OpenAI-compatible requests without `model`.
+    #[arg(
+        long,
+        env = "GONKA_MODEL",
+        default_value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8",
+        global = true
+    )]
+    pub gonka_model: String,
 
     /// Public base URL for the `ActivityPub` actor.
     #[arg(long, env = "ACTIVITYPUB_ACTOR_BASE_URL", global = true)]
@@ -186,6 +217,8 @@ impl Cli {
         let api_format = self.api_format.as_deref().and_then(ApiFormat::from_str_opt);
         let routing_mode =
             RoutingMode::from_str_opt(&self.routing_mode).ok_or(ConfigError::InvalidRoutingMode)?;
+        let upstream_provider = UpstreamProvider::from_str_opt(&self.upstream_provider)
+            .unwrap_or(UpstreamProvider::Anthropic);
         let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy).unwrap_or_default();
         let data_dir = self.data_dir.clone().unwrap_or_else(default_data_dir);
         let activitypub_actor_base_url = self
@@ -208,6 +241,10 @@ impl Cli {
             storage_policy,
             data_dir,
             claude_cli_bin: self.claude_cli_bin.clone(),
+            upstream_provider,
+            gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
+            gonka_source_url: self.gonka_source_url.clone(),
+            gonka_model: self.gonka_model.clone(),
             activitypub_actor_base_url,
             activitypub_public_key_pem,
             enable_openai_api: !self.disable_openai_api,
@@ -223,6 +260,7 @@ impl Cli {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::{default_gonka_model, default_gonka_source_url};
 
     #[test]
     fn cli_defaults_round_trip_to_config() {
@@ -239,6 +277,10 @@ mod tests {
             storage_policy: "memory".into(),
             data_dir: Some(std::path::PathBuf::from("/tmp/d")),
             claude_cli_bin: None,
+            upstream_provider: "anthropic".into(),
+            gonka_private_key: None,
+            gonka_source_url: default_gonka_source_url(),
+            gonka_model: default_gonka_model(),
             activitypub_actor_base_url: Some("https://router.example".into()),
             activitypub_public_key_pem: None,
             disable_openai_api: false,
@@ -272,6 +314,10 @@ mod tests {
             storage_policy: "memory".into(),
             data_dir: None,
             claude_cli_bin: None,
+            upstream_provider: "anthropic".into(),
+            gonka_private_key: None,
+            gonka_source_url: default_gonka_source_url(),
+            gonka_model: default_gonka_model(),
             activitypub_actor_base_url: None,
             activitypub_public_key_pem: None,
             disable_openai_api: false,
