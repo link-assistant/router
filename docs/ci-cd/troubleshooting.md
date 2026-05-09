@@ -93,8 +93,8 @@ The "Publish to Crates.io" step fails with an error.
 ```yaml
 - name: Publish to Crates.io
   env:
-    CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
-  run: node scripts/publish-crate.mjs
+    CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
+  run: rust-script scripts/publish-crate.rs
 ```
 
 #### "already uploaded" or "already exists"
@@ -129,8 +129,8 @@ The "Publish to Crates.io" step fails with an error.
 If using organization secrets with different names, map them in your workflow:
 ```yaml
 env:
-  # Map organization secret to the expected variable name
-  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+  # Map either supported secret name to Cargo's native variable name.
+  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
 ```
 
 ### Checking Secret Values
@@ -145,7 +145,7 @@ Secrets are masked in logs, but you can verify they're set:
       echo "WARNING: CARGO_REGISTRY_TOKEN is NOT set"
     fi
   env:
-    CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+    CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
 ```
 
 ### Reference
@@ -166,10 +166,10 @@ This template auto-detects the repository structure:
 If auto-detection fails, you can explicitly configure the Rust root:
 ```bash
 # Via environment variable
-RUST_ROOT=rust node scripts/publish-crate.mjs
+RUST_ROOT=rust rust-script scripts/publish-crate.rs
 
 # Via CLI argument
-node scripts/publish-crate.mjs --rust-root rust
+rust-script scripts/publish-crate.rs --rust-root rust
 ```
 
 ### Workflow Configuration
@@ -182,7 +182,7 @@ defaults:
 steps:
   - name: Publish to Crates.io
     working-directory: .  # Override for scripts that handle paths themselves
-    run: node rust/scripts/publish-crate.mjs
+    run: rust-script rust/scripts/publish-crate.rs
 ```
 
 ### Reference

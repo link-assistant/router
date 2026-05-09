@@ -54,6 +54,13 @@ fn get_changelog_for_version(version: &str) -> String {
     }
 }
 
+fn crates_io_badge(url: &str) -> String {
+    format!(
+        "[![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)]({})",
+        url
+    )
+}
+
 #[derive(Serialize)]
 struct ReleasePayload {
     tag_name: String,
@@ -88,9 +95,9 @@ fn main() {
 
     let mut release_notes = get_changelog_for_version(&version);
 
-    // Add crates.io link if provided
+    // Add crates.io badge/link if provided so release pages visibly show registry status.
     if let Some(url) = crates_io_url {
-        release_notes = format!("{}\n\n{}", url, release_notes);
+        release_notes = format!("{}\n\n{}", crates_io_badge(&url), release_notes);
     }
 
     // Create release using GitHub API with JSON input
