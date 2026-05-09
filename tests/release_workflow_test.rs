@@ -16,6 +16,22 @@ fn dockerfile_builder_uses_supported_rust_toolchain() {
 }
 
 #[test]
+fn cargo_lock_package_version_matches_manifest() {
+    let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
+    let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");
+
+    let manifest_version =
+        package_version(&manifest).expect("Cargo.toml should declare a package version");
+    let lockfile_version = lockfile_package_version(&lockfile, "link-assistant-router")
+        .expect("Cargo.lock should contain the link-assistant-router package");
+
+    assert_eq!(
+        lockfile_version, manifest_version,
+        "Cargo.lock package version should stay synced with Cargo.toml so cargo package does not dirty the checkout"
+    );
+}
+
+#[test]
 fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
     let workflow = fs::read_to_string(".github/workflows/release.yml")
         .expect("release workflow should be readable");
@@ -217,4 +233,23 @@ fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
         matches!((major, minor), (Some(1), Some(minor)) if minor >= 85)
             || matches!(major, Some(major) if major > 1)
     }
+}
+
+fn package_version(manifest: &str) -> Option<&str> {
+    manifest.lines().find_map(|line| {
+        line.trim()
+            .strip_prefix("version = \"")
+            .and_then(|rest| rest.strip_suffix('"'))
+    })
+}
+
+fn lockfile_package_version<'a>(lockfile: &'a str, package_name: &str) -> Option<&'a str> {
+    lockfile
+        .split("\n[[package]]\n")
+        .find(|package| {
+            package
+                .lines()
+                .any(|line| line.trim() == format!("name = \"{package_name}\""))
+        })
+        .and_then(package_version)
 }

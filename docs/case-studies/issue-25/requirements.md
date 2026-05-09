@@ -12,6 +12,7 @@ Issue: https://github.com/link-assistant/router/issues/25
 | R6 | Report template issues only if the same issue is found in a template repository. | Issue asks to report if the same issue is found in templates. | Not needed; templates do not contain Dockerfiles or Docker publish steps with pinned old Rust builders. |
 | R7 | Add debug output or verbose mode if root cause cannot be found. | Issue asks for debug output when data is insufficient. | Not needed; CI logs identify the failing Dockerfile line and Cargo error. |
 | R8 | Implement and verify a fix in one pull request. | Issue asks to execute everything in a single PR. | Done |
+| R9 | Re-check CI after pushing the draft fix and preserve any new non-passing run data. | Follow-up pull request run `25605006038` exposed a stale `Cargo.lock` after `main` advanced to `v0.13.0`. | Done |
 
 ## Reproduction Evidence
 
@@ -25,3 +26,14 @@ The failure is reproducible from the saved GitHub Actions log:
 - `ci-logs/ci-run-25604352544.log:6911` is the final buildx failure.
 
 Local Docker reproduction was attempted but the prepared runner does not have the `docker` CLI installed. The regression test added in this PR covers the Dockerfile/toolchain contract statically.
+
+## Follow-up CI Evidence
+
+The first PR run after the Dockerfile fix was `25605006038`. That run used the GitHub pull-request merge commit after `main` advanced to `v0.13.0`.
+
+- `ci-logs/follow-up/ci-run-25605006038.log:5778` shows the package building as `link-assistant-router v0.13.0`.
+- `ci-logs/follow-up/ci-run-25605006038.log:5782` shows the failing `cargo package --list` step.
+- `ci-logs/follow-up/ci-run-25605006038.log:5793` says one file became dirty.
+- `ci-logs/follow-up/ci-run-25605006038.log:5795` identifies `Cargo.lock` as the dirty file.
+
+The fix branch now merges the updated `main` branch and commits the corresponding `Cargo.lock` package version. The regression test `cargo_lock_package_version_matches_manifest` keeps the manifest and lockfile package versions aligned before packaging.

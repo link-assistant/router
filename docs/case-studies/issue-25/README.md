@@ -23,6 +23,8 @@ The release pipeline failed during the Docker image publish step, after lint, te
 | 2026-05-09T15:17:05Z | Cargo failed to parse `time-0.3.47` because `edition2024` is not stabilized in Cargo 1.82.0. |
 | 2026-05-09T15:17:09Z | `Auto Release` completed with failure. |
 | 2026-05-09T15:21:01Z | Issue #25 was opened with the failing job link and investigation requirements. |
+| 2026-05-09T15:41:27Z | Follow-up PR run `25605006038` started after `main` advanced to release `v0.13.0`. |
+| 2026-05-09T15:45:36Z | `cargo package --list` failed because Cargo updated `Cargo.lock` from `0.12.0` to `0.13.0`, leaving the checkout dirty. |
 
 ## Root Cause
 
@@ -54,7 +56,8 @@ Rust 2024 edition support is stable starting with Rust and Cargo 1.85, so the Do
 
 - Updated `Dockerfile` builder image from `rust:1.82-slim` to `rust:1-slim-bookworm`.
 - Added `dockerfile_builder_uses_supported_rust_toolchain` to `tests/release_workflow_test.rs`.
-- Synced the package version in `Cargo.lock` with the existing `Cargo.toml` version.
+- Added `cargo_lock_package_version_matches_manifest` to guard the package version contract used by `cargo package --list`.
+- Merged the updated `main` branch and synced the package version in `Cargo.lock` with the current `Cargo.toml` version.
 - Added a changelog fragment for the Docker builder toolchain fix.
 - Preserved CI logs, run metadata, artifact metadata, template trees, template workflows, and online source data under this case-study folder.
 
@@ -64,6 +67,7 @@ The new regression test was run before and after the Dockerfile change:
 
 - Before fix: `cargo test dockerfile_builder_uses_supported_rust_toolchain` failed against `rust:1.82-slim`.
 - After fix: `cargo test dockerfile_builder_uses_supported_rust_toolchain` passed against `rust:1-slim-bookworm`.
+- Follow-up failure: `ci-logs/follow-up/ci-run-25605006038.log:5793` shows `cargo package --list` failed because `Cargo.lock` was dirty after the `v0.13.0` base release. The lockfile is now committed at `0.13.0`.
 
 Local Docker reproduction was attempted, but the prepared environment does not have the `docker` CLI installed. The release workflow's failing Buildx log remains the runtime reproduction evidence.
 
@@ -78,7 +82,9 @@ See `template-comparison.md` for the detailed comparison.
 | Path | Purpose |
 |---|---|
 | `ci-logs/ci-run-25604352544.log` | Full failing GitHub Actions log. |
+| `ci-logs/follow-up/ci-run-25605006038.log` | Follow-up PR run showing the stale `Cargo.lock` packaging failure after `main` advanced. |
 | `raw/ci-run-25604352544.json` | Failing run metadata and job timeline. |
+| `raw/ci-run-25605006038.json` | Follow-up run metadata and job timeline. |
 | `raw/recent-runs.json` | Recent runs with timestamps, conclusions, and head SHAs. |
 | `raw/*-template-tree.json` | Full repository trees for the referenced templates. |
 | `raw/*-template-release.yml` | Template release workflows. |
