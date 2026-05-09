@@ -245,8 +245,89 @@ mod required_headers_tests {
     }
 }
 
+mod activitypub_tests {
+    use link_assistant_router::activitypub::{
+        actor_document, follow_problemsets_activity, followers_document, outbox_document,
+        validate_activity,
+    };
+    use serde_json::json;
+
+    const BASE: &str = "https://router.example";
+    const KEY: &str = "-----BEGIN PUBLIC KEY-----\nabc\n-----END PUBLIC KEY-----";
+
+    #[test]
+    fn actor_document_exposes_required_activitypub_fields() {
+        let actor = actor_document(BASE, KEY);
+
+        assert_eq!(actor["id"], "https://router.example/actor/code");
+        assert_eq!(actor["type"], "Service");
+        assert_eq!(actor["inbox"], "https://router.example/inbox/code");
+        assert_eq!(actor["outbox"], "https://router.example/outbox/code");
+        assert_eq!(
+            actor["followers"],
+            "https://router.example/actors/code/followers"
+        );
+        assert_eq!(
+            actor["publicKey"]["id"],
+            "https://router.example/actor/code#main-key"
+        );
+        assert_eq!(actor["publicKey"]["publicKeyPem"], KEY);
+        assert!(actor["aliases"].as_array().expect("aliases").len() >= 2);
+    }
+
+    #[test]
+    fn actor_context_includes_forgefed_and_fep_ef61_aliases() {
+        let actor = actor_document(BASE, KEY);
+        let context = actor["@context"].as_array().expect("context array");
+
+        assert!(context
+            .iter()
+            .any(|item| item == "https://www.w3.org/ns/activitystreams"));
+        assert!(context.iter().any(|item| item == "https://forgefed.org/ns"));
+        assert!(context.iter().any(|item| item["aliases"] == "fep:aliases"));
+    }
+
+    #[test]
+    fn follow_activity_can_be_posted_to_problemsets_inbox() {
+        let follow = follow_problemsets_activity(BASE);
+
+        assert_eq!(
+            follow["id"],
+            "https://router.example/activities/follow-problemsets-code-001"
+        );
+        assert_eq!(follow["type"], "Follow");
+        assert_eq!(follow["actor"], "https://router.example/actor/code");
+        assert_eq!(
+            follow["object"],
+            "https://problemsets.lefine.pro/actor/code"
+        );
+        assert_eq!(follow["to"][0], "https://problemsets.lefine.pro/actor/code");
+    }
+
+    #[test]
+    fn inbox_validation_rejects_objects_without_actor_or_attributed_to() {
+        let activity = json!({
+            "id": "https://remote.example/activities/1",
+            "type": "Create"
+        });
+
+        assert_eq!(
+            validate_activity(&activity),
+            Err("activity must include actor or attributedTo")
+        );
+    }
+
+    #[test]
+    fn collections_are_addressable_ordered_collections() {
+        assert_eq!(outbox_document(BASE)["type"], "OrderedCollection");
+        assert_eq!(followers_document(BASE)["type"], "OrderedCollection");
+    }
+}
+
 mod config_verbose_tests {
-    use link_assistant_router::config::{BuildArgs, Config, RoutingMode, StoragePolicy};
+    use link_assistant_router::config::{
+        default_activitypub_public_key_pem, BuildArgs, Config, RoutingMode, StoragePolicy,
+    };
     use std::path::PathBuf;
 
     fn args_with_verbose(verbose: bool) -> BuildArgs<'static> {
@@ -262,6 +343,8 @@ mod config_verbose_tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            activitypub_actor_base_url: "https://router.example".into(),
+            activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
             enable_anthropic_api: true,
             enable_metrics: true,

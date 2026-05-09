@@ -5,6 +5,7 @@
 //! access via custom-issued tokens.
 
 pub mod accounts;
+pub mod activitypub;
 pub mod cli;
 pub mod config;
 pub mod metrics;
