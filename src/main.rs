@@ -157,6 +157,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         metrics: Arc::clone(&metrics),
         activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
+        mpp: config.mpp.clone(),
     };
 
     let mut app = Router::new()
@@ -337,6 +338,14 @@ fn run_doctor(config: &Config) -> ExitCode {
             "set"
         } else {
             "<unset>"
+        }
+    );
+    println!(
+        "mpp_openai_charge      : {}",
+        if config.mpp.is_configured() {
+            "enabled"
+        } else {
+            "disabled"
         }
     );
 

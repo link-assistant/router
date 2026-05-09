@@ -356,6 +356,7 @@ mod config_verbose_tests {
             additional_account_dirs: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            mpp: link_assistant_router::config::default_mpp_config(),
         }
     }
 
@@ -442,6 +443,53 @@ mod openai_translation_tests {
         let data = v["data"].as_array().expect("data array");
         let ids: Vec<&str> = data.iter().filter_map(|m| m["id"].as_str()).collect();
         assert!(ids.iter().any(|id| id.contains("claude")));
+    }
+}
+
+mod mpp_tests {
+    use axum::http::{HeaderMap, HeaderValue, StatusCode};
+    use link_assistant_router::mpp::{
+        has_payment_credential, payment_required, unsupported_payment_verification, MppConfig,
+    };
+
+    #[test]
+    fn openai_mpp_challenge_is_machine_readable_402() {
+        let cfg = MppConfig {
+            enabled: true,
+            amount: "0.05".into(),
+            currency: "USD".into(),
+            recipient: "acct_router".into(),
+            method: Some("stripe".into()),
+        };
+
+        let response = payment_required(&cfg, "/v1/responses");
+
+        assert_eq!(response.status(), StatusCode::PAYMENT_REQUIRED);
+        let challenge = response
+            .headers()
+            .get("www-authenticate")
+            .and_then(|v| v.to_str().ok())
+            .expect("MPP challenge header");
+        assert!(challenge.starts_with("Payment "));
+        assert!(challenge.contains(r#"protocol="mpp""#));
+        assert!(challenge.contains(r#"intent="charge""#));
+        assert!(challenge.contains(r#"amount="0.05""#));
+        assert!(challenge.contains(r#"resource="/v1/responses""#));
+    }
+
+    #[test]
+    fn mpp_payment_authorization_is_not_treated_as_bearer_token() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "authorization",
+            HeaderValue::from_static("Payment credential-for-charge"),
+        );
+
+        assert!(has_payment_credential(&headers));
+        assert_eq!(
+            unsupported_payment_verification().status(),
+            StatusCode::NOT_IMPLEMENTED
+        );
     }
 }
 

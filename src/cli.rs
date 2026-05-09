@@ -157,6 +157,26 @@ pub struct Cli {
     /// Bearer key required by `/api/tokens` and admin endpoints.
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true)]
     pub admin_key: Option<String>,
+
+    /// Enable MPP 402 charge challenges on OpenAI-compatible endpoints.
+    #[arg(long, env = "MPP_ENABLE", global = true)]
+    pub mpp_enable: bool,
+
+    /// Per-request MPP charge amount for OpenAI-compatible endpoints.
+    #[arg(long, env = "MPP_AMOUNT", default_value = "0.00", global = true)]
+    pub mpp_amount: String,
+
+    /// Currency or asset for MPP `OpenAI` endpoint charges.
+    #[arg(long, env = "MPP_CURRENCY", default_value = "USD", global = true)]
+    pub mpp_currency: String,
+
+    /// Recipient wallet, merchant account, or payment address for MPP charges.
+    #[arg(long, env = "MPP_RECIPIENT", global = true)]
+    pub mpp_recipient: Option<String>,
+
+    /// Optional MPP payment method identifier, such as tempo or stripe.
+    #[arg(long, env = "MPP_METHOD", global = true)]
+    pub mpp_method: Option<String>,
 }
 
 /// Subcommands.
@@ -253,6 +273,13 @@ impl Cli {
             additional_account_dirs: self.additional_account_dirs.clone(),
             experimental_compatibility: self.experimental_compatibility,
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
+            mpp: crate::mpp::MppConfig {
+                enabled: self.mpp_enable,
+                amount: self.mpp_amount.clone(),
+                currency: self.mpp_currency.clone(),
+                recipient: self.mpp_recipient.clone().unwrap_or_default(),
+                method: self.mpp_method.clone().filter(|s| !s.is_empty()),
+            },
         })
     }
 }
@@ -289,6 +316,11 @@ mod tests {
             additional_account_dirs: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            mpp_enable: false,
+            mpp_amount: "0.00".into(),
+            mpp_currency: "USD".into(),
+            mpp_recipient: None,
+            mpp_method: None,
         };
         let cfg = cli.into_config().unwrap();
         assert_eq!(cfg.listen_addr.port(), 9090);
@@ -326,6 +358,11 @@ mod tests {
             additional_account_dirs: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            mpp_enable: false,
+            mpp_amount: "0.00".into(),
+            mpp_currency: "USD".into(),
+            mpp_recipient: None,
+            mpp_method: None,
         };
         let r = cli.into_config();
         assert!(matches!(r, Err(ConfigError::InvalidRoutingMode)));

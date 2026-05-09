@@ -10,6 +10,7 @@ pub mod cli;
 pub mod config;
 pub mod gonka;
 pub mod metrics;
+pub mod mpp;
 pub mod oauth;
 pub mod openai;
 pub mod proxy;

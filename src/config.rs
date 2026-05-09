@@ -173,6 +173,8 @@ pub struct Config {
     /// When a `TOKEN_ADMIN_KEY` is set the issue endpoint demands it; otherwise
     /// issuance is open (matching the legacy behaviour).
     pub admin_key: Option<String>,
+    /// Optional MPP charge settings for OpenAI-compatible endpoints.
+    pub mpp: crate::mpp::MppConfig,
 }
 
 impl Config {
@@ -238,6 +240,14 @@ impl Config {
         let experimental_compatibility = env::var("EXPERIMENTAL_COMPATIBILITY")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
+        let mpp = crate::mpp::MppConfig {
+            enabled: env::var("MPP_ENABLE")
+                .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON")),
+            amount: env::var("MPP_AMOUNT").unwrap_or_else(|_| "0.00".to_string()),
+            currency: env::var("MPP_CURRENCY").unwrap_or_else(|_| "USD".to_string()),
+            recipient: env::var("MPP_RECIPIENT").unwrap_or_default(),
+            method: env::var("MPP_METHOD").ok().filter(|s| !s.is_empty()),
+        };
 
         Self::build(BuildArgs {
             host: &host,
@@ -263,6 +273,7 @@ impl Config {
             additional_account_dirs,
             experimental_compatibility,
             admin_key,
+            mpp,
         })
     }
 
@@ -312,6 +323,7 @@ impl Config {
             additional_account_dirs: args.additional_account_dirs,
             experimental_compatibility: args.experimental_compatibility,
             admin_key: args.admin_key,
+            mpp: args.mpp,
         })
     }
 }
@@ -341,6 +353,19 @@ pub struct BuildArgs<'a> {
     pub additional_account_dirs: Vec<PathBuf>,
     pub experimental_compatibility: bool,
     pub admin_key: Option<String>,
+    pub mpp: crate::mpp::MppConfig,
+}
+
+/// Default disabled MPP configuration.
+#[must_use]
+pub fn default_mpp_config() -> crate::mpp::MppConfig {
+    crate::mpp::MppConfig {
+        enabled: false,
+        amount: "0.00".to_string(),
+        currency: "USD".to_string(),
+        recipient: String::new(),
+        method: None,
+    }
 }
 
 /// Compute the default data directory: `$DATA_DIR` or `<claude_home>/router-data`.
@@ -437,6 +462,7 @@ mod tests {
             additional_account_dirs: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            mpp: default_mpp_config(),
         })
     }
 
@@ -514,6 +540,7 @@ mod tests {
             additional_account_dirs: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            mpp: default_mpp_config(),
         }
     }
 
@@ -543,6 +570,7 @@ mod tests {
             additional_account_dirs: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            mpp: default_mpp_config(),
         });
         assert!(result.is_err());
     }
