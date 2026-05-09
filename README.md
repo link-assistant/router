@@ -228,6 +228,26 @@ With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
 forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
 request omits `model`, the router uses `GONKA_MODEL`.
 
+### MPP charges for OpenAI endpoints
+
+The OpenAI-compatible endpoints can advertise Machine Payments Protocol (MPP)
+charges with HTTP `402 Payment Required`. Enable this only after configuring
+the amount, currency, and recipient for your payment method:
+
+```env
+MPP_ENABLE=true
+MPP_AMOUNT=0.05
+MPP_CURRENCY=USD
+MPP_RECIPIENT=acct_or_wallet
+MPP_METHOD=stripe
+```
+
+When enabled, unpaid calls to `/v1/chat/completions` and `/v1/responses`
+return `WWW-Authenticate: Payment ...` with `protocol="mpp"` and
+`intent="charge"`. This is separate from the ForgeFed/ActivityPub discovery
+surface. Payment credential settlement is intentionally not accepted until a
+method-specific verifier is configured.
+
 ### Observability (`--disable-metrics` to opt out)
 
 | Endpoint | Method | Description |
@@ -353,6 +373,11 @@ hosting.
 | `--disable-metrics` / `DISABLE_METRICS` | off | Hide `/metrics`, `/v1/usage`, `/v1/accounts` |
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
 | `--admin-key` / `TOKEN_ADMIN_KEY` | (open) | Bearer key required for `/api/tokens*` admin endpoints |
+| `--mpp-enable` / `MPP_ENABLE` | off | Return MPP `402 Payment Required` challenges on OpenAI endpoints |
+| `--mpp-amount` / `MPP_AMOUNT` | `0.00` | Per-request MPP charge amount |
+| `--mpp-currency` / `MPP_CURRENCY` | `USD` | Currency or asset for MPP charges |
+| `--mpp-recipient` / `MPP_RECIPIENT` | — | Recipient wallet, merchant account, or payment address |
+| `--mpp-method` / `MPP_METHOD` | — | Optional MPP payment method identifier |
 
 ### CLI subcommands
 

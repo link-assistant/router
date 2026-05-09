@@ -57,6 +57,8 @@ pub struct AppState {
     pub activitypub_actor_base_url: String,
     /// Public key PEM advertised by the `ActivityPub` actor.
     pub activitypub_public_key_pem: String,
+    /// Optional MPP charge settings for OpenAI-compatible endpoints.
+    pub mpp: crate::mpp::MppConfig,
 }
 
 /// The legacy API path prefix used to route requests through the proxy.
@@ -569,6 +571,10 @@ async fn forward_gonka_openai(
     path: &str,
     surface: crate::metrics::Surface,
 ) -> Response {
+    if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
+        return resp;
+    }
+
     let Some(gonka) = state.gonka.as_ref() else {
         return crate::gonka::provider_error(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -681,6 +687,14 @@ async fn forward_openai(
     stream_requested: bool,
     shape: OpenAIShape,
 ) -> Response {
+    let path = match shape {
+        OpenAIShape::Chat => "/v1/chat/completions",
+        OpenAIShape::Response => "/v1/responses",
+    };
+    if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
+        return resp;
+    }
+
     if stream_requested {
         // SSE translation for OpenAI streaming will be wired in a follow-up;
         // for now we explicitly fall back to non-streaming so callers always
@@ -829,6 +843,16 @@ async fn forward_openai(
         .record_request(surface, 200, selected_account.as_deref());
 
     (StatusCode::OK, axum::Json(translated)).into_response()
+}
+
+fn maybe_mpp_challenge(state: &AppState, headers: &HeaderMap, path: &str) -> Option<Response> {
+    if !state.mpp.is_configured() {
+        return None;
+    }
+    if crate::mpp::has_payment_credential(headers) {
+        return Some(crate::mpp::unsupported_payment_verification());
+    }
+    Some(crate::mpp::payment_required(&state.mpp, path))
 }
 
 /// `GET /metrics` — Prometheus text-exposition format.
