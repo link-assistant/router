@@ -1,0 +1,7 @@
+Archive:  docs/case-studies/issue-29/raw/artifacts/link-assistant-router-XH6HTV.dockerbuild.zip
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.  In the
+  latter case the central directory and zipfile comment will be found on
+  the last disk(s) of this archive.
+unzip:  cannot find zipfile directory in one of docs/case-studies/issue-29/raw/artifacts/link-assistant-router-XH6HTV.dockerbuild.zip or
+        docs/case-studies/issue-29/raw/artifacts/link-assistant-router-XH6HTV.dockerbuild.zip.zip, and cannot find docs/case-studies/issue-29/raw/artifacts/link-assistant-router-XH6HTV.dockerbuild.zip.ZIP, period.
