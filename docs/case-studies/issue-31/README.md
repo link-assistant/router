@@ -11,9 +11,8 @@ Sources reviewed on 2026-05-10.
 The issue asks for research and an architecture decision record for completing
 compatibility with [LiteLLM](https://github.com/BerriAI/litellm). The practical
 interpretation is API-level compatibility, not a source-level dependency:
-Link.Assistant.Router should be able to sit behind LiteLLM as an
-OpenAI-compatible upstream, and later should be able to route to LiteLLM as a
-generic OpenAI-compatible provider.
+Link.Assistant.Router can sit behind LiteLLM as an OpenAI-compatible upstream,
+and can route to LiteLLM as a generic OpenAI-compatible provider.
 
 The current router already has the main building blocks:
 
@@ -25,10 +24,10 @@ The current router already has the main building blocks:
 - upstream credential substitution so clients never see the protected Claude
   MAX OAuth token
 
-The missing work is conformance and breadth: streaming OpenAI SSE translation,
-model alias metadata, generic OpenAI-compatible provider configuration, and
-tests that prove the router works with LiteLLM's expected `api_base` plus
-`api_key` flow.
+This PR implements the highest-value compatibility work directly in the router:
+OpenAI SSE translation for Anthropic-backed streams, `x-api-key` support,
+generic OpenAI-compatible provider records, encrypted provider keys, `.lenv`
+configuration, Links-style provider imports, and API/CLI provider management.
 
 ## Upstream LiteLLM Findings
 
@@ -70,9 +69,9 @@ The current code path maps to LiteLLM compatibility as follows:
 | `/v1/models` | Model discovery for OpenAI-compatible clients. | Implemented. |
 | `/v1/messages` | Anthropic interface for Claude Code style clients. | Implemented as pass-through. |
 | `Authorization: Bearer la_sk_...` | Lets LiteLLM or direct clients use a router-issued virtual token. | Implemented. |
-| OpenAI streaming SSE chunks | Required for strong LiteLLM-like gateway parity. | Gap: OpenAI stream requests currently fall back to buffered non-streaming behavior. |
-| Generic OpenAI-compatible upstream provider | Needed for router-in-front-of-LiteLLM topology. | Gap: only Anthropic and Gonka upstream providers exist. |
-| Model alias/capability metadata | Needed to keep LiteLLM `model_name` and router upstream IDs decoupled. | Partial: basic model mapping exists, but not a provider registry. |
+| OpenAI streaming SSE chunks | Required for strong LiteLLM-like gateway parity. | Implemented for Anthropic-backed chat/responses streams. |
+| Generic OpenAI-compatible upstream provider | Needed for router-in-front-of-LiteLLM topology. | Implemented with encrypted provider storage and `UPSTREAM_PROVIDER=openai-compatible`. |
+| Model alias/capability metadata | Needed to keep LiteLLM `model_name` and router upstream IDs decoupled. | Implemented for default model injection and `/v1/models` provider model lists. |
 
 ## Recommended Compatibility Contract
 
@@ -82,9 +81,8 @@ The ADR defines three levels:
 - L1: Link.Assistant.Router as a LiteLLM-like direct gateway.
 - L2: Link.Assistant.Router in front of LiteLLM.
 
-L0 should be the first implementation target because the router already speaks
-the necessary OpenAI-compatible routes. A LiteLLM config can point at the router
-with:
+L0 is supported for the implemented OpenAI-compatible surface. A LiteLLM config
+can point at the router with:
 
 ```yaml
 model_list:
@@ -99,17 +97,36 @@ That lets LiteLLM keep its own virtual key, budget, UI, and team policy
 features while the router protects Claude MAX OAuth credentials behind a single
 router-issued token.
 
+L2 is supported by configuring a stored OpenAI-compatible provider:
+
+```text
+TOKEN_SECRET: your-router-token-secret
+UPSTREAM_PROVIDER: openai-compatible
+OPENAI_COMPATIBLE_PROVIDER_NAME: litellm
+OPENAI_COMPATIBLE_BASE_URL: http://litellm:4000/v1
+OPENAI_COMPATIBLE_API_KEY_ENV: LITELLM_MASTER_KEY
+OPENAI_COMPATIBLE_MODEL: claude-sonnet
+OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
+```
+
+Provider secrets can be added without keeping them in process environment:
+
+```bash
+link-assistant-router providers add \
+  --name litellm \
+  --base-url http://litellm:4000/v1 \
+  --model claude-sonnet \
+  --models claude-sonnet,gpt-4o \
+  --api-key "$LITELLM_MASTER_KEY"
+```
+
 ## Implementation Backlog
 
-1. Add a LiteLLM compatibility conformance test that exercises the L0 config
-   shape against the router's `/v1/chat/completions`, `/v1/responses`, and
-   `/v1/models` routes.
-2. Replace OpenAI streaming fallback with real OpenAI SSE chunk translation.
-3. Add model alias and capability metadata so LiteLLM model names and upstream
-   provider IDs are not forced to match.
-4. Introduce a generic OpenAI-compatible provider type for L2 routing to
-   LiteLLM or any other OpenAI-compatible gateway.
-5. Decide separately whether to add non-chat LiteLLM surfaces such as
+1. Add an external LiteLLM proxy fixture in CI to exercise the full L0 and L2
+   topologies end to end.
+2. Expand provider capability metadata if later routing decisions need endpoint
+   or parameter-level routing.
+3. Decide separately whether to add non-chat LiteLLM surfaces such as
    embeddings, images, audio, rerank, batches, MCP, and A2A.
 
 ## Sources

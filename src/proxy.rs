@@ -27,6 +27,7 @@ use crate::config::UpstreamProvider;
 use crate::gonka::GonkaConfig;
 use crate::oauth::OAuthProvider;
 use crate::openai;
+use crate::providers::{OpenAICompatibleConfig, ProviderStore};
 use crate::token::TokenManager;
 
 /// Shared application state accessible by all route handlers.
@@ -47,6 +48,10 @@ pub struct AppState {
     pub upstream_provider: UpstreamProvider,
     /// Gonka provider configuration when selected.
     pub gonka: Option<GonkaConfig>,
+    /// Boot-time generic OpenAI-compatible provider config.
+    pub openai_compatible: OpenAICompatibleConfig,
+    /// Persisted provider records with encrypted upstream secrets.
+    pub provider_store: ProviderStore,
     /// Lazy logger for verbose output.
     pub logger: LogLazy,
     /// Optional admin key (Bearer) required for `/api/tokens` issuance.
@@ -94,10 +99,7 @@ pub async fn issue_token(
     axum::Json(req): axum::Json<IssueTokenRequest>,
 ) -> impl IntoResponse {
     if let Some(ref required) = state.admin_key {
-        let provided = headers
-            .get("authorization")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.strip_prefix("Bearer "));
+        let provided = extract_bearer_token(&headers);
         if provided != Some(required.as_str()) {
             return error_response(
                 StatusCode::UNAUTHORIZED,
@@ -188,15 +190,28 @@ pub async fn revoke_token(
     }
 }
 
-fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
+pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
     let Some(required) = state.admin_key.as_deref() else {
         return true;
     };
-    let provided = headers
+    let provided = extract_bearer_token(headers);
+    provided == Some(required)
+}
+
+fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {
+    headers
         .get("authorization")
         .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "));
-    provided == Some(required)
+        .and_then(|v| v.strip_prefix("Bearer "))
+}
+
+pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
+    extract_bearer_token(headers).or_else(|| {
+        headers
+            .get("x-api-key")
+            .and_then(|value| value.to_str().ok())
+            .filter(|value| !value.is_empty())
+    })
 }
 
 /// Request body for the token issuance endpoint.
@@ -260,18 +275,12 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     }
 
     // Extract and validate the bearer token from the Authorization header
-    let auth_header = req
-        .headers()
-        .get("authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "));
-
-    let Some(token) = auth_header else {
+    let Some(token) = extract_client_token(req.headers()) else {
         state.logger.debug(|| "Missing Authorization header");
         return error_response(
             StatusCode::UNAUTHORIZED,
             "authentication_error",
-            "Missing Authorization header with Bearer token",
+            "Missing Authorization Bearer token or x-api-key",
         );
     };
     let custom_token = token.to_string();
@@ -414,12 +423,18 @@ pub fn resolve_upstream_path(path: &str) -> String {
 /// real OAuth authorization. Ensures required LLM Gateway headers
 /// (`anthropic-beta`, `anthropic-version`, `x-claude-code-session-id`)
 /// are always forwarded.
-fn build_upstream_headers(incoming: &HeaderMap, oauth_token: &str, logger: &LogLazy) -> HeaderMap {
+pub(crate) fn build_upstream_headers(
+    incoming: &HeaderMap,
+    oauth_token: &str,
+    logger: &LogLazy,
+) -> HeaderMap {
     let mut headers = HeaderMap::new();
 
     for (name, value) in incoming {
         let name_lower = name.as_str().to_lowercase();
-        if name_lower == "authorization" || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str()) {
+        if matches!(name_lower.as_str(), "authorization" | "x-api-key")
+            || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
+        {
             continue;
         }
         headers.insert(name.clone(), value.clone());
@@ -469,6 +484,9 @@ pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
             || crate::gonka::list_models(&crate::config::default_gonka_model()),
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
+        UpstreamProvider::OpenAICompatible => {
+            crate::provider_proxy::openai_compatible_models(&state)
+        }
     };
     (StatusCode::OK, axum::Json(models)).into_response()
 }
@@ -484,6 +502,16 @@ pub async fn openai_chat_completions(
 ) -> Response {
     if state.upstream_provider == UpstreamProvider::Gonka {
         return forward_gonka_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::OpenAICompatible {
+        return crate::provider_proxy::forward_openai_compatible(
             &state,
             &headers,
             body,
@@ -525,6 +553,16 @@ pub async fn openai_responses(
 ) -> Response {
     if state.upstream_provider == UpstreamProvider::Gonka {
         return forward_gonka_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::OpenAICompatible {
+        return crate::provider_proxy::forward_openai_compatible(
             &state,
             &headers,
             body,
@@ -582,15 +620,11 @@ async fn forward_gonka_openai(
         );
     };
 
-    let auth_header = headers
-        .get("authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "));
-    let Some(token) = auth_header else {
+    let Some(token) = extract_client_token(headers) else {
         return error_response(
             StatusCode::UNAUTHORIZED,
             "authentication_error",
-            "Missing Authorization header with Bearer token",
+            "Missing Authorization Bearer token or x-api-key",
         );
     };
     if let Err(e) = state.token_manager.validate_token(token) {
@@ -695,23 +729,12 @@ async fn forward_openai(
         return resp;
     }
 
-    if stream_requested {
-        // SSE translation for OpenAI streaming will be wired in a follow-up;
-        // for now we explicitly fall back to non-streaming so callers always
-        // get a correct response.
-        tracing::debug!("openai stream requested — falling back to non-streaming");
-    }
-
     // Validate caller token.
-    let auth_header = headers
-        .get("authorization")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "));
-    let Some(token) = auth_header else {
+    let Some(token) = extract_client_token(headers) else {
         return error_response(
             StatusCode::UNAUTHORIZED,
             "authentication_error",
-            "Missing Authorization header with Bearer token",
+            "Missing Authorization Bearer token or x-api-key",
         );
     };
     if let Err(e) = state.token_manager.validate_token(token) {
@@ -778,6 +801,29 @@ async fn forward_openai(
         }
     };
     let upstream_status = upstream_resp.status();
+    if stream_requested && upstream_status.is_success() {
+        state
+            .metrics
+            .record_request(surface, 200, selected_account.as_deref());
+        let stream_shape = match shape {
+            OpenAIShape::Chat => openai::OpenAIStreamShape::ChatCompletion,
+            OpenAIShape::Response => openai::OpenAIStreamShape::Response,
+        };
+        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, requested_model);
+        let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
+            Ok(bytes) => Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
+                translator.push(&bytes).join(""),
+            )),
+            Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+        });
+        let mut response = Response::new(Body::from_stream(stream));
+        *response.status_mut() = StatusCode::OK;
+        response.headers_mut().insert(
+            "content-type",
+            HeaderValue::from_static("text/event-stream; charset=utf-8"),
+        );
+        return response;
+    }
     let upstream_body = match upstream_resp.bytes().await {
         Ok(b) => b,
         Err(e) => {
@@ -845,7 +891,11 @@ async fn forward_openai(
     (StatusCode::OK, axum::Json(translated)).into_response()
 }
 
-fn maybe_mpp_challenge(state: &AppState, headers: &HeaderMap, path: &str) -> Option<Response> {
+pub(crate) fn maybe_mpp_challenge(
+    state: &AppState,
+    headers: &HeaderMap,
+    path: &str,
+) -> Option<Response> {
     if !state.mpp.is_configured() {
         return None;
     }
@@ -906,7 +956,7 @@ pub async fn accounts_endpoint(State(state): State<AppState>) -> impl IntoRespon
 }
 
 /// Build an Anthropic-format error response.
-fn error_response(status: StatusCode, error_type: &str, message: &str) -> Response {
+pub(crate) fn error_response(status: StatusCode, error_type: &str, message: &str) -> Response {
     (
         status,
         axum::Json(serde_json::json!({

@@ -39,9 +39,9 @@ The compatibility contract has three levels:
 
 | Level | Goal | Status |
 | --- | --- | --- |
-| L0: LiteLLM in front | LiteLLM can call this router as an OpenAI-compatible upstream by setting `api_base` to the router `/v1` base URL and `api_key` to a router-issued `la_sk_...` token. | Architectural target; current OpenAI routes mostly satisfy it. |
-| L1: Router as LiteLLM-like gateway | OpenAI SDK clients and Claude Code style Anthropic clients can point directly at this router with the same endpoint assumptions they use for LiteLLM proxy. | Partially implemented. Needs conformance tests and streaming cleanup. |
-| L2: Router in front of LiteLLM | This router can route selected models to a LiteLLM proxy as another OpenAI-compatible provider while keeping router-issued tokens at the edge. | Future provider-abstraction work. |
+| L0: LiteLLM in front | LiteLLM can call this router as an OpenAI-compatible upstream by setting `api_base` to the router `/v1` base URL and `api_key` to a router-issued `la_sk_...` token. | Supported for chat completions, responses, models, bearer tokens, and streaming SSE translation. |
+| L1: Router as LiteLLM-like gateway | OpenAI SDK clients and Claude Code style Anthropic clients can point directly at this router with the same endpoint assumptions they use for LiteLLM proxy. | Supported for the implemented OpenAI and Anthropic surfaces; non-chat LiteLLM surfaces remain separate feature decisions. |
+| L2: Router in front of LiteLLM | This router can route selected models to a LiteLLM proxy as another OpenAI-compatible provider while keeping router-issued tokens at the edge. | Supported for a configured OpenAI-compatible provider record such as LiteLLM. |
 
 The router remains Rust-first and headless. It should adopt the proven LiteLLM
 gateway contract where it improves interoperability:
@@ -53,6 +53,9 @@ gateway contract where it improves interoperability:
   endpoints, and capability metadata,
 - router-issued bearer tokens at the edge, with upstream credentials substituted
   only inside the router,
+- `.lenv` and Links-style provider import so deployment config is file-first
+  and still compatible with environment/CLI overrides,
+- encrypted provider API keys stored under the router data directory,
 - conformance tests that exercise LiteLLM-compatible request and response
   shapes.
 
@@ -85,51 +88,45 @@ Positive:
 
 - The router can be used by LiteLLM through normal OpenAI-compatible upstream
   configuration.
-- The future provider abstraction can route to LiteLLM without a special
-  adapter if LiteLLM is treated as an OpenAI-compatible provider.
+- The provider abstraction can route to LiteLLM without a special adapter by
+  treating LiteLLM as an OpenAI-compatible provider.
 - The current Rust build, Docker image, and operational model stay unchanged.
 
 Tradeoffs:
 
-- Full LiteLLM parity is explicitly out of scope for this ADR.
-- OpenAI streaming compatibility must be tightened before the router can claim
-  broad LiteLLM-like gateway compatibility.
+- Full LiteLLM parity outside the OpenAI-compatible and Anthropic-compatible
+  surfaces is explicitly out of scope for this ADR.
 - Budgeting, virtual-key policy, model cost metadata, and UI workflows remain
   LiteLLM responsibilities unless later issues add router-native equivalents.
 
 ## Compatibility Requirements
 
-Before documenting L0 as supported, add a conformance check that sends an
-OpenAI Chat Completions request through a LiteLLM-style config to this router
-and verifies:
+The supported L0/L1 compatibility surface is:
 
 - `Authorization: Bearer la_sk_...` is accepted.
+- `x-api-key: la_sk_...` is accepted for SDKs that use API-key headers.
 - `/v1/chat/completions` returns OpenAI-shaped `choices`, `usage`, and `model`.
 - `/v1/responses` returns an OpenAI Responses-shaped object.
 - `/v1/models` returns model IDs that can be used in subsequent requests.
+- Streaming Chat Completions are emitted as OpenAI SSE chunks instead of a
+  buffered fallback.
 - Unknown or unsupported parameters are either ignored safely or rejected with
   OpenAI-shaped errors.
 
-Before documenting L1 as supported, add conformance checks for:
+The supported L2 provider record shape is:
 
-- Anthropic `/v1/messages` with Claude Code headers.
-- `Authorization: Bearer ...` and, if needed for Anthropic SDK parity,
-  `x-api-key`.
-- Streaming Chat Completions as OpenAI SSE chunks instead of buffered fallback.
-- Tool-call request and response translation.
-- Model alias behavior for Claude default model names.
+- provider name,
+- provider kind (`openai-compatible`),
+- base URL,
+- default model,
+- model list,
+- API-key environment variable or encrypted API key,
+- enabled flag.
 
-Before implementing L2, introduce a generic OpenAI-compatible provider type
-with these fields:
-
-- provider name
-- display model name
-- upstream model name
-- base URL
-- API-key environment variable or secret reference
-- supported endpoints
-- optional parameter mappings
-- capability metadata
+Future compatibility tests should add an external LiteLLM proxy fixture to
+exercise the complete L0 and L2 topology in CI. The in-repository tests cover
+the local request translation, streaming translation, provider parsing,
+encryption, redaction, and header handling.
 
 ## Example: LiteLLM In Front Of This Router
 
@@ -148,13 +145,15 @@ router-issued token configured in `LINK_ASSISTANT_ROUTER_TOKEN`.
 
 ## Example: This Router In Front Of LiteLLM
 
-This is a future L2 target, not current behavior:
+Configure LiteLLM as the router's selected OpenAI-compatible provider:
 
-```env
-UPSTREAM_PROVIDER=openai-compatible
-OPENAI_COMPATIBLE_BASE_URL=http://litellm:4000/v1
-OPENAI_COMPATIBLE_API_KEY_ENV=LITELLM_MASTER_KEY
-OPENAI_COMPATIBLE_MODEL=claude-sonnet
+```text
+TOKEN_SECRET: your-router-token-secret
+UPSTREAM_PROVIDER: openai-compatible
+OPENAI_COMPATIBLE_PROVIDER_NAME: litellm
+OPENAI_COMPATIBLE_BASE_URL: http://litellm:4000/v1
+OPENAI_COMPATIBLE_API_KEY_ENV: LITELLM_MASTER_KEY
+OPENAI_COMPATIBLE_MODEL: claude-sonnet
 ```
 
 In that topology, clients still authenticate to Link.Assistant.Router with

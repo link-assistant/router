@@ -90,7 +90,7 @@ pub struct Cli {
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
 
-    /// Upstream provider: anthropic or gonka.
+    /// Upstream provider: anthropic, gonka, or openai-compatible.
     #[arg(
         long,
         env = "UPSTREAM_PROVIDER",
@@ -120,6 +120,46 @@ pub struct Cli {
         global = true
     )]
     pub gonka_model: String,
+
+    /// Stored provider name for generic OpenAI-compatible upstream routing.
+    #[arg(
+        long,
+        env = "OPENAI_COMPATIBLE_PROVIDER_NAME",
+        default_value = "litellm",
+        global = true
+    )]
+    pub openai_compatible_provider_name: String,
+
+    /// Generic OpenAI-compatible upstream API base URL, usually ending in /v1.
+    #[arg(
+        long,
+        env = "OPENAI_COMPATIBLE_BASE_URL",
+        default_value = "http://localhost:4000/v1",
+        global = true
+    )]
+    pub openai_compatible_base_url: String,
+
+    /// Generic OpenAI-compatible upstream API key. Prefer provider DB import
+    /// for long-lived deployments so the key is encrypted at rest.
+    #[arg(long, env = "OPENAI_COMPATIBLE_API_KEY", global = true)]
+    pub openai_compatible_api_key: Option<String>,
+
+    /// Environment variable that contains the OpenAI-compatible upstream key.
+    #[arg(long, env = "OPENAI_COMPATIBLE_API_KEY_ENV", global = true)]
+    pub openai_compatible_api_key_env: Option<String>,
+
+    /// Default model for OpenAI-compatible upstream requests without `model`.
+    #[arg(long, env = "OPENAI_COMPATIBLE_MODEL", global = true)]
+    pub openai_compatible_model: Option<String>,
+
+    /// Comma-separated models exposed for the OpenAI-compatible provider.
+    #[arg(
+        long,
+        env = "OPENAI_COMPATIBLE_MODELS",
+        value_delimiter = ',',
+        global = true
+    )]
+    pub openai_compatible_models: Vec<String>,
 
     /// Public base URL for the `ActivityPub` actor.
     #[arg(long, env = "ACTIVITYPUB_ACTOR_BASE_URL", global = true)]
@@ -194,6 +234,11 @@ pub enum Command {
         #[command(subcommand)]
         op: AccountOp,
     },
+    /// Provider-management subcommands.
+    Providers {
+        #[command(subcommand)]
+        op: ProviderOp,
+    },
     /// Print environment + config diagnostics.
     Doctor,
 }
@@ -225,6 +270,37 @@ pub enum AccountOp {
     List,
 }
 
+#[derive(Debug, Subcommand)]
+pub enum ProviderOp {
+    /// List configured upstream providers.
+    List,
+    /// Add or replace an OpenAI-compatible provider.
+    Add {
+        #[arg(long)]
+        name: String,
+        #[arg(long, default_value = "openai-compatible")]
+        kind: String,
+        #[arg(long)]
+        base_url: String,
+        #[arg(long)]
+        model: Option<String>,
+        #[arg(long, value_delimiter = ',')]
+        models: Vec<String>,
+        #[arg(long)]
+        api_key: Option<String>,
+        #[arg(long)]
+        api_key_env: Option<String>,
+        #[arg(long, default_value_t = true)]
+        enabled: bool,
+    },
+    /// Show one provider with secret material redacted.
+    Show { name: String },
+    /// Remove one provider.
+    Remove { name: String },
+    /// Import providers from JSON, `.lenv`, or indented Links-style config.
+    Import { path: PathBuf },
+}
+
 impl Cli {
     /// Build a [`Config`] from the parsed CLI / env / `.lenv` values.
     pub fn into_config(&self) -> Result<Config, ConfigError> {
@@ -249,6 +325,23 @@ impl Cli {
             .activitypub_public_key_pem
             .clone()
             .unwrap_or_else(default_activitypub_public_key_pem);
+        let openai_compatible = crate::providers::OpenAICompatibleConfig {
+            provider_name: self.openai_compatible_provider_name.clone(),
+            base_url: self.openai_compatible_base_url.clone(),
+            api_key: self
+                .openai_compatible_api_key
+                .clone()
+                .filter(|s| !s.is_empty()),
+            api_key_env: self
+                .openai_compatible_api_key_env
+                .clone()
+                .filter(|s| !s.is_empty()),
+            default_model: self
+                .openai_compatible_model
+                .clone()
+                .filter(|s| !s.is_empty()),
+            models: self.openai_compatible_models.clone(),
+        };
         Config::build(BuildArgs {
             host: &self.host,
             port: &port,
@@ -265,6 +358,7 @@ impl Cli {
             gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
             gonka_source_url: self.gonka_source_url.clone(),
             gonka_model: self.gonka_model.clone(),
+            openai_compatible,
             activitypub_actor_base_url,
             activitypub_public_key_pem,
             enable_openai_api: !self.disable_openai_api,
@@ -287,7 +381,9 @@ impl Cli {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{default_gonka_model, default_gonka_source_url};
+    use crate::config::{
+        default_gonka_model, default_gonka_source_url, default_openai_compatible_base_url,
+    };
 
     #[test]
     fn cli_defaults_round_trip_to_config() {
@@ -308,6 +404,12 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            openai_compatible_provider_name: "litellm".into(),
+            openai_compatible_base_url: default_openai_compatible_base_url(),
+            openai_compatible_api_key: None,
+            openai_compatible_api_key_env: None,
+            openai_compatible_model: None,
+            openai_compatible_models: vec![],
             activitypub_actor_base_url: Some("https://router.example".into()),
             activitypub_public_key_pem: None,
             disable_openai_api: false,
@@ -350,6 +452,12 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            openai_compatible_provider_name: "litellm".into(),
+            openai_compatible_base_url: default_openai_compatible_base_url(),
+            openai_compatible_api_key: None,
+            openai_compatible_api_key_env: None,
+            openai_compatible_model: None,
+            openai_compatible_models: vec![],
             activitypub_actor_base_url: None,
             activitypub_public_key_pem: None,
             disable_openai_api: false,

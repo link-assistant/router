@@ -45,6 +45,7 @@ base64 = "0.22"
 async-trait = "0.1"
 sha2 = "0.10"
 hex = "0.4"
+aes-gcm = "0.10"
 
 [dev-dependencies]
 tokio-test = "0.4"

@@ -22,6 +22,8 @@ pub enum UpstreamProvider {
     Anthropic,
     /// Gonka OpenAI-compatible inference provider.
     Gonka,
+    /// Generic OpenAI-compatible inference provider, including `LiteLLM` proxy.
+    OpenAICompatible,
 }
 
 impl UpstreamProvider {
@@ -31,6 +33,9 @@ impl UpstreamProvider {
         match s.to_lowercase().as_str() {
             "anthropic" | "claude" => Some(Self::Anthropic),
             "gonka" => Some(Self::Gonka),
+            "openai" | "openai-compatible" | "openai_like" | "litellm" => {
+                Some(Self::OpenAICompatible)
+            }
             _ => None,
         }
     }
@@ -153,6 +158,9 @@ pub struct Config {
     pub gonka_source_url: String,
     /// Default Gonka model used when requests omit `model`.
     pub gonka_model: String,
+    /// Generic OpenAI-compatible provider config for `LiteLLM` and similar
+    /// gateways.
+    pub openai_compatible: crate::providers::OpenAICompatibleConfig,
     /// Public base URL used for `ActivityPub` actor and collection IDs.
     pub activitypub_actor_base_url: String,
     /// Public key PEM advertised on the `ActivityPub` actor.
@@ -214,6 +222,25 @@ impl Config {
         let gonka_source_url =
             env::var("GONKA_SOURCE_URL").unwrap_or_else(|_| default_gonka_source_url());
         let gonka_model = env::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
+        let openai_compatible = crate::providers::OpenAICompatibleConfig {
+            provider_name: env::var("OPENAI_COMPATIBLE_PROVIDER_NAME")
+                .unwrap_or_else(|_| "litellm".to_string()),
+            base_url: env::var("OPENAI_COMPATIBLE_BASE_URL")
+                .unwrap_or_else(|_| default_openai_compatible_base_url()),
+            api_key: env::var("OPENAI_COMPATIBLE_API_KEY")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            api_key_env: env::var("OPENAI_COMPATIBLE_API_KEY_ENV")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            default_model: env::var("OPENAI_COMPATIBLE_MODEL")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            models: env::var("OPENAI_COMPATIBLE_MODELS")
+                .ok()
+                .map(|raw| parse_csv(&raw))
+                .unwrap_or_default(),
+        };
         let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
             .unwrap_or_else(|_| format!("http://{host}:{port}"));
         let activitypub_public_key_pem = env::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
@@ -265,6 +292,7 @@ impl Config {
             gonka_private_key,
             gonka_source_url,
             gonka_model,
+            openai_compatible,
             activitypub_actor_base_url,
             activitypub_public_key_pem,
             enable_openai_api,
@@ -312,6 +340,7 @@ impl Config {
             gonka_private_key: args.gonka_private_key.filter(|s| !s.is_empty()),
             gonka_source_url: args.gonka_source_url.trim_end_matches('/').to_string(),
             gonka_model: args.gonka_model,
+            openai_compatible: args.openai_compatible,
             activitypub_actor_base_url: args
                 .activitypub_actor_base_url
                 .trim_end_matches('/')
@@ -345,6 +374,7 @@ pub struct BuildArgs<'a> {
     pub gonka_private_key: Option<String>,
     pub gonka_source_url: String,
     pub gonka_model: String,
+    pub openai_compatible: crate::providers::OpenAICompatibleConfig,
     pub activitypub_actor_base_url: String,
     pub activitypub_public_key_pem: String,
     pub enable_openai_api: bool,
@@ -395,6 +425,33 @@ pub fn default_gonka_source_url() -> String {
 #[must_use]
 pub fn default_gonka_model() -> String {
     "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8".to_string()
+}
+
+/// Default OpenAI-compatible provider base URL.
+#[must_use]
+pub fn default_openai_compatible_base_url() -> String {
+    "http://localhost:4000/v1".to_string()
+}
+
+/// Default OpenAI-compatible provider boot config.
+#[must_use]
+pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleConfig {
+    crate::providers::OpenAICompatibleConfig {
+        provider_name: "litellm".to_string(),
+        base_url: default_openai_compatible_base_url(),
+        api_key: None,
+        api_key_env: None,
+        default_model: None,
+        models: Vec::new(),
+    }
+}
+
+fn parse_csv(raw: &str) -> Vec<String> {
+    raw.split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(ToString::to_string)
+        .collect()
 }
 
 /// Errors that can occur during configuration loading.
@@ -454,6 +511,7 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
@@ -532,6 +590,7 @@ mod tests {
             gonka_private_key: private_key.map(str::to_string),
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
@@ -562,6 +621,7 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
             enable_openai_api: true,
