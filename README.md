@@ -15,14 +15,15 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
-- **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to and from Anthropic Messages
+- **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
+- **Optional LiteLLM/OpenAI-compatible upstream** — `UPSTREAM_PROVIDER=openai-compatible` routes OpenAI SDK traffic to a stored provider such as LiteLLM
 - **Multi-account routing** — pool any number of Claude MAX accounts; round-robin / priority / least-used; automatic cooldowns on 429
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
 - **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
-- **First-class CLI** — `serve`, `tokens issue|list|revoke|expire|show`, `accounts list`, `doctor` subcommands
+- **First-class CLI** — `serve`, `tokens issue|list|revoke|expire|show`, `providers add|list|show|remove|import`, `accounts list`, `doctor` subcommands
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
 
@@ -46,6 +47,12 @@ When `UPSTREAM_PROVIDER=gonka`, clients still authenticate to the router with
 `Authorization: Bearer la_sk_...`, but upstream OpenAI-compatible requests are
 sent to Gonka with Gonka signing headers instead of the client token. This
 project remains Link.Assistant.Router; Gonka is an optional backend.
+
+When `UPSTREAM_PROVIDER=openai-compatible`, clients still authenticate to the
+router with `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...`. The
+router forwards OpenAI-compatible requests to the configured provider, such as
+a LiteLLM proxy, and substitutes only the upstream provider key inside the
+router.
 
 ## Quick Start
 
@@ -202,6 +209,8 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 | `/api/tokens` | POST | Issue a new custom token |
 | `/api/tokens/list` | GET | (admin) List every persisted token |
 | `/api/tokens/revoke` | POST | (admin) Revoke a token by id |
+| `/api/providers` | GET/POST | (admin) List or upsert OpenAI-compatible upstream providers |
+| `/api/providers/{name}` | GET/DELETE | (admin) Show or delete one provider |
 
 ### Anthropic surface (`--disable-anthropic-api` to opt out)
 
@@ -218,15 +227,21 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages |
-| `/v1/responses` | POST | Responses API, translated to Anthropic Messages |
-| `/v1/models` | GET | OpenAI-shaped model list (Claude IDs) |
+| `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
+| `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
+| `/v1/models` | GET | OpenAI-shaped model list |
 
 `gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families auto-map to the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged.
 
 With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
 forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
 request omits `model`, the router uses `GONKA_MODEL`.
+
+With `UPSTREAM_PROVIDER=openai-compatible`, the same routes forward JSON to the
+configured provider. This supports LiteLLM proxy deployments by setting the
+provider base URL to the LiteLLM `/v1` API base. Streaming OpenAI requests are
+passed through for OpenAI-compatible providers, and Anthropic-backed streaming
+requests are translated to OpenAI SSE chunks.
 
 ### MPP charges for OpenAI endpoints
 
@@ -288,9 +303,9 @@ Issue a new custom JWT token.
 
 Any request to `/api/latest/anthropic/*` is forwarded to the upstream Anthropic API. The proxy:
 
-- Validates the `Authorization: Bearer la_sk_...` token
+- Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
 - Replaces it with the real OAuth token
-- Forwards all headers (except `host`, `authorization`, `connection`, `transfer-encoding`)
+- Forwards all headers (except `host`, `authorization`, `x-api-key`, `connection`, `transfer-encoding`)
 - Passes through the request body unmodified
 - Streams back the response (SSE-compatible)
 - Preserves the upstream status code and response headers
@@ -315,7 +330,21 @@ Any request to `/api/latest/anthropic/*` is forwarded to the upstream Anthropic 
 
 ## Configuration
 
-Configuration is read from CLI flags, environment variables, and an optional `.lenv` file (loaded automatically by `lino-arguments` if present in the working directory). Any flag listed in `--help` has an env-var alias and a `.lenv` key with the same name (e.g. `--token-secret` ⇔ `TOKEN_SECRET` ⇔ `token-secret = ...`).
+Configuration is read by `lino-arguments` in this order: CLI flags,
+environment variables, `.lenv`, then `.env`. The default file format is
+Lino-style key/value notation:
+
+```text
+TOKEN_SECRET: your-router-token-secret
+UPSTREAM_PROVIDER: openai-compatible
+OPENAI_COMPATIBLE_PROVIDER_NAME: litellm
+OPENAI_COMPATIBLE_BASE_URL: http://litellm:4000/v1
+OPENAI_COMPATIBLE_MODEL: claude-sonnet
+OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
+```
+
+Every flag listed in `--help` has an env-var alias and can be configured from
+`.lenv` with the same env-var key.
 
 ### Core
 
@@ -325,7 +354,7 @@ Configuration is read from CLI flags, environment variables, and an optional `.l
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
-| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic` or `gonka` |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `gonka`, or `openai-compatible` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
@@ -353,6 +382,74 @@ GONKA_MODEL=Qwen/Qwen3-235B-A22B-Instruct-2507-FP8
 Your Gonka account must be activated for inference, funded, and have a
 published on-chain public key. Participant registration is only needed for
 hosting.
+
+### OpenAI-compatible / LiteLLM provider
+
+Generic OpenAI-compatible providers are used when
+`UPSTREAM_PROVIDER=openai-compatible`. The boot-time config can come from
+`.lenv`, env vars, or CLI flags:
+
+```text
+TOKEN_SECRET: your-router-token-secret
+UPSTREAM_PROVIDER: openai-compatible
+OPENAI_COMPATIBLE_PROVIDER_NAME: litellm
+OPENAI_COMPATIBLE_BASE_URL: http://litellm:4000/v1
+OPENAI_COMPATIBLE_API_KEY_ENV: LITELLM_MASTER_KEY
+OPENAI_COMPATIBLE_MODEL: claude-sonnet
+OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
+```
+
+| Flag / env | Default | Required | Description |
+|---|---|---|---|
+| `--openai-compatible-provider-name` / `OPENAI_COMPATIBLE_PROVIDER_NAME` | `litellm` | No | Stored provider name to resolve |
+| `--openai-compatible-base-url` / `OPENAI_COMPATIBLE_BASE_URL` | `http://localhost:4000/v1` | No | Upstream OpenAI-compatible `/v1` API base |
+| `--openai-compatible-api-key` / `OPENAI_COMPATIBLE_API_KEY` | — | No | Inline upstream key; prefer persisted provider storage for long-lived secrets |
+| `--openai-compatible-api-key-env` / `OPENAI_COMPATIBLE_API_KEY_ENV` | — | No | Environment variable containing the upstream key |
+| `--openai-compatible-model` / `OPENAI_COMPATIBLE_MODEL` | — | No | Default model injected when requests omit `model` |
+| `--openai-compatible-models` / `OPENAI_COMPATIBLE_MODELS` | — | No | Comma-separated models exposed from `/v1/models` |
+
+Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
+provider API keys are encrypted with AES-GCM using a key derived from
+`TOKEN_SECRET`; API responses and CLI output only show whether a stored key is
+present.
+
+```bash
+link-assistant-router providers add \
+  --name litellm \
+  --base-url http://litellm:4000/v1 \
+  --model claude-sonnet \
+  --models claude-sonnet,gpt-4o \
+  --api-key "$LITELLM_MASTER_KEY"
+
+link-assistant-router providers list
+link-assistant-router providers show litellm
+link-assistant-router providers remove litellm
+```
+
+Provider records can also be imported from JSON, provider-store `.lenv`, or an
+indented Links-style config:
+
+```text
+litellm
+  kind "openai-compatible"
+  base-url "http://litellm:4000/v1"
+  model "claude-sonnet"
+  models "claude-sonnet,gpt-4o"
+  api-key-env "LITELLM_MASTER_KEY"
+```
+
+The HTTP API accepts the same shape at `POST /api/providers`:
+
+```json
+{
+  "name": "litellm",
+  "kind": "openai-compatible",
+  "base_url": "http://litellm:4000/v1",
+  "default_model": "claude-sonnet",
+  "models": ["claude-sonnet", "gpt-4o"],
+  "api_key_env": "LITELLM_MASTER_KEY"
+}
+```
 
 ### Routing & storage
 
@@ -393,6 +490,11 @@ link-assistant-router tokens show <id>
 
 # Inspect configured accounts:
 link-assistant-router accounts list
+
+# Manage OpenAI-compatible upstream providers:
+link-assistant-router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
+link-assistant-router providers import providers.lenv
+link-assistant-router providers list
 
 # Print resolved configuration + credential / store probes:
 link-assistant-router doctor
@@ -554,7 +656,7 @@ cargo test
 
 This runs:
 - **Unit tests** in every module under `src/` (44 tests covering config, oauth, token, storage, accounts, openai, metrics, cli)
-- **Integration tests** in `tests/integration_test.rs` (39 tests covering API path routing, OpenAI translation, metrics rendering, and CLI parsing)
+- **Integration tests** in `tests/integration_test.rs` cover API path routing, OpenAI translation, metrics rendering, and CLI parsing
 
 ### Run specific test suites
 
@@ -666,6 +768,7 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   ├── oauth.rs              # Claude Code OAuth credential reader
 │   ├── accounts.rs           # Multi-account router (round-robin/priority/least-used + cooldowns)
 │   ├── storage.rs            # Persistent token store (text Lino + binary backends)
+│   ├── providers.rs          # OpenAI-compatible provider store + encrypted secrets
 │   ├── proxy.rs              # Transparent API proxy with token swap, OpenAI shim, ops endpoints
 │   ├── openai.rs             # OpenAI <-> Anthropic translation helpers
 │   ├── metrics.rs            # Atomic counters, Prometheus rendering, JSON snapshots

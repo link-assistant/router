@@ -18,10 +18,12 @@ use axum::routing::{get, post};
 use axum::Router;
 use link_assistant_router::accounts::{AccountRouter, SelectionStrategy};
 use link_assistant_router::activitypub;
-use link_assistant_router::cli::{AccountOp, Cli, Command, TokenOp};
+use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::metrics::Metrics;
 use link_assistant_router::oauth::OAuthProvider;
+use link_assistant_router::provider_proxy;
+use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::{self, AppState};
 use link_assistant_router::storage::{build_token_store, TokenStore};
 use link_assistant_router::token::TokenManager;
@@ -65,6 +67,7 @@ async fn main() -> ExitCode {
         },
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
+        Some(Command::Providers { op }) => run_providers(&config, op),
         Some(Command::Doctor) => run_doctor(&config),
     }
 }
@@ -135,6 +138,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     let token_manager = TokenManager::with_store(&config.token_secret, store);
     let oauth_provider = OAuthProvider::new(&config.claude_code_home);
     let metrics = Arc::new(Metrics::default());
+    let provider_store = ProviderStore::open(&config.data_dir, &config.token_secret)?;
 
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -152,6 +156,8 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             &config.gonka_source_url,
             config.gonka_model.clone(),
         ),
+        openai_compatible: config.openai_compatible.clone(),
+        provider_store,
         logger,
         admin_key: config.admin_key.clone(),
         metrics: Arc::clone(&metrics),
@@ -172,7 +178,15 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         )
         .route("/api/tokens", post(proxy::issue_token))
         .route("/api/tokens/list", get(proxy::list_tokens))
-        .route("/api/tokens/revoke", post(proxy::revoke_token));
+        .route("/api/tokens/revoke", post(proxy::revoke_token))
+        .route(
+            "/api/providers",
+            get(provider_proxy::list_providers).post(provider_proxy::upsert_provider),
+        )
+        .route(
+            "/api/providers/{name}",
+            get(provider_proxy::show_provider).delete(provider_proxy::delete_provider),
+        );
 
     if config.enable_anthropic_api {
         app = app
@@ -317,10 +331,126 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
     }
 }
 
+fn run_providers(config: &Config, op: &ProviderOp) -> ExitCode {
+    let store = match ProviderStore::open(&config.data_dir, &config.token_secret) {
+        Ok(store) => store,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    match op {
+        ProviderOp::List => match store.list_redacted() {
+            Ok(records) => {
+                println!(
+                    "{:<20}  {:<18}  {:<32}  {:<10}  default_model",
+                    "name", "kind", "base_url", "enabled"
+                );
+                for record in records {
+                    println!(
+                        "{:<20}  {:<18}  {:<32}  {:<10}  {}",
+                        record.name,
+                        record.kind.as_str(),
+                        record.base_url,
+                        record.enabled,
+                        record.default_model.unwrap_or_default()
+                    );
+                }
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        ProviderOp::Add {
+            name,
+            kind,
+            base_url,
+            model,
+            models,
+            api_key,
+            api_key_env,
+            enabled,
+        } => {
+            let input = ProviderUpsert {
+                name: name.clone(),
+                kind: Some(kind.clone()),
+                base_url: base_url.clone(),
+                default_model: model.clone(),
+                models: Some(models.clone()),
+                api_key: api_key.clone(),
+                api_key_env: api_key_env.clone(),
+                encrypted_api_key: None,
+                enabled: Some(*enabled),
+            };
+            match store.upsert(input) {
+                Ok(record) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&record.redacted()).unwrap_or_default()
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        ProviderOp::Show { name } => match store.get(name) {
+            Ok(Some(record)) => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&record.redacted()).unwrap_or_default()
+                );
+                ExitCode::SUCCESS
+            }
+            Ok(None) => {
+                eprintln!("not found: {name}");
+                ExitCode::from(2)
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        ProviderOp::Remove { name } => match store.delete(name) {
+            Ok(true) => {
+                println!("removed {name}");
+                ExitCode::SUCCESS
+            }
+            Ok(false) => {
+                eprintln!("not found: {name}");
+                ExitCode::from(2)
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        ProviderOp::Import { path } => match store.import_file(path) {
+            Ok(count) => {
+                println!("imported {count} provider(s)");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+    }
+}
+
 fn run_doctor(config: &Config) -> ExitCode {
     println!("Link.Assistant.Router v{}", link_assistant_router::VERSION);
     println!("listen_addr            : {}", config.listen_addr);
     println!("upstream_base_url      : {}", config.upstream_base_url);
+    println!("upstream_provider      : {:?}", config.upstream_provider);
+    println!(
+        "openai_provider        : {} ({})",
+        config.openai_compatible.provider_name, config.openai_compatible.base_url
+    );
     println!("claude_code_home       : {}", config.claude_code_home);
     println!("routing_mode           : {:?}", config.routing_mode);
     println!("storage_policy         : {:?}", config.storage_policy);
@@ -399,6 +529,12 @@ fn run_doctor(config: &Config) -> ExitCode {
             if p.exists() { "present" } else { "<empty>" }
         );
     }
+    let p = config.data_dir.join("providers.lenv");
+    println!(
+        "provider store         : {} ({})",
+        p.display(),
+        if p.exists() { "present" } else { "<empty>" }
+    );
 
     ExitCode::SUCCESS
 }

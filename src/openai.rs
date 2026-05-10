@@ -18,10 +18,8 @@
 //!   response (whether streamed SSE chunks or a buffered JSON body) to
 //!   the `OpenAI` Chat Completions response shape.
 //!
-//! For streaming we don't reformat each SSE chunk in this PR — that's a
-//! follow-up; instead we buffer-and-emit, which preserves correctness at
-//! the cost of latency. The translation primitives below are unit-tested
-//! so the streaming pipeline can be added without re-deriving the schema.
+//! Streaming Anthropic SSE responses are translated incrementally into the
+//! matching `OpenAI` Chat Completions or Responses SSE event shape.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -315,6 +313,276 @@ pub fn anthropic_to_response(anthropic: &Value, requested_model: &str) -> Value 
         ],
         "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
     })
+}
+
+/// OpenAI-compatible stream response shape to emit while translating
+/// Anthropic SSE events.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OpenAIStreamShape {
+    ChatCompletion,
+    Response,
+}
+
+/// Incremental Anthropic SSE to `OpenAI` SSE translator.
+#[derive(Debug, Clone)]
+pub struct OpenAIStreamTranslator {
+    shape: OpenAIStreamShape,
+    requested_model: String,
+    id: String,
+    created: i64,
+    buffer: String,
+    sent_chat_role: bool,
+    sent_response_created: bool,
+    sent_final: bool,
+}
+
+impl OpenAIStreamTranslator {
+    /// Create a stream translator for one upstream request.
+    #[must_use]
+    pub fn new(shape: OpenAIStreamShape, requested_model: &str) -> Self {
+        let prefix = match shape {
+            OpenAIStreamShape::ChatCompletion => "chatcmpl",
+            OpenAIStreamShape::Response => "resp",
+        };
+        Self {
+            shape,
+            requested_model: requested_model.to_string(),
+            id: format!("{prefix}-{}", uuid::Uuid::new_v4()),
+            created: chrono::Utc::now().timestamp(),
+            buffer: String::new(),
+            sent_chat_role: false,
+            sent_response_created: false,
+            sent_final: false,
+        }
+    }
+
+    /// Push raw upstream bytes and return zero or more `OpenAI` SSE frames.
+    pub fn push(&mut self, chunk: &[u8]) -> Vec<String> {
+        self.buffer.push_str(&String::from_utf8_lossy(chunk));
+        let mut frames = Vec::new();
+        while let Some((idx, separator_len)) = find_sse_separator(&self.buffer) {
+            let block = self.buffer[..idx].to_string();
+            self.buffer.drain(..idx + separator_len);
+            frames.extend(self.translate_block(&block));
+        }
+        frames
+    }
+
+    fn translate_block(&mut self, block: &str) -> Vec<String> {
+        let data = extract_sse_data(block);
+        if data.is_empty() {
+            return Vec::new();
+        }
+        if data == "[DONE]" {
+            self.sent_final = true;
+            return vec![done_frame()];
+        }
+        let Ok(event) = serde_json::from_str::<Value>(&data) else {
+            return Vec::new();
+        };
+        match self.shape {
+            OpenAIStreamShape::ChatCompletion => self.translate_chat_event(&event),
+            OpenAIStreamShape::Response => self.translate_response_event(&event),
+        }
+    }
+
+    fn translate_chat_event(&mut self, event: &Value) -> Vec<String> {
+        match event.get("type").and_then(Value::as_str) {
+            Some("message_start") => {
+                if let Some(id) = event
+                    .get("message")
+                    .and_then(|m| m.get("id"))
+                    .and_then(Value::as_str)
+                {
+                    self.id = format!("chatcmpl-{id}");
+                }
+                self.sent_chat_role = true;
+                vec![self.chat_frame(&json!({"role": "assistant"}), None)]
+            }
+            Some("content_block_start") => {
+                let block = event.get("content_block").unwrap_or(&Value::Null);
+                if block.get("type").and_then(Value::as_str) != Some("tool_use") {
+                    return Vec::new();
+                }
+                self.sent_chat_role = true;
+                let index = event.get("index").and_then(Value::as_u64).unwrap_or(0);
+                let id = block.get("id").and_then(Value::as_str).unwrap_or("");
+                let name = block.get("name").and_then(Value::as_str).unwrap_or("");
+                vec![self.chat_frame(
+                    &json!({
+                        "tool_calls": [{
+                            "index": index,
+                            "id": id,
+                            "type": "function",
+                            "function": {"name": name, "arguments": ""}
+                        }]
+                    }),
+                    None,
+                )]
+            }
+            Some("content_block_delta") => {
+                let delta = event.get("delta").unwrap_or(&Value::Null);
+                match delta.get("type").and_then(Value::as_str) {
+                    Some("text_delta") => {
+                        let text = delta.get("text").and_then(Value::as_str).unwrap_or("");
+                        let mut payload = json!({"content": text});
+                        if !self.sent_chat_role {
+                            payload["role"] = Value::String("assistant".into());
+                            self.sent_chat_role = true;
+                        }
+                        vec![self.chat_frame(&payload, None)]
+                    }
+                    Some("input_json_delta") => {
+                        let partial = delta
+                            .get("partial_json")
+                            .and_then(Value::as_str)
+                            .unwrap_or("");
+                        let index = event.get("index").and_then(Value::as_u64).unwrap_or(0);
+                        vec![self.chat_frame(
+                            &json!({
+                                "tool_calls": [{
+                                    "index": index,
+                                    "function": {"arguments": partial}
+                                }]
+                            }),
+                            None,
+                        )]
+                    }
+                    _ => Vec::new(),
+                }
+            }
+            Some("message_delta") => event
+                .get("delta")
+                .and_then(|d| d.get("stop_reason"))
+                .and_then(Value::as_str)
+                .map_or_else(Vec::new, |reason| {
+                    self.sent_final = true;
+                    vec![self.chat_frame(&json!({}), Some(map_finish_reason(reason)))]
+                }),
+            Some("message_stop") => {
+                let mut frames = Vec::new();
+                if !self.sent_final {
+                    frames.push(self.chat_frame(&json!({}), Some("stop")));
+                    self.sent_final = true;
+                }
+                frames.push(done_frame());
+                frames
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    fn translate_response_event(&mut self, event: &Value) -> Vec<String> {
+        match event.get("type").and_then(Value::as_str) {
+            Some("message_start") => {
+                if let Some(id) = event
+                    .get("message")
+                    .and_then(|m| m.get("id"))
+                    .and_then(Value::as_str)
+                {
+                    self.id = format!("resp-{id}");
+                }
+                self.sent_response_created = true;
+                vec![sse_frame(&json!({
+                    "type": "response.created",
+                    "response": self.response_object("in_progress", "")
+                }))]
+            }
+            Some("content_block_delta") => {
+                if !self.sent_response_created {
+                    self.sent_response_created = true;
+                }
+                let delta = event.get("delta").unwrap_or(&Value::Null);
+                if delta.get("type").and_then(Value::as_str) != Some("text_delta") {
+                    return Vec::new();
+                }
+                let text = delta.get("text").and_then(Value::as_str).unwrap_or("");
+                vec![sse_frame(&json!({
+                    "type": "response.output_text.delta",
+                    "response_id": self.id,
+                    "item_id": format!("msg-{}", self.id),
+                    "output_index": 0,
+                    "content_index": 0,
+                    "delta": text
+                }))]
+            }
+            Some("message_stop") => {
+                self.sent_final = true;
+                vec![
+                    sse_frame(&json!({
+                        "type": "response.completed",
+                        "response": self.response_object("completed", "")
+                    })),
+                    done_frame(),
+                ]
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    fn chat_frame(&self, delta: &Value, finish_reason: Option<&str>) -> String {
+        sse_frame(&json!({
+            "id": self.id,
+            "object": "chat.completion.chunk",
+            "created": self.created,
+            "model": self.requested_model,
+            "choices": [{
+                "index": 0,
+                "delta": delta,
+                "finish_reason": finish_reason
+            }]
+        }))
+    }
+
+    fn response_object(&self, status: &str, text: &str) -> Value {
+        json!({
+            "id": self.id,
+            "object": "response",
+            "created_at": self.created,
+            "model": self.requested_model,
+            "status": status,
+            "output": [{
+                "type": "message",
+                "role": "assistant",
+                "content": [{"type": "output_text", "text": text}]
+            }]
+        })
+    }
+}
+
+fn find_sse_separator(buffer: &str) -> Option<(usize, usize)> {
+    buffer
+        .find("\r\n\r\n")
+        .map(|idx| (idx, 4))
+        .or_else(|| buffer.find("\n\n").map(|idx| (idx, 2)))
+}
+
+fn extract_sse_data(block: &str) -> String {
+    block
+        .lines()
+        .filter_map(|line| {
+            line.trim_end_matches('\r')
+                .strip_prefix("data:")
+                .map(str::trim_start)
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn sse_frame(value: &Value) -> String {
+    format!("data: {value}\n\n")
+}
+
+fn done_frame() -> String {
+    "data: [DONE]\n\n".to_string()
+}
+
+fn map_finish_reason(reason: &str) -> &'static str {
+    match reason {
+        "max_tokens" => "length",
+        "tool_use" => "tool_calls",
+        _ => "stop",
+    }
 }
 
 /// Map common OpenAI-style model aliases to Anthropic model IDs.
@@ -648,6 +916,56 @@ mod tests {
         let out = anthropic_to_response(&resp, "gpt-4o");
         assert_eq!(out["object"], "response");
         assert_eq!(out["output"][0]["content"][0]["text"], "line1");
+    }
+
+    #[test]
+    fn translates_anthropic_text_stream_to_openai_chat_chunks() {
+        let mut translator =
+            OpenAIStreamTranslator::new(OpenAIStreamShape::ChatCompletion, "gpt-4o");
+        let frames = translator.push(
+            br#"event: message_start
+data: {"type":"message_start","message":{"id":"msg_1"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+"#,
+        );
+        let joined = frames.join("");
+        assert!(joined.contains("\"object\":\"chat.completion.chunk\""));
+        assert!(joined.contains("\"role\":\"assistant\""));
+        assert!(joined.contains("\"content\":\"hello\""));
+        assert!(joined.contains("\"finish_reason\":\"stop\""));
+        assert!(joined.contains("data: [DONE]"));
+    }
+
+    #[test]
+    fn translates_anthropic_text_stream_to_openai_response_events() {
+        let mut translator = OpenAIStreamTranslator::new(OpenAIStreamShape::Response, "gpt-4o");
+        let frames = translator.push(
+            br#"event: message_start
+data: {"type":"message_start","message":{"id":"msg_1"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+"#,
+        );
+        let joined = frames.join("");
+        assert!(joined.contains("\"type\":\"response.created\""));
+        assert!(joined.contains("\"type\":\"response.output_text.delta\""));
+        assert!(joined.contains("\"delta\":\"hello\""));
+        assert!(joined.contains("\"type\":\"response.completed\""));
+        assert!(joined.contains("data: [DONE]"));
     }
 
     #[test]
