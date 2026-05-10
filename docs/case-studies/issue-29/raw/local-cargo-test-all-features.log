@@ -1,0 +1,336 @@
+       Fresh unicode-ident v1.0.22
+       Fresh pin-project-lite v0.2.16
+       Fresh itoa v1.0.17
+       Fresh proc-macro2 v1.0.103
+       Fresh once_cell v1.21.4
+       Fresh futures-core v0.3.32
+       Fresh bytes v1.11.0
+       Fresh quote v1.0.42
+       Fresh libc v0.2.183
+       Fresh shlex v1.3.0
+       Fresh cfg-if v1.0.4
+       Fresh find-msvc-tools v0.1.9
+       Fresh log v0.4.29
+       Fresh syn v2.0.111
+       Fresh errno v0.3.14
+       Fresh cc v1.2.57
+       Fresh stable_deref_trait v1.2.1
+       Fresh mio v1.1.1
+       Fresh socket2 v0.6.3
+       Fresh synstructure v0.13.2
+       Fresh tokio-macros v2.6.0
+       Fresh signal-hook-registry v1.4.8
+       Fresh tracing-core v0.1.36
+       Fresh zerovec-derive v0.11.2
+       Fresh zerofrom-derive v0.1.6
+       Fresh yoke-derive v0.8.1
+       Fresh tokio v1.48.0
+       Fresh displaydoc v0.2.5
+       Fresh tracing-attributes v0.1.31
+       Fresh zerofrom v0.1.6
+       Fresh serde_core v1.0.228
+       Fresh tracing v0.1.44
+       Fresh http v1.4.0
+       Fresh smallvec v1.15.1
+       Fresh yoke v0.8.1
+       Fresh pkg-config v0.3.32
+       Fresh vcpkg v0.2.15
+       Fresh serde_derive v1.0.228
+       Fresh slab v0.4.12
+       Fresh zerovec v0.11.5
+       Fresh serde v1.0.228
+       Fresh http-body v1.0.1
+       Fresh litemap v0.8.1
+       Fresh writeable v0.6.2
+       Fresh tinystr v0.8.2
+       Fresh bitflags v2.11.0
+       Fresh autocfg v1.5.0
+       Fresh potential_utf v0.1.4
+       Fresh zerotrie v0.2.3
+       Fresh icu_locale_core v2.1.1
+       Fresh futures-macro v0.3.32
+       Fresh equivalent v1.0.2
+       Fresh futures-task v0.3.32
+       Fresh futures-sink v0.3.32
+       Fresh percent-encoding v2.3.2
+       Fresh hashbrown v0.16.1
+       Fresh tower-service v0.3.3
+       Fresh version_check v0.9.5
+       Fresh indexmap v2.13.0
+       Fresh tokio-util v0.7.18
+       Fresh futures-util v0.3.32
+       Fresh icu_provider v2.1.1
+       Fresh icu_collections v2.1.1
+       Fresh fnv v1.0.7
+       Fresh base64 v0.22.1
+       Fresh try-lock v0.2.5
+       Fresh foreign-types-shared v0.1.1
+       Fresh atomic-waker v1.1.2
+       Fresh want v0.3.1
+       Fresh icu_normalizer_data v2.1.1
+       Fresh h2 v0.4.13
+       Fresh foreign-types v0.3.2
+       Fresh httparse v1.10.1
+       Fresh num-traits v0.2.19
+       Fresh icu_properties_data v2.1.2
+       Fresh zmij v1.0.21
+       Fresh openssl-sys v0.9.112
+       Fresh openssl-macros v0.1.1
+       Fresh sync_wrapper v1.0.2
+       Fresh futures-channel v0.3.32
+       Fresh pin-utils v0.1.0
+       Fresh httpdate v1.0.3
+       Fresh utf8parse v0.2.2
+       Fresh typenum v1.20.0
+       Fresh memchr v2.8.0
+       Fresh tower-layer v0.3.3
+       Fresh generic-array v0.14.7
+       Fresh anstyle-parse v0.2.7
+       Fresh serde_json v1.0.149
+       Fresh hyper v1.8.1
+       Fresh openssl v0.10.76
+       Fresh icu_properties v2.1.2
+       Fresh icu_normalizer v2.1.1
+       Fresh form_urlencoded v1.2.2
+       Fresh http-body-util v0.1.3
+       Fresh powerfmt v0.2.0
+       Fresh num-conv v0.2.0
+       Fresh ipnet v2.12.0
+       Fresh time-core v0.1.8
+       Fresh openssl-probe v0.2.1
+       Fresh is_terminal_polyfill v1.70.2
+       Fresh colorchoice v1.0.5
+       Fresh anstyle-query v1.1.5
+       Fresh anstyle v1.0.14
+       Fresh native-tls v0.2.18
+       Fresh time-macros v0.2.27
+       Fresh hyper-util v0.1.20
+       Fresh anstream v0.6.21
+       Fresh idna_adapter v1.2.1
+       Fresh deranged v0.5.8
+       Fresh tower v0.5.3
+       Fresh num-integer v0.1.46
+       Fresh thiserror-impl v2.0.18
+       Fresh utf8_iter v1.0.4
+       Fresh ryu v1.0.23
+       Fresh regex-syntax v0.8.10
+       Fresh clap_lex v1.1.0
+       Fresh mime v0.3.17
+       Fresh heck v0.5.0
+       Fresh strsim v0.11.1
+       Fresh dtor-proc-macro v0.0.5
+       Fresh dtor v0.0.6
+       Fresh clap_builder v4.5.60
+       Fresh clap_derive v4.5.55
+       Fresh idna v1.1.0
+       Fresh regex-automata v0.4.14
+       Fresh serde_urlencoded v0.7.1
+       Fresh thiserror v2.0.18
+       Fresh num-bigint v0.4.6
+       Fresh getrandom v0.4.2
+       Fresh time v0.3.47
+       Fresh tokio-native-tls v0.3.1
+       Fresh crypto-common v0.1.7
+       Fresh block-buffer v0.10.4
+       Fresh thiserror-impl v1.0.69
+       Fresh getrandom v0.2.17
+       Fresh zeroize v1.8.2
+       Fresh untrusted v0.9.0
+       Fresh lazy_static v1.5.0
+       Fresh iri-string v0.7.10
+       Fresh ctor-proc-macro v0.0.6
+       Fresh rustls-pki-types v1.14.0
+       Fresh thiserror v1.0.69
+       Fresh sharded-slab v0.1.7
+       Fresh ctor v0.4.3
+       Fresh tower-http v0.6.8
+       Fresh ring v0.17.14
+       Fresh hyper-tls v0.6.0
+       Fresh digest v0.10.7
+       Fresh simple_asn1 v0.6.4
+       Fresh url v2.5.8
+       Fresh clap v4.5.60
+       Fresh matchers v0.2.0
+       Fresh axum-core v0.5.6
+       Fresh pem v3.0.6
+       Fresh tracing-serde v0.2.0
+       Fresh serde_path_to_error v0.1.20
+       Fresh tracing-log v0.2.0
+       Fresh axum-macros v0.5.0
+       Fresh thread_local v1.1.9
+       Fresh encoding_rs v0.8.35
+       Fresh nu-ansi-term v0.50.3
+       Fresh dotenvy v0.15.7
+       Fresh matchit v0.8.4
+       Fresh lino-env v0.1.0
+       Fresh cpufeatures v0.2.17
+       Fresh iana-time-zone v0.1.65
+       Fresh sha2 v0.10.9
+       Fresh axum v0.8.8
+       Fresh lino-arguments v0.3.0
+       Fresh tracing-subscriber v0.3.23
+       Fresh chrono v0.4.44
+       Fresh reqwest v0.12.28
+       Fresh jsonwebtoken v9.3.1
+       Fresh uuid v1.22.0
+       Fresh async-stream-impl v0.3.6
+       Fresh async-trait v0.1.89
+       Fresh hex v0.4.3
+       Fresh log-lazy v0.1.0
+       Fresh linux-raw-sys v0.12.1
+       Fresh async-stream v0.3.6
+       Fresh tokio-stream v0.1.17
+       Fresh fastrand v2.3.0
+       Fresh rustix v1.1.4
+       Fresh tokio-test v0.4.4
+       Fresh tempfile v3.27.0
+   Compiling link-assistant-router v0.15.0 (/tmp/gh-issue-solver-1778403055894)
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name basic_usage --edition=2021 examples/basic_usage.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --forbid=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=d2d1c61245d9f23a -C extra-filename=-43d85966cfe79686 --out-dir /tmp/gh-issue-solver-1778403055894/target/debug/examples -C incremental=/tmp/gh-issue-solver-1778403055894/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1778403055894/target/debug/deps --extern async_trait=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libasync_trait-d81cb14f17b3b982.so --extern axum=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libaxum-ee6ac8f119450992.rlib --extern base64=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libbase64-93d13499e98064b8.rlib --extern bytes=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libbytes-c16680b345da9927.rlib --extern chrono=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libchrono-cd4090a17da8c72b.rlib --extern clap=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libclap-4bd315e055bc398b.rlib --extern futures_util=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libfutures_util-50f3692159fb7f71.rlib --extern hex=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhex-1558f6adc06e3fa8.rlib --extern http=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhttp-f74a37e85b630cab.rlib --extern http_body_util=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhttp_body_util-340957a6fbbdf94d.rlib --extern hyper=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhyper-40e0c501fbd4c0cd.rlib --extern hyper_util=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhyper_util-138cd546a309cbe4.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libjsonwebtoken-b8a9d8a407c529b4.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1778403055894/target/debug/deps/liblink_assistant_router-d7263a69ec0fff9e.rlib --extern lino_arguments=/tmp/gh-issue-solver-1778403055894/target/debug/deps/liblino_arguments-093c8c66c8b22004.rlib --extern log_lazy=/tmp/gh-issue-solver-1778403055894/target/debug/deps/liblog_lazy-6d1b0e3fb7d3d64a.rlib --extern reqwest=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libreqwest-7cc2583970dfea07.rlib --extern serde=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libserde-87a40166d13dae81.rlib --extern serde_json=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libserde_json-8d1078ceeb2db8da.rlib --extern sha2=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libsha2-02d23781d7459a81.rlib --extern tempfile=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtempfile-a0d2b5f126e7ab86.rlib --extern tokio=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtokio-4e09265169d499de.rlib --extern tokio_test=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtokio_test-43182e03499e3ee5.rlib --extern tower=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtower-21a661d459a3dd2b.rlib --extern tower_http=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtower_http-1ed3f57a26142c81.rlib --extern tracing=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtracing-6c29585c31dd688e.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtracing_subscriber-564cb82c3c29bbee.rlib --extern uuid=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libuuid-2b9662410b7adb24.rlib -L native=/tmp/gh-issue-solver-1778403055894/target/debug/build/ring-d02978ba5deecc25/out`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.60s
+     Running `/tmp/gh-issue-solver-1778403055894/target/debug/deps/link_assistant_router-117de71542ddb450`
+
+running 57 tests
+test activitypub::tests::actor_contains_required_activitypub_and_forgefed_metadata ... ok
+test activitypub::tests::follow_activity_targets_problemsets_actor ... ok
+test activitypub::tests::inbound_activity_requires_core_fields ... ok
+test cli::tests::cli_defaults_round_trip_to_config ... ok
+test accounts::tests::no_healthy_returns_error ... ok
+test accounts::tests::cooldown_skips_unhealthy_account ... ok
+test cli::tests::cli_invalid_routing_mode_rejected ... ok
+test config::tests::default_provider_is_anthropic ... ok
+test config::tests::gonka_provider_requires_private_key ... ok
+test config::tests::gonka_provider_builds_with_private_key_and_defaults ... ok
+test config::tests::test_api_format_parsing ... ok
+test config::tests::test_config_empty_token_secret ... ok
+test config::tests::test_config_default_port ... ok
+test config::tests::test_config_invalid_port ... ok
+test config::tests::test_config_missing_token_secret ... ok
+test config::tests::test_config_with_valid_values ... ok
+test config::tests::test_routing_mode_parsing ... ok
+test config::tests::test_storage_policy_parsing ... ok
+test config::tests::test_verbose_default_false ... ok
+test gonka::tests::default_model_is_added_when_missing ... ok
+test gonka::tests::existing_model_is_preserved ... ok
+test gonka::tests::models_endpoint_uses_gonka_owner ... ok
+test metrics::tests::usage_snapshot_returns_consistent_values ... ok
+test gonka::tests::signing_headers_do_not_include_private_key ... ok
+test metrics::tests::record_and_render_basic_counters ... ok
+test mpp::tests::challenge_response_uses_http_402_and_payment_auth_scheme ... ok
+test accounts::tests::round_robin_distributes_calls ... ok
+test mpp::tests::detects_payment_authorization_credentials ... ok
+test oauth::tests::test_cached_token_returned ... ok
+test mpp::tests::requires_enabled_and_charge_details ... ok
+test oauth::tests::test_set_token_manually ... ok
+test oauth::tests::test_no_credential_files ... ok
+test openai::tests::anthropic_to_chat_basic ... ok
+test openai::tests::preserves_claude_native_model_id ... ok
+test accounts::tests::least_used_picks_lowest_count ... ok
+test openai::tests::anthropic_tool_use_to_openai_tool_calls ... ok
+test openai::tests::translates_basic_chat_completion ... ok
+test openai::tests::list_models_includes_known_ids ... ok
+test openai::tests::responses_api_translation ... ok
+test oauth::tests::test_read_credential_file ... ok
+test openai::tests::translates_tool_call_blocks ... ok
+test openai::tests::translates_multipart_user_content ... ok
+test storage::tests::lino_codec_handles_special_chars ... ok
+test storage::tests::revoke_marks_record ... ok
+test storage::tests::memory_store_roundtrip ... ok
+test token::tests::test_issue_token_has_prefix ... ok
+test token::tests::test_expired_token ... ok
+test token::tests::test_list_tokens_returns_records ... ok
+test token::tests::test_revoke_token ... ok
+test token::tests::test_validate_invalid_jwt ... ok
+test token::tests::test_validate_valid_token ... ok
+test token::tests::test_validate_wrong_prefix ... ok
+test storage::tests::dual_store_writes_both ... ok
+test storage::tests::binary_store_roundtrip ... ok
+test token::tests::test_persistent_store_roundtrip ... ok
+test storage::tests::text_store_roundtrip ... ok
+test storage::tests::build_token_store_dispatches_correctly ... ok
+
+test result: ok. 57 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running `/tmp/gh-issue-solver-1778403055894/target/debug/deps/link_assistant_router-24ba55e9058fe101`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/gh-issue-solver-1778403055894/target/debug/deps/integration_test-bd973424376b768f`
+
+running 49 tests
+test activitypub_tests::follow_activity_can_be_posted_to_problemsets_inbox ... ok
+test activitypub_tests::actor_document_exposes_required_activitypub_fields ... ok
+test activitypub_tests::actor_context_includes_forgefed_and_fep_ef61_aliases ... ok
+test activitypub_tests::inbox_validation_rejects_objects_without_actor_or_attributed_to ... ok
+test activitypub_tests::collections_are_addressable_ordered_collections ... ok
+test api_format_tests::test_api_format_anthropic_parsing ... ok
+test api_format_tests::test_api_format_bedrock_parsing ... ok
+test api_format_tests::test_api_format_unknown ... ok
+test api_format_tests::test_api_format_vertex_parsing ... ok
+test config_verbose_tests::test_verbose_disabled ... ok
+test config_verbose_tests::test_verbose_enabled ... ok
+test metrics_rendering_tests::prometheus_output_contains_all_required_counters ... ok
+test metrics_rendering_tests::usage_snapshot_serialises_cleanly ... ok
+test mpp_tests::mpp_payment_authorization_is_not_treated_as_bearer_token ... ok
+test cli_parser_tests::cli_default_subcommand_is_none ... ok
+test mpp_tests::openai_mpp_challenge_is_machine_readable_402 ... ok
+test cli_parser_tests::cli_parses_doctor_subcommand ... ok
+test cli_parser_tests::cli_parses_disable_flags ... ok
+test oauth_integration_tests::test_manual_token_set_and_get ... ok
+test openai_translation_tests::anthropic_response_to_openai_chat_completion ... ok
+test openai_translation_tests::maps_openai_aliases_to_claude_models ... ok
+test openai_translation_tests::chat_completion_translates_system_and_user ... ok
+test path_routing_tests::test_anthropic_count_tokens_path ... ok
+test openai_translation_tests::models_endpoint_includes_known_claude_ids ... ok
+test path_routing_tests::test_anthropic_messages_path ... ok
+test path_routing_tests::test_bedrock_invoke_path ... ok
+test path_routing_tests::test_bedrock_invoke_stream_path ... ok
+test path_routing_tests::test_legacy_prefix_root ... ok
+test path_routing_tests::test_legacy_prefix_stripped ... ok
+test path_routing_tests::test_legacy_prefix_with_nested_path ... ok
+test path_routing_tests::test_vertex_count_tokens_raw_predict_path ... ok
+test cli_parser_tests::cli_parses_serve_subcommand ... ok
+test cli_parser_tests::cli_parses_tokens_issue_with_label ... ok
+test oauth_integration_tests::test_missing_credentials_error ... ok
+test required_headers_tests::test_required_headers_include_anthropic_beta ... ok
+test path_routing_tests::test_vertex_raw_predict_path ... ok
+test path_routing_tests::test_vertex_stream_raw_predict_path ... ok
+test required_headers_tests::test_required_headers_include_anthropic_version ... ok
+test required_headers_tests::test_required_headers_include_session_id ... ok
+test oauth_integration_tests::test_credential_file_parsing ... ok
+test support_docs_tests::akash_template_exposes_router_and_required_configuration ... ok
+test support_docs_tests::kubernetes_template_includes_deployment_service_and_health_probes ... ok
+test support_docs_tests::forgefed_docs_describe_public_actor_and_inbox ... ok
+test version_tests::test_version_is_not_empty ... ok
+test version_tests::test_version_matches_cargo_toml ... ok
+test token_integration_tests::test_different_secrets_reject ... ok
+test token_integration_tests::test_token_roundtrip ... ok
+test token_integration_tests::test_revoke_then_reject ... ok
+test token_integration_tests::test_multiple_tokens_independent ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/gh-issue-solver-1778403055894/target/debug/deps/release_workflow_test-26a4dd213bbd4f1f`
+
+running 10 tests
+test dockerfile_builder_installs_native_tls_build_dependencies ... ok
+test dockerfile_builder_uses_supported_rust_toolchain ... ok
+test readme_exposes_release_status_badges ... ok
+test lockfile_package_version_handles_windows_line_endings ... ok
+test release_script_avoids_unsupported_regex_lookaround ... ok
+test cargo_lock_package_version_matches_manifest ... ok
+test release_scripts_check_all_release_artifacts ... ok
+test release_workflow_maps_crates_io_token_fallback_to_cargo_native_env ... ok
+test release_workflow_adds_crates_io_link_to_github_releases ... ok
+test release_workflow_publishes_synced_docker_hub_image_after_crate ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests link_assistant_router
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc --edition=2021 --crate-type lib --color auto --crate-name link_assistant_router --test src/lib.rs --test-run-directory /tmp/gh-issue-solver-1778403055894 -L native=/tmp/gh-issue-solver-1778403055894/target/debug/build/ring-d02978ba5deecc25/out '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --forbid=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --extern async_trait=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libasync_trait-d81cb14f17b3b982.so --extern axum=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libaxum-ee6ac8f119450992.rlib --extern base64=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libbase64-93d13499e98064b8.rlib --extern bytes=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libbytes-c16680b345da9927.rlib --extern chrono=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libchrono-cd4090a17da8c72b.rlib --extern clap=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libclap-4bd315e055bc398b.rlib --extern futures_util=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libfutures_util-50f3692159fb7f71.rlib --extern hex=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhex-1558f6adc06e3fa8.rlib --extern http=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhttp-f74a37e85b630cab.rlib --extern http_body_util=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhttp_body_util-340957a6fbbdf94d.rlib --extern hyper=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhyper-40e0c501fbd4c0cd.rlib --extern hyper_util=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libhyper_util-138cd546a309cbe4.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libjsonwebtoken-b8a9d8a407c529b4.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1778403055894/target/debug/deps/liblink_assistant_router-d7263a69ec0fff9e.rlib --extern lino_arguments=/tmp/gh-issue-solver-1778403055894/target/debug/deps/liblino_arguments-093c8c66c8b22004.rlib --extern log_lazy=/tmp/gh-issue-solver-1778403055894/target/debug/deps/liblog_lazy-6d1b0e3fb7d3d64a.rlib --extern reqwest=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libreqwest-7cc2583970dfea07.rlib --extern serde=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libserde-87a40166d13dae81.rlib --extern serde_json=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libserde_json-8d1078ceeb2db8da.rlib --extern sha2=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libsha2-02d23781d7459a81.rlib --extern tempfile=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtempfile-a0d2b5f126e7ab86.rlib --extern tokio=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtokio-4e09265169d499de.rlib --extern tokio_test=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtokio_test-43182e03499e3ee5.rlib --extern tower=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtower-21a661d459a3dd2b.rlib --extern tower_http=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtower_http-1ed3f57a26142c81.rlib --extern tracing=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtracing-6c29585c31dd688e.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libtracing_subscriber-564cb82c3c29bbee.rlib --extern uuid=/tmp/gh-issue-solver-1778403055894/target/debug/deps/libuuid-2b9662410b7adb24.rlib -L dependency=/tmp/gh-issue-solver-1778403055894/target/debug/deps -C embed-bitcode=no --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' --error-format human`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

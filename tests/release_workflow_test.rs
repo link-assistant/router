@@ -117,6 +117,24 @@ fn release_workflow_adds_crates_io_link_to_github_releases() {
 }
 
 #[test]
+fn release_script_avoids_unsupported_regex_lookaround() {
+    let release_script = fs::read_to_string("scripts/create-github-release.rs")
+        .expect("release script should be readable");
+
+    for token in ["(?=", "(?<=", "(?!", "(?<!"] {
+        assert!(
+            !release_script.contains(token),
+            "release script should not use Rust regex look-around token `{token}`"
+        );
+    }
+    assert!(
+        release_script.contains(r#"Regex::new(r"(?m)^## \[")"#)
+            && release_script.contains("next_section_re.find(body)"),
+        "release script should find the next changelog section without look-around"
+    );
+}
+
+#[test]
 fn readme_exposes_release_status_badges() {
     let readme = fs::read_to_string("README.md").expect("README should be readable");
 

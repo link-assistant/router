@@ -1,0 +1,2 @@
+gh run download 25611545944 --repo link-assistant/router --dir docs/case-studies/issue-29/raw/artifacts
+error downloading link-assistant~router~XH6HTV.dockerbuild: error extracting zip archive: zip: not a valid zip file
