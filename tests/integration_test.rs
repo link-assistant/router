@@ -326,8 +326,8 @@ mod activitypub_tests {
 
 mod config_verbose_tests {
     use link_assistant_router::config::{
-        default_activitypub_public_key_pem, default_gonka_model, default_gonka_source_url,
-        BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
+        default_activitypub_public_key_pem, default_crater_config, default_gonka_model,
+        default_gonka_source_url, BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
     };
     use std::path::PathBuf;
 
@@ -348,6 +348,7 @@ mod config_verbose_tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            crater: default_crater_config("https://router.example"),
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),

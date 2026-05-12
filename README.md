@@ -17,6 +17,7 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
 - **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
+- **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
 - **Optional LiteLLM/OpenAI-compatible upstream** — `UPSTREAM_PROVIDER=openai-compatible` routes OpenAI SDK traffic to a stored provider such as LiteLLM
 - **Multi-account routing** — pool any number of Claude MAX accounts; round-robin / priority / least-used; automatic cooldowns on 429
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
@@ -53,6 +54,11 @@ router with `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...`. The
 router forwards OpenAI-compatible requests to the configured provider, such as
 a LiteLLM proxy, and substitutes only the upstream provider key inside the
 router.
+
+When `UPSTREAM_PROVIDER=crater`, `/v1/chat/completions` accepts normal OpenAI
+chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
+`CRATER_FORGEFED_INBOX`, reads `Accept.result`, polls that task URI until
+`isResolved:true`, and maps the resolved content back to OpenAI JSON or SSE.
 
 ## Quick Start
 
@@ -227,7 +233,7 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
+| `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages, forwarded to the selected OpenAI-compatible provider, or delivered as a Crater ForgeFed task |
 | `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
 | `/v1/models` | GET | OpenAI-shaped model list |
 
@@ -242,6 +248,11 @@ configured provider. This supports LiteLLM proxy deployments by setting the
 provider base URL to the LiteLLM `/v1` API base. Streaming OpenAI requests are
 passed through for OpenAI-compatible providers, and Anthropic-backed streaming
 requests are translated to OpenAI SSE chunks.
+
+With `UPSTREAM_PROVIDER=crater`, `/v1/chat/completions` supports normal JSON
+responses and SSE with either request-body `"stream": true` or `?stream=true`.
+The SSE stream emits OpenAI chat-completion chunks once the ForgeFed task
+resolves.
 
 ### MPP charges for OpenAI endpoints
 
@@ -354,7 +365,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
-| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `gonka`, or `openai-compatible` |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `gonka`, `crater`, or `openai-compatible` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
@@ -382,6 +393,29 @@ GONKA_MODEL=Qwen/Qwen3-235B-A22B-Instruct-2507-FP8
 Your Gonka account must be activated for inference, funded, and have a
 published on-chain public key. Participant registration is only needed for
 hosting.
+
+### Crater ForgeFed provider
+
+Crater support is optional. It keeps router-issued `la_sk_...` tokens at the
+edge, then uses ForgeFed to submit work to a remote ticket tracker or exchange.
+
+```env
+TOKEN_SECRET=your-router-token-secret
+
+UPSTREAM_PROVIDER=crater
+CRATER_FORGEFED_INBOX=https://tracker.example/inbox
+CRATER_FORGEFED_TARGET=https://tracker.example/projects/demo
+# Optional; defaults to ACTIVITYPUB_ACTOR_BASE_URL/actor/code
+CRATER_FORGEFED_ACTOR=https://router.example/actor/code
+```
+
+| Flag / env | Default | Required | Description |
+|---|---|---|---|
+| `--crater-forgefed-inbox` / `CRATER_FORGEFED_INBOX` | — | Yes, for Crater | Remote ForgeFed inbox that receives `Offer{Ticket}` activities |
+| `--crater-forgefed-actor` / `CRATER_FORGEFED_ACTOR` | `${ACTIVITYPUB_ACTOR_BASE_URL}/actor/code` | No | Local actor URI used in outbound activities |
+| `--crater-forgefed-target` / `CRATER_FORGEFED_TARGET` | inbox URI | No | Ticket tracker or project URI used as `Offer.target` |
+| `--crater-poll-interval-ms` / `CRATER_POLL_INTERVAL_MS` | `1000` | No | Delay between task URI polls |
+| `--crater-poll-timeout-secs` / `CRATER_POLL_TIMEOUT_SECS` | `120` | No | Maximum wait for `isResolved:true` |
 
 ### OpenAI-compatible / LiteLLM provider
 
@@ -765,6 +799,7 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   ├── main.rs               # Binary entry point — Cli dispatch + server setup
 │   ├── cli.rs                # `lino-arguments`-based CLI parser + subcommands
 │   ├── config.rs             # CLI/env/.lenv configuration
+│   ├── crater.rs             # Crater ForgeFed task provider
 │   ├── oauth.rs              # Claude Code OAuth credential reader
 │   ├── accounts.rs           # Multi-account router (round-robin/priority/least-used + cooldowns)
 │   ├── storage.rs            # Persistent token store (text Lino + binary backends)

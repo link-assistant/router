@@ -8,6 +8,7 @@ pub mod accounts;
 pub mod activitypub;
 pub mod cli;
 pub mod config;
+pub mod crater;
 pub mod gonka;
 pub mod metrics;
 pub mod mpp;

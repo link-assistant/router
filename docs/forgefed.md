@@ -62,3 +62,31 @@ curl -H 'Accept: application/activity+json' \
 
 Submit that activity to a compatible ForgeFed inbox when a remote problem source
 requires an explicit follow request.
+
+## Crater Provider
+
+Set `UPSTREAM_PROVIDER=crater` to make `/v1/chat/completions` submit outbound
+ForgeFed tasks instead of translating to Anthropic. The router builds an
+`Offer` activity whose `object` is a ForgeFed `Ticket`, posts it to
+`CRATER_FORGEFED_INBOX`, reads the remote `Accept.result` task URI, polls that
+URI until the task has `isResolved: true`, then returns the resolved content in
+OpenAI Chat Completions JSON or SSE format.
+
+Required:
+
+```bash
+export UPSTREAM_PROVIDER=crater
+export CRATER_FORGEFED_INBOX=https://tracker.example/inbox
+```
+
+Optional:
+
+```bash
+export CRATER_FORGEFED_TARGET=https://tracker.example/projects/demo
+export CRATER_FORGEFED_ACTOR=https://router.example.com/actor/code
+export CRATER_POLL_INTERVAL_MS=1000
+export CRATER_POLL_TIMEOUT_SECS=120
+```
+
+When `CRATER_FORGEFED_ACTOR` is omitted, it defaults to
+`${ACTIVITYPUB_ACTOR_BASE_URL}/actor/code`.
