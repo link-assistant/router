@@ -14,12 +14,13 @@
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
-use axum::extract::{Request, State};
+use axum::extract::{Query, Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
 use log_lazy::LogLazy;
 use reqwest::Client;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::accounts::AccountRouter;
@@ -48,6 +49,8 @@ pub struct AppState {
     pub upstream_provider: UpstreamProvider,
     /// Gonka provider configuration when selected.
     pub gonka: Option<GonkaConfig>,
+    /// Crater `ForgeFed` task provider when selected.
+    pub crater: Option<Arc<dyn crate::crater::TaskProvider>>,
     /// Boot-time generic OpenAI-compatible provider config.
     pub openai_compatible: OpenAICompatibleConfig,
     /// Persisted provider records with encrypted upstream secrets.
@@ -484,6 +487,7 @@ pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
             || crate::gonka::list_models(&crate::config::default_gonka_model()),
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
+        UpstreamProvider::Crater => crate::crater::list_models(),
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)
         }
@@ -497,9 +501,14 @@ pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
 /// pipeline used by [`proxy_handler`], and converts the response back.
 pub async fn openai_chat_completions(
     State(state): State<AppState>,
+    Query(query): Query<BTreeMap<String, String>>,
     headers: HeaderMap,
-    axum::Json(body): axum::Json<serde_json::Value>,
+    axum::Json(mut body): axum::Json<serde_json::Value>,
 ) -> Response {
+    let stream_from_query = query_stream_requested(&query);
+    if stream_from_query {
+        body["stream"] = serde_json::json!(true);
+    }
     if state.upstream_provider == UpstreamProvider::Gonka {
         return forward_gonka_openai(
             &state,
@@ -509,6 +518,14 @@ pub async fn openai_chat_completions(
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Crater {
+        let stream_requested = body
+            .get("stream")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+        return crate::crater::forward_chat_completions(&state, &headers, body, stream_requested)
+            .await;
     }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
         return crate::provider_proxy::forward_openai_compatible(
@@ -531,7 +548,7 @@ pub async fn openai_chat_completions(
         }
     };
     let requested_model = req.model.clone();
-    let stream_requested = req.stream.unwrap_or(false);
+    let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
     let body = openai::chat_completion_to_anthropic(&req);
     forward_openai(
         &state,
@@ -543,6 +560,12 @@ pub async fn openai_chat_completions(
         OpenAIShape::Chat,
     )
     .await
+}
+
+fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {
+    query
+        .get("stream")
+        .is_some_and(|value| matches!(value.as_str(), "true" | "1"))
 }
 
 /// `POST /v1/responses` — `OpenAI` Responses API.

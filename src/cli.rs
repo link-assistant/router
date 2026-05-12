@@ -20,6 +20,7 @@
 #![allow(clippy::struct_excessive_bools)]
 
 use std::path::PathBuf;
+use std::time::Duration;
 
 use clap::Subcommand;
 use lino_arguments::Parser as LinoParser;
@@ -90,7 +91,7 @@ pub struct Cli {
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
 
-    /// Upstream provider: anthropic, gonka, or openai-compatible.
+    /// Upstream provider: anthropic, gonka, crater, or openai-compatible.
     #[arg(
         long,
         env = "UPSTREAM_PROVIDER",
@@ -120,6 +121,36 @@ pub struct Cli {
         global = true
     )]
     pub gonka_model: String,
+
+    /// Remote `ForgeFed` inbox for the crater provider.
+    #[arg(long, env = "CRATER_FORGEFED_INBOX", global = true)]
+    pub crater_forgefed_inbox: Option<String>,
+
+    /// Local actor URI used by the crater provider.
+    #[arg(long, env = "CRATER_FORGEFED_ACTOR", global = true)]
+    pub crater_forgefed_actor: Option<String>,
+
+    /// Remote ticket tracker or project URI used as the `ForgeFed` `Offer` target.
+    #[arg(long, env = "CRATER_FORGEFED_TARGET", global = true)]
+    pub crater_forgefed_target: Option<String>,
+
+    /// Delay between crater task-resolution polls.
+    #[arg(
+        long,
+        env = "CRATER_POLL_INTERVAL_MS",
+        default_value_t = 1000,
+        global = true
+    )]
+    pub crater_poll_interval_ms: u64,
+
+    /// Maximum seconds to wait for crater task resolution.
+    #[arg(
+        long,
+        env = "CRATER_POLL_TIMEOUT_SECS",
+        default_value_t = 120,
+        global = true
+    )]
+    pub crater_poll_timeout_secs: u64,
 
     /// Stored provider name for generic OpenAI-compatible upstream routing.
     #[arg(
@@ -321,6 +352,27 @@ impl Cli {
             .activitypub_actor_base_url
             .clone()
             .unwrap_or_else(|| format!("http://{}:{}", self.host, self.port));
+        let crater_actor = self
+            .crater_forgefed_actor
+            .clone()
+            .filter(|value| !value.is_empty())
+            .unwrap_or_else(|| {
+                format!(
+                    "{}/actor/code",
+                    activitypub_actor_base_url.trim_end_matches('/')
+                )
+            });
+        let crater = crate::crater::CraterConfig::new(
+            self.crater_forgefed_inbox
+                .clone()
+                .filter(|value| !value.is_empty()),
+            &crater_actor,
+            self.crater_forgefed_target
+                .clone()
+                .filter(|value| !value.is_empty()),
+            Duration::from_millis(self.crater_poll_interval_ms),
+            Duration::from_secs(self.crater_poll_timeout_secs),
+        );
         let activitypub_public_key_pem = self
             .activitypub_public_key_pem
             .clone()
@@ -358,6 +410,7 @@ impl Cli {
             gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
             gonka_source_url: self.gonka_source_url.clone(),
             gonka_model: self.gonka_model.clone(),
+            crater,
             openai_compatible,
             activitypub_actor_base_url,
             activitypub_public_key_pem,
@@ -404,6 +457,11 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            crater_forgefed_inbox: None,
+            crater_forgefed_actor: None,
+            crater_forgefed_target: None,
+            crater_poll_interval_ms: 1000,
+            crater_poll_timeout_secs: 120,
             openai_compatible_provider_name: "litellm".into(),
             openai_compatible_base_url: default_openai_compatible_base_url(),
             openai_compatible_api_key: None,
@@ -452,6 +510,11 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            crater_forgefed_inbox: None,
+            crater_forgefed_actor: None,
+            crater_forgefed_target: None,
+            crater_poll_interval_ms: 1000,
+            crater_poll_timeout_secs: 120,
             openai_compatible_provider_name: "litellm".into(),
             openai_compatible_base_url: default_openai_compatible_base_url(),
             openai_compatible_api_key: None,

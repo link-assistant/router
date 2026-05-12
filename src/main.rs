@@ -20,6 +20,7 @@ use link_assistant_router::accounts::{AccountRouter, SelectionStrategy};
 use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
+use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
 use link_assistant_router::metrics::Metrics;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::provider_proxy;
@@ -143,6 +144,15 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .build()?;
+    let crater_provider =
+        if config.upstream_provider == link_assistant_router::config::UpstreamProvider::Crater {
+            Some(Arc::new(ForgeFedTaskProvider::new(
+                client.clone(),
+                config.crater.clone(),
+            )) as Arc<dyn TaskProvider>)
+        } else {
+            None
+        };
 
     let state = AppState {
         client,
@@ -156,6 +166,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             &config.gonka_source_url,
             config.gonka_model.clone(),
         ),
+        crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
         provider_store,
         logger,
@@ -451,6 +462,11 @@ fn run_doctor(config: &Config) -> ExitCode {
         "openai_provider        : {} ({})",
         config.openai_compatible.provider_name, config.openai_compatible.base_url
     );
+    println!(
+        "crater_inbox           : {}",
+        config.crater.inbox.as_deref().unwrap_or("<unset>")
+    );
+    println!("crater_actor           : {}", config.crater.actor);
     println!("claude_code_home       : {}", config.claude_code_home);
     println!("routing_mode           : {:?}", config.routing_mode);
     println!("storage_policy         : {:?}", config.storage_policy);

@@ -13,6 +13,7 @@ use std::env;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::time::Duration;
 
 /// Supported upstream inference providers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -22,6 +23,8 @@ pub enum UpstreamProvider {
     Anthropic,
     /// Gonka OpenAI-compatible inference provider.
     Gonka,
+    /// Crater `ForgeFed` task provider.
+    Crater,
     /// Generic OpenAI-compatible inference provider, including `LiteLLM` proxy.
     OpenAICompatible,
 }
@@ -33,6 +36,7 @@ impl UpstreamProvider {
         match s.to_lowercase().as_str() {
             "anthropic" | "claude" => Some(Self::Anthropic),
             "gonka" => Some(Self::Gonka),
+            "crater" | "forgefed" => Some(Self::Crater),
             "openai" | "openai-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
@@ -158,6 +162,8 @@ pub struct Config {
     pub gonka_source_url: String,
     /// Default Gonka model used when requests omit `model`.
     pub gonka_model: String,
+    /// Crater `ForgeFed` task provider configuration.
+    pub crater: crate::crater::CraterConfig,
     /// Generic OpenAI-compatible provider config for `LiteLLM` and similar
     /// gateways.
     pub openai_compatible: crate::providers::OpenAICompatibleConfig,
@@ -222,6 +228,28 @@ impl Config {
         let gonka_source_url =
             env::var("GONKA_SOURCE_URL").unwrap_or_else(|_| default_gonka_source_url());
         let gonka_model = env::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
+        let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
+            .unwrap_or_else(|_| format!("http://{host}:{port}"));
+        let crater_actor = env::var("CRATER_FORGEFED_ACTOR")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| {
+                format!(
+                    "{}/actor/code",
+                    activitypub_actor_base_url.trim_end_matches('/')
+                )
+            });
+        let crater = crate::crater::CraterConfig::new(
+            env::var("CRATER_FORGEFED_INBOX")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            &crater_actor,
+            env::var("CRATER_FORGEFED_TARGET")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            Duration::from_millis(parse_u64_env("CRATER_POLL_INTERVAL_MS", 1000)),
+            Duration::from_secs(parse_u64_env("CRATER_POLL_TIMEOUT_SECS", 120)),
+        );
         let openai_compatible = crate::providers::OpenAICompatibleConfig {
             provider_name: env::var("OPENAI_COMPATIBLE_PROVIDER_NAME")
                 .unwrap_or_else(|_| "litellm".to_string()),
@@ -241,8 +269,6 @@ impl Config {
                 .map(|raw| parse_csv(&raw))
                 .unwrap_or_default(),
         };
-        let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
-            .unwrap_or_else(|_| format!("http://{host}:{port}"));
         let activitypub_public_key_pem = env::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
             .unwrap_or_else(|_| default_activitypub_public_key_pem());
         let enable_openai_api = env::var("ENABLE_OPENAI_API").map_or(true, |v| {
@@ -292,6 +318,7 @@ impl Config {
             gonka_private_key,
             gonka_source_url,
             gonka_model,
+            crater,
             openai_compatible,
             activitypub_actor_base_url,
             activitypub_public_key_pem,
@@ -324,6 +351,9 @@ impl Config {
         {
             return Err(ConfigError::MissingGonkaPrivateKey);
         }
+        if args.upstream_provider == UpstreamProvider::Crater && args.crater.inbox.is_none() {
+            return Err(ConfigError::MissingCraterForgeFedInbox);
+        }
 
         Ok(Self {
             listen_addr,
@@ -340,6 +370,7 @@ impl Config {
             gonka_private_key: args.gonka_private_key.filter(|s| !s.is_empty()),
             gonka_source_url: args.gonka_source_url.trim_end_matches('/').to_string(),
             gonka_model: args.gonka_model,
+            crater: args.crater,
             openai_compatible: args.openai_compatible,
             activitypub_actor_base_url: args
                 .activitypub_actor_base_url
@@ -374,6 +405,7 @@ pub struct BuildArgs<'a> {
     pub gonka_private_key: Option<String>,
     pub gonka_source_url: String,
     pub gonka_model: String,
+    pub crater: crate::crater::CraterConfig,
     pub openai_compatible: crate::providers::OpenAICompatibleConfig,
     pub activitypub_actor_base_url: String,
     pub activitypub_public_key_pem: String,
@@ -446,12 +478,32 @@ pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleC
     }
 }
 
+/// Default crater provider config.
+#[must_use]
+pub fn default_crater_config(actor_base_url: &str) -> crate::crater::CraterConfig {
+    let actor = format!("{}/actor/code", actor_base_url.trim_end_matches('/'));
+    crate::crater::CraterConfig::new(
+        None,
+        &actor,
+        None,
+        Duration::from_secs(1),
+        Duration::from_secs(120),
+    )
+}
+
 fn parse_csv(raw: &str) -> Vec<String> {
     raw.split(',')
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .map(ToString::to_string)
         .collect()
+}
+
+fn parse_u64_env(name: &str, default: u64) -> u64 {
+    env::var(name)
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(default)
 }
 
 /// Errors that can occur during configuration loading.
@@ -467,6 +519,8 @@ pub enum ConfigError {
     InvalidRoutingMode,
     /// Gonka was selected without `GONKA_PRIVATE_KEY`.
     MissingGonkaPrivateKey,
+    /// Crater was selected without `CRATER_FORGEFED_INBOX`.
+    MissingCraterForgeFedInbox,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -484,6 +538,9 @@ impl std::fmt::Display for ConfigError {
                 f,
                 "Gonka provider requires GONKA_PRIVATE_KEY. Make sure your Gonka account is activated for inference, funded, and has a published on-chain public key."
             ),
+            Self::MissingCraterForgeFedInbox => {
+                write!(f, "Crater provider requires CRATER_FORGEFED_INBOX")
+            }
         }
     }
 }
@@ -511,6 +568,7 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            crater: default_crater_config("https://router.example"),
             openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
@@ -573,6 +631,36 @@ mod tests {
         );
     }
 
+    #[test]
+    fn crater_provider_requires_forgefed_inbox() {
+        let mut args = gonka_args(None);
+        args.upstream_provider = UpstreamProvider::Crater;
+        args.gonka_private_key = None;
+
+        let result = Config::build(args);
+
+        assert!(matches!(
+            result,
+            Err(ConfigError::MissingCraterForgeFedInbox)
+        ));
+    }
+
+    #[test]
+    fn crater_provider_builds_with_forgefed_inbox() {
+        let mut args = gonka_args(None);
+        args.upstream_provider = UpstreamProvider::Crater;
+        args.gonka_private_key = None;
+        args.crater.inbox = Some("https://tracker.example/inbox".into());
+
+        let config = Config::build(args).expect("crater config should build");
+
+        assert_eq!(config.upstream_provider, UpstreamProvider::Crater);
+        assert_eq!(
+            config.crater.inbox.as_deref(),
+            Some("https://tracker.example/inbox")
+        );
+    }
+
     fn gonka_args(private_key: Option<&str>) -> BuildArgs<'static> {
         BuildArgs {
             host: "0.0.0.0",
@@ -590,6 +678,7 @@ mod tests {
             gonka_private_key: private_key.map(str::to_string),
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            crater: default_crater_config("https://router.example"),
             openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
@@ -621,6 +710,7 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            crater: default_crater_config("https://router.example"),
             openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
