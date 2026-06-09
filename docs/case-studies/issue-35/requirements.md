@@ -1,0 +1,14 @@
+# Issue 35 Requirements Trace
+
+Every requirement extracted from the issue body, with the solution/plan chosen
+for each and the evidence that it is addressed.
+
+| # | Requirement (from the issue) | Solution / Plan | Status | Evidence |
+| --- | --- | --- | --- | --- |
+| 1 | Test everything documented locally using Claude + Docker; if something is broken, find the root cause and fix it — **both code and docs**. | Run the router against a real Claude MAX session and `api.anthropic.com`; fix the nested-credential reader; correct stale docs (credential format, header injection, revocation persistence). | Done | `src/oauth.rs` (nested+flat), README credential/header/token sections, `raw/count_tokens-200.json`, `raw/server.log.redacted`. |
+| 2 | Make it possible to issue a token that **hides the real access token**; copy local configuration as needed but **do not delete it** (other processes depend on it). | Proxy substitutes the `la_sk_` token for the upstream OAuth bearer; client never sees it. Credentials were only copied to a `mktemp` dir for the test, never modified/deleted. | Done | Token-hiding verified (OAuth token absent from logs, `grep` count 0); original `~/.claude/.credentials.json` unchanged (471 bytes). |
+| 3 | Produce an API token that grants subscription access to separate tasks and **limits how much each task can use**. | Per-token request budget: `max_requests` cap + persisted `used_requests`, enforced with HTTP 429 on every forwarding path; exposed via CLI `--max-requests`, admin API `max_requests`, and `tokens list` `used/max` column. | Done | `src/storage.rs`, `src/token.rs`, `src/proxy.rs`, `src/token_admin.rs`, `src/cli.rs`, `src/main.rs`; `raw/budget-exhausted-429.json`, `raw/tokens-list.txt`; tests in `src/token.rs`. |
+| 4 | Collect issue data into `docs/case-studies/issue-35/`, do a deep case-study analysis, and search online for additional facts and data. | This folder: `README.md` (analysis), `raw/` (issue JSON + redacted live evidence), `online-research.md` (primary sources). | Done | `README.md`, `raw/issue-35.json`, `raw/issue-35-comments.json`, `online-research.md`. |
+| 5 | List **each and all** requirements, propose solutions/plans per requirement, and check known existing components/libraries that solve a similar problem. | This `requirements.md` table; `components-survey.md` surveys LiteLLM virtual keys/budgets, Portkey, Kong AI Gateway, and community Claude proxies. | Done | `requirements.md`, `components-survey.md`. |
+| — | Do everything in the single PR #36 (update the existing draft, don't open a new one). | All commits land on `issue-35-62a0d9107370`; PR #36 updated and marked ready. | Tracked in GitHub | PR #36. |
+| — | Don't expose the real OAuth token in any command output. | Tokens redacted (`sed`/`python`) in all commands; evidence files store only redacted logs. | Done | `raw/server.log.redacted`, `raw/tokens-list.txt`. |
