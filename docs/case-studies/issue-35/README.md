@@ -124,6 +124,18 @@ rate limit on the shared MAX account, **not** a router bug — proven by
 `count_tokens` (which is not inference-metered) returning 200 through the same
 path.
 
+### Docker
+
+The same flow was re-verified through the container image. `link-assistant/router`
+was built from the repo `Dockerfile` and run with a **copy** of the real Claude
+MAX credentials mounted read-only at `/data/claude` (the Dockerfile default
+`CLAUDE_CODE_HOME`); the original `~/.claude/.credentials.json` was never touched.
+The container read the nested credential, started cleanly, issued a token with
+`max_requests`, returned HTTP 200 from `count_tokens` for a client sending only a
+`la_sk_` token, enforced the budget with 429, returned 401 for missing/invalid
+tokens, and never logged the real OAuth token. Evidence is in
+[`raw/docker/`](./raw/docker/).
+
 ## Online research and component survey
 
 See [`online-research.md`](./online-research.md) for primary-source facts on the
