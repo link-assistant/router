@@ -1,0 +1,7 @@
+[2m2026-06-09T23:16:47.770344Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Link.Assistant.Router v0.18.0
+[2m2026-06-09T23:16:47.770409Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Upstream: https://api.anthropic.com
+[2m2026-06-09T23:16:47.770413Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Upstream provider: Anthropic
+[2m2026-06-09T23:16:47.770423Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Claude Code home: /tmp/router-e2e-20tP/claude
+[2m2026-06-09T23:16:47.770426Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Routing mode: Direct
+[2m2026-06-09T23:16:47.770429Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Storage policy: Both
+[2m2026-06-09T23:16:47.800656Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Listening on 0.0.0.0:18099

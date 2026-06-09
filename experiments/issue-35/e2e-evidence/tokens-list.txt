@@ -1,0 +1,6 @@
+[2m2026-06-09T23:20:14.226812Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Link.Assistant.Router v0.18.0
+id                                    issued_at   expires_at  revoked   requests       label
+a803c6d5-c0ee-4383-b502-defeb2121f1d  1781047018  1781050618  false     2/2            e2e-budget
+8dd522be-2f39-4191-a177-a4d928476380  1781047083  1781050683  false     1/-            e2e-unlimited
+f4b470cb-aade-4aed-bd5b-ba2bca7494fa  1781047181  1781050781  false     1/-            e2e-ok2
+fec91baf-f071-442b-932c-f18309b94d92  1781047191  1781050791  false     1/-            e2e-count
