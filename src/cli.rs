@@ -284,6 +284,10 @@ pub enum TokenOp {
         label: String,
         #[arg(long)]
         account: Option<String>,
+        /// Cap on the number of upstream requests this token may make.
+        /// Omit for an unlimited token.
+        #[arg(long)]
+        max_requests: Option<u64>,
     },
     /// List all known tokens.
     List,

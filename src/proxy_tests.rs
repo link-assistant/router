@@ -1,7 +1,9 @@
 use axum::http::{HeaderMap, HeaderValue};
 use log_lazy::{levels, LogLazy};
 
-use crate::proxy::{build_upstream_headers, extract_client_token};
+use crate::proxy::{
+    build_upstream_headers, extract_client_token, merge_oauth_beta, OAUTH_BETA_FLAG,
+};
 
 #[test]
 fn extract_client_token_accepts_bearer_or_x_api_key() {
@@ -39,4 +41,57 @@ fn build_upstream_headers_strips_client_auth_headers() {
             .and_then(|value| value.to_str().ok()),
         Some("2023-06-01")
     );
+}
+
+#[test]
+fn build_upstream_headers_injects_required_oauth_headers_when_missing() {
+    // A plain Anthropic SDK client that does not send anthropic-version or the
+    // OAuth beta flag must still produce a request upstream accepts.
+    let incoming = HeaderMap::new();
+    let logger = LogLazy::with_level(levels::NONE);
+
+    let upstream = build_upstream_headers(&incoming, "oauth-token", &logger);
+
+    assert_eq!(
+        upstream
+            .get("anthropic-version")
+            .and_then(|v| v.to_str().ok()),
+        Some("2023-06-01")
+    );
+    assert_eq!(
+        upstream.get("anthropic-beta").and_then(|v| v.to_str().ok()),
+        Some(OAUTH_BETA_FLAG)
+    );
+}
+
+#[test]
+fn build_upstream_headers_preserves_and_merges_client_beta() {
+    let mut incoming = HeaderMap::new();
+    incoming.insert(
+        "anthropic-beta",
+        HeaderValue::from_static("interleaved-thinking-2025-05-14"),
+    );
+    let logger = LogLazy::with_level(levels::NONE);
+
+    let upstream = build_upstream_headers(&incoming, "oauth-token", &logger);
+    let beta = upstream
+        .get("anthropic-beta")
+        .and_then(|v| v.to_str().ok())
+        .unwrap();
+    assert!(beta.contains("interleaved-thinking-2025-05-14"));
+    assert!(beta.contains(OAUTH_BETA_FLAG));
+}
+
+#[test]
+fn merge_oauth_beta_is_idempotent_and_dedups() {
+    assert_eq!(merge_oauth_beta(None), OAUTH_BETA_FLAG);
+    assert_eq!(merge_oauth_beta(Some("")), OAUTH_BETA_FLAG);
+    assert_eq!(merge_oauth_beta(Some(OAUTH_BETA_FLAG)), OAUTH_BETA_FLAG);
+    assert_eq!(
+        merge_oauth_beta(Some("foo")),
+        format!("foo,{OAUTH_BETA_FLAG}")
+    );
+    // Already present among multiple flags → unchanged.
+    let multi = format!("foo,{OAUTH_BETA_FLAG},bar");
+    assert_eq!(merge_oauth_beta(Some(&multi)), multi);
 }

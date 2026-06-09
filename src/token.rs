@@ -80,6 +80,22 @@ impl TokenManager {
         label: &str,
         account: Option<&str>,
     ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue_token_full(ttl_hours, label, account, None)
+    }
+
+    /// Issue a token bound to a specific account with an optional request cap.
+    ///
+    /// `max_requests` bounds how many upstream requests the token may make
+    /// before the proxy starts rejecting it with HTTP 429. `None` means the
+    /// token is unlimited. This is the knob that lets an operator hand a task
+    /// a token that can only consume a fixed share of the shared subscription.
+    pub fn issue_token_full(
+        &self,
+        ttl_hours: i64,
+        label: &str,
+        account: Option<&str>,
+        max_requests: Option<u64>,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
         let now = Utc::now();
         let exp = now + Duration::hours(ttl_hours);
         let claims = TokenClaims {
@@ -102,11 +118,30 @@ impl TokenManager {
             expires_at: claims.exp,
             revoked: false,
             account: account.map(String::from),
+            max_requests,
+            used_requests: 0,
         };
         if let Err(e) = self.store.put(record) {
             tracing::warn!("token store put failed: {e}");
         }
         Ok(format!("{TOKEN_PREFIX}{jwt}"))
+    }
+
+    /// Enforce (and record) the per-token request budget for `token_id`.
+    ///
+    /// Call this once per proxied upstream request, after the token has been
+    /// validated. Returns:
+    /// * `Ok(())` when the request is within budget (the used-request counter
+    ///   is incremented as a side effect), or
+    /// * `Err(TokenError::LimitExceeded)` when the token has reached its cap.
+    ///
+    /// Tokens issued without a `max_requests` cap are always permitted.
+    pub fn enforce_request_budget(&self, token_id: &str) -> Result<(), TokenError> {
+        match self.store.try_consume_request(token_id) {
+            Ok(true) => Ok(()),
+            Ok(false) => Err(TokenError::LimitExceeded),
+            Err(e) => Err(TokenError::Storage(e.to_string())),
+        }
     }
 
     /// Validate a custom token string.
@@ -167,6 +202,8 @@ pub enum TokenError {
     Revoked,
     /// Token is otherwise invalid.
     Invalid(String),
+    /// Token has reached its per-token request budget (`max_requests`).
+    LimitExceeded,
     /// Storage backend failure.
     Storage(String),
 }
@@ -180,6 +217,9 @@ impl std::fmt::Display for TokenError {
             Self::Expired => write!(f, "Token has expired"),
             Self::Revoked => write!(f, "Token has been revoked"),
             Self::Invalid(msg) => write!(f, "Invalid token: {msg}"),
+            Self::LimitExceeded => {
+                write!(f, "Token has reached its request limit")
+            }
             Self::Storage(msg) => write!(f, "Token storage error: {msg}"),
         }
     }
@@ -262,6 +302,54 @@ mod tests {
         let labels: Vec<_> = list.iter().map(|r| r.label.as_str()).collect();
         assert!(labels.contains(&"one"));
         assert!(labels.contains(&"two"));
+    }
+
+    #[test]
+    fn test_unlimited_token_never_hits_budget() {
+        let mgr = test_manager();
+        let token = mgr.issue_token(24, "unlimited").unwrap();
+        let claims = mgr.validate_token(&token).unwrap();
+        // No max_requests → every request is permitted.
+        for _ in 0..1000 {
+            mgr.enforce_request_budget(&claims.sub)
+                .expect("unlimited token must never be limited");
+        }
+    }
+
+    #[test]
+    fn test_request_budget_enforced() {
+        let mgr = test_manager();
+        let token = mgr
+            .issue_token_full(24, "capped", None, Some(3))
+            .expect("should issue capped token");
+        let claims = mgr.validate_token(&token).unwrap();
+
+        // First three requests are allowed and recorded.
+        mgr.enforce_request_budget(&claims.sub).unwrap();
+        mgr.enforce_request_budget(&claims.sub).unwrap();
+        mgr.enforce_request_budget(&claims.sub).unwrap();
+
+        // The fourth exceeds the budget.
+        let r = mgr.enforce_request_budget(&claims.sub);
+        assert!(matches!(r, Err(TokenError::LimitExceeded)));
+
+        // Usage is persisted on the record.
+        let rec = mgr
+            .list_tokens()
+            .unwrap()
+            .into_iter()
+            .find(|r| r.id == claims.sub)
+            .unwrap();
+        assert_eq!(rec.max_requests, Some(3));
+        assert_eq!(rec.used_requests, 3);
+    }
+
+    #[test]
+    fn test_budget_for_unknown_token_is_permitted() {
+        // A token id with no stored record (e.g. memory store cleared) is not
+        // budget-limited — validation, not budgeting, is the gate there.
+        let mgr = test_manager();
+        mgr.enforce_request_budget("no-such-id").unwrap();
     }
 
     #[test]

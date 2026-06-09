@@ -59,6 +59,13 @@ pub struct TokenRecord {
     /// Optional account identifier the token is bound to (multi-account mode).
     #[serde(default)]
     pub account: Option<String>,
+    /// Optional cap on the number of upstream requests this token may make.
+    /// `None` means unlimited. Used to bound how much a task can consume.
+    #[serde(default)]
+    pub max_requests: Option<u64>,
+    /// Number of upstream requests already made with this token.
+    #[serde(default)]
+    pub used_requests: u64,
 }
 
 /// Errors a [`TokenStore`] can return.
@@ -114,6 +121,32 @@ pub trait TokenStore: Send + Sync {
             .filter(|r| r.revoked)
             .map(|r| r.id)
             .collect())
+    }
+
+    /// Atomically check the request budget for `id` and, when there is room,
+    /// increment the used-request counter.
+    ///
+    /// Returns `Ok(true)` when the request is permitted (and was recorded),
+    /// or `Ok(false)` when the token is already at or over its `max_requests`
+    /// budget. Tokens that have no stored record, or whose record has no
+    /// limit (`max_requests == None`), are always permitted.
+    ///
+    /// Note: the default implementation performs a `get` then a `put`, which
+    /// is not strictly atomic across concurrent callers, so a small number of
+    /// requests may slip over the limit under heavy parallelism. This is an
+    /// acceptable trade-off for a per-task usage cap; backends that need exact
+    /// enforcement can override this with a locked read-modify-write.
+    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
+        if let Some(mut rec) = self.get(id)? {
+            if let Some(max) = rec.max_requests {
+                if rec.used_requests >= max {
+                    return Ok(false);
+                }
+            }
+            rec.used_requests = rec.used_requests.saturating_add(1);
+            self.put(rec)?;
+        }
+        Ok(true)
     }
 }
 
@@ -433,6 +466,16 @@ fn encode_lino<'a>(records: impl IntoIterator<Item = &'a TokenRecord>) -> String
             write_quoted(&mut out, acc);
             out.push(')');
         }
+        if let Some(max) = rec.max_requests {
+            out.push_str(" (max_requests ");
+            out.push_str(&max.to_string());
+            out.push(')');
+        }
+        if rec.used_requests > 0 {
+            out.push_str(" (used_requests ");
+            out.push_str(&rec.used_requests.to_string());
+            out.push(')');
+        }
         out.push_str(")\n");
     }
     out
@@ -488,6 +531,8 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
     let mut expires_at = 0i64;
     let mut revoked = false;
     let mut account: Option<String> = None;
+    let mut max_requests: Option<u64> = None;
+    let mut used_requests: u64 = 0;
     while let Some(field) = tokens.next_paren_group() {
         let mut inner = LinoTokens::new(field);
         let key = inner
@@ -524,6 +569,23 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
             "account" => {
                 account = inner.next_string();
             }
+            "max_requests" => {
+                let v = inner
+                    .next_atom()
+                    .ok_or_else(|| "max_requests missing value".to_string())?;
+                max_requests = Some(
+                    v.parse()
+                        .map_err(|e: std::num::ParseIntError| e.to_string())?,
+                );
+            }
+            "used_requests" => {
+                let v = inner
+                    .next_atom()
+                    .ok_or_else(|| "used_requests missing value".to_string())?;
+                used_requests = v
+                    .parse()
+                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
+            }
             other => return Err(format!("unknown field: {other}")),
         }
     }
@@ -534,6 +596,8 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         expires_at,
         revoked,
         account,
+        max_requests,
+        used_requests,
     })
 }
 
@@ -668,6 +732,8 @@ mod tests {
             expires_at: 1_700_001_000,
             revoked: false,
             account: Some("primary".into()),
+            max_requests: None,
+            used_requests: 0,
         }
     }
 
@@ -768,6 +834,8 @@ mod tests {
             expires_at: 2,
             revoked: true,
             account: None,
+            max_requests: Some(100),
+            used_requests: 7,
         };
         let s = encode_lino(std::iter::once(&rec));
         let parsed = decode_lino(&s).unwrap();

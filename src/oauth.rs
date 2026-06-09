@@ -15,14 +15,62 @@ pub struct OAuthProvider {
 }
 
 /// Structure of the Claude Code OAuth credentials file.
-#[derive(Debug, Deserialize)]
+///
+/// Two on-disk layouts are supported:
+///
+/// * The flat layout used by older or hand-written credential files:
+///   `{"accessToken": "..."}`.
+/// * The nested layout written by the official Claude Code CLI into
+///   `~/.claude/.credentials.json`:
+///   `{"claudeAiOauth": {"accessToken": "...", "expiresAt": 1234, ...}}`.
+///
+/// Real Claude MAX sessions use the nested layout, so it must be read for the
+/// router to work against an actual Claude Code login.
+#[derive(Debug, Default, Deserialize)]
 struct ClaudeCredentials {
+    /// The OAuth access token (flat layout).
+    #[serde(alias = "accessToken", alias = "access_token")]
+    access_token: Option<String>,
+    /// The OAuth bearer token, alternative field name (flat layout).
+    #[serde(alias = "oauthToken", alias = "oauth_token")]
+    oauth_token: Option<String>,
+    /// Nested OAuth block written by the Claude Code CLI.
+    #[serde(alias = "claudeAiOauth", alias = "claude_ai_oauth")]
+    claude_ai_oauth: Option<OAuthBlock>,
+}
+
+/// Nested OAuth credentials block (`claudeAiOauth`) written by Claude Code.
+#[derive(Debug, Default, Deserialize)]
+struct OAuthBlock {
     /// The OAuth access token.
     #[serde(alias = "accessToken", alias = "access_token")]
     access_token: Option<String>,
     /// The OAuth bearer token (alternative field name).
     #[serde(alias = "oauthToken", alias = "oauth_token")]
     oauth_token: Option<String>,
+    /// Expiration timestamp in milliseconds since the Unix epoch, if present.
+    #[serde(alias = "expiresAt", alias = "expires_at")]
+    expires_at: Option<i64>,
+}
+
+impl ClaudeCredentials {
+    /// Extract the bearer token, preferring the nested Claude Code block.
+    fn extract_token(&self) -> Option<&str> {
+        let nested = self.claude_ai_oauth.as_ref().and_then(|b| {
+            b.access_token
+                .as_deref()
+                .or(b.oauth_token.as_deref())
+                .filter(|t| !t.is_empty())
+        });
+        nested
+            .or_else(|| self.access_token.as_deref().filter(|t| !t.is_empty()))
+            .or_else(|| self.oauth_token.as_deref().filter(|t| !t.is_empty()))
+    }
+
+    /// Expiration time in milliseconds since the Unix epoch, if known.
+    fn expires_at_ms(&self) -> Option<i64> {
+        self.claude_ai_oauth.as_ref().and_then(|b| b.expires_at)
+    }
 }
 
 impl OAuthProvider {
@@ -45,6 +93,16 @@ impl OAuthProvider {
             base.join("oauth.json"),
             base.join("config.json"),
         ]
+    }
+
+    /// Return the first existing credential file path, if any.
+    ///
+    /// Useful for diagnostics (e.g. the `doctor` command) so the report
+    /// matches the files the provider would actually read, including the
+    /// dotfile `.credentials.json` written by the Claude Code CLI.
+    #[must_use]
+    pub fn discover_credential_path(&self) -> Option<PathBuf> {
+        self.credential_paths().into_iter().find(|p| p.exists())
     }
 
     /// Try to read the OAuth token from Claude Code session files.
@@ -77,12 +135,20 @@ impl OAuthProvider {
             OAuthError::ParseError(format!("Failed to parse {}: {e}", path.display()))
         })?;
 
-        // Try access_token first, then oauth_token
-        if let Some(token) = creds.access_token.filter(|t| !t.is_empty()) {
-            return Ok(Some(token));
-        }
-        if let Some(token) = creds.oauth_token.filter(|t| !t.is_empty()) {
-            return Ok(Some(token));
+        // Prefer the nested `claudeAiOauth` block (real Claude Code layout),
+        // then fall back to the flat `accessToken`/`oauthToken` fields.
+        if let Some(token) = creds.extract_token() {
+            if let Some(exp_ms) = creds.expires_at_ms() {
+                let now_ms = chrono::Utc::now().timestamp_millis();
+                if exp_ms <= now_ms {
+                    tracing::warn!(
+                        "Claude Code OAuth token in {} expired at {exp_ms} (now {now_ms}); \
+                         upstream requests may fail until you re-authenticate with `claude`.",
+                        path.display()
+                    );
+                }
+            }
+            return Ok(Some(token.to_string()));
         }
 
         Ok(None)
@@ -172,6 +238,50 @@ mod tests {
         let provider = OAuthProvider::new(dir.to_str().unwrap());
         let token = provider.get_token().expect("should read token");
         assert_eq!(token, "test-oauth-token-123");
+    }
+
+    #[test]
+    fn test_read_nested_claude_code_credentials() {
+        // Real Claude Code writes ~/.claude/.credentials.json in this nested
+        // shape. The router must read it, not just the flat layout.
+        let dir = tempdir();
+        let cred_file = dir.join(".credentials.json");
+        fs::write(
+            &cred_file,
+            r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-nested","refreshToken":"sk-ant-ort-x","expiresAt":9999999999999,"scopes":["user:inference"],"subscriptionType":"max"}}"#,
+        )
+        .unwrap();
+
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        let token = provider.get_token().expect("should read nested token");
+        assert_eq!(token, "sk-ant-oat-nested");
+    }
+
+    #[test]
+    fn test_nested_credentials_preferred_over_flat() {
+        let dir = tempdir();
+        // A file that has both a flat and a nested token prefers the nested one.
+        fs::write(
+            dir.join("credentials.json"),
+            r#"{"accessToken":"flat","claudeAiOauth":{"accessToken":"nested"}}"#,
+        )
+        .unwrap();
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        assert_eq!(provider.get_token().unwrap(), "nested");
+    }
+
+    #[test]
+    fn test_expired_nested_token_still_returned() {
+        // An expired token is still returned (the caller decides what to do),
+        // but reading must not fail.
+        let dir = tempdir();
+        fs::write(
+            dir.join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-expired","expiresAt":1}}"#,
+        )
+        .unwrap();
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        assert_eq!(provider.get_token().unwrap(), "sk-ant-oat-expired");
     }
 
     #[test]

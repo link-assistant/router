@@ -1,0 +1,9 @@
+{
+  "claudeAiOauth": {
+    "accessToken": "sk-ant-oat-REALTOKEN",
+    "refreshToken": "sk-ant-ort-REFRESH",
+    "expiresAt": 1781058622319,
+    "scopes": ["user:inference", "user:profile"],
+    "subscriptionType": "max"
+  }
+}

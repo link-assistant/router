@@ -19,6 +19,7 @@ pub mod providers;
 pub mod proxy;
 pub mod storage;
 pub mod token;
+pub mod token_admin;
 
 #[cfg(test)]
 mod proxy_tests;
