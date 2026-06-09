@@ -94,7 +94,33 @@ The router searches these files in order:
 - `oauth.json`
 - `config.json`
 
-It reads the `accessToken` (or `access_token`, `oauthToken`, `oauth_token`) field from the first file found.
+Two on-disk layouts are supported automatically:
+
+- **Nested** (the format real Claude Code writes to `~/.claude/.credentials.json`):
+
+  ```json
+  {
+    "claudeAiOauth": {
+      "accessToken": "sk-ant-oat01-...",
+      "refreshToken": "sk-ant-ort01-...",
+      "expiresAt": 1781050618000,
+      "scopes": ["user:inference", "user:profile"],
+      "subscriptionType": "max"
+    }
+  }
+  ```
+
+- **Flat** (convenient for tests and minimal setups):
+
+  ```json
+  { "accessToken": "sk-ant-oat01-..." }
+  ```
+
+For the nested layout the router reads `accessToken` and `expiresAt` from inside
+`claudeAiOauth`. For the flat layout it reads `accessToken` (or `access_token`,
+`oauthToken`, `oauth_token`) from the top level of the first file found. The
+file is only ever read — the router never writes back to or deletes your
+credential files.
 
 ### 3. Start the router
 
@@ -162,8 +188,16 @@ curl -s http://localhost:8080/api/latest/anthropic/v1/messages \
 The router will:
 1. Validate the `la_sk_...` token
 2. Replace it with the real OAuth token from the Claude Code session
-3. Forward the request to `https://api.anthropic.com/v1/messages`
-4. Stream the response back to the client
+3. Inject the upstream headers Claude MAX OAuth requires — `anthropic-version`
+   (default `2023-06-01` when the client omits it) and the
+   `anthropic-beta: oauth-2025-04-20` flag (merged with any betas the client
+   already sent)
+4. Forward the request to `https://api.anthropic.com/v1/messages`
+5. Stream the response back to the client
+
+Because the router injects these headers itself, a client only needs to send the
+`la_sk_...` token — it never needs the real OAuth token, the OAuth beta flag, or
+even an `anthropic-version` header.
 
 ## Using with Claude Code
 
@@ -518,6 +552,8 @@ link-assistant-router
 
 # Issue / list / revoke / show tokens locally (no HTTP needed):
 link-assistant-router tokens issue --ttl-hours 168 --label alice
+# ...optionally cap how many upstream requests the token may make:
+link-assistant-router tokens issue --ttl-hours 168 --label alice --max-requests 500
 link-assistant-router tokens list
 link-assistant-router tokens revoke <id>
 link-assistant-router tokens show <id>
@@ -656,9 +692,10 @@ The router uses JWT-based custom tokens with the `la_sk_` prefix.
 
 ### Token lifecycle
 
-1. **Issue**: `POST /api/tokens` creates a signed JWT with a UUID subject, expiration, and optional label
+1. **Issue**: `POST /api/tokens` creates a signed JWT with a UUID subject, expiration, optional label, and an optional per-token request budget
 2. **Validate**: Each proxy request extracts the `Authorization: Bearer la_sk_...` header, strips the prefix, and verifies the JWT signature and expiration
-3. **Revoke**: Tokens can be revoked by their subject ID (stored in-memory; revocations are lost on restart)
+3. **Meter**: When the token carries a request budget, each forwarded request increments a persisted `used_requests` counter; once it reaches `max_requests` the router returns `429 Too Many Requests` instead of forwarding upstream
+4. **Revoke**: Tokens can be revoked by their subject ID. Records (including the revoked flag and usage counter) are written to the persistent token store, so revocations and usage survive restarts
 
 ### Token format
 
@@ -673,12 +710,41 @@ Tokens are standard HS256 JWTs with the `la_sk_` prefix. The JWT payload contain
 }
 ```
 
+### Per-token request budget
+
+Each token can carry an optional cap on the number of upstream requests it may
+make. This lets you hand a scoped token to a separate task or agent and bound
+how much of your Claude MAX subscription that task can consume, without ever
+exposing the real OAuth credential.
+
+```bash
+# CLI: issue a token limited to 100 upstream requests
+link-assistant-router tokens issue --ttl-hours 24 --label scoped-agent --max-requests 100
+
+# HTTP: same, via the admin endpoint
+curl -s -X POST http://localhost:8080/api/tokens \
+  -H "Content-Type: application/json" \
+  -d '{"ttl_hours": 24, "label": "scoped-agent", "max_requests": 100}' | jq .
+```
+
+- Omitting `--max-requests` / `max_requests` leaves the token **unlimited**.
+- Usage is counted per forwarded request and persisted in the token store, so
+  the budget is enforced across restarts.
+- When the budget is exhausted the router responds with
+  `429 Too Many Requests` and a `rate_limit_error` body
+  (`{"error":{"message":"Token has reached its request limit",...}}`) instead of
+  forwarding upstream.
+- `tokens list` shows a `requests` column as `used/max` (e.g. `42/100`), or
+  `used/-` for unlimited tokens.
+
 ### Security notes
 
 - The `TOKEN_SECRET` must be kept secure — anyone with the secret can forge tokens
 - OAuth tokens from the Claude Code session are never exposed to clients
 - Tokens are validated on every request
 - Use a strong, random secret (e.g., `openssl rand -hex 32`)
+- Pair short TTLs with `max_requests` to give each task a tightly scoped,
+  self-expiring credential
 
 ## Testing
 

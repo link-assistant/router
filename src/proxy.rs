@@ -79,6 +79,29 @@ pub const REQUIRED_FORWARD_HEADERS: &[&str] = &[
     "x-claude-code-session-id",
 ];
 
+/// Default Anthropic API version injected when a client omits the
+/// `anthropic-version` header (the Messages API requires it).
+pub const DEFAULT_ANTHROPIC_VERSION: &str = "2023-06-01";
+
+/// Anthropic `anthropic-beta` flag for Claude MAX OAuth access tokens.
+///
+/// Claude MAX OAuth access tokens are only accepted for inference on the
+/// Messages API when this beta flag is present. Standard Anthropic SDK
+/// clients do not send it, so the proxy injects it when substituting the
+/// OAuth credential — otherwise upstream rejects the request.
+pub const OAUTH_BETA_FLAG: &str = "oauth-2025-04-20";
+
+/// Merge [`OAUTH_BETA_FLAG`] into an optional existing `anthropic-beta` header
+/// value without creating duplicates.
+#[must_use]
+pub fn merge_oauth_beta(existing: Option<&str>) -> String {
+    match existing {
+        Some(v) if v.split(',').map(str::trim).any(|f| f == OAUTH_BETA_FLAG) => v.to_string(),
+        Some(v) if !v.trim().is_empty() => format!("{v},{OAUTH_BETA_FLAG}"),
+        _ => OAUTH_BETA_FLAG.to_string(),
+    }
+}
+
 /// Hop-by-hop headers that must not be forwarded.
 const HOP_BY_HOP_HEADERS: &[&str] = &["host", "connection", "transfer-encoding", "keep-alive"];
 
@@ -86,111 +109,6 @@ const HOP_BY_HOP_HEADERS: &[&str] = &["host", "connection", "transfer-encoding",
 #[allow(clippy::unused_async)]
 pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, "ok")
-}
-
-/// Token issuance endpoint.
-///
-/// Issues a new custom token.
-/// Expects a JSON body: `{"ttl_hours": 24, "label": "my-token"}`
-///
-/// When `admin_key` is configured the caller MUST present it as a Bearer
-/// token in `Authorization`; otherwise the endpoint is open (matching the
-/// original behaviour, kept for backwards compatibility).
-pub async fn issue_token(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    axum::Json(req): axum::Json<IssueTokenRequest>,
-) -> impl IntoResponse {
-    if let Some(ref required) = state.admin_key {
-        let provided = extract_bearer_token(&headers);
-        if provided != Some(required.as_str()) {
-            return error_response(
-                StatusCode::UNAUTHORIZED,
-                "authentication_error",
-                "missing or invalid admin Bearer key",
-            );
-        }
-    }
-
-    let ttl = req.ttl_hours.unwrap_or(24);
-    let label = req.label.unwrap_or_default();
-
-    match state
-        .token_manager
-        .issue_token_for(ttl, &label, req.account.as_deref())
-    {
-        Ok(token) => {
-            state.metrics.record_token_issued();
-            (
-                StatusCode::OK,
-                axum::Json(serde_json::json!({
-                    "token": token,
-                    "ttl_hours": ttl,
-                    "label": label,
-                    "account": req.account,
-                })),
-            )
-                .into_response()
-        }
-        Err(e) => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            &format!("Failed to issue token: {e}"),
-        ),
-    }
-}
-
-/// List all known tokens (admin endpoint).
-pub async fn list_tokens(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
-    if !is_admin_authorised(&state, &headers) {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "admin Bearer key required",
-        );
-    }
-    match state.token_manager.list_tokens() {
-        Ok(records) => (
-            StatusCode::OK,
-            axum::Json(serde_json::json!({"data": records})),
-        )
-            .into_response(),
-        Err(e) => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            &format!("{e}"),
-        ),
-    }
-}
-
-/// Revoke a token by id (admin endpoint).
-pub async fn revoke_token(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    axum::Json(req): axum::Json<RevokeTokenRequest>,
-) -> impl IntoResponse {
-    if !is_admin_authorised(&state, &headers) {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "admin Bearer key required",
-        );
-    }
-    match state.token_manager.revoke_token(&req.id) {
-        Ok(()) => {
-            state.metrics.record_token_revoked();
-            (
-                StatusCode::OK,
-                axum::Json(serde_json::json!({"revoked": req.id})),
-            )
-                .into_response()
-        }
-        Err(e) => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            &format!("{e}"),
-        ),
-    }
 }
 
 pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
@@ -215,23 +133,6 @@ pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
             .and_then(|value| value.to_str().ok())
             .filter(|value| !value.is_empty())
     })
-}
-
-/// Request body for the token issuance endpoint.
-#[derive(serde::Deserialize)]
-pub struct IssueTokenRequest {
-    /// Time-to-live in hours (default: 24).
-    pub ttl_hours: Option<i64>,
-    /// Optional label for the token.
-    pub label: Option<String>,
-    /// Optional account binding (multi-account mode).
-    pub account: Option<String>,
-}
-
-/// Request body for the token revocation endpoint.
-#[derive(serde::Deserialize)]
-pub struct RevokeTokenRequest {
-    pub id: String,
 }
 
 /// Proxy handler for upstream API forwarding.
@@ -289,15 +190,32 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     let custom_token = token.to_string();
 
     // Validate custom token
-    if let Err(e) = state.token_manager.validate_token(&custom_token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
+    let claims = match state.token_manager.validate_token(&custom_token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            state
+                .logger
+                .debug(|| format!("Token validation failed: {e}"));
+            return error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+
+    // Enforce the per-token request budget (max_requests). This is what lets
+    // an operator cap how much of the shared subscription a single task can
+    // consume. Tokens issued without a cap are always permitted.
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
         state
             .logger
-            .debug(|| format!("Token validation failed: {e}"));
-        return error_response(status, "authentication_error", &format!("{e}"));
+            .debug(|| format!("Token budget check failed: {e}"));
+        return error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
     }
 
     // Get the real OAuth token (multi-account aware).
@@ -446,6 +364,23 @@ pub(crate) fn build_upstream_headers(
     // Set the real OAuth authorization
     if let Ok(auth_val) = HeaderValue::from_str(&format!("Bearer {oauth_token}")) {
         headers.insert("authorization", auth_val);
+    }
+
+    // Ensure the headers Claude MAX OAuth requires are present even when the
+    // client (e.g. a plain Anthropic SDK) omits them. This is what makes the
+    // proxy transparent against an OAuth-backed upstream.
+    if !headers.contains_key("anthropic-version") {
+        headers.insert(
+            "anthropic-version",
+            HeaderValue::from_static(DEFAULT_ANTHROPIC_VERSION),
+        );
+    }
+    let existing_beta = headers
+        .get("anthropic-beta")
+        .and_then(|v| v.to_str().ok())
+        .map(String::from);
+    if let Ok(beta_val) = HeaderValue::from_str(&merge_oauth_beta(existing_beta.as_deref())) {
+        headers.insert("anthropic-beta", beta_val);
     }
 
     // Log required headers for observability
@@ -650,12 +585,22 @@ async fn forward_gonka_openai(
             "Missing Authorization Bearer token or x-api-key",
         );
     };
-    if let Err(e) = state.token_manager.validate_token(token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        return error_response(status, "authentication_error", &format!("{e}"));
+    let claims = match state.token_manager.validate_token(token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            return error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+        return error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
     }
 
     let body = crate::gonka::with_default_model(body, &gonka.model);
@@ -760,12 +705,22 @@ async fn forward_openai(
             "Missing Authorization Bearer token or x-api-key",
         );
     };
-    if let Err(e) = state.token_manager.validate_token(token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        return error_response(status, "authentication_error", &format!("{e}"));
+    let claims = match state.token_manager.validate_token(token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            return error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+        return error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
     }
 
     // Resolve OAuth credentials.
@@ -802,14 +757,12 @@ async fn forward_openai(
         .post(&upstream_url)
         .header("authorization", format!("Bearer {oauth_token}"))
         .header("content-type", "application/json")
-        .header("anthropic-version", "2023-06-01")
+        .header("anthropic-version", DEFAULT_ANTHROPIC_VERSION)
         .body(serialized);
-    // Forward `anthropic-beta` if the caller supplied it (rare for OpenAI clients).
-    if let Some(beta) = headers.get("anthropic-beta") {
-        if let Ok(v) = beta.to_str() {
-            req_builder = req_builder.header("anthropic-beta", v);
-        }
-    }
+    // Ensure the Claude MAX OAuth beta flag is present, merging any value the
+    // caller supplied (OpenAI clients rarely send one).
+    let merged_beta = merge_oauth_beta(headers.get("anthropic-beta").and_then(|v| v.to_str().ok()));
+    req_builder = req_builder.header("anthropic-beta", merged_beta);
     let upstream_resp = match req_builder.send().await {
         Ok(r) => r,
         Err(e) => {

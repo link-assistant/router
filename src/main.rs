@@ -28,6 +28,7 @@ use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::{self, AppState};
 use link_assistant_router::storage::{build_token_store, TokenStore};
 use link_assistant_router::token::TokenManager;
+use link_assistant_router::token_admin;
 use log_lazy::{levels, LogLazy};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
@@ -187,9 +188,9 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             "/activities/follow-problemsets-code-001",
             get(activitypub::follow_problemsets),
         )
-        .route("/api/tokens", post(proxy::issue_token))
-        .route("/api/tokens/list", get(proxy::list_tokens))
-        .route("/api/tokens/revoke", post(proxy::revoke_token))
+        .route("/api/tokens", post(token_admin::issue_token))
+        .route("/api/tokens/list", get(token_admin::list_tokens))
+        .route("/api/tokens/revoke", post(token_admin::revoke_token))
         .route(
             "/api/providers",
             get(provider_proxy::list_providers).post(provider_proxy::upsert_provider),
@@ -249,7 +250,8 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             ttl_hours,
             label,
             account,
-        } => match mgr.issue_token_for(*ttl_hours, label, account.as_deref()) {
+            max_requests,
+        } => match mgr.issue_token_full(*ttl_hours, label, account.as_deref(), *max_requests) {
             Ok(t) => {
                 println!("{t}");
                 ExitCode::SUCCESS
@@ -262,13 +264,17 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
         TokenOp::List => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
-                    "{:<36}  {:<10}  {:<10}  {:<10}  label",
-                    "id", "issued_at", "expires_at", "revoked"
+                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  label",
+                    "id", "issued_at", "expires_at", "revoked", "requests"
                 );
                 for r in records {
+                    let requests = r.max_requests.map_or_else(
+                        || format!("{}/-", r.used_requests),
+                        |max| format!("{}/{max}", r.used_requests),
+                    );
                     println!(
-                        "{:<36}  {:<10}  {:<10}  {:<10}  {}",
-                        r.id, r.issued_at, r.expires_at, r.revoked, r.label
+                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {}",
+                        r.id, r.issued_at, r.expires_at, r.revoked, requests, r.label
                     );
                 }
                 ExitCode::SUCCESS
@@ -495,25 +501,44 @@ fn run_doctor(config: &Config) -> ExitCode {
         }
     );
 
-    // Probe credentials.
-    let probe_path = std::path::Path::new(&config.claude_code_home).join("credentials.json");
-    println!(
-        "primary credentials    : {} ({})",
-        probe_path.display(),
-        if probe_path.exists() {
-            "found"
-        } else {
-            "MISSING"
+    // Probe credentials. Use the OAuth provider so the report covers every
+    // candidate file the router actually reads, including the dotfile
+    // `.credentials.json` and the nested `claudeAiOauth` layout.
+    let primary = OAuthProvider::new(&config.claude_code_home);
+    match primary.discover_credential_path() {
+        Some(path) => {
+            let readable = primary.get_token().is_ok();
+            println!(
+                "primary credentials    : {} ({})",
+                path.display(),
+                if readable {
+                    "found, token OK"
+                } else {
+                    "found, NO TOKEN"
+                }
+            );
         }
-    );
+        None => println!(
+            "primary credentials    : {} (MISSING)",
+            std::path::Path::new(&config.claude_code_home)
+                .join(".credentials.json")
+                .display()
+        ),
+    }
     for (i, dir) in config.additional_account_dirs.iter().enumerate() {
-        let p = dir.join("credentials.json");
-        println!(
-            "extra account {}        : {} ({})",
-            i + 1,
-            p.display(),
-            if p.exists() { "found" } else { "MISSING" }
-        );
+        let provider = OAuthProvider::new(&dir.to_string_lossy());
+        match provider.discover_credential_path() {
+            Some(path) => println!(
+                "extra account {}        : {} (found)",
+                i + 1,
+                path.display()
+            ),
+            None => println!(
+                "extra account {}        : {} (MISSING)",
+                i + 1,
+                dir.join(".credentials.json").display()
+            ),
+        }
     }
 
     // Probe data dir.
