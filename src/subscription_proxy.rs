@@ -144,6 +144,9 @@ pub async fn forward_subscription_openai(
         .get("content-type")
         .cloned()
         .unwrap_or_else(|| HeaderValue::from_static("application/json"));
+    // Preserve rate-limit signals (Retry-After, x-ratelimit-*) so clients can
+    // back off intelligently when a subscription upstream throttles us.
+    let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
 
     if stream_requested || is_event_stream(&content_type) {
         let stream = upstream_resp
@@ -152,6 +155,7 @@ pub async fn forward_subscription_openai(
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         response.headers_mut().insert("content-type", content_type);
+        apply_headers(response.headers_mut(), rate_limit_headers);
         return response;
     }
 
@@ -173,7 +177,28 @@ pub async fn forward_subscription_openai(
     let mut response = Response::new(Body::from(upstream_body));
     *response.status_mut() = status;
     response.headers_mut().insert("content-type", content_type);
+    apply_headers(response.headers_mut(), rate_limit_headers);
     response
+}
+
+/// Collect rate-limit-related headers (`retry-after`, `x-ratelimit-*`) from an
+/// upstream response so they can be relayed to the client.
+fn rate_limit_headers(headers: &HeaderMap) -> Vec<(axum::http::HeaderName, HeaderValue)> {
+    headers
+        .iter()
+        .filter(|(name, _)| {
+            let n = name.as_str();
+            n == "retry-after" || n.starts_with("x-ratelimit")
+        })
+        .map(|(name, value)| (name.clone(), value.clone()))
+        .collect()
+}
+
+/// Insert collected headers into an outgoing response header map.
+fn apply_headers(out: &mut HeaderMap, headers: Vec<(axum::http::HeaderName, HeaderValue)>) {
+    for (name, value) in headers {
+        out.insert(name, value);
+    }
 }
 
 /// Provider-specific extra headers required by the upstream.
@@ -297,6 +322,25 @@ mod tests {
             headers
                 .iter()
                 .any(|(k, v)| *k == "chatgpt-account-id" && v == "acct_9")
+        );
+    }
+
+    #[test]
+    fn rate_limit_headers_are_selected() {
+        let mut headers = HeaderMap::new();
+        headers.insert("retry-after", HeaderValue::from_static("30"));
+        headers.insert(
+            "x-ratelimit-remaining-requests",
+            HeaderValue::from_static("0"),
+        );
+        headers.insert("content-type", HeaderValue::from_static("application/json"));
+        let selected = rate_limit_headers(&headers);
+        assert_eq!(selected.len(), 2);
+        assert!(selected.iter().any(|(n, _)| n.as_str() == "retry-after"));
+        assert!(
+            selected
+                .iter()
+                .any(|(n, _)| n.as_str() == "x-ratelimit-remaining-requests")
         );
     }
 
