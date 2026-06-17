@@ -43,6 +43,9 @@ pub struct AppState {
     /// Multi-account router (when configured). When `None`, the legacy
     /// `oauth_provider` is used directly.
     pub account_router: Option<AccountRouter>,
+    /// Subscription credential reader for vendor OAuth providers
+    /// (Codex/Gemini/Qwen). `None` for non-subscription upstreams.
+    pub subscription_reader: Option<crate::subscription::SubscriptionReader>,
     /// Base URL for the upstream Anthropic API.
     pub upstream_base_url: String,
     /// Selected upstream inference provider.
@@ -423,6 +426,10 @@ pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
         UpstreamProvider::Crater => crate::crater::list_models(),
+        UpstreamProvider::Codex | UpstreamProvider::Qwen => {
+            crate::subscription_proxy::subscription_models(&state)
+        }
+        UpstreamProvider::Gemini => crate::gemini::list_models(),
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)
         }
@@ -468,6 +475,32 @@ pub async fn openai_chat_completions(
             &headers,
             body,
             "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Qwen {
+        return crate::subscription_proxy::forward_subscription_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Gemini {
+        return crate::gemini::forward_chat_completions(&state, &headers, body).await;
+    }
+    if state.upstream_provider == UpstreamProvider::Codex {
+        // The ChatGPT backend speaks only the Responses API; translate the
+        // Chat Completions request before forwarding.
+        let responses_body = openai::chat_completion_to_responses(&body);
+        return crate::subscription_proxy::forward_subscription_openai(
+            &state,
+            &headers,
+            responses_body,
+            "/v1/responses",
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
@@ -528,6 +561,22 @@ pub async fn openai_responses(
             crate::metrics::Surface::OpenAIResponses,
         )
         .await;
+    }
+    if matches!(
+        state.upstream_provider,
+        UpstreamProvider::Codex | UpstreamProvider::Qwen
+    ) {
+        return crate::subscription_proxy::forward_subscription_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Gemini {
+        return crate::gemini::forward_responses(&state, &headers, body).await;
     }
     let req = match serde_json::from_value::<openai::OpenAIResponseRequest>(body) {
         Ok(req) => req,

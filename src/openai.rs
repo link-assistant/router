@@ -196,6 +196,77 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     body
 }
 
+/// Translate an `OpenAI` Chat Completions request body to an `OpenAI`
+/// Responses-API request body.
+///
+/// The `ChatGPT` backend used by Codex subscriptions speaks only the Responses
+/// API, so Chat Completions requests are projected onto it: `system`/`developer`
+/// turns become `instructions`, remaining turns become typed `input` items, and
+/// the token/sampling knobs are renamed to their Responses equivalents. The
+/// caller's `model` is preserved verbatim (Codex expects e.g. `gpt-5-codex`).
+#[must_use]
+pub fn chat_completion_to_responses(body: &Value) -> Value {
+    let model = body
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or("gpt-5-codex");
+
+    let mut instructions: Vec<String> = Vec::new();
+    let mut input: Vec<Value> = Vec::new();
+    if let Some(messages) = body.get("messages").and_then(Value::as_array) {
+        for msg in messages {
+            let role = msg.get("role").and_then(Value::as_str).unwrap_or("user");
+            let content = msg.get("content").cloned().unwrap_or(Value::Null);
+            match role {
+                "system" | "developer" => {
+                    if let Some(text) = extract_text(&content) {
+                        instructions.push(text);
+                    }
+                }
+                _ => {
+                    let text = extract_text(&content).unwrap_or_default();
+                    // Responses input uses `input_text` for user-side content
+                    // and `output_text` for prior assistant turns.
+                    let part_type = if role == "assistant" {
+                        "output_text"
+                    } else {
+                        "input_text"
+                    };
+                    input.push(json!({
+                        "role": role,
+                        "content": [{ "type": part_type, "text": text }],
+                    }));
+                }
+            }
+        }
+    }
+
+    let mut out = json!({
+        "model": model,
+        "input": input,
+    });
+    if !instructions.is_empty() {
+        out["instructions"] = Value::String(instructions.join("\n\n"));
+    }
+    if let Some(max) = body
+        .get("max_completion_tokens")
+        .or_else(|| body.get("max_tokens"))
+        .and_then(Value::as_u64)
+    {
+        out["max_output_tokens"] = json!(max);
+    }
+    if let Some(t) = body.get("temperature").and_then(Value::as_f64) {
+        out["temperature"] = json!(t);
+    }
+    if let Some(t) = body.get("top_p").and_then(Value::as_f64) {
+        out["top_p"] = json!(t);
+    }
+    if let Some(tools) = body.get("tools") {
+        out["tools"] = tools.clone();
+    }
+    out
+}
+
 /// Translate the upstream Anthropic JSON response to an `OpenAI` Chat
 /// Completions response.
 #[must_use]

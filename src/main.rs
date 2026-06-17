@@ -155,11 +155,31 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             None
         };
 
+    // Vendor-subscription upstreams (Codex/Gemini/Qwen) read their OAuth token
+    // from the vendor CLI's credential file. Claude keeps using `oauth_provider`.
+    let subscription_reader = match config.upstream_provider.subscription_provider() {
+        Some(provider)
+            if provider != link_assistant_router::subscription::SubscriptionProvider::Claude =>
+        {
+            let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+            let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
+                provider, &user_home,
+            );
+            tracing::info!(
+                "Subscription provider {provider}: reading credentials from {}",
+                reader.home().display()
+            );
+            Some(reader)
+        }
+        _ => None,
+    };
+
     let state = AppState {
         client,
         token_manager,
         oauth_provider,
         account_router,
+        subscription_reader,
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
         gonka: link_assistant_router::gonka::GonkaConfig::new(

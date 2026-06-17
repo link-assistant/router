@@ -9,6 +9,7 @@ pub mod activitypub;
 pub mod cli;
 pub mod config;
 pub mod crater;
+pub mod gemini;
 pub mod gonka;
 pub mod metrics;
 pub mod mpp;
@@ -19,6 +20,7 @@ pub mod providers;
 pub mod proxy;
 pub mod storage;
 pub mod subscription;
+pub mod subscription_proxy;
 pub mod token;
 pub mod token_admin;
 
