@@ -2,11 +2,11 @@
 //!
 //! Tests the token system, proxy behavior, API format routing, and header forwarding.
 
+use link_assistant_router::VERSION;
 use link_assistant_router::config::ApiFormat;
 use link_assistant_router::oauth::OAuthProvider;
-use link_assistant_router::proxy::{resolve_upstream_path, REQUIRED_FORWARD_HEADERS};
-use link_assistant_router::token::{TokenManager, TOKEN_PREFIX};
-use link_assistant_router::VERSION;
+use link_assistant_router::proxy::{REQUIRED_FORWARD_HEADERS, resolve_upstream_path};
+use link_assistant_router::token::{TOKEN_PREFIX, TokenManager};
 
 mod token_integration_tests {
     use super::*;
@@ -280,9 +280,11 @@ mod activitypub_tests {
         let actor = actor_document(BASE, KEY);
         let context = actor["@context"].as_array().expect("context array");
 
-        assert!(context
-            .iter()
-            .any(|item| item == "https://www.w3.org/ns/activitystreams"));
+        assert!(
+            context
+                .iter()
+                .any(|item| item == "https://www.w3.org/ns/activitystreams")
+        );
         assert!(context.iter().any(|item| item == "https://forgefed.org/ns"));
         assert!(context.iter().any(|item| item["aliases"] == "fep:aliases"));
     }
@@ -326,8 +328,9 @@ mod activitypub_tests {
 
 mod config_verbose_tests {
     use link_assistant_router::config::{
+        BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
         default_activitypub_public_key_pem, default_crater_config, default_gonka_model,
-        default_gonka_source_url, BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
+        default_gonka_source_url,
     };
     use std::path::PathBuf;
 
@@ -377,8 +380,8 @@ mod config_verbose_tests {
 
 mod openai_translation_tests {
     use link_assistant_router::openai::{
-        anthropic_to_chat_completion, chat_completion_to_anthropic, list_models, map_model,
-        ChatMessage, OpenAIChatCompletionRequest,
+        ChatMessage, OpenAIChatCompletionRequest, anthropic_to_chat_completion,
+        chat_completion_to_anthropic, list_models, map_model,
     };
     use serde_json::json;
 
@@ -451,7 +454,7 @@ mod openai_translation_tests {
 mod mpp_tests {
     use axum::http::{HeaderMap, HeaderValue, StatusCode};
     use link_assistant_router::mpp::{
-        has_payment_credential, payment_required, unsupported_payment_verification, MppConfig,
+        MppConfig, has_payment_credential, payment_required, unsupported_payment_verification,
     };
 
     #[test]
@@ -496,7 +499,7 @@ mod mpp_tests {
 }
 
 mod metrics_rendering_tests {
-    use link_assistant_router::metrics::{render_prometheus, usage_snapshot, Metrics, Surface};
+    use link_assistant_router::metrics::{Metrics, Surface, render_prometheus, usage_snapshot};
 
     #[test]
     fn prometheus_output_contains_all_required_counters() {

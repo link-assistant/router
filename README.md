@@ -15,6 +15,7 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
+- **Vendor subscriptions** — `UPSTREAM_PROVIDER=codex|gemini|qwen` reads each vendor CLI's OAuth credentials read-only (`~/.codex`, `~/.gemini`, `~/.qwen`), refreshes expired tokens in memory, and routes to the ChatGPT/Code Assist/DashScope backend with full dialect translation
 - **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
 - **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
@@ -59,6 +60,28 @@ When `UPSTREAM_PROVIDER=crater`, `/v1/chat/completions` accepts normal OpenAI
 chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
 `CRATER_FORGEFED_INBOX`, reads `Accept.result`, polls that task URI until
 `isResolved:true`, and maps the resolved content back to OpenAI JSON or SSE.
+
+### Vendor subscriptions (Codex, Gemini, Qwen)
+
+Set `UPSTREAM_PROVIDER` to `codex`, `gemini`, or `qwen` to serve a vendor
+subscription instead of an API key. Clients still authenticate to the router
+with their `la_sk_...` token; the router supplies the vendor OAuth token.
+
+| Provider | `UPSTREAM_PROVIDER` (aliases) | Credentials (read-only) | Upstream |
+| --- | --- | --- | --- |
+| Claude | `anthropic` | `~/.claude/.credentials.json` | `api.anthropic.com` |
+| Codex / ChatGPT | `codex` (`chatgpt`, `openai-codex`) | `~/.codex/auth.json` | ChatGPT backend Responses API |
+| Gemini | `gemini` (`google`, `code-assist`) | `~/.gemini/oauth_creds.json` | Code Assist `generateContent` |
+| Qwen | `qwen` (`qwen-code`, `dashscope`) | `~/.qwen/oauth_creds.json` | DashScope OpenAI-compatible |
+
+The credential files are produced by each vendor's own CLI (run its `login`
+once); the router only reads them. Expired tokens are refreshed in memory using
+the vendor's public OAuth client — the files on disk are never modified and
+secrets are never logged. `/v1/chat/completions` and `/v1/responses` are
+translated to each backend's dialect (Codex uses the OpenAI Responses API;
+Gemini uses the Code Assist envelope with synthesized SSE for streaming; Qwen is
+OpenAI-compatible). Run `router doctor` to verify each credential file is
+present and its token valid.
 
 ## Quick Start
 

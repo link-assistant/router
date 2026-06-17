@@ -29,6 +29,7 @@ use crate::gonka::GonkaConfig;
 use crate::oauth::OAuthProvider;
 use crate::openai;
 use crate::providers::{OpenAICompatibleConfig, ProviderStore};
+use crate::responses;
 use crate::token::TokenManager;
 
 /// Shared application state accessible by all route handlers.
@@ -43,6 +44,11 @@ pub struct AppState {
     /// Multi-account router (when configured). When `None`, the legacy
     /// `oauth_provider` is used directly.
     pub account_router: Option<AccountRouter>,
+    /// Subscription credential reader for vendor OAuth providers
+    /// (Codex/Gemini/Qwen). `None` for non-subscription upstreams.
+    pub subscription_reader: Option<crate::subscription::SubscriptionReader>,
+    /// In-memory cache of refreshed subscription tokens (Codex/Gemini/Qwen).
+    pub subscription_cache: std::sync::Arc<crate::refresh::TokenCache>,
     /// Base URL for the upstream Anthropic API.
     pub upstream_base_url: String,
     /// Selected upstream inference provider.
@@ -306,7 +312,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     // Stream the response body
     let stream = upstream_resp
         .bytes_stream()
-        .map(|chunk| chunk.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)));
+        .map(|chunk| chunk.map_err(std::io::Error::other));
 
     let body = Body::from_stream(stream);
 
@@ -423,6 +429,10 @@ pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
         UpstreamProvider::Crater => crate::crater::list_models(),
+        UpstreamProvider::Codex | UpstreamProvider::Qwen => {
+            crate::subscription_proxy::subscription_models(&state)
+        }
+        UpstreamProvider::Gemini => crate::gemini::list_models(),
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)
         }
@@ -468,6 +478,32 @@ pub async fn openai_chat_completions(
             &headers,
             body,
             "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Qwen {
+        return crate::subscription_proxy::forward_subscription_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Gemini {
+        return crate::gemini::forward_chat_completions(&state, &headers, body).await;
+    }
+    if state.upstream_provider == UpstreamProvider::Codex {
+        // The ChatGPT backend speaks only the Responses API; translate the
+        // Chat Completions request before forwarding.
+        let responses_body = responses::chat_completion_to_responses(&body);
+        return crate::subscription_proxy::forward_subscription_openai(
+            &state,
+            &headers,
+            responses_body,
+            "/v1/responses",
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
@@ -529,7 +565,23 @@ pub async fn openai_responses(
         )
         .await;
     }
-    let req = match serde_json::from_value::<openai::OpenAIResponseRequest>(body) {
+    if matches!(
+        state.upstream_provider,
+        UpstreamProvider::Codex | UpstreamProvider::Qwen
+    ) {
+        return crate::subscription_proxy::forward_subscription_openai(
+            &state,
+            &headers,
+            body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::Gemini {
+        return crate::gemini::forward_responses(&state, &headers, body).await;
+    }
+    let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
         Ok(req) => req,
         Err(e) => {
             return error_response(
@@ -541,7 +593,7 @@ pub async fn openai_responses(
     };
     let requested_model = req.model.clone();
     let stream_requested = req.stream.unwrap_or(false);
-    let body = openai::response_to_anthropic(&req);
+    let body = responses::response_to_anthropic(&req);
     forward_openai(
         &state,
         &headers,
@@ -790,7 +842,7 @@ async fn forward_openai(
             Ok(bytes) => Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
                 translator.push(&bytes).join(""),
             )),
-            Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+            Err(e) => Err(std::io::Error::other(e)),
         });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = StatusCode::OK;
@@ -857,7 +909,7 @@ async fn forward_openai(
 
     let translated = match shape {
         OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, requested_model),
-        OpenAIShape::Response => openai::anthropic_to_response(&anthropic, requested_model),
+        OpenAIShape::Response => responses::anthropic_to_response(&anthropic, requested_model),
     };
 
     state

@@ -22,7 +22,7 @@
 //! matching `OpenAI` Chat Completions or Responses SSE event shape.
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// One chat message in the `OpenAI` request.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -57,25 +57,6 @@ pub struct OpenAIChatCompletionRequest {
     pub tools: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tool_choice: Option<Value>,
-}
-
-/// `OpenAI` `POST /v1/responses` request body. We accept the superset and
-/// project to Anthropic Messages, so unknown keys are ignored.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OpenAIResponseRequest {
-    pub model: String,
-    /// Either a single string or a structured input list.
-    pub input: Value,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub instructions: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub max_output_tokens: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub temperature: Option<f32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub stream: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tools: Option<Value>,
 }
 
 /// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
@@ -150,48 +131,6 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     }
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
-    }
-    body
-}
-
-/// Translate an `OpenAI` Responses-API request to Anthropic Messages.
-#[must_use]
-pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
-    let mut messages: Vec<Value> = Vec::new();
-    match &req.input {
-        Value::String(s) => {
-            messages.push(json!({"role": "user", "content": s}));
-        }
-        Value::Array(items) => {
-            for item in items {
-                if let Some(role) = item.get("role").and_then(Value::as_str) {
-                    let content = item.get("content").cloned().unwrap_or(Value::Null);
-                    messages.push(json!({"role": role, "content": content}));
-                } else if let Some(text) = item.as_str() {
-                    messages.push(json!({"role": "user", "content": text}));
-                }
-            }
-        }
-        _ => {}
-    }
-
-    let max_tokens = req.max_output_tokens.unwrap_or(4096);
-    let mut body = json!({
-        "model": map_model(&req.model),
-        "max_tokens": max_tokens,
-        "messages": messages,
-    });
-    if let Some(instructions) = &req.instructions {
-        body["system"] = Value::String(instructions.clone());
-    }
-    if let Some(t) = req.temperature {
-        body["temperature"] = json!(t);
-    }
-    if req.stream == Some(true) {
-        body["stream"] = json!(true);
-    }
-    if let Some(tools) = &req.tools {
-        body["tools"] = translate_tools(tools);
     }
     body
 }
@@ -276,42 +215,6 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, requested_model: &str) ->
             "completion_tokens": completion_tokens,
             "total_tokens": prompt_tokens + completion_tokens,
         }
-    })
-}
-
-/// Translate an Anthropic JSON response to an `OpenAI` Responses-API response.
-#[must_use]
-pub fn anthropic_to_response(anthropic: &Value, requested_model: &str) -> Value {
-    let id = anthropic
-        .get("id")
-        .and_then(Value::as_str)
-        .map_or_else(|| format!("resp-{}", uuid::Uuid::new_v4()), String::from);
-    let mut text = String::new();
-    if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
-        for block in blocks {
-            if block.get("type").and_then(Value::as_str) == Some("text") {
-                if let Some(t) = block.get("text").and_then(Value::as_str) {
-                    text.push_str(t);
-                }
-            }
-        }
-    }
-    json!({
-        "id": id,
-        "object": "response",
-        "created_at": chrono::Utc::now().timestamp(),
-        "model": requested_model,
-        "status": "completed",
-        "output": [
-            {
-                "type": "message",
-                "role": "assistant",
-                "content": [
-                    { "type": "output_text", "text": text }
-                ]
-            }
-        ],
-        "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
     })
 }
 
@@ -630,7 +533,7 @@ pub fn list_models() -> Value {
     json!({"object": "list", "data": data})
 }
 
-fn extract_text(content: &Value) -> Option<String> {
+pub(crate) fn extract_text(content: &Value) -> Option<String> {
     match content {
         Value::String(s) => Some(s.clone()),
         Value::Array(parts) => {
@@ -642,11 +545,7 @@ fn extract_text(content: &Value) -> Option<String> {
                     buf.push_str(s);
                 }
             }
-            if buf.is_empty() {
-                None
-            } else {
-                Some(buf)
-            }
+            if buf.is_empty() { None } else { Some(buf) }
         }
         _ => None,
     }
@@ -679,7 +578,7 @@ fn translate_parts(parts: &[Value]) -> Vec<Value> {
         .collect()
 }
 
-fn translate_tools(tools: &Value) -> Value {
+pub(crate) fn translate_tools(tools: &Value) -> Value {
     match tools {
         Value::Array(arr) => {
             let mapped: Vec<Value> = arr
@@ -888,34 +787,13 @@ mod tests {
             .unwrap();
         assert_eq!(calls[0]["id"], "t1");
         assert_eq!(calls[0]["function"]["name"], "lookup");
-        assert!(calls[0]["function"]["arguments"]
-            .as_str()
-            .unwrap()
-            .contains("rust"));
+        assert!(
+            calls[0]["function"]["arguments"]
+                .as_str()
+                .unwrap()
+                .contains("rust")
+        );
         assert_eq!(out["choices"][0]["finish_reason"], "tool_calls");
-    }
-
-    #[test]
-    fn responses_api_translation() {
-        let req = OpenAIResponseRequest {
-            model: "gpt-4o".into(),
-            input: Value::String("write a haiku".into()),
-            instructions: Some("be poetic".into()),
-            max_output_tokens: Some(128),
-            temperature: Some(0.9),
-            stream: None,
-            tools: None,
-        };
-        let body = response_to_anthropic(&req);
-        assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
-        assert_eq!(body["system"], "be poetic");
-        assert_eq!(body["max_tokens"], 128);
-        assert_eq!(body["messages"][0]["content"], "write a haiku");
-
-        let resp = json!({"id": "msg_1", "content": [{"type":"text","text":"line1"}]});
-        let out = anthropic_to_response(&resp, "gpt-4o");
-        assert_eq!(out["object"], "response");
-        assert_eq!(out["output"][0]["content"][0]["text"], "line1");
     }
 
     #[test]

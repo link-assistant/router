@@ -25,6 +25,12 @@ pub enum UpstreamProvider {
     Gonka,
     /// Crater `ForgeFed` task provider.
     Crater,
+    /// `OpenAI` Codex / `ChatGPT` subscription via `~/.codex` OAuth credentials.
+    Codex,
+    /// Google Gemini Code Assist subscription via `~/.gemini` OAuth credentials.
+    Gemini,
+    /// Alibaba Qwen subscription via `~/.qwen` OAuth credentials (`DashScope`).
+    Qwen,
     /// Generic OpenAI-compatible inference provider, including `LiteLLM` proxy.
     OpenAICompatible,
 }
@@ -37,10 +43,27 @@ impl UpstreamProvider {
             "anthropic" | "claude" => Some(Self::Anthropic),
             "gonka" => Some(Self::Gonka),
             "crater" | "forgefed" => Some(Self::Crater),
+            "codex" | "chatgpt" | "openai-codex" => Some(Self::Codex),
+            "gemini" | "google" | "code-assist" => Some(Self::Gemini),
+            "qwen" | "qwen-code" | "dashscope" => Some(Self::Qwen),
             "openai" | "openai-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
             _ => None,
+        }
+    }
+
+    /// The subscription provider backing this upstream, when it is one of the
+    /// vendor-subscription providers (Claude/Codex/Gemini/Qwen).
+    #[must_use]
+    pub const fn subscription_provider(self) -> Option<crate::subscription::SubscriptionProvider> {
+        use crate::subscription::SubscriptionProvider as S;
+        match self {
+            Self::Anthropic => Some(S::Claude),
+            Self::Codex => Some(S::Codex),
+            Self::Gemini => Some(S::Gemini),
+            Self::Qwen => Some(S::Qwen),
+            Self::Gonka | Self::Crater | Self::OpenAICompatible => None,
         }
     }
 }

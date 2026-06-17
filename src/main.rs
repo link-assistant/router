@@ -14,8 +14,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
-use axum::routing::{get, post};
 use axum::Router;
+use axum::routing::{get, post};
 use link_assistant_router::accounts::{AccountRouter, SelectionStrategy};
 use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
@@ -26,10 +26,10 @@ use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::provider_proxy;
 use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::{self, AppState};
-use link_assistant_router::storage::{build_token_store, TokenStore};
+use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::token::TokenManager;
 use link_assistant_router::token_admin;
-use log_lazy::{levels, LogLazy};
+use log_lazy::{LogLazy, levels};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
 
@@ -155,11 +155,32 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             None
         };
 
+    // Vendor-subscription upstreams (Codex/Gemini/Qwen) read their OAuth token
+    // from the vendor CLI's credential file. Claude keeps using `oauth_provider`.
+    let subscription_reader = match config.upstream_provider.subscription_provider() {
+        Some(provider)
+            if provider != link_assistant_router::subscription::SubscriptionProvider::Claude =>
+        {
+            let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+            let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
+                provider, &user_home,
+            );
+            tracing::info!(
+                "Subscription provider {provider}: reading credentials from {}",
+                reader.home().display()
+            );
+            Some(reader)
+        }
+        _ => None,
+    };
+
     let state = AppState {
         client,
         token_manager,
         oauth_provider,
         account_router,
+        subscription_reader,
+        subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
         gonka: link_assistant_router::gonka::GonkaConfig::new(
@@ -538,6 +559,35 @@ fn run_doctor(config: &Config) -> ExitCode {
                 i + 1,
                 dir.join(".credentials.json").display()
             ),
+        }
+    }
+
+    // Probe vendor-subscription credentials (Codex/Gemini/Qwen). These are the
+    // OAuth files written by each vendor's CLI; the router reads them read-only
+    // when the matching upstream provider is active.
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    for provider in link_assistant_router::subscription::SubscriptionProvider::ALL {
+        use link_assistant_router::subscription::SubscriptionProvider;
+        if provider == SubscriptionProvider::Claude {
+            continue; // covered by the primary Claude probe above
+        }
+        let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
+            provider, &user_home,
+        );
+        let label = format!("{provider} subscription");
+        match reader.discover_credential_path() {
+            Some(path) => {
+                let status = reader.read_token().map_or("found, NO TOKEN", |token| {
+                    let now_ms = chrono::Utc::now().timestamp_millis();
+                    if token.is_expired(now_ms) {
+                        "found, token EXPIRED"
+                    } else {
+                        "found, token OK"
+                    }
+                });
+                println!("{label:<23}: {} ({status})", path.display());
+            }
+            None => println!("{label:<23}: {} (MISSING)", reader.home().display()),
         }
     }
 

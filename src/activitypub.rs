@@ -4,9 +4,9 @@
 //! a ForgeFed-capable problem source can discover and address it.
 
 use axum::extract::State;
-use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::proxy::AppState;
 
@@ -208,11 +208,13 @@ mod tests {
         );
         assert_eq!(doc["publicKey"]["owner"], doc["id"]);
         assert_eq!(doc["publicKey"]["publicKeyPem"], KEY);
-        assert!(doc["@context"]
-            .as_array()
-            .expect("context array")
-            .iter()
-            .any(|item| item == "https://forgefed.org/ns"));
+        assert!(
+            doc["@context"]
+                .as_array()
+                .expect("context array")
+                .iter()
+                .any(|item| item == "https://forgefed.org/ns")
+        );
         assert!(doc["aliases"].as_array().expect("aliases").len() >= 2);
     }
 

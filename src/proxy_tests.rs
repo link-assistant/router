@@ -1,8 +1,8 @@
 use axum::http::{HeaderMap, HeaderValue};
-use log_lazy::{levels, LogLazy};
+use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
-    build_upstream_headers, extract_client_token, merge_oauth_beta, OAUTH_BETA_FLAG,
+    OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token, merge_oauth_beta,
 };
 
 #[test]

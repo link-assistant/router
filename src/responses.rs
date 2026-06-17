@@ -1,0 +1,229 @@
+//! `OpenAI` Responses-API (`POST /v1/responses`) request/response translation.
+//!
+//! The newer agentic Responses API is a superset of Chat Completions. The
+//! `ChatGPT` backend used by Codex subscriptions speaks *only* this dialect, so
+//! the router both accepts Responses requests (projecting them to Anthropic
+//! Messages) and projects Chat Completions requests onto the Responses shape
+//! when forwarding to Codex. Shared field-shaping helpers live in
+//! [`crate::openai`].
+
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
+
+use crate::openai::{extract_text, map_model, translate_tools};
+
+/// `OpenAI` `POST /v1/responses` request body. We accept the superset and
+/// project to Anthropic Messages, so unknown keys are ignored.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpenAIResponseRequest {
+    pub model: String,
+    /// Either a single string or a structured input list.
+    pub input: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instructions: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_output_tokens: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tools: Option<Value>,
+}
+
+/// Translate an `OpenAI` Responses-API request to Anthropic Messages.
+#[must_use]
+pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
+    let mut messages: Vec<Value> = Vec::new();
+    match &req.input {
+        Value::String(s) => {
+            messages.push(json!({"role": "user", "content": s}));
+        }
+        Value::Array(items) => {
+            for item in items {
+                if let Some(role) = item.get("role").and_then(Value::as_str) {
+                    let content = item.get("content").cloned().unwrap_or(Value::Null);
+                    messages.push(json!({"role": role, "content": content}));
+                } else if let Some(text) = item.as_str() {
+                    messages.push(json!({"role": "user", "content": text}));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    let max_tokens = req.max_output_tokens.unwrap_or(4096);
+    let mut body = json!({
+        "model": map_model(&req.model),
+        "max_tokens": max_tokens,
+        "messages": messages,
+    });
+    if let Some(instructions) = &req.instructions {
+        body["system"] = Value::String(instructions.clone());
+    }
+    if let Some(t) = req.temperature {
+        body["temperature"] = json!(t);
+    }
+    if req.stream == Some(true) {
+        body["stream"] = json!(true);
+    }
+    if let Some(tools) = &req.tools {
+        body["tools"] = translate_tools(tools);
+    }
+    body
+}
+
+/// Translate an `OpenAI` Chat Completions request body to an `OpenAI`
+/// Responses-API request body.
+///
+/// The `ChatGPT` backend used by Codex subscriptions speaks only the Responses
+/// API, so Chat Completions requests are projected onto it: `system`/`developer`
+/// turns become `instructions`, remaining turns become typed `input` items, and
+/// the token/sampling knobs are renamed to their Responses equivalents. The
+/// caller's `model` is preserved verbatim (Codex expects e.g. `gpt-5-codex`).
+#[must_use]
+pub fn chat_completion_to_responses(body: &Value) -> Value {
+    let model = body
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or("gpt-5-codex");
+
+    let mut instructions: Vec<String> = Vec::new();
+    let mut input: Vec<Value> = Vec::new();
+    if let Some(messages) = body.get("messages").and_then(Value::as_array) {
+        for msg in messages {
+            let role = msg.get("role").and_then(Value::as_str).unwrap_or("user");
+            let content = msg.get("content").cloned().unwrap_or(Value::Null);
+            match role {
+                "system" | "developer" => {
+                    if let Some(text) = extract_text(&content) {
+                        instructions.push(text);
+                    }
+                }
+                _ => {
+                    let text = extract_text(&content).unwrap_or_default();
+                    // Responses input uses `input_text` for user-side content
+                    // and `output_text` for prior assistant turns.
+                    let part_type = if role == "assistant" {
+                        "output_text"
+                    } else {
+                        "input_text"
+                    };
+                    input.push(json!({
+                        "role": role,
+                        "content": [{ "type": part_type, "text": text }],
+                    }));
+                }
+            }
+        }
+    }
+
+    let mut out = json!({
+        "model": model,
+        "input": input,
+    });
+    if !instructions.is_empty() {
+        out["instructions"] = Value::String(instructions.join("\n\n"));
+    }
+    if let Some(max) = body
+        .get("max_completion_tokens")
+        .or_else(|| body.get("max_tokens"))
+        .and_then(Value::as_u64)
+    {
+        out["max_output_tokens"] = json!(max);
+    }
+    if let Some(t) = body.get("temperature").and_then(Value::as_f64) {
+        out["temperature"] = json!(t);
+    }
+    if let Some(t) = body.get("top_p").and_then(Value::as_f64) {
+        out["top_p"] = json!(t);
+    }
+    if let Some(tools) = body.get("tools") {
+        out["tools"] = tools.clone();
+    }
+    out
+}
+
+/// Translate an Anthropic JSON response to an `OpenAI` Responses-API response.
+#[must_use]
+pub fn anthropic_to_response(anthropic: &Value, requested_model: &str) -> Value {
+    let id = anthropic
+        .get("id")
+        .and_then(Value::as_str)
+        .map_or_else(|| format!("resp-{}", uuid::Uuid::new_v4()), String::from);
+    let mut text = String::new();
+    if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
+        for block in blocks {
+            if block.get("type").and_then(Value::as_str) == Some("text") {
+                if let Some(t) = block.get("text").and_then(Value::as_str) {
+                    text.push_str(t);
+                }
+            }
+        }
+    }
+    json!({
+        "id": id,
+        "object": "response",
+        "created_at": chrono::Utc::now().timestamp(),
+        "model": requested_model,
+        "status": "completed",
+        "output": [
+            {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                    { "type": "output_text", "text": text }
+                ]
+            }
+        ],
+        "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn responses_api_translation() {
+        let req = OpenAIResponseRequest {
+            model: "gpt-4o".into(),
+            input: Value::String("write a haiku".into()),
+            instructions: Some("be poetic".into()),
+            max_output_tokens: Some(128),
+            temperature: Some(0.9),
+            stream: None,
+            tools: None,
+        };
+        let body = response_to_anthropic(&req);
+        assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
+        assert_eq!(body["system"], "be poetic");
+        assert_eq!(body["max_tokens"], 128);
+        assert_eq!(body["messages"][0]["content"], "write a haiku");
+
+        let resp = json!({"id": "msg_1", "content": [{"type":"text","text":"line1"}]});
+        let out = anthropic_to_response(&resp, "gpt-4o");
+        assert_eq!(out["object"], "response");
+        assert_eq!(out["output"][0]["content"][0]["text"], "line1");
+    }
+
+    #[test]
+    fn chat_completion_projects_to_responses_input() {
+        let body = json!({
+            "model": "gpt-5-codex",
+            "messages": [
+                {"role": "system", "content": "be terse"},
+                {"role": "user", "content": "hello"},
+                {"role": "assistant", "content": "hi"}
+            ],
+            "max_tokens": 256,
+        });
+        let out = chat_completion_to_responses(&body);
+        assert_eq!(out["model"], "gpt-5-codex");
+        assert_eq!(out["instructions"], "be terse");
+        assert_eq!(out["max_output_tokens"], 256);
+        assert_eq!(out["input"][0]["role"], "user");
+        assert_eq!(out["input"][0]["content"][0]["type"], "input_text");
+        assert_eq!(out["input"][1]["content"][0]["type"], "output_text");
+    }
+}

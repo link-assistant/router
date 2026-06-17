@@ -11,7 +11,7 @@ use futures_util::StreamExt;
 use crate::metrics::Surface;
 use crate::providers::{ProviderError, ProviderUpsert, ResolvedProvider};
 use crate::proxy::{
-    error_response, extract_client_token, is_admin_authorised, maybe_mpp_challenge, AppState,
+    AppState, error_response, extract_client_token, is_admin_authorised, maybe_mpp_challenge,
 };
 
 /// List configured upstream providers with secrets redacted.
@@ -220,7 +220,7 @@ pub async fn forward_openai_compatible(
     if stream_requested || is_event_stream(&content_type) {
         let stream = upstream_resp
             .bytes_stream()
-            .map(|chunk| chunk.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)));
+            .map(|chunk| chunk.map_err(std::io::Error::other));
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         response.headers_mut().insert("content-type", content_type);
