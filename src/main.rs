@@ -180,6 +180,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         oauth_provider,
         account_router,
         subscription_reader,
+        subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
         gonka: link_assistant_router::gonka::GonkaConfig::new(

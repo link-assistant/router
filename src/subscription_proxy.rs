@@ -67,7 +67,7 @@ pub async fn forward_subscription_openai(
             "subscription credentials reader is not configured",
         );
     };
-    let sub_token = match reader.read_token() {
+    let disk_token = match reader.read_token() {
         Ok(token) => token,
         Err(e) => {
             return error_response(
@@ -77,6 +77,13 @@ pub async fn forward_subscription_openai(
             );
         }
     };
+    // Refresh in memory if the on-disk token has expired; vendor files stay
+    // read-only.
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let sub_token = state
+        .subscription_cache
+        .get_fresh(&state.client, provider, disk_token, now_ms)
+        .await;
 
     let stream_requested = body
         .get("stream")

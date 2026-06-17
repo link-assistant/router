@@ -18,6 +18,7 @@ pub mod openai;
 pub mod provider_proxy;
 pub mod providers;
 pub mod proxy;
+pub mod refresh;
 pub mod storage;
 pub mod subscription;
 pub mod subscription_proxy;
