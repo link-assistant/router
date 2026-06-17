@@ -29,22 +29,24 @@ Derived by decomposing *"fully support claude, codex, gemini, qwen, and their
 subscriptions with all our features and more"* against the current router
 ([`README.md` §gap analysis](./README.md)) and the ProxyPal/CLIProxyAPI feature
 set. Each has a plan in [`solution-plans.md`](./solution-plans.md); "Status" is
-the state **as of this PR** (this PR is the analysis/planning deliverable).
+the state **as of this PR**, which implements the subscription engine
+(credential reading, API routing, dialect translation, in-memory refresh) with
+**no UI**, per the governing directive on PR #38.
 
 | # | Functional requirement | Proposed solution (summary) | Status | Plan |
 | --- | --- | --- | --- | --- |
-| F1 | Support **Claude** subscription (Pro/Max OAuth). | Already shipped: `src/oauth.rs` reads nested `~/.claude` creds; beta header injected. Harden with native refresh + login. | **Already supported** (baseline) | Plan 1 |
-| F2 | Support **OpenAI Codex / ChatGPT** subscription. | Phase 1: read `~/.codex/auth.json`; route to `chatgpt.com/backend-api/codex/responses` (Responses wire API) with `chatgpt-account-id`. Phase 2: native `router login codex` (PKCE). | Planned | Plan 2 |
-| F3 | Support **Google Gemini** subscription (Code Assist). | Phase 1: read `~/.gemini/oauth_creds.json`; route to `cloudcode-pa.googleapis.com` `v1internal`; translate OpenAI/Anthropic ↔ Gemini. Phase 2: native Google OAuth login. | Planned | Plan 3 |
-| F4 | Support **Qwen** subscription (qwen-code). | Phase 1: read `~/.qwen/oauth_creds.json` → DashScope OpenAI-compatible base. Phase 2: device-code `router login qwen`. Note: free OAuth tier closed 2026-04-15. | Planned (low priority) | Plan 4 |
-| F5 | **Generalize the provider abstraction** so each provider has its own auth + model map + dialect translation (today `ProviderKind` has one variant). | Introduce a `Provider` trait / enum: `auth()`, `base_url()`, `translate_request/response()`, `usage_endpoint()`. | Planned (foundational) | Plan 5 |
-| F6 | **Native login flows** (OAuth Authorization-Code+PKCE and device-code) so the router stands alone without vendor CLIs. | `router login <provider>` using the `oauth2` crate; local callback server / device-code polling; persist tokens. | Planned | Plan 6 |
-| F7 | **Token refresh & expiry** across providers. | `oauth2` `exchange_refresh_token()` per provider; proactive refresh before expiry; replace the no-op `refresh_token()`. | Planned | Plan 6 |
-| F8 | **Cross-provider multi-account pool** with smart routing/cooldown ("all our features"). | Extend `AccountRouter` to hold accounts of mixed providers; adopt `fill-first`, session affinity, `Retry-After(-Ms)` parsing. | Planned | Plan 7 |
-| F9 | **Auto-configure client tools** (Claude Code, Codex, Gemini CLI, OpenCode, Continue, ...). | `router configure <tool>` writes the right config/env; `router doctor` detects installed tools. | Planned | Plan 8 |
-| F10 | **Per-provider usage/quota & savings** observability ("and more"). | Extend `src/metrics.rs` with per-provider/per-token token+cost accounting; `router quota` / `/v1/quota` polling vendor usage endpoints. | Planned | Plan 9 |
-| F11 | **Dialect translation matrix** (OpenAI ↔ Anthropic ↔ Gemini, incl. SSE). | Build on `src/openai.rs`; add Gemini translation; centralize a translation registry per CLIProxyAPI's design. | Planned | Plan 5 |
-| F12 | **GUI / dashboard** (the most visible ProxyPal feature) — optional. | Out of scope for the engine; propose a thin web dashboard or document ProxyPal-style desktop wrapper as future work. | Planned (optional/future) | Plan 10 |
+| F1 | Support **Claude** subscription (Pro/Max OAuth). | Shipped: `src/oauth.rs` reads nested `~/.claude` creds; beta header injected. | **Done** (baseline) | Plan 1 |
+| F2 | Support **OpenAI Codex / ChatGPT** subscription. | Implemented: `src/subscription.rs` reads `~/.codex/auth.json`; `src/subscription_proxy.rs` translates Chat Completions → Responses and routes to `chatgpt.com/backend-api/codex/responses` with `chatgpt-account-id`. | **Done** | Plan 2 |
+| F3 | Support **Google Gemini** subscription (Code Assist). | Implemented: `src/gemini.rs` reads `~/.gemini/oauth_creds.json`, translates OpenAI ↔ Code Assist `generateContent`, synthesizes SSE for streaming. | **Done** | Plan 3 |
+| F4 | Support **Qwen** subscription (qwen-code). | Implemented: reads `~/.qwen/oauth_creds.json` → DashScope OpenAI-compatible base (per-token `resource_url` override). | **Done** | Plan 4 |
+| F5 | **Generalize the provider abstraction** so each provider has its own auth + model map + dialect translation. | Implemented: `SubscriptionProvider` enum (auth/home/base-url) + `UpstreamProvider::{Codex,Gemini,Qwen}` dispatch in `src/proxy.rs`. | **Done** | Plan 5 |
+| F6 | **Native login flows** so the router stands alone without vendor CLIs. | Deferred by design: best practice is to delegate login to each vendor CLI (avoids duplicating OAuth flows / storing secrets); the router reads the resulting credential files. | Deferred (design choice) | Plan 6 |
+| F7 | **Token refresh & expiry** across providers. | Implemented: `src/refresh.rs` exchanges refresh tokens via each vendor's public OAuth client and caches in memory; vendor files stay read-only. | **Done** | Plan 6 |
+| F8 | **Cross-provider multi-account pool** with smart routing/cooldown ("all our features"). | Partial: `Retry-After`/`x-ratelimit-*` headers relayed to clients; Claude multi-account pool retained in `src/accounts.rs`. Single-credential subscription providers expose one account each. | **Partial** | Plan 7 |
+| F9 | **Auto-configure client tools**. | Deferred: out of scope for the no-UI engine deliverable; vendor CLIs configure themselves. | Deferred | Plan 8 |
+| F10 | **Per-provider usage/quota & savings** observability ("and more"). | `router doctor` reports per-provider credential/token validity; full per-provider cost accounting tracked as follow-up. | Partial | Plan 9 |
+| F11 | **Dialect translation matrix** (OpenAI ↔ Anthropic ↔ Gemini, incl. SSE). | Implemented: `src/openai.rs` (`chat_completion_to_responses`) + `src/gemini.rs` translators with SSE synthesis. | **Done** | Plan 5 |
+| F12 | **GUI / dashboard** — optional. | Out of scope: the governing directive explicitly excludes UI support. | Out of scope (per directive) | Plan 10 |
 
 ## Out of scope / explicitly deferred
 
