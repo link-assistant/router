@@ -18,6 +18,7 @@ pub mod provider_proxy;
 pub mod providers;
 pub mod proxy;
 pub mod storage;
+pub mod subscription;
 pub mod token;
 pub mod token_admin;
 
