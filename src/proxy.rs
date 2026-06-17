@@ -29,6 +29,7 @@ use crate::gonka::GonkaConfig;
 use crate::oauth::OAuthProvider;
 use crate::openai;
 use crate::providers::{OpenAICompatibleConfig, ProviderStore};
+use crate::responses;
 use crate::token::TokenManager;
 
 /// Shared application state accessible by all route handlers.
@@ -497,7 +498,7 @@ pub async fn openai_chat_completions(
     if state.upstream_provider == UpstreamProvider::Codex {
         // The ChatGPT backend speaks only the Responses API; translate the
         // Chat Completions request before forwarding.
-        let responses_body = openai::chat_completion_to_responses(&body);
+        let responses_body = responses::chat_completion_to_responses(&body);
         return crate::subscription_proxy::forward_subscription_openai(
             &state,
             &headers,
@@ -580,7 +581,7 @@ pub async fn openai_responses(
     if state.upstream_provider == UpstreamProvider::Gemini {
         return crate::gemini::forward_responses(&state, &headers, body).await;
     }
-    let req = match serde_json::from_value::<openai::OpenAIResponseRequest>(body) {
+    let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
         Ok(req) => req,
         Err(e) => {
             return error_response(
@@ -592,7 +593,7 @@ pub async fn openai_responses(
     };
     let requested_model = req.model.clone();
     let stream_requested = req.stream.unwrap_or(false);
-    let body = openai::response_to_anthropic(&req);
+    let body = responses::response_to_anthropic(&req);
     forward_openai(
         &state,
         &headers,
@@ -908,7 +909,7 @@ async fn forward_openai(
 
     let translated = match shape {
         OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, requested_model),
-        OpenAIShape::Response => openai::anthropic_to_response(&anthropic, requested_model),
+        OpenAIShape::Response => responses::anthropic_to_response(&anthropic, requested_model),
     };
 
     state
