@@ -561,6 +561,35 @@ fn run_doctor(config: &Config) -> ExitCode {
         }
     }
 
+    // Probe vendor-subscription credentials (Codex/Gemini/Qwen). These are the
+    // OAuth files written by each vendor's CLI; the router reads them read-only
+    // when the matching upstream provider is active.
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    for provider in link_assistant_router::subscription::SubscriptionProvider::ALL {
+        use link_assistant_router::subscription::SubscriptionProvider;
+        if provider == SubscriptionProvider::Claude {
+            continue; // covered by the primary Claude probe above
+        }
+        let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
+            provider, &user_home,
+        );
+        let label = format!("{provider} subscription");
+        match reader.discover_credential_path() {
+            Some(path) => {
+                let status = reader.read_token().map_or("found, NO TOKEN", |token| {
+                    let now_ms = chrono::Utc::now().timestamp_millis();
+                    if token.is_expired(now_ms) {
+                        "found, token EXPIRED"
+                    } else {
+                        "found, token OK"
+                    }
+                });
+                println!("{label:<23}: {} ({status})", path.display());
+            }
+            None => println!("{label:<23}: {} (MISSING)", reader.home().display()),
+        }
+    }
+
     // Probe data dir.
     if config.data_dir.exists() {
         println!("data_dir                : present");
