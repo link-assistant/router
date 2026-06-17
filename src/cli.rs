@@ -26,8 +26,8 @@ use clap::Subcommand;
 use lino_arguments::Parser as LinoParser;
 
 use crate::config::{
-    default_activitypub_public_key_pem, default_data_dir, ApiFormat, BuildArgs, Config,
-    ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
+    ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
+    default_activitypub_public_key_pem, default_data_dir,
 };
 
 /// Top-level CLI parser.

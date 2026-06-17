@@ -306,7 +306,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     // Stream the response body
     let stream = upstream_resp
         .bytes_stream()
-        .map(|chunk| chunk.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)));
+        .map(|chunk| chunk.map_err(std::io::Error::other));
 
     let body = Body::from_stream(stream);
 
@@ -790,7 +790,7 @@ async fn forward_openai(
             Ok(bytes) => Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
                 translator.push(&bytes).join(""),
             )),
-            Err(e) => Err(std::io::Error::new(std::io::ErrorKind::Other, e)),
+            Err(e) => Err(std::io::Error::other(e)),
         });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = StatusCode::OK;

@@ -22,7 +22,7 @@
 //! matching `OpenAI` Chat Completions or Responses SSE event shape.
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// One chat message in the `OpenAI` request.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -642,11 +642,7 @@ fn extract_text(content: &Value) -> Option<String> {
                     buf.push_str(s);
                 }
             }
-            if buf.is_empty() {
-                None
-            } else {
-                Some(buf)
-            }
+            if buf.is_empty() { None } else { Some(buf) }
         }
         _ => None,
     }
@@ -888,10 +884,12 @@ mod tests {
             .unwrap();
         assert_eq!(calls[0]["id"], "t1");
         assert_eq!(calls[0]["function"]["name"], "lookup");
-        assert!(calls[0]["function"]["arguments"]
-            .as_str()
-            .unwrap()
-            .contains("rust"));
+        assert!(
+            calls[0]["function"]["arguments"]
+                .as_str()
+                .unwrap()
+                .contains("rust")
+        );
         assert_eq!(out["choices"][0]["finish_reason"], "tool_calls");
     }
 

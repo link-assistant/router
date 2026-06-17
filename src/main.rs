@@ -14,8 +14,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
-use axum::routing::{get, post};
 use axum::Router;
+use axum::routing::{get, post};
 use link_assistant_router::accounts::{AccountRouter, SelectionStrategy};
 use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
@@ -26,10 +26,10 @@ use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::provider_proxy;
 use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::{self, AppState};
-use link_assistant_router::storage::{build_token_store, TokenStore};
+use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::token::TokenManager;
 use link_assistant_router::token_admin;
-use log_lazy::{levels, LogLazy};
+use log_lazy::{LogLazy, levels};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
 

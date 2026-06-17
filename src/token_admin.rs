@@ -16,7 +16,7 @@ use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 
-use crate::proxy::{error_response, is_admin_authorised, AppState};
+use crate::proxy::{AppState, error_response, is_admin_authorised};
 
 /// Token issuance endpoint.
 ///
