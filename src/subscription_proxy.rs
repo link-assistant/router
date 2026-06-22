@@ -148,15 +148,10 @@ pub async fn forward_subscription_openai(
     // back off intelligently when a subscription upstream throttles us.
     let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
 
-    // The Codex backend *always* streams Server-Sent Events (we force
-    // `stream:true` in `normalize_codex_responses_body`) but labels the response
-    // `application/json`. If we let that fall through to the buffered branch,
-    // SSE-aware clients (e.g. OpenClaw's gateway) receive a `application/json`
-    // body they parse as a single JSON object, failing with an incomplete result
-    // even though the stream ends with a proper `response.completed` event. So
-    // always stream Codex responses and re-label them `text/event-stream`.
     let codex = provider == SubscriptionProvider::Codex;
-    if codex || stream_requested || is_event_stream(&content_type) {
+    if stream_requested || is_event_stream(&content_type) {
+        // The Codex backend streams SSE but labels it `application/json`; re-label
+        // so SSE-aware clients treat the body as the stream it is.
         let stream_content_type = if codex {
             HeaderValue::from_static("text/event-stream")
         } else {
@@ -189,11 +184,59 @@ pub async fn forward_subscription_openai(
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
 
+    // The Codex backend always streams Server-Sent Events even when the client
+    // asked for a non-streaming (`stream:false`) response, and labels that SSE
+    // body `application/json`. A non-streaming client (e.g. OpenClaw's gateway)
+    // then parses the raw event stream as a single JSON object and fails with an
+    // incomplete result. Collapse the SSE into the final `response.completed`
+    // payload and return it as a normal JSON Responses object.
+    if codex && status.is_success() {
+        if let Some(json) = codex_sse_to_response_json(&upstream_body) {
+            let mut response = Response::new(Body::from(json));
+            *response.status_mut() = status;
+            response
+                .headers_mut()
+                .insert("content-type", HeaderValue::from_static("application/json"));
+            apply_headers(response.headers_mut(), rate_limit_headers);
+            return response;
+        }
+    }
+
     let mut response = Response::new(Body::from(upstream_body));
     *response.status_mut() = status;
     response.headers_mut().insert("content-type", content_type);
     apply_headers(response.headers_mut(), rate_limit_headers);
     response
+}
+
+/// Collapse a Codex Responses SSE body into the final Responses JSON object.
+///
+/// The ChatGPT Codex backend only streams (`text/event-stream`-style `event:` /
+/// `data:` lines). For non-streaming clients we extract the `response` object
+/// carried by the terminal `response.completed` event and return it verbatim, so
+/// the client receives the single JSON object it expects. Returns `None` if no
+/// completed event is present (caller falls back to the raw body).
+fn codex_sse_to_response_json(body: &[u8]) -> Option<Vec<u8>> {
+    let text = std::str::from_utf8(body).ok()?;
+    let mut completed: Option<serde_json::Value> = None;
+    for line in text.lines() {
+        let Some(payload) = line.strip_prefix("data:") else {
+            continue;
+        };
+        let payload = payload.trim();
+        if payload.is_empty() || payload == "[DONE]" {
+            continue;
+        }
+        let Ok(event) = serde_json::from_str::<serde_json::Value>(payload) else {
+            continue;
+        };
+        if event.get("type").and_then(serde_json::Value::as_str) == Some("response.completed") {
+            if let Some(response) = event.get("response") {
+                completed = Some(response.clone());
+            }
+        }
+    }
+    completed.and_then(|value| serde_json::to_vec(&value).ok())
 }
 
 /// Collect rate-limit-related headers (`retry-after`, `x-ratelimit-*`) from an
@@ -366,6 +409,29 @@ mod tests {
         assert_eq!(body["instructions"], "be terse");
         assert!(body.get("max_output_tokens").is_none());
         assert_eq!(body["stream"], serde_json::Value::Bool(true));
+    }
+
+    #[test]
+    fn codex_sse_collapses_to_completed_response() {
+        let sse = concat!(
+            "event: response.created\n",
+            "data: {\"type\":\"response.created\",\"response\":{\"status\":\"in_progress\"}}\n\n",
+            "event: response.output_text.delta\n",
+            "data: {\"type\":\"response.output_text.delta\",\"delta\":\"hi\"}\n\n",
+            "event: response.completed\n",
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\",\"output\":[{\"type\":\"message\"}]}}\n\n"
+        );
+        let out = codex_sse_to_response_json(sse.as_bytes()).expect("completed payload");
+        let value: serde_json::Value = serde_json::from_slice(&out).unwrap();
+        assert_eq!(value["id"], "resp_1");
+        assert_eq!(value["status"], "completed");
+        assert_eq!(value["output"][0]["type"], "message");
+    }
+
+    #[test]
+    fn codex_sse_without_completed_returns_none() {
+        let sse = "event: response.created\ndata: {\"type\":\"response.created\"}\n\n";
+        assert!(codex_sse_to_response_json(sse.as_bytes()).is_none());
     }
 
     #[test]
