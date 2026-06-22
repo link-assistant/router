@@ -148,14 +148,16 @@ pub async fn forward_subscription_openai(
     // back off intelligently when a subscription upstream throttles us.
     let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
 
-    if stream_requested || is_event_stream(&content_type) {
-        // The Codex backend streams Server-Sent Events but labels the response
-        // `application/json`. SSE-aware clients (e.g. OpenClaw's gateway) then
-        // parse the body as a single JSON object and fail with an incomplete
-        // result, even though the stream ends with a proper `response.completed`
-        // event. Re-label streamed Codex responses as `text/event-stream` so
-        // clients treat them as the stream they actually are.
-        let stream_content_type = if provider == SubscriptionProvider::Codex {
+    // The Codex backend *always* streams Server-Sent Events (we force
+    // `stream:true` in `normalize_codex_responses_body`) but labels the response
+    // `application/json`. If we let that fall through to the buffered branch,
+    // SSE-aware clients (e.g. OpenClaw's gateway) receive a `application/json`
+    // body they parse as a single JSON object, failing with an incomplete result
+    // even though the stream ends with a proper `response.completed` event. So
+    // always stream Codex responses and re-label them `text/event-stream`.
+    let codex = provider == SubscriptionProvider::Codex;
+    if codex || stream_requested || is_event_stream(&content_type) {
+        let stream_content_type = if codex {
             HeaderValue::from_static("text/event-stream")
         } else {
             content_type
