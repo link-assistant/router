@@ -149,12 +149,25 @@ pub async fn forward_subscription_openai(
     let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
 
     if stream_requested || is_event_stream(&content_type) {
+        // The Codex backend streams Server-Sent Events but labels the response
+        // `application/json`. SSE-aware clients (e.g. OpenClaw's gateway) then
+        // parse the body as a single JSON object and fail with an incomplete
+        // result, even though the stream ends with a proper `response.completed`
+        // event. Re-label streamed Codex responses as `text/event-stream` so
+        // clients treat them as the stream they actually are.
+        let stream_content_type = if provider == SubscriptionProvider::Codex {
+            HeaderValue::from_static("text/event-stream")
+        } else {
+            content_type
+        };
         let stream = upstream_resp
             .bytes_stream()
             .map(|chunk| chunk.map_err(std::io::Error::other));
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
-        response.headers_mut().insert("content-type", content_type);
+        response
+            .headers_mut()
+            .insert("content-type", stream_content_type);
         apply_headers(response.headers_mut(), rate_limit_headers);
         return response;
     }
