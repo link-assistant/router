@@ -90,10 +90,10 @@ pub async fn forward_subscription_openai(
         .and_then(serde_json::Value::as_bool)
         .unwrap_or(false);
 
-    // Codex always streams from the ChatGPT backend; reflect that into the body
-    // so the upstream emits SSE we pass straight through.
+    // The ChatGPT Codex backend is stricter than the generic Responses API, so
+    // reshape the body before forwarding (see `normalize_codex_responses_body`).
     if provider == SubscriptionProvider::Codex {
-        body["stream"] = serde_json::Value::Bool(true);
+        normalize_codex_responses_body(&mut body);
     }
 
     let serialized = match serde_json::to_vec(&body) {
@@ -281,9 +281,77 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
 }
 
+/// Shape a Responses-API body for the `ChatGPT` Codex backend.
+///
+/// The Codex backend is stricter than the generic `OpenAI` Responses API:
+/// it always streams, **rejects** `max_output_tokens` (HTTP 400 "Unsupported
+/// parameter: max_output_tokens"), and **requires** a non-empty `instructions`
+/// field (HTTP 400 "Instructions are required"). Standard Responses clients such
+/// as OpenClaw send `max_output_tokens` and omit `instructions`, so without this
+/// shaping the backend rejects every request. We only add a default
+/// `instructions` when the caller did not supply one, preserving caller intent.
+fn normalize_codex_responses_body(body: &mut serde_json::Value) {
+    let Some(obj) = body.as_object_mut() else {
+        return;
+    };
+    // Codex always streams from the ChatGPT backend; reflect that into the body
+    // so the upstream emits SSE we pass straight through.
+    obj.insert("stream".to_string(), serde_json::Value::Bool(true));
+    // `max_output_tokens` is not accepted by the Codex backend.
+    obj.remove("max_output_tokens");
+    // `instructions` is mandatory and must be non-empty.
+    let has_instructions = obj
+        .get("instructions")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|s| !s.trim().is_empty());
+    if !has_instructions {
+        obj.insert(
+            "instructions".to_string(),
+            serde_json::Value::String("You are a helpful assistant.".to_string()),
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn codex_normalizes_responses_body_for_chatgpt_backend() {
+        // OpenClaw-style Responses body: omits `instructions`, sends
+        // `max_output_tokens`. Both trip the Codex backend without shaping.
+        let mut body = serde_json::json!({
+            "model": "gpt-5.5",
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
+            "store": false,
+            "max_output_tokens": 8192,
+            "reasoning": {"effort": "none"}
+        });
+        normalize_codex_responses_body(&mut body);
+        assert_eq!(body["stream"], serde_json::Value::Bool(true));
+        assert!(
+            body.get("max_output_tokens").is_none(),
+            "max_output_tokens must be stripped for Codex"
+        );
+        assert_eq!(body["instructions"], "You are a helpful assistant.");
+        // Untouched fields are preserved.
+        assert_eq!(body["store"], serde_json::Value::Bool(false));
+        assert_eq!(body["reasoning"]["effort"], "none");
+    }
+
+    #[test]
+    fn codex_preserves_caller_instructions() {
+        let mut body = serde_json::json!({
+            "model": "gpt-5-codex",
+            "input": [],
+            "instructions": "be terse",
+            "max_output_tokens": 100
+        });
+        normalize_codex_responses_body(&mut body);
+        assert_eq!(body["instructions"], "be terse");
+        assert!(body.get("max_output_tokens").is_none());
+        assert_eq!(body["stream"], serde_json::Value::Bool(true));
+    }
 
     #[test]
     fn codex_url_collapses_v1_responses() {
