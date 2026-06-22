@@ -339,35 +339,76 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
 }
 
-/// Shape a Responses-API body for the `ChatGPT` Codex backend.
+/// Extract the concatenated text from a Responses `input` message item.
+fn input_item_text(item: &serde_json::Value) -> Option<String> {
+    match item.get("content") {
+        Some(serde_json::Value::String(s)) => Some(s.clone()),
+        Some(serde_json::Value::Array(parts)) => {
+            let text: String = parts
+                .iter()
+                .filter_map(|p| p.get("text").and_then(serde_json::Value::as_str))
+                .collect::<Vec<_>>()
+                .join("");
+            (!text.is_empty()).then_some(text)
+        }
+        _ => None,
+    }
+}
+
+/// Shape a Responses-API request body for the `ChatGPT` Codex backend.
 ///
 /// The Codex backend is stricter than the generic `OpenAI` Responses API:
-/// it always streams, **rejects** `max_output_tokens` (HTTP 400 "Unsupported
-/// parameter: max_output_tokens"), and **requires** a non-empty `instructions`
-/// field (HTTP 400 "Instructions are required"). Standard Responses clients such
-/// as OpenClaw send `max_output_tokens` and omit `instructions`, so without this
-/// shaping the backend rejects every request. We only add a default
-/// `instructions` when the caller did not supply one, preserving caller intent.
+/// - it always streams,
+/// - **rejects** `max_output_tokens` (HTTP 400 "Unsupported parameter"),
+/// - **rejects** `system`/`developer` messages inside `input`
+///   (HTTP 400 "System messages are not allowed") — they must be carried in the
+///   top-level `instructions` field,
+/// - **requires** a non-empty `instructions` field (HTTP 400 "Instructions are
+///   required").
+///
+/// Standard Responses clients (e.g. OpenClaw's gateway) send `max_output_tokens`
+/// and put the system prompt as a `system` message in `input`, so without this
+/// shaping the backend rejects every request. System turns are hoisted into
+/// `instructions`; a default is used only if nothing remains.
 fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     let Some(obj) = body.as_object_mut() else {
         return;
     };
-    // Codex always streams from the ChatGPT backend; reflect that into the body
-    // so the upstream emits SSE we pass straight through.
+    // Codex always streams from the ChatGPT backend.
     obj.insert("stream".to_string(), serde_json::Value::Bool(true));
     // `max_output_tokens` is not accepted by the Codex backend.
     obj.remove("max_output_tokens");
-    // `instructions` is mandatory and must be non-empty.
-    let has_instructions = obj
-        .get("instructions")
-        .and_then(serde_json::Value::as_str)
-        .is_some_and(|s| !s.trim().is_empty());
-    if !has_instructions {
-        obj.insert(
-            "instructions".to_string(),
-            serde_json::Value::String("You are a helpful assistant.".to_string()),
-        );
+
+    // Hoist system/developer turns out of `input` (Codex forbids them there).
+    let mut hoisted: Vec<String> = Vec::new();
+    if let Some(serde_json::Value::Array(items)) = obj.get_mut("input") {
+        items.retain(|item| {
+            match item.get("role").and_then(serde_json::Value::as_str) {
+                Some("system" | "developer") => {
+                    if let Some(text) = input_item_text(item) {
+                        hoisted.push(text);
+                    }
+                    false
+                }
+                _ => true,
+            }
+        });
     }
+
+    // Merge existing instructions + hoisted system turns; fall back to a default.
+    let mut parts: Vec<String> = Vec::new();
+    if let Some(existing) = obj.get("instructions").and_then(serde_json::Value::as_str) {
+        if !existing.trim().is_empty() {
+            parts.push(existing.to_string());
+        }
+    }
+    parts.extend(hoisted);
+    let instructions = if parts.is_empty() {
+        "You are a helpful assistant.".to_string()
+    } else {
+        parts.join("\n\n")
+    };
+    obj.insert("instructions".to_string(), serde_json::Value::String(instructions));
 }
 
 #[cfg(test)]
@@ -395,6 +436,28 @@ mod tests {
         // Untouched fields are preserved.
         assert_eq!(body["store"], serde_json::Value::Bool(false));
         assert_eq!(body["reasoning"]["effort"], "none");
+    }
+
+    #[test]
+    fn codex_hoists_system_messages_into_instructions() {
+        // OpenClaw gateway shape: system prompt as a `system` message in `input`.
+        let mut body = serde_json::json!({
+            "model": "gpt-5.5",
+            "input": [
+                {"type":"message","role":"system","content":[{"type":"input_text","text":"be terse"}]},
+                {"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}
+            ],
+            "stream": true,
+            "max_output_tokens": 8192
+        });
+        normalize_codex_responses_body(&mut body);
+        // System turn moved out of input (Codex forbids it there)...
+        let input = body["input"].as_array().unwrap();
+        assert_eq!(input.len(), 1);
+        assert_eq!(input[0]["role"], "user");
+        // ...and merged into instructions.
+        assert_eq!(body["instructions"], "be terse");
+        assert!(body.get("max_output_tokens").is_none());
     }
 
     #[test]
