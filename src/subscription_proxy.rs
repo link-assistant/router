@@ -273,6 +273,13 @@ fn subscription_headers(
         // identifies the originating client.
         out.push(("openai-beta", "responses=experimental".to_string()));
         out.push(("originator", "codex_cli_rs".to_string()));
+        // Codex gates newer models (e.g. gpt-5.6-luna) behind a recent client version
+        // advertised via the `version` header; without it the backend replies "Model not
+        // found". Mirror the Codex CLI. Overridable via CODEX_CLIENT_VERSION.
+        out.push((
+            "version",
+            std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.144.1".to_string()),
+        ));
     }
     out
 }
@@ -534,6 +541,25 @@ mod tests {
             headers
                 .iter()
                 .any(|(k, v)| *k == "chatgpt-account-id" && v == "acct_9")
+        );
+    }
+
+    #[test]
+    fn codex_headers_include_version() {
+        let token = SubscriptionToken {
+            access_token: "a".into(),
+            refresh_token: None,
+            expires_at_ms: None,
+            account_id: Some("acct_9".into()),
+            resource_url: None,
+        };
+        let headers = subscription_headers(SubscriptionProvider::Codex, &token);
+        // The Codex backend gates newer models behind a recent client version
+        // advertised via the `version` header.
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| *k == "version" && !v.is_empty())
         );
     }
 
