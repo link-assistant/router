@@ -389,8 +389,8 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     // Hoist system/developer turns out of `input` (Codex forbids them there).
     let mut hoisted: Vec<String> = Vec::new();
     if let Some(serde_json::Value::Array(items)) = obj.get_mut("input") {
-        items.retain(|item| {
-            match item.get("role").and_then(serde_json::Value::as_str) {
+        items.retain(
+            |item| match item.get("role").and_then(serde_json::Value::as_str) {
                 Some("system" | "developer") => {
                     if let Some(text) = input_item_text(item) {
                         hoisted.push(text);
@@ -398,8 +398,8 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
                     false
                 }
                 _ => true,
-            }
-        });
+            },
+        );
     }
 
     // Merge existing instructions + hoisted system turns; fall back to a default.
