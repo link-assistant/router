@@ -415,7 +415,10 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     } else {
         parts.join("\n\n")
     };
-    obj.insert("instructions".to_string(), serde_json::Value::String(instructions));
+    obj.insert(
+        "instructions".to_string(),
+        serde_json::Value::String(instructions),
+    );
 }
 
 #[cfg(test)]
