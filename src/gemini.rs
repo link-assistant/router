@@ -282,6 +282,7 @@ async fn forward(
             crate::subscription::SubscriptionProvider::Gemini,
             disk_token,
             now_ms,
+            None,
         )
         .await;
 

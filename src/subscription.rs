@@ -134,6 +134,9 @@ pub struct SubscriptionToken {
     pub account_id: Option<String>,
     /// Per-token base URL override (Qwen `resource_url`).
     pub resource_url: Option<String>,
+    /// OpenID `id_token`, when the vendor file stores one (Codex). Kept so a
+    /// persisted refresh can rewrite the credential file faithfully.
+    pub id_token: Option<String>,
 }
 
 impl SubscriptionToken {
@@ -273,6 +276,48 @@ impl SubscriptionReader {
             ))
         }))
     }
+
+    /// Persist a refreshed token back to the credential file in the provider's
+    /// native format, so a rotated `refresh_token` survives a process restart
+    /// (mirroring how the vendor CLI keeps its own file current).
+    ///
+    /// Implemented for Codex (writes the `<CODEX_HOME>/auth.json` shape the codex
+    /// CLI uses); a no-op for providers whose CLI already maintains the file.
+    /// Requires the credential directory to be writable.
+    pub fn persist_token(&self, token: &SubscriptionToken) -> Result<(), SubscriptionError> {
+        match self.provider {
+            SubscriptionProvider::Codex => self.persist_codex(token),
+            _ => Ok(()),
+        }
+    }
+
+    fn persist_codex(&self, token: &SubscriptionToken) -> Result<(), SubscriptionError> {
+        let path = self.home.join("auth.json");
+        let last_refresh = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Nanos, true);
+        let doc = serde_json::json!({
+            "auth_mode": "chatgpt",
+            "OPENAI_API_KEY": serde_json::Value::Null,
+            "tokens": {
+                "id_token": token.id_token.clone().unwrap_or_default(),
+                "access_token": token.access_token,
+                "refresh_token": token.refresh_token.clone().unwrap_or_default(),
+                "account_id": token.account_id.clone().unwrap_or_default(),
+            },
+            "last_refresh": last_refresh,
+        });
+        let body = serde_json::to_vec_pretty(&doc).map_err(|e| {
+            SubscriptionError::ParseError(format!("serialize {}: {e}", path.display()))
+        })?;
+        // Atomic replace: write a sibling temp file, then rename over the target
+        // so a reader never observes a torn credential file.
+        let tmp = self.home.join("auth.json.tmp");
+        std::fs::write(&tmp, &body)
+            .map_err(|e| SubscriptionError::ReadError(format!("write {}: {e}", tmp.display())))?;
+        std::fs::rename(&tmp, &path).map_err(|e| {
+            SubscriptionError::ReadError(format!("rename into {}: {e}", path.display()))
+        })?;
+        Ok(())
+    }
 }
 
 /// Superset of every vendor credential layout. Each provider reads only the
@@ -352,6 +397,7 @@ impl RawCredentials {
                     expires_at_ms: block.expires_at,
                     account_id: None,
                     resource_url: None,
+                    id_token: None,
                 });
             }
         }
@@ -362,26 +408,27 @@ impl RawCredentials {
             expires_at_ms: self.expiry_date,
             account_id: None,
             resource_url: None,
+            id_token: None,
         })
     }
 
     fn codex_token(self) -> Option<SubscriptionToken> {
         let tokens = self.tokens.unwrap_or_default();
         let access = non_empty(tokens.access_token)?;
+        let id_token = non_empty(tokens.id_token);
         let account_id = non_empty(tokens.account_id)
             .or_else(|| non_empty(self.account_id))
-            .or_else(|| {
-                tokens
-                    .id_token
-                    .as_deref()
-                    .and_then(account_id_from_id_token)
-            });
+            .or_else(|| id_token.as_deref().and_then(account_id_from_id_token));
+        // Codex `auth.json` has no top-level `expiry_date`; derive expiry from the
+        // access token's JWT `exp` so `is_expired()` (and thus refresh) can fire.
+        let expires_at_ms = jwt_exp_ms(&access).or(self.expiry_date);
         Some(SubscriptionToken {
             access_token: access,
             refresh_token: non_empty(tokens.refresh_token),
-            expires_at_ms: self.expiry_date,
+            expires_at_ms,
             account_id,
             resource_url: None,
+            id_token,
         })
     }
 
@@ -393,6 +440,7 @@ impl RawCredentials {
             expires_at_ms: self.expiry_date,
             account_id: non_empty(self.account_id),
             resource_url: non_empty(self.resource_url),
+            id_token: None,
         })
     }
 }
@@ -402,6 +450,24 @@ impl RawCredentials {
 /// Codex stores the account id directly, but older/edge auth files only carry
 /// the `id_token`; its payload nests the id under
 /// `https://api.openai.com/auth.chatgpt_account_id` (or `chatgpt_account_id`).
+/// Decode a JWT's `exp` claim (Unix seconds) into epoch milliseconds.
+///
+/// Codex credential files carry expiry only inside the access/id token JWTs, so
+/// this lets the router know when a Codex token needs refreshing. Returns `None`
+/// for malformed tokens or a missing `exp`.
+pub(crate) fn jwt_exp_ms(token: &str) -> Option<i64> {
+    use base64::Engine as _;
+    let payload_b64 = token.split('.').nth(1)?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload_b64)
+        .ok()?;
+    let claims: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
+    claims
+        .get("exp")
+        .and_then(serde_json::Value::as_i64)
+        .map(|secs| secs * 1000)
+}
+
 fn account_id_from_id_token(id_token: &str) -> Option<String> {
     use base64::Engine as _;
     let payload_b64 = id_token.split('.').nth(1)?;
@@ -574,6 +640,7 @@ mod tests {
             expires_at_ms: Some(1000),
             account_id: None,
             resource_url: None,
+            id_token: None,
         };
         assert!(token.is_expired(2000));
         assert!(!token.is_expired(500));
@@ -595,5 +662,88 @@ mod tests {
         // Without the override env var set, falls back to <home>/<subdir>.
         let home = SubscriptionProvider::Codex.resolve_home("/home/alice");
         assert!(home.ends_with(".codex"));
+    }
+
+    /// Build an unsigned JWT carrying the given `exp` (Unix seconds).
+    fn jwt_with_exp(exp_secs: i64) -> String {
+        use base64::Engine as _;
+        let enc = |b: &[u8]| base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(b);
+        format!(
+            "{}.{}.sig",
+            enc(br#"{"alg":"none"}"#),
+            enc(format!(r#"{{"exp":{exp_secs}}}"#).as_bytes())
+        )
+    }
+
+    #[test]
+    fn jwt_exp_ms_decodes_exp_claim() {
+        assert_eq!(jwt_exp_ms(&jwt_with_exp(1_700)), Some(1_700_000));
+        assert_eq!(jwt_exp_ms("not-a-jwt"), None);
+        assert_eq!(jwt_exp_ms(""), None);
+    }
+
+    #[test]
+    fn codex_token_derives_expiry_from_access_jwt() {
+        let dir = tempdir();
+        let access = jwt_with_exp(2_000);
+        let auth = serde_json::json!({
+            "auth_mode": "chatgpt",
+            "OPENAI_API_KEY": serde_json::Value::Null,
+            "tokens": {
+                "id_token": "idt",
+                "access_token": access,
+                "refresh_token": "rt0",
+                "account_id": "acct_1",
+            },
+            "last_refresh": "2026-01-01T00:00:00Z",
+        });
+        fs::write(dir.join("auth.json"), serde_json::to_vec(&auth).unwrap()).unwrap();
+        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
+        let token = reader.read_token().unwrap();
+        // Expiry comes from the access-token JWT `exp`, not a missing top-level field.
+        assert_eq!(token.expires_at_ms, Some(2_000_000));
+        assert!(token.is_expired(2_000_001));
+        assert!(!token.is_expired(1_999_999));
+        assert_eq!(token.refresh_token.as_deref(), Some("rt0"));
+        assert_eq!(token.id_token.as_deref(), Some("idt"));
+        assert_eq!(token.account_id.as_deref(), Some("acct_1"));
+    }
+
+    #[test]
+    fn persist_codex_roundtrips_rotated_token() {
+        let dir = tempdir();
+        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
+        let rotated = SubscriptionToken {
+            access_token: jwt_with_exp(9_000),
+            refresh_token: Some("rt1".into()),
+            expires_at_ms: Some(9_000_000),
+            account_id: Some("acct_1".into()),
+            resource_url: None,
+            id_token: Some("idt2".into()),
+        };
+        reader.persist_token(&rotated).unwrap();
+        // No stray temp file remains after the atomic rename.
+        assert!(!dir.join("auth.json.tmp").exists());
+        let reread = reader.read_token().unwrap();
+        assert_eq!(reread.refresh_token.as_deref(), Some("rt1"));
+        assert_eq!(reread.id_token.as_deref(), Some("idt2"));
+        assert_eq!(reread.account_id.as_deref(), Some("acct_1"));
+        assert_eq!(reread.expires_at_ms, Some(9_000_000));
+    }
+
+    #[test]
+    fn persist_token_is_noop_for_non_codex() {
+        let dir = tempdir();
+        let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, &dir);
+        let token = SubscriptionToken {
+            access_token: "a".into(),
+            refresh_token: Some("r".into()),
+            expires_at_ms: None,
+            account_id: None,
+            resource_url: None,
+            id_token: None,
+        };
+        reader.persist_token(&token).unwrap();
+        assert!(!dir.join("auth.json").exists());
     }
 }

@@ -77,12 +77,12 @@ pub async fn forward_subscription_openai(
             );
         }
     };
-    // Refresh in memory if the on-disk token has expired; vendor files stay
-    // read-only.
+    // Refresh if the on-disk token has expired, persisting the rotated token back
+    // to the credential file when SUBSCRIPTION_REFRESH_PERSIST is enabled.
     let now_ms = chrono::Utc::now().timestamp_millis();
     let sub_token = state
         .subscription_cache
-        .get_fresh(&state.client, provider, disk_token, now_ms)
+        .get_fresh(&state.client, provider, disk_token, now_ms, Some(reader))
         .await;
 
     let stream_requested = body
@@ -538,6 +538,7 @@ mod tests {
             expires_at_ms: None,
             account_id: Some("acct_9".into()),
             resource_url: None,
+            id_token: None,
         };
         let headers = subscription_headers(SubscriptionProvider::Codex, &token);
         assert!(
@@ -555,6 +556,7 @@ mod tests {
             expires_at_ms: None,
             account_id: Some("acct_9".into()),
             resource_url: None,
+            id_token: None,
         };
         let headers = subscription_headers(SubscriptionProvider::Codex, &token);
         // The Codex backend gates newer models behind a recent client version
@@ -593,6 +595,7 @@ mod tests {
             expires_at_ms: None,
             account_id: None,
             resource_url: None,
+            id_token: None,
         };
         assert!(subscription_headers(SubscriptionProvider::Qwen, &token).is_empty());
     }

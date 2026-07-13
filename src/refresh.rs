@@ -115,6 +115,7 @@ fn encode_form(pairs: &[(&str, &str)]) -> String {
 struct RefreshResponse {
     access_token: Option<String>,
     refresh_token: Option<String>,
+    id_token: Option<String>,
     expires_in: Option<i64>,
 }
 
@@ -156,6 +157,12 @@ fn merge_refresh_response(
     now_ms: i64,
 ) -> Option<SubscriptionToken> {
     let access_token = resp.access_token.clone().filter(|s| !s.is_empty())?;
+    // Prefer the endpoint's `expires_in`; fall back to the new access token's JWT
+    // `exp` (Codex omits `expires_in`) so expiry is known for the next refresh.
+    let expires_at_ms = resp
+        .expires_in
+        .map(|secs| now_ms + secs * 1000)
+        .or_else(|| crate::subscription::jwt_exp_ms(&access_token));
     Some(SubscriptionToken {
         access_token,
         refresh_token: resp
@@ -163,9 +170,14 @@ fn merge_refresh_response(
             .clone()
             .filter(|s| !s.is_empty())
             .or_else(|| prev.refresh_token.clone()),
-        expires_at_ms: resp.expires_in.map(|secs| now_ms + secs * 1000),
+        expires_at_ms,
         account_id: prev.account_id.clone(),
         resource_url: prev.resource_url.clone(),
+        id_token: resp
+            .id_token
+            .clone()
+            .filter(|s| !s.is_empty())
+            .or_else(|| prev.id_token.clone()),
     })
 }
 
@@ -241,6 +253,20 @@ pub async fn refresh(
         .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))
 }
 
+/// Environment flag opting into writing a refreshed credential back to disk.
+pub const REFRESH_PERSIST_ENV: &str = "SUBSCRIPTION_REFRESH_PERSIST";
+
+/// Whether disk persistence of refreshed tokens is enabled via the environment.
+fn persist_enabled() -> bool {
+    std::env::var(REFRESH_PERSIST_ENV)
+        .ok()
+        .map(|v| {
+            let v = v.trim().to_ascii_lowercase();
+            v == "1" || v == "true" || v == "yes" || v == "on"
+        })
+        .unwrap_or(false)
+}
+
 /// Process-wide cache of refreshed subscription tokens, keyed by provider.
 ///
 /// Holds only in-memory copies obtained via OAuth refresh; vendor credential
@@ -265,6 +291,15 @@ impl TokenCache {
     /// 2. Otherwise reuse a cached refreshed token while it remains valid.
     /// 3. Otherwise exchange the refresh token and cache the result.
     ///
+    /// The refresh exchanges the freshest `refresh_token` we hold — the last
+    /// in-memory rotation if present, else the on-disk one — so single-use
+    /// rotation chains correctly across refreshes rather than replaying a stale
+    /// on-disk token.
+    ///
+    /// When `persist_to` is `Some` and `SUBSCRIPTION_REFRESH_PERSIST` is enabled,
+    /// a successful refresh is written back to the credential file so the rotated
+    /// `refresh_token` survives a process restart (like the vendor CLI does).
+    ///
     /// On refresh failure the (expired) disk token is returned unchanged so the
     /// caller can still attempt the upstream call and surface its error.
     pub async fn get_fresh(
@@ -273,6 +308,7 @@ impl TokenCache {
         provider: SubscriptionProvider,
         disk_token: SubscriptionToken,
         now_ms: i64,
+        persist_to: Option<&crate::subscription::SubscriptionReader>,
     ) -> SubscriptionToken {
         if !disk_token.is_expired(now_ms) {
             return disk_token;
@@ -280,9 +316,26 @@ impl TokenCache {
         if let Some(cached) = self.cached_valid(provider, now_ms) {
             return cached;
         }
-        match refresh(client, provider, &disk_token, now_ms).await {
+        // Chain rotation: refresh from the freshest refresh_token we know.
+        let prev = self
+            .cached_any(provider)
+            .filter(|token| token.refresh_token.is_some())
+            .unwrap_or_else(|| disk_token.clone());
+        match refresh(client, provider, &prev, now_ms).await {
             Ok(fresh) => {
                 self.store(provider, fresh.clone());
+                if let Some(reader) = persist_to {
+                    if persist_enabled() {
+                        match reader.persist_token(&fresh) {
+                            Ok(()) => tracing::info!(
+                                "refreshed and persisted {provider} subscription token"
+                            ),
+                            Err(e) => {
+                                tracing::warn!("persisting refreshed {provider} token failed: {e}")
+                            }
+                        }
+                    }
+                }
                 fresh
             }
             Err(e) => {
@@ -304,6 +357,13 @@ impl TokenCache {
             .cloned()
     }
 
+    /// The cached token for `provider` regardless of expiry (for its
+    /// most-recently-rotated `refresh_token`).
+    fn cached_any(&self, provider: SubscriptionProvider) -> Option<SubscriptionToken> {
+        let guard = self.inner.lock().ok()?;
+        guard.get(&provider).cloned()
+    }
+
     fn store(&self, provider: SubscriptionProvider, token: SubscriptionToken) {
         if let Ok(mut guard) = self.inner.lock() {
             guard.insert(provider, token);
@@ -322,6 +382,7 @@ mod tests {
             expires_at_ms: exp,
             account_id: Some("acct_1".into()),
             resource_url: Some("portal.qwen.ai".into()),
+            id_token: None,
         }
     }
 
@@ -348,6 +409,7 @@ mod tests {
         let resp = RefreshResponse {
             access_token: Some("new-access".into()),
             refresh_token: None,
+            id_token: None,
             expires_in: Some(3600),
         };
         let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
@@ -365,6 +427,7 @@ mod tests {
         let resp = RefreshResponse {
             access_token: Some("new-access".into()),
             refresh_token: Some("r2".into()),
+            id_token: None,
             expires_in: None,
         };
         let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
@@ -379,13 +442,44 @@ mod tests {
         assert!(merge_refresh_response(&prev, &resp, 1_000).is_none());
     }
 
+    #[test]
+    fn merge_carries_id_token_and_derives_expiry_from_jwt() {
+        use base64::Engine as _;
+        let enc = |b: &[u8]| base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(b);
+        // Codex omits `expires_in`; expiry must come from the new access JWT `exp`.
+        let access = format!("{}.{}.sig", enc(br#"{}"#), enc(br#"{"exp":5000}"#));
+        let prev = token(Some("r1"), Some(0));
+        let resp = RefreshResponse {
+            access_token: Some(access),
+            refresh_token: Some("r2".into()),
+            id_token: Some("idt".into()),
+            expires_in: None,
+        };
+        let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
+        assert_eq!(merged.id_token.as_deref(), Some("idt"));
+        assert_eq!(merged.expires_at_ms, Some(5_000_000));
+        assert_eq!(merged.refresh_token.as_deref(), Some("r2"));
+    }
+
+    #[test]
+    fn persist_enabled_reads_env() {
+        // Default (unset in the test process) is off.
+        assert!(!persist_enabled());
+    }
+
     #[tokio::test]
     async fn get_fresh_returns_valid_disk_token_unchanged() {
         let cache = TokenCache::new();
         let client = reqwest::Client::new();
         let valid = token(Some("r1"), Some(10_000));
         let out = cache
-            .get_fresh(&client, SubscriptionProvider::Qwen, valid.clone(), 1_000)
+            .get_fresh(
+                &client,
+                SubscriptionProvider::Qwen,
+                valid.clone(),
+                1_000,
+                None,
+            )
             .await;
         assert_eq!(out.access_token, valid.access_token);
     }
@@ -400,11 +494,18 @@ mod tests {
             expires_at_ms: Some(10_000),
             account_id: None,
             resource_url: None,
+            id_token: None,
         };
         cache.store(SubscriptionProvider::Qwen, cached);
         let expired_disk = token(Some("r1"), Some(0));
         let out = cache
-            .get_fresh(&client, SubscriptionProvider::Qwen, expired_disk, 1_000)
+            .get_fresh(
+                &client,
+                SubscriptionProvider::Qwen,
+                expired_disk,
+                1_000,
+                None,
+            )
             .await;
         assert_eq!(out.access_token, "cached-access");
     }
