@@ -211,7 +211,7 @@ pub async fn forward_subscription_openai(
 
 /// Collapse a Codex Responses SSE body into the final Responses JSON object.
 ///
-/// The ChatGPT Codex backend only streams (`text/event-stream`-style `event:` /
+/// The `ChatGPT` Codex backend only streams (`text/event-stream`-style `event:` /
 /// `data:` lines). For non-streaming clients we extract the `response` object
 /// carried by the terminal `response.completed` event and return it verbatim, so
 /// the client receives the single JSON object it expects. Returns `None` if no
@@ -373,7 +373,7 @@ fn input_item_text(item: &serde_json::Value) -> Option<String> {
 /// - **requires** a non-empty `instructions` field (HTTP 400 "Instructions are
 ///   required").
 ///
-/// Standard Responses clients (e.g. OpenClaw's gateway) send `max_output_tokens`
+/// Standard Responses clients (e.g. `OpenClaw`'s gateway) send `max_output_tokens`
 /// and put the system prompt as a `system` message in `input`, so without this
 /// shaping the backend rejects every request. System turns are hoisted into
 /// `instructions`; a default is used only if nothing remains.
