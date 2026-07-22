@@ -241,13 +241,15 @@ pub async fn refresh(
         .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))
 }
 
-/// Process-wide cache of refreshed subscription tokens, keyed by provider.
+/// Process-wide cache of refreshed subscription tokens, keyed by provider and
+/// account. Two subscriptions for the same vendor must never reuse each
+/// other's bearer token.
 ///
 /// Holds only in-memory copies obtained via OAuth refresh; vendor credential
 /// files on disk are never modified.
 #[derive(Debug, Default)]
 pub struct TokenCache {
-    inner: Mutex<HashMap<SubscriptionProvider, SubscriptionToken>>,
+    inner: Mutex<HashMap<(SubscriptionProvider, String), SubscriptionToken>>,
 }
 
 impl TokenCache {
@@ -274,15 +276,28 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> SubscriptionToken {
+        self.get_fresh_for(client, provider, "primary", disk_token, now_ms)
+            .await
+    }
+
+    /// Account-scoped variant of [`Self::get_fresh`].
+    pub async fn get_fresh_for(
+        &self,
+        client: &reqwest::Client,
+        provider: SubscriptionProvider,
+        account: &str,
+        disk_token: SubscriptionToken,
+        now_ms: i64,
+    ) -> SubscriptionToken {
         if !disk_token.is_expired(now_ms) {
             return disk_token;
         }
-        if let Some(cached) = self.cached_valid(provider, now_ms) {
+        if let Some(cached) = self.cached_valid_for(provider, account, now_ms) {
             return cached;
         }
         match refresh(client, provider, &disk_token, now_ms).await {
             Ok(fresh) => {
-                self.store(provider, fresh.clone());
+                self.store_for(provider, account, fresh.clone());
                 fresh
             }
             Err(e) => {
@@ -292,21 +307,22 @@ impl TokenCache {
         }
     }
 
-    fn cached_valid(
+    fn cached_valid_for(
         &self,
         provider: SubscriptionProvider,
+        account: &str,
         now_ms: i64,
     ) -> Option<SubscriptionToken> {
         let guard = self.inner.lock().ok()?;
         guard
-            .get(&provider)
+            .get(&(provider, account.to_string()))
             .filter(|token| !token.is_expired(now_ms))
             .cloned()
     }
 
-    fn store(&self, provider: SubscriptionProvider, token: SubscriptionToken) {
+    fn store_for(&self, provider: SubscriptionProvider, account: &str, token: SubscriptionToken) {
         if let Ok(mut guard) = self.inner.lock() {
-            guard.insert(provider, token);
+            guard.insert((provider, account.to_string()), token);
         }
     }
 }
@@ -401,11 +417,38 @@ mod tests {
             account_id: None,
             resource_url: None,
         };
-        cache.store(SubscriptionProvider::Qwen, cached);
+        cache.store_for(SubscriptionProvider::Qwen, "primary", cached);
         let expired_disk = token(Some("r1"), Some(0));
         let out = cache
             .get_fresh(&client, SubscriptionProvider::Qwen, expired_disk, 1_000)
             .await;
         assert_eq!(out.access_token, "cached-access");
+    }
+
+    #[test]
+    fn refreshed_tokens_are_isolated_by_account() {
+        let cache = TokenCache::new();
+        let mut first = token(Some("refresh-a"), Some(10_000));
+        first.access_token = "access-a".into();
+        let mut second = token(Some("refresh-b"), Some(10_000));
+        second.access_token = "access-b".into();
+
+        cache.store_for(SubscriptionProvider::Qwen, "primary", first);
+        cache.store_for(SubscriptionProvider::Qwen, "account-1", second);
+
+        assert_eq!(
+            cache
+                .cached_valid_for(SubscriptionProvider::Qwen, "primary", 1_000)
+                .unwrap()
+                .access_token,
+            "access-a"
+        );
+        assert_eq!(
+            cache
+                .cached_valid_for(SubscriptionProvider::Qwen, "account-1", 1_000)
+                .unwrap()
+                .access_token,
+            "access-b"
+        );
     }
 }

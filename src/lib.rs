@@ -6,6 +6,7 @@
 
 pub mod accounts;
 pub mod activitypub;
+pub mod app_state;
 pub mod cli;
 pub mod config;
 pub mod crater;
@@ -19,6 +20,7 @@ pub mod provider_proxy;
 pub mod providers;
 pub mod proxy;
 pub mod refresh;
+mod request_routing;
 pub mod responses;
 pub mod storage;
 pub mod subscription;

@@ -15,12 +15,16 @@
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
+use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
 
 use crate::metrics::Surface;
-use crate::proxy::{AppState, error_response, extract_client_token, maybe_mpp_challenge};
+use crate::proxy::{
+    AppState, error_response, extract_client_token, maybe_mpp_challenge, request_routing_context,
+    retry_after_duration,
+};
 
 /// Environment variable carrying the Google Cloud project id for Code Assist.
 pub const PROJECT_ENV: &str = "GEMINI_PROJECT";
@@ -230,6 +234,99 @@ enum ShapeIn {
     Responses,
 }
 
+struct RoutedGeminiToken {
+    token: crate::subscription::SubscriptionToken,
+    account: String,
+}
+
+async fn route_gemini_token(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: &Value,
+) -> Result<RoutedGeminiToken, Response> {
+    let Some(token) = extract_client_token(headers) else {
+        return Err(error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization Bearer token or x-api-key",
+        ));
+    };
+    let claims = state.token_manager.validate_token(token).map_err(|error| {
+        let status = if matches!(error, crate::token::TokenError::Revoked) {
+            StatusCode::FORBIDDEN
+        } else {
+            StatusCode::UNAUTHORIZED
+        };
+        error_response(status, "authentication_error", &error.to_string())
+    })?;
+    state
+        .token_manager
+        .enforce_request_budget(&claims.sub)
+        .map_err(|error| {
+            error_response(
+                StatusCode::TOO_MANY_REQUESTS,
+                "rate_limit_error",
+                &error.to_string(),
+            )
+        })?;
+    let pinned_account = state
+        .token_manager
+        .account_for(&claims.sub)
+        .map_err(|error| {
+            error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to resolve token account binding: {error}"),
+            )
+        })?;
+    let routing_context = request_routing_context(headers, body, pinned_account);
+    let selected = if let Some(router) = state.account_router.as_ref() {
+        router
+            .select_subscription(&routing_context)
+            .map_err(|error| {
+                error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "account_unavailable",
+                    &error.to_string(),
+                )
+            })?
+    } else {
+        let reader = state.subscription_reader.as_ref().ok_or_else(|| {
+            error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                "subscription credentials reader is not configured",
+            )
+        })?;
+        let token = reader.read_token().map_err(|error| {
+            error_response(
+                StatusCode::BAD_GATEWAY,
+                "authentication_error",
+                &format!("failed to read Gemini subscription credentials: {error}"),
+            )
+        })?;
+        crate::accounts::SelectedSubscriptionAccount {
+            name: "primary".to_string(),
+            token,
+        }
+    };
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let token = state
+        .subscription_cache
+        .get_fresh_for(
+            &state.client,
+            crate::subscription::SubscriptionProvider::Gemini,
+            &selected.name,
+            selected.token,
+            now_ms,
+        )
+        .await;
+    Ok(RoutedGeminiToken {
+        token,
+        account: selected.name,
+    })
+}
+
 async fn forward(
     state: &AppState,
     headers: &HeaderMap,
@@ -240,50 +337,12 @@ async fn forward(
     if let Some(resp) = maybe_mpp_challenge(state, headers, "/v1/chat/completions") {
         return resp;
     }
-    let Some(token) = extract_client_token(headers) else {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
+    let routed = match route_gemini_token(state, headers, &body).await {
+        Ok(routed) => routed,
+        Err(response) => return response,
     };
-    if let Err(e) = state.token_manager.validate_token(token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        return error_response(status, "authentication_error", &format!("{e}"));
-    }
-
-    let Some(reader) = state.subscription_reader.as_ref() else {
-        return error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            "subscription credentials reader is not configured",
-        );
-    };
-    let disk_token = match reader.read_token() {
-        Ok(token) => token,
-        Err(e) => {
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "authentication_error",
-                &format!("failed to read Gemini subscription credentials: {e}"),
-            );
-        }
-    };
-    // Refresh in memory if the on-disk token has expired; vendor files stay
-    // read-only.
-    let now_ms = chrono::Utc::now().timestamp_millis();
-    let sub_token = state
-        .subscription_cache
-        .get_fresh(
-            &state.client,
-            crate::subscription::SubscriptionProvider::Gemini,
-            disk_token,
-            now_ms,
-        )
-        .await;
+    let sub_token = routed.token;
+    let selected_account = Some(routed.account);
 
     // Normalize Responses input into the Chat `messages` shape so a single
     // translator handles both surfaces.
@@ -337,7 +396,9 @@ async fn forward(
     {
         Ok(resp) => resp,
         Err(e) => {
-            state.metrics.record_request(surface, 502, None);
+            state
+                .metrics
+                .record_request(surface, 502, selected_account.as_deref());
             return error_response(
                 StatusCode::BAD_GATEWAY,
                 "api_error",
@@ -347,12 +408,28 @@ async fn forward(
     };
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-    state.metrics.record_request(surface, status.as_u16(), None);
+    state
+        .metrics
+        .record_request(surface, status.as_u16(), selected_account.as_deref());
+    let retry_after = retry_after_duration(upstream_resp.headers());
+    if status == StatusCode::TOO_MANY_REQUESTS {
+        if let (Some(router), Some(account)) =
+            (state.account_router.as_ref(), selected_account.as_deref())
+        {
+            router.report_failure_with_retry_after(
+                account,
+                "Gemini subscription upstream returned 429",
+                retry_after,
+            );
+        }
+    }
 
     let upstream_body = match upstream_resp.bytes().await {
         Ok(bytes) => bytes,
         Err(e) => {
-            state.metrics.record_request(surface, 502, None);
+            state
+                .metrics
+                .record_request(surface, 502, selected_account.as_deref());
             return error_response(
                 StatusCode::BAD_GATEWAY,
                 "api_error",
@@ -440,6 +517,203 @@ fn sse_from_chat_completion(chat: &Value, model: &str) -> Response {
         axum::http::HeaderValue::from_static("text/event-stream"),
     );
     response
+}
+
+fn native_model_document(model: &str) -> Value {
+    let model = model.trim_start_matches("models/");
+    json!({
+        "name": format!("models/{model}"),
+        "displayName": model,
+        "description": "Gemini Code Assist subscription model routed by Link.Assistant.Router",
+        "inputTokenLimit": 1_048_576,
+        "outputTokenLimit": 65_536,
+        "supportedGenerationMethods": ["generateContent", "streamGenerateContent"]
+    })
+}
+
+/// Native Gemini `ListModels` response.
+pub async fn native_models() -> impl IntoResponse {
+    let models = [
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+    ]
+    .iter()
+    .map(|model| native_model_document(model))
+    .collect::<Vec<_>>();
+    (StatusCode::OK, axum::Json(json!({"models": models})))
+}
+
+/// Native Gemini `GetModel` response.
+pub async fn native_model(Path(model): Path<String>) -> impl IntoResponse {
+    (StatusCode::OK, axum::Json(native_model_document(&model)))
+}
+
+fn parse_native_target(path: &str) -> Option<(String, bool)> {
+    let (resource, action) = path.rsplit_once(':')?;
+    let streaming = match action {
+        "generateContent" => false,
+        "streamGenerateContent" => true,
+        _ => return None,
+    };
+    let model = resource
+        .rsplit_once("/models/")
+        .map_or(resource, |(_, model)| model)
+        .trim_start_matches("models/")
+        .trim_matches('/');
+    (!model.is_empty()).then(|| (model.to_string(), streaming))
+}
+
+/// Forward a native Gemini `GenerateContentRequest` without translating it to
+/// an `OpenAI` shape.
+pub async fn forward_native_gemini(
+    State(state): State<AppState>,
+    Path(path): Path<String>,
+    headers: HeaderMap,
+    axum::Json(body): axum::Json<Value>,
+) -> Response {
+    forward_native(&state, &headers, &path, body).await
+}
+
+/// Forward a Vertex publisher-model request using the same native Gemini body.
+pub async fn forward_native_vertex(
+    State(state): State<AppState>,
+    Path(path): Path<String>,
+    headers: HeaderMap,
+    axum::Json(body): axum::Json<Value>,
+) -> Response {
+    forward_native(&state, &headers, &path, body).await
+}
+
+async fn forward_native(
+    state: &AppState,
+    headers: &HeaderMap,
+    path: &str,
+    body: Value,
+) -> Response {
+    if state.upstream_provider != crate::config::UpstreamProvider::Gemini {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "native Gemini and Vertex routes require UPSTREAM_PROVIDER=gemini",
+        );
+    }
+    let Some((model, streaming)) = parse_native_target(path) else {
+        return error_response(
+            StatusCode::NOT_FOUND,
+            "not_found_error",
+            "expected a model :generateContent or :streamGenerateContent action",
+        );
+    };
+    let routed = match route_gemini_token(state, headers, &body).await {
+        Ok(routed) => routed,
+        Err(response) => return response,
+    };
+    let envelope = code_assist_envelope(&model, &body);
+    let serialized = match serde_json::to_vec(&envelope) {
+        Ok(serialized) => serialized,
+        Err(error) => {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to serialize Gemini request: {error}"),
+            );
+        }
+    };
+    let base = routed
+        .token
+        .base_url(crate::subscription::SubscriptionProvider::Gemini);
+    // Code Assist accepts the same envelope for both client modes. A
+    // non-streaming upstream call lets us unwrap the native response reliably;
+    // stream callers receive that response as a valid Gemini SSE data event.
+    let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
+    let upstream = match state
+        .client
+        .post(upstream_url)
+        .header("content-type", "application/json")
+        .header(
+            "authorization",
+            format!("Bearer {}", routed.token.access_token),
+        )
+        .body(serialized.clone())
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(error) => {
+            state
+                .metrics
+                .record_request(Surface::OpenAIChat, 502, Some(&routed.account));
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("Gemini subscription upstream request failed: {error}"),
+            );
+        }
+    };
+    let status = StatusCode::from_u16(upstream.status().as_u16())
+        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+    let retry_after = retry_after_duration(upstream.headers());
+    let retry_header = upstream.headers().get("retry-after").cloned();
+    let response_body = match upstream.bytes().await {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("Gemini subscription upstream body read failed: {error}"),
+            );
+        }
+    };
+    state
+        .metrics
+        .record_bytes(serialized.len() as u64, response_body.len() as u64);
+    state
+        .metrics
+        .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
+    if status == StatusCode::TOO_MANY_REQUESTS {
+        if let Some(router) = state.account_router.as_ref() {
+            router.report_failure_with_retry_after(
+                &routed.account,
+                "Gemini subscription upstream returned 429",
+                retry_after,
+            );
+        }
+    }
+    if !status.is_success() {
+        let mut response = Response::new(Body::from(response_body));
+        *response.status_mut() = status;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("application/json"),
+        );
+        if let Some(value) = retry_header {
+            response.headers_mut().insert("retry-after", value);
+        }
+        return response;
+    }
+    let parsed: Value = match serde_json::from_slice(&response_body) {
+        Ok(parsed) => parsed,
+        Err(error) => {
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("failed to parse Gemini response: {error}"),
+            );
+        }
+    };
+    let native = parsed.get("response").cloned().unwrap_or(parsed);
+    if streaming {
+        let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
+        *response.status_mut() = StatusCode::OK;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("text/event-stream"),
+        );
+        return response;
+    }
+    (StatusCode::OK, axum::Json(native)).into_response()
 }
 
 /// Project an `OpenAI` Responses request onto the Chat Completions shape.
@@ -573,5 +847,20 @@ mod tests {
     fn map_model_passes_gemini_through() {
         assert_eq!(map_model("gemini-2.5-flash"), "gemini-2.5-flash");
         assert_eq!(map_model("gpt-4o"), DEFAULT_MODEL);
+    }
+
+    #[test]
+    fn parses_gemini_and_vertex_native_actions() {
+        assert_eq!(
+            parse_native_target("models/gemini-2.5-pro:generateContent"),
+            Some(("gemini-2.5-pro".into(), false))
+        );
+        assert_eq!(
+            parse_native_target(
+                "projects/p/locations/us/publishers/google/models/gemini-2.5-flash:streamGenerateContent"
+            ),
+            Some(("gemini-2.5-flash".into(), true))
+        );
+        assert!(parse_native_target("models/gemini-2.5-pro:countTokens").is_none());
     }
 }

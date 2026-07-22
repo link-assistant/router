@@ -221,6 +221,42 @@ pub struct Cli {
     )]
     pub additional_account_dirs: Vec<PathBuf>,
 
+    /// New-session account policy: round-robin, fill-first, or least-used.
+    #[arg(
+        long,
+        env = "ACCOUNT_ROUTING_STRATEGY",
+        default_value = "round-robin",
+        global = true
+    )]
+    pub account_routing_strategy: String,
+
+    /// Default seconds to cool an account after a quota response.
+    #[arg(
+        long,
+        env = "ACCOUNT_COOLDOWN_SECS",
+        default_value_t = 60,
+        global = true
+    )]
+    pub account_cooldown_secs: u64,
+
+    /// Seconds an inactive conversation remains on its selected account.
+    #[arg(
+        long,
+        env = "SESSION_AFFINITY_TTL_SECS",
+        default_value_t = 3600,
+        global = true
+    )]
+    pub session_affinity_ttl_secs: u64,
+
+    /// Per-account request caps (primary first); zero means unknown/unlimited.
+    #[arg(
+        long,
+        env = "ACCOUNT_REQUEST_LIMITS",
+        value_delimiter = ',',
+        global = true
+    )]
+    pub account_request_limits: Vec<usize>,
+
     /// Enable experimental compatibility shims (XML history, spoofing, …).
     #[arg(long, env = "EXPERIMENTAL_COMPATIBILITY", global = true)]
     pub experimental_compatibility: bool,
@@ -351,6 +387,9 @@ impl Cli {
         let upstream_provider = UpstreamProvider::from_str_opt(&self.upstream_provider)
             .unwrap_or(UpstreamProvider::Anthropic);
         let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy).unwrap_or_default();
+        let account_routing_strategy =
+            crate::accounts::SelectionStrategy::from_str_opt(&self.account_routing_strategy)
+                .ok_or(ConfigError::InvalidAccountRoutingStrategy)?;
         let data_dir = self.data_dir.clone().unwrap_or_else(default_data_dir);
         let activitypub_actor_base_url = self
             .activitypub_actor_base_url
@@ -422,6 +461,10 @@ impl Cli {
             enable_anthropic_api: !self.disable_anthropic_api,
             enable_metrics: !self.disable_metrics,
             additional_account_dirs: self.additional_account_dirs.clone(),
+            account_routing_strategy,
+            account_cooldown_secs: self.account_cooldown_secs,
+            session_affinity_ttl_secs: self.session_affinity_ttl_secs,
+            account_request_limits: self.account_request_limits.clone(),
             experimental_compatibility: self.experimental_compatibility,
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
             mpp: crate::mpp::MppConfig {
@@ -478,6 +521,10 @@ mod tests {
             disable_anthropic_api: false,
             disable_metrics: false,
             additional_account_dirs: vec![],
+            account_routing_strategy: "round-robin".into(),
+            account_cooldown_secs: 60,
+            session_affinity_ttl_secs: 3600,
+            account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
             mpp_enable: false,
@@ -531,6 +578,10 @@ mod tests {
             disable_anthropic_api: false,
             disable_metrics: false,
             additional_account_dirs: vec![],
+            account_routing_strategy: "round-robin".into(),
+            account_cooldown_secs: 60,
+            session_affinity_ttl_secs: 3600,
+            account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
             mpp_enable: false,
