@@ -163,6 +163,14 @@ mod path_routing_tests {
     }
 
     #[test]
+    fn test_namespaced_anthropic_messages_path() {
+        assert_eq!(
+            resolve_upstream_path("/api/anthropic/v1/messages"),
+            "/v1/messages"
+        );
+    }
+
+    #[test]
     fn test_anthropic_count_tokens_path() {
         assert_eq!(
             resolve_upstream_path("/v1/messages/count_tokens"),
@@ -359,6 +367,10 @@ mod config_verbose_tests {
             enable_anthropic_api: true,
             enable_metrics: true,
             additional_account_dirs: vec![],
+            account_routing_strategy: link_assistant_router::accounts::SelectionStrategy::default(),
+            account_cooldown_secs: 60,
+            session_affinity_ttl_secs: 3600,
+            account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
             mpp: link_assistant_router::config::default_mpp_config(),

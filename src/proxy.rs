@@ -19,61 +19,14 @@ use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
 use log_lazy::LogLazy;
-use reqwest::Client;
 use std::collections::BTreeMap;
-use std::sync::Arc;
 
-use crate::accounts::AccountRouter;
+use crate::accounts::RoutingContext;
+pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
-use crate::gonka::GonkaConfig;
-use crate::oauth::OAuthProvider;
 use crate::openai;
-use crate::providers::{OpenAICompatibleConfig, ProviderStore};
+pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
 use crate::responses;
-use crate::token::TokenManager;
-
-/// Shared application state accessible by all route handlers.
-#[derive(Clone)]
-pub struct AppState {
-    /// HTTP client for upstream requests.
-    pub client: Client,
-    /// Token manager for validating custom tokens.
-    pub token_manager: TokenManager,
-    /// OAuth provider for obtaining upstream credentials (legacy single-account).
-    pub oauth_provider: OAuthProvider,
-    /// Multi-account router (when configured). When `None`, the legacy
-    /// `oauth_provider` is used directly.
-    pub account_router: Option<AccountRouter>,
-    /// Subscription credential reader for vendor OAuth providers
-    /// (Codex/Gemini/Qwen). `None` for non-subscription upstreams.
-    pub subscription_reader: Option<crate::subscription::SubscriptionReader>,
-    /// In-memory cache of refreshed subscription tokens (Codex/Gemini/Qwen).
-    pub subscription_cache: std::sync::Arc<crate::refresh::TokenCache>,
-    /// Base URL for the upstream Anthropic API.
-    pub upstream_base_url: String,
-    /// Selected upstream inference provider.
-    pub upstream_provider: UpstreamProvider,
-    /// Gonka provider configuration when selected.
-    pub gonka: Option<GonkaConfig>,
-    /// Crater `ForgeFed` task provider when selected.
-    pub crater: Option<Arc<dyn crate::crater::TaskProvider>>,
-    /// Boot-time generic OpenAI-compatible provider config.
-    pub openai_compatible: OpenAICompatibleConfig,
-    /// Persisted provider records with encrypted upstream secrets.
-    pub provider_store: ProviderStore,
-    /// Lazy logger for verbose output.
-    pub logger: LogLazy,
-    /// Optional admin key (Bearer) required for `/api/tokens` issuance.
-    pub admin_key: Option<String>,
-    /// Live metrics counter handle.
-    pub metrics: Arc<crate::metrics::Metrics>,
-    /// Public base URL for `ActivityPub` actor documents.
-    pub activitypub_actor_base_url: String,
-    /// Public key PEM advertised by the `ActivityPub` actor.
-    pub activitypub_public_key_pem: String,
-    /// Optional MPP charge settings for OpenAI-compatible endpoints.
-    pub mpp: crate::mpp::MppConfig,
-}
 
 /// The legacy API path prefix used to route requests through the proxy.
 pub const API_PREFIX: &str = "/api/latest/anthropic/";
@@ -154,6 +107,7 @@ pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
 pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl IntoResponse {
     let path = req.uri().path().to_string();
     let method = req.method().clone();
+    let incoming_headers = req.headers().clone();
 
     state.logger.verbose(|| format!("Incoming {method} {path}"));
 
@@ -178,14 +132,14 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     };
 
     // Log session tracking header if present
-    if let Some(session_id) = req.headers().get("x-claude-code-session-id") {
+    if let Some(session_id) = incoming_headers.get("x-claude-code-session-id") {
         state
             .logger
             .verbose(|| format!("Session: {}", session_id.to_str().unwrap_or("<invalid>")));
     }
 
     // Extract and validate the bearer token from the Authorization header
-    let Some(token) = extract_client_token(req.headers()) else {
+    let Some(token) = extract_client_token(&incoming_headers) else {
         state.logger.debug(|| "Missing Authorization header");
         return error_response(
             StatusCode::UNAUTHORIZED,
@@ -224,23 +178,8 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         );
     }
 
-    // Get the real OAuth token (multi-account aware).
-    let (oauth_token, selected_account) = match resolve_upstream_credentials(&state) {
-        Ok(pair) => pair,
-        Err(e) => {
-            tracing::error!("Failed to resolve upstream credentials: {e}");
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                "Upstream authentication unavailable",
-            );
-        }
-    };
-
-    // Build upstream headers
-    let upstream_headers = build_upstream_headers(req.headers(), &oauth_token, &state.logger);
-
-    // Read the request body
+    // Read the body before account selection so the router gets a copy of
+    // stable request metadata and can preserve conversation affinity.
     let body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
         Ok(bytes) => bytes,
         Err(e) => {
@@ -251,6 +190,35 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
             );
         }
     };
+    let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+    let pinned_account = match state.token_manager.account_for(&claims.sub) {
+        Ok(account) => account,
+        Err(error) => {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to resolve token account binding: {error}"),
+            );
+        }
+    };
+    let routing_context = request_routing_context(&incoming_headers, &routing_body, pinned_account);
+
+    // Get the real OAuth token (multi-account aware).
+    let (oauth_token, selected_account) =
+        match resolve_upstream_credentials(&state, &routing_context) {
+            Ok(pair) => pair,
+            Err(e) => {
+                tracing::error!("Failed to resolve upstream credentials: {e}");
+                return error_response(
+                    StatusCode::BAD_GATEWAY,
+                    "api_error",
+                    "Upstream authentication unavailable",
+                );
+            }
+        };
+
+    // Build upstream headers
+    let upstream_headers = build_upstream_headers(&incoming_headers, &oauth_token, &state.logger);
 
     state.logger.verbose(|| {
         format!(
@@ -280,6 +248,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
 
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+    let retry_after = retry_after_duration(upstream_resp.headers());
 
     state
         .logger
@@ -295,7 +264,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         if let (Some(router), Some(name)) =
             (state.account_router.as_ref(), selected_account.as_deref())
         {
-            router.report_failure(name, "upstream returned 429");
+            router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
         }
     }
 
@@ -334,6 +303,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
 /// - `/api/latest/anthropic/*` -> `/*` (legacy)
 #[must_use]
 pub fn resolve_upstream_path(path: &str) -> String {
+    if let Some(rest) = path.strip_prefix("/api/anthropic") {
+        return rest.to_string();
+    }
     // Legacy prefix: strip and forward
     if let Some(rest) = path.strip_prefix("/api/latest/anthropic") {
         return rest.to_string();
@@ -410,9 +382,10 @@ pub(crate) fn build_upstream_headers(
 /// router; otherwise we fall back to the single-account legacy provider.
 fn resolve_upstream_credentials(
     state: &AppState,
+    context: &RoutingContext,
 ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Send + Sync>> {
     if let Some(router) = state.account_router.as_ref() {
-        let sel = router.select()?;
+        let sel = router.select_with_context(context)?;
         return Ok((sel.token, Some(sel.name)));
     }
     let token = state.oauth_provider.get_token()?;
@@ -483,10 +456,12 @@ pub async fn openai_chat_completions(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::Qwen {
+        let routing_body = body.clone();
         return crate::subscription_proxy::forward_subscription_openai(
             &state,
             &headers,
             body,
+            &routing_body,
             "/v1/chat/completions",
             crate::metrics::Surface::OpenAIChat,
         )
@@ -503,11 +478,13 @@ pub async fn openai_chat_completions(
             &state,
             &headers,
             responses_body,
+            &body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
     }
+    let routing_body = body.clone();
     let req = match serde_json::from_value::<openai::OpenAIChatCompletionRequest>(body) {
         Ok(req) => req,
         Err(e) => {
@@ -518,15 +495,14 @@ pub async fn openai_chat_completions(
             );
         }
     };
-    let requested_model = req.model.clone();
     let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
     let body = openai::chat_completion_to_anthropic(&req);
     forward_openai(
         &state,
         &headers,
         body,
+        &routing_body,
         crate::metrics::Surface::OpenAIChat,
-        &requested_model,
         stream_requested,
         OpenAIShape::Chat,
     )
@@ -569,10 +545,12 @@ pub async fn openai_responses(
         state.upstream_provider,
         UpstreamProvider::Codex | UpstreamProvider::Qwen
     ) {
+        let routing_body = body.clone();
         return crate::subscription_proxy::forward_subscription_openai(
             &state,
             &headers,
             body,
+            &routing_body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
         )
@@ -581,6 +559,7 @@ pub async fn openai_responses(
     if state.upstream_provider == UpstreamProvider::Gemini {
         return crate::gemini::forward_responses(&state, &headers, body).await;
     }
+    let routing_body = body.clone();
     let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
         Ok(req) => req,
         Err(e) => {
@@ -591,15 +570,14 @@ pub async fn openai_responses(
             );
         }
     };
-    let requested_model = req.model.clone();
     let stream_requested = req.stream.unwrap_or(false);
     let body = responses::response_to_anthropic(&req);
     forward_openai(
         &state,
         &headers,
         body,
+        &routing_body,
         crate::metrics::Surface::OpenAIResponses,
-        &requested_model,
         stream_requested,
         OpenAIShape::Response,
     )
@@ -736,11 +714,15 @@ async fn forward_openai(
     state: &AppState,
     headers: &HeaderMap,
     body: serde_json::Value,
+    routing_body: &serde_json::Value,
     surface: crate::metrics::Surface,
-    requested_model: &str,
     stream_requested: bool,
     shape: OpenAIShape,
 ) -> Response {
+    let requested_model = routing_body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
     let path = match shape {
         OpenAIShape::Chat => "/v1/chat/completions",
         OpenAIShape::Response => "/v1/responses",
@@ -775,18 +757,31 @@ async fn forward_openai(
         );
     }
 
-    // Resolve OAuth credentials.
-    let (oauth_token, selected_account) = match resolve_upstream_credentials(state) {
-        Ok(p) => p,
-        Err(e) => {
-            tracing::error!("openai: upstream credentials unavailable: {e}");
+    let pinned_account = match state.token_manager.account_for(&claims.sub) {
+        Ok(account) => account,
+        Err(error) => {
             return error_response(
-                StatusCode::BAD_GATEWAY,
+                StatusCode::INTERNAL_SERVER_ERROR,
                 "api_error",
-                "Upstream authentication unavailable",
+                &format!("failed to resolve token account binding: {error}"),
             );
         }
     };
+    let routing_context = request_routing_context(headers, routing_body, pinned_account);
+
+    // Resolve OAuth credentials.
+    let (oauth_token, selected_account) =
+        match resolve_upstream_credentials(state, &routing_context) {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!("openai: upstream credentials unavailable: {e}");
+                return error_response(
+                    StatusCode::BAD_GATEWAY,
+                    "api_error",
+                    "Upstream authentication unavailable",
+                );
+            }
+        };
 
     let upstream_url = format!(
         "{}/v1/messages",
@@ -829,6 +824,7 @@ async fn forward_openai(
         }
     };
     let upstream_status = upstream_resp.status();
+    let retry_after = retry_after_duration(upstream_resp.headers());
     if stream_requested && upstream_status.is_success() {
         state
             .metrics
@@ -873,7 +869,7 @@ async fn forward_openai(
             if let (Some(router), Some(name)) =
                 (state.account_router.as_ref(), selected_account.as_deref())
             {
-                router.report_failure(name, "upstream returned 429");
+                router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
             }
         }
         state.metrics.record_request(
@@ -971,6 +967,8 @@ pub async fn accounts_endpoint(State(state): State<AppState>) -> impl IntoRespon
                 "home": h.home.display().to_string(),
                 "healthy": h.healthy,
                 "used": h.used,
+                "request_limit": h.request_limit,
+                "remaining_requests": h.remaining_requests,
                 "last_error": h.last_error,
                 "cooldown_remaining_seconds": h.cooldown_remaining.map(|d| d.as_secs()),
             })

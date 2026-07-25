@@ -15,6 +15,8 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
+use crate::accounts::SelectionStrategy;
+
 /// Supported upstream inference providers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum UpstreamProvider {
@@ -200,9 +202,18 @@ pub struct Config {
     pub enable_anthropic_api: bool,
     /// Whether to expose `/metrics` and other operational endpoints.
     pub enable_metrics: bool,
-    /// Optional comma-separated list of additional Claude account credential
-    /// directories — used by the multi-account router.
+    /// Optional comma-separated list of additional credential directories for
+    /// the active vendor-subscription provider.
     pub additional_account_dirs: Vec<PathBuf>,
+    /// Selection policy applied to new sessions in a multi-account pool.
+    pub account_routing_strategy: SelectionStrategy,
+    /// Default cooldown after an account returns a typed quota failure.
+    pub account_cooldown_secs: u64,
+    /// Inactive session-affinity lifetime. Zero disables affinity.
+    pub session_affinity_ttl_secs: u64,
+    /// Per-account request caps, ordered primary then additional. Zero means
+    /// unknown/unlimited.
+    pub account_request_limits: Vec<usize>,
     /// Whether to enable experimental compatibility features (spoofing,
     /// XML history reconstruction, etc.). Off by default.
     pub experimental_compatibility: bool,
@@ -313,6 +324,18 @@ impl Config {
                     .collect()
             })
             .unwrap_or_default();
+        let account_routing_strategy = match env::var("ACCOUNT_ROUTING_STRATEGY") {
+            Ok(value) => SelectionStrategy::from_str_opt(&value)
+                .ok_or(ConfigError::InvalidAccountRoutingStrategy)?,
+            Err(_) => SelectionStrategy::default(),
+        };
+        let account_cooldown_secs = parse_u64_env("ACCOUNT_COOLDOWN_SECS", 60);
+        let session_affinity_ttl_secs = parse_u64_env("SESSION_AFFINITY_TTL_SECS", 3600);
+        let account_request_limits = env::var("ACCOUNT_REQUEST_LIMITS")
+            .ok()
+            .map(|raw| parse_usize_csv(&raw))
+            .transpose()?
+            .unwrap_or_default();
         let experimental_compatibility = env::var("EXPERIMENTAL_COMPATIBILITY")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
@@ -349,6 +372,10 @@ impl Config {
             enable_anthropic_api,
             enable_metrics,
             additional_account_dirs,
+            account_routing_strategy,
+            account_cooldown_secs,
+            session_affinity_ttl_secs,
+            account_request_limits,
             experimental_compatibility,
             admin_key,
             mpp,
@@ -377,6 +404,11 @@ impl Config {
         if args.upstream_provider == UpstreamProvider::Crater && args.crater.inbox.is_none() {
             return Err(ConfigError::MissingCraterForgeFedInbox);
         }
+        if !args.account_request_limits.is_empty()
+            && args.account_request_limits.len() != args.additional_account_dirs.len() + 1
+        {
+            return Err(ConfigError::MismatchedAccountRequestLimits);
+        }
 
         Ok(Self {
             listen_addr,
@@ -404,6 +436,10 @@ impl Config {
             enable_anthropic_api: args.enable_anthropic_api,
             enable_metrics: args.enable_metrics,
             additional_account_dirs: args.additional_account_dirs,
+            account_routing_strategy: args.account_routing_strategy,
+            account_cooldown_secs: args.account_cooldown_secs,
+            session_affinity_ttl_secs: args.session_affinity_ttl_secs,
+            account_request_limits: args.account_request_limits,
             experimental_compatibility: args.experimental_compatibility,
             admin_key: args.admin_key,
             mpp: args.mpp,
@@ -436,6 +472,10 @@ pub struct BuildArgs<'a> {
     pub enable_anthropic_api: bool,
     pub enable_metrics: bool,
     pub additional_account_dirs: Vec<PathBuf>,
+    pub account_routing_strategy: SelectionStrategy,
+    pub account_cooldown_secs: u64,
+    pub session_affinity_ttl_secs: u64,
+    pub account_request_limits: Vec<usize>,
     pub experimental_compatibility: bool,
     pub admin_key: Option<String>,
     pub mpp: crate::mpp::MppConfig,
@@ -529,6 +569,18 @@ fn parse_u64_env(name: &str, default: u64) -> u64 {
         .unwrap_or(default)
 }
 
+fn parse_usize_csv(raw: &str) -> Result<Vec<usize>, ConfigError> {
+    raw.split(',')
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(|value| {
+            value
+                .parse::<usize>()
+                .map_err(|_| ConfigError::InvalidAccountRequestLimits)
+        })
+        .collect()
+}
+
 /// Errors that can occur during configuration loading.
 #[derive(Debug)]
 pub enum ConfigError {
@@ -540,6 +592,12 @@ pub enum ConfigError {
     MissingTokenSecret,
     /// Routing mode was not recognised.
     InvalidRoutingMode,
+    /// The multi-account strategy was not recognised.
+    InvalidAccountRoutingStrategy,
+    /// An account request cap was not a non-negative integer.
+    InvalidAccountRequestLimits,
+    /// Request caps did not align with primary plus additional accounts.
+    MismatchedAccountRequestLimits,
     /// Gonka was selected without `GONKA_PRIVATE_KEY`.
     MissingGonkaPrivateKey,
     /// Crater was selected without `CRATER_FORGEFED_INBOX`.
@@ -557,6 +615,18 @@ impl std::fmt::Display for ConfigError {
             Self::InvalidRoutingMode => {
                 write!(f, "ROUTING_MODE must be one of: direct, cli, hybrid")
             }
+            Self::InvalidAccountRoutingStrategy => write!(
+                f,
+                "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"
+            ),
+            Self::InvalidAccountRequestLimits => write!(
+                f,
+                "ACCOUNT_REQUEST_LIMITS must be comma-separated non-negative integers"
+            ),
+            Self::MismatchedAccountRequestLimits => write!(
+                f,
+                "ACCOUNT_REQUEST_LIMITS must contain one entry for primary and each additional account"
+            ),
             Self::MissingGonkaPrivateKey => write!(
                 f,
                 "Gonka provider requires GONKA_PRIVATE_KEY. Make sure your Gonka account is activated for inference, funded, and has a published on-chain public key."
@@ -599,6 +669,10 @@ mod tests {
             enable_anthropic_api: true,
             enable_metrics: true,
             additional_account_dirs: vec![],
+            account_routing_strategy: SelectionStrategy::default(),
+            account_cooldown_secs: 60,
+            session_affinity_ttl_secs: 3600,
+            account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
             mpp: default_mpp_config(),
@@ -633,6 +707,28 @@ mod tests {
     fn default_provider_is_anthropic() {
         let config = build_default(Some("secret")).expect("should build");
         assert_eq!(config.upstream_provider, UpstreamProvider::Anthropic);
+    }
+
+    #[test]
+    fn account_limits_must_align_with_the_configured_pool() {
+        let mut args = gonka_args(None);
+        args.upstream_provider = UpstreamProvider::Anthropic;
+        args.additional_account_dirs = vec![PathBuf::from("/tmp/second")];
+        args.account_request_limits = vec![100];
+
+        assert!(matches!(
+            Config::build(args),
+            Err(ConfigError::MismatchedAccountRequestLimits)
+        ));
+    }
+
+    #[test]
+    fn account_limit_parser_accepts_zero_as_unlimited() {
+        assert_eq!(parse_usize_csv("100, 0,250").unwrap(), vec![100, 0, 250]);
+        assert!(matches!(
+            parse_usize_csv("100,nope"),
+            Err(ConfigError::InvalidAccountRequestLimits)
+        ));
     }
 
     #[test]
@@ -709,6 +805,10 @@ mod tests {
             enable_anthropic_api: true,
             enable_metrics: true,
             additional_account_dirs: vec![],
+            account_routing_strategy: SelectionStrategy::default(),
+            account_cooldown_secs: 60,
+            session_affinity_ttl_secs: 3600,
+            account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
             mpp: default_mpp_config(),
@@ -741,6 +841,10 @@ mod tests {
             enable_anthropic_api: true,
             enable_metrics: true,
             additional_account_dirs: vec![],
+            account_routing_strategy: SelectionStrategy::default(),
+            account_cooldown_secs: 60,
+            session_affinity_ttl_secs: 3600,
+            account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
             mpp: default_mpp_config(),

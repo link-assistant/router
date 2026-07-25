@@ -3,6 +3,7 @@ use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
     OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token, merge_oauth_beta,
+    request_routing_context, retry_after_duration,
 };
 
 #[test]
@@ -94,4 +95,54 @@ fn merge_oauth_beta_is_idempotent_and_dedups() {
     // Already present among multiple flags → unchanged.
     let multi = format!("foo,{OAUTH_BETA_FLAG},bar");
     assert_eq!(merge_oauth_beta(Some(&multi)), multi);
+}
+
+#[test]
+fn routing_context_prefers_token_pin_and_detects_sessions() {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "x-claude-code-session-id",
+        HeaderValue::from_static("header-session"),
+    );
+    let body = serde_json::json!({"metadata": {"session_id": "body-session"}});
+
+    let context = request_routing_context(&headers, &body, Some("account-3".into()));
+
+    assert_eq!(context.pinned_account.as_deref(), Some("account-3"));
+    assert_eq!(context.session_key.as_deref(), Some("header-session"));
+}
+
+#[test]
+fn routing_context_falls_back_to_standard_body_session_fields() {
+    let headers = HeaderMap::new();
+    let body = serde_json::json!({"metadata": {"session_id": "body-session"}});
+
+    let context = request_routing_context(&headers, &body, None);
+
+    assert_eq!(context.session_key.as_deref(), Some("body-session"));
+}
+
+#[test]
+fn retry_after_delta_seconds_is_used_for_account_cooldown() {
+    let mut headers = HeaderMap::new();
+    headers.insert("retry-after", HeaderValue::from_static("120"));
+
+    assert_eq!(
+        retry_after_duration(&headers),
+        Some(std::time::Duration::from_secs(120))
+    );
+}
+
+#[test]
+fn retry_after_http_date_is_used_for_account_cooldown() {
+    let retry_at = chrono::Utc::now() + chrono::Duration::seconds(120);
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "retry-after",
+        HeaderValue::from_str(&retry_at.to_rfc2822()).unwrap(),
+    );
+
+    let parsed = retry_after_duration(&headers).unwrap();
+    assert!(parsed >= std::time::Duration::from_secs(118));
+    assert!(parsed <= std::time::Duration::from_secs(120));
 }

@@ -20,7 +20,10 @@ use futures_util::StreamExt;
 
 use crate::config::UpstreamProvider;
 use crate::metrics::Surface;
-use crate::proxy::{AppState, error_response, extract_client_token, maybe_mpp_challenge};
+use crate::proxy::{
+    AppState, error_response, extract_client_token, maybe_mpp_challenge, request_routing_context,
+    retry_after_duration,
+};
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 /// Forward one `OpenAI`-shaped request to the active subscription upstream.
@@ -31,6 +34,7 @@ pub async fn forward_subscription_openai(
     state: &AppState,
     headers: &HeaderMap,
     mut body: serde_json::Value,
+    routing_body: &serde_json::Value,
     path: &str,
     surface: Surface,
 ) -> Response {
@@ -45,12 +49,22 @@ pub async fn forward_subscription_openai(
             "Missing Authorization Bearer token or x-api-key",
         );
     };
-    if let Err(e) = state.token_manager.validate_token(token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        return error_response(status, "authentication_error", &format!("{e}"));
+    let claims = match state.token_manager.validate_token(token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            return error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+        return error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
     }
 
     let Some(provider) = state.upstream_provider.subscription_provider() else {
@@ -60,21 +74,49 @@ pub async fn forward_subscription_openai(
             "active upstream is not a subscription provider",
         );
     };
-    let Some(reader) = state.subscription_reader.as_ref() else {
-        return error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            "subscription credentials reader is not configured",
-        );
-    };
-    let disk_token = match reader.read_token() {
-        Ok(token) => token,
-        Err(e) => {
+    let pinned_account = match state.token_manager.account_for(&claims.sub) {
+        Ok(account) => account,
+        Err(error) => {
             return error_response(
-                StatusCode::BAD_GATEWAY,
-                "authentication_error",
-                &format!("failed to read {provider} subscription credentials: {e}"),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to resolve token account binding: {error}"),
             );
+        }
+    };
+    let routing_context = request_routing_context(headers, routing_body, pinned_account);
+    let selected = if let Some(router) = state.account_router.as_ref() {
+        match router.select_subscription(&routing_context) {
+            Ok(selected) => selected,
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "account_unavailable",
+                    &error.to_string(),
+                );
+            }
+        }
+    } else {
+        let Some(reader) = state.subscription_reader.as_ref() else {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                "subscription credentials reader is not configured",
+            );
+        };
+        let disk_token = match reader.read_token() {
+            Ok(token) => token,
+            Err(e) => {
+                return error_response(
+                    StatusCode::BAD_GATEWAY,
+                    "authentication_error",
+                    &format!("failed to read {provider} subscription credentials: {e}"),
+                );
+            }
+        };
+        crate::accounts::SelectedSubscriptionAccount {
+            name: "primary".to_string(),
+            token: disk_token,
         }
     };
     // Refresh in memory if the on-disk token has expired; vendor files stay
@@ -82,8 +124,15 @@ pub async fn forward_subscription_openai(
     let now_ms = chrono::Utc::now().timestamp_millis();
     let sub_token = state
         .subscription_cache
-        .get_fresh(&state.client, provider, disk_token, now_ms)
+        .get_fresh_for(
+            &state.client,
+            provider,
+            &selected.name,
+            selected.token,
+            now_ms,
+        )
         .await;
+    let selected_account = Some(selected.name);
 
     let stream_requested = body
         .get("stream")
@@ -127,7 +176,9 @@ pub async fn forward_subscription_openai(
     let upstream_resp = match upstream_req.send().await {
         Ok(resp) => resp,
         Err(e) => {
-            state.metrics.record_request(surface, 502, None);
+            state
+                .metrics
+                .record_request(surface, 502, selected_account.as_deref());
             return error_response(
                 StatusCode::BAD_GATEWAY,
                 "api_error",
@@ -137,7 +188,21 @@ pub async fn forward_subscription_openai(
     };
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-    state.metrics.record_request(surface, status.as_u16(), None);
+    state
+        .metrics
+        .record_request(surface, status.as_u16(), selected_account.as_deref());
+    let retry_after = retry_after_duration(upstream_resp.headers());
+    if status == StatusCode::TOO_MANY_REQUESTS {
+        if let (Some(router), Some(account)) =
+            (state.account_router.as_ref(), selected_account.as_deref())
+        {
+            router.report_failure_with_retry_after(
+                account,
+                "subscription upstream returned 429",
+                retry_after,
+            );
+        }
+    }
 
     let content_type = upstream_resp
         .headers()
@@ -172,7 +237,9 @@ pub async fn forward_subscription_openai(
     let upstream_body = match upstream_resp.bytes().await {
         Ok(bytes) => bytes,
         Err(e) => {
-            state.metrics.record_request(surface, 502, None);
+            state
+                .metrics
+                .record_request(surface, 502, selected_account.as_deref());
             return error_response(
                 StatusCode::BAD_GATEWAY,
                 "api_error",

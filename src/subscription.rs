@@ -83,7 +83,15 @@ impl SubscriptionProvider {
     #[must_use]
     pub const fn credential_filenames(self) -> &'static [&'static str] {
         match self {
-            Self::Claude => &[".credentials.json", "credentials.json", "auth.json"],
+            // Keep parity with the legacy OAuthProvider search order so
+            // enabling a pool does not make an existing Claude login vanish.
+            Self::Claude => &[
+                "credentials.json",
+                ".credentials.json",
+                "auth.json",
+                "oauth.json",
+                "config.json",
+            ],
             Self::Codex => &["auth.json"],
             Self::Gemini | Self::Qwen => &["oauth_creds.json"],
         }
@@ -554,6 +562,17 @@ mod tests {
         assert_eq!(token.access_token, "sk-ant-oat-nested");
         assert_eq!(token.refresh_token.as_deref(), Some("sk-ant-ort-x"));
         assert_eq!(token.expires_at_ms, Some(9_999_999_999_999));
+    }
+
+    #[test]
+    fn claude_pool_reader_preserves_legacy_credential_candidates() {
+        let dir = tempdir();
+        fs::write(dir.join("oauth.json"), r#"{"accessToken":"legacy"}"#).unwrap();
+        let token = SubscriptionReader::new(SubscriptionProvider::Claude, &dir)
+            .read_token()
+            .unwrap();
+
+        assert_eq!(token.access_token, "legacy");
     }
 
     #[test]

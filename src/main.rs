@@ -16,7 +16,7 @@ use std::time::Duration;
 
 use axum::Router;
 use axum::routing::{get, post};
-use link_assistant_router::accounts::{AccountRouter, SelectionStrategy};
+use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
 use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
@@ -27,6 +27,7 @@ use link_assistant_router::provider_proxy;
 use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::{self, AppState};
 use link_assistant_router::storage::{TokenStore, build_token_store};
+use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 use link_assistant_router::token::TokenManager;
 use link_assistant_router::token_admin;
 use log_lazy::{LogLazy, levels};
@@ -98,6 +99,20 @@ fn build_logger(verbose: bool) -> LogLazy {
     })
 }
 
+fn subscription_pool(config: &Config) -> (SubscriptionProvider, std::path::PathBuf) {
+    let provider = config
+        .upstream_provider
+        .subscription_provider()
+        .unwrap_or(SubscriptionProvider::Claude);
+    let primary = if provider == SubscriptionProvider::Claude {
+        std::path::PathBuf::from(&config.claude_code_home)
+    } else {
+        let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+        provider.resolve_home(&user_home)
+    };
+    (provider, primary)
+}
+
 /// Construct the persistent token store and the optional multi-account router
 /// for the given [`Config`]. Both are needed by both the server and the CLI
 /// subcommands.
@@ -106,23 +121,39 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
         std::fs::create_dir_all(&config.data_dir)?;
     }
     let store = build_token_store(config.storage_policy, &config.data_dir)?;
-    let account_router = if config.additional_account_dirs.is_empty() {
-        None
-    } else {
-        Some(AccountRouter::new(
-            std::path::PathBuf::from(&config.claude_code_home),
-            &config.additional_account_dirs,
-            SelectionStrategy::default(),
-            Duration::from_secs(60),
-        ))
-    };
+    let account_router =
+        if config.additional_account_dirs.is_empty() && config.account_request_limits.is_empty() {
+            None
+        } else {
+            let (provider, primary) = subscription_pool(config);
+            let options = AccountRouterOptions {
+                strategy: config.account_routing_strategy,
+                cooldown: Duration::from_secs(config.account_cooldown_secs),
+                session_affinity_ttl: Duration::from_secs(config.session_affinity_ttl_secs),
+                request_limits: config
+                    .account_request_limits
+                    .iter()
+                    .map(|limit| (*limit != 0).then_some(*limit))
+                    .collect(),
+            };
+            Some(AccountRouter::new_for_provider(
+                primary,
+                &config.additional_account_dirs,
+                provider,
+                options,
+            ))
+        };
     Ok((store, account_router))
 }
 
 async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Upstream: {}", config.upstream_base_url);
     tracing::info!("Upstream provider: {:?}", config.upstream_provider);
-    tracing::info!("Claude Code home: {}", config.claude_code_home);
+    let (subscription_provider, subscription_home) = subscription_pool(&config);
+    tracing::info!(
+        "Subscription home ({subscription_provider}): {}",
+        subscription_home.display()
+    );
     tracing::info!("Routing mode: {:?}", config.routing_mode);
     tracing::info!("Storage policy: {:?}", config.storage_policy);
     if config.routing_mode == RoutingMode::Cli || config.routing_mode == RoutingMode::Hybrid {
@@ -225,6 +256,11 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         app = app
             .route("/v1/messages", post(proxy::proxy_handler))
             .route("/v1/messages/count_tokens", post(proxy::proxy_handler))
+            .route("/api/anthropic/v1/messages", post(proxy::proxy_handler))
+            .route(
+                "/api/anthropic/v1/messages/count_tokens",
+                post(proxy::proxy_handler),
+            )
             .route("/invoke", post(proxy::proxy_handler))
             .route("/invoke-with-response-stream", post(proxy::proxy_handler));
     }
@@ -233,7 +269,38 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         app = app
             .route("/v1/chat/completions", post(proxy::openai_chat_completions))
             .route("/v1/responses", post(proxy::openai_responses))
-            .route("/v1/models", get(proxy::openai_models));
+            .route("/v1/models", get(proxy::openai_models))
+            .route(
+                "/api/openai/v1/chat/completions",
+                post(proxy::openai_chat_completions),
+            )
+            .route("/api/openai/v1/responses", post(proxy::openai_responses))
+            .route("/api/openai/v1/models", get(proxy::openai_models))
+            .route(
+                "/api/codex/v1/chat/completions",
+                post(proxy::openai_chat_completions),
+            )
+            .route("/api/codex/v1/responses", post(proxy::openai_responses))
+            .route("/api/codex/v1/models", get(proxy::openai_models))
+            .route(
+                "/api/qwen/v1/chat/completions",
+                post(proxy::openai_chat_completions),
+            )
+            .route("/api/qwen/v1/responses", post(proxy::openai_responses))
+            .route("/api/qwen/v1/models", get(proxy::openai_models))
+            .route(
+                "/api/gemini/v1beta/models",
+                get(link_assistant_router::gemini::native_models),
+            )
+            .route(
+                "/api/gemini/v1beta/models/{model}",
+                get(link_assistant_router::gemini::native_model)
+                    .post(link_assistant_router::gemini::forward_native_gemini),
+            )
+            .route(
+                "/api/vertex/v1/{*path}",
+                post(link_assistant_router::gemini::forward_native_vertex),
+            );
     }
 
     if config.enable_metrics {
@@ -339,11 +406,21 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
         Ok((_, Some(r))) => r,
         Ok((_, None)) => {
             // Single-account mode: synthesise a one-account router for inspection.
-            AccountRouter::new(
-                std::path::PathBuf::from(&config.claude_code_home),
+            let (provider, primary) = subscription_pool(config);
+            AccountRouter::new_for_provider(
+                primary,
                 &[],
-                SelectionStrategy::default(),
-                Duration::from_secs(60),
+                provider,
+                AccountRouterOptions {
+                    strategy: config.account_routing_strategy,
+                    cooldown: Duration::from_secs(config.account_cooldown_secs),
+                    session_affinity_ttl: Duration::from_secs(config.session_affinity_ttl_secs),
+                    request_limits: config
+                        .account_request_limits
+                        .iter()
+                        .map(|limit| (*limit != 0).then_some(*limit))
+                        .collect(),
+                },
             )
         }
         Err(e) => {
@@ -354,13 +431,24 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
     match op {
         AccountOp::List => {
             let snap = router.health_snapshot();
-            println!("{:<16}  {:<8}  {:<6}  home", "name", "healthy", "used");
+            println!(
+                "{:<16}  {:<8}  {:<6}  {:<9}  {:<9}  home",
+                "name", "healthy", "used", "limit", "remaining"
+            );
             for h in snap {
+                let limit = h
+                    .request_limit
+                    .map_or_else(|| "-".to_string(), |value| value.to_string());
+                let remaining = h
+                    .remaining_requests
+                    .map_or_else(|| "-".to_string(), |value| value.to_string());
                 println!(
-                    "{:<16}  {:<8}  {:<6}  {}",
+                    "{:<16}  {:<8}  {:<6}  {:<9}  {:<9}  {}",
                     h.name,
                     h.healthy,
                     h.used,
+                    limit,
+                    remaining,
                     h.home.display()
                 );
             }
@@ -506,6 +594,19 @@ fn run_doctor(config: &Config) -> ExitCode {
         config.additional_account_dirs.len()
     );
     println!(
+        "account_routing_strategy: {:?}",
+        config.account_routing_strategy
+    );
+    println!("account_cooldown_secs   : {}", config.account_cooldown_secs);
+    println!(
+        "account_request_limits  : {:?}",
+        config.account_request_limits
+    );
+    println!(
+        "session_affinity_ttl   : {}",
+        config.session_affinity_ttl_secs
+    );
+    println!(
         "admin_key              : {}",
         if config.admin_key.is_some() {
             "set"
@@ -522,13 +623,12 @@ fn run_doctor(config: &Config) -> ExitCode {
         }
     );
 
-    // Probe credentials. Use the OAuth provider so the report covers every
-    // candidate file the router actually reads, including the dotfile
-    // `.credentials.json` and the nested `claudeAiOauth` layout.
-    let primary = OAuthProvider::new(&config.claude_code_home);
+    // Probe the active pool with its vendor-specific credential layout.
+    let (active_provider, primary_home) = subscription_pool(config);
+    let primary = SubscriptionReader::new(active_provider, &primary_home);
     match primary.discover_credential_path() {
         Some(path) => {
-            let readable = primary.get_token().is_ok();
+            let readable = primary.read_token().is_ok();
             println!(
                 "primary credentials    : {} ({})",
                 path.display(),
@@ -541,14 +641,12 @@ fn run_doctor(config: &Config) -> ExitCode {
         }
         None => println!(
             "primary credentials    : {} (MISSING)",
-            std::path::Path::new(&config.claude_code_home)
-                .join(".credentials.json")
-                .display()
+            primary_home.display()
         ),
     }
     for (i, dir) in config.additional_account_dirs.iter().enumerate() {
-        let provider = OAuthProvider::new(&dir.to_string_lossy());
-        match provider.discover_credential_path() {
+        let reader = SubscriptionReader::new(active_provider, dir);
+        match reader.discover_credential_path() {
             Some(path) => println!(
                 "extra account {}        : {} (found)",
                 i + 1,
@@ -557,7 +655,7 @@ fn run_doctor(config: &Config) -> ExitCode {
             None => println!(
                 "extra account {}        : {} (MISSING)",
                 i + 1,
-                dir.join(".credentials.json").display()
+                dir.display()
             ),
         }
     }
@@ -567,9 +665,8 @@ fn run_doctor(config: &Config) -> ExitCode {
     // when the matching upstream provider is active.
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     for provider in link_assistant_router::subscription::SubscriptionProvider::ALL {
-        use link_assistant_router::subscription::SubscriptionProvider;
-        if provider == SubscriptionProvider::Claude {
-            continue; // covered by the primary Claude probe above
+        if provider == active_provider {
+            continue; // covered by the active primary probe above
         }
         let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
             provider, &user_home,

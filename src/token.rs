@@ -144,6 +144,14 @@ impl TokenManager {
         }
     }
 
+    /// Return the strict account binding stored for a router-issued token.
+    pub fn account_for(&self, token_id: &str) -> Result<Option<String>, TokenError> {
+        self.store
+            .get(token_id)
+            .map(|record| record.and_then(|record| record.account))
+            .map_err(|error| TokenError::Storage(error.to_string()))
+    }
+
     /// Validate a custom token string.
     ///
     /// Strips the `la_sk_` prefix, decodes the JWT, checks expiration and
@@ -302,6 +310,18 @@ mod tests {
         let labels: Vec<_> = list.iter().map(|r| r.label.as_str()).collect();
         assert!(labels.contains(&"one"));
         assert!(labels.contains(&"two"));
+    }
+
+    #[test]
+    fn account_binding_is_available_during_request_routing() {
+        let mgr = test_manager();
+        let token = mgr.issue_token_for(1, "bound", Some("account-2")).unwrap();
+        let claims = mgr.validate_token(&token).unwrap();
+
+        assert_eq!(
+            mgr.account_for(&claims.sub).unwrap().as_deref(),
+            Some("account-2")
+        );
     }
 
     #[test]

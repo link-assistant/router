@@ -20,7 +20,7 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
 - **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
 - **Optional LiteLLM/OpenAI-compatible upstream** — `UPSTREAM_PROVIDER=openai-compatible` routes OpenAI SDK traffic to a stored provider such as LiteLLM
-- **Multi-account routing** — pool any number of Claude MAX accounts; round-robin / priority / least-used; automatic cooldowns on 429
+- **Multi-account routing** — pool any number of Claude, Codex, Gemini, or Qwen subscriptions; session affinity, strict token pins, round-robin / fill-first / least-used selection, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
 - **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
@@ -82,6 +82,15 @@ translated to each backend's dialect (Codex uses the OpenAI Responses API;
 Gemini uses the Code Assist envelope with synthesized SSE for streaming; Qwen is
 OpenAI-compatible). Run `router doctor` to verify each credential file is
 present and its token valid.
+
+To pool subscriptions, set `ADDITIONAL_ACCOUNT_DIRS` to vendor-specific
+credential homes. The active `UPSTREAM_PROVIDER` determines how every directory
+is parsed. New sessions use `ACCOUNT_ROUTING_STRATEGY`; a session remains on its
+chosen account for `SESSION_AFFINITY_TTL_SECS`, and an `la_sk_...` token issued
+with an `account` claim is a strict pin. Automatic selection skips accounts
+whose configured `ACCOUNT_REQUEST_LIMITS` cap is spent or whose upstream
+returned HTTP 429. Pinned and session-bound requests fail instead of silently
+changing identity.
 
 ## Quick Start
 
@@ -281,6 +290,8 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 |---|---|---|
 | `/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
 | `/v1/messages/count_tokens` | POST | Token-count helper |
+| `/api/anthropic/v1/messages` | POST | Namespaced Anthropic Messages alias |
+| `/api/anthropic/v1/messages/count_tokens` | POST | Namespaced token-count alias |
 | `/invoke` | POST | Bedrock-format invoke |
 | `/invoke-with-response-stream` | POST | Bedrock streaming invoke |
 | `/api/latest/anthropic/*` | ANY | Legacy prefix; stripped and forwarded |
@@ -293,6 +304,19 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 | `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages, forwarded to the selected OpenAI-compatible provider, or delivered as a Crater ForgeFed task |
 | `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
 | `/v1/models` | GET | OpenAI-shaped model list |
+| `/api/openai/v1/*` | GET/POST | Namespaced aliases for models, Chat Completions, and Responses |
+| `/api/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
+| `/api/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
+| `/api/gemini/v1beta/models` | GET | Native Gemini model list |
+| `/api/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
+| `/api/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation |
+| `/api/gemini/v1beta/models/{model}:streamGenerateContent` | POST | Native Gemini SSE response |
+| `/api/vertex/v1/projects/.../models/{model}:generateContent` | POST | Native Vertex-style generation through Gemini Code Assist |
+
+Provider-specific namespaces use the matching active subscription configured
+by `UPSTREAM_PROVIDER`; for example, native Gemini and Vertex generation
+requires `UPSTREAM_PROVIDER=gemini`. They are additive client-facing protocol
+aliases, not cross-provider fallback rules.
 
 `gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families auto-map to the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged.
 
@@ -337,7 +361,7 @@ method-specific verifier is configured.
 |---|---|---|
 | `/metrics` | GET | Prometheus text-exposition counters |
 | `/v1/usage` | GET | JSON snapshot of all counters |
-| `/v1/accounts` | GET | Multi-account health: cooldowns, last error, used-count |
+| `/v1/accounts` | GET | Multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 
 ### POST /api/tokens
 
@@ -422,7 +446,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
-| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `gonka`, `crater`, or `openai-compatible` |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, or `openai-compatible` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
@@ -550,7 +574,11 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--storage-policy` / `STORAGE_POLICY` | `both` | Persistent token store: `memory`, `text` (Lino), `binary`, or `both` |
 | `--data-dir` / `DATA_DIR` | platform-specific | Where `tokens.lino` / `tokens.bin` live |
 | `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend |
-| `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential dirs for multi-account routing |
+| `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential homes for the active subscription provider |
+| `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
+| `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins |
+| `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
+| `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
 
 ### Feature toggles
 
@@ -777,9 +805,9 @@ curl -s -X POST http://localhost:8080/api/tokens \
 cargo test
 ```
 
-This runs:
-- **Unit tests** in every module under `src/` (44 tests covering config, oauth, token, storage, accounts, openai, metrics, cli)
-- **Integration tests** in `tests/integration_test.rs` cover API path routing, OpenAI translation, metrics rendering, and CLI parsing
+This runs the unit, integration, release-workflow, and documentation tests,
+including account affinity/caps, provider-scoped token caching, request-routing
+metadata, protocol translation, metrics, and configuration validation.
 
 ### Run specific test suites
 
@@ -891,9 +919,11 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   ├── crater.rs             # Crater ForgeFed task provider
 │   ├── oauth.rs              # Claude Code OAuth credential reader
 │   ├── accounts.rs           # Multi-account router (round-robin/priority/least-used + cooldowns)
+│   ├── app_state.rs          # Shared HTTP handler state
 │   ├── storage.rs            # Persistent token store (text Lino + binary backends)
 │   ├── providers.rs          # OpenAI-compatible provider store + encrypted secrets
 │   ├── proxy.rs              # Transparent API proxy with token swap, OpenAI shim, ops endpoints
+│   ├── request_routing.rs    # Session/account routing signal extraction
 │   ├── openai.rs             # OpenAI <-> Anthropic translation helpers
 │   ├── metrics.rs            # Atomic counters, Prometheus rendering, JSON snapshots
 │   └── token.rs              # Custom JWT token management (la_sk_...)
