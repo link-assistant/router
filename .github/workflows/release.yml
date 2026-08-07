@@ -339,9 +339,34 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: runtime
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+
+      - name: Extract Docker metadata for the Claude CLI variant
+        if: steps.check.outputs.should_release == 'true'
+        id: docker-meta-claude-cli
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_IMAGE }}
+          tags: |
+            type=raw,value=with-claude-cli
+            type=raw,value=${{ steps.current_version.outputs.version }}-with-claude-cli
+          labels: |
+            org.opencontainers.image.version=${{ steps.current_version.outputs.version }}
+
+      - name: Publish Claude CLI variant image to registries
+        if: steps.check.outputs.should_release == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: with-claude-cli
+          push: true
+          tags: ${{ steps.docker-meta-claude-cli.outputs.tags }}
+          labels: ${{ steps.docker-meta-claude-cli.outputs.labels }}
 
       - name: Create GitHub Release
         if: steps.check.outputs.should_release == 'true'
@@ -443,9 +468,34 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: runtime
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+
+      - name: Extract Docker metadata for the Claude CLI variant
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        id: docker-meta-claude-cli
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_IMAGE }}
+          tags: |
+            type=raw,value=with-claude-cli
+            type=raw,value=${{ steps.version.outputs.new_version }}-with-claude-cli
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.new_version }}
+
+      - name: Publish Claude CLI variant image to registries
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: with-claude-cli
+          push: true
+          tags: ${{ steps.docker-meta-claude-cli.outputs.tags }}
+          labels: ${{ steps.docker-meta-claude-cli.outputs.labels }}
 
       - name: Create GitHub Release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'

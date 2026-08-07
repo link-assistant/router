@@ -183,13 +183,13 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
     );
     assert_eq!(
         workflow.matches("docker/metadata-action@v6").count(),
-        2,
-        "auto and manual release jobs should derive Docker metadata once for both registries"
+        4,
+        "auto and manual release jobs should derive Docker metadata for the default and Claude CLI images"
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
-        2,
-        "auto and manual release jobs should push Docker images"
+        4,
+        "auto and manual release jobs should push the default and Claude CLI images"
     );
 
     let auto_publish = workflow
@@ -356,4 +356,85 @@ fn quoted_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     let rest = line.strip_prefix(key)?.trim_start();
     let rest = rest.strip_prefix('=')?.trim_start();
     rest.strip_prefix('"')?.strip_suffix('"')
+}
+
+/// The runtime image has no Claude CLI, so a container cannot perform a
+/// first-time `claude` login. The published `:with-claude-cli` variant is what
+/// closes that gap; see issue #48.
+#[test]
+fn dockerfile_offers_a_claude_cli_variant_without_bloating_the_default_image() {
+    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+
+    assert!(
+        dockerfile.contains("AS with-claude-cli"),
+        "Dockerfile should define a `with-claude-cli` stage so a container can run `claude` login"
+    );
+    assert!(
+        dockerfile.contains("@anthropic-ai/claude-code"),
+        "the `with-claude-cli` stage should install the Claude Code CLI"
+    );
+
+    let default_stage = dockerfile_stage(&dockerfile, "runtime-base")
+        .expect("Dockerfile should define the minimal `runtime-base` stage");
+    assert!(
+        !default_stage.contains("nodejs") && !default_stage.contains("claude-code"),
+        "the default runtime stage should stay minimal: no Node.js and no Claude CLI"
+    );
+
+    // The last stage is what a bare `docker build .` produces, so the minimal
+    // image must come last or every default build would ship the CLI.
+    let last_stage_name = dockerfile
+        .rsplit("\nFROM ")
+        .next()
+        .and_then(|stage| stage.split_whitespace().nth(2))
+        .expect("Dockerfile should end with a named stage");
+    assert_eq!(
+        last_stage_name, "runtime",
+        "the minimal `runtime` stage must be last so a default build does not include the Claude CLI"
+    );
+}
+
+#[test]
+fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
+    let workflow = fs::read_to_string(".github/workflows/release.yml")
+        .expect("release workflow should be readable");
+
+    assert_eq!(
+        workflow.matches("target: runtime").count(),
+        2,
+        "auto and manual release jobs should pin the default image to the minimal `runtime` stage"
+    );
+    assert_eq!(
+        workflow.matches("target: with-claude-cli").count(),
+        2,
+        "auto and manual release jobs should also build the Claude CLI variant"
+    );
+    assert_eq!(
+        workflow.matches("type=raw,value=with-claude-cli").count(),
+        2,
+        "the Claude CLI variant should get a floating `with-claude-cli` tag"
+    );
+    assert_eq!(
+        workflow.matches("-with-claude-cli\n").count(),
+        2,
+        "the Claude CLI variant should also get a version-pinned tag"
+    );
+}
+
+/// Extract the instructions of the named Dockerfile stage.
+///
+/// Comments are dropped: the block documenting the *next* stage sits inside
+/// this stage's text and would otherwise be mistaken for its content.
+fn dockerfile_stage(dockerfile: &str, name: &str) -> Option<String> {
+    let marker = format!("AS {name}\n");
+    let start = dockerfile.find(&marker)? + marker.len();
+    let rest = &dockerfile[start..];
+    let end = rest.find("\nFROM ").unwrap_or(rest.len());
+    Some(
+        rest[..end]
+            .lines()
+            .filter(|line| !line.trim_start().starts_with('#'))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    )
 }

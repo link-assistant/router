@@ -207,6 +207,28 @@ pub async fn refresh(
     prev: &SubscriptionToken,
     now_ms: i64,
 ) -> Result<SubscriptionToken, RefreshError> {
+    refresh_at(
+        client,
+        refresh_config(provider).token_url,
+        provider,
+        prev,
+        now_ms,
+    )
+    .await
+}
+
+/// [`refresh`] against an explicit token endpoint.
+///
+/// Only the URL is overridden — client id, body encoding, and response
+/// handling stay exactly as they are in production, so a test pointing this at
+/// a stub server exercises the real request shape.
+async fn refresh_at(
+    client: &reqwest::Client,
+    token_url: &str,
+    provider: SubscriptionProvider,
+    prev: &SubscriptionToken,
+    now_ms: i64,
+) -> Result<SubscriptionToken, RefreshError> {
     let config = refresh_config(provider);
     let refresh_token = prev
         .refresh_token
@@ -230,7 +252,7 @@ pub async fn refresh(
             if let Some(secret) = client_secret.as_deref() {
                 body["client_secret"] = serde_json::Value::String(secret.to_string());
             }
-            client.post(config.token_url).json(&body)
+            client.post(token_url).json(&body)
         }
         BodyStyle::Form => {
             let mut form = vec![
@@ -242,7 +264,7 @@ pub async fn refresh(
                 form.push(("client_secret", secret));
             }
             client
-                .post(config.token_url)
+                .post(token_url)
                 .header("content-type", "application/x-www-form-urlencoded")
                 .body(encode_form(&form))
         }
@@ -400,6 +422,123 @@ mod tests {
         assert_eq!(claude.client_id, CLAUDE_CLIENT_ID);
         assert!(claude.client_secret_env.is_none());
         assert_eq!(claude.style, BodyStyle::Json);
+    }
+
+    /// Serve one JSON response on loopback and hand back the request that was
+    /// received, so a test can assert the exact refresh body sent upstream.
+    async fn stub_token_endpoint(
+        response_body: &'static str,
+    ) -> (String, tokio::task::JoinHandle<(String, String)>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}/v1/oauth/token", listener.local_addr().unwrap());
+        let handle = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut raw = Vec::new();
+            let mut buf = [0u8; 2048];
+            // Read until the body (after the blank line) is fully present.
+            loop {
+                let n = socket.read(&mut buf).await.unwrap();
+                raw.extend_from_slice(&buf[..n]);
+                let text = String::from_utf8_lossy(&raw);
+                if n == 0
+                    || text
+                        .split_once("\r\n\r\n")
+                        .is_some_and(|(_, b)| !b.is_empty())
+                {
+                    break;
+                }
+            }
+            let request = String::from_utf8_lossy(&raw).to_string();
+            let (head, body) = request.split_once("\r\n\r\n").unwrap();
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{response_body}",
+                        response_body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+            socket.flush().await.unwrap();
+            (head.to_string(), body.to_string())
+        });
+        (url, handle)
+    }
+
+    #[tokio::test]
+    async fn claude_refresh_exchanges_the_refresh_token_and_never_touches_disk() {
+        // The container case from issue #48: the on-disk Claude token has
+        // expired and there is no Claude CLI to renew it.
+        let (url, server) = stub_token_endpoint(
+            r#"{"access_token":"sk-ant-oat-new","refresh_token":"sk-ant-ort-new","expires_in":3600}"#,
+        )
+        .await;
+
+        let expired = SubscriptionToken {
+            access_token: "sk-ant-oat-old".into(),
+            refresh_token: Some("sk-ant-ort-old".into()),
+            expires_at_ms: Some(1),
+            account_id: None,
+            resource_url: None,
+        };
+        let fresh = refresh_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            &expired,
+            10_000,
+        )
+        .await
+        .expect("claude refresh should succeed");
+
+        assert_eq!(fresh.access_token, "sk-ant-oat-new");
+        assert_eq!(fresh.refresh_token.as_deref(), Some("sk-ant-ort-new"));
+        assert_eq!(fresh.expires_at_ms, Some(10_000 + 3_600_000));
+
+        let (head, body) = server.await.unwrap();
+        assert!(head.starts_with("POST /v1/oauth/token"));
+        let sent: serde_json::Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!(sent["grant_type"], "refresh_token");
+        assert_eq!(sent["refresh_token"], "sk-ant-ort-old");
+        assert_eq!(sent["client_id"], CLAUDE_CLIENT_ID);
+        // Claude's public client takes no secret.
+        assert!(sent.get("client_secret").is_none());
+    }
+
+    #[tokio::test]
+    async fn claude_refresh_result_is_cached_and_reused() {
+        // A single exchange must serve subsequent requests: the stub answers
+        // once, so a second refresh attempt would hang/fail instead.
+        let (url, server) =
+            stub_token_endpoint(r#"{"access_token":"cached-once","expires_in":3600}"#).await;
+        let expired = SubscriptionToken {
+            access_token: "expired".into(),
+            refresh_token: Some("r".into()),
+            expires_at_ms: Some(1),
+            account_id: None,
+            resource_url: None,
+        };
+        let client = reqwest::Client::new();
+        let fresh = refresh_at(
+            &client,
+            &url,
+            SubscriptionProvider::Claude,
+            &expired,
+            10_000,
+        )
+        .await
+        .unwrap();
+
+        let cache = TokenCache::new();
+        cache.store_refreshed(SubscriptionProvider::Claude, "primary", fresh);
+        let reused = cache
+            .get_fresh(&client, SubscriptionProvider::Claude, expired, 20_000)
+            .await;
+        assert_eq!(reused.access_token, "cached-once");
+        server.await.unwrap();
     }
 
     #[tokio::test]

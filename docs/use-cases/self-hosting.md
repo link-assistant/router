@@ -94,6 +94,18 @@ The router starts and serves `/health` with **no subscription mounted at all**,
 so it can be deployed before credentials are provisioned; requests then fail at
 the upstream rather than at startup.
 
+The mount can stay read-only across token expiry: the router exchanges the
+`refreshToken` in the credential file for a new access token in memory and
+never writes the file back. The image carries no Claude CLI, so the one thing
+it cannot do with a read-only mount is a **first-time login** — for that, use
+the `with-claude-cli` image variant with a writable mount:
+
+```bash
+docker run -it --rm --entrypoint claude \
+  -v claude-home:/data/claude \
+  ghcr.io/link-assistant/router:with-claude-cli /login
+```
+
 ### Corporate host
 
 Nothing external is required — no database, no message broker. State is JSON
@@ -103,7 +115,7 @@ under `DATA_DIR` and, when `AUDIT_LOG` is set, an append-only JSONL file:
 | --- | --- | --- |
 | `$DATA_DIR` | issued-token records (id, label, expiry, budget, usage) | yes — losing it loses revocation state |
 | `$AUDIT_LOG` | one line per proxied request | ship to your log collector |
-| `$CLAUDE_CODE_HOME` | the vendor session, read-only | never — it is the vendor's |
+| `$CLAUDE_CODE_HOME` | the vendor session; read-only unless you log in from the container | never — it is the vendor's |
 
 `STORAGE_POLICY=memory` keeps tokens in memory only, for ephemeral test
 deployments where nothing should survive a restart.
