@@ -375,6 +375,7 @@ mod config_verbose_tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp: link_assistant_router::config::default_mpp_config(),
             login: link_assistant_router::login::LoginConfig::default(),
         }

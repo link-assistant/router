@@ -236,10 +236,13 @@ pub struct Config {
     /// Whether to enable experimental compatibility features (spoofing,
     /// XML history reconstruction, etc.). Off by default.
     pub experimental_compatibility: bool,
-    /// Whether to require a Bearer token on the `/api/tokens` issue endpoint.
-    /// When a `TOKEN_ADMIN_KEY` is set the issue endpoint demands it; otherwise
-    /// issuance is open (matching the legacy behaviour).
+    /// Optional flat bootstrap admin key accepted by the admin endpoints in
+    /// addition to admin-scoped `la_sk_…` tokens.
     pub admin_key: Option<String>,
+    /// Explicit opt-out that leaves the admin endpoints open to
+    /// unauthenticated callers. Off by default: a deployment with no admin
+    /// credential configured mints a bootstrap one at startup instead.
+    pub allow_anonymous_admin: bool,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login API settings (`/api/login`).
@@ -364,6 +367,8 @@ impl Config {
         let experimental_compatibility = env::var("EXPERIMENTAL_COMPATIBILITY")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
+        let allow_anonymous_admin = env::var("ALLOW_ANONYMOUS_ADMIN")
+            .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let login = crate::login::LoginConfig {
             enabled: env::var("ENABLE_LOGIN_API").map_or(true, |v| {
                 !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
@@ -418,6 +423,7 @@ impl Config {
             account_request_limits,
             experimental_compatibility,
             admin_key,
+            allow_anonymous_admin,
             mpp,
             login,
         })
@@ -485,6 +491,7 @@ impl Config {
             account_request_limits: args.account_request_limits,
             experimental_compatibility: args.experimental_compatibility,
             admin_key: args.admin_key,
+            allow_anonymous_admin: args.allow_anonymous_admin,
             mpp: args.mpp,
             login: crate::login::LoginConfig {
                 claude_code_home: PathBuf::from(args.claude_code_home),
@@ -527,6 +534,7 @@ pub struct BuildArgs<'a> {
     pub account_request_limits: Vec<usize>,
     pub experimental_compatibility: bool,
     pub admin_key: Option<String>,
+    pub allow_anonymous_admin: bool,
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login settings. `claude_code_home` is overwritten by
     /// [`Config::build`] so the login flow always writes where the router reads.
@@ -729,6 +737,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
         })
@@ -868,6 +877,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
         }
@@ -907,6 +917,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
         });

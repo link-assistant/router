@@ -70,12 +70,37 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, "ok")
 }
 
+/// Decide whether a request may touch the administrative endpoints.
+///
+/// Two credentials are accepted, in this order:
+///
+/// 1. an admin-scoped `la_sk_…` JWT (see [`crate::token::ADMIN_SCOPE`]) —
+///    identified, expiring, revocable, and rotatable;
+/// 2. the flat `TOKEN_ADMIN_KEY` bootstrap secret, compared in constant time.
+///    It is kept because it is the only way to provision the *first*
+///    credential in a deployment that configures everything externally.
+///
+/// When neither is presented the request is refused, unless the operator
+/// explicitly opted out with `--allow-anonymous-admin`. That default is the
+/// inverse of the historical behaviour, where an unconfigured admin key left
+/// the token-administration endpoints wide open.
 pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
-    let Some(required) = state.admin_key.as_deref() else {
-        return true;
-    };
-    let provided = extract_bearer_token(headers);
-    provided == Some(required)
+    if let Some(provided) = extract_bearer_token(headers) {
+        if state.token_manager.validate_admin_token(provided).is_ok() {
+            return true;
+        }
+        if let Some(required) = state.admin_key.as_deref()
+            && crate::token::constant_time_eq(provided, required)
+        {
+            return true;
+        }
+    }
+    state.allow_anonymous_admin
+}
+
+/// Bearer credential presented for an administrative request, if any.
+pub(crate) fn extract_admin_bearer(headers: &HeaderMap) -> Option<&str> {
+    extract_bearer_token(headers)
 }
 
 fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {

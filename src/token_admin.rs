@@ -16,7 +16,8 @@ use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 
-use crate::proxy::{AppState, error_response, is_admin_authorised};
+use crate::proxy::{AppState, error_response, extract_admin_bearer, is_admin_authorised};
+use crate::token::{ADMIN_SCOPE, IssueRequest};
 
 /// Token issuance endpoint.
 ///
@@ -41,13 +42,22 @@ pub async fn issue_token(
 
     let ttl = req.ttl_hours.unwrap_or(24);
     let label = req.label.unwrap_or_default();
+    let scope = req.scope.unwrap_or_default();
+    if !scope.is_empty() && scope != ADMIN_SCOPE {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &format!("unknown scope '{scope}'; expected '{ADMIN_SCOPE}' or none"),
+        );
+    }
 
-    match state.token_manager.issue_token_full(
-        ttl,
-        &label,
-        req.account.as_deref(),
-        req.max_requests,
-    ) {
+    match state.token_manager.issue(&IssueRequest {
+        ttl_hours: ttl,
+        label: &label,
+        account: req.account.as_deref(),
+        max_requests: req.max_requests,
+        scope: &scope,
+    }) {
         Ok(token) => {
             state.metrics.record_token_issued();
             (
@@ -58,6 +68,7 @@ pub async fn issue_token(
                     "label": label,
                     "account": req.account,
                     "max_requests": req.max_requests,
+                    "scope": scope,
                 })),
             )
                 .into_response()
@@ -123,6 +134,61 @@ pub async fn revoke_token(
     }
 }
 
+/// Rotate the admin token used to make this call.
+///
+/// Issues a replacement admin token and revokes the caller's own `sub` in one
+/// step — "new token, old one expired". The caller must authenticate with an
+/// admin-scoped JWT: the flat `TOKEN_ADMIN_KEY` has no subject to revoke, so
+/// it cannot rotate itself and gets HTTP 400 instead.
+pub async fn rotate_admin_token(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    axum::Json(req): axum::Json<RotateTokenRequest>,
+) -> impl IntoResponse {
+    let Some(bearer) = extract_admin_bearer(&headers) else {
+        return error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "admin Bearer token required",
+        );
+    };
+    let Ok(claims) = state.token_manager.validate_admin_token(bearer) else {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "rotation requires an admin-scoped token; the flat admin key has no subject to revoke",
+        );
+    };
+
+    let ttl = req.ttl_hours.unwrap_or(24);
+    let label = req.label.unwrap_or_else(|| claims.label.clone());
+    match state
+        .token_manager
+        .rotate_admin_token(&claims.sub, ttl, &label)
+    {
+        Ok(token) => {
+            state.metrics.record_token_issued();
+            state.metrics.record_token_revoked();
+            (
+                StatusCode::OK,
+                axum::Json(serde_json::json!({
+                    "token": token,
+                    "ttl_hours": ttl,
+                    "label": label,
+                    "scope": ADMIN_SCOPE,
+                    "revoked": claims.sub,
+                })),
+            )
+                .into_response()
+        }
+        Err(e) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &format!("Failed to rotate admin token: {e}"),
+        ),
+    }
+}
+
 /// Request body for the token issuance endpoint.
 #[derive(serde::Deserialize)]
 pub struct IssueTokenRequest {
@@ -135,6 +201,18 @@ pub struct IssueTokenRequest {
     /// Optional cap on the number of upstream requests the token may make.
     /// `None` (omitted) means unlimited.
     pub max_requests: Option<u64>,
+    /// Privilege scope. Omit (or empty) for an ordinary client token; pass
+    /// `"admin"` to mint a credential that also unlocks the admin endpoints.
+    pub scope: Option<String>,
+}
+
+/// Request body for the admin rotation endpoint. All fields are optional.
+#[derive(serde::Deserialize, Default)]
+pub struct RotateTokenRequest {
+    /// TTL of the replacement token in hours (default: 24).
+    pub ttl_hours: Option<i64>,
+    /// Label for the replacement token; defaults to the current token's label.
+    pub label: Option<String>,
 }
 
 /// Request body for the token revocation endpoint.

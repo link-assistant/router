@@ -271,9 +271,18 @@ pub struct Cli {
     #[arg(long, env = "EXPERIMENTAL_COMPATIBILITY", global = true)]
     pub experimental_compatibility: bool,
 
-    /// Bearer key required by `/api/tokens` and admin endpoints.
+    /// Flat bootstrap Bearer key accepted by the admin endpoints alongside
+    /// admin-scoped `la_sk_...` tokens.
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true)]
     pub admin_key: Option<String>,
+
+    /// Leave the admin endpoints (`/api/tokens*`, `/api/providers*`,
+    /// `/api/login*`) open to unauthenticated callers.
+    ///
+    /// Off by default. Without it, a deployment that configures no admin
+    /// credential mints a one-off admin token at startup and prints it once.
+    #[arg(long, env = "ALLOW_ANONYMOUS_ADMIN", global = true)]
+    pub allow_anonymous_admin: bool,
 
     /// Enable MPP 402 charge challenges on OpenAI-compatible endpoints.
     #[arg(long, env = "MPP_ENABLE", global = true)]
@@ -370,6 +379,19 @@ pub enum TokenOp {
         /// Omit for an unlimited token.
         #[arg(long)]
         max_requests: Option<u64>,
+        /// Issue an administrative token (`scope: admin`) that unlocks the
+        /// admin endpoints instead of only the inference proxy.
+        #[arg(long)]
+        admin: bool,
+    },
+    /// Replace an administrative token: issue a new one and revoke the old.
+    Rotate {
+        /// Subject id (`sub`) of the admin token being replaced.
+        id: String,
+        #[arg(long, default_value_t = 24)]
+        ttl_hours: i64,
+        #[arg(long, default_value = "")]
+        label: String,
     },
     /// List all known tokens.
     List,
@@ -519,6 +541,7 @@ impl Cli {
             account_request_limits: self.account_request_limits.clone(),
             experimental_compatibility: self.experimental_compatibility,
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
+            allow_anonymous_admin: self.allow_anonymous_admin,
             login: crate::login::LoginConfig {
                 enabled: !self.disable_login_api,
                 command: self.login_cli_command.clone(),
@@ -589,6 +612,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp_enable: false,
             mpp_amount: "0.00".into(),
             mpp_currency: "USD".into(),
@@ -653,6 +677,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp_enable: false,
             mpp_amount: "0.00".into(),
             mpp_currency: "USD".into(),

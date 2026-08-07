@@ -19,6 +19,13 @@ use crate::storage::{MemoryTokenStore, StorageError, TokenRecord, TokenStore};
 /// Prefix for all router-issued custom tokens.
 pub const TOKEN_PREFIX: &str = "la_sk_";
 
+/// Scope claim marking a token as an administrative credential.
+///
+/// A token carrying this scope unlocks the administrative endpoints
+/// (`/api/tokens*`, `/api/providers*`, `/api/login*`) in addition to the
+/// inference proxy. Tokens issued without a scope may only proxy inference.
+pub const ADMIN_SCOPE: &str = "admin";
+
 /// JWT claims stored inside each custom token.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TokenClaims {
@@ -31,6 +38,37 @@ pub struct TokenClaims {
     /// Optional label for this token.
     #[serde(default)]
     pub label: String,
+    /// Privilege scope. Empty means an ordinary client token; [`ADMIN_SCOPE`]
+    /// marks an administrative credential.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub scope: String,
+}
+
+impl TokenClaims {
+    /// Whether these claims carry the administrative scope.
+    #[must_use]
+    pub fn is_admin(&self) -> bool {
+        self.scope == ADMIN_SCOPE
+    }
+}
+
+/// Parameters for [`TokenManager::issue`].
+///
+/// Grouped into a struct because issuance now varies along five independent
+/// axes (TTL, label, account pin, request budget, scope) and a positional
+/// argument list at that width is easy to mis-order at the call site.
+#[derive(Debug, Default, Clone)]
+pub struct IssueRequest<'a> {
+    /// Time-to-live in hours.
+    pub ttl_hours: i64,
+    /// Human-readable label recorded alongside the token.
+    pub label: &'a str,
+    /// Optional strict account binding (multi-account mode).
+    pub account: Option<&'a str>,
+    /// Optional cap on upstream requests; `None` means unlimited.
+    pub max_requests: Option<u64>,
+    /// Privilege scope; empty for an ordinary client token.
+    pub scope: &'a str,
 }
 
 /// Manages creation, validation, and revocation of custom tokens.
@@ -96,6 +134,41 @@ impl TokenManager {
         account: Option<&str>,
         max_requests: Option<u64>,
     ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue(&IssueRequest {
+            ttl_hours,
+            label,
+            account,
+            max_requests,
+            scope: "",
+        })
+    }
+
+    /// Issue an administrative token.
+    ///
+    /// The result is an ordinary `la_sk_…` JWT that additionally carries
+    /// `"scope": "admin"`, so it validates on exactly the same code path as a
+    /// client token — same signature check, same expiry, same revocation —
+    /// while being distinguishable from one that may only proxy inference.
+    pub fn issue_admin_token(
+        &self,
+        ttl_hours: i64,
+        label: &str,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue(&IssueRequest {
+            ttl_hours,
+            label,
+            account: None,
+            max_requests: None,
+            scope: ADMIN_SCOPE,
+        })
+    }
+
+    /// Issue a token described by [`IssueRequest`].
+    pub fn issue(&self, request: &IssueRequest<'_>) -> Result<String, jsonwebtoken::errors::Error> {
+        let ttl_hours = request.ttl_hours;
+        let label = request.label;
+        let account = request.account;
+        let max_requests = request.max_requests;
         let now = Utc::now();
         let exp = now + Duration::hours(ttl_hours);
         let claims = TokenClaims {
@@ -103,6 +176,7 @@ impl TokenManager {
             iat: now.timestamp(),
             exp: exp.timestamp(),
             label: label.to_string(),
+            scope: request.scope.to_string(),
         };
         let jwt = encode(
             &Header::default(),
@@ -120,6 +194,7 @@ impl TokenManager {
             account: account.map(String::from),
             max_requests,
             used_requests: 0,
+            scope: claims.scope.clone(),
         };
         if let Err(e) = self.store.put(record) {
             tracing::warn!("token store put failed: {e}");
@@ -183,6 +258,53 @@ impl TokenManager {
         Ok(token_data.claims)
     }
 
+    /// Validate a token and require that it carries [`ADMIN_SCOPE`].
+    ///
+    /// Returns [`TokenError::InsufficientScope`] for a token that is otherwise
+    /// valid but was issued without the administrative scope, so a leaked
+    /// client token can never be replayed against the admin endpoints.
+    pub fn validate_admin_token(&self, token: &str) -> Result<TokenClaims, TokenError> {
+        let claims = self.validate_token(token)?;
+        if claims.is_admin() {
+            Ok(claims)
+        } else {
+            Err(TokenError::InsufficientScope)
+        }
+    }
+
+    /// Whether at least one usable administrative token exists.
+    ///
+    /// "Usable" means recorded, not revoked, and not yet expired. Boot uses
+    /// this to decide whether a deployment already has a way in before
+    /// minting a bootstrap credential.
+    pub fn has_active_admin_token(&self) -> Result<bool, TokenError> {
+        let now = Utc::now().timestamp();
+        Ok(self.list_tokens()?.iter().any(|record| {
+            record.scope == ADMIN_SCOPE && !record.revoked && record.expires_at > now
+        }))
+    }
+
+    /// Rotate an administrative token: issue a replacement and revoke the old
+    /// one in a single step.
+    ///
+    /// This is the operation a flat shared secret cannot express — "new token,
+    /// old one expired" — and is why the admin credential is modelled as a
+    /// JWT with a `sub` in the first place. The replacement is issued *before*
+    /// the old subject is revoked so a storage failure cannot leave the
+    /// deployment with no admin credential at all.
+    pub fn rotate_admin_token(
+        &self,
+        current_sub: &str,
+        ttl_hours: i64,
+        label: &str,
+    ) -> Result<String, TokenError> {
+        let replacement = self
+            .issue_admin_token(ttl_hours, label)
+            .map_err(|e| TokenError::Invalid(e.to_string()))?;
+        self.revoke_token(current_sub)?;
+        Ok(replacement)
+    }
+
     /// Revoke a token by its subject ID. Idempotent.
     pub fn revoke_token(&self, token_id: &str) -> Result<(), TokenError> {
         match self.store.revoke(token_id) {
@@ -199,6 +321,26 @@ impl TokenManager {
     }
 }
 
+/// Compare two secrets without leaking their contents through timing.
+///
+/// Both sides are hashed with SHA-256 first, so the comparison always runs
+/// over 32 bytes and neither the length nor the position of the first
+/// differing byte is observable. The fold over the whole digest is what makes
+/// it constant-time; a plain `==` on the raw strings (which is what the flat
+/// `TOKEN_ADMIN_KEY` path used to do) short-circuits on the first mismatch.
+#[must_use]
+pub fn constant_time_eq(a: &str, b: &str) -> bool {
+    use sha2::{Digest, Sha256};
+
+    let left = Sha256::digest(a.as_bytes());
+    let right = Sha256::digest(b.as_bytes());
+    let mut diff = 0u8;
+    for (x, y) in left.iter().zip(right.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
 /// Errors related to token operations.
 #[derive(Debug)]
 pub enum TokenError {
@@ -210,6 +352,8 @@ pub enum TokenError {
     Revoked,
     /// Token is otherwise invalid.
     Invalid(String),
+    /// Token is valid but lacks the privilege scope the operation requires.
+    InsufficientScope,
     /// Token has reached its per-token request budget (`max_requests`).
     LimitExceeded,
     /// Storage backend failure.
@@ -225,6 +369,9 @@ impl std::fmt::Display for TokenError {
             Self::Expired => write!(f, "Token has expired"),
             Self::Revoked => write!(f, "Token has been revoked"),
             Self::Invalid(msg) => write!(f, "Invalid token: {msg}"),
+            Self::InsufficientScope => {
+                write!(f, "Token does not carry the '{ADMIN_SCOPE}' scope")
+            }
             Self::LimitExceeded => {
                 write!(f, "Token has reached its request limit")
             }
