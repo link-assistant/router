@@ -1,0 +1,247 @@
+//! Regression tests for the security review of issue #52.
+//!
+//! Each test here pins one property that the review checked by hand, so that a
+//! later refactor cannot quietly undo it:
+//!
+//! * the bootstrap claim can be won exactly once, no matter which channel wins
+//!   it — the web UI and the chat bots share one claim;
+//! * an ordinary client token is never enough where an admin credential is
+//!   required, on either port;
+//! * the read-only endpoints that name tokens, accounts and filesystem paths
+//!   are admin-only on the network-facing proxy port;
+//! * the admin listener hardens its responses, because its client keeps the
+//!   credential in `localStorage`.
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::body::Body;
+use axum::http::{Request, StatusCode, header};
+use axum::routing::get;
+use http_body_util::BodyExt;
+use link_assistant_router::admin::AdminClaim;
+use link_assistant_router::app_state::AppState;
+use link_assistant_router::chat_admin::{ChatAdmin, ChatAdminConfig, ChatChannel};
+use link_assistant_router::providers::ProviderStore;
+use link_assistant_router::token::TokenManager;
+use tower::ServiceExt;
+
+/// A claim that has to be won, with a generous candidate TTL.
+fn claim(dir: &std::path::Path) -> Arc<AdminClaim> {
+    Arc::new(AdminClaim::load(None, dir, Duration::from_secs(120)))
+}
+
+fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
+    AppState {
+        client: reqwest::Client::new(),
+        token_manager: TokenManager::new("test-secret"),
+        oauth_provider: link_assistant_router::oauth::OAuthProvider::new(
+            data_dir.to_str().expect("utf-8 path"),
+        ),
+        account_router: None,
+        subscription_reader: None,
+        subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
+        upstream_base_url: "https://api.anthropic.com".to_string(),
+        upstream_provider: link_assistant_router::config::UpstreamProvider::Anthropic,
+        gonka: None,
+        bridge_model: None,
+        crater: None,
+        openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
+        provider_store: ProviderStore::open(data_dir, "test-secret").expect("provider store"),
+        logger: log_lazy::LogLazy::new(),
+        admin,
+        admin_key: None,
+        allow_anonymous_admin: false,
+        metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
+        audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
+        activitypub_actor_base_url: "https://router.example".to_string(),
+        activitypub_public_key_pem:
+            link_assistant_router::config::default_activitypub_public_key_pem(),
+        mpp: link_assistant_router::config::default_mpp_config(),
+        login_manager: link_assistant_router::login::LoginManager::new(
+            link_assistant_router::login::LoginConfig::default(),
+        ),
+    }
+}
+
+/// The proxy-port routes `main` mounts when metrics are enabled — the ones this
+/// review had to re-examine, because that port is the network-facing one.
+fn proxy_router(state: AppState) -> axum::Router {
+    axum::Router::new()
+        .route(
+            "/metrics",
+            get(link_assistant_router::proxy::metrics_endpoint),
+        )
+        .route(
+            "/v1/usage",
+            get(link_assistant_router::proxy::usage_endpoint),
+        )
+        .route(
+            "/v1/accounts",
+            get(link_assistant_router::proxy::accounts_endpoint),
+        )
+        .with_state(state)
+}
+
+fn get_request(path: &str, token: Option<&str>) -> Request<Body> {
+    let mut request = Request::builder().method("GET").uri(path);
+    if let Some(token) = token {
+        request = request.header("authorization", format!("Bearer {token}"));
+    }
+    request.body(Body::empty()).expect("request")
+}
+
+async fn status_of(router: axum::Router, path: &str, token: Option<&str>) -> StatusCode {
+    router
+        .oneshot(get_request(path, token))
+        .await
+        .expect("router responds")
+        .status()
+}
+
+/// The whole point of the two-phase claim is that exactly one visitor becomes
+/// the administrator. The web UI and the chat bots hold the *same*
+/// [`AdminClaim`], so a claim won in chat must close bootstrap for HTTP.
+#[tokio::test]
+async fn the_bootstrap_claim_can_be_won_only_once_across_channels() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let admin = claim(dir.path());
+    let chat = ChatAdmin::new(
+        Arc::clone(&admin),
+        TokenManager::new("test-secret"),
+        None,
+        ChatAdminConfig::default(),
+    );
+
+    // Chat wins the race: mint a candidate and confirm it by sending it back.
+    let minted = chat.handle(ChatChannel::Telegram, "1", "/start").text;
+    let token = minted
+        .split_whitespace()
+        .find(|word| word.starts_with(link_assistant_router::admin::ADMIN_TOKEN_PREFIX))
+        .expect("the mint reply carries the candidate token")
+        .to_string();
+    let confirmed = chat.handle(ChatChannel::Telegram, "1", &token).text;
+    assert!(
+        admin.status().claimed,
+        "confirming in chat must claim the router: {confirmed}"
+    );
+
+    // HTTP now finds bootstrap closed, and a second chat user gets nothing.
+    let state = state_with(Arc::clone(&admin), dir.path());
+    let response = link_assistant_router::admin_api::router(state)
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/admin/bootstrap")
+                .body(Body::empty())
+                .expect("request"),
+        )
+        .await
+        .expect("router responds");
+    assert_eq!(
+        response.status(),
+        StatusCode::CONFLICT,
+        "a claim won in chat must close the HTTP bootstrap"
+    );
+    let second = chat.handle(ChatChannel::Vk, "999", "/start").text;
+    assert!(
+        !second.contains(link_assistant_router::admin::ADMIN_TOKEN_PREFIX),
+        "a second channel must not be handed a candidate: {second}"
+    );
+}
+
+/// An ordinary client token authorises API traffic, never administration.
+#[tokio::test]
+async fn a_client_token_is_refused_where_an_admin_credential_is_required() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let state = state_with(claim(dir.path()), dir.path());
+    let client_token = state
+        .token_manager
+        .issue_token(1, "ordinary client")
+        .expect("issue");
+
+    assert_eq!(
+        status_of(
+            link_assistant_router::admin_api::router(state.clone()),
+            "/api/admin/summary",
+            Some(&client_token),
+        )
+        .await,
+        StatusCode::UNAUTHORIZED,
+        "the admin port must not accept a client token"
+    );
+    assert_eq!(
+        status_of(proxy_router(state), "/v1/usage", Some(&client_token)).await,
+        StatusCode::UNAUTHORIZED,
+        "the proxy port must not accept a client token for admin reads"
+    );
+}
+
+/// `/v1/usage` names tokens and `/v1/accounts` names credential directories.
+/// Both are served on the port that faces the network, so both need the admin
+/// credential; `/metrics` stays open because it is aggregate-only.
+#[tokio::test]
+async fn the_disclosing_read_endpoints_require_admin_but_metrics_stays_scrapable() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let state = state_with(claim(dir.path()), dir.path());
+    let admin_token = state
+        .token_manager
+        .issue_admin_token(1, "ops")
+        .expect("issue admin");
+
+    for path in ["/v1/usage", "/v1/accounts"] {
+        assert_eq!(
+            status_of(proxy_router(state.clone()), path, None).await,
+            StatusCode::UNAUTHORIZED,
+            "{path} must not answer an unauthenticated caller"
+        );
+        assert_eq!(
+            status_of(proxy_router(state.clone()), path, Some(&admin_token)).await,
+            StatusCode::OK,
+            "{path} must still answer an administrator"
+        );
+    }
+    assert_eq!(
+        status_of(proxy_router(state), "/metrics", None).await,
+        StatusCode::OK,
+        "aggregate metrics stay scrapable without a credential"
+    );
+}
+
+/// The console keeps its credential in `localStorage`, so the listener that
+/// serves it must forbid framing and foreign scripts — on API responses, on the
+/// UI assets, and on the auth middleware's own refusals.
+#[tokio::test]
+async fn every_admin_response_is_hardened() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let state = state_with(claim(dir.path()), dir.path());
+    for (path, token) in [
+        ("/api/admin/status", None),
+        ("/api/admin/summary", None),
+        ("/", None),
+    ] {
+        let response = link_assistant_router::admin_api::router(state.clone())
+            .oneshot(get_request(path, token))
+            .await
+            .expect("router responds");
+        let headers = response.headers();
+        assert_eq!(
+            headers
+                .get(header::X_FRAME_OPTIONS)
+                .and_then(|v| v.to_str().ok()),
+            Some("DENY"),
+            "{path} may be framed"
+        );
+        let csp = headers
+            .get(header::CONTENT_SECURITY_POLICY)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or_default();
+        assert!(
+            csp.contains("frame-ancestors 'none'") && csp.contains("script-src 'self'"),
+            "{path} carries a weak policy: {csp}"
+        );
+        // Consume the body so the assertion failure message above is the first
+        // thing a reader sees, not a dangling-body warning.
+        let _ = response.into_body().collect().await;
+    }
+}

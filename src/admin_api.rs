@@ -15,7 +15,7 @@ use std::sync::Arc;
 use axum::Router;
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, StatusCode};
-use axum::middleware::{Next, from_fn_with_state};
+use axum::middleware::{Next, from_fn, from_fn_with_state};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 
@@ -51,6 +51,9 @@ pub fn router(state: AppState) -> Router {
         .route("/api/providers", get(provider_proxy::list_providers))
         .route_layer(from_fn_with_state(state.clone(), require_admin))
         .fallback(crate::admin_ui::serve_asset)
+        // Outermost, so the UI assets and the error responses of the auth
+        // middleware are hardened too — see [`crate::security_headers`].
+        .layer(from_fn(crate::security_headers::apply))
         .with_state(state)
 }
 

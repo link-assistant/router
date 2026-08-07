@@ -154,7 +154,7 @@ impl Reply {
 
 /// Per-conversation state. Deliberately in memory only: a restart drops every
 /// binding and each admin simply presents their token again.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct Session {
     /// Credential the user presented, cached for the conversation. Re-validated
     /// on every command, so revocation and rotation take effect at once.
@@ -163,7 +163,32 @@ struct Session {
     pending_claim: Option<String>,
     /// Timestamps of recent sensitive commands, for the rate limiter.
     recent: Vec<Instant>,
+    /// Last time this conversation sent anything, for idle eviction.
+    last_seen: Instant,
 }
+
+impl Default for Session {
+    fn default() -> Self {
+        Self {
+            credential: None,
+            pending_claim: None,
+            recent: Vec::new(),
+            last_seen: Instant::now(),
+        }
+    }
+}
+
+/// How long a conversation may sit idle before it is forgotten.
+///
+/// This bounds a registry that is keyed by an *unauthenticated* identifier:
+/// anyone who can message the bot gets an entry, whether or not they ever hold
+/// a credential. Forgetting an idle conversation costs an authenticated admin
+/// one `/auth`, and costs a stranger their foothold in the map.
+const SESSION_IDLE_TTL: Duration = Duration::from_secs(3600);
+
+/// Hard ceiling on conversations kept at once. Reached only under abuse; the
+/// least recently active entries are dropped first.
+const MAX_SESSIONS: usize = 512;
 
 /// The shared chat administration brain.
 ///
@@ -224,6 +249,7 @@ impl ChatAdmin {
     /// conversation — group traffic is dropped by the transports before it ever
     /// reaches this function.
     pub fn handle(&self, channel: ChatChannel, user_id: &str, text: &str) -> Reply {
+        self.prune(channel, user_id);
         let text = text.trim();
         if text.is_empty() {
             return Reply::plain(HELP);
@@ -477,6 +503,39 @@ impl ChatAdmin {
         }
         drop(sessions);
         allowed
+    }
+
+    /// Touch the current conversation and drop the ones that went cold.
+    ///
+    /// Called on every inbound message, because every inbound message is what
+    /// creates entries in the first place: the key is a platform user id, which
+    /// nobody has had to authenticate to own.
+    fn prune(&self, channel: ChatChannel, user_id: &str) {
+        let now = Instant::now();
+        let mut sessions = self.locked();
+        sessions.retain(|_, session| now.duration_since(session.last_seen) < SESSION_IDLE_TTL);
+        sessions
+            .entry((channel, user_id.to_string()))
+            .or_default()
+            .last_seen = now;
+        // Under abuse, idle eviction alone is not fast enough: shed the least
+        // recently active conversations until the map is back within its cap.
+        // Conversations that hold a credential are shed last — a flood of
+        // strangers must not sign a real admin out — and the conversation being
+        // served right now is never shed.
+        while sessions.len() > MAX_SESSIONS {
+            let current = (channel, user_id.to_string());
+            let Some(oldest) = sessions
+                .iter()
+                .filter(|(key, _)| **key != current)
+                .min_by_key(|(_, session)| (session.credential.is_some(), session.last_seen))
+                .map(|(key, _)| key.clone())
+            else {
+                break;
+            };
+            sessions.remove(&oldest);
+        }
+        drop(sessions);
     }
 
     fn deletion_note(&self) -> String {
@@ -763,6 +822,40 @@ mod tests {
                 .handle(ChatChannel::Telegram, "2", "/auth la_admin_wrong")
                 .text
                 .contains("Too many")
+        );
+    }
+
+    /// The session map is keyed by a platform user id, which costs an attacker
+    /// nothing to vary. Without a ceiling, messaging the bot from many accounts
+    /// would grow the router's memory without bound.
+    #[test]
+    fn a_flood_of_strangers_cannot_grow_the_session_map_without_bound() {
+        let chat = core(None);
+        for user in 0..(MAX_SESSIONS * 2) {
+            chat.handle(ChatChannel::Telegram, &user.to_string(), "/help");
+        }
+        assert!(
+            chat.locked().len() <= MAX_SESSIONS,
+            "session map grew to {}",
+            chat.locked().len()
+        );
+    }
+
+    /// The conversation being served is never the one evicted, even when the
+    /// cap is hit while it is being handled.
+    #[test]
+    fn the_active_conversation_survives_the_cap() {
+        let chat = core(Some("env-key".into()));
+        chat.handle(ChatChannel::Telegram, "admin", "/auth env-key");
+        for user in 0..(MAX_SESSIONS * 2) {
+            chat.handle(ChatChannel::Vk, &user.to_string(), "/help");
+        }
+        // The admin's own next message must still find its session present.
+        chat.handle(ChatChannel::Telegram, "admin", "/help");
+        assert!(
+            chat.locked()
+                .get(&(ChatChannel::Telegram, "admin".to_string()))
+                .is_some()
         );
     }
 

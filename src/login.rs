@@ -186,6 +186,9 @@ struct SessionState {
     error: Option<String>,
     /// Dropped (and thus killed) as soon as the session stops being pending.
     pty: Option<Arc<PtySession>>,
+    /// When the session reached a terminal state, which starts the clock on
+    /// [`TERMINAL_RETENTION`].
+    settled_at: Option<DateTime<Utc>>,
 }
 
 impl Session {
@@ -203,6 +206,17 @@ impl Session {
             error: state.error.clone(),
         }
     }
+}
+
+/// How long a finished session is kept so its outcome can still be polled.
+///
+/// Long enough that a client which just submitted a code can read the verdict
+/// even over a slow link; short enough that the registry cannot be grown into a
+/// memory problem by repeated logins.
+const TERMINAL_RETENTION_SECS: i64 = 300;
+
+const fn terminal_retention() -> chrono::Duration {
+    chrono::Duration::seconds(TERMINAL_RETENTION_SECS)
 }
 
 /// Registry of live login sessions.
@@ -264,6 +278,7 @@ impl LoginManager {
                 expires_at: None,
                 error: None,
                 pty: Some(pty),
+                settled_at: None,
             }),
         });
         self.lock_sessions().insert(id, Arc::clone(&session));
@@ -328,30 +343,44 @@ impl LoginManager {
         self.count_pending()
     }
 
-    /// Expire sessions whose TTL elapsed, killing their processes.
+    /// Expire sessions whose TTL elapsed, killing their processes, and forget
+    /// finished ones once their result has had time to be collected.
     ///
-    /// Without this, an abandoned login would leak one CLI process per
-    /// attempt, indefinitely.
+    /// Without the first half, an abandoned login would leak one CLI process
+    /// per attempt, indefinitely. Without the second, the registry itself would
+    /// grow without bound: a finished session releases its PTY but its map
+    /// entry used to live as long as the process, so anyone who could call
+    /// `begin` repeatedly could grow the map for the lifetime of the router.
     pub fn sweep(&self) {
         let now = Utc::now();
         let sessions: Vec<Arc<Session>> = self.lock_sessions().values().map(Arc::clone).collect();
+        let mut evict = Vec::new();
         for session in sessions {
-            let expired = {
-                let mut state = session
-                    .state
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner);
-                if state.status == LoginStatus::AwaitingCode && session.deadline <= now {
-                    state.status = LoginStatus::Expired;
-                    state.error = Some("login session expired before a code was submitted".into());
-                    state.pty = None; // dropping the PTY kills the child
-                    true
-                } else {
-                    false
-                }
-            };
+            let mut state = session
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let expired = state.status == LoginStatus::AwaitingCode && session.deadline <= now;
+            if expired {
+                state.status = LoginStatus::Expired;
+                state.error = Some("login session expired before a code was submitted".into());
+                state.pty = None; // dropping the PTY kills the child
+                state.settled_at = Some(now);
+            } else if state
+                .settled_at
+                .is_some_and(|at| now - at >= terminal_retention())
+            {
+                evict.push(session.id.clone());
+            }
+            drop(state);
             if expired {
                 tracing::info!("login session {} expired", session.id);
+            }
+        }
+        if !evict.is_empty() {
+            let mut sessions = self.lock_sessions();
+            for id in evict {
+                sessions.remove(&id);
             }
         }
     }
@@ -373,6 +402,7 @@ impl LoginManager {
             }
         }
         state.pty = None;
+        state.settled_at = Some(Utc::now());
     }
 
     fn release(session: &Arc<Session>) {
@@ -502,13 +532,13 @@ fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &str) -> Ou
             || {
                 format!(
                     "no credential was produced; last output: {}",
-                    tail(&transcript, 400)
+                    excerpt(&transcript, code, 400)
                 )
             },
             |marker| {
                 format!(
                     "login rejected ({marker}); last output: {}",
-                    tail(&transcript, 400)
+                    excerpt(&transcript, code, 400)
                 )
             },
         );
@@ -574,6 +604,17 @@ fn ensure_writable_dir(home: &Path) -> Result<(), LoginError> {
     Ok(())
 }
 
+/// Last `limit` characters of a transcript, safe to return to a client.
+///
+/// Two kinds of secret live in a login transcript and both are removed before
+/// the text is truncated: the account token the CLI prints (recognised by its
+/// prefix) and the authorization code the human pasted, which the terminal
+/// echoes back and which no pattern could identify — so it is passed in.
+fn excerpt(text: &str, code: &str, limit: usize) -> String {
+    let redacted = crate::login_url::redact_value(&crate::login_url::redact_secrets(text), code);
+    tail(&redacted, limit)
+}
+
 /// Last `limit` characters of `text`, trimmed.
 fn tail(text: &str, limit: usize) -> String {
     let trimmed = text.trim();
@@ -587,6 +628,101 @@ fn tail(text: &str, limit: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Build a session that already reached `status`, settled `age` ago.
+    fn settled_session(id: &str, status: LoginStatus, age: chrono::Duration) -> Arc<Session> {
+        Arc::new(Session {
+            id: id.to_string(),
+            url: "https://claude.ai/oauth/authorize".to_string(),
+            deadline: Utc::now() + chrono::Duration::seconds(900),
+            state: Mutex::new(SessionState {
+                status,
+                expires_at: None,
+                error: None,
+                pty: None,
+                settled_at: Some(Utc::now() - age),
+            }),
+        })
+    }
+
+    /// The registry must not grow for the lifetime of the process. A finished
+    /// session keeps its entry only long enough for the client to read the
+    /// verdict; after that it is forgotten.
+    #[test]
+    fn finished_sessions_are_evicted_once_their_result_has_been_retained() {
+        let manager = LoginManager::new(LoginConfig::default());
+        let fresh = settled_session("fresh", LoginStatus::Authorized, chrono::Duration::zero());
+        let stale = settled_session(
+            "stale",
+            LoginStatus::Failed,
+            terminal_retention() + chrono::Duration::seconds(1),
+        );
+        {
+            let mut sessions = manager.lock_sessions();
+            sessions.insert("fresh".to_string(), fresh);
+            sessions.insert("stale".to_string(), stale);
+        }
+
+        manager.sweep();
+
+        assert!(
+            manager.status("fresh").is_some(),
+            "a just-finished login must still be pollable"
+        );
+        assert!(
+            manager.status("stale").is_none(),
+            "a long-finished login must not occupy the registry forever"
+        );
+    }
+
+    /// A session that expires waiting for the human is terminal too, so it
+    /// must start the retention clock rather than living on.
+    #[test]
+    fn an_expired_session_becomes_evictable() {
+        let manager = LoginManager::new(LoginConfig::default());
+        let session = Arc::new(Session {
+            id: "gone".to_string(),
+            url: String::new(),
+            deadline: Utc::now() - chrono::Duration::seconds(1),
+            state: Mutex::new(SessionState {
+                status: LoginStatus::AwaitingCode,
+                expires_at: None,
+                error: None,
+                pty: None,
+                settled_at: None,
+            }),
+        });
+        manager
+            .lock_sessions()
+            .insert("gone".to_string(), Arc::clone(&session));
+
+        manager.sweep();
+        assert_eq!(
+            session.view().status,
+            LoginStatus::Expired,
+            "the TTL must still expire the session"
+        );
+        let settled = session
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .settled_at;
+        assert!(settled.is_some(), "expiry must start the retention clock");
+    }
+
+    /// A failed login quotes the terminal back to the caller. `SUCCESS_MARKERS`
+    /// contains `sk-ant-oat` precisely because the token is printed there, so
+    /// the excerpt must not carry it — nor the code the human pasted.
+    #[test]
+    fn a_failure_excerpt_carries_neither_the_token_nor_the_pasted_code() {
+        let code = "authcode-9f3a2b7c";
+        let transcript =
+            format!("Paste code: {code}\nrejected\nleftover token sk-ant-oat01-SECRETVALUE0001\n");
+        let text = excerpt(&transcript, code, 400);
+        assert!(!text.contains("SECRETVALUE0001"), "{text}");
+        assert!(!text.contains(code), "{text}");
+        assert!(text.contains("rejected"), "context is still useful: {text}");
+    }
 
     #[test]
     fn write_credential_is_readable_by_the_oauth_reader() {

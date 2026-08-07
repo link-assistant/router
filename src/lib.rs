@@ -39,6 +39,7 @@ pub mod proxy;
 pub mod refresh;
 mod request_routing;
 pub mod responses;
+pub mod security_headers;
 pub mod storage;
 pub mod subscription;
 pub mod subscription_proxy;

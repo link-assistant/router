@@ -83,6 +83,83 @@ pub fn extract_token(transcript: &str) -> Option<String> {
     found
 }
 
+/// Placeholder substituted for a secret that was removed from a transcript.
+pub const REDACTED: &str = "[redacted]";
+
+/// Prefixes of every credential that can appear in a login transcript: the
+/// upstream tokens the CLI prints, and the router's own credentials, in case a
+/// transcript ever picks one up.
+const SECRET_PREFIXES: &[&str] = &[
+    "sk-ant-",
+    crate::token::TOKEN_PREFIX,
+    crate::admin::ADMIN_TOKEN_PREFIX,
+];
+
+/// Remove credential-looking runs from text that is about to be shown to a
+/// client or written to a log.
+///
+/// The login flow's whole purpose is to obtain a paid-account credential, and
+/// the CLI *prints* that credential on the terminal it is driven through — so
+/// the transcript is a secret-bearing document, and every excerpt of it that
+/// leaves this process has to go through here first. Redaction happens before
+/// truncation, so a token cut by a length limit cannot leave a usable prefix
+/// behind.
+#[must_use]
+pub fn redact_secrets(text: &str) -> String {
+    let mut out = text.to_string();
+    for prefix in SECRET_PREFIXES {
+        out = redact_prefix(&out, prefix);
+    }
+    out
+}
+
+/// Replace every `prefix`-led credential run with `prefix[redacted]`.
+fn redact_prefix(text: &str, prefix: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(idx) = rest.find(prefix) {
+        out.push_str(&rest[..idx]);
+        let candidate = &rest[idx..];
+        out.push_str(prefix);
+        out.push_str(REDACTED);
+        rest = &candidate[secret_run_len(candidate)..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Length of the credential run starting at the beginning of `text`.
+///
+/// The run is the usual base64url alphabet plus `-` and `_`. A `.` is part of
+/// the run only when another such character follows it, so a JWT's dotted
+/// segments are swallowed whole while a sentence-ending period is not.
+fn secret_run_len(text: &str) -> usize {
+    let is_body = |c: char| c.is_ascii_alphanumeric() || c == '-' || c == '_';
+    let bytes = text.as_bytes();
+    let mut end = 0;
+    while end < bytes.len() {
+        let c = bytes[end] as char;
+        let continues =
+            is_body(c) || (c == '.' && bytes.get(end + 1).is_some_and(|&n| is_body(n as char)));
+        if !continues {
+            break;
+        }
+        end += 1;
+    }
+    end
+}
+
+/// Remove a specific known secret — the authorization code the human pasted,
+/// which the terminal echoes back and which no pattern can recognise.
+#[must_use]
+pub fn redact_value(text: &str, secret: &str) -> String {
+    let secret = secret.trim();
+    if secret.len() < 4 {
+        return text.to_string();
+    }
+    text.replace(secret, REDACTED)
+}
+
 /// Strip punctuation a sentence may have wrapped the URL in.
 fn trim_url_punctuation(url: &str) -> &str {
     url.trim_end_matches(['.', ',', ')', ']', '>', '"', '\'', ';', ':'])
@@ -176,6 +253,50 @@ mod tests {
             extract_token(transcript).as_deref(),
             Some("sk-ant-oat01-ABCDEFGH1234567890")
         );
+    }
+
+    /// The credential the login flow exists to obtain is printed on the very
+    /// terminal whose transcript is quoted back in error messages, so this is
+    /// the check that a failed login cannot hand the token to the caller.
+    #[test]
+    fn a_printed_credential_never_survives_redaction() {
+        let transcript = "Your token:\n\nsk-ant-oat01-ABCDEFGH1234567890\n\nStore it safely.";
+        let redacted = redact_secrets(transcript);
+        assert!(!redacted.contains("ABCDEFGH1234567890"), "{redacted}");
+        assert_eq!(
+            redacted,
+            "Your token:\n\nsk-ant-[redacted]\n\nStore it safely."
+        );
+    }
+
+    #[test]
+    fn the_routers_own_credentials_are_redacted_whole() {
+        let text = format!(
+            "issued {}header.payload.signature and {}deadbeefcafe.",
+            crate::token::TOKEN_PREFIX,
+            crate::admin::ADMIN_TOKEN_PREFIX
+        );
+        let redacted = redact_secrets(&text);
+        assert!(!redacted.contains("payload"), "{redacted}");
+        assert!(!redacted.contains("signature"), "{redacted}");
+        assert!(!redacted.contains("deadbeefcafe"), "{redacted}");
+        assert!(redacted.ends_with('.'), "sentence punctuation is kept");
+    }
+
+    #[test]
+    fn text_without_a_credential_is_returned_unchanged() {
+        let text = "Paste the code from your browser here.";
+        assert_eq!(redact_secrets(text), text);
+    }
+
+    #[test]
+    fn a_known_pasted_value_is_removed_verbatim() {
+        assert_eq!(
+            redact_value("echoed: abc123xyz done", "abc123xyz\n"),
+            "echoed: [redacted] done"
+        );
+        // Too short to be a code, and removing it would mangle unrelated text.
+        assert_eq!(redact_value("a b a", "a"), "a b a");
     }
 
     #[test]

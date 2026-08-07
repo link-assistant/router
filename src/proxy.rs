@@ -898,7 +898,19 @@ pub(crate) fn maybe_mpp_challenge(
     Some(crate::mpp::payment_required(&state.mpp, path))
 }
 
+/// The refusal used by the administrative read-only endpoints.
+fn admin_required() -> Response {
+    error_response(
+        StatusCode::UNAUTHORIZED,
+        "authentication_error",
+        "admin credential required",
+    )
+}
+
 /// `GET /metrics` — Prometheus text-exposition format.
+///
+/// Deliberately left open: it carries aggregate counters only, and scrapers
+/// (Prometheus, container health checks) are typically unauthenticated.
 pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoResponse {
     let body = crate::metrics::render_prometheus(&state.metrics);
     (
@@ -909,14 +921,35 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
         .into_response()
 }
 
-/// `GET /v1/usage` — JSON usage snapshot.
-pub async fn usage_endpoint(State(state): State<AppState>) -> impl IntoResponse {
+/// `GET /v1/usage` — JSON usage snapshot. Requires an admin credential.
+///
+/// Unlike `/metrics`, which exposes aggregate counters, this snapshot names
+/// individual tokens and accounts (see [`crate::metrics::usage_snapshot`]) —
+/// that is an inventory of who holds credentials on the deployment, and it is
+/// served on the *proxy* port, which is the one that faces the network.
+pub async fn usage_endpoint(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return admin_required();
+    }
     let snap = crate::metrics::usage_snapshot(&state.metrics);
     (StatusCode::OK, axum::Json(snap)).into_response()
 }
 
 /// `GET /v1/accounts` — Health snapshot of every configured account.
-pub async fn accounts_endpoint(State(state): State<AppState>) -> impl IntoResponse {
+///
+/// Admin-only for the same reason as [`usage_endpoint`], and one more: the
+/// snapshot includes each account's credential directory and last upstream
+/// error.
+pub async fn accounts_endpoint(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return admin_required();
+    }
     let Some(router) = state.account_router.as_ref() else {
         return (
             StatusCode::OK,
