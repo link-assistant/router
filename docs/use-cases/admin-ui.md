@@ -96,6 +96,8 @@ is never shown again. **Rotate credential** in the UI mints a replacement and
 retires the old one in one step. It is disabled when `TOKEN_ADMIN_KEY` is set —
 rotate that at the deployment instead.
 
+![The claim screen a first visitor sees](https://github.com/link-assistant/router/blob/issue-50-e84c64dc1eb6/docs/screenshots/admin-ui-claim.png?raw=true)
+
 ## What the UI does
 
 - **Tokens** — the issued tokens with id, label, issued/expires, requests used
@@ -103,6 +105,12 @@ rotate that at the deployment instead.
   request cap, optional account pin); revoke behind a confirmation dialog.
 - **Status** — read-only: version, upstream provider and base URL, credential
   state, accounts (`/v1/accounts`) and usage counters (`/v1/usage`).
+
+![Issuing a token; the value is shown exactly once](https://github.com/link-assistant/router/blob/issue-50-e84c64dc1eb6/docs/screenshots/admin-ui-tokens.png?raw=true)
+
+![Revoking a token behind a confirmation dialog](https://github.com/link-assistant/router/blob/issue-50-e84c64dc1eb6/docs/screenshots/admin-ui-revoke.png?raw=true)
+
+![The read-only status tab](https://github.com/link-assistant/router/blob/issue-50-e84c64dc1eb6/docs/screenshots/admin-ui-status.png?raw=true)
 
 A token value is shown **once**, at the moment it is issued. The server keeps
 only the record, so there is nothing to re-display later — copy it then.
