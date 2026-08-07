@@ -329,6 +329,41 @@ pub struct Cli {
     )]
     pub allow_anonymous_admin: bool,
 
+    /// Telegram Bot API token. Unset keeps the Telegram admin channel off;
+    /// setting it starts an outbound long-polling bot that accepts admin
+    /// commands in private chats only.
+    #[arg(long, env = "TELEGRAM_BOT_TOKEN", global = true)]
+    pub telegram_bot_token: Option<String>,
+
+    /// VK community access token. Unset keeps the VK admin channel off.
+    #[arg(long, env = "VK_BOT_TOKEN", global = true)]
+    pub vk_bot_token: Option<String>,
+
+    /// VK community id the bot token belongs to; required alongside
+    /// `--vk-bot-token` because VK long polling addresses a community.
+    #[arg(long, env = "VK_GROUP_ID", global = true)]
+    pub vk_group_id: Option<u64>,
+
+    /// How long a chat message carrying a secret survives before the bot
+    /// deletes it. Zero keeps secrets in the chat history.
+    #[arg(
+        long,
+        env = "CHAT_ADMIN_SECRET_TTL_SECS",
+        default_value_t = crate::chat_admin::DEFAULT_SECRET_TTL_SECS,
+        global = true
+    )]
+    pub chat_admin_secret_ttl_secs: u64,
+
+    /// Sensitive chat commands (`/start`, credential presentation, issuance)
+    /// allowed per user per minute. Zero disables the limit.
+    #[arg(
+        long,
+        env = "CHAT_ADMIN_RATE_LIMIT_PER_MINUTE",
+        default_value_t = crate::chat_admin::DEFAULT_RATE_LIMIT_PER_MINUTE,
+        global = true
+    )]
+    pub chat_admin_rate_limit_per_minute: u32,
+
     /// Enable MPP 402 charge challenges on OpenAI-compatible endpoints.
     #[arg(long, env = "MPP_ENABLE", global = true)]
     pub mpp_enable: bool,
@@ -592,6 +627,13 @@ impl Cli {
                 self.admin_claim_ttl_secs,
             )?,
             allow_anonymous_admin: self.allow_anonymous_admin,
+            chat_admin: crate::config::chat_admin_config(
+                self.telegram_bot_token.clone(),
+                self.vk_bot_token.clone(),
+                self.vk_group_id,
+                self.chat_admin_secret_ttl_secs,
+                u64::from(self.chat_admin_rate_limit_per_minute),
+            ),
             login: crate::login::LoginConfig {
                 enabled: !self.disable_login_api,
                 command: self.login_cli_command.clone(),
@@ -666,6 +708,11 @@ mod tests {
             admin_claim_ttl_secs: crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
             admin_key: None,
             allow_anonymous_admin: false,
+            telegram_bot_token: None,
+            vk_bot_token: None,
+            vk_group_id: None,
+            chat_admin_secret_ttl_secs: crate::chat_admin::DEFAULT_SECRET_TTL_SECS,
+            chat_admin_rate_limit_per_minute: crate::chat_admin::DEFAULT_RATE_LIMIT_PER_MINUTE,
             mpp_enable: false,
             mpp_amount: "0.00".into(),
             mpp_currency: "USD".into(),
@@ -734,6 +781,11 @@ mod tests {
             admin_claim_ttl_secs: crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
             admin_key: None,
             allow_anonymous_admin: false,
+            telegram_bot_token: None,
+            vk_bot_token: None,
+            vk_group_id: None,
+            chat_admin_secret_ttl_secs: crate::chat_admin::DEFAULT_SECRET_TTL_SECS,
+            chat_admin_rate_limit_per_minute: crate::chat_admin::DEFAULT_RATE_LIMIT_PER_MINUTE,
             mpp_enable: false,
             mpp_amount: "0.00".into(),
             mpp_currency: "USD".into(),
