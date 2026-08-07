@@ -6,8 +6,8 @@
 # of the admin surface a use case in its own right, so the claims in the
 # self-hosting document are asserted here rather than assumed:
 #
-#   * with TOKEN_ADMIN_KEY unset, /api/tokens mints tokens to anyone who can
-#     reach the port (documented as the single most important hardening step),
+#   * with TOKEN_ADMIN_KEY unset, /api/tokens refuses anonymous callers and the
+#     router prints a one-off bootstrap admin token instead (issue #49),
 #   * with TOKEN_ADMIN_KEY set, issuing/listing/revoking require the key,
 #   * an admin key is NOT a proxy credential and a task token is NOT an admin
 #     credential — the two surfaces do not accept each other's secrets,

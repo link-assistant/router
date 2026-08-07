@@ -10,7 +10,7 @@ This document covers that scenario: where the process runs, what it needs on
 disk, and — most importantly — **who can reach the endpoint that mints tokens**.
 
 Every claim below is asserted by
-`experiments/issue-45/test-deployment-hardening.sh` (**16 passed, 0 failed**),
+`experiments/issue-45/test-deployment-hardening.sh` (**18 passed, 0 failed**),
 which needs no subscription: all of it concerns the router's own auth surface,
 so no request reaches an upstream.
 
