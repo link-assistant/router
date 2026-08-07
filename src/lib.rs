@@ -6,7 +6,11 @@
 
 pub mod accounts;
 pub mod activitypub;
+pub mod anthropic_bridge;
+pub mod anthropic_stream;
 pub mod app_state;
+pub mod audit;
+pub mod claude_identity;
 pub mod cli;
 pub mod config;
 pub mod crater;
@@ -28,6 +32,8 @@ pub mod subscription_proxy;
 pub mod token;
 pub mod token_admin;
 
+#[cfg(test)]
+mod anthropic_bridge_tests;
 #[cfg(test)]
 mod proxy_tests;
 

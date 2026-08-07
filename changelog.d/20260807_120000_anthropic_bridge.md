@@ -1,0 +1,3 @@
+- Serve the Anthropic Messages API on top of non-Anthropic upstreams. Claude Code (and any other Anthropic-dialect client) can now run against the Codex, Qwen, Gemini, and OpenAI-compatible providers: requests are translated to the provider's own dialect, delegated to that provider's existing forwarder, and the reply is translated back — including streaming, tool calls, and images.
+- Add `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` to pick the upstream model used for bridged Anthropic requests (per-provider default otherwise).
+- Answer `POST /v1/messages/count_tokens` locally for bridged upstreams with a documented estimate.

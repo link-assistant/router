@@ -231,6 +231,26 @@ Because the router injects these headers itself, a client only needs to send the
 `la_sk_...` token — it never needs the real OAuth token, the OAuth beta flag, or
 even an `anthropic-version` header.
 
+## Use-case documentation
+
+Each supported scenario has its own document under
+[docs/use-cases/](docs/use-cases/README.md), so you can read only the one you
+need:
+
+| Document | Scenario |
+| --- | --- |
+| [per-task-tokens.md](docs/use-cases/per-task-tokens.md) | One `la_sk_…` token per task — audit, monitoring, security, isolation |
+| [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Per-token counters in `/metrics` and `/v1/usage`, plus the JSONL audit log |
+| [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | A Claude MAX subscription inside Codex CLI and other OpenAI-dialect clients |
+| [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | A ChatGPT/Qwen/Gemini/LiteLLM backend inside Claude Code and other Anthropic-dialect clients |
+| [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |
+| [cli-codex.md](docs/use-cases/cli-codex.md) | Codex CLI configuration |
+| [cli-qwen-code.md](docs/use-cases/cli-qwen-code.md) | Qwen Code configuration |
+| [cli-gemini-cli.md](docs/use-cases/cli-gemini-cli.md) | Gemini CLI configuration |
+| [cli-opencode.md](docs/use-cases/cli-opencode.md) | opencode configuration |
+| [cli-grok-cli.md](docs/use-cases/cli-grok-cli.md) | Grok CLI configuration |
+| [cli-cursor.md](docs/use-cases/cli-cursor.md) | Cursor CLI — explicitly **not supported**, and why |
+
 ## Using with Claude Code
 
 The primary use case is routing Claude Code through the proxy so multiple users can share a single Claude MAX subscription.
@@ -363,6 +383,11 @@ method-specific verifier is configured.
 | `/v1/usage` | GET | JSON snapshot of all counters |
 | `/v1/accounts` | GET | Multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 
+`/metrics` and `/v1/usage` also attribute every authorised request to its
+router token — `link_assistant_token_requests_total{token,label}` and the
+`token_calls` JSON map. Set `--audit-log` for a durable JSONL trail of the same
+events. See [docs/use-cases/audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md).
+
 ### POST /api/tokens
 
 Issue a new custom JWT token.
@@ -449,6 +474,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, or `openai-compatible` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
+| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
+| `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
 ### Gonka provider
@@ -904,6 +931,9 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   └── release.yml           # CI/CD pipeline (lint, test, build, release)
 ├── changelog.d/              # Changelog fragments (per-PR documentation)
 ├── docs/                     # Documentation
+│   ├── use-cases/            # One document per supported scenario / CLI
+│   ├── case-studies/         # Per-issue research, requirements, solution plans
+│   └── adr/                  # Architecture decision records
 ├── examples/
 │   └── basic_usage.rs        # Token management example
 ├── scripts/
@@ -925,10 +955,15 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   ├── proxy.rs              # Transparent API proxy with token swap, OpenAI shim, ops endpoints
 │   ├── request_routing.rs    # Session/account routing signal extraction
 │   ├── openai.rs             # OpenAI <-> Anthropic translation helpers
+│   ├── anthropic_bridge.rs   # Anthropic Messages served from OpenAI-dialect upstreams
+│   ├── anthropic_stream.rs   # OpenAI SSE -> Anthropic SSE translator
+│   ├── audit.rs              # Per-token JSONL audit log
+│   ├── claude_identity.rs    # Claude Code identity block required by Claude MAX OAuth
 │   ├── metrics.rs            # Atomic counters, Prometheus rendering, JSON snapshots
 │   └── token.rs              # Custom JWT token management (la_sk_...)
 ├── tests/
 │   └── integration_test.rs   # Integration tests
+├── experiments/              # Local end-to-end harnesses (see docs/case-studies/)
 ├── Cargo.toml                # Project configuration and dependencies
 ├── Dockerfile                # Multi-stage Docker build
 ├── CHANGELOG.md              # Project changelog

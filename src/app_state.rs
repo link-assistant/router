@@ -35,6 +35,9 @@ pub struct AppState {
     pub upstream_provider: UpstreamProvider,
     /// Gonka provider configuration when selected.
     pub gonka: Option<GonkaConfig>,
+    /// Upstream model used when an Anthropic-dialect request is bridged to a
+    /// non-Anthropic upstream. `None` falls back to a per-provider default.
+    pub bridge_model: Option<String>,
     /// Crater `ForgeFed` task provider when selected.
     pub crater: Option<Arc<dyn crate::crater::TaskProvider>>,
     /// Boot-time generic OpenAI-compatible provider config.
@@ -47,6 +50,8 @@ pub struct AppState {
     pub admin_key: Option<String>,
     /// Live metrics counter handle.
     pub metrics: Arc<crate::metrics::Metrics>,
+    /// Append-only per-token audit log (disabled unless a path is configured).
+    pub audit: Arc<crate::audit::AuditLog>,
     /// Public base URL for `ActivityPub` actor documents.
     pub activitypub_actor_base_url: String,
     /// Public key PEM advertised by the `ActivityPub` actor.

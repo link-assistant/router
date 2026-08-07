@@ -216,6 +216,19 @@ pub async fn forward_chat_completions(
     forward(state, headers, body, Surface::OpenAIChat, ShapeIn::Chat).await
 }
 
+/// `POST /v1/chat/completions` with an explicit metrics surface.
+///
+/// Used by the Anthropic bridge, where the client-facing surface is Anthropic
+/// even though the upstream request is `OpenAI`-shaped.
+pub async fn forward_chat_completions_as(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: Value,
+    surface: Surface,
+) -> Response {
+    forward(state, headers, body, surface, ShapeIn::Chat).await
+}
+
 /// `POST /v1/responses` for the Gemini subscription upstream.
 pub async fn forward_responses(state: &AppState, headers: &HeaderMap, body: Value) -> Response {
     forward(
@@ -243,6 +256,8 @@ async fn route_gemini_token(
     state: &AppState,
     headers: &HeaderMap,
     body: &Value,
+    surface: Surface,
+    path: &str,
 ) -> Result<RoutedGeminiToken, Response> {
     let Some(token) = extract_client_token(headers) else {
         return Err(error_response(
@@ -269,6 +284,7 @@ async fn route_gemini_token(
                 &error.to_string(),
             )
         })?;
+    crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
     let pinned_account = state
         .token_manager
         .account_for(&claims.sub)
@@ -337,10 +353,11 @@ async fn forward(
     if let Some(resp) = maybe_mpp_challenge(state, headers, "/v1/chat/completions") {
         return resp;
     }
-    let routed = match route_gemini_token(state, headers, &body).await {
-        Ok(routed) => routed,
-        Err(response) => return response,
-    };
+    let routed =
+        match route_gemini_token(state, headers, &body, surface, "/v1/chat/completions").await {
+            Ok(routed) => routed,
+            Err(response) => return response,
+        };
     let sub_token = routed.token;
     let selected_account = Some(routed.account);
 
@@ -606,7 +623,7 @@ async fn forward_native(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let routed = match route_gemini_token(state, headers, &body).await {
+    let routed = match route_gemini_token(state, headers, &body, Surface::OpenAIChat, path).await {
         Ok(routed) => routed,
         Err(response) => return response,
     };

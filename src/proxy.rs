@@ -149,6 +149,32 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
     };
     let custom_token = token.to_string();
 
+    // Anthropic-dialect requests aimed at a non-Anthropic upstream are handed
+    // to the bridge, which translates both directions and delegates to the
+    // provider's own forwarder (that forwarder owns token validation, budget
+    // enforcement, and account selection, so none of it is done twice here).
+    // Every other provider keeps the pass-through path below unchanged.
+    if crate::anthropic_bridge::is_bridged(state.upstream_provider) {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return error_response(
+                    StatusCode::BAD_REQUEST,
+                    "invalid_request_error",
+                    &format!("Failed to read request body: {e}"),
+                );
+            }
+        };
+        let body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+        return crate::anthropic_bridge::handle_anthropic_surface(
+            &state,
+            &incoming_headers,
+            &path,
+            body,
+        )
+        .await;
+    }
+
     // Validate custom token
     let claims = match state.token_manager.validate_token(&custom_token) {
         Ok(claims) => claims,
@@ -191,6 +217,13 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         }
     };
     let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+    crate::audit::record_authorised_request(
+        &state,
+        &claims,
+        crate::metrics::Surface::Anthropic,
+        &path,
+        Some(&routing_body),
+    );
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
         Err(error) => {
@@ -216,6 +249,15 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
                 );
             }
         };
+
+    // Same requirement as above for the pass-through surface: a client that is
+    // not Claude Code (an SDK, a curl smoke test) would otherwise be rejected
+    // by the upstream with a misleading 429. Idempotent for Claude Code itself.
+    let body_bytes = if crate::claude_identity::is_oauth_credential(&oauth_token) {
+        crate::claude_identity::ensure_claude_code_system_bytes(&routing_body, body_bytes)
+    } else {
+        body_bytes
+    };
 
     // Build upstream headers
     let upstream_headers = build_upstream_headers(&incoming_headers, &oauth_token, &state.logger);
@@ -331,8 +373,13 @@ pub(crate) fn build_upstream_headers(
 
     for (name, value) in incoming {
         let name_lower = name.as_str().to_lowercase();
-        if matches!(name_lower.as_str(), "authorization" | "x-api-key")
-            || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
+        // `content-length` is dropped on purpose: the forwarded body may differ
+        // in length from the client's (the Claude Code identity block is
+        // prepended for OAuth upstreams), and the HTTP client recomputes it.
+        if matches!(
+            name_lower.as_str(),
+            "authorization" | "x-api-key" | "content-length"
+        ) || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
         {
             continue;
         }
@@ -428,7 +475,7 @@ pub async fn openai_chat_completions(
         body["stream"] = serde_json::json!(true);
     }
     if state.upstream_provider == UpstreamProvider::Gonka {
-        return forward_gonka_openai(
+        return crate::gonka::forward_openai(
             &state,
             &headers,
             body,
@@ -522,7 +569,7 @@ pub async fn openai_responses(
     axum::Json(body): axum::Json<serde_json::Value>,
 ) -> Response {
     if state.upstream_provider == UpstreamProvider::Gonka {
-        return forward_gonka_openai(
+        return crate::gonka::forward_openai(
             &state,
             &headers,
             body,
@@ -590,126 +637,6 @@ enum OpenAIShape {
     Response,
 }
 
-async fn forward_gonka_openai(
-    state: &AppState,
-    headers: &HeaderMap,
-    body: serde_json::Value,
-    path: &str,
-    surface: crate::metrics::Surface,
-) -> Response {
-    if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
-        return resp;
-    }
-
-    let Some(gonka) = state.gonka.as_ref() else {
-        return crate::gonka::provider_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            crate::gonka::MISSING_PRIVATE_KEY_MESSAGE,
-        );
-    };
-
-    let Some(token) = extract_client_token(headers) else {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let claims = match state.token_manager.validate_token(token) {
-        Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
-    };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
-    }
-
-    let body = crate::gonka::with_default_model(body, &gonka.model);
-    let serialized = match serde_json::to_vec(&body) {
-        Ok(v) => v,
-        Err(e) => {
-            return error_response(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "api_error",
-                &format!("failed to serialize Gonka body: {e}"),
-            );
-        }
-    };
-    let bytes_sent = serialized.len() as u64;
-
-    let mut upstream_headers = HeaderMap::new();
-    upstream_headers.insert("content-type", HeaderValue::from_static("application/json"));
-    if let Err(e) = crate::gonka::sign_headers(
-        &mut upstream_headers,
-        "POST",
-        path,
-        &serialized,
-        &gonka.private_key,
-    ) {
-        return error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            &format!("failed to sign Gonka request: {e}"),
-        );
-    }
-
-    let upstream_resp = match state
-        .client
-        .post(gonka.endpoint(path))
-        .headers(upstream_headers)
-        .body(serialized)
-        .send()
-        .await
-    {
-        Ok(resp) => resp,
-        Err(e) => {
-            state.metrics.record_request(surface, 502, None);
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                &format!("Gonka upstream request failed: {e}"),
-            );
-        }
-    };
-
-    let status = StatusCode::from_u16(upstream_resp.status().as_u16())
-        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-    let content_type = upstream_resp
-        .headers()
-        .get("content-type")
-        .cloned()
-        .unwrap_or_else(|| HeaderValue::from_static("application/json"));
-    let upstream_body = match upstream_resp.bytes().await {
-        Ok(bytes) => bytes,
-        Err(e) => {
-            state.metrics.record_request(surface, 502, None);
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                &format!("Gonka upstream body read failed: {e}"),
-            );
-        }
-    };
-    state
-        .metrics
-        .record_bytes(bytes_sent, upstream_body.len() as u64);
-    state.metrics.record_request(surface, status.as_u16(), None);
-
-    let mut response = Response::new(Body::from(upstream_body));
-    *response.status_mut() = status;
-    response.headers_mut().insert("content-type", content_type);
-    response
-}
-
 async fn forward_openai(
     state: &AppState,
     headers: &HeaderMap,
@@ -756,6 +683,7 @@ async fn forward_openai(
             &format!("{e}"),
         );
     }
+    crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
@@ -787,6 +715,12 @@ async fn forward_openai(
         "{}/v1/messages",
         state.upstream_base_url.trim_end_matches('/')
     );
+    // Claude MAX OAuth inference requires Claude Code's identity as the first
+    // system block; OpenAI-dialect clients such as Codex never send it.
+    let mut body = body;
+    if crate::claude_identity::is_oauth_credential(&oauth_token) {
+        crate::claude_identity::ensure_claude_code_system(&mut body);
+    }
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
         Err(e) => {

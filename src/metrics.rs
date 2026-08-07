@@ -38,6 +38,20 @@ pub struct Metrics {
     pub tokens_revoked: AtomicU64,
     pub status_counts: Mutex<HashMap<u16, u64>>,
     pub account_calls: Mutex<HashMap<String, u64>>,
+    /// Per-token request counters, keyed by router token id (JWT `sub`).
+    ///
+    /// Issue #45 wants one token per task so usage can be attributed; this is
+    /// the monitoring half of that (the durable half is [`crate::audit`]).
+    pub token_calls: Mutex<HashMap<String, TokenUsage>>,
+}
+
+/// Per-token usage accumulated by [`Metrics::record_token_request`].
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct TokenUsage {
+    /// Label the token was issued with (empty when none was given).
+    pub label: String,
+    /// Requests authorised for this token since the router started.
+    pub requests: u64,
 }
 
 impl Metrics {
@@ -64,6 +78,21 @@ impl Metrics {
             if let Ok(mut g) = self.account_calls.lock() {
                 *g.entry(acct.to_string()).or_insert(0) += 1;
             }
+        }
+    }
+
+    /// Attribute one authorised request to a router token.
+    ///
+    /// Called once per request, right after the token is validated, so the
+    /// counter reflects requests the router accepted for that token — the same
+    /// unit `max_requests` budgets.
+    pub fn record_token_request(&self, token_id: &str, label: &str) {
+        if let Ok(mut g) = self.token_calls.lock() {
+            let entry = g.entry(token_id.to_string()).or_default();
+            if entry.label.is_empty() && !label.is_empty() {
+                entry.label = label.to_string();
+            }
+            entry.requests += 1;
         }
     }
 
@@ -103,6 +132,8 @@ pub struct UsageSnapshot {
     pub tokens_revoked: u64,
     pub status_counts: HashMap<u16, u64>,
     pub account_calls: HashMap<String, u64>,
+    /// Per-token request counts keyed by router token id.
+    pub token_calls: HashMap<String, TokenUsage>,
 }
 
 #[must_use]
@@ -127,6 +158,7 @@ pub fn usage_snapshot(m: &Metrics) -> UsageSnapshot {
             .lock()
             .map(|g| g.clone())
             .unwrap_or_default(),
+        token_calls: m.token_calls.lock().map(|g| g.clone()).unwrap_or_default(),
     }
 }
 
@@ -173,6 +205,17 @@ pub fn render_prometheus(m: &Metrics) -> String {
             "link_assistant_status_total{{code=\"{status}\"}} {count}"
         );
     }
+    out.push_str("# TYPE link_assistant_token_requests_total counter\n");
+    let mut sorted_tokens: Vec<_> = snap.token_calls.iter().collect();
+    sorted_tokens.sort_by(|a, b| a.0.cmp(b.0));
+    for (token, usage) in sorted_tokens {
+        let label = escape_label(&usage.label);
+        let _ = writeln!(
+            out,
+            "link_assistant_token_requests_total{{token=\"{token}\",label=\"{label}\"}} {}",
+            usage.requests
+        );
+    }
     out.push_str("# TYPE link_assistant_account_calls_total counter\n");
     let mut sorted_accounts: Vec<_> = snap.account_calls.iter().collect();
     sorted_accounts.sort_by(|a, b| a.0.cmp(b.0));
@@ -185,9 +228,60 @@ pub fn render_prometheus(m: &Metrics) -> String {
     out
 }
 
+/// Escape a value for use inside a Prometheus label.
+fn escape_label(value: &str) -> String {
+    value
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn per_token_requests_are_counted_and_labelled() {
+        let m = Metrics::default();
+        m.record_token_request("tok-a", "task-a");
+        m.record_token_request("tok-a", "task-a");
+        m.record_token_request("tok-b", "task-b");
+
+        let snap = usage_snapshot(&m);
+        assert_eq!(snap.token_calls["tok-a"].requests, 2);
+        assert_eq!(snap.token_calls["tok-a"].label, "task-a");
+        assert_eq!(snap.token_calls["tok-b"].requests, 1);
+
+        let out = render_prometheus(&m);
+        assert!(
+            out.contains("link_assistant_token_requests_total{token=\"tok-a\",label=\"task-a\"} 2")
+        );
+        assert!(
+            out.contains("link_assistant_token_requests_total{token=\"tok-b\",label=\"task-b\"} 1")
+        );
+    }
+
+    #[test]
+    fn token_labels_are_escaped_for_prometheus() {
+        let m = Metrics::default();
+        m.record_token_request("tok-a", "task \"one\"\nline");
+        let out = render_prometheus(&m);
+        assert!(out.contains(r#"label="task \"one\"\nline""#), "{out}");
+        // Every emitted line must still be a single Prometheus sample.
+        let token_lines = out
+            .lines()
+            .filter(|l| l.starts_with("link_assistant_token_requests_total"))
+            .count();
+        assert_eq!(token_lines, 1);
+    }
+
+    #[test]
+    fn token_counters_are_absent_until_a_token_is_used() {
+        let m = Metrics::default();
+        m.record_request(Surface::Anthropic, 200, None);
+        assert!(usage_snapshot(&m).token_calls.is_empty());
+        assert!(!render_prometheus(&m).contains("link_assistant_token_requests_total{"));
+    }
 
     #[test]
     fn record_and_render_basic_counters() {

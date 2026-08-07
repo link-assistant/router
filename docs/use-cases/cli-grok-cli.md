@@ -1,0 +1,44 @@
+# CLI: Grok CLI through the router
+
+**Dialect:** OpenAI Chat Completions. **Router endpoint:**
+`/v1/chat/completions`.
+
+## Configuration
+
+[superagent-ai/grok-cli](https://github.com/superagent-ai/grok-cli) documents
+`GROK_API_KEY` for authentication and an optional `GROK_BASE_URL` (default
+`https://api.x.ai/v1`), with user settings persisted at
+`~/.grok/user-settings.json`.
+
+```bash
+export GROK_BASE_URL=http://127.0.0.1:8080/v1
+export GROK_API_KEY=la_sk_...            # your task token
+grok
+```
+
+The same two values can be stored in `~/.grok/user-settings.json`, but the
+environment variables are preferable here: they keep the token out of a file and
+make one-token-per-task a per-shell export.
+
+## Which subscription answers
+
+Any active `UPSTREAM_PROVIDER`. Grok CLI speaks plain Chat Completions, which
+the router either translates to Anthropic Messages (`anthropic`), converts to
+Responses (`codex`), or forwards natively (`qwen`, `openai-compatible`, `gonka`).
+
+## Smoke test
+
+```bash
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H "Authorization: Bearer $GROK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"ping"}]}' | jq -r '.choices[0].message.content'
+```
+
+## Troubleshooting
+
+| Symptom | Cause |
+| --- | --- |
+| Requests still hit `api.x.ai` | `GROK_BASE_URL` is overridden by a stored value in `~/.grok/user-settings.json` |
+| `404` | the base URL must include the `/v1` suffix |
+| Model not recognised upstream | unknown OpenAI ids map to the default Sonnet tier on `UPSTREAM_PROVIDER=anthropic`; set an explicit `claude-…` id if you need a specific model |

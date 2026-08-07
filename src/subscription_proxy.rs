@@ -66,6 +66,7 @@ pub async fn forward_subscription_openai(
             &format!("{e}"),
         );
     }
+    crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
     let Some(provider) = state.upstream_provider.subscription_provider() else {
         return error_response(

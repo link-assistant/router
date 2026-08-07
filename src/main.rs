@@ -219,6 +219,10 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             &config.gonka_source_url,
             config.gonka_model.clone(),
         ),
+        bridge_model: config.bridge_model.clone(),
+        audit: std::sync::Arc::new(link_assistant_router::audit::AuditLog::to_path(
+            config.audit_log.as_deref(),
+        )),
         crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
         provider_store,

@@ -525,13 +525,30 @@ pub async fn forward_chat_completions(
             "Missing Authorization Bearer token or x-api-key",
         );
     };
-    if let Err(e) = state.token_manager.validate_token(token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        return crate::proxy::error_response(status, "authentication_error", &format!("{e}"));
+    let claims = match state.token_manager.validate_token(token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            return crate::proxy::error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+        return crate::proxy::error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
     }
+    crate::audit::record_authorised_request(
+        state,
+        &claims,
+        crate::metrics::Surface::OpenAIChat,
+        path,
+        Some(&body),
+    );
 
     let Some(provider) = state.crater.as_ref().map(Arc::clone) else {
         return provider_error(&CraterError::MissingConfig("CRATER_FORGEFED_INBOX"));
