@@ -6,6 +6,9 @@
 
 pub mod accounts;
 pub mod activitypub;
+pub mod admin;
+pub mod admin_api;
+pub mod admin_ui;
 pub mod anthropic_bridge;
 pub mod anthropic_stream;
 pub mod app_state;

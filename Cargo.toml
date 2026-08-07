@@ -47,6 +47,7 @@ sha2 = "0.11"
 hex = "0.4"
 aes-gcm = "0.10"
 portable-pty = "0.9"
+rust-embed = { version = "8.12.0", default-features = false }
 
 [dev-dependencies]
 tokio-test = "0.4"

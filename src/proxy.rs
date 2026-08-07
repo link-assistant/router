@@ -71,11 +71,13 @@ pub async fn health() -> impl IntoResponse {
 }
 
 pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
-    let Some(required) = state.admin_key.as_deref() else {
+    // Backwards compatible: when no admin credential exists at all these
+    // endpoints stay open, as they were before admin credentials existed. Once
+    // one is provisioned or claimed, it is required.
+    if !state.admin.is_claimed() {
         return true;
-    };
-    let provided = extract_bearer_token(headers);
-    provided == Some(required)
+    }
+    extract_bearer_token(headers).is_some_and(|token| state.admin.verify(token))
 }
 
 fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {

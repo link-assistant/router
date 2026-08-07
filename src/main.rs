@@ -207,6 +207,14 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         _ => None,
     };
 
+    // The admin credential: a deploy-time key when provided, otherwise the
+    // persisted first-visitor claim (unclaimed until someone confirms one).
+    let admin_claim = Arc::new(link_assistant_router::admin::AdminClaim::load(
+        config.admin_key.clone(),
+        &config.data_dir,
+        config.admin_ui.candidate_ttl,
+    ));
+
     let state = AppState {
         client,
         token_manager,
@@ -229,7 +237,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         openai_compatible: config.openai_compatible.clone(),
         provider_store,
         logger,
-        admin_key: config.admin_key.clone(),
+        admin: Arc::clone(&admin_claim),
         metrics: Arc::clone(&metrics),
         activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
@@ -331,15 +339,44 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
 
     let app = app
         .fallback(proxy::proxy_handler)
-        .with_state(state)
+        .with_state(state.clone())
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Listening on {}", config.listen_addr);
+
+    let admin_server = if config.admin_ui.enabled {
+        let admin_addr = config.admin_ui.listen_addr;
+        let admin_app = link_assistant_router::admin_api::router(state.clone())
+            .layer(TraceLayer::new_for_http());
+        let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
+        tracing::info!("Admin UI listening on {admin_addr}");
+        if admin_claim.is_claimed() {
+            tracing::info!("Admin credential present; bootstrap is closed");
+        } else {
+            tracing::warn!(
+                "Admin is unclaimed: the first visitor to {admin_addr} that confirms a claim becomes admin"
+            );
+        }
+        Some(tokio::spawn(async move {
+            if let Err(e) = axum::serve(admin_listener, admin_app)
+                .with_graceful_shutdown(shutdown_signal())
+                .await
+            {
+                tracing::error!("admin UI server error: {e}");
+            }
+        }))
+    } else {
+        tracing::info!("Admin UI disabled (set --admin-port / ADMIN_PORT to enable)");
+        None
+    };
 
     let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
+    if let Some(handle) = admin_server {
+        handle.abort();
+    }
     Ok(())
 }
 
@@ -633,6 +670,32 @@ fn run_doctor(config: &Config) -> ExitCode {
             "<unset>"
         }
     );
+    println!(
+        "admin_ui               : {}",
+        if config.admin_ui.enabled {
+            format!("enabled on {}", config.admin_ui.listen_addr)
+        } else {
+            "disabled".to_string()
+        }
+    );
+    {
+        let claim = link_assistant_router::admin::AdminClaim::load(
+            config.admin_key.clone(),
+            &config.data_dir,
+            config.admin_ui.candidate_ttl,
+        );
+        let status = claim.status();
+        println!(
+            "admin_credential       : {}",
+            if status.provisioned_by_environment {
+                "provisioned by environment"
+            } else if status.claimed {
+                "claimed (first-visitor bootstrap closed)"
+            } else {
+                "UNCLAIMED (bootstrap open)"
+            }
+        );
+    }
     println!(
         "login_api              : {}",
         if config.login.enabled {

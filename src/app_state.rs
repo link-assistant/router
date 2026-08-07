@@ -46,8 +46,9 @@ pub struct AppState {
     pub provider_store: ProviderStore,
     /// Lazy logger for verbose output.
     pub logger: LogLazy,
-    /// Optional admin key (Bearer) required for `/api/tokens` issuance.
-    pub admin_key: Option<String>,
+    /// Admin credential state: the optional deploy-time key plus the
+    /// first-visitor claim (see [`crate::admin`]).
+    pub admin: Arc<crate::admin::AdminClaim>,
     /// Live metrics counter handle.
     pub metrics: Arc<crate::metrics::Metrics>,
     /// Append-only per-token audit log (disabled unless a path is configured).
