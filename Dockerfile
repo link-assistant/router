@@ -34,17 +34,11 @@ RUN touch src/lib.rs src/main.rs && \
 # when you need to *create* a credential inside the container.
 FROM debian:bookworm-slim AS runtime-base
 
-# `POST /api/login` (issue #47) drives the Claude Code CLI on a PTY inside this
-# container, so the CLI — and the Node runtime it needs — must be present. Set
-# `--disable-login-api` if you authorize by mounting a credential file instead.
+# TLS roots only. `POST /api/login` (issue #47) drives the Claude Code CLI on a
+# PTY, so that surface needs the `with-claude-cli` stage below; this base image
+# stays minimal for the mounted-credential deployment.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates curl gnupg && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g @anthropic-ai/claude-code && \
-    npm cache clean --force && \
-    apt-get purge -y gnupg && \
-    apt-get autoremove -y && \
+    apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/link-assistant-router /usr/local/bin/link-assistant-router

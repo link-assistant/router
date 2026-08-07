@@ -712,6 +712,7 @@ The default image intentionally contains no Claude CLI. What it can and cannot d
 | Serve requests with a valid access token | No | `:ro` |
 | Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` |
 | **First-time login** (no credential file yet) | Yes | writable |
+| `POST /api/login` (remote login over HTTP) | Yes — it drives `claude setup-token` | writable |
 
 Renewal happens in memory: the router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and keeps the result in RAM. The credential file is never written to, which is why `:ro` keeps working across expiry — and why a restarted container refreshes again from the same file. The same mechanism already covers Codex, Gemini, and Qwen.
 

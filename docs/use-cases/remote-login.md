@@ -114,9 +114,10 @@ With it disabled the routes are not registered at all, and requests to them are
 ## Requirements
 
 * **The CLI must exist in the image.** The flow drives `claude setup-token` by
-  default; the published image ships the Claude Code CLI and Node for exactly
-  this reason. Point it elsewhere with `--login-cli-command` /
-  `--login-cli-args` if you drive something else.
+  default, so in Docker use the `with-claude-cli` image variant — it ships the
+  Claude Code CLI and Node for exactly this reason, while the default image
+  stays minimal for mounted-credential deployments. Point it elsewhere with
+  `--login-cli-command` / `--login-cli-args` if you drive something else.
 * **`CLAUDE_CODE_HOME` must be writable.** This is checked *before* the URL is
   returned, so a read-only mount fails immediately rather than after the human
   has already finished the browser step.
