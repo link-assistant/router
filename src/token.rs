@@ -194,7 +194,7 @@ impl TokenManager {
             account: account.map(String::from),
             max_requests,
             used_requests: 0,
-            scope: claims.scope.clone(),
+            scope: claims.scope,
         };
         if let Err(e) = self.store.put(record) {
             tracing::warn!("token store put failed: {e}");
@@ -542,5 +542,89 @@ mod tests {
         let mgr3 = TokenManager::with_store("k", store3);
         let r = mgr3.validate_token(&tok);
         assert!(matches!(r, Err(TokenError::Revoked)));
+    }
+
+    #[test]
+    fn test_admin_scope_is_carried_by_claims_and_records() {
+        let mgr = test_manager();
+        let token = mgr.issue_admin_token(1, "ops").expect("should issue");
+        let claims = mgr.validate_token(&token).expect("should validate");
+        assert!(claims.is_admin());
+        assert_eq!(claims.scope, ADMIN_SCOPE);
+
+        let records = mgr.list_tokens().expect("should list");
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].scope, ADMIN_SCOPE);
+    }
+
+    #[test]
+    fn test_client_tokens_carry_no_scope() {
+        let mgr = test_manager();
+        let token = mgr.issue_token(1, "client").expect("should issue");
+        let claims = mgr.validate_token(&token).expect("should validate");
+        assert!(!claims.is_admin());
+        assert!(claims.scope.is_empty());
+        assert!(matches!(
+            mgr.validate_admin_token(&token),
+            Err(TokenError::InsufficientScope)
+        ));
+    }
+
+    #[test]
+    fn test_has_active_admin_token_tracks_revocation_and_expiry() {
+        let mgr = test_manager();
+        assert!(!mgr.has_active_admin_token().expect("should query"));
+
+        mgr.issue_token(1, "client").expect("should issue");
+        assert!(
+            !mgr.has_active_admin_token().expect("should query"),
+            "client tokens must not satisfy the admin-credential check"
+        );
+
+        mgr.issue(&IssueRequest {
+            ttl_hours: -1,
+            label: "stale",
+            scope: ADMIN_SCOPE,
+            ..IssueRequest::default()
+        })
+        .expect("should issue");
+        assert!(
+            !mgr.has_active_admin_token().expect("should query"),
+            "expired admin tokens must not count"
+        );
+
+        let token = mgr.issue_admin_token(1, "ops").expect("should issue");
+        assert!(mgr.has_active_admin_token().expect("should query"));
+
+        let claims = mgr.validate_token(&token).expect("should validate");
+        mgr.revoke_token(&claims.sub).expect("should revoke");
+        assert!(!mgr.has_active_admin_token().expect("should query"));
+    }
+
+    #[test]
+    fn test_rotate_admin_token_issues_a_replacement_and_revokes_the_old_one() {
+        let mgr = test_manager();
+        let old = mgr.issue_admin_token(1, "ops").expect("should issue");
+        let old_claims = mgr.validate_token(&old).expect("should validate");
+
+        let new = mgr
+            .rotate_admin_token(&old_claims.sub, 2, "ops-rotated")
+            .expect("should rotate");
+
+        let new_claims = mgr.validate_admin_token(&new).expect("should validate");
+        assert_eq!(new_claims.label, "ops-rotated");
+        assert_ne!(new_claims.sub, old_claims.sub);
+        assert!(matches!(mgr.validate_token(&old), Err(TokenError::Revoked)));
+        assert!(mgr.has_active_admin_token().expect("should query"));
+    }
+
+    #[test]
+    fn test_constant_time_eq_matches_string_equality() {
+        assert!(constant_time_eq("", ""));
+        assert!(constant_time_eq("s3cret", "s3cret"));
+        assert!(!constant_time_eq("s3cret", "s3crev"));
+        // Length differences must not short-circuit into a match.
+        assert!(!constant_time_eq("s3cret", "s3cre"));
+        assert!(!constant_time_eq("s3cre", "s3cret"));
     }
 }

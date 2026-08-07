@@ -795,6 +795,33 @@ mod tests {
     }
 
     #[test]
+    fn stores_persist_the_admin_scope() {
+        let dir = tempdir().unwrap();
+        let mut admin = sample_record("admin");
+        admin.scope = crate::token::ADMIN_SCOPE.to_string();
+
+        let text_path = dir.path().join("tokens.lino");
+        let text = TextTokenStore::open(&text_path).unwrap();
+        text.put(admin.clone()).unwrap();
+        text.put(sample_record("client")).unwrap();
+        let text = TextTokenStore::open(&text_path).unwrap();
+        assert_eq!(
+            text.get("admin").unwrap().unwrap().scope,
+            crate::token::ADMIN_SCOPE
+        );
+        assert!(text.get("client").unwrap().unwrap().scope.is_empty());
+
+        let bin_path = dir.path().join("tokens.bin");
+        let bin = BinaryTokenStore::open(&bin_path).unwrap();
+        bin.put(admin).unwrap();
+        let bin = BinaryTokenStore::open(&bin_path).unwrap();
+        assert_eq!(
+            bin.get("admin").unwrap().unwrap().scope,
+            crate::token::ADMIN_SCOPE
+        );
+    }
+
+    #[test]
     fn dual_store_writes_both() {
         let dir = tempdir().unwrap();
         let text = Arc::new(TextTokenStore::open(dir.path().join("a.lino")).unwrap());

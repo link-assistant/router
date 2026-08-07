@@ -704,8 +704,12 @@ impl std::error::Error for ConfigError {}
 mod tests {
     use super::*;
 
-    fn build_default(secret: Option<&str>) -> Result<Config, ConfigError> {
-        Config::build(BuildArgs {
+    fn build_default(secret: Option<&'static str>) -> Result<Config, ConfigError> {
+        Config::build(default_args(secret))
+    }
+
+    fn default_args(secret: Option<&'static str>) -> BuildArgs<'static> {
+        BuildArgs {
             host: "0.0.0.0",
             port: "8080",
             token_secret: secret,
@@ -740,7 +744,7 @@ mod tests {
             allow_anonymous_admin: false,
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
-        })
+        }
     }
 
     #[test]
@@ -885,43 +889,9 @@ mod tests {
 
     #[test]
     fn test_config_invalid_port() {
-        let result = Config::build(BuildArgs {
-            host: "0.0.0.0",
-            port: "not-a-number",
-            token_secret: Some("secret"),
-            claude_code_home: "/tmp/claude",
-            upstream_base_url: "https://api.anthropic.com",
-            verbose: false,
-            api_format: None,
-            routing_mode: RoutingMode::Direct,
-            storage_policy: StoragePolicy::Memory,
-            data_dir: PathBuf::from("/tmp/test-data"),
-            claude_cli_bin: None,
-            upstream_provider: UpstreamProvider::Anthropic,
-            gonka_private_key: None,
-            gonka_source_url: default_gonka_source_url(),
-            gonka_model: default_gonka_model(),
-            bridge_model: None,
-            audit_log: None,
-            crater: default_crater_config("https://router.example"),
-            openai_compatible: default_openai_compatible_config(),
-            activitypub_actor_base_url: "https://router.example".into(),
-            activitypub_public_key_pem: default_activitypub_public_key_pem(),
-            enable_openai_api: true,
-            enable_anthropic_api: true,
-            enable_metrics: true,
-            additional_account_dirs: vec![],
-            account_routing_strategy: SelectionStrategy::default(),
-            account_cooldown_secs: 60,
-            session_affinity_ttl_secs: 3600,
-            account_request_limits: vec![],
-            experimental_compatibility: false,
-            admin_key: None,
-            allow_anonymous_admin: false,
-            mpp: default_mpp_config(),
-            login: crate::login::LoginConfig::default(),
-        });
-        assert!(result.is_err());
+        let mut args = default_args(Some("secret"));
+        args.port = "not-a-number";
+        assert!(Config::build(args).is_err());
     }
 
     #[test]
