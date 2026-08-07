@@ -378,6 +378,7 @@ mod config_verbose_tests {
             allow_anonymous_admin: false,
             mpp: link_assistant_router::config::default_mpp_config(),
             login: link_assistant_router::login::LoginConfig::default(),
+            admin_ui: link_assistant_router::admin::AdminUiConfig::default(),
         }
     }
 

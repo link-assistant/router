@@ -317,6 +317,21 @@ Authorizes a deployment that has no credential file — see
 | `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
 | `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
 
+### Admin UI surface (`--admin-port` to opt in)
+
+Served on a **separate listener** that does not exist unless you give it a port,
+and on which every route but bootstrap and status requires the admin
+credential — see [docs/use-cases/admin-ui.md](docs/use-cases/admin-ui.md).
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/admin/status` | GET | (open) Credential state: claimed, bootstrap open, provisioned by environment |
+| `/api/admin/bootstrap` | POST | (open while unclaimed) Mint a candidate token; authorises nothing on its own |
+| `/api/admin/bootstrap/confirm` | POST | Activate the candidate, authenticated with the candidate token itself |
+| `/api/admin/rotate` | POST | (admin) Mint a replacement admin credential and retire the current one |
+| `/api/admin/summary` | GET | (admin) Version, upstream, accounts and credential state |
+| `/` and static assets | GET | The embedded React console |
+
 ### Anthropic surface (`--disable-anthropic-api` to opt out)
 
 | Endpoint | Method | Description |
@@ -636,6 +651,9 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
 | `--admin-key` / `TOKEN_ADMIN_KEY` | — | Flat bootstrap Bearer key accepted by `/api/tokens*` alongside admin-scoped tokens |
 | `--allow-anonymous-admin` / `ALLOW_ANONYMOUS_ADMIN` | off | Opt back into unauthenticated `/api/tokens*` access (**not recommended**) |
+| `--admin-port` / `ADMIN_PORT` | — (disabled) | Port for the admin UI listener; no port, no admin surface |
+| `--admin-host` / `ADMIN_HOST` | `127.0.0.1` | Address the admin UI listener binds, independent of the proxy |
+| `--admin-claim-ttl-secs` / `ADMIN_CLAIM_TTL_SECS` | `120` | Lifetime of an unconfirmed admin bootstrap candidate |
 | `--mpp-enable` / `MPP_ENABLE` | off | Return MPP `402 Payment Required` challenges on OpenAI endpoints |
 | `--mpp-amount` / `MPP_AMOUNT` | `0.00` | Per-request MPP charge amount |
 | `--mpp-currency` / `MPP_CURRENCY` | `USD` | Currency or asset for MPP charges |

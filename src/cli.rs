@@ -290,6 +290,25 @@ pub struct Cli {
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true)]
     pub admin_key: Option<String>,
 
+    /// Port for the admin UI, served on its own listener. Omitted or `0`
+    /// keeps the admin UI disabled, so upgrading exposes no new surface.
+    #[arg(long, env = "ADMIN_PORT", global = true)]
+    pub admin_port: Option<u16>,
+
+    /// Address the admin UI binds to. Loopback by default so binding the proxy
+    /// to `0.0.0.0` does not publish the UI as a side effect.
+    #[arg(long, env = "ADMIN_HOST", default_value = "127.0.0.1", global = true)]
+    pub admin_host: String,
+
+    /// How long an unconfirmed first-visitor admin claim stays valid.
+    #[arg(
+        long,
+        env = "ADMIN_CLAIM_TTL_SECS",
+        default_value_t = crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
+        global = true
+    )]
+    pub admin_claim_ttl_secs: u64,
+
     /// Leave the admin endpoints (`/api/tokens*`, `/api/providers*`,
     /// `/api/login*`) open to unauthenticated callers.
     ///
@@ -567,6 +586,11 @@ impl Cli {
             account_request_limits: self.account_request_limits.clone(),
             experimental_compatibility: self.experimental_compatibility,
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
+            admin_ui: crate::config::admin_ui_config(
+                self.admin_port,
+                &self.admin_host,
+                self.admin_claim_ttl_secs,
+            )?,
             allow_anonymous_admin: self.allow_anonymous_admin,
             login: crate::login::LoginConfig {
                 enabled: !self.disable_login_api,
@@ -637,6 +661,9 @@ mod tests {
             session_affinity_ttl_secs: 3600,
             account_request_limits: vec![],
             experimental_compatibility: false,
+            admin_port: None,
+            admin_host: "127.0.0.1".into(),
+            admin_claim_ttl_secs: crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
             admin_key: None,
             allow_anonymous_admin: false,
             mpp_enable: false,
@@ -702,6 +729,9 @@ mod tests {
             session_affinity_ttl_secs: 3600,
             account_request_limits: vec![],
             experimental_compatibility: false,
+            admin_port: None,
+            admin_host: "127.0.0.1".into(),
+            admin_claim_ttl_secs: crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
             admin_key: None,
             allow_anonymous_admin: false,
             mpp_enable: false,

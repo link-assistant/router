@@ -46,6 +46,9 @@ pub struct AppState {
     pub provider_store: ProviderStore,
     /// Lazy logger for verbose output.
     pub logger: LogLazy,
+    /// Admin credential state: the optional deploy-time key plus the
+    /// first-visitor claim of the admin UI (see [`crate::admin`]).
+    pub admin: Arc<crate::admin::AdminClaim>,
     /// Optional flat bootstrap admin key (Bearer) accepted by the admin
     /// endpoints alongside admin-scoped `la_sk_…` tokens.
     pub admin_key: Option<String>,

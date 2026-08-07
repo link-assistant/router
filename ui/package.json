@@ -1,0 +1,23 @@
+{
+  "name": "link-assistant-router-admin-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Admin UI for Link.Assistant.Router, served on the opt-in admin port.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^3.36.1",
+    "@emotion/react": "^11.14.0",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^7.0.0"
+  }
+}
