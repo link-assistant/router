@@ -1,0 +1,292 @@
+//! Unit tests for [`crate::anthropic_bridge`].
+//!
+//! Kept in their own file so `anthropic_bridge.rs` stays under the 1000-line
+//! ceiling enforced by `scripts/check-file-size.rs`.
+
+use serde_json::json;
+
+use crate::anthropic_bridge::*;
+use crate::config::UpstreamProvider;
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
+
+#[test]
+fn translates_system_and_messages() {
+    let body = json!({
+        "model": "claude-sonnet-4-5",
+        "max_tokens": 128,
+        "system": "be terse",
+        "messages": [
+            {"role": "user", "content": "hi"},
+            {"role": "assistant", "content": [{"type": "text", "text": "hello"}]}
+        ],
+        "temperature": 0.2,
+        "stop_sequences": ["STOP"],
+        "stream": true
+    });
+    let chat = anthropic_to_chat_request(&body, "gpt-5-codex");
+    assert_eq!(chat["model"], "gpt-5-codex");
+    assert_eq!(chat["max_tokens"], 128);
+    assert_eq!(chat["messages"][0]["role"], "system");
+    assert_eq!(chat["messages"][0]["content"], "be terse");
+    assert_eq!(chat["messages"][1]["content"], "hi");
+    assert_eq!(chat["messages"][2]["content"], "hello");
+    assert_eq!(chat["temperature"], 0.2);
+    assert_eq!(chat["stop"][0], "STOP");
+    assert_eq!(chat["stream"], true);
+}
+
+#[test]
+fn system_block_array_is_joined() {
+    let body = json!({
+        "system": [{"type": "text", "text": "a"}, {"type": "text", "text": "b"}],
+        "messages": []
+    });
+    let chat = anthropic_to_chat_request(&body, "m");
+    assert_eq!(chat["messages"][0]["content"], "a\n\nb");
+}
+
+#[test]
+fn defaults_max_tokens_when_absent() {
+    let chat = anthropic_to_chat_request(&json!({"messages": []}), "m");
+    assert_eq!(chat["max_tokens"], DEFAULT_MAX_TOKENS);
+}
+
+#[test]
+fn translates_tools_and_tool_choice() {
+    let body = json!({
+        "messages": [],
+        "tools": [{
+            "name": "get_time",
+            "description": "current time",
+            "input_schema": {"type": "object", "properties": {"tz": {"type": "string"}}}
+        }],
+        "tool_choice": {"type": "tool", "name": "get_time"}
+    });
+    let chat = anthropic_to_chat_request(&body, "m");
+    assert_eq!(chat["tools"][0]["type"], "function");
+    assert_eq!(chat["tools"][0]["function"]["name"], "get_time");
+    assert_eq!(
+        chat["tools"][0]["function"]["parameters"]["properties"]["tz"]["type"],
+        "string"
+    );
+    assert_eq!(chat["tool_choice"]["function"]["name"], "get_time");
+}
+
+#[test]
+fn tool_choice_any_becomes_required() {
+    let chat = anthropic_to_chat_request(
+        &json!({"messages": [], "tool_choice": {"type": "any"}}),
+        "m",
+    );
+    assert_eq!(chat["tool_choice"], "required");
+}
+
+#[test]
+fn translates_tool_use_and_tool_result_blocks() {
+    let body = json!({
+        "messages": [
+            {"role": "assistant", "content": [
+                {"type": "text", "text": "checking"},
+                {"type": "tool_use", "id": "toolu_1", "name": "get_time", "input": {"tz": "UTC"}}
+            ]},
+            {"role": "user", "content": [
+                {"type": "tool_result", "tool_use_id": "toolu_1", "content": "12:00"}
+            ]}
+        ]
+    });
+    let chat = anthropic_to_chat_request(&body, "m");
+    let messages = chat["messages"].as_array().unwrap();
+    assert_eq!(messages.len(), 2);
+    assert_eq!(messages[0]["role"], "assistant");
+    assert_eq!(messages[0]["tool_calls"][0]["id"], "toolu_1");
+    assert_eq!(
+        messages[0]["tool_calls"][0]["function"]["arguments"],
+        "{\"tz\":\"UTC\"}"
+    );
+    assert_eq!(messages[1]["role"], "tool");
+    assert_eq!(messages[1]["tool_call_id"], "toolu_1");
+    assert_eq!(messages[1]["content"], "12:00");
+}
+
+#[test]
+fn drops_thinking_blocks() {
+    let body = json!({
+        "messages": [{"role": "assistant", "content": [
+            {"type": "thinking", "thinking": "secret"},
+            {"type": "text", "text": "visible"}
+        ]}]
+    });
+    let chat = anthropic_to_chat_request(&body, "m");
+    assert_eq!(chat["messages"][0]["content"], "visible");
+    assert!(!chat.to_string().contains("secret"));
+}
+
+#[test]
+fn translates_base64_images() {
+    let body = json!({
+        "messages": [{"role": "user", "content": [
+            {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "AAA"}},
+            {"type": "text", "text": "what is this"}
+        ]}]
+    });
+    let chat = anthropic_to_chat_request(&body, "m");
+    let parts = chat["messages"][0]["content"].as_array().unwrap();
+    assert_eq!(parts[0]["image_url"]["url"], "data:image/png;base64,AAA");
+    assert_eq!(parts[1]["text"], "what is this");
+}
+
+#[test]
+fn chat_completion_becomes_anthropic_message() {
+    let payload = json!({
+        "id": "chatcmpl-1",
+        "object": "chat.completion",
+        "choices": [{
+            "index": 0,
+            "message": {"role": "assistant", "content": "hello"},
+            "finish_reason": "stop"
+        }],
+        "usage": {"prompt_tokens": 7, "completion_tokens": 2}
+    });
+    let msg = openai_json_to_anthropic_message(&payload, "claude-sonnet-4-5");
+    assert_eq!(msg["type"], "message");
+    assert_eq!(msg["role"], "assistant");
+    assert_eq!(msg["model"], "claude-sonnet-4-5");
+    assert_eq!(msg["content"][0]["type"], "text");
+    assert_eq!(msg["content"][0]["text"], "hello");
+    assert_eq!(msg["stop_reason"], "end_turn");
+    assert_eq!(msg["usage"]["input_tokens"], 7);
+    assert_eq!(msg["usage"]["output_tokens"], 2);
+}
+
+#[test]
+fn chat_tool_calls_become_tool_use_blocks() {
+    let payload = json!({
+        "choices": [{
+            "message": {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{
+                    "id": "call_1",
+                    "type": "function",
+                    "function": {"name": "get_time", "arguments": "{\"tz\":\"UTC\"}"}
+                }]
+            },
+            "finish_reason": "tool_calls"
+        }]
+    });
+    let msg = openai_json_to_anthropic_message(&payload, "claude-sonnet-4-5");
+    assert_eq!(msg["content"][0]["type"], "tool_use");
+    assert_eq!(msg["content"][0]["id"], "call_1");
+    assert_eq!(msg["content"][0]["name"], "get_time");
+    assert_eq!(msg["content"][0]["input"]["tz"], "UTC");
+    assert_eq!(msg["stop_reason"], "tool_use");
+}
+
+#[test]
+fn responses_object_becomes_anthropic_message() {
+    let payload = json!({
+        "id": "resp_1",
+        "object": "response",
+        "status": "completed",
+        "output": [
+            {"type": "message", "content": [{"type": "output_text", "text": "hi there"}]},
+            {"type": "function_call", "call_id": "fc_1", "name": "lookup", "arguments": "{\"q\":1}"}
+        ],
+        "usage": {"input_tokens": 5, "output_tokens": 9}
+    });
+    let msg = openai_json_to_anthropic_message(&payload, "claude-opus-4-7");
+    assert_eq!(msg["content"][0]["text"], "hi there");
+    assert_eq!(msg["content"][1]["type"], "tool_use");
+    assert_eq!(msg["content"][1]["input"]["q"], 1);
+    assert_eq!(msg["stop_reason"], "tool_use");
+    assert_eq!(msg["usage"]["input_tokens"], 5);
+}
+
+#[test]
+fn max_tokens_finish_reason_maps_to_anthropic() {
+    let payload = json!({
+        "choices": [{"message": {"content": "x"}, "finish_reason": "length"}]
+    });
+    let msg = openai_json_to_anthropic_message(&payload, "m");
+    assert_eq!(msg["stop_reason"], "max_tokens");
+}
+
+#[test]
+fn count_tokens_estimate_scales_with_input() {
+    let small = count_tokens_estimate(&json!({"messages": [{"role": "user", "content": "hi"}]}));
+    let large = count_tokens_estimate(&json!({
+        "system": "s".repeat(400),
+        "messages": [{"role": "user", "content": "x".repeat(400)}]
+    }));
+    assert!(small >= 4, "per-message overhead is counted: {small}");
+    assert!(large > small);
+    assert!(large >= 200, "roughly 800 chars / 4: {large}");
+}
+
+#[test]
+fn bridged_providers_are_the_non_anthropic_openai_dialect_ones() {
+    assert!(is_bridged(UpstreamProvider::Codex));
+    assert!(is_bridged(UpstreamProvider::Qwen));
+    assert!(is_bridged(UpstreamProvider::Gemini));
+    assert!(is_bridged(UpstreamProvider::OpenAICompatible));
+    assert!(!is_bridged(UpstreamProvider::Anthropic));
+    assert!(!is_bridged(UpstreamProvider::Gonka));
+    assert!(!is_bridged(UpstreamProvider::Crater));
+}
+
+/// `count_tokens` is answered locally, so it must authenticate the caller
+/// itself — no upstream forwarder does it on this path.
+mod count_tokens_auth {
+    use super::*;
+    use crate::token::TokenManager;
+
+    fn bearer(token: &str) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "authorization",
+            HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+        );
+        headers
+    }
+
+    #[test]
+    fn accepts_a_valid_token_and_returns_its_claims() {
+        let manager = TokenManager::new("test-secret");
+        let token = manager.issue_token(1, "bridge-test").unwrap();
+        let claims = count_tokens_claims(&manager, &bearer(&token))
+            .unwrap_or_else(|_| panic!("valid token must be accepted"));
+        assert_eq!(claims.label, "bridge-test");
+    }
+
+    #[test]
+    fn rejects_a_missing_token_with_401() {
+        let manager = TokenManager::new("test-secret");
+        let err = count_tokens_claims(&manager, &HeaderMap::new())
+            .expect_err("a request without credentials must be rejected");
+        assert_eq!(err.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn rejects_a_forged_token_with_401() {
+        let manager = TokenManager::new("test-secret");
+        let forged = TokenManager::new("other-secret")
+            .issue_token(1, "forged")
+            .unwrap();
+        let err = count_tokens_claims(&manager, &bearer(&forged))
+            .expect_err("a token signed with another secret must be rejected");
+        assert_eq!(err.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn rejects_a_revoked_token_with_403() {
+        let manager = TokenManager::new("test-secret");
+        let token = manager.issue_token(1, "revoked").unwrap();
+        let claims = count_tokens_claims(&manager, &bearer(&token)).unwrap_or_else(|_| {
+            panic!("valid token must be accepted before revocation");
+        });
+        manager.revoke_token(&claims.sub).unwrap();
+        let err = count_tokens_claims(&manager, &bearer(&token))
+            .expect_err("a revoked token must be rejected");
+        assert_eq!(err.status(), StatusCode::FORBIDDEN);
+    }
+}

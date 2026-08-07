@@ -27,7 +27,7 @@ use crate::metrics::Surface;
 
 /// Default `max_tokens` used when a bridged Anthropic request omits it.
 /// The Anthropic Messages API requires the field; `OpenAI` upstreams do not.
-const DEFAULT_MAX_TOKENS: u64 = 4096;
+pub(crate) const DEFAULT_MAX_TOKENS: u64 = 4096;
 
 /// Whether the Anthropic surface must be bridged for this upstream provider.
 ///
@@ -503,6 +503,21 @@ pub async fn handle_anthropic_surface(
     body: Value,
 ) -> Response {
     if path.ends_with("/count_tokens") {
+        // Answered locally, so no delegate forwarder validates the token for
+        // us. Do it here: an expired or revoked token must not get an estimate
+        // either. The request budget is deliberately *not* consumed, since
+        // nothing is spent upstream.
+        let claims = match count_tokens_claims(&state.token_manager, headers) {
+            Ok(claims) => claims,
+            Err(response) => return *response,
+        };
+        crate::audit::record_authorised_request(
+            state,
+            &claims,
+            Surface::Anthropic,
+            path,
+            Some(&body),
+        );
         return (
             StatusCode::OK,
             axum::Json(json!({"input_tokens": count_tokens_estimate(&body)})),
@@ -510,6 +525,26 @@ pub async fn handle_anthropic_surface(
             .into_response();
     }
     forward_anthropic_messages(state, headers, body).await
+}
+
+/// Validate the client token for a locally answered `count_tokens` request.
+pub(crate) fn count_tokens_claims(
+    token_manager: &crate::token::TokenManager,
+    headers: &HeaderMap,
+) -> Result<crate::token::TokenClaims, Box<Response>> {
+    let Some(token) = crate::proxy::extract_client_token(headers) else {
+        return Err(Box::new(anthropic_error(
+            StatusCode::UNAUTHORIZED,
+            b"Missing Authorization Bearer token or x-api-key",
+        )));
+    };
+    token_manager.validate_token(token).map_err(|e| {
+        let status = match &e {
+            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+            _ => StatusCode::UNAUTHORIZED,
+        };
+        Box::new(anthropic_error(status, e.to_string().as_bytes()))
+    })
 }
 
 /// Serve `POST /v1/messages` from a non-Anthropic upstream.
@@ -703,235 +738,4 @@ fn anthropic_error(status: StatusCode, body: &[u8]) -> Response {
         })),
     )
         .into_response()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn translates_system_and_messages() {
-        let body = json!({
-            "model": "claude-sonnet-4-5",
-            "max_tokens": 128,
-            "system": "be terse",
-            "messages": [
-                {"role": "user", "content": "hi"},
-                {"role": "assistant", "content": [{"type": "text", "text": "hello"}]}
-            ],
-            "temperature": 0.2,
-            "stop_sequences": ["STOP"],
-            "stream": true
-        });
-        let chat = anthropic_to_chat_request(&body, "gpt-5-codex");
-        assert_eq!(chat["model"], "gpt-5-codex");
-        assert_eq!(chat["max_tokens"], 128);
-        assert_eq!(chat["messages"][0]["role"], "system");
-        assert_eq!(chat["messages"][0]["content"], "be terse");
-        assert_eq!(chat["messages"][1]["content"], "hi");
-        assert_eq!(chat["messages"][2]["content"], "hello");
-        assert_eq!(chat["temperature"], 0.2);
-        assert_eq!(chat["stop"][0], "STOP");
-        assert_eq!(chat["stream"], true);
-    }
-
-    #[test]
-    fn system_block_array_is_joined() {
-        let body = json!({
-            "system": [{"type": "text", "text": "a"}, {"type": "text", "text": "b"}],
-            "messages": []
-        });
-        let chat = anthropic_to_chat_request(&body, "m");
-        assert_eq!(chat["messages"][0]["content"], "a\n\nb");
-    }
-
-    #[test]
-    fn defaults_max_tokens_when_absent() {
-        let chat = anthropic_to_chat_request(&json!({"messages": []}), "m");
-        assert_eq!(chat["max_tokens"], DEFAULT_MAX_TOKENS);
-    }
-
-    #[test]
-    fn translates_tools_and_tool_choice() {
-        let body = json!({
-            "messages": [],
-            "tools": [{
-                "name": "get_time",
-                "description": "current time",
-                "input_schema": {"type": "object", "properties": {"tz": {"type": "string"}}}
-            }],
-            "tool_choice": {"type": "tool", "name": "get_time"}
-        });
-        let chat = anthropic_to_chat_request(&body, "m");
-        assert_eq!(chat["tools"][0]["type"], "function");
-        assert_eq!(chat["tools"][0]["function"]["name"], "get_time");
-        assert_eq!(
-            chat["tools"][0]["function"]["parameters"]["properties"]["tz"]["type"],
-            "string"
-        );
-        assert_eq!(chat["tool_choice"]["function"]["name"], "get_time");
-    }
-
-    #[test]
-    fn tool_choice_any_becomes_required() {
-        let chat = anthropic_to_chat_request(
-            &json!({"messages": [], "tool_choice": {"type": "any"}}),
-            "m",
-        );
-        assert_eq!(chat["tool_choice"], "required");
-    }
-
-    #[test]
-    fn translates_tool_use_and_tool_result_blocks() {
-        let body = json!({
-            "messages": [
-                {"role": "assistant", "content": [
-                    {"type": "text", "text": "checking"},
-                    {"type": "tool_use", "id": "toolu_1", "name": "get_time", "input": {"tz": "UTC"}}
-                ]},
-                {"role": "user", "content": [
-                    {"type": "tool_result", "tool_use_id": "toolu_1", "content": "12:00"}
-                ]}
-            ]
-        });
-        let chat = anthropic_to_chat_request(&body, "m");
-        let messages = chat["messages"].as_array().unwrap();
-        assert_eq!(messages.len(), 2);
-        assert_eq!(messages[0]["role"], "assistant");
-        assert_eq!(messages[0]["tool_calls"][0]["id"], "toolu_1");
-        assert_eq!(
-            messages[0]["tool_calls"][0]["function"]["arguments"],
-            "{\"tz\":\"UTC\"}"
-        );
-        assert_eq!(messages[1]["role"], "tool");
-        assert_eq!(messages[1]["tool_call_id"], "toolu_1");
-        assert_eq!(messages[1]["content"], "12:00");
-    }
-
-    #[test]
-    fn drops_thinking_blocks() {
-        let body = json!({
-            "messages": [{"role": "assistant", "content": [
-                {"type": "thinking", "thinking": "secret"},
-                {"type": "text", "text": "visible"}
-            ]}]
-        });
-        let chat = anthropic_to_chat_request(&body, "m");
-        assert_eq!(chat["messages"][0]["content"], "visible");
-        assert!(!chat.to_string().contains("secret"));
-    }
-
-    #[test]
-    fn translates_base64_images() {
-        let body = json!({
-            "messages": [{"role": "user", "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "AAA"}},
-                {"type": "text", "text": "what is this"}
-            ]}]
-        });
-        let chat = anthropic_to_chat_request(&body, "m");
-        let parts = chat["messages"][0]["content"].as_array().unwrap();
-        assert_eq!(parts[0]["image_url"]["url"], "data:image/png;base64,AAA");
-        assert_eq!(parts[1]["text"], "what is this");
-    }
-
-    #[test]
-    fn chat_completion_becomes_anthropic_message() {
-        let payload = json!({
-            "id": "chatcmpl-1",
-            "object": "chat.completion",
-            "choices": [{
-                "index": 0,
-                "message": {"role": "assistant", "content": "hello"},
-                "finish_reason": "stop"
-            }],
-            "usage": {"prompt_tokens": 7, "completion_tokens": 2}
-        });
-        let msg = openai_json_to_anthropic_message(&payload, "claude-sonnet-4-5");
-        assert_eq!(msg["type"], "message");
-        assert_eq!(msg["role"], "assistant");
-        assert_eq!(msg["model"], "claude-sonnet-4-5");
-        assert_eq!(msg["content"][0]["type"], "text");
-        assert_eq!(msg["content"][0]["text"], "hello");
-        assert_eq!(msg["stop_reason"], "end_turn");
-        assert_eq!(msg["usage"]["input_tokens"], 7);
-        assert_eq!(msg["usage"]["output_tokens"], 2);
-    }
-
-    #[test]
-    fn chat_tool_calls_become_tool_use_blocks() {
-        let payload = json!({
-            "choices": [{
-                "message": {
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": [{
-                        "id": "call_1",
-                        "type": "function",
-                        "function": {"name": "get_time", "arguments": "{\"tz\":\"UTC\"}"}
-                    }]
-                },
-                "finish_reason": "tool_calls"
-            }]
-        });
-        let msg = openai_json_to_anthropic_message(&payload, "claude-sonnet-4-5");
-        assert_eq!(msg["content"][0]["type"], "tool_use");
-        assert_eq!(msg["content"][0]["id"], "call_1");
-        assert_eq!(msg["content"][0]["name"], "get_time");
-        assert_eq!(msg["content"][0]["input"]["tz"], "UTC");
-        assert_eq!(msg["stop_reason"], "tool_use");
-    }
-
-    #[test]
-    fn responses_object_becomes_anthropic_message() {
-        let payload = json!({
-            "id": "resp_1",
-            "object": "response",
-            "status": "completed",
-            "output": [
-                {"type": "message", "content": [{"type": "output_text", "text": "hi there"}]},
-                {"type": "function_call", "call_id": "fc_1", "name": "lookup", "arguments": "{\"q\":1}"}
-            ],
-            "usage": {"input_tokens": 5, "output_tokens": 9}
-        });
-        let msg = openai_json_to_anthropic_message(&payload, "claude-opus-4-7");
-        assert_eq!(msg["content"][0]["text"], "hi there");
-        assert_eq!(msg["content"][1]["type"], "tool_use");
-        assert_eq!(msg["content"][1]["input"]["q"], 1);
-        assert_eq!(msg["stop_reason"], "tool_use");
-        assert_eq!(msg["usage"]["input_tokens"], 5);
-    }
-
-    #[test]
-    fn max_tokens_finish_reason_maps_to_anthropic() {
-        let payload = json!({
-            "choices": [{"message": {"content": "x"}, "finish_reason": "length"}]
-        });
-        let msg = openai_json_to_anthropic_message(&payload, "m");
-        assert_eq!(msg["stop_reason"], "max_tokens");
-    }
-
-    #[test]
-    fn count_tokens_estimate_scales_with_input() {
-        let small =
-            count_tokens_estimate(&json!({"messages": [{"role": "user", "content": "hi"}]}));
-        let large = count_tokens_estimate(&json!({
-            "system": "s".repeat(400),
-            "messages": [{"role": "user", "content": "x".repeat(400)}]
-        }));
-        assert!(small >= 4, "per-message overhead is counted: {small}");
-        assert!(large > small);
-        assert!(large >= 200, "roughly 800 chars / 4: {large}");
-    }
-
-    #[test]
-    fn bridged_providers_are_the_non_anthropic_openai_dialect_ones() {
-        assert!(is_bridged(UpstreamProvider::Codex));
-        assert!(is_bridged(UpstreamProvider::Qwen));
-        assert!(is_bridged(UpstreamProvider::Gemini));
-        assert!(is_bridged(UpstreamProvider::OpenAICompatible));
-        assert!(!is_bridged(UpstreamProvider::Anthropic));
-        assert!(!is_bridged(UpstreamProvider::Gonka));
-        assert!(!is_bridged(UpstreamProvider::Crater));
-    }
 }

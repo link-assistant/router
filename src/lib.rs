@@ -32,6 +32,8 @@ pub mod token;
 pub mod token_admin;
 
 #[cfg(test)]
+mod anthropic_bridge_tests;
+#[cfg(test)]
 mod proxy_tests;
 
 /// Package version (matches Cargo.toml version).
