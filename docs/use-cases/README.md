@@ -11,6 +11,7 @@ come first; the per-CLI documents follow.
 
 | Document | Scenario |
 | --- | --- |
+| [self-hosting.md](self-hosting.md) | Running the router as an internal component of personal or corporate infrastructure — and who can reach the endpoint that mints tokens |
 | [per-task-tokens.md](per-task-tokens.md) | One `la_sk_…` token per task, for audit, monitoring, security and isolation |
 | [audit-and-monitoring.md](audit-and-monitoring.md) | Where per-token usage shows up: `/metrics`, `/v1/usage`, and the JSONL audit log |
 | [claude-max-in-codex.md](claude-max-in-codex.md) | Use a **Claude MAX** subscription from **Codex CLI** (and any other OpenAI-dialect client) |

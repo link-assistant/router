@@ -10,6 +10,7 @@ and what stopped it — no use case is claimed as verified when it is not.
 | --- | --- | --- |
 | `experiments/issue-45/test-bridge-openai-compatible.sh` | nothing (bundles `mock_openai_upstream.py`) | **26 passed, 0 failed** |
 | `experiments/issue-45/test-docker-claude-max.sh` | Docker + a Claude MAX session in `~/.claude` | **18 passed, 0 failed** |
+| `experiments/issue-45/test-deployment-hardening.sh` | Docker only (no subscription, no egress) | **16 passed, 0 failed** |
 | `cargo test` | nothing | 235 tests, all passing |
 
 The Docker harness copies **only** `~/.claude/.credentials.json` into a
@@ -27,6 +28,7 @@ mount rejects writes and that the copy stays byte-identical to the original.
 | [chatgpt-in-claude-code.md](../../use-cases/chatgpt-in-claude-code.md) | end-to-end against a **mock** OpenAI upstream: request translation, response translation, SSE translation, `count_tokens`, budget, audit, metrics | `test-bridge-openai-compatible.sh` |
 | [cli-codex.md](../../use-cases/cli-codex.md), [cli-qwen-code.md](../../use-cases/cli-qwen-code.md), [cli-gemini-cli.md](../../use-cases/cli-gemini-cli.md), [cli-opencode.md](../../use-cases/cli-opencode.md), [cli-grok-cli.md](../../use-cases/cli-grok-cli.md) | router side verified via the OpenAI-compatible harness; the **subscription** side is unverified — see below | — |
 | [cli-cursor.md](../../use-cases/cli-cursor.md) | documented as **not supported**; nothing to verify | — |
+| [self-hosting.md](../../use-cases/self-hosting.md) | live: admin surface open without `TOKEN_ADMIN_KEY`, 401 on every admin route with it, rejected revoke is a no-op, the two secrets are not interchangeable, `ROUTER_HOST` honoured, starts with no subscription | `test-deployment-hardening.sh` |
 
 ### What could not be tested here, and why
 
@@ -45,3 +47,4 @@ sessions, with `UPSTREAM_PROVIDER` set accordingly, is the remaining step.
 | `POST /v1/messages/count_tokens` was answered locally by the bridge **without validating the client token** | validate (and audit) before answering; the request budget is deliberately not consumed | `src/anthropic_bridge_tests.rs::count_tokens_auth::*`, plus a live 401 assertion in the bridge harness |
 | Claude MAX OAuth rejects any request whose first system block is not Claude Code's identity, with a misleading `429 rate_limit_error` — breaking the Codex use case | `src/claude_identity.rs` prepends the block for `sk-ant-oat…` credentials on both Anthropic-bound paths | `src/claude_identity.rs` unit tests; the live Docker run ([root-cause note](evidence/identity-prompt-429.md)) |
 | A forwarded body can change length once the identity block is added | `content-length` is dropped from forwarded upstream headers | live Docker run (both surfaces) |
+| With `TOKEN_ADMIN_KEY` unset, `POST /api/tokens` mints subscription-spending tokens to any caller, and the default bind address is `0.0.0.0` | **documented, not changed** — the open default is deliberate backwards compatibility (`src/token_admin.rs`), so changing it is out of scope for issue #45; it is now stated in the first section of [self-hosting.md](../../use-cases/self-hosting.md) and in that document's pre-exposure checklist | `test-deployment-hardening.sh` asserts both the open default and that the key closes every admin route |
