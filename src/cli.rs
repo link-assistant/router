@@ -30,6 +30,20 @@ use crate::config::{
     default_activitypub_public_key_pem, default_data_dir,
 };
 
+/// Parse a boolean switch that may also arrive from the environment.
+///
+/// Clap's plain `bool` accepts only `true`/`false` from an env var, which makes
+/// the `=1` spelling used throughout the deployment docs a hard startup error.
+fn parse_truthy(value: &str) -> Result<bool, String> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Ok(true),
+        "0" | "false" | "no" | "off" | "" => Ok(false),
+        other => Err(format!(
+            "expected a boolean (1/0, true/false), got '{other}'"
+        )),
+    }
+}
+
 /// Top-level CLI parser.
 #[derive(Debug, LinoParser)]
 #[command(
@@ -281,7 +295,19 @@ pub struct Cli {
     ///
     /// Off by default. Without it, a deployment that configures no admin
     /// credential mints a one-off admin token at startup and prints it once.
-    #[arg(long, env = "ALLOW_ANONYMOUS_ADMIN", global = true)]
+    ///
+    /// Accepted as a bare flag, and from the environment as `1`/`0`,
+    /// `true`/`false`, `yes`/`no` or `on`/`off` — clap's plain `bool` would
+    /// reject the `=1` spelling every other switch in the deployment docs uses.
+    #[arg(
+        long,
+        env = "ALLOW_ANONYMOUS_ADMIN",
+        global = true,
+        num_args = 0..=1,
+        default_value_t = false,
+        default_missing_value = "true",
+        value_parser = parse_truthy,
+    )]
     pub allow_anonymous_admin: bool,
 
     /// Enable MPP 402 charge challenges on OpenAI-compatible endpoints.
