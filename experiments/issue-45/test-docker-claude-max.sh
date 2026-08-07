@@ -122,7 +122,7 @@ AUDIT=$(cat "$WORK/router/audit.jsonl" 2>/dev/null || echo '')
 echo "$AUDIT" | redact >"$OUT/docker-audit.jsonl"
 contains "audit log records the task label" "$AUDIT" '"label":"docker-live-test"'
 contains "audit log records the anthropic surface" "$AUDIT" '"surface":"anthropic"'
-contains "audit log records the openai surface" "$AUDIT" '"surface":"openai"'
+contains "audit log records the openai responses surface" "$AUDIT" '"surface":"openai_responses"'
 if [[ "$AUDIT" == *"la_sk_"* ]]; then
   check "audit log never contains a token string" "found la_sk_"
 else
@@ -133,7 +133,7 @@ METRICS=$(curl -s "http://127.0.0.1:$PORT/metrics")
 echo "$METRICS" | redact >"$OUT/docker-metrics.txt"
 contains "metrics expose the per-task counter" "$METRICS" 'label="docker-live-test"'
 
-docker logs "$NAME" 2>&1 | redact >"$OUT/docker-router.log"
+docker logs "$NAME" 2>&1 | redact >"$OUT/docker-router-startup.txt"
 
 echo
 echo "passed: $PASS  failed: $FAIL"

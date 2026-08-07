@@ -67,5 +67,6 @@ curl -s http://127.0.0.1:8080/v1/messages \
 | --- | --- |
 | `401 authentication_error` | token expired, revoked, or `TOKEN_SECRET` changed since it was issued |
 | `429 rate_limit_error` with "reached its request limit" | the token's `--max-requests` budget is spent — issue a new one |
+| `429 rate_limit_error` whose message is just `"Error"` | the upstream rejected the request because the Claude Code identity system block was missing — the router adds it for OAuth credentials, so this indicates an API-key upstream ([details](claude-max-in-codex.md#the-claude-code-identity-block)) |
 | `503` naming an account | the pinned account is in a `Retry-After` cooldown |
 | Extended thinking missing | you are on a bridged upstream; `thinking` blocks are dropped (see the bridge document) |

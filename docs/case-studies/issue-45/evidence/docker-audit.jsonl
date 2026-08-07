@@ -1,0 +1,2 @@
+{"time":"2026-08-07T12:49:31.962118885+00:00","token_id":"68628eb8-a16b-4634-bbc8-a281d21fea94","label":"docker-live-test","provider":"anthropic","surface":"anthropic","path":"/v1/messages","model":"claude-sonnet-4-5-20250929"}
+{"time":"2026-08-07T12:49:33.709316967+00:00","token_id":"68628eb8-a16b-4634-bbc8-a281d21fea94","label":"docker-live-test","provider":"anthropic","surface":"openai_responses","path":"/v1/responses","model":"gpt-5-codex"}

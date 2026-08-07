@@ -1,0 +1,23 @@
+# TYPE link_assistant_requests_total counter
+link_assistant_requests_total 2
+# TYPE link_assistant_errors_total counter
+link_assistant_errors_total 0
+# TYPE link_assistant_bytes_in_total counter
+link_assistant_bytes_in_total 465
+# TYPE link_assistant_bytes_out_total counter
+link_assistant_bytes_out_total 218
+# TYPE link_assistant_openai_chat_completions_total counter
+link_assistant_openai_chat_completions_total 0
+# TYPE link_assistant_openai_responses_total counter
+link_assistant_openai_responses_total 1
+# TYPE link_assistant_anthropic_messages_total counter
+link_assistant_anthropic_messages_total 1
+# TYPE link_assistant_tokens_issued_total counter
+link_assistant_tokens_issued_total 1
+# TYPE link_assistant_tokens_revoked_total counter
+link_assistant_tokens_revoked_total 0
+# TYPE link_assistant_status_total counter
+link_assistant_status_total{code="200"} 2
+# TYPE link_assistant_token_requests_total counter
+link_assistant_token_requests_total{token="68628eb8-a16b-4634-bbc8-a281d21fea94",label="docker-live-test"} 2
+# TYPE link_assistant_account_calls_total counter

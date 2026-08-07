@@ -25,6 +25,27 @@ Codex CLI ──POST /v1/responses (Bearer la_sk_…)──► router ──Anth
 The client never sees the OAuth token. It only ever holds a task-scoped
 `la_sk_…` token.
 
+### The Claude Code identity block
+
+`api.anthropic.com` only serves a Claude MAX OAuth credential when the request's
+**first system block** is Claude Code's own identity line:
+
+```
+You are Claude Code, Anthropic's official CLI for Claude.
+```
+
+Codex never sends it — it does not know Claude exists. A request without the
+line is rejected with a **misleading** `429 rate_limit_error` whose message is
+literally `"Error"`, even when no rate limit has been hit (captured live in
+[`docs/case-studies/issue-45/evidence/`](../case-studies/issue-45/evidence/)).
+
+The router therefore prepends the block whenever the upstream credential is a
+subscription OAuth token (`sk-ant-oat…`), on both the `/v1/responses` and the
+pass-through `/v1/messages` surfaces. Your own system prompt is preserved
+immediately after it, and a request that already starts with the line — every
+request Claude Code itself makes — is left untouched. Plain API keys
+(`sk-ant-api…`) are never modified.
+
 ## 1. Log in with Claude Code once
 
 The router reads (never writes) the Claude Code session:

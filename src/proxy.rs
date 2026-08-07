@@ -250,6 +250,15 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
             }
         };
 
+    // Same requirement as above for the pass-through surface: a client that is
+    // not Claude Code (an SDK, a curl smoke test) would otherwise be rejected
+    // by the upstream with a misleading 429. Idempotent for Claude Code itself.
+    let body_bytes = if crate::claude_identity::is_oauth_credential(&oauth_token) {
+        crate::claude_identity::ensure_claude_code_system_bytes(&routing_body, body_bytes)
+    } else {
+        body_bytes
+    };
+
     // Build upstream headers
     let upstream_headers = build_upstream_headers(&incoming_headers, &oauth_token, &state.logger);
 
@@ -364,8 +373,13 @@ pub(crate) fn build_upstream_headers(
 
     for (name, value) in incoming {
         let name_lower = name.as_str().to_lowercase();
-        if matches!(name_lower.as_str(), "authorization" | "x-api-key")
-            || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
+        // `content-length` is dropped on purpose: the forwarded body may differ
+        // in length from the client's (the Claude Code identity block is
+        // prepended for OAuth upstreams), and the HTTP client recomputes it.
+        if matches!(
+            name_lower.as_str(),
+            "authorization" | "x-api-key" | "content-length"
+        ) || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
         {
             continue;
         }
@@ -701,6 +715,12 @@ async fn forward_openai(
         "{}/v1/messages",
         state.upstream_base_url.trim_end_matches('/')
     );
+    // Claude MAX OAuth inference requires Claude Code's identity as the first
+    // system block; OpenAI-dialect clients such as Codex never send it.
+    let mut body = body;
+    if crate::claude_identity::is_oauth_credential(&oauth_token) {
+        crate::claude_identity::ensure_claude_code_system(&mut body);
+    }
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
         Err(e) => {
