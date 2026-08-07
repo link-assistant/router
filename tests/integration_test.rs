@@ -359,6 +359,7 @@ mod config_verbose_tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            bridge_model: None,
             crater: default_crater_config("https://router.example"),
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),

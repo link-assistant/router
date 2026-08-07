@@ -216,6 +216,19 @@ pub async fn forward_chat_completions(
     forward(state, headers, body, Surface::OpenAIChat, ShapeIn::Chat).await
 }
 
+/// `POST /v1/chat/completions` with an explicit metrics surface.
+///
+/// Used by the Anthropic bridge, where the client-facing surface is Anthropic
+/// even though the upstream request is `OpenAI`-shaped.
+pub async fn forward_chat_completions_as(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: Value,
+    surface: Surface,
+) -> Response {
+    forward(state, headers, body, surface, ShapeIn::Chat).await
+}
+
 /// `POST /v1/responses` for the Gemini subscription upstream.
 pub async fn forward_responses(state: &AppState, headers: &HeaderMap, body: Value) -> Response {
     forward(

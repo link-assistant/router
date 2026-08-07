@@ -122,6 +122,11 @@ pub struct Cli {
     )]
     pub gonka_model: String,
 
+    /// Upstream model used when an Anthropic-dialect request is bridged to a
+    /// non-Anthropic upstream (e.g. Claude Code against the Codex provider).
+    #[arg(long, env = "ANTHROPIC_BRIDGE_MODEL", global = true)]
+    pub bridge_model: Option<String>,
+
     /// Remote `ForgeFed` inbox for the crater provider.
     #[arg(long, env = "CRATER_FORGEFED_INBOX", global = true)]
     pub crater_forgefed_inbox: Option<String>,
@@ -453,6 +458,7 @@ impl Cli {
             gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
             gonka_source_url: self.gonka_source_url.clone(),
             gonka_model: self.gonka_model.clone(),
+            bridge_model: self.bridge_model.clone().filter(|s| !s.is_empty()),
             crater,
             openai_compatible,
             activitypub_actor_base_url,
@@ -504,6 +510,7 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            bridge_model: None,
             crater_forgefed_inbox: None,
             crater_forgefed_actor: None,
             crater_forgefed_target: None,
@@ -561,6 +568,7 @@ mod tests {
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
+            bridge_model: None,
             crater_forgefed_inbox: None,
             crater_forgefed_actor: None,
             crater_forgefed_target: None,

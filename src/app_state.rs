@@ -35,6 +35,9 @@ pub struct AppState {
     pub upstream_provider: UpstreamProvider,
     /// Gonka provider configuration when selected.
     pub gonka: Option<GonkaConfig>,
+    /// Upstream model used when an Anthropic-dialect request is bridged to a
+    /// non-Anthropic upstream. `None` falls back to a per-provider default.
+    pub bridge_model: Option<String>,
     /// Crater `ForgeFed` task provider when selected.
     pub crater: Option<Arc<dyn crate::crater::TaskProvider>>,
     /// Boot-time generic OpenAI-compatible provider config.

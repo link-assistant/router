@@ -4,10 +4,13 @@
 //! client-facing `la_sk_...` auth model, then signs upstream requests with the
 //! configured Gonka private key instead of forwarding client credentials.
 
+use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+
+use crate::proxy::AppState;
 
 /// Error shown when Gonka is selected without a private key.
 pub const MISSING_PRIVATE_KEY_MESSAGE: &str = "Gonka provider requires GONKA_PRIVATE_KEY. Make sure your Gonka account is activated for inference, funded, and has a published on-chain public key.";
@@ -98,6 +101,130 @@ pub fn provider_error(status: StatusCode, message: &str) -> Response {
         })),
     )
         .into_response()
+}
+
+/// Forward an `OpenAI`-dialect request to the Gonka upstream.
+///
+/// Client auth stays on the router's own `la_sk_...` tokens; the upstream call
+/// is signed with the configured Gonka private key.
+pub(crate) async fn forward_openai(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    path: &str,
+    surface: crate::metrics::Surface,
+) -> Response {
+    if let Some(resp) = crate::proxy::maybe_mpp_challenge(state, headers, path) {
+        return resp;
+    }
+
+    let Some(gonka) = state.gonka.as_ref() else {
+        return provider_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            crate::gonka::MISSING_PRIVATE_KEY_MESSAGE,
+        );
+    };
+
+    let Some(token) = crate::proxy::extract_client_token(headers) else {
+        return crate::proxy::error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization Bearer token or x-api-key",
+        );
+    };
+    let claims = match state.token_manager.validate_token(token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            return crate::proxy::error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+        return crate::proxy::error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
+    }
+
+    let body = with_default_model(body, &gonka.model);
+    let serialized = match serde_json::to_vec(&body) {
+        Ok(v) => v,
+        Err(e) => {
+            return crate::proxy::error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to serialize Gonka body: {e}"),
+            );
+        }
+    };
+    let bytes_sent = serialized.len() as u64;
+
+    let mut upstream_headers = HeaderMap::new();
+    upstream_headers.insert("content-type", HeaderValue::from_static("application/json"));
+    if let Err(e) = sign_headers(
+        &mut upstream_headers,
+        "POST",
+        path,
+        &serialized,
+        &gonka.private_key,
+    ) {
+        return crate::proxy::error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &format!("failed to sign Gonka request: {e}"),
+        );
+    }
+
+    let upstream_resp = match state
+        .client
+        .post(gonka.endpoint(path))
+        .headers(upstream_headers)
+        .body(serialized)
+        .send()
+        .await
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            state.metrics.record_request(surface, 502, None);
+            return crate::proxy::error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("Gonka upstream request failed: {e}"),
+            );
+        }
+    };
+
+    let status = StatusCode::from_u16(upstream_resp.status().as_u16())
+        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+    let content_type = upstream_resp
+        .headers()
+        .get("content-type")
+        .cloned()
+        .unwrap_or_else(|| HeaderValue::from_static("application/json"));
+    let upstream_body = match upstream_resp.bytes().await {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            state.metrics.record_request(surface, 502, None);
+            return crate::proxy::error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                &format!("Gonka upstream body read failed: {e}"),
+            );
+        }
+    };
+    state
+        .metrics
+        .record_bytes(bytes_sent, upstream_body.len() as u64);
+    state.metrics.record_request(surface, status.as_u16(), None);
+
+    let mut response = Response::new(Body::from(upstream_body));
+    *response.status_mut() = status;
+    response.headers_mut().insert("content-type", content_type);
+    response
 }
 
 #[cfg(test)]
