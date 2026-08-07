@@ -9,6 +9,7 @@ pub mod activitypub;
 pub mod anthropic_bridge;
 pub mod anthropic_stream;
 pub mod app_state;
+pub mod audit;
 pub mod cli;
 pub mod config;
 pub mod crater;

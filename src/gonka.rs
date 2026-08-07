@@ -149,6 +149,7 @@ pub(crate) async fn forward_openai(
             &format!("{e}"),
         );
     }
+    crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let body = with_default_model(body, &gonka.model);
     let serialized = match serde_json::to_vec(&body) {

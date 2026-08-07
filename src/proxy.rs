@@ -217,6 +217,13 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
         }
     };
     let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+    crate::audit::record_authorised_request(
+        &state,
+        &claims,
+        crate::metrics::Surface::Anthropic,
+        &path,
+        Some(&routing_body),
+    );
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
         Err(error) => {
@@ -662,6 +669,7 @@ async fn forward_openai(
             &format!("{e}"),
         );
     }
+    crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,

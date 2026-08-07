@@ -68,6 +68,20 @@ impl UpstreamProvider {
             Self::Gonka | Self::Crater | Self::OpenAICompatible => None,
         }
     }
+
+    /// Canonical lowercase name, used in logs, metrics, and audit records.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Anthropic => "anthropic",
+            Self::Gonka => "gonka",
+            Self::Crater => "crater",
+            Self::Codex => "codex",
+            Self::Gemini => "gemini",
+            Self::Qwen => "qwen",
+            Self::OpenAICompatible => "openai-compatible",
+        }
+    }
 }
 
 /// Supported upstream API formats accepted by the router.
@@ -190,6 +204,8 @@ pub struct Config {
     /// Upstream model used when an Anthropic-dialect request is bridged to a
     /// non-Anthropic upstream. `None` falls back to a per-provider default.
     pub bridge_model: Option<String>,
+    /// Path of the append-only per-token audit log. `None` disables auditing.
+    pub audit_log: Option<String>,
     /// Crater `ForgeFed` task provider configuration.
     pub crater: crate::crater::CraterConfig,
     /// Generic OpenAI-compatible provider config for `LiteLLM` and similar
@@ -268,6 +284,7 @@ impl Config {
         let bridge_model = env::var("ANTHROPIC_BRIDGE_MODEL")
             .ok()
             .filter(|s| !s.is_empty());
+        let audit_log = env::var("AUDIT_LOG").ok().filter(|s| !s.is_empty());
         let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
             .unwrap_or_else(|_| format!("http://{host}:{port}"));
         let crater_actor = env::var("CRATER_FORGEFED_ACTOR")
@@ -371,6 +388,7 @@ impl Config {
             gonka_source_url,
             gonka_model,
             bridge_model,
+            audit_log,
             crater,
             openai_compatible,
             activitypub_actor_base_url,
@@ -433,6 +451,7 @@ impl Config {
             gonka_source_url: args.gonka_source_url.trim_end_matches('/').to_string(),
             gonka_model: args.gonka_model,
             bridge_model: args.bridge_model.filter(|s| !s.is_empty()),
+            audit_log: args.audit_log.filter(|s| !s.is_empty()),
             crater: args.crater,
             openai_compatible: args.openai_compatible,
             activitypub_actor_base_url: args
@@ -473,6 +492,7 @@ pub struct BuildArgs<'a> {
     pub gonka_source_url: String,
     pub gonka_model: String,
     pub bridge_model: Option<String>,
+    pub audit_log: Option<String>,
     pub crater: crate::crater::CraterConfig,
     pub openai_compatible: crate::providers::OpenAICompatibleConfig,
     pub activitypub_actor_base_url: String,
@@ -671,6 +691,7 @@ mod tests {
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
             bridge_model: None,
+            audit_log: None,
             crater: default_crater_config("https://router.example"),
             openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
@@ -808,6 +829,7 @@ mod tests {
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
             bridge_model: None,
+            audit_log: None,
             crater: default_crater_config("https://router.example"),
             openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
@@ -845,6 +867,7 @@ mod tests {
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
             bridge_model: None,
+            audit_log: None,
             crater: default_crater_config("https://router.example"),
             openai_compatible: default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),

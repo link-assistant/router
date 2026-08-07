@@ -50,6 +50,8 @@ pub struct AppState {
     pub admin_key: Option<String>,
     /// Live metrics counter handle.
     pub metrics: Arc<crate::metrics::Metrics>,
+    /// Append-only per-token audit log (disabled unless a path is configured).
+    pub audit: Arc<crate::audit::AuditLog>,
     /// Public base URL for `ActivityPub` actor documents.
     pub activitypub_actor_base_url: String,
     /// Public key PEM advertised by the `ActivityPub` actor.

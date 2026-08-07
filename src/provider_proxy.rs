@@ -146,13 +146,27 @@ pub async fn forward_openai_compatible(
             "Missing Authorization Bearer token or x-api-key",
         );
     };
-    if let Err(e) = state.token_manager.validate_token(token) {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        return error_response(status, "authentication_error", &format!("{e}"));
+    let claims = match state.token_manager.validate_token(token) {
+        Ok(claims) => claims,
+        Err(e) => {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            return error_response(status, "authentication_error", &format!("{e}"));
+        }
+    };
+    // Per-token request budgets apply to every upstream, not just the
+    // subscription ones, so a task token cannot escape its cap by being
+    // pointed at an OpenAI-compatible gateway.
+    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+        return error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &format!("{e}"),
+        );
     }
+    crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let provider = match resolve_openai_compatible_provider(state) {
         Ok(provider) => provider,
