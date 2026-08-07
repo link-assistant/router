@@ -162,9 +162,13 @@ impl PtySession {
     }
 
     /// The last `limit` characters of the transcript, for error reporting.
+    ///
+    /// Credentials are stripped *before* truncation — this text is destined for
+    /// an API response or a log line, and the CLI prints the account token on
+    /// this very terminal. See [`crate::login_url::redact_secrets`].
     #[must_use]
     pub fn transcript_tail(&self, limit: usize) -> String {
-        let text = self.transcript();
+        let text = crate::login_url::redact_secrets(&self.transcript());
         let trimmed = text.trim();
         if trimmed.chars().count() <= limit {
             return trimmed.to_string();
