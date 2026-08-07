@@ -57,9 +57,9 @@ pub fn router(state: AppState) -> Router {
 /// Reject every admin-port API request that does not carry the admin
 /// credential, except the bootstrap routes and the UI assets themselves.
 ///
-/// The proxy-port check in [`crate::proxy::is_admin_authorised`] stays
-/// backwards compatible (open when nothing is configured); the admin port does
-/// not, because a UI without a credential is exactly what this must not be.
+/// The proxy-port check in [`crate::proxy::is_admin_authorised`] also accepts
+/// admin-scoped tokens and the flat `TOKEN_ADMIN_KEY`; the admin port accepts
+/// only the claimed credential, because that is the one the UI holds.
 async fn require_admin(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let path = request.uri().path();
     let is_api = path.starts_with("/api/");

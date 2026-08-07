@@ -37,6 +37,8 @@ fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
         provider_store: ProviderStore::open(data_dir, "test-secret").expect("provider store"),
         logger: log_lazy::LogLazy::new(),
         admin,
+        admin_key: None,
+        allow_anonymous_admin: false,
         metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
         audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
         activitypub_actor_base_url: "https://router.example".to_string(),

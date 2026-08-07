@@ -96,10 +96,10 @@ free a slot early.
 ## Who may call this
 
 These endpoints start a process inside your deployment, so they are **admin**
-endpoints: when `TOKEN_ADMIN_KEY` is set they require it as a Bearer credential,
-exactly like `/api/tokens/list`. When it is unset they are open, like the rest
-of the admin surface — see [self-hosting.md](self-hosting.md), which explains
-why you should set it.
+endpoints: they require an admin credential as a Bearer token, exactly like
+`/api/tokens/list` — either an admin-scoped `la_sk_…` token or the flat
+`TOKEN_ADMIN_KEY`. They are closed when neither is presented; see
+[self-hosting.md](self-hosting.md) for how to obtain one.
 
 If you authorize by mounting a credential file and never want this surface,
 remove it entirely:
@@ -114,9 +114,10 @@ With it disabled the routes are not registered at all, and requests to them are
 ## Requirements
 
 * **The CLI must exist in the image.** The flow drives `claude setup-token` by
-  default; the published image ships the Claude Code CLI and Node for exactly
-  this reason. Point it elsewhere with `--login-cli-command` /
-  `--login-cli-args` if you drive something else.
+  default, so in Docker use the `with-claude-cli` image variant — it ships the
+  Claude Code CLI and Node for exactly this reason, while the default image
+  stays minimal for mounted-credential deployments. Point it elsewhere with
+  `--login-cli-command` / `--login-cli-args` if you drive something else.
 * **`CLAUDE_CODE_HOME` must be writable.** This is checked *before* the URL is
   returned, so a read-only mount fails immediately rather than after the human
   has already finished the browser step.

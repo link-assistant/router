@@ -70,14 +70,28 @@ pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, "ok")
 }
 
+/// Decide whether a request may touch the administrative endpoints.
+///
+/// Thin HTTP wrapper over [`crate::admin_auth::admin_access_granted`], which
+/// documents and tests the rule itself.
 pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
-    // Backwards compatible: when no admin credential exists at all these
-    // endpoints stay open, as they were before admin credentials existed. Once
-    // one is provisioned or claimed, it is required.
-    if !state.admin.is_claimed() {
+    let provided = extract_bearer_token(headers);
+    // A credential claimed through the admin UI (see [`crate::admin`]) is an
+    // admin credential everywhere, not only on the admin port.
+    if provided.is_some_and(|token| state.admin.verify(token)) {
         return true;
     }
-    extract_bearer_token(headers).is_some_and(|token| state.admin.verify(token))
+    crate::admin_auth::admin_access_granted(
+        &state.token_manager,
+        provided,
+        state.admin_key.as_deref(),
+        state.allow_anonymous_admin,
+    )
+}
+
+/// Bearer credential presented for an administrative request, if any.
+pub(crate) fn extract_admin_bearer(headers: &HeaderMap) -> Option<&str> {
+    extract_bearer_token(headers)
 }
 
 fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {

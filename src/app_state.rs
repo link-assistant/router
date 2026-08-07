@@ -47,8 +47,14 @@ pub struct AppState {
     /// Lazy logger for verbose output.
     pub logger: LogLazy,
     /// Admin credential state: the optional deploy-time key plus the
-    /// first-visitor claim (see [`crate::admin`]).
+    /// first-visitor claim of the admin UI (see [`crate::admin`]).
     pub admin: Arc<crate::admin::AdminClaim>,
+    /// Optional flat bootstrap admin key (Bearer) accepted by the admin
+    /// endpoints alongside admin-scoped `la_sk_…` tokens.
+    pub admin_key: Option<String>,
+    /// Whether the admin endpoints stay open to unauthenticated callers.
+    /// Defaults to `false`; set only by an explicit `--allow-anonymous-admin`.
+    pub allow_anonymous_admin: bool,
     /// Live metrics counter handle.
     pub metrics: Arc<crate::metrics::Metrics>,
     /// Append-only per-token audit log (disabled unless a path is configured).

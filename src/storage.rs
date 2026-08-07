@@ -66,6 +66,12 @@ pub struct TokenRecord {
     /// Number of upstream requests already made with this token.
     #[serde(default)]
     pub used_requests: u64,
+    /// Privilege scope carried by the token. Empty (the default) means an
+    /// ordinary client token that may only proxy inference; `"admin"` marks a
+    /// credential that also unlocks the administrative endpoints. See
+    /// [`crate::token::ADMIN_SCOPE`].
+    #[serde(default)]
+    pub scope: String,
 }
 
 /// Errors a [`TokenStore`] can return.
@@ -476,6 +482,11 @@ fn encode_lino<'a>(records: impl IntoIterator<Item = &'a TokenRecord>) -> String
             out.push_str(&rec.used_requests.to_string());
             out.push(')');
         }
+        if !rec.scope.is_empty() {
+            out.push_str(" (scope ");
+            write_quoted(&mut out, &rec.scope);
+            out.push(')');
+        }
         out.push_str(")\n");
     }
     out
@@ -533,6 +544,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
     let mut account: Option<String> = None;
     let mut max_requests: Option<u64> = None;
     let mut used_requests: u64 = 0;
+    let mut scope = String::new();
     while let Some(field) = tokens.next_paren_group() {
         let mut inner = LinoTokens::new(field);
         let key = inner
@@ -586,6 +598,9 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
                     .parse()
                     .map_err(|e: std::num::ParseIntError| e.to_string())?;
             }
+            "scope" => {
+                scope = inner.next_string().unwrap_or_default();
+            }
             other => return Err(format!("unknown field: {other}")),
         }
     }
@@ -598,6 +613,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         account,
         max_requests,
         used_requests,
+        scope,
     })
 }
 
@@ -734,6 +750,7 @@ mod tests {
             account: Some("primary".into()),
             max_requests: None,
             used_requests: 0,
+            scope: String::new(),
         }
     }
 
@@ -775,6 +792,33 @@ mod tests {
         list.sort_by(|x, y| x.id.cmp(&y.id));
         assert_eq!(list.len(), 2);
         assert_eq!(list[1].id, "b");
+    }
+
+    #[test]
+    fn stores_persist_the_admin_scope() {
+        let dir = tempdir().unwrap();
+        let mut admin = sample_record("admin");
+        admin.scope = crate::token::ADMIN_SCOPE.to_string();
+
+        let text_path = dir.path().join("tokens.lino");
+        let text = TextTokenStore::open(&text_path).unwrap();
+        text.put(admin.clone()).unwrap();
+        text.put(sample_record("client")).unwrap();
+        let text = TextTokenStore::open(&text_path).unwrap();
+        assert_eq!(
+            text.get("admin").unwrap().unwrap().scope,
+            crate::token::ADMIN_SCOPE
+        );
+        assert!(text.get("client").unwrap().unwrap().scope.is_empty());
+
+        let bin_path = dir.path().join("tokens.bin");
+        let bin = BinaryTokenStore::open(&bin_path).unwrap();
+        bin.put(admin).unwrap();
+        let bin = BinaryTokenStore::open(&bin_path).unwrap();
+        assert_eq!(
+            bin.get("admin").unwrap().unwrap().scope,
+            crate::token::ADMIN_SCOPE
+        );
     }
 
     #[test]
@@ -836,6 +880,7 @@ mod tests {
             account: None,
             max_requests: Some(100),
             used_requests: 7,
+            scope: crate::token::ADMIN_SCOPE.to_string(),
         };
         let s = encode_lino(std::iter::once(&rec));
         let parsed = decode_lino(&s).unwrap();

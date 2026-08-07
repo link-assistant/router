@@ -8,6 +8,7 @@ pub mod accounts;
 pub mod activitypub;
 pub mod admin;
 pub mod admin_api;
+pub mod admin_auth;
 pub mod admin_config;
 pub mod admin_ui;
 pub mod anthropic_bridge;
