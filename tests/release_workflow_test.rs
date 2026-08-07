@@ -363,7 +363,7 @@ fn quoted_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
 /// closes that gap; see issue #48.
 #[test]
 fn dockerfile_offers_a_claude_cli_variant_without_bloating_the_default_image() {
-    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let dockerfile = read_lf("Dockerfile");
 
     assert!(
         dockerfile.contains("AS with-claude-cli"),
@@ -396,8 +396,7 @@ fn dockerfile_offers_a_claude_cli_variant_without_bloating_the_default_image() {
 
 #[test]
 fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
-        .expect("release workflow should be readable");
+    let workflow = read_lf(".github/workflows/release.yml");
 
     assert_eq!(
         workflow.matches("target: runtime").count(),
@@ -419,6 +418,16 @@ fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
         2,
         "the Claude CLI variant should also get a version-pinned tag"
     );
+}
+
+/// Read a repository file with line endings normalised to `\n`.
+///
+/// A Windows checkout may convert these files to CRLF, which would otherwise
+/// break the newline-anchored matching below.
+fn read_lf(path: &str) -> String {
+    fs::read_to_string(path)
+        .unwrap_or_else(|e| panic!("{path} should be readable: {e}"))
+        .replace("\r\n", "\n")
 }
 
 /// Extract the instructions of the named Dockerfile stage.
