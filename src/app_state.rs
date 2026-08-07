@@ -58,4 +58,6 @@ pub struct AppState {
     pub activitypub_public_key_pem: String,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
+    /// Registry of in-flight interactive login sessions (`/api/login`).
+    pub login_manager: crate::login::LoginManager,
 }

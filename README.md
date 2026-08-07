@@ -304,6 +304,18 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 | `/api/providers` | GET/POST | (admin) List or upsert OpenAI-compatible upstream providers |
 | `/api/providers/{name}` | GET/DELETE | (admin) Show or delete one provider |
 
+### Login surface (`--disable-login-api` to opt out)
+
+Authorizes a deployment that has no credential file — see
+[docs/use-cases/remote-login.md](docs/use-cases/remote-login.md).
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/login` | POST | (admin) Start a login; returns `login_id` and the URL the human must open |
+| `/api/login/{id}` | GET | (admin) Status: `awaiting_code`, `authorized`, `failed` or `expired` |
+| `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
+| `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
+
 ### Anthropic surface (`--disable-anthropic-api` to opt out)
 
 | Endpoint | Method | Description |
@@ -614,6 +626,11 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--disable-openai-api` / `DISABLE_OPENAI_API` | off | Hide `/v1/chat/completions`, `/v1/responses`, `/v1/models` |
 | `--disable-anthropic-api` / `DISABLE_ANTHROPIC_API` | off | Hide `/v1/messages*` and Bedrock paths |
 | `--disable-metrics` / `DISABLE_METRICS` | off | Hide `/metrics`, `/v1/usage`, `/v1/accounts` |
+| `--disable-login-api` / `DISABLE_LOGIN_API` | off | Hide `/api/login*` |
+| `--login-cli-command` / `LOGIN_CLI_COMMAND` | `claude` | Program `/api/login` drives on a PTY |
+| `--login-cli-args` / `LOGIN_CLI_ARGS` | `setup-token` | Comma-separated arguments for that program |
+| `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | How long a pending login waits for its code before expiring |
+| `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Maximum simultaneously pending logins; beyond it, `429` |
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
 | `--admin-key` / `TOKEN_ADMIN_KEY` | (open) | Bearer key required for `/api/tokens*` admin endpoints |
 | `--mpp-enable` / `MPP_ENABLE` | off | Return MPP `402 Payment Required` challenges on OpenAI endpoints |

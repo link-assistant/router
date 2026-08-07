@@ -21,6 +21,8 @@ use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
+use link_assistant_router::login::LoginManager;
+use link_assistant_router::login_api;
 use link_assistant_router::metrics::Metrics;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::provider_proxy;
@@ -232,6 +234,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
         mpp: config.mpp.clone(),
+        login_manager: LoginManager::new(config.login.clone()),
     };
 
     let mut app = Router::new()
@@ -255,6 +258,18 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             "/api/providers/{name}",
             get(provider_proxy::show_provider).delete(provider_proxy::delete_provider),
         );
+
+    if config.login.enabled {
+        // Interactive login sessions outlive the request that starts them, so
+        // the registry lives in `AppState`, not in the handler.
+        app = app
+            .route("/api/login", post(login_api::begin_login))
+            .route(
+                "/api/login/{id}",
+                get(login_api::login_status).delete(login_api::cancel_login),
+            )
+            .route("/api/login/{id}/code", post(login_api::submit_code));
+    }
 
     if config.enable_anthropic_api {
         app = app
@@ -617,6 +632,19 @@ fn run_doctor(config: &Config) -> ExitCode {
         } else {
             "<unset>"
         }
+    );
+    println!(
+        "login_api              : {}",
+        if config.login.enabled {
+            "enabled (POST /api/login)"
+        } else {
+            "disabled"
+        }
+    );
+    println!(
+        "login_cli              : {} {}",
+        config.login.command,
+        config.login.args.join(" ")
     );
     println!(
         "mpp_openai_charge      : {}",

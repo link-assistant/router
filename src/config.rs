@@ -242,6 +242,8 @@ pub struct Config {
     pub admin_key: Option<String>,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
+    /// Interactive login API settings (`/api/login`).
+    pub login: crate::login::LoginConfig,
 }
 
 impl Config {
@@ -362,6 +364,19 @@ impl Config {
         let experimental_compatibility = env::var("EXPERIMENTAL_COMPATIBILITY")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
+        let login = crate::login::LoginConfig {
+            enabled: env::var("ENABLE_LOGIN_API").map_or(true, |v| {
+                !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
+            }),
+            command: env::var("LOGIN_CLI_COMMAND").unwrap_or_else(|_| "claude".to_string()),
+            args: env::var("LOGIN_CLI_ARGS")
+                .ok()
+                .filter(|raw| !raw.trim().is_empty())
+                .map_or_else(|| vec!["setup-token".to_string()], |raw| parse_csv(&raw)),
+            session_ttl: Duration::from_secs(parse_u64_env("LOGIN_SESSION_TTL_SECS", 900)),
+            max_sessions: usize::try_from(parse_u64_env("LOGIN_MAX_SESSIONS", 4)).unwrap_or(4),
+            ..crate::login::LoginConfig::default()
+        };
         let mpp = crate::mpp::MppConfig {
             enabled: env::var("MPP_ENABLE")
                 .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON")),
@@ -404,6 +419,7 @@ impl Config {
             experimental_compatibility,
             admin_key,
             mpp,
+            login,
         })
     }
 
@@ -470,6 +486,10 @@ impl Config {
             experimental_compatibility: args.experimental_compatibility,
             admin_key: args.admin_key,
             mpp: args.mpp,
+            login: crate::login::LoginConfig {
+                claude_code_home: PathBuf::from(args.claude_code_home),
+                ..args.login
+            },
         })
     }
 }
@@ -508,6 +528,9 @@ pub struct BuildArgs<'a> {
     pub experimental_compatibility: bool,
     pub admin_key: Option<String>,
     pub mpp: crate::mpp::MppConfig,
+    /// Interactive login settings. `claude_code_home` is overwritten by
+    /// [`Config::build`] so the login flow always writes where the router reads.
+    pub login: crate::login::LoginConfig,
 }
 
 /// Default disabled MPP configuration.
@@ -707,6 +730,7 @@ mod tests {
             experimental_compatibility: false,
             admin_key: None,
             mpp: default_mpp_config(),
+            login: crate::login::LoginConfig::default(),
         })
     }
 
@@ -845,6 +869,7 @@ mod tests {
             experimental_compatibility: false,
             admin_key: None,
             mpp: default_mpp_config(),
+            login: crate::login::LoginConfig::default(),
         }
     }
 
@@ -883,6 +908,7 @@ mod tests {
             experimental_compatibility: false,
             admin_key: None,
             mpp: default_mpp_config(),
+            login: crate::login::LoginConfig::default(),
         });
         assert!(result.is_err());
     }
