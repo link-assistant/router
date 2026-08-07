@@ -30,6 +30,20 @@ use crate::config::{
     default_activitypub_public_key_pem, default_data_dir,
 };
 
+/// Parse a boolean switch that may also arrive from the environment.
+///
+/// Clap's plain `bool` accepts only `true`/`false` from an env var, which makes
+/// the `=1` spelling used throughout the deployment docs a hard startup error.
+fn parse_truthy(value: &str) -> Result<bool, String> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Ok(true),
+        "0" | "false" | "no" | "off" | "" => Ok(false),
+        other => Err(format!(
+            "expected a boolean (1/0, true/false), got '{other}'"
+        )),
+    }
+}
+
 /// Top-level CLI parser.
 #[derive(Debug, LinoParser)]
 #[command(
@@ -271,9 +285,30 @@ pub struct Cli {
     #[arg(long, env = "EXPERIMENTAL_COMPATIBILITY", global = true)]
     pub experimental_compatibility: bool,
 
-    /// Bearer key required by `/api/tokens` and admin endpoints.
+    /// Flat bootstrap Bearer key accepted by the admin endpoints alongside
+    /// admin-scoped `la_sk_...` tokens.
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true)]
     pub admin_key: Option<String>,
+
+    /// Leave the admin endpoints (`/api/tokens*`, `/api/providers*`,
+    /// `/api/login*`) open to unauthenticated callers.
+    ///
+    /// Off by default. Without it, a deployment that configures no admin
+    /// credential mints a one-off admin token at startup and prints it once.
+    ///
+    /// Accepted as a bare flag, and from the environment as `1`/`0`,
+    /// `true`/`false`, `yes`/`no` or `on`/`off` — clap's plain `bool` would
+    /// reject the `=1` spelling every other switch in the deployment docs uses.
+    #[arg(
+        long,
+        env = "ALLOW_ANONYMOUS_ADMIN",
+        global = true,
+        num_args = 0..=1,
+        default_value_t = false,
+        default_missing_value = "true",
+        value_parser = parse_truthy,
+    )]
+    pub allow_anonymous_admin: bool,
 
     /// Enable MPP 402 charge challenges on OpenAI-compatible endpoints.
     #[arg(long, env = "MPP_ENABLE", global = true)]
@@ -370,6 +405,19 @@ pub enum TokenOp {
         /// Omit for an unlimited token.
         #[arg(long)]
         max_requests: Option<u64>,
+        /// Issue an administrative token (`scope: admin`) that unlocks the
+        /// admin endpoints instead of only the inference proxy.
+        #[arg(long)]
+        admin: bool,
+    },
+    /// Replace an administrative token: issue a new one and revoke the old.
+    Rotate {
+        /// Subject id (`sub`) of the admin token being replaced.
+        id: String,
+        #[arg(long, default_value_t = 24)]
+        ttl_hours: i64,
+        #[arg(long, default_value = "")]
+        label: String,
     },
     /// List all known tokens.
     List,
@@ -519,6 +567,7 @@ impl Cli {
             account_request_limits: self.account_request_limits.clone(),
             experimental_compatibility: self.experimental_compatibility,
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
+            allow_anonymous_admin: self.allow_anonymous_admin,
             login: crate::login::LoginConfig {
                 enabled: !self.disable_login_api,
                 command: self.login_cli_command.clone(),
@@ -589,6 +638,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp_enable: false,
             mpp_amount: "0.00".into(),
             mpp_currency: "USD".into(),
@@ -653,6 +703,7 @@ mod tests {
             account_request_limits: vec![],
             experimental_compatibility: false,
             admin_key: None,
+            allow_anonymous_admin: false,
             mpp_enable: false,
             mpp_amount: "0.00".into(),
             mpp_currency: "USD".into(),

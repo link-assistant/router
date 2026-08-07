@@ -30,7 +30,7 @@ use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::{self, AppState};
 use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
-use link_assistant_router::token::TokenManager;
+use link_assistant_router::token::{ADMIN_SCOPE, IssueRequest, TokenManager};
 use link_assistant_router::token_admin;
 use log_lazy::{LogLazy, levels};
 use tower_http::trace::TraceLayer;
@@ -148,6 +148,58 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
     Ok((store, account_router))
 }
 
+/// TTL of the admin token minted on first start, in hours (one year).
+const BOOTSTRAP_ADMIN_TTL_HOURS: i64 = 24 * 365;
+
+/// Label recorded on the auto-generated bootstrap admin token.
+const BOOTSTRAP_ADMIN_LABEL: &str = "bootstrap-admin";
+
+/// Make sure the deployment starts with a closed, reachable admin surface.
+///
+/// A fresh deployment that configures no admin credential would otherwise
+/// have to choose between "open to everyone" and "impossible to administer".
+/// Instead we mint one admin-scoped token and print it once — the pattern used
+/// by most self-hosted services. Nothing is minted when the operator already
+/// provisioned a credential externally (`TOKEN_ADMIN_KEY`), when a usable
+/// admin token already exists in the store, or when anonymous admin access was
+/// explicitly opted into.
+fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
+    if config.allow_anonymous_admin {
+        tracing::warn!(
+            "--allow-anonymous-admin is set: /api/tokens*, /api/providers* and /api/login* accept unauthenticated requests"
+        );
+        return;
+    }
+    if config.admin_key.is_some() {
+        tracing::info!("Admin access: TOKEN_ADMIN_KEY configured (bootstrap credential)");
+        return;
+    }
+    match token_manager.has_active_admin_token() {
+        Ok(true) => {
+            tracing::info!("Admin access: existing admin token found in the token store");
+            return;
+        }
+        Ok(false) => {}
+        Err(e) => {
+            tracing::warn!("could not inspect the token store for admin tokens: {e}");
+            return;
+        }
+    }
+    match token_manager.issue_admin_token(BOOTSTRAP_ADMIN_TTL_HOURS, BOOTSTRAP_ADMIN_LABEL) {
+        Ok(token) => {
+            // Printed to stdout as well as the log: this value is shown once
+            // and never recoverable afterwards (only its metadata is stored).
+            println!("─────────────────────────────────────────────────────────────");
+            println!("Admin token (shown once, store it now): {token}");
+            println!("Use it as: Authorization: Bearer <token>");
+            println!("Rotate it with: link-assistant-router tokens rotate <id>");
+            println!("─────────────────────────────────────────────────────────────");
+            tracing::info!("Generated a bootstrap admin token; admin endpoints are closed");
+        }
+        Err(e) => tracing::error!("failed to generate a bootstrap admin token: {e}"),
+    }
+}
+
 async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Upstream: {}", config.upstream_base_url);
     tracing::info!("Upstream provider: {:?}", config.upstream_provider);
@@ -171,6 +223,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     }
 
     let token_manager = TokenManager::with_store(&config.token_secret, store);
+    announce_admin_access(&config, &token_manager);
     let oauth_provider = OAuthProvider::new(&config.claude_code_home);
     let metrics = Arc::new(Metrics::default());
     let provider_store = ProviderStore::open(&config.data_dir, &config.token_secret)?;
@@ -230,6 +283,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         provider_store,
         logger,
         admin_key: config.admin_key.clone(),
+        allow_anonymous_admin: config.allow_anonymous_admin,
         metrics: Arc::clone(&metrics),
         activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
@@ -250,6 +304,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         .route("/api/tokens", post(token_admin::issue_token))
         .route("/api/tokens/list", get(token_admin::list_tokens))
         .route("/api/tokens/revoke", post(token_admin::revoke_token))
+        .route("/api/tokens/rotate", post(token_admin::rotate_admin_token))
         .route(
             "/api/providers",
             get(provider_proxy::list_providers).post(provider_proxy::upsert_provider),
@@ -358,9 +413,31 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             label,
             account,
             max_requests,
-        } => match mgr.issue_token_full(*ttl_hours, label, account.as_deref(), *max_requests) {
+            admin,
+        } => match mgr.issue(&IssueRequest {
+            ttl_hours: *ttl_hours,
+            label,
+            account: account.as_deref(),
+            max_requests: *max_requests,
+            scope: if *admin { ADMIN_SCOPE } else { "" },
+        }) {
             Ok(t) => {
                 println!("{t}");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        TokenOp::Rotate {
+            id,
+            ttl_hours,
+            label,
+        } => match mgr.rotate_admin_token(id, *ttl_hours, label) {
+            Ok(t) => {
+                println!("{t}");
+                eprintln!("revoked {id}");
                 ExitCode::SUCCESS
             }
             Err(e) => {
@@ -371,16 +448,21 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
         TokenOp::List => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
-                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  label",
-                    "id", "issued_at", "expires_at", "revoked", "requests"
+                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<6}  label",
+                    "id", "issued_at", "expires_at", "revoked", "requests", "scope"
                 );
                 for r in records {
                     let requests = r.max_requests.map_or_else(
                         || format!("{}/-", r.used_requests),
                         |max| format!("{}/{max}", r.used_requests),
                     );
+                    let scope = if r.scope.is_empty() {
+                        "client"
+                    } else {
+                        r.scope.as_str()
+                    };
                     println!(
-                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {}",
+                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {scope:<6}  {}",
                         r.id, r.issued_at, r.expires_at, r.revoked, requests, r.label
                     );
                 }
@@ -631,6 +713,14 @@ fn run_doctor(config: &Config) -> ExitCode {
             "set"
         } else {
             "<unset>"
+        }
+    );
+    println!(
+        "admin_endpoints        : {}",
+        if config.allow_anonymous_admin {
+            "OPEN (--allow-anonymous-admin)"
+        } else {
+            "closed (admin key or admin-scoped token required)"
         }
     );
     println!(

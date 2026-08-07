@@ -298,9 +298,10 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 | Endpoint | Method | Description |
 |---|---|---|
 | `/health` | GET | Health check, returns `ok` |
-| `/api/tokens` | POST | Issue a new custom token |
+| `/api/tokens` | POST | (admin) Issue a new custom token |
 | `/api/tokens/list` | GET | (admin) List every persisted token |
 | `/api/tokens/revoke` | POST | (admin) Revoke a token by id |
+| `/api/tokens/rotate` | POST | (admin) Issue a replacement admin token and revoke the caller's own |
 | `/api/providers` | GET/POST | (admin) List or upsert OpenAI-compatible upstream providers |
 | `/api/providers/{name}` | GET/DELETE | (admin) Show or delete one provider |
 
@@ -417,6 +418,7 @@ Issue a new custom JWT token.
 |---|---|---|---|
 | `ttl_hours` | integer | 24 | Token lifetime in hours |
 | `label` | string | `""` | Optional human-readable label |
+| `scope` | string | `""` | `"admin"` mints a credential that also unlocks the admin endpoints; omit for an ordinary client token |
 
 **Response:**
 
@@ -632,7 +634,8 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | How long a pending login waits for its code before expiring |
 | `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Maximum simultaneously pending logins; beyond it, `429` |
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
-| `--admin-key` / `TOKEN_ADMIN_KEY` | (open) | Bearer key required for `/api/tokens*` admin endpoints |
+| `--admin-key` / `TOKEN_ADMIN_KEY` | — | Flat bootstrap Bearer key accepted by `/api/tokens*` alongside admin-scoped tokens |
+| `--allow-anonymous-admin` / `ALLOW_ANONYMOUS_ADMIN` | off | Opt back into unauthenticated `/api/tokens*` access (**not recommended**) |
 | `--mpp-enable` / `MPP_ENABLE` | off | Return MPP `402 Payment Required` challenges on OpenAI endpoints |
 | `--mpp-amount` / `MPP_AMOUNT` | `0.00` | Per-request MPP charge amount |
 | `--mpp-currency` / `MPP_CURRENCY` | `USD` | Currency or asset for MPP charges |
@@ -709,6 +712,7 @@ The default image intentionally contains no Claude CLI. What it can and cannot d
 | Serve requests with a valid access token | No | `:ro` |
 | Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` |
 | **First-time login** (no credential file yet) | Yes | writable |
+| `POST /api/login` (remote login over HTTP) | Yes — it drives `claude setup-token` | writable |
 
 Renewal happens in memory: the router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and keeps the result in RAM. The credential file is never written to, which is why `:ro` keeps working across expiry — and why a restarted container refreshes again from the same file. The same mechanism already covers Codex, Gemini, and Qwen.
 
@@ -859,9 +863,60 @@ Tokens are standard HS256 JWTs with the `la_sk_` prefix. The JWT payload contain
   "sub": "550e8400-e29b-41d4-a716-446655440000",
   "iat": 1710806400,
   "exp": 1710892800,
-  "label": "my-token"
+  "label": "my-token",
+  "scope": "admin"
 }
 ```
+
+`scope` is absent (or empty) on an ordinary client token and `"admin"` on an
+administrative one — see [Admin access](#admin-access).
+
+### Admin access
+
+The `/api/tokens*` endpoints — and every other endpoint marked *(admin)* above
+— are **closed by default**. Three things can open them:
+
+1. **An admin-scoped token.** It is an ordinary `la_sk_…` JWT carrying
+   `"scope": "admin"`, so it expires, has an identity (`sub`), shows up in
+   `tokens list`, and can be revoked and rotated like any other token.
+
+   ```bash
+   # CLI
+   link-assistant-router tokens issue --admin --ttl-hours 168 --label ops
+   # HTTP (from an existing admin credential)
+   curl -s -X POST http://localhost:8080/api/tokens \
+     -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
+     -d '{"ttl_hours": 168, "label": "ops", "scope": "admin"}' | jq -r .token
+   ```
+
+   Rotation is a single step — mint the replacement and revoke the credential
+   that asked for it:
+
+   ```bash
+   link-assistant-router tokens rotate <sub> --ttl-hours 168 --label ops
+   curl -s -X POST http://localhost:8080/api/tokens/rotate \
+     -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" -d '{}' | jq .
+   ```
+
+2. **The flat `--admin-key` / `TOKEN_ADMIN_KEY`.** Still supported unchanged as
+   a bootstrap and compatibility credential for deployments that configure
+   everything externally, and now compared in constant time. It carries no
+   identity or expiry, so it cannot rotate itself (`/api/tokens/rotate` answers
+   `400`); prefer an admin-scoped token for day-to-day use.
+
+3. **Nothing at all** — only if you pass `--allow-anonymous-admin`
+   (`ALLOW_ANONYMOUS_ADMIN=1`). This restores the historical wide-open
+   behaviour and is logged as a warning at startup.
+
+When neither an admin key nor an active admin token exists, the router mints
+one on startup and prints it **once**:
+
+```
+Admin token (shown once, store it now): la_sk_eyJ0eXAi...
+```
+
+A client token presented to an admin endpoint is rejected: authorisation is by
+scope, not by "any valid token".
 
 ### Per-token request budget
 
