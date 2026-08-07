@@ -46,6 +46,7 @@ async-trait = "0.1"
 sha2 = "0.11"
 hex = "0.4"
 aes-gcm = "0.10"
+portable-pty = "0.9"
 
 [dev-dependencies]
 tokio-test = "0.4"

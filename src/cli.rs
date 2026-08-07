@@ -294,6 +294,42 @@ pub struct Cli {
     /// Optional MPP payment method identifier, such as tempo or stripe.
     #[arg(long, env = "MPP_METHOD", global = true)]
     pub mpp_method: Option<String>,
+
+    /// Disable the interactive login API (`/api/login`).
+    #[arg(long, env = "DISABLE_LOGIN_API", global = true)]
+    pub disable_login_api: bool,
+
+    /// Program the login API drives on a PTY.
+    #[arg(
+        long,
+        env = "LOGIN_CLI_COMMAND",
+        default_value = "claude",
+        global = true
+    )]
+    pub login_cli_command: String,
+
+    /// Arguments passed to the login program.
+    #[arg(
+        long,
+        env = "LOGIN_CLI_ARGS",
+        value_delimiter = ',',
+        default_value = "setup-token",
+        global = true
+    )]
+    pub login_cli_args: Vec<String>,
+
+    /// How long a pending login stays valid while waiting for the human.
+    #[arg(
+        long,
+        env = "LOGIN_SESSION_TTL_SECS",
+        default_value = "900",
+        global = true
+    )]
+    pub login_session_ttl_secs: u64,
+
+    /// Maximum number of simultaneously pending logins.
+    #[arg(long, env = "LOGIN_MAX_SESSIONS", default_value = "4", global = true)]
+    pub login_max_sessions: usize,
 }
 
 /// Subcommands.
@@ -483,6 +519,14 @@ impl Cli {
             account_request_limits: self.account_request_limits.clone(),
             experimental_compatibility: self.experimental_compatibility,
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
+            login: crate::login::LoginConfig {
+                enabled: !self.disable_login_api,
+                command: self.login_cli_command.clone(),
+                args: self.login_cli_args.clone(),
+                session_ttl: Duration::from_secs(self.login_session_ttl_secs),
+                max_sessions: self.login_max_sessions,
+                ..crate::login::LoginConfig::default()
+            },
             mpp: crate::mpp::MppConfig {
                 enabled: self.mpp_enable,
                 amount: self.mpp_amount.clone(),
@@ -550,6 +594,11 @@ mod tests {
             mpp_currency: "USD".into(),
             mpp_recipient: None,
             mpp_method: None,
+            disable_login_api: false,
+            login_cli_command: "claude".into(),
+            login_cli_args: vec!["setup-token".into()],
+            login_session_ttl_secs: 900,
+            login_max_sessions: 4,
         };
         let cfg = cli.into_config().unwrap();
         assert_eq!(cfg.listen_addr.port(), 9090);
@@ -609,6 +658,11 @@ mod tests {
             mpp_currency: "USD".into(),
             mpp_recipient: None,
             mpp_method: None,
+            disable_login_api: false,
+            login_cli_command: "claude".into(),
+            login_cli_args: vec!["setup-token".into()],
+            login_session_ttl_secs: 900,
+            login_max_sessions: 4,
         };
         let r = cli.into_config();
         assert!(matches!(r, Err(ConfigError::InvalidRoutingMode)));

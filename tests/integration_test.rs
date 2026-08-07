@@ -376,6 +376,7 @@ mod config_verbose_tests {
             experimental_compatibility: false,
             admin_key: None,
             mpp: link_assistant_router::config::default_mpp_config(),
+            login: link_assistant_router::login::LoginConfig::default(),
         }
     }
 
