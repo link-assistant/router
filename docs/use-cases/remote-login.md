@@ -96,10 +96,10 @@ free a slot early.
 ## Who may call this
 
 These endpoints start a process inside your deployment, so they are **admin**
-endpoints: when `TOKEN_ADMIN_KEY` is set they require it as a Bearer credential,
-exactly like `/api/tokens/list`. When it is unset they are open, like the rest
-of the admin surface — see [self-hosting.md](self-hosting.md), which explains
-why you should set it.
+endpoints: they require an admin credential as a Bearer token, exactly like
+`/api/tokens/list` — either an admin-scoped `la_sk_…` token or the flat
+`TOKEN_ADMIN_KEY`. They are closed when neither is presented; see
+[self-hosting.md](self-hosting.md) for how to obtain one.
 
 If you authorize by mounting a credential file and never want this surface,
 remove it entirely:

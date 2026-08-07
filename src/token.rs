@@ -298,6 +298,18 @@ impl TokenManager {
         ttl_hours: i64,
         label: &str,
     ) -> Result<String, TokenError> {
+        // `revoke_token` is idempotent and reports nothing for an unknown id,
+        // so check first: a typo must not hand back a fresh credential while
+        // silently leaving the old one live.
+        if !self
+            .list_tokens()?
+            .iter()
+            .any(|record| record.id == current_sub)
+        {
+            return Err(TokenError::Invalid(format!(
+                "unknown token id {current_sub}"
+            )));
+        }
         let replacement = self
             .issue_admin_token(ttl_hours, label)
             .map_err(|e| TokenError::Invalid(e.to_string()))?;
@@ -616,6 +628,18 @@ mod tests {
         assert_ne!(new_claims.sub, old_claims.sub);
         assert!(matches!(mgr.validate_token(&old), Err(TokenError::Revoked)));
         assert!(mgr.has_active_admin_token().expect("should query"));
+    }
+
+    #[test]
+    fn test_rotate_admin_token_rejects_an_unknown_subject() {
+        let mgr = test_manager();
+        let live = mgr.issue_admin_token(1, "ops").expect("should issue");
+
+        assert!(mgr.rotate_admin_token("not-an-id", 1, "typo").is_err());
+        // The existing credential must survive a failed rotation, and no
+        // replacement may have been handed out.
+        assert!(mgr.validate_admin_token(&live).is_ok());
+        assert_eq!(mgr.list_tokens().expect("should list").len(), 1);
     }
 
     #[test]

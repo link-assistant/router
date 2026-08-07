@@ -73,17 +73,26 @@ docker image inspect "$IMAGE" >/dev/null 2>&1 ||
 start la-router-open "$OPEN_PORT" && check "starts with no subscription mounted" ok ||
   check "starts with no subscription mounted" "never became healthy"
 
-# --- TOKEN_ADMIN_KEY unset: the admin surface is OPEN ----------------------
+# --- TOKEN_ADMIN_KEY unset: the admin surface is CLOSED (issue #49) --------
 OPEN_ISSUE=$(curl -s -o /tmp/issue45-open.json -w '%{http_code}' \
   -X POST "http://127.0.0.1:$OPEN_PORT/api/tokens" \
   -H 'Content-Type: application/json' -d '{"ttl_hours":1,"label":"unauthenticated"}')
-expect_status "without TOKEN_ADMIN_KEY anyone can mint a token" 200 "$OPEN_ISSUE"
+expect_status "without an admin credential nobody can mint a token" 401 "$OPEN_ISSUE"
 OPEN_TOKEN=$(python3 -c 'import json;print(json.load(open("/tmp/issue45-open.json")).get("token",""))')
-[[ "$OPEN_TOKEN" == la_sk_* ]] && check "the unauthenticated mint really returns a usable token" ok ||
-  check "the unauthenticated mint really returns a usable token" "no la_sk_ token"
+[[ -z "$OPEN_TOKEN" ]] && check "the rejected mint returns no token" ok ||
+  check "the rejected mint returns no token" "got $OPEN_TOKEN"
 
 OPEN_LIST=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$OPEN_PORT/api/tokens/list")
-expect_status "without TOKEN_ADMIN_KEY the token list is readable" 200 "$OPEN_LIST"
+expect_status "without an admin credential the token list is not readable" 401 "$OPEN_LIST"
+
+# The router mints a bootstrap admin token instead and prints it once.
+BOOTSTRAP=$(docker logs la-router-open 2>&1 | sed -n 's/.*Admin token (shown once, store it now): //p' | tail -1)
+[[ "$BOOTSTRAP" == la_sk_* ]] && check "a bootstrap admin token is printed at startup" ok ||
+  check "a bootstrap admin token is printed at startup" "no token in the logs"
+
+BOOTSTRAP_LIST=$(curl -s -o /dev/null -w '%{http_code}' \
+  -H "Authorization: Bearer $BOOTSTRAP" "http://127.0.0.1:$OPEN_PORT/api/tokens/list")
+expect_status "the bootstrap admin token opens the admin surface" 200 "$BOOTSTRAP_LIST"
 
 # --- TOKEN_ADMIN_KEY set: every admin route requires it --------------------
 start la-router-keyed "$KEYED_PORT" -e "TOKEN_ADMIN_KEY=$ADMIN_KEY" ||

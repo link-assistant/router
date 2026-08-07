@@ -16,25 +16,43 @@ so no request reaches an upstream.
 
 ## The one thing to get right
 
-`POST /api/tokens` mints `la_sk_…` tokens that spend your subscription. **When
-`TOKEN_ADMIN_KEY` is unset, that endpoint is open** — anyone who can reach the
-port can mint themselves a working token, and list every token you have issued:
+`POST /api/tokens` mints `la_sk_…` tokens that spend your subscription, so it —
+and every other `/api/tokens*` endpoint — is **closed by default**. An
+unauthenticated call is refused:
 
 ```console
 $ curl -X POST http://router:8080/api/tokens -d '{"ttl_hours":1,"label":"anyone"}'
-{"token":"la_sk_…","ttl_hours":1,"label":"anyone", …}      # 200, no credential sent
+{"error":{"type":"authentication_error", …}}              # 401, no credential sent
 ```
 
-The default bind address is `0.0.0.0`, so in a container with a published port
-this is reachable from outside the host. Set an admin key:
+Historically the endpoint was open whenever `TOKEN_ADMIN_KEY` was unset — the
+default bind address is `0.0.0.0`, so in a container with a published port
+anyone who could reach it could mint themselves a working token and list every
+token you had issued. That default is gone.
+
+If you configure nothing, the router mints an admin credential on first start
+and prints it once:
+
+```
+Admin token (shown once, store it now): la_sk_eyJ0eXAi...
+```
+
+That token is an ordinary `la_sk_…` JWT with `"scope": "admin"`: it expires, it
+is listed by `tokens list`, and it can be revoked or rotated
+(`POST /api/tokens/rotate` mints a replacement and revokes the caller's own
+subject in one step). Issue more with `tokens issue --admin` or
+`{"scope":"admin"}`.
+
+The flat key still works as a bootstrap credential when you provision
+everything externally, and is now compared in constant time:
 
 ```bash
 TOKEN_ADMIN_KEY="$(openssl rand -hex 32)"
 ```
 
-With it set, issuing, listing and revoking all require it as a Bearer
-credential; a missing or wrong key is `401`, and a rejected revoke is a **no-op**
-— an outsider cannot cancel a running task's token:
+Either way, issuing, listing and revoking all require a credential as a Bearer
+token; a missing or wrong one is `401`, and a rejected revoke is a **no-op** —
+an outsider cannot cancel a running task's token:
 
 | Request | Result |
 | --- | --- |
@@ -42,12 +60,17 @@ credential; a missing or wrong key is `401`, and a rejected revoke is a **no-op*
 | `GET /api/tokens/list` with no key | `401` |
 | `POST /api/tokens/revoke` with no key | `401`, and the token stays valid |
 | any of the above with `Authorization: Bearer $TOKEN_ADMIN_KEY` | `200` |
+| any of the above with an admin-scoped `la_sk_…` token | `200` |
+
+`--allow-anonymous-admin` (`ALLOW_ANONYMOUS_ADMIN=1`) restores the old open
+behaviour. It exists only so an existing deployment that depends on it is not
+broken by an upgrade; do not use it on a reachable port.
 
 ### The two secrets are not interchangeable
 
 | Secret | Held by | Grants |
 | --- | --- | --- |
-| `TOKEN_ADMIN_KEY` | the operator | minting, listing, revoking task tokens |
+| `TOKEN_ADMIN_KEY` or an admin-scoped token | the operator | minting, listing, revoking task tokens |
 | `la_sk_…` task token | one task | proxied inference, within that token's TTL and budget |
 
 They do not substitute for each other: a task token presented to
@@ -141,9 +164,10 @@ One token per task keeps the audit trail attributable — see
 ## Checklist before exposing the port
 
 - [ ] `TOKEN_SECRET` set to a random value, not a default.
-- [ ] `TOKEN_ADMIN_KEY` set — otherwise `/api/tokens` is open.
+- [ ] An admin credential in hand — the bootstrap token printed at first start,
+      or `TOKEN_ADMIN_KEY` set. Never `--allow-anonymous-admin`.
 - [ ] `ROUTER_HOST=127.0.0.1`, or a published port restricted to loopback,
-      unless the admin key is set and TLS terminates in front.
+      unless an admin credential is required and TLS terminates in front.
 - [ ] `AUDIT_LOG` pointed somewhere durable.
 - [ ] The subscription directory mounted **read-only**.
 - [ ] Tokens issued with a `--max-requests` budget and a short TTL.

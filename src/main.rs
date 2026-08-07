@@ -190,8 +190,7 @@ fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
             // Printed to stdout as well as the log: this value is shown once
             // and never recoverable afterwards (only its metadata is stored).
             println!("─────────────────────────────────────────────────────────────");
-            println!("Admin token (shown once, store it now):");
-            println!("  {token}");
+            println!("Admin token (shown once, store it now): {token}");
             println!("Use it as: Authorization: Bearer <token>");
             println!("Rotate it with: link-assistant-router tokens rotate <id>");
             println!("─────────────────────────────────────────────────────────────");
