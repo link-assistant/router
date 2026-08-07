@@ -1,7 +1,7 @@
-[2m2026-08-07T12:49:30.446788Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Link.Assistant.Router v0.22.0
-[2m2026-08-07T12:49:30.447778Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Upstream: https://api.anthropic.com
-[2m2026-08-07T12:49:30.448042Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Upstream provider: Anthropic
-[2m2026-08-07T12:49:30.448751Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Subscription home (claude): /data/claude
-[2m2026-08-07T12:49:30.449457Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Routing mode: Direct
-[2m2026-08-07T12:49:30.449463Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Storage policy: Both
-[2m2026-08-07T12:49:30.974310Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Listening on 0.0.0.0:8080
+[2m2026-08-07T12:51:16.137169Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Link.Assistant.Router v0.22.0
+[2m2026-08-07T12:51:16.138498Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Upstream: https://api.anthropic.com
+[2m2026-08-07T12:51:16.138526Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Upstream provider: Anthropic
+[2m2026-08-07T12:51:16.139447Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Subscription home (claude): /data/claude
+[2m2026-08-07T12:51:16.140324Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Routing mode: Direct
+[2m2026-08-07T12:51:16.140332Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Storage policy: Both
+[2m2026-08-07T12:51:16.560298Z[0m [32m INFO[0m [2mlink_assistant_router[0m[2m:[0m Listening on 0.0.0.0:8080

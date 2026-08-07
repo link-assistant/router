@@ -14,12 +14,14 @@ token or credential appears here.
 | --- | --- |
 | `docker-v1-messages.json` | `POST /v1/messages` answered by the live Claude MAX subscription — the Claude Code / Anthropic-dialect use case |
 | `docker-v1-responses.json` | `POST /v1/responses` (Codex dialect) answered by the same subscription — the "Claude MAX inside Codex" use case |
+| `docker-v1-messages-stream.sse` | the documented Anthropic SSE vocabulary (`message_start` … `message_stop`) from the live upstream |
+| `docker-v1-responses-stream.sse` | the documented Responses SSE vocabulary (`response.created` … `response.completed`) for the Codex dialect |
 | `docker-audit.jsonl` | the per-task audit trail for both requests: token id, label, provider, surface, path, model — and no token string |
 | `docker-metrics.txt` | `/metrics` after the run, including the per-token counter carrying the task label |
 | `docker-router-startup.txt` | container startup showing `Subscription home (claude): /data/claude` |
 | `identity-prompt-429.md` | root-cause note for the misleading `429` this run first hit |
 
-Harness result: **12 passed, 0 failed**.
+Harness result: **18 passed, 0 failed**.
 
 The bridge in the other direction (Anthropic dialect served by an
 OpenAI-compatible upstream) is covered by

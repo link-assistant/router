@@ -1,0 +1,9 @@
+data: {"response":{"created_at":1786107088,"id":"resp-msg_011CdoRDm28udyiV6UbJEVTY","model":"gpt-5-codex","object":"response","output":[{"content":[{"text":"","type":"output_text"}],"role":"assistant","type":"message"}],"status":"in_progress"},"type":"response.created"}
+
+data: {"content_index":0,"delta":"1","item_id":"msg-resp-msg_011CdoRDm28udyiV6UbJEVTY","output_index":0,"response_id":"resp-msg_011CdoRDm28udyiV6UbJEVTY","type":"response.output_text.delta"}
+
+data: {"content_index":0,"delta":"\n2\n3","item_id":"msg-resp-msg_011CdoRDm28udyiV6UbJEVTY","output_index":0,"response_id":"resp-msg_011CdoRDm28udyiV6UbJEVTY","type":"response.output_text.delta"}
+
+data: {"response":{"created_at":1786107088,"id":"resp-msg_011CdoRDm28udyiV6UbJEVTY","model":"gpt-5-codex","object":"response","output":[{"content":[{"text":"","type":"output_text"}],"role":"assistant","type":"message"}],"status":"completed"},"type":"response.completed"}
+
+data: [DONE]

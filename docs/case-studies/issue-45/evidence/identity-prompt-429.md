@@ -42,6 +42,6 @@ path. It is idempotent (Claude Code's own bodies are byte-identical afterwards),
 it preserves the caller's own system prompt directly after the identity block,
 and it never touches API-key (`sk-ant-api…`) traffic.
 
-Re-running the same harness after the fix: **12 passed, 0 failed**, with
+Re-running the same harness after the fix: **18 passed, 0 failed**, with
 `ROUTER_OK` and `CODEX_OK` coming back from the live model — see the other files
 in this directory.

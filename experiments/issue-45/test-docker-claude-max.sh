@@ -117,6 +117,25 @@ RESP=$(curl -s "http://127.0.0.1:$PORT/v1/responses" \
 echo "$RESP" | redact >"$OUT/docker-v1-responses.json"
 contains "/v1/responses is served from the Claude MAX subscription" "$RESP" 'CODEX_OK'
 
+# --- Streaming, as documented for both dialects -----------------------------
+MSG_SSE=$(curl -sN "http://127.0.0.1:$PORT/v1/messages" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":32,"stream":true,
+       "messages":[{"role":"user","content":"count to three"}]}')
+echo "$MSG_SSE" | redact >"$OUT/docker-v1-messages-stream.sse"
+for event in message_start content_block_delta message_stop; do
+  contains "/v1/messages stream emits $event" "$MSG_SSE" "event: $event"
+done
+
+RESP_SSE=$(curl -sN "http://127.0.0.1:$PORT/v1/responses" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"model":"gpt-5-codex","max_output_tokens":32,"stream":true,
+       "input":[{"role":"user","content":"count to three"}]}')
+echo "$RESP_SSE" | redact >"$OUT/docker-v1-responses-stream.sse"
+for event in response.created response.output_text.delta response.completed; do
+  contains "/v1/responses stream emits $event" "$RESP_SSE" "$event"
+done
+
 # --- Audit trail and metrics ------------------------------------------------
 AUDIT=$(cat "$WORK/router/audit.jsonl" 2>/dev/null || echo '')
 echo "$AUDIT" | redact >"$OUT/docker-audit.jsonl"
