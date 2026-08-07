@@ -1,0 +1,16 @@
+# Configuration for `cargo audit`, run by the `Dependency Audit` CI job.
+#
+# Every entry here is an advisory this project has looked at and consciously
+# accepted. Adding one without a justification defeats the point of the job.
+# See docs/security/review-2026-08.md.
+
+[advisories]
+ignore = [
+    # RUSTSEC-2023-0071 — Marvin Attack (timing side channel) in `rsa` 0.9.
+    # No fixed release exists upstream. It reaches us only through
+    # `jsonwebtoken`, which pulls `rsa` in for the RS*/PS* JWT algorithms; this
+    # router signs and verifies its tokens with HMAC (HS256) and never performs
+    # an RSA private-key operation, so the vulnerable code path is not reached.
+    # Re-check when `rsa` 0.10 ships and `jsonwebtoken` picks it up.
+    "RUSTSEC-2023-0071",
+]
