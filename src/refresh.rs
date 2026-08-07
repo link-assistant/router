@@ -7,9 +7,13 @@
 //! in each vendor's open-source CLI) and caches the result **in memory only**.
 //!
 //! This is the same behavior `ProxyPal` relies on so the proxy keeps working even
-//! when the vendor CLI is not running to refresh its own credential file. Claude
-//! is intentionally excluded — it is served by [`crate::oauth`], which already
-//! re-reads the credential file the Claude CLI keeps current.
+//! when the vendor CLI is not running to refresh its own credential file.
+//!
+//! Claude is included here too: the runtime container image ships no Claude CLI,
+//! so nothing else would keep `~/.claude/.credentials.json` current. The
+//! `refreshToken` stored in the nested `claudeAiOauth` block is exchanged the
+//! same way, and the result stays in memory — the credential file is never
+//! written back to, so a read-only mount keeps working across expiry.
 //!
 //! Secrets (access/refresh tokens) are never logged.
 
@@ -47,33 +51,49 @@ struct RefreshConfig {
 /// Environment variable for the Gemini (Google) OAuth client secret.
 pub const GEMINI_CLIENT_SECRET_ENV: &str = "GEMINI_OAUTH_CLIENT_SECRET";
 
-/// Refresh parameters for a provider, or `None` when the router does not drive
-/// the OAuth refresh itself (Claude).
-const fn refresh_config(provider: SubscriptionProvider) -> Option<RefreshConfig> {
+/// Public OAuth client id of the Claude Code CLI.
+///
+/// Same value the CLI embeds; used only for the `refresh_token` grant, which
+/// needs no client secret.
+pub const CLAUDE_CLIENT_ID: &str = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+
+/// Anthropic's OAuth token endpoint.
+pub const CLAUDE_TOKEN_URL: &str = "https://console.anthropic.com/v1/oauth/token";
+
+/// Refresh parameters for a provider. Every subscription provider now has a
+/// public OAuth client, so this is total.
+const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
     match provider {
+        // The Claude Code CLI's public OAuth client (no client secret). Lets a
+        // container renew an expired `~/.claude` token without the CLI.
+        SubscriptionProvider::Claude => RefreshConfig {
+            token_url: CLAUDE_TOKEN_URL,
+            client_id: CLAUDE_CLIENT_ID,
+            client_secret_env: None,
+            style: BodyStyle::Json,
+        },
         // The Codex CLI's public OAuth client (no client secret).
-        SubscriptionProvider::Codex => Some(RefreshConfig {
+        SubscriptionProvider::Codex => RefreshConfig {
             token_url: "https://auth.openai.com/oauth/token",
             client_id: "app_EMoamEEZ73f0CkXaXp7hrann",
             client_secret_env: None,
             style: BodyStyle::Json,
-        }),
+        },
         // The gemini-cli public OAuth client. Google requires a client secret;
         // it is read from the environment rather than embedded in the binary.
-        SubscriptionProvider::Gemini => Some(RefreshConfig {
+        SubscriptionProvider::Gemini => RefreshConfig {
             token_url: "https://oauth2.googleapis.com/token",
             client_id: "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com",
             client_secret_env: Some(GEMINI_CLIENT_SECRET_ENV),
             style: BodyStyle::Form,
-        }),
+        },
         // The qwen-code CLI's public OAuth client (no client secret).
-        SubscriptionProvider::Qwen => Some(RefreshConfig {
+        SubscriptionProvider::Qwen => RefreshConfig {
             token_url: "https://chat.qwen.ai/api/v1/oauth2/token",
             client_id: "f0304373b74a44d2b584a3fb70ca9e56",
             client_secret_env: None,
             style: BodyStyle::Form,
-        }),
-        SubscriptionProvider::Claude => None,
+        },
     }
 }
 
@@ -121,7 +141,11 @@ struct RefreshResponse {
 /// Errors that can occur while refreshing a subscription token.
 #[derive(Debug)]
 pub enum RefreshError {
-    /// The provider does not support router-driven refresh (Claude).
+    /// The provider does not support router-driven refresh.
+    ///
+    /// No provider reports this today — every subscription provider has a
+    /// public OAuth client — but it is kept so callers matching on this enum
+    /// keep compiling.
     Unsupported,
     /// The token had no `refresh_token` to exchange.
     NoRefreshToken,
@@ -183,7 +207,29 @@ pub async fn refresh(
     prev: &SubscriptionToken,
     now_ms: i64,
 ) -> Result<SubscriptionToken, RefreshError> {
-    let config = refresh_config(provider).ok_or(RefreshError::Unsupported)?;
+    refresh_at(
+        client,
+        refresh_config(provider).token_url,
+        provider,
+        prev,
+        now_ms,
+    )
+    .await
+}
+
+/// [`refresh`] against an explicit token endpoint.
+///
+/// Only the URL is overridden — client id, body encoding, and response
+/// handling stay exactly as they are in production, so a test pointing this at
+/// a stub server exercises the real request shape.
+async fn refresh_at(
+    client: &reqwest::Client,
+    token_url: &str,
+    provider: SubscriptionProvider,
+    prev: &SubscriptionToken,
+    now_ms: i64,
+) -> Result<SubscriptionToken, RefreshError> {
+    let config = refresh_config(provider);
     let refresh_token = prev
         .refresh_token
         .as_deref()
@@ -206,7 +252,7 @@ pub async fn refresh(
             if let Some(secret) = client_secret.as_deref() {
                 body["client_secret"] = serde_json::Value::String(secret.to_string());
             }
-            client.post(config.token_url).json(&body)
+            client.post(token_url).json(&body)
         }
         BodyStyle::Form => {
             let mut form = vec![
@@ -218,7 +264,7 @@ pub async fn refresh(
                 form.push(("client_secret", secret));
             }
             client
-                .post(config.token_url)
+                .post(token_url)
                 .header("content-type", "application/x-www-form-urlencoded")
                 .body(encode_form(&form))
         }
@@ -307,6 +353,20 @@ impl TokenCache {
         }
     }
 
+    /// Seed the cache with an already-refreshed token for `provider`/`account`.
+    ///
+    /// Used by callers that obtained a token outside [`Self::get_fresh_for`]
+    /// (and by tests) so a subsequent lookup reuses it instead of exchanging
+    /// the refresh token again.
+    pub fn store_refreshed(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+        token: SubscriptionToken,
+    ) {
+        self.store_for(provider, account, token);
+    }
+
     fn cached_valid_for(
         &self,
         provider: SubscriptionProvider,
@@ -343,10 +403,154 @@ mod tests {
 
     #[test]
     fn config_present_for_subscription_providers() {
-        assert!(refresh_config(SubscriptionProvider::Codex).is_some());
-        assert!(refresh_config(SubscriptionProvider::Gemini).is_some());
-        assert!(refresh_config(SubscriptionProvider::Qwen).is_some());
-        assert!(refresh_config(SubscriptionProvider::Claude).is_none());
+        assert_eq!(
+            refresh_config(SubscriptionProvider::Codex).token_url,
+            "https://auth.openai.com/oauth/token"
+        );
+        assert_eq!(
+            refresh_config(SubscriptionProvider::Gemini).client_secret_env,
+            Some(GEMINI_CLIENT_SECRET_ENV)
+        );
+        assert_eq!(
+            refresh_config(SubscriptionProvider::Qwen).style,
+            BodyStyle::Form
+        );
+        // Claude is refreshed by the router too: the runtime image has no
+        // Claude CLI to keep the credential file current.
+        let claude = refresh_config(SubscriptionProvider::Claude);
+        assert_eq!(claude.token_url, CLAUDE_TOKEN_URL);
+        assert_eq!(claude.client_id, CLAUDE_CLIENT_ID);
+        assert!(claude.client_secret_env.is_none());
+        assert_eq!(claude.style, BodyStyle::Json);
+    }
+
+    /// Serve one JSON response on loopback and hand back the request that was
+    /// received, so a test can assert the exact refresh body sent upstream.
+    async fn stub_token_endpoint(
+        response_body: &'static str,
+    ) -> (String, tokio::task::JoinHandle<(String, String)>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}/v1/oauth/token", listener.local_addr().unwrap());
+        let handle = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut raw = Vec::new();
+            let mut buf = [0u8; 2048];
+            // Read until the body (after the blank line) is fully present.
+            loop {
+                let n = socket.read(&mut buf).await.unwrap();
+                raw.extend_from_slice(&buf[..n]);
+                let text = String::from_utf8_lossy(&raw);
+                if n == 0
+                    || text
+                        .split_once("\r\n\r\n")
+                        .is_some_and(|(_, b)| !b.is_empty())
+                {
+                    break;
+                }
+            }
+            let request = String::from_utf8_lossy(&raw).to_string();
+            let (head, body) = request.split_once("\r\n\r\n").unwrap();
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{response_body}",
+                        response_body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+            socket.flush().await.unwrap();
+            (head.to_string(), body.to_string())
+        });
+        (url, handle)
+    }
+
+    #[tokio::test]
+    async fn claude_refresh_exchanges_the_refresh_token_and_never_touches_disk() {
+        // The container case from issue #48: the on-disk Claude token has
+        // expired and there is no Claude CLI to renew it.
+        let (url, server) = stub_token_endpoint(
+            r#"{"access_token":"sk-ant-oat-new","refresh_token":"sk-ant-ort-new","expires_in":3600}"#,
+        )
+        .await;
+
+        let expired = SubscriptionToken {
+            access_token: "sk-ant-oat-old".into(),
+            refresh_token: Some("sk-ant-ort-old".into()),
+            expires_at_ms: Some(1),
+            account_id: None,
+            resource_url: None,
+        };
+        let fresh = refresh_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            &expired,
+            10_000,
+        )
+        .await
+        .expect("claude refresh should succeed");
+
+        assert_eq!(fresh.access_token, "sk-ant-oat-new");
+        assert_eq!(fresh.refresh_token.as_deref(), Some("sk-ant-ort-new"));
+        assert_eq!(fresh.expires_at_ms, Some(10_000 + 3_600_000));
+
+        let (head, body) = server.await.unwrap();
+        assert!(head.starts_with("POST /v1/oauth/token"));
+        let sent: serde_json::Value = serde_json::from_str(&body).expect("json body");
+        assert_eq!(sent["grant_type"], "refresh_token");
+        assert_eq!(sent["refresh_token"], "sk-ant-ort-old");
+        assert_eq!(sent["client_id"], CLAUDE_CLIENT_ID);
+        // Claude's public client takes no secret.
+        assert!(sent.get("client_secret").is_none());
+    }
+
+    #[tokio::test]
+    async fn claude_refresh_result_is_cached_and_reused() {
+        // A single exchange must serve subsequent requests: the stub answers
+        // once, so a second refresh attempt would hang/fail instead.
+        let (url, server) =
+            stub_token_endpoint(r#"{"access_token":"cached-once","expires_in":3600}"#).await;
+        let expired = SubscriptionToken {
+            access_token: "expired".into(),
+            refresh_token: Some("r".into()),
+            expires_at_ms: Some(1),
+            account_id: None,
+            resource_url: None,
+        };
+        let client = reqwest::Client::new();
+        let fresh = refresh_at(
+            &client,
+            &url,
+            SubscriptionProvider::Claude,
+            &expired,
+            10_000,
+        )
+        .await
+        .unwrap();
+
+        let cache = TokenCache::new();
+        cache.store_refreshed(SubscriptionProvider::Claude, "primary", fresh);
+        let reused = cache
+            .get_fresh(&client, SubscriptionProvider::Claude, expired, 20_000)
+            .await;
+        assert_eq!(reused.access_token, "cached-once");
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn claude_refresh_requires_a_refresh_token() {
+        // Without a `refreshToken` in `claudeAiOauth` there is nothing to
+        // exchange; the error must be explicit rather than `Unsupported`.
+        let client = reqwest::Client::new();
+        let no_refresh = token(None, Some(0));
+        let err = refresh(&client, SubscriptionProvider::Claude, &no_refresh, 1_000)
+            .await
+            .expect_err("must fail without a refresh token");
+        assert!(matches!(err, RefreshError::NoRefreshToken));
     }
 
     #[test]
