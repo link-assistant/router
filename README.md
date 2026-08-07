@@ -958,10 +958,12 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   ├── anthropic_bridge.rs   # Anthropic Messages served from OpenAI-dialect upstreams
 │   ├── anthropic_stream.rs   # OpenAI SSE -> Anthropic SSE translator
 │   ├── audit.rs              # Per-token JSONL audit log
+│   ├── claude_identity.rs    # Claude Code identity block required by Claude MAX OAuth
 │   ├── metrics.rs            # Atomic counters, Prometheus rendering, JSON snapshots
 │   └── token.rs              # Custom JWT token management (la_sk_...)
 ├── tests/
 │   └── integration_test.rs   # Integration tests
+├── experiments/              # Local end-to-end harnesses (see docs/case-studies/)
 ├── Cargo.toml                # Project configuration and dependencies
 ├── Dockerfile                # Multi-stage Docker build
 ├── CHANGELOG.md              # Project changelog

@@ -93,4 +93,8 @@ Gemini instructions.
   libraries that solve the same or an adjacent problem, and what was borrowed.
 - [`solution-plans.md`](solution-plans.md) — the options considered per
   requirement and the plan chosen.
+- [`verification.md`](verification.md) — what was tested locally, how, and what
+  could not be tested on this machine.
+- [`evidence/`](evidence) — redacted transcripts from the live Docker run
+  against a read-only copy of a Claude MAX session.
 - [`raw/`](raw) — unmodified issue data captured from the GitHub API.
