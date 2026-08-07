@@ -139,13 +139,12 @@ fn secret_run_len(text: &str) -> usize {
     let mut end = 0;
     while end < bytes.len() {
         let c = bytes[end] as char;
-        if is_body(c) {
-            end += 1;
-        } else if c == '.' && bytes.get(end + 1).is_some_and(|&n| is_body(n as char)) {
-            end += 1;
-        } else {
+        let continues =
+            is_body(c) || (c == '.' && bytes.get(end + 1).is_some_and(|&n| is_body(n as char)));
+        if !continues {
             break;
         }
+        end += 1;
     }
     end
 }
