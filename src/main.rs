@@ -426,6 +426,8 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         None
     };
 
+    let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
+
     let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
@@ -433,7 +435,62 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     if let Some(handle) = admin_server {
         handle.abort();
     }
+    for handle in chat_channels {
+        handle.abort();
+    }
     Ok(())
+}
+
+/// Start the optional Telegram and VK admin channels.
+///
+/// Both are off unless a bot token is configured, so an upgrade adds no new
+/// behaviour; when they do run they share the *same* [`AdminClaim`] as the web
+/// UI, which is what makes the first-admin claim system-wide rather than one
+/// per channel.
+fn spawn_chat_channels(
+    config: &Config,
+    state: &AppState,
+    admin_claim: Arc<link_assistant_router::admin::AdminClaim>,
+) -> Vec<tokio::task::JoinHandle<()>> {
+    let chat_config = config.chat_admin.clone();
+    if !chat_config.telegram_enabled() && !chat_config.vk_enabled() {
+        tracing::info!(
+            "Chat admin channels disabled (set TELEGRAM_BOT_TOKEN and/or VK_BOT_TOKEN to enable)"
+        );
+        return Vec::new();
+    }
+    let chat = Arc::new(
+        link_assistant_router::chat_admin::ChatAdmin::new(
+            admin_claim,
+            state.token_manager.clone(),
+            config.admin_key.clone(),
+            chat_config.clone(),
+        )
+        .with_status(Arc::new(state.clone())),
+    );
+    let mut handles = Vec::new();
+    if chat_config.telegram_enabled() {
+        let chat = Arc::clone(&chat);
+        let client = state.client.clone();
+        handles.push(tokio::spawn(async move {
+            link_assistant_router::telegram::run(chat, client).await;
+        }));
+    }
+    if chat_config.vk_enabled() {
+        let chat = Arc::clone(&chat);
+        let client = state.client.clone();
+        handles.push(tokio::spawn(async move {
+            link_assistant_router::vk::run(chat, client).await;
+        }));
+    }
+    if chat.admin_claim().is_claimed() {
+        tracing::info!("Chat admin: a credential exists; /start will ask for one");
+    } else {
+        tracing::warn!(
+            "Chat admin: unclaimed — the first private-chat user to confirm a /start becomes admin"
+        );
+    }
+    handles
 }
 
 fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
@@ -785,6 +842,22 @@ fn run_doctor(config: &Config) -> ExitCode {
             "OPEN (--allow-anonymous-admin)"
         } else {
             "closed (admin key or admin-scoped token required)"
+        }
+    );
+    println!(
+        "telegram_admin_bot     : {}",
+        if config.chat_admin.telegram_enabled() {
+            "enabled (private chats only)"
+        } else {
+            "disabled"
+        }
+    );
+    println!(
+        "vk_admin_bot           : {}",
+        if config.chat_admin.vk_enabled() {
+            "enabled (private chats only)"
+        } else {
+            "disabled"
         }
     );
     println!(

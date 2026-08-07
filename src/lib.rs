@@ -15,6 +15,9 @@ pub mod anthropic_bridge;
 pub mod anthropic_stream;
 pub mod app_state;
 pub mod audit;
+pub mod chat_admin;
+pub mod chat_commands;
+pub mod chat_config;
 pub mod claude_identity;
 pub mod cli;
 pub mod config;
@@ -39,8 +42,10 @@ pub mod responses;
 pub mod storage;
 pub mod subscription;
 pub mod subscription_proxy;
+pub mod telegram;
 pub mod token;
 pub mod token_admin;
+pub mod vk;
 
 #[cfg(test)]
 mod anthropic_bridge_tests;

@@ -332,6 +332,22 @@ credential — see [docs/use-cases/admin-ui.md](docs/use-cases/admin-ui.md).
 | `/api/admin/summary` | GET | (admin) Version, upstream, accounts and credential state |
 | `/` and static assets | GET | The embedded React console |
 
+### Chat admin channels (`TELEGRAM_BOT_TOKEN` / `VK_BOT_TOKEN` to opt in)
+
+Optional Telegram and VK bots that administer the router from a **private chat**
+— they poll outward, so no inbound port is opened. They share the same
+system-wide admin claim as the web UI: one first admin per deployment, claimed
+in a browser *or* in a chat. See
+[docs/use-cases/chat-admin-bots.md](docs/use-cases/chat-admin-bots.md).
+
+| Env / flag | Description |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` / `--telegram-bot-token` | Bot API token; present ⇒ the Telegram channel runs |
+| `VK_BOT_TOKEN` / `--vk-bot-token` | VK community token (needs `VK_GROUP_ID`) |
+| `VK_GROUP_ID` / `--vk-group-id` | VK community id the token belongs to |
+| `CHAT_ADMIN_SECRET_TTL_SECS` / `--chat-admin-secret-ttl-secs` | Seconds before a message carrying a credential is deleted (default `120`) |
+| `CHAT_ADMIN_RATE_LIMIT_PER_MINUTE` / `--chat-admin-rate-limit-per-minute` | Sensitive commands per user per minute (default `5`) |
+
 ### Anthropic surface (`--disable-anthropic-api` to opt out)
 
 | Endpoint | Method | Description |

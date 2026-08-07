@@ -249,6 +249,8 @@ pub struct Config {
     pub login: crate::login::LoginConfig,
     /// Opt-in admin UI listener (separate port, disabled by default).
     pub admin_ui: crate::admin::AdminUiConfig,
+    /// Opt-in Telegram/VK admin channels (disabled unless a bot token is set).
+    pub chat_admin: crate::chat_admin::ChatAdminConfig,
 }
 
 impl Config {
@@ -394,6 +396,7 @@ impl Config {
         };
 
         let admin_ui = admin_ui_from_env()?;
+        let chat_admin = chat_admin_from_env()?;
 
         Self::build(BuildArgs {
             host: &host,
@@ -431,6 +434,7 @@ impl Config {
             mpp,
             login,
             admin_ui,
+            chat_admin,
         })
     }
 
@@ -503,6 +507,7 @@ impl Config {
                 ..args.login
             },
             admin_ui: args.admin_ui,
+            chat_admin: args.chat_admin,
         })
     }
 }
@@ -547,9 +552,12 @@ pub struct BuildArgs<'a> {
     pub login: crate::login::LoginConfig,
     /// Opt-in admin UI listener (separate port, disabled by default).
     pub admin_ui: crate::admin::AdminUiConfig,
+    /// Opt-in Telegram/VK admin channels (disabled unless a bot token is set).
+    pub chat_admin: crate::chat_admin::ChatAdminConfig,
 }
 
 pub use crate::admin_config::{admin_ui_config, admin_ui_from_env};
+pub use crate::chat_config::{chat_admin_config, chat_admin_from_env};
 
 /// Default disabled MPP configuration.
 #[must_use]
@@ -716,6 +724,7 @@ mod tests {
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
             admin_ui: crate::admin::AdminUiConfig::default(),
+            chat_admin: crate::chat_admin::ChatAdminConfig::default(),
         }
     }
 
@@ -857,6 +866,7 @@ mod tests {
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
             admin_ui: crate::admin::AdminUiConfig::default(),
+            chat_admin: crate::chat_admin::ChatAdminConfig::default(),
         }
     }
 
