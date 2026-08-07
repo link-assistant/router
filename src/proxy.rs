@@ -75,9 +75,15 @@ pub async fn health() -> impl IntoResponse {
 /// Thin HTTP wrapper over [`crate::admin_auth::admin_access_granted`], which
 /// documents and tests the rule itself.
 pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool {
+    let provided = extract_bearer_token(headers);
+    // A credential claimed through the admin UI (see [`crate::admin`]) is an
+    // admin credential everywhere, not only on the admin port.
+    if provided.is_some_and(|token| state.admin.verify(token)) {
+        return true;
+    }
     crate::admin_auth::admin_access_granted(
         &state.token_manager,
-        extract_bearer_token(headers),
+        provided,
         state.admin_key.as_deref(),
         state.allow_anonymous_admin,
     )

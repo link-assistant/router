@@ -247,6 +247,8 @@ pub struct Config {
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login API settings (`/api/login`).
     pub login: crate::login::LoginConfig,
+    /// Opt-in admin UI listener (separate port, disabled by default).
+    pub admin_ui: crate::admin::AdminUiConfig,
 }
 
 impl Config {
@@ -391,6 +393,8 @@ impl Config {
             method: env::var("MPP_METHOD").ok().filter(|s| !s.is_empty()),
         };
 
+        let admin_ui = admin_ui_from_env()?;
+
         Self::build(BuildArgs {
             host: &host,
             port: &port,
@@ -426,6 +430,7 @@ impl Config {
             allow_anonymous_admin,
             mpp,
             login,
+            admin_ui,
         })
     }
 
@@ -497,6 +502,7 @@ impl Config {
                 claude_code_home: PathBuf::from(args.claude_code_home),
                 ..args.login
             },
+            admin_ui: args.admin_ui,
         })
     }
 }
@@ -539,7 +545,11 @@ pub struct BuildArgs<'a> {
     /// Interactive login settings. `claude_code_home` is overwritten by
     /// [`Config::build`] so the login flow always writes where the router reads.
     pub login: crate::login::LoginConfig,
+    /// Opt-in admin UI listener (separate port, disabled by default).
+    pub admin_ui: crate::admin::AdminUiConfig,
 }
+
+pub use crate::admin_config::{admin_ui_config, admin_ui_from_env};
 
 /// Default disabled MPP configuration.
 #[must_use]
@@ -570,49 +580,10 @@ pub fn default_activitypub_public_key_pem() -> String {
     "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----".to_string()
 }
 
-/// Default Gonka source URL.
-#[must_use]
-pub fn default_gonka_source_url() -> String {
-    "https://node4.gonka.ai".to_string()
-}
-
-/// Default Gonka model ID.
-#[must_use]
-pub fn default_gonka_model() -> String {
-    "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8".to_string()
-}
-
-/// Default OpenAI-compatible provider base URL.
-#[must_use]
-pub fn default_openai_compatible_base_url() -> String {
-    "http://localhost:4000/v1".to_string()
-}
-
-/// Default OpenAI-compatible provider boot config.
-#[must_use]
-pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleConfig {
-    crate::providers::OpenAICompatibleConfig {
-        provider_name: "litellm".to_string(),
-        base_url: default_openai_compatible_base_url(),
-        api_key: None,
-        api_key_env: None,
-        default_model: None,
-        models: Vec::new(),
-    }
-}
-
-/// Default crater provider config.
-#[must_use]
-pub fn default_crater_config(actor_base_url: &str) -> crate::crater::CraterConfig {
-    let actor = format!("{}/actor/code", actor_base_url.trim_end_matches('/'));
-    crate::crater::CraterConfig::new(
-        None,
-        &actor,
-        None,
-        Duration::from_secs(1),
-        Duration::from_secs(120),
-    )
-}
+pub use crate::config_defaults::{
+    default_crater_config, default_gonka_model, default_gonka_source_url,
+    default_openai_compatible_base_url, default_openai_compatible_config,
+};
 
 fn parse_csv(raw: &str) -> Vec<String> {
     raw.split(',')
@@ -622,7 +593,7 @@ fn parse_csv(raw: &str) -> Vec<String> {
         .collect()
 }
 
-fn parse_u64_env(name: &str, default: u64) -> u64 {
+pub(crate) fn parse_u64_env(name: &str, default: u64) -> u64 {
     env::var(name)
         .ok()
         .and_then(|value| value.parse().ok())
@@ -744,6 +715,7 @@ mod tests {
             allow_anonymous_admin: false,
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
+            admin_ui: crate::admin::AdminUiConfig::default(),
         }
     }
 
@@ -884,6 +856,7 @@ mod tests {
             allow_anonymous_admin: false,
             mpp: default_mpp_config(),
             login: crate::login::LoginConfig::default(),
+            admin_ui: crate::admin::AdminUiConfig::default(),
         }
     }
 

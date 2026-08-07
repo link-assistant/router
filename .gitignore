@@ -54,3 +54,7 @@ doc/
 # Log files
 *.log
 logs/
+
+# Admin UI toolchain: `ui/dist` IS committed (it is embedded in the binary),
+# but the npm dependency tree is not.
+ui/node_modules/
