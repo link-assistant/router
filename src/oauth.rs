@@ -2,16 +2,28 @@
 //!
 //! Reads Claude Code session credentials from the filesystem to obtain
 //! the OAuth bearer token for upstream API requests.
+//!
+//! The credential file is never written back to: when the access token has
+//! expired, [`OAuthProvider::get_fresh_token`] exchanges the stored
+//! `refreshToken` via [`crate::refresh`] and keeps the result in memory. That
+//! is what lets a container whose `CLAUDE_CODE_HOME` is mounted read-only
+//! survive token expiry without a Claude CLI inside the image.
 
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
+
+use crate::subscription::SubscriptionToken;
 
 /// Cached OAuth credentials.
 #[derive(Clone)]
 pub struct OAuthProvider {
     claude_code_home: PathBuf,
     cached_token: Arc<RwLock<Option<String>>>,
+    /// Token supplied through [`OAuthProvider::set_token`] rather than read
+    /// from disk. Kept separate from `cached_token` so a refresh-aware read
+    /// can still prefer an explicitly configured token over the file.
+    manual_token: Arc<RwLock<Option<String>>>,
 }
 
 /// Structure of the Claude Code OAuth credentials file.
@@ -34,6 +46,12 @@ struct ClaudeCredentials {
     /// The OAuth bearer token, alternative field name (flat layout).
     #[serde(alias = "oauthToken", alias = "oauth_token")]
     oauth_token: Option<String>,
+    /// The OAuth refresh token (flat layout).
+    #[serde(alias = "refreshToken", alias = "refresh_token")]
+    refresh_token: Option<String>,
+    /// Expiration timestamp in milliseconds since the Unix epoch (flat layout).
+    #[serde(alias = "expiresAt", alias = "expires_at", alias = "expiryDate")]
+    expires_at: Option<i64>,
     /// Nested OAuth block written by the Claude Code CLI.
     #[serde(alias = "claudeAiOauth", alias = "claude_ai_oauth")]
     claude_ai_oauth: Option<OAuthBlock>,
@@ -48,28 +66,47 @@ struct OAuthBlock {
     /// The OAuth bearer token (alternative field name).
     #[serde(alias = "oauthToken", alias = "oauth_token")]
     oauth_token: Option<String>,
+    /// The OAuth refresh token used to obtain a new access token.
+    #[serde(alias = "refreshToken", alias = "refresh_token")]
+    refresh_token: Option<String>,
     /// Expiration timestamp in milliseconds since the Unix epoch, if present.
     #[serde(alias = "expiresAt", alias = "expires_at")]
     expires_at: Option<i64>,
 }
 
 impl ClaudeCredentials {
-    /// Extract the bearer token, preferring the nested Claude Code block.
-    fn extract_token(&self) -> Option<&str> {
-        let nested = self.claude_ai_oauth.as_ref().and_then(|b| {
-            b.access_token
-                .as_deref()
-                .or(b.oauth_token.as_deref())
-                .filter(|t| !t.is_empty())
-        });
-        nested
-            .or_else(|| self.access_token.as_deref().filter(|t| !t.is_empty()))
-            .or_else(|| self.oauth_token.as_deref().filter(|t| !t.is_empty()))
-    }
+    /// Normalize into a [`SubscriptionToken`], preferring the nested Claude
+    /// Code block.
+    ///
+    /// The access token, refresh token, and expiry are taken from whichever
+    /// layout supplied the access token, so a stale flat `refreshToken` is
+    /// never paired with a nested access token.
+    fn into_subscription_token(self) -> Option<SubscriptionToken> {
+        fn non_empty(value: Option<String>) -> Option<String> {
+            value.filter(|v| !v.is_empty())
+        }
 
-    /// Expiration time in milliseconds since the Unix epoch, if known.
-    fn expires_at_ms(&self) -> Option<i64> {
-        self.claude_ai_oauth.as_ref().and_then(|b| b.expires_at)
+        if let Some(block) = self.claude_ai_oauth {
+            if let Some(access) =
+                non_empty(block.access_token).or_else(|| non_empty(block.oauth_token))
+            {
+                return Some(SubscriptionToken {
+                    access_token: access,
+                    refresh_token: non_empty(block.refresh_token),
+                    expires_at_ms: block.expires_at,
+                    account_id: None,
+                    resource_url: None,
+                });
+            }
+        }
+        let access = non_empty(self.access_token).or_else(|| non_empty(self.oauth_token))?;
+        Some(SubscriptionToken {
+            access_token: access,
+            refresh_token: non_empty(self.refresh_token),
+            expires_at_ms: self.expires_at,
+            account_id: None,
+            resource_url: None,
+        })
     }
 }
 
@@ -80,6 +117,7 @@ impl OAuthProvider {
         Self {
             claude_code_home: PathBuf::from(claude_code_home),
             cached_token: Arc::new(RwLock::new(None)),
+            manual_token: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -110,6 +148,21 @@ impl OAuthProvider {
     /// Searches through known credential file locations and extracts the
     /// access token.
     fn read_token_from_files(&self) -> Result<String, OAuthError> {
+        Ok(self.read_subscription_token()?.access_token)
+    }
+
+    /// Read the full Claude credential — access token, `refreshToken`, and
+    /// expiry — from the first credential file that yields one.
+    ///
+    /// Unlike [`Self::get_token`] this always hits the filesystem, so a
+    /// credential file refreshed by an outside process (a Claude CLI on the
+    /// host, a re-mounted secret) is picked up rather than served from cache.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OAuthError`] when no credential file exists, one cannot be
+    /// read, or none contains an access token.
+    pub fn read_subscription_token(&self) -> Result<SubscriptionToken, OAuthError> {
         for path in self.credential_paths() {
             if let Some(token) = Self::try_read_credential_file(&path)? {
                 return Ok(token);
@@ -122,7 +175,7 @@ impl OAuthProvider {
     }
 
     /// Try to read a single credential file and extract the token.
-    fn try_read_credential_file(path: &Path) -> Result<Option<String>, OAuthError> {
+    fn try_read_credential_file(path: &Path) -> Result<Option<SubscriptionToken>, OAuthError> {
         if !path.exists() {
             return Ok(None);
         }
@@ -137,18 +190,27 @@ impl OAuthProvider {
 
         // Prefer the nested `claudeAiOauth` block (real Claude Code layout),
         // then fall back to the flat `accessToken`/`oauthToken` fields.
-        if let Some(token) = creds.extract_token() {
-            if let Some(exp_ms) = creds.expires_at_ms() {
+        if let Some(token) = creds.into_subscription_token() {
+            if let Some(exp_ms) = token.expires_at_ms {
                 let now_ms = chrono::Utc::now().timestamp_millis();
                 if exp_ms <= now_ms {
-                    tracing::warn!(
-                        "Claude Code OAuth token in {} expired at {exp_ms} (now {now_ms}); \
-                         upstream requests may fail until you re-authenticate with `claude`.",
-                        path.display()
-                    );
+                    if token.refresh_token.is_some() {
+                        tracing::debug!(
+                            "Claude Code OAuth token in {} expired at {exp_ms} (now {now_ms}); \
+                             the router will exchange its refresh token in memory.",
+                            path.display()
+                        );
+                    } else {
+                        tracing::warn!(
+                            "Claude Code OAuth token in {} expired at {exp_ms} (now {now_ms}) \
+                             and stores no refresh token; upstream requests may fail until you \
+                             re-authenticate with `claude`.",
+                            path.display()
+                        );
+                    }
                 }
             }
-            return Ok(Some(token.to_string()));
+            return Ok(Some(token));
         }
 
         Ok(None)
@@ -186,8 +248,59 @@ impl OAuthProvider {
         self.get_token()
     }
 
+    /// Get a non-expired OAuth token, exchanging the stored `refreshToken`
+    /// when the on-disk access token has expired.
+    ///
+    /// Resolution order:
+    /// 1. A token set explicitly via [`Self::set_token`].
+    /// 2. The credential file, re-read on every call so an externally
+    ///    refreshed file wins over anything cached here.
+    /// 3. `cache`, which refreshes via Anthropic's token endpoint and keeps
+    ///    the result in memory — the credential file is never written to.
+    ///
+    /// This is what allows a container with no Claude CLI (and a read-only
+    /// `CLAUDE_CODE_HOME` mount) to keep serving requests past token expiry.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`OAuthError`] when no token can be read from disk and none was
+    /// set manually. A failed *refresh* is not an error: the expired disk
+    /// token is returned so the upstream can surface its own error.
+    pub async fn get_fresh_token(
+        &self,
+        client: &reqwest::Client,
+        cache: &crate::refresh::TokenCache,
+    ) -> Result<String, OAuthError> {
+        if let Ok(guard) = self.manual_token.read() {
+            if let Some(ref token) = *guard {
+                return Ok(token.clone());
+            }
+        }
+
+        let disk_token = match self.read_subscription_token() {
+            Ok(token) => token,
+            // No readable credential file: fall back to whatever `get_token`
+            // can produce (a previously cached read) and its error otherwise.
+            Err(e) => return self.get_token().map_err(|_| e),
+        };
+
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        let fresh = cache
+            .get_fresh(
+                client,
+                crate::subscription::SubscriptionProvider::Claude,
+                disk_token,
+                now_ms,
+            )
+            .await;
+        Ok(fresh.access_token)
+    }
+
     /// Manually set the OAuth token (useful for testing or direct configuration).
     pub fn set_token(&self, token: &str) {
+        if let Ok(mut guard) = self.manual_token.write() {
+            *guard = Some(token.to_string());
+        }
         if let Ok(mut guard) = self.cached_token.write() {
             *guard = Some(token.to_string());
         }
@@ -282,6 +395,130 @@ mod tests {
         .unwrap();
         let provider = OAuthProvider::new(dir.to_str().unwrap());
         assert_eq!(provider.get_token().unwrap(), "sk-ant-oat-expired");
+    }
+
+    #[test]
+    fn test_reads_refresh_token_and_expiry_from_nested_block() {
+        // The refresh token is what lets a container renew without the CLI,
+        // so it must survive the read alongside the access token.
+        let dir = tempdir();
+        fs::write(
+            dir.join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-x","refreshToken":"sk-ant-ort-y","expiresAt":1700000000000}}"#,
+        )
+        .unwrap();
+        let token = OAuthProvider::new(dir.to_str().unwrap())
+            .read_subscription_token()
+            .expect("should read credential");
+        assert_eq!(token.access_token, "sk-ant-oat-x");
+        assert_eq!(token.refresh_token.as_deref(), Some("sk-ant-ort-y"));
+        assert_eq!(token.expires_at_ms, Some(1_700_000_000_000));
+    }
+
+    #[test]
+    fn test_flat_layout_refresh_token_is_read() {
+        let dir = tempdir();
+        fs::write(
+            dir.join("credentials.json"),
+            r#"{"accessToken":"flat-access","refreshToken":"flat-refresh","expiresAt":42}"#,
+        )
+        .unwrap();
+        let token = OAuthProvider::new(dir.to_str().unwrap())
+            .read_subscription_token()
+            .unwrap();
+        assert_eq!(token.refresh_token.as_deref(), Some("flat-refresh"));
+        assert_eq!(token.expires_at_ms, Some(42));
+    }
+
+    #[test]
+    fn test_nested_block_does_not_borrow_flat_refresh_token() {
+        // Mixing a nested access token with a flat refresh token would send a
+        // mismatched pair to the token endpoint.
+        let dir = tempdir();
+        fs::write(
+            dir.join("credentials.json"),
+            r#"{"accessToken":"flat","refreshToken":"flat-refresh","claudeAiOauth":{"accessToken":"nested"}}"#,
+        )
+        .unwrap();
+        let token = OAuthProvider::new(dir.to_str().unwrap())
+            .read_subscription_token()
+            .unwrap();
+        assert_eq!(token.access_token, "nested");
+        assert_eq!(token.refresh_token, None);
+    }
+
+    #[tokio::test]
+    async fn test_get_fresh_token_returns_unexpired_disk_token() {
+        let dir = tempdir();
+        fs::write(
+            dir.join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-valid","refreshToken":"r","expiresAt":99999999999999}}"#,
+        )
+        .unwrap();
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        let token = provider
+            .get_fresh_token(&reqwest::Client::new(), &crate::refresh::TokenCache::new())
+            .await
+            .unwrap();
+        assert_eq!(token, "sk-ant-oat-valid");
+    }
+
+    #[tokio::test]
+    async fn test_get_fresh_token_prefers_manual_token() {
+        // An explicitly configured token must win over the credential file and
+        // must never trigger a network refresh.
+        let dir = tempdir();
+        fs::write(
+            dir.join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"from-disk","expiresAt":1}}"#,
+        )
+        .unwrap();
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        provider.set_token("manual");
+        let token = provider
+            .get_fresh_token(&reqwest::Client::new(), &crate::refresh::TokenCache::new())
+            .await
+            .unwrap();
+        assert_eq!(token, "manual");
+    }
+
+    #[tokio::test]
+    async fn test_get_fresh_token_uses_cached_refresh_result() {
+        // With a valid cached token the expired disk token is never sent
+        // upstream and no refresh request is made.
+        let dir = tempdir();
+        fs::write(
+            dir.join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"expired","refreshToken":"r","expiresAt":1}}"#,
+        )
+        .unwrap();
+        let cache = crate::refresh::TokenCache::new();
+        cache.store_refreshed(
+            crate::subscription::SubscriptionProvider::Claude,
+            "primary",
+            SubscriptionToken {
+                access_token: "refreshed".into(),
+                refresh_token: Some("r".into()),
+                expires_at_ms: Some(i64::MAX),
+                account_id: None,
+                resource_url: None,
+            },
+        );
+        let provider = OAuthProvider::new(dir.to_str().unwrap());
+        let token = provider
+            .get_fresh_token(&reqwest::Client::new(), &cache)
+            .await
+            .unwrap();
+        assert_eq!(token, "refreshed");
+    }
+
+    #[tokio::test]
+    async fn test_get_fresh_token_errors_without_credentials() {
+        let provider = OAuthProvider::new("/tmp/nonexistent-claude-dir-fresh");
+        let result = provider
+            .get_fresh_token(&reqwest::Client::new(), &crate::refresh::TokenCache::new())
+            .await;
+        assert!(result.is_err());
     }
 
     #[test]

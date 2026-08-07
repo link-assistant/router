@@ -238,7 +238,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl 
 
     // Get the real OAuth token (multi-account aware).
     let (oauth_token, selected_account) =
-        match resolve_upstream_credentials(&state, &routing_context) {
+        match resolve_upstream_credentials(&state, &routing_context).await {
             Ok(pair) => pair,
             Err(e) => {
                 tracing::error!("Failed to resolve upstream credentials: {e}");
@@ -427,15 +427,34 @@ pub(crate) fn build_upstream_headers(
 ///
 /// When `state.account_router` is set we delegate to the multi-account
 /// router; otherwise we fall back to the single-account legacy provider.
-fn resolve_upstream_credentials(
+///
+/// Either way an expired access token is refreshed in memory via
+/// `state.subscription_cache` — the vendor credential file is never written
+/// back to, so a read-only `CLAUDE_CODE_HOME` mount survives expiry without a
+/// Claude CLI in the image.
+async fn resolve_upstream_credentials(
     state: &AppState,
     context: &RoutingContext,
 ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Send + Sync>> {
     if let Some(router) = state.account_router.as_ref() {
-        let sel = router.select_with_context(context)?;
-        return Ok((sel.token, Some(sel.name)));
+        let sel = router.select_subscription(context)?;
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        let token = state
+            .subscription_cache
+            .get_fresh_for(
+                &state.client,
+                router.provider(),
+                &sel.name,
+                sel.token,
+                now_ms,
+            )
+            .await;
+        return Ok((token.access_token, Some(sel.name)));
     }
-    let token = state.oauth_provider.get_token()?;
+    let token = state
+        .oauth_provider
+        .get_fresh_token(&state.client, &state.subscription_cache)
+        .await?;
     Ok((token, None))
 }
 
@@ -699,7 +718,7 @@ async fn forward_openai(
 
     // Resolve OAuth credentials.
     let (oauth_token, selected_account) =
-        match resolve_upstream_credentials(state, &routing_context) {
+        match resolve_upstream_credentials(state, &routing_context).await {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!("openai: upstream credentials unavailable: {e}");
