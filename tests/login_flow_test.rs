@@ -8,6 +8,14 @@
 //! The point of the test is the part that is easy to get wrong: the process
 //! spawned by the first request must still be alive when a *separate* later
 //! request types the code into it.
+//!
+//! Unix only: the fixture is a shell script, which Windows cannot execute
+//! (`CreateProcessW … is not a valid Win32 application`). The flow itself
+//! targets a Linux container, so the coverage is where it matters. The
+//! platform-independent parts — ANSI stripping, URL recovery, credential
+//! writing — are unit-tested in `src/login_pty.rs`, `src/login_url.rs` and
+//! `src/login.rs`, which do run everywhere.
+#![cfg(unix)]
 
 use link_assistant_router::login::{LoginConfig, LoginManager, LoginStatus};
 use link_assistant_router::oauth::OAuthProvider;
