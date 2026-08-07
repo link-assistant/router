@@ -541,55 +541,7 @@ pub struct BuildArgs<'a> {
     pub admin_ui: crate::admin::AdminUiConfig,
 }
 
-/// Build the admin UI configuration from environment variables.
-///
-/// The listener is enabled only when `ADMIN_PORT` names a non-zero port, so
-/// upgrading an existing deployment gains no new surface.
-///
-/// # Errors
-///
-/// Returns [`ConfigError::InvalidPort`] for an unparseable `ADMIN_PORT` and
-/// [`ConfigError::InvalidAddress`] when host and port do not form an address.
-pub fn admin_ui_from_env() -> Result<crate::admin::AdminUiConfig, ConfigError> {
-    let port = env::var("ADMIN_PORT")
-        .ok()
-        .filter(|value| !value.trim().is_empty())
-        .map(|value| value.trim().parse::<u16>())
-        .transpose()
-        .map_err(|_| ConfigError::InvalidPort)?;
-    let host = env::var("ADMIN_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let ttl = parse_u64_env(
-        "ADMIN_CLAIM_TTL_SECS",
-        crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
-    );
-    admin_ui_config(port, &host, ttl)
-}
-
-/// Assemble an [`crate::admin::AdminUiConfig`] from explicit parts.
-///
-/// # Errors
-///
-/// Returns [`ConfigError::InvalidAddress`] when `host` and `port` do not parse
-/// as a socket address.
-pub fn admin_ui_config(
-    port: Option<u16>,
-    host: &str,
-    candidate_ttl_secs: u64,
-) -> Result<crate::admin::AdminUiConfig, ConfigError> {
-    let default = crate::admin::AdminUiConfig::default();
-    let enabled = port.is_some_and(|value| value != 0);
-    let listen_addr = match port.filter(|value| *value != 0) {
-        Some(value) => format!("{host}:{value}")
-            .parse()
-            .map_err(|_| ConfigError::InvalidAddress)?,
-        None => default.listen_addr,
-    };
-    Ok(crate::admin::AdminUiConfig {
-        enabled,
-        listen_addr,
-        candidate_ttl: Duration::from_secs(candidate_ttl_secs),
-    })
-}
+pub use crate::admin_config::{admin_ui_config, admin_ui_from_env};
 
 /// Default disabled MPP configuration.
 #[must_use]
@@ -620,49 +572,10 @@ pub fn default_activitypub_public_key_pem() -> String {
     "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----".to_string()
 }
 
-/// Default Gonka source URL.
-#[must_use]
-pub fn default_gonka_source_url() -> String {
-    "https://node4.gonka.ai".to_string()
-}
-
-/// Default Gonka model ID.
-#[must_use]
-pub fn default_gonka_model() -> String {
-    "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8".to_string()
-}
-
-/// Default OpenAI-compatible provider base URL.
-#[must_use]
-pub fn default_openai_compatible_base_url() -> String {
-    "http://localhost:4000/v1".to_string()
-}
-
-/// Default OpenAI-compatible provider boot config.
-#[must_use]
-pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleConfig {
-    crate::providers::OpenAICompatibleConfig {
-        provider_name: "litellm".to_string(),
-        base_url: default_openai_compatible_base_url(),
-        api_key: None,
-        api_key_env: None,
-        default_model: None,
-        models: Vec::new(),
-    }
-}
-
-/// Default crater provider config.
-#[must_use]
-pub fn default_crater_config(actor_base_url: &str) -> crate::crater::CraterConfig {
-    let actor = format!("{}/actor/code", actor_base_url.trim_end_matches('/'));
-    crate::crater::CraterConfig::new(
-        None,
-        &actor,
-        None,
-        Duration::from_secs(1),
-        Duration::from_secs(120),
-    )
-}
+pub use crate::config_defaults::{
+    default_crater_config, default_gonka_model, default_gonka_source_url,
+    default_openai_compatible_base_url, default_openai_compatible_config,
+};
 
 fn parse_csv(raw: &str) -> Vec<String> {
     raw.split(',')
@@ -672,7 +585,7 @@ fn parse_csv(raw: &str) -> Vec<String> {
         .collect()
 }
 
-fn parse_u64_env(name: &str, default: u64) -> u64 {
+pub(crate) fn parse_u64_env(name: &str, default: u64) -> u64 {
     env::var(name)
         .ok()
         .and_then(|value| value.parse().ok())
