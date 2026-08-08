@@ -11,8 +11,8 @@
 //!   text-exposition format consumed by `/metrics`.
 //! - [`UsageSnapshot`] / [`usage_snapshot`] — aggregate counts and per-
 //!   account usage, served as JSON by `/v1/usage`.
-//! - [`MetricsRecorder`] — a tiny Tower-style helper that handlers can
-//!   call from `proxy_handler` and the `OpenAI` translators.
+//! - [`Metrics`] recording methods — tiny helpers that handlers can call from
+//!   `proxy_handler` and the `OpenAI` translators.
 //!
 //! The implementation is intentionally lock-free (atomics + a single Mutex
 //! for the per-status / per-account maps) so it stays cheap on the hot path.
