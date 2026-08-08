@@ -1,9 +1,10 @@
 //! End-to-end tests of the interactive login flow (issue #47).
 //!
 //! These drive [`LoginManager`] against `examples/fake-login-cli.sh`, a stand-in
-//! for `claude setup-token` that behaves like the real TUI in the ways the flow
-//! depends on: it repaints, it prints the authorization URL, it waits on stdin
-//! for a code, and it prints a `sk-ant-oat…` token on success.
+//! for both the default TUI `/login` flow and the explicit `setup-token`
+//! alternative. The default path includes the first-run theme and trust
+//! screens, waits for `/login`, repaints its authorization URL, waits on stdin
+//! for a code, and writes the same credential shape as the real TUI.
 //!
 //! The point of the test is the part that is easy to get wrong: the process
 //! spawned by the first request must still be alive when a *separate* later
@@ -46,6 +47,17 @@ fn manager_with(home: &Path) -> LoginManager {
     })
 }
 
+fn setup_token_manager_with(home: &Path) -> LoginManager {
+    LoginManager::new(LoginConfig {
+        command: fake_cli(),
+        args: vec!["setup-token".to_string()],
+        claude_code_home: home.to_path_buf(),
+        url_timeout: Duration::from_secs(20),
+        code_timeout: Duration::from_secs(20),
+        ..LoginConfig::default()
+    })
+}
+
 #[tokio::test]
 async fn login_produces_a_url_then_a_usable_credential() {
     let home = temp_home();
@@ -55,9 +67,19 @@ async fn login_produces_a_url_then_a_usable_credential() {
     assert_eq!(begun.status, LoginStatus::AwaitingCode);
     let url = begun.url.as_deref().expect("a URL must be reported");
     assert!(
-        url.starts_with("https://claude.ai/oauth/authorize?"),
+        url.starts_with("https://claude.com/cai/oauth/authorize?"),
         "unexpected URL: {url}"
     );
+    for scope in [
+        "org%3Acreate_api_key",
+        "user%3Aprofile",
+        "user%3Ainference",
+        "user%3Asessions%3Aclaude_code",
+        "user%3Amcp_servers",
+        "user%3Afile_upload",
+    ] {
+        assert!(url.contains(scope), "default login URL lacks {scope}: {url}");
+    }
 
     // The session survives between requests: status is served from the registry
     // while the process is still parked on its stdin read.
@@ -83,6 +105,29 @@ async fn login_produces_a_url_then_a_usable_credential() {
 
     // A finished session is cleaned up: it no longer counts against the cap.
     assert_eq!(manager.pending_count(), 0);
+}
+
+#[tokio::test]
+async fn setup_token_remains_an_explicit_alternative() {
+    let home = temp_home();
+    let manager = setup_token_manager_with(&home);
+
+    let begun = manager.begin().await.expect("setup-token should start");
+    let url = begun.url.as_deref().expect("a URL must be reported");
+    assert!(url.contains("scope=user%3Ainference"), "unexpected URL: {url}");
+    assert!(!url.contains("user%3Aprofile"), "unexpected URL: {url}");
+
+    let done = manager
+        .submit_code(&begun.login_id, "good-code")
+        .await
+        .expect("code should be accepted");
+    assert_eq!(done.status, LoginStatus::Authorized);
+    assert!(
+        OAuthProvider::new(home.to_str().unwrap())
+            .get_token()
+            .expect("the synthesized credential must be readable")
+            .starts_with("sk-ant-oat")
+    );
 }
 
 #[tokio::test]
