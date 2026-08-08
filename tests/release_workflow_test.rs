@@ -102,7 +102,8 @@ fn dependency_audit_reuses_the_cached_binary() {
         .expect("release workflow should be readable");
 
     assert!(
-        workflow.contains("command -v cargo-audit >/dev/null || cargo install cargo-audit --locked"),
+        workflow
+            .contains("command -v cargo-audit >/dev/null || cargo install cargo-audit --locked"),
         "the audit job should not reinstall cargo-audit after its binary was restored from cache"
     );
 }
