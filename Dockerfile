@@ -19,6 +19,11 @@ RUN mkdir src && \
     cargo build --release && \
     rm -rf src
 
+# Copy the committed admin UI before the Rust source. RustEmbed needs this
+# directory at compile time, and keeping it in a separate layer preserves the
+# cache when only Rust source changes.
+COPY ui/dist/ ui/dist/
+
 # Copy real source code
 COPY src/ src/
 
