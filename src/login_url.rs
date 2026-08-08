@@ -179,6 +179,12 @@ mod tests {
     }
 
     #[test]
+    fn finds_current_claude_cli_url() {
+        let url = "https://claude.com/cai/oauth/authorize?code=true&state=abc";
+        assert_eq!(extract_login_url(url).as_deref(), Some(url));
+    }
+
+    #[test]
     fn prefers_the_last_repaint() {
         let transcript = "https://claude.ai/oauth/authorize?state=stale\nrepaint\nhttps://claude.ai/oauth/authorize?state=fresh\n";
         assert_eq!(
