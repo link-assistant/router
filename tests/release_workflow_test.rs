@@ -88,6 +88,17 @@ fn release_workflow_builds_the_default_docker_image_before_releasing() {
 }
 
 #[test]
+fn release_workflow_refreshes_cached_cargo_audit_binary() {
+    let workflow = fs::read_to_string(".github/workflows/release.yml")
+        .expect("release workflow should be readable");
+
+    assert!(
+        workflow.contains("cargo install cargo-audit --locked --force"),
+        "the audit job should overwrite a cargo-audit binary restored from its cache"
+    );
+}
+
+#[test]
 fn cargo_lock_package_version_matches_manifest() {
     let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
     let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");
