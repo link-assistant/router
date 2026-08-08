@@ -33,7 +33,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
 use portable_pty::CommandBuilder;
@@ -57,6 +57,16 @@ const FAILURE_MARKERS: &[&str] = &[
     "Login failed",
 ];
 
+/// Stable text on the first-run screens that block the Claude Code prompt.
+///
+/// Each marker names the screen whose currently selected safe/default action
+/// is accepted with Enter. Unknown screens are deliberately left untouched so
+/// a changed onboarding flow times out loudly instead of receiving blind input.
+const THEME_PICKER_MARKER: &str = "Choosethetextstylethatlooksbestwithyourterminal";
+const WORKSPACE_TRUST_MARKER: &str = "Quicksafetycheck:Isthisaprojectyoucreated";
+const LOGIN_METHOD_MARKER: &str = "Selectloginmethod:";
+const READY_PROMPT_MARKER: &str = "Tipsforgettingstarted";
+
 /// Settings for the login flow.
 #[derive(Clone, Debug)]
 pub struct LoginConfig {
@@ -64,7 +74,8 @@ pub struct LoginConfig {
     pub enabled: bool,
     /// Program to drive, e.g. `claude`.
     pub command: String,
-    /// Arguments passed to that program, e.g. `["setup-token"]`.
+    /// Arguments passed to that program. Empty selects the default TUI
+    /// `/login` flow; `["setup-token"]` selects the narrow-scope alternative.
     pub args: Vec<String>,
     /// Directory the resulting credential must land in. This is the same
     /// directory [`crate::oauth::OAuthProvider`] reads.
@@ -87,7 +98,7 @@ impl Default for LoginConfig {
         Self {
             enabled: true,
             command: "claude".to_string(),
-            args: vec!["setup-token".to_string()],
+            args: vec![],
             claude_code_home: PathBuf::from("/data/claude"),
             session_ttl: Duration::from_secs(900),
             max_sessions: 4,
@@ -463,27 +474,150 @@ fn spawn_and_wait_for_url(config: &LoginConfig) -> Result<(Arc<PtySession>, Stri
 
     let session =
         Arc::new(PtySession::spawn(command).map_err(|e| LoginError::Spawn(e.to_string()))?);
-    match session.wait_for(
-        |text| extract_login_url(text).is_some(),
-        config.idle_settle,
-        config.url_timeout,
-    ) {
-        Ok(text) => {
-            let url = extract_login_url(&text)
-                .ok_or_else(|| LoginError::NoUrl(session.transcript_tail(400)))?;
-            Ok((session, url))
-        }
-        Err(err) => {
-            let detail = match err {
-                WaitError::Timeout => {
-                    format!("timed out; last output: {}", session.transcript_tail(400))
-                }
-                WaitError::ChildExited(_) => {
-                    format!("{err}; last output: {}", session.transcript_tail(400))
-                }
-            };
+    let result = if config.args.is_empty() {
+        drive_tui_to_login_url(&session, config)
+    } else {
+        wait_for_login_url(&session, config)
+    };
+    match result {
+        Ok(url) => Ok((session, url)),
+        Err(detail) => {
             session.kill();
             Err(LoginError::NoUrl(detail))
+        }
+    }
+}
+
+/// Progress through the known TUI screens without re-reacting to old text in
+/// the append-only PTY transcript.
+#[derive(Default)]
+struct TuiProgress {
+    completed: Vec<TuiAction>,
+}
+
+impl TuiProgress {
+    fn needs(&self, action: TuiAction) -> bool {
+        !self.completed.contains(&action)
+    }
+
+    fn complete(&mut self, action: TuiAction) {
+        self.completed.push(action);
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TuiAction {
+    AcceptTheme,
+    AcceptWorkspaceTrust,
+    SendLogin,
+    SelectLoginMethod,
+}
+
+fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
+    // Ink-based TUIs position words with cursor escapes instead of printing
+    // literal spaces. `strip_ansi` intentionally removes those escapes, so a
+    // rendered "Select login method:" may arrive as "Selectloginmethod:".
+    let compact: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
+    if progress.needs(TuiAction::AcceptTheme) && compact.contains(THEME_PICKER_MARKER) {
+        Some(TuiAction::AcceptTheme)
+    } else if progress.needs(TuiAction::AcceptWorkspaceTrust)
+        && compact.contains(WORKSPACE_TRUST_MARKER)
+    {
+        Some(TuiAction::AcceptWorkspaceTrust)
+    } else if progress.needs(TuiAction::SendLogin) && compact.contains(READY_PROMPT_MARKER) {
+        Some(TuiAction::SendLogin)
+    } else if progress.needs(TuiAction::SelectLoginMethod) && compact.contains(LOGIN_METHOD_MARKER)
+    {
+        Some(TuiAction::SelectLoginMethod)
+    } else {
+        None
+    }
+}
+
+/// Drive bare `claude` to the full-scope OAuth URL exposed by its `/login`
+/// command. The one timeout covers the whole startup sequence, not each screen.
+fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> Result<String, String> {
+    let deadline = Instant::now() + config.url_timeout;
+    let mut progress = TuiProgress::default();
+    loop {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining.is_zero() {
+            return Err(format!(
+                "timed out; last output: {}",
+                session.transcript_tail(400)
+            ));
+        }
+        let text = session
+            .wait_for(
+                |text| {
+                    extract_login_url(text).is_some() || next_tui_action(text, &progress).is_some()
+                },
+                config.idle_settle,
+                remaining,
+            )
+            .map_err(|err| wait_error_detail(session, &err))?;
+        if let Some(url) = extract_login_url(&text) {
+            return Ok(url);
+        }
+        let action = next_tui_action(&text, &progress);
+        match action {
+            Some(TuiAction::AcceptTheme) => {
+                session
+                    .send_key(Key::Enter)
+                    .map_err(|e| format!("could not accept the Claude Code theme screen: {e}"))?;
+            }
+            Some(TuiAction::AcceptWorkspaceTrust) => {
+                session.send_key(Key::Enter).map_err(|e| {
+                    format!("could not accept the Claude Code workspace trust screen: {e}")
+                })?;
+            }
+            Some(TuiAction::SendLogin) => {
+                session
+                    .send_text("/login")
+                    .and_then(|()| session.send_key(Key::Enter))
+                    .map_err(|e| format!("could not type /login at the Claude Code prompt: {e}"))?;
+            }
+            Some(TuiAction::SelectLoginMethod) => {
+                session.send_key(Key::Enter).map_err(|e| {
+                    format!("could not select the Claude subscription login method: {e}")
+                })?;
+            }
+            None => {
+                return Err(format!(
+                    "Claude Code reached an unrecognized screen; last output: {}",
+                    session.transcript_tail(400)
+                ));
+            }
+        }
+        if let Some(action) = action {
+            progress.complete(action);
+        }
+    }
+}
+
+/// Preserve the existing custom-argument behaviour: wait for whichever login
+/// URL the configured command prints without sending TUI input first.
+fn wait_for_login_url(session: &PtySession, config: &LoginConfig) -> Result<String, String> {
+    let text = session
+        .wait_for(
+            |text| extract_login_url(text).is_some(),
+            config.idle_settle,
+            config.url_timeout,
+        )
+        .map_err(|err| wait_error_detail(session, &err))?;
+    extract_login_url(&text).ok_or_else(|| {
+        format!(
+            "authorization URL disappeared; last output: {}",
+            session.transcript_tail(400)
+        )
+    })
+}
+
+fn wait_error_detail(session: &PtySession, err: &WaitError) -> String {
+    match err {
+        WaitError::Timeout => format!("timed out; last output: {}", session.transcript_tail(400)),
+        WaitError::ChildExited(_) => {
+            format!("{err}; last output: {}", session.transcript_tail(400))
         }
     }
 }
@@ -628,6 +762,27 @@ fn tail(text: &str, limit: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tui_only_types_into_recognized_screens() {
+        let progress = TuiProgress::default();
+        let rendered_theme = crate::login_pty::strip_ansi(
+            "Choose\x1b[9Gthe\x1b[13Gtext\x1b[18Gstyle\x1b[24Gthat\x1b[29Glooks\x1b[35Gbest\x1b[40Gwith\x1b[45Gyour\x1b[50Gterminal",
+        );
+        assert_eq!(
+            next_tui_action(&rendered_theme, &progress),
+            Some(TuiAction::AcceptTheme)
+        );
+        assert_eq!(
+            next_tui_action("A future, unknown onboarding screen", &progress),
+            None
+        );
+    }
+
+    #[test]
+    fn login_config_defaults_to_bare_tui() {
+        assert!(LoginConfig::default().args.is_empty());
+    }
 
     /// Build a session that already reached `status`, settled `age` ago.
     fn settled_session(id: &str, status: LoginStatus, age: chrono::Duration) -> Arc<Session> {

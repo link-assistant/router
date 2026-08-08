@@ -398,13 +398,7 @@ pub struct Cli {
     pub login_cli_command: String,
 
     /// Arguments passed to the login program.
-    #[arg(
-        long,
-        env = "LOGIN_CLI_ARGS",
-        value_delimiter = ',',
-        default_value = "setup-token",
-        global = true
-    )]
+    #[arg(long, env = "LOGIN_CLI_ARGS", value_delimiter = ',', global = true)]
     pub login_cli_args: Vec<String>,
 
     /// How long a pending login stays valid while waiting for the human.
@@ -661,6 +655,12 @@ mod tests {
     };
 
     #[test]
+    fn login_cli_defaults_to_bare_tui() {
+        let cli = Cli::try_parse_from(["link-assistant-router"]).unwrap();
+        assert!(cli.login_cli_args.is_empty());
+    }
+
+    #[test]
     fn cli_defaults_round_trip_to_config() {
         let cli = Cli {
             command: None,
@@ -720,7 +720,7 @@ mod tests {
             mpp_method: None,
             disable_login_api: false,
             login_cli_command: "claude".into(),
-            login_cli_args: vec!["setup-token".into()],
+            login_cli_args: vec![],
             login_session_ttl_secs: 900,
             login_max_sessions: 4,
         };
@@ -793,7 +793,7 @@ mod tests {
             mpp_method: None,
             disable_login_api: false,
             login_cli_command: "claude".into(),
-            login_cli_args: vec!["setup-token".into()],
+            login_cli_args: vec![],
             login_session_ttl_secs: 900,
             login_max_sessions: 4,
         };
