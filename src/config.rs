@@ -256,8 +256,8 @@ pub struct Config {
 impl Config {
     /// Load configuration from environment variables only (legacy compatibility).
     ///
-    /// New entrypoints should prefer [`Config::from_cli`] which also supports
-    /// CLI flags and `.lenv` overrides.
+    /// The binary's CLI entrypoint layers command-line flags and `.lenv`
+    /// overrides onto this environment configuration.
     pub fn from_env() -> Result<Self, ConfigError> {
         let port = env::var("ROUTER_PORT").unwrap_or_else(|_| "8080".to_string());
         let host = env::var("ROUTER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

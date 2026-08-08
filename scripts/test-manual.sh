@@ -61,7 +61,7 @@ info "Credentials written to $TEST_CLAUDE_HOME/credentials.json"
 
 # Step 2: Build the router
 info "Building the router (release mode)..."
-cargo build --release 2>&1
+cargo build --release --locked 2>&1
 pass "Build succeeded"
 
 # Step 3: Start the router

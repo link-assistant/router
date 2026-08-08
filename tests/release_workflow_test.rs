@@ -113,6 +113,89 @@ fn cargo_lock_package_version_matches_manifest() {
 }
 
 #[test]
+fn release_version_bump_updates_and_commits_cargo_lock() {
+    let script = read_lf("scripts/version-and-commit.rs");
+
+    assert!(
+        script.contains("fn update_cargo_lock"),
+        "release versioning must update the root package entry in Cargo.lock"
+    );
+    assert!(
+        script.contains("update_cargo_lock(") && script.contains("&cargo_lock,"),
+        "the release path must invoke Cargo.lock synchronization"
+    );
+    assert!(
+        script.contains("release_files.push(&cargo_lock)")
+            && script.contains(r#"exec("git", &release_files)"#),
+        "the synchronized Cargo.lock must be included in the release commit"
+    );
+    assert!(
+        read_lf(".github/workflows/release.yml")
+            .contains("rust-script --test scripts/version-and-commit.rs"),
+        "CI must execute the release script's behavioral unit tests"
+    );
+}
+
+#[test]
+fn release_workflow_uses_supported_action_runtimes() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    for obsolete in [
+        "actions/checkout@v4",
+        "actions/cache@v4",
+        "actions/setup-node@v4",
+        "node-version: '20'",
+    ] {
+        assert!(
+            !workflow.contains(obsolete),
+            "CI should not use deprecated runtime configuration `{obsolete}`"
+        );
+    }
+    for supported in [
+        "actions/checkout@v6",
+        "actions/cache@v5",
+        "actions/setup-node@v6",
+        "node-version: '24'",
+    ] {
+        assert!(
+            workflow.contains(supported),
+            "CI should use supported runtime configuration `{supported}`"
+        );
+    }
+}
+
+#[test]
+fn dependency_audit_fails_on_warnings() {
+    let audit = read_lf(".cargo/audit.toml");
+
+    assert!(
+        audit.contains("[output]") && audit.contains(r#"deny = ["warnings"]"#),
+        "cargo-audit warnings must fail CI instead of producing a green check"
+    );
+}
+
+#[test]
+fn release_workflow_prevents_silent_lockfile_rewrites() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    assert!(
+        workflow.contains("cargo check --locked"),
+        "CI must validate the committed lockfile before another Cargo command can rewrite it"
+    );
+    for command in [
+        "cargo clippy --locked",
+        "cargo test --locked",
+        "cargo build --locked",
+        "cargo package --locked",
+    ] {
+        assert!(
+            workflow.contains(command),
+            "CI command `{command}` must fail instead of silently repairing Cargo.lock"
+        );
+    }
+}
+
+#[test]
 fn lockfile_package_version_handles_windows_line_endings() {
     let lockfile = "[[package]]\r\nname = \"dependency\"\r\nversion = \"1.1.4\"\r\n\r\n[[package]]\r\nname = \"link-assistant-router\"\r\nversion = \"0.13.0\"\r\n";
 

@@ -2,9 +2,9 @@
 //!
 //! These endpoints let an operator mint, list, and revoke the `la_sk_...`
 //! tokens that downstream tasks present to the proxy. When `admin_key` is
-//! configured they require it as a Bearer credential; the shared
-//! [`is_admin_authorised`](crate::proxy::is_admin_authorised) helper enforces
-//! that. They are intentionally kept in their own module so the core
+//! configured they require it as a Bearer credential; the proxy's shared
+//! authorization helper enforces that. They are intentionally kept in their
+//! own module so the core
 //! request-forwarding logic in [`crate::proxy`] stays focused and under the
 //! repository's per-file line budget.
 

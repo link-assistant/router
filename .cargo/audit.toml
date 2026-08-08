@@ -4,6 +4,14 @@
 # accepted. Adding one without a justification defeats the point of the job.
 # See docs/security/review-2026-08.md.
 
+[output]
+# Treat yanked crates and unsoundness notices as CI failures instead of green
+# checks with warnings hidden in their logs.
+deny = ["warnings"]
+format = "terminal"
+quiet = false
+show_tree = true
+
 [advisories]
 ignore = [
     # RUSTSEC-2023-0071 — Marvin Attack (timing side channel) in `rsa` 0.9.

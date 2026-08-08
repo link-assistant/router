@@ -16,7 +16,7 @@ COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && \
     echo "pub const VERSION: &str = \"0.0.0\";" > src/lib.rs && \
     echo "fn main() {}" > src/main.rs && \
-    cargo build --release && \
+    cargo build --release --locked && \
     rm -rf src
 
 # Copy the committed admin UI before the Rust source. RustEmbed needs this
@@ -29,7 +29,7 @@ COPY src/ src/
 
 # Touch files to invalidate cache for source changes
 RUN touch src/lib.rs src/main.rs && \
-    cargo build --release
+    cargo build --release --locked
 
 # Runtime base
 #

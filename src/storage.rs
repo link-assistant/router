@@ -3,7 +3,7 @@
 //! Issue #7 requires that the router persist issued tokens with **two**
 //! formats by default — a Lino-style text encoding (so humans can audit
 //! the token database with a text editor) **and** a binary encoding that
-//! is compatible with the [`link-cli`] storage layer.
+//! is compatible with the `link-cli` storage layer.
 //!
 //! This module provides:
 //!
@@ -18,7 +18,7 @@
 //! - [`BinaryTokenStore`] — persists records as a length-prefixed
 //!   binary file at `<data_dir>/tokens.bin`. The format is intentionally
 //!   simple and round-trippable; it interoperates with `link-cli` when
-//!   the [`crate::cli_backend`] adapter is wired up but does not require
+//!   the optional CLI backend adapter is wired up but does not require
 //!   `clink` to be installed.
 //! - [`DualTokenStore`] — fans writes out to two stores (typically text +
 //!   binary) and reads from the *first* store, falling back to the second
@@ -277,7 +277,7 @@ impl TokenStore for TextTokenStore {
 /// JSON-on-binary is intentional: it keeps the format trivially auditable
 /// and round-trippable while still being length-prefixed and
 /// non-text-editor-friendly enough that operators won't accidentally edit
-/// it. The [`crate::cli_backend`] adapter can substitute a `clink`-driven
+/// it. An optional CLI backend adapter can substitute a `clink`-driven
 /// implementation when configured.
 #[derive(Clone)]
 pub struct BinaryTokenStore {

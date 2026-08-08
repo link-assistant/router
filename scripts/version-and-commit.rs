@@ -14,13 +14,13 @@
 //! chrono = "0.4"
 //! ```
 
+use chrono::Utc;
+use regex::Regex;
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::process::{Command, exit};
-use regex::Regex;
-use chrono::Utc;
+use std::process::{exit, Command};
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -62,6 +62,14 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
     }
 }
 
+fn get_cargo_lock_path(rust_root: &str) -> String {
+    if rust_root == "." {
+        "./Cargo.lock".to_string()
+    } else {
+        format!("{}/Cargo.lock", rust_root)
+    }
+}
+
 fn get_changelog_dir(rust_root: &str) -> String {
     if rust_root == "." {
         "./changelog.d".to_string()
@@ -80,7 +88,11 @@ fn get_changelog_path(rust_root: &str) -> String {
 
 fn set_output(key: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
+        if let Ok(mut file) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&output_file)
+        {
             let _ = writeln!(file, "{}={}", key, value);
         }
     }
@@ -149,6 +161,43 @@ fn update_cargo_toml(cargo_toml_path: &str, new_version: &str) -> Result<(), Str
     Ok(())
 }
 
+fn update_cargo_lock(
+    cargo_lock_path: &str,
+    crate_name: &str,
+    new_version: &str,
+) -> Result<bool, String> {
+    if !Path::new(cargo_lock_path).exists() {
+        println!("No Cargo.lock at {cargo_lock_path}; skipping lockfile synchronization");
+        return Ok(false);
+    }
+
+    let content = fs::read_to_string(cargo_lock_path)
+        .map_err(|e| format!("Failed to read {cargo_lock_path}: {e}"))?;
+    let pattern = format!(
+        r#"(?m)(\[\[package\]\]\s*\nname\s*=\s*"{}"\s*\nversion\s*=\s*")[^"]+(")"#,
+        regex::escape(crate_name),
+    );
+    let package = Regex::new(&pattern)
+        .map_err(|e| format!("Failed to build Cargo.lock package matcher: {e}"))?;
+
+    if !package.is_match(&content) {
+        return Err(format!(
+            "Could not find [[package]] entry for `{crate_name}` in {cargo_lock_path}"
+        ));
+    }
+
+    let updated = package.replace(&content, format!("${{1}}{new_version}${{2}}").as_str());
+    if updated == content {
+        println!("Cargo.lock already contains version {new_version}");
+        return Ok(false);
+    }
+
+    fs::write(cargo_lock_path, updated.as_ref())
+        .map_err(|e| format!("Failed to write {cargo_lock_path}: {e}"))?;
+    println!("Updated {cargo_lock_path} to version {new_version}");
+    Ok(true)
+}
+
 fn check_tag_exists(version: &str) -> bool {
     exec_check("git", &["rev-parse", &format!("v{}", version)])
 }
@@ -198,7 +247,12 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
     }
 
     let date_str = Utc::now().format("%Y-%m-%d").to_string();
-    let new_entry = format!("\n## [{}] - {}\n\n{}\n", version, date_str, fragments.join("\n\n"));
+    let new_entry = format!(
+        "\n## [{}] - {}\n\n{}\n",
+        version,
+        date_str,
+        fragments.join("\n\n")
+    );
 
     if Path::new(changelog_file).exists() {
         let mut content = fs::read_to_string(changelog_file).unwrap_or_default();
@@ -237,19 +291,30 @@ fn main() {
     };
 
     if !["major", "minor", "patch"].contains(&bump_type.as_str()) {
-        eprintln!("Invalid bump type: {}. Must be major, minor, or patch.", bump_type);
+        eprintln!(
+            "Invalid bump type: {}. Must be major, minor, or patch.",
+            bump_type
+        );
         exit(1);
     }
 
     let description = get_arg("description");
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
+    let cargo_lock = get_cargo_lock_path(&rust_root);
     let changelog_dir = get_changelog_dir(&rust_root);
     let changelog_file = get_changelog_path(&rust_root);
 
     // Configure git
     let _ = exec("git", &["config", "user.name", "github-actions[bot]"]);
-    let _ = exec("git", &["config", "user.email", "github-actions[bot]@users.noreply.github.com"]);
+    let _ = exec(
+        "git",
+        &[
+            "config",
+            "user.email",
+            "github-actions[bot]@users.noreply.github.com",
+        ],
+    );
 
     // Get current version
     let content = match fs::read_to_string(&cargo_toml) {
@@ -284,11 +349,26 @@ fn main() {
         exit(1);
     }
 
+    let lock_updated = match update_cargo_lock(&cargo_lock, "link-assistant-router", &new_version) {
+        Ok(updated) => updated,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            exit(1);
+        }
+    };
+
     // Collect changelog fragments
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
-    // Stage Cargo.toml and CHANGELOG.md
-    let _ = exec("git", &["add", &cargo_toml, &changelog_file]);
+    // Stage the manifest, synchronized lockfile, and changelog together.
+    let mut release_files = vec!["add", &cargo_toml, &changelog_file];
+    if lock_updated {
+        release_files.push(&cargo_lock);
+    }
+    if let Err(e) = exec("git", &release_files) {
+        eprintln!("Error staging release files: {e}");
+        exit(1);
+    }
 
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
@@ -317,7 +397,10 @@ fn main() {
         None => format!("Release v{}", new_version),
     };
 
-    if let Err(e) = exec("git", &["tag", "-a", &format!("v{}", new_version), "-m", &tag_msg]) {
+    if let Err(e) = exec(
+        "git",
+        &["tag", "-a", &format!("v{}", new_version), "-m", &tag_msg],
+    ) {
         eprintln!("Error creating tag: {}", e);
         exit(1);
     }
@@ -337,4 +420,92 @@ fn main() {
 
     set_output("version_committed", "true");
     set_output("new_version", &new_version);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::update_cargo_lock;
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_lock(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock should be after the Unix epoch")
+            .as_nanos();
+        std::env::temp_dir().join(format!("router-{name}-{nonce}.lock"))
+    }
+
+    #[test]
+    fn lock_update_changes_only_the_named_package() {
+        let lock = temp_lock("update");
+        fs::write(
+            &lock,
+            r#"[[package]]
+name = "link-assistant-router-helper"
+version = "9.9.9"
+
+[[package]]
+name = "link-assistant-router"
+version = "0.28.0"
+
+[[package]]
+name = "dependency"
+version = "1.2.3"
+"#,
+        )
+        .expect("fixture should be writable");
+
+        assert!(update_cargo_lock(
+            lock.to_str().expect("temporary path should be UTF-8"),
+            "link-assistant-router",
+            "0.29.0",
+        )
+        .expect("lock update should succeed"));
+
+        let updated = fs::read_to_string(&lock).expect("updated fixture should be readable");
+        assert!(updated.contains("name = \"link-assistant-router\"\nversion = \"0.29.0\""));
+        assert!(updated.contains("name = \"link-assistant-router-helper\"\nversion = \"9.9.9\""));
+        assert!(updated.contains("name = \"dependency\"\nversion = \"1.2.3\""));
+        fs::remove_file(lock).expect("temporary fixture should be removable");
+    }
+
+    #[test]
+    fn lock_update_is_idempotent() {
+        let lock = temp_lock("idempotent");
+        let content = "[[package]]\nname = \"link-assistant-router\"\nversion = \"0.29.0\"\n";
+        fs::write(&lock, content).expect("fixture should be writable");
+
+        assert!(!update_cargo_lock(
+            lock.to_str().expect("temporary path should be UTF-8"),
+            "link-assistant-router",
+            "0.29.0",
+        )
+        .expect("idempotent update should succeed"));
+        assert_eq!(
+            fs::read_to_string(&lock).expect("fixture should be readable"),
+            content
+        );
+        fs::remove_file(lock).expect("temporary fixture should be removable");
+    }
+
+    #[test]
+    fn lock_update_rejects_a_missing_package_entry() {
+        let lock = temp_lock("missing");
+        fs::write(
+            &lock,
+            "[[package]]\nname = \"dependency\"\nversion = \"1.2.3\"\n",
+        )
+        .expect("fixture should be writable");
+
+        let error = update_cargo_lock(
+            lock.to_str().expect("temporary path should be UTF-8"),
+            "link-assistant-router",
+            "0.29.0",
+        )
+        .expect_err("a missing root package must fail closed");
+        assert!(error.contains("Could not find [[package]] entry"));
+        fs::remove_file(lock).expect("temporary fixture should be removable");
+    }
 }
