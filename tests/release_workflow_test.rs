@@ -48,6 +48,46 @@ fn dockerfile_builder_installs_native_tls_build_dependencies() {
 }
 
 #[test]
+fn dockerfile_builder_copies_embedded_admin_ui_before_building_source() {
+    let dockerfile = fs::read_to_string("Dockerfile").expect("Dockerfile should be readable");
+    let builder_stage =
+        docker_builder_stage(&dockerfile).expect("Dockerfile should have a builder stage");
+    let ui_copy = builder_stage
+        .find("COPY ui/dist/ ui/dist/")
+        .expect("builder stage should copy the committed admin UI bundle");
+    let source_copy = builder_stage
+        .find("COPY src/ src/")
+        .expect("builder stage should copy the Rust source");
+
+    assert!(
+        ui_copy < source_copy,
+        "the stable UI bundle should be copied before Rust source to preserve Docker layer caching"
+    );
+}
+
+#[test]
+fn release_workflow_builds_the_default_docker_image_before_releasing() {
+    let workflow = fs::read_to_string(".github/workflows/release.yml")
+        .expect("release workflow should be readable");
+
+    assert!(
+        workflow.contains("docker-build:\n    name: Build Docker Image"),
+        "CI should have a dedicated Docker image build job"
+    );
+    assert!(
+        workflow.contains("run: docker build --target runtime ."),
+        "CI should build the default runtime image without pushing it"
+    );
+    assert_eq!(
+        workflow
+            .matches("needs: [lint, test, build, docker-build]")
+            .count(),
+        2,
+        "automatic and manual releases should wait for the Docker image build"
+    );
+}
+
+#[test]
 fn cargo_lock_package_version_matches_manifest() {
     let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
     let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");
