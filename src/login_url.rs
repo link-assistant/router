@@ -12,7 +12,7 @@
 use crate::login_pty::PTY_COLS;
 
 /// Hosts an authorization URL is accepted from.
-const AUTH_HOSTS: &[&str] = &["claude.ai", "anthropic.com"];
+const AUTH_HOSTS: &[&str] = &["claude.ai", "claude.com", "anthropic.com"];
 
 /// Prefix of the long-lived tokens `claude setup-token` prints.
 const TOKEN_PREFIXES: &[&str] = &["sk-ant-oat", "sk-ant-"];
