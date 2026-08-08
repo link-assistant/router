@@ -81,3 +81,13 @@ Template features not copied wholesale include language-specific changeset tooli
 5. The default Docker runtime build exercises both locked Docker dependency steps; its result is preserved in `ci-logs/local-docker-build.log`.
 6. Packaging is intentionally rerun only from a committed clean tree because its strict dirty-tree rejection is the regression signal under repair.
 7. Finalization reviews the complete diff, merges current `main`, reruns clean-tree checks, pushes only the prepared branch, and verifies the resulting GitHub Actions run matches the pushed SHA.
+
+## Final CI result
+
+GitHub Actions run 31268242910 completed successfully for implementation SHA
+`694f9039ccd8451ebf34778531859f6f557613f8`. Every executed gate passed,
+including warning-denied lint/documentation, dependency audits, tests on Linux,
+macOS, and Windows, strict package creation, and the Docker build. A scan of
+the complete log found no actual warning/error annotations or deprecation
+messages; apparent broad keyword matches were only compiler command-line flag
+names. The complete log and structured run/job metadata are preserved here.

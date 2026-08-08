@@ -9,3 +9,8 @@ This directory preserves the evidence used to diagnose and fix issue 63. The fil
 - `online-research.md`: authoritative external sources and evaluated supporting tools.
 
 Empty JSON arrays are intentional: issue 63 and PR 64 had no comments, reviews, or inline review comments when collected.
+
+The final implementation validation is Actions run `31268242910` at SHA
+`694f9039ccd8451ebf34778531859f6f557613f8`; its complete log is
+`ci-logs/ci-cd-31268242910.log` and its metadata is
+`github/ci-run-31268242910.json`.
