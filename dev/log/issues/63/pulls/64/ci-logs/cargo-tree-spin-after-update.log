@@ -1,0 +1,12 @@
+ Downloading crates ...
+  Downloaded anyhow v1.0.103
+  Downloaded spin v0.9.9
+spin v0.9.9
+└── lazy_static v1.5.0
+    ├── num-bigint-dig v0.8.6
+    │   └── rsa v0.9.10
+    │       └── jsonwebtoken v10.3.0
+    │           └── link-assistant-router v0.29.0 (/tmp/gh-issue-solver-1786206324626)
+    └── sharded-slab v0.1.7
+        └── tracing-subscriber v0.3.23
+            └── link-assistant-router v0.29.0 (/tmp/gh-issue-solver-1786206324626)

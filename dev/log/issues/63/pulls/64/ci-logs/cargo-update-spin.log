@@ -1,0 +1,4 @@
+    Updating crates.io index
+     Locking 1 package to latest Rust 1.85 compatible version
+    Updating spin v0.9.8 -> v0.9.9
+note: pass `--verbose` to see 86 unchanged dependencies behind latest
