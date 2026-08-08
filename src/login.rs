@@ -492,10 +492,17 @@ fn spawn_and_wait_for_url(config: &LoginConfig) -> Result<(Arc<PtySession>, Stri
 /// the append-only PTY transcript.
 #[derive(Default)]
 struct TuiProgress {
-    theme_accepted: bool,
-    trust_accepted: bool,
-    login_sent: bool,
-    method_selected: bool,
+    completed: Vec<TuiAction>,
+}
+
+impl TuiProgress {
+    fn needs(&self, action: TuiAction) -> bool {
+        !self.completed.contains(&action)
+    }
+
+    fn complete(&mut self, action: TuiAction) {
+        self.completed.push(action);
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -511,13 +518,16 @@ fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
     // literal spaces. `strip_ansi` intentionally removes those escapes, so a
     // rendered "Select login method:" may arrive as "Selectloginmethod:".
     let compact: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
-    if !progress.theme_accepted && compact.contains(THEME_PICKER_MARKER) {
+    if progress.needs(TuiAction::AcceptTheme) && compact.contains(THEME_PICKER_MARKER) {
         Some(TuiAction::AcceptTheme)
-    } else if !progress.trust_accepted && compact.contains(WORKSPACE_TRUST_MARKER) {
+    } else if progress.needs(TuiAction::AcceptWorkspaceTrust)
+        && compact.contains(WORKSPACE_TRUST_MARKER)
+    {
         Some(TuiAction::AcceptWorkspaceTrust)
-    } else if !progress.login_sent && compact.contains(READY_PROMPT_MARKER) {
+    } else if progress.needs(TuiAction::SendLogin) && compact.contains(READY_PROMPT_MARKER) {
         Some(TuiAction::SendLogin)
-    } else if !progress.method_selected && compact.contains(LOGIN_METHOD_MARKER) {
+    } else if progress.needs(TuiAction::SelectLoginMethod) && compact.contains(LOGIN_METHOD_MARKER)
+    {
         Some(TuiAction::SelectLoginMethod)
     } else {
         None
@@ -549,31 +559,28 @@ fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> Result<
         if let Some(url) = extract_login_url(&text) {
             return Ok(url);
         }
-        match next_tui_action(&text, &progress) {
+        let action = next_tui_action(&text, &progress);
+        match action {
             Some(TuiAction::AcceptTheme) => {
                 session
                     .send_key(Key::Enter)
                     .map_err(|e| format!("could not accept the Claude Code theme screen: {e}"))?;
-                progress.theme_accepted = true;
             }
             Some(TuiAction::AcceptWorkspaceTrust) => {
                 session.send_key(Key::Enter).map_err(|e| {
                     format!("could not accept the Claude Code workspace trust screen: {e}")
                 })?;
-                progress.trust_accepted = true;
             }
             Some(TuiAction::SendLogin) => {
                 session
                     .send_text("/login")
                     .and_then(|()| session.send_key(Key::Enter))
                     .map_err(|e| format!("could not type /login at the Claude Code prompt: {e}"))?;
-                progress.login_sent = true;
             }
             Some(TuiAction::SelectLoginMethod) => {
                 session.send_key(Key::Enter).map_err(|e| {
                     format!("could not select the Claude subscription login method: {e}")
                 })?;
-                progress.method_selected = true;
             }
             None => {
                 return Err(format!(
@@ -581,6 +588,9 @@ fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> Result<
                     session.transcript_tail(400)
                 ));
             }
+        }
+        if let Some(action) = action {
+            progress.complete(action);
         }
     }
 }
