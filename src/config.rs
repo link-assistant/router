@@ -381,7 +381,7 @@ impl Config {
             args: env::var("LOGIN_CLI_ARGS")
                 .ok()
                 .filter(|raw| !raw.trim().is_empty())
-                .map_or_else(|| vec!["setup-token".to_string()], |raw| parse_csv(&raw)),
+                .map_or_else(Vec::new, |raw| parse_csv(&raw)),
             session_ttl: Duration::from_secs(parse_u64_env("LOGIN_SESSION_TTL_SECS", 900)),
             max_sessions: usize::try_from(parse_u64_env("LOGIN_MAX_SESSIONS", 4)).unwrap_or(4),
             ..crate::login::LoginConfig::default()
