@@ -78,7 +78,10 @@ async fn login_produces_a_url_then_a_usable_credential() {
         "user%3Amcp_servers",
         "user%3Afile_upload",
     ] {
-        assert!(url.contains(scope), "default login URL lacks {scope}: {url}");
+        assert!(
+            url.contains(scope),
+            "default login URL lacks {scope}: {url}"
+        );
     }
 
     // The session survives between requests: status is served from the registry
@@ -114,7 +117,10 @@ async fn setup_token_remains_an_explicit_alternative() {
 
     let begun = manager.begin().await.expect("setup-token should start");
     let url = begun.url.as_deref().expect("a URL must be reported");
-    assert!(url.contains("scope=user%3Ainference"), "unexpected URL: {url}");
+    assert!(
+        url.contains("scope=user%3Ainference"),
+        "unexpected URL: {url}"
+    );
     assert!(!url.contains("user%3Aprofile"), "unexpected URL: {url}");
 
     let done = manager
