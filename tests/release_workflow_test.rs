@@ -97,6 +97,17 @@ fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
 }
 
 #[test]
+fn dependency_audit_reuses_the_cached_binary() {
+    let workflow = fs::read_to_string(".github/workflows/release.yml")
+        .expect("release workflow should be readable");
+
+    assert!(
+        workflow.contains("command -v cargo-audit >/dev/null || cargo install cargo-audit --locked"),
+        "the audit job should not reinstall cargo-audit after its binary was restored from cache"
+    );
+}
+
+#[test]
 fn release_workflow_adds_crates_io_link_to_github_releases() {
     let workflow = fs::read_to_string(".github/workflows/release.yml")
         .expect("release workflow should be readable");
