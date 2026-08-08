@@ -67,8 +67,7 @@ fn dockerfile_builder_copies_embedded_admin_ui_before_building_source() {
 
 #[test]
 fn release_workflow_builds_the_default_docker_image_before_releasing() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
-        .expect("release workflow should be readable");
+    let workflow = read_lf(".github/workflows/release.yml");
 
     assert!(
         workflow.contains("docker-build:\n    name: Build Docker Image"),
@@ -89,8 +88,7 @@ fn release_workflow_builds_the_default_docker_image_before_releasing() {
 
 #[test]
 fn release_workflow_refreshes_cached_cargo_audit_binary() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
-        .expect("release workflow should be readable");
+    let workflow = read_lf(".github/workflows/release.yml");
 
     assert!(
         workflow.contains("cargo install cargo-audit --locked --force"),
