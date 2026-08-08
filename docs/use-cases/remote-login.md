@@ -44,7 +44,7 @@ $ curl -s -X POST http://localhost:8080/api/login \
 {
   "login_id": "3f2b…",
   "status": "awaiting_code",
-  "url": "https://claude.ai/oauth/authorize?code=true&state=…",
+  "url": "https://claude.com/cai/oauth/authorize?code=true&state=…",
   "session_expires_at": "2026-08-07T12:15:00Z"
 }
 ```
@@ -67,7 +67,7 @@ Polling is available for clients that would rather not block:
 
 ```console
 $ curl -s http://localhost:8080/api/login/3f2b… -H "Authorization: Bearer $ADMIN"
-{"login_id":"3f2b…","status":"awaiting_code","url":"https://claude.ai/…", …}
+{"login_id":"3f2b…","status":"awaiting_code","url":"https://claude.com/…", …}
 ```
 
 ## Statuses
@@ -111,13 +111,35 @@ link-assistant-router --disable-login-api    # or DISABLE_LOGIN_API=1
 With it disabled the routes are not registered at all, and requests to them are
 `404`.
 
+## Choosing the login mode
+
+The default is Claude Code's own TUI `/login` flow. The router starts bare
+`claude`, recognizes and accepts the first-run theme and workspace-trust
+screens, waits for the real prompt before typing `/login`, and selects the
+Claude subscription login method. It does not type into unknown wizard screens:
+if Claude Code changes onboarding, the request fails with the last recognized
+output instead of guessing.
+
+`setup-token` remains available by setting `LOGIN_CLI_ARGS=setup-token` or
+passing `--login-cli-args setup-token`.
+
+| Mode | How to select it | OAuth scopes requested |
+| --- | --- | --- |
+| TUI `/login` (default) | Leave `LOGIN_CLI_ARGS` unset or empty | `org:create_api_key`, `user:profile`, `user:inference`, `user:sessions:claude_code`, `user:mcp_servers`, `user:file_upload` |
+| `setup-token` | `LOGIN_CLI_ARGS=setup-token` | `user:inference` |
+
+Use the default when the deployment should receive the same credential Claude
+Code produces interactively. Choose `setup-token` explicitly when the narrower,
+long-lived credential intended for non-interactive consumers is preferable.
+
 ## Requirements
 
-* **The CLI must exist in the image.** The flow drives `claude setup-token` by
-  default, so in Docker use the `with-claude-cli` image variant — it ships the
-  Claude Code CLI and Node for exactly this reason, while the default image
-  stays minimal for mounted-credential deployments. Point it elsewhere with
-  `--login-cli-command` / `--login-cli-args` if you drive something else.
+* **The CLI must exist in the image.** The default flow drives the Claude Code
+  TUI and its `/login` command, so in Docker use the `with-claude-cli` image
+  variant — it ships the Claude Code CLI and Node for exactly this reason,
+  while the default image stays minimal for mounted-credential deployments.
+  Point it elsewhere with `--login-cli-command` / `--login-cli-args` if you
+  drive something else.
 * **`CLAUDE_CODE_HOME` must be writable.** This is checked *before* the URL is
   returned, so a read-only mount fails immediately rather than after the human
   has already finished the browser step.
@@ -125,10 +147,12 @@ With it disabled the routes are not registered at all, and requests to them are
 ## What is tested
 
 `tests/login_flow_test.rs` drives the whole flow against
-`examples/fake-login-cli.sh`, a stand-in for `claude setup-token` that repaints
-like the real TUI, waits on stdin, and prints an `sk-ant-oat…` token. It
-asserts that the URL is recovered, that a *separate* later call reaches the same
-live process, that the resulting credential is readable by
-`OAuthProvider` (the component that actually serves upstream requests), and that
-rejection, double submission, cancellation, expiry and the concurrency cap each
-behave as described above.
+`examples/fake-login-cli.sh`, a stand-in for both the TUI `/login` flow and
+`claude setup-token`. It reproduces the first-run screens, prompt readiness,
+login-method selection and repainting URL, then waits on stdin. The tests assert
+that the full-scope default URL is recovered, that a *separate* later call
+reaches the same live process, that the resulting credential is readable by
+`OAuthProvider` (the component that actually serves upstream requests), that
+`setup-token` remains selectable with its narrower scope, and that rejection,
+double submission, cancellation, expiry and the concurrency cap each behave as
+described above.
