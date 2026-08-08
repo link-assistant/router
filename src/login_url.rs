@@ -12,7 +12,7 @@
 use crate::login_pty::PTY_COLS;
 
 /// Hosts an authorization URL is accepted from.
-const AUTH_HOSTS: &[&str] = &["claude.ai", "anthropic.com"];
+const AUTH_HOSTS: &[&str] = &["claude.ai", "claude.com", "anthropic.com"];
 
 /// Prefix of the long-lived tokens `claude setup-token` prints.
 const TOKEN_PREFIXES: &[&str] = &["sk-ant-oat", "sk-ant-"];
@@ -176,6 +176,12 @@ mod tests {
             extract_login_url(transcript).as_deref(),
             Some("https://claude.ai/oauth/authorize?code=true&state=abc")
         );
+    }
+
+    #[test]
+    fn finds_current_claude_cli_url() {
+        let url = "https://claude.com/cai/oauth/authorize?code=true&state=abc";
+        assert_eq!(extract_login_url(url).as_deref(), Some(url));
     }
 
     #[test]
