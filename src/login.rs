@@ -44,17 +44,15 @@ use crate::login_url::{extract_login_url, extract_token};
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
 /// Markers that mean the CLI accepted the code and finished.
-const SUCCESS_MARKERS: &[&str] = &[
-    "Login successful",
-    "successfully authenticated",
-    "sk-ant-oat",
-];
+const SUCCESS_MARKERS: &[&str] = &["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"];
 /// Markers that mean the CLI rejected the code.
 const FAILURE_MARKERS: &[&str] = &[
-    "Invalid code",
+    "OAutherror",
+    "PressEntertoretry",
+    "Invalidcode",
     "invalid_grant",
-    "Authentication failed",
-    "Login failed",
+    "Authenticationfailed",
+    "Loginfailed",
 ];
 
 /// Stable text on the first-run screens that block the Claude Code prompt.
@@ -517,7 +515,7 @@ fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
     // Ink-based TUIs position words with cursor escapes instead of printing
     // literal spaces. `strip_ansi` intentionally removes those escapes, so a
     // rendered "Select login method:" may arrive as "Selectloginmethod:".
-    let compact: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
+    let compact = compact_terminal_text(text);
     if progress.needs(TuiAction::AcceptTheme) && compact.contains(THEME_PICKER_MARKER) {
         Some(TuiAction::AcceptTheme)
     } else if progress.needs(TuiAction::AcceptWorkspaceTrust)
@@ -532,6 +530,16 @@ fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
     } else {
         None
     }
+}
+
+/// Match terminal text independently of whether a TUI printed spaces or used
+/// cursor-positioning escapes that disappeared during ANSI stripping.
+fn compact_terminal_text(text: &str) -> String {
+    text.chars().filter(|ch| !ch.is_whitespace()).collect()
+}
+
+fn contains_marker(compact: &str, markers: &[&str]) -> bool {
+    markers.iter().any(|marker| compact.contains(marker))
 }
 
 /// Drive bare `claude` to the full-scope OAuth URL exposed by its `/login`
@@ -624,16 +632,33 @@ fn wait_error_detail(session: &PtySession, err: &WaitError) -> String {
 
 /// Type the code into the live session and decide what happened.
 fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &str) -> Outcome {
-    if let Err(e) = pty.send_text(code).and_then(|()| pty.send_key(Key::Enter)) {
+    // The default flow is an Ink TUI. A real terminal wraps pasted text so the
+    // controlled input receives it as one transaction instead of racing its
+    // repaint one keypress at a time. Preserve raw input for the explicit
+    // `setup-token` alternative, whose line reader does not enable this mode.
+    let send_result = if config.args.is_empty() {
+        pty.send_bracketed_paste(code)
+    } else {
+        pty.send_text(code)
+    };
+    if let Err(e) = send_result {
         return Outcome::Failed(format!("could not send the code to the login process: {e}"));
+    }
+    if let Err(e) = pty.wait_idle(config.idle_settle, config.code_timeout) {
+        return Outcome::Failed(format!(
+            "login timed out while waiting for the pasted authorization code to settle: {e}"
+        ));
+    }
+    if let Err(e) = pty.send_key(Key::Enter) {
+        return Outcome::Failed(format!("could not submit the authorization code: {e}"));
     }
 
     // Either the CLI prints a verdict, or it simply exits. Both are handled;
     // the authoritative check is whether a credential exists afterwards.
-    let _ = pty.wait_for(
+    let verdict = pty.wait_for(
         |text| {
-            SUCCESS_MARKERS.iter().any(|m| text.contains(m))
-                || FAILURE_MARKERS.iter().any(|m| text.contains(m))
+            let compact = compact_terminal_text(text);
+            contains_marker(&compact, SUCCESS_MARKERS) || contains_marker(&compact, FAILURE_MARKERS)
         },
         config.idle_settle,
         config.code_timeout,
@@ -659,24 +684,50 @@ fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &str) -> Ou
             )),
         };
     }
-    let failure = FAILURE_MARKERS
-        .iter()
-        .find(|marker| transcript.contains(**marker))
-        .map_or_else(
-            || {
-                format!(
-                    "no credential was produced; last output: {}",
-                    excerpt(&transcript, code, 400)
-                )
-            },
-            |marker| {
-                format!(
-                    "login rejected ({marker}); last output: {}",
-                    excerpt(&transcript, code, 400)
-                )
-            },
-        );
+    let compact = compact_terminal_text(&transcript);
+    let failure = if contains_marker(&compact, FAILURE_MARKERS) {
+        format!(
+            "authorization code was rejected; CLI reported: {}. Request a fresh login URL and code",
+            rejection_verdict(&compact)
+        )
+    } else if matches!(verdict, Err(WaitError::Timeout)) {
+        format!(
+            "login timed out waiting for the CLI to accept or reject the authorization code; last output: {}",
+            excerpt(&transcript, code, 400)
+        )
+    } else {
+        format!(
+            "login process ended without producing a credential; last output: {}",
+            excerpt(&transcript, code, 400)
+        )
+    };
     Outcome::Failed(failure)
+}
+
+/// Turn the CLI's known compacted verdicts back into readable API text.
+fn rejection_verdict(compact: &str) -> String {
+    const STATUS_PREFIX: &str = "OAutherror:Requestfailedwithstatuscode";
+
+    if compact.contains("OAutherror:Invalidcode") {
+        return "OAuth error: Invalid code. Please make sure the full code was copied".into();
+    }
+    if let Some(start) = compact.rfind(STATUS_PREFIX) {
+        let rest = &compact[start + STATUS_PREFIX.len()..];
+        let status: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        if !status.is_empty() {
+            return format!("OAuth error: Request failed with status code {status}");
+        }
+    }
+    if compact.contains("invalid_grant") {
+        return "OAuth error: invalid_grant".into();
+    }
+    if compact.contains("Authenticationfailed") {
+        return "Authentication failed".into();
+    }
+    if compact.contains("Loginfailed") {
+        return "Login failed".into();
+    }
+    "OAuth error: the CLI rejected the authorization code".into()
 }
 
 /// A credential the router can now read.
@@ -782,6 +833,18 @@ mod tests {
     #[test]
     fn login_config_defaults_to_bare_tui() {
         assert!(LoginConfig::default().args.is_empty());
+    }
+
+    #[test]
+    fn compacted_oauth_verdicts_are_restored_for_api_errors() {
+        assert_eq!(
+            rejection_verdict("promptOAutherror:Invalidcode.Pleasemakesurethefullcodewascopied"),
+            "OAuth error: Invalid code. Please make sure the full code was copied"
+        );
+        assert_eq!(
+            rejection_verdict("promptOAutherror:Requestfailedwithstatuscode400"),
+            "OAuth error: Request failed with status code 400"
+        );
     }
 
     /// Build a session that already reached `status`, settled `age` ago.

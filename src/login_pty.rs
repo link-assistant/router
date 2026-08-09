@@ -232,6 +232,26 @@ impl PtySession {
         }
     }
 
+    /// Block until output has stayed quiet for `idle` after this call began.
+    ///
+    /// Requiring a full idle interval after entry prevents old quiet time from
+    /// making a post-input settle return before the child has processed the
+    /// newly written bytes.
+    pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> Result<(), WaitError> {
+        let started = Instant::now();
+        let deadline = started + timeout;
+        loop {
+            let (_, quiet_for) = self.snapshot();
+            if started.elapsed() >= idle && quiet_for >= idle {
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err(WaitError::Timeout);
+            }
+            std::thread::sleep(POLL_INTERVAL);
+        }
+    }
+
     /// Current transcript and how long the child has been quiet.
     fn snapshot(&self) -> (String, Duration) {
         let (bytes, quiet_for) = self.output.lock().map_or_else(
@@ -264,6 +284,22 @@ impl PtySession {
             .lock()
             .map_err(|_| std::io::Error::other("PTY writer poisoned"))?;
         writer.write_all(text.as_bytes())?;
+        writer.flush()
+    }
+
+    /// Paste `text` as one bracketed-paste transaction.
+    ///
+    /// Ink and other terminal UIs use these delimiters to distinguish a paste
+    /// from a burst of independent keypresses. Keeping the complete sequence
+    /// under one writer lock also prevents another input from interleaving.
+    pub fn send_bracketed_paste(&self, text: &str) -> std::io::Result<()> {
+        let mut writer = self
+            .writer
+            .lock()
+            .map_err(|_| std::io::Error::other("PTY writer poisoned"))?;
+        writer.write_all(b"\x1b[200~")?;
+        writer.write_all(text.as_bytes())?;
+        writer.write_all(b"\x1b[201~")?;
         writer.flush()
     }
 

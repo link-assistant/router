@@ -9,7 +9,7 @@
 #   * the TUI waits until `/login` is entered and a login method is selected,
 #   * it repaints, printing the authorization URL more than once,
 #   * it hard-wraps nothing itself and relies on the terminal,
-#   * it waits on stdin for the code the human pastes,
+#   * its TUI accepts the code as bracketed paste, like a terminal emulator,
 #   * the TUI writes `.credentials.json`, while `setup-token` prints a token,
 #   * it prints `Invalid code` and exits 1 when the code is rejected.
 #
@@ -60,6 +60,24 @@ printf 'Paste code here: '
 IFS= read -r code
 code="${code%$'\r'}"
 
+if [ "$mode" = "tui" ]; then
+  paste_start=$'\033[200~'
+  paste_end=$'\033[201~'
+  case "$code" in
+    "$paste_start"*"$paste_end")
+      code="${code#"$paste_start"}"
+      code="${code%"$paste_end"}"
+      ;;
+    *)
+      # Ink positions words with cursor escapes. ANSI stripping therefore
+      # yields OAutherror:Invalidcode... rather than a space-preserving line.
+      printf '\r\nOAuth\033[7Gerror: Invalid\033[22Gcode. Please make sure the full code was copied\r\n'
+      printf 'Press\033[7GEnter\033[13Gto\033[16Gretry.\r\n'
+      exit 1
+      ;;
+  esac
+fi
+
 if [ "$code" = "$expected" ]; then
   printf '\r\nLogin successful.\r\n'
   if [ "$mode" = "setup-token" ]; then
@@ -70,5 +88,6 @@ if [ "$code" = "$expected" ]; then
   exit 0
 fi
 
-printf '\r\nInvalid code\r\n'
+printf '\r\nOAuth\033[7Gerror: Invalid\033[22Gcode. Please make sure the full code was copied\r\n'
+printf 'Press\033[7GEnter\033[13Gto\033[16Gretry.\r\n'
 exit 1
