@@ -37,6 +37,541 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.32.0] - 2026-08-09
+
+### Added
+- Changeset-style fragment format with frontmatter for specifying version bump type
+- New `get-bump-type.mjs` script to automatically determine version bump from fragments
+- Automatic version bumping on merge to main based on changelog fragments
+- Detailed documentation for the changelog fragment system in `changelog.d/README.md`
+
+### Changed
+- Updated `collect-changelog.mjs` to strip frontmatter when collecting fragments
+- Updated `version-and-commit.mjs` to handle frontmatter in fragments
+- Enhanced release workflow to automatically determine bump type from changesets
+
+### Changed
+- Add `detect-changes` job with cross-platform `detect-code-changes.mjs` script
+- Make lint job independent of changelog check (runs based on file changes only)
+- Allow docs-only PRs without changelog fragment requirement
+- Handle changelog check 'skipped' state in dependent jobs
+- Exclude `changelog.d/`, `docs/`, `experiments/`, `examples/` folders and markdown files from code changes detection
+
+### Fixed
+- Fixed README.md to correctly reference Node.js scripts (`.mjs`) instead of Python scripts (`.py`)
+- Updated project structure in README.md to match actual script files in `scripts/` directory
+- Fixed example code in README.md that had invalid Rust with two `main` functions
+
+### Added
+
+- Added crates.io publishing support to CI/CD workflow
+- Added `release_mode` input with "instant" and "changelog-pr" options for manual releases
+- Added `--tag-prefix` and `--crates-io-url` options to create-github-release.mjs script
+- Added comprehensive case study documentation for Issue #11 in docs/case-studies/issue-11/
+
+### Changed
+
+- Changed changelog fragment check from warning to error (exit 1) to enforce changelog requirements
+- Updated job conditions with `always() && !cancelled()` to fix workflow_dispatch job skipping issue
+- Renamed manual-release job to "Instant Release" for clarity
+
+### Fixed
+
+- Fixed deprecated `::set-output` GitHub Actions command in version-and-commit.mjs
+- Fixed workflow_dispatch triggering issues where lint/build/release jobs were incorrectly skipped
+
+### Fixed
+
+- Fixed changelog fragment check to validate that a fragment is **added in the PR diff** rather than just checking if any fragments exist in the directory. This prevents the check from incorrectly passing when there are leftover fragments from previous PRs that haven't been released yet.
+
+### Changed
+
+- Converted shell scripts in `release.yml` to cross-platform `.mjs` scripts for improved portability and performance:
+  - `check-changelog-fragment.mjs` - validates changelog fragment is added in PR diff
+  - `git-config.mjs` - configures git user for CI/CD
+  - `check-release-needed.mjs` - checks if release is needed
+  - `publish-crate.mjs` - publishes package to crates.io
+  - `create-changelog-fragment.mjs` - creates changelog fragments for manual releases
+  - `get-version.mjs` - gets current version from Cargo.toml
+
+### Added
+
+- Added `check-version-modification.mjs` script to detect manual version changes in Cargo.toml
+- Added `version-check` job to CI/CD workflow that runs on pull requests
+- Added skip logic for automated release branches (changelog-manual-release-*, changeset-release/*, release/*, automated-release/*)
+
+### Changed
+
+- Version modifications in Cargo.toml are now blocked in pull requests to enforce automated release pipeline
+
+### Added
+
+- Added support for `CARGO_REGISTRY_TOKEN` as alternative to `CARGO_TOKEN` for crates.io publishing
+- Added case study documentation for Issue #17 (yargs reserved word and dual token support)
+
+### Changed
+
+- Updated workflow to use fallback logic: `${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}`
+- Improved publish-crate.mjs to check both `CARGO_REGISTRY_TOKEN` and `CARGO_TOKEN` environment variables
+- Added warning message when neither token is set
+
+### Added
+- New `scripts/rust-paths.mjs` utility for automatic Rust package root detection
+- Support for both single-language and multi-language repository structures in all CI/CD scripts
+- Configuration options via `--rust-root` CLI argument and `RUST_ROOT` environment variable
+- Comprehensive case study documentation in `docs/case-studies/issue-19/`
+
+### Changed
+- Updated all release scripts to use the new path detection utility:
+  - `scripts/bump-version.mjs`
+  - `scripts/check-release-needed.mjs`
+  - `scripts/collect-changelog.mjs`
+  - `scripts/get-bump-type.mjs`
+  - `scripts/get-version.mjs`
+  - `scripts/publish-crate.mjs`
+  - `scripts/version-and-commit.mjs`
+
+### Changed
+
+- **check-release-needed.mjs**: Now checks crates.io API directly instead of git tags to determine if a version is already released. This prevents false positives where git tags exist but the package was never actually published to crates.io.
+
+### Added
+
+- **CI/CD Troubleshooting Guide**: New documentation at `docs/ci-cd/troubleshooting.md` covering common issues like skipped jobs, false positive version checks, publishing failures, and secret configuration.
+
+- **Enhanced Error Handling in publish-crate.mjs**: Added specific detection and helpful error messages for authentication failures, including guidance on secret configuration and workflow setup.
+
+- **Case Study Documentation**: Added comprehensive case study at `docs/case-studies/issue-21/` analyzing CI/CD failures from browser-commander repository (issues #27, #29, #31, #33) with timeline, root causes, and lessons learned.
+
+### Fixed
+
+- **Prevent False Positive Version Checks**: The release workflow now correctly identifies unpublished versions by checking crates.io instead of relying on git tags, which can exist without the package being published.
+
+### Changed
+
+- Translated all CI/CD scripts from JavaScript (.mjs) to Rust (.rs) using rust-script
+- Scripts now use native Rust with rust-script for execution in shell
+- Removed Node.js dependency from CI/CD pipeline
+- Updated GitHub Actions workflow to use rust-script instead of node
+- Updated README and CONTRIBUTING documentation with new script references
+
+### Added
+- Link.Assistant.Router prototype: Rust-based API gateway for Anthropic (Claude) APIs
+- Claude MAX OAuth proxy: reads Claude Code session credentials and injects OAuth token into upstream requests
+- Custom token system (`la_sk_...` prefixed JWT tokens) with issuance, validation, expiration, and revocation
+- Transparent API proxying with SSE/streaming pass-through at `/api/latest/anthropic/{...}`
+- Health check endpoint at `/health`
+- Token issuance endpoint at `/api/tokens`
+- Configuration via environment variables (ROUTER_PORT, TOKEN_SECRET, CLAUDE_CODE_HOME, UPSTREAM_BASE_URL)
+- Dockerfile for single-container deployment
+
+### Added
+- Comprehensive README.md with full usage documentation, configuration reference, Docker/VPS deployment guides, and manual testing instructions
+- Manual end-to-end testing script (`scripts/test-manual.sh`) that validates health check, token issuance, proxy authentication, and error handling
+
+### Added
+- Full Claude Code LLM Gateway compliance with all three API formats:
+  - Anthropic Messages API (`/v1/messages`, `/v1/messages/count_tokens`)
+  - Amazon Bedrock InvokeModel API (`/invoke`, `/invoke-with-response-stream`)
+  - Google Vertex AI rawPredict API (`:rawPredict`, `:streamRawPredict`)
+- Explicit forwarding of required headers (`anthropic-beta`, `anthropic-version`, `x-claude-code-session-id`)
+- Verbose logging via `log-lazy` crate with `--verbose` flag and `VERBOSE` env var
+- `UPSTREAM_API_FORMAT` environment variable to restrict accepted API format
+- Case study documentation for issue #5
+
+### Changed
+- Proxy handler refactored to support multiple API format routing
+- Configuration expanded with `verbose` and `api_format` fields
+
+### Added
+
+- Added the issue #7 case-study package under `docs/case-studies/issue-7`, including a requirement inventory, current-router gap analysis, competitor comparison, official-docs research notes, and raw research snapshots.
+
+### Added
+
+- **Persistent token store** with dual text (Lino) + binary backends. The
+  selected backend(s) are controlled via `--storage-policy` /
+  `STORAGE_POLICY` (`memory`, `text`, `binary`, or the default `both`).
+  Tokens, labels, expiries, and revocations now survive process restarts.
+- **Multi-account routing**. `--additional-account-dirs` registers extra
+  Claude MAX credential directories alongside the primary one. The router
+  distributes requests across healthy accounts and parks an account on
+  cooldown when upstream returns 429.
+- **OpenAI-compatible API surface**: `/v1/chat/completions`, `/v1/responses`,
+  and `/v1/models`. Translates OpenAI request/response shapes to and from
+  Anthropic Messages, mapping `gpt-4o`, `gpt-4o-mini`, and the `o*`
+  reasoning families to the equivalent Claude tiers. Native `claude-*` IDs
+  pass through untouched.
+- **Live observability**: Prometheus `/metrics`, JSON `/v1/usage`, and
+  per-account health at `/v1/accounts`.
+- **First-class CLI** built on `lino-arguments` (clap drop-in with `.lenv`
+  support): `serve`, `tokens issue|list|revoke|expire|show`,
+  `accounts list`, and `doctor` subcommands. Token operations bypass the
+  HTTP layer and operate directly on the configured store.
+- **Admin endpoints** (`/api/tokens/list`, `/api/tokens/revoke`) plus the
+  optional `--admin-key` / `TOKEN_ADMIN_KEY` Bearer gate.
+- **Feature toggles** for every API surface — `--disable-openai-api`,
+  `--disable-anthropic-api`, `--disable-metrics`,
+  `--experimental-compatibility`.
+
+### Changed
+
+- `Config` is now built via `BuildArgs` and loaded from CLI flags + env +
+  `.lenv` (still supports `Config::from_env()` for backwards
+  compatibility).
+- The HTTP server now mounts `/v1/messages*`, OpenAI endpoints, and the
+  ops endpoints conditionally based on the feature toggles above.
+- `proxy_handler` consults the multi-account router (when configured) and
+  reports 429s as cooldowns.
+
+### Notes
+
+- `RoutingMode::Cli` and `RoutingMode::Hybrid` are accepted by the parser
+  but currently log a warning and fall back to direct routing — the local
+  Claude CLI subprocess driver is the next slice.
+- Closes the `lino-objects-codec` dependency gap by hand-rolling a minimal
+  Lino-style codec inside `src/storage.rs` until the upstream crate is
+  published.
+
+### Added
+
+- Added the issue #9 case-study package under `docs/case-studies/issue-9`, including a 28-item requirement inventory, current-router gap analysis vs. OmniRoute, competitor comparison (OmniRoute / 9router / CLIProxyAPI / musistudio/claude-code-router / LiteLLM / Caveman), per-source online research notes, and raw README + metadata snapshots for each compared project.
+
+### Fixed
+
+- Synchronised `Cargo.lock` with the v0.6.0 version in `Cargo.toml`. The previous release commit (`chore: release v0.6.0`) bumped `Cargo.toml` but did not regenerate `Cargo.lock`, leaving the lockfile pinned to `0.5.0`. This caused `cargo package --list` in the `Build Package` CI job to fail with "files in the working directory contain changes that were not yet committed into git: Cargo.lock" because the first build re-locks the file.
+
+### Added
+- Document ForgeFed integration endpoints and deployment verification steps.
+- Add Akash SDL and Kubernetes deployment templates for the router.
+
+### Added
+- Expose a minimal ActivityPub and ForgeFed actor surface for the code task actor, including inbox, outbox, followers, public key metadata, and a problemsets Follow activity document.
+
+### Added
+- Optional Gonka upstream provider selection with Gonka config, forwarding, model listing, and request signing for OpenAI-compatible routes.
+
+### Added
+- Add optional Machine Payments Protocol 402 charge challenges for OpenAI-compatible `/v1/chat/completions` and `/v1/responses` endpoints.
+
+### Added
+- Publish release Docker images to GitHub Container Registry alongside crates.io releases.
+
+### Fixed
+
+- Map both `CARGO_REGISTRY_TOKEN` and `CARGO_TOKEN` secrets into Cargo's native `CARGO_REGISTRY_TOKEN` environment variable in release jobs, keeping the crates.io publish fallback explicit and consistent.
+
+### Added
+
+- Add crates.io and docs.rs badges to the README, and include a crates.io badge/link in generated GitHub release notes.
+- Extend the release workflow invariant check to verify crates.io secret fallback, GHCR publishing, and release-note crates.io links.
+
+### Added
+- Added Docker Hub publishing for `konard/link-assistant-router` during crate releases, with release notes and README badges for the Docker image.
+
+### Changed
+- Release checks now verify crates.io, Docker Hub, and GitHub release artifacts before deciding that a version is fully published.
+
+### Fixed
+- Updated the Docker builder image to track a supported Rust 1.x toolchain on Debian bookworm so release image builds can compile dependencies that use Rust 2024 edition metadata.
+
+### Fixed
+- Installed native OpenSSL build dependencies in the Docker builder stage so release image publishing can compile crates that use `openssl-sys`.
+
+### Fixed
+- Fixed GitHub release creation by removing unsupported Rust regex look-ahead from changelog section parsing.
+
+### Added
+
+- Added issue 31 LiteLLM compatibility research and an architecture decision
+  record defining the router's LiteLLM-compatible gateway contract.
+- Added `UPSTREAM_PROVIDER=openai-compatible` routing for LiteLLM and other
+  OpenAI-compatible upstreams.
+- Added encrypted provider storage in `<DATA_DIR>/providers.lenv` with
+  `providers add|list|show|remove|import` CLI commands and `/api/providers`
+  admin endpoints.
+- Added `.lenv`, JSON, and indented Links-style provider imports.
+- Added OpenAI SSE translation for Anthropic-backed chat and responses streams.
+
+### Fixed
+
+- Accepted router tokens from either `Authorization: Bearer ...` or `x-api-key`
+  while stripping client credentials before upstream forwarding.
+- Synchronized the root package version in `Cargo.lock` with `Cargo.toml` after
+  the v0.16.0 release bump.
+
+### Added
+- Add an optional Crater ForgeFed upstream provider for OpenAI chat completions, including `Offer{Ticket}` delivery, `Accept.result` polling, SSE responses, and `TaskProvider` backend abstraction.
+
+### Added
+
+- Added a per-token request budget: tokens can carry an optional `max_requests`
+  cap with a persisted `used_requests` counter, enforced on every upstream
+  forwarding path (Anthropic, OpenAI-compatible, Gonka) with an HTTP 429
+  `rate_limit_error` once exhausted. Exposed via the CLI `tokens issue
+  --max-requests`, the `POST /api/tokens` `max_requests` field, and a `used/max`
+  column in `tokens list`.
+- Added the issue #35 case-study package under `docs/case-studies/issue-35`,
+  including a full requirement trace, online research with primary sources, an
+  existing-components survey (LiteLLM virtual keys/budgets, Portkey, Kong AI
+  Gateway, community Claude proxies), and redacted live end-to-end evidence.
+
+### Fixed
+
+- Fixed Claude MAX credential reading: the router now parses the real Claude Code
+  `~/.claude/.credentials.json` layout, where the OAuth token is nested under a
+  `claudeAiOauth` object (`accessToken`, `refreshToken`, `expiresAt`, `scopes`,
+  `subscriptionType`), in addition to the previously supported flat layout.
+  `doctor` now probes the credential file and reports whether a usable token was
+  found.
+
+### Changed
+
+- Documented the nested credential layout, transparent header injection
+  (`anthropic-version` default plus the `anthropic-beta: oauth-2025-04-20` flag),
+  and the per-token request budget in `README.md`, and corrected the stale note
+  claiming token revocations are lost on restart (records are persisted).
+
+### Added
+
+- Added the issue #37 case-study package under `docs/case-studies/issue-37`,
+  analyzing how to adopt the best experience from ProxyPal
+  (`heyhuynhgiabuu/proxypal`) to fully support Claude, Codex, Gemini, and Qwen
+  subscriptions. Includes a requirement trace (process + functional), file-level
+  solution plans per requirement, an existing-components survey (CLIProxyAPI,
+  ProxyPal, LiteLLM, the `oauth2`/`openidconnect` crates), online research with
+  primary sources for each provider's OAuth endpoints/tokens/quotas, a deep
+  inventory of ProxyPal and its CLIProxyAPI engine, and raw research snapshots.
+
+### Added
+
+- Multi-provider subscription support for Codex (ChatGPT), Gemini (Code Assist),
+  and Qwen (DashScope), alongside the existing Claude support, adopting the best
+  practices from ProxyPal. The router now reads each vendor CLI's OAuth
+  credential file read-only (`~/.codex/auth.json`, `~/.gemini/oauth_creds.json`,
+  `~/.qwen/oauth_creds.json`) via a unified `subscription` module and routes
+  `/v1/chat/completions`, `/v1/responses`, and `/v1/models` to the correct
+  upstream.
+- `UpstreamProvider::{Codex, Gemini, Qwen}` selectable upstreams with provider
+  aliases (e.g. `chatgpt`, `google`, `dashscope`).
+- Dialect translation between OpenAI Chat Completions, the OpenAI Responses API
+  (Codex/ChatGPT backend), and the Gemini Code Assist `generateContent` envelope,
+  including SSE synthesis when a client requests streaming from Gemini.
+- In-memory OAuth token refresh: expired Codex/Gemini/Qwen tokens are refreshed
+  using each vendor's public OAuth client and cached in memory, keeping the proxy
+  working even when the vendor CLI is not running. Vendor credential files remain
+  read-only and secrets are never logged.
+- `router doctor` now probes the Codex/Gemini/Qwen subscription credential files
+  and reports whether each is present, valid, or expired.
+- Rate-limit headers (`Retry-After`, `x-ratelimit-*`) from subscription upstreams
+  are relayed to clients so they can back off intelligently.
+
+### Changed
+
+- Updated dependencies to their latest versions and built on the latest stable
+  Rust (edition 2024).
+
+### Fixed
+
+- Codex subscription proxy now shapes `/v1/responses` (and projected
+  `/v1/chat/completions`) request bodies for the ChatGPT Codex backend: the
+  unsupported `max_output_tokens` parameter is stripped and a default
+  `instructions` field is injected when the client omits one. Standard OpenAI
+  Responses clients (e.g. OpenClaw) previously received HTTP 400
+  "Unsupported parameter: max_output_tokens" / "Instructions are required".
+
+### Added
+- Codex subscriptions now send a `version` header (default `0.144.1`, overridable via
+  `CODEX_CLIENT_VERSION`) when proxying to the ChatGPT backend. The backend gates newer
+  models (e.g. `gpt-5.6-luna`) behind a recent client version; without the header
+  `POST /responses` returns `Model not found`. This mirrors the Codex CLI so newer models
+  are usable through the router.
+
+### Added
+
+- Provider-neutral multi-subscription pools for Claude, Codex, Gemini, and Qwen
+  with strict token pins, session affinity, round-robin/fill-first/least-used
+  selection, configurable per-account request caps, and `Retry-After`-aware
+  quota cooldowns.
+- Formal AI-style namespaced protocol routes for Anthropic, OpenAI, Codex,
+  Qwen, native Gemini `generateContent`, and Vertex publisher-model requests.
+- Issue #42 research and requirement trace under
+  `docs/case-studies/issue-42`.
+
+### Fixed
+
+- Subscription requests now enforce router-token request budgets, keep
+  refreshed credentials isolated per account, and preserve original request
+  metadata when selecting an account before protocol translation.
+
+- Serve the Anthropic Messages API on top of non-Anthropic upstreams. Claude Code (and any other Anthropic-dialect client) can now run against the Codex, Qwen, Gemini, and OpenAI-compatible providers: requests are translated to the provider's own dialect, delegated to that provider's existing forwarder, and the reply is translated back — including streaming, tool calls, and images.
+- Add `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` to pick the upstream model used for bridged Anthropic requests (per-provider default otherwise).
+- Answer `POST /v1/messages/count_tokens` locally for bridged upstreams with a documented estimate.
+
+- Added `docs/use-cases/`: one document per supported scenario — per-task tokens, audit/monitoring, Claude MAX inside Codex CLI, ChatGPT/Qwen/Gemini/LiteLLM inside Claude Code — plus per-CLI configuration guides for Claude Code, Codex CLI, Qwen Code, Gemini CLI, opencode and Grok CLI, and an explicit non-support note for Cursor CLI. Linked from `README.md`, which now also documents `--bridge-model` and `--audit-log`.
+
+- Require a valid router token for `POST /v1/messages/count_tokens` when the request is served locally by the Anthropic bridge; expired or revoked tokens no longer receive an estimate (the per-token request budget is still not consumed, since nothing is spent upstream).
+
+- Prepend the Claude Code identity system block to Anthropic upstream requests backed by a Claude subscription OAuth credential. Without it `api.anthropic.com` rejects non-Claude-Code clients with a misleading `429 rate_limit_error`, which broke the documented "Claude MAX inside Codex" use case (`/v1/responses`) and any Anthropic SDK or `curl` client on `/v1/messages`. The change is idempotent for Claude Code's own requests, keeps the caller's system prompt, and never alters API-key traffic.
+
+- Added `docs/use-cases/self-hosting.md` for running the router as an internal component of personal or corporate infrastructure: deployment shapes (local process, Docker, corporate host), what lives on disk and what to back up, and — stated up front — the fact that `POST /api/tokens` is open to any caller that can reach the port unless `TOKEN_ADMIN_KEY` is set, while the default bind address is `0.0.0.0`. Backed by `experiments/issue-45/test-deployment-hardening.sh`, which asserts the admin surface's behaviour in Docker without a subscription or upstream egress.
+
+- Added a REST login API so a deployment can be authorized without a pre-existing credential file ([#47](https://github.com/link-assistant/router/issues/47)): `POST /api/login` starts the Claude Code CLI on a real PTY inside the deployment and returns the authorization URL it printed, `POST /api/login/{id}/code` types the human's code into that **same, still-running** process, `GET /api/login/{id}` reports `awaiting_code` / `authorized` / `failed` / `expired`, and `DELETE /api/login/{id}` cancels a pending login. Because a human opening a browser is slow, the session outlives the request that created it: the router keeps a registry keyed by `login_id` with a generous TTL (`--login-session-ttl-secs`, default 900s), a cap on simultaneously pending logins (`--login-max-sessions`, default 4, `429` beyond it), and an explicit kill of the process on every terminal path — success, failure, cancellation and expiry. The endpoints are admin endpoints (`TOKEN_ADMIN_KEY`) and can be removed entirely with `--disable-login-api`. On success the obtained credential is written in the layout `OAuthProvider` reads and the proxy's cached token is refreshed, so the next request works without a restart; `CLAUDE_CODE_HOME` is write-probed *before* the URL is returned so a read-only mount fails immediately rather than after the human has finished. The published image now ships the Claude Code CLI and Node, which the flow needs to have something to drive. Documented in `docs/use-cases/remote-login.md` and covered end to end by `tests/login_flow_test.rs` (7 passed), which drives the flow against `examples/fake-login-cli.sh`, a stand-in TUI that repaints, waits on stdin and prints an `sk-ant-oat…` token.
+
+### Added
+
+- Router-driven refresh for Claude subscription tokens. An expired
+  `~/.claude` access token is now renewed by exchanging the `refreshToken`
+  from the nested `claudeAiOauth` block against Anthropic's token endpoint,
+  the same way `src/refresh.rs` already handled Codex, Gemini, and Qwen. The
+  result is kept **in memory only**, so a container whose `CLAUDE_CODE_HOME`
+  is mounted read-only keeps working past expiry without a Claude CLI inside
+  the image (#48).
+- A `with-claude-cli` image variant that layers Node.js and the Claude Code
+  CLI on top of the runtime image, published on each release as
+  `:with-claude-cli` and `:<version>-with-claude-cli` on both GHCR and Docker
+  Hub. It makes a first-time `claude /login` possible from inside a
+  container; the default image stays minimal.
+
+### Documentation
+
+- README and `docs/use-cases/self-hosting.md` now state which credential
+  operations work with a read-only `CLAUDE_CODE_HOME` mount (serving
+  requests, renewing an expired token) and which need a writable one plus the
+  CLI (first-time login), and include a derived-image recipe for adding the
+  CLI to the published minimal image.
+
+### Security
+
+- The `/api/tokens*` admin surface is **closed by default**
+  ([#49](https://github.com/link-assistant/router/issues/49)). Previously
+  `is_admin_authorised` returned `true` whenever `TOKEN_ADMIN_KEY` was unset, so
+  a deployment that had not configured an admin key answered `200` to an
+  unauthenticated `POST /api/tokens` — anyone who could reach the port could
+  mint a token that spends the subscription and list every token already issued.
+  The default bind address is `0.0.0.0`, so in a container with a published port
+  that was reachable from outside the host. An unauthenticated admin request is
+  now `401`.
+- The flat `TOKEN_ADMIN_KEY` is compared with a constant-time digest comparison
+  instead of `==`, so a wrong key no longer leaks how many bytes matched.
+
+### Added
+
+- Admin access is now modelled as a **scoped token** rather than a flat shared
+  secret. An admin credential is an ordinary `la_sk_…` JWT carrying
+  `"scope": "admin"`, validated on the same code path as every other token, so
+  it has an identity (`sub`), an expiry, a record in `tokens list`, and full
+  revocation semantics.
+- `tokens issue --admin` (CLI) and `{"scope": "admin"}` on `POST /api/tokens`
+  (HTTP) mint one.
+- Rotation in a single step — mint the replacement and revoke the credential
+  that asked for it: `tokens rotate <sub>` (CLI) and `POST /api/tokens/rotate`
+  (HTTP). The flat key has no subject to revoke, so it cannot rotate itself and
+  gets `400`.
+- When no admin credential is configured, the router generates one on first
+  start, prints it once (`Admin token (shown once, store it now): la_sk_…`) and
+  persists its record — a fresh deployment is usable without being open.
+- `--allow-anonymous-admin` / `ALLOW_ANONYMOUS_ADMIN` explicitly restores the
+  historical open behaviour for deployments that depend on it. It warns at
+  startup, and `doctor` reports the admin surface as `OPEN` when it is set.
+
+### Changed
+
+- The flat `--admin-key` / `TOKEN_ADMIN_KEY` keeps working unchanged as a
+  bootstrap and compatibility credential — it is the only way to provision the
+  first credential in a deployment configured entirely from the outside.
+- `tokens list` gained a `scope` column (`client` for ordinary tokens).
+
+### Documentation
+
+- README gained an *Admin access* section and rows for `/api/tokens/rotate`,
+  the `scope` field and `--allow-anonymous-admin`;
+  `docs/use-cases/self-hosting.md` and `docs/use-cases/remote-login.md` now
+  describe the closed default and the bootstrap token instead of the open one.
+
+### Added
+
+- Added an opt-in admin UI ([#50](https://github.com/link-assistant/router/issues/50)): a minimal React console built on **Chakra UI v3** (Horizon UI as a visual reference only, not a v2 fork), built with Vite and embedded in the binary with `rust-embed`, served by the router on a **separate listener that does not exist unless you give it a port** — `--admin-port` / `ADMIN_PORT`, bound independently of the proxy via `--admin-host` / `ADMIN_HOST` (default `127.0.0.1`), so the proxy can face the network while the console stays on loopback. The admin credential is either provisioned at deploy time (`TOKEN_ADMIN_KEY`, which closes bootstrap from the start) or **claimed by the first browser visit** through a two-phase handshake that cannot brick the deployment: `POST /api/admin/bootstrap` mints a candidate token and a `claim_id` while persisting nothing and authorising nothing, the client writes the token to `localStorage` and **reads it back**, and only `POST /api/admin/bootstrap/confirm` — authenticated with that freshly stored token itself — activates the credential and closes bootstrap. An unconfirmed candidate expires after `--admin-claim-ttl-secs` (default 120s) leaving the system unclaimed and the mint retryable; only one candidate is outstanding at a time so the first to *confirm* wins and the loser's candidate is discarded; and when the storage read-back fails the client deliberately does **not** confirm, showing the token for manual copy and leaving bootstrap open. Only the SHA-256 digest of the active credential is persisted (`<data-dir>/admin-claim.json`). The console lists tokens (id, label, issued, expires, used/max requests, revoked), issues them (label, TTL, optional request cap, optional account pin) showing each value exactly once, revokes behind a confirmation dialog, rotates the admin credential, and reports read-only status (`/v1/accounts`, `/v1/usage`, doctor-style credential state); `doctor` now prints `admin_ui` and `admin_credential`. The `localStorage` exposure risk is documented in `docs/use-cases/admin-ui.md`. Covered by `tests/admin_ui_test.rs` (12 passed) driving the real admin router end to end plus 10 unit tests in `src/admin.rs`, including that a mint alone neither authorises nor closes bootstrap, that an expired candidate leaves the system unclaimed, and that only the first confirmer wins.
+
+### Security
+
+- Ran a deliberate security review over the surface added by [#47](https://github.com/link-assistant/router/issues/47), [#49](https://github.com/link-assistant/router/issues/49), [#50](https://github.com/link-assistant/router/issues/50) and [#51](https://github.com/link-assistant/router/issues/51) ([#52](https://github.com/link-assistant/router/issues/52)), and wrote the pass down — threat model, every checklist item, **and what was found to be fine** — in `docs/security/review-2026-08.md`. Four findings were fixed, each with a regression test in `tests/security_review_test.rs` or beside the code:
+  - The admin listener now sends `Content-Security-Policy` (`frame-ancestors 'none'`, `script-src 'self'`, `form-action 'none'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer` on **every** response — API, embedded UI assets, and the auth middleware's own refusals — because the console keeps its credential in `localStorage` and its revoke/rotate actions are one click (`src/security_headers.rs`).
+  - Login transcript excerpts are now redacted before they are truncated, so a login that fails *after* `claude setup-token` printed the paid-account credential can no longer return it in an error string; the pasted authorization code is removed too (`login_url::redact_secrets`, `login_url::redact_value`).
+  - The login and chat session registries are now bounded: terminal login sessions are evicted after a 300 s retention window and an expired session drops its PTY (killing the child), while chat sessions — keyed by an *unauthenticated* platform user id — are pruned on every message with a 1 h idle TTL and a 512-entry cap that evicts strangers before authenticated conversations.
+  - `/v1/usage` and `/v1/accounts` now require an admin credential on the network-facing proxy port, where `ENABLE_METRICS` defaults to on; they disclosed token ids, labels and credential filesystem paths to unauthenticated callers. `/metrics` stays open on purpose (aggregate counters only).
+
+### Added
+
+- Added a `Dependency Audit` CI job running `cargo audit` and `npm audit --audit-level=high` over the admin console toolchain. It deliberately does not gate `build`, so a newly published advisory against an unchanged tree raises a red check instead of blocking an unrelated release.
+
+### Added
+
+- **Optional Telegram and VK admin bots** (issue #51): administer the router
+  from a private chat — `/status`, `/tokens`, `/issue`, `/revoke`, `/rotate`.
+  Both channels are off unless a bot token is configured
+  (`TELEGRAM_BOT_TOKEN`, `VK_BOT_TOKEN` + `VK_GROUP_ID`), each is independent,
+  and both poll outward (Telegram `getUpdates`, VK Bots Long Poll), so no
+  inbound port or webhook is required.
+
+- **One system-wide admin claim across every channel**: the bots share
+  `AdminClaim` with the web UI, keeping its two-phase shape — `/start` mints a
+  candidate that authorises nothing, `/confirm <token>` activates it. A claim
+  made in a browser closes `/start` in chat and vice versa, a `TOKEN_ADMIN_KEY`
+  deployment starts already claimed, and a mint that never arrives leaves the
+  router claimable.
+
+- **New settings**: `--telegram-bot-token`, `--vk-bot-token`, `--vk-group-id`,
+  `--chat-admin-secret-ttl-secs` (default `120`),
+  `--chat-admin-rate-limit-per-minute` (default `5`), each with the matching
+  environment variable. `doctor` now reports `telegram_admin_bot` and
+  `vk_admin_bot`.
+
+- **Documentation**: [docs/use-cases/chat-admin-bots.md](../docs/use-cases/chat-admin-bots.md)
+  covers enabling a channel, the shared claim, the command set and the
+  secret-handling rules.
+
+### Security
+
+- Chat commands are parsed **only** in 1:1 conversations: Telegram requires
+  `chat.type == "private"` (bots and senderless messages are dropped too), and
+  VK requires `peer_id == from_id` below the multi-user chat offset. Group
+  traffic never reaches the command parser.
+- A message carrying a credential is sent on its own and deleted after
+  `--chat-admin-secret-ttl-secs`; token **values** are never echoed by listings.
+- A platform user id is only a cache for a presented credential — every command
+  re-validates it, so revoking or rotating signs the chat user out at once — and
+  `/start`, `/auth`, `/confirm`, `/issue` and `/rotate` are rate limited per
+  user. `--allow-anonymous-admin` does not open a chat channel.
+
+### Fixed
+
+- Recognize the `claude.com` authorization URLs emitted by current Claude Code CLI releases so `POST /api/login` can return the URL instead of timing out.
+
+### Fixed
+- Copy the embedded admin UI bundle into Docker builds and verify the default image in CI before releasing.
+
+Fix release versioning to keep `Cargo.lock` synchronized with `Cargo.toml`, make Cargo commands reject stale lockfiles, and eliminate deprecated-action and dependency-audit CI warnings.
+
+### Changed
+
+- `POST /api/login` now defaults to Claude Code's TUI `/login` flow and its
+  full OAuth scope set. The PTY driver recognizes first-run theme and workspace
+  trust screens, waits for the prompt before typing `/login`, and selects the
+  Claude subscription method without sending blind input to unknown screens.
+
+### Documentation
+
+- Document all scopes requested by TUI `/login` and by the narrower,
+  long-lived `setup-token` alternative. Operators can retain the latter with
+  `LOGIN_CLI_ARGS=setup-token` or `--login-cli-args setup-token`.
+
+### Fixed
+
+- Submit Claude TUI authorization codes as bracketed paste and wait for the input to settle before pressing Enter, preventing long codes from being corrupted.
+- Report the CLI's OAuth rejection immediately and distinguish it from a genuine login timeout.
+
 ## [0.31.0] - 2026-08-09
 
 ### Added
