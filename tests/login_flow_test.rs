@@ -139,15 +139,40 @@ async fn setup_token_remains_an_explicit_alternative() {
 #[tokio::test]
 async fn a_rejected_code_fails_the_session_without_writing_a_credential() {
     let home = temp_home();
-    let manager = manager_with(&home);
+    let timeout = Duration::from_secs(3);
+    let manager = LoginManager::new(LoginConfig {
+        command: fake_cli(),
+        args: vec![],
+        claude_code_home: home.clone(),
+        idle_settle: Duration::from_millis(50),
+        url_timeout: Duration::from_secs(20),
+        code_timeout: timeout,
+        ..LoginConfig::default()
+    });
 
     let begun = manager.begin().await.expect("login should start");
+    let started = std::time::Instant::now();
     let done = manager
         .submit_code(&begun.login_id, "wrong-code")
         .await
         .expect("submitting is not itself an error");
     assert_eq!(done.status, LoginStatus::Failed);
-    assert!(done.error.is_some(), "a failure must explain itself");
+    assert!(
+        started.elapsed() < timeout,
+        "a recognized rejection must not consume code_timeout"
+    );
+    let error = done
+        .error
+        .as_deref()
+        .expect("a failure must explain itself");
+    assert!(
+        error.contains("authorization code was rejected"),
+        "the caller must be told to obtain a fresh code: {error}"
+    );
+    assert!(
+        error.contains("OAuth error") && error.contains("Invalid code"),
+        "the CLI's verdict must be surfaced in readable form: {error}"
+    );
 
     assert!(
         OAuthProvider::new(home.to_str().unwrap())
