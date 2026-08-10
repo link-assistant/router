@@ -1,0 +1,358 @@
+//! Model catalog and automatic subscription-provider routing.
+
+use axum::body::Body;
+use axum::extract::{Request, State};
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use serde_json::{Value, json};
+
+use crate::app_state::AppState;
+use crate::config::UpstreamProvider;
+use crate::subscription::{SubscriptionProvider, SubscriptionReader};
+
+const CLAUDE_MODELS: &[&str] = &[
+    "claude-opus-4-7",
+    "claude-sonnet-4-5-20250929",
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-3-5-20241022",
+    "claude-haiku-3-5-20241022",
+];
+const CODEX_MODELS: &[&str] = &["gpt-5-codex", "gpt-5", "codex-mini-latest"];
+const GEMINI_MODELS: &[&str] = &[
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+];
+const QWEN_MODELS: &[&str] = &[
+    "qwen3-coder-plus",
+    "qwen3-coder-flash",
+    "qwen-max",
+    "qwen-plus",
+];
+
+const fn provider_models(
+    provider: SubscriptionProvider,
+) -> (&'static str, &'static [&'static str]) {
+    match provider {
+        SubscriptionProvider::Claude => ("anthropic", CLAUDE_MODELS),
+        SubscriptionProvider::Codex => ("openai", CODEX_MODELS),
+        SubscriptionProvider::Gemini => ("google", GEMINI_MODELS),
+        SubscriptionProvider::Qwen => ("qwen", QWEN_MODELS),
+    }
+}
+
+/// Return the provider that owns an advertised model id.
+#[must_use]
+pub fn provider_for_model(model: &str) -> Option<SubscriptionProvider> {
+    SubscriptionProvider::ALL.into_iter().find(|provider| {
+        let (_, models) = provider_models(*provider);
+        models.contains(&model)
+    })
+}
+
+/// Resolve a model only when the owning subscription is available.
+pub fn available_provider_for_model(
+    model: &str,
+    available: &[SubscriptionProvider],
+) -> Result<SubscriptionProvider, String> {
+    let provider = provider_for_model(model)
+        .ok_or_else(|| format!("model '{model}' is not advertised by any subscription"))?;
+    available
+        .contains(&provider)
+        .then_some(provider)
+        .ok_or_else(|| format!("model '{model}' has no healthy {provider} credential"))
+}
+
+/// Readers whose current on-disk access token exists and has not expired.
+#[must_use]
+pub fn healthy_providers(readers: &[SubscriptionReader], now_ms: i64) -> Vec<SubscriptionProvider> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| {
+            readers
+                .iter()
+                .find(|reader| reader.provider() == *provider)
+                .and_then(|reader| reader.read_token().ok())
+                .is_some_and(|token| !token.is_expired(now_ms))
+        })
+        .collect()
+}
+
+/// `OpenAI` list-shape union for all supplied subscription providers.
+#[must_use]
+pub fn model_catalog(providers: &[SubscriptionProvider]) -> Value {
+    let now = chrono::Utc::now().timestamp();
+    let data = providers
+        .iter()
+        .flat_map(|provider| {
+            let (owner, models) = provider_models(*provider);
+            models.iter().map(move |id| {
+                json!({
+                    "id": id,
+                    "object": "model",
+                    "created": now,
+                    "owned_by": owner,
+                })
+            })
+        })
+        .collect::<Vec<_>>();
+    json!({"object": "list", "data": data})
+}
+
+/// Model catalog for one pinned subscription, empty when its credential is not healthy.
+#[must_use]
+pub fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) -> Value {
+    let healthy = healthy_providers(
+        &state.subscription_readers,
+        chrono::Utc::now().timestamp_millis(),
+    );
+    if healthy.contains(&provider) {
+        model_catalog(&[provider])
+    } else {
+        model_catalog(&[])
+    }
+}
+
+/// `GET /v1/models` across automatic or explicitly pinned providers.
+pub async fn models(State(state): State<AppState>) -> impl IntoResponse {
+    let models = match state.upstream_provider {
+        UpstreamProvider::Auto => model_catalog(&healthy_providers(
+            &state.subscription_readers,
+            chrono::Utc::now().timestamp_millis(),
+        )),
+        UpstreamProvider::Anthropic => pinned_model_catalog(&state, SubscriptionProvider::Claude),
+        UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
+            || crate::gonka::list_models(&crate::config::default_gonka_model()),
+            |gonka| crate::gonka::list_models(&gonka.model),
+        ),
+        UpstreamProvider::Crater => crate::crater::list_models(),
+        UpstreamProvider::Codex => pinned_model_catalog(&state, SubscriptionProvider::Codex),
+        UpstreamProvider::Qwen => pinned_model_catalog(&state, SubscriptionProvider::Qwen),
+        UpstreamProvider::Gemini => pinned_model_catalog(&state, SubscriptionProvider::Gemini),
+        UpstreamProvider::OpenAICompatible => {
+            crate::provider_proxy::openai_compatible_models(&state)
+        }
+    };
+    (StatusCode::OK, axum::Json(models)).into_response()
+}
+
+/// Consume an automatic Anthropic-surface request and return its concrete state.
+pub async fn route_anthropic_request(
+    state: &AppState,
+    request: Request,
+) -> Result<(AppState, Request), Response> {
+    let path = request.uri().path().to_string();
+    let (parts, body) = request.into_parts();
+    let body_bytes = axum::body::to_bytes(body, 10 * 1024 * 1024)
+        .await
+        .map_err(|error| {
+            crate::proxy::error_response(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &format!("Failed to read request body: {error}"),
+            )
+        })?;
+    let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(Value::Null);
+    let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
+        route_state(state, &routing_body)
+    } else {
+        route_provider(state, SubscriptionProvider::Claude)
+    }
+    .map_err(|error| {
+        crate::proxy::error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error)
+    })?;
+    Ok((routed, Request::from_parts(parts, Body::from(body_bytes))))
+}
+
+/// Resolve one provider only when its credential is currently healthy.
+pub fn route_provider(
+    state: &AppState,
+    provider: SubscriptionProvider,
+) -> Result<AppState, String> {
+    let reader = state
+        .subscription_readers
+        .iter()
+        .find(|reader| reader.provider() == provider)
+        .filter(|reader| {
+            reader
+                .read_token()
+                .is_ok_and(|token| !token.is_expired(chrono::Utc::now().timestamp_millis()))
+        })
+        .cloned()
+        .ok_or_else(|| format!("no healthy {provider} credential is available"))?;
+
+    let mut routed = state.clone();
+    routed.upstream_provider = match provider {
+        SubscriptionProvider::Claude => UpstreamProvider::Anthropic,
+        SubscriptionProvider::Codex => UpstreamProvider::Codex,
+        SubscriptionProvider::Gemini => UpstreamProvider::Gemini,
+        SubscriptionProvider::Qwen => UpstreamProvider::Qwen,
+    };
+    if provider != SubscriptionProvider::Claude {
+        routed.account_router = None;
+        routed.subscription_reader = Some(reader);
+    }
+    Ok(routed)
+}
+
+/// Resolve an automatic state to the healthy subscription serving `model`.
+pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, String> {
+    if state.upstream_provider != UpstreamProvider::Auto {
+        return Ok(state.clone());
+    }
+    let model = body
+        .get("model")
+        .and_then(Value::as_str)
+        .filter(|model| !model.is_empty())
+        .ok_or_else(|| "model is required when UPSTREAM_PROVIDER=auto".to_string())?;
+    let provider = available_provider_for_model(
+        model,
+        &healthy_providers(
+            &state.subscription_readers,
+            chrono::Utc::now().timestamp_millis(),
+        ),
+    )?;
+    let mut routed = route_provider(state, provider)
+        .map_err(|_| format!("model '{model}' has no healthy {provider} credential"))?;
+    if provider != SubscriptionProvider::Claude {
+        // The Anthropic bridge normally substitutes its provider default
+        // because pinned clients name Claude models. Auto mode selected this
+        // provider from the requested model itself, so preserve that exact id.
+        routed.bridge_model = Some(model.to_string());
+    }
+    Ok(routed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::sync::Arc;
+    use tempfile::tempdir;
+
+    fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
+        AppState {
+            client: reqwest::Client::new(),
+            token_manager: crate::token::TokenManager::new("test-secret"),
+            oauth_provider: crate::oauth::OAuthProvider::new(&data_dir.to_string_lossy()),
+            account_router: None,
+            subscription_reader: None,
+            subscription_readers: readers,
+            subscription_cache: Arc::new(crate::refresh::TokenCache::new()),
+            upstream_base_url: "https://api.anthropic.com".to_string(),
+            upstream_provider: UpstreamProvider::Auto,
+            gonka: None,
+            bridge_model: None,
+            crater: None,
+            openai_compatible: crate::config::default_openai_compatible_config(),
+            provider_store: crate::providers::ProviderStore::open(data_dir, "test-secret").unwrap(),
+            logger: log_lazy::LogLazy::new(),
+            admin: Arc::new(crate::admin::AdminClaim::load(
+                None,
+                data_dir,
+                std::time::Duration::from_secs(60),
+            )),
+            admin_key: None,
+            allow_anonymous_admin: false,
+            metrics: Arc::new(crate::metrics::Metrics::default()),
+            audit: Arc::new(crate::audit::AuditLog::to_path(None)),
+            activitypub_actor_base_url: "https://router.example".to_string(),
+            activitypub_public_key_pem: crate::config::default_activitypub_public_key_pem(),
+            mpp: crate::config::default_mpp_config(),
+            login_manager: crate::login::LoginManager::new(crate::login::LoginConfig::default()),
+        }
+    }
+
+    #[test]
+    fn catalog_unions_models_with_their_real_owners() {
+        let catalog = model_catalog(&[SubscriptionProvider::Claude, SubscriptionProvider::Codex]);
+        let data = catalog["data"].as_array().unwrap();
+        assert!(
+            data.iter()
+                .any(|m| m["id"] == "claude-opus-4-7" && m["owned_by"] == "anthropic")
+        );
+        assert!(
+            data.iter()
+                .any(|m| m["id"] == "gpt-5" && m["owned_by"] == "openai")
+        );
+    }
+
+    #[test]
+    fn model_ids_route_to_the_subscription_that_serves_them() {
+        assert_eq!(
+            provider_for_model("gpt-5"),
+            Some(SubscriptionProvider::Codex)
+        );
+        assert_eq!(
+            provider_for_model("claude-opus-4-7"),
+            Some(SubscriptionProvider::Claude)
+        );
+        assert_eq!(
+            provider_for_model("gemini-2.5-pro"),
+            Some(SubscriptionProvider::Gemini)
+        );
+        assert_eq!(provider_for_model("made-up-model"), None);
+        assert_eq!(
+            available_provider_for_model("gpt-5", &[SubscriptionProvider::Codex]),
+            Ok(SubscriptionProvider::Codex)
+        );
+        assert!(
+            available_provider_for_model("gpt-5", &[SubscriptionProvider::Claude])
+                .unwrap_err()
+                .contains("no healthy codex credential")
+        );
+        assert!(available_provider_for_model("made-up-model", &[]).is_err());
+    }
+
+    #[test]
+    fn missing_and_expired_credentials_are_not_healthy() {
+        let live = tempdir().unwrap();
+        let expired = tempdir().unwrap();
+        fs::write(
+            live.path().join("auth.json"),
+            r#"{"tokens":{"access_token":"live"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            expired.path().join("oauth_creds.json"),
+            r#"{"access_token":"old","expiry_date":1000}"#,
+        )
+        .unwrap();
+        let readers = vec![
+            SubscriptionReader::new(SubscriptionProvider::Codex, live.path()),
+            SubscriptionReader::new(SubscriptionProvider::Gemini, expired.path()),
+        ];
+        assert_eq!(
+            healthy_providers(&readers, 2000),
+            vec![SubscriptionProvider::Codex]
+        );
+    }
+
+    #[test]
+    fn automatic_state_selects_the_models_healthy_reader() {
+        let data = tempdir().unwrap();
+        let codex = tempdir().unwrap();
+        fs::write(
+            codex.path().join("auth.json"),
+            r#"{"tokens":{"access_token":"live"}}"#,
+        )
+        .unwrap();
+        let state = auto_state(
+            vec![SubscriptionReader::new(
+                SubscriptionProvider::Codex,
+                codex.path(),
+            )],
+            data.path(),
+        );
+
+        let routed = route_state(&state, &json!({"model": "gpt-5"})).unwrap();
+        assert_eq!(routed.upstream_provider, UpstreamProvider::Codex);
+        assert_eq!(routed.bridge_model.as_deref(), Some("gpt-5"));
+        assert_eq!(
+            routed.subscription_reader.unwrap().provider(),
+            SubscriptionProvider::Codex
+        );
+        assert!(route_state(&state, &json!({"model": "claude-opus-4-7"})).is_err());
+    }
+}

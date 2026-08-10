@@ -15,7 +15,7 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
-- **Vendor subscriptions** — `UPSTREAM_PROVIDER=codex|gemini|qwen` reads each vendor CLI's OAuth credentials read-only (`~/.codex`, `~/.gemini`, `~/.qwen`), refreshes expired tokens in memory, and routes to the ChatGPT/Code Assist/DashScope backend with full dialect translation
+- **Vendor subscriptions** — the default `UPSTREAM_PROVIDER=auto` discovers healthy Claude, Codex, Gemini, and Qwen CLI credentials, exposes their model union, and routes each model to its owning subscription; an explicit provider value pins all traffic
 - **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
 - **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
@@ -63,9 +63,11 @@ chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
 
 ### Vendor subscriptions (Codex, Gemini, Qwen)
 
-Set `UPSTREAM_PROVIDER` to `codex`, `gemini`, or `qwen` to serve a vendor
-subscription instead of an API key. Clients still authenticate to the router
-with their `la_sk_...` token; the router supplies the vendor OAuth token.
+By default, leave `UPSTREAM_PROVIDER=auto`: the router discovers every healthy
+vendor credential, returns their union from `/v1/models`, and sends each model
+to its owning subscription. Set a concrete value to pin a deployment to one
+provider. Clients still authenticate with their `la_sk_...` token; the router
+supplies the selected vendor OAuth token.
 
 | Provider | `UPSTREAM_PROVIDER` (aliases) | Credentials (read-only) | Upstream |
 | --- | --- | --- | --- |
@@ -370,7 +372,7 @@ in a browser *or* in a chat. See
 |---|---|---|
 | `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages, forwarded to the selected OpenAI-compatible provider, or delivered as a Crater ForgeFed task |
 | `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
-| `/v1/models` | GET | OpenAI-shaped model list |
+| `/v1/models` | GET | OpenAI-shaped union of models from healthy subscriptions in automatic mode |
 | `/api/openai/v1/*` | GET/POST | Namespaced aliases for models, Chat Completions, and Responses |
 | `/api/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
 | `/api/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
@@ -380,10 +382,8 @@ in a browser *or* in a chat. See
 | `/api/gemini/v1beta/models/{model}:streamGenerateContent` | POST | Native Gemini SSE response |
 | `/api/vertex/v1/projects/.../models/{model}:generateContent` | POST | Native Vertex-style generation through Gemini Code Assist |
 
-Provider-specific namespaces use the matching active subscription configured
-by `UPSTREAM_PROVIDER`; for example, native Gemini and Vertex generation
-requires `UPSTREAM_PROVIDER=gemini`. They are additive client-facing protocol
-aliases, not cross-provider fallback rules.
+Provider-specific namespaces use the matching healthy subscription in
+automatic mode, or the provider pinned by `UPSTREAM_PROVIDER`.
 
 `gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families auto-map to the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged.
 
@@ -519,7 +519,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
-| `--upstream-provider` / `UPSTREAM_PROVIDER` | `anthropic` | No | Upstream provider: `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, or `openai-compatible` |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy subscriptions, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, or `openai-compatible` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
@@ -528,8 +528,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 
 ### Gonka provider
 
-Gonka support is optional. Anthropic remains the default provider, and existing
-Claude MAX OAuth behavior is unchanged unless `UPSTREAM_PROVIDER=gonka` is set.
+Gonka support is optional. Set `UPSTREAM_PROVIDER=gonka` to pin the deployment
+to it instead of using automatic subscription routing.
 
 ```env
 TOKEN_SECRET=your-router-token-secret

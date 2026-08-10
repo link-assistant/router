@@ -27,6 +27,8 @@ pub struct AppState {
     /// Subscription credential reader for vendor OAuth providers
     /// (Codex/Gemini/Qwen). `None` for non-subscription upstreams.
     pub subscription_reader: Option<crate::subscription::SubscriptionReader>,
+    /// Credential readers for every discoverable vendor subscription.
+    pub subscription_readers: Vec<crate::subscription::SubscriptionReader>,
     /// In-memory cache of refreshed subscription tokens (Codex/Gemini/Qwen).
     pub subscription_cache: Arc<crate::refresh::TokenCache>,
     /// Base URL for the upstream Anthropic API.

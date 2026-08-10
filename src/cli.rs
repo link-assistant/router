@@ -105,13 +105,9 @@ pub struct Cli {
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
 
-    /// Upstream provider: anthropic, gonka, crater, or openai-compatible.
-    #[arg(
-        long,
-        env = "UPSTREAM_PROVIDER",
-        default_value = "anthropic",
-        global = true
-    )]
+    /// Upstream provider: auto, anthropic, codex, gemini, qwen, gonka, crater,
+    /// or openai-compatible.
+    #[arg(long, env = "UPSTREAM_PROVIDER", default_value = "auto", global = true)]
     pub upstream_provider: String,
 
     /// Gonka private key used for request signing.
@@ -526,8 +522,8 @@ impl Cli {
         let api_format = self.api_format.as_deref().and_then(ApiFormat::from_str_opt);
         let routing_mode =
             RoutingMode::from_str_opt(&self.routing_mode).ok_or(ConfigError::InvalidRoutingMode)?;
-        let upstream_provider = UpstreamProvider::from_str_opt(&self.upstream_provider)
-            .unwrap_or(UpstreamProvider::Anthropic);
+        let upstream_provider =
+            UpstreamProvider::from_str_opt(&self.upstream_provider).unwrap_or_default();
         let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy).unwrap_or_default();
         let account_routing_strategy =
             crate::accounts::SelectionStrategy::from_str_opt(&self.account_routing_strategy)
@@ -658,6 +654,7 @@ mod tests {
     fn login_cli_defaults_to_bare_tui() {
         let cli = Cli::try_parse_from(["link-assistant-router"]).unwrap();
         assert!(cli.login_cli_args.is_empty());
+        assert_eq!(cli.upstream_provider, "auto");
     }
 
     #[test]

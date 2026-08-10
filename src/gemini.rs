@@ -549,7 +549,14 @@ fn native_model_document(model: &str) -> Value {
 }
 
 /// Native Gemini `ListModels` response.
-pub async fn native_models() -> impl IntoResponse {
+pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
+    let available = state.upstream_provider == crate::config::UpstreamProvider::Gemini
+        || (state.upstream_provider == crate::config::UpstreamProvider::Auto
+            && crate::model_routing::healthy_providers(
+                &state.subscription_readers,
+                chrono::Utc::now().timestamp_millis(),
+            )
+            .contains(&crate::subscription::SubscriptionProvider::Gemini));
     let models = [
         "gemini-2.5-pro",
         "gemini-2.5-flash",
@@ -557,14 +564,32 @@ pub async fn native_models() -> impl IntoResponse {
         "gemini-2.0-flash-lite",
     ]
     .iter()
+    .filter(|_| available)
     .map(|model| native_model_document(model))
     .collect::<Vec<_>>();
     (StatusCode::OK, axum::Json(json!({"models": models})))
 }
 
 /// Native Gemini `GetModel` response.
-pub async fn native_model(Path(model): Path<String>) -> impl IntoResponse {
-    (StatusCode::OK, axum::Json(native_model_document(&model)))
+pub async fn native_model(
+    State(state): State<AppState>,
+    Path(model): Path<String>,
+) -> impl IntoResponse {
+    let available = state.upstream_provider == crate::config::UpstreamProvider::Gemini
+        || (state.upstream_provider == crate::config::UpstreamProvider::Auto
+            && crate::model_routing::provider_for_model(&model)
+                == Some(crate::subscription::SubscriptionProvider::Gemini)
+            && crate::model_routing::healthy_providers(
+                &state.subscription_readers,
+                chrono::Utc::now().timestamp_millis(),
+            )
+            .contains(&crate::subscription::SubscriptionProvider::Gemini));
+    let status = if available {
+        StatusCode::OK
+    } else {
+        StatusCode::NOT_FOUND
+    };
+    (status, axum::Json(native_model_document(&model)))
 }
 
 fn parse_native_target(path: &str) -> Option<(String, bool)> {
@@ -609,6 +634,20 @@ async fn forward_native(
     path: &str,
     body: Value,
 ) -> Response {
+    let routed_state = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
+        match crate::model_routing::route_provider(
+            state,
+            crate::subscription::SubscriptionProvider::Gemini,
+        ) {
+            Ok(state) => Some(state),
+            Err(error) => {
+                return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);
+            }
+        }
+    } else {
+        None
+    };
+    let state = routed_state.as_ref().unwrap_or(state);
     if state.upstream_provider != crate::config::UpstreamProvider::Gemini {
         return error_response(
             StatusCode::BAD_REQUEST,

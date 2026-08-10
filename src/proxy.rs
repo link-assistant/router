@@ -24,6 +24,7 @@ use std::collections::BTreeMap;
 use crate::accounts::RoutingContext;
 pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
+pub use crate::model_routing::models as openai_models;
 use crate::openai;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
 use crate::responses;
@@ -120,10 +121,19 @@ pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
 /// - Bedrock `InvokeModel`: `/invoke`, `/invoke-with-response-stream`
 /// - Vertex rawPredict: paths ending in `:rawPredict`, `:streamRawPredict`
 /// - Legacy: `/api/latest/anthropic/*`
-pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> impl IntoResponse {
+pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Response {
     let path = req.uri().path().to_string();
     let method = req.method().clone();
     let incoming_headers = req.headers().clone();
+
+    if state.upstream_provider == UpstreamProvider::Auto {
+        let (routed, request) =
+            match crate::model_routing::route_anthropic_request(&state, req).await {
+                Ok(routed) => routed,
+                Err(response) => return response,
+            };
+        return Box::pin(proxy_handler(State(routed), request)).await;
+    }
 
     state.logger.verbose(|| format!("Incoming {method} {path}"));
 
@@ -474,27 +484,6 @@ async fn resolve_upstream_credentials(
     Ok((token, None))
 }
 
-/// `GET /v1/models` — OpenAI-compatible model listing.
-#[allow(clippy::unused_async)]
-pub async fn openai_models(State(state): State<AppState>) -> impl IntoResponse {
-    let models = match state.upstream_provider {
-        UpstreamProvider::Anthropic => openai::list_models(),
-        UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
-            || crate::gonka::list_models(&crate::config::default_gonka_model()),
-            |gonka| crate::gonka::list_models(&gonka.model),
-        ),
-        UpstreamProvider::Crater => crate::crater::list_models(),
-        UpstreamProvider::Codex | UpstreamProvider::Qwen => {
-            crate::subscription_proxy::subscription_models(&state)
-        }
-        UpstreamProvider::Gemini => crate::gemini::list_models(),
-        UpstreamProvider::OpenAICompatible => {
-            crate::provider_proxy::openai_compatible_models(&state)
-        }
-    };
-    (StatusCode::OK, axum::Json(models)).into_response()
-}
-
 /// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
 ///
 /// Translates to Anthropic Messages, forwards via the same OAuth-substituting
@@ -509,6 +498,12 @@ pub async fn openai_chat_completions(
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
     }
+    let state = match crate::model_routing::route_state(&state, &body) {
+        Ok(state) => state,
+        Err(error) => {
+            return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);
+        }
+    };
     if state.upstream_provider == UpstreamProvider::Gonka {
         return crate::gonka::forward_openai(
             &state,
@@ -603,6 +598,12 @@ pub async fn openai_responses(
     headers: HeaderMap,
     axum::Json(body): axum::Json<serde_json::Value>,
 ) -> Response {
+    let state = match crate::model_routing::route_state(&state, &body) {
+        Ok(state) => state,
+        Err(error) => {
+            return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);
+        }
+    };
     if state.upstream_provider == UpstreamProvider::Gonka {
         return crate::gonka::forward_openai(
             &state,
