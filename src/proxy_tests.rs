@@ -1,10 +1,31 @@
 use axum::http::{HeaderMap, HeaderValue};
+use http_body_util::BodyExt;
 use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
     OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token, merge_oauth_beta,
     request_routing_context, retry_after_duration,
 };
+
+#[tokio::test]
+async fn unknown_anthropic_model_returns_not_found_error() {
+    assert_eq!(
+        crate::openai::resolve_model("totally-made-up-model-xyz"),
+        None
+    );
+    let response = crate::openai::model_not_found_response("totally-made-up-model-xyz");
+
+    assert_eq!(response.status(), axum::http::StatusCode::NOT_FOUND);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["error"]["type"], "not_found_error");
+    assert!(
+        json["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("totally-made-up-model-xyz")
+    );
+}
 
 #[test]
 fn extract_client_token_accepts_bearer_or_x_api_key() {

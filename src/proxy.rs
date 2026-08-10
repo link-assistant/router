@@ -505,7 +505,7 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     axum::Json(mut body): axum::Json<serde_json::Value>,
 ) -> Response {
-    let stream_from_query = query_stream_requested(&query);
+    let stream_from_query = openai::query_stream_requested(&query);
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
     }
@@ -578,6 +578,9 @@ pub async fn openai_chat_completions(
         }
     };
     let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
+    if openai::resolve_model(&req.model).is_none() {
+        return openai::model_not_found_response(&req.model);
+    }
     let body = openai::chat_completion_to_anthropic(&req);
     forward_openai(
         &state,
@@ -589,12 +592,6 @@ pub async fn openai_chat_completions(
         OpenAIShape::Chat,
     )
     .await
-}
-
-fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {
-    query
-        .get("stream")
-        .is_some_and(|value| matches!(value.as_str(), "true" | "1"))
 }
 
 /// `POST /v1/responses` — `OpenAI` Responses API.
@@ -653,6 +650,9 @@ pub async fn openai_responses(
         }
     };
     let stream_requested = req.stream.unwrap_or(false);
+    if openai::resolve_model(&req.model).is_none() {
+        return openai::model_not_found_response(&req.model);
+    }
     let body = responses::response_to_anthropic(&req);
     forward_openai(
         &state,
@@ -681,10 +681,7 @@ async fn forward_openai(
     stream_requested: bool,
     shape: OpenAIShape,
 ) -> Response {
-    let requested_model = routing_body
-        .get("model")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or_default();
+    let served_model = body["model"].as_str().unwrap_or_default().to_string();
     let path = match shape {
         OpenAIShape::Chat => "/v1/chat/completions",
         OpenAIShape::Response => "/v1/responses",
@@ -802,7 +799,7 @@ async fn forward_openai(
             OpenAIShape::Chat => openai::OpenAIStreamShape::ChatCompletion,
             OpenAIShape::Response => openai::OpenAIStreamShape::Response,
         };
-        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, requested_model);
+        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model);
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Ok(bytes) => Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
                 translator.push(&bytes).join(""),
@@ -873,8 +870,8 @@ async fn forward_openai(
     };
 
     let translated = match shape {
-        OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, requested_model),
-        OpenAIShape::Response => responses::anthropic_to_response(&anthropic, requested_model),
+        OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, &served_model),
+        OpenAIShape::Response => responses::anthropic_to_response(&anthropic, &served_model),
     };
 
     state

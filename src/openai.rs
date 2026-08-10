@@ -21,6 +21,10 @@
 //! Streaming Anthropic SSE responses are translated incrementally into the
 //! matching `OpenAI` Chat Completions or Responses SSE event shape.
 
+use std::collections::BTreeMap;
+
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -138,7 +142,7 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
 /// Translate the upstream Anthropic JSON response to an `OpenAI` Chat
 /// Completions response.
 #[must_use]
-pub fn anthropic_to_chat_completion(anthropic: &Value, requested_model: &str) -> Value {
+pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> Value {
     let id = anthropic.get("id").and_then(Value::as_str).map_or_else(
         || format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         String::from,
@@ -198,11 +202,16 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, requested_model: &str) ->
         .and_then(Value::as_i64)
         .unwrap_or(0);
 
+    let served_model = anthropic
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or(resolved_model);
+
     json!({
         "id": id,
         "object": "chat.completion",
         "created": chrono::Utc::now().timestamp(),
-        "model": requested_model,
+        "model": served_model,
         "choices": [
             {
                 "index": 0,
@@ -230,7 +239,7 @@ pub enum OpenAIStreamShape {
 #[derive(Debug, Clone)]
 pub struct OpenAIStreamTranslator {
     shape: OpenAIStreamShape,
-    requested_model: String,
+    served_model: String,
     id: String,
     created: i64,
     buffer: String,
@@ -242,14 +251,14 @@ pub struct OpenAIStreamTranslator {
 impl OpenAIStreamTranslator {
     /// Create a stream translator for one upstream request.
     #[must_use]
-    pub fn new(shape: OpenAIStreamShape, requested_model: &str) -> Self {
+    pub fn new(shape: OpenAIStreamShape, resolved_model: &str) -> Self {
         let prefix = match shape {
             OpenAIStreamShape::ChatCompletion => "chatcmpl",
             OpenAIStreamShape::Response => "resp",
         };
         Self {
             shape,
-            requested_model: requested_model.to_string(),
+            served_model: resolved_model.to_string(),
             id: format!("{prefix}-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
             buffer: String::new(),
@@ -292,6 +301,7 @@ impl OpenAIStreamTranslator {
     fn translate_chat_event(&mut self, event: &Value) -> Vec<String> {
         match event.get("type").and_then(Value::as_str) {
             Some("message_start") => {
+                self.capture_upstream_identity(event);
                 if let Some(id) = event
                     .get("message")
                     .and_then(|m| m.get("id"))
@@ -378,6 +388,7 @@ impl OpenAIStreamTranslator {
     fn translate_response_event(&mut self, event: &Value) -> Vec<String> {
         match event.get("type").and_then(Value::as_str) {
             Some("message_start") => {
+                self.capture_upstream_identity(event);
                 if let Some(id) = event
                     .get("message")
                     .and_then(|m| m.get("id"))
@@ -428,7 +439,7 @@ impl OpenAIStreamTranslator {
             "id": self.id,
             "object": "chat.completion.chunk",
             "created": self.created,
-            "model": self.requested_model,
+            "model": self.served_model,
             "choices": [{
                 "index": 0,
                 "delta": delta,
@@ -442,7 +453,7 @@ impl OpenAIStreamTranslator {
             "id": self.id,
             "object": "response",
             "created_at": self.created,
-            "model": self.requested_model,
+            "model": self.served_model,
             "status": status,
             "output": [{
                 "type": "message",
@@ -450,6 +461,16 @@ impl OpenAIStreamTranslator {
                 "content": [{"type": "output_text", "text": text}]
             }]
         })
+    }
+
+    fn capture_upstream_identity(&mut self, event: &Value) {
+        if let Some(model) = event
+            .get("message")
+            .and_then(|message| message.get("model"))
+            .and_then(Value::as_str)
+        {
+            self.served_model = model.to_string();
+        }
     }
 }
 
@@ -488,23 +509,53 @@ fn map_finish_reason(reason: &str) -> &'static str {
     }
 }
 
-/// Map common OpenAI-style model aliases to Anthropic model IDs.
+/// Resolve a model that the Anthropic-backed `OpenAI` surface can serve.
 ///
 /// If the model already looks like a Claude model id (`claude-...`) it
-/// is returned unchanged so callers can pass through Claude-native names.
+/// is returned unchanged. `OpenAI` aliases are deliberately finite so a typo
+/// cannot silently fall through to an unrelated Claude tier.
 #[must_use]
-pub fn map_model(requested: &str) -> String {
+pub fn resolve_model(requested: &str) -> Option<String> {
     let lower = requested.to_lowercase();
     if lower.starts_with("claude-") {
-        return requested.to_string();
+        return Some(requested.to_string());
     }
     match lower.as_str() {
-        "gpt-4o-mini" | "gpt-4-mini" => "claude-haiku-4-5-20251001".to_string(),
-        "o1" | "o1-pro" | "o3" | "o4" | "gpt-5" => "claude-opus-4-7".to_string(),
-        // Any other model (including gpt-4, gpt-4-turbo, gpt-4o, unknowns)
-        // maps to the default Sonnet tier.
-        _ => "claude-sonnet-4-5-20250929".to_string(),
+        "gpt-4o-mini" | "gpt-4-mini" => Some("claude-haiku-4-5-20251001".to_string()),
+        "o1" | "o1-pro" | "o3" | "o4" | "gpt-5" => Some("claude-opus-4-7".to_string()),
+        "gpt-4" | "gpt-4-turbo" | "gpt-4o" => Some("claude-sonnet-4-5-20250929".to_string()),
+        _ => None,
     }
+}
+
+pub(crate) fn model_not_found_response(model: &str) -> Response {
+    (
+        StatusCode::NOT_FOUND,
+        axum::Json(json!({
+            "type": "error",
+            "error": {
+                "type": "not_found_error",
+                "message": format!("model '{model}' is not available")
+            }
+        })),
+    )
+        .into_response()
+}
+
+pub(crate) fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {
+    query
+        .get("stream")
+        .is_some_and(|value| matches!(value.as_str(), "true" | "1"))
+}
+
+/// Map an explicit `OpenAI` alias to its Anthropic model ID.
+///
+/// Unknown names remain unchanged; request handlers reject them with a model
+/// not-found response before forwarding. Keeping this infallible wrapper
+/// preserves the translation helper API for downstream library callers.
+#[must_use]
+pub fn map_model(requested: &str) -> String {
+    resolve_model(requested).unwrap_or_else(|| requested.to_string())
 }
 
 /// Static `/v1/models` listing (Anthropic-issued models, presented in the
@@ -692,6 +743,20 @@ mod tests {
     }
 
     #[test]
+    fn model_resolution_rejects_unknown_ids() {
+        assert_eq!(resolve_model("totally-made-up-model-xyz"), None);
+    }
+
+    #[test]
+    fn model_resolution_keeps_intentional_aliases_explicit() {
+        assert_eq!(
+            resolve_model("gpt-4o").as_deref(),
+            Some("claude-sonnet-4-5-20250929")
+        );
+        assert_eq!(resolve_model("gpt-5").as_deref(), Some("claude-opus-4-7"));
+    }
+
+    #[test]
     fn translates_multipart_user_content() {
         let req = OpenAIChatCompletionRequest {
             model: "gpt-4o".into(),
@@ -762,8 +827,8 @@ mod tests {
             "stop_reason": "end_turn",
             "usage": {"input_tokens": 5, "output_tokens": 3}
         });
-        let out = anthropic_to_chat_completion(&antrhopic_resp, "gpt-4o");
-        assert_eq!(out["model"], "gpt-4o");
+        let out = anthropic_to_chat_completion(&antrhopic_resp, "claude-sonnet-4-5-20250929");
+        assert_eq!(out["model"], "claude-sonnet-4-5-20250929");
         assert_eq!(out["choices"][0]["message"]["role"], "assistant");
         assert_eq!(out["choices"][0]["message"]["content"], "hello back");
         assert_eq!(out["choices"][0]["finish_reason"], "stop");
@@ -802,7 +867,7 @@ mod tests {
             OpenAIStreamTranslator::new(OpenAIStreamShape::ChatCompletion, "gpt-4o");
         let frames = translator.push(
             br#"event: message_start
-data: {"type":"message_start","message":{"id":"msg_1"}}
+data: {"type":"message_start","message":{"id":"msg_1","model":"claude-sonnet-4-5-20250929"}}
 
 event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}
@@ -820,6 +885,7 @@ data: {"type":"message_stop"}
         assert!(joined.contains("\"role\":\"assistant\""));
         assert!(joined.contains("\"content\":\"hello\""));
         assert!(joined.contains("\"finish_reason\":\"stop\""));
+        assert!(joined.contains("\"model\":\"claude-sonnet-4-5-20250929\""));
         assert!(joined.contains("data: [DONE]"));
     }
 
@@ -828,7 +894,7 @@ data: {"type":"message_stop"}
         let mut translator = OpenAIStreamTranslator::new(OpenAIStreamShape::Response, "gpt-4o");
         let frames = translator.push(
             br#"event: message_start
-data: {"type":"message_start","message":{"id":"msg_1"}}
+data: {"type":"message_start","message":{"id":"msg_1","model":"claude-sonnet-4-5-20250929"}}
 
 event: content_block_delta
 data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}
@@ -843,6 +909,7 @@ data: {"type":"message_stop"}
         assert!(joined.contains("\"type\":\"response.output_text.delta\""));
         assert!(joined.contains("\"delta\":\"hello\""));
         assert!(joined.contains("\"type\":\"response.completed\""));
+        assert!(joined.contains("\"model\":\"claude-sonnet-4-5-20250929\""));
         assert!(joined.contains("data: [DONE]"));
     }
 

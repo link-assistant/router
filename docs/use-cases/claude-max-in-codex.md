@@ -120,11 +120,15 @@ Codex will send an OpenAI model id. The router maps it to a Claude tier:
 | --- | --- |
 | `gpt-4o-mini`, `gpt-4-mini` | Claude Haiku |
 | `o1`, `o1-pro`, `o3`, `o4`, `gpt-5` | Claude Opus |
-| anything else (`gpt-4`, `gpt-4o`, unknown ids) | Claude Sonnet |
+| `gpt-4`, `gpt-4-turbo`, `gpt-4o` | Claude Sonnet |
 | `claude-…` | passed through unchanged |
+| anything else | rejected with `404 not_found_error` |
 
 If you want an exact model, set `model = "claude-sonnet-4-5-20250929"` in
 `config.toml` — Claude-native ids pass through untouched.
+
+The `model` field in successful buffered and streaming responses contains the
+resolved Claude model id, not the OpenAI alias from the request.
 
 ## 6. Verify without the CLI
 

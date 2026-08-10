@@ -146,7 +146,7 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
 
 /// Translate an Anthropic JSON response to an `OpenAI` Responses-API response.
 #[must_use]
-pub fn anthropic_to_response(anthropic: &Value, requested_model: &str) -> Value {
+pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
     let id = anthropic
         .get("id")
         .and_then(Value::as_str)
@@ -161,11 +161,15 @@ pub fn anthropic_to_response(anthropic: &Value, requested_model: &str) -> Value 
             }
         }
     }
+    let served_model = anthropic
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or(resolved_model);
     json!({
         "id": id,
         "object": "response",
         "created_at": chrono::Utc::now().timestamp(),
-        "model": requested_model,
+        "model": served_model,
         "status": "completed",
         "output": [
             {
@@ -201,9 +205,14 @@ mod tests {
         assert_eq!(body["max_tokens"], 128);
         assert_eq!(body["messages"][0]["content"], "write a haiku");
 
-        let resp = json!({"id": "msg_1", "content": [{"type":"text","text":"line1"}]});
+        let resp = json!({
+            "id": "msg_1",
+            "model": "claude-sonnet-4-5-20250929",
+            "content": [{"type":"text","text":"line1"}]
+        });
         let out = anthropic_to_response(&resp, "gpt-4o");
         assert_eq!(out["object"], "response");
+        assert_eq!(out["model"], "claude-sonnet-4-5-20250929");
         assert_eq!(out["output"][0]["content"][0]["text"], "line1");
     }
 

@@ -413,6 +413,11 @@ mod openai_translation_tests {
             "claude-opus-4-7",
             "native claude IDs pass through"
         );
+        assert_eq!(
+            link_assistant_router::openai::resolve_model("totally-made-up-model-xyz"),
+            None,
+            "unknown model IDs are not routable"
+        );
     }
 
     #[test]
@@ -457,7 +462,7 @@ mod openai_translation_tests {
         assert_eq!(choice["message"]["role"], "assistant");
         assert_eq!(choice["message"]["content"], "hello");
         assert_eq!(choice["finish_reason"], "stop");
-        assert_eq!(v["model"], "gpt-4o");
+        assert_eq!(v["model"], "claude-sonnet-4-5-20250929");
     }
 
     #[test]
