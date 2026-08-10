@@ -4,6 +4,15 @@
 
 ## Configuration
 
+Automatic setup (merges the router URL and backs up an existing settings file):
+
+```bash
+eval "$(link-assistant-router clients setup claude-code | grep '^export ')"
+```
+
+See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
+For manual or per-task setup, export the variables directly.
+
 Claude Code's [settings reference](https://code.claude.com/docs/en/settings)
 documents the two variables that matter:
 

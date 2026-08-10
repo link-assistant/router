@@ -10,6 +10,15 @@ for this CLI.
 
 ## Configuration
 
+Automatic setup (merges this provider and backs up an existing config):
+
+```bash
+eval "$(link-assistant-router clients setup codex | grep '^export ')"
+```
+
+See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
+For manual setup, use the following configuration.
+
 `~/.codex/config.toml`:
 
 ```toml
