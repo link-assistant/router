@@ -15,6 +15,11 @@ fn router_with_env(home: &std::path::Path, args: &[&str], env: &[(&str, &str)]) 
     command
         .args(args)
         .env("HOME", home)
+        .env_remove("CODEX_HOME")
+        .env_remove("CLAUDE_CONFIG_DIR")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("QWEN_HOME")
+        .env_remove("CURSOR_CONFIG_DIR")
         .env("TOKEN_SECRET", "clients-cli-test-secret")
         .env("DATA_DIR", home.join("router-data"))
         .env("STORAGE_POLICY", "text");
