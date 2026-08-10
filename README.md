@@ -251,6 +251,7 @@ need:
 | [cli-gemini-cli.md](docs/use-cases/cli-gemini-cli.md) | Gemini CLI configuration |
 | [cli-opencode.md](docs/use-cases/cli-opencode.md) | opencode configuration |
 | [cli-grok-cli.md](docs/use-cases/cli-grok-cli.md) | Grok CLI configuration |
+| [cli-agent.md](docs/use-cases/cli-agent.md) | Link.Assistant Agent configuration |
 | [cli-cursor.md](docs/use-cases/cli-cursor.md) | Cursor CLI — explicitly **not supported**, and why |
 
 ## Using with Claude Code
@@ -701,10 +702,14 @@ link-assistant-router providers add --name litellm --base-url http://litellm:400
 link-assistant-router providers import providers.lenv
 link-assistant-router providers list
 
-# Safely configure Codex CLI or Claude Code against this router:
+# Safely configure local agentic CLIs against this router:
 link-assistant-router clients list
 link-assistant-router clients setup codex
 link-assistant-router clients setup claude-code --token la_sk_...
+link-assistant-router clients setup opencode
+link-assistant-router clients setup qwen-code
+link-assistant-router clients setup agent
+link-assistant-router clients setup grok-cli
 link-assistant-router clients show codex
 link-assistant-router clients doctor codex
 link-assistant-router clients remove codex
