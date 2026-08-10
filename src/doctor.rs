@@ -41,29 +41,25 @@ pub async fn subscription_catalog_diagnostics(
         let token = token_cache
             .get_fresh(&client, provider, disk_token, now_ms)
             .await;
-        if token.is_expired(now_ms) {
-            println!(
-                "{label:<23}: {} (found, token EXPIRED; refresh failed)",
-                path.display()
-            );
-            println!(
-                "{:<23}: ERROR (credential is expired and could not be refreshed)",
-                format!("{provider} catalog")
-            );
-            catalog_error = true;
-            continue;
-        }
+        // `expiresAt` is a hint, so a still-expired token is probed rather than
+        // declared dead: the catalog endpoint is what actually knows.
+        let still_expired = token.is_expired(now_ms);
         let catalog = fetch_provider_catalog(&client, provider, &token, None).await;
         let rejected = catalog
             .as_ref()
             .is_err_and(|error| error.starts_with("HTTP 401") || error.starts_with("HTTP 403"));
-        let status = match (was_expired, rejected) {
-            (true, true) => "found, token REJECTED after refresh",
-            (false, true) => "found, token REJECTED",
-            (true, false) => "found, token OK (refreshed in memory)",
-            (false, false) => "found, token OK",
+        let status = match (was_expired, still_expired, rejected) {
+            (_, true, true) => "found, token EXPIRED and REJECTED",
+            (_, true, false) => "found, token EXPIRED on disk but ACCEPTED upstream",
+            (true, false, true) => "found, token REJECTED after refresh",
+            (false, _, true) => "found, token REJECTED",
+            (true, false, false) => "found, token OK (refreshed in memory)",
+            (false, false, false) => "found, token OK",
         };
         println!("{label:<23}: {} ({status})", path.display());
+        if let Some(error) = token_cache.last_refresh_error(provider) {
+            println!("{:<23}: {error}", format!("{provider} refresh"));
+        }
 
         match catalog {
             Ok(models) => println!(

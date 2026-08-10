@@ -324,7 +324,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream_resp.headers());
-
+    crate::request_routing::record_claude_evidence(&state, status.as_u16());
     state
         .logger
         .verbose(|| format!("Upstream responded: {status}"));
