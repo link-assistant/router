@@ -3,7 +3,7 @@
 //! Parses the [`Cli`] (lino-arguments + clap), then either:
 //!
 //! 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
-//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `doctor`) that runs
+//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `clients`, `doctor`) that runs
 //!    locally and exits without binding a port.
 //!
 //! All shared services (config, token store, multi-account router, metrics)
@@ -73,6 +73,9 @@ async fn main() -> ExitCode {
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
         Some(Command::Providers { op }) => run_providers(&config, op),
+        Some(Command::Clients { op }) => {
+            link_assistant_router::client_command::run(&config, op).await
+        }
         Some(Command::Doctor) => run_doctor(&config),
     }
 }

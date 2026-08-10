@@ -11,6 +11,7 @@
 //! - `tokens issue|list|revoke|expire|show` — manage persistent tokens
 //!   without going through the HTTP layer (useful for ops scripts).
 //! - `accounts list` — show configured accounts and their health.
+//! - `clients list|setup|show|remove|doctor` — configure local agentic CLIs.
 //! - `doctor` — report on environment, OAuth credential discoverability,
 //!   storage paths, and other config.
 
@@ -25,6 +26,7 @@ use std::time::Duration;
 use clap::Subcommand;
 use lino_arguments::Parser as LinoParser;
 
+use crate::clients::ClientKind;
 use crate::config::{
     ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
     default_activitypub_public_key_pem, default_data_dir,
@@ -435,6 +437,11 @@ pub enum Command {
         #[command(subcommand)]
         op: ProviderOp,
     },
+    /// Configure local agentic CLIs to use this router.
+    Clients {
+        #[command(subcommand)]
+        op: ClientOp,
+    },
     /// Print environment + config diagnostics.
     Doctor,
 }
@@ -512,6 +519,41 @@ pub enum ProviderOp {
     Remove { name: String },
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
     Import { path: PathBuf },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ClientOp {
+    /// List supported clients and their local installation/configuration state.
+    List,
+    /// Merge this router into a client's user configuration.
+    Setup {
+        #[arg(value_enum)]
+        client: ClientKind,
+        /// Existing router token. Omit to mint one in the configured token store.
+        #[arg(long)]
+        token: Option<String>,
+        /// Router URL reachable from the client (defaults to this CLI's host/port).
+        #[arg(long)]
+        base_url: Option<String>,
+        /// Lifetime of an automatically minted token.
+        #[arg(long, default_value_t = 24)]
+        ttl_hours: i64,
+    },
+    /// Show the effective client integration with secrets redacted.
+    Show {
+        #[arg(value_enum)]
+        client: ClientKind,
+    },
+    /// Remove only settings managed by this router.
+    Remove {
+        #[arg(value_enum)]
+        client: ClientKind,
+    },
+    /// Make a real request using the client's configured URL and token variable.
+    Doctor {
+        #[arg(value_enum)]
+        client: ClientKind,
+    },
 }
 
 impl Cli {
