@@ -283,6 +283,38 @@ impl SubscriptionReader {
     }
 }
 
+/// Construct readers for every vendor, honoring the configured Claude home.
+#[must_use]
+pub fn all_subscription_readers(claude_home: &str, user_home: &str) -> Vec<SubscriptionReader> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .map(|provider| {
+            if provider == SubscriptionProvider::Claude {
+                SubscriptionReader::new(provider, claude_home)
+            } else {
+                SubscriptionReader::from_user_home(provider, user_home)
+            }
+        })
+        .collect()
+}
+
+/// Reader used by an explicitly pinned non-Claude subscription provider.
+#[must_use]
+pub fn active_subscription_reader(
+    upstream: crate::config::UpstreamProvider,
+    readers: &[SubscriptionReader],
+) -> Option<SubscriptionReader> {
+    upstream
+        .subscription_provider()
+        .filter(|provider| *provider != SubscriptionProvider::Claude)
+        .and_then(|provider| {
+            readers
+                .iter()
+                .find(|reader| reader.provider() == provider)
+                .cloned()
+        })
+}
+
 /// Superset of every vendor credential layout. Each provider reads only the
 /// fields it uses; serde `alias` covers `camelCase`/`snake_case` variants.
 #[derive(Debug, Default, Deserialize)]

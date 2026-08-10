@@ -602,7 +602,7 @@ pub(crate) fn extract_text(content: &Value) -> Option<String> {
     }
 }
 
-fn translate_parts(parts: &[Value]) -> Vec<Value> {
+pub(crate) fn translate_parts(parts: &[Value]) -> Vec<Value> {
     parts
         .iter()
         .filter_map(|p| {
@@ -618,6 +618,13 @@ fn translate_parts(parts: &[Value]) -> Vec<Value> {
                         .and_then(|v| v.get("url"))
                         .and_then(Value::as_str)
                         .unwrap_or("");
+                    Some(json!({
+                        "type": "image",
+                        "source": {"type": "url", "url": url}
+                    }))
+                }
+                "input_image" => {
+                    let url = p.get("image_url").and_then(Value::as_str).unwrap_or("");
                     Some(json!({
                         "type": "image",
                         "source": {"type": "url", "url": url}
