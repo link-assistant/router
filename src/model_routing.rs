@@ -273,6 +273,9 @@ pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRout
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::extract::Query;
+    use axum::http::HeaderMap;
+    use http_body_util::BodyExt;
     use std::fs;
     use std::sync::Arc;
     use tempfile::tempdir;
@@ -357,6 +360,37 @@ mod tests {
             available_provider_for_model("made-up-model", &[]),
             Err(ModelRouteError::NotFound(_))
         ));
+    }
+
+    #[tokio::test]
+    async fn openai_request_rejects_unknown_model_in_pinned_and_auto_modes() {
+        for provider in [UpstreamProvider::Anthropic, UpstreamProvider::Auto] {
+            let data = tempdir().unwrap();
+            let mut state = auto_state(Vec::new(), data.path());
+            state.upstream_provider = provider;
+
+            let response = crate::proxy::openai_chat_completions(
+                State(state),
+                Query(std::collections::BTreeMap::default()),
+                HeaderMap::new(),
+                axum::Json(json!({
+                    "model": "totally-made-up-model-xyz",
+                    "messages": [{"role": "user", "content": "hello"}]
+                })),
+            )
+            .await;
+
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
+            let body = response.into_body().collect().await.unwrap().to_bytes();
+            let json: Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(json["error"]["type"], "not_found_error");
+            assert!(
+                json["error"]["message"]
+                    .as_str()
+                    .unwrap()
+                    .contains("totally-made-up-model-xyz")
+            );
+        }
     }
 
     #[test]
