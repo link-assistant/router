@@ -142,9 +142,7 @@ pub async fn forward_subscription_openai(
 
     // The ChatGPT Codex backend is stricter than the generic Responses API, so
     // reshape the body before forwarding (see `normalize_codex_responses_body`).
-    if provider == SubscriptionProvider::Codex {
-        normalize_codex_responses_body(&mut body);
-    }
+    normalize_subscription_request(provider, &mut body);
 
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
@@ -458,12 +456,11 @@ fn join_subscription_url(provider: SubscriptionProvider, base_url: &str, path: &
 }
 
 /// `OpenAI`-shaped model listing for a subscription provider.
-#[must_use]
-pub fn subscription_models(state: &AppState) -> serde_json::Value {
-    state.upstream_provider.subscription_provider().map_or_else(
-        || serde_json::json!({"object": "list", "data": []}),
-        |provider| crate::model_routing::pinned_model_catalog(state, provider),
-    )
+pub async fn subscription_models(state: &AppState) -> serde_json::Value {
+    match state.upstream_provider.subscription_provider() {
+        Some(provider) => crate::model_routing::pinned_model_catalog(state, provider).await,
+        None => serde_json::json!({"object": "list", "data": []}),
+    }
 }
 
 fn is_event_stream(content_type: &HeaderValue) -> bool {
@@ -488,21 +485,20 @@ fn input_item_text(item: &serde_json::Value) -> Option<String> {
     }
 }
 
+/// Apply provider capability rules, then any provider-specific body shaping.
+fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut serde_json::Value) {
+    crate::openai::reconcile_subscription_parameters(provider, body);
+    if provider == SubscriptionProvider::Codex {
+        normalize_codex_responses_body(body);
+    }
+}
+
 /// Shape a Responses-API request body for the `ChatGPT` Codex backend.
 ///
-/// The Codex backend is stricter than the generic `OpenAI` Responses API:
-/// - it always streams,
-/// - **rejects** `max_output_tokens` (HTTP 400 "Unsupported parameter"),
-/// - **rejects** `system`/`developer` messages inside `input`
-///   (HTTP 400 "System messages are not allowed") — they must be carried in the
-///   top-level `instructions` field,
-/// - **requires** a non-empty `instructions` field (HTTP 400 "Instructions are
-///   required").
-///
-/// Standard Responses clients (e.g. `OpenClaw`'s gateway) send `max_output_tokens`
-/// and put the system prompt as a `system` message in `input`, so without this
-/// shaping the backend rejects every request. System turns are hoisted into
-/// `instructions`; a default is used only if nothing remains.
+/// The Codex backend is stricter than the generic `OpenAI` Responses API: it
+/// always streams, rejects `max_output_tokens` and system/developer input
+/// messages, and requires non-empty top-level `instructions`. System turns are
+/// hoisted into `instructions`; a default is used only if nothing remains.
 fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     let Some(obj) = body.as_object_mut() else {
         return;
@@ -561,10 +557,11 @@ mod tests {
             "model": "gpt-5.5",
             "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
             "store": true,
+            "temperature": 0.7,
             "max_output_tokens": 8192,
             "reasoning": {"effort": "none"}
         });
-        normalize_codex_responses_body(&mut body);
+        normalize_subscription_request(SubscriptionProvider::Codex, &mut body);
         assert_eq!(body["stream"], serde_json::Value::Bool(true));
         assert!(
             body.get("max_output_tokens").is_none(),
@@ -573,6 +570,10 @@ mod tests {
         assert_eq!(body["instructions"], "You are a helpful assistant.");
         // ChatGPT subscription inference requires stateless requests.
         assert_eq!(body["store"], serde_json::Value::Bool(false));
+        assert!(
+            body.get("temperature").is_none(),
+            "temperature must be stripped for the ChatGPT subscription backend"
+        );
         // Untouched fields are preserved.
         assert_eq!(body["reasoning"]["effort"], "none");
     }

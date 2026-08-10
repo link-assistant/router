@@ -310,6 +310,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         link_assistant_router::model_catalog::refresh_catalogs_forever(
             state.client.clone(),
             state.subscription_readers.clone(),
+            Arc::clone(&state.subscription_cache),
             Arc::clone(&state.model_catalogs),
         ),
     );
@@ -903,16 +904,14 @@ async fn run_doctor(config: &Config) -> ExitCode {
     let primary = SubscriptionReader::new(active_provider, &primary_home);
     match primary.discover_credential_path() {
         Some(path) => {
-            let readable = primary.read_token().is_ok();
-            println!(
-                "primary credentials    : {} ({})",
-                path.display(),
-                if readable {
-                    "found, token OK"
+            let status = primary.read_token().map_or("found, NO TOKEN", |token| {
+                if token.is_expired(chrono::Utc::now().timestamp_millis()) {
+                    "found, token EXPIRED on disk"
                 } else {
-                    "found, NO TOKEN"
+                    "found, token OK"
                 }
-            );
+            });
+            println!("primary credentials    : {} ({})", path.display(), status);
         }
         None => println!(
             "primary credentials    : {} (MISSING)",

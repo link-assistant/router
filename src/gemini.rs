@@ -527,9 +527,12 @@ fn native_model_document(model: &str) -> Value {
 /// Native Gemini `ListModels` response.
 pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
     let healthy = crate::model_routing::healthy_providers(
+        &state.client,
         &state.subscription_readers,
+        &state.subscription_cache,
         chrono::Utc::now().timestamp_millis(),
-    );
+    )
+    .await;
     let available = matches!(
         state.upstream_provider,
         crate::config::UpstreamProvider::Gemini | crate::config::UpstreamProvider::Auto
@@ -550,9 +553,12 @@ pub async fn native_model(
     Path(model): Path<String>,
 ) -> impl IntoResponse {
     let healthy = crate::model_routing::healthy_providers(
+        &state.client,
         &state.subscription_readers,
+        &state.subscription_cache,
         chrono::Utc::now().timestamp_millis(),
-    );
+    )
+    .await;
     let available = matches!(
         state.upstream_provider,
         crate::config::UpstreamProvider::Gemini | crate::config::UpstreamProvider::Auto
@@ -613,7 +619,9 @@ async fn forward_native(
         match crate::model_routing::route_provider(
             state,
             crate::subscription::SubscriptionProvider::Gemini,
-        ) {
+        )
+        .await
+        {
             Ok(state) => Some(state),
             Err(error) => {
                 return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);

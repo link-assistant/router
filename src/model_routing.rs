@@ -89,18 +89,30 @@ pub fn available_provider_for_model(
         })
 }
 
-/// Readers whose current on-disk access token exists and has not expired.
-#[must_use]
-pub fn healthy_providers(readers: &[SubscriptionReader], now_ms: i64) -> Vec<SubscriptionProvider> {
-    SubscriptionProvider::ALL
+/// Readers whose credential can supply a current access token, refreshing an
+/// expired on-disk token into the shared in-memory cache when possible.
+pub async fn healthy_providers(
+    client: &reqwest::Client,
+    readers: &[SubscriptionReader],
+    token_cache: &crate::refresh::TokenCache,
+    now_ms: i64,
+) -> Vec<SubscriptionProvider> {
+    let checks = SubscriptionProvider::ALL
         .into_iter()
-        .filter(|provider| {
-            readers
+        .map(|provider| async move {
+            let reader = readers
                 .iter()
-                .find(|reader| reader.provider() == *provider)
-                .and_then(|reader| reader.read_token().ok())
-                .is_some_and(|token| !token.is_expired(now_ms))
-        })
+                .find(|reader| reader.provider() == provider)?;
+            let disk_token = reader.read_token().ok()?;
+            let token = token_cache
+                .get_fresh(client, provider, disk_token, now_ms)
+                .await;
+            (!token.is_expired(now_ms)).then_some(provider)
+        });
+    futures_util::future::join_all(checks)
+        .await
+        .into_iter()
+        .flatten()
         .collect()
 }
 
@@ -127,11 +139,14 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
 
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.
 #[must_use]
-pub fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) -> Value {
+pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) -> Value {
     let healthy = healthy_providers(
+        &state.client,
         &state.subscription_readers,
+        &state.subscription_cache,
         chrono::Utc::now().timestamp_millis(),
-    );
+    )
+    .await;
     if healthy.contains(&provider) {
         model_catalog(&[provider], &state.model_catalogs)
     } else {
@@ -144,20 +159,27 @@ pub async fn models(State(state): State<AppState>) -> impl IntoResponse {
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => model_catalog(
             &healthy_providers(
+                &state.client,
                 &state.subscription_readers,
+                &state.subscription_cache,
                 chrono::Utc::now().timestamp_millis(),
-            ),
+            )
+            .await,
             &state.model_catalogs,
         ),
-        UpstreamProvider::Anthropic => pinned_model_catalog(&state, SubscriptionProvider::Claude),
+        UpstreamProvider::Anthropic => {
+            pinned_model_catalog(&state, SubscriptionProvider::Claude).await
+        }
         UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
             || crate::gonka::list_models(&crate::config::default_gonka_model()),
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
         UpstreamProvider::Crater => crate::crater::list_models(),
-        UpstreamProvider::Codex => pinned_model_catalog(&state, SubscriptionProvider::Codex),
-        UpstreamProvider::Qwen => pinned_model_catalog(&state, SubscriptionProvider::Qwen),
-        UpstreamProvider::Gemini => pinned_model_catalog(&state, SubscriptionProvider::Gemini),
+        UpstreamProvider::Codex => pinned_model_catalog(&state, SubscriptionProvider::Codex).await,
+        UpstreamProvider::Qwen => pinned_model_catalog(&state, SubscriptionProvider::Qwen).await,
+        UpstreamProvider::Gemini => {
+            pinned_model_catalog(&state, SubscriptionProvider::Gemini).await
+        }
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)
         }
@@ -183,29 +205,40 @@ pub async fn route_anthropic_request(
         })?;
     let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(Value::Null);
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        route_state(state, &routing_body).map_err(|error| model_route_error_response(&error))?
+        route_state(state, &routing_body)
+            .await
+            .map_err(|error| model_route_error_response(&error))?
     } else {
-        route_provider(state, SubscriptionProvider::Claude).map_err(|error| {
-            crate::proxy::error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error)
-        })?
+        route_provider(state, SubscriptionProvider::Claude)
+            .await
+            .map_err(|error| {
+                crate::proxy::error_response(
+                    StatusCode::BAD_REQUEST,
+                    "invalid_request_error",
+                    &error,
+                )
+            })?
     };
     Ok((routed, Request::from_parts(parts, Body::from(body_bytes))))
 }
 
 /// Resolve one provider only when its credential is currently healthy.
-pub fn route_provider(
+pub async fn route_provider(
     state: &AppState,
     provider: SubscriptionProvider,
 ) -> Result<AppState, String> {
+    let healthy = healthy_providers(
+        &state.client,
+        &state.subscription_readers,
+        &state.subscription_cache,
+        chrono::Utc::now().timestamp_millis(),
+    )
+    .await;
     let reader = state
         .subscription_readers
         .iter()
         .find(|reader| reader.provider() == provider)
-        .filter(|reader| {
-            reader
-                .read_token()
-                .is_ok_and(|token| !token.is_expired(chrono::Utc::now().timestamp_millis()))
-        })
+        .filter(|_| healthy.contains(&provider))
         .cloned()
         .ok_or_else(|| format!("no healthy {provider} credential is available"))?;
 
@@ -224,7 +257,7 @@ pub fn route_provider(
 }
 
 /// Resolve an automatic state to the healthy subscription serving `model`.
-pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
+pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         return Ok(state.clone());
     }
@@ -236,12 +269,15 @@ pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRout
     let provider = available_provider_for_model(
         model,
         &healthy_providers(
+            &state.client,
             &state.subscription_readers,
+            &state.subscription_cache,
             chrono::Utc::now().timestamp_millis(),
-        ),
+        )
+        .await,
         &state.model_catalogs,
     )?;
-    let mut routed = route_provider(state, provider).map_err(|_| {
+    let mut routed = route_provider(state, provider).await.map_err(|_| {
         ModelRouteError::NotFound(format!(
             "model '{model}' has no healthy {provider} credential"
         ))
@@ -398,8 +434,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn missing_and_expired_credentials_are_not_healthy() {
+    #[tokio::test]
+    async fn missing_and_expired_credentials_are_not_healthy() {
         let live = tempdir().unwrap();
         let expired = tempdir().unwrap();
         fs::write(
@@ -417,13 +453,50 @@ mod tests {
             SubscriptionReader::new(SubscriptionProvider::Gemini, expired.path()),
         ];
         assert_eq!(
-            healthy_providers(&readers, 2000),
+            healthy_providers(
+                &reqwest::Client::new(),
+                &readers,
+                &crate::refresh::TokenCache::new(),
+                2000,
+            )
+            .await,
             vec![SubscriptionProvider::Codex]
         );
     }
 
-    #[test]
-    fn automatic_state_selects_the_models_healthy_reader() {
+    #[tokio::test]
+    async fn expired_credentials_with_a_cached_refresh_are_healthy() {
+        let claude = tempdir().unwrap();
+        fs::write(
+            claude.path().join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"expired","refreshToken":"refresh","expiresAt":1000}}"#,
+        )
+        .unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Claude,
+            claude.path(),
+        )];
+        let cache = crate::refresh::TokenCache::new();
+        cache.store_refreshed(
+            SubscriptionProvider::Claude,
+            "primary",
+            crate::subscription::SubscriptionToken {
+                access_token: "fresh".into(),
+                refresh_token: Some("refresh".into()),
+                expires_at_ms: Some(3000),
+                account_id: None,
+                resource_url: None,
+            },
+        );
+
+        assert_eq!(
+            healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000).await,
+            vec![SubscriptionProvider::Claude]
+        );
+    }
+
+    #[tokio::test]
+    async fn automatic_state_selects_the_models_healthy_reader() {
         let data = tempdir().unwrap();
         let codex = tempdir().unwrap();
         fs::write(
@@ -439,13 +512,19 @@ mod tests {
             data.path(),
         );
 
-        let routed = route_state(&state, &json!({"model": "gpt-5"})).unwrap();
+        let routed = route_state(&state, &json!({"model": "gpt-5"}))
+            .await
+            .unwrap();
         assert_eq!(routed.upstream_provider, UpstreamProvider::Codex);
         assert_eq!(routed.bridge_model.as_deref(), Some("gpt-5"));
         assert_eq!(
             routed.subscription_reader.unwrap().provider(),
             SubscriptionProvider::Codex
         );
-        assert!(route_state(&state, &json!({"model": "claude-opus-4-7"})).is_err());
+        assert!(
+            route_state(&state, &json!({"model": "claude-opus-4-7"}))
+                .await
+                .is_err()
+        );
     }
 }

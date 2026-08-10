@@ -3,49 +3,69 @@
 use crate::model_catalog::fetch_provider_catalog;
 use crate::subscription::{SubscriptionProvider, all_subscription_readers};
 
-/// Report credential and live-catalog health for every non-active provider.
+/// Report credential and live-catalog health for every provider.
 ///
-/// Returns `true` when a healthy credential could not fetch its catalog.
+/// Expired credentials are refreshed in memory before their catalogs are
+/// fetched. Returns `true` when a present credential cannot become healthy or
+/// cannot fetch its catalog.
 pub async fn subscription_catalog_diagnostics(
-    active_provider: SubscriptionProvider,
+    _active_provider: SubscriptionProvider,
     claude_home: &str,
     user_home: &str,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
-    for reader in &readers {
-        let provider = reader.provider();
-        if provider == active_provider {
-            continue;
-        }
-        let label = format!("{provider} subscription");
-        match reader.discover_credential_path() {
-            Some(path) => {
-                let status = reader.read_token().map_or("found, NO TOKEN", |token| {
-                    let now_ms = chrono::Utc::now().timestamp_millis();
-                    if token.is_expired(now_ms) {
-                        "found, token EXPIRED"
-                    } else {
-                        "found, token OK"
-                    }
-                });
-                println!("{label:<23}: {} ({status})", path.display());
-            }
-            None => println!("{label:<23}: {} (MISSING)", reader.home().display()),
-        }
-    }
-
     let client = reqwest::Client::new();
+    let token_cache = crate::refresh::TokenCache::new();
     let now_ms = chrono::Utc::now().timestamp_millis();
     let mut catalog_error = false;
     for reader in readers {
-        let Ok(token) = reader.read_token() else {
+        let provider = reader.provider();
+        let label = format!("{provider} subscription");
+        let Some(path) = reader.discover_credential_path() else {
+            println!("{label:<23}: {} (MISSING)", reader.home().display());
             continue;
         };
+        let disk_token = match reader.read_token() {
+            Ok(token) => token,
+            Err(error) => {
+                println!("{label:<23}: {} (found, NO TOKEN: {error})", path.display());
+                println!(
+                    "{:<23}: ERROR (credential is unreadable)",
+                    format!("{provider} catalog")
+                );
+                catalog_error = true;
+                continue;
+            }
+        };
+        let was_expired = disk_token.is_expired(now_ms);
+        let token = token_cache
+            .get_fresh(&client, provider, disk_token, now_ms)
+            .await;
         if token.is_expired(now_ms) {
+            println!(
+                "{label:<23}: {} (found, token EXPIRED; refresh failed)",
+                path.display()
+            );
+            println!(
+                "{:<23}: ERROR (credential is expired and could not be refreshed)",
+                format!("{provider} catalog")
+            );
+            catalog_error = true;
             continue;
         }
-        let provider = reader.provider();
-        match fetch_provider_catalog(&client, provider, &token, None).await {
+        let catalog = fetch_provider_catalog(&client, provider, &token, None).await;
+        let rejected = catalog
+            .as_ref()
+            .is_err_and(|error| error.starts_with("HTTP 401") || error.starts_with("HTTP 403"));
+        let status = match (was_expired, rejected) {
+            (true, true) => "found, token REJECTED after refresh",
+            (false, true) => "found, token REJECTED",
+            (true, false) => "found, token OK (refreshed in memory)",
+            (false, false) => "found, token OK",
+        };
+        println!("{label:<23}: {} ({status})", path.display());
+
+        match catalog {
             Ok(models) => println!(
                 "{:<23}: OK ({} live model(s))",
                 format!("{provider} catalog"),
