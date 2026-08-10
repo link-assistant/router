@@ -10,7 +10,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::openai::{extract_text, map_model, translate_parts, translate_tools};
+use crate::openai::{
+    extract_text, map_model, remove_unsupported_anthropic_temperature, translate_parts,
+    translate_tools,
+};
 
 /// `OpenAI` `POST /v1/responses` request body. We accept the superset and
 /// project to Anthropic Messages, so unknown keys are ignored.
@@ -89,6 +92,7 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     if let Some(tools) = &req.tools {
         body["tools"] = translate_tools(tools);
     }
+    remove_unsupported_anthropic_temperature(&mut body);
     body
 }
 
@@ -310,5 +314,20 @@ mod tests {
         assert_eq!(out["input"][0]["role"], "user");
         assert_eq!(out["input"][0]["content"][0]["type"], "input_text");
         assert_eq!(out["input"][1]["content"][0]["type"], "output_text");
+    }
+
+    #[test]
+    fn drops_temperature_for_claude_5_models() {
+        let req = OpenAIResponseRequest {
+            model: "claude-opus-5".into(),
+            input: Value::String("hello".into()),
+            instructions: None,
+            max_output_tokens: None,
+            temperature: Some(0.7),
+            stream: None,
+            tools: None,
+        };
+        let body = response_to_anthropic(&req);
+        assert!(body.get("temperature").is_none());
     }
 }

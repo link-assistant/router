@@ -232,7 +232,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
 
     // Read the body before account selection so the router gets a copy of
     // stable request metadata and can preserve conversation affinity.
-    let body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
+    let mut body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
         Ok(bytes) => bytes,
         Err(e) => {
             return error_response(
@@ -276,11 +276,17 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             }
         };
 
-    // Same requirement as above for the pass-through surface: a client that is
-    // not Claude Code (an SDK, a curl smoke test) would otherwise be rejected
+    // Same requirement as above: a client that is not Claude Code would be rejected
     // by the upstream with a misleading 429. Idempotent for Claude Code itself.
+    let mut upstream_body = routing_body.clone();
+    openai::remove_unsupported_anthropic_temperature(&mut upstream_body);
+    if upstream_body != routing_body {
+        body_bytes = serde_json::to_vec(&upstream_body)
+            .map(bytes::Bytes::from)
+            .unwrap_or(body_bytes);
+    }
     let body_bytes = if crate::claude_identity::is_oauth_credential(&oauth_token) {
-        crate::claude_identity::ensure_claude_code_system_bytes(&routing_body, body_bytes)
+        crate::claude_identity::ensure_claude_code_system_bytes(&upstream_body, body_bytes)
     } else {
         body_bytes
     };
