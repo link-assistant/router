@@ -39,6 +39,7 @@ codex "explain this repository"
 
 | `UPSTREAM_PROVIDER` | Behaviour |
 | --- | --- |
+| `auto` (default) | `gpt-5` and other advertised Codex models route to the healthy ChatGPT subscription |
 | `anthropic` | Responses request is translated to Anthropic Messages and served by Claude MAX — see [claude-max-in-codex.md](claude-max-in-codex.md) |
 | `codex` | native: forwarded to the ChatGPT backend Responses API with the `~/.codex/auth.json` OAuth token |
 | `qwen`, `gemini`, `openai-compatible`, `gonka`, `crater` | translated to that provider's dialect |

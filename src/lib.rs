@@ -30,6 +30,7 @@ pub mod login_api;
 pub mod login_pty;
 pub mod login_url;
 pub mod metrics;
+pub mod model_routing;
 pub mod mpp;
 pub mod oauth;
 pub mod openai;

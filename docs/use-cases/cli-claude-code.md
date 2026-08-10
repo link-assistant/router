@@ -32,7 +32,8 @@ The client sends only its `la_sk_…` token. The router adds, per request:
 
 | `UPSTREAM_PROVIDER` | Behaviour |
 | --- | --- |
-| `anthropic` (default) | native pass-through to `api.anthropic.com` with the Claude MAX OAuth token |
+| `auto` (default) | routes the requested advertised model to its healthy owning subscription |
+| `anthropic` | native pass-through to `api.anthropic.com` with the Claude MAX OAuth token |
 | `codex`, `qwen`, `gemini`, `openai-compatible` | bridged — see [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) |
 | `gonka`, `crater` | unchanged prior behaviour on this surface |
 

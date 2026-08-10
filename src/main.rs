@@ -241,24 +241,24 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             None
         };
 
-    // Vendor-subscription upstreams (Codex/Gemini/Qwen) read their OAuth token
-    // from the vendor CLI's credential file. Claude keeps using `oauth_provider`.
-    let subscription_reader = match config.upstream_provider.subscription_provider() {
-        Some(provider)
-            if provider != link_assistant_router::subscription::SubscriptionProvider::Claude =>
-        {
-            let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-            let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
-                provider, &user_home,
-            );
-            tracing::info!(
-                "Subscription provider {provider}: reading credentials from {}",
-                reader.home().display()
-            );
-            Some(reader)
-        }
-        _ => None,
-    };
+    // Keep readers for every vendor so automatic routing can discover all
+    // mounted subscriptions. Claude's configured home may differ from HOME.
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let subscription_readers = link_assistant_router::subscription::all_subscription_readers(
+        &config.claude_code_home,
+        &user_home,
+    );
+    for reader in &subscription_readers {
+        tracing::info!(
+            "Subscription provider {}: reading credentials from {}",
+            reader.provider(),
+            reader.home().display()
+        );
+    }
+    let subscription_reader = link_assistant_router::subscription::active_subscription_reader(
+        config.upstream_provider,
+        &subscription_readers,
+    );
 
     // The admin credential: a deploy-time key when provided, otherwise the
     // persisted first-visitor claim (unclaimed until someone confirms one).
@@ -274,6 +274,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         oauth_provider,
         account_router,
         subscription_reader,
+        subscription_readers,
         subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
@@ -359,6 +360,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
             )
             .route("/api/openai/v1/responses", post(proxy::openai_responses))
             .route("/api/openai/v1/models", get(proxy::openai_models))
+            .route("/api/anthropic/v1/models", get(proxy::openai_models))
             .route(
                 "/api/codex/v1/chat/completions",
                 post(proxy::openai_chat_completions),

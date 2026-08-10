@@ -20,8 +20,10 @@ use crate::accounts::SelectionStrategy;
 /// Supported upstream inference providers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum UpstreamProvider {
-    /// Anthropic via Claude MAX OAuth credentials.
+    /// Automatically route requests across every healthy vendor subscription.
     #[default]
+    Auto,
+    /// Anthropic via Claude MAX OAuth credentials.
     Anthropic,
     /// Gonka OpenAI-compatible inference provider.
     Gonka,
@@ -42,6 +44,7 @@ impl UpstreamProvider {
     #[must_use]
     pub fn from_str_opt(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
+            "auto" | "all" => Some(Self::Auto),
             "anthropic" | "claude" => Some(Self::Anthropic),
             "gonka" => Some(Self::Gonka),
             "crater" | "forgefed" => Some(Self::Crater),
@@ -65,7 +68,7 @@ impl UpstreamProvider {
             Self::Codex => Some(S::Codex),
             Self::Gemini => Some(S::Gemini),
             Self::Qwen => Some(S::Qwen),
-            Self::Gonka | Self::Crater | Self::OpenAICompatible => None,
+            Self::Auto | Self::Gonka | Self::Crater | Self::OpenAICompatible => None,
         }
     }
 
@@ -73,6 +76,7 @@ impl UpstreamProvider {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
+            Self::Auto => "auto",
             Self::Anthropic => "anthropic",
             Self::Gonka => "gonka",
             Self::Crater => "crater",
@@ -700,7 +704,7 @@ mod tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
-            upstream_provider: UpstreamProvider::Anthropic,
+            upstream_provider: UpstreamProvider::Auto,
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),
             gonka_model: default_gonka_model(),
@@ -747,15 +751,15 @@ mod tests {
         assert_eq!(config.token_secret, "test-secret-key");
         assert_eq!(config.claude_code_home, "/tmp/claude");
         assert_eq!(config.upstream_base_url, "https://api.anthropic.com");
-        assert_eq!(config.upstream_provider, UpstreamProvider::Anthropic);
+        assert_eq!(config.upstream_provider, UpstreamProvider::Auto);
         assert!(!config.verbose);
         assert_eq!(config.routing_mode, RoutingMode::Direct);
     }
 
     #[test]
-    fn default_provider_is_anthropic() {
+    fn default_provider_routes_across_subscriptions() {
         let config = build_default(Some("secret")).expect("should build");
-        assert_eq!(config.upstream_provider, UpstreamProvider::Anthropic);
+        assert_eq!(config.upstream_provider, UpstreamProvider::Auto);
     }
 
     #[test]
