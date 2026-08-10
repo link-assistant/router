@@ -123,6 +123,7 @@ fn state_with(
         account_router: None,
         subscription_reader: None,
         subscription_readers: vec![],
+        model_catalogs: Arc::new(link_assistant_router::model_catalog::ModelCatalogCache::new()),
         subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
         upstream_base_url: "https://api.anthropic.com".to_string(),
         upstream_provider: link_assistant_router::config::UpstreamProvider::Anthropic,
