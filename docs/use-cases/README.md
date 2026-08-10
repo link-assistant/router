@@ -22,8 +22,8 @@ come first; the per-CLI documents follow.
 
 ## Per-CLI configuration
 
-Use [`configure-clients.md`](configure-clients.md) to configure Codex CLI or
-Claude Code automatically with safe merge, backup, removal, and live diagnosis.
+Use [`configure-clients.md`](configure-clients.md) for automatic configuration,
+safe merge, backup, removal, and live diagnosis across the full client matrix.
 The individual documents below also describe manual configuration and protocol
 details.
 
@@ -35,6 +35,7 @@ details.
 | [cli-gemini-cli.md](cli-gemini-cli.md) | Gemini CLI | Gemini / Vertex |
 | [cli-opencode.md](cli-opencode.md) | opencode | OpenAI Chat Completions or Responses |
 | [cli-grok-cli.md](cli-grok-cli.md) | Grok CLI | OpenAI Chat Completions |
+| [cli-agent.md](cli-agent.md) | Link.Assistant Agent | OpenAI Chat Completions |
 | [cli-cursor.md](cli-cursor.md) | Cursor CLI (`cursor-agent`) | **Not supported** — no base-URL override exists |
 
 ## The one rule that makes all of this work
@@ -60,6 +61,7 @@ Codex CLI   ──Responses──┐
 opencode    ──Responses──┤
                          ├─► /v1/responses ─► Anthropic upstream (translated)
 Grok CLI    ──Chat───────┤                 └─► native provider upstream
+Agent       ──Chat───────┤
 opencode    ──Chat───────┴─► /v1/chat/completions
 
 Gemini CLI  ──Gemini─────► /api/gemini/v1beta, /api/vertex/v1

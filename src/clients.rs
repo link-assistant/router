@@ -15,27 +15,56 @@ use serde::Serialize;
 use serde_json::{Value, json};
 use toml_edit::{DocumentMut, Item, Table, value};
 
+mod json_config;
+
+use json_config::{read_json_provider_base_url, read_qwen_base_url};
+
 const CODEX_PROVIDER: &str = "link-assistant";
 const CODEX_TOKEN_ENV: &str = "LINK_ASSISTANT_TOKEN";
 const CLAUDE_TOKEN_ENV: &str = "ANTHROPIC_AUTH_TOKEN";
 const CLAUDE_BASE_ENV: &str = "ANTHROPIC_BASE_URL";
+const ROUTER_TOKEN_ENV: &str = "LINK_ASSISTANT_TOKEN";
+const GROK_TOKEN_ENV: &str = "GROK_API_KEY";
+const GROK_BASE_ENV: &str = "GROK_BASE_URL";
+const ROUTER_PROVIDER: &str = "link-assistant";
 const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
 
-/// Clients currently supported by the first issue #69 milestone.
+/// Documented local clients, including clients whose vendor gates prevent setup.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
 pub enum ClientKind {
     Codex,
     ClaudeCode,
+    Cursor,
+    GeminiCli,
+    GrokCli,
+    Opencode,
+    QwenCode,
+    Agent,
 }
 
 impl ClientKind {
-    pub const ALL: [Self; 2] = [Self::Codex, Self::ClaudeCode];
+    pub const ALL: [Self; 8] = [
+        Self::Codex,
+        Self::ClaudeCode,
+        Self::Cursor,
+        Self::GeminiCli,
+        Self::GrokCli,
+        Self::Opencode,
+        Self::QwenCode,
+        Self::Agent,
+    ];
 
     #[must_use]
     pub const fn command(self) -> &'static str {
         match self {
             Self::Codex => "codex",
             Self::ClaudeCode => "claude",
+            Self::Cursor => "cursor-agent",
+            Self::GeminiCli => "gemini",
+            Self::GrokCli => "grok",
+            Self::Opencode => "opencode",
+            Self::QwenCode => "qwen",
+            Self::Agent => "agent",
         }
     }
 
@@ -44,6 +73,12 @@ impl ClientKind {
         match self {
             Self::Codex => "Codex CLI",
             Self::ClaudeCode => "Claude Code",
+            Self::Cursor => "Cursor CLI",
+            Self::GeminiCli => "Gemini CLI",
+            Self::GrokCli => "Grok CLI",
+            Self::Opencode => "OpenCode",
+            Self::QwenCode => "Qwen Code",
+            Self::Agent => "Link.Assistant Agent",
         }
     }
 
@@ -52,14 +87,42 @@ impl ClientKind {
         match self {
             Self::Codex => "OpenAI Responses",
             Self::ClaudeCode => "Anthropic Messages",
+            Self::GeminiCli => "Gemini native",
+            Self::Cursor => "Cursor private",
+            Self::GrokCli | Self::Opencode | Self::QwenCode | Self::Agent => "OpenAI Chat",
         }
     }
 
     #[must_use]
-    pub const fn token_env(self) -> &'static str {
+    pub const fn token_env(self) -> Option<&'static str> {
         match self {
-            Self::Codex => CODEX_TOKEN_ENV,
-            Self::ClaudeCode => CLAUDE_TOKEN_ENV,
+            Self::Codex => Some(CODEX_TOKEN_ENV),
+            Self::ClaudeCode => Some(CLAUDE_TOKEN_ENV),
+            Self::GeminiCli => Some("GEMINI_API_KEY"),
+            Self::GrokCli => Some(GROK_TOKEN_ENV),
+            Self::Opencode | Self::QwenCode | Self::Agent => Some(ROUTER_TOKEN_ENV),
+            Self::Cursor => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn setup_limitation(self) -> Option<&'static str> {
+        match self {
+            Self::Cursor => Some(
+                "Cursor CLI does not expose a base-URL override and rejects non-Cursor keys before making an HTTP request",
+            ),
+            Self::GeminiCli => Some(
+                "Gemini CLI aborts with IneligibleTierError before contacting the router on the tested individual Code Assist flow",
+            ),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn base_url_env(self) -> Option<&'static str> {
+        match self {
+            Self::GrokCli => Some(GROK_BASE_ENV),
+            _ => None,
         }
     }
 }
@@ -69,6 +132,12 @@ impl fmt::Display for ClientKind {
         match self {
             Self::Codex => write!(f, "codex"),
             Self::ClaudeCode => write!(f, "claude-code"),
+            Self::Cursor => write!(f, "cursor"),
+            Self::GeminiCli => write!(f, "gemini-cli"),
+            Self::GrokCli => write!(f, "grok-cli"),
+            Self::Opencode => write!(f, "opencode"),
+            Self::QwenCode => write!(f, "qwen-code"),
+            Self::Agent => write!(f, "agent"),
         }
     }
 }
@@ -111,7 +180,7 @@ pub struct ClientStatus {
     pub config_path: PathBuf,
     pub dialect: &'static str,
     pub base_url: Option<String>,
-    pub token_env: &'static str,
+    pub token_env: Option<&'static str>,
     pub token_env_set: bool,
 }
 
@@ -126,8 +195,11 @@ pub struct SetupResult {
 /// Reads and updates supported clients below their normal user config roots.
 #[derive(Debug)]
 pub struct ClientManager {
+    home: PathBuf,
     codex_home: PathBuf,
     claude_home: PathBuf,
+    config_home: PathBuf,
+    qwen_home: PathBuf,
 }
 
 impl ClientManager {
@@ -140,9 +212,16 @@ impl ClientManager {
             std::env::var_os("CODEX_HOME").map_or_else(|| home.join(".codex"), PathBuf::from);
         let claude_home = std::env::var_os("CLAUDE_CONFIG_DIR")
             .map_or_else(|| home.join(".claude"), PathBuf::from);
+        let config_home =
+            std::env::var_os("XDG_CONFIG_HOME").map_or_else(|| home.join(".config"), PathBuf::from);
+        let qwen_home =
+            std::env::var_os("QWEN_HOME").map_or_else(|| home.join(".qwen"), PathBuf::from);
         Ok(Self {
+            home,
             codex_home,
             claude_home,
+            config_home,
+            qwen_home,
         })
     }
 
@@ -151,6 +230,15 @@ impl ClientManager {
         match client {
             ClientKind::Codex => self.codex_home.join("config.toml"),
             ClientKind::ClaudeCode => self.claude_home.join("settings.json"),
+            ClientKind::Cursor => std::env::var_os("CURSOR_CONFIG_DIR").map_or_else(
+                || self.home.join(".cursor/cli-config.json"),
+                |path| PathBuf::from(path).join("cli-config.json"),
+            ),
+            ClientKind::GeminiCli => self.home.join(".gemini/settings.json"),
+            ClientKind::GrokCli => self.home.join(".grok/user-settings.json"),
+            ClientKind::Opencode => self.config_home.join("opencode/opencode.json"),
+            ClientKind::QwenCode => self.qwen_home.join("settings.json"),
+            ClientKind::Agent => self.config_home.join("link-assistant-agent/opencode.json"),
         }
     }
 
@@ -159,7 +247,12 @@ impl ClientManager {
         let base_url = match client {
             ClientKind::Codex => read_codex_base_url(&path)?,
             ClientKind::ClaudeCode => read_claude_base_url(&path)?,
+            ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path)?,
+            ClientKind::QwenCode => read_qwen_base_url(&path)?,
+            ClientKind::GrokCli => std::env::var(GROK_BASE_ENV).ok(),
+            ClientKind::Cursor | ClientKind::GeminiCli => None,
         };
+        let token_env = client.token_env();
         Ok(ClientStatus {
             client: client.to_string(),
             installed: command_exists(client.command()),
@@ -167,16 +260,23 @@ impl ClientManager {
             config_path: path,
             dialect: client.dialect(),
             base_url,
-            token_env: client.token_env(),
-            token_env_set: std::env::var_os(client.token_env()).is_some(),
+            token_env,
+            token_env_set: token_env.is_some_and(|name| std::env::var_os(name).is_some()),
         })
     }
 
     pub fn setup(&self, client: ClientKind, base_url: &str) -> Result<SetupResult, ClientError> {
+        if let Some(limitation) = client.setup_limitation() {
+            return Err(ClientError::message(limitation));
+        }
         let base_url = normalize_base_url(base_url)?;
         match client {
             ClientKind::Codex => self.setup_codex(&base_url),
             ClientKind::ClaudeCode => self.setup_claude(&base_url),
+            ClientKind::Opencode | ClientKind::Agent => self.setup_json_provider(client, &base_url),
+            ClientKind::QwenCode => self.setup_qwen(&base_url),
+            ClientKind::GrokCli => Ok(unchanged(self.config_path(client))),
+            ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
         }
     }
 
@@ -184,11 +284,19 @@ impl ClientManager {
         match client {
             ClientKind::Codex => self.remove_codex(),
             ClientKind::ClaudeCode => self.remove_claude(),
+            ClientKind::Opencode | ClientKind::Agent => self.remove_json_provider(client),
+            ClientKind::QwenCode => self.remove_qwen(),
+            ClientKind::GrokCli | ClientKind::Cursor | ClientKind::GeminiCli => {
+                Ok(unchanged(self.config_path(client)))
+            }
         }
     }
 
     /// Exercise the same URL and token variable configured for the client.
     pub async fn doctor(&self, client: ClientKind) -> Result<String, ClientError> {
+        if let Some(limitation) = client.setup_limitation() {
+            return Err(ClientError::message(limitation));
+        }
         let status = self.status(client)?;
         let base_url = status.base_url.ok_or_else(|| {
             ClientError::message(format!(
@@ -196,10 +304,12 @@ impl ClientManager {
                 client.display_name()
             ))
         })?;
-        let token = std::env::var(client.token_env()).map_err(|_| {
+        let token_env = client
+            .token_env()
+            .ok_or_else(|| ClientError::message("client has no router token environment"))?;
+        let token = std::env::var(token_env).map_err(|_| {
             ClientError::message(format!(
-                "{} is unset; export the token printed by `clients setup {client}`",
-                client.token_env()
+                "{token_env} is unset; export the token printed by `clients setup {client}`"
             ))
         })?;
         let (url, body) = match client {
@@ -215,6 +325,18 @@ impl ClientManager {
                     "messages":[{"role":"user", "content":"Reply OK"}]
                 }),
             ),
+            ClientKind::GrokCli
+            | ClientKind::Opencode
+            | ClientKind::QwenCode
+            | ClientKind::Agent => (
+                format!("{}/chat/completions", base_url.trim_end_matches('/')),
+                json!({
+                    "model":"claude-sonnet-4-5-20250929",
+                    "messages":[{"role":"user", "content":"Reply OK"}],
+                    "max_tokens":1
+                }),
+            ),
+            ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
         };
         let response = reqwest::Client::new()
             .post(&url)
@@ -235,8 +357,7 @@ impl ClientManager {
         }
         if code.as_u16() == 401 || code.as_u16() == 403 {
             return Err(ClientError::message(format!(
-                "router rejected {} ({code}); the token is invalid, expired, or revoked",
-                client.token_env()
+                "router rejected {token_env} ({code}); the token is invalid, expired, or revoked"
             )));
         }
         if code.as_u16() == 503 {

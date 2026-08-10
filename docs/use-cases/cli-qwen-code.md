@@ -14,15 +14,13 @@ which is exactly what a per-task `la_sk_…` token wants.
 ```json
 {
   "modelProviders": {
-    "openai": {
-      "models": [
-        {
-          "id": "gpt-5",
-          "baseUrl": "http://127.0.0.1:8080/v1",
-          "envKey": "LINK_ASSISTANT_TOKEN"
-        }
-      ]
-    }
+    "openai": [
+      {
+        "id": "claude-sonnet-4-5-20250929",
+        "baseUrl": "http://127.0.0.1:8080/v1",
+        "envKey": "LINK_ASSISTANT_TOKEN"
+      }
+    ]
   }
 }
 ```
@@ -40,15 +38,13 @@ the same path Claude Code uses:
 ```json
 {
   "modelProviders": {
-    "anthropic": {
-      "models": [
-        {
-          "id": "claude-sonnet-4-5-20250929",
-          "baseUrl": "http://127.0.0.1:8080",
-          "envKey": "LINK_ASSISTANT_TOKEN"
-        }
-      ]
-    }
+    "anthropic": [
+      {
+        "id": "claude-sonnet-4-5-20250929",
+        "baseUrl": "http://127.0.0.1:8080",
+        "envKey": "LINK_ASSISTANT_TOKEN"
+      }
+    ]
   }
 }
 ```

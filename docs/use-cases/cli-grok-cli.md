@@ -16,9 +16,13 @@ export GROK_API_KEY=la_sk_...            # your task token
 grok
 ```
 
-The same two values can be stored in `~/.grok/user-settings.json`, but the
-environment variables are preferable here: they keep the token out of a file and
-make one-token-per-task a per-shell export.
+The current settings schema can store `apiKey` in
+`~/.grok/user-settings.json`, but the implementation reads the base URL only
+from `GROK_BASE_URL`. The router therefore keeps both values in the launching
+shell: this avoids persisting the token and avoids writing an ignored base-URL
+field.
+
+`link-assistant-router clients setup grok-cli` prints both exports.
 
 ## Which subscription answers
 
@@ -39,6 +43,6 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 
 | Symptom | Cause |
 | --- | --- |
-| Requests still hit `api.x.ai` | `GROK_BASE_URL` is overridden by a stored value in `~/.grok/user-settings.json` |
+| Requests still hit `api.x.ai` | `GROK_BASE_URL` was not exported in the shell that launched `grok` |
 | `404` | the base URL must include the `/v1` suffix |
 | Model not recognised upstream | unknown OpenAI ids map to the default Sonnet tier on `UPSTREAM_PROVIDER=anthropic`; set an explicit `claude-…` id if you need a specific model |

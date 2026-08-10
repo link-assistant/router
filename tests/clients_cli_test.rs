@@ -15,6 +15,11 @@ fn router_with_env(home: &std::path::Path, args: &[&str], env: &[(&str, &str)]) 
     command
         .args(args)
         .env("HOME", home)
+        .env_remove("CODEX_HOME")
+        .env_remove("CLAUDE_CONFIG_DIR")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("QWEN_HOME")
+        .env_remove("CURSOR_CONFIG_DIR")
         .env("TOKEN_SECRET", "clients-cli-test-secret")
         .env("DATA_DIR", home.join("router-data"))
         .env("STORAGE_POLICY", "text");
@@ -289,4 +294,348 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
             .to_ascii_lowercase()
             .contains("authorization: bearer la_sk_doctor")
     );
+}
+
+#[test]
+fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
+    let home = tempfile::tempdir().expect("temp home");
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
+    let port = listener.local_addr().expect("listener address").port();
+    let base_url = format!("http://127.0.0.1:{port}");
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "opencode",
+            "--token",
+            "la_sk_doctor",
+            "--base-url",
+            &base_url,
+        ],
+    );
+    assert!(setup.status.success());
+
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept doctor request");
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .expect("set timeout");
+        let mut bytes = Vec::new();
+        let mut buffer = [0_u8; 4096];
+        loop {
+            let count = stream.read(&mut buffer).expect("read request");
+            if count == 0 {
+                break;
+            }
+            bytes.extend_from_slice(&buffer[..count]);
+            if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+                break;
+            }
+        }
+        stream
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}")
+            .expect("write response");
+        String::from_utf8_lossy(&bytes).into_owned()
+    });
+    let doctor = router_with_env(
+        home.path(),
+        &["clients", "doctor", "opencode"],
+        &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
+    );
+    assert!(
+        doctor.status.success(),
+        "{}",
+        String::from_utf8_lossy(&doctor.stderr)
+    );
+    let request = server.join().expect("mock server thread");
+    assert!(request.starts_with("POST /v1/chat/completions HTTP/1.1"));
+    assert!(
+        request
+            .to_ascii_lowercase()
+            .contains("authorization: bearer la_sk_doctor")
+    );
+}
+
+#[test]
+fn list_covers_every_documented_client_and_agent() {
+    let home = tempfile::tempdir().expect("temp home");
+    let listed = router(home.path(), &["clients", "list"]);
+    assert!(listed.status.success());
+    let output = String::from_utf8_lossy(&listed.stdout);
+    for client in [
+        "codex",
+        "claude-code",
+        "cursor",
+        "gemini-cli",
+        "grok-cli",
+        "opencode",
+        "qwen-code",
+        "agent",
+    ] {
+        assert!(output.contains(client), "missing {client} from:\n{output}");
+    }
+}
+
+#[test]
+fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
+    for (client, relative_path) in [
+        ("opencode", ".config/opencode/opencode.json"),
+        ("agent", ".config/link-assistant-agent/opencode.json"),
+    ] {
+        let home = tempfile::tempdir().expect("temp home");
+        let path = home.path().join(relative_path);
+        fs::create_dir_all(path.parent().expect("config parent")).expect("create config dir");
+        fs::write(
+            &path,
+            r#"{"theme":"user-theme","provider":{"mine":{"name":"Mine"}}}"#,
+        )
+        .expect("seed config");
+        let args = [
+            "clients",
+            "setup",
+            client,
+            "--token",
+            "la_sk_existing",
+            "--base-url",
+            "http://router.test:8080/",
+        ];
+
+        let first = router(home.path(), &args);
+        assert!(
+            first.status.success(),
+            "{}",
+            String::from_utf8_lossy(&first.stderr)
+        );
+        let configured = fs::read_to_string(&path).expect("read config");
+        let document: serde_json::Value = serde_json::from_str(&configured).expect("valid JSON");
+        assert_eq!(document["theme"], "user-theme");
+        assert_eq!(document["provider"]["mine"]["name"], "Mine");
+        assert_eq!(
+            document["provider"]["link-assistant"]["options"]["baseURL"],
+            "http://router.test:8080/v1"
+        );
+        assert_eq!(
+            document["provider"]["link-assistant"]["options"]["apiKey"],
+            "{env:LINK_ASSISTANT_TOKEN}"
+        );
+        assert!(!configured.contains("la_sk_existing"));
+
+        let second = router(home.path(), &args);
+        assert!(second.status.success());
+        assert_eq!(
+            configured,
+            fs::read_to_string(&path).expect("read idempotent config")
+        );
+
+        let removed = router(home.path(), &["clients", "remove", client]);
+        assert!(removed.status.success());
+        let removed: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).expect("read removed config"))
+                .expect("valid removed JSON");
+        assert_eq!(removed["theme"], "user-theme");
+        assert_eq!(removed["provider"]["mine"]["name"], "Mine");
+        assert!(removed["provider"].get("link-assistant").is_none());
+    }
+}
+
+#[test]
+fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
+    let home = tempfile::tempdir().expect("temp home");
+    let qwen_dir = home.path().join(".qwen");
+    fs::create_dir_all(&qwen_dir).expect("create qwen dir");
+    fs::write(
+        qwen_dir.join("settings.json"),
+        r#"{"theme":"dark","modelProviders":{"openai":[{"id":"mine","baseUrl":"http://mine.test/v1"}]}}"#,
+    )
+    .expect("seed settings");
+
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "qwen-code",
+            "--token",
+            "la_sk_existing",
+            "--base-url",
+            "http://router.test:8080",
+        ],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+    let path = qwen_dir.join("settings.json");
+    let configured = fs::read_to_string(&path).expect("read Qwen settings");
+    let document: serde_json::Value = serde_json::from_str(&configured).expect("valid JSON");
+    let models = document["modelProviders"]["openai"]
+        .as_array()
+        .expect("current Qwen modelProviders array");
+    assert!(models.iter().any(|model| model["id"] == "mine"));
+    assert!(models.iter().any(|model| {
+        model["baseUrl"] == "http://router.test:8080/v1"
+            && model["envKey"] == "LINK_ASSISTANT_TOKEN"
+    }));
+    assert!(!configured.contains("la_sk_existing"));
+
+    let removed = router(home.path(), &["clients", "remove", "qwen-code"]);
+    assert!(removed.status.success());
+    let removed: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("read removed settings"))
+            .expect("valid removed JSON");
+    let models = removed["modelProviders"]["openai"]
+        .as_array()
+        .expect("models remain an array");
+    assert_eq!(models.len(), 1);
+    assert_eq!(models[0]["id"], "mine");
+    assert_eq!(removed["theme"], "dark");
+}
+
+#[test]
+fn grok_setup_prints_both_required_exports_without_persisting_the_token() {
+    let home = tempfile::tempdir().expect("temp home");
+    let grok_dir = home.path().join(".grok");
+    fs::create_dir_all(&grok_dir).expect("create grok dir");
+    let settings_path = grok_dir.join("user-settings.json");
+    let original = r#"{"recapsEnabled":true}"#;
+    fs::write(&settings_path, original).expect("seed Grok settings");
+
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "grok-cli",
+            "--token",
+            "la_sk_existing",
+            "--base-url",
+            "http://router.test:8080",
+        ],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+    let output = String::from_utf8_lossy(&setup.stdout);
+    assert!(output.contains("export GROK_BASE_URL='http://router.test:8080/v1'"));
+    assert!(output.contains("export GROK_API_KEY='la_sk_existing'"));
+    assert_eq!(
+        fs::read_to_string(settings_path).expect("read Grok settings"),
+        original,
+        "Grok only supports the router URL through GROK_BASE_URL"
+    );
+}
+
+#[test]
+fn vendor_gated_clients_fail_before_minting_tokens_or_writing_configs() {
+    for (client, expected) in [
+        ("cursor", "does not expose a base-URL override"),
+        ("gemini-cli", "IneligibleTierError"),
+    ] {
+        let home = tempfile::tempdir().expect("temp home");
+        let setup = router(home.path(), &["clients", "setup", client]);
+        assert!(!setup.status.success());
+        assert!(
+            String::from_utf8_lossy(&setup.stderr).contains(expected),
+            "unexpected diagnostic: {}",
+            String::from_utf8_lossy(&setup.stderr)
+        );
+        assert!(
+            !home.path().join("router-data/tokens.json").exists(),
+            "unsupported setup must not mint a token"
+        );
+
+        let doctor = router(home.path(), &["clients", "doctor", client]);
+        assert!(!doctor.status.success());
+        assert!(String::from_utf8_lossy(&doctor.stderr).contains(expected));
+    }
+}
+
+#[test]
+fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
+    let home = tempfile::tempdir().expect("temp home");
+    let qwen_dir = home.path().join(".qwen");
+    fs::create_dir_all(&qwen_dir).expect("create qwen dir");
+    fs::write(
+        qwen_dir.join("settings.json"),
+        r#"{"modelProviders":{"openai":{"models":[{"id":"mine"}]}}}"#,
+    )
+    .expect("seed legacy settings");
+    let setup = router(
+        home.path(),
+        &["clients", "setup", "qwen-code", "--token", "la_sk_existing"],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+    let document: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(qwen_dir.join("settings.json")).expect("read settings"),
+    )
+    .expect("valid JSON");
+    let models = document["modelProviders"]["openai"]["models"]
+        .as_array()
+        .expect("legacy models remain wrapped");
+    assert_eq!(models.len(), 2);
+    assert_eq!(models[0]["id"], "mine");
+}
+
+#[test]
+fn opencode_remove_restores_a_provider_that_setup_replaced() {
+    let home = tempfile::tempdir().expect("temp home");
+    let directory = home.path().join(".config/opencode");
+    fs::create_dir_all(&directory).expect("create config dir");
+    let path = directory.join("opencode.json");
+    fs::write(
+        &path,
+        r#"{"provider":{"link-assistant":{"name":"User-owned"}}}"#,
+    )
+    .expect("seed provider");
+    let setup = router(
+        home.path(),
+        &["clients", "setup", "opencode", "--token", "la_sk_existing"],
+    );
+    assert!(setup.status.success());
+    let removed = router(home.path(), &["clients", "remove", "opencode"]);
+    assert!(removed.status.success());
+    let document: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("read restored config"))
+            .expect("valid JSON");
+    assert_eq!(document["provider"]["link-assistant"]["name"], "User-owned");
+}
+
+#[test]
+fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
+    for client in ["opencode", "qwen-code"] {
+        let home = tempfile::tempdir().expect("temp home");
+        for base_url in ["http://router-one.test", "http://router-two.test"] {
+            let setup = router(
+                home.path(),
+                &[
+                    "clients",
+                    "setup",
+                    client,
+                    "--token",
+                    "la_sk_existing",
+                    "--base-url",
+                    base_url,
+                ],
+            );
+            assert!(
+                setup.status.success(),
+                "{}",
+                String::from_utf8_lossy(&setup.stderr)
+            );
+        }
+
+        let removed = router(home.path(), &["clients", "remove", client]);
+        assert!(removed.status.success());
+        let shown = router(home.path(), &["clients", "show", client]);
+        assert!(shown.status.success());
+        assert!(String::from_utf8_lossy(&shown.stdout).contains("\"configured\": false"));
+    }
 }
