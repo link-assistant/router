@@ -10,7 +10,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::openai::{extract_text, map_model, translate_tools};
+use crate::openai::{extract_text, map_model, translate_parts, translate_tools};
 
 /// `OpenAI` `POST /v1/responses` request body. We accept the superset and
 /// project to Anthropic Messages, so unknown keys are ignored.
@@ -34,6 +34,7 @@ pub struct OpenAIResponseRequest {
 /// Translate an `OpenAI` Responses-API request to Anthropic Messages.
 #[must_use]
 pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
+    let mut system_chunks: Vec<String> = req.instructions.iter().cloned().collect();
     let mut messages: Vec<Value> = Vec::new();
     match &req.input {
         Value::String(s) => {
@@ -43,7 +44,25 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
             for item in items {
                 if let Some(role) = item.get("role").and_then(Value::as_str) {
                     let content = item.get("content").cloned().unwrap_or(Value::Null);
-                    messages.push(json!({"role": role, "content": content}));
+                    match role {
+                        "system" | "developer" => {
+                            if let Some(text) = extract_text(&content) {
+                                system_chunks.push(text);
+                            }
+                        }
+                        "user" | "assistant" => {
+                            let anthropic_content = match content {
+                                Value::String(text) => Value::String(text),
+                                Value::Array(parts) => Value::Array(translate_parts(&parts)),
+                                other => Value::String(extract_text(&other).unwrap_or_default()),
+                            };
+                            messages.push(json!({
+                                "role": role,
+                                "content": anthropic_content,
+                            }));
+                        }
+                        _ => {}
+                    }
                 } else if let Some(text) = item.as_str() {
                     messages.push(json!({"role": "user", "content": text}));
                 }
@@ -58,8 +77,8 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
         "max_tokens": max_tokens,
         "messages": messages,
     });
-    if let Some(instructions) = &req.instructions {
-        body["system"] = Value::String(instructions.clone());
+    if !system_chunks.is_empty() {
+        body["system"] = Value::String(system_chunks.join("\n\n"));
     }
     if let Some(t) = req.temperature {
         body["temperature"] = json!(t);
@@ -205,6 +224,63 @@ mod tests {
         let out = anthropic_to_response(&resp, "gpt-4o");
         assert_eq!(out["object"], "response");
         assert_eq!(out["output"][0]["content"][0]["text"], "line1");
+    }
+
+    #[test]
+    fn responses_structured_input_translates_to_anthropic() {
+        let req = OpenAIResponseRequest {
+            model: "gpt-5".into(),
+            input: json!([
+                {
+                    "role": "developer",
+                    "content": [{"type": "input_text", "text": "be terse"}]
+                },
+                {
+                    "role": "system",
+                    "content": [{"type": "input_text", "text": "answer plainly"}]
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": "describe this"},
+                        {"type": "input_image", "image_url": "https://example.com/image.png"}
+                    ]
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": "a prior answer"}]
+                }
+            ]),
+            instructions: Some("follow policy".into()),
+            max_output_tokens: None,
+            temperature: None,
+            stream: None,
+            tools: None,
+        };
+
+        let body = response_to_anthropic(&req);
+
+        assert_eq!(
+            body["system"],
+            "follow policy\n\nbe terse\n\nanswer plainly"
+        );
+        assert_eq!(body["messages"].as_array().map(Vec::len), Some(2));
+        assert_eq!(body["messages"][0]["role"], "user");
+        assert_eq!(
+            body["messages"][0]["content"],
+            json!([
+                {"type": "text", "text": "describe this"},
+                {
+                    "type": "image",
+                    "source": {"type": "url", "url": "https://example.com/image.png"}
+                }
+            ])
+        );
+        assert_eq!(body["messages"][1]["role"], "assistant");
+        assert_eq!(
+            body["messages"][1]["content"],
+            json!([{"type": "text", "text": "a prior answer"}])
+        );
     }
 
     #[test]
