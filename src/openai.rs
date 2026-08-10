@@ -23,8 +23,6 @@
 
 use std::collections::BTreeMap;
 
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -526,20 +524,6 @@ pub fn resolve_model(requested: &str) -> Option<String> {
         "gpt-4" | "gpt-4-turbo" | "gpt-4o" => Some("claude-sonnet-4-5-20250929".to_string()),
         _ => None,
     }
-}
-
-pub(crate) fn model_not_found_response(model: &str) -> Response {
-    (
-        StatusCode::NOT_FOUND,
-        axum::Json(json!({
-            "type": "error",
-            "error": {
-                "type": "not_found_error",
-                "message": format!("model '{model}' is not available")
-            }
-        })),
-    )
-        .into_response()
 }
 
 pub(crate) fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {

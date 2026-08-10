@@ -13,7 +13,10 @@ async fn unknown_anthropic_model_returns_not_found_error() {
         crate::openai::resolve_model("totally-made-up-model-xyz"),
         None
     );
-    let response = crate::openai::model_not_found_response("totally-made-up-model-xyz");
+    let routing_error =
+        crate::model_routing::available_provider_for_model("totally-made-up-model-xyz", &[])
+            .unwrap_err();
+    let response = crate::model_routing::model_route_error_response(&routing_error);
 
     assert_eq!(response.status(), axum::http::StatusCode::NOT_FOUND);
     let body = response.into_body().collect().await.unwrap().to_bytes();

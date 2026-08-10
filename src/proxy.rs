@@ -500,9 +500,7 @@ pub async fn openai_chat_completions(
     }
     let state = match crate::model_routing::route_state(&state, &body) {
         Ok(state) => state,
-        Err(error) => {
-            return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);
-        }
+        Err(error) => return crate::model_routing::model_route_error_response(&error),
     };
     if state.upstream_provider == UpstreamProvider::Gonka {
         return crate::gonka::forward_openai(
@@ -574,7 +572,7 @@ pub async fn openai_chat_completions(
     };
     let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
     if openai::resolve_model(&req.model).is_none() {
-        return openai::model_not_found_response(&req.model);
+        return crate::model_routing::model_not_found_response(&req.model);
     }
     let body = openai::chat_completion_to_anthropic(&req);
     forward_openai(
@@ -597,9 +595,7 @@ pub async fn openai_responses(
 ) -> Response {
     let state = match crate::model_routing::route_state(&state, &body) {
         Ok(state) => state,
-        Err(error) => {
-            return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);
-        }
+        Err(error) => return crate::model_routing::model_route_error_response(&error),
     };
     if state.upstream_provider == UpstreamProvider::Gonka {
         return crate::gonka::forward_openai(
@@ -652,7 +648,7 @@ pub async fn openai_responses(
     };
     let stream_requested = req.stream.unwrap_or(false);
     if openai::resolve_model(&req.model).is_none() {
-        return openai::model_not_found_response(&req.model);
+        return crate::model_routing::model_not_found_response(&req.model);
     }
     let body = responses::response_to_anthropic(&req);
     forward_openai(
