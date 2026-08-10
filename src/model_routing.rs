@@ -89,8 +89,15 @@ pub fn available_provider_for_model(
         })
 }
 
-/// Readers whose credential can supply a current access token, refreshing an
+/// Readers whose credential can plausibly serve a request, refreshing an
 /// expired on-disk token into the shared in-memory cache when possible.
+///
+/// `expiresAt` is treated as a *hint*, not a verdict. Vendors have been
+/// observed to keep honouring a stamped-expired access token on the inference
+/// endpoint while rejecting it on `/v1/models`, so a credential that cannot be
+/// refreshed is still offered for routing — the upstream gets to decide. Only
+/// positive evidence (an upstream 401/403 recorded by a real call, see
+/// [`crate::refresh::CredentialEvidence`]) removes a provider.
 pub async fn healthy_providers(
     client: &reqwest::Client,
     readers: &[SubscriptionReader],
@@ -107,7 +114,21 @@ pub async fn healthy_providers(
             let token = token_cache
                 .get_fresh(client, provider, disk_token, now_ms)
                 .await;
-            (!token.is_expired(now_ms)).then_some(provider)
+            if !token.is_expired(now_ms) {
+                return Some(provider);
+            }
+            if token_cache.evidence(provider) == Some(crate::refresh::CredentialEvidence::Rejected)
+            {
+                tracing::debug!(
+                    "{provider} credential is expired and was rejected upstream; not routable"
+                );
+                return None;
+            }
+            tracing::debug!(
+                "{provider} credential is stamped expired and could not be refreshed; keeping it \
+                 routable until an upstream rejects it"
+            );
+            Some(provider)
         });
     futures_util::future::join_all(checks)
         .await
@@ -435,22 +456,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn missing_and_expired_credentials_are_not_healthy() {
+    async fn missing_credentials_are_not_healthy() {
         let live = tempdir().unwrap();
-        let expired = tempdir().unwrap();
+        let absent = tempdir().unwrap();
         fs::write(
             live.path().join("auth.json"),
             r#"{"tokens":{"access_token":"live"}}"#,
         )
         .unwrap();
-        fs::write(
-            expired.path().join("oauth_creds.json"),
-            r#"{"access_token":"old","expiry_date":1000}"#,
-        )
-        .unwrap();
         let readers = vec![
             SubscriptionReader::new(SubscriptionProvider::Codex, live.path()),
-            SubscriptionReader::new(SubscriptionProvider::Gemini, expired.path()),
+            SubscriptionReader::new(SubscriptionProvider::Gemini, absent.path()),
         ];
         assert_eq!(
             healthy_providers(
@@ -461,6 +477,36 @@ mod tests {
             )
             .await,
             vec![SubscriptionProvider::Codex]
+        );
+    }
+
+    /// A stamped-expired credential that cannot be refreshed may still be
+    /// honoured by the inference endpoint, so `expiresAt` alone must not drop
+    /// the provider from routing.
+    #[tokio::test]
+    async fn expired_credential_stays_routable_without_an_upstream_rejection() {
+        let expired = tempdir().unwrap();
+        fs::write(
+            expired.path().join("oauth_creds.json"),
+            r#"{"access_token":"old","expiry_date":1000}"#,
+        )
+        .unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Gemini,
+            expired.path(),
+        )];
+        let cache = crate::refresh::TokenCache::new();
+        assert_eq!(
+            healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000).await,
+            vec![SubscriptionProvider::Gemini]
+        );
+
+        // An observed upstream 401/403 is the evidence that does drop it.
+        cache.record_credential_rejected(SubscriptionProvider::Gemini);
+        assert!(
+            healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000)
+                .await
+                .is_empty()
         );
     }
 

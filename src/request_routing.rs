@@ -60,3 +60,12 @@ pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
         .max(0);
     Some(Duration::from_secs(u64::try_from(seconds).ok()?))
 }
+
+/// Record what the Anthropic upstream just said about the Claude credential.
+///
+/// The response status is the only authority on whether a credential still
+/// works; see [`crate::refresh::CredentialEvidence`].
+pub fn record_claude_evidence(state: &crate::app_state::AppState, status: u16) {
+    let cache = &state.subscription_cache;
+    cache.record_status(crate::subscription::SubscriptionProvider::Claude, status);
+}

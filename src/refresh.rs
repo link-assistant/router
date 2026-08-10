@@ -157,16 +157,44 @@ pub enum RefreshError {
     Parse(String),
 }
 
+impl RefreshError {
+    /// Whether the token endpoint rejected the *refresh token itself*.
+    ///
+    /// OAuth reports this as `invalid_grant`. It is worth separating from every
+    /// other refresh failure because it is the one case waiting cannot fix:
+    /// the stored refresh token is gone or revoked, so the only remedy is to
+    /// re-authenticate.
+    #[must_use]
+    pub fn is_invalid_grant(&self) -> bool {
+        matches!(self, Self::Status(_, body) if body.contains("invalid_grant"))
+    }
+}
+
 impl std::fmt::Display for RefreshError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Unsupported => write!(f, "provider does not support router-driven refresh"),
             Self::NoRefreshToken => write!(f, "no refresh token available"),
             Self::Request(m) => write!(f, "refresh request failed: {m}"),
+            Self::Status(_, m) if self.is_invalid_grant() => write!(
+                f,
+                "refresh token is no longer valid (invalid_grant) — re-authenticate this \
+                 subscription; waiting will not help: {m}"
+            ),
             Self::Status(code, m) => write!(f, "refresh endpoint returned {code}: {m}"),
             Self::Parse(m) => write!(f, "refresh response parse error: {m}"),
         }
     }
+}
+
+/// What real upstream calls have said about a credential, as opposed to what
+/// its `expiresAt` timestamp claims.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CredentialEvidence {
+    /// An upstream call succeeded with this credential.
+    Working,
+    /// An upstream call rejected this credential (HTTP 401/403).
+    Rejected,
 }
 
 impl std::error::Error for RefreshError {}
@@ -293,9 +321,15 @@ async fn refresh_at(
 ///
 /// Holds only in-memory copies obtained via OAuth refresh; vendor credential
 /// files on disk are never modified.
+/// Also records what upstreams actually said about each credential, so health
+/// decisions can be based on observed behaviour rather than on `expiresAt`.
 #[derive(Debug, Default)]
 pub struct TokenCache {
     inner: Mutex<HashMap<(SubscriptionProvider, String), SubscriptionToken>>,
+    /// Latest observed verdict per provider from real upstream calls.
+    evidence: Mutex<HashMap<SubscriptionProvider, CredentialEvidence>>,
+    /// Latest refresh failure per provider, cleared by a successful refresh.
+    refresh_errors: Mutex<HashMap<SubscriptionProvider, String>>,
 }
 
 impl TokenCache {
@@ -344,12 +378,72 @@ impl TokenCache {
         match refresh(client, provider, &disk_token, now_ms).await {
             Ok(fresh) => {
                 self.store_for(provider, account, fresh.clone());
+                if let Ok(mut guard) = self.refresh_errors.lock() {
+                    guard.remove(&provider);
+                }
                 fresh
             }
             Err(e) => {
                 tracing::warn!("subscription token refresh for {provider} failed: {e}");
+                self.record_refresh_error(provider, &e.to_string());
+                // The stamped-expired token is returned unchanged on purpose:
+                // it may still be honoured by the inference endpoint.
                 disk_token
             }
+        }
+    }
+
+    /// Record that an upstream call succeeded with `provider`'s credential.
+    pub fn record_credential_working(&self, provider: SubscriptionProvider) {
+        self.record_evidence(provider, CredentialEvidence::Working);
+    }
+
+    /// Record what an upstream status code says about `provider`'s credential.
+    ///
+    /// This is the evidence [`crate::model_routing::healthy_providers`] trusts
+    /// over `expiresAt`: a served request proves the credential works even when
+    /// its timestamp says otherwise, and only a 401/403 proves it does not.
+    /// Every other status describes the request, not the credential.
+    pub fn record_status(&self, provider: SubscriptionProvider, status: u16) {
+        if status == 401 || status == 403 {
+            self.record_credential_rejected(provider);
+        } else if (200..300).contains(&status) {
+            self.record_credential_working(provider);
+        }
+    }
+
+    /// Record that an upstream rejected `provider`'s credential (401/403).
+    pub fn record_credential_rejected(&self, provider: SubscriptionProvider) {
+        self.record_evidence(provider, CredentialEvidence::Rejected);
+    }
+
+    /// The most recent upstream verdict for `provider`, if any call was made.
+    #[must_use]
+    pub fn evidence(&self, provider: SubscriptionProvider) -> Option<CredentialEvidence> {
+        self.evidence
+            .lock()
+            .ok()
+            .and_then(|guard| guard.get(&provider).copied())
+    }
+
+    /// The most recent refresh failure for `provider`, if the last attempt failed.
+    #[must_use]
+    pub fn last_refresh_error(&self, provider: SubscriptionProvider) -> Option<String> {
+        self.refresh_errors
+            .lock()
+            .ok()
+            .and_then(|guard| guard.get(&provider).cloned())
+    }
+
+    fn record_evidence(&self, provider: SubscriptionProvider, evidence: CredentialEvidence) {
+        if let Ok(mut guard) = self.evidence.lock() {
+            guard.insert(provider, evidence);
+        }
+    }
+
+    fn record_refresh_error(&self, provider: SubscriptionProvider, error: &str) {
+        if let Ok(mut guard) = self.refresh_errors.lock() {
+            guard.insert(provider, error.to_string());
         }
     }
 
@@ -627,6 +721,67 @@ mod tests {
             .get_fresh(&client, SubscriptionProvider::Qwen, expired_disk, 1_000)
             .await;
         assert_eq!(out.access_token, "cached-access");
+    }
+
+    /// "expired" invites waiting; a dead refresh token needs re-authentication,
+    /// so the two must not read the same.
+    #[test]
+    fn invalid_grant_is_reported_as_a_re_authentication_prompt() {
+        let dead = RefreshError::Status(
+            400,
+            r#"{"error":"invalid_grant","error_description":"Refresh token not found or invalid"}"#
+                .to_string(),
+        );
+        assert!(dead.is_invalid_grant());
+        let message = dead.to_string();
+        assert!(message.contains("re-authenticate"), "{message}");
+        assert!(message.contains("invalid_grant"), "{message}");
+
+        let transient = RefreshError::Status(503, "upstream busy".to_string());
+        assert!(!transient.is_invalid_grant());
+        assert!(!transient.to_string().contains("re-authenticate"));
+    }
+
+    /// A failed refresh must leave an actionable trace for `doctor`, and a later
+    /// success must clear it.
+    #[test]
+    fn refresh_errors_are_recorded_per_provider_and_cleared() {
+        let cache = TokenCache::new();
+        assert!(
+            cache
+                .last_refresh_error(SubscriptionProvider::Claude)
+                .is_none()
+        );
+        cache.record_refresh_error(SubscriptionProvider::Claude, "invalid_grant");
+        assert_eq!(
+            cache
+                .last_refresh_error(SubscriptionProvider::Claude)
+                .as_deref(),
+            Some("invalid_grant")
+        );
+        assert!(
+            cache
+                .last_refresh_error(SubscriptionProvider::Codex)
+                .is_none()
+        );
+    }
+
+    /// Upstream verdicts, not timestamps, decide whether a credential is dead.
+    #[test]
+    fn credential_evidence_records_the_latest_upstream_verdict() {
+        let cache = TokenCache::new();
+        assert!(cache.evidence(SubscriptionProvider::Claude).is_none());
+        cache.record_credential_rejected(SubscriptionProvider::Claude);
+        assert_eq!(
+            cache.evidence(SubscriptionProvider::Claude),
+            Some(CredentialEvidence::Rejected)
+        );
+        // A credential can come back (re-authentication, vendor-side fix).
+        cache.record_credential_working(SubscriptionProvider::Claude);
+        assert_eq!(
+            cache.evidence(SubscriptionProvider::Claude),
+            Some(CredentialEvidence::Working)
+        );
     }
 
     #[test]

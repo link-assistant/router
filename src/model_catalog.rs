@@ -133,14 +133,14 @@ pub async fn refresh_catalogs(
             let token = token_cache
                 .get_fresh(client, provider, disk_token, now_ms)
                 .await;
-            let result = if token.is_expired(now_ms) {
-                Err("credential is expired and could not be refreshed".to_string())
-            } else {
-                fetch_provider_catalog(client, provider, &token, None).await
-            };
-            (provider, result)
+            // A stamped-expired credential is still tried: `expiresAt` is a
+            // hint, and the catalog endpoint is the authority on whether this
+            // token works for *it*.
+            let stamped_expired = token.is_expired(now_ms);
+            let result = fetch_provider_catalog(client, provider, &token, None).await;
+            (provider, stamped_expired, result)
         });
-    for (provider, result) in futures_util::future::join_all(refreshes).await {
+    for (provider, stamped_expired, result) in futures_util::future::join_all(refreshes).await {
         match result {
             Ok(models) => {
                 tracing::info!(
@@ -150,6 +150,15 @@ pub async fn refresh_catalogs(
                 cache.record_success(provider, models);
             }
             Err(error) => {
+                // A catalog rejection is evidence about the catalog endpoint
+                // only. The provider keeps serving from its last known models
+                // (`using_fallback` says whether those are the bundled ones),
+                // and routing keeps offering it until inference itself fails.
+                let error = if stamped_expired {
+                    format!("{error} (credential is stamped expired; last known catalog retained)")
+                } else {
+                    error
+                };
                 tracing::warn!("failed to refresh {provider} model catalog: {error}");
                 cache.record_failure(provider, &error);
             }
@@ -421,6 +430,53 @@ mod tests {
 
         assert_eq!(catalogs.models(SubscriptionProvider::Qwen), ["qwen-live"]);
         assert!(!catalogs.status(SubscriptionProvider::Qwen).using_fallback);
+    }
+
+    /// A stamped-expired credential is still probed, and when the catalog
+    /// endpoint rejects it the provider keeps serving its last known models
+    /// instead of losing its catalog to a timestamp.
+    #[tokio::test]
+    async fn expired_credential_is_still_probed_and_keeps_its_cached_catalog() {
+        async fn handler() -> (axum::http::StatusCode, &'static str) {
+            (axum::http::StatusCode::UNAUTHORIZED, "expired token")
+        }
+
+        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let home = tempdir().unwrap();
+        fs::write(
+            home.path().join("oauth_creds.json"),
+            format!(
+                r#"{{"access_token":"expired","expiry_date":1000,"resource_url":"http://{address}"}}"#
+            ),
+        )
+        .unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Qwen,
+            home.path(),
+        )];
+        let catalogs = ModelCatalogCache::new();
+        catalogs.record_success(SubscriptionProvider::Qwen, vec!["qwen-known".to_string()]);
+
+        refresh_catalogs(
+            &reqwest::Client::new(),
+            &readers,
+            &crate::refresh::TokenCache::new(),
+            &catalogs,
+        )
+        .await;
+
+        let status = catalogs.status(SubscriptionProvider::Qwen);
+        // The fetch was actually attempted (the 401 proves the request went out)
+        // rather than short-circuited on `expiresAt`...
+        let error = status.last_error.expect("catalog fetch was attempted");
+        assert!(error.starts_with("HTTP 401"), "{error}");
+        assert!(error.contains("stamped expired"), "{error}");
+        // ...and the last known catalog survives the failure.
+        assert_eq!(status.models, ["qwen-known"]);
     }
 
     #[test]

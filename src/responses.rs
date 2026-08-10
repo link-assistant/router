@@ -95,6 +95,35 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     body
 }
 
+/// Normalise a Responses-API `input` field to the typed list shape.
+///
+/// The documented Responses API accepts either a bare string or a list of
+/// input items, but the `ChatGPT` backend accepts only the list form and
+/// answers a string with `{"detail":"Input must be a list"}` (HTTP 400). Both
+/// documented forms therefore have to be normalised here before forwarding:
+/// a string becomes a single user turn, and bare strings inside the list get
+/// the same treatment. Anything already typed is passed through untouched.
+#[must_use]
+pub fn normalize_input_items(input: &Value) -> Value {
+    fn user_turn(text: &str) -> Value {
+        json!({
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": text}],
+        })
+    }
+    match input {
+        Value::String(text) => json!([user_turn(text)]),
+        Value::Array(items) => Value::Array(
+            items
+                .iter()
+                .map(|item| item.as_str().map_or_else(|| item.clone(), user_turn))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
 /// Translate an `OpenAI` Chat Completions request body to an `OpenAI`
 /// Responses-API request body.
 ///
@@ -313,6 +342,20 @@ mod tests {
         assert_eq!(out["input"][0]["role"], "user");
         assert_eq!(out["input"][0]["content"][0]["type"], "input_text");
         assert_eq!(out["input"][1]["content"][0]["type"], "output_text");
+    }
+
+    #[test]
+    fn normalizes_string_input_and_preserves_typed_input() {
+        let typed = json!([{
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "скажи ок"}],
+        }]);
+        assert_eq!(
+            normalize_input_items(&Value::String("скажи ок".into())),
+            typed
+        );
+        assert_eq!(normalize_input_items(&typed), typed);
     }
 
     #[test]

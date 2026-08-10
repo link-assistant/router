@@ -190,6 +190,9 @@ pub async fn forward_subscription_openai(
     state
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
+    state
+        .subscription_cache
+        .record_status(provider, status.as_u16());
     let retry_after = retry_after_duration(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS {
         if let (Some(router), Some(account)) =
@@ -509,6 +512,12 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     obj.insert("store".to_string(), serde_json::Value::Bool(false));
     // `max_output_tokens` is not accepted by the Codex backend.
     obj.remove("max_output_tokens");
+    // The backend rejects a bare-string `input` ("Input must be a list"), so
+    // normalise both documented forms to the typed list shape.
+    if let Some(input) = obj.get("input") {
+        let normalized = crate::responses::normalize_input_items(input);
+        obj.insert("input".to_string(), normalized);
+    }
 
     // Hoist system/developer turns out of `input` (Codex forbids them there).
     let mut hoisted: Vec<String> = Vec::new();
@@ -576,6 +585,41 @@ mod tests {
         );
         // Untouched fields are preserved.
         assert_eq!(body["reasoning"]["effort"], "none");
+    }
+
+    /// Both documented `input` forms must reach the `ChatGPT` backend as a list;
+    /// the string form previously went through unchanged and drew a 400
+    /// ("Input must be a list").
+    #[test]
+    fn codex_normalizes_both_documented_input_forms_to_a_list() {
+        let typed = serde_json::json!([{
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": "скажи ок"}],
+        }]);
+
+        let mut string_form = serde_json::json!({
+            "model": "gpt-5.6-sol",
+            "input": "скажи ок",
+        });
+        normalize_codex_responses_body(&mut string_form);
+        assert_eq!(string_form["input"], typed);
+
+        // The list form is already correct and must survive untouched.
+        let mut list_form = serde_json::json!({
+            "model": "gpt-5.6-sol",
+            "input": typed,
+        });
+        normalize_codex_responses_body(&mut list_form);
+        assert_eq!(list_form["input"], typed);
+
+        // A bare string inside the list is the same defect one level down.
+        let mut mixed = serde_json::json!({
+            "model": "gpt-5.6-sol",
+            "input": ["скажи ок"],
+        });
+        normalize_codex_responses_body(&mut mixed);
+        assert_eq!(mixed["input"], typed);
     }
 
     #[test]
