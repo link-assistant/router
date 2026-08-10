@@ -292,6 +292,67 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
 }
 
 #[test]
+fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
+    let home = tempfile::tempdir().expect("temp home");
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
+    let port = listener.local_addr().expect("listener address").port();
+    let base_url = format!("http://127.0.0.1:{port}");
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "opencode",
+            "--token",
+            "la_sk_doctor",
+            "--base-url",
+            &base_url,
+        ],
+    );
+    assert!(setup.status.success());
+
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept doctor request");
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .expect("set timeout");
+        let mut bytes = Vec::new();
+        let mut buffer = [0_u8; 4096];
+        loop {
+            let count = stream.read(&mut buffer).expect("read request");
+            if count == 0 {
+                break;
+            }
+            bytes.extend_from_slice(&buffer[..count]);
+            if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+                break;
+            }
+        }
+        stream
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}")
+            .expect("write response");
+        String::from_utf8_lossy(&bytes).into_owned()
+    });
+    let doctor = router_with_env(
+        home.path(),
+        &["clients", "doctor", "opencode"],
+        &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
+    );
+    assert!(
+        doctor.status.success(),
+        "{}",
+        String::from_utf8_lossy(&doctor.stderr)
+    );
+    let request = server.join().expect("mock server thread");
+    assert!(request.starts_with("POST /v1/chat/completions HTTP/1.1"));
+    assert!(
+        request
+            .to_ascii_lowercase()
+            .contains("authorization: bearer la_sk_doctor")
+    );
+}
+
+#[test]
 fn list_covers_every_documented_client_and_agent() {
     let home = tempfile::tempdir().expect("temp home");
     let listed = router(home.path(), &["clients", "list"]);
@@ -485,5 +546,91 @@ fn vendor_gated_clients_fail_before_minting_tokens_or_writing_configs() {
         let doctor = router(home.path(), &["clients", "doctor", client]);
         assert!(!doctor.status.success());
         assert!(String::from_utf8_lossy(&doctor.stderr).contains(expected));
+    }
+}
+
+#[test]
+fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
+    let home = tempfile::tempdir().expect("temp home");
+    let qwen_dir = home.path().join(".qwen");
+    fs::create_dir_all(&qwen_dir).expect("create qwen dir");
+    fs::write(
+        qwen_dir.join("settings.json"),
+        r#"{"modelProviders":{"openai":{"models":[{"id":"mine"}]}}}"#,
+    )
+    .expect("seed legacy settings");
+    let setup = router(
+        home.path(),
+        &["clients", "setup", "qwen-code", "--token", "la_sk_existing"],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+    let document: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(qwen_dir.join("settings.json")).expect("read settings"),
+    )
+    .expect("valid JSON");
+    let models = document["modelProviders"]["openai"]["models"]
+        .as_array()
+        .expect("legacy models remain wrapped");
+    assert_eq!(models.len(), 2);
+    assert_eq!(models[0]["id"], "mine");
+}
+
+#[test]
+fn opencode_remove_restores_a_provider_that_setup_replaced() {
+    let home = tempfile::tempdir().expect("temp home");
+    let directory = home.path().join(".config/opencode");
+    fs::create_dir_all(&directory).expect("create config dir");
+    let path = directory.join("opencode.json");
+    fs::write(
+        &path,
+        r#"{"provider":{"link-assistant":{"name":"User-owned"}}}"#,
+    )
+    .expect("seed provider");
+    let setup = router(
+        home.path(),
+        &["clients", "setup", "opencode", "--token", "la_sk_existing"],
+    );
+    assert!(setup.status.success());
+    let removed = router(home.path(), &["clients", "remove", "opencode"]);
+    assert!(removed.status.success());
+    let document: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("read restored config"))
+            .expect("valid JSON");
+    assert_eq!(document["provider"]["link-assistant"]["name"], "User-owned");
+}
+
+#[test]
+fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
+    for client in ["opencode", "qwen-code"] {
+        let home = tempfile::tempdir().expect("temp home");
+        for base_url in ["http://router-one.test", "http://router-two.test"] {
+            let setup = router(
+                home.path(),
+                &[
+                    "clients",
+                    "setup",
+                    client,
+                    "--token",
+                    "la_sk_existing",
+                    "--base-url",
+                    base_url,
+                ],
+            );
+            assert!(
+                setup.status.success(),
+                "{}",
+                String::from_utf8_lossy(&setup.stderr)
+            );
+        }
+
+        let removed = router(home.path(), &["clients", "remove", client]);
+        assert!(removed.status.success());
+        let shown = router(home.path(), &["clients", "show", client]);
+        assert!(shown.status.success());
+        assert!(String::from_utf8_lossy(&shown.stdout).contains("\"configured\": false"));
     }
 }

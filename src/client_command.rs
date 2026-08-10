@@ -79,6 +79,12 @@ fn setup(
         Ok(result) => result,
         Err(error) => return failed(error),
     };
+    let Some(token_env) = client.token_env() else {
+        return failed(format!(
+            "{} has no router token environment",
+            client.display_name()
+        ));
+    };
     let token = match supplied_token {
         Some(token) => token.to_string(),
         None => match issue_client_token(config, client, ttl_hours) {
@@ -86,7 +92,12 @@ fn setup(
             Err(error) => return failed(error),
         },
     };
-    if result.changed {
+    if client == ClientKind::GrokCli {
+        println!(
+            "{} uses shell environment; no client config was changed",
+            client.display_name()
+        );
+    } else if result.changed {
         println!(
             "configured {} in {}",
             client.display_name(),
@@ -102,7 +113,14 @@ fn setup(
     if let Some(backup) = result.backup {
         println!("backup: {}", backup.display());
     }
-    println!("export {}={}", client.token_env(), shell_quote(&token));
+    if let Some(base_url_env) = client.base_url_env() {
+        println!(
+            "export {}={}",
+            base_url_env,
+            shell_quote(&format!("{}/v1", base_url.trim_end_matches('/')))
+        );
+    }
+    println!("export {}={}", token_env, shell_quote(&token));
     println!(
         "The token is not stored in the client config; export it in each shell that launches {}.",
         client.display_name()
