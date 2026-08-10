@@ -17,6 +17,7 @@ use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::Response;
 use futures_util::StreamExt;
+use std::collections::BTreeMap;
 
 use crate::metrics::Surface;
 use crate::proxy::{
@@ -286,6 +287,7 @@ pub async fn forward_subscription_openai(
 fn codex_sse_to_response_json(body: &[u8]) -> Option<Vec<u8>> {
     let text = std::str::from_utf8(body).ok()?;
     let mut completed: Option<serde_json::Value> = None;
+    let mut output = BTreeMap::<u64, serde_json::Value>::new();
     for line in text.lines() {
         let Some(payload) = line.strip_prefix("data:") else {
             continue;
@@ -297,13 +299,93 @@ fn codex_sse_to_response_json(body: &[u8]) -> Option<Vec<u8>> {
         let Ok(event) = serde_json::from_str::<serde_json::Value>(payload) else {
             continue;
         };
-        if event.get("type").and_then(serde_json::Value::as_str) == Some("response.completed") {
-            if let Some(response) = event.get("response") {
-                completed = Some(response.clone());
+        match event.get("type").and_then(serde_json::Value::as_str) {
+            Some("response.output_item.added" | "response.output_item.done") => {
+                if let Some(item) = event.get("item") {
+                    let index = event
+                        .get("output_index")
+                        .and_then(serde_json::Value::as_u64)
+                        .unwrap_or(output.len() as u64);
+                    output.insert(index, item.clone());
+                }
             }
+            Some("response.output_text.delta") => {
+                update_codex_output_text(&mut output, &event, false);
+            }
+            Some("response.output_text.done") => {
+                update_codex_output_text(&mut output, &event, true);
+            }
+            Some("response.completed") => {
+                if let Some(response) = event.get("response") {
+                    completed = Some(response.clone());
+                }
+            }
+            _ => {}
+        }
+    }
+    if let Some(response) = completed.as_mut() {
+        let missing_output = response
+            .get("output")
+            .and_then(serde_json::Value::as_array)
+            .is_none_or(Vec::is_empty);
+        if missing_output && !output.is_empty() {
+            response["output"] = serde_json::Value::Array(output.into_values().collect());
         }
     }
     completed.and_then(|value| serde_json::to_vec(&value).ok())
+}
+
+fn update_codex_output_text(
+    output: &mut BTreeMap<u64, serde_json::Value>,
+    event: &serde_json::Value,
+    done: bool,
+) {
+    let output_index = event
+        .get("output_index")
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0);
+    let content_index = event
+        .get("content_index")
+        .and_then(serde_json::Value::as_u64)
+        .and_then(|index| usize::try_from(index).ok())
+        .unwrap_or(0);
+    let item_id = event
+        .get("item_id")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
+    let item = output.entry(output_index).or_insert_with(|| {
+        serde_json::json!({
+            "id": item_id,
+            "type": "message",
+            "status": "in_progress",
+            "role": "assistant",
+            "content": []
+        })
+    });
+    let Some(content) = item
+        .get_mut("content")
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return;
+    };
+    content.resize(content_index + 1, serde_json::Value::Null);
+    if content[content_index].is_null() {
+        content[content_index] =
+            serde_json::json!({"type": "output_text", "text": "", "annotations": []});
+    }
+    let text = if done {
+        event.get("text")
+    } else {
+        event.get("delta")
+    }
+    .and_then(serde_json::Value::as_str)
+    .unwrap_or("");
+    if done {
+        content[content_index]["text"] = serde_json::Value::String(text.to_string());
+        item["status"] = serde_json::Value::String("completed".to_string());
+    } else if let Some(current) = content[content_index]["text"].as_str() {
+        content[content_index]["text"] = serde_json::Value::String(format!("{current}{text}"));
+    }
 }
 
 /// Collect rate-limit-related headers (`retry-after`, `x-ratelimit-*`) from an
@@ -427,6 +509,8 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     };
     // Codex always streams from the ChatGPT backend.
     obj.insert("stream".to_string(), serde_json::Value::Bool(true));
+    // ChatGPT subscription inference does not permit stored responses.
+    obj.insert("store".to_string(), serde_json::Value::Bool(false));
     // `max_output_tokens` is not accepted by the Codex backend.
     obj.remove("max_output_tokens");
 
@@ -476,7 +560,7 @@ mod tests {
         let mut body = serde_json::json!({
             "model": "gpt-5.5",
             "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
-            "store": false,
+            "store": true,
             "max_output_tokens": 8192,
             "reasoning": {"effort": "none"}
         });
@@ -487,8 +571,9 @@ mod tests {
             "max_output_tokens must be stripped for Codex"
         );
         assert_eq!(body["instructions"], "You are a helpful assistant.");
-        // Untouched fields are preserved.
+        // ChatGPT subscription inference requires stateless requests.
         assert_eq!(body["store"], serde_json::Value::Bool(false));
+        // Untouched fields are preserved.
         assert_eq!(body["reasoning"]["effort"], "none");
     }
 
@@ -534,15 +619,19 @@ mod tests {
             "event: response.created\n",
             "data: {\"type\":\"response.created\",\"response\":{\"status\":\"in_progress\"}}\n\n",
             "event: response.output_text.delta\n",
-            "data: {\"type\":\"response.output_text.delta\",\"delta\":\"hi\"}\n\n",
+            "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"hi\"}\n\n",
+            "event: response.output_text.done\n",
+            "data: {\"type\":\"response.output_text.done\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"text\":\"hi\"}\n\n",
             "event: response.completed\n",
-            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"status\":\"completed\",\"output\":[{\"type\":\"message\"}]}}\n\n"
+            "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"gpt-5.6-sol\",\"status\":\"completed\",\"output\":[]}}\n\n"
         );
         let out = codex_sse_to_response_json(sse.as_bytes()).expect("completed payload");
         let value: serde_json::Value = serde_json::from_slice(&out).unwrap();
         assert_eq!(value["id"], "resp_1");
         assert_eq!(value["status"], "completed");
         assert_eq!(value["output"][0]["type"], "message");
+        assert_eq!(value["output"][0]["role"], "assistant");
+        assert_eq!(value["output"][0]["content"][0]["text"], "hi");
     }
 
     #[test]

@@ -134,7 +134,31 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
     }
+    remove_unsupported_anthropic_temperature(&mut body);
     body
+}
+
+/// Remove sampling parameters rejected by the selected Anthropic model.
+///
+/// Claude 5 models deprecated `temperature`; older generations continue to
+/// accept it, so retain the caller's value everywhere else.
+pub(crate) fn remove_unsupported_anthropic_temperature(body: &mut Value) {
+    let rejects_temperature = body
+        .get("model")
+        .and_then(Value::as_str)
+        .and_then(|model| model.strip_prefix("claude-"))
+        .and_then(|model| {
+            let mut parts = model.split('-');
+            let family = parts.next()?;
+            let generation = parts.next()?.parse::<u32>().ok()?;
+            matches!(family, "haiku" | "sonnet" | "opus").then_some(generation)
+        })
+        .is_some_and(|generation| generation >= 5);
+    if rejects_temperature {
+        if let Some(object) = body.as_object_mut() {
+            object.remove("temperature");
+        }
+    }
 }
 
 /// Translate the upstream Anthropic JSON response to an `OpenAI` Chat
@@ -731,6 +755,28 @@ mod tests {
         let body = chat_completion_to_anthropic(&req);
         assert_eq!(body["model"], "claude-opus-4-7");
         assert_eq!(body["max_tokens"], 4096);
+    }
+
+    #[test]
+    fn drops_temperature_for_claude_5_models() {
+        let req = OpenAIChatCompletionRequest {
+            model: "claude-sonnet-5".into(),
+            messages: vec![ChatMessage {
+                role: "user".into(),
+                content: Value::String("hi".into()),
+                name: None,
+            }],
+            max_tokens: None,
+            max_completion_tokens: None,
+            temperature: Some(0.7),
+            top_p: None,
+            stream: None,
+            stop: None,
+            tools: None,
+            tool_choice: None,
+        };
+        let body = chat_completion_to_anthropic(&req);
+        assert!(body.get("temperature").is_none());
     }
 
     #[test]
