@@ -28,6 +28,7 @@ pub use crate::model_routing::models as openai_models;
 use crate::openai;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
 use crate::responses;
+use crate::subscription::SubscriptionProvider;
 
 /// The legacy API path prefix used to route requests through the proxy.
 pub const API_PREFIX: &str = "/api/latest/anthropic/";
@@ -279,7 +280,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     // Same requirement as above: a client that is not Claude Code would be rejected
     // by the upstream with a misleading 429. Idempotent for Claude Code itself.
     let mut upstream_body = routing_body.clone();
-    openai::remove_unsupported_anthropic_temperature(&mut upstream_body);
+    openai::reconcile_subscription_parameters(SubscriptionProvider::Claude, &mut upstream_body);
     if upstream_body != routing_body {
         body_bytes = serde_json::to_vec(&upstream_body)
             .map(bytes::Bytes::from)
@@ -504,7 +505,7 @@ pub async fn openai_chat_completions(
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
     }
-    let state = match crate::model_routing::route_state(&state, &body) {
+    let state = match crate::model_routing::route_state(&state, &body).await {
         Ok(state) => state,
         Err(error) => return crate::model_routing::model_route_error_response(&error),
     };
@@ -599,7 +600,7 @@ pub async fn openai_responses(
     headers: HeaderMap,
     axum::Json(body): axum::Json<serde_json::Value>,
 ) -> Response {
-    let state = match crate::model_routing::route_state(&state, &body) {
+    let state = match crate::model_routing::route_state(&state, &body).await {
         Ok(state) => state,
         Err(error) => return crate::model_routing::model_route_error_response(&error),
     };

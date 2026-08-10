@@ -134,26 +134,31 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
     }
-    remove_unsupported_anthropic_temperature(&mut body);
+    reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
     body
 }
 
-/// Remove sampling parameters rejected by the selected Anthropic model.
+/// Reconcile request parameters with the selected subscription backend.
 ///
-/// Claude 5 models deprecated `temperature`; older generations continue to
-/// accept it, so retain the caller's value everywhere else.
-pub(crate) fn remove_unsupported_anthropic_temperature(body: &mut Value) {
-    let rejects_temperature = body
-        .get("model")
-        .and_then(Value::as_str)
-        .and_then(|model| model.strip_prefix("claude-"))
-        .and_then(|model| {
-            let mut parts = model.split('-');
-            let family = parts.next()?;
-            let generation = parts.next()?.parse::<u32>().ok()?;
-            matches!(family, "haiku" | "sonnet" | "opus").then_some(generation)
-        })
-        .is_some_and(|generation| generation >= 5);
+/// `ChatGPT` subscription inference rejects `temperature` for every advertised
+/// model. Claude 5 rejects it too, while older Claude generations retain it.
+pub(crate) fn reconcile_subscription_parameters(
+    provider: crate::subscription::SubscriptionProvider,
+    body: &mut Value,
+) {
+    let rejects_temperature = provider == crate::subscription::SubscriptionProvider::Codex
+        || (provider == crate::subscription::SubscriptionProvider::Claude
+            && body
+                .get("model")
+                .and_then(Value::as_str)
+                .and_then(|model| model.strip_prefix("claude-"))
+                .and_then(|model| {
+                    let mut parts = model.split('-');
+                    let family = parts.next()?;
+                    let generation = parts.next()?.parse::<u32>().ok()?;
+                    matches!(family, "haiku" | "sonnet" | "opus").then_some(generation)
+                })
+                .is_some_and(|generation| generation >= 5));
     if rejects_temperature {
         if let Some(object) = body.as_object_mut() {
             object.remove("temperature");

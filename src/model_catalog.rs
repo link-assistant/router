@@ -117,20 +117,29 @@ impl ModelCatalogCache {
 pub async fn refresh_catalogs(
     client: &reqwest::Client,
     readers: &[SubscriptionReader],
+    token_cache: &crate::refresh::TokenCache,
     cache: &ModelCatalogCache,
 ) {
     let now_ms = chrono::Utc::now().timestamp_millis();
-    let credentials = readers.iter().filter_map(|reader| {
-        reader
-            .read_token()
-            .ok()
-            .filter(|token| !token.is_expired(now_ms))
-            .map(|token| (reader.provider(), token))
-    });
-    let refreshes = credentials.map(|(provider, token)| async move {
-        let result = fetch_provider_catalog(client, provider, &token, None).await;
-        (provider, result)
-    });
+    let refreshes = readers
+        .iter()
+        .filter_map(|reader| {
+            reader
+                .read_token()
+                .ok()
+                .map(|token| (reader.provider(), token))
+        })
+        .map(|(provider, disk_token)| async move {
+            let token = token_cache
+                .get_fresh(client, provider, disk_token, now_ms)
+                .await;
+            let result = if token.is_expired(now_ms) {
+                Err("credential is expired and could not be refreshed".to_string())
+            } else {
+                fetch_provider_catalog(client, provider, &token, None).await
+            };
+            (provider, result)
+        });
     for (provider, result) in futures_util::future::join_all(refreshes).await {
         match result {
             Ok(models) => {
@@ -152,10 +161,11 @@ pub async fn refresh_catalogs(
 pub async fn refresh_catalogs_forever(
     client: reqwest::Client,
     readers: Vec<SubscriptionReader>,
+    token_cache: std::sync::Arc<crate::refresh::TokenCache>,
     cache: std::sync::Arc<ModelCatalogCache>,
 ) {
     loop {
-        refresh_catalogs(&client, &readers, &cache).await;
+        refresh_catalogs(&client, &readers, &token_cache, &cache).await;
         tokio::time::sleep(CATALOG_TTL).await;
     }
 }
@@ -287,7 +297,9 @@ mod tests {
     use axum::extract::State;
     use axum::http::{HeaderMap, Uri};
     use axum::routing::get;
+    use std::fs;
     use std::sync::Arc;
+    use tempfile::tempdir;
 
     #[test]
     fn parses_each_vendor_response_shape() {
@@ -362,6 +374,53 @@ mod tests {
         .unwrap();
         assert_eq!(models, ["gpt-5.6-sol"]);
         assert!(*seen.read().unwrap());
+    }
+
+    #[tokio::test]
+    async fn catalog_refresh_uses_an_in_memory_refreshed_token() {
+        async fn handler(headers: HeaderMap) -> axum::Json<Value> {
+            assert_eq!(
+                headers
+                    .get("authorization")
+                    .and_then(|value| value.to_str().ok()),
+                Some("Bearer fresh-token")
+            );
+            axum::Json(serde_json::json!({"data":[{"id":"qwen-live"}]}))
+        }
+
+        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let home = tempdir().unwrap();
+        fs::write(
+            home.path().join("oauth_creds.json"),
+            r#"{"access_token":"expired","refresh_token":"refresh","expiry_date":1000}"#,
+        )
+        .unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Qwen,
+            home.path(),
+        )];
+        let token_cache = crate::refresh::TokenCache::new();
+        token_cache.store_refreshed(
+            SubscriptionProvider::Qwen,
+            "primary",
+            SubscriptionToken {
+                access_token: "fresh-token".into(),
+                refresh_token: Some("refresh".into()),
+                expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 60_000),
+                account_id: None,
+                resource_url: Some(format!("http://{address}")),
+            },
+        );
+        let catalogs = ModelCatalogCache::new();
+
+        refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &catalogs).await;
+
+        assert_eq!(catalogs.models(SubscriptionProvider::Qwen), ["qwen-live"]);
+        assert!(!catalogs.status(SubscriptionProvider::Qwen).using_fallback);
     }
 
     #[test]

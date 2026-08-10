@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::openai::{
-    extract_text, map_model, remove_unsupported_anthropic_temperature, translate_parts,
-    translate_tools,
+    extract_text, map_model, reconcile_subscription_parameters, translate_parts, translate_tools,
 };
 
 /// `OpenAI` `POST /v1/responses` request body. We accept the superset and
@@ -92,7 +91,7 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     if let Some(tools) = &req.tools {
         body["tools"] = translate_tools(tools);
     }
-    remove_unsupported_anthropic_temperature(&mut body);
+    reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
     body
 }
 
