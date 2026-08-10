@@ -385,7 +385,7 @@ in a browser *or* in a chat. See
 Provider-specific namespaces use the matching healthy subscription in
 automatic mode, or the provider pinned by `UPSTREAM_PROVIDER`.
 
-`gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families auto-map to the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged.
+`gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the `o*` reasoning families are explicit aliases for the Claude Sonnet / Haiku / Opus tiers respectively. Native `claude-*` IDs pass through unchanged. Other model names return `404 not_found_error` instead of silently selecting a default model. Successful responses report the resolved Claude model that actually served the request.
 
 With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
 forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a

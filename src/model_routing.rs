@@ -10,6 +10,41 @@ use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
+/// Failure to resolve a request model in automatic provider mode.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ModelRouteError {
+    /// The request did not identify a model to route.
+    ModelRequired,
+    /// The requested model is unknown or its owning provider is unavailable.
+    NotFound(String),
+}
+
+impl std::fmt::Display for ModelRouteError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ModelRequired => {
+                formatter.write_str("model is required when UPSTREAM_PROVIDER=auto")
+            }
+            Self::NotFound(message) => formatter.write_str(message),
+        }
+    }
+}
+
+/// Convert an automatic-routing failure into the public API error shape.
+pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
+    let (status, error_type) = match error {
+        ModelRouteError::ModelRequired => (StatusCode::BAD_REQUEST, "invalid_request_error"),
+        ModelRouteError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found_error"),
+    };
+    crate::proxy::error_response(status, error_type, &error.to_string())
+}
+
+pub(crate) fn model_not_found_response(model: &str) -> Response {
+    model_route_error_response(&ModelRouteError::NotFound(format!(
+        "model '{model}' is not available"
+    )))
+}
+
 const CLAUDE_MODELS: &[&str] = &[
     "claude-opus-4-7",
     "claude-sonnet-4-5-20250929",
@@ -55,13 +90,22 @@ pub fn provider_for_model(model: &str) -> Option<SubscriptionProvider> {
 pub fn available_provider_for_model(
     model: &str,
     available: &[SubscriptionProvider],
-) -> Result<SubscriptionProvider, String> {
+) -> Result<SubscriptionProvider, ModelRouteError> {
     let provider = provider_for_model(model)
-        .ok_or_else(|| format!("model '{model}' is not advertised by any subscription"))?;
+        .or_else(|| crate::openai::resolve_model(model).map(|_| SubscriptionProvider::Claude))
+        .ok_or_else(|| {
+            ModelRouteError::NotFound(format!(
+                "model '{model}' is not advertised by any subscription"
+            ))
+        })?;
     available
         .contains(&provider)
         .then_some(provider)
-        .ok_or_else(|| format!("model '{model}' has no healthy {provider} credential"))
+        .ok_or_else(|| {
+            ModelRouteError::NotFound(format!(
+                "model '{model}' has no healthy {provider} credential"
+            ))
+        })
 }
 
 /// Readers whose current on-disk access token exists and has not expired.
@@ -155,13 +199,12 @@ pub async fn route_anthropic_request(
         })?;
     let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(Value::Null);
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        route_state(state, &routing_body)
+        route_state(state, &routing_body).map_err(|error| model_route_error_response(&error))?
     } else {
-        route_provider(state, SubscriptionProvider::Claude)
-    }
-    .map_err(|error| {
-        crate::proxy::error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error)
-    })?;
+        route_provider(state, SubscriptionProvider::Claude).map_err(|error| {
+            crate::proxy::error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error)
+        })?
+    };
     Ok((routed, Request::from_parts(parts, Body::from(body_bytes))))
 }
 
@@ -197,7 +240,7 @@ pub fn route_provider(
 }
 
 /// Resolve an automatic state to the healthy subscription serving `model`.
-pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, String> {
+pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         return Ok(state.clone());
     }
@@ -205,7 +248,7 @@ pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, String> {
         .get("model")
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
-        .ok_or_else(|| "model is required when UPSTREAM_PROVIDER=auto".to_string())?;
+        .ok_or(ModelRouteError::ModelRequired)?;
     let provider = available_provider_for_model(
         model,
         &healthy_providers(
@@ -213,8 +256,11 @@ pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, String> {
             chrono::Utc::now().timestamp_millis(),
         ),
     )?;
-    let mut routed = route_provider(state, provider)
-        .map_err(|_| format!("model '{model}' has no healthy {provider} credential"))?;
+    let mut routed = route_provider(state, provider).map_err(|_| {
+        ModelRouteError::NotFound(format!(
+            "model '{model}' has no healthy {provider} credential"
+        ))
+    })?;
     if provider != SubscriptionProvider::Claude {
         // The Anthropic bridge normally substitutes its provider default
         // because pinned clients name Claude models. Auto mode selected this
@@ -227,6 +273,9 @@ pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::extract::Query;
+    use axum::http::HeaderMap;
+    use http_body_util::BodyExt;
     use std::fs;
     use std::sync::Arc;
     use tempfile::tempdir;
@@ -300,9 +349,48 @@ mod tests {
         assert!(
             available_provider_for_model("gpt-5", &[SubscriptionProvider::Claude])
                 .unwrap_err()
+                .to_string()
                 .contains("no healthy codex credential")
         );
-        assert!(available_provider_for_model("made-up-model", &[]).is_err());
+        assert_eq!(
+            available_provider_for_model("gpt-4o", &[SubscriptionProvider::Claude]),
+            Ok(SubscriptionProvider::Claude)
+        );
+        assert!(matches!(
+            available_provider_for_model("made-up-model", &[]),
+            Err(ModelRouteError::NotFound(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn openai_request_rejects_unknown_model_in_pinned_and_auto_modes() {
+        for provider in [UpstreamProvider::Anthropic, UpstreamProvider::Auto] {
+            let data = tempdir().unwrap();
+            let mut state = auto_state(Vec::new(), data.path());
+            state.upstream_provider = provider;
+
+            let response = crate::proxy::openai_chat_completions(
+                State(state),
+                Query(std::collections::BTreeMap::default()),
+                HeaderMap::new(),
+                axum::Json(json!({
+                    "model": "totally-made-up-model-xyz",
+                    "messages": [{"role": "user", "content": "hello"}]
+                })),
+            )
+            .await;
+
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
+            let body = response.into_body().collect().await.unwrap().to_bytes();
+            let json: Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(json["error"]["type"], "not_found_error");
+            assert!(
+                json["error"]["message"]
+                    .as_str()
+                    .unwrap()
+                    .contains("totally-made-up-model-xyz")
+            );
+        }
     }
 
     #[test]
