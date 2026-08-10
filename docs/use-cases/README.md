@@ -22,6 +22,11 @@ come first; the per-CLI documents follow.
 
 ## Per-CLI configuration
 
+Use [`configure-clients.md`](configure-clients.md) to configure Codex CLI or
+Claude Code automatically with safe merge, backup, removal, and live diagnosis.
+The individual documents below also describe manual configuration and protocol
+details.
+
 | Document | CLI | Dialect it speaks to the router |
 | --- | --- | --- |
 | [cli-claude-code.md](cli-claude-code.md) | Claude Code | Anthropic Messages |

@@ -20,6 +20,8 @@ pub mod chat_commands;
 pub mod chat_config;
 pub mod claude_identity;
 pub mod cli;
+pub mod client_command;
+pub mod clients;
 pub mod config;
 pub mod config_defaults;
 pub mod crater;

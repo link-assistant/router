@@ -25,7 +25,7 @@ Link.Assistant.Router is a transparent proxy that sits between API clients (such
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
 - **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
-- **First-class CLI** — `serve`, `tokens issue|list|revoke|expire|show`, `providers add|list|show|remove|import`, `accounts list`, `doctor` subcommands
+- **First-class CLI** — `serve`, token/provider/account management, `clients list|setup|show|remove|doctor`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
 
@@ -700,6 +700,14 @@ link-assistant-router accounts list
 link-assistant-router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
 link-assistant-router providers import providers.lenv
 link-assistant-router providers list
+
+# Safely configure Codex CLI or Claude Code against this router:
+link-assistant-router clients list
+link-assistant-router clients setup codex
+link-assistant-router clients setup claude-code --token la_sk_...
+link-assistant-router clients show codex
+link-assistant-router clients doctor codex
+link-assistant-router clients remove codex
 
 # Print resolved configuration + credential / store probes:
 link-assistant-router doctor
