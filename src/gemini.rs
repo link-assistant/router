@@ -32,30 +32,6 @@ pub const PROJECT_ENV: &str = "GEMINI_PROJECT";
 /// Default Gemini model used when a request omits `model`.
 pub const DEFAULT_MODEL: &str = "gemini-2.5-pro";
 
-/// `GET /v1/models` listing for the Gemini subscription upstream.
-#[must_use]
-pub fn list_models() -> Value {
-    let now = chrono::Utc::now().timestamp();
-    let entries = [
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-    ];
-    let data: Vec<Value> = entries
-        .iter()
-        .map(|id| {
-            json!({
-                "id": id,
-                "object": "model",
-                "created": now,
-                "owned_by": "google",
-            })
-        })
-        .collect();
-    json!({"object": "list", "data": data})
-}
-
 /// Translate an `OpenAI` Chat Completions request body to a Gemini
 /// `GenerateContentRequest`.
 #[must_use]
@@ -550,23 +526,21 @@ fn native_model_document(model: &str) -> Value {
 
 /// Native Gemini `ListModels` response.
 pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
-    let available = state.upstream_provider == crate::config::UpstreamProvider::Gemini
-        || (state.upstream_provider == crate::config::UpstreamProvider::Auto
-            && crate::model_routing::healthy_providers(
-                &state.subscription_readers,
-                chrono::Utc::now().timestamp_millis(),
-            )
-            .contains(&crate::subscription::SubscriptionProvider::Gemini));
-    let models = [
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-    ]
-    .iter()
-    .filter(|_| available)
-    .map(|model| native_model_document(model))
-    .collect::<Vec<_>>();
+    let healthy = crate::model_routing::healthy_providers(
+        &state.subscription_readers,
+        chrono::Utc::now().timestamp_millis(),
+    );
+    let available = matches!(
+        state.upstream_provider,
+        crate::config::UpstreamProvider::Gemini | crate::config::UpstreamProvider::Auto
+    ) && healthy.contains(&crate::subscription::SubscriptionProvider::Gemini);
+    let models = state
+        .model_catalogs
+        .models(crate::subscription::SubscriptionProvider::Gemini)
+        .iter()
+        .filter(|_| available)
+        .map(|model| native_model_document(model))
+        .collect::<Vec<_>>();
     (StatusCode::OK, axum::Json(json!({"models": models})))
 }
 
@@ -575,15 +549,16 @@ pub async fn native_model(
     State(state): State<AppState>,
     Path(model): Path<String>,
 ) -> impl IntoResponse {
-    let available = state.upstream_provider == crate::config::UpstreamProvider::Gemini
-        || (state.upstream_provider == crate::config::UpstreamProvider::Auto
-            && crate::model_routing::provider_for_model(&model)
-                == Some(crate::subscription::SubscriptionProvider::Gemini)
-            && crate::model_routing::healthy_providers(
-                &state.subscription_readers,
-                chrono::Utc::now().timestamp_millis(),
-            )
-            .contains(&crate::subscription::SubscriptionProvider::Gemini));
+    let healthy = crate::model_routing::healthy_providers(
+        &state.subscription_readers,
+        chrono::Utc::now().timestamp_millis(),
+    );
+    let available = matches!(
+        state.upstream_provider,
+        crate::config::UpstreamProvider::Gemini | crate::config::UpstreamProvider::Auto
+    ) && healthy.contains(&crate::subscription::SubscriptionProvider::Gemini)
+        && crate::model_routing::provider_for_model(&model, &state.model_catalogs)
+            == Some(crate::subscription::SubscriptionProvider::Gemini);
     let status = if available {
         StatusCode::OK
     } else {
