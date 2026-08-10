@@ -76,7 +76,7 @@ async fn main() -> ExitCode {
         Some(Command::Clients { op }) => {
             link_assistant_router::client_command::run(&config, op).await
         }
-        Some(Command::Doctor) => run_doctor(&config),
+        Some(Command::Doctor) => run_doctor(&config).await,
     }
 }
 
@@ -262,6 +262,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         config.upstream_provider,
         &subscription_readers,
     );
+    let model_catalogs = Arc::new(link_assistant_router::model_catalog::ModelCatalogCache::new());
 
     // The admin credential: a deploy-time key when provided, otherwise the
     // persisted first-visitor claim (unclaimed until someone confirms one).
@@ -278,6 +279,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         account_router,
         subscription_reader,
         subscription_readers,
+        model_catalogs: Arc::clone(&model_catalogs),
         subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
@@ -303,6 +305,14 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         mpp: config.mpp.clone(),
         login_manager: LoginManager::new(config.login.clone()),
     };
+
+    let catalog_refresh = tokio::spawn(
+        link_assistant_router::model_catalog::refresh_catalogs_forever(
+            state.client.clone(),
+            state.subscription_readers.clone(),
+            Arc::clone(&state.model_catalogs),
+        ),
+    );
 
     let mut app = Router::new()
         .route("/health", get(proxy::health))
@@ -443,6 +453,7 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     for handle in chat_channels {
         handle.abort();
     }
+    catalog_refresh.abort();
     Ok(())
 }
 
@@ -769,7 +780,7 @@ fn run_providers(config: &Config, op: &ProviderOp) -> ExitCode {
     }
 }
 
-fn run_doctor(config: &Config) -> ExitCode {
+async fn run_doctor(config: &Config) -> ExitCode {
     println!("Link.Assistant.Router v{}", link_assistant_router::VERSION);
     println!("listen_addr            : {}", config.listen_addr);
     println!("upstream_base_url      : {}", config.upstream_base_url);
@@ -924,33 +935,13 @@ fn run_doctor(config: &Config) -> ExitCode {
         }
     }
 
-    // Probe vendor-subscription credentials (Codex/Gemini/Qwen). These are the
-    // OAuth files written by each vendor's CLI; the router reads them read-only
-    // when the matching upstream provider is active.
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    for provider in link_assistant_router::subscription::SubscriptionProvider::ALL {
-        if provider == active_provider {
-            continue; // covered by the active primary probe above
-        }
-        let reader = link_assistant_router::subscription::SubscriptionReader::from_user_home(
-            provider, &user_home,
-        );
-        let label = format!("{provider} subscription");
-        match reader.discover_credential_path() {
-            Some(path) => {
-                let status = reader.read_token().map_or("found, NO TOKEN", |token| {
-                    let now_ms = chrono::Utc::now().timestamp_millis();
-                    if token.is_expired(now_ms) {
-                        "found, token EXPIRED"
-                    } else {
-                        "found, token OK"
-                    }
-                });
-                println!("{label:<23}: {} ({status})", path.display());
-            }
-            None => println!("{label:<23}: {} (MISSING)", reader.home().display()),
-        }
-    }
+    let catalog_error = link_assistant_router::doctor::subscription_catalog_diagnostics(
+        active_provider,
+        &config.claude_code_home,
+        &user_home,
+    )
+    .await;
 
     // Probe data dir.
     if config.data_dir.exists() {
@@ -988,7 +979,11 @@ fn run_doctor(config: &Config) -> ExitCode {
         if p.exists() { "present" } else { "<empty>" }
     );
 
-    ExitCode::SUCCESS
+    if catalog_error {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }
 
 async fn shutdown_signal() {

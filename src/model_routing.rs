@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 
 use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
+use crate::model_catalog::ModelCatalogCache;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
 /// Failure to resolve a request model in automatic provider mode.
@@ -45,53 +46,33 @@ pub(crate) fn model_not_found_response(model: &str) -> Response {
     )))
 }
 
-const CLAUDE_MODELS: &[&str] = &[
-    "claude-opus-4-7",
-    "claude-sonnet-4-5-20250929",
-    "claude-haiku-4-5-20251001",
-    "claude-sonnet-3-5-20241022",
-    "claude-haiku-3-5-20241022",
-];
-const CODEX_MODELS: &[&str] = &["gpt-5-codex", "gpt-5", "codex-mini-latest"];
-const GEMINI_MODELS: &[&str] = &[
-    "gemini-2.5-pro",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-];
-const QWEN_MODELS: &[&str] = &[
-    "qwen3-coder-plus",
-    "qwen3-coder-flash",
-    "qwen-max",
-    "qwen-plus",
-];
-
-const fn provider_models(
-    provider: SubscriptionProvider,
-) -> (&'static str, &'static [&'static str]) {
+const fn provider_owner(provider: SubscriptionProvider) -> &'static str {
     match provider {
-        SubscriptionProvider::Claude => ("anthropic", CLAUDE_MODELS),
-        SubscriptionProvider::Codex => ("openai", CODEX_MODELS),
-        SubscriptionProvider::Gemini => ("google", GEMINI_MODELS),
-        SubscriptionProvider::Qwen => ("qwen", QWEN_MODELS),
+        SubscriptionProvider::Claude => "anthropic",
+        SubscriptionProvider::Codex => "openai",
+        SubscriptionProvider::Gemini => "google",
+        SubscriptionProvider::Qwen => "qwen",
     }
 }
 
-/// Return the provider that owns an advertised model id.
+/// Return the provider whose last known live catalog owns a model id.
 #[must_use]
-pub fn provider_for_model(model: &str) -> Option<SubscriptionProvider> {
-    SubscriptionProvider::ALL.into_iter().find(|provider| {
-        let (_, models) = provider_models(*provider);
-        models.contains(&model)
-    })
+pub fn provider_for_model(
+    model: &str,
+    catalogs: &ModelCatalogCache,
+) -> Option<SubscriptionProvider> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .find(|provider| catalogs.models(*provider).iter().any(|id| id == model))
 }
 
 /// Resolve a model only when the owning subscription is available.
 pub fn available_provider_for_model(
     model: &str,
     available: &[SubscriptionProvider],
+    catalogs: &ModelCatalogCache,
 ) -> Result<SubscriptionProvider, ModelRouteError> {
-    let provider = provider_for_model(model)
+    let provider = provider_for_model(model, catalogs)
         .or_else(|| crate::openai::resolve_model(model).map(|_| SubscriptionProvider::Claude))
         .ok_or_else(|| {
             ModelRouteError::NotFound(format!(
@@ -125,13 +106,13 @@ pub fn healthy_providers(readers: &[SubscriptionReader], now_ms: i64) -> Vec<Sub
 
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
-pub fn model_catalog(providers: &[SubscriptionProvider]) -> Value {
+pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
     let now = chrono::Utc::now().timestamp();
     let data = providers
         .iter()
         .flat_map(|provider| {
-            let (owner, models) = provider_models(*provider);
-            models.iter().map(move |id| {
+            let owner = provider_owner(*provider);
+            catalogs.models(*provider).into_iter().map(move |id| {
                 json!({
                     "id": id,
                     "object": "model",
@@ -152,19 +133,22 @@ pub fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) ->
         chrono::Utc::now().timestamp_millis(),
     );
     if healthy.contains(&provider) {
-        model_catalog(&[provider])
+        model_catalog(&[provider], &state.model_catalogs)
     } else {
-        model_catalog(&[])
+        model_catalog(&[], &state.model_catalogs)
     }
 }
 
 /// `GET /v1/models` across automatic or explicitly pinned providers.
 pub async fn models(State(state): State<AppState>) -> impl IntoResponse {
     let models = match state.upstream_provider {
-        UpstreamProvider::Auto => model_catalog(&healthy_providers(
-            &state.subscription_readers,
-            chrono::Utc::now().timestamp_millis(),
-        )),
+        UpstreamProvider::Auto => model_catalog(
+            &healthy_providers(
+                &state.subscription_readers,
+                chrono::Utc::now().timestamp_millis(),
+            ),
+            &state.model_catalogs,
+        ),
         UpstreamProvider::Anthropic => pinned_model_catalog(&state, SubscriptionProvider::Claude),
         UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
             || crate::gonka::list_models(&crate::config::default_gonka_model()),
@@ -255,6 +239,7 @@ pub fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRout
             &state.subscription_readers,
             chrono::Utc::now().timestamp_millis(),
         ),
+        &state.model_catalogs,
     )?;
     let mut routed = route_provider(state, provider).map_err(|_| {
         ModelRouteError::NotFound(format!(
@@ -288,6 +273,7 @@ mod tests {
             account_router: None,
             subscription_reader: None,
             subscription_readers: readers,
+            model_catalogs: Arc::new(ModelCatalogCache::new()),
             subscription_cache: Arc::new(crate::refresh::TokenCache::new()),
             upstream_base_url: "https://api.anthropic.com".to_string(),
             upstream_provider: UpstreamProvider::Auto,
@@ -315,7 +301,11 @@ mod tests {
 
     #[test]
     fn catalog_unions_models_with_their_real_owners() {
-        let catalog = model_catalog(&[SubscriptionProvider::Claude, SubscriptionProvider::Codex]);
+        let catalogs = ModelCatalogCache::new();
+        let catalog = model_catalog(
+            &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
+            &catalogs,
+        );
         let data = catalog["data"].as_array().unwrap();
         assert!(
             data.iter()
@@ -330,36 +320,51 @@ mod tests {
     #[test]
     fn model_ids_route_to_the_subscription_that_serves_them() {
         assert_eq!(
-            provider_for_model("gpt-5"),
+            provider_for_model("gpt-5", &ModelCatalogCache::new()),
             Some(SubscriptionProvider::Codex)
         );
         assert_eq!(
-            provider_for_model("claude-opus-4-7"),
+            provider_for_model("claude-opus-4-7", &ModelCatalogCache::new()),
             Some(SubscriptionProvider::Claude)
         );
         assert_eq!(
-            provider_for_model("gemini-2.5-pro"),
+            provider_for_model("gemini-2.5-pro", &ModelCatalogCache::new()),
             Some(SubscriptionProvider::Gemini)
         );
-        assert_eq!(provider_for_model("made-up-model"), None);
+        let catalogs = ModelCatalogCache::new();
+        assert_eq!(provider_for_model("made-up-model", &catalogs), None);
         assert_eq!(
-            available_provider_for_model("gpt-5", &[SubscriptionProvider::Codex]),
+            available_provider_for_model("gpt-5", &[SubscriptionProvider::Codex], &catalogs,),
             Ok(SubscriptionProvider::Codex)
         );
         assert!(
-            available_provider_for_model("gpt-5", &[SubscriptionProvider::Claude])
+            available_provider_for_model("gpt-5", &[SubscriptionProvider::Claude], &catalogs,)
                 .unwrap_err()
                 .to_string()
                 .contains("no healthy codex credential")
         );
         assert_eq!(
-            available_provider_for_model("gpt-4o", &[SubscriptionProvider::Claude]),
+            available_provider_for_model("gpt-4o", &[SubscriptionProvider::Claude], &catalogs,),
             Ok(SubscriptionProvider::Claude)
         );
         assert!(matches!(
-            available_provider_for_model("made-up-model", &[]),
+            available_provider_for_model("made-up-model", &[], &catalogs),
             Err(ModelRouteError::NotFound(_))
         ));
+    }
+
+    #[test]
+    fn newly_discovered_model_is_immediately_routable() {
+        let catalogs = ModelCatalogCache::new();
+        catalogs.record_success(SubscriptionProvider::Codex, vec!["gpt-5.6-sol".to_string()]);
+        assert_eq!(
+            available_provider_for_model("gpt-5.6-sol", &[SubscriptionProvider::Codex], &catalogs,),
+            Ok(SubscriptionProvider::Codex)
+        );
+        assert!(
+            available_provider_for_model("gpt-5", &[SubscriptionProvider::Codex], &catalogs,)
+                .is_err()
+        );
     }
 
     #[tokio::test]

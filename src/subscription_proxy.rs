@@ -18,7 +18,6 @@ use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::Response;
 use futures_util::StreamExt;
 
-use crate::config::UpstreamProvider;
 use crate::metrics::Surface;
 use crate::proxy::{
     AppState, error_response, extract_client_token, maybe_mpp_challenge, request_routing_context,
@@ -379,33 +378,10 @@ fn join_subscription_url(provider: SubscriptionProvider, base_url: &str, path: &
 /// `OpenAI`-shaped model listing for a subscription provider.
 #[must_use]
 pub fn subscription_models(state: &AppState) -> serde_json::Value {
-    let provider = state.upstream_provider;
-    let now = chrono::Utc::now().timestamp();
-    let (owner, ids): (&str, &[&str]) = match provider {
-        UpstreamProvider::Codex => ("openai", &["gpt-5-codex", "gpt-5", "codex-mini-latest"]),
-        UpstreamProvider::Qwen => (
-            "qwen",
-            &[
-                "qwen3-coder-plus",
-                "qwen3-coder-flash",
-                "qwen-max",
-                "qwen-plus",
-            ],
-        ),
-        _ => ("subscription", &["default"]),
-    };
-    let data: Vec<serde_json::Value> = ids
-        .iter()
-        .map(|id| {
-            serde_json::json!({
-                "id": id,
-                "object": "model",
-                "created": now,
-                "owned_by": owner,
-            })
-        })
-        .collect();
-    serde_json::json!({"object": "list", "data": data})
+    state.upstream_provider.subscription_provider().map_or_else(
+        || serde_json::json!({"object": "list", "data": []}),
+        |provider| crate::model_routing::pinned_model_catalog(state, provider),
+    )
 }
 
 fn is_event_stream(content_type: &HeaderValue) -> bool {

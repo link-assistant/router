@@ -29,6 +29,8 @@ pub struct AppState {
     pub subscription_reader: Option<crate::subscription::SubscriptionReader>,
     /// Credential readers for every discoverable vendor subscription.
     pub subscription_readers: Vec<crate::subscription::SubscriptionReader>,
+    /// Last known live model catalogs, refreshed independently in the background.
+    pub model_catalogs: Arc<crate::model_catalog::ModelCatalogCache>,
     /// In-memory cache of refreshed subscription tokens (Codex/Gemini/Qwen).
     pub subscription_cache: Arc<crate::refresh::TokenCache>,
     /// Base URL for the upstream Anthropic API.
