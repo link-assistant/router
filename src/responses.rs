@@ -761,7 +761,10 @@ data: {"type":"response.completed","response":{"id":"resp_1","created_at":178644
 
         assert!(out["choices"][0]["message"]["content"].is_null());
         assert_eq!(out["choices"][0]["finish_reason"], "tool_calls");
-        assert_eq!(out["choices"][0]["message"]["tool_calls"][0]["id"], "call_1");
+        assert_eq!(
+            out["choices"][0]["message"]["tool_calls"][0]["id"],
+            "call_1"
+        );
         assert_eq!(
             out["choices"][0]["message"]["tool_calls"][0]["function"]["name"],
             "get_weather"
