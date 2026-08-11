@@ -162,9 +162,10 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
                 _ => {
                     let text = extract_text(&content).unwrap_or_default();
                     let tool_calls = msg.get("tool_calls").and_then(Value::as_array);
+                    let has_tool_calls = matches!(tool_calls, Some(calls) if !calls.is_empty());
                     // A tool-only assistant turn is represented by its
                     // `function_call` items, without an empty message item.
-                    if !text.is_empty() || tool_calls.map_or(true, Vec::is_empty) {
+                    if !text.is_empty() || !has_tool_calls {
                         // Responses input uses `input_text` for user-side
                         // content and `output_text` for prior assistant turns.
                         let part_type = if role == "assistant" {
