@@ -7,17 +7,17 @@ problem this solves:
 > that was produced somewhere else. There is no way to log in *to the
 > deployment*.
 
-This document covers Claude's copied-code flow and Codex's PKCE loopback flow.
-In both cases the human only opens the returned URL and approves access.
+This document covers Claude's copied-code flow and Codex's device-code flow.
+In both cases the human opens the returned URL and approves access.
 
 ## The flow
 
 | Request | Does |
 | --- | --- |
-| `POST /api/login` | Starts Claude by default; `{"provider":"codex"}` binds Codex's callback listener before returning its URL |
-| *(human)* | Opens that URL and approves; Claude displays a code, while Codex redirects to its listener |
+| `POST /api/login` | Starts Claude by default; `{"provider":"codex"}` requests a Codex device code without binding a port |
+| *(human)* | Opens that URL and approves; Claude displays a code to copy, while Codex asks for the returned `user_code` |
 | `POST /api/login/{id}/code` | Claude only: types the copied code into the **same, still-running** process |
-| `GET /api/login/{id}` | Reports `awaiting_code`, `awaiting_callback`, `authorized`, `failed` or `expired` |
+| `GET /api/login/{id}` | Reports `awaiting_code`, `awaiting_device`, `authorized`, `failed` or `expired` |
 | `DELETE /api/login/{id}` | Cancels a pending login and kills its process |
 
 The middle step can take minutes, so the process started by the first request
@@ -64,7 +64,7 @@ is refreshed, so the very next `/v1/messages` request works without a restart.
 
 ### Codex / ChatGPT
 
-Codex displays no code to paste. Start its provider-aware session instead:
+Start a provider-aware Codex device session:
 
 ```console
 $ curl -s -X POST http://localhost:8080/api/login \
@@ -74,22 +74,17 @@ $ curl -s -X POST http://localhost:8080/api/login \
 {
   "login_id": "7ab1…",
   "provider": "codex",
-  "status": "awaiting_callback",
-  "url": "https://auth.openai.com/oauth/authorize?…redirect_uri=http%3A%2F%2Flocalhost%3A1455%2Fauth%2Fcallback…"
+  "status": "awaiting_device",
+  "url": "https://auth.openai.com/codex/device",
+  "user_code": "ABCD-EFGH"
 }
 ```
 
-The router has already bound port 1455 when this response arrives. The browser
-callback exchanges the code with its PKCE verifier and atomically writes
-`$CODEX_HOME/auth.json`; a mismatched `state` is rejected without ending the
-wait. The listener closes on success, failure, cancellation, or timeout.
-
-Because OpenAI registers a loopback redirect, the browser's `localhost:1455`
-must reach the router process. For Docker, publish both ports with
-`-p 8080:8080 -p 1455:1455`. For a remote host, forward it first, for example
-`ssh -L 1455:localhost:1455 router-host`. The foreground
-`link-assistant-router auth codex` command is simpler when run on the browser's
-machine and does not require the Codex CLI to be installed.
+Open the URL, enter `user_code`, and approve the device. The router polls at
+the server-provided interval, handles pending, slowdown, denial and expiry,
+then exchanges the returned authorization code with its PKCE verifier and
+atomically writes `$CODEX_HOME/auth.json`. No inbound port is opened, so this
+works unchanged in Docker, over SSH and on headless hosts.
 
 Polling is available for clients that would rather not block:
 
@@ -103,7 +98,8 @@ $ curl -s http://localhost:8080/api/login/3f2b… -H "Authorization: Bearer $ADM
 | `status` | Meaning |
 | --- | --- |
 | `awaiting_code` | The URL is live and the process is parked, waiting for a code |
-| `awaiting_callback` | The Codex loopback listener is bound and waiting for the browser |
+| `awaiting_device` | Codex is polling while the operator enters `user_code` at the URL |
+| `awaiting_callback` | A forced Codex CLI loopback flow is waiting for the browser |
 | `authorized` | A credential exists and is readable by the proxy |
 | `failed` | The CLI rejected the code, or no credential was produced; `error` says which |
 | `expired` | The session's TTL elapsed before a code arrived; its process was killed |
@@ -170,9 +166,10 @@ link-assistant-router auth codex
 link-assistant-router auth status
 ```
 
-Claude supports `--flow code`; Codex supports `--flow loopback`. A forced
-`device` flow fails clearly because neither vendor currently advertises one
-for these clients.
+Claude supports `--flow code`. Codex defaults to `--flow device`; use
+`--flow loopback` as an explicit fallback when device authorization is disabled
+for the account. Loopback binds port 1455 (or 1457 via `--port`) and validates
+OAuth state; the listener closes on success, denial, timeout and cancellation.
 
 ## Requirements
 

@@ -79,19 +79,23 @@ async fn read_code() -> Result<String, String> {
 }
 
 async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
-    if !matches!(flow, AuthFlow::Auto | AuthFlow::Loopback) {
-        eprintln!("error: Codex does not support {flow:?}; use --flow loopback");
+    if flow == AuthFlow::Code {
+        eprintln!("error: Codex does not support Code; use --flow device or --flow loopback");
         return ExitCode::from(2);
+    }
+    if matches!(flow, AuthFlow::Auto | AuthFlow::Device) {
+        return run_codex_device(config, port).await;
     }
     if !matches!(port, 1455 | 1457) {
         eprintln!("error: Codex OAuth registers loopback ports 1455 and 1457 only");
         return ExitCode::from(2);
     }
-    let settings = link_assistant_router::auth::CodexAuthConfig::production(
+    let mut settings = link_assistant_router::auth::CodexAuthConfig::production(
         config.login.codex_home.clone(),
         port,
         config.login.session_ttl,
     );
+    settings.issuer.clone_from(&config.login.codex_issuer);
     let login = match link_assistant_router::auth::CodexLogin::bind(settings).await {
         Ok(login) => login,
         Err(error) => {
@@ -101,6 +105,38 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
     };
     println!("Open this URL:\n{}", login.authorization_url());
     println!("Waiting for the browser callback on port {}…", login.port());
+    match login.complete().await {
+        Ok(path) => {
+            println!("Codex authorization saved in {}", path.display());
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::from(1)
+        }
+    }
+}
+
+async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
+    let mut settings = link_assistant_router::auth::CodexAuthConfig::production(
+        config.login.codex_home.clone(),
+        port,
+        config.login.session_ttl,
+    );
+    settings.issuer.clone_from(&config.login.codex_issuer);
+    let login = match link_assistant_router::auth::CodexDeviceLogin::begin(settings).await {
+        Ok(login) => login,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    };
+    println!(
+        "Open this URL:\n{}\nEnter this one-time code:\n{}",
+        login.verification_url(),
+        login.user_code()
+    );
+    println!("Waiting for device authorization…");
     match login.complete().await {
         Ok(path) => {
             println!("Codex authorization saved in {}", path.display());

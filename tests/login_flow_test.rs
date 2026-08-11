@@ -23,6 +23,7 @@ use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::subscription::SubscriptionProvider;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 
 fn fake_cli() -> String {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -283,22 +284,62 @@ async fn a_disabled_manager_serves_nothing() {
 }
 
 #[tokio::test]
-async fn codex_login_waits_for_a_callback_instead_of_a_pasted_code() {
+async fn codex_login_defaults_to_device_auth_without_a_callback_listener() {
+    let issuer_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let issuer = format!("http://{}", issuer_listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        let mut first = true;
+        loop {
+            let Ok((mut socket, _)) = issuer_listener.accept().await else {
+                break;
+            };
+            let mut bytes = vec![0_u8; 2048];
+            let read = socket.read(&mut bytes).await.unwrap();
+            let request = String::from_utf8_lossy(&bytes[..read]);
+            let (status, body) = if first {
+                first = false;
+                assert!(request.starts_with("POST /api/accounts/deviceauth/usercode "));
+                (
+                    "200 OK",
+                    r#"{"device_auth_id":"device-1","user_code":"ABCD-EFGH","interval":"5"}"#,
+                )
+            } else {
+                assert!(request.starts_with("POST /api/accounts/deviceauth/token "));
+                ("403 Forbidden", r#"{"error":"authorization_pending"}"#)
+            };
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        }
+    });
+    let occupied = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let occupied_port = occupied.local_addr().unwrap().port();
     let home = temp_home();
     let manager = LoginManager::new(LoginConfig {
         codex_home: home,
-        codex_callback_port: 0,
+        codex_issuer: issuer,
+        codex_callback_port: occupied_port,
         ..LoginConfig::default()
     });
     let begun = manager
         .begin_for(SubscriptionProvider::Codex)
         .await
-        .expect("Codex loopback login should start");
+        .expect("Codex device login should start");
     assert_eq!(begun.provider, SubscriptionProvider::Codex);
-    assert_eq!(begun.status, LoginStatus::AwaitingCallback);
-    let url = begun.url.as_deref().expect("authorization URL");
-    assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A"));
-    assert!(url.contains("code_challenge_method=S256"));
+    assert_eq!(begun.status, LoginStatus::AwaitingDevice);
+    assert_eq!(begun.user_code.as_deref(), Some("ABCD-EFGH"));
+    assert!(begun.url.as_deref().unwrap().ends_with("/codex/device"));
+    let response = serde_json::to_value(&begun).unwrap();
+    assert_eq!(response["status"], "awaiting_device");
+    assert_eq!(response["user_code"], "ABCD-EFGH");
+    assert_eq!(occupied.local_addr().unwrap().port(), occupied_port);
     assert!(
         manager
             .submit_code(&begun.login_id, "there-is-no-codex-paste-code")
@@ -306,4 +347,5 @@ async fn codex_login_waits_for_a_callback_instead_of_a_pasted_code() {
             .is_err()
     );
     assert!(manager.cancel(&begun.login_id));
+    server.abort();
 }

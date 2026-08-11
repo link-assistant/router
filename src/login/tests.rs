@@ -38,13 +38,14 @@ fn settled_session(id: &str, status: LoginStatus, age: chrono::Duration) -> Arc<
         id: id.to_string(),
         provider: SubscriptionProvider::Claude,
         url: "https://claude.ai/oauth/authorize".to_string(),
+        user_code: None,
         deadline: Utc::now() + chrono::Duration::seconds(900),
         state: Mutex::new(SessionState {
             status,
             expires_at: None,
             error: None,
             pty: None,
-            loopback_task: None,
+            auth_task: None,
             settled_at: Some(Utc::now() - age),
         }),
     })
@@ -76,13 +77,14 @@ fn an_expired_session_becomes_evictable() {
         id: "gone".to_string(),
         provider: SubscriptionProvider::Claude,
         url: String::new(),
+        user_code: None,
         deadline: Utc::now() - chrono::Duration::seconds(1),
         state: Mutex::new(SessionState {
             status: LoginStatus::AwaitingCode,
             expires_at: None,
             error: None,
             pty: None,
-            loopback_task: None,
+            auth_task: None,
             settled_at: None,
         }),
     });

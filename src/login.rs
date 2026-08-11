@@ -6,15 +6,15 @@
 //! Code login is interactive, and the machine that would run it is not the
 //! machine the router runs on (issue #47).
 //!
-//! This module closes that gap by driving the Claude Code CLI on a PTY inside
-//! the deployment and exposing the *only* irreducibly human step — approving
-//! a URL in a browser — as two HTTP calls:
+//! This module closes that gap by driving Claude Code on a PTY and conducting
+//! Codex device authorization directly. It exposes the irreducibly human step
+//! — approving a URL in a browser — through provider-aware HTTP sessions:
 //!
-//! 1. [`LoginManager::begin`] spawns the CLI, waits for the authorization URL
-//!    to settle on screen, and returns it along with a `login_id`.
-//! 2. The human opens the URL, approves, and copies the code back.
-//! 3. [`LoginManager::submit_code`] types that code into the *same* PTY and
-//!    persists the resulting credential where [`crate::oauth`] reads it.
+//! 1. [`LoginManager::begin`] starts the provider flow and returns its URL with
+//!    a `login_id` (and, for Codex, a one-time device code).
+//! 2. The human opens the URL and approves. Claude's code is submitted through
+//!    [`LoginManager::submit_code`]; Codex is completed by background polling.
+//! 3. The resulting credential is persisted in that provider's own home.
 //!
 //! # Why the session outlives the request
 //!
@@ -80,6 +80,8 @@ pub struct LoginConfig {
     pub claude_code_home: PathBuf,
     /// Directory where Codex credentials are written.
     pub codex_home: PathBuf,
+    /// Codex OAuth issuer. Overridable for compatible deployments and tests.
+    pub codex_issuer: String,
     /// Loopback callback port registered for the Codex OAuth client.
     pub codex_callback_port: u16,
     /// How long a pending session stays valid while waiting for the human.
@@ -103,6 +105,7 @@ impl Default for LoginConfig {
             args: vec![],
             claude_code_home: PathBuf::from("/data/claude"),
             codex_home: PathBuf::from("/data/codex"),
+            codex_issuer: crate::auth::CODEX_ISSUER.to_string(),
             codex_callback_port: 1455,
             session_ttl: Duration::from_secs(900),
             max_sessions: 4,
@@ -121,6 +124,8 @@ pub enum LoginStatus {
     AwaitingCode,
     /// The URL was returned; a provider-owned loopback listener awaits OAuth.
     AwaitingCallback,
+    /// A provider-issued user code is waiting for browser approval.
+    AwaitingDevice,
     /// A credential is now readable by the router.
     Authorized,
     /// The flow ended without a credential; restarting is required.
@@ -141,6 +146,9 @@ pub struct LoginView {
     /// Authorization URL the human must open. Present while pending.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
+    /// One-time code entered at `url` for a device authorization.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_code: Option<String>,
     /// When this *session* stops accepting a code.
     pub session_expires_at: DateTime<Utc>,
     /// When the obtained *credential* expires, when the CLI reports it.
@@ -181,7 +189,7 @@ impl std::fmt::Display for LoginError {
             Self::NotPending(status) => {
                 write!(f, "login is not awaiting a code (status: {status:?})")
             }
-            Self::Spawn(msg) => write!(f, "could not start the login CLI: {msg}"),
+            Self::Spawn(msg) => write!(f, "could not start the login flow: {msg}"),
             Self::NoUrl(msg) => write!(f, "no authorization URL appeared: {msg}"),
             Self::Storage(msg) => write!(f, "credential directory is unusable: {msg}"),
         }
@@ -195,6 +203,7 @@ struct Session {
     id: String,
     provider: SubscriptionProvider,
     url: String,
+    user_code: Option<String>,
     deadline: DateTime<Utc>,
     state: Mutex<SessionState>,
 }
@@ -206,8 +215,8 @@ struct SessionState {
     error: Option<String>,
     /// Dropped (and thus killed) as soon as the session stops being pending.
     pty: Option<Arc<PtySession>>,
-    /// Codex loopback completion task; aborting it drops the listener.
-    loopback_task: Option<tokio::task::JoinHandle<()>>,
+    /// Provider authorization task; aborting it stops polling or the listener.
+    auth_task: Option<tokio::task::JoinHandle<()>>,
     /// When the session reached a terminal state, which starts the clock on
     /// [`TERMINAL_RETENTION`].
     settled_at: Option<DateTime<Utc>>,
@@ -225,9 +234,14 @@ impl Session {
             status: state.status.clone(),
             url: matches!(
                 state.status,
-                LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+                LoginStatus::AwaitingCode
+                    | LoginStatus::AwaitingCallback
+                    | LoginStatus::AwaitingDevice
             )
             .then(|| self.url.clone()),
+            user_code: (state.status == LoginStatus::AwaitingDevice)
+                .then(|| self.user_code.clone())
+                .flatten(),
             session_expires_at: self.deadline,
             expires_at: state.expires_at,
             error: state.error.clone(),
@@ -311,6 +325,7 @@ impl LoginManager {
             id: id.clone(),
             provider,
             url,
+            user_code: None,
             deadline: Utc::now()
                 + chrono::Duration::from_std(self.config.session_ttl)
                     .unwrap_or_else(|_| chrono::Duration::seconds(900)),
@@ -319,7 +334,7 @@ impl LoginManager {
                 expires_at: None,
                 error: None,
                 pty: Some(pty),
-                loopback_task: None,
+                auth_task: None,
                 settled_at: None,
             }),
         });
@@ -335,26 +350,25 @@ impl LoginManager {
             self.config.codex_callback_port,
             self.config.session_ttl,
         );
-        // HTTP logins commonly run in a container. Publishing/forwarding the
-        // registered loopback port can only reach a listener on its interface.
-        codex_config.bind_host = "0.0.0.0".to_string();
-        let login = crate::auth::CodexLogin::bind(codex_config)
+        codex_config.issuer.clone_from(&self.config.codex_issuer);
+        let login = crate::auth::CodexDeviceLogin::begin(codex_config)
             .await
             .map_err(LoginError::Spawn)?;
         let id = uuid::Uuid::new_v4().to_string();
         let session = Arc::new(Session {
             id: id.clone(),
             provider: SubscriptionProvider::Codex,
-            url: login.authorization_url().to_string(),
+            url: login.verification_url().to_string(),
+            user_code: Some(login.user_code().to_string()),
             deadline: Utc::now()
                 + chrono::Duration::from_std(self.config.session_ttl)
                     .unwrap_or_else(|_| chrono::Duration::seconds(900)),
             state: Mutex::new(SessionState {
-                status: LoginStatus::AwaitingCallback,
+                status: LoginStatus::AwaitingDevice,
                 expires_at: None,
                 error: None,
                 pty: None,
-                loopback_task: None,
+                auth_task: None,
                 settled_at: None,
             }),
         });
@@ -386,7 +400,7 @@ impl LoginManager {
             .state
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .loopback_task = Some(task);
+            .auth_task = Some(task);
         Ok(session.view())
     }
 
@@ -467,13 +481,15 @@ impl LoginManager {
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
             let expired = matches!(
                 state.status,
-                LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+                LoginStatus::AwaitingCode
+                    | LoginStatus::AwaitingCallback
+                    | LoginStatus::AwaitingDevice
             ) && session.deadline <= now;
             if expired {
                 state.status = LoginStatus::Expired;
-                state.error = Some("login session expired before a code was submitted".into());
+                state.error = Some("login session expired before authorization completed".into());
                 state.pty = None; // dropping the PTY kills the child
-                if let Some(task) = state.loopback_task.take() {
+                if let Some(task) = state.auth_task.take() {
                     task.abort();
                 }
                 state.settled_at = Some(now);
@@ -513,7 +529,7 @@ impl LoginManager {
             }
         }
         state.pty = None;
-        state.loopback_task = None;
+        state.auth_task = None;
         state.settled_at = Some(Utc::now());
     }
 
@@ -523,12 +539,12 @@ impl LoginManager {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         state.pty = None;
-        if let Some(task) = state.loopback_task.take() {
+        if let Some(task) = state.auth_task.take() {
             task.abort();
         }
         if matches!(
             state.status,
-            LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+            LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback | LoginStatus::AwaitingDevice
         ) {
             state.status = LoginStatus::Failed;
             state.error = Some("login session cancelled".into());
@@ -547,7 +563,9 @@ impl LoginManager {
                     .clone();
                 matches!(
                     status,
-                    LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+                    LoginStatus::AwaitingCode
+                        | LoginStatus::AwaitingCallback
+                        | LoginStatus::AwaitingDevice
                 )
             })
             .count()

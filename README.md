@@ -315,20 +315,21 @@ Authorizes a deployment that has no credential file — see
 `provider` request field selects `claude` (the backwards-compatible default)
 or `codex`. Claude drives the TUI `/login` flow and requests its full scope set;
 `LOGIN_CLI_ARGS=setup-token` explicitly selects the narrower `user:inference`
-flow. Codex binds a temporary PKCE loopback listener and needs no vendor CLI.
-The use-case guide lists the networking requirement and every requested scope.
+flow. Codex defaults to its device-code flow, which needs no callback port or
+vendor CLI; its PKCE loopback flow remains available as a CLI fallback.
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/login` | POST | (admin) Start a login; optional body: `{"provider":"claude"|"codex"}` |
-| `/api/login/{id}` | GET | (admin) Status includes `awaiting_code` (Claude) or `awaiting_callback` (Codex) |
+| `/api/login/{id}` | GET | (admin) Status includes `awaiting_code` (Claude) or `awaiting_device` plus `user_code` (Codex) |
 | `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
 | `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
 
 For a foreground local login, use `link-assistant-router auth claude`,
 `auth claude --code <code>`, or `auth codex`. `auth status` reports each
-provider credential as `usable`, `expired`, or `absent`. `--flow` can enforce
-`code` or `loopback`; unsupported forced flows fail instead of falling back.
+provider credential as `usable`, `expired`, or `absent`. `auth codex` defaults
+to device authorization; `--flow device` or `--flow loopback` makes the choice
+explicit. Unsupported forced flows fail instead of falling back.
 
 ### Admin UI surface (`--admin-port` to opt in)
 
