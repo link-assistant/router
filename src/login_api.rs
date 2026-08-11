@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! POST   /api/login            -> { login_id, provider, url, status, ... }
-//! GET    /api/login/{id}       -> { status: "awaiting_code" | "awaiting_callback" | ... }
+//! GET    /api/login/{id}       -> { status: "awaiting_code" | "awaiting_device" | ... }
 //! POST   /api/login/{id}/code  -> { status: "authorized", expires_at, ... }
 //! DELETE /api/login/{id}       -> { cancelled: true }
 //! ```

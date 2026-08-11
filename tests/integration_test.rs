@@ -628,6 +628,17 @@ mod cli_parser_tests {
                 }
             })
         ));
+        let codex_device = Cli::try_parse_from(["bin", "auth", "codex", "--flow", "device"])
+            .expect("parses Codex device auth");
+        assert!(matches!(
+            codex_device.command,
+            Some(Command::Auth {
+                op: AuthOp::Codex {
+                    flow: AuthFlow::Device,
+                    port: 1455
+                }
+            })
+        ));
         let status = Cli::try_parse_from(["bin", "auth", "status"]).expect("parses auth status");
         assert!(matches!(
             status.command,

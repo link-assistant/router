@@ -1,7 +1,7 @@
 //! Provider-aware interactive subscription authorization.
 //!
-//! Claude uses its vendor CLI's copy/paste flow. Codex uses an OAuth 2.0
-//! authorization-code flow with PKCE and a temporary loopback callback server.
+//! Claude uses its vendor CLI's copy/paste flow. Codex defaults to device-code
+//! authorization, with its PKCE loopback callback server available as fallback.
 
 use std::collections::HashMap;
 use std::io::Write as _;
@@ -25,8 +25,10 @@ pub const CODEX_CLIENT_ID: &str = "app_EMoamEEZ73f0CkXaXp7hrann";
 pub const CODEX_ISSUER: &str = "https://auth.openai.com";
 /// Callback path registered for the Codex public client.
 pub const CODEX_CALLBACK_PATH: &str = "/auth/callback";
+/// Product-specific callback URI used by Codex device authorization.
+pub const CODEX_DEVICE_CALLBACK_PATH: &str = "/deviceauth/callback";
 
-/// Settings for one Codex loopback authorization.
+/// Settings shared by Codex device and loopback authorization.
 #[derive(Clone, Debug)]
 pub struct CodexAuthConfig {
     /// OAuth issuer; overridable so tests can use a local token endpoint.
@@ -55,6 +57,235 @@ impl CodexAuthConfig {
             timeout,
             bind_host: "127.0.0.1".to_string(),
         }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum PollInterval {
+    Number(u64),
+    String(String),
+}
+
+impl PollInterval {
+    fn seconds(self) -> Result<u64, String> {
+        match self {
+            Self::Number(value) => Ok(value),
+            Self::String(value) => value
+                .trim()
+                .parse()
+                .map_err(|error| format!("invalid Codex device polling interval: {error}")),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct DeviceCodeResponse {
+    device_auth_id: String,
+    #[serde(alias = "usercode")]
+    user_code: String,
+    interval: PollInterval,
+}
+
+#[derive(Deserialize)]
+struct DeviceAuthorizationResponse {
+    authorization_code: String,
+    code_challenge: String,
+    code_verifier: String,
+}
+
+#[derive(Default, Deserialize)]
+struct DeviceErrorResponse {
+    #[serde(default)]
+    error: String,
+    #[serde(default)]
+    error_description: String,
+}
+
+enum DevicePoll {
+    Pending,
+    SlowDown,
+    Complete(DeviceAuthorizationResponse),
+}
+
+/// A Codex device-code authorization that never opens a local listener.
+pub struct CodexDeviceLogin {
+    config: CodexAuthConfig,
+    verification_url: String,
+    user_code: String,
+    device_auth_id: String,
+    interval: Duration,
+}
+
+impl CodexDeviceLogin {
+    /// Request a one-time code from Codex without binding a callback port.
+    pub async fn begin(config: CodexAuthConfig) -> Result<Self, String> {
+        let endpoint = format!(
+            "{}/api/accounts/deviceauth/usercode",
+            config.issuer.trim_end_matches('/')
+        );
+        let response = reqwest::Client::new()
+            .post(endpoint)
+            .json(&serde_json::json!({ "client_id": config.client_id }))
+            .send()
+            .await
+            .map_err(|error| format!("Codex device-code request failed: {error}"))?;
+        let status = response.status();
+        if !status.is_success() {
+            let detail = response.text().await.unwrap_or_default();
+            let hint = if status == StatusCode::NOT_FOUND {
+                "device authorization is not enabled; use --flow loopback"
+            } else {
+                "device authorization could not be started"
+            };
+            return Err(format!(
+                "Codex device-code endpoint returned {status}: {hint}{}",
+                response_detail(&detail)
+            ));
+        }
+        let device: DeviceCodeResponse = response
+            .json()
+            .await
+            .map_err(|error| format!("invalid Codex device-code response: {error}"))?;
+        if device.device_auth_id.trim().is_empty() || device.user_code.trim().is_empty() {
+            return Err("invalid Codex device-code response: missing id or user code".to_string());
+        }
+        let interval = Duration::from_secs(device.interval.seconds()?);
+        Ok(Self {
+            verification_url: format!("{}/codex/device", config.issuer.trim_end_matches('/')),
+            config,
+            user_code: device.user_code,
+            device_auth_id: device.device_auth_id,
+            interval,
+        })
+    }
+
+    /// URL at which the operator enters [`Self::user_code`].
+    #[must_use]
+    pub fn verification_url(&self) -> &str {
+        &self.verification_url
+    }
+
+    /// Compatibility alias for callers that expose every login as a URL.
+    #[must_use]
+    pub fn authorization_url(&self) -> &str {
+        self.verification_url()
+    }
+
+    /// One-time code the operator enters at [`Self::verification_url`].
+    #[must_use]
+    pub fn user_code(&self) -> &str {
+        &self.user_code
+    }
+
+    /// Poll until the browser authorizes this device, then persist `auth.json`.
+    pub async fn complete(self) -> Result<PathBuf, String> {
+        let timeout = self.config.timeout;
+        tokio::time::timeout(timeout, self.poll_and_store())
+            .await
+            .unwrap_or_else(|_| {
+                Err(format!(
+                    "Codex device authorization expired after {} seconds",
+                    timeout.as_secs()
+                ))
+            })
+    }
+
+    async fn poll_and_store(mut self) -> Result<PathBuf, String> {
+        loop {
+            match self.poll_once().await? {
+                DevicePoll::Pending => tokio::time::sleep(self.interval).await,
+                DevicePoll::SlowDown => {
+                    self.interval += Duration::from_secs(5);
+                    tokio::time::sleep(self.interval).await;
+                }
+                DevicePoll::Complete(code) => {
+                    let expected_challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
+                        .encode(Sha256::digest(code.code_verifier.as_bytes()));
+                    if code.code_challenge != expected_challenge {
+                        return Err(
+                            "Codex device authorization returned inconsistent PKCE values"
+                                .to_string(),
+                        );
+                    }
+                    let redirect_uri = format!(
+                        "{}{}",
+                        self.config.issuer.trim_end_matches('/'),
+                        CODEX_DEVICE_CALLBACK_PATH
+                    );
+                    return exchange_and_store(
+                        &self.config,
+                        &redirect_uri,
+                        &code.code_verifier,
+                        &code.authorization_code,
+                    )
+                    .await;
+                }
+            }
+        }
+    }
+
+    async fn poll_once(&self) -> Result<DevicePoll, String> {
+        let response = reqwest::Client::new()
+            .post(format!(
+                "{}/api/accounts/deviceauth/token",
+                self.config.issuer.trim_end_matches('/')
+            ))
+            .json(&serde_json::json!({
+                "device_auth_id": self.device_auth_id,
+                "user_code": self.user_code,
+            }))
+            .send()
+            .await
+            .map_err(|error| format!("Codex device authorization poll failed: {error}"))?;
+        let status = response.status();
+        if status.is_success() {
+            return response
+                .json()
+                .await
+                .map(DevicePoll::Complete)
+                .map_err(|error| format!("invalid Codex device authorization response: {error}"));
+        }
+        let body = response.text().await.unwrap_or_default();
+        classify_device_error(status, &body)
+    }
+}
+
+fn classify_device_error(status: StatusCode, body: &str) -> Result<DevicePoll, String> {
+    let provider_error = serde_json::from_str::<DeviceErrorResponse>(body).unwrap_or_default();
+    let error = provider_error.error.to_ascii_lowercase();
+    if status == StatusCode::TOO_MANY_REQUESTS || error == "slow_down" {
+        return Ok(DevicePoll::SlowDown);
+    }
+    if matches!(error.as_str(), "expired_token" | "access_denied") {
+        let detail = if provider_error.error_description.is_empty() {
+            error
+        } else {
+            provider_error.error_description
+        };
+        return Err(format!("Codex device authorization failed: {detail}"));
+    }
+    if matches!(status, StatusCode::FORBIDDEN | StatusCode::NOT_FOUND)
+        || error == "authorization_pending"
+    {
+        return Ok(DevicePoll::Pending);
+    }
+    Err(format!(
+        "Codex device authorization endpoint returned {status}{}",
+        response_detail(body)
+    ))
+}
+
+fn response_detail(body: &str) -> String {
+    let detail = body.trim();
+    if detail.is_empty() {
+        String::new()
+    } else {
+        let safe_end = detail
+            .char_indices()
+            .nth(500)
+            .map_or(detail.len(), |(index, _)| index);
+        format!(": {}", &detail[..safe_end])
     }
 }
 
@@ -365,7 +596,166 @@ fn percent_encode(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::Json;
+    use axum::body::Bytes;
+    use axum::response::{IntoResponse as _, Response};
+    use axum::routing::post;
+    use std::sync::atomic::AtomicUsize;
     use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    #[derive(Default)]
+    struct DeviceStubState {
+        polls: AtomicUsize,
+    }
+
+    async fn issue_device_code(Json(body): Json<serde_json::Value>) -> Json<serde_json::Value> {
+        assert_eq!(body["client_id"], CODEX_CLIENT_ID);
+        Json(serde_json::json!({
+            "device_auth_id": "device-1",
+            "user_code": "ABCD-EFGH",
+            "interval": "0",
+        }))
+    }
+
+    async fn poll_device_code(
+        State(state): State<Arc<DeviceStubState>>,
+        Json(body): Json<serde_json::Value>,
+    ) -> Response {
+        assert_eq!(body["device_auth_id"], "device-1");
+        assert_eq!(body["user_code"], "ABCD-EFGH");
+        if state.polls.fetch_add(1, Ordering::SeqCst) == 0 {
+            return (
+                StatusCode::FORBIDDEN,
+                Json(serde_json::json!({"error": "authorization_pending"})),
+            )
+                .into_response();
+        }
+        let verifier = "device-verifier";
+        let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .encode(Sha256::digest(verifier.as_bytes()));
+        Json(serde_json::json!({
+            "authorization_code": "device-authorization-code",
+            "code_challenge": challenge,
+            "code_verifier": verifier,
+        }))
+        .into_response()
+    }
+
+    async fn exchange_device_code(body: Bytes) -> Json<serde_json::Value> {
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(body.contains("code=device-authorization-code"));
+        assert!(body.contains("code_verifier=device-verifier"));
+        assert!(body.contains("redirect_uri=http%3A%2F%2F"));
+        assert!(body.contains("%2Fdeviceauth%2Fcallback"));
+        Json(serde_json::json!({
+            "id_token": "header.payload.sig",
+            "access_token": "device-access",
+            "refresh_token": "device-refresh",
+        }))
+    }
+
+    async fn device_stub() -> (String, Arc<DeviceStubState>, tokio::task::JoinHandle<()>) {
+        let state = Arc::new(DeviceStubState::default());
+        let app = Router::new()
+            .route("/api/accounts/deviceauth/usercode", post(issue_device_code))
+            .route("/api/accounts/deviceauth/token", post(poll_device_code))
+            .route("/oauth/token", post(exchange_device_code))
+            .with_state(Arc::clone(&state));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let issuer = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        (issuer, state, server)
+    }
+
+    #[tokio::test]
+    async fn device_login_starts_without_binding_the_loopback_port() {
+        let issuer_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let issuer = format!("http://{}", issuer_listener.local_addr().unwrap());
+        let user_code_request = tokio::spawn(async move {
+            let (mut socket, _) = issuer_listener.accept().await.unwrap();
+            let mut bytes = vec![0_u8; 2048];
+            let read = socket.read(&mut bytes).await.unwrap();
+            let request = String::from_utf8_lossy(&bytes[..read]);
+            assert!(request.starts_with("POST /api/accounts/deviceauth/usercode "));
+            assert!(request.contains(CODEX_CLIENT_ID));
+            let body = r#"{"device_auth_id":"device-1","user_code":"ABCD-EFGH","interval":"5"}"#;
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        });
+        let occupied = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let occupied_port = occupied.local_addr().unwrap().port();
+        let home = tempfile::tempdir().unwrap();
+
+        let login = CodexDeviceLogin::begin(CodexAuthConfig {
+            issuer,
+            client_id: CODEX_CLIENT_ID.to_string(),
+            port: occupied_port,
+            codex_home: home.path().to_path_buf(),
+            timeout: Duration::from_secs(3),
+            bind_host: "127.0.0.1".to_string(),
+        })
+        .await
+        .expect("device auth must not bind the loopback port");
+
+        assert_eq!(login.verification_url(), login.authorization_url());
+        assert!(login.verification_url().ends_with("/codex/device"));
+        assert_eq!(login.user_code(), "ABCD-EFGH");
+        assert_eq!(occupied.local_addr().unwrap().port(), occupied_port);
+        user_code_request.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn device_login_polls_pending_then_exchanges_and_persists_tokens() {
+        let (issuer, state, server) = device_stub().await;
+        let home = tempfile::tempdir().unwrap();
+        let login = CodexDeviceLogin::begin(CodexAuthConfig {
+            issuer,
+            client_id: CODEX_CLIENT_ID.to_string(),
+            port: 1455,
+            codex_home: home.path().to_path_buf(),
+            timeout: Duration::from_secs(3),
+            bind_host: "127.0.0.1".to_string(),
+        })
+        .await
+        .unwrap();
+
+        let path = login.complete().await.unwrap();
+        let saved: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+        assert_eq!(saved["auth_mode"], "chatgpt");
+        assert_eq!(saved["tokens"]["access_token"], "device-access");
+        assert_eq!(state.polls.load(Ordering::SeqCst), 2);
+        server.abort();
+    }
+
+    #[test]
+    fn device_polling_handles_pending_slow_down_and_expiry() {
+        assert!(matches!(
+            classify_device_error(StatusCode::FORBIDDEN, ""),
+            Ok(DevicePoll::Pending)
+        ));
+        assert!(matches!(
+            classify_device_error(StatusCode::BAD_REQUEST, r#"{"error":"slow_down"}"#),
+            Ok(DevicePoll::SlowDown)
+        ));
+        let expired = classify_device_error(
+            StatusCode::FORBIDDEN,
+            r#"{"error":"expired_token","error_description":"code expired"}"#,
+        )
+        .err()
+        .unwrap();
+        assert!(expired.contains("code expired"));
+    }
 
     async fn token_stub() -> (String, tokio::task::JoinHandle<String>) {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -459,6 +849,31 @@ mod tests {
         .unwrap();
         let port = login.port();
         assert!(login.complete().await.unwrap_err().contains("timed out"));
+        assert!(
+            tokio::net::TcpListener::bind(("127.0.0.1", port))
+                .await
+                .is_ok()
+        );
+    }
+
+    #[tokio::test]
+    async fn dropping_loopback_login_closes_listener() {
+        let home = tempfile::tempdir().unwrap();
+        let login = CodexLogin::bind(CodexAuthConfig {
+            issuer: "http://127.0.0.1:1".to_string(),
+            client_id: CODEX_CLIENT_ID.to_string(),
+            port: 0,
+            codex_home: home.path().to_path_buf(),
+            timeout: Duration::from_secs(3),
+            bind_host: "127.0.0.1".to_string(),
+        })
+        .await
+        .unwrap();
+        let port = login.port();
+
+        drop(login);
+        tokio::task::yield_now().await;
+
         assert!(
             tokio::net::TcpListener::bind(("127.0.0.1", port))
                 .await
