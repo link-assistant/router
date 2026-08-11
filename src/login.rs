@@ -78,6 +78,10 @@ pub struct LoginConfig {
     /// Directory the resulting credential must land in. This is the same
     /// directory [`crate::oauth::OAuthProvider`] reads.
     pub claude_code_home: PathBuf,
+    /// Directory where Codex credentials are written.
+    pub codex_home: PathBuf,
+    /// Loopback callback port registered for the Codex OAuth client.
+    pub codex_callback_port: u16,
     /// How long a pending session stays valid while waiting for the human.
     pub session_ttl: Duration,
     /// Maximum number of simultaneously pending sessions.
@@ -98,6 +102,8 @@ impl Default for LoginConfig {
             command: "claude".to_string(),
             args: vec![],
             claude_code_home: PathBuf::from("/data/claude"),
+            codex_home: PathBuf::from("/data/codex"),
+            codex_callback_port: 1455,
             session_ttl: Duration::from_secs(900),
             max_sessions: 4,
             idle_settle: Duration::from_millis(750),
@@ -113,6 +119,8 @@ impl Default for LoginConfig {
 pub enum LoginStatus {
     /// The URL was returned; the router is waiting for the human's code.
     AwaitingCode,
+    /// The URL was returned; a provider-owned loopback listener awaits OAuth.
+    AwaitingCallback,
     /// A credential is now readable by the router.
     Authorized,
     /// The flow ended without a credential; restarting is required.
@@ -126,6 +134,8 @@ pub enum LoginStatus {
 pub struct LoginView {
     /// Identifier used to address this session.
     pub login_id: String,
+    /// Subscription provider being authorized.
+    pub provider: SubscriptionProvider,
     /// Current lifecycle state.
     pub status: LoginStatus,
     /// Authorization URL the human must open. Present while pending.
@@ -183,6 +193,7 @@ impl std::error::Error for LoginError {}
 /// One pending or finished login.
 struct Session {
     id: String,
+    provider: SubscriptionProvider,
     url: String,
     deadline: DateTime<Utc>,
     state: Mutex<SessionState>,
@@ -195,6 +206,8 @@ struct SessionState {
     error: Option<String>,
     /// Dropped (and thus killed) as soon as the session stops being pending.
     pty: Option<Arc<PtySession>>,
+    /// Codex loopback completion task; aborting it drops the listener.
+    loopback_task: Option<tokio::task::JoinHandle<()>>,
     /// When the session reached a terminal state, which starts the clock on
     /// [`TERMINAL_RETENTION`].
     settled_at: Option<DateTime<Utc>>,
@@ -208,8 +221,13 @@ impl Session {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         LoginView {
             login_id: self.id.clone(),
+            provider: self.provider,
             status: state.status.clone(),
-            url: (state.status == LoginStatus::AwaitingCode).then(|| self.url.clone()),
+            url: matches!(
+                state.status,
+                LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+            )
+            .then(|| self.url.clone()),
             session_expires_at: self.deadline,
             expires_at: state.expires_at,
             error: state.error.clone(),
@@ -260,6 +278,11 @@ impl LoginManager {
     /// Start a login: spawn the CLI, wait for its authorization URL, and
     /// register the still-running session so a later request can finish it.
     pub async fn begin(&self) -> Result<LoginView, LoginError> {
+        self.begin_for(SubscriptionProvider::Claude).await
+    }
+
+    /// Start the authorization flow supported by `provider`.
+    pub async fn begin_for(&self, provider: SubscriptionProvider) -> Result<LoginView, LoginError> {
         if !self.config.enabled {
             return Err(LoginError::Disabled);
         }
@@ -267,6 +290,14 @@ impl LoginManager {
         let pending = self.count_pending();
         if pending >= self.config.max_sessions {
             return Err(LoginError::TooManySessions(self.config.max_sessions));
+        }
+        if provider == SubscriptionProvider::Codex {
+            return self.begin_codex().await;
+        }
+        if provider != SubscriptionProvider::Claude {
+            return Err(LoginError::Spawn(format!(
+                "{provider} authorization is not implemented; supported providers: claude, codex"
+            )));
         }
         ensure_writable_dir(&self.config.claude_code_home)?;
 
@@ -278,6 +309,7 @@ impl LoginManager {
         let id = uuid::Uuid::new_v4().to_string();
         let session = Arc::new(Session {
             id: id.clone(),
+            provider,
             url,
             deadline: Utc::now()
                 + chrono::Duration::from_std(self.config.session_ttl)
@@ -287,10 +319,74 @@ impl LoginManager {
                 expires_at: None,
                 error: None,
                 pty: Some(pty),
+                loopback_task: None,
                 settled_at: None,
             }),
         });
         self.lock_sessions().insert(id, Arc::clone(&session));
+        Ok(session.view())
+    }
+
+    async fn begin_codex(&self) -> Result<LoginView, LoginError> {
+        let codex_home = self.config.codex_home.clone();
+        ensure_writable_dir(&codex_home)?;
+        let mut codex_config = crate::auth::CodexAuthConfig::production(
+            codex_home,
+            self.config.codex_callback_port,
+            self.config.session_ttl,
+        );
+        // HTTP logins commonly run in a container. Publishing/forwarding the
+        // registered loopback port can only reach a listener on its interface.
+        codex_config.bind_host = "0.0.0.0".to_string();
+        let login = crate::auth::CodexLogin::bind(codex_config)
+            .await
+            .map_err(LoginError::Spawn)?;
+        let id = uuid::Uuid::new_v4().to_string();
+        let session = Arc::new(Session {
+            id: id.clone(),
+            provider: SubscriptionProvider::Codex,
+            url: login.authorization_url().to_string(),
+            deadline: Utc::now()
+                + chrono::Duration::from_std(self.config.session_ttl)
+                    .unwrap_or_else(|_| chrono::Duration::seconds(900)),
+            state: Mutex::new(SessionState {
+                status: LoginStatus::AwaitingCallback,
+                expires_at: None,
+                error: None,
+                pty: None,
+                loopback_task: None,
+                settled_at: None,
+            }),
+        });
+        self.lock_sessions().insert(id, Arc::clone(&session));
+        let task_session = Arc::clone(&session);
+        let task = tokio::spawn(async move {
+            let outcome = login.complete().await;
+            let mut state = task_session
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            match outcome {
+                Ok(_) => {
+                    state.status = LoginStatus::Authorized;
+                    state.error = None;
+                }
+                Err(error) => {
+                    state.status = if Utc::now() >= task_session.deadline {
+                        LoginStatus::Expired
+                    } else {
+                        LoginStatus::Failed
+                    };
+                    state.error = Some(error);
+                }
+            }
+            state.settled_at = Some(Utc::now());
+        });
+        session
+            .state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .loopback_task = Some(task);
         Ok(session.view())
     }
 
@@ -369,11 +465,17 @@ impl LoginManager {
                 .state
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
-            let expired = state.status == LoginStatus::AwaitingCode && session.deadline <= now;
+            let expired = matches!(
+                state.status,
+                LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+            ) && session.deadline <= now;
             if expired {
                 state.status = LoginStatus::Expired;
                 state.error = Some("login session expired before a code was submitted".into());
                 state.pty = None; // dropping the PTY kills the child
+                if let Some(task) = state.loopback_task.take() {
+                    task.abort();
+                }
                 state.settled_at = Some(now);
             } else if state
                 .settled_at
@@ -411,6 +513,7 @@ impl LoginManager {
             }
         }
         state.pty = None;
+        state.loopback_task = None;
         state.settled_at = Some(Utc::now());
     }
 
@@ -420,7 +523,13 @@ impl LoginManager {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         state.pty = None;
-        if state.status == LoginStatus::AwaitingCode {
+        if let Some(task) = state.loopback_task.take() {
+            task.abort();
+        }
+        if matches!(
+            state.status,
+            LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+        ) {
             state.status = LoginStatus::Failed;
             state.error = Some("login session cancelled".into());
         }
@@ -430,12 +539,16 @@ impl LoginManager {
         self.lock_sessions()
             .values()
             .filter(|session| {
-                session
+                let status = session
                     .state
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
                     .status
-                    == LoginStatus::AwaitingCode
+                    .clone();
+                matches!(
+                    status,
+                    LoginStatus::AwaitingCode | LoginStatus::AwaitingCallback
+                )
             })
             .count()
     }
@@ -811,164 +924,4 @@ fn tail(text: &str, limit: usize) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn tui_only_types_into_recognized_screens() {
-        let progress = TuiProgress::default();
-        let rendered_theme = crate::login_pty::strip_ansi(
-            "Choose\x1b[9Gthe\x1b[13Gtext\x1b[18Gstyle\x1b[24Gthat\x1b[29Glooks\x1b[35Gbest\x1b[40Gwith\x1b[45Gyour\x1b[50Gterminal",
-        );
-        assert_eq!(
-            next_tui_action(&rendered_theme, &progress),
-            Some(TuiAction::AcceptTheme)
-        );
-        assert_eq!(
-            next_tui_action("A future, unknown onboarding screen", &progress),
-            None
-        );
-    }
-
-    #[test]
-    fn login_config_defaults_to_bare_tui() {
-        assert!(LoginConfig::default().args.is_empty());
-    }
-
-    #[test]
-    fn compacted_oauth_verdicts_are_restored_for_api_errors() {
-        assert_eq!(
-            rejection_verdict("promptOAutherror:Invalidcode.Pleasemakesurethefullcodewascopied"),
-            "OAuth error: Invalid code. Please make sure the full code was copied"
-        );
-        assert_eq!(
-            rejection_verdict("promptOAutherror:Requestfailedwithstatuscode400"),
-            "OAuth error: Request failed with status code 400"
-        );
-    }
-
-    /// Build a session that already reached `status`, settled `age` ago.
-    fn settled_session(id: &str, status: LoginStatus, age: chrono::Duration) -> Arc<Session> {
-        Arc::new(Session {
-            id: id.to_string(),
-            url: "https://claude.ai/oauth/authorize".to_string(),
-            deadline: Utc::now() + chrono::Duration::seconds(900),
-            state: Mutex::new(SessionState {
-                status,
-                expires_at: None,
-                error: None,
-                pty: None,
-                settled_at: Some(Utc::now() - age),
-            }),
-        })
-    }
-
-    /// The registry must not grow for the lifetime of the process. A finished
-    /// session keeps its entry only long enough for the client to read the
-    /// verdict; after that it is forgotten.
-    #[test]
-    fn finished_sessions_are_evicted_once_their_result_has_been_retained() {
-        let manager = LoginManager::new(LoginConfig::default());
-        let fresh = settled_session("fresh", LoginStatus::Authorized, chrono::Duration::zero());
-        let stale = settled_session(
-            "stale",
-            LoginStatus::Failed,
-            terminal_retention() + chrono::Duration::seconds(1),
-        );
-        {
-            let mut sessions = manager.lock_sessions();
-            sessions.insert("fresh".to_string(), fresh);
-            sessions.insert("stale".to_string(), stale);
-        }
-
-        manager.sweep();
-
-        assert!(
-            manager.status("fresh").is_some(),
-            "a just-finished login must still be pollable"
-        );
-        assert!(
-            manager.status("stale").is_none(),
-            "a long-finished login must not occupy the registry forever"
-        );
-    }
-
-    /// A session that expires waiting for the human is terminal too, so it
-    /// must start the retention clock rather than living on.
-    #[test]
-    fn an_expired_session_becomes_evictable() {
-        let manager = LoginManager::new(LoginConfig::default());
-        let session = Arc::new(Session {
-            id: "gone".to_string(),
-            url: String::new(),
-            deadline: Utc::now() - chrono::Duration::seconds(1),
-            state: Mutex::new(SessionState {
-                status: LoginStatus::AwaitingCode,
-                expires_at: None,
-                error: None,
-                pty: None,
-                settled_at: None,
-            }),
-        });
-        manager
-            .lock_sessions()
-            .insert("gone".to_string(), Arc::clone(&session));
-
-        manager.sweep();
-        assert_eq!(
-            session.view().status,
-            LoginStatus::Expired,
-            "the TTL must still expire the session"
-        );
-        let settled = session
-            .state
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .settled_at;
-        assert!(settled.is_some(), "expiry must start the retention clock");
-    }
-
-    /// A failed login quotes the terminal back to the caller. `SUCCESS_MARKERS`
-    /// contains `sk-ant-oat` precisely because the token is printed there, so
-    /// the excerpt must not carry it — nor the code the human pasted.
-    #[test]
-    fn a_failure_excerpt_carries_neither_the_token_nor_the_pasted_code() {
-        let code = "authcode-9f3a2b7c";
-        let transcript =
-            format!("Paste code: {code}\nrejected\nleftover token sk-ant-oat01-SECRETVALUE0001\n");
-        let text = excerpt(&transcript, code, 400);
-        assert!(!text.contains("SECRETVALUE0001"), "{text}");
-        assert!(!text.contains(code), "{text}");
-        assert!(text.contains("rejected"), "context is still useful: {text}");
-    }
-
-    #[test]
-    fn write_credential_is_readable_by_the_oauth_reader() {
-        let dir = tempfile::tempdir().unwrap();
-        write_credential(dir.path(), "sk-ant-oat01-testtoken").unwrap();
-        let provider = crate::oauth::OAuthProvider::new(dir.path().to_str().unwrap());
-        assert_eq!(provider.get_token().unwrap(), "sk-ant-oat01-testtoken");
-    }
-
-    #[test]
-    fn ensure_writable_dir_creates_missing_directories() {
-        let dir = tempfile::tempdir().unwrap();
-        let nested = dir.path().join("a/b/claude");
-        ensure_writable_dir(&nested).unwrap();
-        assert!(nested.is_dir());
-    }
-
-    #[test]
-    fn disabled_manager_refuses_to_begin() {
-        let manager = LoginManager::new(LoginConfig {
-            enabled: false,
-            ..LoginConfig::default()
-        });
-        let result = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(manager.begin());
-        assert!(matches!(result, Err(LoginError::Disabled)));
-    }
-}
+mod tests;

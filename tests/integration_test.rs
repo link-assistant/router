@@ -557,7 +557,7 @@ mod metrics_rendering_tests {
 }
 
 mod cli_parser_tests {
-    use link_assistant_router::cli::{Cli, Command, TokenOp};
+    use link_assistant_router::cli::{AuthFlow, AuthOp, Cli, Command, TokenOp};
     use lino_arguments::Parser;
 
     #[test]
@@ -602,6 +602,37 @@ mod cli_parser_tests {
     fn cli_parses_doctor_subcommand() {
         let cli = Cli::try_parse_from(["bin", "doctor"]).expect("parses doctor");
         assert!(matches!(cli.command, Some(Command::Doctor)));
+    }
+
+    #[test]
+    fn cli_parses_provider_auth_flows() {
+        let claude = Cli::try_parse_from(["bin", "auth", "claude", "--code", "copied"])
+            .expect("parses Claude auth");
+        assert!(matches!(
+            claude.command,
+            Some(Command::Auth {
+                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto }
+            }) if code == "copied"
+        ));
+
+        let codex = Cli::try_parse_from([
+            "bin", "auth", "codex", "--flow", "loopback", "--port", "1457",
+        ])
+        .expect("parses Codex auth");
+        assert!(matches!(
+            codex.command,
+            Some(Command::Auth {
+                op: AuthOp::Codex {
+                    flow: AuthFlow::Loopback,
+                    port: 1457
+                }
+            })
+        ));
+        let status = Cli::try_parse_from(["bin", "auth", "status"]).expect("parses auth status");
+        assert!(matches!(
+            status.command,
+            Some(Command::Auth { op: AuthOp::Status })
+        ));
     }
 
     #[test]

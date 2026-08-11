@@ -15,6 +15,7 @@ pub mod anthropic_bridge;
 pub mod anthropic_stream;
 pub mod app_state;
 pub mod audit;
+pub mod auth;
 pub mod chat_admin;
 pub mod chat_commands;
 pub mod chat_config;
