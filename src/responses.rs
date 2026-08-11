@@ -151,19 +151,36 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
                         instructions.push(text);
                     }
                 }
+                "tool" => input.push(json!({
+                    "type": "function_call_output",
+                    "call_id": msg
+                        .get("tool_call_id")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default(),
+                    "output": extract_text(&content).unwrap_or_default(),
+                })),
                 _ => {
                     let text = extract_text(&content).unwrap_or_default();
-                    // Responses input uses `input_text` for user-side content
-                    // and `output_text` for prior assistant turns.
-                    let part_type = if role == "assistant" {
-                        "output_text"
-                    } else {
-                        "input_text"
-                    };
-                    input.push(json!({
-                        "role": role,
-                        "content": [{ "type": part_type, "text": text }],
-                    }));
+                    let tool_calls = msg.get("tool_calls").and_then(Value::as_array);
+                    let has_tool_calls = matches!(tool_calls, Some(calls) if !calls.is_empty());
+                    // A tool-only assistant turn is represented by its
+                    // `function_call` items, without an empty message item.
+                    if !text.is_empty() || !has_tool_calls {
+                        // Responses input uses `input_text` for user-side
+                        // content and `output_text` for prior assistant turns.
+                        let part_type = if role == "assistant" {
+                            "output_text"
+                        } else {
+                            "input_text"
+                        };
+                        input.push(json!({
+                            "role": role,
+                            "content": [{ "type": part_type, "text": text }],
+                        }));
+                    }
+                    if let Some(tool_calls) = tool_calls {
+                        input.extend(tool_calls.iter().filter_map(chat_tool_call_to_responses));
+                    }
                 }
             }
         }
@@ -190,12 +207,73 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
         out["top_p"] = json!(t);
     }
     if let Some(tools) = body.get("tools") {
-        out["tools"] = tools.clone();
+        out["tools"] = chat_tools_to_responses(tools);
+    }
+    if let Some(choice) = body.get("tool_choice") {
+        out["tool_choice"] = chat_tool_choice_to_responses(choice);
     }
     if body.get("stream").and_then(Value::as_bool) == Some(true) {
         out["stream"] = Value::Bool(true);
     }
     out
+}
+
+fn chat_tool_call_to_responses(call: &Value) -> Option<Value> {
+    let function = call.get("function")?;
+    Some(json!({
+        "type": "function_call",
+        "call_id": call.get("id").and_then(Value::as_str).unwrap_or_default(),
+        "name": function.get("name").and_then(Value::as_str).unwrap_or_default(),
+        "arguments": function
+            .get("arguments")
+            .and_then(Value::as_str)
+            .unwrap_or("{}"),
+    }))
+}
+
+fn chat_tools_to_responses(tools: &Value) -> Value {
+    let Value::Array(tools) = tools else {
+        return tools.clone();
+    };
+    Value::Array(
+        tools
+            .iter()
+            .map(|tool| {
+                if tool.get("type").and_then(Value::as_str) != Some("function") {
+                    return tool.clone();
+                }
+                let Some(function) = tool.get("function") else {
+                    return tool.clone();
+                };
+                let mut mapped = json!({
+                    "type": "function",
+                    "name": function.get("name").cloned().unwrap_or(Value::Null),
+                    "description": function
+                        .get("description")
+                        .cloned()
+                        .unwrap_or(Value::String(String::new())),
+                    "parameters": function
+                        .get("parameters")
+                        .cloned()
+                        .unwrap_or_else(|| json!({})),
+                });
+                if let Some(strict) = function.get("strict") {
+                    mapped["strict"] = strict.clone();
+                }
+                mapped
+            })
+            .collect(),
+    )
+}
+
+fn chat_tool_choice_to_responses(choice: &Value) -> Value {
+    let Some(function) = choice.get("function") else {
+        return choice.clone();
+    };
+    json!({
+        "type": "function",
+        "name": function.get("name").cloned().unwrap_or(Value::Null),
+    })
 }
 
 /// Translate a completed Responses object into a Chat Completions object.
@@ -665,6 +743,83 @@ mod tests {
         assert_eq!(out["input"][0]["role"], "user");
         assert_eq!(out["input"][0]["content"][0]["type"], "input_text");
         assert_eq!(out["input"][1]["content"][0]["type"], "output_text");
+    }
+
+    #[test]
+    fn chat_completion_projects_tools_and_results_to_responses() {
+        let body = json!({
+            "model": "gpt-5.6-sol",
+            "tools": [{
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "description": "Get the weather",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"city": {"type": "string"}}
+                    },
+                    "strict": true
+                }
+            }],
+            "tool_choice": {"type": "function", "function": {"name": "get_weather"}},
+            "messages": [
+                {"role": "user", "content": "weather in Moscow?"},
+                {
+                    "role": "assistant",
+                    "content": null,
+                    "tool_calls": [{
+                        "id": "call_weather_1",
+                        "type": "function",
+                        "function": {
+                            "name": "get_weather",
+                            "arguments": "{\"city\":\"Moscow\"}"
+                        }
+                    }]
+                },
+                {
+                    "role": "tool",
+                    "tool_call_id": "call_weather_1",
+                    "content": "cold"
+                }
+            ]
+        });
+
+        let out = chat_completion_to_responses(&body);
+
+        assert_eq!(
+            out["tools"][0],
+            json!({
+                "type": "function",
+                "name": "get_weather",
+                "description": "Get the weather",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"city": {"type": "string"}}
+                },
+                "strict": true
+            })
+        );
+        assert_eq!(
+            out["tool_choice"],
+            json!({"type": "function", "name": "get_weather"})
+        );
+        assert_eq!(
+            out["input"][1],
+            json!({
+                "type": "function_call",
+                "call_id": "call_weather_1",
+                "name": "get_weather",
+                "arguments": "{\"city\":\"Moscow\"}"
+            })
+        );
+        assert_eq!(
+            out["input"][2],
+            json!({
+                "type": "function_call_output",
+                "call_id": "call_weather_1",
+                "output": "cold"
+            })
+        );
     }
 
     #[test]

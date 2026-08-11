@@ -109,6 +109,35 @@ fn translates_tool_use_and_tool_result_blocks() {
 }
 
 #[test]
+fn codex_projection_uses_native_responses_tool_items() {
+    let body = json!({
+        "tools": [{
+            "name": "get_time",
+            "description": "current time",
+            "input_schema": {"type": "object", "properties": {"tz": {"type": "string"}}}
+        }],
+        "messages": [
+            {"role": "assistant", "content": [
+                {"type": "tool_use", "id": "toolu_1", "name": "get_time", "input": {"tz": "UTC"}}
+            ]},
+            {"role": "user", "content": [
+                {"type": "tool_result", "tool_use_id": "toolu_1", "content": "12:00"}
+            ]}
+        ]
+    });
+
+    let chat = anthropic_to_chat_request(&body, "gpt-5.6-sol");
+    let responses = crate::responses::chat_completion_to_responses(&chat);
+
+    assert_eq!(responses["tools"][0]["name"], "get_time");
+    assert!(responses["tools"][0].get("function").is_none());
+    assert_eq!(responses["input"][0]["type"], "function_call");
+    assert_eq!(responses["input"][0]["call_id"], "toolu_1");
+    assert_eq!(responses["input"][1]["type"], "function_call_output");
+    assert_eq!(responses["input"][1]["call_id"], "toolu_1");
+}
+
+#[test]
 fn drops_thinking_blocks() {
     let body = json!({
         "messages": [{"role": "assistant", "content": [
