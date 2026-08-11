@@ -552,6 +552,47 @@ fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
     );
 }
 
+#[test]
+fn release_workflow_publishes_and_verifies_multi_platform_images() {
+    let workflow = read_lf(".github/workflows/release.yml");
+    let platform_check = read_lf("scripts/check-docker-platforms.rs");
+
+    assert_eq!(
+        workflow.matches("docker/setup-qemu-action@v4").count(),
+        2,
+        "auto and manual release jobs should install emulation for cross-platform builds"
+    );
+    assert_eq!(
+        workflow
+            .matches("platforms: linux/amd64,linux/arm64")
+            .count(),
+        4,
+        "both image variants in both release paths should publish amd64 and arm64 manifests"
+    );
+    assert_eq!(
+        workflow
+            .matches("rust-script scripts/check-docker-platforms.rs")
+            .count(),
+        2,
+        "auto and manual releases should verify the published manifests"
+    );
+    assert!(
+        workflow.contains("rust-script --test scripts/check-docker-platforms.rs"),
+        "CI should exercise the manifest parser without contacting a registry"
+    );
+
+    for platform in ["linux/amd64", "linux/arm64"] {
+        assert!(
+            platform_check.contains(platform),
+            "published-image verification should require {platform}"
+        );
+    }
+    assert!(
+        platform_check.contains("unknown/unknown"),
+        "published-image verification should explicitly tolerate provenance attestations"
+    );
+}
+
 /// Read a repository file with line endings normalised to `\n`.
 ///
 /// A Windows checkout may convert these files to CRLF, which would otherwise
