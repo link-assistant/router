@@ -273,6 +273,7 @@ pub struct OpenAIStreamTranslator {
     sent_chat_role: bool,
     sent_response_created: bool,
     sent_final: bool,
+    response_output_text: String,
 }
 
 impl OpenAIStreamTranslator {
@@ -292,6 +293,7 @@ impl OpenAIStreamTranslator {
             sent_chat_role: false,
             sent_response_created: false,
             sent_final: false,
+            response_output_text: String::new(),
         }
     }
 
@@ -424,10 +426,28 @@ impl OpenAIStreamTranslator {
                     self.id = format!("resp-{id}");
                 }
                 self.sent_response_created = true;
-                vec![sse_frame(&json!({
-                    "type": "response.created",
-                    "response": self.response_object("in_progress", "")
-                }))]
+                vec![
+                    response_sse_frame(&json!({
+                        "type": "response.created",
+                        "response": self.response_object("in_progress", false)
+                    })),
+                    response_sse_frame(&json!({
+                        "type": "response.in_progress",
+                        "response": self.response_object("in_progress", false)
+                    })),
+                    response_sse_frame(&json!({
+                        "type": "response.output_item.added",
+                        "output_index": 0,
+                        "item": self.response_output_item("in_progress", false)
+                    })),
+                    response_sse_frame(&json!({
+                        "type": "response.content_part.added",
+                        "item_id": self.response_item_id(),
+                        "output_index": 0,
+                        "content_index": 0,
+                        "part": Self::response_content_part("")
+                    })),
+                ]
             }
             Some("content_block_delta") => {
                 if !self.sent_response_created {
@@ -438,10 +458,11 @@ impl OpenAIStreamTranslator {
                     return Vec::new();
                 }
                 let text = delta.get("text").and_then(Value::as_str).unwrap_or("");
-                vec![sse_frame(&json!({
+                self.response_output_text.push_str(text);
+                vec![response_sse_frame(&json!({
                     "type": "response.output_text.delta",
                     "response_id": self.id,
-                    "item_id": format!("msg-{}", self.id),
+                    "item_id": self.response_item_id(),
                     "output_index": 0,
                     "content_index": 0,
                     "delta": text
@@ -450,9 +471,28 @@ impl OpenAIStreamTranslator {
             Some("message_stop") => {
                 self.sent_final = true;
                 vec![
-                    sse_frame(&json!({
+                    response_sse_frame(&json!({
+                        "type": "response.output_text.done",
+                        "item_id": self.response_item_id(),
+                        "output_index": 0,
+                        "content_index": 0,
+                        "text": self.response_output_text
+                    })),
+                    response_sse_frame(&json!({
+                        "type": "response.content_part.done",
+                        "item_id": self.response_item_id(),
+                        "output_index": 0,
+                        "content_index": 0,
+                        "part": Self::response_content_part(&self.response_output_text)
+                    })),
+                    response_sse_frame(&json!({
+                        "type": "response.output_item.done",
+                        "output_index": 0,
+                        "item": self.response_output_item("completed", true)
+                    })),
+                    response_sse_frame(&json!({
                         "type": "response.completed",
-                        "response": self.response_object("completed", "")
+                        "response": self.response_object("completed", true)
                     })),
                     done_frame(),
                 ]
@@ -475,18 +515,42 @@ impl OpenAIStreamTranslator {
         }))
     }
 
-    fn response_object(&self, status: &str, text: &str) -> Value {
+    fn response_object(&self, status: &str, include_output: bool) -> Value {
+        let output = if include_output {
+            vec![self.response_output_item("completed", true)]
+        } else {
+            Vec::new()
+        };
         json!({
             "id": self.id,
             "object": "response",
             "created_at": self.created,
             "model": self.served_model,
             "status": status,
-            "output": [{
-                "type": "message",
-                "role": "assistant",
-                "content": [{"type": "output_text", "text": text}]
-            }]
+            "output": output
+        })
+    }
+
+    fn response_item_id(&self) -> String {
+        format!("msg-{}", self.id)
+    }
+
+    fn response_content_part(text: &str) -> Value {
+        json!({"type": "output_text", "text": text, "annotations": []})
+    }
+
+    fn response_output_item(&self, status: &str, include_content: bool) -> Value {
+        let content = if include_content {
+            vec![Self::response_content_part(&self.response_output_text)]
+        } else {
+            Vec::new()
+        };
+        json!({
+            "id": self.response_item_id(),
+            "type": "message",
+            "status": status,
+            "role": "assistant",
+            "content": content
         })
     }
 
@@ -522,6 +586,14 @@ pub(crate) fn extract_sse_data(block: &str) -> String {
 
 fn sse_frame(value: &Value) -> String {
     format!("data: {value}\n\n")
+}
+
+fn response_sse_frame(value: &Value) -> String {
+    let event = value
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("message");
+    format!("event: {event}\ndata: {value}\n\n")
 }
 
 fn done_frame() -> String {
@@ -700,132 +772,12 @@ fn translate_tool_choice(choice: &Value) -> Value {
 }
 
 #[cfg(test)]
+#[path = "openai_request_tests.rs"]
+mod request_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn translates_basic_chat_completion() {
-        let req = OpenAIChatCompletionRequest {
-            model: "gpt-4o".into(),
-            messages: vec![
-                ChatMessage {
-                    role: "system".into(),
-                    content: Value::String("You are helpful.".into()),
-                    name: None,
-                },
-                ChatMessage {
-                    role: "user".into(),
-                    content: Value::String("Hello".into()),
-                    name: None,
-                },
-            ],
-            max_tokens: Some(100),
-            max_completion_tokens: None,
-            temperature: Some(0.5),
-            top_p: None,
-            stream: None,
-            stop: None,
-            tools: None,
-            tool_choice: None,
-        };
-        let body = chat_completion_to_anthropic(&req);
-        assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
-        assert_eq!(body["max_tokens"], 100);
-        assert_eq!(body["temperature"], 0.5);
-        assert_eq!(body["system"], "You are helpful.");
-        let msgs = body["messages"].as_array().unwrap();
-        assert_eq!(msgs.len(), 1);
-        assert_eq!(msgs[0]["role"], "user");
-        assert_eq!(msgs[0]["content"], "Hello");
-    }
-
-    #[test]
-    fn preserves_claude_native_model_id() {
-        let req = OpenAIChatCompletionRequest {
-            model: "claude-opus-4-7".into(),
-            messages: vec![ChatMessage {
-                role: "user".into(),
-                content: Value::String("hi".into()),
-                name: None,
-            }],
-            max_tokens: None,
-            max_completion_tokens: None,
-            temperature: None,
-            top_p: None,
-            stream: None,
-            stop: None,
-            tools: None,
-            tool_choice: None,
-        };
-        let body = chat_completion_to_anthropic(&req);
-        assert_eq!(body["model"], "claude-opus-4-7");
-        assert_eq!(body["max_tokens"], 4096);
-    }
-
-    #[test]
-    fn drops_temperature_for_claude_5_models() {
-        let req = OpenAIChatCompletionRequest {
-            model: "claude-sonnet-5".into(),
-            messages: vec![ChatMessage {
-                role: "user".into(),
-                content: Value::String("hi".into()),
-                name: None,
-            }],
-            max_tokens: None,
-            max_completion_tokens: None,
-            temperature: Some(0.7),
-            top_p: None,
-            stream: None,
-            stop: None,
-            tools: None,
-            tool_choice: None,
-        };
-        let body = chat_completion_to_anthropic(&req);
-        assert!(body.get("temperature").is_none());
-    }
-
-    #[test]
-    fn model_resolution_rejects_unknown_ids() {
-        assert_eq!(resolve_model("totally-made-up-model-xyz"), None);
-    }
-
-    #[test]
-    fn model_resolution_keeps_intentional_aliases_explicit() {
-        assert_eq!(
-            resolve_model("gpt-4o").as_deref(),
-            Some("claude-sonnet-4-5-20250929")
-        );
-        assert_eq!(resolve_model("gpt-5").as_deref(), Some("claude-opus-4-7"));
-    }
-
-    #[test]
-    fn translates_multipart_user_content() {
-        let req = OpenAIChatCompletionRequest {
-            model: "gpt-4o".into(),
-            messages: vec![ChatMessage {
-                role: "user".into(),
-                content: json!([
-                    {"type": "text", "text": "describe"},
-                    {"type": "image_url", "image_url": {"url": "https://example.com/x.png"}}
-                ]),
-                name: None,
-            }],
-            max_tokens: Some(50),
-            max_completion_tokens: None,
-            temperature: None,
-            top_p: None,
-            stream: None,
-            stop: None,
-            tools: None,
-            tool_choice: None,
-        };
-        let body = chat_completion_to_anthropic(&req);
-        let parts = body["messages"][0]["content"].as_array().unwrap();
-        assert_eq!(parts[0]["type"], "text");
-        assert_eq!(parts[0]["text"], "describe");
-        assert_eq!(parts[1]["type"], "image");
-        assert_eq!(parts[1]["source"]["url"], "https://example.com/x.png");
-    }
 
     #[test]
     fn translates_tool_call_blocks() {
@@ -953,6 +905,75 @@ data: {"type":"message_stop"}
         assert!(joined.contains("\"type\":\"response.completed\""));
         assert!(joined.contains("\"model\":\"claude-sonnet-4-5-20250929\""));
         assert!(joined.contains("data: [DONE]"));
+    }
+
+    #[test]
+    fn response_stream_emits_named_output_item_lifecycle() {
+        let mut translator =
+            OpenAIStreamTranslator::new(OpenAIStreamShape::Response, "claude-haiku-4-5");
+        let frames = translator.push(
+            br#"event: message_start
+data: {"type":"message_start","message":{"id":"msg_1","model":"claude-haiku-4-5"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hel"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"lo"}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+"#,
+        );
+        let event_names = frames
+            .iter()
+            .filter_map(|frame| frame.lines().next()?.strip_prefix("event: "))
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            event_names,
+            vec![
+                "response.created",
+                "response.in_progress",
+                "response.output_item.added",
+                "response.content_part.added",
+                "response.output_text.delta",
+                "response.output_text.delta",
+                "response.output_text.done",
+                "response.content_part.done",
+                "response.output_item.done",
+                "response.completed",
+            ]
+        );
+
+        let events = frames
+            .iter()
+            .filter_map(|frame| {
+                frame
+                    .lines()
+                    .find_map(|line| line.strip_prefix("data: "))
+                    .filter(|data| *data != "[DONE]")
+                    .map(|data| serde_json::from_str::<Value>(data).unwrap())
+            })
+            .collect::<Vec<_>>();
+        let item_id = events[2]["item"]["id"].as_str().unwrap();
+        for event in &events[3..8] {
+            assert_eq!(event["item_id"], item_id);
+            assert_eq!(event["output_index"], 0);
+        }
+        assert_eq!(events[3]["content_index"], 0);
+        assert_eq!(events[4]["content_index"], 0);
+        assert_eq!(events[5]["content_index"], 0);
+        assert_eq!(events[6]["text"], "hello");
+        assert_eq!(events[7]["part"]["text"], "hello");
+        assert_eq!(events[8]["item"]["content"][0]["text"], "hello");
+        assert_eq!(events[9]["response"]["output"][0]["id"], item_id);
+        assert_eq!(
+            events[9]["response"]["output"][0]["content"][0]["text"],
+            "hello"
+        );
+        assert_eq!(frames.last().map(String::as_str), Some("data: [DONE]\n\n"));
     }
 
     #[test]
