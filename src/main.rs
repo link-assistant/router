@@ -6,8 +6,7 @@
 //! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `clients`, `doctor`) that runs
 //!    locally and exits without binding a port.
 //!
-//! All shared services (config, token store, multi-account router, metrics)
-//! are constructed in `build_runtime()` so the CLI subcommands operate on the
+//! Shared services are constructed together so the CLI subcommands operate on the
 //! exact same backing state the HTTP server would.
 
 use std::process::ExitCode;
@@ -17,6 +16,7 @@ use std::time::Duration;
 mod auth_cli;
 
 use axum::Router;
+use axum::middleware::from_fn_with_state;
 use axum::routing::{get, post};
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
 use link_assistant_router::activitypub;
@@ -34,9 +34,8 @@ use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 use link_assistant_router::token::{ADMIN_SCOPE, IssueRequest, TokenManager};
 use link_assistant_router::token_admin;
-use log_lazy::{LogLazy, levels};
+use log_lazy::LogLazy;
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::EnvFilter;
 
 type SharedState = (Arc<dyn TokenStore>, Option<AccountRouter>);
 type AnyError = Box<dyn std::error::Error>;
@@ -46,10 +45,12 @@ async fn main() -> ExitCode {
     let cli = <Cli as lino_arguments::Parser>::parse();
 
     let verbose = cli.verbose;
+    let request_log = cli.request_log.clone();
+    let request_log_max_bytes = cli.request_log_max_bytes;
 
-    init_tracing(verbose);
+    link_assistant_router::logging::init(verbose);
 
-    let logger = build_logger(verbose);
+    let logger = link_assistant_router::logging::build_lazy(verbose);
 
     tracing::info!("Link.Assistant.Router v{}", link_assistant_router::VERSION);
     if verbose {
@@ -65,7 +66,14 @@ async fn main() -> ExitCode {
     };
 
     match cli.command.as_ref() {
-        None | Some(Command::Serve) => match run_server(config, logger).await {
+        None | Some(Command::Serve) => match run_server(
+            config,
+            logger,
+            request_log.as_deref(),
+            request_log_max_bytes,
+        )
+        .await
+        {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
                 tracing::error!("server error: {e}");
@@ -81,30 +89,6 @@ async fn main() -> ExitCode {
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
     }
-}
-
-fn init_tracing(verbose: bool) {
-    let default_filter = if verbose { "debug" } else { "info" };
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::from_default_env().add_directive(default_filter.parse().unwrap()),
-        )
-        .init();
-}
-
-fn build_logger(verbose: bool) -> LogLazy {
-    let log_level = if verbose {
-        levels::ALL
-    } else {
-        levels::PRODUCTION
-    };
-    LogLazy::with_sink(log_level, |level, message| match level {
-        log_lazy::Level::FATAL | log_lazy::Level::ERROR => tracing::error!("{message}"),
-        log_lazy::Level::WARN => tracing::warn!("{message}"),
-        log_lazy::Level::INFO => tracing::info!("{message}"),
-        log_lazy::Level::DEBUG => tracing::debug!("{message}"),
-        _ => tracing::trace!("{message}"),
-    })
 }
 
 fn subscription_pool(config: &Config) -> (SubscriptionProvider, std::path::PathBuf) {
@@ -206,7 +190,12 @@ fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
     }
 }
 
-async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_server(
+    config: Config,
+    logger: LogLazy,
+    request_log: Option<&std::path::Path>,
+    request_log_max_bytes: u64,
+) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Upstream: {}", config.upstream_base_url);
     tracing::info!("Upstream provider: {:?}", config.upstream_provider);
     let (subscription_provider, subscription_home) = subscription_pool(&config);
@@ -295,6 +284,11 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
         audit: std::sync::Arc::new(link_assistant_router::audit::AuditLog::to_path(
             config.audit_log.as_deref(),
         )),
+        request_log: link_assistant_router::logging::request_log(
+            &config.data_dir,
+            request_log,
+            request_log_max_bytes,
+        ),
         crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
         provider_store,
@@ -415,6 +409,10 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     let app = app
         .fallback(proxy::proxy_handler)
         .with_state(state.clone())
+        .layer(from_fn_with_state(
+            state.clone(),
+            link_assistant_router::request_log::log_http_exchange,
+        ))
         .layer(TraceLayer::new_for_http());
 
     tracing::info!("Listening on {}", config.listen_addr);
@@ -422,6 +420,10 @@ async fn run_server(config: Config, logger: LogLazy) -> Result<(), Box<dyn std::
     let admin_server = if config.admin_ui.enabled {
         let admin_addr = config.admin_ui.listen_addr;
         let admin_app = link_assistant_router::admin_api::router(state.clone())
+            .layer(from_fn_with_state(
+                state.clone(),
+                link_assistant_router::request_log::log_http_exchange,
+            ))
             .layer(TraceLayer::new_for_http());
         let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
         tracing::info!("Admin UI listening on {admin_addr}");

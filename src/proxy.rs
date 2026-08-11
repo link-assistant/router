@@ -25,6 +25,7 @@ use crate::accounts::RoutingContext;
 pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 pub use crate::model_routing::models as openai_models;
+pub use crate::monitoring_api::{accounts_endpoint, metrics_endpoint, usage_endpoint};
 use crate::openai;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
 use crate::responses;
@@ -309,7 +310,12 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         .headers(upstream_headers)
         .body(body_bytes);
 
-    let upstream_resp = match upstream_req.send().await {
+    let correlation_id = crate::request_log::correlation_id(&incoming_headers);
+    let upstream_resp = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, upstream_req)
+        .await
+    {
         Ok(resp) => resp,
         Err(e) => {
             tracing::error!("Upstream request failed: {e}");
@@ -354,9 +360,13 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     }
 
     // Stream the response body
-    let stream = upstream_resp
-        .bytes_stream()
-        .map(|chunk| chunk.map_err(std::io::Error::other));
+    let response_log = std::sync::Arc::clone(&state.request_log);
+    let stream = upstream_resp.bytes_stream().map(move |chunk| {
+        if let Ok(bytes) = &chunk {
+            response_log.record_upstream_body(&correlation_id, bytes);
+        }
+        chunk.map_err(std::io::Error::other)
+    });
 
     let body = Body::from_stream(stream);
 
@@ -779,7 +789,12 @@ async fn forward_openai(
     // caller supplied (OpenAI clients rarely send one).
     let merged_beta = merge_oauth_beta(headers.get("anthropic-beta").and_then(|v| v.to_str().ok()));
     req_builder = req_builder.header("anthropic-beta", merged_beta);
-    let upstream_resp = match req_builder.send().await {
+    let correlation_id = crate::request_log::correlation_id(headers);
+    let upstream_resp = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, req_builder)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             state
@@ -803,10 +818,14 @@ async fn forward_openai(
             OpenAIShape::Response => openai::OpenAIStreamShape::Response,
         };
         let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model);
+        let response_log = std::sync::Arc::clone(&state.request_log);
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
-            Ok(bytes) => Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
-                translator.push(&bytes).join(""),
-            )),
+            Ok(bytes) => {
+                response_log.record_upstream_body(&correlation_id, &bytes);
+                Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
+                    translator.push(&bytes).join(""),
+                ))
+            }
             Err(e) => Err(std::io::Error::other(e)),
         });
         let mut response = Response::new(Body::from_stream(stream));
@@ -830,6 +849,9 @@ async fn forward_openai(
             );
         }
     };
+    state
+        .request_log
+        .record_upstream_body(&correlation_id, &upstream_body);
     let bytes_received = upstream_body.len() as u64;
     state.metrics.record_bytes(bytes_sent, bytes_received);
 
@@ -896,91 +918,6 @@ pub(crate) fn maybe_mpp_challenge(
         return Some(crate::mpp::unsupported_payment_verification());
     }
     Some(crate::mpp::payment_required(&state.mpp, path))
-}
-
-/// The refusal used by the administrative read-only endpoints.
-fn admin_required() -> Response {
-    error_response(
-        StatusCode::UNAUTHORIZED,
-        "authentication_error",
-        "admin credential required",
-    )
-}
-
-/// `GET /metrics` — Prometheus text-exposition format.
-///
-/// Deliberately left open: it carries aggregate counters only, and scrapers
-/// (Prometheus, container health checks) are typically unauthenticated.
-pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoResponse {
-    let body = crate::metrics::render_prometheus(&state.metrics);
-    (
-        StatusCode::OK,
-        [("content-type", "text/plain; version=0.0.4")],
-        body,
-    )
-        .into_response()
-}
-
-/// `GET /v1/usage` — JSON usage snapshot. Requires an admin credential.
-///
-/// Unlike `/metrics`, which exposes aggregate counters, this snapshot names
-/// individual tokens and accounts (see [`crate::metrics::usage_snapshot`]) —
-/// that is an inventory of who holds credentials on the deployment, and it is
-/// served on the *proxy* port, which is the one that faces the network.
-pub async fn usage_endpoint(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
-    if !is_admin_authorised(&state, &headers) {
-        return admin_required();
-    }
-    let snap = crate::metrics::usage_snapshot(&state.metrics);
-    (StatusCode::OK, axum::Json(snap)).into_response()
-}
-
-/// `GET /v1/accounts` — Health snapshot of every configured account.
-///
-/// Admin-only for the same reason as [`usage_endpoint`], and one more: the
-/// snapshot includes each account's credential directory and last upstream
-/// error.
-pub async fn accounts_endpoint(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
-    if !is_admin_authorised(&state, &headers) {
-        return admin_required();
-    }
-    let Some(router) = state.account_router.as_ref() else {
-        return (
-            StatusCode::OK,
-            axum::Json(serde_json::json!({
-                "accounts": [],
-                "note": "single-account mode (no AccountRouter configured)"
-            })),
-        )
-            .into_response();
-    };
-    let snap: Vec<serde_json::Value> = router
-        .health_snapshot()
-        .into_iter()
-        .map(|h| {
-            serde_json::json!({
-                "name": h.name,
-                "home": h.home.display().to_string(),
-                "healthy": h.healthy,
-                "used": h.used,
-                "request_limit": h.request_limit,
-                "remaining_requests": h.remaining_requests,
-                "last_error": h.last_error,
-                "cooldown_remaining_seconds": h.cooldown_remaining.map(|d| d.as_secs()),
-            })
-        })
-        .collect();
-    (
-        StatusCode::OK,
-        axum::Json(serde_json::json!({"accounts": snap})),
-    )
-        .into_response()
 }
 
 /// Build an Anthropic-format error response.

@@ -56,6 +56,10 @@ fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
         allow_anonymous_admin: false,
         metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
         audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
+        request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
+            data_dir.join("requests.jsonl"),
+            1024 * 1024,
+        )),
         activitypub_actor_base_url: "https://router.example".to_string(),
         activitypub_public_key_pem:
             link_assistant_router::config::default_activitypub_public_key_pem(),

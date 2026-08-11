@@ -368,6 +368,10 @@ mod tests {
             allow_anonymous_admin: false,
             metrics: Arc::new(crate::metrics::Metrics::default()),
             audit: Arc::new(crate::audit::AuditLog::to_path(None)),
+            request_log: Arc::new(crate::request_log::RequestLog::new(
+                data_dir.join("requests.jsonl"),
+                1024 * 1024,
+            )),
             activitypub_actor_base_url: "https://router.example".to_string(),
             activitypub_public_key_pem: crate::config::default_activitypub_public_key_pem(),
             mpp: crate::config::default_mpp_config(),

@@ -63,6 +63,8 @@ pub struct AppState {
     pub metrics: Arc<crate::metrics::Metrics>,
     /// Append-only per-token audit log (disabled unless a path is configured).
     pub audit: Arc<crate::audit::AuditLog>,
+    /// Redacted bounded log of complete HTTP exchanges.
+    pub request_log: Arc<crate::request_log::RequestLog>,
     /// Public base URL for `ActivityPub` actor documents.
     pub activitypub_actor_base_url: String,
     /// Public key PEM advertised by the `ActivityPub` actor.
