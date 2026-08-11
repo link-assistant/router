@@ -16,9 +16,12 @@ fn main() {
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
         "docker/login-action@v4",
+        "docker/setup-qemu-action@v4",
         "docker/setup-buildx-action@v4",
         "docker/metadata-action@v6",
         "docker/build-push-action@v7",
+        "platforms: linux/amd64,linux/arm64",
+        "rust-script scripts/check-docker-platforms.rs",
         "username: konard",
         "password: ${{ secrets.DOCKERHUB_TOKEN }}",
         "ghcr.io/${{ github.repository }}",
@@ -55,6 +58,30 @@ fn main() {
         failures.push("auto and manual release jobs must both publish Docker images".to_string());
     }
 
+    if count_occurrences(&workflow, "docker/setup-qemu-action@v4") < 2 {
+        failures.push(
+            "auto and manual release jobs must both enable cross-platform emulation".to_string(),
+        );
+    }
+
+    if count_occurrences(&workflow, "platforms: linux/amd64,linux/arm64") < 4 {
+        failures.push(
+            "auto and manual release jobs must publish both image variants for amd64 and arm64"
+                .to_string(),
+        );
+    }
+
+    if count_occurrences(
+        &workflow,
+        "rust-script scripts/check-docker-platforms.rs",
+    ) < 2
+    {
+        failures.push(
+            "auto and manual release jobs must verify published multi-platform manifests"
+                .to_string(),
+        );
+    }
+
     if count_occurrences(
         &workflow,
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
@@ -89,7 +116,9 @@ fn main() {
     }
 
     if failures.is_empty() {
-        println!("release workflow publishes crates, GHCR images, and Docker Hub images");
+        println!(
+            "release workflow publishes crates and verified multi-platform GHCR/Docker Hub images"
+        );
     } else {
         for failure in failures {
             eprintln!("Error: {failure}");
