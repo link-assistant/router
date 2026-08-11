@@ -2,7 +2,7 @@
 
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
 
@@ -176,7 +176,23 @@ pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvid
 }
 
 /// `GET /v1/models` across automatic or explicitly pinned providers.
-pub async fn models(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Response {
+    let Some(token) = crate::proxy::extract_client_token(&headers) else {
+        return crate::proxy::error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization Bearer token or x-api-key",
+        );
+    };
+    if let Err(error) = state.token_manager.validate_token(token) {
+        let status = if matches!(error, crate::token::TokenError::Revoked) {
+            StatusCode::FORBIDDEN
+        } else {
+            StatusCode::UNAUTHORIZED
+        };
+        return crate::proxy::error_response(status, "authentication_error", &error.to_string());
+    }
+
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => model_catalog(
             &healthy_providers(
@@ -315,12 +331,15 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::body::Body;
     use axum::extract::Query;
-    use axum::http::HeaderMap;
+    use axum::http::{HeaderMap, Request};
+    use axum::routing::get;
     use http_body_util::BodyExt;
     use std::fs;
     use std::sync::Arc;
     use tempfile::tempdir;
+    use tower::ServiceExt;
 
     fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
         AppState {
@@ -372,6 +391,53 @@ mod tests {
             data.iter()
                 .any(|m| m["id"] == "gpt-5" && m["owned_by"] == "openai")
         );
+    }
+
+    #[tokio::test]
+    async fn model_catalog_routes_require_a_valid_client_token() {
+        let data = tempdir().unwrap();
+        let state = auto_state(Vec::new(), data.path());
+        let valid_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+        let app = axum::Router::new()
+            .route("/v1/models", get(models))
+            .route("/api/codex/v1/models", get(models))
+            .with_state(state);
+
+        for path in ["/v1/models", "/api/codex/v1/models"] {
+            for authorization in [None, Some("Bearer la_sk_garbage")] {
+                let mut request = Request::builder().uri(path);
+                if let Some(value) = authorization {
+                    request = request.header("authorization", value);
+                }
+                let response = app
+                    .clone()
+                    .oneshot(request.body(Body::empty()).unwrap())
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    response.status(),
+                    StatusCode::UNAUTHORIZED,
+                    "{path} accepted {authorization:?}"
+                );
+            }
+
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .uri(path)
+                        .header("authorization", format!("Bearer {valid_token}"))
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                response.status(),
+                StatusCode::OK,
+                "{path} rejected a valid token"
+            );
+        }
     }
 
     #[test]
