@@ -16,6 +16,7 @@ use std::str::FromStr;
 use std::time::Duration;
 
 use crate::accounts::SelectionStrategy;
+use crate::subscription::SubscriptionProvider;
 
 /// Supported upstream inference providers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -270,6 +271,8 @@ impl Config {
             let home = env::var("HOME").unwrap_or_else(|_| "/root".to_string());
             format!("{home}/.claude")
         });
+        let codex_home = SubscriptionProvider::Codex
+            .resolve_home(&env::var("HOME").unwrap_or_else(|_| "/root".to_string()));
         let upstream_base_url = env::var("UPSTREAM_BASE_URL")
             .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
         let verbose = env::var("VERBOSE").is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
@@ -388,6 +391,7 @@ impl Config {
                 .map_or_else(Vec::new, |raw| parse_csv(&raw)),
             session_ttl: Duration::from_secs(parse_u64_env("LOGIN_SESSION_TTL_SECS", 900)),
             max_sessions: usize::try_from(parse_u64_env("LOGIN_MAX_SESSIONS", 4)).unwrap_or(4),
+            codex_home,
             ..crate::login::LoginConfig::default()
         };
         let mpp = crate::mpp::MppConfig {

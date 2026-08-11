@@ -14,6 +14,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
+mod auth_cli;
+
 use axum::Router;
 use axum::routing::{get, post};
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
@@ -76,6 +78,7 @@ async fn main() -> ExitCode {
         Some(Command::Clients { op }) => {
             link_assistant_router::client_command::run(&config, op).await
         }
+        Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
     }
 }

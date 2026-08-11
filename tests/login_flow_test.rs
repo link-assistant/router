@@ -20,6 +20,7 @@
 
 use link_assistant_router::login::{LoginConfig, LoginManager, LoginStatus};
 use link_assistant_router::oauth::OAuthProvider;
+use link_assistant_router::subscription::SubscriptionProvider;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -279,4 +280,30 @@ async fn a_disabled_manager_serves_nothing() {
     });
     assert!(!manager.is_enabled());
     assert!(manager.begin().await.is_err());
+}
+
+#[tokio::test]
+async fn codex_login_waits_for_a_callback_instead_of_a_pasted_code() {
+    let home = temp_home();
+    let manager = LoginManager::new(LoginConfig {
+        codex_home: home,
+        codex_callback_port: 0,
+        ..LoginConfig::default()
+    });
+    let begun = manager
+        .begin_for(SubscriptionProvider::Codex)
+        .await
+        .expect("Codex loopback login should start");
+    assert_eq!(begun.provider, SubscriptionProvider::Codex);
+    assert_eq!(begun.status, LoginStatus::AwaitingCallback);
+    let url = begun.url.as_deref().expect("authorization URL");
+    assert!(url.contains("redirect_uri=http%3A%2F%2Flocalhost%3A"));
+    assert!(url.contains("code_challenge_method=S256"));
+    assert!(
+        manager
+            .submit_code(&begun.login_id, "there-is-no-codex-paste-code")
+            .await
+            .is_err()
+    );
+    assert!(manager.cancel(&begun.login_id));
 }

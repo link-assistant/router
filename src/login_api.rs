@@ -1,8 +1,8 @@
 //! HTTP endpoints for authorizing a deployment (issue #47).
 //!
 //! ```text
-//! POST   /api/login            -> { login_id, url, status: "awaiting_code", ... }
-//! GET    /api/login/{id}       -> { status: "awaiting_code" | "authorized" | "failed" | "expired", ... }
+//! POST   /api/login            -> { login_id, provider, url, status, ... }
+//! GET    /api/login/{id}       -> { status: "awaiting_code" | "awaiting_callback" | ... }
 //! POST   /api/login/{id}/code  -> { status: "authorized", expires_at, ... }
 //! DELETE /api/login/{id}       -> { cancelled: true }
 //! ```
@@ -23,18 +23,52 @@ use axum::response::IntoResponse;
 
 use crate::login::{LoginError, LoginManager};
 use crate::proxy::{AppState, error_response, is_admin_authorised};
+use crate::subscription::SubscriptionProvider;
 
 /// Start a login and return the URL the human must open.
 ///
 /// The spawned CLI keeps running after this responds — the session is what
 /// [`submit_code`] later writes to.
-pub async fn begin_login(State(state): State<AppState>, headers: HeaderMap) -> impl IntoResponse {
+pub async fn begin_login(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    request: Option<axum::Json<BeginLoginRequest>>,
+) -> impl IntoResponse {
     let Some(manager) = guard(&state, &headers) else {
         return unauthorised();
     };
-    match manager.begin().await {
+    let provider = requested_provider(request.as_ref().and_then(|body| body.provider.as_deref()));
+    let Some(provider) = provider else {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "`provider` must be `claude` or `codex`",
+        );
+    };
+    match manager.begin_for(provider).await {
         Ok(view) => (StatusCode::OK, axum::Json(view)).into_response(),
         Err(e) => login_error_response(&e),
+    }
+}
+
+/// Optional body for [`begin_login`]. An empty request remains Claude for
+/// compatibility with the original endpoint.
+#[derive(Default, serde::Deserialize)]
+pub struct BeginLoginRequest {
+    /// Subscription provider (`claude` or `codex`).
+    pub provider: Option<String>,
+}
+
+fn requested_provider(value: Option<&str>) -> Option<SubscriptionProvider> {
+    match value
+        .unwrap_or("claude")
+        .trim()
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "claude" => Some(SubscriptionProvider::Claude),
+        "codex" => Some(SubscriptionProvider::Codex),
+        _ => None,
     }
 }
 
@@ -135,4 +169,20 @@ fn login_error_response(error: &LoginError) -> axum::response::Response {
         }
     };
     error_response(status, kind, &error.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn provider_defaults_to_claude_and_rejects_unexposed_aliases() {
+        assert_eq!(requested_provider(None), Some(SubscriptionProvider::Claude));
+        assert_eq!(
+            requested_provider(Some("codex")),
+            Some(SubscriptionProvider::Codex)
+        );
+        assert_eq!(requested_provider(Some("chatgpt")), None);
+        assert_eq!(requested_provider(Some("gemini")), None);
+    }
 }

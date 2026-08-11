@@ -23,7 +23,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use clap::Subcommand;
+use clap::{Subcommand, ValueEnum};
 use lino_arguments::Parser as LinoParser;
 
 use crate::clients::ClientKind;
@@ -438,8 +438,52 @@ pub enum Command {
         #[command(subcommand)]
         op: ClientOp,
     },
+    /// Obtain or inspect vendor subscription credentials.
+    Auth {
+        #[command(subcommand)]
+        op: AuthOp,
+    },
     /// Print environment + config diagnostics.
     Doctor,
+}
+
+/// Authorization-flow override. `auto` selects the provider's supported flow.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, ValueEnum)]
+pub enum AuthFlow {
+    /// Select the best supported flow automatically.
+    #[default]
+    Auto,
+    /// OAuth device authorization (only when advertised by the provider).
+    Device,
+    /// Copy/paste authorization code flow.
+    Code,
+    /// Local OAuth callback listener.
+    Loopback,
+}
+
+/// Provider authorization operations.
+#[derive(Debug, Subcommand)]
+pub enum AuthOp {
+    /// Authorize an Anthropic Claude subscription.
+    Claude {
+        /// Supply the copied code without prompting on stdin.
+        #[arg(long)]
+        code: Option<String>,
+        /// Force an OAuth flow instead of automatic selection.
+        #[arg(long, value_enum, default_value_t)]
+        flow: AuthFlow,
+    },
+    /// Authorize an `OpenAI` Codex / `ChatGPT` subscription.
+    Codex {
+        /// Force an OAuth flow instead of automatic selection.
+        #[arg(long, value_enum, default_value_t)]
+        flow: AuthFlow,
+        /// Local callback port registered for the Codex OAuth client.
+        #[arg(long, default_value_t = 1455)]
+        port: u16,
+    },
+    /// Report whether each provider credential is usable, expired, or absent.
+    Status,
 }
 
 #[derive(Debug, Subcommand)]
@@ -561,6 +605,8 @@ impl Cli {
             std::env::var("HOME")
                 .map_or_else(|_| "/root/.claude".to_string(), |h| format!("{h}/.claude"))
         });
+        let codex_home = crate::subscription::SubscriptionProvider::Codex
+            .resolve_home(&std::env::var("HOME").unwrap_or_else(|_| "/root".to_string()));
         let api_format = self.api_format.as_deref().and_then(ApiFormat::from_str_opt);
         let routing_mode =
             RoutingMode::from_str_opt(&self.routing_mode).ok_or(ConfigError::InvalidRoutingMode)?;
@@ -672,6 +718,7 @@ impl Cli {
                 args: self.login_cli_args.clone(),
                 session_ttl: Duration::from_secs(self.login_session_ttl_secs),
                 max_sessions: self.login_max_sessions,
+                codex_home,
                 ..crate::login::LoginConfig::default()
             },
             mpp: crate::mpp::MppConfig {

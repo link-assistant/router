@@ -16,7 +16,8 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 /// A subscription-backed upstream that authenticates with vendor OAuth tokens.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SubscriptionProvider {
     /// Anthropic Claude (Pro/Max) via Claude Code — `~/.claude`.
     Claude,
@@ -408,6 +409,7 @@ impl RawCredentials {
     fn codex_token(self) -> Option<SubscriptionToken> {
         let tokens = self.tokens.unwrap_or_default();
         let access = non_empty(tokens.access_token)?;
+        let expires_at_ms = self.expiry_date.or_else(|| jwt_expiry_ms(&access));
         let account_id = non_empty(tokens.account_id)
             .or_else(|| non_empty(self.account_id))
             .or_else(|| {
@@ -419,7 +421,7 @@ impl RawCredentials {
         Some(SubscriptionToken {
             access_token: access,
             refresh_token: non_empty(tokens.refresh_token),
-            expires_at_ms: self.expiry_date,
+            expires_at_ms,
             account_id,
             resource_url: None,
         })
@@ -435,6 +437,18 @@ impl RawCredentials {
             resource_url: non_empty(self.resource_url),
         })
     }
+}
+
+/// Read a JWT `exp` claim without verifying the signature. This is only a
+/// local expiry hint; the token endpoint and upstream remain authoritative.
+fn jwt_expiry_ms(token: &str) -> Option<i64> {
+    use base64::Engine as _;
+    let payload = token.split('.').nth(1)?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload)
+        .ok()?;
+    let claims: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
+    claims.get("exp")?.as_i64()?.checked_mul(1000)
 }
 
 /// Extract the `ChatGPT` account id from a Codex `id_token` JWT.
@@ -524,6 +538,24 @@ mod tests {
         let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
         let token = reader.read_token().expect("codex token");
         assert_eq!(token.account_id.as_deref(), Some("acct_from_jwt"));
+    }
+
+    #[test]
+    fn reads_codex_expiry_from_access_token() {
+        use base64::Engine as _;
+        let dir = tempdir();
+        let payload =
+            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(br#"{"exp":1770000000}"#);
+        let access = format!("header.{payload}.signature");
+        fs::write(
+            dir.join("auth.json"),
+            format!(r#"{{"tokens":{{"access_token":"{access}"}}}}"#),
+        )
+        .unwrap();
+        let token = SubscriptionReader::new(SubscriptionProvider::Codex, &dir)
+            .read_token()
+            .unwrap();
+        assert_eq!(token.expires_at_ms, Some(1_770_000_000_000));
     }
 
     #[test]

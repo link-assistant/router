@@ -311,17 +311,24 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 ### Login surface (`--disable-login-api` to opt out)
 
 Authorizes a deployment that has no credential file — see
-[docs/use-cases/remote-login.md](docs/use-cases/remote-login.md). By default it
-drives the TUI `/login` flow, which requests Claude Code's full scope set;
+[docs/use-cases/remote-login.md](docs/use-cases/remote-login.md). The optional
+`provider` request field selects `claude` (the backwards-compatible default)
+or `codex`. Claude drives the TUI `/login` flow and requests its full scope set;
 `LOGIN_CLI_ARGS=setup-token` explicitly selects the narrower `user:inference`
-flow. The use-case guide lists every requested scope.
+flow. Codex binds a temporary PKCE loopback listener and needs no vendor CLI.
+The use-case guide lists the networking requirement and every requested scope.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/login` | POST | (admin) Start a login; returns `login_id` and the URL the human must open |
-| `/api/login/{id}` | GET | (admin) Status: `awaiting_code`, `authorized`, `failed` or `expired` |
+| `/api/login` | POST | (admin) Start a login; optional body: `{"provider":"claude"|"codex"}` |
+| `/api/login/{id}` | GET | (admin) Status includes `awaiting_code` (Claude) or `awaiting_callback` (Codex) |
 | `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
 | `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
+
+For a foreground local login, use `link-assistant-router auth claude`,
+`auth claude --code <code>`, or `auth codex`. `auth status` reports each
+provider credential as `usable`, `expired`, or `absent`. `--flow` can enforce
+`code` or `loopback`; unsupported forced flows fail instead of falling back.
 
 ### Admin UI surface (`--admin-port` to opt in)
 
