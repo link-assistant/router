@@ -144,6 +144,20 @@ pub struct Cli {
     #[arg(long, env = "AUDIT_LOG", global = true)]
     pub audit_log: Option<PathBuf>,
 
+    /// Redacted JSONL log containing complete client and upstream exchanges.
+    /// Defaults to `DATA_DIR/requests.jsonl`.
+    #[arg(long, env = "REQUEST_LOG", global = true)]
+    pub request_log: Option<PathBuf>,
+
+    /// Maximum size of the request log; oldest complete records are discarded.
+    #[arg(
+        long,
+        env = "REQUEST_LOG_MAX_BYTES",
+        default_value_t = crate::request_log::DEFAULT_MAX_BYTES,
+        global = true
+    )]
+    pub request_log_max_bytes: u64,
+
     /// Remote `ForgeFed` inbox for the crater provider.
     #[arg(long, env = "CRATER_FORGEFED_INBOX", global = true)]
     pub crater_forgefed_inbox: Option<String>,
@@ -767,6 +781,8 @@ mod tests {
             gonka_model: default_gonka_model(),
             bridge_model: None,
             audit_log: None,
+            request_log: None,
+            request_log_max_bytes: crate::request_log::DEFAULT_MAX_BYTES,
             crater_forgefed_inbox: None,
             crater_forgefed_actor: None,
             crater_forgefed_target: None,
@@ -840,6 +856,8 @@ mod tests {
             gonka_model: default_gonka_model(),
             bridge_model: None,
             audit_log: None,
+            request_log: None,
+            request_log_max_bytes: crate::request_log::DEFAULT_MAX_BYTES,
             crater_forgefed_inbox: None,
             crater_forgefed_actor: None,
             crater_forgefed_target: None,

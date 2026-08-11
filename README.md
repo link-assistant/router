@@ -533,6 +533,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
+| `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests.jsonl` | No | Redacted JSONL log of client requests, transformed upstream requests, and responses, tied together by `correlation_id` |
+| `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Hard request-log size bound; the oldest complete JSONL records are discarded first |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
 ### Gonka provider
@@ -740,6 +742,13 @@ RUST_LOG=debug ./target/release/link-assistant-router
 # Trace level for maximum verbosity
 RUST_LOG=trace ./target/release/link-assistant-router
 ```
+
+`RUST_LOG` overrides the default `info` level (or the `debug` fallback selected
+by `--verbose`). Every HTTP request also writes a structured exchange to
+`$DATA_DIR/requests.jsonl` by default. Client and upstream phases share an
+`x-request-id`/`correlation_id`; credential headers and credential-shaped JSON
+fields are replaced with `[REDACTED]`. The file retains complete recent JSONL
+records within `REQUEST_LOG_MAX_BYTES`, without requiring an external rotator.
 
 ## Docker Deployment
 

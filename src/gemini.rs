@@ -375,7 +375,7 @@ async fn forward(
     // synthesize `OpenAI` SSE below when the client asked to stream.
     let upstream_url = format!("{base}/v1internal:generateContent");
 
-    let upstream_resp = match state
+    let upstream_request = state
         .client
         .post(upstream_url)
         .header("content-type", "application/json")
@@ -383,8 +383,11 @@ async fn forward(
             "authorization",
             format!("Bearer {}", sub_token.access_token),
         )
-        .body(serialized)
-        .send()
+        .body(serialized);
+    let correlation_id = crate::request_log::correlation_id(headers);
+    let upstream_resp = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, upstream_request)
         .await
     {
         Ok(resp) => resp,
@@ -430,6 +433,9 @@ async fn forward(
             );
         }
     };
+    state
+        .request_log
+        .record_upstream_body(&correlation_id, &upstream_body);
     state
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
@@ -667,7 +673,7 @@ async fn forward_native(
     // non-streaming upstream call lets us unwrap the native response reliably;
     // stream callers receive that response as a valid Gemini SSE data event.
     let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
-    let upstream = match state
+    let upstream_request = state
         .client
         .post(upstream_url)
         .header("content-type", "application/json")
@@ -675,8 +681,11 @@ async fn forward_native(
             "authorization",
             format!("Bearer {}", routed.token.access_token),
         )
-        .body(serialized.clone())
-        .send()
+        .body(serialized.clone());
+    let correlation_id = crate::request_log::correlation_id(headers);
+    let upstream = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, upstream_request)
         .await
     {
         Ok(response) => response,
@@ -705,6 +714,9 @@ async fn forward_native(
             );
         }
     };
+    state
+        .request_log
+        .record_upstream_body(&correlation_id, &response_body);
     state
         .metrics
         .record_bytes(serialized.len() as u64, response_body.len() as u64);

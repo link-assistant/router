@@ -220,7 +220,12 @@ async fn forward_subscription_openai_inner(
         upstream_req = upstream_req.header(name, value);
     }
 
-    let upstream_resp = match upstream_req.send().await {
+    let correlation_id = crate::request_log::correlation_id(headers);
+    let upstream_resp = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, upstream_req)
+        .await
+    {
         Ok(resp) => resp,
         Err(e) => {
             state
@@ -277,10 +282,12 @@ async fn forward_subscription_openai_inner(
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
         let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model);
+        let response_log = std::sync::Arc::clone(&state.request_log);
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             chunk.map_or_else(
                 |error| Err(std::io::Error::other(error)),
                 |bytes| {
+                    response_log.record_upstream_body(&correlation_id, &bytes);
                     if codex && response_shape == SubscriptionResponseShape::ChatCompletion {
                         Ok(bytes::Bytes::from(translator.push(&bytes).join("")))
                     } else {
@@ -311,6 +318,9 @@ async fn forward_subscription_openai_inner(
             );
         }
     };
+    state
+        .request_log
+        .record_upstream_body(&correlation_id, &upstream_body);
     state
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);

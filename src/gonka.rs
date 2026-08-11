@@ -180,12 +180,15 @@ pub(crate) async fn forward_openai(
         );
     }
 
-    let upstream_resp = match state
+    let upstream_request = state
         .client
         .post(gonka.endpoint(path))
         .headers(upstream_headers)
-        .body(serialized)
-        .send()
+        .body(serialized);
+    let correlation_id = crate::request_log::correlation_id(headers);
+    let upstream_resp = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, upstream_request)
         .await
     {
         Ok(resp) => resp,
@@ -217,6 +220,9 @@ pub(crate) async fn forward_openai(
             );
         }
     };
+    state
+        .request_log
+        .record_upstream_body(&correlation_id, &upstream_body);
     state
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);

@@ -210,7 +210,12 @@ pub async fn forward_openai_compatible(
         upstream_req = upstream_req.header("authorization", format!("Bearer {api_key}"));
     }
 
-    let upstream_resp = match upstream_req.send().await {
+    let correlation_id = crate::request_log::correlation_id(headers);
+    let upstream_resp = match state
+        .request_log
+        .send_upstream(&correlation_id, &state.client, upstream_req)
+        .await
+    {
         Ok(resp) => resp,
         Err(e) => {
             state.metrics.record_request(surface, 502, None);
@@ -232,9 +237,13 @@ pub async fn forward_openai_compatible(
         .unwrap_or_else(|| HeaderValue::from_static("application/json"));
 
     if stream_requested || is_event_stream(&content_type) {
-        let stream = upstream_resp
-            .bytes_stream()
-            .map(|chunk| chunk.map_err(std::io::Error::other));
+        let response_log = std::sync::Arc::clone(&state.request_log);
+        let stream = upstream_resp.bytes_stream().map(move |chunk| {
+            if let Ok(bytes) = &chunk {
+                response_log.record_upstream_body(&correlation_id, bytes);
+            }
+            chunk.map_err(std::io::Error::other)
+        });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         response.headers_mut().insert("content-type", content_type);
@@ -252,6 +261,9 @@ pub async fn forward_openai_compatible(
             );
         }
     };
+    state
+        .request_log
+        .record_upstream_body(&correlation_id, &upstream_body);
     state
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
