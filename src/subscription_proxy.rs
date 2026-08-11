@@ -123,6 +123,9 @@ async fn forward_subscription_openai_inner(
             "active upstream is not a subscription provider",
         );
     };
+    if let Some(response) = reject_unsupported_codex_output_limit(provider, &body) {
+        return response;
+    }
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
         Err(error) => {
@@ -594,6 +597,32 @@ fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut ser
     }
 }
 
+/// Reject a caller-supplied output cap that the `ChatGPT` backend cannot honor.
+///
+/// Every client surface has already converged on Responses shape at this point,
+/// so this single gate covers `max_output_tokens` from Responses and translated
+/// `max_tokens` / `max_completion_tokens` from Chat Completions and Messages.
+/// The backend rejects the parameter, and enforcing only visible text in the
+/// router would still leave hidden reasoning tokens unbounded. Failing before
+/// the upstream call is therefore the only way to preserve the cap's spend-
+/// control guarantee.
+fn reject_unsupported_codex_output_limit(
+    provider: SubscriptionProvider,
+    body: &serde_json::Value,
+) -> Option<Response> {
+    let has_limit = body
+        .get("max_output_tokens")
+        .is_some_and(|value| !value.is_null());
+    if provider != SubscriptionProvider::Codex || !has_limit {
+        return None;
+    }
+    Some(error_response(
+        StatusCode::BAD_REQUEST,
+        "invalid_request_error",
+        "Codex subscriptions cannot honor output-token limits because the ChatGPT backend rejects max_output_tokens. Remove the limit or select a provider that supports it; the router rejected this request instead of silently ignoring the cap.",
+    ))
+}
+
 /// Shape a Responses-API request body for the `ChatGPT` Codex backend.
 ///
 /// The Codex backend is stricter than the generic `OpenAI` Responses API: it
@@ -655,6 +684,62 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn codex_rejects_output_limits_from_every_client_surface() {
+        let responses = serde_json::json!({
+            "model": "gpt-5.6-sol",
+            "input": "hi",
+            "max_output_tokens": 16,
+        });
+        let chat = crate::responses::chat_completion_to_responses(&serde_json::json!({
+            "model": "gpt-5.6-sol",
+            "messages": [{"role": "user", "content": "hi"}],
+            "max_tokens": 16,
+        }));
+        let chat_completion = crate::responses::chat_completion_to_responses(&serde_json::json!({
+            "model": "gpt-5.6-sol",
+            "messages": [{"role": "user", "content": "hi"}],
+            "max_completion_tokens": 16,
+        }));
+        let anthropic_chat = crate::anthropic_bridge::anthropic_to_chat_request(
+            &serde_json::json!({
+                "model": "claude-sonnet-4-5",
+                "messages": [{"role": "user", "content": "hi"}],
+                "max_tokens": 16,
+            }),
+            "gpt-5.6-sol",
+        );
+        let anthropic = crate::responses::chat_completion_to_responses(&anthropic_chat);
+
+        for body in [&responses, &chat, &chat_completion, &anthropic] {
+            let response = reject_unsupported_codex_output_limit(SubscriptionProvider::Codex, body)
+                .expect("Codex must reject a limit it cannot honor");
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+            let error = axum::body::to_bytes(response.into_body(), 4096)
+                .await
+                .expect("read error body");
+            let error: serde_json::Value =
+                serde_json::from_slice(&error).expect("valid JSON error");
+            assert_eq!(error["error"]["type"], "invalid_request_error");
+            assert!(error["error"]["message"].as_str().is_some_and(|message| {
+                message.contains("rejected this request instead of silently ignoring")
+            }));
+        }
+    }
+
+    #[test]
+    fn output_limit_gate_leaves_uncapped_codex_and_other_providers_unchanged() {
+        let capped = serde_json::json!({"max_output_tokens": 16});
+        let uncapped = serde_json::json!({"model": "gpt-5.6-sol", "input": "hi"});
+
+        assert!(
+            reject_unsupported_codex_output_limit(SubscriptionProvider::Codex, &uncapped).is_none()
+        );
+        assert!(
+            reject_unsupported_codex_output_limit(SubscriptionProvider::Qwen, &capped).is_none()
+        );
+    }
 
     #[test]
     fn codex_normalizes_responses_body_for_chatgpt_backend() {
