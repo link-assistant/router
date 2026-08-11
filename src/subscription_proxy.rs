@@ -33,10 +33,58 @@ use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 pub async fn forward_subscription_openai(
     state: &AppState,
     headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    path: &str,
+    surface: Surface,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        path,
+        surface,
+        SubscriptionResponseShape::Passthrough,
+    )
+    .await
+}
+
+/// Forward a Chat Completions request translated to the Codex Responses API,
+/// then translate the upstream response back to the caller's requested shape.
+pub async fn forward_codex_chat_completions(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    surface: Surface,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        "/v1/responses",
+        surface,
+        SubscriptionResponseShape::ChatCompletion,
+    )
+    .await
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SubscriptionResponseShape {
+    Passthrough,
+    ChatCompletion,
+}
+
+async fn forward_subscription_openai_inner(
+    state: &AppState,
+    headers: &HeaderMap,
     mut body: serde_json::Value,
     routing_body: &serde_json::Value,
     path: &str,
     surface: Surface,
+    response_shape: SubscriptionResponseShape,
 ) -> Response {
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
@@ -216,7 +264,7 @@ pub async fn forward_subscription_openai(
     let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
 
     let codex = provider == SubscriptionProvider::Codex;
-    if stream_requested || is_event_stream(&content_type) {
+    if stream_requested || (!codex && is_event_stream(&content_type)) {
         // The Codex backend streams SSE but labels it `application/json`; re-label
         // so SSE-aware clients treat the body as the stream it is.
         let stream_content_type = if codex {
@@ -224,9 +272,23 @@ pub async fn forward_subscription_openai(
         } else {
             content_type
         };
-        let stream = upstream_resp
-            .bytes_stream()
-            .map(|chunk| chunk.map_err(std::io::Error::other));
+        let requested_model = routing_body
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model);
+        let stream = upstream_resp.bytes_stream().map(move |chunk| {
+            chunk.map_or_else(
+                |error| Err(std::io::Error::other(error)),
+                |bytes| {
+                    if codex && response_shape == SubscriptionResponseShape::ChatCompletion {
+                        Ok(bytes::Bytes::from(translator.push(&bytes).join("")))
+                    } else {
+                        Ok(bytes)
+                    }
+                },
+            )
+        });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         response
@@ -259,19 +321,45 @@ pub async fn forward_subscription_openai(
     // then parses the raw event stream as a single JSON object and fails with an
     // incomplete result. Collapse the SSE into the final `response.completed`
     // payload and return it as a normal JSON Responses object.
+    let mut response_body = upstream_body;
     if codex && status.is_success() {
-        if let Some(json) = codex_sse_to_response_json(&upstream_body) {
-            let mut response = Response::new(Body::from(json));
-            *response.status_mut() = status;
-            response
-                .headers_mut()
-                .insert("content-type", HeaderValue::from_static("application/json"));
-            apply_headers(response.headers_mut(), rate_limit_headers);
-            return response;
+        if let Some(json) = codex_sse_to_response_json(&response_body) {
+            response_body = bytes::Bytes::from(json);
         }
+        if response_shape == SubscriptionResponseShape::ChatCompletion {
+            let requested_model = routing_body
+                .get("model")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default();
+            let parsed = match serde_json::from_slice::<serde_json::Value>(&response_body) {
+                Ok(value) => value,
+                Err(error) => {
+                    return error_response(
+                        StatusCode::BAD_GATEWAY,
+                        "api_error",
+                        &format!(
+                            "Codex subscription upstream returned an invalid response: {error}"
+                        ),
+                    );
+                }
+            };
+            let translated =
+                crate::responses::response_to_chat_completion(&parsed, requested_model);
+            response_body = bytes::Bytes::from(
+                serde_json::to_vec(&translated).expect("JSON values always serialize"),
+            );
+        }
+
+        let mut response = Response::new(Body::from(response_body));
+        *response.status_mut() = status;
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+        apply_headers(response.headers_mut(), rate_limit_headers);
+        return response;
     }
 
-    let mut response = Response::new(Body::from(upstream_body));
+    let mut response = Response::new(Body::from(response_body));
     *response.status_mut() = status;
     response.headers_mut().insert("content-type", content_type);
     apply_headers(response.headers_mut(), rate_limit_headers);

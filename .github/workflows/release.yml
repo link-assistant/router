@@ -189,7 +189,9 @@ jobs:
         run: rust-script scripts/check-file-size.rs
 
       - name: Test release automation
-        run: rust-script --test scripts/version-and-commit.rs
+        run: |
+          rust-script --test scripts/version-and-commit.rs
+          rust-script --test scripts/check-docker-platforms.rs
 
   # === DEPENDENCY AUDIT ===
   # Both dependency surfaces the router carries: the Rust crates and the JS
@@ -408,6 +410,10 @@ jobs:
           username: konard
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up QEMU
+        if: steps.check.outputs.should_release == 'true'
+        uses: docker/setup-qemu-action@v4
+
       - name: Set up Docker Buildx
         if: steps.check.outputs.should_release == 'true'
         uses: docker/setup-buildx-action@v4
@@ -432,6 +438,7 @@ jobs:
         with:
           context: .
           target: runtime
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
@@ -456,9 +463,23 @@ jobs:
         with:
           context: .
           target: with-claude-cli
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-meta-claude-cli.outputs.tags }}
           labels: ${{ steps.docker-meta-claude-cli.outputs.labels }}
+
+      - name: Verify multi-platform Docker manifests
+        if: steps.check.outputs.should_release == 'true'
+        run: |
+          rust-script scripts/check-docker-platforms.rs \
+            "ghcr.io/${{ github.repository }}:latest" \
+            "ghcr.io/${{ github.repository }}:${{ steps.current_version.outputs.version }}" \
+            "ghcr.io/${{ github.repository }}:with-claude-cli" \
+            "ghcr.io/${{ github.repository }}:${{ steps.current_version.outputs.version }}-with-claude-cli" \
+            "${{ env.DOCKERHUB_IMAGE }}:latest" \
+            "${{ env.DOCKERHUB_IMAGE }}:${{ steps.current_version.outputs.version }}" \
+            "${{ env.DOCKERHUB_IMAGE }}:with-claude-cli" \
+            "${{ env.DOCKERHUB_IMAGE }}:${{ steps.current_version.outputs.version }}-with-claude-cli"
 
       - name: Create GitHub Release
         if: steps.check.outputs.should_release == 'true'
@@ -538,6 +559,10 @@ jobs:
           username: konard
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up QEMU
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        uses: docker/setup-qemu-action@v4
+
       - name: Set up Docker Buildx
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         uses: docker/setup-buildx-action@v4
@@ -562,6 +587,7 @@ jobs:
         with:
           context: .
           target: runtime
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
@@ -586,9 +612,23 @@ jobs:
         with:
           context: .
           target: with-claude-cli
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.docker-meta-claude-cli.outputs.tags }}
           labels: ${{ steps.docker-meta-claude-cli.outputs.labels }}
+
+      - name: Verify multi-platform Docker manifests
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        run: |
+          rust-script scripts/check-docker-platforms.rs \
+            "ghcr.io/${{ github.repository }}:latest" \
+            "ghcr.io/${{ github.repository }}:${{ steps.version.outputs.new_version }}" \
+            "ghcr.io/${{ github.repository }}:with-claude-cli" \
+            "ghcr.io/${{ github.repository }}:${{ steps.version.outputs.new_version }}-with-claude-cli" \
+            "${{ env.DOCKERHUB_IMAGE }}:latest" \
+            "${{ env.DOCKERHUB_IMAGE }}:${{ steps.version.outputs.new_version }}" \
+            "${{ env.DOCKERHUB_IMAGE }}:with-claude-cli" \
+            "${{ env.DOCKERHUB_IMAGE }}:${{ steps.version.outputs.new_version }}-with-claude-cli"
 
       - name: Create GitHub Release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'

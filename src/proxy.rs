@@ -556,12 +556,11 @@ pub async fn openai_chat_completions(
         // The ChatGPT backend speaks only the Responses API; translate the
         // Chat Completions request before forwarding.
         let responses_body = responses::chat_completion_to_responses(&body);
-        return crate::subscription_proxy::forward_subscription_openai(
+        return crate::subscription_proxy::forward_codex_chat_completions(
             &state,
             &headers,
             responses_body,
             &body,
-            "/v1/responses",
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
