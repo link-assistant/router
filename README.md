@@ -325,8 +325,10 @@ vendor CLI; its PKCE loopback flow remains available as a CLI fallback.
 | `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
 | `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
 
-For a foreground local login, use `link-assistant-router auth claude`,
-`auth claude --code <code>`, or `auth codex`. `auth status` reports each
+For a foreground local login, use `link-assistant-router auth claude` or
+`auth codex`. Claude's `--flow code` stores its pending PKCE login for 15
+minutes, so the code can be redeemed from a later process with
+`auth claude --flow code --code <code>`. `auth status` reports each
 provider credential as `usable`, `expired`, or `absent`. `auth codex` defaults
 to device authorization; `--flow device` or `--flow loopback` makes the choice
 explicit. Unsupported forced flows fail instead of falling back.

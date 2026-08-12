@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use axum::{Json, Router, extract::State, routing::post};
 use base64::Engine as _;
@@ -52,13 +53,14 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
     let address = listener.local_addr().unwrap();
     let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
     let home = tempfile::tempdir().unwrap();
-    let login = ClaudeLogin::begin(ClaudeAuthConfig {
+    let config = ClaudeAuthConfig {
         authorize_url: "https://claude.test/oauth/authorize".into(),
         token_url: format!("http://{address}/token"),
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
-    });
+    };
+    let login = ClaudeLogin::begin_persisted(config.clone(), Duration::from_secs(900)).unwrap();
     let state = reqwest::Url::parse(login.authorization_url())
         .unwrap()
         .query_pairs()
@@ -66,8 +68,10 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
         .unwrap()
         .1
         .into_owned();
+    drop(login);
 
-    let path = login
+    let path = ClaudeLogin::resume(config)
+        .unwrap()
         .complete(&format!("copied-code#{state}"))
         .await
         .unwrap();

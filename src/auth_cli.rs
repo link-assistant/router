@@ -32,12 +32,16 @@ async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> Ex
     // Disabling HTTP login routes must not disable this local CLI command.
     login_config.enabled = true;
     if flow == AuthFlow::Cli {
+        if code.is_some() {
+            eprintln!("error: --code requires --flow code; the CLI fallback starts its own login");
+            return ExitCode::from(2);
+        }
         return run_claude_cli_fallback(config, login_config, code).await;
     }
-    let manager = LoginManager::new(login_config.clone());
-    match complete_claude(config, &manager, code).await {
+    let has_code = code.is_some();
+    match complete_native_claude(config, code).await {
         Ok(()) => ExitCode::SUCCESS,
-        Err(error) if flow == AuthFlow::Auto => {
+        Err(error) if flow == AuthFlow::Auto && !has_code => {
             eprintln!("native Claude OAuth failed: {error}");
             eprintln!("Trying a disposable Claude Code CLI fallback…");
             run_claude_cli_fallback(config, login_config, None).await
@@ -49,7 +53,36 @@ async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> Ex
     }
 }
 
-async fn complete_claude(
+async fn complete_native_claude(config: &Config, code: Option<String>) -> Result<(), String> {
+    let auth_config = link_assistant_router::claude_auth::ClaudeAuthConfig::production(
+        config.login.claude_code_home.clone(),
+    );
+    let submitted = if let Some(code) = code {
+        code
+    } else {
+        let login = link_assistant_router::claude_auth::ClaudeLogin::begin_persisted(
+            auth_config.clone(),
+            config.login.session_ttl,
+        )?;
+        println!("Open this URL:\n{}", login.authorization_url());
+        read_code().await?
+    };
+    if submitted.trim().is_empty() {
+        return Err(
+            "no authorization code was supplied; the pending login was kept for `router auth claude --flow code --code <CODE>`"
+                .to_string(),
+        );
+    }
+    let login = link_assistant_router::claude_auth::ClaudeLogin::resume(auth_config)?;
+    login.complete(submitted.trim()).await?;
+    println!(
+        "Claude authorization saved in {}",
+        config.login.claude_code_home.display()
+    );
+    Ok(())
+}
+
+async fn complete_claude_cli(
     config: &Config,
     manager: &LoginManager,
     code: Option<String>,
@@ -94,7 +127,7 @@ async fn run_claude_cli_fallback(
                 return ExitCode::from(1);
             }
         };
-    match complete_claude(config, &LoginManager::new(fallback_config), code).await {
+    match complete_claude_cli(config, &LoginManager::new(fallback_config), code).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("error: {error}");

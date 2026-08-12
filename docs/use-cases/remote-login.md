@@ -155,13 +155,22 @@ For local or scripted authorization, use the foreground commands:
 
 ```bash
 link-assistant-router auth claude
-link-assistant-router auth claude --code "$CODE"
 link-assistant-router auth codex
 link-assistant-router auth status
 ```
 
-Claude supports `--flow code`; `--flow cli` forces the disposable bun fallback,
-while `auto` tries it only after native OAuth fails. Codex defaults to `--flow device`; use
+To split Claude authorization across processes or containers sharing the same
+`CLAUDE_CODE_HOME`, first run `auth claude --flow code` and open its URL. The
+pending PKCE state remains usable for 15 minutes if that process exits. Redeem
+the copied code without printing a different URL:
+
+```bash
+link-assistant-router auth claude --flow code --code "$CODE"
+```
+
+`--flow cli` forces the disposable bun fallback and cannot be combined with
+`--code`, while `auto` tries it only after native OAuth fails. Codex defaults
+to `--flow device`; use
 `--flow loopback` as an explicit fallback when device authorization is disabled
 for the account. Loopback binds port 1455 (or 1457 via `--port`) and validates
 OAuth state; the listener closes on success, denial, timeout and cancellation.

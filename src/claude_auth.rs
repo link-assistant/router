@@ -2,9 +2,10 @@
 
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use base64::Engine as _;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::refresh::{CLAUDE_CLIENT_ID, CLAUDE_TOKEN_URL};
@@ -16,6 +17,8 @@ pub const CLAUDE_AUTHORIZE_URL: &str = "https://claude.com/cai/oauth/authorize";
 pub const CLAUDE_REDIRECT_URI: &str = "https://platform.claude.com/oauth/code/callback";
 /// Scopes requested by the interactive Claude Code login.
 pub const CLAUDE_SCOPES: &str = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload";
+
+const PENDING_LOGIN_FILE: &str = ".link-assistant-router-claude-login.json";
 
 /// Testable settings for one native Claude authorization.
 #[derive(Clone, Debug)]
@@ -60,6 +63,13 @@ struct TokenResponse {
     rate_limit_tier: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct PendingLogin {
+    code_verifier: String,
+    state: String,
+    expires_at: i64,
+}
+
 impl ClaudeLogin {
     /// Construct a native login without spawning or locating a vendor CLI.
     #[must_use]
@@ -85,6 +95,42 @@ impl ClaudeLogin {
             code_verifier,
             state,
         }
+    }
+
+    /// Start a login whose PKCE state can be redeemed by a later CLI process.
+    pub fn begin_persisted(config: ClaudeAuthConfig, ttl: Duration) -> Result<Self, String> {
+        let login = Self::begin(config);
+        let ttl = i64::try_from(ttl.as_millis()).unwrap_or(i64::MAX);
+        let pending = PendingLogin {
+            code_verifier: login.code_verifier.clone(),
+            state: login.state.clone(),
+            expires_at: chrono::Utc::now().timestamp_millis().saturating_add(ttl),
+        };
+        write_pending(&login.config.claude_home, &pending)?;
+        Ok(login)
+    }
+
+    /// Atomically consume the PKCE state created by [`Self::begin_persisted`].
+    pub fn resume(config: ClaudeAuthConfig) -> Result<Self, String> {
+        let pending = take_pending(&config.claude_home)?;
+        if pending.expires_at <= chrono::Utc::now().timestamp_millis() {
+            return Err(
+                "pending Claude authorization expired; run `router auth claude --flow code` again"
+                    .to_string(),
+            );
+        }
+        if pending.code_verifier.is_empty() || pending.state.is_empty() {
+            return Err(
+                "pending Claude authorization is invalid; run `router auth claude --flow code` again"
+                    .to_string(),
+            );
+        }
+        Ok(Self {
+            config,
+            authorization_url: String::new(),
+            code_verifier: pending.code_verifier,
+            state: pending.state,
+        })
     }
 
     #[must_use]
@@ -134,6 +180,50 @@ impl ClaudeLogin {
         }
         persist(&self.config.claude_home, token)
     }
+}
+
+fn write_pending(home: &Path, pending: &PendingLogin) -> Result<(), String> {
+    std::fs::create_dir_all(home)
+        .map_err(|error| format!("could not create {}: {error}", home.display()))?;
+    let path = home.join(PENDING_LOGIN_FILE);
+    let temporary = home.join(format!("{PENDING_LOGIN_FILE}.{}.tmp", uuid::Uuid::new_v4()));
+    let bytes = serde_json::to_vec(pending)
+        .map_err(|error| format!("could not encode pending Claude authorization: {error}"))?;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary)
+        .map_err(|error| format!("could not create {}: {error}", temporary.display()))?;
+    file.write_all(&bytes)
+        .and_then(|()| file.sync_all())
+        .map_err(|error| format!("could not write {}: {error}", temporary.display()))?;
+    restrict_permissions(&temporary)?;
+    std::fs::rename(&temporary, &path)
+        .map_err(|error| format!("could not install {}: {error}", path.display()))
+}
+
+fn take_pending(home: &Path) -> Result<PendingLogin, String> {
+    let path = home.join(PENDING_LOGIN_FILE);
+    let claimed = home.join(format!(
+        "{PENDING_LOGIN_FILE}.{}.claimed",
+        uuid::Uuid::new_v4()
+    ));
+    std::fs::rename(&path, &claimed).map_err(|error| {
+        if error.kind() == std::io::ErrorKind::NotFound {
+            "no pending Claude authorization; run `router auth claude --flow code` first and open the printed URL"
+                .to_string()
+        } else {
+            format!("could not consume {}: {error}", path.display())
+        }
+    })?;
+    let result = std::fs::read(&claimed)
+        .map_err(|error| format!("could not read {}: {error}", claimed.display()))
+        .and_then(|bytes| {
+            serde_json::from_slice(&bytes)
+                .map_err(|error| format!("invalid pending Claude authorization: {error}"))
+        });
+    let _ = std::fs::remove_file(&claimed);
+    result
 }
 
 fn persist(home: &Path, token: TokenResponse) -> Result<PathBuf, String> {
