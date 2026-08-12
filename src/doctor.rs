@@ -1,6 +1,6 @@
 //! Subscription diagnostics shared by the `doctor` CLI command.
 
-use crate::model_catalog::fetch_provider_catalog;
+use crate::model_catalog::{fetch_provider_catalog, is_credential_rejection};
 use crate::subscription::{SubscriptionProvider, all_subscription_readers};
 
 /// Report credential and live-catalog health for every provider.
@@ -47,7 +47,7 @@ pub async fn subscription_catalog_diagnostics(
         let catalog = fetch_provider_catalog(&client, provider, &token, None).await;
         let rejected = catalog
             .as_ref()
-            .is_err_and(|error| error.starts_with("HTTP 401") || error.starts_with("HTTP 403"));
+            .is_err_and(|error| is_credential_rejection(error));
         let status = match (was_expired, still_expired, rejected) {
             (_, true, true) => "found, token EXPIRED and REJECTED",
             (_, true, false) => "found, token EXPIRED on disk but ACCEPTED upstream",

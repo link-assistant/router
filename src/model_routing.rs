@@ -92,12 +92,10 @@ pub fn available_provider_for_model(
 /// Readers whose credential can plausibly serve a request, refreshing an
 /// expired on-disk token into the shared in-memory cache when possible.
 ///
-/// `expiresAt` is treated as a *hint*, not a verdict. Vendors have been
-/// observed to keep honouring a stamped-expired access token on the inference
-/// endpoint while rejecting it on `/v1/models`, so a credential that cannot be
-/// refreshed is still offered for routing — the upstream gets to decide. Only
-/// positive evidence (an upstream 401/403 recorded by a real call, see
-/// [`crate::refresh::CredentialEvidence`]) removes a provider.
+/// `expiresAt` is treated as a *hint*, not a verdict, so a stamped-expired
+/// credential remains available until an upstream call supplies stronger
+/// evidence. A 401/403 from inference or live catalog discovery removes the
+/// provider regardless of its local expiry timestamp.
 pub async fn healthy_providers(
     client: &reqwest::Client,
     readers: &[SubscriptionReader],
@@ -114,15 +112,13 @@ pub async fn healthy_providers(
             let token = token_cache
                 .get_fresh(client, provider, disk_token, now_ms)
                 .await;
-            if !token.is_expired(now_ms) {
-                return Some(provider);
-            }
             if token_cache.evidence(provider) == Some(crate::refresh::CredentialEvidence::Rejected)
             {
-                tracing::debug!(
-                    "{provider} credential is expired and was rejected upstream; not routable"
-                );
+                tracing::debug!("{provider} credential was rejected upstream; not routable");
                 return None;
+            }
+            if !token.is_expired(now_ms) {
+                return Some(provider);
             }
             tracing::debug!(
                 "{provider} credential is stamped expired and could not be refreshed; keeping it \
@@ -141,6 +137,13 @@ pub async fn healthy_providers(
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
     let now = chrono::Utc::now().timestamp();
+    let using_fallback = providers
+        .iter()
+        .any(|provider| catalogs.status(*provider).using_fallback);
+    let healthy_providers = providers
+        .iter()
+        .map(|provider| provider.as_str())
+        .collect::<Vec<_>>();
     let data = providers
         .iter()
         .flat_map(|provider| {
@@ -155,7 +158,12 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
             })
         })
         .collect::<Vec<_>>();
-    json!({"object": "list", "data": data})
+    json!({
+        "object": "list",
+        "data": data,
+        "using_fallback": using_fallback,
+        "healthy_providers": healthy_providers,
+    })
 }
 
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.
@@ -396,6 +404,74 @@ mod tests {
             data.iter()
                 .any(|m| m["id"] == "gpt-5" && m["owned_by"] == "openai")
         );
+        assert_eq!(catalog["using_fallback"], true);
+        assert_eq!(catalog["healthy_providers"], json!(["claude", "codex"]));
+
+        let unavailable = model_catalog(&[], &catalogs);
+        assert_eq!(unavailable["data"], json!([]));
+        assert_eq!(unavailable["using_fallback"], false);
+        assert_eq!(unavailable["healthy_providers"], json!([]));
+    }
+
+    #[tokio::test]
+    async fn models_omits_a_rejected_provider_and_names_only_healthy_ones() {
+        let data = tempdir().unwrap();
+        let claude = tempdir().unwrap();
+        let codex = tempdir().unwrap();
+        fs::write(
+            claude.path().join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"revoked"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            codex.path().join("auth.json"),
+            r#"{"tokens":{"access_token":"healthy"}}"#,
+        )
+        .unwrap();
+        let state = auto_state(
+            vec![
+                SubscriptionReader::new(SubscriptionProvider::Claude, claude.path()),
+                SubscriptionReader::new(SubscriptionProvider::Codex, codex.path()),
+            ],
+            data.path(),
+        );
+        state
+            .subscription_cache
+            .record_credential_rejected(SubscriptionProvider::Claude);
+        let client_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+        let app = axum::Router::new()
+            .route("/v1/models", get(models))
+            .with_state(state.clone());
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/v1/models")
+                    .header("authorization", format!("Bearer {client_token}"))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let catalog: Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(catalog["healthy_providers"], json!(["codex"]));
+        assert_eq!(catalog["using_fallback"], true);
+        assert!(
+            catalog["data"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|model| model["owned_by"] == "openai")
+        );
+
+        let error = route_state(&state, &json!({"model": "claude-opus-4-7"}))
+            .await
+            .err()
+            .expect("rejected Claude credential should not be routable");
+        assert!(error.to_string().contains("no healthy claude credential"));
     }
 
     #[tokio::test]
@@ -574,6 +650,28 @@ mod tests {
 
         // An observed upstream 401/403 is the evidence that does drop it.
         cache.record_credential_rejected(SubscriptionProvider::Gemini);
+        assert!(
+            healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000)
+                .await
+                .is_empty()
+        );
+    }
+
+    #[tokio::test]
+    async fn rejected_credential_is_unhealthy_even_without_an_expiry_timestamp() {
+        let credential = tempdir().unwrap();
+        fs::write(
+            credential.path().join("auth.json"),
+            r#"{"tokens":{"access_token":"revoked"}}"#,
+        )
+        .unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            credential.path(),
+        )];
+        let cache = crate::refresh::TokenCache::new();
+        cache.record_credential_rejected(SubscriptionProvider::Codex);
+
         assert!(
             healthy_providers(&reqwest::Client::new(), &readers, &cache, 2000)
                 .await
