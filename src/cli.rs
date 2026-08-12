@@ -473,6 +473,8 @@ pub enum AuthFlow {
     Code,
     /// Local OAuth callback listener.
     Loopback,
+    /// Disposable vendor CLI compatibility flow.
+    Cli,
 }
 
 /// Provider authorization operations.

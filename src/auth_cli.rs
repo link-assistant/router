@@ -16,30 +16,46 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
 }
 
 async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> ExitCode {
-    if !matches!(flow, AuthFlow::Auto | AuthFlow::Code) {
-        eprintln!("error: Claude does not support {flow:?}; use --flow code");
+    if !matches!(flow, AuthFlow::Auto | AuthFlow::Code | AuthFlow::Cli) {
+        eprintln!("error: Claude does not support {flow:?}; use --flow code or --flow cli");
         return ExitCode::from(2);
     }
     let mut login_config = config.login.clone();
     // Disabling HTTP login routes must not disable this local CLI command.
     login_config.enabled = true;
-    let manager = LoginManager::new(login_config);
-    let begun = match manager.begin().await {
-        Ok(view) => view,
+    if flow == AuthFlow::Cli {
+        return run_claude_cli_fallback(config, login_config, code).await;
+    }
+    let manager = LoginManager::new(login_config.clone());
+    match complete_claude(config, &manager, code).await {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) if flow == AuthFlow::Auto => {
+            eprintln!("native Claude OAuth failed: {error}");
+            eprintln!("Trying a disposable Claude Code CLI fallback…");
+            run_claude_cli_fallback(config, login_config, None).await
+        }
         Err(error) => {
             eprintln!("error: {error}");
-            return ExitCode::from(1);
+            ExitCode::from(1)
         }
+    }
+}
+
+async fn complete_claude(
+    config: &Config,
+    manager: &LoginManager,
+    code: Option<String>,
+) -> Result<(), String> {
+    let begun = match manager.begin().await {
+        Ok(view) => view,
+        Err(error) => return Err(error.to_string()),
     };
     println!("Open this URL:\n{}", begun.url.as_deref().unwrap_or(""));
     let submitted = match code {
         Some(code) => code,
         None => match read_code().await {
             Ok(code) => code,
-            Err(error) => {
-                eprintln!("error: {error}");
-                return ExitCode::from(1);
-            }
+            Err(error) => return Err(error),
         },
     };
     match manager.submit_code(&begun.login_id, submitted.trim()).await {
@@ -48,16 +64,30 @@ async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> Ex
                 "Claude authorization saved in {}",
                 config.login.claude_code_home.display()
             );
-            ExitCode::SUCCESS
+            Ok(())
         }
-        Ok(view) => {
-            eprintln!(
-                "error: {}",
-                view.error
-                    .unwrap_or_else(|| "authorization failed".to_string())
-            );
-            ExitCode::from(1)
-        }
+        Ok(view) => Err(view
+            .error
+            .unwrap_or_else(|| "authorization failed".to_string())),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+async fn run_claude_cli_fallback(
+    config: &Config,
+    login_config: link_assistant_router::login::LoginConfig,
+    code: Option<String>,
+) -> ExitCode {
+    let (_disposable, fallback_config) =
+        match link_assistant_router::on_demand_cli::DisposableCli::claude(&login_config) {
+            Ok(value) => value,
+            Err(error) => {
+                eprintln!("error: {error}");
+                return ExitCode::from(1);
+            }
+        };
+    match complete_claude(config, &LoginManager::new(fallback_config), code).await {
+        Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("error: {error}");
             ExitCode::from(1)
@@ -79,6 +109,10 @@ async fn read_code() -> Result<String, String> {
 }
 
 async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
+    if flow == AuthFlow::Cli {
+        eprintln!("error: Codex does not support CLI; use --flow device or --flow loopback");
+        return ExitCode::from(2);
+    }
     if flow == AuthFlow::Code {
         eprintln!("error: Codex does not support Code; use --flow device or --flow loopback");
         return ExitCode::from(2);
