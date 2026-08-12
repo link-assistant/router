@@ -192,6 +192,7 @@ jobs:
         run: |
           rust-script --test scripts/version-and-commit.rs
           rust-script --test scripts/check-docker-platforms.rs
+          rust-script --test scripts/check-github-releases.rs
 
   # === DEPENDENCY AUDIT ===
   # Both dependency surfaces the router carries: the Rust crates and the JS
@@ -619,6 +620,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: refs/tags/v${{ env.RELEASE_VERSION }}
+          fetch-depth: 0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -630,6 +632,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: rust-script scripts/create-github-release.rs --release-version "${{ env.RELEASE_VERSION }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
+
+      - name: Verify GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:

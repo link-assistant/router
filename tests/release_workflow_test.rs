@@ -96,6 +96,33 @@ fn release_workflow_does_not_gate_releases_on_docker_builds() {
 }
 
 #[test]
+fn release_workflows_detect_missing_github_releases() {
+    let release_workflow = read_lf(".github/workflows/release.yml");
+    let reconciliation_workflow = read_lf(".github/workflows/verify-releases.yml");
+    let verification_command = "rust-script scripts/check-github-releases.rs --repository \"${{ github.repository }}\" --default-branch main";
+
+    assert!(
+        release_workflow.contains(verification_command),
+        "each release run should fail if any default-branch version tag lacks a GitHub Release"
+    );
+    assert!(
+        release_workflow
+            .contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}\n          fetch-depth: 0"),
+        "the post-release check should fetch the default branch and complete tag history"
+    );
+    assert!(
+        reconciliation_workflow.contains("schedule:")
+            && reconciliation_workflow.contains("fetch-depth: 0")
+            && reconciliation_workflow.contains(verification_command),
+        "a scheduled reconciliation should detect release drift outside release runs"
+    );
+    assert!(
+        release_workflow.contains("rust-script --test scripts/check-github-releases.rs"),
+        "CI should exercise the release reconciliation script's regression tests"
+    );
+}
+
+#[test]
 fn release_workflow_publishes_one_native_image_per_architecture() {
     let workflow = read_lf(".github/workflows/release.yml");
 
