@@ -318,6 +318,9 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    outputs:
+      should-release: ${{ steps.check.outputs.should_release }}
+      release-version: ${{ steps.current_version.outputs.version }}
     # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
     if: |
       always() && !cancelled() &&
@@ -328,9 +331,6 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
-    outputs:
-      publish_images: ${{ steps.check.outputs.should_release }}
-      release_version: ${{ steps.current_version.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -383,17 +383,14 @@ jobs:
         if: steps.check.outputs.should_release == 'true'
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
 
-      - name: Create GitHub Release
-        if: steps.check.outputs.should_release == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.current_version.outputs.version }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
-
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Instant Release
     needs: [lint, test, build]
+    outputs:
+      should-release: ${{ steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true' }}
+      release-version: ${{ steps.version.outputs.new_version }}
     # Note: always() is required to evaluate the condition when dependencies use always().
     # The build job ensures lint and test passed before this job runs.
     if: |
@@ -405,9 +402,6 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
-    outputs:
-      publish_images: ${{ steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true' }}
-      release_version: ${{ steps.version.outputs.new_version }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -448,45 +442,119 @@ jobs:
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
 
-      - name: Create GitHub Release
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
-
-  # === PUBLISH DOCKER IMAGES ===
-  # Images are follow-up artifacts: release notes and the crate are already public.
+  # Build every image variant and architecture on a native runner. Each matrix
+  # leg pushes a digest; the following job gives those digests their tags.
   publish-docker-images:
-    name: Publish Docker Image (${{ matrix.target }})
-    needs: [auto-release, manual-release]
-    if: |
-      always() && !cancelled() && (
-        (needs.auto-release.result == 'success' && needs.auto-release.outputs.publish_images == 'true') ||
-        (needs.manual-release.result == 'success' && needs.manual-release.outputs.publish_images == 'true')
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-      packages: write
+    name: Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})
+    needs: [create-github-release]
+    if: always() && !cancelled() && needs.create-github-release.result == 'success'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - target: runtime
-            floating_tag: latest
-            version_suffix: ''
-            cache_scope: runtime
-          - target: with-claude-cli
-            floating_tag: with-claude-cli
-            version_suffix: '-with-claude-cli'
-            cache_scope: with-claude-cli
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+            variant: runtime
+            target: runtime
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+            variant: claude-cli
+            target: with-claude-cli
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            variant: runtime
+            target: runtime
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            variant: claude-cli
+            target: with-claude-cli
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
     env:
-      RELEASE_VERSION: ${{ needs.auto-release.outputs.release_version || needs.manual-release.outputs.release_version }}
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
     steps:
       - uses: actions/checkout@v6
         with:
           ref: refs/tags/v${{ env.RELEASE_VERSION }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: konard
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Extract Docker metadata
+        id: docker-meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_IMAGE }}
+          tags: type=raw,value=${{ env.RELEASE_VERSION }}
+          labels: org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+
+      - name: Build and push image by digest
+        id: build-image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          outputs: type=image,"name=ghcr.io/${{ github.repository }},${{ env.DOCKERHUB_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.arch }}-${{ matrix.variant }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}-${{ matrix.variant }}
+
+      - name: Export image digest
+        env:
+          IMAGE_DIGEST: ${{ steps.build-image.outputs.digest }}
+        run: |
+          mkdir -p "/tmp/digests/${{ matrix.variant }}"
+          touch "/tmp/digests/${{ matrix.variant }}/${IMAGE_DIGEST#sha256:}"
+
+      - name: Upload image digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.variant }}-${{ matrix.arch }}
+          path: /tmp/digests/${{ matrix.variant }}/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-docker-manifests:
+    name: Publish Multi-Platform Docker Manifests
+    needs: [create-github-release, publish-docker-images]
+    if: always() && !cancelled() && needs.publish-docker-images.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install rust-script
         run: cargo install rust-script
@@ -504,46 +572,101 @@ jobs:
           username: konard
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Extract Docker metadata
-        id: docker-meta
-        uses: docker/metadata-action@v6
+      - name: Download runtime digests
+        uses: actions/download-artifact@v8
         with:
-          images: |
-            ghcr.io/${{ github.repository }}
-            ${{ env.DOCKERHUB_IMAGE }}
-          tags: |
-            type=raw,value=${{ matrix.floating_tag }}
-            type=raw,value=${{ env.RELEASE_VERSION }}${{ matrix.version_suffix }}
-          labels: |
-            org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+          pattern: runtime-*
+          path: /tmp/digests/runtime
+          merge-multiple: true
 
-      - name: Publish image to registries
-        uses: docker/build-push-action@v7
+      - name: Download Claude CLI digests
+        uses: actions/download-artifact@v8
         with:
-          context: .
-          target: ${{ matrix.target }}
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: |
-            type=gha,scope=runtime
-            type=gha,scope=with-claude-cli
-          cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}
+          pattern: claude-cli-*
+          path: /tmp/digests/claude-cli
+          merge-multiple: true
+
+      - name: Create multi-platform manifests
+        shell: bash
+        run: |
+          ghcr_runtime=()
+          dockerhub_runtime=()
+          for digest in /tmp/digests/runtime/*; do
+            hash="$(basename "$digest")"
+            ghcr_runtime+=("ghcr.io/${{ github.repository }}@sha256:$hash")
+            dockerhub_runtime+=("${{ env.DOCKERHUB_IMAGE }}@sha256:$hash")
+          done
+          docker buildx imagetools create \
+            -t "ghcr.io/${{ github.repository }}:latest" \
+            -t "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
+            "${ghcr_runtime[@]}"
+          docker buildx imagetools create \
+            -t "${{ env.DOCKERHUB_IMAGE }}:latest" \
+            -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
+            "${dockerhub_runtime[@]}"
+
+          ghcr_claude_cli=()
+          dockerhub_claude_cli=()
+          for digest in /tmp/digests/claude-cli/*; do
+            hash="$(basename "$digest")"
+            ghcr_claude_cli+=("ghcr.io/${{ github.repository }}@sha256:$hash")
+            dockerhub_claude_cli+=("${{ env.DOCKERHUB_IMAGE }}@sha256:$hash")
+          done
+          docker buildx imagetools create \
+            -t "ghcr.io/${{ github.repository }}:with-claude-cli" \
+            -t "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}-with-claude-cli" \
+            "${ghcr_claude_cli[@]}"
+          docker buildx imagetools create \
+            -t "${{ env.DOCKERHUB_IMAGE }}:with-claude-cli" \
+            -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}-with-claude-cli" \
+            "${dockerhub_claude_cli[@]}"
 
       - name: Verify multi-platform Docker manifests
         run: |
           rust-script scripts/check-docker-platforms.rs \
-            "ghcr.io/${{ github.repository }}:${{ matrix.floating_tag }}" \
-            "ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}${{ matrix.version_suffix }}" \
-            "${{ env.DOCKERHUB_IMAGE }}:${{ matrix.floating_tag }}" \
-            "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}${{ matrix.version_suffix }}"
+            "ghcr.io/${{ github.repository }}:latest" \
+            "ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}" \
+            "ghcr.io/${{ github.repository }}:with-claude-cli" \
+            "ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}-with-claude-cli" \
+            "${{ env.DOCKERHUB_IMAGE }}:latest" \
+            "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}" \
+            "${{ env.DOCKERHUB_IMAGE }}:with-claude-cli" \
+            "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}-with-claude-cli"
+
+  create-github-release:
+    name: Create GitHub Release
+    needs: [auto-release, manual-release]
+    if: |
+      always() && !cancelled() && (
+        (needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') ||
+        (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true')
+      )
+    outputs:
+      release-version: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: cargo install rust-script
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: rust-script scripts/create-github-release.rs --release-version "${{ env.RELEASE_VERSION }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:

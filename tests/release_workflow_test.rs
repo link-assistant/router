@@ -79,9 +79,15 @@ fn release_workflow_does_not_gate_releases_on_docker_builds() {
     );
     assert!(
         workflow.contains(
-            "publish-docker-images:\n    name: Publish Docker Image (${{ matrix.target }})\n    needs: [auto-release, manual-release]"
+            "create-github-release:\n    name: Create GitHub Release\n    needs: [auto-release, manual-release]"
         ),
-        "published image builds should depend on completed release jobs"
+        "GitHub release publication should depend directly on completed crate release jobs"
+    );
+    assert!(
+        workflow.contains(
+            "publish-docker-images:\n    name: Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})\n    needs: [create-github-release]"
+        ),
+        "published image builds should begin only after the GitHub release exists"
     );
     assert!(
         workflow.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"),
@@ -97,21 +103,29 @@ fn release_workflow_publishes_cached_image_variants_in_parallel() {
         workflow.contains("strategy:\n      fail-fast: false\n      matrix:\n        include:"),
         "Docker image variants should be separate matrix jobs"
     );
-    for target in ["runtime", "with-claude-cli"] {
-        assert!(
-            workflow.contains(&format!("- target: {target}")),
-            "Docker matrix should publish the {target} target"
-        );
-    }
     assert!(
-        workflow.contains("cache-from: |")
-            && workflow.contains("cache-to: type=gha,mode=max,scope=${{ matrix.cache_scope }}"),
-        "every matrix image build should restore and save BuildKit's GitHub Actions cache"
+        workflow.contains("runner: ubuntu-latest") && workflow.contains("runner: ubuntu-24.04-arm"),
+        "native architecture builds should run concurrently as matrix jobs"
+    );
+    assert_eq!(
+        workflow.matches("variant: runtime").count(),
+        2,
+        "the runtime variant should have one native matrix leg per architecture"
+    );
+    assert_eq!(
+        workflow.matches("variant: claude-cli").count(),
+        2,
+        "the Claude CLI variant should have one native matrix leg per architecture"
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
         workflow.matches("cache-to: type=gha").count(),
         "every Buildx invocation should persist its cache"
+    );
+    assert_eq!(
+        workflow.matches("docker/build-push-action@v7").count(),
+        workflow.matches("cache-from: type=gha").count(),
+        "every Buildx invocation should restore its architecture- and target-specific cache"
     );
 }
 
@@ -267,8 +281,8 @@ fn release_workflow_adds_crates_io_link_to_github_releases() {
     let crates_url_arg = "--crates-io-url \"https://crates.io/crates/link-assistant-router\"";
     assert_eq!(
         workflow.matches(crates_url_arg).count(),
-        2,
-        "auto and manual GitHub releases should include the crates.io package URL"
+        1,
+        "the shared GitHub release job should include the crates.io package URL"
     );
     assert!(
         release_script
@@ -329,28 +343,28 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
         workflow
             .matches("password: ${{ secrets.DOCKERHUB_TOKEN }}")
             .count(),
-        1,
-        "the Docker publishing matrix should authenticate to Docker Hub with DOCKERHUB_TOKEN"
+        2,
+        "Docker build and manifest jobs should authenticate with DOCKERHUB_TOKEN"
     );
     assert_eq!(
         workflow.matches("username: konard").count(),
-        1,
-        "the Docker publishing matrix should publish as the konard Docker Hub user"
+        2,
+        "Docker build and manifest jobs should publish as the konard Docker Hub user"
     );
     assert_eq!(
         workflow.matches("docker/login-action@v4").count(),
-        2,
-        "the Docker publishing matrix should log in to both GHCR and Docker Hub"
+        4,
+        "Docker build and manifest jobs should log in to both GHCR and Docker Hub"
     );
     assert_eq!(
         workflow.matches("docker/metadata-action@v6").count(),
         1,
-        "the Docker publishing matrix should derive metadata for each image variant"
+        "the shared native matrix should preserve standard OCI image metadata"
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
         1,
-        "the matrix build step should push each selected image variant"
+        "all native matrix legs should share one image build step"
     );
 
     let auto_publish = workflow
@@ -359,19 +373,15 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
     let auto_wait = workflow
         .find("- name: Wait for Crate availability on Crates.io")
         .expect("auto release should wait for the crate to be visible");
-    let auto_docker = workflow
-        .find("- name: Publish image to registries")
-        .expect("auto release should publish Docker images");
-    let auto_github_release = workflow
-        .find("- name: Create GitHub Release")
-        .expect("auto release should create a GitHub release");
-
-    assert!(
-        auto_publish < auto_wait
-            && auto_wait < auto_github_release
-            && auto_github_release < auto_docker,
-        "auto release should publish the crate and GitHub release before Docker images"
-    );
+    let docker_build = workflow
+        .find("publish-docker-images:")
+        .expect("shared native Docker build job should exist");
+    let docker_manifests = workflow
+        .find("publish-docker-manifests:")
+        .expect("shared Docker manifest job should exist");
+    let github_release = workflow
+        .find("create-github-release:")
+        .expect("shared GitHub release job should exist");
 
     let manual_release = workflow
         .find("manual-release:")
@@ -383,18 +393,18 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
     let manual_wait = manual_section
         .find("- name: Wait for Crate availability on Crates.io")
         .expect("manual release should wait for the crate to be visible");
-    let manual_docker = manual_section
-        .find("- name: Publish image to registries")
-        .expect("manual release should publish Docker images");
-    let manual_github_release = manual_section
-        .find("- name: Create GitHub Release")
-        .expect("manual release should create a GitHub release");
-
     assert!(
-        manual_publish < manual_wait
-            && manual_wait < manual_github_release
-            && manual_github_release < manual_docker,
-        "manual release should publish the crate and GitHub release before Docker images"
+        auto_publish < auto_wait
+            && auto_wait < docker_build
+            && manual_publish < manual_wait
+            && manual_release + manual_wait < docker_build
+            && docker_build < docker_manifests,
+        "both release paths should publish crates.io before the shared follow-up jobs"
+    );
+    assert!(
+        workflow[github_release..].contains("needs: [auto-release, manual-release]")
+            && workflow[docker_build..].contains("needs: [create-github-release]"),
+        "the workflow DAG should publish the GitHub release before native Docker images"
     );
 }
 
@@ -563,25 +573,25 @@ fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
 
     assert_eq!(
         workflow.matches("target: runtime").count(),
-        1,
-        "the Docker matrix should include the minimal `runtime` stage"
+        2,
+        "the native build matrix should include the minimal `runtime` stage for both architectures"
     );
     assert_eq!(
         workflow.matches("target: with-claude-cli").count(),
-        1,
-        "the Docker matrix should include the Claude CLI variant"
+        2,
+        "the native build matrix should include the Claude CLI variant for both architectures"
     );
     assert_eq!(
-        workflow.matches("floating_tag: with-claude-cli").count(),
-        1,
-        "the Claude CLI matrix entry should get a floating `with-claude-cli` tag"
+        workflow.matches(":with-claude-cli\"").count(),
+        4,
+        "both registries should get and verify the floating `with-claude-cli` tag"
     );
     assert_eq!(
         workflow
-            .matches("version_suffix: '-with-claude-cli'")
+            .matches("${RELEASE_VERSION}-with-claude-cli")
             .count(),
-        1,
-        "the Claude CLI matrix entry should also get a version-pinned tag suffix"
+        2,
+        "both registries should get a version-pinned Claude CLI tag"
     );
 }
 
@@ -590,24 +600,49 @@ fn release_workflow_publishes_and_verifies_multi_platform_images() {
     let workflow = read_lf(".github/workflows/release.yml");
     let platform_check = read_lf("scripts/check-docker-platforms.rs");
 
+    assert!(
+        !workflow.contains("docker/setup-qemu-action"),
+        "release images must not use QEMU emulation"
+    );
+    for snippet in [
+        "platform: linux/amd64",
+        "runner: ubuntu-latest",
+        "platform: linux/arm64",
+        "runner: ubuntu-24.04-arm",
+        "runs-on: ${{ matrix.runner }}",
+        "platforms: ${{ matrix.platform }}",
+    ] {
+        assert!(
+            workflow.contains(snippet),
+            "native release matrix should contain `{snippet}`"
+        );
+    }
     assert_eq!(
-        workflow.matches("docker/setup-qemu-action@v4").count(),
+        workflow.matches("push-by-digest=true").count(),
         1,
-        "the Docker matrix should install emulation for each cross-platform build"
+        "the shared matrix step should publish every architecture-specific image by digest"
     );
     assert_eq!(
-        workflow
-            .matches("platforms: linux/amd64,linux/arm64")
-            .count(),
+        workflow.matches("cache-from: type=gha").count(),
         1,
-        "the matrix build should publish every variant for amd64 and arm64"
+        "every matrix build should reuse its isolated GitHub Actions cache"
+    );
+    assert_eq!(
+        workflow.matches("cache-to: type=gha,mode=max").count(),
+        1,
+        "every matrix build should populate its isolated GitHub Actions cache"
+    );
+    assert_eq!(
+        workflow.matches("docker buildx imagetools create").count(),
+        4,
+        "both registries and both variants should receive merged multi-platform manifests"
     );
     assert_eq!(
         workflow
             .matches("rust-script scripts/check-docker-platforms.rs")
             .count(),
         1,
-        "each Docker matrix job should verify its published manifests"
+        "the shared manifest job should verify every published image"
     );
     assert!(
         workflow.contains("rust-script --test scripts/check-docker-platforms.rs"),

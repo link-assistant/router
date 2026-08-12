@@ -11,26 +11,33 @@ fn main() {
     let required_snippets = [
         "auto-release:",
         "manual-release:",
+        "publish-docker-images:",
+        "publish-docker-manifests:",
         "packages: write",
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
         "docker/login-action@v4",
-        "docker/setup-qemu-action@v4",
         "docker/setup-buildx-action@v4",
         "docker/metadata-action@v6",
         "docker/build-push-action@v7",
-        "platforms: linux/amd64,linux/arm64",
+        "platform: linux/amd64",
+        "platform: linux/arm64",
+        "runner: ubuntu-24.04-arm",
+        "runs-on: ${{ matrix.runner }}",
+        "platforms: ${{ matrix.platform }}",
+        "push-by-digest=true",
+        "cache-from: type=gha",
+        "cache-to: type=gha,mode=max",
+        "docker buildx imagetools create",
         "rust-script scripts/check-docker-platforms.rs",
         "username: konard",
         "password: ${{ secrets.DOCKERHUB_TOKEN }}",
         "ghcr.io/${{ github.repository }}",
         "${{ env.DOCKERHUB_IMAGE }}",
-        "floating_tag: latest",
-        "floating_tag: with-claude-cli",
-        "type=raw,value=${{ matrix.floating_tag }}",
-        "type=raw,value=${{ env.RELEASE_VERSION }}${{ matrix.version_suffix }}",
-        "org.opencontainers.image.version=${{ env.RELEASE_VERSION }}",
+        "labels: ${{ steps.docker-meta.outputs.labels }}",
+        "needs: [create-github-release]",
+        "ref: refs/tags/v${{ env.RELEASE_VERSION }}",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
     ];
@@ -44,38 +51,54 @@ fn main() {
         }
     }
 
-    if count_occurrences(&workflow, "packages: write") < 1 {
-        failures.push("Docker publishing must grant packages: write".to_string());
+    if count_occurrences(&workflow, "packages: write") < 2 {
+        failures.push("Docker build and manifest jobs must grant packages: write".to_string());
     }
 
-    if count_occurrences(&workflow, "docker/login-action@v4") < 2 {
-        failures.push("Docker publishing must log in to GHCR and Docker Hub".to_string());
-    }
-
-    if count_occurrences(&workflow, "docker/build-push-action@v7") < 1 {
-        failures.push("Docker publishing must build and push each image variant".to_string());
-    }
-
-    if count_occurrences(&workflow, "docker/setup-qemu-action@v4") < 1 {
-        failures.push("Docker publishing must enable cross-platform emulation".to_string());
-    }
-
-    if count_occurrences(&workflow, "platforms: linux/amd64,linux/arm64") < 1 {
+    if count_occurrences(&workflow, "docker/login-action@v4") < 4 {
         failures.push(
-            "Docker publishing must publish every image variant for amd64 and arm64".to_string(),
+            "Docker build and manifest jobs must both log in to GHCR and Docker Hub".to_string(),
+        );
+    }
+
+    if count_occurrences(&workflow, "docker/build-push-action@v7") != 1 {
+        failures.push("the variant-and-architecture matrix must use one shared build step".to_string());
+    }
+
+    if workflow.contains("docker/setup-qemu-action") {
+        failures.push("release images must not use QEMU emulation".to_string());
+    }
+
+    if count_occurrences(&workflow, "push-by-digest=true") != 1 {
+        failures.push(
+            "every matrix leg must publish its native image by digest".to_string(),
+        );
+    }
+
+    if count_occurrences(&workflow, "docker buildx imagetools create") != 4 {
+        failures.push(
+            "both registries must receive merged runtime and Claude CLI manifests".to_string(),
         );
     }
 
     if count_occurrences(
         &workflow,
         "rust-script scripts/check-docker-platforms.rs",
-    ) < 1
+    ) != 1
     {
-        failures.push("Docker publishing must verify multi-platform manifests".to_string());
+        failures.push(
+            "the shared manifest job must verify every published multi-platform image".to_string(),
+        );
     }
 
-    if !workflow.contains("cache-from: |") || !workflow.contains("cache-to: type=gha") {
-        failures.push("Docker publishing must use a persistent BuildKit cache".to_string());
+    if workflow.contains("docker-build:")
+        || workflow.contains("needs: [lint, test, build, docker-build]")
+    {
+        failures.push("release publication must not wait for a disposable Docker build".to_string());
+    }
+
+    if !workflow.contains("create-github-release:\n    name: Create GitHub Release\n    needs: [auto-release, manual-release]") {
+        failures.push("GitHub releases must be created immediately after crate publication".to_string());
     }
 
     if count_occurrences(
@@ -92,29 +115,25 @@ fn main() {
     if count_occurrences(
         &workflow,
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
-    ) < 2
+    ) != 1
     {
         failures.push(
-            "auto and manual GitHub releases must include the crates.io release badge/link"
-                .to_string(),
+            "the shared GitHub release must include the crates.io release badge/link".to_string(),
         );
     }
 
     if count_occurrences(
         &workflow,
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
-    ) < 2
+    ) != 1
     {
         failures.push(
-            "auto and manual GitHub releases must include the Docker Hub release badge/link"
-                .to_string(),
+            "the shared GitHub release must include the Docker Hub release badge/link".to_string(),
         );
     }
 
     if failures.is_empty() {
-        println!(
-            "release workflow publishes crates and verified multi-platform GHCR/Docker Hub images"
-        );
+        println!("release workflow builds native images and publishes verified multi-platform manifests");
     } else {
         for failure in failures {
             eprintln!("Error: {failure}");
