@@ -19,7 +19,7 @@ use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
 use log_lazy::LogLazy;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use crate::accounts::RoutingContext;
 pub use crate::app_state::AppState;
@@ -65,7 +65,58 @@ pub fn merge_oauth_beta(existing: Option<&str>) -> String {
 }
 
 /// Hop-by-hop headers that must not be forwarded.
-const HOP_BY_HOP_HEADERS: &[&str] = &["host", "connection", "transfer-encoding", "keep-alive"];
+const HOP_BY_HOP_HEADERS: &[&str] = &[
+    "host",
+    "connection",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+];
+
+/// Upstream response fields that can contain credentials or establish client state.
+const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
+    "authorization",
+    "proxy-authorization",
+    "set-cookie",
+    "set-cookie2",
+    "x-api-key",
+];
+
+/// Select end-to-end upstream response headers that are safe to relay to a client.
+///
+/// This policy is shared by Claude and subscription provider paths so vendor
+/// quota fields and request IDs are preserved consistently. Besides standard
+/// hop-by-hop fields, it removes fields named by `Connection`, upstream
+/// credentials, and `Content-Length` (response bodies may be translated).
+pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
+    let connection_headers: HashSet<String> = headers
+        .get_all("connection")
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .map(|name| name.trim().to_ascii_lowercase())
+        .filter(|name| !name.is_empty())
+        .collect();
+    let mut relayed = HeaderMap::new();
+
+    for (name, value) in headers {
+        let name_lower = name.as_str();
+        if HOP_BY_HOP_HEADERS.contains(&name_lower)
+            || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
+            || name_lower == "content-length"
+            || connection_headers.contains(name_lower)
+        {
+            continue;
+        }
+        relayed.append(name.clone(), value.clone());
+    }
+
+    relayed
+}
 
 /// Health check endpoint.
 #[allow(clippy::unused_async)]
@@ -350,14 +401,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     }
 
     // Build the response -- stream it back to preserve SSE
-    let mut response_headers = HeaderMap::new();
-    for (name, value) in upstream_resp.headers() {
-        let name_lower = name.as_str().to_lowercase();
-        if HOP_BY_HOP_HEADERS.contains(&name_lower.as_str()) {
-            continue;
-        }
-        response_headers.insert(name.clone(), value.clone());
-    }
+    let response_headers = relay_response_headers(upstream_resp.headers());
 
     // Stream the response body
     let response_log = std::sync::Arc::clone(&state.request_log);
