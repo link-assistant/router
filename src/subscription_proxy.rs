@@ -207,7 +207,10 @@ async fn forward_subscription_openai_inner(
     };
     let bytes_sent = serialized.len() as u64;
 
-    let base_url = sub_token.base_url(provider);
+    let base_url = state
+        .subscription_base_url
+        .clone()
+        .unwrap_or_else(|| sub_token.base_url(provider));
     let upstream_url = join_subscription_url(provider, &base_url, path);
 
     let mut upstream_req = state

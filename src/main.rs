@@ -270,6 +270,7 @@ async fn run_server(
         oauth_provider,
         account_router,
         subscription_reader,
+        subscription_base_url: None,
         subscription_readers,
         model_catalogs: Arc::clone(&model_catalogs),
         subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
