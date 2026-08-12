@@ -27,6 +27,12 @@ pub struct AppState {
     /// Subscription credential reader for vendor OAuth providers
     /// (Codex/Gemini/Qwen). `None` for non-subscription upstreams.
     pub subscription_reader: Option<crate::subscription::SubscriptionReader>,
+    /// Optional subscription API base URL override.
+    ///
+    /// Production leaves this unset and uses the provider's canonical URL;
+    /// integration tests use it to drive the real forwarding path against a
+    /// local deterministic upstream.
+    pub subscription_base_url: Option<String>,
     /// Credential readers for every discoverable vendor subscription.
     pub subscription_readers: Vec<crate::subscription::SubscriptionReader>,
     /// Last known live model catalogs, refreshed independently in the background.

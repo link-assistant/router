@@ -207,7 +207,10 @@ async fn forward_subscription_openai_inner(
     };
     let bytes_sent = serialized.len() as u64;
 
-    let base_url = sub_token.base_url(provider);
+    let base_url = state
+        .subscription_base_url
+        .clone()
+        .unwrap_or_else(|| sub_token.base_url(provider));
     let upstream_url = join_subscription_url(provider, &base_url, path);
 
     let mut upstream_req = state
@@ -267,8 +270,8 @@ async fn forward_subscription_openai_inner(
         .get("content-type")
         .cloned()
         .unwrap_or_else(|| HeaderValue::from_static("application/json"));
-    // Preserve rate-limit signals (Retry-After, x-ratelimit-*) so clients can
-    // back off intelligently when a subscription upstream throttles us.
+    // Preserve vendor rate-limit and request-id signals so clients can back
+    // off intelligently and correlate failures with the upstream provider.
     let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
 
     let codex = provider == SubscriptionProvider::Codex;
@@ -490,14 +493,21 @@ fn update_codex_output_text(
     }
 }
 
-/// Collect rate-limit-related headers (`retry-after`, `x-ratelimit-*`) from an
-/// upstream response so they can be relayed to the client.
+/// Collect quota and request-id headers from an upstream response.
+///
+/// Codex names quota fields `x-codex-*` and its request id
+/// `x-oai-request-id`; the older filter only recognized the generic
+/// `x-ratelimit-*` family and silently discarded both.
 fn rate_limit_headers(headers: &HeaderMap) -> Vec<(axum::http::HeaderName, HeaderValue)> {
     headers
         .iter()
         .filter(|(name, _)| {
             let n = name.as_str();
-            n == "retry-after" || n.starts_with("x-ratelimit")
+            n == "retry-after"
+                || n == "x-request-id"
+                || n == "x-oai-request-id"
+                || n.starts_with("x-ratelimit")
+                || n.starts_with("x-codex-")
         })
         .map(|(name, value)| (name.clone(), value.clone()))
         .collect()
@@ -935,15 +945,33 @@ mod tests {
             "x-ratelimit-remaining-requests",
             HeaderValue::from_static("0"),
         );
+        headers.insert("x-codex-active-limit", HeaderValue::from_static("primary"));
+        headers.insert("x-oai-request-id", HeaderValue::from_static("req_123"));
+        headers.insert("authorization", HeaderValue::from_static("Bearer secret"));
+        headers.insert("x-api-key", HeaderValue::from_static("secret"));
+        headers.insert("set-cookie", HeaderValue::from_static("session=secret"));
         headers.insert("content-type", HeaderValue::from_static("application/json"));
         let selected = rate_limit_headers(&headers);
-        assert_eq!(selected.len(), 2);
+        assert_eq!(selected.len(), 4);
         assert!(selected.iter().any(|(n, _)| n.as_str() == "retry-after"));
         assert!(
             selected
                 .iter()
                 .any(|(n, _)| n.as_str() == "x-ratelimit-remaining-requests")
         );
+        assert!(
+            selected
+                .iter()
+                .any(|(n, _)| n.as_str() == "x-codex-active-limit")
+        );
+        assert!(
+            selected
+                .iter()
+                .any(|(n, _)| n.as_str() == "x-oai-request-id")
+        );
+        assert!(selected.iter().all(|(name, _)| {
+            !matches!(name.as_str(), "authorization" | "x-api-key" | "set-cookie")
+        }));
     }
 
     #[test]

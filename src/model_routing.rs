@@ -348,6 +348,7 @@ mod tests {
             oauth_provider: crate::oauth::OAuthProvider::new(&data_dir.to_string_lossy()),
             account_router: None,
             subscription_reader: None,
+            subscription_base_url: None,
             subscription_readers: readers,
             model_catalogs: Arc::new(ModelCatalogCache::new()),
             subscription_cache: Arc::new(crate::refresh::TokenCache::new()),

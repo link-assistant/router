@@ -27,6 +27,7 @@ fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
         ),
         account_router: None,
         subscription_reader: None,
+        subscription_base_url: None,
         subscription_readers: vec![],
         model_catalogs: Arc::new(link_assistant_router::model_catalog::ModelCatalogCache::new()),
         subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
