@@ -147,13 +147,16 @@ pub async fn refresh_catalogs(
                     "refreshed {provider} model catalog with {} model(s)",
                     models.len()
                 );
+                token_cache.record_credential_working(provider);
                 cache.record_success(provider, models);
             }
             Err(error) => {
-                // A catalog rejection is evidence about the catalog endpoint
-                // only. The provider keeps serving from its last known models
-                // (`using_fallback` says whether those are the bundled ones),
-                // and routing keeps offering it until inference itself fails.
+                // Keep the last known models in the cache for transient
+                // failures, but an authentication rejection makes them unsafe
+                // to advertise or route until a later probe succeeds.
+                if is_credential_rejection(&error) {
+                    token_cache.record_credential_rejected(provider);
+                }
                 let error = if stamped_expired {
                     format!("{error} (credential is stamped expired; last known catalog retained)")
                 } else {
@@ -164,6 +167,12 @@ pub async fn refresh_catalogs(
             }
         }
     }
+}
+
+/// Whether a catalog response proves that the supplied credential is unusable.
+#[must_use]
+pub(crate) fn is_credential_rejection(error: &str) -> bool {
+    error.starts_with("HTTP 401") || error.starts_with("HTTP 403")
 }
 
 /// Continuously refresh live catalogs, beginning immediately at startup.
@@ -424,17 +433,22 @@ mod tests {
                 resource_url: Some(format!("http://{address}")),
             },
         );
+        token_cache.record_credential_rejected(SubscriptionProvider::Qwen);
         let catalogs = ModelCatalogCache::new();
 
         refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &catalogs).await;
 
         assert_eq!(catalogs.models(SubscriptionProvider::Qwen), ["qwen-live"]);
         assert!(!catalogs.status(SubscriptionProvider::Qwen).using_fallback);
+        assert_eq!(
+            token_cache.evidence(SubscriptionProvider::Qwen),
+            Some(crate::refresh::CredentialEvidence::Working)
+        );
     }
 
-    /// A stamped-expired credential is still probed, and when the catalog
-    /// endpoint rejects it the provider keeps serving its last known models
-    /// instead of losing its catalog to a timestamp.
+    /// A stamped-expired credential is still probed. Its last known catalog is
+    /// retained for diagnostics, while rejection evidence prevents it from
+    /// being advertised or routed.
     #[tokio::test]
     async fn expired_credential_is_still_probed_and_keeps_its_cached_catalog() {
         async fn handler() -> (axum::http::StatusCode, &'static str) {
@@ -460,14 +474,9 @@ mod tests {
         )];
         let catalogs = ModelCatalogCache::new();
         catalogs.record_success(SubscriptionProvider::Qwen, vec!["qwen-known".to_string()]);
+        let token_cache = crate::refresh::TokenCache::new();
 
-        refresh_catalogs(
-            &reqwest::Client::new(),
-            &readers,
-            &crate::refresh::TokenCache::new(),
-            &catalogs,
-        )
-        .await;
+        refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &catalogs).await;
 
         let status = catalogs.status(SubscriptionProvider::Qwen);
         // The fetch was actually attempted (the 401 proves the request went out)
@@ -475,8 +484,50 @@ mod tests {
         let error = status.last_error.expect("catalog fetch was attempted");
         assert!(error.starts_with("HTTP 401"), "{error}");
         assert!(error.contains("stamped expired"), "{error}");
-        // ...and the last known catalog survives the failure.
+        // The last known catalog survives internally, but the shared rejection
+        // evidence removes it from routing and public catalog responses.
         assert_eq!(status.models, ["qwen-known"]);
+        assert_eq!(
+            token_cache.evidence(SubscriptionProvider::Qwen),
+            Some(crate::refresh::CredentialEvidence::Rejected)
+        );
+    }
+
+    #[tokio::test]
+    async fn catalog_auth_rejection_is_recorded_as_credential_evidence() {
+        async fn handler() -> (axum::http::StatusCode, &'static str) {
+            (axum::http::StatusCode::UNAUTHORIZED, "revoked token")
+        }
+
+        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let home = tempdir().unwrap();
+        fs::write(
+            home.path().join("oauth_creds.json"),
+            format!(r#"{{"access_token":"revoked","resource_url":"http://{address}"}}"#),
+        )
+        .unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Qwen,
+            home.path(),
+        )];
+        let token_cache = crate::refresh::TokenCache::new();
+
+        refresh_catalogs(
+            &reqwest::Client::new(),
+            &readers,
+            &token_cache,
+            &ModelCatalogCache::new(),
+        )
+        .await;
+
+        assert_eq!(
+            token_cache.evidence(SubscriptionProvider::Qwen),
+            Some(crate::refresh::CredentialEvidence::Rejected)
+        );
     }
 
     #[test]
