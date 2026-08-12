@@ -40,6 +40,7 @@ fn main() {
         "ref: refs/tags/v${{ env.RELEASE_VERSION }}",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
+        "rust-script scripts/check-github-releases.rs --repository \"${{ github.repository }}\" --default-branch main",
     ];
 
     let mut failures = Vec::new();
@@ -99,6 +100,10 @@ fn main() {
 
     if !workflow.contains("create-github-release:\n    name: Create GitHub Release\n    needs: [auto-release, manual-release]") {
         failures.push("GitHub releases must be created immediately after crate publication".to_string());
+    }
+
+    if !workflow.contains("rust-script --test scripts/check-github-releases.rs") {
+        failures.push("CI must test GitHub release reconciliation logic".to_string());
     }
 
     if count_occurrences(
