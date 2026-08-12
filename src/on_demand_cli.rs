@@ -27,6 +27,9 @@ impl DisposableCli {
                 "x".into(),
                 "--bun".into(),
                 "@anthropic-ai/claude-code@latest".into(),
+                "auth".into(),
+                "login".into(),
+                "--claudeai".into(),
             ];
             config.package_cache = Some(root.join("bun-cache"));
         } else if command_exists("npx") {
@@ -36,6 +39,9 @@ impl DisposableCli {
                 "--cache".into(),
                 root.join("npm-cache").to_string_lossy().into_owned(),
                 "@anthropic-ai/claude-code@latest".into(),
+                "auth".into(),
+                "login".into(),
+                "--claudeai".into(),
             ];
             config.package_cache = Some(root.join("npm-cache"));
         } else {
@@ -112,5 +118,17 @@ mod tests {
         .read_token()
         .unwrap();
         assert_eq!(token.access_token, "sk-ant-oat-result");
+    }
+
+    #[test]
+    fn fallback_runs_the_dedicated_subscription_login_command() {
+        let (_guard, config) = DisposableCli::claude(&LoginConfig::default()).unwrap();
+
+        assert!(config.args.ends_with(&[
+            "@anthropic-ai/claude-code@latest".to_string(),
+            "auth".to_string(),
+            "login".to_string(),
+            "--claudeai".to_string(),
+        ]));
     }
 }
