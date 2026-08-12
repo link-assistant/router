@@ -58,7 +58,7 @@ pub const GEMINI_CLIENT_SECRET_ENV: &str = "GEMINI_OAUTH_CLIENT_SECRET";
 pub const CLAUDE_CLIENT_ID: &str = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 
 /// Anthropic's OAuth token endpoint.
-pub const CLAUDE_TOKEN_URL: &str = "https://console.anthropic.com/v1/oauth/token";
+pub const CLAUDE_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
 
 /// Refresh parameters for a provider. Every subscription provider now has a
 /// public OAuth client, so this is total.
