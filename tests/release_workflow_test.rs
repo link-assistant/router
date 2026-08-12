@@ -238,8 +238,8 @@ fn release_workflow_adds_crates_io_link_to_github_releases() {
     let crates_url_arg = "--crates-io-url \"https://crates.io/crates/link-assistant-router\"";
     assert_eq!(
         workflow.matches(crates_url_arg).count(),
-        2,
-        "auto and manual GitHub releases should include the crates.io package URL"
+        1,
+        "the shared GitHub release job should include the crates.io package URL"
     );
     assert!(
         release_script
@@ -301,27 +301,27 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
             .matches("password: ${{ secrets.DOCKERHUB_TOKEN }}")
             .count(),
         2,
-        "auto and manual release jobs should authenticate to Docker Hub with DOCKERHUB_TOKEN"
+        "Docker build and manifest jobs should authenticate with DOCKERHUB_TOKEN"
     );
     assert_eq!(
         workflow.matches("username: konard").count(),
         2,
-        "auto and manual release jobs should publish as the konard Docker Hub user"
+        "Docker build and manifest jobs should publish as the konard Docker Hub user"
     );
     assert_eq!(
         workflow.matches("docker/login-action@v4").count(),
         4,
-        "auto and manual release jobs should log in to both GHCR and Docker Hub"
+        "Docker build and manifest jobs should log in to both GHCR and Docker Hub"
     );
     assert_eq!(
         workflow.matches("docker/metadata-action@v6").count(),
-        4,
-        "auto and manual release jobs should derive Docker metadata for the default and Claude CLI images"
+        1,
+        "the shared native matrix should preserve standard OCI image metadata"
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
-        4,
-        "auto and manual release jobs should push the default and Claude CLI images"
+        2,
+        "the native matrix should push the default and Claude CLI images"
     );
 
     let auto_publish = workflow
@@ -330,17 +330,15 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
     let auto_wait = workflow
         .find("- name: Wait for Crate availability on Crates.io")
         .expect("auto release should wait for the crate to be visible");
-    let auto_docker = workflow
-        .find("- name: Publish Docker images to registries")
-        .expect("auto release should publish Docker images");
-    let auto_github_release = workflow
-        .find("- name: Create GitHub Release")
-        .expect("auto release should create a GitHub release");
-
-    assert!(
-        auto_publish < auto_wait && auto_wait < auto_docker && auto_docker < auto_github_release,
-        "auto release should publish crates.io first, then Docker images, then the GitHub release"
-    );
+    let docker_build = workflow
+        .find("publish-docker-images:")
+        .expect("shared native Docker build job should exist");
+    let docker_manifests = workflow
+        .find("publish-docker-manifests:")
+        .expect("shared Docker manifest job should exist");
+    let github_release = workflow
+        .find("create-github-release:")
+        .expect("shared GitHub release job should exist");
 
     let manual_release = workflow
         .find("manual-release:")
@@ -352,18 +350,14 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
     let manual_wait = manual_section
         .find("- name: Wait for Crate availability on Crates.io")
         .expect("manual release should wait for the crate to be visible");
-    let manual_docker = manual_section
-        .find("- name: Publish Docker images to registries")
-        .expect("manual release should publish Docker images");
-    let manual_github_release = manual_section
-        .find("- name: Create GitHub Release")
-        .expect("manual release should create a GitHub release");
-
     assert!(
-        manual_publish < manual_wait
-            && manual_wait < manual_docker
-            && manual_docker < manual_github_release,
-        "manual release should publish crates.io first, then Docker images, then the GitHub release"
+        auto_publish < auto_wait
+            && auto_wait < docker_build
+            && manual_publish < manual_wait
+            && manual_release + manual_wait < docker_build
+            && docker_build < docker_manifests
+            && docker_manifests < github_release,
+        "both release paths should publish crates.io first, then native Docker images and manifests, then the GitHub release"
     );
 }
 
@@ -532,23 +526,25 @@ fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
 
     assert_eq!(
         workflow.matches("target: runtime").count(),
-        2,
-        "auto and manual release jobs should pin the default image to the minimal `runtime` stage"
+        1,
+        "the shared native build matrix should pin the default image to the minimal `runtime` stage"
     );
     assert_eq!(
         workflow.matches("target: with-claude-cli").count(),
-        2,
-        "auto and manual release jobs should also build the Claude CLI variant"
+        1,
+        "the shared native build matrix should also build the Claude CLI variant"
     );
     assert_eq!(
-        workflow.matches("type=raw,value=with-claude-cli").count(),
-        2,
-        "the Claude CLI variant should get a floating `with-claude-cli` tag"
+        workflow.matches(":with-claude-cli\"").count(),
+        4,
+        "both registries should get and verify the floating `with-claude-cli` tag"
     );
     assert_eq!(
-        workflow.matches("-with-claude-cli\n").count(),
+        workflow
+            .matches("${RELEASE_VERSION}-with-claude-cli")
+            .count(),
         2,
-        "the Claude CLI variant should also get a version-pinned tag"
+        "both registries should get a version-pinned Claude CLI tag"
     );
 }
 
@@ -557,24 +553,49 @@ fn release_workflow_publishes_and_verifies_multi_platform_images() {
     let workflow = read_lf(".github/workflows/release.yml");
     let platform_check = read_lf("scripts/check-docker-platforms.rs");
 
+    assert!(
+        !workflow.contains("docker/setup-qemu-action"),
+        "release images must not use QEMU emulation"
+    );
+    for snippet in [
+        "platform: linux/amd64",
+        "runner: ubuntu-latest",
+        "platform: linux/arm64",
+        "runner: ubuntu-24.04-arm",
+        "runs-on: ${{ matrix.runner }}",
+        "platforms: ${{ matrix.platform }}",
+    ] {
+        assert!(
+            workflow.contains(snippet),
+            "native release matrix should contain `{snippet}`"
+        );
+    }
     assert_eq!(
-        workflow.matches("docker/setup-qemu-action@v4").count(),
+        workflow.matches("push-by-digest=true").count(),
         2,
-        "auto and manual release jobs should install emulation for cross-platform builds"
+        "both image variants should publish architecture-specific digests"
     );
     assert_eq!(
-        workflow
-            .matches("platforms: linux/amd64,linux/arm64")
-            .count(),
+        workflow.matches("cache-from: type=gha").count(),
+        2,
+        "both image variants should reuse GitHub Actions build cache"
+    );
+    assert_eq!(
+        workflow.matches("cache-to: type=gha,mode=max").count(),
+        2,
+        "both image variants should populate GitHub Actions build cache"
+    );
+    assert_eq!(
+        workflow.matches("docker buildx imagetools create").count(),
         4,
-        "both image variants in both release paths should publish amd64 and arm64 manifests"
+        "both registries and both variants should receive merged multi-platform manifests"
     );
     assert_eq!(
         workflow
             .matches("rust-script scripts/check-docker-platforms.rs")
             .count(),
-        2,
-        "auto and manual releases should verify the published manifests"
+        1,
+        "the shared manifest job should verify every published image"
     );
     assert!(
         workflow.contains("rust-script --test scripts/check-docker-platforms.rs"),
