@@ -600,13 +600,15 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     let payload: Value = messages.json().await.expect("Messages JSON response");
     assert!(payload["content"].is_array());
 
-    let requests = codex.requests.lock().expect("stub requests");
-    assert_eq!(requests.len(), 1);
-    assert!(
-        requests[0].get("max_output_tokens").is_none(),
-        "the unsupported field must still be omitted from the Codex request"
-    );
-    drop(requests);
+    {
+        let requests = codex.requests.lock().expect("stub requests");
+        assert_eq!(requests.len(), 1);
+        assert!(
+            requests[0].get("max_output_tokens").is_none(),
+            "the unsupported field must still be omitted from the Codex request"
+        );
+        drop(requests);
+    }
 
     // A Messages request without its required field is a protocol error, not
     // an unsupported-Codex-cap error, and must not reach the subscription.

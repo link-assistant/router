@@ -584,10 +584,10 @@ fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut ser
 ///
 /// Every client surface has already converged on Responses shape at this point,
 /// so `surface` preserves the otherwise-lost distinction between an optional
-/// OpenAI limit and the protocol-required `max_tokens` on Anthropic Messages.
+/// `OpenAI` limit and the protocol-required `max_tokens` on Anthropic Messages.
 /// The backend rejects the parameter, and enforcing only visible text in the
 /// router would still leave hidden reasoning tokens unbounded. Failing before
-/// the upstream call is therefore the only way to preserve optional OpenAI
+/// the upstream call is therefore the only way to preserve optional `OpenAI`
 /// caps as spend controls. Messages requests remain usable and normalization
 /// removes their mandatory field before the Codex request is serialized.
 fn reject_unsupported_codex_output_limit(

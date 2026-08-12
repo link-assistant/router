@@ -558,10 +558,10 @@ pub async fn forward_anthropic_messages(
     headers: &HeaderMap,
     anthropic_body: Value,
 ) -> Response {
-    if !anthropic_body
+    if anthropic_body
         .get("max_tokens")
         .and_then(Value::as_u64)
-        .is_some_and(|limit| limit > 0)
+        .is_none_or(|limit| limit == 0)
     {
         // Keep authentication ahead of request validation even though the
         // delegated forwarder is not reached for a malformed Messages body.
