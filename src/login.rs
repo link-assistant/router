@@ -1,13 +1,9 @@
 //! Login sessions that authorize a deployment without a pre-existing
 //! credential file.
 //!
-//! The router can only *read* Claude Code credentials ([`crate::oauth`]), so a
-//! fresh container has nothing to read and no way to produce it: the Claude
-//! Code login is interactive, and the machine that would run it is not the
-//! machine the router runs on (issue #47).
-//!
-//! This module closes that gap by driving Claude Code on a PTY and conducting
-//! Codex device authorization directly. It exposes the irreducibly human step
+//! Claude and Codex authorization run in-process. The legacy Claude Code PTY
+//! driver remains available as a compatibility fallback. This module exposes
+//! the irreducibly human step
 //! — approving a URL in a browser — through provider-aware HTTP sessions:
 //!
 //! 1. [`LoginManager::begin`] starts the provider flow and returns its URL with
@@ -19,11 +15,12 @@
 //! # Why the session outlives the request
 //!
 //! Between steps 1 and 3 the router is waiting on a human — tens of seconds at
-//! best, minutes realistically, possibly on another device. Re-spawning the
-//! CLI is not an option, because a second run prints a *different* URL and the
-//! code the user is holding no longer matches. So the child process, its PTY,
-//! and its terminal state are owned by a registry entry keyed by `login_id`,
-//! with their own generous TTL that is independent of any HTTP timeout.
+//! best, minutes realistically, possibly on another device. Restarting the
+//! authorization is not an option, because a second run creates different PKCE
+//! state and the code the user is holding no longer matches. The native state
+//! (or the PTY for an explicitly configured compatibility flow) is therefore
+//! owned by a registry entry keyed by `login_id`, with a generous TTL that is
+//! independent of any HTTP timeout.
 //!
 //! Sessions are bounded in both directions: at most
 //! [`LoginConfig::max_sessions`] may be pending at once (so repeated `begin`
@@ -75,6 +72,8 @@ pub struct LoginConfig {
     /// Arguments passed to that program. Empty selects the default TUI
     /// `/login` flow; `["setup-token"]` selects the narrow-scope alternative.
     pub args: Vec<String>,
+    /// Optional disposable package cache exposed only to the fallback runner.
+    pub package_cache: Option<PathBuf>,
     /// Directory the resulting credential must land in. This is the same
     /// directory [`crate::oauth::OAuthProvider`] reads.
     pub claude_code_home: PathBuf,
@@ -103,6 +102,7 @@ impl Default for LoginConfig {
             enabled: true,
             command: "claude".to_string(),
             args: vec![],
+            package_cache: None,
             claude_code_home: PathBuf::from("/data/claude"),
             codex_home: PathBuf::from("/data/codex"),
             codex_issuer: crate::auth::CODEX_ISSUER.to_string(),
@@ -215,6 +215,8 @@ struct SessionState {
     error: Option<String>,
     /// Dropped (and thus killed) as soon as the session stops being pending.
     pty: Option<Arc<PtySession>>,
+    /// Native Claude PKCE state; no vendor process exists on this path.
+    claude_login: Option<crate::claude_auth::ClaudeLogin>,
     /// Provider authorization task; aborting it stops polling or the listener.
     auth_task: Option<tokio::task::JoinHandle<()>>,
     /// When the session reached a terminal state, which starts the clock on
@@ -289,8 +291,7 @@ impl LoginManager {
         self.config.enabled
     }
 
-    /// Start a login: spawn the CLI, wait for its authorization URL, and
-    /// register the still-running session so a later request can finish it.
+    /// Start the provider-native Claude login.
     pub async fn begin(&self) -> Result<LoginView, LoginError> {
         self.begin_for(SubscriptionProvider::Claude).await
     }
@@ -315,10 +316,25 @@ impl LoginManager {
         }
         ensure_writable_dir(&self.config.claude_code_home)?;
 
-        let config = Arc::clone(&self.config);
-        let (pty, url) = tokio::task::spawn_blocking(move || spawn_and_wait_for_url(&config))
-            .await
-            .map_err(|e| LoginError::Spawn(e.to_string()))??;
+        // A non-default command is an intentional compatibility/test backend.
+        // Normal deployments never locate or spawn the vendor CLI.
+        let (pty, claude_login, url) = if self.config.command != "claude"
+            || !self.config.args.is_empty()
+        {
+            let config = Arc::clone(&self.config);
+            let (pty, url) = tokio::task::spawn_blocking(move || spawn_and_wait_for_url(&config))
+                .await
+                .map_err(|e| LoginError::Spawn(e.to_string()))??;
+            (Some(pty), None, url)
+        } else {
+            let login = crate::claude_auth::ClaudeLogin::begin(
+                crate::claude_auth::ClaudeAuthConfig::production(
+                    self.config.claude_code_home.clone(),
+                ),
+            );
+            let url = login.authorization_url().to_string();
+            (None, Some(login), url)
+        };
 
         let id = uuid::Uuid::new_v4().to_string();
         let session = Arc::new(Session {
@@ -333,7 +349,8 @@ impl LoginManager {
                 status: LoginStatus::AwaitingCode,
                 expires_at: None,
                 error: None,
-                pty: Some(pty),
+                pty,
+                claude_login,
                 auth_task: None,
                 settled_at: None,
             }),
@@ -368,6 +385,7 @@ impl LoginManager {
                 expires_at: None,
                 error: None,
                 pty: None,
+                claude_login: None,
                 auth_task: None,
                 settled_at: None,
             }),
@@ -424,7 +442,7 @@ impl LoginManager {
             .map(Arc::clone)
             .ok_or(LoginError::NotFound)?;
 
-        let pty = {
+        let (pty, claude_login) = {
             let state = session
                 .state
                 .lock()
@@ -432,15 +450,32 @@ impl LoginManager {
             if state.status != LoginStatus::AwaitingCode {
                 return Err(LoginError::NotPending(state.status.clone()));
             }
-            state.pty.clone().ok_or(LoginError::NotFound)?
+            (state.pty.clone(), state.claude_login.clone())
         };
 
-        let config = Arc::clone(&self.config);
         let code = code.trim().to_string();
-        let outcome =
+        let outcome = if let Some(login) = claude_login {
+            match login.complete(&code).await {
+                Ok(_) => read_credential(&self.config.claude_code_home).map_or_else(
+                    || {
+                        Outcome::Failed(
+                            "native Claude OAuth did not write a readable credential".into(),
+                        )
+                    },
+                    |credential| Outcome::Authorized {
+                        expires_at: credential.expires_at,
+                    },
+                ),
+                Err(error) => Outcome::Failed(error),
+            }
+        } else if let Some(pty) = pty {
+            let config = Arc::clone(&self.config);
             tokio::task::spawn_blocking(move || submit_and_finalize(&config, &pty, &code))
                 .await
-                .map_err(|e| LoginError::Spawn(e.to_string()))?;
+                .map_err(|e| LoginError::Spawn(e.to_string()))?
+        } else {
+            return Err(LoginError::NotFound);
+        };
 
         Self::finish(&session, outcome);
         Ok(session.view())
@@ -489,6 +524,7 @@ impl LoginManager {
                 state.status = LoginStatus::Expired;
                 state.error = Some("login session expired before authorization completed".into());
                 state.pty = None; // dropping the PTY kills the child
+                state.claude_login = None;
                 if let Some(task) = state.auth_task.take() {
                     task.abort();
                 }
@@ -529,6 +565,7 @@ impl LoginManager {
             }
         }
         state.pty = None;
+        state.claude_login = None;
         state.auth_task = None;
         state.settled_at = Some(Utc::now());
     }
@@ -539,6 +576,7 @@ impl LoginManager {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         state.pty = None;
+        state.claude_login = None;
         if let Some(task) = state.auth_task.take() {
             task.abort();
         }
@@ -597,6 +635,9 @@ fn spawn_and_wait_for_url(config: &LoginConfig) -> Result<(Arc<PtySession>, Stri
         command.env("HOME", parent);
     }
     command.env("TERM", "xterm-256color");
+    if let Some(cache) = &config.package_cache {
+        command.env("BUN_INSTALL_CACHE_DIR", cache);
+    }
     if let Ok(path) = std::env::var("PATH") {
         command.env("PATH", path);
     }

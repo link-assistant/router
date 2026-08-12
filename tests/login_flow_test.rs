@@ -61,6 +61,28 @@ fn setup_token_manager_with(home: &Path) -> LoginManager {
 }
 
 #[tokio::test]
+async fn native_claude_login_starts_without_spawning_the_vendor_cli() {
+    let home = temp_home();
+    let manager = LoginManager::new(LoginConfig {
+        command: "claude".into(),
+        args: vec![],
+        claude_code_home: home.clone(),
+        ..LoginConfig::default()
+    });
+
+    let begun = manager.begin().await.expect("native login should start");
+
+    assert_eq!(begun.status, LoginStatus::AwaitingCode);
+    assert!(begun.url.unwrap().starts_with("https://claude.com/"));
+    assert!(
+        std::fs::read_dir(&home).unwrap().next().is_none(),
+        "beginning native OAuth should not install or write a CLI"
+    );
+    let _ = manager.cancel(&begun.login_id);
+    std::fs::remove_dir_all(home).ok();
+}
+
+#[tokio::test]
 async fn login_produces_a_url_then_a_usable_credential() {
     let home = temp_home();
     let manager = manager_with(&home);
