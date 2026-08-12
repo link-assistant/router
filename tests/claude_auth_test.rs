@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use axum::{Json, Router, extract::State, routing::post};
+use base64::Engine as _;
 use link_assistant_router::claude_auth::{CLAUDE_SCOPES, ClaudeAuthConfig, ClaudeLogin};
+use link_assistant_router::refresh::CLAUDE_TOKEN_URL;
 use serde_json::{Value, json};
 
 #[test]
@@ -23,9 +25,21 @@ fn native_login_builds_the_claude_pkce_authorization_url() {
     assert_eq!(query["redirect_uri"], "https://callback.test/code");
     assert_eq!(query["scope"], CLAUDE_SCOPES);
     assert_eq!(query["response_type"], "code");
+    assert_eq!(query["code"], "true");
     assert_eq!(query["code_challenge_method"], "S256");
     assert!(!query["code_challenge"].is_empty());
-    assert!(!query["state"].is_empty());
+    let state = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(query["state"].as_bytes())
+        .expect("state must be unpadded URL-safe base64");
+    assert_eq!(state.len(), 32, "state must match Claude Code's entropy");
+}
+
+#[test]
+fn native_login_uses_the_current_claude_code_token_endpoint() {
+    assert_eq!(
+        CLAUDE_TOKEN_URL,
+        "https://platform.claude.com/v1/oauth/token"
+    );
 }
 
 #[tokio::test]
@@ -64,7 +78,10 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
     assert_eq!(request["code"], "copied-code");
     assert_eq!(request["state"], state);
     assert_eq!(request["client_id"], "public-client");
-    assert!(request["code_verifier"].as_str().unwrap().len() >= 43);
+    let verifier = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(request["code_verifier"].as_str().unwrap())
+        .expect("verifier must be unpadded URL-safe base64");
+    assert_eq!(verifier.len(), 32, "verifier must carry 256 bits");
     let stored: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
     assert_eq!(stored["claudeAiOauth"]["accessToken"], "sk-ant-oat-test");
     assert_eq!(stored["claudeAiOauth"]["refreshToken"], "sk-ant-ort-test");

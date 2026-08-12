@@ -65,7 +65,7 @@ impl ClaudeLogin {
     #[must_use]
     pub fn begin(config: ClaudeAuthConfig) -> Self {
         let state = random_urlsafe();
-        let code_verifier = format!("{}{}", random_urlsafe(), random_urlsafe());
+        let code_verifier = random_urlsafe();
         let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .encode(Sha256::digest(code_verifier.as_bytes()));
         let mut url = reqwest::Url::parse(&config.authorize_url)
@@ -178,7 +178,9 @@ fn persist(home: &Path, token: TokenResponse) -> Result<PathBuf, String> {
 }
 
 fn random_urlsafe() -> String {
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(uuid::Uuid::new_v4().as_bytes())
+    let mut bytes = [0_u8; 32];
+    getrandom::fill(&mut bytes).expect("operating system randomness is available");
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }
 
 fn response_detail(body: &str) -> String {
