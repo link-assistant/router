@@ -853,6 +853,7 @@ async fn forward_openai(
     };
     let upstream_status = upstream_resp.status();
     let retry_after = retry_after_duration(upstream_resp.headers());
+    let response_headers = relay_response_headers(upstream_resp.headers());
     if stream_requested && upstream_status.is_success() {
         state
             .metrics
@@ -874,6 +875,7 @@ async fn forward_openai(
         });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = StatusCode::OK;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             HeaderValue::from_static("text/event-stream; charset=utf-8"),
@@ -919,6 +921,7 @@ async fn forward_openai(
             axum::Json(parsed),
         )
             .into_response();
+        *resp.headers_mut() = response_headers;
         resp.headers_mut()
             .insert("content-type", HeaderValue::from_static("application/json"));
         return resp;
@@ -947,7 +950,12 @@ async fn forward_openai(
         .metrics
         .record_request(surface, 200, selected_account.as_deref());
 
-    (StatusCode::OK, axum::Json(translated)).into_response()
+    let mut response = (StatusCode::OK, axum::Json(translated)).into_response();
+    *response.headers_mut() = response_headers;
+    response
+        .headers_mut()
+        .insert("content-type", HeaderValue::from_static("application/json"));
+    response
 }
 
 pub(crate) fn maybe_mpp_challenge(

@@ -239,6 +239,14 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         "x-ratelimit-remaining-requests",
         HeaderValue::from_static("41"),
     );
+    response.headers_mut().insert(
+        "anthropic-ratelimit-unified-reset",
+        HeaderValue::from_static("1786546200"),
+    );
+    response.headers_mut().insert(
+        "request-id",
+        HeaderValue::from_static("req_anthropic_stub_123"),
+    );
     response
         .headers_mut()
         .insert("x-codex-active-limit", HeaderValue::from_static("primary"));
@@ -365,6 +373,50 @@ async fn anthropic_upstream_returns_each_client_dialect_and_pinned_alias() {
         assert!(
             payload[envelope].is_array(),
             "{path} must return {envelope}[]"
+        );
+    }
+}
+
+#[tokio::test]
+async fn anthropic_upstream_relays_vendor_headers_across_client_dialects() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+    let cases = [
+        (
+            "/v1/messages",
+            json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
+        ),
+        (
+            "/v1/responses",
+            json!({"model":"claude-sonnet-4-5","input":"hi"}),
+        ),
+        (
+            "/v1/chat/completions",
+            json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
+        ),
+    ];
+
+    for (path, body) in cases {
+        let response = router
+            .post(path, &body)
+            .send()
+            .await
+            .expect("router response");
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert_eq!(
+            response
+                .headers()
+                .get("anthropic-ratelimit-unified-reset")
+                .and_then(|value| value.to_str().ok()),
+            Some("1786546200"),
+            "{path} must relay Anthropic quota headers"
+        );
+        assert_eq!(
+            response
+                .headers()
+                .get("request-id")
+                .and_then(|value| value.to_str().ok()),
+            Some("req_anthropic_stub_123"),
+            "{path} must relay the vendor request ID"
         );
     }
 }
