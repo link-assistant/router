@@ -16,15 +16,13 @@ In both cases the human opens the returned URL and approves access.
 | --- | --- |
 | `POST /api/login` | Starts Claude by default; `{"provider":"codex"}` requests a Codex device code without binding a port |
 | *(human)* | Opens that URL and approves; Claude displays a code to copy, while Codex asks for the returned `user_code` |
-| `POST /api/login/{id}/code` | Claude only: types the copied code into the **same, still-running** process |
+| `POST /api/login/{id}/code` | Claude only: exchanges the copied code with the session's PKCE verifier |
 | `GET /api/login/{id}` | Reports `awaiting_code`, `awaiting_device`, `authorized`, `failed` or `expired` |
 | `DELETE /api/login/{id}` | Cancels a pending login and kills its process |
 
-The middle step can take minutes, so the process started by the first request
-must outlive it. It does: the router keeps a registry of live sessions keyed by
-`login_id`, and the code-submitting request writes into the PTY of the session
-the first request created. This is the whole reason the API has three calls
-rather than one.
+The middle step can take minutes, so the PKCE verifier created by the first
+request must outlive it. The router keeps that secret in a bounded session
+registry keyed by `login_id`; no vendor process is started.
 
 ## Walkthrough
 
@@ -97,12 +95,12 @@ $ curl -s http://localhost:8080/api/login/3f2b… -H "Authorization: Bearer $ADM
 
 | `status` | Meaning |
 | --- | --- |
-| `awaiting_code` | The URL is live and the process is parked, waiting for a code |
+| `awaiting_code` | The native PKCE session is waiting for a copied code |
 | `awaiting_device` | Codex is polling while the operator enters `user_code` at the URL |
 | `awaiting_callback` | A forced Codex CLI loopback flow is waiting for the browser |
 | `authorized` | A credential exists and is readable by the proxy |
-| `failed` | The CLI rejected the code, or no credential was produced; `error` says which |
-| `expired` | The session's TTL elapsed before a code arrived; its process was killed |
+| `failed` | OAuth rejected the code, or no credential was produced; `error` says which |
+| `expired` | The session's TTL elapsed before a code arrived |
 
 `expired` is deliberately distinct from `failed`: an expired session means
 "start over", a failed one means "the code was wrong".
@@ -112,10 +110,10 @@ $ curl -s http://localhost:8080/api/login/3f2b… -H "Authorization: Bearer $ADM
 | Setting | Default | Why it exists |
 | --- | --- | --- |
 | `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | A human opening a browser is slow; a process parked forever is a leak. Generous, but bounded. |
-| `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Each pending login is a real process. Beyond the cap, `POST /api/login` is `429`. |
+| `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Bounds retained PKCE state. Beyond the cap, `POST /api/login` is `429`. |
 
-A session's process is killed and its slot freed on **every** terminal path:
-success, failure, `DELETE`, and TTL expiry. Cancelling is the polite way to
+A session's retained state is dropped and its slot freed on **every** terminal
+path: success, failure, `DELETE`, and TTL expiry. Cancelling is the polite way to
 free a slot early.
 
 ## Who may call this
@@ -138,12 +136,8 @@ With it disabled the routes are not registered at all, and requests to them are
 
 ## Choosing the login mode
 
-The default is Claude Code's own TUI `/login` flow. The router starts bare
-`claude`, recognizes and accepts the first-run theme and workspace-trust
-screens, waits for the real prompt before typing `/login`, and selects the
-Claude subscription login method. It does not type into unknown wizard screens:
-if Claude Code changes onboarding, the request fails with the last recognized
-output instead of guessing.
+The default is router-native Claude OAuth with the same public client, callback,
+PKCE method and scopes as Claude Code. The vendor CLI is not consulted.
 
 `setup-token` remains available by setting `LOGIN_CLI_ARGS=setup-token` or
 passing `--login-cli-args setup-token`.
@@ -166,19 +160,17 @@ link-assistant-router auth codex
 link-assistant-router auth status
 ```
 
-Claude supports `--flow code`. Codex defaults to `--flow device`; use
+Claude supports `--flow code`; `--flow cli` forces the disposable bun fallback,
+while `auto` tries it only after native OAuth fails. Codex defaults to `--flow device`; use
 `--flow loopback` as an explicit fallback when device authorization is disabled
 for the account. Loopback binds port 1455 (or 1457 via `--port`) and validates
 OAuth state; the listener closes on success, denial, timeout and cancellation.
 
 ## Requirements
 
-* **The CLI must exist in the image.** The default flow drives the Claude Code
-  TUI and its `/login` command, so in Docker use the `with-claude-cli` image
-  variant — it ships the Claude Code CLI and Node for exactly this reason,
-  while the default image stays minimal for mounted-credential deployments.
-  Point it elsewhere with `--login-cli-command` / `--login-cli-args` if you
-  drive something else.
+* **No vendor CLI must exist in the image.** Native Claude OAuth is the primary
+  path. The image carries bun, which downloads a current CLI package into a
+  disposable directory only when the foreground fallback is needed.
 * **`CLAUDE_CODE_HOME` must be writable.** This is checked *before* the URL is
   returned, so a read-only mount fails immediately rather than after the human
   has already finished the browser step.
@@ -187,7 +179,9 @@ OAuth state; the listener closes on success, denial, timeout and cancellation.
 
 ## What is tested
 
-`tests/login_flow_test.rs` drives the whole flow against
+`tests/claude_auth_test.rs` verifies the native authorization URL, token request,
+and persisted refreshable credential. `tests/login_flow_test.rs` retains the
+compatibility PTY coverage against
 `examples/fake-login-cli.sh`, a stand-in for both the TUI `/login` flow and
 `claude setup-token`. It reproduces the first-run screens, prompt readiness,
 login-method selection and repainting URL, then waits on stdin. The tests assert

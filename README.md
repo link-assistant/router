@@ -772,14 +772,14 @@ The Dockerfile sets `CLAUDE_CODE_HOME=/data/claude` by default, so mount your Cl
 
 ### Credential lifecycle in a container
 
-The default image intentionally contains no Claude CLI. What it can and cannot do with a mounted credential:
+The single image intentionally contains no vendor CLI. It performs Claude OAuth and refresh in-process:
 
 | Operation | Needs the Claude CLI in the image? | Mount mode |
 | --- | --- | --- |
 | Serve requests with a valid access token | No | `:ro` |
 | Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` |
-| **First-time login** (no credential file yet) | Yes | writable |
-| `POST /api/login` (remote login over HTTP) | Yes — it drives the TUI `/login` flow by default | writable |
+| **First-time login** (no credential file yet) | No — native OAuth | writable |
+| `POST /api/login` (remote login over HTTP) | No — native OAuth | writable |
 
 Renewal happens in memory: the router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and keeps the result in RAM. The credential file is never written to, which is why `:ro` keeps working across expiry — and why a restarted container refreshes again from the same file. The same mechanism already covers Codex, Gemini, and Qwen.
 
@@ -787,45 +787,25 @@ Two things still require a real login: a directory with no credential file at al
 
 ### Logging in from inside a container
 
-For a self-contained deployment, use the `with-claude-cli` image variant, which layers Node.js and the Claude Code CLI on top of the same router binary:
+The regular image can authorize itself without a preinstalled Claude CLI:
 
 ```bash
 # Log in once into a named volume (interactive, needs a writable mount)
 docker run -it --rm \
-  --entrypoint claude \
   -v claude-home:/data/claude \
-  ghcr.io/link-assistant/router:with-claude-cli /login
+  ghcr.io/link-assistant/router:latest auth claude
 
 # Then run the router against that volume
 docker run -d \
   -p 8080:8080 \
   -e TOKEN_SECRET=your-secure-secret \
   -v claude-home:/data/claude \
-  ghcr.io/link-assistant/router:with-claude-cli
+  ghcr.io/link-assistant/router:latest
 ```
 
-Both `ghcr.io/link-assistant/router:with-claude-cli` and `konard/link-assistant-router:with-claude-cli` are published alongside each release, plus version-pinned `<version>-with-claude-cli` tags.
-
-To build it yourself, target the stage directly:
-
-```bash
-docker build --target with-claude-cli -t link-assistant/router:with-claude-cli .
-```
-
-Or derive your own image from the published minimal one:
-
-```dockerfile
-FROM ghcr.io/link-assistant/router:latest
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl gnupg && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g @anthropic-ai/claude-code && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV CLAUDE_CONFIG_DIR=/data/claude
-```
+If native OAuth fails, `auth claude` downloads the current Claude Code package
+through bun into a temporary cache, completes the compatibility flow, and
+removes that cache. Force this path with `auth claude --flow cli`.
 
 ### Docker Compose example
 
@@ -841,7 +821,7 @@ services:
       ROUTER_PORT: "8080"
     volumes:
       # `:ro` is enough: token renewal happens in memory. Drop `:ro` (and use
-      # the `with-claude-cli` image) if you want to log in from the container.
+      # `:ro` can be dropped when authorizing from the container.
       - ${HOME}/.claude:/data/claude:ro
     restart: unless-stopped
 ```

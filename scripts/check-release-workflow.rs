@@ -76,9 +76,9 @@ fn main() {
         );
     }
 
-    if count_occurrences(&workflow, "docker buildx imagetools create") != 4 {
+    if count_occurrences(&workflow, "docker buildx imagetools create") != 2 {
         failures.push(
-            "both registries must receive merged runtime and Claude CLI manifests".to_string(),
+            "both registries must receive one merged runtime manifest".to_string(),
         );
     }
 

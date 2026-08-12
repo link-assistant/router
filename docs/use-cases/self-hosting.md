@@ -119,14 +119,13 @@ the upstream rather than at startup.
 
 The mount can stay read-only across token expiry: the router exchanges the
 `refreshToken` in the credential file for a new access token in memory and
-never writes the file back. The image carries no Claude CLI, so the one thing
-it cannot do with a read-only mount is a **first-time login** — for that, use
-the `with-claude-cli` image variant with a writable mount:
+never writes the file back. A **first-time login** needs a writable mount, but
+the router performs that OAuth flow itself and needs no preinstalled vendor CLI:
 
 ```bash
-docker run -it --rm --entrypoint claude \
+docker run -it --rm \
   -v claude-home:/data/claude \
-  ghcr.io/link-assistant/router:with-claude-cli /login
+  ghcr.io/link-assistant/router:latest auth claude
 ```
 
 ### Corporate host

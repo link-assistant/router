@@ -378,6 +378,38 @@ fn list_covers_every_documented_client_and_agent() {
 }
 
 #[test]
+fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
+    for client in [
+        "codex",
+        "claude-code",
+        "grok-cli",
+        "opencode",
+        "qwen-code",
+        "agent",
+    ] {
+        let home = tempfile::tempdir().expect("temp home");
+        let configured = router_with_env(
+            home.path(),
+            &[
+                "clients",
+                "setup",
+                client,
+                "--token",
+                "la_sk_existing",
+                "--base-url",
+                "http://router.test:8080",
+            ],
+            &[("PATH", "")],
+        );
+        assert!(
+            configured.status.success(),
+            "{client} setup unexpectedly required its executable: {}",
+            String::from_utf8_lossy(&configured.stderr)
+        );
+    }
+}
+
+#[test]
 fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
     for (client, relative_path) in [
         ("opencode", ".config/opencode/opencode.json"),
