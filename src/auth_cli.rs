@@ -15,10 +15,18 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     }
 }
 
+const fn claude_supports_flow(flow: AuthFlow) -> bool {
+    matches!(flow, AuthFlow::Auto | AuthFlow::Code | AuthFlow::Cli)
+}
+
+const fn codex_supports_flow(flow: AuthFlow) -> bool {
+    matches!(flow, AuthFlow::Auto | AuthFlow::Device | AuthFlow::Loopback)
+}
+
 async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> ExitCode {
-    if !matches!(flow, AuthFlow::Auto | AuthFlow::Code | AuthFlow::Cli) {
+    if !claude_supports_flow(flow) {
         eprintln!("error: Claude does not support {flow:?}; use --flow code or --flow cli");
-        return ExitCode::from(2);
+        return ExitCode::from(1);
     }
     let mut login_config = config.login.clone();
     // Disabling HTTP login routes must not disable this local CLI command.
@@ -142,13 +150,9 @@ async fn read_code() -> Result<String, String> {
 }
 
 async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
-    if flow == AuthFlow::Cli {
-        eprintln!("error: Codex does not support CLI; use --flow device or --flow loopback");
-        return ExitCode::from(2);
-    }
-    if flow == AuthFlow::Code {
-        eprintln!("error: Codex does not support Code; use --flow device or --flow loopback");
-        return ExitCode::from(2);
+    if !codex_supports_flow(flow) {
+        eprintln!("error: Codex does not support {flow:?}; use --flow device or --flow loopback");
+        return ExitCode::from(1);
     }
     if matches!(flow, AuthFlow::Auto | AuthFlow::Device) {
         return run_codex_device(config, port).await;
@@ -240,4 +244,25 @@ fn status(config: &Config) -> ExitCode {
         );
     }
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn provider_flow_support_matrix_matches_the_oauth_implementations() {
+        let cases = [
+            (AuthFlow::Auto, true, true),
+            (AuthFlow::Device, false, true),
+            (AuthFlow::Code, true, false),
+            (AuthFlow::Loopback, false, true),
+            (AuthFlow::Cli, true, false),
+        ];
+
+        for (flow, claude_supported, codex_supported) in cases {
+            assert_eq!(claude_supports_flow(flow), claude_supported, "{flow:?}");
+            assert_eq!(codex_supports_flow(flow), codex_supported, "{flow:?}");
+        }
+    }
 }

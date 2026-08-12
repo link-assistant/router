@@ -486,12 +486,16 @@ pub enum AuthOp {
         #[arg(long)]
         code: Option<String>,
         /// Force an OAuth flow instead of automatic selection.
+        ///
+        /// Supported flows: auto, code, cli.
         #[arg(long, value_enum, default_value_t)]
         flow: AuthFlow,
     },
     /// Authorize an `OpenAI` Codex / `ChatGPT` subscription.
     Codex {
         /// Force an OAuth flow instead of automatic selection.
+        ///
+        /// Supported flows: auto, device, loopback.
         #[arg(long, value_enum, default_value_t)]
         flow: AuthFlow,
         /// Local callback port registered for the Codex OAuth client.
