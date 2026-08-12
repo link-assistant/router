@@ -312,26 +312,12 @@ jobs:
       - name: Check package
         run: cargo package --locked --list
 
-  # === DOCKER BUILD ===
-  # Compile the deployable image before a release can publish artifacts.
-  docker-build:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    needs: [lint, test]
-    if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success'
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Build default runtime image
-        run: docker build --target runtime .
-
   # === AUTO RELEASE ===
   # Automatic release on push to main using changelog fragments
   # This job automatically bumps version based on fragments in changelog.d/
   auto-release:
     name: Auto Release
-    needs: [lint, test, build, docker-build]
+    needs: [lint, test, build]
     outputs:
       should-release: ${{ steps.check.outputs.should_release }}
       release-version: ${{ steps.current_version.outputs.version }}
@@ -401,7 +387,7 @@ jobs:
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Instant Release
-    needs: [lint, test, build, docker-build]
+    needs: [lint, test, build]
     outputs:
       should-release: ${{ steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true' }}
       release-version: ${{ steps.version.outputs.new_version }}
@@ -456,16 +442,12 @@ jobs:
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
 
-  # Build one image per architecture on a native runner. Each matrix leg pushes
-  # content-addressed images; the following job gives those digests their tags.
+  # Build every image variant and architecture on a native runner. Each matrix
+  # leg pushes a digest; the following job gives those digests their tags.
   publish-docker-images:
-    name: Build Docker Images (${{ matrix.arch }})
-    needs: [auto-release, manual-release]
-    if: |
-      always() && !cancelled() && (
-        (needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') ||
-        (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true')
-      )
+    name: Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})
+    needs: [create-github-release]
+    if: always() && !cancelled() && needs.create-github-release.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -473,20 +455,34 @@ jobs:
           - arch: amd64
             platform: linux/amd64
             runner: ubuntu-latest
+            variant: runtime
+            target: runtime
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+            variant: claude-cli
+            target: with-claude-cli
           - arch: arm64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
+            variant: runtime
+            target: runtime
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            variant: claude-cli
+            target: with-claude-cli
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     permissions:
       contents: read
       packages: write
     env:
-      RELEASE_VERSION: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: refs/tags/v${{ env.RELEASE_VERSION }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
@@ -514,63 +510,36 @@ jobs:
           tags: type=raw,value=${{ env.RELEASE_VERSION }}
           labels: org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
 
-      - name: Build and push runtime image by digest
-        id: build-runtime
+      - name: Build and push image by digest
+        id: build-image
         uses: docker/build-push-action@v7
         with:
           context: .
-          target: runtime
+          target: ${{ matrix.target }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.docker-meta.outputs.labels }}
           outputs: type=image,"name=ghcr.io/${{ github.repository }},${{ env.DOCKERHUB_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha,scope=${{ matrix.arch }}-runtime
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}-runtime
+          cache-from: type=gha,scope=${{ matrix.arch }}-${{ matrix.variant }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}-${{ matrix.variant }}
 
-      - name: Export runtime digest
+      - name: Export image digest
         env:
-          IMAGE_DIGEST: ${{ steps.build-runtime.outputs.digest }}
+          IMAGE_DIGEST: ${{ steps.build-image.outputs.digest }}
         run: |
-          mkdir -p /tmp/digests/runtime
-          touch "/tmp/digests/runtime/${IMAGE_DIGEST#sha256:}"
+          mkdir -p "/tmp/digests/${{ matrix.variant }}"
+          touch "/tmp/digests/${{ matrix.variant }}/${IMAGE_DIGEST#sha256:}"
 
-      - name: Upload runtime digest
+      - name: Upload image digest
         uses: actions/upload-artifact@v7
         with:
-          name: runtime-${{ matrix.arch }}
-          path: /tmp/digests/runtime/*
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Build and push Claude CLI image by digest
-        id: build-claude-cli
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: with-claude-cli
-          platforms: ${{ matrix.platform }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          outputs: type=image,"name=ghcr.io/${{ github.repository }},${{ env.DOCKERHUB_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha,scope=${{ matrix.arch }}-with-claude-cli
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}-with-claude-cli
-
-      - name: Export Claude CLI digest
-        env:
-          IMAGE_DIGEST: ${{ steps.build-claude-cli.outputs.digest }}
-        run: |
-          mkdir -p /tmp/digests/claude-cli
-          touch "/tmp/digests/claude-cli/${IMAGE_DIGEST#sha256:}"
-
-      - name: Upload Claude CLI digest
-        uses: actions/upload-artifact@v7
-        with:
-          name: claude-cli-${{ matrix.arch }}
-          path: /tmp/digests/claude-cli/*
+          name: ${{ matrix.variant }}-${{ matrix.arch }}
+          path: /tmp/digests/${{ matrix.variant }}/*
           if-no-files-found: error
           retention-days: 1
 
   publish-docker-manifests:
     name: Publish Multi-Platform Docker Manifests
-    needs: [auto-release, manual-release, publish-docker-images]
+    needs: [create-github-release, publish-docker-images]
     if: always() && !cancelled() && needs.publish-docker-images.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -578,11 +547,11 @@ jobs:
       contents: read
       packages: write
     env:
-      RELEASE_VERSION: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: refs/tags/v${{ env.RELEASE_VERSION }}
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -669,8 +638,14 @@ jobs:
 
   create-github-release:
     name: Create GitHub Release
-    needs: [auto-release, manual-release, publish-docker-manifests]
-    if: always() && !cancelled() && needs.publish-docker-manifests.result == 'success'
+    needs: [auto-release, manual-release]
+    if: |
+      always() && !cancelled() && (
+        (needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') ||
+        (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true')
+      )
+    outputs:
+      release-version: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -680,7 +655,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: refs/tags/v${{ env.RELEASE_VERSION }}
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

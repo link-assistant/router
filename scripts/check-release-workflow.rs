@@ -36,6 +36,8 @@ fn main() {
         "ghcr.io/${{ github.repository }}",
         "${{ env.DOCKERHUB_IMAGE }}",
         "labels: ${{ steps.docker-meta.outputs.labels }}",
+        "needs: [create-github-release]",
+        "ref: refs/tags/v${{ env.RELEASE_VERSION }}",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
     ];
@@ -59,17 +61,17 @@ fn main() {
         );
     }
 
-    if count_occurrences(&workflow, "docker/build-push-action@v7") != 2 {
-        failures.push("the native matrix must publish both Docker image variants".to_string());
+    if count_occurrences(&workflow, "docker/build-push-action@v7") != 1 {
+        failures.push("the variant-and-architecture matrix must use one shared build step".to_string());
     }
 
     if workflow.contains("docker/setup-qemu-action") {
         failures.push("release images must not use QEMU emulation".to_string());
     }
 
-    if count_occurrences(&workflow, "push-by-digest=true") != 2 {
+    if count_occurrences(&workflow, "push-by-digest=true") != 1 {
         failures.push(
-            "both image variants must publish native architecture images by digest".to_string(),
+            "every matrix leg must publish its native image by digest".to_string(),
         );
     }
 
@@ -87,6 +89,16 @@ fn main() {
         failures.push(
             "the shared manifest job must verify every published multi-platform image".to_string(),
         );
+    }
+
+    if workflow.contains("docker-build:")
+        || workflow.contains("needs: [lint, test, build, docker-build]")
+    {
+        failures.push("release publication must not wait for a disposable Docker build".to_string());
+    }
+
+    if !workflow.contains("create-github-release:\n    name: Create GitHub Release\n    needs: [auto-release, manual-release]") {
+        failures.push("GitHub releases must be created immediately after crate publication".to_string());
     }
 
     if count_occurrences(
