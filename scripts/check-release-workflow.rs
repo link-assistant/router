@@ -11,26 +11,31 @@ fn main() {
     let required_snippets = [
         "auto-release:",
         "manual-release:",
+        "publish-docker-images:",
+        "publish-docker-manifests:",
         "packages: write",
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
         "docker/login-action@v4",
-        "docker/setup-qemu-action@v4",
         "docker/setup-buildx-action@v4",
         "docker/metadata-action@v6",
         "docker/build-push-action@v7",
-        "platforms: linux/amd64,linux/arm64",
+        "platform: linux/amd64",
+        "platform: linux/arm64",
+        "runner: ubuntu-24.04-arm",
+        "runs-on: ${{ matrix.runner }}",
+        "platforms: ${{ matrix.platform }}",
+        "push-by-digest=true",
+        "cache-from: type=gha",
+        "cache-to: type=gha,mode=max",
+        "docker buildx imagetools create",
         "rust-script scripts/check-docker-platforms.rs",
         "username: konard",
         "password: ${{ secrets.DOCKERHUB_TOKEN }}",
         "ghcr.io/${{ github.repository }}",
         "${{ env.DOCKERHUB_IMAGE }}",
-        "type=raw,value=latest",
-        "type=raw,value=${{ steps.current_version.outputs.version }}",
-        "type=raw,value=${{ steps.version.outputs.new_version }}",
-        "org.opencontainers.image.version=${{ steps.current_version.outputs.version }}",
-        "org.opencontainers.image.version=${{ steps.version.outputs.new_version }}",
+        "labels: ${{ steps.docker-meta.outputs.labels }}",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
     ];
@@ -45,40 +50,42 @@ fn main() {
     }
 
     if count_occurrences(&workflow, "packages: write") < 2 {
-        failures.push("auto and manual release jobs must both grant packages: write".to_string());
+        failures.push("Docker build and manifest jobs must grant packages: write".to_string());
     }
 
     if count_occurrences(&workflow, "docker/login-action@v4") < 4 {
         failures.push(
-            "auto and manual release jobs must both log in to GHCR and Docker Hub".to_string(),
+            "Docker build and manifest jobs must both log in to GHCR and Docker Hub".to_string(),
         );
     }
 
-    if count_occurrences(&workflow, "docker/build-push-action@v7") < 2 {
-        failures.push("auto and manual release jobs must both publish Docker images".to_string());
+    if count_occurrences(&workflow, "docker/build-push-action@v7") != 2 {
+        failures.push("the native matrix must publish both Docker image variants".to_string());
     }
 
-    if count_occurrences(&workflow, "docker/setup-qemu-action@v4") < 2 {
+    if workflow.contains("docker/setup-qemu-action") {
+        failures.push("release images must not use QEMU emulation".to_string());
+    }
+
+    if count_occurrences(&workflow, "push-by-digest=true") != 2 {
         failures.push(
-            "auto and manual release jobs must both enable cross-platform emulation".to_string(),
+            "both image variants must publish native architecture images by digest".to_string(),
         );
     }
 
-    if count_occurrences(&workflow, "platforms: linux/amd64,linux/arm64") < 4 {
+    if count_occurrences(&workflow, "docker buildx imagetools create") != 4 {
         failures.push(
-            "auto and manual release jobs must publish both image variants for amd64 and arm64"
-                .to_string(),
+            "both registries must receive merged runtime and Claude CLI manifests".to_string(),
         );
     }
 
     if count_occurrences(
         &workflow,
         "rust-script scripts/check-docker-platforms.rs",
-    ) < 2
+    ) != 1
     {
         failures.push(
-            "auto and manual release jobs must verify published multi-platform manifests"
-                .to_string(),
+            "the shared manifest job must verify every published multi-platform image".to_string(),
         );
     }
 
@@ -96,29 +103,25 @@ fn main() {
     if count_occurrences(
         &workflow,
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
-    ) < 2
+    ) != 1
     {
         failures.push(
-            "auto and manual GitHub releases must include the crates.io release badge/link"
-                .to_string(),
+            "the shared GitHub release must include the crates.io release badge/link".to_string(),
         );
     }
 
     if count_occurrences(
         &workflow,
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
-    ) < 2
+    ) != 1
     {
         failures.push(
-            "auto and manual GitHub releases must include the Docker Hub release badge/link"
-                .to_string(),
+            "the shared GitHub release must include the Docker Hub release badge/link".to_string(),
         );
     }
 
     if failures.is_empty() {
-        println!(
-            "release workflow publishes crates and verified multi-platform GHCR/Docker Hub images"
-        );
+        println!("release workflow builds native images and publishes verified multi-platform manifests");
     } else {
         for failure in failures {
             eprintln!("Error: {failure}");
