@@ -558,6 +558,18 @@ pub async fn forward_anthropic_messages(
     headers: &HeaderMap,
     anthropic_body: Value,
 ) -> Response {
+    if anthropic_body
+        .get("max_tokens")
+        .and_then(Value::as_u64)
+        .is_none_or(|limit| limit == 0)
+    {
+        // Keep authentication ahead of request validation even though the
+        // delegated forwarder is not reached for a malformed Messages body.
+        if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
+            return *response;
+        }
+        return anthropic_error(StatusCode::BAD_REQUEST, b"max_tokens is required");
+    }
     let requested_model = anthropic_body
         .get("model")
         .and_then(Value::as_str)

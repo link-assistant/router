@@ -494,7 +494,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
 }
 
 #[tokio::test]
-async fn auth_unknown_models_admin_isolation_and_codex_limits_fail_clearly() {
+async fn auth_unknown_models_and_admin_isolation() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     for path in [
         "/v1/models",
@@ -576,18 +576,99 @@ async fn auth_unknown_models_admin_isolation_and_codex_limits_fail_clearly() {
         .await
         .expect("admin response");
     assert_eq!(admin.status(), StatusCode::UNAUTHORIZED);
+}
 
+#[tokio::test]
+async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
-    let capped = codex
+
+    // Messages requires max_tokens, so its required protocol field must not
+    // make the entire Anthropic surface unusable with a Codex subscription.
+    let messages = codex
         .post(
-            "/v1/responses",
-            &json!({"model":"gpt-5","input":"hi","max_output_tokens":16}),
+            "/v1/messages",
+            &json!({
+                "model":"gpt-5",
+                "max_tokens":16,
+                "messages":[{"role":"user","content":"hi"}]
+            }),
         )
         .send()
         .await
-        .expect("capped Codex response");
-    assert_eq!(capped.status(), StatusCode::BAD_REQUEST);
-    let message = capped.text().await.expect("limit error body");
-    assert!(message.contains("cannot honor output-token limits"));
-    assert!(codex.requests.lock().expect("stub requests").is_empty());
+        .expect("capped Codex Messages response");
+    assert_eq!(messages.status(), StatusCode::OK);
+    let payload: Value = messages.json().await.expect("Messages JSON response");
+    assert!(payload["content"].is_array());
+
+    {
+        let requests = codex.requests.lock().expect("stub requests");
+        assert_eq!(requests.len(), 1);
+        assert!(
+            requests[0].get("max_output_tokens").is_none(),
+            "the unsupported field must still be omitted from the Codex request"
+        );
+        drop(requests);
+    }
+
+    // A Messages request without its required field is a protocol error, not
+    // an unsupported-Codex-cap error, and must not reach the subscription.
+    let missing = codex
+        .post(
+            "/v1/messages",
+            &json!({"model":"gpt-5","messages":[{"role":"user","content":"hi"}]}),
+        )
+        .send()
+        .await
+        .expect("missing max_tokens response");
+    assert_eq!(missing.status(), StatusCode::BAD_REQUEST);
+    let missing_payload: Value = missing.json().await.expect("Messages error response");
+    assert_eq!(missing_payload["error"]["type"], "invalid_request_error");
+    assert!(
+        missing_payload["error"]["message"]
+            .as_str()
+            .is_some_and(|message| message.contains("max_tokens is required"))
+    );
+
+    // The optional caps on both OpenAI surfaces retain PR #103's explicit
+    // rejection, including both Chat Completions spellings.
+    for (path, body) in [
+        (
+            "/v1/responses",
+            json!({"model":"gpt-5","input":"hi","max_output_tokens":16}),
+        ),
+        (
+            "/v1/chat/completions",
+            json!({
+                "model":"gpt-5",
+                "max_tokens":16,
+                "messages":[{"role":"user","content":"hi"}]
+            }),
+        ),
+        (
+            "/v1/chat/completions",
+            json!({
+                "model":"gpt-5",
+                "max_completion_tokens":16,
+                "messages":[{"role":"user","content":"hi"}]
+            }),
+        ),
+    ] {
+        let capped = codex
+            .post(path, &body)
+            .send()
+            .await
+            .expect("capped Codex OpenAI response");
+        assert_eq!(capped.status(), StatusCode::BAD_REQUEST, "{path}");
+        let message = capped.text().await.expect("limit error body");
+        assert!(
+            message.contains("cannot honor output-token limits"),
+            "{path}"
+        );
+    }
+
+    assert_eq!(
+        codex.requests.lock().expect("stub requests").len(),
+        1,
+        "rejected requests must not reach the Codex subscription"
+    );
 }

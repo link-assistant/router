@@ -123,7 +123,7 @@ async fn forward_subscription_openai_inner(
             "active upstream is not a subscription provider",
         );
     };
-    if let Some(response) = reject_unsupported_codex_output_limit(provider, &body) {
+    if let Some(response) = reject_unsupported_codex_output_limit(provider, surface, &body) {
         return response;
     }
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
@@ -583,20 +583,22 @@ fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut ser
 /// Reject a caller-supplied output cap that the `ChatGPT` backend cannot honor.
 ///
 /// Every client surface has already converged on Responses shape at this point,
-/// so this single gate covers `max_output_tokens` from Responses and translated
-/// `max_tokens` / `max_completion_tokens` from Chat Completions and Messages.
+/// so `surface` preserves the otherwise-lost distinction between an optional
+/// `OpenAI` limit and the protocol-required `max_tokens` on Anthropic Messages.
 /// The backend rejects the parameter, and enforcing only visible text in the
 /// router would still leave hidden reasoning tokens unbounded. Failing before
-/// the upstream call is therefore the only way to preserve the cap's spend-
-/// control guarantee.
+/// the upstream call is therefore the only way to preserve optional `OpenAI`
+/// caps as spend controls. Messages requests remain usable and normalization
+/// removes their mandatory field before the Codex request is serialized.
 fn reject_unsupported_codex_output_limit(
     provider: SubscriptionProvider,
+    surface: Surface,
     body: &serde_json::Value,
 ) -> Option<Response> {
     let has_limit = body
         .get("max_output_tokens")
         .is_some_and(|value| !value.is_null());
-    if provider != SubscriptionProvider::Codex || !has_limit {
+    if provider != SubscriptionProvider::Codex || surface == Surface::Anthropic || !has_limit {
         return None;
     }
     Some(error_response(
@@ -669,7 +671,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn codex_rejects_output_limits_from_every_client_surface() {
+    async fn codex_rejects_optional_openai_output_limits() {
         let responses = serde_json::json!({
             "model": "gpt-5.6-sol",
             "input": "hi",
@@ -685,19 +687,14 @@ mod tests {
             "messages": [{"role": "user", "content": "hi"}],
             "max_completion_tokens": 16,
         }));
-        let anthropic_chat = crate::anthropic_bridge::anthropic_to_chat_request(
-            &serde_json::json!({
-                "model": "claude-sonnet-4-5",
-                "messages": [{"role": "user", "content": "hi"}],
-                "max_tokens": 16,
-            }),
-            "gpt-5.6-sol",
-        );
-        let anthropic = crate::responses::chat_completion_to_responses(&anthropic_chat);
-
-        for body in [&responses, &chat, &chat_completion, &anthropic] {
-            let response = reject_unsupported_codex_output_limit(SubscriptionProvider::Codex, body)
-                .expect("Codex must reject a limit it cannot honor");
+        for (surface, body) in [
+            (Surface::OpenAIResponses, &responses),
+            (Surface::OpenAIChat, &chat),
+            (Surface::OpenAIChat, &chat_completion),
+        ] {
+            let response =
+                reject_unsupported_codex_output_limit(SubscriptionProvider::Codex, surface, body)
+                    .expect("Codex must reject an optional limit it cannot honor");
             assert_eq!(response.status(), StatusCode::BAD_REQUEST);
             let error = axum::body::to_bytes(response.into_body(), 4096)
                 .await
@@ -717,10 +714,28 @@ mod tests {
         let uncapped = serde_json::json!({"model": "gpt-5.6-sol", "input": "hi"});
 
         assert!(
-            reject_unsupported_codex_output_limit(SubscriptionProvider::Codex, &uncapped).is_none()
+            reject_unsupported_codex_output_limit(
+                SubscriptionProvider::Codex,
+                Surface::OpenAIResponses,
+                &uncapped,
+            )
+            .is_none()
         );
         assert!(
-            reject_unsupported_codex_output_limit(SubscriptionProvider::Qwen, &capped).is_none()
+            reject_unsupported_codex_output_limit(
+                SubscriptionProvider::Qwen,
+                Surface::OpenAIResponses,
+                &capped,
+            )
+            .is_none()
+        );
+        assert!(
+            reject_unsupported_codex_output_limit(
+                SubscriptionProvider::Codex,
+                Surface::Anthropic,
+                &capped,
+            )
+            .is_none()
         );
     }
 
