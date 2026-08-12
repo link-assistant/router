@@ -26,11 +26,11 @@ fn main() {
         "password: ${{ secrets.DOCKERHUB_TOKEN }}",
         "ghcr.io/${{ github.repository }}",
         "${{ env.DOCKERHUB_IMAGE }}",
-        "type=raw,value=latest",
-        "type=raw,value=${{ steps.current_version.outputs.version }}",
-        "type=raw,value=${{ steps.version.outputs.new_version }}",
-        "org.opencontainers.image.version=${{ steps.current_version.outputs.version }}",
-        "org.opencontainers.image.version=${{ steps.version.outputs.new_version }}",
+        "floating_tag: latest",
+        "floating_tag: with-claude-cli",
+        "type=raw,value=${{ matrix.floating_tag }}",
+        "type=raw,value=${{ env.RELEASE_VERSION }}${{ matrix.version_suffix }}",
+        "org.opencontainers.image.version=${{ env.RELEASE_VERSION }}",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
     ];
@@ -44,42 +44,38 @@ fn main() {
         }
     }
 
-    if count_occurrences(&workflow, "packages: write") < 2 {
-        failures.push("auto and manual release jobs must both grant packages: write".to_string());
+    if count_occurrences(&workflow, "packages: write") < 1 {
+        failures.push("Docker publishing must grant packages: write".to_string());
     }
 
-    if count_occurrences(&workflow, "docker/login-action@v4") < 4 {
+    if count_occurrences(&workflow, "docker/login-action@v4") < 2 {
+        failures.push("Docker publishing must log in to GHCR and Docker Hub".to_string());
+    }
+
+    if count_occurrences(&workflow, "docker/build-push-action@v7") < 1 {
+        failures.push("Docker publishing must build and push each image variant".to_string());
+    }
+
+    if count_occurrences(&workflow, "docker/setup-qemu-action@v4") < 1 {
+        failures.push("Docker publishing must enable cross-platform emulation".to_string());
+    }
+
+    if count_occurrences(&workflow, "platforms: linux/amd64,linux/arm64") < 1 {
         failures.push(
-            "auto and manual release jobs must both log in to GHCR and Docker Hub".to_string(),
-        );
-    }
-
-    if count_occurrences(&workflow, "docker/build-push-action@v7") < 2 {
-        failures.push("auto and manual release jobs must both publish Docker images".to_string());
-    }
-
-    if count_occurrences(&workflow, "docker/setup-qemu-action@v4") < 2 {
-        failures.push(
-            "auto and manual release jobs must both enable cross-platform emulation".to_string(),
-        );
-    }
-
-    if count_occurrences(&workflow, "platforms: linux/amd64,linux/arm64") < 4 {
-        failures.push(
-            "auto and manual release jobs must publish both image variants for amd64 and arm64"
-                .to_string(),
+            "Docker publishing must publish every image variant for amd64 and arm64".to_string(),
         );
     }
 
     if count_occurrences(
         &workflow,
         "rust-script scripts/check-docker-platforms.rs",
-    ) < 2
+    ) < 1
     {
-        failures.push(
-            "auto and manual release jobs must verify published multi-platform manifests"
-                .to_string(),
-        );
+        failures.push("Docker publishing must verify multi-platform manifests".to_string());
+    }
+
+    if !workflow.contains("cache-from: |") || !workflow.contains("cache-to: type=gha") {
+        failures.push("Docker publishing must use a persistent BuildKit cache".to_string());
     }
 
     if count_occurrences(
