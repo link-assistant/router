@@ -21,8 +21,8 @@ use std::collections::BTreeMap;
 
 use crate::metrics::Surface;
 use crate::proxy::{
-    AppState, error_response, extract_client_token, maybe_mpp_challenge, request_routing_context,
-    retry_after_duration,
+    AppState, error_response, extract_client_token, maybe_mpp_challenge, relay_response_headers,
+    request_routing_context, retry_after_duration,
 };
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
@@ -267,9 +267,9 @@ async fn forward_subscription_openai_inner(
         .get("content-type")
         .cloned()
         .unwrap_or_else(|| HeaderValue::from_static("application/json"));
-    // Preserve rate-limit signals (Retry-After, x-ratelimit-*) so clients can
-    // back off intelligently when a subscription upstream throttles us.
-    let rate_limit_headers = rate_limit_headers(upstream_resp.headers());
+    // Relay the same safe end-to-end response fields as the Claude path,
+    // including provider-specific quota signals and request IDs.
+    let response_headers = relay_response_headers(upstream_resp.headers());
 
     let codex = provider == SubscriptionProvider::Codex;
     if stream_requested || (!codex && is_event_stream(&content_type)) {
@@ -301,10 +301,10 @@ async fn forward_subscription_openai_inner(
         });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
         response
             .headers_mut()
             .insert("content-type", stream_content_type);
-        apply_headers(response.headers_mut(), rate_limit_headers);
         return response;
     }
 
@@ -365,17 +365,17 @@ async fn forward_subscription_openai_inner(
 
         let mut response = Response::new(Body::from(response_body));
         *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
         response
             .headers_mut()
             .insert("content-type", HeaderValue::from_static("application/json"));
-        apply_headers(response.headers_mut(), rate_limit_headers);
         return response;
     }
 
     let mut response = Response::new(Body::from(response_body));
     *response.status_mut() = status;
+    *response.headers_mut() = response_headers;
     response.headers_mut().insert("content-type", content_type);
-    apply_headers(response.headers_mut(), rate_limit_headers);
     response
 }
 
@@ -487,26 +487,6 @@ fn update_codex_output_text(
         item["status"] = serde_json::Value::String("completed".to_string());
     } else if let Some(current) = content[content_index]["text"].as_str() {
         content[content_index]["text"] = serde_json::Value::String(format!("{current}{text}"));
-    }
-}
-
-/// Collect rate-limit-related headers (`retry-after`, `x-ratelimit-*`) from an
-/// upstream response so they can be relayed to the client.
-fn rate_limit_headers(headers: &HeaderMap) -> Vec<(axum::http::HeaderName, HeaderValue)> {
-    headers
-        .iter()
-        .filter(|(name, _)| {
-            let n = name.as_str();
-            n == "retry-after" || n.starts_with("x-ratelimit")
-        })
-        .map(|(name, value)| (name.clone(), value.clone()))
-        .collect()
-}
-
-/// Insert collected headers into an outgoing response header map.
-fn apply_headers(out: &mut HeaderMap, headers: Vec<(axum::http::HeaderName, HeaderValue)>) {
-    for (name, value) in headers {
-        out.insert(name, value);
     }
 }
 
@@ -928,22 +908,48 @@ mod tests {
     }
 
     #[test]
-    fn rate_limit_headers_are_selected() {
+    fn safe_upstream_response_headers_are_selected() {
         let mut headers = HeaderMap::new();
         headers.insert("retry-after", HeaderValue::from_static("30"));
         headers.insert(
             "x-ratelimit-remaining-requests",
             HeaderValue::from_static("0"),
         );
-        headers.insert("content-type", HeaderValue::from_static("application/json"));
-        let selected = rate_limit_headers(&headers);
-        assert_eq!(selected.len(), 2);
-        assert!(selected.iter().any(|(n, _)| n.as_str() == "retry-after"));
-        assert!(
-            selected
-                .iter()
-                .any(|(n, _)| n.as_str() == "x-ratelimit-remaining-requests")
+        headers.insert("x-codex-active-limit", HeaderValue::from_static("75"));
+        headers.insert(
+            "x-oai-request-id",
+            HeaderValue::from_static("req_codex_123"),
         );
+        headers.insert(
+            "authorization",
+            HeaderValue::from_static("Bearer upstream-secret"),
+        );
+        headers.insert("x-api-key", HeaderValue::from_static("upstream-secret"));
+        headers.insert("set-cookie", HeaderValue::from_static("session=secret"));
+        headers.insert("connection", HeaderValue::from_static("x-remove-me"));
+        headers.insert("x-remove-me", HeaderValue::from_static("hop-by-hop"));
+        headers.insert("content-length", HeaderValue::from_static("999"));
+        headers.insert("content-type", HeaderValue::from_static("application/json"));
+        let selected = relay_response_headers(&headers);
+        for relayed in [
+            "retry-after",
+            "x-ratelimit-remaining-requests",
+            "x-codex-active-limit",
+            "x-oai-request-id",
+            "content-type",
+        ] {
+            assert!(selected.contains_key(relayed), "missing {relayed}");
+        }
+        for excluded in [
+            "authorization",
+            "x-api-key",
+            "set-cookie",
+            "connection",
+            "x-remove-me",
+            "content-length",
+        ] {
+            assert!(!selected.contains_key(excluded), "relayed {excluded}");
+        }
     }
 
     #[test]
