@@ -457,21 +457,11 @@ jobs:
             runner: ubuntu-latest
             variant: runtime
             target: runtime
-          - arch: amd64
-            platform: linux/amd64
-            runner: ubuntu-latest
-            variant: claude-cli
-            target: with-claude-cli
           - arch: arm64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
             variant: runtime
             target: runtime
-          - arch: arm64
-            platform: linux/arm64
-            runner: ubuntu-24.04-arm
-            variant: claude-cli
-            target: with-claude-cli
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     permissions:
@@ -582,13 +572,6 @@ jobs:
           path: /tmp/digests/runtime
           merge-multiple: true
 
-      - name: Download Claude CLI digests
-        uses: actions/download-artifact@v8
-        with:
-          pattern: claude-cli-*
-          path: /tmp/digests/claude-cli
-          merge-multiple: true
-
       - name: Create multi-platform manifests
         shell: bash
         run: |
@@ -608,33 +591,13 @@ jobs:
             -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
             "${dockerhub_runtime[@]}"
 
-          ghcr_claude_cli=()
-          dockerhub_claude_cli=()
-          for digest in /tmp/digests/claude-cli/*; do
-            hash="$(basename "$digest")"
-            ghcr_claude_cli+=("ghcr.io/${{ github.repository }}@sha256:$hash")
-            dockerhub_claude_cli+=("${{ env.DOCKERHUB_IMAGE }}@sha256:$hash")
-          done
-          docker buildx imagetools create \
-            -t "ghcr.io/${{ github.repository }}:with-claude-cli" \
-            -t "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}-with-claude-cli" \
-            "${ghcr_claude_cli[@]}"
-          docker buildx imagetools create \
-            -t "${{ env.DOCKERHUB_IMAGE }}:with-claude-cli" \
-            -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}-with-claude-cli" \
-            "${dockerhub_claude_cli[@]}"
-
       - name: Verify multi-platform Docker manifests
         run: |
           rust-script scripts/check-docker-platforms.rs \
             "ghcr.io/${{ github.repository }}:latest" \
             "ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}" \
-            "ghcr.io/${{ github.repository }}:with-claude-cli" \
-            "ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}-with-claude-cli" \
             "${{ env.DOCKERHUB_IMAGE }}:latest" \
-            "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}" \
-            "${{ env.DOCKERHUB_IMAGE }}:with-claude-cli" \
-            "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}-with-claude-cli"
+            "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}"
 
   create-github-release:
     name: Create GitHub Release

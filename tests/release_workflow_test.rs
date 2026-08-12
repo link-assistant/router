@@ -96,7 +96,7 @@ fn release_workflow_does_not_gate_releases_on_docker_builds() {
 }
 
 #[test]
-fn release_workflow_publishes_cached_image_variants_in_parallel() {
+fn release_workflow_publishes_one_native_image_per_architecture() {
     let workflow = read_lf(".github/workflows/release.yml");
 
     assert!(
@@ -114,8 +114,8 @@ fn release_workflow_publishes_cached_image_variants_in_parallel() {
     );
     assert_eq!(
         workflow.matches("variant: claude-cli").count(),
-        2,
-        "the Claude CLI variant should have one native matrix leg per architecture"
+        0,
+        "a second image variant must not return"
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
@@ -531,27 +531,27 @@ fn quoted_value<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     rest.strip_prefix('"')?.strip_suffix('"')
 }
 
-/// The runtime image has no Claude CLI, so a container cannot perform a
-/// first-time `claude` login. The published `:with-claude-cli` variant is what
-/// closes that gap; see issue #48.
+/// The runtime has the small fallback runner but no installed vendor package.
 #[test]
-fn dockerfile_offers_a_claude_cli_variant_without_bloating_the_default_image() {
+fn dockerfile_keeps_vendor_clis_out_of_the_single_runtime_image() {
     let dockerfile = read_lf("Dockerfile");
 
     assert!(
-        dockerfile.contains("AS with-claude-cli"),
-        "Dockerfile should define a `with-claude-cli` stage so a container can run `claude` login"
+        !dockerfile.contains("AS with-claude-cli"),
+        "Dockerfile must not define a second Claude CLI image"
     );
     assert!(
-        dockerfile.contains("@anthropic-ai/claude-code"),
-        "the `with-claude-cli` stage should install the Claude Code CLI"
+        !dockerfile.contains("@anthropic-ai/claude-code"),
+        "the image must not install the vendor CLI"
     );
 
     let default_stage = dockerfile_stage(&dockerfile, "runtime-base")
         .expect("Dockerfile should define the minimal `runtime-base` stage");
     assert!(
-        !default_stage.contains("nodejs") && !default_stage.contains("claude-code"),
-        "the default runtime stage should stay minimal: no Node.js and no Claude CLI"
+        !default_stage.contains("nodejs")
+            && !default_stage.contains("claude-code")
+            && default_stage.contains("/usr/local/bin/bun"),
+        "the runtime should carry only bun, not Node.js or a vendor CLI"
     );
 
     // The last stage is what a bare `docker build .` produces, so the minimal
@@ -568,7 +568,7 @@ fn dockerfile_offers_a_claude_cli_variant_without_bloating_the_default_image() {
 }
 
 #[test]
-fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
+fn release_workflow_publishes_only_the_runtime_image() {
     let workflow = read_lf(".github/workflows/release.yml");
 
     assert_eq!(
@@ -578,20 +578,20 @@ fn release_workflow_publishes_both_the_default_and_claude_cli_images() {
     );
     assert_eq!(
         workflow.matches("target: with-claude-cli").count(),
-        2,
-        "the native build matrix should include the Claude CLI variant for both architectures"
+        0,
+        "the native matrix must not include a Claude CLI variant"
     );
     assert_eq!(
         workflow.matches(":with-claude-cli\"").count(),
-        4,
-        "both registries should get and verify the floating `with-claude-cli` tag"
+        0,
+        "the retired floating Claude CLI tag must not be published"
     );
     assert_eq!(
         workflow
             .matches("${RELEASE_VERSION}-with-claude-cli")
             .count(),
-        2,
-        "both registries should get a version-pinned Claude CLI tag"
+        0,
+        "the retired versioned Claude CLI tag must not be published"
     );
 }
 
@@ -634,8 +634,8 @@ fn release_workflow_publishes_and_verifies_multi_platform_images() {
     );
     assert_eq!(
         workflow.matches("docker buildx imagetools create").count(),
-        4,
-        "both registries and both variants should receive merged multi-platform manifests"
+        2,
+        "both registries should receive one merged multi-platform manifest"
     );
     assert_eq!(
         workflow
