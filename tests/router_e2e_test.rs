@@ -23,6 +23,7 @@ use link_assistant_router::refresh::TokenCache;
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 use link_assistant_router::token::TokenManager;
 use serde_json::{Value, json};
+use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
 
 #[derive(Clone, Copy)]
@@ -43,7 +44,7 @@ struct TestRouter {
     url: String,
     token: String,
     requests: Arc<Mutex<Vec<Value>>>,
-    log_path: std::path::PathBuf,
+    log_root: std::path::PathBuf,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -86,7 +87,7 @@ impl TestRouter {
         let subscription_reader = (provider == UpstreamProvider::Codex)
             .then(|| SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home));
 
-        let log_path = data.path().join("requests.jsonl");
+        let log_root = data.path().join("requests");
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
@@ -119,7 +120,7 @@ impl TestRouter {
             metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
             audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
             request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
-                log_path.clone(),
+                log_root.clone(),
                 1024 * 1024,
             )),
             activitypub_actor_base_url: "https://router.test".to_string(),
@@ -138,7 +139,7 @@ impl TestRouter {
             url,
             token,
             requests,
-            log_path,
+            log_root,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
@@ -155,6 +156,11 @@ impl TestRouter {
         self.client
             .get(format!("{}{path}", self.url))
             .bearer_auth(&self.token)
+    }
+
+    fn log_path_for(&self, token: &str) -> std::path::PathBuf {
+        let digest = hex::encode(Sha256::digest(token.as_bytes()));
+        self.log_root.join(&digest[..32]).join("requests.jsonl")
     }
 }
 
@@ -359,7 +365,8 @@ async fn request_larger_than_logging_buffer_reaches_handler() {
         response.text().await.expect("large response body"),
         (10 * 1024 * 1024 + 1).to_string()
     );
-    let log = std::fs::read_to_string(&router.log_path).expect("request log");
+    let log = std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
+        .expect("request log");
     assert!(log.contains("client_request"));
     assert!(log.contains("[OMITTED:"));
     assert!(!log.contains("client_request_error"));
@@ -552,7 +559,8 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(translated_tools[0].get("function").is_none());
     drop(requests);
 
-    let records = std::fs::read_to_string(&router.log_path).expect("request exchange log");
+    let records =
+        std::fs::read_to_string(router.log_path_for(&router.token)).expect("request exchange log");
     let records = records
         .lines()
         .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL record"))
@@ -583,12 +591,24 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
             "missing {phase} for one correlation id"
         );
     }
+    let token_log_path = router.log_path_for(&router.token);
+    let expected_hash = token_log_path
+        .parent()
+        .and_then(std::path::Path::file_name)
+        .and_then(std::ffi::OsStr::to_str)
+        .expect("token hash");
+    assert!(exchange.iter().all(|record| {
+        record["token_hash"] == expected_hash
+            && record["token_label"] == "router e2e client"
+            && record["token_id"].as_str().is_some_and(|id| !id.is_empty())
+    }));
     let rendered = exchange
         .iter()
         .map(std::string::ToString::to_string)
         .collect::<String>();
     assert!(rendered.contains("client-boundary-marker"));
-    assert!(rendered.contains("[REDACTED]"));
+    assert!(rendered.contains("Bearer la_"));
+    assert!(rendered.contains("***"));
     assert!(!rendered.contains(&router.token));
 }
 
@@ -675,6 +695,16 @@ async fn auth_unknown_models_and_admin_isolation() {
         .await
         .expect("admin response");
     assert_eq!(admin.status(), StatusCode::UNAUTHORIZED);
+
+    let unauthenticated =
+        std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
+            .expect("unauthenticated request log");
+    assert!(unauthenticated.lines().all(|line| {
+        let record: Value = serde_json::from_str(line).expect("valid JSONL");
+        record["token_hash"] == "unauthenticated"
+            && record["token_id"].is_null()
+            && record["token_label"].is_null()
+    }));
 }
 
 #[tokio::test]

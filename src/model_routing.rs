@@ -430,7 +430,7 @@ mod tests {
             metrics: Arc::new(crate::metrics::Metrics::default()),
             audit: Arc::new(crate::audit::AuditLog::to_path(None)),
             request_log: Arc::new(crate::request_log::RequestLog::new(
-                data_dir.join("requests.jsonl"),
+                data_dir.join("requests"),
                 1024 * 1024,
             )),
             activitypub_actor_base_url: "https://router.example".to_string(),

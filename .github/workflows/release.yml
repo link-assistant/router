@@ -316,8 +316,10 @@ jobs:
 
       - name: Install coverage tools
         run: |
-          cargo install cargo-llvm-cov --version 0.8.7 --locked
-          cargo install rust-script
+          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.8.7'; then
+            cargo install cargo-llvm-cov --version 0.8.7 --locked --force
+          fi
+          command -v rust-script >/dev/null || cargo install rust-script
 
       - name: Test coverage gate behavior
         run: rust-script --test scripts/check-coverage.rs
