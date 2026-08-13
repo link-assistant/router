@@ -298,9 +298,8 @@ impl TokenManager {
         ttl_hours: i64,
         label: &str,
     ) -> Result<String, TokenError> {
-        // `revoke_token` is idempotent and reports nothing for an unknown id,
-        // so check first: a typo must not hand back a fresh credential while
-        // silently leaving the old one live.
+        // Check first so a typo cannot issue a fresh credential before the
+        // unknown old token is rejected.
         if !self
             .list_tokens()?
             .iter()
@@ -414,6 +413,7 @@ impl TokenError {
             Self::InvalidPrefix | Self::Invalid(_) => "invalid token",
             Self::Expired => "Token has expired",
             Self::Revoked => "Token has been revoked",
+            Self::NotFound(_) => "token not found",
             Self::InsufficientScope => "insufficient token scope",
             Self::LimitExceeded => "Token has reached its request limit",
             Self::Storage(_) => "token validation failed",
