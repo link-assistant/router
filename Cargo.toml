@@ -61,7 +61,9 @@ tower = { version = "0.5", features = ["util"] }
 tempfile = "3"
 
 [lints.rust]
-unsafe_code = "forbid"
+# The file-mapping compatibility adapter has a scoped exception; unsafe code
+# remains denied throughout the rest of the crate.
+unsafe_code = "deny"
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }

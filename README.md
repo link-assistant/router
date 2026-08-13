@@ -669,6 +669,30 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
 | `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
 
+#### Storage formats and ownership
+
+Router-owned token state uses the associative stack. `tokens.lino` is a
+portable Links Notation projection produced by `lino-objects-codec`, with each
+record represented as `Type → SubType → Value`. `tokens.bin` is the same
+semantic graph in a native `doublets` store backed by file-mapped
+`platform-mem`. The `text`, `binary`, and default `both` policies select those
+two projections; `memory` remains non-persistent. Hand-built `tokens.lino`
+files and `LARTOK01` JSON containers from earlier releases are loaded and
+atomically converted on first open.
+
+Other files keep the format of the boundary they serve:
+
+- Provider/client credentials and client settings such as
+  `.credentials.json`, `auth.json`, `settings.json`, and `config.toml` are
+  vendor-owned interoperability files. The router continues to read or update
+  the vendor's expected shape.
+- `requests.jsonl` and the optional audit JSONL are append-only operational
+  streams intended for log collectors and standard text tooling, rather than
+  mutable router domain state.
+- `providers.lenv` is the router's existing portable provider configuration
+  interchange. Moving additional router-owned state onto doublets can be done
+  independently of the token migration.
+
 ### Feature toggles
 
 | Flag / env | Default | Description |

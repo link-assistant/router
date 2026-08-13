@@ -1,9 +1,7 @@
 //! Token persistence backends.
 //!
-//! Issue #7 requires that the router persist issued tokens with **two**
-//! formats by default — a Lino-style text encoding (so humans can audit
-//! the token database with a text editor) **and** a binary encoding that
-//! is compatible with the `link-cli` storage layer.
+//! Issued-token state can be persisted as real Links Notation text, a native
+//! file-mapped doublets graph, or both.
 //!
 //! This module provides:
 //!
@@ -11,15 +9,11 @@
 //!   listing, persisting, and revoking [`TokenRecord`]s.
 //! - [`MemoryTokenStore`] — an in-memory implementation, used in tests and
 //!   for [`StoragePolicy::Memory`].
-//! - [`TextTokenStore`] — persists records as a Lino-style text file at
-//!   `<data_dir>/tokens.lino`. This is the format recommended by
-//!   `lino-objects-codec`. We implement a minimal subset of the encoder
-//!   internally so we don't depend on the (currently unpublished) crate.
-//! - [`BinaryTokenStore`] — persists records as a length-prefixed
-//!   binary file at `<data_dir>/tokens.bin`. The format is intentionally
-//!   simple and round-trippable; it interoperates with `link-cli` when
-//!   the optional CLI backend adapter is wired up but does not require
-//!   `clink` to be installed.
+//! - [`TextTokenStore`] — persists records through `lino-objects-codec` at
+//!   `<data_dir>/tokens.lino`.
+//! - [`BinaryTokenStore`] — persists the same `Type → SubType → Value` graph
+//!   in a `doublets` store backed by `platform-mem` at
+//!   `<data_dir>/tokens.bin`.
 //! - [`DualTokenStore`] — fans writes out to two stores (typically text +
 //!   binary) and reads from the *first* store, falling back to the second
 //!   on miss. This is the default when [`StoragePolicy::Both`] is set.
@@ -37,13 +31,18 @@
 
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
 
 use crate::config::StoragePolicy;
+
+mod associative;
+#[allow(unsafe_code)]
+mod file_mapped;
+mod legacy;
 
 /// One persisted token record.
 ///
@@ -197,18 +196,10 @@ impl TokenStore for MemoryTokenStore {
     }
 }
 
-/// Lino-style text token store.
+/// Links Notation text token store.
 ///
-/// File layout (one record per line):
-///
-/// ```text
-/// (token <id> (label "<label>") (issued_at <iat>) (expires_at <exp>) (revoked <bool>) (account "<account>"))
-/// ```
-///
-/// We use a hand-rolled encoder so we don't depend on the unpublished
-/// `lino-objects-codec` crate. The shape mirrors Lino syntax (parens, atoms
-/// and quoted strings) and round-trips cleanly via the encoder/decoder
-/// helpers in this module.
+/// Existing hand-built files are read once and atomically migrated to the
+/// official `lino-objects-codec` representation.
 #[derive(Clone)]
 pub struct TextTokenStore {
     path: PathBuf,
@@ -221,23 +212,34 @@ impl TextTokenStore {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let records = if path.exists() {
+        let (records, migrated) = if path.exists() {
             let contents = fs::read_to_string(&path)?;
-            decode_lino(&contents).map_err(StorageError::Codec)?
+            match associative::decode_text(&contents) {
+                Ok(records) => (records, false),
+                Err(_) => (
+                    legacy::decode_text(&contents).map_err(StorageError::Codec)?,
+                    true,
+                ),
+            }
         } else {
-            Vec::new()
+            (Vec::new(), false)
         };
         let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
-        Ok(Self {
+        let store = Self {
             path,
             inner: Arc::new(RwLock::new(map)),
-        })
+        };
+        if migrated {
+            let guard = store.inner.read().map_err(|_| StorageError::LockPoisoned)?;
+            store.flush(&guard)?;
+        }
+        Ok(store)
     }
 
     fn flush(&self, guard: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
         let mut sorted: Vec<&TokenRecord> = guard.values().collect();
         sorted.sort_by(|a, b| a.id.cmp(&b.id));
-        let body = encode_lino(sorted.iter().copied());
+        let body = associative::encode_text(sorted.iter().copied());
         atomic_write(&self.path, body.as_bytes())
     }
 }
@@ -278,28 +280,15 @@ impl TokenStore for TextTokenStore {
     }
 }
 
-/// Length-prefixed binary token store.
+/// Native file-mapped doublets token store.
 ///
-/// File layout:
-/// ```text
-/// magic = b"LARTOK01"  // 8 bytes
-/// repeat:
-///     u32 LE record_len
-///     <record_len> bytes of JSON-encoded TokenRecord
-/// ```
-///
-/// JSON-on-binary is intentional: it keeps the format trivially auditable
-/// and round-trippable while still being length-prefixed and
-/// non-text-editor-friendly enough that operators won't accidentally edit
-/// it. An optional CLI backend adapter can substitute a `clink`-driven
-/// implementation when configured.
+/// Existing `LARTOK01` length-prefixed JSON files are read once and
+/// atomically migrated to the doublets representation.
 #[derive(Clone)]
 pub struct BinaryTokenStore {
     path: PathBuf,
     inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
 }
-
-const BIN_MAGIC: &[u8; 8] = b"LARTOK01";
 
 impl BinaryTokenStore {
     pub fn open(path: impl Into<PathBuf>) -> Result<Self, StorageError> {
@@ -307,31 +296,31 @@ impl BinaryTokenStore {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let records = if path.exists() {
-            decode_binary(&path)?
+        let (records, migrated) = if path.exists() {
+            if legacy::is_binary(&path)? {
+                (legacy::decode_binary(&path)?, true)
+            } else {
+                (associative::read_binary(&path)?, false)
+            }
         } else {
-            Vec::new()
+            (Vec::new(), false)
         };
         let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
-        Ok(Self {
+        let store = Self {
             path,
             inner: Arc::new(RwLock::new(map)),
-        })
+        };
+        if migrated {
+            let guard = store.inner.read().map_err(|_| StorageError::LockPoisoned)?;
+            store.flush(&guard)?;
+        }
+        Ok(store)
     }
 
     fn flush(&self, guard: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
         let mut sorted: Vec<&TokenRecord> = guard.values().collect();
         sorted.sort_by(|a, b| a.id.cmp(&b.id));
-        let mut buf: Vec<u8> = Vec::with_capacity(8 + sorted.len() * 128);
-        buf.extend_from_slice(BIN_MAGIC);
-        for rec in sorted {
-            let json = serde_json::to_vec(rec).map_err(|e| StorageError::Codec(e.to_string()))?;
-            let len = u32::try_from(json.len())
-                .map_err(|_| StorageError::Codec("record too large".into()))?;
-            buf.extend_from_slice(&len.to_le_bytes());
-            buf.extend_from_slice(&json);
-        }
-        atomic_write(&self.path, &buf)
+        associative::write_binary(&self.path, sorted)
     }
 }
 
@@ -383,36 +372,6 @@ fn consume_request(record: Option<&mut TokenRecord>) -> bool {
     }
     record.used_requests = record.used_requests.saturating_add(1);
     true
-}
-
-fn decode_binary(path: &Path) -> Result<Vec<TokenRecord>, StorageError> {
-    let mut f = fs::File::open(path)?;
-    let mut magic = [0u8; 8];
-    if let Err(e) = f.read_exact(&mut magic) {
-        if e.kind() == io::ErrorKind::UnexpectedEof {
-            return Ok(Vec::new());
-        }
-        return Err(e.into());
-    }
-    if &magic != BIN_MAGIC {
-        return Err(StorageError::Codec("invalid binary magic header".into()));
-    }
-    let mut out = Vec::new();
-    loop {
-        let mut len_buf = [0u8; 4];
-        match f.read_exact(&mut len_buf) {
-            Ok(()) => {}
-            Err(e) if e.kind() == io::ErrorKind::UnexpectedEof => break,
-            Err(e) => return Err(e.into()),
-        }
-        let len = u32::from_le_bytes(len_buf) as usize;
-        let mut data = vec![0u8; len];
-        f.read_exact(&mut data)?;
-        let rec: TokenRecord =
-            serde_json::from_slice(&data).map_err(|e| StorageError::Codec(e.to_string()))?;
-        out.push(rec);
-    }
-    Ok(out)
 }
 
 /// Dual-write store: every mutation goes to *both* primary and secondary;
@@ -487,281 +446,6 @@ pub fn build_token_store(
                 secondary: binary,
             }))
         }
-    }
-}
-
-// =====================================================================
-// Lino-style text codec
-// =====================================================================
-
-fn encode_lino<'a>(records: impl IntoIterator<Item = &'a TokenRecord>) -> String {
-    let mut out = String::new();
-    out.push_str("# Link.Assistant.Router token store\n");
-    out.push_str("# Format: (token <id> (label \"...\") ...)\n");
-    for rec in records {
-        out.push('(');
-        out.push_str("token ");
-        out.push_str(&rec.id);
-        out.push_str(" (label ");
-        write_quoted(&mut out, &rec.label);
-        out.push_str(") (issued_at ");
-        out.push_str(&rec.issued_at.to_string());
-        out.push_str(") (expires_at ");
-        out.push_str(&rec.expires_at.to_string());
-        out.push_str(") (revoked ");
-        out.push_str(if rec.revoked { "true" } else { "false" });
-        out.push(')');
-        if let Some(ref acc) = rec.account {
-            out.push_str(" (account ");
-            write_quoted(&mut out, acc);
-            out.push(')');
-        }
-        if let Some(max) = rec.max_requests {
-            out.push_str(" (max_requests ");
-            out.push_str(&max.to_string());
-            out.push(')');
-        }
-        if rec.used_requests > 0 {
-            out.push_str(" (used_requests ");
-            out.push_str(&rec.used_requests.to_string());
-            out.push(')');
-        }
-        if !rec.scope.is_empty() {
-            out.push_str(" (scope ");
-            write_quoted(&mut out, &rec.scope);
-            out.push(')');
-        }
-        out.push_str(")\n");
-    }
-    out
-}
-
-fn write_quoted(out: &mut String, s: &str) {
-    out.push('"');
-    for ch in s.chars() {
-        match ch {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c => out.push(c),
-        }
-    }
-    out.push('"');
-}
-
-fn decode_lino(input: &str) -> Result<Vec<TokenRecord>, String> {
-    let mut out = Vec::new();
-    for raw in input.lines() {
-        let line = raw.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        out.push(parse_record_line(line)?);
-    }
-    Ok(out)
-}
-
-fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
-    // Expected outer shape: (token <id> <fields...>)
-    let inner = line
-        .strip_prefix('(')
-        .and_then(|s| s.strip_suffix(')'))
-        .ok_or_else(|| format!("expected parens around record: {line}"))?
-        .trim();
-    let mut tokens = LinoTokens::new(inner);
-    let kind = tokens
-        .next_atom()
-        .ok_or_else(|| "missing record kind".to_string())?;
-    if kind != "token" {
-        return Err(format!("unexpected record kind: {kind}"));
-    }
-    let id = tokens
-        .next_atom()
-        .ok_or_else(|| "missing token id".to_string())?
-        .to_string();
-    let mut label = String::new();
-    let mut issued_at = 0i64;
-    let mut expires_at = 0i64;
-    let mut revoked = false;
-    let mut account: Option<String> = None;
-    let mut max_requests: Option<u64> = None;
-    let mut used_requests: u64 = 0;
-    let mut scope = String::new();
-    while let Some(field) = tokens.next_paren_group() {
-        let mut inner = LinoTokens::new(field);
-        let key = inner
-            .next_atom()
-            .ok_or_else(|| "field missing key".to_string())?;
-        match key {
-            "label" => {
-                label = inner
-                    .next_string()
-                    .ok_or_else(|| "label missing value".to_string())?;
-            }
-            "issued_at" => {
-                let v = inner
-                    .next_atom()
-                    .ok_or_else(|| "issued_at missing value".to_string())?;
-                issued_at = v
-                    .parse()
-                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
-            }
-            "expires_at" => {
-                let v = inner
-                    .next_atom()
-                    .ok_or_else(|| "expires_at missing value".to_string())?;
-                expires_at = v
-                    .parse()
-                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
-            }
-            "revoked" => {
-                let v = inner
-                    .next_atom()
-                    .ok_or_else(|| "revoked missing value".to_string())?;
-                revoked = matches!(v, "true" | "1" | "yes");
-            }
-            "account" => {
-                account = inner.next_string();
-            }
-            "max_requests" => {
-                let v = inner
-                    .next_atom()
-                    .ok_or_else(|| "max_requests missing value".to_string())?;
-                max_requests = Some(
-                    v.parse()
-                        .map_err(|e: std::num::ParseIntError| e.to_string())?,
-                );
-            }
-            "used_requests" => {
-                let v = inner
-                    .next_atom()
-                    .ok_or_else(|| "used_requests missing value".to_string())?;
-                used_requests = v
-                    .parse()
-                    .map_err(|e: std::num::ParseIntError| e.to_string())?;
-            }
-            "scope" => {
-                scope = inner.next_string().unwrap_or_default();
-            }
-            other => return Err(format!("unknown field: {other}")),
-        }
-    }
-    Ok(TokenRecord {
-        id,
-        label,
-        issued_at,
-        expires_at,
-        revoked,
-        account,
-        max_requests,
-        used_requests,
-        scope,
-    })
-}
-
-struct LinoTokens<'a> {
-    rest: &'a str,
-}
-
-impl<'a> LinoTokens<'a> {
-    const fn new(input: &'a str) -> Self {
-        Self { rest: input }
-    }
-
-    fn skip_ws(&mut self) {
-        self.rest = self.rest.trim_start();
-    }
-
-    fn next_atom(&mut self) -> Option<&'a str> {
-        self.skip_ws();
-        if self.rest.is_empty() || self.rest.starts_with('(') || self.rest.starts_with('"') {
-            return None;
-        }
-        let end = self
-            .rest
-            .find(|c: char| c.is_whitespace() || c == '(' || c == ')')
-            .unwrap_or(self.rest.len());
-        let (atom, rest) = self.rest.split_at(end);
-        self.rest = rest;
-        Some(atom)
-    }
-
-    fn next_string(&mut self) -> Option<String> {
-        self.skip_ws();
-        let bytes = self.rest.as_bytes();
-        if bytes.first() != Some(&b'"') {
-            return None;
-        }
-        let mut out = String::new();
-        let mut i = 1usize;
-        while i < bytes.len() {
-            let c = bytes[i];
-            if c == b'\\' && i + 1 < bytes.len() {
-                let esc = bytes[i + 1];
-                match esc {
-                    b'"' => out.push('"'),
-                    b'\\' => out.push('\\'),
-                    b'n' => out.push('\n'),
-                    b'r' => out.push('\r'),
-                    b't' => out.push('\t'),
-                    other => out.push(other as char),
-                }
-                i += 2;
-            } else if c == b'"' {
-                self.rest = &self.rest[i + 1..];
-                return Some(out);
-            } else {
-                out.push(c as char);
-                i += 1;
-            }
-        }
-        None
-    }
-
-    fn next_paren_group(&mut self) -> Option<&'a str> {
-        self.skip_ws();
-        if !self.rest.starts_with('(') {
-            return None;
-        }
-        let bytes = self.rest.as_bytes();
-        let mut depth = 0i32;
-        let mut in_str = false;
-        let mut escape = false;
-        let mut end = 0usize;
-        for (idx, &b) in bytes.iter().enumerate() {
-            if escape {
-                escape = false;
-                continue;
-            }
-            if in_str {
-                match b {
-                    b'\\' => escape = true,
-                    b'"' => in_str = false,
-                    _ => {}
-                }
-                continue;
-            }
-            match b {
-                b'"' => in_str = true,
-                b'(' => depth += 1,
-                b')' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        end = idx + 1;
-                        break;
-                    }
-                }
-                _ => {}
-            }
-        }
-        if end == 0 {
-            return None;
-        }
-        let group = &self.rest[1..end - 1];
-        self.rest = &self.rest[end..];
-        Some(group)
     }
 }
 
@@ -973,7 +657,7 @@ mod tests {
         dual.put(sample_record("d")).unwrap();
         // both files updated
         let text_contents = std::fs::read_to_string(dir.path().join("tokens.lino")).unwrap();
-        assert!(text_contents.contains("(token d "));
+        assert_eq!(associative::decode_text(&text_contents).unwrap()[0].id, "d");
     }
 
     #[test]
@@ -989,8 +673,8 @@ mod tests {
             used_requests: 7,
             scope: crate::token::ADMIN_SCOPE.to_string(),
         };
-        let s = encode_lino(std::iter::once(&rec));
-        let parsed = decode_lino(&s).unwrap();
+        let s = associative::encode_text(std::iter::once(&rec));
+        let parsed = associative::decode_text(&s).unwrap();
         assert_eq!(parsed.len(), 1);
         assert_eq!(parsed[0], rec);
     }
