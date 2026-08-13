@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use axum::body::Body;
@@ -114,7 +114,7 @@ impl RequestLog {
             return;
         }
         if line.len() as u64 > self.max_bytes {
-            if let Err(error) = fs::write(&self.path, []) {
+            if let Err(error) = write_owner_only(&self.path, &[]) {
                 tracing::warn!(
                     "request log truncation failed ({}): {error}",
                     self.path.display()
@@ -126,11 +126,7 @@ impl RequestLog {
         if existing_len.saturating_add(line.len() as u64) > self.max_bytes {
             self.retain_newest_before(line.len());
         }
-        let result = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&self.path)
-            .and_then(|mut file| file.write_all(line));
+        let result = append_owner_only(&self.path, line);
         if let Err(error) = result {
             tracing::warn!(
                 "request log write failed ({}): {error}",
@@ -151,7 +147,7 @@ impl RequestLog {
             .iter()
             .position(|byte| *byte == b'\n')
             .map_or(existing.len(), |offset| start_floor + offset + 1);
-        if let Err(error) = fs::write(&self.path, &existing[start..]) {
+        if let Err(error) = write_owner_only(&self.path, &existing[start..]) {
             tracing::warn!(
                 "request log compaction failed ({}): {error}",
                 self.path.display()
@@ -212,6 +208,44 @@ impl RequestLog {
     }
 }
 
+fn append_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    let mut options = OpenOptions::new();
+    options.create(true).append(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    set_owner_only(&file)?;
+    file.write_all(contents)
+}
+
+fn write_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+    let mut options = OpenOptions::new();
+    options.create(true).write(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    set_owner_only(&file)?;
+    file.write_all(contents)
+}
+
+#[cfg(unix)]
+fn set_owner_only(file: &fs::File) -> std::io::Result<()> {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    file.set_permissions(fs::Permissions::from_mode(0o600))
+}
+
+#[cfg(not(unix))]
+fn set_owner_only(_file: &fs::File) -> std::io::Result<()> {
+    Ok(())
+}
+
 /// Correlation id injected by [`log_http_exchange`]. Direct handler tests that
 /// bypass middleware receive a fresh id instead of sharing an ambiguous value.
 #[must_use]
@@ -233,9 +267,16 @@ pub fn redacted_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
             let value = if is_secret_name(&name) {
                 REDACTED.to_string()
             } else {
-                value
-                    .to_str()
-                    .map_or_else(|_| "[NON-UTF8]".to_string(), str::to_string)
+                value.to_str().map_or_else(
+                    |_| "[NON-UTF8]".to_string(),
+                    |value| {
+                        if is_secret_value(value) {
+                            REDACTED.to_string()
+                        } else {
+                            value.to_string()
+                        }
+                    },
+                )
             };
             (name, value)
         })
@@ -257,6 +298,10 @@ fn redact_value(mut value: Value) -> Value {
             for (key, child) in object {
                 if is_secret_name(key) {
                     *child = Value::String(REDACTED.to_string());
+                } else if key.eq_ignore_ascii_case("uri")
+                    && let Value::String(uri) = child
+                {
+                    *uri = redacted_uri(uri);
                 } else {
                     *child = redact_value(child.take());
                 }
@@ -267,24 +312,217 @@ fn redact_value(mut value: Value) -> Value {
                 *child = redact_value(child.take());
             }
         }
+        Value::String(text) if is_secret_value(text) => {
+            *text = REDACTED.to_string();
+        }
         _ => {}
     }
     value
 }
 
 fn is_secret_name(name: &str) -> bool {
+    let normalized = normalize_name(name);
     matches!(
-        name.to_ascii_lowercase().replace('-', "_").as_str(),
+        normalized.as_str(),
         "authorization"
             | "proxy_authorization"
             | "x_api_key"
             | "api_key"
+            | "key"
             | "cookie"
             | "set_cookie"
             | "access_token"
             | "refresh_token"
             | "oauth_token"
-    )
+            | "auth_token"
+            | "security_token"
+            | "x_auth_token"
+            | "x_goog_api_key"
+            | "x_amz_security_token"
+            | "token"
+            | "password"
+            | "secret"
+            | "client_secret"
+            | "private_key"
+    ) || normalized.ends_with("_password")
+        || normalized.ends_with("_secret")
+        || normalized.ends_with("_token")
+        || normalized.ends_with("_api_key")
+}
+
+fn normalize_name(name: &str) -> String {
+    let mut normalized = String::with_capacity(name.len());
+    let mut previous_was_lowercase_or_digit = false;
+    for character in name.chars() {
+        if character.is_ascii_uppercase() {
+            if previous_was_lowercase_or_digit && !normalized.ends_with('_') {
+                normalized.push('_');
+            }
+            normalized.push(character.to_ascii_lowercase());
+            previous_was_lowercase_or_digit = false;
+        } else if character.is_ascii_alphanumeric() {
+            normalized.push(character.to_ascii_lowercase());
+            previous_was_lowercase_or_digit =
+                character.is_ascii_lowercase() || character.is_ascii_digit();
+        } else {
+            if !normalized.ends_with('_') {
+                normalized.push('_');
+            }
+            previous_was_lowercase_or_digit = false;
+        }
+    }
+    normalized.trim_matches('_').to_string()
+}
+
+fn is_secret_value(value: &str) -> bool {
+    let value = value.trim();
+    value
+        .get(..7)
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
+        || [
+            "sk-ant-",
+            crate::token::TOKEN_PREFIX,
+            crate::admin::ADMIN_TOKEN_PREFIX,
+        ]
+        .iter()
+        .any(|prefix| value.contains(prefix))
+        || is_jwt(
+            value
+                .strip_prefix(crate::token::TOKEN_PREFIX)
+                .unwrap_or(value),
+        )
+}
+
+fn is_jwt(value: &str) -> bool {
+    let mut segments = value.split('.');
+    let Some(header) = segments.next() else {
+        return false;
+    };
+    let Some(payload) = segments.next() else {
+        return false;
+    };
+    let Some(signature) = segments.next() else {
+        return false;
+    };
+    segments.next().is_none()
+        && header.starts_with("eyJ")
+        && [header, payload, signature].iter().all(|segment| {
+            segment.len() >= 8
+                && segment.chars().all(|character| {
+                    character.is_ascii_alphanumeric() || matches!(character, '-' | '_')
+                })
+        })
+}
+
+fn redacted_uri(uri: &str) -> String {
+    let Some((path, query)) = uri.split_once('?') else {
+        return uri.to_string();
+    };
+    let query = query
+        .split('&')
+        .map(|parameter| {
+            let (name, value) = parameter.split_once('=').unwrap_or((parameter, ""));
+            let decoded_name = percent_decode(name);
+            let decoded_value = percent_decode(value);
+            if is_secret_name(&decoded_name) || is_secret_value(&decoded_value) {
+                format!("{name}={REDACTED}")
+            } else {
+                parameter.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("&");
+    format!("{path}?{query}")
+}
+
+fn percent_decode(value: &str) -> String {
+    let bytes = value.as_bytes();
+    let mut decoded = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        match bytes[index] {
+            b'%' if index + 2 < bytes.len() => {
+                if let (Some(high), Some(low)) =
+                    (hex_digit(bytes[index + 1]), hex_digit(bytes[index + 2]))
+                {
+                    decoded.push(high * 16 + low);
+                    index += 3;
+                    continue;
+                }
+                decoded.push(bytes[index]);
+            }
+            b'+' => decoded.push(b' '),
+            byte => decoded.push(byte),
+        }
+        index += 1;
+    }
+    String::from_utf8_lossy(&decoded).into_owned()
+}
+
+const fn hex_digit(byte: u8) -> Option<u8> {
+    match byte {
+        b'0'..=b'9' => Some(byte - b'0'),
+        b'a'..=b'f' => Some(byte - b'a' + 10),
+        b'A'..=b'F' => Some(byte - b'A' + 10),
+        _ => None,
+    }
+}
+
+struct ClientRequestCapture {
+    logger: Arc<RequestLog>,
+    correlation_id: String,
+    method: String,
+    uri: String,
+    version: String,
+    headers: BTreeMap<String, String>,
+    body: Vec<u8>,
+    omitted: bool,
+    recorded: bool,
+}
+
+impl ClientRequestCapture {
+    fn push(&mut self, bytes: &[u8]) {
+        if self.omitted {
+            return;
+        }
+        if self.body.len().saturating_add(bytes.len()) > MAX_BUFFERED_REQUEST_BYTES {
+            self.body.clear();
+            self.omitted = true;
+        } else {
+            self.body.extend_from_slice(bytes);
+        }
+    }
+
+    fn record(&mut self) {
+        if self.recorded {
+            return;
+        }
+        let body = if self.omitted {
+            Value::String(format!(
+                "[OMITTED: request body exceeds {MAX_BUFFERED_REQUEST_BYTES} byte logging limit]"
+            ))
+        } else {
+            redacted_body(&self.body)
+        };
+        self.logger.record(
+            &self.correlation_id,
+            "client_request",
+            json!({
+                "method": self.method,
+                "uri": self.uri,
+                "version": self.version,
+                "headers": self.headers,
+                "body": body,
+            }),
+        );
+        self.recorded = true;
+    }
+}
+
+impl Drop for ClientRequestCapture {
+    fn drop(&mut self) {
+        self.record();
+    }
 }
 
 /// Middleware that records every client-side HTTP exchange by default.
@@ -299,36 +537,43 @@ pub async fn log_http_exchange(
         "x-request-id",
         HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
     );
-    let body = match axum::body::to_bytes(body, MAX_BUFFERED_REQUEST_BYTES).await {
-        Ok(body) => body,
-        Err(error) => {
-            state.request_log.record(
-                &correlation_id,
-                "client_request_error",
-                json!({"error": error.to_string()}),
-            );
-            return (
-                axum::http::StatusCode::PAYLOAD_TOO_LARGE,
-                "request body exceeds 10 MiB logging limit",
-            )
-                .into_response();
-        }
+    let logged_uri = redacted_uri(&parts.uri.to_string());
+    let capture = ClientRequestCapture {
+        logger: Arc::clone(&state.request_log),
+        correlation_id: correlation_id.clone(),
+        method: parts.method.as_str().to_string(),
+        uri: logged_uri.clone(),
+        version: format!("{:?}", parts.version),
+        headers: redacted_headers(&parts.headers),
+        body: Vec::new(),
+        omitted: false,
+        recorded: false,
     };
-    state.request_log.record(
-        &correlation_id,
-        "client_request",
-        json!({
-            "method": parts.method.as_str(),
-            "uri": parts.uri.to_string(),
-            "version": format!("{:?}", parts.version),
-            "headers": redacted_headers(&parts.headers),
-            "body": redacted_body(&body),
-        }),
+    let stream = futures_util::stream::unfold(
+        (body.into_data_stream(), capture),
+        |(mut stream, mut capture)| async move {
+            match stream.next().await {
+                Some(Ok(bytes)) => {
+                    capture.push(&bytes);
+                    Some((Ok::<_, axum::Error>(bytes), (stream, capture)))
+                }
+                Some(Err(error)) => {
+                    capture.omitted = true;
+                    Some((Err(error), (stream, capture)))
+                }
+                None => {
+                    capture.record();
+                    None
+                }
+            }
+        },
     );
-    tracing::info!(request_id = %correlation_id, method = %parts.method, uri = %parts.uri, "request");
+    tracing::info!(request_id = %correlation_id, method = %parts.method, uri = %logged_uri, "request");
 
     let started = Instant::now();
-    let mut response = next.run(Request::from_parts(parts, Body::from(body))).await;
+    let mut response = next
+        .run(Request::from_parts(parts, Body::from_stream(stream)))
+        .await;
     response.headers_mut().insert(
         "x-request-id",
         HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
@@ -360,8 +605,6 @@ pub async fn log_http_exchange(
     Response::from_parts(parts, Body::from_stream(stream))
 }
 
-use axum::response::IntoResponse as _;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -371,17 +614,93 @@ mod tests {
         let mut headers = HeaderMap::new();
         headers.insert("authorization", HeaderValue::from_static("Bearer secret"));
         headers.insert("x-api-key", HeaderValue::from_static("secret-key"));
+        headers.insert("x-auth-token", HeaderValue::from_static("auth-secret"));
+        headers.insert("x-goog-api-key", HeaderValue::from_static("google-secret"));
+        headers.insert(
+            "x-amz-security-token",
+            HeaderValue::from_static("aws-secret"),
+        );
         headers.insert("x-visible", HeaderValue::from_static("marker"));
         let redacted = redacted_headers(&headers);
         assert_eq!(redacted["authorization"], REDACTED);
         assert_eq!(redacted["x-api-key"], REDACTED);
+        assert_eq!(redacted["x-auth-token"], REDACTED);
+        assert_eq!(redacted["x-goog-api-key"], REDACTED);
+        assert_eq!(redacted["x-amz-security-token"], REDACTED);
         assert_eq!(redacted["x-visible"], "marker");
 
-        let body = redacted_body(br#"{"access_token":"secret","nested":{"api_key":"key"}}"#);
+        let body = redacted_body(
+            br#"{
+                "access_token":"access-secret",
+                "apiKey":"camel-secret",
+                "client_secret":"client-secret",
+                "password":"password-secret",
+                "secret":"ordinary-secret",
+                "nested":{"api_key":"key-secret"},
+                "unknownPrefix":"sk-ant-oat01-shaped-secret",
+                "unknownBearer":"Bearer arbitrary-secret",
+                "unknownJwt":"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature"
+            }"#,
+        );
         let rendered = body.to_string();
-        assert!(!rendered.contains("secret"));
-        assert!(!rendered.contains("\"key\""));
+        assert!(!rendered.contains("-secret"));
+        assert!(!rendered.contains("eyJhbGci"));
         assert!(rendered.contains(REDACTED));
+    }
+
+    #[test]
+    fn credentials_are_redacted_from_uri_queries() {
+        let dir = tempfile::tempdir().expect("temporary directory");
+        let path = dir.path().join("requests.jsonl");
+        let log = RequestLog::new(path.clone(), 1024 * 1024);
+        log.record(
+            "request",
+            "client_request",
+            json!({
+                "uri": "/v1/models?api_key=api-secret&key=key-secret&access_token=access-secret&token=token-secret&authorization=bearer-secret&probe=visible"
+            }),
+        );
+
+        let rendered = fs::read_to_string(path).expect("request log");
+        for secret in [
+            "api-secret",
+            "key-secret",
+            "access-secret",
+            "token-secret",
+            "bearer-secret",
+        ] {
+            assert!(!rendered.contains(secret));
+        }
+        assert!(rendered.contains("probe=visible"));
+        assert!(rendered.contains(REDACTED));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn request_log_is_created_owner_only() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let dir = tempfile::tempdir().expect("temporary directory");
+        let path = dir.path().join("requests.jsonl");
+        let log = RequestLog::new(path.clone(), 1024 * 1024);
+        log.record("request", "test", json!({"visible": true}));
+
+        let mode = fs::metadata(&path)
+            .expect("request log")
+            .permissions()
+            .mode()
+            & 0o777;
+        assert_eq!(mode, 0o600);
+
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o644))
+            .expect("make existing log permissive");
+        log.record("request", "test", json!({"visible": true}));
+        let repaired_mode = fs::metadata(path)
+            .expect("request log")
+            .permissions()
+            .mode()
+            & 0o777;
+        assert_eq!(repaired_mode, 0o600);
     }
 
     #[test]
