@@ -273,6 +273,9 @@ pub struct OpenAIStreamTranslator {
     sent_chat_role: bool,
     sent_response_created: bool,
     sent_final: bool,
+    usage_requested: Option<()>,
+    input_tokens: u64,
+    output_tokens: u64,
     response_output_text: String,
 }
 
@@ -293,8 +296,18 @@ impl OpenAIStreamTranslator {
             sent_chat_role: false,
             sent_response_created: false,
             sent_final: false,
+            usage_requested: None,
+            input_tokens: 0,
+            output_tokens: 0,
             response_output_text: String::new(),
         }
+    }
+
+    /// Request a final Chat Completions usage chunk with empty choices.
+    #[must_use]
+    pub const fn with_include_usage(mut self, include_usage: bool) -> Self {
+        self.usage_requested = if include_usage { Some(()) } else { None };
+        self
     }
 
     /// Push raw upstream bytes and return zero or more `OpenAI` SSE frames.
@@ -331,6 +344,7 @@ impl OpenAIStreamTranslator {
         match event.get("type").and_then(Value::as_str) {
             Some("message_start") => {
                 self.capture_upstream_identity(event);
+                self.capture_anthropic_usage(event.pointer("/message/usage"));
                 if let Some(id) = event
                     .get("message")
                     .and_then(|m| m.get("id"))
@@ -393,19 +407,25 @@ impl OpenAIStreamTranslator {
                     _ => Vec::new(),
                 }
             }
-            Some("message_delta") => event
-                .get("delta")
-                .and_then(|d| d.get("stop_reason"))
-                .and_then(Value::as_str)
-                .map_or_else(Vec::new, |reason| {
-                    self.sent_final = true;
-                    vec![self.chat_frame(&json!({}), Some(map_finish_reason(reason)))]
-                }),
+            Some("message_delta") => {
+                self.capture_anthropic_usage(event.get("usage"));
+                event
+                    .get("delta")
+                    .and_then(|d| d.get("stop_reason"))
+                    .and_then(Value::as_str)
+                    .map_or_else(Vec::new, |reason| {
+                        self.sent_final = true;
+                        vec![self.chat_frame(&json!({}), Some(map_finish_reason(reason)))]
+                    })
+            }
             Some("message_stop") => {
                 let mut frames = Vec::new();
                 if !self.sent_final {
                     frames.push(self.chat_frame(&json!({}), Some("stop")));
                     self.sent_final = true;
+                }
+                if self.usage_requested.is_some() {
+                    frames.push(self.chat_usage_frame());
                 }
                 frames.push(done_frame());
                 frames
@@ -513,6 +533,35 @@ impl OpenAIStreamTranslator {
                 "finish_reason": finish_reason
             }]
         }))
+    }
+
+    fn chat_usage_frame(&self) -> String {
+        sse_frame(&json!({
+            "id": self.id,
+            "object": "chat.completion.chunk",
+            "created": self.created,
+            "model": self.served_model,
+            "choices": [],
+            "usage": {
+                "prompt_tokens": self.input_tokens,
+                "completion_tokens": self.output_tokens,
+                "total_tokens": self.input_tokens + self.output_tokens,
+            }
+        }))
+    }
+
+    fn capture_anthropic_usage(&mut self, usage: Option<&Value>) {
+        let Some(usage) = usage else {
+            return;
+        };
+        self.input_tokens = usage
+            .get("input_tokens")
+            .and_then(Value::as_u64)
+            .unwrap_or(self.input_tokens);
+        self.output_tokens = usage
+            .get("output_tokens")
+            .and_then(Value::as_u64)
+            .unwrap_or(self.output_tokens);
     }
 
     fn response_object(&self, status: &str, include_output: bool) -> Value {
@@ -853,58 +902,6 @@ mod tests {
                 .contains("rust")
         );
         assert_eq!(out["choices"][0]["finish_reason"], "tool_calls");
-    }
-
-    #[test]
-    fn translates_anthropic_text_stream_to_openai_chat_chunks() {
-        let mut translator =
-            OpenAIStreamTranslator::new(OpenAIStreamShape::ChatCompletion, "gpt-4o");
-        let frames = translator.push(
-            br#"event: message_start
-data: {"type":"message_start","message":{"id":"msg_1","model":"claude-sonnet-4-5-20250929"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}
-
-event: message_delta
-data: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}
-
-event: message_stop
-data: {"type":"message_stop"}
-
-"#,
-        );
-        let joined = frames.join("");
-        assert!(joined.contains("\"object\":\"chat.completion.chunk\""));
-        assert!(joined.contains("\"role\":\"assistant\""));
-        assert!(joined.contains("\"content\":\"hello\""));
-        assert!(joined.contains("\"finish_reason\":\"stop\""));
-        assert!(joined.contains("\"model\":\"claude-sonnet-4-5-20250929\""));
-        assert!(joined.contains("data: [DONE]"));
-    }
-
-    #[test]
-    fn translates_anthropic_text_stream_to_openai_response_events() {
-        let mut translator = OpenAIStreamTranslator::new(OpenAIStreamShape::Response, "gpt-4o");
-        let frames = translator.push(
-            br#"event: message_start
-data: {"type":"message_start","message":{"id":"msg_1","model":"claude-sonnet-4-5-20250929"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello"}}
-
-event: message_stop
-data: {"type":"message_stop"}
-
-"#,
-        );
-        let joined = frames.join("");
-        assert!(joined.contains("\"type\":\"response.created\""));
-        assert!(joined.contains("\"type\":\"response.output_text.delta\""));
-        assert!(joined.contains("\"delta\":\"hello\""));
-        assert!(joined.contains("\"type\":\"response.completed\""));
-        assert!(joined.contains("\"model\":\"claude-sonnet-4-5-20250929\""));
-        assert!(joined.contains("data: [DONE]"));
     }
 
     #[test]

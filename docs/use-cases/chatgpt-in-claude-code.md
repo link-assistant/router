@@ -145,7 +145,8 @@ Expect the Anthropic SSE vocabulary, in order: `message_start`,
 | `image` blocks | OpenAI image parts |
 | `tools` / `tool_choice` | OpenAI function tools |
 | `tool_use` / `tool_result` blocks | assistant `tool_calls` / `tool` messages |
-| `max_tokens`, `temperature`, `top_p`, `stop_sequences`, `stream` | direct equivalents |
+| `temperature`, `top_p`, `stop_sequences`, `stream` | direct equivalents |
+| `max_tokens` | forwarded when supported; see the Codex caveat below |
 | `stop_reason` | mapped from the OpenAI `finish_reason` |
 | `usage.input_tokens` / `output_tokens` | mapped from upstream usage when reported |
 
@@ -159,6 +160,12 @@ an approximation for budgeting, not as a billing figure.
   there is no OpenAI equivalent. Extended-thinking output will not appear.
 - **Prompt caching** (`cache_control`) has no counterpart upstream and is
   ignored.
+- **Codex cannot enforce `max_tokens`.** The field remains required by the
+  Anthropic Messages protocol, but the ChatGPT backend rejects its Responses
+  equivalent. Successful Codex-backed Messages responses therefore include
+  `x-link-assistant-output-limit: unsupported` and an HTTP `Warning` header;
+  callers that require a hard spend cap must select a provider that supports
+  one.
 - Anthropic-only beta features and vendor-specific fields are not emulated.
 - Token *estimates* replace exact `count_tokens` results (see above).
 - Cost and quota accounting are the upstream vendor's; the router only counts

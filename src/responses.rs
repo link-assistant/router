@@ -396,6 +396,10 @@ pub struct ResponsesChatStreamTranslator {
     buffer: String,
     sent_role: bool,
     sent_final: bool,
+    include_usage: bool,
+    input_tokens: u64,
+    output_tokens: u64,
+    total_tokens: u64,
     tool_indices: std::collections::BTreeSet<u64>,
 }
 
@@ -410,8 +414,19 @@ impl ResponsesChatStreamTranslator {
             buffer: String::new(),
             sent_role: false,
             sent_final: false,
+            include_usage: false,
+            input_tokens: 0,
+            output_tokens: 0,
+            total_tokens: 0,
             tool_indices: std::collections::BTreeSet::new(),
         }
+    }
+
+    /// Request the protocol's final empty-choices usage chunk.
+    #[must_use]
+    pub const fn with_include_usage(mut self, include_usage: bool) -> Self {
+        self.include_usage = include_usage;
+        self
     }
 
     /// Push raw upstream bytes and return complete Chat Completions SSE frames.
@@ -450,6 +465,7 @@ impl ResponsesChatStreamTranslator {
             Some("response.created") => {
                 if let Some(response) = event.get("response") {
                     self.capture_identity(response);
+                    self.capture_usage(response);
                 }
                 self.role_frame()
             }
@@ -488,6 +504,7 @@ impl ResponsesChatStreamTranslator {
                 }
                 if let Some(response) = event.get("response") {
                     self.capture_identity(response);
+                    self.capture_usage(response);
                 }
                 let finish_reason = if !self.tool_indices.is_empty() {
                     "tool_calls"
@@ -497,10 +514,12 @@ impl ResponsesChatStreamTranslator {
                     "stop"
                 };
                 self.sent_final = true;
-                vec![
-                    self.chat_frame(&json!({}), Some(finish_reason)),
-                    done_frame(),
-                ]
+                let mut frames = vec![self.chat_frame(&json!({}), Some(finish_reason))];
+                if self.include_usage {
+                    frames.push(self.usage_frame());
+                }
+                frames.push(done_frame());
+                frames
             }
             _ => Vec::new(),
         }
@@ -546,6 +565,24 @@ impl ResponsesChatStreamTranslator {
         }
     }
 
+    fn capture_usage(&mut self, response: &Value) {
+        let Some(usage) = response.get("usage") else {
+            return;
+        };
+        self.input_tokens = usage
+            .get("input_tokens")
+            .and_then(Value::as_u64)
+            .unwrap_or(self.input_tokens);
+        self.output_tokens = usage
+            .get("output_tokens")
+            .and_then(Value::as_u64)
+            .unwrap_or(self.output_tokens);
+        self.total_tokens = usage
+            .get("total_tokens")
+            .and_then(Value::as_u64)
+            .unwrap_or(self.input_tokens + self.output_tokens);
+    }
+
     fn role_frame(&mut self) -> Vec<String> {
         if self.sent_role {
             Vec::new()
@@ -568,6 +605,24 @@ impl ResponsesChatStreamTranslator {
                     "delta": delta,
                     "finish_reason": finish_reason,
                 }]
+            })
+        )
+    }
+
+    fn usage_frame(&self) -> String {
+        format!(
+            "data: {}\n\n",
+            json!({
+                "id": self.id,
+                "object": "chat.completion.chunk",
+                "created": self.created,
+                "model": self.model,
+                "choices": [],
+                "usage": {
+                    "prompt_tokens": self.input_tokens,
+                    "completion_tokens": self.output_tokens,
+                    "total_tokens": self.total_tokens,
+                }
             })
         )
     }
@@ -635,6 +690,10 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
         "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
     })
 }
+
+#[cfg(test)]
+#[path = "responses_stream_tests.rs"]
+mod stream_tests;
 
 #[cfg(test)]
 mod tests {
@@ -863,38 +922,6 @@ mod tests {
         assert_eq!(out["usage"]["total_tokens"], 11);
         assert!(out.get("output").is_none());
         assert!(out.get("instructions").is_none());
-    }
-
-    #[test]
-    fn codex_response_stream_converts_to_chat_chunks() {
-        let mut translator = ResponsesChatStreamTranslator::new("gpt-5.6-sol");
-        let first = translator.push(
-            br#"event: response.created
-data: {"type":"response.created","response":{"id":"resp_1","created_at":1786448400,"model":"gpt-5.6-sol","status":"in_progress"}}
-
-event: response.output_text.delta
-data: {"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"1"}
-
-"#,
-        );
-        let second = translator.push(
-            br#"event: response.output_text.delta
-data: {"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"3"}
-
-event: response.completed
-data: {"type":"response.completed","response":{"id":"resp_1","created_at":1786448400,"model":"gpt-5.6-sol","status":"completed","output":[]}}
-
-"#,
-        );
-        let joined = first.into_iter().chain(second).collect::<String>();
-
-        assert!(joined.contains("\"object\":\"chat.completion.chunk\""));
-        assert!(joined.contains("\"role\":\"assistant\""));
-        assert!(joined.contains("\"content\":\"1\""));
-        assert!(joined.contains("\"content\":\"3\""));
-        assert!(joined.contains("\"finish_reason\":\"stop\""));
-        assert!(joined.ends_with("data: [DONE]\n\n"));
-        assert!(!joined.contains("response.output_text.delta"));
     }
 
     #[test]

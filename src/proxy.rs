@@ -14,6 +14,7 @@
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
+use axum::extract::rejection::JsonRejection;
 use axum::extract::{Query, Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -22,6 +23,8 @@ use log_lazy::LogLazy;
 use std::collections::{BTreeMap, HashSet};
 
 use crate::accounts::RoutingContext;
+pub(crate) use crate::api_error::error_response;
+use crate::api_error::malformed_json_response;
 pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 pub use crate::model_routing::models as openai_models;
@@ -107,6 +110,7 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         let name_lower = name.as_str();
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
+            || name_lower.starts_with("x-codex-")
             || name_lower == "content-length"
             || connection_headers.contains(name_lower)
         {
@@ -266,7 +270,10 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
                 );
             }
         };
-        let body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+        let body = match serde_json::from_slice(&body_bytes) {
+            Ok(body) => body,
+            Err(error) => return malformed_json_response(&error.to_string()),
+        };
         return crate::anthropic_bridge::handle_anthropic_surface(
             &state,
             &incoming_headers,
@@ -303,7 +310,10 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             );
         }
     };
-    let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+    let routing_body = match serde_json::from_slice(&body_bytes) {
+        Ok(body) => body,
+        Err(error) => return malformed_json_response(&error.to_string()),
+    };
     crate::audit::record_authorised_request(
         &state,
         &claims,
@@ -561,8 +571,16 @@ pub async fn openai_chat_completions(
     State(state): State<AppState>,
     Query(query): Query<BTreeMap<String, String>>,
     headers: HeaderMap,
-    axum::Json(mut body): axum::Json<serde_json::Value>,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
+    let mut body = match body {
+        Ok(axum::Json(body)) => body,
+        Err(error) => return malformed_json_response(&error.body_text()),
+    };
+    let include_usage = body
+        .pointer("/stream_options/include_usage")
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
     let stream_from_query = openai::query_stream_requested(&query);
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
@@ -649,8 +667,7 @@ pub async fn openai_chat_completions(
         body,
         &routing_body,
         crate::metrics::Surface::OpenAIChat,
-        stream_requested,
-        OpenAIShape::Chat,
+        (stream_requested, OpenAIShape::Chat, include_usage),
     )
     .await
 }
@@ -659,8 +676,12 @@ pub async fn openai_chat_completions(
 pub async fn openai_responses(
     State(state): State<AppState>,
     headers: HeaderMap,
-    axum::Json(body): axum::Json<serde_json::Value>,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(axum::Json(body)) => body,
+        Err(error) => return malformed_json_response(&error.body_text()),
+    };
     let state = match crate::model_routing::route_state(&state, &body).await {
         Ok(state) => state,
         Err(error) => return crate::model_routing::model_route_error_response(&error),
@@ -725,8 +746,7 @@ pub async fn openai_responses(
         body,
         &routing_body,
         crate::metrics::Surface::OpenAIResponses,
-        stream_requested,
-        OpenAIShape::Response,
+        (stream_requested, OpenAIShape::Response, false),
     )
     .await
 }
@@ -743,9 +763,9 @@ async fn forward_openai(
     body: serde_json::Value,
     routing_body: &serde_json::Value,
     surface: crate::metrics::Surface,
-    stream_requested: bool,
-    shape: OpenAIShape,
+    stream_options: (bool, OpenAIShape, bool),
 ) -> Response {
+    let (stream_requested, shape, include_usage) = stream_options;
     let served_model = body["model"].as_str().unwrap_or_default().to_string();
     let path = match shape {
         OpenAIShape::Chat => "/v1/chat/completions",
@@ -853,7 +873,8 @@ async fn forward_openai(
             OpenAIShape::Chat => openai::OpenAIStreamShape::ChatCompletion,
             OpenAIShape::Response => openai::OpenAIStreamShape::Response,
         };
-        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model);
+        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model)
+            .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Ok(bytes) => {
@@ -981,19 +1002,4 @@ pub(crate) fn maybe_mpp_challenge(
         return Some(crate::mpp::unsupported_payment_verification());
     }
     Some(crate::mpp::payment_required(&state.mpp, path))
-}
-
-/// Build an Anthropic-format error response.
-pub(crate) fn error_response(status: StatusCode, error_type: &str, message: &str) -> Response {
-    (
-        status,
-        axum::Json(serde_json::json!({
-            "type": "error",
-            "error": {
-                "type": error_type,
-                "message": message
-            }
-        })),
-    )
-        .into_response()
 }

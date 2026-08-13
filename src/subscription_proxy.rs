@@ -270,7 +270,12 @@ async fn forward_subscription_openai_inner(
             .get("model")
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
-        let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model);
+        let include_usage = routing_body
+            .pointer("/stream_options/include_usage")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+        let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
+            .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             chunk.map_or_else(
@@ -935,7 +940,6 @@ mod tests {
         for relayed in [
             "retry-after",
             "x-ratelimit-remaining-requests",
-            "x-codex-active-limit",
             "x-oai-request-id",
             "content-type",
         ] {
@@ -948,6 +952,7 @@ mod tests {
             "connection",
             "x-remove-me",
             "content-length",
+            "x-codex-active-limit",
         ] {
             assert!(!selected.contains_key(excluded), "relayed {excluded}");
         }
