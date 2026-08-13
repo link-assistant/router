@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
     inputs:
       release_mode:
@@ -193,6 +193,7 @@ jobs:
           rust-script --test scripts/version-and-commit.rs
           rust-script --test scripts/check-docker-platforms.rs
           rust-script --test scripts/check-github-releases.rs
+          rust-script --test scripts/check-coverage.rs
 
   # === DEPENDENCY AUDIT ===
   # Both dependency surfaces the router carries: the Rust crates and the JS
@@ -282,14 +283,101 @@ jobs:
       - name: Run doc tests
         run: cargo test --locked --doc --verbose
 
+  # === COVERAGE ===
+  # Instrument once on Linux; platform-specific behavior remains covered by the test matrix.
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [detect-changes, changelog]
+    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache coverage tools
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-coverage-
+
+      - name: Install coverage tools
+        run: |
+          cargo install cargo-llvm-cov --version 0.8.7 --locked
+          cargo install rust-script
+
+      - name: Test coverage gate behavior
+        run: rust-script --test scripts/check-coverage.rs
+
+      - name: Run instrumented tests
+        run: |
+          cargo llvm-cov clean --workspace
+          cargo llvm-cov --locked --all-features --workspace --no-report
+
+      - name: Generate coverage reports
+        run: |
+          cargo llvm-cov report --json --summary-only --output-path coverage-summary.json
+          cargo llvm-cov report --lcov --output-path lcov.info
+
+      - name: Read default-branch baseline
+        id: base-coverage
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE_REF" ] && git show "origin/${BASE_REF}:coverage-baseline.txt" > /tmp/base-coverage-baseline.txt 2>/dev/null; then
+            echo "argument=--previous-baseline /tmp/base-coverage-baseline.txt" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enforce coverage floor and ratchet
+        shell: bash
+        env:
+          BASELINE_ARGUMENT: ${{ steps.base-coverage.outputs.argument }}
+          COVERAGE_EXCEPTION: ${{ contains(github.event.pull_request.labels.*.name, 'coverage-exception') }}
+        run: |
+          args=(--report coverage-summary.json --baseline coverage-baseline.txt --summary "$GITHUB_STEP_SUMMARY")
+          if [ -n "$BASELINE_ARGUMENT" ]; then
+            args+=(--previous-baseline /tmp/base-coverage-baseline.txt)
+          fi
+          if [ "$COVERAGE_EXCEPTION" = "true" ]; then
+            args+=(--allow-decrease)
+          fi
+          rust-script scripts/check-coverage.rs "${args[@]}"
+
+      - name: Require reviewable baseline update
+        shell: bash
+        run: |
+          if ! git diff --exit-code -- coverage-baseline.txt; then
+            echo "::error::Coverage changed the baseline. Commit coverage-baseline.txt so the ratchet update is reviewable."
+            exit 1
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-lcov
+          path: lcov.info
+          if-no-files-found: error
+
   # === BUILD ===
   # Build package - only runs if lint and test pass
   build:
     name: Build Package
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [lint, test]
-    if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success'
+    needs: [lint, test, coverage]
+    if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' && needs.coverage.result == 'success'
     steps:
       - uses: actions/checkout@v6
 
