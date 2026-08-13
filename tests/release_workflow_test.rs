@@ -102,8 +102,10 @@ fn release_workflows_detect_missing_github_releases() {
     let verification_command = "rust-script scripts/check-github-releases.rs --repository \"${{ github.repository }}\" --default-branch main";
 
     assert!(
-        release_workflow.contains(verification_command),
-        "each release run should fail if any default-branch version tag lacks a GitHub Release"
+        release_workflow.contains(&format!(
+            "{verification_command} --release-version \"${{{{ env.RELEASE_VERSION }}}}\""
+        )),
+        "each release run should fail if the version it just published lacks a GitHub Release"
     );
     assert!(
         release_workflow
@@ -113,12 +115,47 @@ fn release_workflows_detect_missing_github_releases() {
     assert!(
         reconciliation_workflow.contains("schedule:")
             && reconciliation_workflow.contains("fetch-depth: 0")
-            && reconciliation_workflow.contains(verification_command),
-        "a scheduled reconciliation should detect release drift outside release runs"
+            && reconciliation_workflow.contains(verification_command)
+            && !reconciliation_workflow.contains("--historical-orphans warn"),
+        "a scheduled reconciliation should fail on any release drift outside release runs"
     );
     assert!(
         release_workflow.contains("rust-script --test scripts/check-github-releases.rs"),
         "CI should exercise the release reconciliation script's regression tests"
+    );
+}
+
+/// A tag left without a release by an earlier run is unrelated to the version being
+/// published now. It must not block that version's Docker images, and whatever the
+/// release run does check has to run *before* the release is created, never between
+/// release creation and image build. See issue #128.
+#[test]
+fn historical_orphan_tags_do_not_block_the_current_release() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    let drift_report = workflow
+        .find("- name: Report pre-existing release drift")
+        .expect("the release job should report pre-existing orphan tags");
+    let create_release = workflow
+        .find("- name: Create GitHub Release\n        env:")
+        .expect("the release job should create the GitHub release");
+    assert!(
+        drift_report < create_release,
+        "orphan tags should be reported before a release is published, not after"
+    );
+
+    let drift_step = &workflow[drift_report..create_release];
+    assert!(
+        drift_step.contains("--historical-orphans warn"),
+        "the pre-release drift report should warn, not fail, on unrelated orphan tags"
+    );
+
+    let verification = workflow
+        .find("--release-version \"${{ env.RELEASE_VERSION }}\" --historical-orphans warn")
+        .expect("the post-release verification should be scoped to the published version");
+    assert!(
+        create_release < verification,
+        "the scoped verification should confirm the release that was just created"
     );
 }
 
