@@ -6,7 +6,7 @@ review](review-2026-08.md). This document records the threat model, every
 network route, data egress, secret lifecycle, persistence and release checks,
 including controls that were found to be sound.
 
-Review target: `main` at `c0928bc` plus the fixes in pull request
+Review target: `main` at `f8cb3a4` plus the fixes in pull request
 [#155](https://github.com/link-assistant/router/pull/155).
 
 ## Threat model and deployment modes
