@@ -205,35 +205,7 @@ pub fn render_prometheus(m: &Metrics) -> String {
             "link_assistant_status_total{{code=\"{status}\"}} {count}"
         );
     }
-    out.push_str("# TYPE link_assistant_token_requests_total counter\n");
-    let mut sorted_tokens: Vec<_> = snap.token_calls.iter().collect();
-    sorted_tokens.sort_by(|a, b| a.0.cmp(b.0));
-    for (token, usage) in sorted_tokens {
-        let label = escape_label(&usage.label);
-        let _ = writeln!(
-            out,
-            "link_assistant_token_requests_total{{token=\"{token}\",label=\"{label}\"}} {}",
-            usage.requests
-        );
-    }
-    out.push_str("# TYPE link_assistant_account_calls_total counter\n");
-    let mut sorted_accounts: Vec<_> = snap.account_calls.iter().collect();
-    sorted_accounts.sort_by(|a, b| a.0.cmp(b.0));
-    for (acct, count) in sorted_accounts {
-        let _ = writeln!(
-            out,
-            "link_assistant_account_calls_total{{account=\"{acct}\"}} {count}"
-        );
-    }
     out
-}
-
-/// Escape a value for use inside a Prometheus label.
-fn escape_label(value: &str) -> String {
-    value
-        .replace('\\', "\\\\")
-        .replace('"', "\\\"")
-        .replace('\n', "\\n")
 }
 
 #[cfg(test)]
@@ -254,25 +226,33 @@ mod tests {
 
         let out = render_prometheus(&m);
         assert!(
-            out.contains("link_assistant_token_requests_total{token=\"tok-a\",label=\"task-a\"} 2")
+            !out.contains("tok-a"),
+            "public metrics leaked a token id: {out}"
         );
         assert!(
-            out.contains("link_assistant_token_requests_total{token=\"tok-b\",label=\"task-b\"} 1")
+            !out.contains("task-a"),
+            "public metrics leaked a token label: {out}"
         );
     }
 
     #[test]
-    fn token_labels_are_escaped_for_prometheus() {
+    fn public_metrics_omit_token_labels_and_account_names() {
         let m = Metrics::default();
         m.record_token_request("tok-a", "task \"one\"\nline");
+        m.record_request(Surface::Anthropic, 200, Some("primary-account"));
         let out = render_prometheus(&m);
-        assert!(out.contains(r#"label="task \"one\"\nline""#), "{out}");
-        // Every emitted line must still be a single Prometheus sample.
-        let token_lines = out
-            .lines()
-            .filter(|l| l.starts_with("link_assistant_token_requests_total"))
-            .count();
-        assert_eq!(token_lines, 1);
+        assert!(
+            !out.contains("tok-a"),
+            "public metrics leaked a token id: {out}"
+        );
+        assert!(
+            !out.contains("task"),
+            "public metrics leaked a token label: {out}"
+        );
+        assert!(
+            !out.contains("primary-account"),
+            "public metrics leaked an account name: {out}"
+        );
     }
 
     #[test]
@@ -300,7 +280,7 @@ mod tests {
         assert!(out.contains("link_assistant_tokens_issued_total 1"));
         assert!(out.contains("code=\"200\""));
         assert!(out.contains("code=\"500\""));
-        assert!(out.contains("account=\"primary\""));
+        assert!(!out.contains("account=\"primary\""));
     }
 
     #[test]

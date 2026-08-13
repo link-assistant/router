@@ -21,8 +21,8 @@ use std::collections::BTreeMap;
 
 use crate::metrics::Surface;
 use crate::proxy::{
-    AppState, error_response, extract_client_token, maybe_mpp_challenge, relay_response_headers,
-    request_routing_context, retry_after_duration,
+    AppState, error_response, maybe_mpp_challenge, relay_response_headers, request_routing_context,
+    retry_after_duration,
 };
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
@@ -90,22 +90,9 @@ async fn forward_subscription_openai_inner(
         return resp;
     }
 
-    let Some(token) = extract_client_token(headers) else {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let claims = match state.token_manager.validate_token(token) {
+    let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
         return error_response(

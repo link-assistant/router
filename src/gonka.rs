@@ -125,22 +125,9 @@ pub(crate) async fn forward_openai(
         );
     };
 
-    let Some(token) = crate::proxy::extract_client_token(headers) else {
-        return crate::proxy::error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let claims = match state.token_manager.validate_token(token) {
+    let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            return crate::proxy::error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
         return crate::proxy::error_response(

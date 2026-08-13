@@ -543,7 +543,7 @@ pub(crate) fn count_tokens_claims(
             crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
             _ => StatusCode::UNAUTHORIZED,
         };
-        Box::new(anthropic_error(status, e.to_string().as_bytes()))
+        Box::new(anthropic_error(status, e.client_message().as_bytes()))
     })
 }
 

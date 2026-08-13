@@ -15,7 +15,7 @@ This is the first requirement of
 | Property | What a per-task token gives you |
 | --- | --- |
 | **Audit** | Every request carries a token id, so the JSONL audit log answers "which task did this?" after the fact |
-| **Monitoring** | `/metrics` exports `link_assistant_token_requests_total{token,label}`, so per-task usage is a Prometheus series |
+| **Monitoring** | Admin-only `/v1/usage` exposes per-token request counts while public `/metrics` stays aggregate-only |
 | **Security** | A leaked task token exposes one task's budget, not the subscription — the vendor OAuth credential never leaves the router |
 | **Isolation** | `--max-requests` bounds the blast radius of a runaway agent; `--account` pins a task to one subscription in a pool |
 
@@ -47,7 +47,7 @@ curl -s -X POST http://127.0.0.1:8080/api/tokens \
 ```
 
 Both return a token of the form `la_sk_eyJ…`. The `label` is the human name the
-audit log and the Prometheus series will carry, so use something you can grep
+audit log and the admin usage snapshot will carry, so use something you can grep
 for later — an issue id, a job id, a person, a service.
 
 Issuing is **universal**: one endpoint issues every token. What makes a token
@@ -57,7 +57,7 @@ Issuing is **universal**: one endpoint issues every token. What makes a token
 
 | Flag / field | Effect |
 | --- | --- |
-| `--label` / `label` | Name shown in `tokens list`, `/v1/usage`, `/metrics` and the audit log |
+| `--label` / `label` | Name shown in `tokens list`, admin-only `/v1/usage`, and the audit log |
 | `--ttl-hours` / `ttl_hours` | Token stops working after this many hours; short TTLs make revocation mostly unnecessary |
 | `--max-requests` / `max_requests` | Hard cap on forwarded requests; `429 rate_limit_error` after that. Omit for unlimited |
 | `--account` / `account` | Strict pin to one account in a multi-subscription pool. Pinned requests fail rather than silently changing identity |
