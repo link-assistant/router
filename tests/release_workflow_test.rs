@@ -303,6 +303,54 @@ fn release_workflow_prevents_silent_lockfile_rewrites() {
 }
 
 #[test]
+fn release_workflow_enforces_single_platform_coverage() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    let coverage = workflow
+        .split_once("  coverage:\n")
+        .expect("CI must define a dedicated coverage job")
+        .1
+        .split_once("\n  # === BUILD ===")
+        .expect("coverage must run alongside tests before the build job")
+        .0;
+
+    assert!(coverage.contains("runs-on: ubuntu-latest"));
+    assert!(
+        !coverage.contains("matrix."),
+        "instrumented coverage should run on exactly one platform"
+    );
+    assert!(coverage.contains("cargo llvm-cov"));
+    assert!(
+        coverage.contains("cargo llvm-cov clean --workspace"),
+        "coverage must discard stale profiles before collecting a new measurement"
+    );
+    assert!(coverage.contains("rust-script scripts/check-coverage.rs"));
+    assert!(coverage.contains("GITHUB_STEP_SUMMARY"));
+    assert!(
+        !coverage.contains("continue-on-error: true"),
+        "instrumentation and coverage failures must fail closed"
+    );
+    assert!(
+        workflow.contains("needs: [lint, test, coverage]"),
+        "the package build must be gated by coverage"
+    );
+}
+
+#[test]
+fn coverage_gate_is_behaviorally_tested_in_ci() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    assert!(
+        workflow.contains("rust-script --test scripts/check-coverage.rs"),
+        "CI must test the independent absolute-floor, ratchet, and baseline-update rules"
+    );
+    assert!(
+        fs::metadata("coverage-baseline.txt").is_ok(),
+        "the reviewable line-coverage baseline must be committed"
+    );
+}
+
+#[test]
 fn lockfile_package_version_handles_windows_line_endings() {
     let lockfile = "[[package]]\r\nname = \"dependency\"\r\nversion = \"1.1.4\"\r\n\r\n[[package]]\r\nname = \"link-assistant-router\"\r\nversion = \"0.13.0\"\r\n";
 
