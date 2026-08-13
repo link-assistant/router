@@ -4,6 +4,9 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static SANDBOX_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn script() -> String {
     format!(
@@ -17,8 +20,9 @@ fn sandbox(status: &str, body: &str) -> PathBuf {
         .duration_since(std::time::UNIX_EPOCH)
         .expect("clock must be after the Unix epoch")
         .as_nanos();
+    let sequence = SANDBOX_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let dir = std::env::temp_dir().join(format!(
-        "router-ghcr-visibility-{}-{nonce}",
+        "router-ghcr-visibility-{}-{nonce}-{sequence}",
         std::process::id()
     ));
     fs::create_dir_all(&dir).expect("sandbox must be created");
