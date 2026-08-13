@@ -31,6 +31,9 @@ fn main() {
         "cache-to: type=gha,mode=max",
         "docker buildx imagetools create",
         "rust-script scripts/check-docker-platforms.rs",
+        "bash scripts/verify-ghcr-visibility.sh",
+        "GHCR_IMAGE: ghcr.io/link-assistant/router",
+        "org.opencontainers.image.source=https://github.com/link-assistant/router",
         "username: konard",
         "password: ${{ secrets.DOCKERHUB_TOKEN }}",
         "ghcr.io/${{ github.repository }}",
@@ -92,6 +95,12 @@ fn main() {
         );
     }
 
+    if count_occurrences(&workflow, "bash scripts/verify-ghcr-visibility.sh") != 1 {
+        failures.push(
+            "the shared manifest job must verify anonymous GHCR visibility once".to_string(),
+        );
+    }
+
     if workflow.contains("docker-build:")
         || workflow.contains("needs: [lint, test, build, docker-build]")
     {
@@ -138,7 +147,7 @@ fn main() {
     }
 
     if failures.is_empty() {
-        println!("release workflow builds native images and publishes verified multi-platform manifests");
+        println!("release workflow builds native images and publishes public, verified multi-platform manifests");
     } else {
         for failure in failures {
             eprintln!("Error: {failure}");

@@ -499,7 +499,9 @@ jobs:
             ghcr.io/${{ github.repository }}
             ${{ env.DOCKERHUB_IMAGE }}
           tags: type=raw,value=${{ env.RELEASE_VERSION }}
-          labels: org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+          labels: |
+            org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+            org.opencontainers.image.source=https://github.com/link-assistant/router
 
       - name: Build and push image by digest
         id: build-image
@@ -591,6 +593,11 @@ jobs:
             -t "${{ env.DOCKERHUB_IMAGE }}:latest" \
             -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
             "${dockerhub_runtime[@]}"
+
+      - name: Verify GHCR package is publicly pullable
+        env:
+          GHCR_IMAGE: ghcr.io/link-assistant/router
+        run: bash scripts/verify-ghcr-visibility.sh
 
       - name: Verify multi-platform Docker manifests
         run: |

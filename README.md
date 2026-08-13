@@ -813,6 +813,13 @@ If native OAuth fails, `auth claude` downloads the current Claude Code package
 through bun into a temporary cache, completes the compatibility flow, and
 removes that cache. Force this path with `auth claude --flow cli`.
 
+The release pipeline verifies that `ghcr.io/link-assistant/router` is publicly
+pullable without credentials. On the first package publication, the publishing
+job fails closed if GitHub created the package as private. An organization owner
+must open the package settings, change its visibility to **Public**, and rerun
+the failed job. GitHub does not currently provide a package-visibility API, so
+this one-time bootstrap cannot be automated safely.
+
 ### Docker Compose example
 
 ```yaml
