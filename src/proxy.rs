@@ -105,7 +105,6 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         .filter(|name| !name.is_empty())
         .collect();
     let mut relayed = HeaderMap::new();
-
     for (name, value) in headers {
         let name_lower = name.as_str();
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
@@ -118,7 +117,6 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         }
         relayed.append(name.clone(), value.clone());
     }
-
     relayed
 }
 
@@ -212,7 +210,6 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let path = req.uri().path().to_string();
     let method = req.method().clone();
     let incoming_headers = req.headers().clone();
-
     if state.upstream_provider == UpstreamProvider::Auto {
         if let Err(response) = authenticate_client(&state, &incoming_headers) {
             return *response;
@@ -224,12 +221,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             };
         return Box::pin(proxy_handler(State(routed), request)).await;
     }
-
     state.logger.verbose(|| format!("Incoming {method} {path}"));
-
     // Resolve the upstream path based on which API format the request matches
     let upstream_path = resolve_upstream_path(&path);
-
     state
         .logger
         .debug(|| format!("Resolved upstream path: {upstream_path}"));

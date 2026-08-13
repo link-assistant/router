@@ -23,6 +23,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
+use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Subcommand, ValueEnum};
 use lino_arguments::Parser as LinoParser;
 
@@ -67,11 +68,11 @@ pub struct Cli {
     pub port: u16,
 
     /// Verbose logging.
-    #[arg(long, env = "VERBOSE", global = true)]
+    #[arg(long, env = "VERBOSE", global = true, value_parser = parse_truthy)]
     pub verbose: bool,
 
     /// JWT signing secret (or `TOKEN_SECRET` env).
-    #[arg(long, env = "TOKEN_SECRET", global = true)]
+    #[arg(long, env = "TOKEN_SECRET", global = true, hide_env_values = true)]
     pub token_secret: Option<String>,
 
     /// Claude Code home directory (primary account credentials).
@@ -113,7 +114,7 @@ pub struct Cli {
     pub upstream_provider: String,
 
     /// Gonka private key used for request signing.
-    #[arg(long, env = "GONKA_PRIVATE_KEY", global = true)]
+    #[arg(long, env = "GONKA_PRIVATE_KEY", global = true, hide_env_values = true)]
     pub gonka_private_key: Option<String>,
 
     /// Gonka source node URL.
@@ -208,7 +209,12 @@ pub struct Cli {
 
     /// Generic OpenAI-compatible upstream API key. Prefer provider DB import
     /// for long-lived deployments so the key is encrypted at rest.
-    #[arg(long, env = "OPENAI_COMPATIBLE_API_KEY", global = true)]
+    #[arg(
+        long,
+        env = "OPENAI_COMPATIBLE_API_KEY",
+        global = true,
+        hide_env_values = true
+    )]
     pub openai_compatible_api_key: Option<String>,
 
     /// Environment variable that contains the OpenAI-compatible upstream key.
@@ -237,15 +243,30 @@ pub struct Cli {
     pub activitypub_public_key_pem: Option<String>,
 
     /// Disable the OpenAI-compatible API surface.
-    #[arg(long, env = "DISABLE_OPENAI_API", global = true)]
+    #[arg(
+        long,
+        env = "DISABLE_OPENAI_API",
+        global = true,
+        value_parser = parse_truthy
+    )]
     pub disable_openai_api: bool,
 
     /// Disable the Anthropic (direct) proxy surface.
-    #[arg(long, env = "DISABLE_ANTHROPIC_API", global = true)]
+    #[arg(
+        long,
+        env = "DISABLE_ANTHROPIC_API",
+        global = true,
+        value_parser = parse_truthy
+    )]
     pub disable_anthropic_api: bool,
 
     /// Disable `/metrics`, `/v1/usage` and `/v1/accounts` endpoints.
-    #[arg(long, env = "DISABLE_METRICS", global = true)]
+    #[arg(
+        long,
+        env = "DISABLE_METRICS",
+        global = true,
+        value_parser = parse_truthy
+    )]
     pub disable_metrics: bool,
 
     /// Comma-separated list of additional account credential directories.
@@ -294,12 +315,17 @@ pub struct Cli {
     pub account_request_limits: Vec<usize>,
 
     /// Enable experimental compatibility shims (XML history, spoofing, …).
-    #[arg(long, env = "EXPERIMENTAL_COMPATIBILITY", global = true)]
+    #[arg(
+        long,
+        env = "EXPERIMENTAL_COMPATIBILITY",
+        global = true,
+        value_parser = parse_truthy
+    )]
     pub experimental_compatibility: bool,
 
     /// Flat bootstrap Bearer key accepted by the admin endpoints alongside
     /// admin-scoped `la_sk_...` tokens.
-    #[arg(long, env = "TOKEN_ADMIN_KEY", global = true)]
+    #[arg(long, env = "TOKEN_ADMIN_KEY", global = true, hide_env_values = true)]
     pub admin_key: Option<String>,
 
     /// Port for the admin UI, served on its own listener. Omitted or `0`
@@ -344,11 +370,16 @@ pub struct Cli {
     /// Telegram Bot API token. Unset keeps the Telegram admin channel off;
     /// setting it starts an outbound long-polling bot that accepts admin
     /// commands in private chats only.
-    #[arg(long, env = "TELEGRAM_BOT_TOKEN", global = true)]
+    #[arg(
+        long,
+        env = "TELEGRAM_BOT_TOKEN",
+        global = true,
+        hide_env_values = true
+    )]
     pub telegram_bot_token: Option<String>,
 
     /// VK community access token. Unset keeps the VK admin channel off.
-    #[arg(long, env = "VK_BOT_TOKEN", global = true)]
+    #[arg(long, env = "VK_BOT_TOKEN", global = true, hide_env_values = true)]
     pub vk_bot_token: Option<String>,
 
     /// VK community id the bot token belongs to; required alongside
@@ -377,7 +408,7 @@ pub struct Cli {
     pub chat_admin_rate_limit_per_minute: u32,
 
     /// Enable MPP 402 charge challenges on OpenAI-compatible endpoints.
-    #[arg(long, env = "MPP_ENABLE", global = true)]
+    #[arg(long, env = "MPP_ENABLE", global = true, value_parser = parse_truthy)]
     pub mpp_enable: bool,
 
     /// Per-request MPP charge amount for OpenAI-compatible endpoints.
@@ -397,7 +428,12 @@ pub struct Cli {
     pub mpp_method: Option<String>,
 
     /// Disable the interactive login API (`/api/login`).
-    #[arg(long, env = "DISABLE_LOGIN_API", global = true)]
+    #[arg(
+        long,
+        env = "DISABLE_LOGIN_API",
+        global = true,
+        value_parser = parse_truthy
+    )]
     pub disable_login_api: bool,
 
     /// Program the login API drives on a PTY.
@@ -477,6 +513,19 @@ pub enum AuthFlow {
     Cli,
 }
 
+/// OAuth flows implemented by the Claude authorization command.
+pub const CLAUDE_AUTH_FLOWS: [AuthFlow; 3] = [AuthFlow::Auto, AuthFlow::Code, AuthFlow::Cli];
+
+/// OAuth flows implemented by the Codex authorization command.
+pub const CODEX_AUTH_FLOWS: [AuthFlow; 3] = [AuthFlow::Auto, AuthFlow::Device, AuthFlow::Loopback];
+
+fn auth_flow_parser(flows: &'static [AuthFlow]) -> impl TypedValueParser<Value = AuthFlow> {
+    PossibleValuesParser::new(flows.iter().filter_map(ValueEnum::to_possible_value)).map(|value| {
+        AuthFlow::from_str(&value, false)
+            .unwrap_or_else(|_| unreachable!("possible-values parser returned an unknown flow"))
+    })
+}
+
 /// Provider authorization operations.
 #[derive(Debug, Subcommand)]
 pub enum AuthOp {
@@ -486,17 +535,13 @@ pub enum AuthOp {
         #[arg(long)]
         code: Option<String>,
         /// Force an OAuth flow instead of automatic selection.
-        ///
-        /// Supported flows: auto, code, cli.
-        #[arg(long, value_enum, default_value_t)]
+        #[arg(long, value_parser = auth_flow_parser(&CLAUDE_AUTH_FLOWS), default_value = "auto")]
         flow: AuthFlow,
     },
     /// Authorize an `OpenAI` Codex / `ChatGPT` subscription.
     Codex {
         /// Force an OAuth flow instead of automatic selection.
-        ///
-        /// Supported flows: auto, device, loopback.
-        #[arg(long, value_enum, default_value_t)]
+        #[arg(long, value_parser = auth_flow_parser(&CODEX_AUTH_FLOWS), default_value = "auto")]
         flow: AuthFlow,
         /// Local callback port registered for the Codex OAuth client.
         #[arg(long, default_value_t = 1455)]
@@ -526,6 +571,7 @@ pub enum TokenOp {
         admin: bool,
     },
     /// Replace an administrative token: issue a new one and revoke the old.
+    #[command(override_usage = "link-assistant-router tokens rotate [OPTIONS] <ID>")]
     Rotate {
         /// Subject id (`sub`) of the admin token being replaced.
         id: String,
@@ -537,10 +583,13 @@ pub enum TokenOp {
     /// List all known tokens.
     List,
     /// Revoke a token by id.
+    #[command(override_usage = "link-assistant-router tokens revoke [OPTIONS] <ID>")]
     Revoke { id: String },
     /// Mark a token as expired immediately (revoke alias).
+    #[command(override_usage = "link-assistant-router tokens expire [OPTIONS] <ID>")]
     Expire { id: String },
     /// Show metadata for one token.
+    #[command(override_usage = "link-assistant-router tokens show [OPTIONS] <ID>")]
     Show { id: String },
 }
 
@@ -555,6 +604,9 @@ pub enum ProviderOp {
     /// List configured upstream providers.
     List,
     /// Add or replace an OpenAI-compatible provider.
+    #[command(
+        override_usage = "link-assistant-router providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>"
+    )]
     Add {
         #[arg(long)]
         name: String,
@@ -574,10 +626,13 @@ pub enum ProviderOp {
         enabled: bool,
     },
     /// Show one provider with secret material redacted.
+    #[command(override_usage = "link-assistant-router providers show [OPTIONS] <NAME>")]
     Show { name: String },
     /// Remove one provider.
+    #[command(override_usage = "link-assistant-router providers remove [OPTIONS] <NAME>")]
     Remove { name: String },
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
+    #[command(override_usage = "link-assistant-router providers import [OPTIONS] <PATH>")]
     Import { path: PathBuf },
 }
 
@@ -586,6 +641,7 @@ pub enum ClientOp {
     /// List supported clients and their local installation/configuration state.
     List,
     /// Merge this router into a client's user configuration.
+    #[command(override_usage = "link-assistant-router clients setup [OPTIONS] <CLIENT>")]
     Setup {
         #[arg(value_enum)]
         client: ClientKind,
@@ -600,16 +656,19 @@ pub enum ClientOp {
         ttl_hours: i64,
     },
     /// Show the effective client integration with secrets redacted.
+    #[command(override_usage = "link-assistant-router clients show [OPTIONS] <CLIENT>")]
     Show {
         #[arg(value_enum)]
         client: ClientKind,
     },
     /// Remove only settings managed by this router.
+    #[command(override_usage = "link-assistant-router clients remove [OPTIONS] <CLIENT>")]
     Remove {
         #[arg(value_enum)]
         client: ClientKind,
     },
     /// Make a real request using the client's configured URL and token variable.
+    #[command(override_usage = "link-assistant-router clients doctor [OPTIONS] <CLIENT>")]
     Doctor {
         #[arg(value_enum)]
         client: ClientKind,
@@ -627,12 +686,17 @@ impl Cli {
         });
         let codex_home = crate::subscription::SubscriptionProvider::Codex
             .resolve_home(&std::env::var("HOME").unwrap_or_else(|_| "/root".to_string()));
-        let api_format = self.api_format.as_deref().and_then(ApiFormat::from_str_opt);
+        let api_format = self
+            .api_format
+            .as_deref()
+            .map(|value| ApiFormat::from_str_opt(value).ok_or(ConfigError::InvalidApiFormat))
+            .transpose()?;
         let routing_mode =
             RoutingMode::from_str_opt(&self.routing_mode).ok_or(ConfigError::InvalidRoutingMode)?;
-        let upstream_provider =
-            UpstreamProvider::from_str_opt(&self.upstream_provider).unwrap_or_default();
-        let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy).unwrap_or_default();
+        let upstream_provider = UpstreamProvider::from_str_opt(&self.upstream_provider)
+            .ok_or(ConfigError::InvalidUpstreamProvider)?;
+        let storage_policy = StoragePolicy::from_str_opt(&self.storage_policy)
+            .ok_or(ConfigError::InvalidStoragePolicy)?;
         let account_routing_strategy =
             crate::accounts::SelectionStrategy::from_str_opt(&self.account_routing_strategy)
                 .ok_or(ConfigError::InvalidAccountRoutingStrategy)?;

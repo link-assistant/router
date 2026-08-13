@@ -63,7 +63,7 @@ fn claude_code_is_rejected_for_the_cli_fallback_without_starting_it() {
 }
 
 #[test]
-fn unsupported_provider_flows_exit_with_authorization_error() {
+fn unsupported_provider_flows_are_rejected_during_parsing() {
     for (provider, flow) in [
         ("claude", "device"),
         ("claude", "loopback"),
@@ -73,11 +73,11 @@ fn unsupported_provider_flows_exit_with_authorization_error() {
         let output = router(&["auth", provider, "--flow", flow]);
         assert_eq!(
             output.status.code(),
-            Some(1),
-            "auth {provider} --flow {flow} returned the wrong status"
+            Some(2),
+            "auth {provider} accepted {flow}"
         );
         assert!(
-            String::from_utf8_lossy(&output.stderr).contains("does not support"),
+            String::from_utf8_lossy(&output.stderr).contains("invalid value"),
             "auth {provider} --flow {flow} did not explain the failure: {}",
             String::from_utf8_lossy(&output.stderr)
         );
@@ -86,16 +86,29 @@ fn unsupported_provider_flows_exit_with_authorization_error() {
 
 #[test]
 fn provider_help_lists_supported_flows() {
-    for (provider, supported_flows) in [
-        ("claude", "Supported flows: auto, code, cli."),
-        ("codex", "Supported flows: auto, device, loopback."),
+    for (provider, supported_flows, unsupported_flows) in [
+        ("claude", ["auto", "code", "cli"], ["device", "loopback"]),
+        ("codex", ["auto", "device", "loopback"], ["code", "cli"]),
     ] {
         let output = router(&["auth", provider, "--help"]);
         assert!(output.status.success());
         let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(
-            stdout.contains(supported_flows),
-            "auth {provider} help did not contain {supported_flows:?}:\n{stdout}"
-        );
+        let possible_values = stdout
+            .split("Possible values:")
+            .nth(1)
+            .and_then(|section| section.split("[default:").next())
+            .expect("flow possible-values section");
+        for flow in supported_flows {
+            assert!(possible_values.contains(&format!("- {flow}:")), "{stdout}");
+        }
+        for flow in unsupported_flows {
+            assert!(!possible_values.contains(&format!("- {flow}:")), "{stdout}");
+            let rejected = router(&["auth", provider, "--flow", flow]);
+            assert_eq!(
+                rejected.status.code(),
+                Some(2),
+                "auth {provider} accepted {flow}"
+            );
+        }
     }
 }

@@ -639,6 +639,12 @@ pub enum ConfigError {
     MissingTokenSecret,
     /// Routing mode was not recognised.
     InvalidRoutingMode,
+    /// Upstream API format was not recognised.
+    InvalidApiFormat,
+    /// Storage policy was not recognised.
+    InvalidStoragePolicy,
+    /// Upstream provider was not recognised.
+    InvalidUpstreamProvider,
     /// The multi-account strategy was not recognised.
     InvalidAccountRoutingStrategy,
     /// An account request cap was not a non-negative integer.
@@ -662,6 +668,18 @@ impl std::fmt::Display for ConfigError {
             Self::InvalidRoutingMode => {
                 write!(f, "ROUTING_MODE must be one of: direct, cli, hybrid")
             }
+            Self::InvalidApiFormat => write!(
+                f,
+                "UPSTREAM_API_FORMAT must be one of: anthropic, bedrock, vertex"
+            ),
+            Self::InvalidStoragePolicy => write!(
+                f,
+                "STORAGE_POLICY must be one of: memory, text, binary, both"
+            ),
+            Self::InvalidUpstreamProvider => write!(
+                f,
+                "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, gonka, crater, openai-compatible"
+            ),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"
