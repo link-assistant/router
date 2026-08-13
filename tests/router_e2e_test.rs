@@ -193,6 +193,7 @@ fn test_app(state: AppState) -> Router {
         .route("/api/openai/v1/models", get(proxy::openai_models))
         .route("/api/codex/v1/models", get(proxy::openai_models))
         .route("/api/qwen/v1/models", get(proxy::openai_models))
+        .route("/test/large-request", post(accept_large_request))
         .route(
             "/api/tokens/list",
             get(link_assistant_router::token_admin::list_tokens),
@@ -202,6 +203,13 @@ fn test_app(state: AppState) -> Router {
             logging_state,
             link_assistant_router::request_log::log_http_exchange,
         ))
+}
+
+async fn accept_large_request(request: Request) -> Response {
+    let body = to_bytes(request.into_body(), 12 * 1024 * 1024)
+        .await
+        .expect("read large request");
+    Response::new(Body::from(body.len().to_string()))
 }
 
 async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
@@ -331,6 +339,30 @@ fn codex_stream() -> String {
     }
     stream.push_str("data: [DONE]\n\n");
     stream
+}
+
+#[tokio::test]
+async fn request_larger_than_logging_buffer_reaches_handler() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+    let body = vec![b'x'; 10 * 1024 * 1024 + 1];
+
+    let response = router
+        .client
+        .post(format!("{}/test/large-request", router.url))
+        .body(body)
+        .send()
+        .await
+        .expect("large request response");
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.text().await.expect("large response body"),
+        (10 * 1024 * 1024 + 1).to_string()
+    );
+    let log = std::fs::read_to_string(&router.log_path).expect("request log");
+    assert!(log.contains("client_request"));
+    assert!(log.contains("[OMITTED:"));
+    assert!(!log.contains("client_request_error"));
 }
 
 #[tokio::test]
