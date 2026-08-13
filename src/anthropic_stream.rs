@@ -362,7 +362,10 @@ impl AnthropicStreamTranslator {
             &json!({
                 "type": "message_delta",
                 "delta": {"stop_reason": stop_reason, "stop_sequence": Value::Null},
-                "usage": {"output_tokens": self.output_tokens},
+                "usage": {
+                    "input_tokens": self.input_tokens,
+                    "output_tokens": self.output_tokens
+                },
             }),
         ));
         frames.push(anthropic_frame(

@@ -248,7 +248,13 @@ pub async fn route_anthropic_request(
                 &format!("Failed to read request body: {error}"),
             )
         })?;
-    let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(Value::Null);
+    let routing_body = serde_json::from_slice(&body_bytes).map_err(|error| {
+        crate::proxy::error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &format!("Failed to parse request body as JSON: {error}"),
+        )
+    })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
         route_state(state, &routing_body)
             .await
@@ -582,10 +588,10 @@ mod tests {
                 State(state),
                 Query(std::collections::BTreeMap::default()),
                 HeaderMap::new(),
-                axum::Json(json!({
+                Ok(axum::Json(json!({
                     "model": "totally-made-up-model-xyz",
                     "messages": [{"role": "user", "content": "hello"}]
-                })),
+                }))),
             )
             .await;
 
