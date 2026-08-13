@@ -211,6 +211,17 @@ fn release_workflow_refreshes_cached_coverage_binary() {
         workflow.contains("cargo install cargo-llvm-cov --version 0.8.7 --locked --force"),
         "the coverage job should overwrite a cargo-llvm-cov binary restored from its cache"
     );
+    let coverage = workflow
+        .split_once("  coverage:\n")
+        .expect("CI must define a dedicated coverage job")
+        .1
+        .split_once("  build:\n")
+        .expect("coverage must precede the build job")
+        .0;
+    assert!(
+        coverage.contains("cargo install rust-script --force"),
+        "the coverage job should overwrite a rust-script binary restored from its cache"
+    );
 }
 
 #[test]
