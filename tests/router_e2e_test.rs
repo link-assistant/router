@@ -23,6 +23,7 @@ use link_assistant_router::refresh::TokenCache;
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 use link_assistant_router::token::TokenManager;
 use serde_json::{Value, json};
+use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
 
 #[derive(Clone, Copy)]
@@ -42,8 +43,9 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
+    token_manager: TokenManager,
     requests: Arc<Mutex<Vec<Value>>>,
-    log_path: std::path::PathBuf,
+    log_root: std::path::PathBuf,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -86,10 +88,10 @@ impl TestRouter {
         let subscription_reader = (provider == UpstreamProvider::Codex)
             .then(|| SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home));
 
-        let log_path = data.path().join("requests.jsonl");
+        let log_root = data.path().join("requests");
         let state = AppState {
             client: reqwest::Client::new(),
-            token_manager,
+            token_manager: token_manager.clone(),
             oauth_provider,
             account_router: None,
             subscription_reader,
@@ -119,7 +121,7 @@ impl TestRouter {
             metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
             audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
             request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
-                log_path.clone(),
+                log_root.clone(),
                 1024 * 1024,
             )),
             activitypub_actor_base_url: "https://router.test".to_string(),
@@ -137,8 +139,9 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
+            token_manager,
             requests,
-            log_path,
+            log_root,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
@@ -155,6 +158,11 @@ impl TestRouter {
         self.client
             .get(format!("{}{path}", self.url))
             .bearer_auth(&self.token)
+    }
+
+    fn log_path_for(&self, token: &str) -> std::path::PathBuf {
+        let digest = hex::encode(Sha256::digest(token.as_bytes()));
+        self.log_root.join(&digest[..32]).join("requests.jsonl")
     }
 }
 
@@ -359,7 +367,8 @@ async fn request_larger_than_logging_buffer_reaches_handler() {
         response.text().await.expect("large response body"),
         (10 * 1024 * 1024 + 1).to_string()
     );
-    let log = std::fs::read_to_string(&router.log_path).expect("request log");
+    let log = std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
+        .expect("request log");
     assert!(log.contains("client_request"));
     assert!(log.contains("[OMITTED:"));
     assert!(!log.contains("client_request_error"));
@@ -552,7 +561,8 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(translated_tools[0].get("function").is_none());
     drop(requests);
 
-    let records = std::fs::read_to_string(&router.log_path).expect("request exchange log");
+    let records =
+        std::fs::read_to_string(router.log_path_for(&router.token)).expect("request exchange log");
     let records = records
         .lines()
         .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL record"))
@@ -590,6 +600,83 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(rendered.contains("client-boundary-marker"));
     assert!(rendered.contains("[REDACTED]"));
     assert!(!rendered.contains(&router.token));
+}
+
+#[tokio::test]
+async fn request_logs_are_isolated_and_attributed_by_valid_token() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+    let second_token = router
+        .token_manager
+        .issue_token(1, "second e2e client")
+        .expect("issue second token");
+
+    for (token, marker) in [
+        (&router.token, "first-token-marker"),
+        (&second_token, "second-token-marker"),
+    ] {
+        let response = router
+            .client
+            .post(format!("{}/v1/messages", router.url))
+            .bearer_auth(token)
+            .header("x-test-marker", marker)
+            .json(&json!({
+                "model":"claude-sonnet-4-5",
+                "max_tokens":16,
+                "messages":[{"role":"user","content":"hi"}]
+            }))
+            .send()
+            .await
+            .expect("router response");
+        assert_eq!(response.status(), StatusCode::OK);
+        let _ = response.bytes().await.expect("response body");
+    }
+
+    let first =
+        std::fs::read_to_string(router.log_path_for(&router.token)).expect("first token log");
+    let second =
+        std::fs::read_to_string(router.log_path_for(&second_token)).expect("second token log");
+    assert!(first.contains("first-token-marker"));
+    assert!(!first.contains("second-token-marker"));
+    assert!(second.contains("second-token-marker"));
+    assert!(!second.contains("first-token-marker"));
+
+    for (log, token, label) in [
+        (&first, &router.token, "router e2e client"),
+        (&second, &second_token, "second e2e client"),
+    ] {
+        let claims = router
+            .token_manager
+            .validate_token(token)
+            .expect("valid token");
+        let records = log
+            .lines()
+            .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL"))
+            .collect::<Vec<_>>();
+        for phase in [
+            "client_request",
+            "upstream_request",
+            "upstream_response",
+            "upstream_response_body",
+            "client_response",
+            "client_response_body",
+        ] {
+            let record = records
+                .iter()
+                .find(|record| record["phase"] == phase)
+                .unwrap_or_else(|| panic!("missing {phase}"));
+            assert_eq!(record["token_id"], claims.sub);
+            assert_eq!(record["token_label"], label);
+            assert_eq!(
+                record["token_hash"],
+                router
+                    .log_path_for(token)
+                    .parent()
+                    .and_then(std::path::Path::file_name)
+                    .and_then(std::ffi::OsStr::to_str)
+                    .expect("token hash")
+            );
+        }
+    }
 }
 
 #[tokio::test]

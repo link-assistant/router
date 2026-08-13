@@ -56,6 +56,7 @@ portable-pty = "0.9"
 rust-embed = { version = "8.12.0", default-features = false }
 
 [dev-dependencies]
+proptest = "1"
 tokio-test = "0.4"
 tower = { version = "0.5", features = ["util"] }
 tempfile = "3"

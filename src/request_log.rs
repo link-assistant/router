@@ -608,6 +608,56 @@ pub async fn log_http_exchange(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
+
+    #[test]
+    fn long_credentials_are_partially_redacted_and_short_ones_are_fully_masked() {
+        let long = "la_sk_abcdefghijklmnop_last";
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "authorization",
+            HeaderValue::from_str(&format!("Bearer {long}")).expect("header value"),
+        );
+        headers.insert("x-api-key", HeaderValue::from_static("tiny"));
+
+        let redacted = redacted_headers(&headers);
+        let authorization = &redacted["authorization"];
+        assert!(authorization.starts_with("Bearer la_"), "{authorization}");
+        assert!(authorization.ends_with("ast"), "{authorization}");
+        assert_eq!(authorization.matches('*').count(), long.len() - 6);
+        assert!(!authorization.contains(long));
+        assert_eq!(redacted["x-api-key"], REDACTED);
+    }
+
+    proptest! {
+        #[test]
+        fn complete_credentials_never_survive_any_redaction_site(
+            payload in "[A-Za-z0-9_-]{12,96}"
+        ) {
+            let secret = format!("la_sk_{payload}");
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {secret}")).expect("header value"),
+            );
+            let header_log = serde_json::to_string(&redacted_headers(&headers))
+                .expect("serialize headers");
+            let body_log = redacted_body(
+                serde_json::to_string(&json!({
+                    "access_token": secret,
+                    "unlisted": secret,
+                }))
+                .expect("serialize body")
+                .as_bytes(),
+            )
+            .to_string();
+            let uri_log = redacted_uri(&format!("/v1/models?access_token={secret}"));
+
+            prop_assert!(!header_log.contains(&secret));
+            prop_assert!(!body_log.contains(&secret));
+            prop_assert!(!uri_log.contains(&secret));
+        }
+    }
 
     #[test]
     fn credentials_are_redacted_from_headers_and_json_bodies() {
