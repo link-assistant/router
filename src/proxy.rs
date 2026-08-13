@@ -276,11 +276,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         state
             .logger
             .debug(|| format!("Token budget check failed: {e}"));
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
+        return token_budget_error_response(&e);
     }
 
     // Read the body before account selection so the router gets a copy of
@@ -766,11 +762,7 @@ async fn forward_openai(
         }
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
+        return token_budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
@@ -956,6 +948,26 @@ async fn forward_openai(
         .headers_mut()
         .insert("content-type", HeaderValue::from_static("application/json"));
     response
+}
+
+pub(crate) fn token_budget_error_response(error: &crate::token::TokenError) -> Response {
+    match error {
+        crate::token::TokenError::LimitExceeded => error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &error.to_string(),
+        ),
+        crate::token::TokenError::Storage(_) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "storage_error",
+            &error.to_string(),
+        ),
+        _ => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &error.to_string(),
+        ),
+    }
 }
 
 pub(crate) fn maybe_mpp_challenge(

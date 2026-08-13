@@ -160,11 +160,7 @@ pub async fn forward_openai_compatible(
     // subscription ones, so a task token cannot escape its cap by being
     // pointed at an OpenAI-compatible gateway.
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
+        return crate::proxy::token_budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 

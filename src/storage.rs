@@ -36,7 +36,7 @@
 #![allow(clippy::significant_drop_tightening)]
 
 use std::collections::HashMap;
-use std::fs;
+use std::fs::{self, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
@@ -190,6 +190,11 @@ impl TokenStore for MemoryTokenStore {
         let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
         Ok(guard.remove(id).is_some())
     }
+
+    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        Ok(consume_request(guard.get_mut(id)))
+    }
 }
 
 /// Lino-style text token store.
@@ -261,6 +266,15 @@ impl TokenStore for TextTokenStore {
             self.flush(&guard)?;
         }
         Ok(removed)
+    }
+
+    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        let permitted = consume_request(guard.get_mut(id));
+        if permitted && guard.contains_key(id) {
+            self.flush(&guard)?;
+        }
+        Ok(permitted)
     }
 }
 
@@ -346,6 +360,29 @@ impl TokenStore for BinaryTokenStore {
         }
         Ok(removed)
     }
+
+    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        let permitted = consume_request(guard.get_mut(id));
+        if permitted && guard.contains_key(id) {
+            self.flush(&guard)?;
+        }
+        Ok(permitted)
+    }
+}
+
+fn consume_request(record: Option<&mut TokenRecord>) -> bool {
+    let Some(record) = record else {
+        return true;
+    };
+    if record
+        .max_requests
+        .is_some_and(|max| record.used_requests >= max)
+    {
+        return false;
+    }
+    record.used_requests = record.used_requests.saturating_add(1);
+    true
 }
 
 fn decode_binary(path: &Path) -> Result<Vec<TokenRecord>, StorageError> {
@@ -417,6 +454,13 @@ impl TokenStore for DualTokenStore {
         let a = self.primary.delete(id)?;
         let b = self.secondary.delete(id)?;
         Ok(a || b)
+    }
+
+    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
+        if !self.primary.try_consume_request(id)? {
+            return Ok(false);
+        }
+        self.secondary.try_consume_request(id)
     }
 }
 
@@ -722,22 +766,49 @@ impl<'a> LinoTokens<'a> {
 }
 
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), StorageError> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| io::Error::other("storage path has no parent directory"))?;
+    fs::create_dir_all(parent)?;
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| io::Error::other("storage file name is not valid UTF-8"))?;
+    let tmp = parent.join(format!(
+        ".{file_name}.{}.{}.tmp",
+        std::process::id(),
+        uuid::Uuid::new_v4()
+    ));
+
+    let result = (|| -> Result<(), StorageError> {
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&tmp)?;
+        file.write_all(contents)?;
+        file.sync_all()?;
+        if let Ok(metadata) = fs::metadata(path) {
+            fs::set_permissions(&tmp, metadata.permissions())?;
+        }
+        fs::rename(&tmp, path)?;
+        Ok(())
+    })();
+
+    if result.is_err() {
+        let _ = fs::remove_file(&tmp);
     }
-    let tmp = path.with_extension("tmp");
-    {
-        let mut f = fs::File::create(&tmp)?;
-        f.write_all(contents)?;
-        f.sync_all()?;
-    }
-    fs::rename(&tmp, path)?;
-    Ok(())
+    result
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Barrier;
+    use std::thread;
     use tempfile::tempdir;
 
     fn sample_record(id: &str) -> TokenRecord {
@@ -833,6 +904,42 @@ mod tests {
         dual.put(sample_record("a")).unwrap();
         assert_eq!(text.list().unwrap().len(), 1);
         assert_eq!(bin.list().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn dual_store_concurrent_consumption_is_atomic_and_preserves_formats() {
+        const REQUESTS: usize = 32;
+
+        let dir = tempdir().unwrap();
+        let store = build_token_store(StoragePolicy::Both, dir.path()).unwrap();
+        store.put(sample_record("shared")).unwrap();
+
+        let barrier = Arc::new(Barrier::new(REQUESTS));
+        let handles: Vec<_> = (0..REQUESTS)
+            .map(|_| {
+                let store = Arc::clone(&store);
+                let barrier = Arc::clone(&barrier);
+                thread::spawn(move || {
+                    barrier.wait();
+                    store.try_consume_request("shared")
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            assert!(handle.join().unwrap().unwrap());
+        }
+
+        let text = TextTokenStore::open(dir.path().join("tokens.lino")).unwrap();
+        let binary = BinaryTokenStore::open(dir.path().join("tokens.bin")).unwrap();
+        assert_eq!(
+            text.get("shared").unwrap().unwrap().used_requests,
+            REQUESTS as u64
+        );
+        assert_eq!(
+            binary.get("shared").unwrap().unwrap().used_requests,
+            REQUESTS as u64
+        );
     }
 
     #[test]

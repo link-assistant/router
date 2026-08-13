@@ -253,13 +253,7 @@ async fn route_gemini_token(
     state
         .token_manager
         .enforce_request_budget(&claims.sub)
-        .map_err(|error| {
-            error_response(
-                StatusCode::TOO_MANY_REQUESTS,
-                "rate_limit_error",
-                &error.to_string(),
-            )
-        })?;
+        .map_err(|error| crate::proxy::token_budget_error_response(&error))?;
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
     let pinned_account = state
         .token_manager
