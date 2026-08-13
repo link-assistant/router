@@ -47,6 +47,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocator-api2"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c880a97d28a3681c0267bd29cff89621202715b065127cd445fa0f0fe0aa2880"
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -237,6 +243,12 @@ name = "base64ct"
 version = "1.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
+
+[[package]]
+name = "beef"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
 
 [[package]]
 name = "bitflags"
@@ -600,6 +612,22 @@ name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
+
+[[package]]
+name = "doublets"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fec36305f729ca75677ebe6be2f45020a52894c32cac4842e18d4ad320f7a31f"
+dependencies = [
+ "cfg-if",
+ "leak_slice",
+ "platform-data",
+ "platform-mem",
+ "platform-num",
+ "platform-trees",
+ "tap",
+ "thiserror 2.0.18",
+]
 
 [[package]]
 name = "downcast-rs"
@@ -1363,6 +1391,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "leak_slice"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecf3387da9fb41906394e1306ddd3cd26dd9b7177af11c19b45b364b743aed26"
+
+[[package]]
 name = "leb128fmt"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1391,6 +1425,7 @@ dependencies = [
  "bytes",
  "chrono",
  "clap",
+ "doublets",
  "futures-util",
  "getrandom 0.4.2",
  "hex",
@@ -1399,8 +1434,11 @@ dependencies = [
  "hyper",
  "hyper-util",
  "jsonwebtoken",
+ "links-notation",
  "lino-arguments",
+ "lino-objects-codec",
  "log-lazy",
+ "platform-mem",
  "portable-pty",
  "reqwest",
  "rust-embed",
@@ -1416,6 +1454,15 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "links-notation"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4c952b42a8c6ff6f849d7cafe3b1e13f1063a51bbb144bc6c62026ab327814c"
+dependencies = [
+ "nom",
 ]
 
 [[package]]
@@ -1437,6 +1484,16 @@ name = "lino-env"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f453c53827aabe91a3d3856d61d14ae3867ab1a4344db22f9fa5396664c8d0e"
+
+[[package]]
+name = "lino-objects-codec"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4db12a09a113afcfa4bd1ba32e76b5e4cb22a37b8d3f130b198f8c14dded0ad0"
+dependencies = [
+ "base64",
+ "links-notation",
+]
 
 [[package]]
 name = "linux-raw-sys"
@@ -1493,6 +1550,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4"
 
 [[package]]
+name = "memmap2"
+version = "0.9.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1219ed1b7f229ee7104d281dd01d6802fe28bb6e95d292942c4daacdeb798c0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1529,6 +1595,15 @@ dependencies = [
  "cfg-if",
  "cfg_aliases 0.1.1",
  "libc",
+]
+
+[[package]]
+name = "nom"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df9761775871bdef83bee530e60050f7e54b1105350d6884eb0fb4f46c2f9405"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -1674,6 +1749,47 @@ checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
 dependencies = [
  "der",
  "spki",
+]
+
+[[package]]
+name = "platform-data"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6782bc71345465116de96d250a36dcf49336010a2320d958d12a5d4390186c90"
+dependencies = [
+ "beef",
+ "platform-num",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "platform-mem"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f27cff7c92440ac926c8c91ea3151db6e52a262f602d0c157f254e422fc15b12"
+dependencies = [
+ "allocator-api2",
+ "memmap2",
+ "tempfile",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "platform-num"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c4ca8e18138b1c90ad802aff931f946a0e6bd760c35af30f1ff2489489ab54a"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "platform-trees"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40e25a531617fa762c8505826c930f6c1cfcc226f63dea09882b56ae0b8ed078"
+dependencies = [
+ "platform-num",
 ]
 
 [[package]]
@@ -2478,6 +2594,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "tap"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "tempfile"

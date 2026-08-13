@@ -42,6 +42,10 @@ futures-util = "0.3"
 http = "1.4"
 http-body-util = "0.1"
 lino-arguments = "0.3"
+lino-objects-codec = "0.2.1"
+links-notation = "0.13.0"
+doublets = "0.4.0"
+mem = { package = "platform-mem", version = "0.3.0" }
 clap = { version = "4", features = ["derive", "env"] }
 base64 = "0.22"
 async-trait = "0.1"
@@ -57,7 +61,9 @@ tower = { version = "0.5", features = ["util"] }
 tempfile = "3"
 
 [lints.rust]
-unsafe_code = "forbid"
+# The file-mapping compatibility adapter has a scoped exception; unsafe code
+# remains denied throughout the rest of the crate.
+unsafe_code = "deny"
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }
