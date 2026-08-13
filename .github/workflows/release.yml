@@ -628,15 +628,25 @@ jobs:
       - name: Install rust-script
         run: cargo install rust-script
 
+      # Surface orphan tags left by earlier runs *before* anything is published, so the
+      # log names them while they can still be fixed without a half-finished release.
+      # They only warn here: an unrelated historical orphan must not block today's images.
+      # The scheduled verify-releases workflow still fails hard on them.
+      - name: Report pre-existing release drift
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main --historical-orphans warn
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: rust-script scripts/create-github-release.rs --release-version "${{ env.RELEASE_VERSION }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
 
+      # Scoped to the version just published: this run is responsible for that release only.
       - name: Verify GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main
+        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main --release-version "${{ env.RELEASE_VERSION }}" --historical-orphans warn
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
