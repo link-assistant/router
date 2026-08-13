@@ -219,7 +219,13 @@ pub(super) fn write_binary<'a>(
             .map_err(|error| codec_error("initialize doublets store", error))?;
         write_semantic_links(&mut store, records)?;
         drop(store);
-        OpenOptions::new().read(true).open(&tmp)?.sync_all()?;
+        // Windows requires a writable handle for FlushFileBuffers, which is
+        // what File::sync_all uses after the memory map has been dropped.
+        OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&tmp)?
+            .sync_all()?;
         if let Ok(metadata) = fs::metadata(path) {
             fs::set_permissions(&tmp, metadata.permissions())?;
         }
