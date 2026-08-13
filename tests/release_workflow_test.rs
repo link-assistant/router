@@ -204,6 +204,16 @@ fn release_workflow_refreshes_cached_cargo_audit_binary() {
 }
 
 #[test]
+fn release_workflow_refreshes_cached_coverage_binary() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    assert!(
+        workflow.contains("cargo install cargo-llvm-cov --version 0.8.7 --locked --force"),
+        "the coverage job should overwrite a cargo-llvm-cov binary restored from its cache"
+    );
+}
+
+#[test]
 fn cargo_lock_package_version_matches_manifest() {
     let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
     let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");

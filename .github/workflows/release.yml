@@ -314,7 +314,7 @@ jobs:
 
       - name: Install coverage tools
         run: |
-          cargo install cargo-llvm-cov --version 0.8.7 --locked
+          cargo install cargo-llvm-cov --version 0.8.7 --locked --force
           cargo install rust-script
 
       - name: Test coverage gate behavior
