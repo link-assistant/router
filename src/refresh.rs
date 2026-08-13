@@ -22,6 +22,10 @@ use std::sync::Mutex;
 
 use serde::Deserialize;
 
+#[path = "refresh_state.rs"]
+mod refresh_state;
+use refresh_state::RefreshAttempts;
+
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 /// How a provider's token endpoint expects the refresh request body encoded.
@@ -326,6 +330,9 @@ async fn refresh_at(
 #[derive(Debug, Default)]
 pub struct TokenCache {
     inner: Mutex<HashMap<(SubscriptionProvider, String), SubscriptionToken>>,
+    /// Per-subscription refresh state. Each async mutex is held across the
+    /// exchange so concurrent requests share one attempt.
+    attempts: RefreshAttempts,
     /// Latest observed verdict per provider from real upstream calls.
     evidence: Mutex<HashMap<SubscriptionProvider, CredentialEvidence>>,
     /// Latest refresh failure per provider, cleared by a successful refresh.
@@ -369,15 +376,56 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> SubscriptionToken {
+        self.get_fresh_for_at(
+            client,
+            refresh_config(provider).token_url,
+            provider,
+            account,
+            disk_token,
+            now_ms,
+        )
+        .await
+    }
+
+    async fn get_fresh_for_at(
+        &self,
+        client: &reqwest::Client,
+        token_url: &str,
+        provider: SubscriptionProvider,
+        account: &str,
+        disk_token: SubscriptionToken,
+        now_ms: i64,
+    ) -> SubscriptionToken {
+        let key = (provider, account.to_string());
+        let attempt = self
+            .attempts
+            .for_subscription(provider, account, &disk_token);
+        let mut attempt = attempt.lock().await;
+
+        // Re-authentication replaces at least one credential field. Forget
+        // both negative and positive state derived from the previous file.
+        if attempt.reset_if_changed(&disk_token) {
+            if let Ok(mut guard) = self.inner.lock() {
+                guard.remove(&key);
+            }
+            if let Ok(mut guard) = self.evidence.lock() {
+                guard.remove(&provider);
+            }
+        }
         if !disk_token.is_expired(now_ms) {
             return disk_token;
         }
         if let Some(cached) = self.cached_valid_for(provider, account, now_ms) {
             return cached;
         }
-        match refresh(client, provider, &disk_token, now_ms).await {
+        if attempt.suppresses_attempt(now_ms) {
+            return disk_token;
+        }
+        match refresh_at(client, token_url, provider, &disk_token, now_ms).await {
             Ok(fresh) => {
                 self.store_for(provider, account, fresh.clone());
+                attempt.record_success();
+                self.record_credential_working(provider);
                 if let Ok(mut guard) = self.refresh_errors.lock() {
                     guard.remove(&provider);
                 }
@@ -386,6 +434,12 @@ impl TokenCache {
             Err(e) => {
                 tracing::warn!("subscription token refresh for {provider} failed: {e}");
                 self.record_refresh_error(provider, &e.to_string());
+                if e.is_invalid_grant() {
+                    attempt.record_terminal_failure();
+                    self.record_credential_rejected(provider);
+                } else {
+                    attempt.record_transient_failure(now_ms);
+                }
                 // The stamped-expired token is returned unchanged on purpose:
                 // it may still be honoured by the inference endpoint.
                 disk_token
@@ -633,6 +687,91 @@ mod tests {
             .await;
         assert_eq!(reused.access_token, "cached-once");
         server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn terminal_refresh_failure_is_attempted_only_once_for_same_credential() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}/token", listener.local_addr().unwrap());
+        let calls = Arc::new(AtomicUsize::new(0));
+        let server_calls = Arc::clone(&calls);
+        let server = tokio::spawn(async move {
+            loop {
+                let Ok(Ok((mut socket, _))) =
+                    tokio::time::timeout(std::time::Duration::from_millis(200), listener.accept())
+                        .await
+                else {
+                    break;
+                };
+                server_calls.fetch_add(1, Ordering::SeqCst);
+                let mut request = [0; 2048];
+                let _ = socket.read(&mut request).await.unwrap();
+                let body = r#"{"error":"invalid_grant","error_description":"revoked"}"#;
+                socket
+                    .write_all(
+                        format!(
+                            "HTTP/1.1 400 Bad Request\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                            body.len()
+                        )
+                        .as_bytes(),
+                    )
+                    .await
+                    .unwrap();
+            }
+        });
+
+        let cache = TokenCache::new();
+        let client = reqwest::Client::new();
+        let expired = token(Some("revoked-refresh"), Some(1));
+        let requests = (0..8).map(|_| {
+            cache.get_fresh_for_at(
+                &client,
+                &url,
+                SubscriptionProvider::Claude,
+                "primary",
+                expired.clone(),
+                10_000,
+            )
+        });
+        futures_util::future::join_all(requests).await;
+        server.await.unwrap();
+
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            cache.evidence(SubscriptionProvider::Claude),
+            Some(CredentialEvidence::Rejected)
+        );
+    }
+
+    #[tokio::test]
+    async fn changed_valid_credential_clears_terminal_rejection() {
+        let cache = TokenCache::new();
+        let expired = token(Some("revoked"), Some(1));
+        let attempt =
+            cache
+                .attempts
+                .for_subscription(SubscriptionProvider::Claude, "primary", &expired);
+        attempt.lock().await.record_terminal_failure();
+        cache.record_credential_rejected(SubscriptionProvider::Claude);
+
+        let replacement = token(Some("new-login"), Some(20_000));
+        let result = cache
+            .get_fresh_for_at(
+                &reqwest::Client::new(),
+                "http://unused.invalid",
+                SubscriptionProvider::Claude,
+                "primary",
+                replacement.clone(),
+                10_000,
+            )
+            .await;
+
+        assert_eq!(result, replacement);
+        assert!(cache.evidence(SubscriptionProvider::Claude).is_none());
     }
 
     #[tokio::test]
