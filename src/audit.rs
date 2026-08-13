@@ -15,6 +15,9 @@ use std::fs::OpenOptions;
 use std::io::Write as _;
 use std::path::PathBuf;
 
+#[cfg(unix)]
+use std::os::unix::fs::{OpenOptionsExt as _, PermissionsExt as _};
+
 use serde::Serialize;
 
 /// One audit record, serialised as a single JSON line.
@@ -83,15 +86,22 @@ impl AuditLog {
         let Ok(line) = serde_json::to_string(event) else {
             return;
         };
-        let write = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-            .and_then(|mut file| writeln!(file, "{line}"));
+        let write = open_append_only(path).and_then(|mut file| writeln!(file, "{line}"));
         if let Err(e) = write {
             tracing::warn!("audit log write failed ({}): {e}", path.display());
         }
     }
+}
+
+fn open_append_only(path: &std::path::Path) -> std::io::Result<std::fs::File> {
+    let mut options = OpenOptions::new();
+    options.create(true).append(true);
+    #[cfg(unix)]
+    options.mode(0o600);
+    let file = options.open(path)?;
+    #[cfg(unix)]
+    file.set_permissions(std::fs::Permissions::from_mode(0o600))?;
+    Ok(file)
 }
 
 /// Build an event for `claims` at the current wall-clock time.
@@ -225,6 +235,35 @@ mod tests {
         assert!(second.get("model").is_none());
 
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn enabled_log_is_owner_only() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file = dir.path().join("audit.jsonl");
+        std::fs::write(&file, "").expect("seed audit log");
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o644))
+            .expect("set permissive mode");
+        let log = AuditLog::to_path(file.to_str());
+
+        log.record(&event(
+            "tok-1",
+            "task-a",
+            "anthropic",
+            "anthropic",
+            "/v1/messages",
+            None,
+        ));
+
+        let mode = std::fs::metadata(file)
+            .expect("audit metadata")
+            .permissions()
+            .mode()
+            & 0o777;
+        assert_eq!(mode, 0o600);
     }
 
     #[test]
