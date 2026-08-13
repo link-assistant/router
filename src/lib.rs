@@ -52,6 +52,7 @@ pub mod request_log;
 mod request_routing;
 pub mod responses;
 pub mod security_headers;
+pub mod server_router;
 pub mod storage;
 pub mod subscription;
 pub mod subscription_proxy;

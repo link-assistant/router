@@ -374,8 +374,11 @@ in a browser *or* in a chat. See
 | `/api/anthropic/v1/messages/count_tokens` | POST | Namespaced token-count alias |
 | `/invoke` | POST | Bedrock-format invoke |
 | `/invoke-with-response-stream` | POST | Bedrock streaming invoke |
-| `/api/latest/anthropic/*` | ANY | Legacy prefix; stripped and forwarded |
-| `/*:rawPredict`, `/*:streamRawPredict` | POST | Vertex rawPredict pass-through |
+| `/api/latest/anthropic/v1/messages` | POST | Legacy Messages alias; prefix stripped before forwarding |
+| `/api/latest/anthropic/v1/messages/count_tokens` | POST | Legacy token-count alias; prefix stripped before forwarding |
+| `/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:rawPredict` | POST | Vertex rawPredict pass-through |
+| `/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:streamRawPredict` | POST | Vertex streaming rawPredict pass-through |
+| `/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}/count-tokens:rawPredict` | POST | Vertex token-count pass-through |
 
 ### OpenAI surface (`--disable-openai-api` to opt out)
 
@@ -486,7 +489,9 @@ Issue a new custom JWT token.
 
 ### Proxy Routes
 
-Any request to `/api/latest/anthropic/*` is forwarded to the upstream Anthropic API. The proxy:
+The two documented `/api/latest/anthropic/v1/messages` routes are forwarded to
+the corresponding upstream Anthropic API paths. Unknown routes and methods are
+rejected locally rather than forwarded. The proxy:
 
 - Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
 - Replaces it with the real OAuth token

@@ -15,7 +15,10 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 
 const TARGET_FLOOR: f64 = 80.0;
-const EPSILON: f64 = 0.000_001;
+// Instrumented async/concurrent paths vary slightly between otherwise identical
+// runs. Ignore changes smaller than one basis point so the ratchet reflects a
+// reviewable coverage change rather than scheduler noise.
+const TOLERANCE: f64 = 0.01;
 
 #[derive(Deserialize)]
 struct CoverageReport {
@@ -54,24 +57,24 @@ fn decide(measured: f64, committed: f64, previous: f64, allow_decrease: bool) ->
     let mut errors = Vec::new();
 
     if !allow_decrease {
-        if measured + EPSILON < enforced_floor {
+        if measured + TOLERANCE < enforced_floor {
             errors.push(format!(
                 "line coverage {measured:.2}% is below the enforced floor {enforced_floor:.2}%"
             ));
         }
-        if measured + EPSILON < committed {
+        if measured + TOLERANCE < committed {
             errors.push(format!(
                 "line coverage {measured:.2}% is below the committed baseline {committed:.2}%"
             ));
         }
-        if measured + EPSILON < previous {
+        if measured + TOLERANCE < previous {
             errors.push(format!(
                 "line coverage {measured:.2}% is below the default-branch baseline {previous:.2}%"
             ));
         }
     }
 
-    let next_baseline = if errors.is_empty() && (measured > committed + EPSILON || allow_decrease) {
+    let next_baseline = if errors.is_empty() && (measured > committed + TOLERANCE || allow_decrease) {
         measured
     } else {
         committed
@@ -150,9 +153,9 @@ fn summary(decision: &Decision, lines: &LineCoverage, exception: bool) -> String
          | Target floor | {TARGET_FLOOR:.2}% |\n",
         lines.covered, lines.count, decision.measured, decision.previous, decision.enforced_floor,
     );
-    if decision.next_baseline > decision.committed + EPSILON {
+    if decision.next_baseline > decision.committed + TOLERANCE {
         output.push_str("\nCoverage increased; `coverage-baseline.txt` was advanced. Commit that reviewable change.\n");
-    } else if decision.next_baseline + EPSILON < decision.committed && exception {
+    } else if decision.next_baseline + TOLERANCE < decision.committed && exception {
         output.push_str("\nThe `coverage-exception` escape hatch lowered the baseline; commit and review that change explicitly.\n");
     }
     for error in &decision.errors {
@@ -175,7 +178,7 @@ fn append_summary(path: Option<&Path>, contents: &str) -> Result<(), String> {
 }
 
 fn update_baseline(path: &Path, committed: f64, next: f64) -> Result<bool, String> {
-    if (next - committed).abs() <= EPSILON {
+    if (next - committed).abs() <= TOLERANCE {
         return Ok(false);
     }
     fs::write(path, format!("{next:.6}\n"))
@@ -256,6 +259,17 @@ mod tests {
         let result = decide(78.25, 76.9, 76.9, false);
         assert!(result.errors.is_empty());
         assert_eq!(result.next_baseline, 78.25);
+    }
+
+    #[test]
+    fn sub_basis_point_variance_does_not_move_or_fail_the_ratchet() {
+        let lower = decide(77.449, 77.45, 76.82, false);
+        assert!(lower.errors.is_empty());
+        assert_eq!(lower.next_baseline, 77.45);
+
+        let higher = decide(77.459, 77.45, 76.82, false);
+        assert!(higher.errors.is_empty());
+        assert_eq!(higher.next_baseline, 77.45);
     }
 
     #[test]

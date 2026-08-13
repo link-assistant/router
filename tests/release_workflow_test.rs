@@ -204,6 +204,22 @@ fn release_workflow_refreshes_cached_cargo_audit_binary() {
 }
 
 #[test]
+fn release_workflow_reuses_current_cached_coverage_tools() {
+    let workflow = read_lf(".github/workflows/release.yml");
+    let coverage = workflow
+        .split_once("  coverage:\n")
+        .expect("CI must define a dedicated coverage job")
+        .1
+        .split_once("  build:\n")
+        .expect("coverage must precede the build job")
+        .0;
+    assert!(
+        coverage.contains("command -v rust-script >/dev/null || cargo install rust-script"),
+        "the coverage job should reuse a cached rust-script binary when it is available"
+    );
+}
+
+#[test]
 fn cargo_lock_package_version_matches_manifest() {
     let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
     let lockfile = fs::read_to_string("Cargo.lock").expect("Cargo.lock should be readable");

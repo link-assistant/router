@@ -15,25 +15,19 @@ use std::time::Duration;
 
 mod auth_cli;
 
-use axum::Router;
 use axum::middleware::from_fn_with_state;
-use axum::routing::{get, post};
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
-use link_assistant_router::activitypub;
 use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
 use link_assistant_router::login::LoginManager;
-use link_assistant_router::login_api;
 use link_assistant_router::metrics::Metrics;
 use link_assistant_router::oauth::OAuthProvider;
-use link_assistant_router::provider_proxy;
 use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
-use link_assistant_router::proxy::{self, AppState};
+use link_assistant_router::proxy::AppState;
 use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 use link_assistant_router::token::{ADMIN_SCOPE, IssueRequest, TokenManager};
-use link_assistant_router::token_admin;
 use log_lazy::LogLazy;
 use tower_http::trace::TraceLayer;
 
@@ -313,103 +307,7 @@ async fn run_server(
         ),
     );
 
-    let mut app = Router::new()
-        .route("/health", get(proxy::health))
-        .route("/actor/code", get(activitypub::actor))
-        .route("/inbox/code", post(activitypub::inbox))
-        .route("/outbox/code", get(activitypub::outbox))
-        .route("/actors/code/followers", get(activitypub::followers))
-        .route(
-            "/activities/follow-problemsets-code-001",
-            get(activitypub::follow_problemsets),
-        )
-        .route("/api/tokens", post(token_admin::issue_token))
-        .route("/api/tokens/list", get(token_admin::list_tokens))
-        .route("/api/tokens/revoke", post(token_admin::revoke_token))
-        .route("/api/tokens/rotate", post(token_admin::rotate_admin_token))
-        .route(
-            "/api/providers",
-            get(provider_proxy::list_providers).post(provider_proxy::upsert_provider),
-        )
-        .route(
-            "/api/providers/{name}",
-            get(provider_proxy::show_provider).delete(provider_proxy::delete_provider),
-        );
-
-    if config.login.enabled {
-        // Interactive login sessions outlive the request that starts them, so
-        // the registry lives in `AppState`, not in the handler.
-        app = app
-            .route("/api/login", post(login_api::begin_login))
-            .route(
-                "/api/login/{id}",
-                get(login_api::login_status).delete(login_api::cancel_login),
-            )
-            .route("/api/login/{id}/code", post(login_api::submit_code));
-    }
-
-    if config.enable_anthropic_api {
-        app = app
-            .route("/v1/messages", post(proxy::proxy_handler))
-            .route("/v1/messages/count_tokens", post(proxy::proxy_handler))
-            .route("/api/anthropic/v1/messages", post(proxy::proxy_handler))
-            .route(
-                "/api/anthropic/v1/messages/count_tokens",
-                post(proxy::proxy_handler),
-            )
-            .route("/invoke", post(proxy::proxy_handler))
-            .route("/invoke-with-response-stream", post(proxy::proxy_handler));
-    }
-
-    if config.enable_openai_api {
-        app = app
-            .route("/v1/chat/completions", post(proxy::openai_chat_completions))
-            .route("/v1/responses", post(proxy::openai_responses))
-            .route("/v1/models", get(proxy::openai_models))
-            .route(
-                "/api/openai/v1/chat/completions",
-                post(proxy::openai_chat_completions),
-            )
-            .route("/api/openai/v1/responses", post(proxy::openai_responses))
-            .route("/api/openai/v1/models", get(proxy::openai_models))
-            .route("/api/anthropic/v1/models", get(proxy::openai_models))
-            .route(
-                "/api/codex/v1/chat/completions",
-                post(proxy::openai_chat_completions),
-            )
-            .route("/api/codex/v1/responses", post(proxy::openai_responses))
-            .route("/api/codex/v1/models", get(proxy::openai_models))
-            .route(
-                "/api/qwen/v1/chat/completions",
-                post(proxy::openai_chat_completions),
-            )
-            .route("/api/qwen/v1/responses", post(proxy::openai_responses))
-            .route("/api/qwen/v1/models", get(proxy::openai_models))
-            .route(
-                "/api/gemini/v1beta/models",
-                get(link_assistant_router::gemini::native_models),
-            )
-            .route(
-                "/api/gemini/v1beta/models/{model}",
-                get(link_assistant_router::gemini::native_model)
-                    .post(link_assistant_router::gemini::forward_native_gemini),
-            )
-            .route(
-                "/api/vertex/v1/{*path}",
-                post(link_assistant_router::gemini::forward_native_vertex),
-            );
-    }
-
-    if config.enable_metrics {
-        app = app
-            .route("/metrics", get(proxy::metrics_endpoint))
-            .route("/v1/usage", get(proxy::usage_endpoint))
-            .route("/v1/accounts", get(proxy::accounts_endpoint));
-    }
-
-    let app = app
-        .fallback(proxy::proxy_handler)
-        .with_state(state.clone())
+    let app = link_assistant_router::server_router::router(state.clone(), &config)
         .layer(from_fn_with_state(
             state.clone(),
             link_assistant_router::request_log::log_http_exchange,
