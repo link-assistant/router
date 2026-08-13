@@ -2,7 +2,7 @@
 
 CI measures Rust line coverage once on Linux with `cargo-llvm-cov`. Its default source filtering is intentional: dependencies, vendored sources, the `tests/` directory, `tests.rs`, and `*_tests.rs` files do not count. Inline `#[cfg(test)] mod tests` blocks in production files remain part of LLVM's file-level report; excluding those blocks requires unstable coverage attributes, so the baseline records the tool's stable default rather than modifying hundreds of test modules. The LCOV report is retained as a workflow artifact and the measured percentage and delta are written to the job summary.
 
-The long-term absolute floor is 80%. The initial measurement is 76.917518%, so enforcing 80% immediately would prevent all changes, including coverage improvements. Until 80% is reached, the committed `coverage-baseline.txt` is both the floor and the ratchet: coverage may rise but may not fall. The planned ramp has four coverage-focused milestones: 77.50%, 78.50%, 79.25%, and 80.00%. Any incidental increase advances the baseline too.
+The long-term absolute floor is 80%. The canonical Ubuntu CI measurement is 76.824610%, so enforcing 80% immediately would prevent all changes, including coverage improvements. Until 80% is reached, the committed `coverage-baseline.txt` is both the floor and the ratchet: coverage may rise but may not fall. The planned ramp has four coverage-focused milestones: 77.50%, 78.50%, 79.25%, and 80.00%. Any incidental increase advances the baseline too.
 
 Run the same check locally with:
 
