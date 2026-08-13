@@ -242,7 +242,7 @@ need:
 | Document | Scenario |
 | --- | --- |
 | [per-task-tokens.md](docs/use-cases/per-task-tokens.md) | One `la_sk_…` token per task — audit, monitoring, security, isolation |
-| [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Per-token counters in `/metrics` and `/v1/usage`, plus the JSONL audit log |
+| [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Aggregate `/metrics`, admin-only per-token `/v1/usage`, and the JSONL audit log |
 | [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | A Claude MAX subscription inside Codex CLI and other OpenAI-dialect clients |
 | [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | A ChatGPT/Qwen/Gemini/LiteLLM backend inside Claude Code and other Anthropic-dialect clients |
 | [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |
@@ -437,14 +437,15 @@ method-specific verifier is configured.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/metrics` | GET | Prometheus text-exposition counters |
-| `/v1/usage` | GET | JSON snapshot of all counters |
-| `/v1/accounts` | GET | Multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
+| `/metrics` | GET | Public Prometheus text-exposition aggregate counters |
+| `/v1/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
+| `/v1/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 
-`/metrics` and `/v1/usage` also attribute every authorised request to its
-router token — `link_assistant_token_requests_total{token,label}` and the
-`token_calls` JSON map. Set `--audit-log` for a durable JSONL trail of the same
-events. See [docs/use-cases/audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md).
+`/metrics` deliberately contains no token ids, labels, or account names because
+it is available without authentication. Administrators can inspect per-token
+usage in the `/v1/usage` `token_calls` JSON map. Set `--audit-log` for a durable
+JSONL trail of the same events. See
+[docs/use-cases/audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md).
 
 ### POST /api/tokens
 

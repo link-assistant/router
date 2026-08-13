@@ -164,6 +164,36 @@ pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
     })
 }
 
+/// Validate the caller credential without exposing token parser internals.
+pub(crate) fn authenticate_client(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> Result<crate::token::TokenClaims, Box<Response>> {
+    let Some(token) = extract_client_token(headers) else {
+        state.logger.debug(|| "Missing Authorization header");
+        return Err(Box::new(error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization Bearer token or x-api-key",
+        )));
+    };
+    state.token_manager.validate_token(token).map_err(|error| {
+        let status = if matches!(error, crate::token::TokenError::Revoked) {
+            StatusCode::FORBIDDEN
+        } else {
+            StatusCode::UNAUTHORIZED
+        };
+        state
+            .logger
+            .debug(|| format!("Token validation failed: {error}"));
+        Box::new(error_response(
+            status,
+            "authentication_error",
+            error.client_message(),
+        ))
+    })
+}
+
 /// Proxy handler for upstream API forwarding.
 ///
 /// Catches all requests, validates the custom token, swaps it for OAuth
@@ -180,6 +210,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let incoming_headers = req.headers().clone();
 
     if state.upstream_provider == UpstreamProvider::Auto {
+        if let Err(response) = authenticate_client(&state, &incoming_headers) {
+            return *response;
+        }
         let (routed, request) =
             match crate::model_routing::route_anthropic_request(&state, req).await {
                 Ok(routed) => routed,
@@ -217,17 +250,6 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             .verbose(|| format!("Session: {}", session_id.to_str().unwrap_or("<invalid>")));
     }
 
-    // Extract and validate the bearer token from the Authorization header
-    let Some(token) = extract_client_token(&incoming_headers) else {
-        state.logger.debug(|| "Missing Authorization header");
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let custom_token = token.to_string();
-
     // Anthropic-dialect requests aimed at a non-Anthropic upstream are handed
     // to the bridge, which translates both directions and delegates to the
     // provider's own forwarder (that forwarder owns token validation, budget
@@ -254,19 +276,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         .await;
     }
 
-    // Validate custom token
-    let claims = match state.token_manager.validate_token(&custom_token) {
+    let claims = match authenticate_client(&state, &incoming_headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            state
-                .logger
-                .debug(|| format!("Token validation failed: {e}"));
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
 
     // Enforce the per-token request budget (max_requests). This is what lets
@@ -748,22 +760,9 @@ async fn forward_openai(
     }
 
     // Validate caller token.
-    let Some(token) = extract_client_token(headers) else {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let claims = match state.token_manager.validate_token(token) {
+    let claims = match authenticate_client(state, headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
         return error_response(

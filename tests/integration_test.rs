@@ -525,7 +525,7 @@ mod metrics_rendering_tests {
     use link_assistant_router::metrics::{Metrics, Surface, render_prometheus, usage_snapshot};
 
     #[test]
-    fn prometheus_output_contains_all_required_counters() {
+    fn prometheus_output_contains_only_aggregate_required_counters() {
         let m = Metrics::default();
         m.record_request(Surface::Anthropic, 200, Some("primary"));
         m.record_request(Surface::OpenAIChat, 429, Some("account-1"));
@@ -537,10 +537,11 @@ mod metrics_rendering_tests {
         assert!(out.contains("link_assistant_anthropic_messages_total"));
         assert!(out.contains("link_assistant_openai_chat_completions_total"));
         assert!(out.contains("link_assistant_tokens_issued_total"));
-        // Per-status + per-account labelled counters.
+        // Status codes are aggregate; account identities stay admin-only.
         assert!(out.contains("link_assistant_status_total{code=\"200\"}"));
         assert!(out.contains("link_assistant_status_total{code=\"429\"}"));
-        assert!(out.contains("link_assistant_account_calls_total{account=\"primary\"}"));
+        assert!(!out.contains("primary"));
+        assert!(!out.contains("account-1"));
     }
 
     #[test]
