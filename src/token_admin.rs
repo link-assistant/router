@@ -17,7 +17,7 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 
 use crate::proxy::{AppState, error_response, extract_admin_bearer, is_admin_authorised};
-use crate::token::{ADMIN_SCOPE, IssueRequest};
+use crate::token::{ADMIN_SCOPE, IssueRequest, TokenError};
 
 /// Token issuance endpoint.
 ///
@@ -125,6 +125,9 @@ pub async fn revoke_token(
                 axum::Json(serde_json::json!({"revoked": req.id})),
             )
                 .into_response()
+        }
+        Err(e @ TokenError::NotFound(_)) => {
+            error_response(StatusCode::NOT_FOUND, "not_found", &format!("{e}"))
         }
         Err(e) => error_response(
             StatusCode::INTERNAL_SERVER_ERROR,

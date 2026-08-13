@@ -2,7 +2,7 @@
 
 use std::process::ExitCode;
 
-use link_assistant_router::cli::{AuthFlow, AuthOp};
+use link_assistant_router::cli::{AuthFlow, AuthOp, CLAUDE_AUTH_FLOWS, CODEX_AUTH_FLOWS};
 use link_assistant_router::config::Config;
 use link_assistant_router::login::{LoginManager, LoginStatus};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
@@ -15,12 +15,12 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     }
 }
 
-const fn claude_supports_flow(flow: AuthFlow) -> bool {
-    matches!(flow, AuthFlow::Auto | AuthFlow::Code | AuthFlow::Cli)
+fn claude_supports_flow(flow: AuthFlow) -> bool {
+    CLAUDE_AUTH_FLOWS.contains(&flow)
 }
 
-const fn codex_supports_flow(flow: AuthFlow) -> bool {
-    matches!(flow, AuthFlow::Auto | AuthFlow::Device | AuthFlow::Loopback)
+fn codex_supports_flow(flow: AuthFlow) -> bool {
+    CODEX_AUTH_FLOWS.contains(&flow)
 }
 
 async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> ExitCode {

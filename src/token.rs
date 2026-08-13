@@ -320,7 +320,15 @@ impl TokenManager {
     /// Revoke a token by its subject ID. Idempotent.
     pub fn revoke_token(&self, token_id: &str) -> Result<(), TokenError> {
         match self.store.revoke(token_id) {
-            Ok(_) => Ok(()),
+            Ok(true) => Ok(()),
+            Ok(false) => match self.store.get(token_id) {
+                Ok(Some(record)) if record.revoked => Ok(()),
+                Ok(Some(_)) => Err(TokenError::Storage(format!(
+                    "token {token_id} could not be revoked"
+                ))),
+                Ok(None) => Err(TokenError::NotFound(token_id.to_string())),
+                Err(error) => Err(TokenError::Storage(error.to_string())),
+            },
             Err(e) => Err(TokenError::Storage(e.to_string())),
         }
     }
@@ -362,6 +370,8 @@ pub enum TokenError {
     Expired,
     /// Token has been revoked.
     Revoked,
+    /// No stored token has the requested subject ID.
+    NotFound(String),
     /// Token is otherwise invalid.
     Invalid(String),
     /// Token is valid but lacks the privilege scope the operation requires.
@@ -380,6 +390,7 @@ impl std::fmt::Display for TokenError {
             }
             Self::Expired => write!(f, "Token has expired"),
             Self::Revoked => write!(f, "Token has been revoked"),
+            Self::NotFound(id) => write!(f, "Token not found: {id}"),
             Self::Invalid(msg) => write!(f, "Invalid token: {msg}"),
             Self::InsufficientScope => {
                 write!(f, "Token does not carry the '{ADMIN_SCOPE}' scope")
@@ -439,9 +450,17 @@ mod tests {
         let claims = mgr.validate_token(&token).expect("should validate first");
 
         mgr.revoke_token(&claims.sub).expect("should revoke");
+        mgr.revoke_token(&claims.sub)
+            .expect("repeated revocation should stay idempotent");
 
         let result = mgr.validate_token(&token);
         assert!(matches!(result, Err(TokenError::Revoked)));
+    }
+
+    #[test]
+    fn test_revoke_unknown_token_reports_not_found() {
+        let result = test_manager().revoke_token("missing-token-id");
+        assert!(matches!(result, Err(TokenError::NotFound(id)) if id == "missing-token-id"));
     }
 
     #[test]
