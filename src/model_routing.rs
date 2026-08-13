@@ -18,6 +18,8 @@ pub enum ModelRouteError {
     ModelRequired,
     /// The requested model is unknown or its owning provider is unavailable.
     NotFound(String),
+    /// More than one healthy subscription advertises an unqualified model id.
+    Ambiguous(String),
 }
 
 impl std::fmt::Display for ModelRouteError {
@@ -26,7 +28,7 @@ impl std::fmt::Display for ModelRouteError {
             Self::ModelRequired => {
                 formatter.write_str("model is required when UPSTREAM_PROVIDER=auto")
             }
-            Self::NotFound(message) => formatter.write_str(message),
+            Self::NotFound(message) | Self::Ambiguous(message) => formatter.write_str(message),
         }
     }
 }
@@ -34,7 +36,9 @@ impl std::fmt::Display for ModelRouteError {
 /// Convert an automatic-routing failure into the public API error shape.
 pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
     let (status, error_type) = match error {
-        ModelRouteError::ModelRequired => (StatusCode::BAD_REQUEST, "invalid_request_error"),
+        ModelRouteError::ModelRequired | ModelRouteError::Ambiguous(_) => {
+            (StatusCode::BAD_REQUEST, "invalid_request_error")
+        }
         ModelRouteError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found_error"),
     };
     crate::proxy::error_response(status, error_type, &error.to_string())
@@ -55,15 +59,48 @@ const fn provider_owner(provider: SubscriptionProvider) -> &'static str {
     }
 }
 
-/// Return the provider whose last known live catalog owns a model id.
+fn provider_hint(model: &str) -> Option<SubscriptionProvider> {
+    if model.starts_with("claude-") {
+        Some(SubscriptionProvider::Claude)
+    } else if model.starts_with("gpt-")
+        || model.starts_with("codex-")
+        || model
+            .strip_prefix('o')
+            .and_then(|suffix| suffix.chars().next())
+            .is_some_and(|character| character.is_ascii_digit())
+    {
+        Some(SubscriptionProvider::Codex)
+    } else if model.starts_with("gemini-") {
+        Some(SubscriptionProvider::Gemini)
+    } else if model.starts_with("qwen-") {
+        Some(SubscriptionProvider::Qwen)
+    } else {
+        None
+    }
+}
+
+fn providers_for_model(model: &str, catalogs: &ModelCatalogCache) -> Vec<SubscriptionProvider> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| catalogs.models(*provider).iter().any(|id| id == model))
+        .collect()
+}
+
+/// Return the unambiguous provider whose last known live catalog owns a model id.
+///
+/// A vendor-shaped model id resolves to that vendor when multiple catalogs
+/// contain it. An unqualified collision returns `None` instead of inheriting
+/// [`SubscriptionProvider::ALL`] ordering as an accidental routing policy.
 #[must_use]
 pub fn provider_for_model(
     model: &str,
     catalogs: &ModelCatalogCache,
 ) -> Option<SubscriptionProvider> {
-    SubscriptionProvider::ALL
-        .into_iter()
-        .find(|provider| catalogs.models(*provider).iter().any(|id| id == model))
+    let providers = providers_for_model(model, catalogs);
+    if providers.len() == 1 {
+        return providers.first().copied();
+    }
+    provider_hint(model).filter(|provider| providers.contains(provider))
 }
 
 /// Resolve a model only when the owning subscription is available.
@@ -72,11 +109,32 @@ pub fn available_provider_for_model(
     available: &[SubscriptionProvider],
     catalogs: &ModelCatalogCache,
 ) -> Result<SubscriptionProvider, ModelRouteError> {
-    let provider = provider_for_model(model, catalogs)
-        .or_else(|| crate::openai::resolve_model(model).map(|_| SubscriptionProvider::Claude))
+    let advertised = providers_for_model(model, catalogs);
+    if advertised.is_empty() {
+        return Err(ModelRouteError::NotFound(format!(
+            "model '{model}' is not advertised by any subscription"
+        )));
+    }
+    let provider = provider_hint(model)
+        .filter(|provider| advertised.contains(provider))
+        .or_else(|| {
+            let healthy = advertised
+                .iter()
+                .copied()
+                .filter(|provider| available.contains(provider))
+                .collect::<Vec<_>>();
+            (healthy.len() == 1).then(|| healthy[0])
+        })
+        .or_else(|| (advertised.len() == 1).then(|| advertised[0]))
         .ok_or_else(|| {
-            ModelRouteError::NotFound(format!(
-                "model '{model}' is not advertised by any subscription"
+            let providers = advertised
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", ");
+            ModelRouteError::Ambiguous(format!(
+                "model '{model}' is advertised by multiple subscriptions ({providers}); pin \
+                 UPSTREAM_PROVIDER to disambiguate"
             ))
         })?;
     available
@@ -609,10 +667,11 @@ mod tests {
                 .to_string()
                 .contains("no healthy codex credential")
         );
-        assert_eq!(
-            available_provider_for_model("gpt-4o", &[SubscriptionProvider::Claude], &catalogs,),
-            Ok(SubscriptionProvider::Claude)
-        );
+        let error =
+            available_provider_for_model("gpt-4o", &[SubscriptionProvider::Claude], &catalogs)
+                .unwrap_err();
+        assert!(error.to_string().contains("not advertised"));
+        assert!(!error.to_string().contains("claude credential"));
         assert!(matches!(
             available_provider_for_model("made-up-model", &[], &catalogs),
             Err(ModelRouteError::NotFound(_))
@@ -802,6 +861,92 @@ mod tests {
             route_state(&state, &json!({"model": "claude-opus-4-7"}))
                 .await
                 .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn automatic_state_never_uses_a_claude_alias_for_an_unadvertised_openai_model() {
+        let data = tempdir().unwrap();
+        let claude = tempdir().unwrap();
+        let codex = tempdir().unwrap();
+        fs::write(
+            claude.path().join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"claude-live"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            codex.path().join("auth.json"),
+            r#"{"tokens":{"access_token":"codex-live"}}"#,
+        )
+        .unwrap();
+        let state = auto_state(
+            vec![
+                SubscriptionReader::new(SubscriptionProvider::Claude, claude.path()),
+                SubscriptionReader::new(SubscriptionProvider::Codex, codex.path()),
+            ],
+            data.path(),
+        );
+        state.model_catalogs.record_success(
+            SubscriptionProvider::Claude,
+            vec!["claude-opus-4-7".to_string()],
+        );
+        state
+            .model_catalogs
+            .record_success(SubscriptionProvider::Codex, vec!["gpt-5.6-sol".to_string()]);
+
+        let error = route_state(&state, &json!({"model": "gpt-5"}))
+            .await
+            .err()
+            .expect("an unadvertised model must not cross vendors through an alias");
+
+        assert!(error.to_string().contains("not advertised"));
+        assert!(!error.to_string().contains("claude credential"));
+
+        state.model_catalogs.record_success(
+            SubscriptionProvider::Claude,
+            vec!["gpt-5".to_string(), "claude-opus-4-7".to_string()],
+        );
+        state.model_catalogs.record_success(
+            SubscriptionProvider::Codex,
+            vec!["gpt-5".to_string(), "gpt-5.6-sol".to_string()],
+        );
+        let routed = route_state(&state, &json!({"model": "gpt-5"}))
+            .await
+            .expect("an OpenAI-shaped collision must route to Codex");
+        assert_eq!(routed.upstream_provider, UpstreamProvider::Codex);
+        assert_eq!(routed.bridge_model.as_deref(), Some("gpt-5"));
+    }
+
+    #[test]
+    fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
+        let catalogs = ModelCatalogCache::new();
+        catalogs.record_success(
+            SubscriptionProvider::Claude,
+            vec!["gpt-5".to_string(), "shared-model".to_string()],
+        );
+        catalogs.record_success(
+            SubscriptionProvider::Codex,
+            vec!["gpt-5".to_string(), "shared-model".to_string()],
+        );
+
+        assert_eq!(
+            available_provider_for_model(
+                "gpt-5",
+                &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
+                &catalogs,
+            ),
+            Ok(SubscriptionProvider::Codex)
+        );
+        let error = available_provider_for_model(
+            "shared-model",
+            &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
+            &catalogs,
+        )
+        .expect_err("an unqualified collision must require disambiguation");
+        assert!(error.to_string().contains("multiple subscriptions"));
+        assert_eq!(
+            available_provider_for_model("shared-model", &[SubscriptionProvider::Codex], &catalogs,),
+            Ok(SubscriptionProvider::Codex)
         );
     }
 }

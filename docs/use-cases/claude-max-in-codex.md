@@ -116,6 +116,10 @@ Notes on this configuration:
 
 Codex will send an OpenAI model id. The router maps it to a Claude tier:
 
+This compatibility alias table applies when the router is explicitly pinned to
+Anthropic. In automatic multi-subscription mode, the live catalogs own model
+attribution, so an OpenAI-shaped name cannot silently select Claude.
+
 | Requested | Served by |
 | --- | --- |
 | `gpt-4o-mini`, `gpt-4-mini` | Claude Haiku |
