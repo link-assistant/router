@@ -749,9 +749,12 @@ RUST_LOG=trace ./target/release/link-assistant-router
 `RUST_LOG` overrides the default `info` level (or the `debug` fallback selected
 by `--verbose`). Every HTTP request also writes a structured exchange to
 `$DATA_DIR/requests.jsonl` by default. Client and upstream phases share an
-`x-request-id`/`correlation_id`; credential headers and credential-shaped JSON
-fields are replaced with `[REDACTED]`. The file retains complete recent JSONL
-records within `REQUEST_LOG_MAX_BYTES`, without requiring an external rotator.
+`x-request-id`/`correlation_id`; credentials are replaced with `[REDACTED]`
+when detected by field name or value shape in headers, URI query parameters,
+and JSON bodies. Request bodies larger than 10 MiB continue to the handler but
+are omitted from the log, and the log is created with owner-only permissions
+on Unix. The file retains complete recent JSONL records within
+`REQUEST_LOG_MAX_BYTES`, without requiring an external rotator.
 
 ## Docker Deployment
 
