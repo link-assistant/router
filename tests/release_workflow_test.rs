@@ -351,6 +351,28 @@ fn coverage_gate_is_behaviorally_tested_in_ci() {
 }
 
 #[test]
+fn coverage_tool_install_is_idempotent_after_cache_restore() {
+    let workflow = read_lf(".github/workflows/release.yml");
+    let coverage = workflow
+        .split_once("  coverage:\n")
+        .expect("CI must define a dedicated coverage job")
+        .1
+        .split_once("\n  build:\n")
+        .expect("coverage must run before the build job")
+        .0;
+
+    assert!(
+        coverage
+            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.8.7'"),
+        "a restored coverage binary at the pinned version should not be reinstalled"
+    );
+    assert!(
+        coverage.contains("cargo install cargo-llvm-cov --version 0.8.7 --locked --force"),
+        "a stale cached coverage binary should be replaced"
+    );
+}
+
+#[test]
 fn lockfile_package_version_handles_windows_line_endings() {
     let lockfile = "[[package]]\r\nname = \"dependency\"\r\nversion = \"1.1.4\"\r\n\r\n[[package]]\r\nname = \"link-assistant-router\"\r\nversion = \"0.13.0\"\r\n";
 
