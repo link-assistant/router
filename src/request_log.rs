@@ -777,6 +777,34 @@ mod tests {
         assert_eq!(redacted["x-api-key"], REDACTED);
     }
 
+    #[test]
+    fn partial_redaction_is_stable_distinguishable_and_shared_across_sites() {
+        let first = "la_sk_abcdefghijklmnop_first";
+        let second = "la_sk_abcdefghijklmnop_other";
+        let expected_first = partially_redact(first);
+        let expected_second = partially_redact(second);
+        assert_ne!(expected_first, expected_second);
+        assert_eq!(expected_first, partially_redact(first));
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-api-key",
+            HeaderValue::from_str(first).expect("header value"),
+        );
+        assert_eq!(redacted_headers(&headers)["x-api-key"], expected_first);
+
+        let body = redacted_body(
+            serde_json::to_string(&json!({"access_token": first}))
+                .expect("serialize body")
+                .as_bytes(),
+        );
+        assert_eq!(body["access_token"], expected_first);
+        assert_eq!(
+            redacted_uri(&format!("/v1/models?access_token={first}")),
+            format!("/v1/models?access_token={expected_first}")
+        );
+    }
+
     proptest! {
         #[test]
         fn complete_credentials_never_survive_any_redaction_site(
