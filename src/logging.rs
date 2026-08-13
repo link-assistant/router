@@ -9,10 +9,8 @@ pub fn request_log(
     configured_path: Option<&std::path::Path>,
     max_bytes: u64,
 ) -> std::sync::Arc<crate::request_log::RequestLog> {
-    let path = configured_path.map_or_else(
-        || data_dir.join("requests.jsonl"),
-        std::path::Path::to_path_buf,
-    );
+    let path =
+        configured_path.map_or_else(|| data_dir.join("requests"), std::path::Path::to_path_buf);
     tracing::info!("Request log: {} (max {max_bytes} bytes)", path.display());
     std::sync::Arc::new(crate::request_log::RequestLog::new(path, max_bytes))
 }

@@ -75,6 +75,12 @@ One JSON object per line is appended as each request is authorised:
 A unit test (`events_never_carry_the_token_string_or_credentials`) asserts the
 first two. The file is therefore safe to ship to a shared log collector.
 
+This content policy applies only to the optional audit log. The default request
+log is a diagnostic record of complete exchanges and therefore includes prompt
+and completion content. It partially masks long credentials and fully masks
+short ones, but operators with access to `$DATA_DIR/requests` can read message
+content and should protect and retain that directory accordingly.
+
 ### Rotation
 
 Each write re-opens the file in append mode, so an external rotator

@@ -97,6 +97,17 @@ link-assistant-router tokens revoke <id>   # immediate, persisted across restart
 Usage and revocation live in the persistent token store, so both survive a
 router restart.
 
+Complete exchanges are grouped under
+`$DATA_DIR/requests/<sha256-of-token-truncated>/requests.jsonl`. Every phase
+includes `token_hash`, `token_id`, and `token_label`, so one task's client and
+upstream traffic can be audited without scanning another task's records. The
+configured request-log size limit applies independently to each token. Missing
+or invalid credentials are written only to `requests/unauthenticated/`.
+
+Request-log directories are retained after expiry or revocation so retiring a
+credential does not erase its audit evidence. Operators may archive or remove
+those directories according to their own retention policy.
+
 For where the usage numbers surface, see
 [audit-and-monitoring.md](audit-and-monitoring.md).
 

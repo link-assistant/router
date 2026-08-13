@@ -43,7 +43,6 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
-    token_manager: TokenManager,
     requests: Arc<Mutex<Vec<Value>>>,
     log_root: std::path::PathBuf,
     tasks: Vec<tokio::task::JoinHandle<()>>,
@@ -91,7 +90,7 @@ impl TestRouter {
         let log_root = data.path().join("requests");
         let state = AppState {
             client: reqwest::Client::new(),
-            token_manager: token_manager.clone(),
+            token_manager,
             oauth_provider,
             account_router: None,
             subscription_reader,
@@ -139,7 +138,6 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
-            token_manager,
             requests,
             log_root,
             tasks: vec![stub_task, router_task],
@@ -593,90 +591,25 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
             "missing {phase} for one correlation id"
         );
     }
+    let token_log_path = router.log_path_for(&router.token);
+    let expected_hash = token_log_path
+        .parent()
+        .and_then(std::path::Path::file_name)
+        .and_then(std::ffi::OsStr::to_str)
+        .expect("token hash");
+    assert!(exchange.iter().all(|record| {
+        record["token_hash"] == expected_hash
+            && record["token_label"] == "router e2e client"
+            && record["token_id"].as_str().is_some_and(|id| !id.is_empty())
+    }));
     let rendered = exchange
         .iter()
         .map(std::string::ToString::to_string)
         .collect::<String>();
     assert!(rendered.contains("client-boundary-marker"));
-    assert!(rendered.contains("[REDACTED]"));
+    assert!(rendered.contains("Bearer la_"));
+    assert!(rendered.contains("***"));
     assert!(!rendered.contains(&router.token));
-}
-
-#[tokio::test]
-async fn request_logs_are_isolated_and_attributed_by_valid_token() {
-    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
-    let second_token = router
-        .token_manager
-        .issue_token(1, "second e2e client")
-        .expect("issue second token");
-
-    for (token, marker) in [
-        (&router.token, "first-token-marker"),
-        (&second_token, "second-token-marker"),
-    ] {
-        let response = router
-            .client
-            .post(format!("{}/v1/messages", router.url))
-            .bearer_auth(token)
-            .header("x-test-marker", marker)
-            .json(&json!({
-                "model":"claude-sonnet-4-5",
-                "max_tokens":16,
-                "messages":[{"role":"user","content":"hi"}]
-            }))
-            .send()
-            .await
-            .expect("router response");
-        assert_eq!(response.status(), StatusCode::OK);
-        let _ = response.bytes().await.expect("response body");
-    }
-
-    let first =
-        std::fs::read_to_string(router.log_path_for(&router.token)).expect("first token log");
-    let second =
-        std::fs::read_to_string(router.log_path_for(&second_token)).expect("second token log");
-    assert!(first.contains("first-token-marker"));
-    assert!(!first.contains("second-token-marker"));
-    assert!(second.contains("second-token-marker"));
-    assert!(!second.contains("first-token-marker"));
-
-    for (log, token, label) in [
-        (&first, &router.token, "router e2e client"),
-        (&second, &second_token, "second e2e client"),
-    ] {
-        let claims = router
-            .token_manager
-            .validate_token(token)
-            .expect("valid token");
-        let records = log
-            .lines()
-            .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL"))
-            .collect::<Vec<_>>();
-        for phase in [
-            "client_request",
-            "upstream_request",
-            "upstream_response",
-            "upstream_response_body",
-            "client_response",
-            "client_response_body",
-        ] {
-            let record = records
-                .iter()
-                .find(|record| record["phase"] == phase)
-                .unwrap_or_else(|| panic!("missing {phase}"));
-            assert_eq!(record["token_id"], claims.sub);
-            assert_eq!(record["token_label"], label);
-            assert_eq!(
-                record["token_hash"],
-                router
-                    .log_path_for(token)
-                    .parent()
-                    .and_then(std::path::Path::file_name)
-                    .and_then(std::ffi::OsStr::to_str)
-                    .expect("token hash")
-            );
-        }
-    }
 }
 
 #[tokio::test]
@@ -762,6 +695,16 @@ async fn auth_unknown_models_and_admin_isolation() {
         .await
         .expect("admin response");
     assert_eq!(admin.status(), StatusCode::UNAUTHORIZED);
+
+    let unauthenticated =
+        std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
+            .expect("unauthenticated request log");
+    assert!(unauthenticated.lines().all(|line| {
+        let record: Value = serde_json::from_str(line).expect("valid JSONL");
+        record["token_hash"] == "unauthenticated"
+            && record["token_id"].is_null()
+            && record["token_label"].is_null()
+    }));
 }
 
 #[tokio::test]

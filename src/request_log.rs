@@ -1,6 +1,6 @@
 //! Redacted, size-bounded HTTP exchange logging.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
@@ -14,6 +14,7 @@ use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
 use serde_json::{Map, Value, json};
+use sha2::{Digest as _, Sha256};
 
 use crate::app_state::AppState;
 
@@ -21,25 +22,49 @@ use crate::app_state::AppState;
 pub const DEFAULT_MAX_BYTES: u64 = 100 * 1024 * 1024;
 const MAX_BUFFERED_REQUEST_BYTES: usize = 10 * 1024 * 1024;
 const REDACTED: &str = "[REDACTED]";
+const UNAUTHENTICATED: &str = "unauthenticated";
+const TOKEN_HASH_HEX_LENGTH: usize = 32;
+const REDACTED_PREFIX_LENGTH: usize = 3;
+const REDACTED_SUFFIX_LENGTH: usize = 3;
+const MIN_PARTIAL_REDACTION_LENGTH: usize = 12;
+
+#[derive(Clone, Debug)]
+struct LogIdentity {
+    hash: String,
+    id: Option<String>,
+    label: Option<String>,
+}
+
+impl LogIdentity {
+    fn unauthenticated() -> Self {
+        Self {
+            hash: UNAUTHENTICATED.to_string(),
+            id: None,
+            label: None,
+        }
+    }
+}
 
 /// A JSONL request log which retains the newest complete records.
 #[derive(Debug)]
 pub struct RequestLog {
-    path: PathBuf,
+    root: PathBuf,
     max_bytes: u64,
     write_lock: Mutex<()>,
+    routes: Mutex<HashMap<String, LogIdentity>>,
 }
 
 impl RequestLog {
     /// Build the default logger, with optional environment overrides.
     ///
-    /// `REQUEST_LOG` selects the path and `REQUEST_LOG_MAX_BYTES` selects the
-    /// hard size limit. An empty path falls back to `<data-dir>/requests.jsonl`.
+    /// `REQUEST_LOG` selects the root directory and `REQUEST_LOG_MAX_BYTES`
+    /// selects the per-token hard size limit. An empty path falls back to
+    /// `<data-dir>/requests`.
     #[must_use]
     pub fn from_data_dir(data_dir: &Path) -> Self {
         let path = std::env::var_os("REQUEST_LOG")
             .filter(|value| !value.is_empty())
-            .map_or_else(|| data_dir.join("requests.jsonl"), PathBuf::from);
+            .map_or_else(|| data_dir.join("requests"), PathBuf::from);
         let max_bytes = std::env::var("REQUEST_LOG_MAX_BYTES")
             .ok()
             .and_then(|value| value.parse().ok())
@@ -50,18 +75,19 @@ impl RequestLog {
 
     /// Build a logger at `path` with an exact byte limit.
     #[must_use]
-    pub fn new(path: PathBuf, max_bytes: u64) -> Self {
+    pub fn new(root: PathBuf, max_bytes: u64) -> Self {
         Self {
-            path,
+            root,
             max_bytes: max_bytes.max(1),
             write_lock: Mutex::new(()),
+            routes: Mutex::new(HashMap::new()),
         }
     }
 
-    /// Destination of this request log.
+    /// Root directory containing one request log per token identity.
     #[must_use]
     pub fn path(&self) -> &Path {
-        &self.path
+        &self.root
     }
 
     /// Configured maximum file size.
@@ -72,6 +98,7 @@ impl RequestLog {
 
     /// Append one structured event, removing credentials before serialization.
     pub fn record(&self, correlation_id: &str, phase: &str, fields: Value) {
+        let identity = self.identity(correlation_id);
         let mut event = Map::new();
         event.insert(
             "time".into(),
@@ -82,6 +109,15 @@ impl RequestLog {
             Value::String(correlation_id.to_string()),
         );
         event.insert("phase".into(), Value::String(phase.to_string()));
+        event.insert("token_hash".into(), Value::String(identity.hash.clone()));
+        event.insert(
+            "token_id".into(),
+            identity.id.clone().map_or(Value::Null, Value::String),
+        );
+        event.insert(
+            "token_label".into(),
+            identity.label.clone().map_or(Value::Null, Value::String),
+        );
         if let Value::Object(fields) = redact_value(fields) {
             event.extend(fields);
         }
@@ -95,48 +131,73 @@ impl RequestLog {
                 "time": chrono::Utc::now().to_rfc3339(),
                 "correlation_id": correlation_id,
                 "phase": phase,
+                "token_hash": identity.hash,
+                "token_id": identity.id,
+                "token_label": identity.label,
                 "body": format!("[OMITTED: {omitted} byte record exceeds log limit]")
             }))
             .unwrap_or_default();
             line.push(b'\n');
         }
-        self.append_bounded(&line);
+        self.append_bounded(&identity.hash, &line);
     }
 
-    fn append_bounded(&self, line: &[u8]) {
+    fn identity(&self, correlation_id: &str) -> LogIdentity {
+        self.routes
+            .lock()
+            .ok()
+            .and_then(|routes| routes.get(correlation_id).cloned())
+            .unwrap_or_else(LogIdentity::unauthenticated)
+    }
+
+    fn route_request(&self, correlation_id: &str, identity: LogIdentity) {
+        if let Ok(mut routes) = self.routes.lock() {
+            routes.insert(correlation_id.to_string(), identity);
+        }
+    }
+
+    fn finish_request(&self, correlation_id: &str) {
+        if let Ok(mut routes) = self.routes.lock() {
+            routes.remove(correlation_id);
+        }
+    }
+
+    fn log_path(&self, token_hash: &str) -> PathBuf {
+        self.root.join(token_hash).join("requests.jsonl")
+    }
+
+    fn append_bounded(&self, token_hash: &str, line: &[u8]) {
         let Ok(_guard) = self.write_lock.lock() else {
             return;
         };
-        if let Some(parent) = self.path.parent()
-            && let Err(error) = fs::create_dir_all(parent)
+        let path = self.log_path(token_hash);
+        if let Err(error) = ensure_owner_only_dir(&self.root)
+            .and_then(|()| ensure_owner_only_dir(path.parent().unwrap_or(&self.root)))
         {
             tracing::warn!("request log directory creation failed: {error}");
             return;
         }
         if line.len() as u64 > self.max_bytes {
-            if let Err(error) = write_owner_only(&self.path, &[]) {
+            if let Err(error) = write_owner_only(&path, &[]) {
                 tracing::warn!(
                     "request log truncation failed ({}): {error}",
-                    self.path.display()
+                    path.display()
                 );
             }
             return;
         }
-        let existing_len = fs::metadata(&self.path).map_or(0, |metadata| metadata.len());
+        let existing_len = fs::metadata(&path).map_or(0, |metadata| metadata.len());
         if existing_len.saturating_add(line.len() as u64) > self.max_bytes {
-            self.retain_newest_before(line.len());
+            self.retain_newest_before(&path, line.len());
         }
-        let result = append_owner_only(&self.path, line);
+        let result = append_owner_only(&path, line);
         if let Err(error) = result {
-            tracing::warn!(
-                "request log write failed ({}): {error}",
-                self.path.display()
-            );
+            tracing::warn!("request log write failed ({}): {error}", path.display());
         }
     }
 
-    fn retain_newest_before(&self, incoming_len: usize) {
-        let Ok(existing) = fs::read(&self.path) else {
+    fn retain_newest_before(&self, path: &Path, incoming_len: usize) {
+        let Ok(existing) = fs::read(path) else {
             return;
         };
         let capacity = usize::try_from(self.max_bytes)
@@ -147,10 +208,10 @@ impl RequestLog {
             .iter()
             .position(|byte| *byte == b'\n')
             .map_or(existing.len(), |offset| start_floor + offset + 1);
-        if let Err(error) = write_owner_only(&self.path, &existing[start..]) {
+        if let Err(error) = write_owner_only(path, &existing[start..]) {
             tracing::warn!(
                 "request log compaction failed ({}): {error}",
-                self.path.display()
+                path.display()
             );
         }
     }
@@ -208,6 +269,23 @@ impl RequestLog {
     }
 }
 
+fn ensure_owner_only_dir(path: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(path)?;
+    set_dir_owner_only(path)
+}
+
+#[cfg(unix)]
+fn set_dir_owner_only(path: &Path) -> std::io::Result<()> {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+}
+
+#[cfg(not(unix))]
+fn set_dir_owner_only(_path: &Path) -> std::io::Result<()> {
+    Ok(())
+}
+
 fn append_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
     let mut options = OpenOptions::new();
     options.create(true).append(true);
@@ -257,6 +335,41 @@ pub fn correlation_id(headers: &HeaderMap) -> String {
         .map_or_else(|| uuid::Uuid::new_v4().to_string(), str::to_string)
 }
 
+/// Stable, non-reversible directory key for one router token.
+#[must_use]
+pub fn token_log_key(token: &str) -> String {
+    let digest = hex::encode(Sha256::digest(token.as_bytes()));
+    digest[..TOKEN_HASH_HEX_LENGTH].to_string()
+}
+
+fn partially_redact(value: &str) -> String {
+    let length = value.chars().count();
+    if length < MIN_PARTIAL_REDACTION_LENGTH {
+        return REDACTED.to_string();
+    }
+    let prefix = value
+        .chars()
+        .take(REDACTED_PREFIX_LENGTH)
+        .collect::<String>();
+    let suffix = value
+        .chars()
+        .skip(length - REDACTED_SUFFIX_LENGTH)
+        .collect::<String>();
+    let mask = "*".repeat(length - REDACTED_PREFIX_LENGTH - REDACTED_SUFFIX_LENGTH);
+    format!("{prefix}{mask}{suffix}")
+}
+
+fn redact_secret(value: &str) -> String {
+    let trimmed = value.trim();
+    if trimmed
+        .get(..7)
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
+    {
+        return format!("{}{}", &trimmed[..7], partially_redact(&trimmed[7..]));
+    }
+    partially_redact(trimmed)
+}
+
 /// Mask credentials while retaining header names for diagnostics.
 #[must_use]
 pub fn redacted_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
@@ -265,13 +378,15 @@ pub fn redacted_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
         .map(|(name, value)| {
             let name = name.as_str().to_string();
             let value = if is_secret_name(&name) {
-                REDACTED.to_string()
+                value
+                    .to_str()
+                    .map_or_else(|_| REDACTED.to_string(), redact_secret)
             } else {
                 value.to_str().map_or_else(
                     |_| "[NON-UTF8]".to_string(),
                     |value| {
                         if is_secret_value(value) {
-                            REDACTED.to_string()
+                            redact_secret(value)
                         } else {
                             value.to_string()
                         }
@@ -297,7 +412,10 @@ fn redact_value(mut value: Value) -> Value {
         Value::Object(object) => {
             for (key, child) in object {
                 if is_secret_name(key) {
-                    *child = Value::String(REDACTED.to_string());
+                    *child = child.as_str().map_or_else(
+                        || Value::String(REDACTED.to_string()),
+                        |secret| Value::String(redact_secret(secret)),
+                    );
                 } else if key.eq_ignore_ascii_case("uri")
                     && let Value::String(uri) = child
                 {
@@ -313,7 +431,7 @@ fn redact_value(mut value: Value) -> Value {
             }
         }
         Value::String(text) if is_secret_value(text) => {
-            *text = REDACTED.to_string();
+            *text = redact_secret(text);
         }
         _ => {}
     }
@@ -425,7 +543,7 @@ fn redacted_uri(uri: &str) -> String {
             let decoded_name = percent_decode(name);
             let decoded_value = percent_decode(value);
             if is_secret_name(&decoded_name) || is_secret_value(&decoded_value) {
-                format!("{name}={REDACTED}")
+                format!("{name}={}", redact_secret(&decoded_value))
             } else {
                 parameter.to_string()
             }
@@ -525,6 +643,17 @@ impl Drop for ClientRequestCapture {
     }
 }
 
+struct RequestRouteGuard {
+    logger: Arc<RequestLog>,
+    correlation_id: String,
+}
+
+impl Drop for RequestRouteGuard {
+    fn drop(&mut self) {
+        self.logger.finish_request(&self.correlation_id);
+    }
+}
+
 /// Middleware that records every client-side HTTP exchange by default.
 pub async fn log_http_exchange(
     State(state): State<AppState>,
@@ -533,6 +662,24 @@ pub async fn log_http_exchange(
 ) -> Response {
     let correlation_id = uuid::Uuid::new_v4().to_string();
     let (mut parts, body) = request.into_parts();
+    let identity = crate::proxy::extract_client_token(&parts.headers)
+        .and_then(|token| {
+            state
+                .token_manager
+                .validate_token(token)
+                .ok()
+                .map(|claims| LogIdentity {
+                    hash: token_log_key(token),
+                    id: Some(claims.sub),
+                    label: Some(claims.label),
+                })
+        })
+        .unwrap_or_else(LogIdentity::unauthenticated);
+    state.request_log.route_request(&correlation_id, identity);
+    let route_guard = RequestRouteGuard {
+        logger: Arc::clone(&state.request_log),
+        correlation_id: correlation_id.clone(),
+    };
     parts.headers.insert(
         "x-request-id",
         HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
@@ -593,6 +740,7 @@ pub async fn log_http_exchange(
     let logger = std::sync::Arc::clone(&state.request_log);
     let response_id = correlation_id;
     let stream = body.into_data_stream().map(move |chunk| {
+        let _keep_route_until_response_body_finishes = &route_guard;
         if let Ok(bytes) = &chunk {
             logger.record(
                 &response_id,
@@ -672,10 +820,10 @@ mod tests {
         );
         headers.insert("x-visible", HeaderValue::from_static("marker"));
         let redacted = redacted_headers(&headers);
-        assert_eq!(redacted["authorization"], REDACTED);
+        assert_eq!(redacted["authorization"], "Bearer [REDACTED]");
         assert_eq!(redacted["x-api-key"], REDACTED);
         assert_eq!(redacted["x-auth-token"], REDACTED);
-        assert_eq!(redacted["x-goog-api-key"], REDACTED);
+        assert_eq!(redacted["x-goog-api-key"], "goo*******ret");
         assert_eq!(redacted["x-amz-security-token"], REDACTED);
         assert_eq!(redacted["x-visible"], "marker");
 
@@ -701,8 +849,8 @@ mod tests {
     #[test]
     fn credentials_are_redacted_from_uri_queries() {
         let dir = tempfile::tempdir().expect("temporary directory");
-        let path = dir.path().join("requests.jsonl");
-        let log = RequestLog::new(path.clone(), 1024 * 1024);
+        let root = dir.path().join("requests");
+        let log = RequestLog::new(root.clone(), 1024 * 1024);
         log.record(
             "request",
             "client_request",
@@ -711,7 +859,8 @@ mod tests {
             }),
         );
 
-        let rendered = fs::read_to_string(path).expect("request log");
+        let rendered =
+            fs::read_to_string(root.join("unauthenticated/requests.jsonl")).expect("request log");
         for secret in [
             "api-secret",
             "key-secret",
@@ -731,8 +880,9 @@ mod tests {
         use std::os::unix::fs::PermissionsExt as _;
 
         let dir = tempfile::tempdir().expect("temporary directory");
-        let path = dir.path().join("requests.jsonl");
-        let log = RequestLog::new(path.clone(), 1024 * 1024);
+        let root = dir.path().join("requests");
+        let path = root.join("unauthenticated/requests.jsonl");
+        let log = RequestLog::new(root.clone(), 1024 * 1024);
         log.record("request", "test", json!({"visible": true}));
 
         let mode = fs::metadata(&path)
@@ -741,6 +891,14 @@ mod tests {
             .mode()
             & 0o777;
         assert_eq!(mode, 0o600);
+        for directory in [&root, path.parent().expect("bucket directory")] {
+            let mode = fs::metadata(directory)
+                .expect("request log directory")
+                .permissions()
+                .mode()
+                & 0o777;
+            assert_eq!(mode, 0o700);
+        }
 
         fs::set_permissions(&path, fs::Permissions::from_mode(0o644))
             .expect("make existing log permissive");
@@ -756,8 +914,9 @@ mod tests {
     #[test]
     fn log_never_exceeds_limit_and_keeps_newest_complete_record() {
         let dir = tempfile::tempdir().expect("temporary directory");
-        let path = dir.path().join("requests.jsonl");
-        let log = RequestLog::new(path.clone(), 600);
+        let root = dir.path().join("requests");
+        let path = root.join("unauthenticated/requests.jsonl");
+        let log = RequestLog::new(root, 600);
         for sequence in 0..30 {
             log.record("request", "test", json!({"sequence": sequence}));
         }
@@ -771,8 +930,9 @@ mod tests {
         assert!(text.contains("\"sequence\":29"));
         assert!(!text.contains("\"sequence\":0,"));
 
-        let tiny_path = dir.path().join("tiny.jsonl");
-        let tiny = RequestLog::new(tiny_path.clone(), 32);
+        let tiny_root = dir.path().join("tiny");
+        let tiny_path = tiny_root.join("unauthenticated/requests.jsonl");
+        let tiny = RequestLog::new(tiny_root, 32);
         tiny.record("request", "oversized", json!({"body": "far too large"}));
         assert!(fs::metadata(tiny_path).expect("tiny log").len() <= 32);
     }
@@ -798,8 +958,9 @@ mod tests {
         });
 
         let dir = tempfile::tempdir().expect("temporary directory");
-        let path = dir.path().join("requests.jsonl");
-        let log = RequestLog::new(path.clone(), 1024 * 1024);
+        let root = dir.path().join("requests");
+        let path = root.join("unauthenticated/requests.jsonl");
+        let log = RequestLog::new(root, 1024 * 1024);
         let client = reqwest::Client::new();
         let request = client
             .post(format!("http://{address}/translated"))
@@ -825,3 +986,7 @@ mod tests {
         assert!(!rendered.contains("body-secret"));
     }
 }
+
+#[cfg(test)]
+#[path = "request_log_isolation_tests.rs"]
+mod isolation_tests;
