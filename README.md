@@ -549,8 +549,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
-| `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests.jsonl` | No | Redacted JSONL log of client requests, transformed upstream requests, and responses, tied together by `correlation_id` |
-| `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Hard request-log size bound; the oldest complete JSONL records are discarded first |
+| `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
+| `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
 ### Gonka provider
@@ -699,9 +699,9 @@ Other files keep the format of the boundary they serve:
   `.credentials.json`, `auth.json`, `settings.json`, and `config.toml` are
   vendor-owned interoperability files. The router continues to read or update
   the vendor's expected shape.
-- `requests.jsonl` and the optional audit JSONL are append-only operational
-  streams intended for log collectors and standard text tooling, rather than
-  mutable router domain state.
+- Per-token `requests/<token-hash>/requests.jsonl` files and the optional audit
+  JSONL are append-only operational streams intended for log collectors and
+  standard text tooling, rather than mutable router domain state.
 - `providers.lenv` is the router's existing portable provider configuration
   interchange. Moving additional router-owned state onto doublets can be done
   independently of the token migration.
@@ -785,13 +785,16 @@ RUST_LOG=trace ./target/release/link-assistant-router
 
 `RUST_LOG` overrides the default `info` level (or the `debug` fallback selected
 by `--verbose`). Every HTTP request also writes a structured exchange to
-`$DATA_DIR/requests.jsonl` by default. Client and upstream phases share an
-`x-request-id`/`correlation_id`; credentials are replaced with `[REDACTED]`
-when detected by field name or value shape in headers, URI query parameters,
-and JSON bodies. Request bodies larger than 10 MiB continue to the handler but
-are omitted from the log, and the log is created with owner-only permissions
-on Unix. The file retains complete recent JSONL records within
-`REQUEST_LOG_MAX_BYTES`, without requiring an external rotator.
+`$DATA_DIR/requests/<token-hash>/requests.jsonl` by default. Client and upstream
+phases share an `x-request-id`/`correlation_id` and carry the token hash, id,
+and label. Missing or invalid credentials use the explicit `unauthenticated`
+directory. Credentials longer than the safety threshold retain three leading
+and trailing characters with a fixed `*` mask; shorter values are replaced
+with `[REDACTED]`. The same helper handles headers, URI query parameters, and
+JSON bodies, and no complete credential is logged. Request bodies larger than
+10 MiB continue to the handler but are omitted from the log. Directories and
+files use owner-only permissions on Unix. `REQUEST_LOG_MAX_BYTES` applies to
+each token independently, so one caller cannot evict another's history.
 
 ## Docker Deployment
 

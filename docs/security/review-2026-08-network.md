@@ -6,7 +6,7 @@ review](review-2026-08.md). This document records the threat model, every
 network route, data egress, secret lifecycle, persistence and release checks,
 including controls that were found to be sound.
 
-Review target: `main` at `0498d39` plus the fixes in pull request
+Review target: `main` at `c0928bc` plus the fixes in pull request
 [#155](https://github.com/link-assistant/router/pull/155).
 
 ## Threat model and deployment modes
@@ -157,10 +157,13 @@ Tracking: [#161](https://github.com/link-assistant/router/issues/161).
   token therefore authorizes access to the content and normal vendor metadata
   of its own calls, not to upstream credentials.
 - The bounded request log intentionally records complete client and upstream
-  exchanges for diagnostics. It redacts credential headers, credential-shaped
-  query/body fields, JWTs, known token prefixes, and oversized bodies; it is
-  mode 0600 on Unix. Prompt/response content is not generally secret-redacted,
-  so operators must treat this log as sensitive and control retention/access.
+  exchanges for diagnostics. Exchanges are isolated in per-token directories
+  with independent retention budgets; invalid traffic uses an unauthenticated
+  bucket. Credential headers, credential-shaped query/body fields, JWTs, known
+  token prefixes, and oversized bodies are redacted or omitted. Directories are
+  mode 0700 and files mode 0600 on Unix. Prompt/response content is not generally
+  secret-redacted, so operators must treat this tree as sensitive and control
+  retention/access.
 - The audit log records identifiers and request metadata, never bearer tokens,
   upstream credentials, prompts, or responses. It is optional and now 0600.
 - Normal logs and `doctor` print credential state/path/expiry information, not
@@ -251,8 +254,9 @@ or leave redundant stores divergent. Follow-up:
 5. Transparent/native vendor bodies and safe quota/request-ID headers are
    visible to the caller by design.
 6. Diagnostic request logs contain prompt and response content after credential
-   redaction; access and retention are operator responsibilities. Per-token log
-   attribution remains tracked in [#145](https://github.com/link-assistant/router/issues/145).
+   redaction; access and retention are operator responsibilities. Per-token
+   isolation prevents one caller from evicting another's retained exchanges,
+   but does not remove this operator-side confidentiality risk.
 7. Multi-process/power-loss persistence limitations remain tracked in #162.
 8. Immutable build inputs and signed artifact provenance remain tracked in #163.
 9. MPP payment verification is not implemented; payment credentials fail closed

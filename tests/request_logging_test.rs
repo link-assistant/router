@@ -81,7 +81,10 @@ fn successful_request_is_logged_by_default() {
         .expect("successful request");
     assert!(response.starts_with("HTTP/1.1 200"));
 
-    let log_path = router.data_dir.path().join("requests.jsonl");
+    let log_path = router
+        .data_dir
+        .path()
+        .join("requests/unauthenticated/requests.jsonl");
     let deadline = Instant::now() + Duration::from_secs(5);
     while Instant::now() < deadline {
         if let Ok(log) = std::fs::read_to_string(&log_path)

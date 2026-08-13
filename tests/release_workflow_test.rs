@@ -204,13 +204,8 @@ fn release_workflow_refreshes_cached_cargo_audit_binary() {
 }
 
 #[test]
-fn release_workflow_refreshes_cached_coverage_binary() {
+fn release_workflow_reuses_current_cached_coverage_tools() {
     let workflow = read_lf(".github/workflows/release.yml");
-
-    assert!(
-        workflow.contains("cargo install cargo-llvm-cov --version 0.8.7 --locked --force"),
-        "the coverage job should overwrite a cargo-llvm-cov binary restored from its cache"
-    );
     let coverage = workflow
         .split_once("  coverage:\n")
         .expect("CI must define a dedicated coverage job")
@@ -219,8 +214,8 @@ fn release_workflow_refreshes_cached_coverage_binary() {
         .expect("coverage must precede the build job")
         .0;
     assert!(
-        coverage.contains("cargo install rust-script --force"),
-        "the coverage job should overwrite a rust-script binary restored from its cache"
+        coverage.contains("command -v rust-script >/dev/null || cargo install rust-script"),
+        "the coverage job should reuse a cached rust-script binary when it is available"
     );
 }
 
@@ -368,6 +363,28 @@ fn coverage_gate_is_behaviorally_tested_in_ci() {
     assert!(
         fs::metadata("coverage-baseline.txt").is_ok(),
         "the reviewable line-coverage baseline must be committed"
+    );
+}
+
+#[test]
+fn coverage_tool_install_is_idempotent_after_cache_restore() {
+    let workflow = read_lf(".github/workflows/release.yml");
+    let coverage = workflow
+        .split_once("  coverage:\n")
+        .expect("CI must define a dedicated coverage job")
+        .1
+        .split_once("\n  build:\n")
+        .expect("coverage must run before the build job")
+        .0;
+
+    assert!(
+        coverage
+            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.8.7'"),
+        "a restored coverage binary at the pinned version should not be reinstalled"
+    );
+    assert!(
+        coverage.contains("cargo install cargo-llvm-cov --version 0.8.7 --locked --force"),
+        "a stale cached coverage binary should be replaced"
     );
 }
 

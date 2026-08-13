@@ -81,7 +81,7 @@ fn test_app_with_mpp(dir: &std::path::Path, mpp: bool) -> (axum::Router, String)
         metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
         audit: Arc::new(link_assistant_router::audit::AuditLog::disabled()),
         request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
-            dir.join("requests.jsonl"),
+            dir.join("requests"),
             1024 * 1024,
         )),
         activitypub_actor_base_url: "https://router.test".to_string(),
