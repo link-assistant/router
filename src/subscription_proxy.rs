@@ -21,8 +21,8 @@ use std::collections::BTreeMap;
 
 use crate::metrics::Surface;
 use crate::proxy::{
-    AppState, error_response, extract_client_token, maybe_mpp_challenge, relay_response_headers,
-    request_routing_context, retry_after_duration,
+    AppState, error_response, maybe_mpp_challenge, relay_response_headers, request_routing_context,
+    retry_after_duration,
 };
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
@@ -90,29 +90,12 @@ async fn forward_subscription_openai_inner(
         return resp;
     }
 
-    let Some(token) = extract_client_token(headers) else {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let claims = match state.token_manager.validate_token(token) {
+    let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
+        return crate::proxy::token_budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
@@ -287,7 +270,12 @@ async fn forward_subscription_openai_inner(
             .get("model")
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
-        let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model);
+        let include_usage = routing_body
+            .pointer("/stream_options/include_usage")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+        let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
+            .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             chunk.map_or_else(
@@ -952,7 +940,6 @@ mod tests {
         for relayed in [
             "retry-after",
             "x-ratelimit-remaining-requests",
-            "x-codex-active-limit",
             "x-oai-request-id",
             "content-type",
         ] {
@@ -965,6 +952,7 @@ mod tests {
             "connection",
             "x-remove-me",
             "content-length",
+            "x-codex-active-limit",
         ] {
             assert!(!selected.contains_key(excluded), "relayed {excluded}");
         }

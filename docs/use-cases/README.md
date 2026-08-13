@@ -16,7 +16,7 @@ come first; the per-CLI documents follow.
 | [admin-ui.md](admin-ui.md) | The opt-in browser console on its own port: enabling it, the two-phase first-visitor claim, and the `localStorage` trade-off |
 | [chat-admin-bots.md](chat-admin-bots.md) | The optional Telegram and VK admin bots: private chats only, sharing one system-wide admin claim with the web UI |
 | [per-task-tokens.md](per-task-tokens.md) | One `la_sk_…` token per task, for audit, monitoring, security and isolation |
-| [audit-and-monitoring.md](audit-and-monitoring.md) | Where per-token usage shows up: `/metrics`, `/v1/usage`, and the JSONL audit log |
+| [audit-and-monitoring.md](audit-and-monitoring.md) | Public aggregate metrics, admin-only per-token usage, and the JSONL audit log |
 | [claude-max-in-codex.md](claude-max-in-codex.md) | Use a **Claude MAX** subscription from **Codex CLI** (and any other OpenAI-dialect client) |
 | [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) | Use a **ChatGPT/Codex** subscription from **Claude Code** (and any other Anthropic-dialect client) |
 

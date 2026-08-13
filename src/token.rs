@@ -403,6 +403,24 @@ impl std::fmt::Display for TokenError {
     }
 }
 
+impl TokenError {
+    /// Stable message safe to return across the unauthenticated client boundary.
+    ///
+    /// Decoder and storage details remain available through [`std::fmt::Display`]
+    /// for server-side logs, but must not disclose parser internals to callers.
+    #[must_use]
+    pub const fn client_message(&self) -> &'static str {
+        match self {
+            Self::InvalidPrefix | Self::Invalid(_) => "invalid token",
+            Self::Expired => "Token has expired",
+            Self::Revoked => "Token has been revoked",
+            Self::InsufficientScope => "insufficient token scope",
+            Self::LimitExceeded => "Token has reached its request limit",
+            Self::Storage(_) => "token validation failed",
+        }
+    }
+}
+
 impl std::error::Error for TokenError {}
 
 #[cfg(test)]

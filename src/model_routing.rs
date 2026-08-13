@@ -185,20 +185,8 @@ pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvid
 
 /// `GET /v1/models` across automatic or explicitly pinned providers.
 pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Response {
-    let Some(token) = crate::proxy::extract_client_token(&headers) else {
-        return crate::proxy::error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    if let Err(error) = state.token_manager.validate_token(token) {
-        let status = if matches!(error, crate::token::TokenError::Revoked) {
-            StatusCode::FORBIDDEN
-        } else {
-            StatusCode::UNAUTHORIZED
-        };
-        return crate::proxy::error_response(status, "authentication_error", &error.to_string());
+    if let Err(response) = crate::proxy::authenticate_client(&state, &headers) {
+        return *response;
     }
 
     let models = match state.upstream_provider {
@@ -248,7 +236,13 @@ pub async fn route_anthropic_request(
                 &format!("Failed to read request body: {error}"),
             )
         })?;
-    let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(Value::Null);
+    let routing_body = serde_json::from_slice(&body_bytes).map_err(|error| {
+        crate::proxy::error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &format!("Failed to parse request body as JSON: {error}"),
+        )
+    })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
         route_state(state, &routing_body)
             .await
@@ -521,6 +515,74 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn automatic_messages_authenticate_before_model_routing() {
+        let data = tempdir().unwrap();
+        let state = auto_state(Vec::new(), data.path());
+        let app = axum::Router::new()
+            .route(
+                "/v1/messages",
+                axum::routing::post(crate::proxy::proxy_handler),
+            )
+            .with_state(state);
+        let bodies = [
+            json!({"model": "claude-opus-4-7", "max_tokens": 1, "messages": []}),
+            json!({"model": "totally-made-up-xyz", "max_tokens": 1, "messages": []}),
+            json!({"max_tokens": 1}),
+        ];
+
+        for authorization in [None, Some("Bearer la_sk_invalid-before-routing")] {
+            let mut responses = Vec::new();
+            for body in &bodies {
+                let mut request = Request::builder()
+                    .method("POST")
+                    .uri("/v1/messages")
+                    .header("content-type", "application/json");
+                if let Some(value) = authorization {
+                    request = request.header("authorization", value);
+                }
+                let response = app
+                    .clone()
+                    .oneshot(request.body(Body::from(body.to_string())).unwrap())
+                    .await
+                    .unwrap();
+                assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+                responses.push(response.into_body().collect().await.unwrap().to_bytes());
+            }
+            assert!(responses.windows(2).all(|pair| pair[0] == pair[1]));
+        }
+    }
+
+    #[tokio::test]
+    async fn malformed_client_tokens_return_a_fixed_message() {
+        let data = tempdir().unwrap();
+        let state = auto_state(Vec::new(), data.path());
+        let app = axum::Router::new()
+            .route("/v1/models", get(models))
+            .with_state(state);
+        let malformed = ["wrong-prefix", "la_sk_zzzzQQQrandom.stuff.here"];
+        let mut responses = Vec::new();
+
+        for token in malformed {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .uri("/v1/models")
+                        .header("authorization", format!("Bearer {token}"))
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+            responses.push(response.into_body().collect().await.unwrap().to_bytes());
+        }
+        assert!(responses.windows(2).all(|pair| pair[0] == pair[1]));
+        let payload: Value = serde_json::from_slice(&responses[0]).unwrap();
+        assert_eq!(payload["error"]["message"], "invalid token");
+    }
+
     #[test]
     fn model_ids_route_to_the_subscription_that_serves_them() {
         assert_eq!(
@@ -582,10 +644,10 @@ mod tests {
                 State(state),
                 Query(std::collections::BTreeMap::default()),
                 HeaderMap::new(),
-                axum::Json(json!({
+                Ok(axum::Json(json!({
                     "model": "totally-made-up-model-xyz",
                     "messages": [{"role": "user", "content": "hello"}]
-                })),
+                }))),
             )
             .await;
 

@@ -35,6 +35,7 @@ enum StubDialect {
 struct StubState {
     dialect: StubDialect,
     requests: Arc<Mutex<Vec<Value>>>,
+    invalid_body: bool,
 }
 
 struct TestRouter {
@@ -49,6 +50,10 @@ struct TestRouter {
 
 impl TestRouter {
     async fn start(provider: UpstreamProvider) -> Self {
+        Self::start_with_invalid_body(provider, false).await
+    }
+
+    async fn start_with_invalid_body(provider: UpstreamProvider, invalid_body: bool) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
         let dialect = if provider == UpstreamProvider::Codex {
             StubDialect::Codex
@@ -59,6 +64,7 @@ impl TestRouter {
         let stub_state = StubState {
             dialect,
             requests: Arc::clone(&requests),
+            invalid_body,
         };
         let stub = Router::new().fallback(stub_vendor).with_state(stub_state);
         let (stub_url, stub_task) = spawn(stub).await;
@@ -227,6 +233,12 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         .lock()
         .expect("stub request lock")
         .push(body.clone());
+
+    if state.invalid_body {
+        return Response::new(Body::from(
+            "internal safety_identifier and prompt_cache_key must stay private",
+        ));
+    }
 
     let stream = body.get("stream").and_then(Value::as_bool) == Some(true);
     let mut response = match state.dialect {
@@ -511,7 +523,8 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
         .await
         .expect("chat completion response");
     assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(response.headers()["x-codex-active-limit"], "primary");
+    assert!(response.headers().get("x-codex-active-limit").is_none());
+    assert_eq!(response.headers()["x-ratelimit-remaining-requests"], "41");
     assert_eq!(response.headers()["x-oai-request-id"], "req_stub_123");
     let chat: Value = response.json().await.expect("chat completion JSON");
     assert_eq!(chat["object"], "chat.completion");
@@ -526,6 +539,8 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
         .await
         .expect("Responses response");
     assert_eq!(response.status(), StatusCode::OK);
+    assert!(response.headers().get("x-codex-active-limit").is_none());
+    assert_eq!(response.headers()["x-ratelimit-remaining-requests"], "41");
     let responses: Value = response.json().await.expect("Responses JSON");
     assert_eq!(responses["object"], "response");
     assert!(responses["output"].is_array());
@@ -681,6 +696,22 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
         .await
         .expect("capped Codex Messages response");
     assert_eq!(messages.status(), StatusCode::OK);
+    assert!(messages.headers().get("x-codex-active-limit").is_none());
+    assert_eq!(messages.headers()["x-ratelimit-remaining-requests"], "41");
+    assert!(
+        messages
+            .headers()
+            .get("warning")
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.contains("max_tokens"))
+    );
+    assert_eq!(
+        messages
+            .headers()
+            .get("x-link-assistant-output-limit")
+            .and_then(|value| value.to_str().ok()),
+        Some("unsupported")
+    );
     let payload: Value = messages.json().await.expect("Messages JSON response");
     assert!(payload["content"].is_array());
 
@@ -755,4 +786,165 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
         1,
         "rejected requests must not reach the Codex subscription"
     );
+}
+
+#[tokio::test]
+async fn malformed_json_uses_each_http_surfaces_json_error_envelope() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+
+    for path in ["/v1/messages", "/v1/chat/completions", "/v1/responses"] {
+        let response = router
+            .client
+            .post(format!("{}{path}", router.url))
+            .bearer_auth(&router.token)
+            .header("content-type", "application/json")
+            .body(r#"{"model":"gpt-5",broken"#)
+            .send()
+            .await
+            .expect("malformed JSON response");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
+        assert_eq!(
+            response
+                .headers()
+                .get("content-type")
+                .and_then(|value| value.to_str().ok()),
+            Some("application/json"),
+            "{path}"
+        );
+        let payload: Value = response.json().await.expect("JSON error envelope");
+        assert_eq!(payload["error"]["type"], "invalid_request_error", "{path}");
+        assert!(
+            payload["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message.to_ascii_lowercase().contains("json")),
+            "{path}: {payload}"
+        );
+    }
+    assert!(router.requests.lock().expect("stub requests").is_empty());
+
+    let auto = TestRouter::start(UpstreamProvider::Auto).await;
+    let response = auto
+        .client
+        .post(format!("{}/v1/messages", auto.url))
+        .bearer_auth(&auto.token)
+        .header("content-type", "application/json")
+        .body(r#"{"model":"gpt-5",broken"#)
+        .send()
+        .await
+        .expect("automatic-routing malformed JSON response");
+    let payload: Value = response.json().await.expect("JSON error envelope");
+    assert_eq!(payload["error"]["type"], "invalid_request_error");
+    assert!(
+        payload["error"]["message"]
+            .as_str()
+            .is_some_and(|message| message.to_ascii_lowercase().contains("json"))
+    );
+}
+
+#[tokio::test]
+async fn empty_messages_is_reported_in_the_anthropic_dialect() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+
+    for body in [
+        json!({"model":"gpt-5","max_tokens":16,"messages":[]}),
+        json!({"model":"gpt-5","max_tokens":16}),
+    ] {
+        let response = router
+            .post("/v1/messages", &body)
+            .send()
+            .await
+            .expect("invalid Messages response");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let payload: Value = response.json().await.expect("Anthropic error envelope");
+        assert_eq!(payload["error"]["type"], "invalid_request_error");
+        let message = payload["error"]["message"].as_str().expect("error message");
+        assert!(message.contains("messages"), "{message}");
+        for leaked in ["input", "previous_response_id", "prompt", "conversation"] {
+            assert!(!message.contains(leaked), "leaked {leaked}: {message}");
+        }
+    }
+    assert!(router.requests.lock().expect("stub requests").is_empty());
+}
+
+#[tokio::test]
+async fn translated_streams_preserve_usage_in_the_client_dialect() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+
+    let anthropic = router
+        .post(
+            "/v1/messages",
+            &json!({
+                "model":"gpt-5",
+                "max_tokens":16,
+                "messages":[{"role":"user","content":"hi"}],
+                "stream":true
+            }),
+        )
+        .send()
+        .await
+        .expect("Anthropic stream")
+        .text()
+        .await
+        .expect("Anthropic SSE body");
+    let message_delta = anthropic
+        .split("\n\n")
+        .filter_map(|block| block.lines().find_map(|line| line.strip_prefix("data: ")))
+        .filter_map(|data| serde_json::from_str::<Value>(data).ok())
+        .find(|event| event["type"] == "message_delta")
+        .expect("message_delta event");
+    assert_eq!(message_delta["usage"]["input_tokens"], 3);
+    assert_eq!(message_delta["usage"]["output_tokens"], 2);
+
+    let chat = router
+        .post(
+            "/v1/chat/completions",
+            &json!({
+                "model":"gpt-5",
+                "messages":[{"role":"user","content":"hi"}],
+                "stream":true,
+                "stream_options":{"include_usage":true}
+            }),
+        )
+        .send()
+        .await
+        .expect("Chat Completions stream")
+        .text()
+        .await
+        .expect("Chat SSE body");
+    let usage = chat
+        .split("\n\n")
+        .filter_map(|block| block.lines().find_map(|line| line.strip_prefix("data: ")))
+        .filter(|data| *data != "[DONE]")
+        .filter_map(|data| serde_json::from_str::<Value>(data).ok())
+        .find(|chunk| chunk["choices"].as_array().is_some_and(Vec::is_empty))
+        .expect("final usage chunk");
+    assert_eq!(usage["usage"]["prompt_tokens"], 3);
+    assert_eq!(usage["usage"]["completion_tokens"], 2);
+    assert_eq!(usage["usage"]["total_tokens"], 5);
+}
+
+#[tokio::test]
+async fn invalid_upstream_body_is_not_disclosed_to_anthropic_clients() {
+    let router = TestRouter::start_with_invalid_body(UpstreamProvider::Codex, true).await;
+    let response = router
+        .post(
+            "/v1/messages",
+            &json!({
+                "model":"gpt-5",
+                "max_tokens":16,
+                "messages":[{"role":"user","content":"hi"}]
+            }),
+        )
+        .send()
+        .await
+        .expect("invalid upstream response");
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    let payload: Value = response.json().await.expect("Anthropic error envelope");
+    assert_eq!(
+        payload["error"]["message"],
+        "Upstream returned a malformed response"
+    );
+    let rendered = payload.to_string();
+    assert!(!rendered.contains("safety_identifier"));
+    assert!(!rendered.contains("prompt_cache_key"));
 }

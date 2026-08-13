@@ -13,6 +13,7 @@ pub mod admin_config;
 pub mod admin_ui;
 pub mod anthropic_bridge;
 pub mod anthropic_stream;
+mod api_error;
 pub mod app_state;
 pub mod audit;
 pub mod auth;

@@ -12,30 +12,20 @@ when it authorises a request.
 
 | View | Endpoint / file | Retention | Best for |
 | --- | --- | --- | --- |
-| Prometheus counters | `GET /metrics` | in-memory, resets on restart | dashboards, alerts |
-| JSON snapshot | `GET /v1/usage` | in-memory, resets on restart | ad-hoc inspection, scripts |
+| Prometheus counters | `GET /metrics` (public, aggregate only) | in-memory, resets on restart | dashboards, alerts |
+| JSON snapshot | `GET /v1/usage` (admin only) | in-memory, resets on restart | per-token inspection, scripts |
 | Audit trail | `--audit-log <file>` (JSONL) | durable, append-only | forensics, compliance |
 | Persisted budgets | `tokens list` | durable token store | quota enforcement |
 
 ## Live per-token counters
 
 Every authorised request is attributed to its token id (the JWT `sub`) and the
-label the token was issued with:
+label the token was issued with. The detailed counters are available only from
+the admin-gated `/v1/usage` endpoint:
 
 ```bash
-curl -s http://127.0.0.1:8080/metrics | grep token_requests_total
-```
-
-```
-# TYPE link_assistant_token_requests_total counter
-link_assistant_token_requests_total{token="550e8400-…",label="issue-45-solver"} 42
-link_assistant_token_requests_total{token="9f1c2b7a-…",label="ci-nightly"} 7
-```
-
-The same numbers appear as JSON under `token_calls` in `/v1/usage`:
-
-```bash
-curl -s http://127.0.0.1:8080/v1/usage | jq .token_calls
+curl -s http://127.0.0.1:8080/v1/usage \
+  -H "Authorization: Bearer $ROUTER_ADMIN_TOKEN" | jq .token_calls
 ```
 
 ```json
@@ -44,14 +34,11 @@ curl -s http://127.0.0.1:8080/v1/usage | jq .token_calls
 }
 ```
 
-The counter increments once per *authorised* request — the same unit
+The count increments once per *authorised* request — the same unit
 `--max-requests` budgets — so `requests` here and `used/max` in `tokens list`
-count the same events. Tokens with no traffic yet emit no series at all, so the
-label set stays bounded by tokens actually in use.
-
-Label values are escaped (`\`, `"`, newline) before being written, so a token
-labelled with quotes or a newline still produces exactly one valid Prometheus
-sample.
+count the same events. `/metrics` remains unauthenticated for standard
+Prometheus scrapers, so it exposes aggregate totals and status codes only; it
+never emits token ids, token labels, or account names.
 
 ## Durable audit trail
 
@@ -109,8 +96,8 @@ link-assistant-router tokens list
 ```
 
 ```promql
-# Prometheus: request rate per task over 5 minutes
-rate(link_assistant_token_requests_total[5m])
+# Prometheus: aggregate request rate over 5 minutes
+rate(link_assistant_requests_total[5m])
 ```
 
 ## Related
@@ -118,5 +105,5 @@ rate(link_assistant_token_requests_total[5m])
 - [per-task-tokens.md](per-task-tokens.md) — issuing and scoping the tokens
   these views attribute traffic to.
 - The router also exports overall counters (`link_assistant_requests_total`,
-  `…_errors_total`, per-status and per-account series) — see the main
+  `…_errors_total`, and per-status series) — see the main
   [`README.md`](../../README.md).

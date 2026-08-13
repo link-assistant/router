@@ -29,6 +29,9 @@ use crate::metrics::Surface;
 /// The Anthropic Messages API requires the field; `OpenAI` upstreams do not.
 pub(crate) const DEFAULT_MAX_TOKENS: u64 = 4096;
 
+/// Response header used when a required Messages limit cannot be enforced.
+pub const OUTPUT_LIMIT_HEADER: &str = "x-link-assistant-output-limit";
+
 /// Whether the Anthropic surface must be bridged for this upstream provider.
 ///
 /// `Anthropic` needs no translation, and `Gonka`/`Crater` keep the behaviour
@@ -543,7 +546,7 @@ pub(crate) fn count_tokens_claims(
             crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
             _ => StatusCode::UNAUTHORIZED,
         };
-        Box::new(anthropic_error(status, e.to_string().as_bytes()))
+        Box::new(anthropic_error(status, e.client_message().as_bytes()))
     })
 }
 
@@ -569,6 +572,19 @@ pub async fn forward_anthropic_messages(
             return *response;
         }
         return anthropic_error(StatusCode::BAD_REQUEST, b"max_tokens is required");
+    }
+    if anthropic_body
+        .get("messages")
+        .and_then(Value::as_array)
+        .is_none_or(Vec::is_empty)
+    {
+        if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
+            return *response;
+        }
+        return anthropic_error(
+            StatusCode::BAD_REQUEST,
+            b"messages must contain at least one message",
+        );
     }
     let requested_model = anthropic_body
         .get("model")
@@ -627,7 +643,20 @@ pub async fn forward_anthropic_messages(
         }
     };
 
-    translate_upstream_response(upstream, &requested_model, stream_requested).await
+    let mut response =
+        translate_upstream_response(upstream, &requested_model, stream_requested).await;
+    if state.upstream_provider == UpstreamProvider::Codex && response.status().is_success() {
+        response
+            .headers_mut()
+            .insert(OUTPUT_LIMIT_HEADER, HeaderValue::from_static("unsupported"));
+        response.headers_mut().insert(
+            "warning",
+            HeaderValue::from_static(
+                "299 link-assistant-router \"max_tokens is required by Messages but cannot be enforced by the Codex subscription backend\"",
+            ),
+        );
+    }
+    response
 }
 
 /// Convert the `OpenAI`-dialect response produced by a delegate forwarder into
@@ -644,7 +673,12 @@ async fn translate_upstream_response(
         let bytes = axum::body::to_bytes(body, 1024 * 1024)
             .await
             .unwrap_or_default();
-        return anthropic_error(status, &bytes);
+        let mut response = anthropic_error(status, &bytes);
+        *response.headers_mut() = parts.headers;
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+        return response;
     }
 
     if stream_requested {
@@ -661,13 +695,21 @@ async fn translate_upstream_response(
         }
     };
     let Ok(payload) = serde_json::from_slice::<Value>(&bytes) else {
-        return anthropic_error(StatusCode::BAD_GATEWAY, &bytes);
+        return anthropic_error(
+            StatusCode::BAD_GATEWAY,
+            b"Upstream returned a malformed response",
+        );
     };
-    (
+    let mut response = (
         StatusCode::OK,
         axum::Json(openai_json_to_anthropic_message(&payload, requested_model)),
     )
-        .into_response()
+        .into_response();
+    *response.headers_mut() = parts.headers;
+    response
+        .headers_mut()
+        .insert("content-type", HeaderValue::from_static("application/json"));
+    response
 }
 
 /// Wrap the upstream stream in an incremental Anthropic SSE translator.
@@ -706,6 +748,7 @@ fn anthropic_sse_response(body: Body, requested_model: &str, upstream: &HeaderMa
 
     let mut response = Response::new(Body::from_stream(stream));
     *response.status_mut() = StatusCode::OK;
+    *response.headers_mut() = crate::proxy::relay_response_headers(upstream);
     response.headers_mut().insert(
         "content-type",
         HeaderValue::from_static("text/event-stream"),
@@ -713,14 +756,6 @@ fn anthropic_sse_response(body: Body, requested_model: &str, upstream: &HeaderMa
     response
         .headers_mut()
         .insert("cache-control", HeaderValue::from_static("no-cache"));
-    // Relay rate-limit hints so clients keep seeing upstream back-pressure.
-    for name in ["retry-after", "x-ratelimit-remaining", "x-ratelimit-reset"] {
-        if let Some(value) = upstream.get(name) {
-            if let Ok(header) = axum::http::HeaderName::try_from(name) {
-                response.headers_mut().insert(header, value.clone());
-            }
-        }
-    }
     response
 }
 

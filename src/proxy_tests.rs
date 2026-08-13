@@ -1,9 +1,10 @@
-use axum::http::{HeaderMap, HeaderValue};
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use http_body_util::BodyExt;
 use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
     OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token, merge_oauth_beta,
-    request_routing_context, retry_after_duration,
+    request_routing_context, retry_after_duration, token_budget_error_response,
 };
 
 #[test]
@@ -145,4 +146,24 @@ fn retry_after_http_date_is_used_for_account_cooldown() {
     let parsed = retry_after_duration(&headers).unwrap();
     assert!(parsed >= std::time::Duration::from_secs(118));
     assert!(parsed <= std::time::Duration::from_secs(120));
+}
+
+#[tokio::test]
+async fn budget_errors_distinguish_limits_from_storage_failures() {
+    let limited = token_budget_error_response(&crate::token::TokenError::LimitExceeded);
+    assert_eq!(limited.status(), StatusCode::TOO_MANY_REQUESTS);
+    let body = limited.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&body).unwrap()["error"]["type"],
+        "rate_limit_error"
+    );
+
+    let failed =
+        token_budget_error_response(&crate::token::TokenError::Storage("disk full".into()));
+    assert_eq!(failed.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    let body = failed.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&body).unwrap()["error"]["type"],
+        "storage_error"
+    );
 }

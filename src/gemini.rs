@@ -22,8 +22,7 @@ use serde_json::{Value, json};
 
 use crate::metrics::Surface;
 use crate::proxy::{
-    AppState, error_response, extract_client_token, maybe_mpp_challenge, request_routing_context,
-    retry_after_duration,
+    AppState, error_response, maybe_mpp_challenge, request_routing_context, retry_after_duration,
 };
 
 /// Environment variable carrying the Google Cloud project id for Code Assist.
@@ -235,31 +234,11 @@ async fn route_gemini_token(
     surface: Surface,
     path: &str,
 ) -> Result<RoutedGeminiToken, Response> {
-    let Some(token) = extract_client_token(headers) else {
-        return Err(error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        ));
-    };
-    let claims = state.token_manager.validate_token(token).map_err(|error| {
-        let status = if matches!(error, crate::token::TokenError::Revoked) {
-            StatusCode::FORBIDDEN
-        } else {
-            StatusCode::UNAUTHORIZED
-        };
-        error_response(status, "authentication_error", &error.to_string())
-    })?;
+    let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
     state
         .token_manager
         .enforce_request_budget(&claims.sub)
-        .map_err(|error| {
-            error_response(
-                StatusCode::TOO_MANY_REQUESTS,
-                "rate_limit_error",
-                &error.to_string(),
-            )
-        })?;
+        .map_err(|error| crate::proxy::token_budget_error_response(&error))?;
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
     let pinned_account = state
         .token_manager

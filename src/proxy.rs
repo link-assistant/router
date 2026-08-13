@@ -14,6 +14,7 @@
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
+use axum::extract::rejection::JsonRejection;
 use axum::extract::{Query, Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -22,6 +23,8 @@ use log_lazy::LogLazy;
 use std::collections::{BTreeMap, HashSet};
 
 use crate::accounts::RoutingContext;
+pub(crate) use crate::api_error::error_response;
+use crate::api_error::malformed_json_response;
 pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 pub use crate::model_routing::models as openai_models;
@@ -107,6 +110,7 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         let name_lower = name.as_str();
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
+            || name_lower.starts_with("x-codex-")
             || name_lower == "content-length"
             || connection_headers.contains(name_lower)
         {
@@ -164,6 +168,36 @@ pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
     })
 }
 
+/// Validate the caller credential without exposing token parser internals.
+pub(crate) fn authenticate_client(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> Result<crate::token::TokenClaims, Box<Response>> {
+    let Some(token) = extract_client_token(headers) else {
+        state.logger.debug(|| "Missing Authorization header");
+        return Err(Box::new(error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "Missing Authorization Bearer token or x-api-key",
+        )));
+    };
+    state.token_manager.validate_token(token).map_err(|error| {
+        let status = if matches!(error, crate::token::TokenError::Revoked) {
+            StatusCode::FORBIDDEN
+        } else {
+            StatusCode::UNAUTHORIZED
+        };
+        state
+            .logger
+            .debug(|| format!("Token validation failed: {error}"));
+        Box::new(error_response(
+            status,
+            "authentication_error",
+            error.client_message(),
+        ))
+    })
+}
+
 /// Proxy handler for upstream API forwarding.
 ///
 /// Catches all requests, validates the custom token, swaps it for OAuth
@@ -180,6 +214,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let incoming_headers = req.headers().clone();
 
     if state.upstream_provider == UpstreamProvider::Auto {
+        if let Err(response) = authenticate_client(&state, &incoming_headers) {
+            return *response;
+        }
         let (routed, request) =
             match crate::model_routing::route_anthropic_request(&state, req).await {
                 Ok(routed) => routed,
@@ -217,17 +254,6 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             .verbose(|| format!("Session: {}", session_id.to_str().unwrap_or("<invalid>")));
     }
 
-    // Extract and validate the bearer token from the Authorization header
-    let Some(token) = extract_client_token(&incoming_headers) else {
-        state.logger.debug(|| "Missing Authorization header");
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let custom_token = token.to_string();
-
     // Anthropic-dialect requests aimed at a non-Anthropic upstream are handed
     // to the bridge, which translates both directions and delegates to the
     // provider's own forwarder (that forwarder owns token validation, budget
@@ -244,7 +270,10 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
                 );
             }
         };
-        let body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+        let body = match serde_json::from_slice(&body_bytes) {
+            Ok(body) => body,
+            Err(error) => return malformed_json_response(&error.to_string()),
+        };
         return crate::anthropic_bridge::handle_anthropic_surface(
             &state,
             &incoming_headers,
@@ -254,19 +283,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         .await;
     }
 
-    // Validate custom token
-    let claims = match state.token_manager.validate_token(&custom_token) {
+    let claims = match authenticate_client(&state, &incoming_headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            state
-                .logger
-                .debug(|| format!("Token validation failed: {e}"));
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
 
     // Enforce the per-token request budget (max_requests). This is what lets
@@ -276,11 +295,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         state
             .logger
             .debug(|| format!("Token budget check failed: {e}"));
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
+        return token_budget_error_response(&e);
     }
 
     // Read the body before account selection so the router gets a copy of
@@ -295,7 +310,10 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             );
         }
     };
-    let routing_body = serde_json::from_slice(&body_bytes).unwrap_or(serde_json::Value::Null);
+    let routing_body = match serde_json::from_slice(&body_bytes) {
+        Ok(body) => body,
+        Err(error) => return malformed_json_response(&error.to_string()),
+    };
     crate::audit::record_authorised_request(
         &state,
         &claims,
@@ -553,8 +571,16 @@ pub async fn openai_chat_completions(
     State(state): State<AppState>,
     Query(query): Query<BTreeMap<String, String>>,
     headers: HeaderMap,
-    axum::Json(mut body): axum::Json<serde_json::Value>,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
+    let mut body = match body {
+        Ok(axum::Json(body)) => body,
+        Err(error) => return malformed_json_response(&error.body_text()),
+    };
+    let include_usage = body
+        .pointer("/stream_options/include_usage")
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
     let stream_from_query = openai::query_stream_requested(&query);
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
@@ -641,8 +667,7 @@ pub async fn openai_chat_completions(
         body,
         &routing_body,
         crate::metrics::Surface::OpenAIChat,
-        stream_requested,
-        OpenAIShape::Chat,
+        (stream_requested, OpenAIShape::Chat, include_usage),
     )
     .await
 }
@@ -651,8 +676,12 @@ pub async fn openai_chat_completions(
 pub async fn openai_responses(
     State(state): State<AppState>,
     headers: HeaderMap,
-    axum::Json(body): axum::Json<serde_json::Value>,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(axum::Json(body)) => body,
+        Err(error) => return malformed_json_response(&error.body_text()),
+    };
     let state = match crate::model_routing::route_state(&state, &body).await {
         Ok(state) => state,
         Err(error) => return crate::model_routing::model_route_error_response(&error),
@@ -717,8 +746,7 @@ pub async fn openai_responses(
         body,
         &routing_body,
         crate::metrics::Surface::OpenAIResponses,
-        stream_requested,
-        OpenAIShape::Response,
+        (stream_requested, OpenAIShape::Response, false),
     )
     .await
 }
@@ -735,9 +763,9 @@ async fn forward_openai(
     body: serde_json::Value,
     routing_body: &serde_json::Value,
     surface: crate::metrics::Surface,
-    stream_requested: bool,
-    shape: OpenAIShape,
+    stream_options: (bool, OpenAIShape, bool),
 ) -> Response {
+    let (stream_requested, shape, include_usage) = stream_options;
     let served_model = body["model"].as_str().unwrap_or_default().to_string();
     let path = match shape {
         OpenAIShape::Chat => "/v1/chat/completions",
@@ -748,29 +776,12 @@ async fn forward_openai(
     }
 
     // Validate caller token.
-    let Some(token) = extract_client_token(headers) else {
-        return error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        );
-    };
-    let claims = match state.token_manager.validate_token(token) {
+    let claims = match authenticate_client(state, headers) {
         Ok(claims) => claims,
-        Err(e) => {
-            let status = match &e {
-                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-                _ => StatusCode::UNAUTHORIZED,
-            };
-            return error_response(status, "authentication_error", &format!("{e}"));
-        }
+        Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &format!("{e}"),
-        );
+        return token_budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
@@ -862,7 +873,8 @@ async fn forward_openai(
             OpenAIShape::Chat => openai::OpenAIStreamShape::ChatCompletion,
             OpenAIShape::Response => openai::OpenAIStreamShape::Response,
         };
-        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model);
+        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model)
+            .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Ok(bytes) => {
@@ -958,6 +970,26 @@ async fn forward_openai(
     response
 }
 
+pub(crate) fn token_budget_error_response(error: &crate::token::TokenError) -> Response {
+    match error {
+        crate::token::TokenError::LimitExceeded => error_response(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limit_error",
+            &error.to_string(),
+        ),
+        crate::token::TokenError::Storage(_) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "storage_error",
+            &error.to_string(),
+        ),
+        _ => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &error.to_string(),
+        ),
+    }
+}
+
 pub(crate) fn maybe_mpp_challenge(
     state: &AppState,
     headers: &HeaderMap,
@@ -970,19 +1002,4 @@ pub(crate) fn maybe_mpp_challenge(
         return Some(crate::mpp::unsupported_payment_verification());
     }
     Some(crate::mpp::payment_required(&state.mpp, path))
-}
-
-/// Build an Anthropic-format error response.
-pub(crate) fn error_response(status: StatusCode, error_type: &str, message: &str) -> Response {
-    (
-        status,
-        axum::Json(serde_json::json!({
-            "type": "error",
-            "error": {
-                "type": error_type,
-                "message": message
-            }
-        })),
-    )
-        .into_response()
 }
