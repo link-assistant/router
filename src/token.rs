@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::storage::{MemoryTokenStore, StorageError, TokenRecord, TokenStore};
+use crate::storage::{MemoryTokenStore, RequestAdmission, StorageError, TokenRecord, TokenStore};
 
 /// Prefix for all router-issued custom tokens.
 pub const TOKEN_PREFIX: &str = "la_sk_";
@@ -54,8 +54,8 @@ impl TokenClaims {
 
 /// Parameters for [`TokenManager::issue`].
 ///
-/// Grouped into a struct because issuance now varies along five independent
-/// axes (TTL, label, account pin, request budget, scope) and a positional
+/// Grouped into a struct because issuance varies along independent policy
+/// axes (TTL, label, account pin, budgets, rate, scope) and a positional
 /// argument list at that width is easy to mis-order at the call site.
 #[derive(Debug, Default, Clone)]
 pub struct IssueRequest<'a> {
@@ -67,6 +67,10 @@ pub struct IssueRequest<'a> {
     pub account: Option<&'a str>,
     /// Optional cap on upstream requests; `None` means unlimited.
     pub max_requests: Option<u64>,
+    /// Optional cap on upstream-reported input plus output tokens.
+    pub max_tokens: Option<u64>,
+    /// Optional fixed-window request rate for this credential.
+    pub rate_limit_per_minute: Option<u64>,
     /// Privilege scope; empty for an ordinary client token.
     pub scope: &'a str,
 }
@@ -139,6 +143,8 @@ impl TokenManager {
             label,
             account,
             max_requests,
+            max_tokens: None,
+            rate_limit_per_minute: None,
             scope: "",
         })
     }
@@ -159,6 +165,8 @@ impl TokenManager {
             label,
             account: None,
             max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
             scope: ADMIN_SCOPE,
         })
     }
@@ -194,6 +202,11 @@ impl TokenManager {
             account: account.map(String::from),
             max_requests,
             used_requests: 0,
+            max_tokens: request.max_tokens,
+            used_tokens: 0,
+            rate_limit_per_minute: request.rate_limit_per_minute,
+            rate_window_started_at: 0,
+            rate_window_requests: 0,
             scope: claims.scope,
         };
         if let Err(e) = self.store.put(record) {
@@ -212,11 +225,23 @@ impl TokenManager {
     ///
     /// Tokens issued without a `max_requests` cap are always permitted.
     pub fn enforce_request_budget(&self, token_id: &str) -> Result<(), TokenError> {
-        match self.store.try_consume_request(token_id) {
-            Ok(true) => Ok(()),
-            Ok(false) => Err(TokenError::LimitExceeded),
+        match self
+            .store
+            .try_admit_request(token_id, Utc::now().timestamp())
+        {
+            Ok(RequestAdmission::Admitted) => Ok(()),
+            Ok(RequestAdmission::RequestLimitExceeded) => Err(TokenError::LimitExceeded),
+            Ok(RequestAdmission::TokenLimitExceeded) => Err(TokenError::TokenLimitExceeded),
+            Ok(RequestAdmission::RateLimitExceeded) => Err(TokenError::RateLimitExceeded),
             Err(e) => Err(TokenError::Storage(e.to_string())),
         }
+    }
+
+    /// Persist actual input plus output tokens reported by an upstream response.
+    pub fn record_token_usage(&self, token_id: &str, tokens: u64) -> Result<(), TokenError> {
+        self.store
+            .record_token_usage(token_id, tokens)
+            .map_err(|error| TokenError::Storage(error.to_string()))
     }
 
     /// Return the strict account binding stored for a router-issued token.
@@ -298,20 +323,47 @@ impl TokenManager {
         ttl_hours: i64,
         label: &str,
     ) -> Result<String, TokenError> {
-        // Check first so a typo cannot issue a fresh credential before the
-        // unknown old token is rejected.
-        if !self
-            .list_tokens()?
-            .iter()
-            .any(|record| record.id == current_sub)
-        {
+        let record = self
+            .store
+            .get(current_sub)
+            .map_err(|error| TokenError::Storage(error.to_string()))?
+            .ok_or_else(|| TokenError::Invalid(format!("unknown token id {current_sub}")))?;
+        if record.scope != ADMIN_SCOPE {
             return Err(TokenError::Invalid(format!(
-                "unknown token id {current_sub}"
+                "token {current_sub} is not an admin token"
             )));
         }
+        self.rotate_token(current_sub, ttl_hours, label)
+    }
+
+    /// Replace any stored token while preserving its account and controls.
+    pub fn rotate_token(
+        &self,
+        current_sub: &str,
+        ttl_hours: i64,
+        label: &str,
+    ) -> Result<String, TokenError> {
+        let record = self
+            .store
+            .get(current_sub)
+            .map_err(|error| TokenError::Storage(error.to_string()))?
+            .ok_or_else(|| TokenError::Invalid(format!("unknown token id {current_sub}")))?;
+        let replacement_label = if label.is_empty() {
+            &record.label
+        } else {
+            label
+        };
         let replacement = self
-            .issue_admin_token(ttl_hours, label)
-            .map_err(|e| TokenError::Invalid(e.to_string()))?;
+            .issue(&IssueRequest {
+                ttl_hours,
+                label: replacement_label,
+                account: record.account.as_deref(),
+                max_requests: record.max_requests,
+                max_tokens: record.max_tokens,
+                rate_limit_per_minute: record.rate_limit_per_minute,
+                scope: &record.scope,
+            })
+            .map_err(|error| TokenError::Invalid(error.to_string()))?;
         self.revoke_token(current_sub)?;
         Ok(replacement)
     }
@@ -377,6 +429,10 @@ pub enum TokenError {
     InsufficientScope,
     /// Token has reached its per-token request budget (`max_requests`).
     LimitExceeded,
+    /// Token has reached its upstream-reported token budget (`max_tokens`).
+    TokenLimitExceeded,
+    /// Token has reached its configured one-minute request rate.
+    RateLimitExceeded,
     /// Storage backend failure.
     Storage(String),
 }
@@ -397,6 +453,8 @@ impl std::fmt::Display for TokenError {
             Self::LimitExceeded => {
                 write!(f, "Token has reached its request limit")
             }
+            Self::TokenLimitExceeded => write!(f, "Token has reached its token limit"),
+            Self::RateLimitExceeded => write!(f, "Token has reached its per-minute rate limit"),
             Self::Storage(msg) => write!(f, "Token storage error: {msg}"),
         }
     }
@@ -416,6 +474,8 @@ impl TokenError {
             Self::NotFound(_) => "token not found",
             Self::InsufficientScope => "insufficient token scope",
             Self::LimitExceeded => "Token has reached its request limit",
+            Self::TokenLimitExceeded => "Token has reached its token limit",
+            Self::RateLimitExceeded => "Token has reached its per-minute rate limit",
             Self::Storage(_) => "token validation failed",
         }
     }
@@ -561,6 +621,56 @@ mod tests {
     }
 
     #[test]
+    fn actual_token_spend_stops_only_the_exhausted_token() {
+        let mgr = test_manager();
+        let capped = mgr
+            .issue(&IssueRequest {
+                ttl_hours: 24,
+                label: "capped",
+                max_tokens: Some(5),
+                ..IssueRequest::default()
+            })
+            .unwrap();
+        let other = mgr.issue_token(24, "other").unwrap();
+        let capped_id = mgr.validate_token(&capped).unwrap().sub;
+        let other_id = mgr.validate_token(&other).unwrap().sub;
+
+        mgr.enforce_request_budget(&capped_id).unwrap();
+        mgr.record_token_usage(&capped_id, 5).unwrap();
+
+        assert!(matches!(
+            mgr.enforce_request_budget(&capped_id),
+            Err(TokenError::TokenLimitExceeded)
+        ));
+        mgr.enforce_request_budget(&other_id)
+            .expect("one token's spend must not affect another token");
+    }
+
+    #[test]
+    fn per_token_rate_limit_rejects_only_the_bursting_token() {
+        let mgr = test_manager();
+        let limited = mgr
+            .issue(&IssueRequest {
+                ttl_hours: 24,
+                label: "limited",
+                rate_limit_per_minute: Some(1),
+                ..IssueRequest::default()
+            })
+            .unwrap();
+        let other = mgr.issue_token(24, "other").unwrap();
+        let limited_id = mgr.validate_token(&limited).unwrap().sub;
+        let other_id = mgr.validate_token(&other).unwrap().sub;
+
+        mgr.enforce_request_budget(&limited_id).unwrap();
+        assert!(matches!(
+            mgr.enforce_request_budget(&limited_id),
+            Err(TokenError::RateLimitExceeded)
+        ));
+        mgr.enforce_request_budget(&other_id)
+            .expect("rate windows must be isolated by token id");
+    }
+
+    #[test]
     fn test_budget_for_unknown_token_is_permitted() {
         // A token id with no stored record (e.g. memory store cleared) is not
         // budget-limited — validation, not budgeting, is the gate there.
@@ -677,6 +787,34 @@ mod tests {
         // replacement may have been handed out.
         assert!(mgr.validate_admin_token(&live).is_ok());
         assert_eq!(mgr.list_tokens().expect("should list").len(), 1);
+    }
+
+    #[test]
+    fn ordinary_token_rotation_preserves_its_controls_and_revokes_the_old_token() {
+        let mgr = test_manager();
+        let old = mgr
+            .issue(&IssueRequest {
+                ttl_hours: 1,
+                label: "worker",
+                account: Some("account-2"),
+                max_requests: Some(10),
+                max_tokens: Some(1_000),
+                rate_limit_per_minute: Some(3),
+                scope: "",
+            })
+            .unwrap();
+        let old_claims = mgr.validate_token(&old).unwrap();
+
+        let new = mgr.rotate_token(&old_claims.sub, 2, "").unwrap();
+        let new_claims = mgr.validate_token(&new).unwrap();
+        let record = mgr.store().get(&new_claims.sub).unwrap().unwrap();
+
+        assert_eq!(record.label, "worker");
+        assert_eq!(record.account.as_deref(), Some("account-2"));
+        assert_eq!(record.max_requests, Some(10));
+        assert_eq!(record.max_tokens, Some(1_000));
+        assert_eq!(record.rate_limit_per_minute, Some(3));
+        assert!(matches!(mgr.validate_token(&old), Err(TokenError::Revoked)));
     }
 
     #[test]

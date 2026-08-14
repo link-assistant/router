@@ -191,6 +191,8 @@ fn issue_client_token(
         label: &format!("client-{client}"),
         account: None,
         max_requests: None,
+        max_tokens: None,
+        rate_limit_per_minute: None,
         scope: "",
     })?)
 }

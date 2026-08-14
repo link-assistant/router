@@ -4,7 +4,7 @@ use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
     OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token, merge_oauth_beta,
-    request_routing_context, retry_after_duration, token_budget_error_response,
+    request_routing_context, retry_after_duration,
 };
 
 #[test]
@@ -150,7 +150,8 @@ fn retry_after_http_date_is_used_for_account_cooldown() {
 
 #[tokio::test]
 async fn budget_errors_distinguish_limits_from_storage_failures() {
-    let limited = token_budget_error_response(&crate::token::TokenError::LimitExceeded);
+    let limited =
+        crate::token_http::budget_error_response(&crate::token::TokenError::LimitExceeded);
     assert_eq!(limited.status(), StatusCode::TOO_MANY_REQUESTS);
     let body = limited.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(
@@ -158,12 +159,28 @@ async fn budget_errors_distinguish_limits_from_storage_failures() {
         "rate_limit_error"
     );
 
-    let failed =
-        token_budget_error_response(&crate::token::TokenError::Storage("disk full".into()));
+    for error in [
+        crate::token::TokenError::TokenLimitExceeded,
+        crate::token::TokenError::RateLimitExceeded,
+    ] {
+        assert_eq!(
+            crate::token_http::budget_error_response(&error).status(),
+            StatusCode::TOO_MANY_REQUESTS
+        );
+    }
+
+    let failed = crate::token_http::budget_error_response(&crate::token::TokenError::Storage(
+        "disk full".into(),
+    ));
     assert_eq!(failed.status(), StatusCode::INTERNAL_SERVER_ERROR);
     let body = failed.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(
         serde_json::from_slice::<serde_json::Value>(&body).unwrap()["error"]["type"],
         "storage_error"
     );
+
+    let invalid = crate::token_http::budget_error_response(&crate::token::TokenError::Invalid(
+        "bad claims".into(),
+    ));
+    assert_eq!(invalid.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }

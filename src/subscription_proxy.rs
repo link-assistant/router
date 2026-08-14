@@ -95,7 +95,7 @@ async fn forward_subscription_openai_inner(
         Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return crate::proxy::token_budget_error_response(&e);
+        return crate::token_http::budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
@@ -277,11 +277,17 @@ async fn forward_subscription_openai_inner(
         let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
             .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
+        let mut usage = status.is_success().then(|| {
+            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
+        });
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             chunk.map_or_else(
                 |error| Err(std::io::Error::other(error)),
                 |bytes| {
                     response_log.record_upstream_body(&correlation_id, &bytes);
+                    if let Some(tracker) = &mut usage {
+                        tracker.feed(&bytes);
+                    }
                     if codex && response_shape == SubscriptionResponseShape::ChatCompletion {
                         Ok(bytes::Bytes::from(translator.push(&bytes).join("")))
                     } else {
@@ -318,6 +324,11 @@ async fn forward_subscription_openai_inner(
     state
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
+    if status.is_success() {
+        let mut usage =
+            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        usage.feed(&upstream_body);
+    }
 
     // The Codex backend always streams Server-Sent Events even when the client
     // asked for a non-streaming (`stream:false`) response, and labels that SSE

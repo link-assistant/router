@@ -56,6 +56,8 @@ pub async fn issue_token(
         label: &label,
         account: req.account.as_deref(),
         max_requests: req.max_requests,
+        max_tokens: req.max_tokens,
+        rate_limit_per_minute: req.rate_limit_per_minute,
         scope: &scope,
     }) {
         Ok(token) => {
@@ -68,6 +70,8 @@ pub async fn issue_token(
                     "label": label,
                     "account": req.account,
                     "max_requests": req.max_requests,
+                    "max_tokens": req.max_tokens,
+                    "rate_limit_per_minute": req.rate_limit_per_minute,
                     "scope": scope,
                 })),
             )
@@ -204,6 +208,10 @@ pub struct IssueTokenRequest {
     /// Optional cap on the number of upstream requests the token may make.
     /// `None` (omitted) means unlimited.
     pub max_requests: Option<u64>,
+    /// Optional cap on actual input plus output tokens reported by upstreams.
+    pub max_tokens: Option<u64>,
+    /// Optional number of requests admitted per one-minute window.
+    pub rate_limit_per_minute: Option<u64>,
     /// Privilege scope. Omit (or empty) for an ordinary client token; pass
     /// `"admin"` to mint a credential that also unlocks the admin endpoints.
     pub scope: Option<String>,

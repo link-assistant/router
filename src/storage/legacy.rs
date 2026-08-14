@@ -86,6 +86,11 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         account: None,
         max_requests: None,
         used_requests: 0,
+        max_tokens: None,
+        used_tokens: 0,
+        rate_limit_per_minute: None,
+        rate_window_started_at: 0,
+        rate_window_requests: 0,
         scope: String::new(),
     };
     while let Some(field) = tokens.next_paren_group() {
@@ -110,6 +115,17 @@ fn parse_field(record: &mut TokenRecord, field: &str) -> Result<(), String> {
         "account" => record.account = tokens.next_string(),
         "max_requests" => record.max_requests = Some(required_number(&mut tokens, key)?),
         "used_requests" => record.used_requests = required_number(&mut tokens, key)?,
+        "max_tokens" => record.max_tokens = Some(required_number(&mut tokens, key)?),
+        "used_tokens" => record.used_tokens = required_number(&mut tokens, key)?,
+        "rate_limit_per_minute" => {
+            record.rate_limit_per_minute = Some(required_number(&mut tokens, key)?);
+        }
+        "rate_window_started_at" => {
+            record.rate_window_started_at = required_number(&mut tokens, key)?;
+        }
+        "rate_window_requests" => {
+            record.rate_window_requests = required_number(&mut tokens, key)?;
+        }
         "scope" => record.scope = tokens.next_string().unwrap_or_default(),
         other => return Err(format!("unknown field: {other}")),
     }

@@ -145,7 +145,7 @@ pub async fn forward_openai_compatible(
     // subscription ones, so a task token cannot escape its cap by being
     // pointed at an OpenAI-compatible gateway.
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return crate::proxy::token_budget_error_response(&e);
+        return crate::token_http::budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
@@ -219,9 +219,15 @@ pub async fn forward_openai_compatible(
 
     if stream_requested || is_event_stream(&content_type) {
         let response_log = std::sync::Arc::clone(&state.request_log);
+        let mut usage = status.is_success().then(|| {
+            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
+        });
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             if let Ok(bytes) = &chunk {
                 response_log.record_upstream_body(&correlation_id, bytes);
+                if let Some(tracker) = &mut usage {
+                    tracker.feed(bytes);
+                }
             }
             chunk.map_err(std::io::Error::other)
         });
@@ -248,6 +254,11 @@ pub async fn forward_openai_compatible(
     state
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
+    if status.is_success() {
+        let mut usage =
+            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        usage.feed(&upstream_body);
+    }
 
     let mut response = Response::new(Body::from(upstream_body));
     *response.status_mut() = status;

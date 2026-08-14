@@ -1,6 +1,15 @@
 # Link.Assistant.Router
 
-A Rust-based API gateway that proxies Anthropic (Claude) APIs through a Claude MAX OAuth session, providing multi-tenant access via custom-issued tokens.
+A self-hosted gateway for safely sharing one AI subscription with family,
+household members, colleagues, or a small team. Each person, task, or agent gets
+an independently expiring, revocable, rate-limited `la_sk_…` token while the
+vendor credential stays inside the router.
+
+The primary use case is putting Claude Code and other agentic clients behind
+one Claude MAX subscription without handing its OAuth credential to every
+user. Per-token request and actual-token budgets contain runaway agents and
+make usage attributable. The router also supports additional subscription and
+OpenAI-compatible providers when a deployment needs them.
 
 [![CI/CD Pipeline](https://github.com/link-assistant/router/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/link-assistant/router/actions)
 [![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)](https://crates.io/crates/link-assistant-router)
@@ -11,7 +20,10 @@ A Rust-based API gateway that proxies Anthropic (Claude) APIs through a Claude M
 
 ## Overview
 
-Link.Assistant.Router is a transparent proxy that sits between API clients (such as Claude Code) and the Anthropic API. It is the OpenRouter-equivalent for Claude MAX accounts: every feature found in the community Claude proxies is available behind a single configurable surface.
+Link.Assistant.Router is a transparent proxy between API clients (such as
+Claude Code) and vendor APIs. It provides an OpenRouter-like surface for
+subscription credentials while keeping the sharing, attribution, and
+containment controls local to the operator.
 
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
@@ -741,8 +753,12 @@ link-assistant-router
 link-assistant-router tokens issue --ttl-hours 168 --label alice
 # ...optionally cap how many upstream requests the token may make:
 link-assistant-router tokens issue --ttl-hours 168 --label alice --max-requests 500
+# ...cap actual input + output tokens and bursts as well:
+link-assistant-router tokens issue --label alice --max-tokens 100000 --rate-limit-per-minute 10
 link-assistant-router tokens list
 link-assistant-router tokens revoke <id>
+link-assistant-router tokens expire <id>
+link-assistant-router tokens rotate <id> --ttl-hours 168
 link-assistant-router tokens show <id>
 
 # Inspect configured accounts:
@@ -950,9 +966,9 @@ The router uses JWT-based custom tokens with the `la_sk_` prefix.
 
 ### Token lifecycle
 
-1. **Issue**: `POST /api/tokens` creates a signed JWT with a UUID subject, expiration, optional label, and an optional per-token request budget
+1. **Issue**: `POST /api/tokens` creates a signed JWT with a UUID subject, expiration, optional label, and optional per-token request, token-spend, and rate controls
 2. **Validate**: Each proxy request extracts the `Authorization: Bearer la_sk_...` header, strips the prefix, and verifies the JWT signature and expiration
-3. **Meter**: When the token carries a request budget, each forwarded request increments a persisted `used_requests` counter; once it reaches `max_requests` the router returns `429 Too Many Requests` instead of forwarding upstream
+3. **Meter**: Each admitted request increments `used_requests`; successful upstream usage payloads add actual input and output tokens to `used_tokens`. Reaching `max_requests`, `max_tokens`, or `rate_limit_per_minute` returns `429 Too Many Requests` before another request is forwarded
 4. **Revoke**: Tokens can be revoked by their subject ID. Records (including the revoked flag and usage counter) are written to the persistent token store, so revocations and usage survive restarts
 
 ### Token format
@@ -1019,32 +1035,39 @@ Admin token (shown once, store it now): la_sk_eyJ0eXAi...
 A client token presented to an admin endpoint is rejected: authorisation is by
 scope, not by "any valid token".
 
-### Per-token request budget
+### Per-token containment controls
 
-Each token can carry an optional cap on the number of upstream requests it may
-make. This lets you hand a scoped token to a separate task or agent and bound
-how much of your Claude MAX subscription that task can consume, without ever
-exposing the real OAuth credential.
+Each token can cap request count, actual upstream-reported input plus output
+tokens, and requests per minute. This lets you hand a credential to a separate
+person, task, or agent without exposing the vendor OAuth credential or letting
+one runaway loop immediately consume the shared subscription.
 
 ```bash
-# CLI: issue a token limited to 100 upstream requests
-link-assistant-router tokens issue --ttl-hours 24 --label scoped-agent --max-requests 100
+# CLI
+link-assistant-router tokens issue --ttl-hours 24 --label scoped-agent \
+  --max-requests 100 --max-tokens 100000 --rate-limit-per-minute 10
 
 # HTTP: same, via the admin endpoint
 curl -s -X POST http://localhost:8080/api/tokens \
   -H "Content-Type: application/json" \
-  -d '{"ttl_hours": 24, "label": "scoped-agent", "max_requests": 100}' | jq .
+  -d '{"ttl_hours":24,"label":"scoped-agent","max_requests":100,"max_tokens":100000,"rate_limit_per_minute":10}' | jq .
 ```
 
 - Omitting `--max-requests` / `max_requests` leaves the token **unlimited**.
+- Omitting `--max-tokens` / `max_tokens` leaves actual token spend unlimited.
+  Counts come from vendor response `usage` fields and are persisted across
+  restarts; the response that crosses a cap completes, and the next request is
+  rejected.
+- Omitting `--rate-limit-per-minute` / `rate_limit_per_minute` disables the
+  per-token one-minute request window.
 - Usage is counted per forwarded request and persisted in the token store, so
   the budget is enforced across restarts.
 - When the budget is exhausted the router responds with
   `429 Too Many Requests` and a `rate_limit_error` body
   (`{"error":{"message":"Token has reached its request limit",...}}`) instead of
   forwarding upstream.
-- `tokens list` shows a `requests` column as `used/max` (e.g. `42/100`), or
-  `used/-` for unlimited tokens.
+- `tokens list` shows `requests` and `tokens` as `used/max` plus the configured
+  `rpm`; each credential has independent counters and a separate rate window.
 
 ### Security notes
 
@@ -1052,7 +1075,7 @@ curl -s -X POST http://localhost:8080/api/tokens \
 - OAuth tokens from the Claude Code session are never exposed to clients
 - Tokens are validated on every request
 - Use a strong, random secret (e.g., `openssl rand -hex 32`)
-- Pair short TTLs with `max_requests` to give each task a tightly scoped,
+- Pair short TTLs with `max_tokens` and a per-minute rate to give each task a tightly scoped,
   self-expiring credential
 
 ## Testing

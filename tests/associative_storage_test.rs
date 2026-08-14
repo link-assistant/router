@@ -14,6 +14,11 @@ fn sample_record() -> TokenRecord {
         account: Some("primary".into()),
         max_requests: Some(100),
         used_requests: 7,
+        max_tokens: Some(10_000),
+        used_tokens: 250,
+        rate_limit_per_minute: Some(20),
+        rate_window_started_at: 1_700_000_000,
+        rate_window_requests: 3,
         scope: "admin".into(),
     }
 }

@@ -21,10 +21,13 @@ use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::proxy;
 use link_assistant_router::refresh::TokenCache;
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
-use link_assistant_router::token::TokenManager;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
+
+#[path = "router_e2e/token_budget.rs"]
+mod token_budget;
 
 #[derive(Clone, Copy)]
 enum StubDialect {
@@ -43,6 +46,7 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
+    token_manager: TokenManager,
     requests: Arc<Mutex<Vec<Value>>>,
     log_root: std::path::PathBuf,
     tasks: Vec<tokio::task::JoinHandle<()>>,
@@ -90,7 +94,7 @@ impl TestRouter {
         let log_root = data.path().join("requests");
         let state = AppState {
             client: reqwest::Client::new(),
-            token_manager,
+            token_manager: token_manager.clone(),
             oauth_provider,
             account_router: None,
             subscription_reader,
@@ -138,6 +142,7 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
+            token_manager,
             requests,
             log_root,
             tasks: vec![stub_task, router_task],
