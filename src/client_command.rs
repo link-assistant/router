@@ -21,14 +21,17 @@ pub async fn run(config: &Config, op: &ClientOp) -> ExitCode {
             token,
             base_url,
             ttl_hours,
-        } => setup(
-            config,
-            &manager,
-            *client,
-            token.as_deref(),
-            base_url.as_deref(),
-            *ttl_hours,
-        ),
+        } => {
+            setup(
+                config,
+                &manager,
+                *client,
+                token.as_deref(),
+                base_url.as_deref(),
+                *ttl_hours,
+            )
+            .await
+        }
         ClientOp::Show { client } => show(&manager, *client),
         ClientOp::Remove { client } => remove(&manager, *client),
         ClientOp::Doctor { client } => match manager.doctor(*client).await {
@@ -62,7 +65,7 @@ fn list(manager: &ClientManager) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn setup(
+async fn setup(
     config: &Config,
     manager: &ClientManager,
     client: ClientKind,
@@ -75,22 +78,40 @@ fn setup(
         return ExitCode::from(2);
     }
     let base_url = base_url.map_or_else(|| local_client_base_url(config), str::to_string);
-    let result = match manager.setup(client, &base_url) {
-        Ok(result) => result,
-        Err(error) => return failed(error),
-    };
-    let Some(token_env) = client.token_env() else {
+    if let Some(limitation) = client.setup_limitation() {
+        return failed(limitation);
+    }
+    if client.token_env().is_none() {
         return failed(format!(
             "{} has no router token environment",
             client.display_name()
         ));
-    };
+    }
     let token = match supplied_token {
         Some(token) => token.to_string(),
         None => match issue_client_token(config, client, ttl_hours) {
             Ok(token) => token,
             Err(error) => return failed(error),
         },
+    };
+    let models = if matches!(
+        client,
+        ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
+    ) {
+        match manager.catalog(&base_url, &token).await {
+            Ok(models) => models,
+            Err(error) => return failed(error),
+        }
+    } else {
+        Vec::new()
+    };
+    let result = match manager.setup(client, &base_url, &models) {
+        Ok(result) => result,
+        Err(error) => return failed(error),
+    };
+    let environment_path = match manager.write_environment(client, &base_url, &token) {
+        Ok(path) => path,
+        Err(error) => return failed(error),
     };
     if client == ClientKind::GrokCli {
         println!(
@@ -113,18 +134,12 @@ fn setup(
     if let Some(backup) = result.backup {
         println!("backup: {}", backup.display());
     }
-    if let Some(base_url_env) = client.base_url_env() {
-        println!(
-            "export {}={}",
-            base_url_env,
-            shell_quote(&format!("{}/v1", base_url.trim_end_matches('/')))
-        );
-    }
-    println!("export {}={}", token_env, shell_quote(&token));
     println!(
-        "The token is not stored in the client config; export it in each shell that launches {}.",
-        client.display_name()
+        "credentials: {} (mode 0600); run: source {}",
+        environment_path.display(),
+        shell_quote(&environment_path.display().to_string())
     );
+    println!("The token is not stored in the client config or printed to the terminal.");
     ExitCode::SUCCESS
 }
 

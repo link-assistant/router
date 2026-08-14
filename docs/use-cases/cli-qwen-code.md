@@ -27,7 +27,8 @@ and supplies `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and
   "modelProviders": {
     "openai": [
       {
-        "id": "claude-sonnet-4-5-20250929",
+        "id": "<model-from-v1-models>",
+        "name": "Link.Assistant.Router",
         "baseUrl": "http://127.0.0.1:8080/v1",
         "envKey": "LINK_ASSISTANT_TOKEN"
       }
@@ -37,9 +38,15 @@ and supplies `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and
 ```
 
 ```bash
-export LINK_ASSISTANT_TOKEN=la_sk_...
+link-assistant-router clients setup qwen-code
+# Run the `source …/qwen-code.env` command printed by setup.
 qwen
 ```
+
+Automatic setup selects an advertised model from the authenticated router
+catalog. Its stable `name` and `envKey` markers let `show`, `doctor`, and repeat
+setup continue to recognise the entry if you switch its `id` to another
+advertised model.
 
 ## Anthropic configuration
 

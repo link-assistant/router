@@ -29,11 +29,12 @@ grok
 
 The current settings schema can store `apiKey` in
 `~/.grok/user-settings.json`, but the implementation reads the base URL only
-from `GROK_BASE_URL`. The router therefore keeps both values in the launching
-shell: this avoids persisting the token and avoids writing an ignored base-URL
-field.
+from `GROK_BASE_URL`. The router therefore writes both exports to a protected
+mode-`0600` environment file instead of the client settings or terminal output.
 
-`link-assistant-router clients setup grok-cli` prints both exports.
+`link-assistant-router clients setup grok-cli` prints the command that sources
+that file. Chat token limits sent by Grok are dropped only when forwarding to a
+Codex subscription, whose backend cannot accept them.
 
 ## Which subscription answers
 

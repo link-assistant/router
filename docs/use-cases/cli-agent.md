@@ -16,8 +16,9 @@ See [with-router.md](with-router.md).
 ## Manual or permanent configuration
 
 ```bash
-eval "$(link-assistant-router clients setup agent | grep '^export ')"
-agent --model link-assistant/claude-sonnet-4-5-20250929 -p "ping"
+link-assistant-router clients setup agent
+# Run the printed `source …/agent.env` command, then choose a configured model.
+agent --model link-assistant/<model-from-v1-models> -p "ping"
 ```
 
 Permanent setup merges a `link-assistant` provider into
@@ -40,8 +41,8 @@ and settings, creates a timestamped backup, and refers to the token as
         "apiKey": "{env:LINK_ASSISTANT_TOKEN}"
       },
       "models": {
-        "claude-sonnet-4-5-20250929": {
-          "name": "Router (Claude Sonnet 4.5)"
+        "<model-from-v1-models>": {
+          "name": "Router (<model-from-v1-models>)"
         }
       }
     }
@@ -66,6 +67,7 @@ link-assistant-router clients doctor agent
 link-assistant-router clients remove agent
 ```
 
-`doctor` sends a minimal request using the configured URL and token variable.
+`doctor` discovers the live catalog and sends a minimal request with an
+advertised model using the configured URL and token variable.
 `remove` restores a pre-existing `link-assistant` provider when setup replaced
 one; otherwise it removes only the managed provider.
