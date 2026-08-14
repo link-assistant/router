@@ -68,7 +68,10 @@ fn mock_router() -> (String, thread::JoinHandle<Vec<String>>) {
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/v1/models" => ("200 OK", r#"{"object":"list","data":[{"id":"gpt-5"}]}"#),
+                "/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                ),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
             let response = format!(
@@ -104,7 +107,10 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
                 ),
-                "/v1/models" => ("200 OK", r#"{"object":"list","data":[{"id":"gpt-5"}]}"#),
+                "/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                ),
                 "/api/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -233,6 +239,7 @@ fn run_with(
             "--token",
             "la_sk_ordinary",
             "codex",
+            "--",
             "--global",
             "hi",
         ])

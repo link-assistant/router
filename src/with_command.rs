@@ -169,7 +169,9 @@ impl TemporaryClient {
         let model = model_override.unwrap_or(integration.default_model);
         match client {
             ClientKind::ClaudeCode => {
-                command.env("ANTHROPIC_API_KEY", "");
+                command
+                    .env("ANTHROPIC_API_KEY", "")
+                    .env("MAX_THINKING_TOKENS", "16384");
             }
             ClientKind::GeminiCli => {
                 command
@@ -180,9 +182,19 @@ impl TemporaryClient {
                 command
                     .env("OPENAI_API_KEY", token)
                     .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"))
-                    .env("OPENAI_MODEL", model);
+                    .env("OPENAI_MODEL", model)
+                    .env(
+                        "OPENAI_REASONING_EFFORT",
+                        integration.default_reasoning_effort,
+                    );
             }
-            _ => {}
+            ClientKind::Codex | ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent => {
+                command.env(
+                    "OPENAI_REASONING_EFFORT",
+                    integration.default_reasoning_effort,
+                );
+            }
+            ClientKind::Cursor => {}
         }
         Ok(Self { directory, command })
     }
@@ -313,6 +325,21 @@ fn client_arguments(args: &WithArgs) -> Vec<OsString> {
     }
     if let Some(model) = model {
         result.extend(model);
+    }
+    if args.client == ClientKind::Codex
+        && !forwarded.iter().any(|argument| {
+            argument
+                .to_string_lossy()
+                .contains("model_reasoning_effort")
+        })
+    {
+        result.extend([
+            OsString::from("-c"),
+            OsString::from(format!(
+                "model_reasoning_effort=\"{}\"",
+                integration.default_reasoning_effort
+            )),
+        ]);
     }
     if !command_mode && non_interactive && !has_mode {
         if let Some(mode) = mode {

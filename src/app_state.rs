@@ -56,6 +56,8 @@ pub struct AppState {
     pub provider_store: ProviderStore,
     /// Lazy logger for verbose output.
     pub logger: LogLazy,
+    /// Maximum request body accepted by raw proxy surfaces.
+    pub max_proxy_request_bytes: usize,
     /// Admin credential state: the optional deploy-time key plus the
     /// first-visitor claim of the admin UI (see [`crate::admin`]).
     pub admin: Arc<crate::admin::AdminClaim>,
@@ -79,4 +81,6 @@ pub struct AppState {
     pub mpp: crate::mpp::MppConfig,
     /// Registry of in-flight interactive login sessions (`/api/login`).
     pub login_manager: crate::login::LoginManager,
+    /// Optional GitHub credential proxy and destructive-operation policy.
+    pub github: crate::github_proxy::GitHubProxyConfig,
 }

@@ -18,7 +18,7 @@ determines whether the router needs a new translation direction.
 | Gemini CLI | Gemini / Vertex | `GOOGLE_GEMINI_BASE_URL`, `GOOGLE_VERTEX_BASE_URL` | `/api/gemini/v1beta`, `/api/vertex/v1` |
 | opencode | provider-plugin driven | `opencode.json` `provider.<id>.options.baseURL` | `/v1/chat/completions`, `/v1/responses`, or `/v1/messages` |
 | Grok CLI | OpenAI Chat Completions | `GROK_BASE_URL` + `GROK_API_KEY` | `/v1/chat/completions` |
-| Cursor CLI (`cursor-agent`) | Cursor backend | **not configurable** — see below | — |
+| Cursor CLI (`cursor-agent`) | Connect-RPC over private `agent.v1` / `aiserver.v1` services | `CURSOR_API_ENDPOINT` (undocumented) | a new Cursor RPC adapter |
 
 ### Claude Code
 
@@ -128,17 +128,13 @@ the router's `/v1/chat/completions` endpoint is the integration point.
 
 ### Cursor CLI
 
-The [Cursor CLI configuration reference](https://cursor.com/docs/cli/reference/configuration)
-documents `~/.cursor/cli-config.json`, `CURSOR_CONFIG_DIR`, `XDG_CONFIG_HOME`,
-the standard `HTTP_PROXY`/`HTTPS_PROXY`/`NODE_USE_ENV_PROXY` proxy variables,
-and `NODE_EXTRA_CA_CERTS`. It documents **no** custom API base URL or custom
-provider key; model selection is limited to Cursor-hosted models.
-
-This is recorded as an explicit non-support finding rather than being papered
-over: the Cursor *IDE* exposes an "Override OpenAI Base URL" setting, but the
-`cursor-agent` CLI does not expose an equivalent. The corresponding use-case
-document says so and describes the only supported interception route (an
-HTTP(S) proxy with a trusted CA), while marking it unsupported/unverified.
+Correction (2026-08-14): static inspection of the shipped CLI found
+`CURSOR_API_ENDPOINT`, resolved after an explicit endpoint argument and before
+the `https://api2.cursor.sh` default. It also found Connect-RPC service names
+under `agent.v1` and `aiserver.v1`, plus `CURSOR_CONFIG_DIR` and
+`CURSOR_DATA_DIR`. The client can therefore be redirected and isolated, but it
+cannot use an existing chat endpoint: the missing work is a private Connect-RPC
+adapter, not MCP and not a base-URL setting.
 
 ## Cross-cutting conclusions
 

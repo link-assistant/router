@@ -97,6 +97,12 @@ impl std::fmt::Display for ClaimError {
 
 impl std::error::Error for ClaimError {}
 
+impl From<io::Error> for ClaimError {
+    fn from(_: io::Error) -> Self {
+        Self::Storage
+    }
+}
+
 /// A freshly minted, not-yet-active admin candidate.
 #[derive(Debug, Clone)]
 pub struct Candidate {
@@ -207,13 +213,16 @@ impl AdminClaim {
     /// Whether *some* admin credential exists — provisioned or claimed.
     #[must_use]
     pub fn is_claimed(&self) -> bool {
-        self.env_key.is_some() || self.locked().active_sha256.is_some()
+        let mut state = self.locked();
+        self.refresh_from_disk(&mut state);
+        self.env_key.is_some() || state.active_sha256.is_some()
     }
 
     /// Public status snapshot.
     #[must_use]
     pub fn status(&self) -> AdminStatus {
         let mut state = self.locked();
+        self.refresh_from_disk(&mut state);
         Self::expire_candidate(&mut state);
         let provisioned = self.env_key.is_some();
         let claimed = provisioned || state.active_sha256.is_some();
@@ -240,7 +249,8 @@ impl AdminClaim {
         {
             return true;
         }
-        let state = self.locked();
+        let mut state = self.locked();
+        self.refresh_from_disk(&mut state);
         state.active_sha256.as_deref().is_some_and(|digest| {
             constant_time_eq(digest.as_bytes(), sha256_hex(presented).as_bytes())
         })
@@ -258,6 +268,7 @@ impl AdminClaim {
             return Err(ClaimError::ProvisionedByEnvironment);
         }
         let mut state = self.locked();
+        self.refresh_from_disk(&mut state);
         if state.active_sha256.is_some() {
             return Err(ClaimError::AlreadyClaimed);
         }
@@ -293,6 +304,7 @@ impl AdminClaim {
             return Err(ClaimError::ProvisionedByEnvironment);
         }
         let mut state = self.locked();
+        self.refresh_from_disk(&mut state);
         if state.active_sha256.is_some() {
             return Err(ClaimError::AlreadyClaimed);
         }
@@ -306,8 +318,13 @@ impl AdminClaim {
             return Err(ClaimError::TokenMismatch);
         }
         let claimed_at = unix_secs();
-        self.persist(&digest, claimed_at)
-            .map_err(|_| ClaimError::Storage)?;
+        self.with_claim_lock(|| {
+            if self.read_persisted().is_some() {
+                return Err(ClaimError::AlreadyClaimed);
+            }
+            self.persist(&digest, claimed_at)
+                .map_err(|_| ClaimError::Storage)
+        })?;
         state.active_sha256 = Some(digest);
         state.claimed_at = Some(claimed_at);
         state.candidate = None;
@@ -329,14 +346,23 @@ impl AdminClaim {
             return Err(ClaimError::ProvisionedByEnvironment);
         }
         let mut state = self.locked();
+        self.refresh_from_disk(&mut state);
         if state.active_sha256.is_none() {
             return Err(ClaimError::NoCandidate);
         }
+        let previous_digest = state.active_sha256.clone();
         let token = mint_admin_token();
         let digest = sha256_hex(&token);
         let claimed_at = unix_secs();
-        self.persist(&digest, claimed_at)
-            .map_err(|_| ClaimError::Storage)?;
+        self.with_claim_lock(|| {
+            if self.claim_path.is_some()
+                && self.read_persisted().map(|file| file.token_sha256) != previous_digest
+            {
+                return Err(ClaimError::AlreadyClaimed);
+            }
+            self.persist(&digest, claimed_at)
+                .map_err(|_| ClaimError::Storage)
+        })?;
         state.active_sha256 = Some(digest);
         state.claimed_at = Some(claimed_at);
         state.candidate = None;
@@ -347,19 +373,38 @@ impl AdminClaim {
         let Some(path) = self.claim_path.as_ref() else {
             return Ok(());
         };
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
         let file = ClaimFile {
             token_sha256: token_sha256.to_string(),
             claimed_at,
         };
         let body = serde_json::to_string_pretty(&file)?;
-        // Write-then-rename so a crash mid-write cannot leave a truncated file
-        // that would read back as "unclaimed".
-        let tmp = path.with_extension("json.tmp");
-        fs::write(&tmp, body)?;
-        fs::rename(&tmp, path)
+        crate::durable_file::atomic_write_owner_only(path, body.as_bytes())
+    }
+
+    fn read_persisted(&self) -> Option<ClaimFile> {
+        self.claim_path
+            .as_ref()
+            .and_then(|path| fs::read_to_string(path).ok())
+            .and_then(|raw| serde_json::from_str(&raw).ok())
+            .filter(|file: &ClaimFile| !file.token_sha256.is_empty())
+    }
+
+    fn refresh_from_disk(&self, state: &mut ClaimState) {
+        if let Some(file) = self.read_persisted() {
+            state.active_sha256 = Some(file.token_sha256);
+            state.claimed_at = Some(file.claimed_at);
+            state.candidate = None;
+        }
+    }
+
+    fn with_claim_lock<T>(
+        &self,
+        operation: impl FnOnce() -> Result<T, ClaimError>,
+    ) -> Result<T, ClaimError> {
+        let Some(path) = self.claim_path.as_ref() else {
+            return operation();
+        };
+        crate::durable_file::with_exclusive_lock(&path.with_extension("lock"), operation)
     }
 
     fn expire_candidate(state: &mut ClaimState) {
@@ -530,6 +575,26 @@ mod tests {
         assert!(reloaded.is_claimed());
         assert!(reloaded.verify(&candidate.token));
         assert_eq!(reloaded.begin().unwrap_err(), ClaimError::AlreadyClaimed);
+    }
+
+    #[test]
+    fn independently_loaded_claims_have_one_cross_process_winner() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let ttl = Duration::from_secs(60);
+        let first = AdminClaim::load(None, dir.path(), ttl);
+        let second = AdminClaim::load(None, dir.path(), ttl);
+        let first_candidate = first.begin().expect("first candidate");
+        let second_candidate = second.begin().expect("second candidate");
+
+        first
+            .confirm(&first_candidate.claim_id, &first_candidate.token)
+            .expect("first process claims");
+        assert_eq!(
+            second.confirm(&second_candidate.claim_id, &second_candidate.token),
+            Err(ClaimError::AlreadyClaimed)
+        );
+        assert!(second.verify(&first_candidate.token));
+        assert!(!second.verify(&second_candidate.token));
     }
 
     #[test]

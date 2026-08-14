@@ -92,7 +92,10 @@ fn mock_managed_router(
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJtYW5hZ2VkLXJ1biJ9.signature"}"#,
                 ),
-                "/v1/models" => ("200 OK", r#"{"object":"list","data":[{"id":"gpt-5"}]}"#),
+                "/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                ),
                 "/api/tokens/revoke" => ("200 OK", r#"{"revoked":"managed-run"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };

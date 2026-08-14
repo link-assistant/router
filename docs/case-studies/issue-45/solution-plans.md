@@ -103,10 +103,11 @@ endpoint.
 
 ## Plan 7 — Every other agentic CLI (R7)
 
-No further protocol work: the research shows the remaining CLIs speak a dialect
-the router already serves once Plan 6 lands. The plan is one use-case document
-per CLI with a verified configuration block, plus an explicit non-support note
-for `cursor-agent`.
+Most remaining CLIs speak a dialect the router already serves once Plan 6
+lands. Cursor is the exception: `CURSOR_API_ENDPOINT` can redirect it, but a
+future integration requires a scoped Connect-RPC adapter for the minimum
+`agent.v1`/`aiserver.v1` session surface. Until then, keep an accurate explicit
+non-support note rather than describing the missing adapter as MCP.
 
 ## Plan 8 — Documentation split (R9)
 

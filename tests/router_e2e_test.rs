@@ -10,7 +10,7 @@ use std::time::Duration;
 use axum::Router;
 use axum::body::{Body, to_bytes};
 use axum::extract::{Request, State};
-use axum::http::{HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::from_fn_with_state;
 use axum::response::Response;
 use axum::routing::{get, post};
@@ -39,6 +39,7 @@ enum StubDialect {
 struct StubState {
     dialect: StubDialect,
     requests: Arc<Mutex<Vec<Value>>>,
+    headers: Arc<Mutex<Vec<HeaderMap>>>,
     invalid_body: bool,
 }
 
@@ -48,6 +49,7 @@ struct TestRouter {
     token: String,
     token_manager: TokenManager,
     requests: Arc<Mutex<Vec<Value>>>,
+    upstream_headers: Arc<Mutex<Vec<HeaderMap>>>,
     log_root: std::path::PathBuf,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
@@ -55,10 +57,32 @@ struct TestRouter {
 
 impl TestRouter {
     async fn start(provider: UpstreamProvider) -> Self {
-        Self::start_with_invalid_body(provider, false).await
+        Self::start_with_options(
+            provider,
+            false,
+            link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+        )
+        .await
     }
 
     async fn start_with_invalid_body(provider: UpstreamProvider, invalid_body: bool) -> Self {
+        Self::start_with_options(
+            provider,
+            invalid_body,
+            link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+        )
+        .await
+    }
+
+    async fn start_with_max_request_bytes(provider: UpstreamProvider, limit: usize) -> Self {
+        Self::start_with_options(provider, false, limit).await
+    }
+
+    async fn start_with_options(
+        provider: UpstreamProvider,
+        invalid_body: bool,
+        max_proxy_request_bytes: usize,
+    ) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
         let dialect = if provider == UpstreamProvider::Codex {
             StubDialect::Codex
@@ -66,9 +90,11 @@ impl TestRouter {
             StubDialect::Anthropic
         };
         let requests = Arc::new(Mutex::new(Vec::new()));
+        let upstream_headers = Arc::new(Mutex::new(Vec::new()));
         let stub_state = StubState {
             dialect,
             requests: Arc::clone(&requests),
+            headers: Arc::clone(&upstream_headers),
             invalid_body,
         };
         let stub = Router::new().fallback(stub_vendor).with_state(stub_state);
@@ -134,6 +160,8 @@ impl TestRouter {
             login_manager: link_assistant_router::login::LoginManager::new(
                 link_assistant_router::login::LoginConfig::default(),
             ),
+            github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
+            max_proxy_request_bytes,
         };
         let app = test_app(state);
         let (url, router_task) = spawn(app).await;
@@ -144,6 +172,7 @@ impl TestRouter {
             token,
             token_manager,
             requests,
+            upstream_headers,
             log_root,
             tasks: vec![stub_task, router_task],
             _data: data,
@@ -235,6 +264,11 @@ async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
 }
 
 async fn stub_vendor(State(state): State<StubState>, request: Request) -> Response {
+    state
+        .headers
+        .lock()
+        .expect("stub header lock")
+        .push(request.headers().clone());
     let body = to_bytes(request.into_body(), 1024 * 1024)
         .await
         .expect("read stub request");
@@ -255,7 +289,8 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
     let mut response = match state.dialect {
         StubDialect::Anthropic if stream => Response::new(Body::from(anthropic_stream())),
         StubDialect::Anthropic => Response::new(Body::from(
-            serde_json::to_vec(&anthropic_message()).expect("serialize Anthropic response"),
+            serde_json::to_vec(&anthropic_message_with_server_tools(&body))
+                .expect("serialize Anthropic response"),
         )),
         StubDialect::Codex => Response::new(Body::from(codex_stream())),
     };
@@ -297,6 +332,40 @@ fn anthropic_message() -> Value {
         "stop_reason": "end_turn",
         "stop_sequence": null,
         "usage": {"input_tokens": 3, "output_tokens": 2}
+    })
+}
+
+fn anthropic_message_with_server_tools(request: &Value) -> Value {
+    let tool_types = request["tools"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|tool| tool["type"].as_str())
+        .collect::<Vec<_>>();
+    if !tool_types
+        .iter()
+        .any(|kind| kind.starts_with("web_search_") || kind.starts_with("web_fetch_"))
+    {
+        return anthropic_message();
+    }
+    json!({
+        "id": "msg_server_tools",
+        "type": "message",
+        "role": "assistant",
+        "model": "claude-sonnet-4-5",
+        "content": [
+            {"type":"server_tool_use","id":"srvtoolu_search","name":"web_search","input":{"query":"rust"}},
+            {"type":"web_search_tool_result","tool_use_id":"srvtoolu_search","content":[{"type":"web_search_result","url":"https://www.rust-lang.org","title":"Rust","encrypted_content":"opaque"}]},
+            {"type":"server_tool_use","id":"srvtoolu_fetch","name":"web_fetch","input":{"url":"https://www.rust-lang.org"}},
+            {"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_fetch","content":{"type":"web_fetch_result","url":"https://www.rust-lang.org","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"Rust"}}}}
+        ],
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "usage": {
+            "input_tokens": 3,
+            "output_tokens": 2,
+            "server_tool_use": {"web_search_requests":1,"web_fetch_requests":1}
+        }
     })
 }
 
@@ -378,6 +447,33 @@ async fn request_larger_than_logging_buffer_reaches_handler() {
 }
 
 #[tokio::test]
+async fn configured_proxy_body_ceiling_returns_413_without_reaching_upstream() {
+    let router = TestRouter::start_with_max_request_bytes(UpstreamProvider::Anthropic, 1024).await;
+    let response = router
+        .post(
+            "/v1/messages",
+            &json!({
+                "model":"claude-sonnet-4-5",
+                "max_tokens":64,
+                "messages":[{"role":"user","content":"x".repeat(2048)}]
+            }),
+        )
+        .send()
+        .await
+        .expect("oversize response");
+
+    assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+    let payload: Value = response.json().await.expect("Anthropic error JSON");
+    assert_eq!(payload["type"], "error");
+    assert!(
+        payload["error"]["message"]
+            .as_str()
+            .is_some_and(|message| message.contains("1024 byte proxy limit"))
+    );
+    assert!(router.requests.lock().expect("stub requests").is_empty());
+}
+
+#[tokio::test]
 async fn anthropic_upstream_returns_each_client_dialect_and_pinned_alias() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let cases = [
@@ -434,6 +530,55 @@ async fn anthropic_upstream_returns_each_client_dialect_and_pinned_alias() {
 }
 
 #[tokio::test]
+async fn both_upstream_dialects_serve_all_three_buffered_client_surfaces() {
+    for (provider, requested_model, served_model) in [
+        (
+            UpstreamProvider::Anthropic,
+            "claude-sonnet-4-5",
+            "claude-sonnet-4-5",
+        ),
+        (UpstreamProvider::Codex, "gpt-5", "gpt-5"),
+    ] {
+        let router = TestRouter::start(provider).await;
+        let cases = [
+            (
+                "/v1/messages",
+                json!({"model":requested_model,"max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
+                "content",
+            ),
+            (
+                "/v1/chat/completions",
+                json!({"model":requested_model,"messages":[{"role":"user","content":"hi"}]}),
+                "choices",
+            ),
+            (
+                "/v1/responses",
+                json!({"model":requested_model,"input":"hi"}),
+                "output",
+            ),
+        ];
+
+        for (path, body, envelope) in cases {
+            let response = router
+                .post(path, &body)
+                .send()
+                .await
+                .expect("cross-dialect response");
+            assert_eq!(response.status(), StatusCode::OK, "{provider:?} {path}");
+            let payload: Value = response.json().await.expect("JSON response");
+            assert!(
+                payload[envelope].is_array(),
+                "{provider:?} {path} must return {envelope}[]"
+            );
+            assert_eq!(
+                payload["model"], served_model,
+                "{provider:?} {path} must report the upstream-served model"
+            );
+        }
+    }
+}
+
+#[tokio::test]
 async fn anthropic_upstream_relays_vendor_headers_across_client_dialects() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let cases = [
@@ -475,6 +620,64 @@ async fn anthropic_upstream_relays_vendor_headers_across_client_dialects() {
             "{path} must relay the vendor request ID"
         );
     }
+}
+
+#[tokio::test]
+async fn native_anthropic_server_tools_and_beta_headers_survive_the_full_route() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+    let response = router
+        .post(
+            "/v1/messages",
+            &json!({
+                "model":"claude-sonnet-4-5",
+                "max_tokens":256,
+                "messages":[{"role":"user","content":"research Rust"}],
+                "tools":[
+                    {"type":"web_search_20250305","name":"web_search","max_uses":2},
+                    {"type":"web_fetch_20250910","name":"web_fetch","max_uses":2}
+                ]
+            }),
+        )
+        .header("anthropic-beta", "web-fetch-2025-09-10")
+        .send()
+        .await
+        .expect("native server-tool response");
+    assert_eq!(response.status(), StatusCode::OK);
+    let payload: Value = response.json().await.expect("Anthropic JSON");
+    let types = payload["content"]
+        .as_array()
+        .expect("content blocks")
+        .iter()
+        .filter_map(|block| block["type"].as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        types,
+        [
+            "server_tool_use",
+            "web_search_tool_result",
+            "server_tool_use",
+            "web_fetch_tool_result"
+        ]
+    );
+    assert_eq!(
+        payload["usage"]["server_tool_use"]["web_search_requests"],
+        1
+    );
+    assert_eq!(payload["usage"]["server_tool_use"]["web_fetch_requests"], 1);
+
+    let requests = router.requests.lock().expect("stub requests");
+    assert_eq!(requests[0]["tools"][0]["type"], "web_search_20250305");
+    assert_eq!(requests[0]["tools"][1]["type"], "web_fetch_20250910");
+    drop(requests);
+    let beta = {
+        let headers = router.upstream_headers.lock().expect("stub headers");
+        headers[0]["anthropic-beta"]
+            .to_str()
+            .expect("ASCII beta header")
+            .to_string()
+    };
+    assert!(beta.contains("web-fetch-2025-09-10"));
+    assert!(beta.contains(proxy::OAUTH_BETA_FLAG));
 }
 
 #[tokio::test]
@@ -618,6 +821,28 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
 }
 
 #[tokio::test]
+async fn unavailable_server_tool_fails_explicitly_without_reaching_codex() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    let response = router
+        .post(
+            "/v1/responses",
+            &json!({"model":"gpt-5","input":"fetch this","tools":[{"type":"web_fetch"}]}),
+        )
+        .send()
+        .await
+        .expect("unsupported server-tool response");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let payload: Value = response.json().await.expect("OpenAI error JSON");
+    assert!(
+        payload["error"]["message"]
+            .as_str()
+            .is_some_and(|message| message.contains("web_fetch"))
+    );
+    assert!(router.requests.lock().expect("stub requests").is_empty());
+}
+
+#[tokio::test]
 async fn auth_unknown_models_and_admin_isolation() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     for path in [
@@ -733,19 +958,12 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     assert_eq!(messages.status(), StatusCode::OK);
     assert!(messages.headers().get("x-codex-active-limit").is_none());
     assert_eq!(messages.headers()["x-ratelimit-remaining-requests"], "41");
+    assert!(messages.headers().get("warning").is_none());
     assert!(
         messages
             .headers()
-            .get("warning")
-            .and_then(|value| value.to_str().ok())
-            .is_some_and(|value| value.contains("max_tokens"))
-    );
-    assert_eq!(
-        messages
-            .headers()
             .get("x-link-assistant-output-limit")
-            .and_then(|value| value.to_str().ok()),
-        Some("unsupported")
+            .is_none()
     );
     let payload: Value = messages.json().await.expect("Messages JSON response");
     assert!(payload["content"].is_array());
@@ -798,8 +1016,8 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
             .contains("cannot honor output-token limits")
     );
 
-    // Chat-compatible clients such as grok-cli always send a cap and cannot
-    // disable it. Keep that surface usable by dropping the translated field.
+    // Chat caps are optional. Refuse them when the backend cannot enforce
+    // them, rather than returning more tokens than the caller authorised.
     for body in [
         json!({
             "model":"gpt-5",
@@ -817,17 +1035,15 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
             .send()
             .await
             .expect("capped Codex Chat response");
-        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let payload: Value = response.json().await.expect("OpenAI error response");
+        assert!(payload.get("type").is_none());
+        assert_eq!(payload["error"]["type"], "invalid_request_error");
     }
 
     let requests = codex.requests.lock().expect("stub requests");
-    assert_eq!(requests.len(), 3);
-    for request in &requests[1..] {
-        assert!(
-            request.get("max_output_tokens").is_none(),
-            "Chat compatibility cap must not reach the Codex subscription"
-        );
-    }
+    assert_eq!(requests.len(), 1, "rejected caps must not reach upstream");
+    drop(requests);
 }
 
 #[tokio::test]

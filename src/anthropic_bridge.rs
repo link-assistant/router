@@ -29,9 +29,6 @@ use crate::metrics::Surface;
 /// The Anthropic Messages API requires the field; `OpenAI` upstreams do not.
 pub(crate) const DEFAULT_MAX_TOKENS: u64 = 4096;
 
-/// Response header used when a required Messages limit cannot be enforced.
-pub const OUTPUT_LIMIT_HEADER: &str = "x-link-assistant-output-limit";
-
 /// Whether the Anthropic surface must be bridged for this upstream provider.
 ///
 /// `Anthropic` needs no translation, and `Gonka`/`Crater` keep the behaviour
@@ -259,6 +256,20 @@ fn translate_tools(tools: &[Value]) -> Vec<Value> {
     tools
         .iter()
         .filter_map(|tool| {
+            if tool
+                .get("type")
+                .and_then(Value::as_str)
+                .is_some_and(|kind| kind.starts_with("web_search_"))
+            {
+                return Some(json!({"type": "web_search"}));
+            }
+            if tool
+                .get("type")
+                .and_then(Value::as_str)
+                .is_some_and(|kind| kind.starts_with("web_fetch_"))
+            {
+                return Some(json!({"type": "web_fetch"}));
+            }
             let name = tool.get("name").and_then(Value::as_str)?;
             Some(json!({
                 "type": "function",
@@ -360,6 +371,7 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
 fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
     let mut content: Vec<Value> = Vec::new();
     let mut saw_tool_call = false;
+    let mut web_search_requests = 0_u64;
     for item in payload
         .get("output")
         .and_then(Value::as_array)
@@ -396,6 +408,23 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                         .unwrap_or("{}"),
                 ));
             }
+            "web_search_call" => {
+                let id = item.get("id").and_then(Value::as_str).unwrap_or_default();
+                content.push(json!({
+                    "type": "server_tool_use",
+                    "id": id,
+                    "name": "web_search",
+                    "input": item.get("action").cloned().unwrap_or_else(|| json!({})),
+                }));
+                if item.get("status").and_then(Value::as_str) == Some("completed") {
+                    web_search_requests = web_search_requests.saturating_add(1);
+                    content.push(json!({
+                        "type": "web_search_tool_result",
+                        "tool_use_id": id,
+                        "content": [],
+                    }));
+                }
+            }
             _ => {}
         }
     }
@@ -408,14 +437,21 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
         "end_turn"
     };
     let usage = payload.get("usage");
-    message_envelope(
+    let mut message = message_envelope(
         payload.get("id").and_then(Value::as_str),
         requested_model,
         &content,
         stop_reason,
         usage_field(usage, &["input_tokens", "prompt_tokens"]),
         usage_field(usage, &["output_tokens", "completion_tokens"]),
-    )
+    );
+    if web_search_requests > 0 {
+        message["usage"]["server_tool_use"] = json!({
+            "web_search_requests": web_search_requests,
+            "web_fetch_requests": 0,
+        });
+    }
+    message
 }
 
 fn tool_use_block(id: &str, name: &str, arguments: &str) -> Value {
@@ -451,6 +487,39 @@ fn message_envelope(
         "stop_reason": stop_reason,
         "stop_sequence": Value::Null,
         "usage": {"input_tokens": input_tokens, "output_tokens": output_tokens},
+    })
+}
+
+fn enforce_anthropic_stop(message: &mut Value, sequences: &[String]) {
+    let Some(content) = message.get_mut("content").and_then(Value::as_array_mut) else {
+        return;
+    };
+    let mut matched = None;
+    let mut keep = content.len();
+    for (index, block) in content.iter_mut().enumerate() {
+        let Some(text) = block.get_mut("text") else {
+            continue;
+        };
+        let Some(mut visible) = text.as_str().map(str::to_string) else {
+            continue;
+        };
+        if let Some(sequence) = crate::stop_sequences::truncate(&mut visible, sequences) {
+            *text = Value::String(visible);
+            matched = Some(sequence);
+            keep = index + 1;
+            break;
+        }
+    }
+    content.truncate(keep);
+    if let Some(sequence) = matched {
+        message["stop_reason"] = Value::String("end_turn".into());
+        message["stop_sequence"] = Value::String(sequence);
+    }
+}
+
+fn unsupported_server_tool(body: &Value, provider: UpstreamProvider) -> Option<String> {
+    provider.subscription_provider().and_then(|subscription| {
+        crate::capabilities::unsupported_server_tool_type(subscription, body.get("tools"))
     })
 }
 
@@ -586,6 +655,15 @@ pub async fn forward_anthropic_messages(
             b"messages must contain at least one message",
         );
     }
+    if let Some(kind) = unsupported_server_tool(&anthropic_body, state.upstream_provider) {
+        if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
+            return *response;
+        }
+        return anthropic_error(
+            StatusCode::BAD_REQUEST,
+            format!("Unsupported tool type for selected provider: {kind}").as_bytes(),
+        );
+    }
     let requested_model = anthropic_body
         .get("model")
         .and_then(Value::as_str)
@@ -595,6 +673,7 @@ pub async fn forward_anthropic_messages(
         .get("stream")
         .and_then(Value::as_bool)
         .unwrap_or(false);
+    let stop_sequences = crate::stop_sequences::from_value(anthropic_body.get("stop_sequences"));
     let upstream_model = resolve_bridge_model(state);
     let chat_body = anthropic_to_chat_request(&anthropic_body, &upstream_model);
 
@@ -643,20 +722,13 @@ pub async fn forward_anthropic_messages(
         }
     };
 
-    let mut response =
-        translate_upstream_response(upstream, &requested_model, stream_requested).await;
-    if state.upstream_provider == UpstreamProvider::Codex && response.status().is_success() {
-        response
-            .headers_mut()
-            .insert(OUTPUT_LIMIT_HEADER, HeaderValue::from_static("unsupported"));
-        response.headers_mut().insert(
-            "warning",
-            HeaderValue::from_static(
-                "299 link-assistant-router \"max_tokens is required by Messages but cannot be enforced by the Codex subscription backend\"",
-            ),
-        );
-    }
-    response
+    translate_upstream_response(
+        upstream,
+        &requested_model,
+        stream_requested,
+        &stop_sequences,
+    )
+    .await
 }
 
 /// Convert the `OpenAI`-dialect response produced by a delegate forwarder into
@@ -665,6 +737,7 @@ async fn translate_upstream_response(
     upstream: Response,
     requested_model: &str,
     stream_requested: bool,
+    stop_sequences: &[String],
 ) -> Response {
     let (parts, body) = upstream.into_parts();
     let status = parts.status;
@@ -682,7 +755,12 @@ async fn translate_upstream_response(
     }
 
     if stream_requested {
-        return anthropic_sse_response(body, requested_model, &parts.headers);
+        return anthropic_sse_response(
+            body,
+            requested_model,
+            &parts.headers,
+            stop_sequences.to_vec(),
+        );
     }
 
     let bytes = match axum::body::to_bytes(body, 32 * 1024 * 1024).await {
@@ -700,11 +778,13 @@ async fn translate_upstream_response(
             b"Upstream returned a malformed response",
         );
     };
-    let mut response = (
-        StatusCode::OK,
-        axum::Json(openai_json_to_anthropic_message(&payload, requested_model)),
-    )
-        .into_response();
+    let served_model = payload
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or(requested_model);
+    let mut translated = openai_json_to_anthropic_message(&payload, served_model);
+    enforce_anthropic_stop(&mut translated, stop_sequences);
+    let mut response = (StatusCode::OK, axum::Json(translated)).into_response();
     *response.headers_mut() = parts.headers;
     response
         .headers_mut()
@@ -713,8 +793,14 @@ async fn translate_upstream_response(
 }
 
 /// Wrap the upstream stream in an incremental Anthropic SSE translator.
-fn anthropic_sse_response(body: Body, requested_model: &str, upstream: &HeaderMap) -> Response {
-    let translator = AnthropicStreamTranslator::new(requested_model);
+fn anthropic_sse_response(
+    body: Body,
+    requested_model: &str,
+    upstream: &HeaderMap,
+    stop_sequences: Vec<String>,
+) -> Response {
+    let translator =
+        AnthropicStreamTranslator::new(requested_model).with_stop_sequences(stop_sequences);
     let data = body.into_data_stream();
     let stream = futures_util::stream::unfold(
         (data, translator, false),

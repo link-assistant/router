@@ -690,6 +690,33 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn concurrent_successful_refreshes_share_one_exchange() {
+        let (url, server) =
+            stub_token_endpoint(r#"{"access_token":"shared-refresh","expires_in":3600}"#).await;
+        let cache = TokenCache::new();
+        let client = reqwest::Client::new();
+        let expired = token(Some("one-refresh-token"), Some(1));
+        let requests = (0..10).map(|_| {
+            cache.get_fresh_for_at(
+                &client,
+                &url,
+                SubscriptionProvider::Claude,
+                "primary",
+                expired.clone(),
+                10_000,
+            )
+        });
+        let refreshed = futures_util::future::join_all(requests).await;
+
+        assert!(
+            refreshed
+                .iter()
+                .all(|token| token.access_token == "shared-refresh")
+        );
+        server.await.expect("single refresh exchange");
+    }
+
+    #[tokio::test]
     async fn terminal_refresh_failure_is_attempted_only_once_for_same_credential() {
         use std::sync::Arc;
         use std::sync::atomic::{AtomicUsize, Ordering};

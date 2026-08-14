@@ -36,6 +36,12 @@ pub struct ChatMessage {
     pub content: Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// Identifier of the tool call answered by a `role=tool` message.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    /// Function calls emitted by an assistant turn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_calls: Option<Value>,
 }
 
 /// `OpenAI` `POST /v1/chat/completions` request body.
@@ -59,6 +65,10 @@ pub struct OpenAIChatCompletionRequest {
     pub tools: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tool_choice: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<Value>,
 }
 
 /// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
@@ -77,11 +87,36 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
                 }
             }
             "user" | "assistant" => {
-                let anthropic_content = match &msg.content {
+                let mut anthropic_content = match &msg.content {
                     Value::String(s) => Value::String(s.clone()),
                     Value::Array(parts) => Value::Array(translate_parts(parts)),
                     _ => Value::String(extract_text(&msg.content).unwrap_or_default()),
                 };
+                if role == "assistant"
+                    && let Some(tool_calls) = msg.tool_calls.as_ref().and_then(Value::as_array)
+                {
+                    let mut blocks = match anthropic_content {
+                        Value::String(ref text) if text.is_empty() => Vec::new(),
+                        Value::String(text) => vec![json!({"type": "text", "text": text})],
+                        Value::Array(blocks) => blocks,
+                        _ => Vec::new(),
+                    };
+                    blocks.extend(tool_calls.iter().filter_map(|call| {
+                        let function = call.get("function")?;
+                        let arguments = function
+                            .get("arguments")
+                            .and_then(Value::as_str)
+                            .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+                            .unwrap_or_else(|| json!({}));
+                        Some(json!({
+                            "type": "tool_use",
+                            "id": call.get("id").and_then(Value::as_str).unwrap_or_default(),
+                            "name": function.get("name").and_then(Value::as_str).unwrap_or_default(),
+                            "input": arguments,
+                        }))
+                    }));
+                    anthropic_content = Value::Array(blocks);
+                }
                 messages.push(json!({
                     "role": role,
                     "content": anthropic_content,
@@ -94,7 +129,11 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
                 messages.push(json!({
                     "role": "user",
                     "content": [
-                        { "type": "tool_result", "content": txt }
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": msg.tool_call_id.clone().unwrap_or_default(),
+                            "content": txt
+                        }
                     ]
                 }));
             }
@@ -134,6 +173,11 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
     }
+    if let Some(reasoning) = &req.reasoning {
+        body["reasoning"] = reasoning.clone();
+    } else if let Some(effort) = &req.reasoning_effort {
+        body["reasoning"] = json!({"effort": effort});
+    }
     reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
     body
 }
@@ -146,22 +190,68 @@ pub(crate) fn reconcile_subscription_parameters(
     provider: crate::subscription::SubscriptionProvider,
     body: &mut Value,
 ) {
-    let rejects_temperature = provider == crate::subscription::SubscriptionProvider::Codex
-        || (provider == crate::subscription::SubscriptionProvider::Claude
-            && body
-                .get("model")
-                .and_then(Value::as_str)
-                .and_then(|model| model.strip_prefix("claude-"))
-                .and_then(|model| {
-                    let mut parts = model.split('-');
-                    let family = parts.next()?;
-                    let generation = parts.next()?.parse::<u32>().ok()?;
-                    matches!(family, "haiku" | "sonnet" | "opus").then_some(generation)
-                })
-                .is_some_and(|generation| generation >= 5));
-    if rejects_temperature {
+    let model = body.get("model").and_then(Value::as_str);
+    let claude_generation = crate::capabilities::claude_generation(model);
+    let capabilities = crate::capabilities::subscription(provider, model);
+    if capabilities.temperature == crate::capabilities::Capability::Unsupported {
         if let Some(object) = body.as_object_mut() {
             object.remove("temperature");
+        }
+    }
+    if provider == crate::subscription::SubscriptionProvider::Claude {
+        reconcile_claude_thinking(body, claude_generation);
+    }
+}
+
+fn reconcile_claude_thinking(body: &mut Value, generation: Option<u32>) {
+    let requested_effort = body
+        .pointer("/reasoning/effort")
+        .and_then(Value::as_str)
+        .map(str::to_string);
+    if let Some(object) = body.as_object_mut() {
+        object.remove("reasoning");
+    }
+    let max_tokens = body
+        .get("max_tokens")
+        .and_then(Value::as_u64)
+        .unwrap_or(4096);
+    let thinking_present = body.get("thinking").is_some();
+    if !thinking_present
+        && (requested_effort
+            .as_deref()
+            .is_some_and(|effort| effort != "none")
+            || generation.is_some_and(|generation| generation >= 5))
+        && max_tokens > 1
+    {
+        let requested_budget = match requested_effort.as_deref().unwrap_or("high") {
+            "minimal" => 1_024,
+            "low" => 4_096,
+            "medium" => 8_192,
+            "xhigh" => 32_768,
+            _ => 16_384,
+        };
+        body["thinking"] = json!({
+            "type": "enabled",
+            "budget_tokens": requested_budget.min(max_tokens - 1),
+        });
+    }
+    let thinking_enabled = body
+        .get("thinking")
+        .and_then(|thinking| thinking.get("type"))
+        .and_then(Value::as_str)
+        .is_some_and(|kind| matches!(kind, "enabled" | "adaptive"));
+    if thinking_enabled {
+        if let Some(budget) = body
+            .pointer("/thinking/budget_tokens")
+            .and_then(Value::as_u64)
+            && budget >= max_tokens
+            && max_tokens > 1
+        {
+            body["thinking"]["budget_tokens"] = json!(max_tokens - 1);
+        }
+        if let Some(object) = body.as_object_mut() {
+            object.remove("temperature");
+            object.remove("top_p");
         }
     }
 }
@@ -777,10 +867,40 @@ pub(crate) fn translate_tools(tools: &Value) -> Value {
                 .iter()
                 .filter_map(|t| {
                     let kind = t.get("type").and_then(Value::as_str).unwrap_or("function");
-                    if kind != "function" {
-                        return None;
+                    match kind {
+                        "web_search" => {
+                            let mut tool = json!({
+                                "type": "web_search_20250305",
+                                "name": "web_search",
+                            });
+                            for key in [
+                                "max_uses",
+                                "allowed_domains",
+                                "blocked_domains",
+                                "user_location",
+                            ] {
+                                if let Some(value) = t.get(key) {
+                                    tool[key] = value.clone();
+                                }
+                            }
+                            return Some(tool);
+                        }
+                        "web_fetch" => {
+                            let mut tool = json!({
+                                "type": "web_fetch_20250910",
+                                "name": "web_fetch",
+                            });
+                            if let Some(max_uses) = t.get("max_uses") {
+                                tool["max_uses"] = max_uses.clone();
+                            }
+                            return Some(tool);
+                        }
+                        "function" => {}
+                        _ => return None,
                     }
-                    let func = t.get("function")?;
+                    // Chat Completions nests a function definition while the
+                    // Responses API keeps the same fields flat.
+                    let func = t.get("function").unwrap_or(t);
                     let name = func.get("name").and_then(Value::as_str)?.to_string();
                     let description = func
                         .get("description")
@@ -798,6 +918,31 @@ pub(crate) fn translate_tools(tools: &Value) -> Value {
         }
         other => other.clone(),
     }
+}
+
+/// Return the first tool type that cannot be represented by Anthropic.
+#[must_use]
+pub fn unsupported_anthropic_tool_type(tools: &Value) -> Option<String> {
+    tools.as_array()?.iter().find_map(|tool| {
+        let kind = tool
+            .get("type")
+            .and_then(Value::as_str)
+            .unwrap_or("function");
+        match kind {
+            "function"
+                if tool
+                    .get("function")
+                    .unwrap_or(tool)
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .is_some() =>
+            {
+                None
+            }
+            "web_search" | "web_fetch" => None,
+            other => Some(other.to_string()),
+        }
+    })
 }
 
 fn translate_tool_choice(choice: &Value) -> Value {
@@ -836,6 +981,8 @@ mod tests {
                 role: "user".into(),
                 content: Value::String("search for X".into()),
                 name: None,
+                tool_call_id: None,
+                tool_calls: None,
             }],
             max_tokens: None,
             max_completion_tokens: None,
@@ -854,6 +1001,8 @@ mod tests {
                 }
             ])),
             tool_choice: Some(json!("required")),
+            reasoning_effort: None,
+            reasoning: None,
         };
         let body = chat_completion_to_anthropic(&req);
         assert_eq!(body["tools"][0]["name"], "search");

@@ -31,6 +31,8 @@ pub struct OpenAIResponseRequest {
     pub stream: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tools: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<Value>,
 }
 
 /// Translate an `OpenAI` Responses-API request to Anthropic Messages.
@@ -65,6 +67,30 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
                         }
                         _ => {}
                     }
+                } else if item.get("type").and_then(Value::as_str) == Some("function_call") {
+                    let arguments = item
+                        .get("arguments")
+                        .and_then(Value::as_str)
+                        .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+                        .unwrap_or_else(|| json!({}));
+                    messages.push(json!({
+                        "role": "assistant",
+                        "content": [{
+                            "type": "tool_use",
+                            "id": item.get("call_id").or_else(|| item.get("id")).and_then(Value::as_str).unwrap_or_default(),
+                            "name": item.get("name").and_then(Value::as_str).unwrap_or_default(),
+                            "input": arguments,
+                        }]
+                    }));
+                } else if item.get("type").and_then(Value::as_str) == Some("function_call_output") {
+                    messages.push(json!({
+                        "role": "user",
+                        "content": [{
+                            "type": "tool_result",
+                            "tool_use_id": item.get("call_id").and_then(Value::as_str).unwrap_or_default(),
+                            "content": item.get("output").and_then(Value::as_str).unwrap_or_default(),
+                        }]
+                    }));
                 } else if let Some(text) = item.as_str() {
                     messages.push(json!({"role": "user", "content": text}));
                 }
@@ -90,6 +116,9 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     }
     if let Some(tools) = &req.tools {
         body["tools"] = translate_tools(tools);
+    }
+    if let Some(reasoning) = &req.reasoning {
+        body["reasoning"] = reasoning.clone();
     }
     reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
     body
@@ -190,6 +219,15 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
         "model": model,
         "input": input,
     });
+    out["reasoning"] = body
+        .get("reasoning")
+        .cloned()
+        .or_else(|| {
+            body.get("reasoning_effort")
+                .cloned()
+                .map(|effort| json!({"effort": effort}))
+        })
+        .unwrap_or_else(|| json!({"effort": crate::clients::DEFAULT_OPENAI_REASONING_EFFORT}));
     if !instructions.is_empty() {
         out["instructions"] = Value::String(instructions.join("\n\n"));
     }
@@ -388,6 +426,29 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
     })
 }
 
+/// Enforce Chat stop sequences on a buffered translated response.
+pub(crate) fn enforce_chat_stop(response: &mut Value, sequences: &[String]) {
+    let Some(choice) = response
+        .get_mut("choices")
+        .and_then(Value::as_array_mut)
+        .and_then(|choices| choices.first_mut())
+    else {
+        return;
+    };
+    let Some(text) = choice
+        .pointer_mut("/message/content")
+        .and_then(|value| value.as_str())
+        .map(str::to_string)
+    else {
+        return;
+    };
+    let mut visible = text;
+    if crate::stop_sequences::truncate(&mut visible, sequences).is_some() {
+        choice["message"]["content"] = Value::String(visible);
+        choice["finish_reason"] = Value::String("stop".into());
+    }
+}
+
 /// Incrementally translate Responses SSE events into Chat Completions chunks.
 pub struct ResponsesChatStreamTranslator {
     model: String,
@@ -401,6 +462,7 @@ pub struct ResponsesChatStreamTranslator {
     output_tokens: u64,
     total_tokens: u64,
     tool_indices: std::collections::BTreeSet<u64>,
+    stop_filter: crate::stop_sequences::StopSequenceFilter,
 }
 
 impl ResponsesChatStreamTranslator {
@@ -419,6 +481,7 @@ impl ResponsesChatStreamTranslator {
             output_tokens: 0,
             total_tokens: 0,
             tool_indices: std::collections::BTreeSet::new(),
+            stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
         }
     }
 
@@ -426,6 +489,13 @@ impl ResponsesChatStreamTranslator {
     #[must_use]
     pub const fn with_include_usage(mut self, include_usage: bool) -> Self {
         self.include_usage = include_usage;
+        self
+    }
+
+    /// Enforce Chat `stop` locally when the Responses backend cannot accept it.
+    #[must_use]
+    pub fn with_stop_sequences(mut self, sequences: Vec<String>) -> Self {
+        self.stop_filter = crate::stop_sequences::StopSequenceFilter::new(sequences);
         self
     }
 
@@ -461,6 +531,9 @@ impl ResponsesChatStreamTranslator {
     }
 
     fn translate_event(&mut self, event: &Value) -> Vec<String> {
+        if self.sent_final {
+            return Vec::new();
+        }
         match event.get("type").and_then(Value::as_str) {
             Some("response.created") => {
                 if let Some(response) = event.get("response") {
@@ -474,8 +547,16 @@ impl ResponsesChatStreamTranslator {
                     .get("delta")
                     .and_then(Value::as_str)
                     .unwrap_or_default();
+                let (text, matched) = self.stop_filter.push(text);
                 let mut frames = self.role_frame();
-                frames.push(self.chat_frame(&json!({"content": text}), None));
+                if !text.is_empty() {
+                    frames.push(self.chat_frame(&json!({"content": text}), None));
+                }
+                if matched.is_some() {
+                    self.sent_final = true;
+                    frames.push(self.chat_frame(&json!({}), Some("stop")));
+                    frames.push(done_frame());
+                }
                 frames
             }
             Some("response.output_item.added" | "response.output_item.done") => {
@@ -499,9 +580,6 @@ impl ResponsesChatStreamTranslator {
                 )]
             }
             Some("response.completed" | "response.incomplete" | "response.failed") => {
-                if self.sent_final {
-                    return Vec::new();
-                }
                 if let Some(response) = event.get("response") {
                     self.capture_identity(response);
                     self.capture_usage(response);
@@ -513,8 +591,14 @@ impl ResponsesChatStreamTranslator {
                 } else {
                     "stop"
                 };
+                let mut frames = Vec::new();
+                let pending = self.stop_filter.finish();
+                if !pending.is_empty() {
+                    frames.extend(self.role_frame());
+                    frames.push(self.chat_frame(&json!({"content": pending}), None));
+                }
                 self.sent_final = true;
-                let mut frames = vec![self.chat_frame(&json!({}), Some(finish_reason))];
+                frames.push(self.chat_frame(&json!({}), Some(finish_reason)));
                 if self.include_usage {
                     frames.push(self.usage_frame());
                 }
@@ -538,6 +622,10 @@ impl ResponsesChatStreamTranslator {
             return Vec::new();
         }
         let mut frames = self.role_frame();
+        let pending = self.stop_filter.finish();
+        if !pending.is_empty() {
+            frames.push(self.chat_frame(&json!({"content": pending}), None));
+        }
         frames.push(self.chat_frame(
             &json!({"tool_calls": [{
                 "index": index,
@@ -659,14 +747,48 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
         .and_then(Value::as_str)
         .map_or_else(|| format!("resp-{}", uuid::Uuid::new_v4()), String::from);
     let mut text = String::new();
+    let mut output = Vec::new();
     if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
         for block in blocks {
-            if block.get("type").and_then(Value::as_str) == Some("text") {
-                if let Some(t) = block.get("text").and_then(Value::as_str) {
-                    text.push_str(t);
+            match block.get("type").and_then(Value::as_str) {
+                Some("text") => {
+                    if let Some(t) = block.get("text").and_then(Value::as_str) {
+                        text.push_str(t);
+                    }
                 }
+                Some("tool_use") => output.push(json!({
+                    "type": "function_call",
+                    "call_id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
+                    "name": block.get("name").and_then(Value::as_str).unwrap_or_default(),
+                    "arguments": serde_json::to_string(
+                        block.get("input").unwrap_or(&Value::Null)
+                    ).unwrap_or_else(|_| "{}".into()),
+                    "status": "completed",
+                })),
+                Some("server_tool_use") => output.push(json!({
+                    "type": "web_search_call",
+                    "id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
+                    "status": "in_progress",
+                    "action": block.get("input").cloned().unwrap_or_else(|| json!({})),
+                })),
+                Some("web_search_tool_result") => {
+                    if let Some(item) = output.iter_mut().rev().find(|item| {
+                        item.get("type").and_then(Value::as_str) == Some("web_search_call")
+                            && item.get("id") == block.get("tool_use_id")
+                    }) {
+                        item["status"] = Value::String("completed".into());
+                    }
+                }
+                _ => {}
             }
         }
+    }
+    if !text.is_empty() || output.is_empty() {
+        output.push(json!({
+            "type": "message",
+            "role": "assistant",
+            "content": [{ "type": "output_text", "text": text }]
+        }));
     }
     let served_model = anthropic
         .get("model")
@@ -678,15 +800,7 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
         "created_at": chrono::Utc::now().timestamp(),
         "model": served_model,
         "status": "completed",
-        "output": [
-            {
-                "type": "message",
-                "role": "assistant",
-                "content": [
-                    { "type": "output_text", "text": text }
-                ]
-            }
-        ],
+        "output": output,
         "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
     })
 }
@@ -709,6 +823,7 @@ mod tests {
             temperature: Some(0.9),
             stream: None,
             tools: None,
+            reasoning: None,
         };
         let body = response_to_anthropic(&req);
         assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
@@ -725,6 +840,19 @@ mod tests {
         assert_eq!(out["object"], "response");
         assert_eq!(out["model"], "claude-sonnet-4-5-20250929");
         assert_eq!(out["output"][0]["content"][0]["text"], "line1");
+    }
+
+    #[test]
+    fn buffered_chat_stop_is_enforced_locally() {
+        let mut response = json!({
+            "choices": [{
+                "message": {"role": "assistant", "content": "visible<END>hidden"},
+                "finish_reason": "length"
+            }]
+        });
+        enforce_chat_stop(&mut response, &["<END>".into()]);
+        assert_eq!(response["choices"][0]["message"]["content"], "visible");
+        assert_eq!(response["choices"][0]["finish_reason"], "stop");
     }
 
     #[test]
@@ -757,6 +885,7 @@ mod tests {
             temperature: None,
             stream: None,
             tools: None,
+            reasoning: None,
         };
 
         let body = response_to_anthropic(&req);
@@ -977,8 +1106,41 @@ mod tests {
             temperature: Some(0.7),
             stream: None,
             tools: None,
+            reasoning: None,
         };
         let body = response_to_anthropic(&req);
         assert!(body.get("temperature").is_none());
+    }
+
+    #[test]
+    fn responses_reasoning_is_preserved_as_claude_thinking() {
+        let req: OpenAIResponseRequest = serde_json::from_value(json!({
+            "model":"claude-opus-5",
+            "input":"hello",
+            "max_output_tokens":40_000,
+            "reasoning":{"effort":"xhigh"}
+        }))
+        .unwrap();
+        let body = response_to_anthropic(&req);
+
+        assert_eq!(body["thinking"]["budget_tokens"], 32_768);
+        assert!(body.get("reasoning").is_none());
+    }
+
+    #[test]
+    fn prior_function_items_survive_responses_to_anthropic_translation() {
+        let req: OpenAIResponseRequest = serde_json::from_value(json!({
+            "model": "gpt-5.6-sol",
+            "input": [
+                {"type": "function_call", "call_id": "call_1", "name": "lookup", "arguments": "{\"q\":1}"},
+                {"type": "function_call_output", "call_id": "call_1", "output": "found"}
+            ]
+        }))
+        .unwrap();
+        let body = response_to_anthropic(&req);
+        assert_eq!(body["messages"][0]["content"][0]["type"], "tool_use");
+        assert_eq!(body["messages"][0]["content"][0]["id"], "call_1");
+        assert_eq!(body["messages"][1]["content"][0]["type"], "tool_result");
+        assert_eq!(body["messages"][1]["content"][0]["tool_use_id"], "call_1");
     }
 }

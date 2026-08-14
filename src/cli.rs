@@ -163,6 +163,16 @@ pub struct Cli {
     )]
     pub request_log_max_bytes: u64,
 
+    /// Maximum request body accepted by proxy surfaces. Independent of the
+    /// request-log capture bound.
+    #[arg(
+        long,
+        env = "MAX_PROXY_REQUEST_BYTES",
+        default_value_t = crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+        global = true
+    )]
+    pub max_proxy_request_bytes: usize,
+
     /// Remote `ForgeFed` inbox for the crater provider.
     #[arg(long, env = "CRATER_FORGEFED_INBOX", global = true)]
     pub crater_forgefed_inbox: Option<String>,
@@ -772,6 +782,7 @@ impl Cli {
             claude_code_home: &claude_home,
             upstream_base_url: &self.upstream_base_url,
             verbose: self.verbose,
+            max_proxy_request_bytes: self.max_proxy_request_bytes,
             api_format,
             routing_mode,
             storage_policy,
@@ -840,12 +851,22 @@ mod tests {
     use crate::config::{
         default_gonka_model, default_gonka_source_url, default_openai_compatible_base_url,
     };
+    use clap::CommandFactory as _;
 
     #[test]
     fn login_cli_defaults_to_bare_tui() {
         let cli = Cli::try_parse_from(["link-assistant-router"]).unwrap();
         assert!(cli.login_cli_args.is_empty());
         assert_eq!(cli.upstream_provider, "auto");
+    }
+
+    #[test]
+    fn serve_help_renders_the_numeric_request_log_default() {
+        let help = Cli::command().render_long_help().to_string();
+        assert!(help.contains("--request-log-max-bytes"));
+        assert!(help.contains(&crate::request_log::DEFAULT_MAX_BYTES.to_string()));
+        assert!(help.contains("--max-proxy-request-bytes"));
+        assert!(help.contains(&crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES.to_string()));
     }
 
     #[test]
@@ -871,6 +892,7 @@ mod tests {
             audit_log: None,
             request_log: None,
             request_log_max_bytes: crate::request_log::DEFAULT_MAX_BYTES,
+            max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
             crater_forgefed_inbox: None,
             crater_forgefed_actor: None,
             crater_forgefed_target: None,
@@ -921,6 +943,10 @@ mod tests {
         assert!(cfg.enable_openai_api);
         assert!(cfg.enable_anthropic_api);
         assert!(cfg.enable_metrics);
+        assert_eq!(
+            cfg.max_proxy_request_bytes,
+            crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES
+        );
     }
 
     #[test]
@@ -946,6 +972,7 @@ mod tests {
             audit_log: None,
             request_log: None,
             request_log_max_bytes: crate::request_log::DEFAULT_MAX_BYTES,
+            max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
             crater_forgefed_inbox: None,
             crater_forgefed_actor: None,
             crater_forgefed_target: None,

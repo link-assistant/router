@@ -350,6 +350,7 @@ mod config_verbose_tests {
             claude_code_home: "/tmp/claude",
             upstream_base_url: "https://api.anthropic.com",
             verbose,
+            max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
             api_format: None,
             routing_mode: RoutingMode::Direct,
             storage_policy: StoragePolicy::Memory,
@@ -438,6 +439,8 @@ mod openai_translation_tests {
             role: "user".into(),
             content: json!("hello"),
             name: None,
+            tool_call_id: None,
+            tool_calls: None,
         };
         let v = chat_completion_to_anthropic(&req);
         assert!(v.get("system").is_some());

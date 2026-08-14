@@ -5,8 +5,7 @@
 //! replaced wholesale, and every changed existing file is backed up first.
 
 use std::fmt::{self, Write as _};
-use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -32,6 +31,11 @@ const GROK_BASE_ENV: &str = "GROK_BASE_URL";
 const ROUTER_PROVIDER: &str = "link-assistant";
 const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
 
+pub const DEFAULT_OPENAI_MODEL: &str = "gpt-5.6-sol";
+pub const DEFAULT_ANTHROPIC_MODEL: &str = "claude-opus-5";
+pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
+pub const DEFAULT_ANTHROPIC_REASONING_EFFORT: &str = "high";
+
 /// How a client can be isolated from its normal user configuration.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ClientIsolation {
@@ -54,6 +58,7 @@ pub struct ClientIntegration {
     pub base_url_env: Option<&'static str>,
     pub endpoint_suffix: &'static str,
     pub default_model: &'static str,
+    pub default_reasoning_effort: &'static str,
     pub model_arg: Option<&'static str>,
     pub non_interactive_arg: Option<&'static str>,
     pub isolation: ClientIsolation,
@@ -87,7 +92,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        default_model: "gpt-5",
+        default_model: DEFAULT_OPENAI_MODEL,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("exec"),
         isolation: ClientIsolation::Home,
@@ -101,7 +107,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
         endpoint_suffix: "",
-        default_model: "claude-sonnet-4-5-20250929",
+        default_model: DEFAULT_ANTHROPIC_MODEL,
+        default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--print"),
         isolation: ClientIsolation::ClaudeConfig,
@@ -116,11 +123,12 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         base_url_env: None,
         endpoint_suffix: "",
         default_model: "",
+        default_reasoning_effort: "",
         model_arg: None,
         non_interactive_arg: None,
         isolation: ClientIsolation::Unsupported,
         setup_limitation: Some(
-            "Cursor CLI does not expose a base-URL override; this router also does not expose the MCP adapter Cursor would require",
+            "Cursor CLI accepts CURSOR_API_ENDPOINT, but it speaks Connect-RPC over Cursor's private agent.v1/aiserver.v1 services; this router does not yet implement that RPC surface",
         ),
     },
     ClientIntegration {
@@ -131,7 +139,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some("GEMINI_API_KEY"),
         base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
         endpoint_suffix: "/api/gemini",
-        default_model: "gemini-2.5-pro",
+        default_model: DEFAULT_OPENAI_MODEL,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
         isolation: ClientIsolation::GeminiHome,
@@ -147,7 +156,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(GROK_TOKEN_ENV),
         base_url_env: Some(GROK_BASE_ENV),
         endpoint_suffix: "/v1",
-        default_model: "gpt-4o",
+        default_model: DEFAULT_OPENAI_MODEL,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
         isolation: ClientIsolation::Home,
@@ -161,7 +171,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        default_model: "claude-sonnet-4-5-20250929",
+        default_model: DEFAULT_OPENAI_MODEL,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("run"),
         isolation: ClientIsolation::ConfigFile,
@@ -175,7 +186,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: Some("OPENAI_BASE_URL"),
         endpoint_suffix: "/v1",
-        default_model: "claude-sonnet-4-5-20250929",
+        default_model: DEFAULT_OPENAI_MODEL,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
         isolation: ClientIsolation::Home,
@@ -189,7 +201,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        default_model: "claude-sonnet-4-5-20250929",
+        default_model: DEFAULT_OPENAI_MODEL,
+        default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--prompt"),
         isolation: ClientIsolation::ConfigFile,
@@ -379,6 +392,13 @@ impl ClientManager {
         }
     }
 
+    #[must_use]
+    pub fn environment_path(&self, client: ClientKind) -> PathBuf {
+        self.config_home
+            .join("link-assistant-router/clients")
+            .join(format!("{client}.env"))
+    }
+
     /// Ownership marker used to make a managed configuration reversible.
     #[must_use]
     pub fn ownership_marker_path(&self, client: ClientKind) -> Option<PathBuf> {
@@ -403,7 +423,11 @@ impl ClientManager {
             ClientKind::ClaudeCode => read_claude_base_url(&path)?,
             ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path)?,
             ClientKind::QwenCode => read_qwen_base_url(&path)?,
-            ClientKind::GrokCli => std::env::var(GROK_BASE_ENV).ok(),
+            ClientKind::GrokCli => std::env::var(GROK_BASE_ENV).ok().or_else(|| {
+                read_environment_value(&self.environment_path(client), GROK_BASE_ENV)
+                    .ok()
+                    .flatten()
+            }),
             ClientKind::Cursor | ClientKind::GeminiCli => None,
         };
         let token_env = client.token_env();
@@ -415,7 +439,13 @@ impl ClientManager {
             dialect: client.dialect(),
             base_url,
             token_env,
-            token_env_set: token_env.is_some_and(|name| std::env::var_os(name).is_some()),
+            token_env_set: token_env.is_some_and(|name| {
+                std::env::var_os(name).is_some()
+                    || read_environment_value(&self.environment_path(client), name)
+                        .ok()
+                        .flatten()
+                        .is_some()
+            }),
         })
     }
 
@@ -442,7 +472,7 @@ impl ClientManager {
     }
 
     pub fn remove(&self, client: ClientKind) -> Result<SetupResult, ClientError> {
-        match client {
+        let mut result = match client {
             ClientKind::Codex => self.remove_codex(),
             ClientKind::ClaudeCode => self.remove_claude(),
             ClientKind::Opencode | ClientKind::Agent => self.remove_json_provider(client),
@@ -450,7 +480,16 @@ impl ClientManager {
             ClientKind::GrokCli | ClientKind::Cursor | ClientKind::GeminiCli => {
                 Ok(unchanged(self.config_path(client)))
             }
+        }?;
+        let environment = self.environment_path(client);
+        if environment.exists() {
+            fs::remove_file(&environment)?;
+            if !result.changed {
+                result.path = environment;
+                result.changed = true;
+            }
         }
+        Ok(result)
     }
 
     /// Store the client's shell exports without exposing the token on stdout.
@@ -465,7 +504,7 @@ impl ClientManager {
             .ok_or_else(|| ClientError::message("client has no router token environment"))?;
         let directory = self.config_home.join("link-assistant-router/clients");
         fs::create_dir_all(&directory)?;
-        let path = directory.join(format!("{client}.env"));
+        let path = self.environment_path(client);
         let mut contents = String::new();
         if let Some(base_url_env) = client.base_url_env() {
             let endpoint = format!(
@@ -506,23 +545,35 @@ impl ClientManager {
         let token_env = client
             .token_env()
             .ok_or_else(|| ClientError::message("client has no router token environment"))?;
-        let token = std::env::var(token_env).map_err(|_| {
-            ClientError::message(format!(
-                "{token_env} is unset; source the credential file printed by `clients setup {client}`"
-            ))
-        })?;
+        let token = std::env::var(token_env)
+            .ok()
+            .or_else(|| {
+                read_environment_value(&self.environment_path(client), token_env)
+                    .ok()
+                    .flatten()
+            })
+            .ok_or_else(|| {
+                ClientError::message(format!(
+                    "{token_env} is unset and no managed credential exists; run `clients setup {client}`"
+                ))
+            })?;
         let catalog = self.catalog(&base_url, &token).await?;
         let model = doctor_model(client, &catalog)?;
         let (url, body) = match client {
             ClientKind::Codex => (
                 format!("{}/responses", base_url.trim_end_matches('/')),
-                json!({"model":model, "input":"Reply OK"}),
+                json!({
+                    "model": model,
+                    "input": "Reply OK",
+                    "reasoning": {"effort": client.integration().default_reasoning_effort}
+                }),
             ),
             ClientKind::ClaudeCode => (
                 format!("{}/v1/messages", base_url.trim_end_matches('/')),
                 json!({
                     "model":model,
-                    "max_tokens":1,
+                    "max_tokens":16_385,
+                    "thinking":{"type":"enabled", "budget_tokens":16_384},
                     "messages":[{"role":"user", "content":"Reply OK"}]
                 }),
             ),
@@ -533,6 +584,7 @@ impl ClientManager {
                 format!("{}/chat/completions", base_url.trim_end_matches('/')),
                 json!({
                     "model":model,
+                    "reasoning_effort": client.integration().default_reasoning_effort,
                     "messages":[{"role":"user", "content":"Reply OK"}]
                 }),
             ),
@@ -783,6 +835,20 @@ fn read_or_empty(path: &Path) -> Result<String, ClientError> {
     }
 }
 
+fn read_environment_value(path: &Path, name: &str) -> Result<Option<String>, ClientError> {
+    let source = read_or_empty(path)?;
+    let prefix = format!("export {name}=");
+    Ok(source.lines().find_map(|line| {
+        let raw = line.strip_prefix(&prefix)?.trim();
+        Some(
+            raw.strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+                .unwrap_or(raw)
+                .replace("'\\''", "'"),
+        )
+    }))
+}
+
 fn write_if_changed(path: &Path, before: &str, after: &str) -> Result<SetupResult, ClientError> {
     if before == after {
         return Ok(unchanged(path.to_path_buf()));
@@ -823,29 +889,7 @@ fn backup_file(path: &Path) -> Result<PathBuf, ClientError> {
 }
 
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ClientError> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| ClientError::message("missing parent directory"))?;
-    let temp = parent.join(format!(
-        ".link-assistant-router.{}.{}.tmp",
-        std::process::id(),
-        uuid::Uuid::new_v4()
-    ));
-    let mut options = OpenOptions::new();
-    options.write(true).create_new(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt;
-        options.mode(0o600);
-    }
-    let mut file = options.open(&temp)?;
-    file.write_all(contents)?;
-    file.sync_all()?;
-    if let Ok(metadata) = fs::metadata(path) {
-        fs::set_permissions(&temp, metadata.permissions())?;
-    }
-    fs::rename(&temp, path)?;
-    Ok(())
+    crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
 }
 
 fn write_claude_marker(path: &Path, base_url: &str) -> Result<(), ClientError> {

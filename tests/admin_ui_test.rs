@@ -55,6 +55,8 @@ fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
         login_manager: link_assistant_router::login::LoginManager::new(
             link_assistant_router::login::LoginConfig::default(),
         ),
+        github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
+        max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     }
 }
 

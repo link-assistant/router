@@ -304,6 +304,7 @@ async fn run_server(
         openai_compatible: config.openai_compatible.clone(),
         provider_store,
         logger,
+        max_proxy_request_bytes: config.max_proxy_request_bytes,
         admin: Arc::clone(&admin_claim),
         admin_key: config.admin_key.clone(),
         allow_anonymous_admin: config.allow_anonymous_admin,
@@ -312,6 +313,8 @@ async fn run_server(
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
         mpp: config.mpp.clone(),
         login_manager: LoginManager::new(config.login.clone()),
+        github: link_assistant_router::github_proxy::GitHubProxyConfig::from_env()
+            .map_err(std::io::Error::other)?,
     };
 
     let catalog_refresh = tokio::spawn(

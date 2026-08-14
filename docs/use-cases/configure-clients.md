@@ -46,9 +46,9 @@ setup refreshes catalog models while preserving user-added OpenCode entries.
 | OpenCode | `$XDG_CONFIG_HOME/opencode/opencode.json`, or `~/.config/opencode/opencode.json` | `provider.link-assistant.options.baseURL` | `LINK_ASSISTANT_TOKEN` via `{env:…}` | Yes |
 | Qwen Code | `$QWEN_HOME/settings.json`, or `~/.qwen/settings.json` | `modelProviders.openai[].baseUrl` | `LINK_ASSISTANT_TOKEN` via `envKey` | Yes |
 | Link.Assistant Agent | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json`, or `~/.config/link-assistant-agent/opencode.json` | `provider.link-assistant.options.baseURL` | `LINK_ASSISTANT_TOKEN` via `{env:…}` | Yes |
-| Grok CLI | `~/.grok/user-settings.json` is inspected but not changed | `GROK_BASE_URL` (shell only) | `GROK_API_KEY` | Yes, via environment only |
+| Grok CLI | managed mode-`0600` environment file | `GROK_BASE_URL` | `GROK_API_KEY` | Yes |
 | Gemini CLI | no file is changed | `GOOGLE_GEMINI_BASE_URL` on the API-key auth path | `GEMINI_API_KEY` | Conditional; the tested individual Code Assist flow aborts with `IneligibleTierError` before HTTP |
-| Cursor CLI | `~/.cursor/cli-config.json` has no provider field | none | vendor `--api-key` only | No; it rejects non-Cursor keys before HTTP |
+| Cursor CLI | `$CURSOR_CONFIG_DIR` / `$CURSOR_DATA_DIR` can isolate it | `CURSOR_API_ENDPOINT` | vendor `--api-key` | Deferred: client speaks private Connect-RPC, not a supported chat dialect |
 
 Before changing an existing config, the command creates a sibling timestamped
 `*.link-assistant-router.*.bak` file. JSON objects, TOML tables, comments and
@@ -65,16 +65,19 @@ client-side limitation before minting a token or writing a file. Their matching
 `doctor` commands report the same reason directly; they do not misdiagnose a
 request that never reached the router.
 
-`remove` deletes only the provider and selection owned by the router for Codex.
+`remove` also deletes the owner-only managed credential environment file, so a
+successful removal does not leave a working router token on disk. It deletes
+only the provider and selection owned by the router for Codex.
 For Claude Code it removes `ANTHROPIC_BASE_URL` only when it still matches the
 value recorded by `setup`; if the user changed that setting later, it is left
 alone. OpenCode and Agent restore any provider entry that setup replaced. Qwen
-removes only its exact managed model entry. Other environment keys, providers,
+removes its exact set of managed catalog model entries. Other environment keys, providers,
 models, and settings remain untouched.
 
 `show` reports the path, URL, dialect, installed/configured state, and whether
 the expected token variable is set, but never prints its value. `doctor` sends
-one catalog-selected minimal request to the configured endpoint and distinguishes missing
+one minimal request using the explicit family default (`gpt-5.6-sol`/`xhigh`
+or `claude-opus-5`/`high`) rather than depending on catalog order, and distinguishes missing
 configuration, missing token environment, an unreachable router, rejected
 tokens, unavailable upstream credentials, and other HTTP failures.
 

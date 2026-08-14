@@ -7,6 +7,8 @@ use std::process::exit;
 fn main() {
     let workflow = fs::read_to_string(".github/workflows/release.yml")
         .expect("failed to read .github/workflows/release.yml");
+    let reconciliation = fs::read_to_string(".github/workflows/verify-releases.yml")
+        .expect("failed to read .github/workflows/verify-releases.yml");
 
     let required_snippets = [
         "auto-release:",
@@ -17,10 +19,22 @@ fn main() {
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
         "DOCKERHUB_IMAGE: konard/link-assistant-router",
         "rust-script scripts/wait-for-crate.rs",
-        "docker/login-action@v4",
-        "docker/setup-buildx-action@v4",
-        "docker/metadata-action@v6",
-        "docker/build-push-action@v7",
+        "cargo install rust-script --version 0.36.0 --locked",
+        "cargo install cargo-audit --version 0.22.2 --locked --force",
+        "toolchain: 1.96.1",
+        "docker/login-action@",
+        "docker/setup-buildx-action@",
+        "docker/metadata-action@",
+        "docker/build-push-action@",
+        "actions/attest-build-provenance@",
+        "publish-release-artifacts:",
+        "subject-path: dist/*",
+        "provenance: mode=max",
+        "sbom: true",
+        "gh release upload",
+        "gh attestation verify",
+        "Verify tag and package version",
+        "gh release view \"v${RELEASE_VERSION}\"",
         "platform: linux/amd64",
         "platform: linux/arm64",
         "runner: ubuntu-24.04-arm",
@@ -59,18 +73,40 @@ fn main() {
         failures.push("Docker build and manifest jobs must grant packages: write".to_string());
     }
 
-    if count_occurrences(&workflow, "docker/login-action@v4") < 4 {
+    if count_occurrences(&workflow, "docker/login-action@") < 4 {
         failures.push(
             "Docker build and manifest jobs must both log in to GHCR and Docker Hub".to_string(),
         );
     }
 
-    if count_occurrences(&workflow, "docker/build-push-action@v7") != 1 {
+    if count_occurrences(&workflow, "docker/build-push-action@") != 1 {
         failures.push("the variant-and-architecture matrix must use one shared build step".to_string());
     }
 
     if workflow.contains("docker/setup-qemu-action") {
         failures.push("release images must not use QEMU emulation".to_string());
+    }
+
+    for line in workflow
+        .lines()
+        .chain(reconciliation.lines())
+        .filter(|line| line.trim_start().starts_with("uses:"))
+    {
+        let revision = line
+            .split_once('@')
+            .map(|(_, revision)| revision.split_whitespace().next().unwrap_or_default())
+            .unwrap_or_default();
+        if revision.len() != 40 || !revision.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            failures.push(format!("workflow action is not pinned to an immutable commit: {line}"));
+        }
+    }
+
+    let toolchain_actions = count_occurrences(&workflow, "dtolnay/rust-toolchain@")
+        + count_occurrences(&reconciliation, "dtolnay/rust-toolchain@");
+    let pinned_toolchains = count_occurrences(&workflow, "toolchain: 1.96.1")
+        + count_occurrences(&reconciliation, "toolchain: 1.96.1");
+    if toolchain_actions != pinned_toolchains {
+        failures.push("every Rust action must select the reviewed numeric toolchain".to_string());
     }
 
     if count_occurrences(&workflow, "push-by-digest=true") != 1 {

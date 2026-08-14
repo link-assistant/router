@@ -22,11 +22,11 @@ later invocation sweeps directories left behind by a wrapper killed with
 | `codex` | Responses, `URL/v1` | isolated `HOME` | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
 | `claude-code` (`claude`) | Anthropic Messages, `URL` | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
 | `gemini-cli` (`gemini`) | Gemini native, `URL/api/gemini` | `GEMINI_CLI_HOME` | temporary only; API-key endpoint override is environmental |
-| `grok-cli` (`grok`) | Chat Completions, `URL/v1` | isolated `HOME` plus environment | environment only; Grok does not persist its base URL |
+| `grok-cli` (`grok`) | Chat Completions, `URL/v1` | isolated `HOME` plus environment | owner-only managed environment file |
 | `opencode` | Chat Completions, `URL/v1` | `OPENCODE_CONFIG` | `$XDG_CONFIG_HOME/opencode/opencode.json` |
 | `qwen-code` (`qwen`) | Chat Completions, `URL/v1` | isolated `HOME` | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
 | `agent` | Chat Completions, `URL/v1` | temporary config content | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
-| `cursor` | Cursor's private protocol | unsupported: no custom endpoint and no router MCP adapter | none |
+| `cursor` | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | unsupported: router RPC adapter not implemented | none |
 
 Each client-specific document keeps a binary-free manual path with the exact
 environment variables or config fields. Cursor deliberately fails before
@@ -35,13 +35,14 @@ can use an OpenAI URL.
 
 ## Arguments, interaction, and models
 
-Wrapper options go before the tool. Everything after the tool name belongs to
-the tool, even when its name collides with a wrapper option:
+Wrapper options are accepted before or after the tool name. After an explicit
+`--`, every remaining argument belongs to the tool, even when its name collides
+with a wrapper option:
 
 ```bash
 link-assistant-router with --non-interactive gemini "hi"
 link-assistant-router with opencode run "hi"
-link-assistant-router with codex --global "client receives this flag"
+link-assistant-router with codex --server https://router.example "hi"
 link-assistant-router with codex -- --server client-owned-value
 ```
 
@@ -49,7 +50,10 @@ The explicit `--` is optional, but useful to make the boundary visible in
 scripts. With client arguments, the wrapper selects the client's native
 one-shot mode; use `--interactive` to suppress that behavior, or
 `--non-interactive` to request it explicitly. `--model` overrides the registry
-default. Before execution, the wrapper fetches `/v1/models` with the run token
+default. OpenAI-family clients default to `gpt-5.6-sol` with `xhigh` reasoning;
+Claude Code defaults to `claude-opus-5` (`opus-5`) with a `high` thinking
+budget. Caller-supplied reasoning settings take precedence. Before execution,
+the wrapper fetches `/v1/models` with the run token
 and refuses an unavailable model, listing the models the selected server
 advertises.
 

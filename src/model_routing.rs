@@ -285,13 +285,16 @@ pub async fn route_anthropic_request(
 ) -> Result<(AppState, Request), Response> {
     let path = request.uri().path().to_string();
     let (parts, body) = request.into_parts();
-    let body_bytes = axum::body::to_bytes(body, 10 * 1024 * 1024)
+    let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
         .await
         .map_err(|error| {
             crate::proxy::error_response(
-                StatusCode::BAD_REQUEST,
+                StatusCode::PAYLOAD_TOO_LARGE,
                 "invalid_request_error",
-                &format!("Failed to read request body: {error}"),
+                &format!(
+                    "request body exceeds the {} byte proxy limit: {error}",
+                    state.max_proxy_request_bytes
+                ),
             )
         })?;
     let routing_body = serde_json::from_slice(&body_bytes).map_err(|error| {
@@ -437,6 +440,8 @@ mod tests {
             activitypub_public_key_pem: crate::config::default_activitypub_public_key_pem(),
             mpp: crate::config::default_mpp_config(),
             login_manager: crate::login::LoginManager::new(crate::login::LoginConfig::default()),
+            github: crate::github_proxy::GitHubProxyConfig::default(),
+            max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
         }
     }
 

@@ -274,8 +274,10 @@ async fn forward_subscription_openai_inner(
             .pointer("/stream_options/include_usage")
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
+        let stop_sequences = crate::stop_sequences::from_value(routing_body.get("stop"));
         let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
-            .with_include_usage(include_usage);
+            .with_include_usage(include_usage)
+            .with_stop_sequences(stop_sequences);
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = status.is_success().then(|| {
             crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
@@ -358,8 +360,12 @@ async fn forward_subscription_openai_inner(
                     );
                 }
             };
-            let translated =
+            let mut translated =
                 crate::responses::response_to_chat_completion(&parsed, requested_model);
+            crate::responses::enforce_chat_stop(
+                &mut translated,
+                &crate::stop_sequences::from_value(routing_body.get("stop")),
+            );
             response_body = bytes::Bytes::from(
                 serde_json::to_vec(&translated).expect("JSON values always serialize"),
             );
@@ -587,8 +593,9 @@ fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut ser
 /// The backend rejects the parameter, and enforcing only visible text in the
 /// router would still leave hidden reasoning tokens unbounded. Failing before
 /// the upstream call is therefore the only way to preserve optional `OpenAI`
-/// caps as spend controls. Compatibility clients remain usable and normalization
-/// removes their unsupported field before the Codex request is serialized.
+/// caps as spend controls. Anthropic Messages remains usable because its
+/// mandatory `max_tokens` field has no optional/unset spelling; Chat and
+/// Responses callers receive an explicit refusal rather than silent overspend.
 fn reject_unsupported_codex_output_limit(
     provider: SubscriptionProvider,
     surface: Surface,
@@ -597,11 +604,11 @@ fn reject_unsupported_codex_output_limit(
     let has_limit = body
         .get("max_output_tokens")
         .is_some_and(|value| !value.is_null());
-    if provider != SubscriptionProvider::Codex || surface != Surface::OpenAIResponses || !has_limit
-    {
+    if provider != SubscriptionProvider::Codex || surface == Surface::Anthropic || !has_limit {
         return None;
     }
-    Some(error_response(
+    Some(crate::api_error::error_response_for_surface(
+        surface,
         StatusCode::BAD_REQUEST,
         "invalid_request_error",
         "Codex subscriptions cannot honor output-token limits because the ChatGPT backend rejects max_output_tokens. Remove the limit or select a provider that supports it; the router rejected this request instead of silently ignoring the cap.",
@@ -618,6 +625,9 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     let Some(obj) = body.as_object_mut() else {
         return;
     };
+    obj.entry("reasoning").or_insert_with(
+        || serde_json::json!({"effort": crate::clients::DEFAULT_OPENAI_REASONING_EFFORT}),
+    );
     // Codex always streams from the ChatGPT backend.
     obj.insert("stream".to_string(), serde_json::Value::Bool(true));
     // ChatGPT subscription inference does not permit stored responses.
@@ -710,8 +720,8 @@ mod tests {
                     Surface::OpenAIChat,
                     body,
                 )
-                .is_none(),
-                "Chat compatibility limits must be dropped for the Codex backend"
+                .is_some(),
+                "Chat limits must be rejected rather than silently dropped"
             );
         }
     }

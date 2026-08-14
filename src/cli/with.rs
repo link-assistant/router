@@ -6,14 +6,13 @@ use clap::{Args, Subcommand};
 
 use crate::clients::ClientKind;
 
-/// Insert clap's argument boundary immediately after a wrapper client.
+/// Normalize wrapper-owned flags that appear after the client positional.
 ///
-/// Clap otherwise continues recognizing wrapper flags after the client name,
-/// which makes `with codex --global` configure Codex globally instead of
-/// forwarding `--global` to it. The public grammar deliberately ends wrapper
-/// option parsing at the client positional.
+/// Before an explicit `--`, a flag owned by the wrapper is accepted in either
+/// position. Everything else is protected behind a clap argument boundary and
+/// reaches the client verbatim.
 #[must_use]
-pub fn protect_client_arguments(mut arguments: Vec<OsString>, nested: bool) -> Vec<OsString> {
+pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<OsString> {
     let start = if nested {
         arguments
             .iter()
@@ -43,6 +42,13 @@ pub fn protect_client_arguments(mut arguments: Vec<OsString>, nested: bool) -> V
         "qwen",
         "agent",
     ];
+    let boolean_options = [
+        "--global",
+        "--undo",
+        "--non-interactive",
+        "--interactive",
+        "--token-stdin",
+    ];
     let mut position = start;
     while position < arguments.len() {
         let value = arguments[position].to_string_lossy();
@@ -58,14 +64,58 @@ pub fn protect_client_arguments(mut arguments: Vec<OsString>, nested: bool) -> V
             continue;
         }
         if clients.contains(&value.as_ref()) {
-            let boundary = position + 1;
-            if arguments
-                .get(boundary)
-                .is_none_or(|argument| argument != "--")
-            {
-                arguments.insert(boundary, "--".into());
+            let client = arguments[position].clone();
+            let prefix = arguments[..position].to_vec();
+            let mut wrapper = Vec::new();
+            let mut forwarded = Vec::new();
+            let mut cursor = position + 1;
+            let mut explicit_boundary = false;
+            while cursor < arguments.len() {
+                let item = arguments[cursor].to_string_lossy();
+                if explicit_boundary {
+                    forwarded.push(arguments[cursor].clone());
+                    cursor += 1;
+                    continue;
+                }
+                if item == "--" {
+                    explicit_boundary = true;
+                    cursor += 1;
+                    continue;
+                }
+                if boolean_options.contains(&item.as_ref()) {
+                    wrapper.push(arguments[cursor].clone());
+                    cursor += 1;
+                    continue;
+                }
+                if value_options.contains(&item.as_ref()) {
+                    wrapper.push(arguments[cursor].clone());
+                    if let Some(value) = arguments.get(cursor + 1) {
+                        wrapper.push(value.clone());
+                        cursor += 2;
+                    } else {
+                        cursor += 1;
+                    }
+                    continue;
+                }
+                if value_options
+                    .iter()
+                    .any(|option| item.starts_with(&format!("{option}=")))
+                {
+                    wrapper.push(arguments[cursor].clone());
+                    cursor += 1;
+                    continue;
+                }
+                forwarded.push(arguments[cursor].clone());
+                cursor += 1;
             }
-            break;
+            let mut normalized = prefix;
+            normalized.extend(wrapper);
+            normalized.push(client);
+            if !forwarded.is_empty() {
+                normalized.push("--".into());
+                normalized.extend(forwarded);
+            }
+            return normalized;
         }
         position += 1;
     }
@@ -166,7 +216,33 @@ mod tests {
         assert_eq!(
             protect_client_arguments(arguments, true),
             [
-                "router", "with", "--global", "codex", "--", "--global", "prompt"
+                "router", "with", "--global", "--global", "codex", "--", "prompt"
+            ]
+            .map(OsString::from)
+        );
+    }
+
+    #[test]
+    fn value_wrapper_flags_after_client_are_accepted() {
+        let arguments = [
+            "with-router",
+            "codex",
+            "--server",
+            "https://router.test",
+            "hi",
+        ]
+        .into_iter()
+        .map(OsString::from)
+        .collect();
+        assert_eq!(
+            protect_client_arguments(arguments, false),
+            [
+                "with-router",
+                "--server",
+                "https://router.test",
+                "codex",
+                "--",
+                "hi"
             ]
             .map(OsString::from)
         );
