@@ -62,6 +62,8 @@ pub mod subscription_proxy;
 pub mod telegram;
 pub mod token;
 pub mod token_admin;
+mod token_http;
+pub mod usage;
 pub mod vk;
 pub mod with_command;
 

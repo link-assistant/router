@@ -600,6 +600,30 @@ mod cli_parser_tests {
     }
 
     #[test]
+    fn cli_parses_per_token_spend_and_rate_controls() {
+        let cli = Cli::try_parse_from([
+            "bin",
+            "tokens",
+            "issue",
+            "--max-tokens",
+            "1000",
+            "--rate-limit-per-minute",
+            "7",
+        ])
+        .expect("parses token controls");
+        assert!(matches!(
+            cli.command,
+            Some(Command::Tokens {
+                op: TokenOp::Issue {
+                    max_tokens: Some(1000),
+                    rate_limit_per_minute: Some(7),
+                    ..
+                }
+            })
+        ));
+    }
+
+    #[test]
     fn cli_parses_doctor_subcommand() {
         let cli = Cli::try_parse_from(["bin", "doctor"]).expect("parses doctor");
         assert!(matches!(cli.command, Some(Command::Doctor)));

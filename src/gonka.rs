@@ -130,7 +130,7 @@ pub(crate) async fn forward_openai(
         Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return crate::proxy::token_budget_error_response(&e);
+        return crate::token_http::budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
@@ -210,6 +210,11 @@ pub(crate) async fn forward_openai(
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
     state.metrics.record_request(surface, status.as_u16(), None);
+    if status.is_success() {
+        let mut usage =
+            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        usage.feed(&upstream_body);
+    }
 
     let mut response = Response::new(Body::from(upstream_body));
     *response.status_mut() = status;

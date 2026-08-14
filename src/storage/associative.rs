@@ -99,6 +99,32 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                     "used_requests",
                     LinoValue::String(record.used_requests.to_string()),
                 ),
+                (
+                    "max_tokens",
+                    record.max_tokens.map_or(LinoValue::Null, |value| {
+                        LinoValue::String(value.to_string())
+                    }),
+                ),
+                (
+                    "used_tokens",
+                    LinoValue::String(record.used_tokens.to_string()),
+                ),
+                (
+                    "rate_limit_per_minute",
+                    record
+                        .rate_limit_per_minute
+                        .map_or(LinoValue::Null, |value| {
+                            LinoValue::String(value.to_string())
+                        }),
+                ),
+                (
+                    "rate_window_started_at",
+                    LinoValue::String(record.rate_window_started_at.to_string()),
+                ),
+                (
+                    "rate_window_requests",
+                    LinoValue::String(record.rate_window_requests.to_string()),
+                ),
                 ("scope", LinoValue::String(record.scope.clone())),
             ]),
         ),
@@ -124,6 +150,17 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         account: optional_string_field(fields, "account", "record value")?,
         max_requests: optional_u64_field(fields, "max_requests", "record value")?,
         used_requests: expect_u64_field(fields, "used_requests", "record value")?,
+        max_tokens: optional_u64_field(fields, "max_tokens", "record value")?,
+        used_tokens: optional_u64_field(fields, "used_tokens", "record value")?.unwrap_or(0),
+        rate_limit_per_minute: optional_u64_field(fields, "rate_limit_per_minute", "record value")?,
+        rate_window_started_at: optional_i64_string_field(
+            fields,
+            "rate_window_started_at",
+            "record value",
+        )?
+        .unwrap_or(0),
+        rate_window_requests: optional_u64_field(fields, "rate_window_requests", "record value")?
+            .unwrap_or(0),
         scope: expect_string_field(fields, "scope", "record value")?.to_string(),
     })
 }
@@ -186,13 +223,45 @@ fn optional_string_field(
 }
 
 fn optional_u64_field(value: &LinoValue, key: &str, context: &str) -> Result<Option<u64>, String> {
-    match object_field(value, key, context)? {
+    let LinoValue::Object(fields) = value else {
+        return Err(format!("{context} must be an object"));
+    };
+    let Some(value) = fields
+        .iter()
+        .find_map(|(field, value)| (field == key).then_some(value))
+    else {
+        return Ok(None);
+    };
+    match value {
         LinoValue::Null => Ok(None),
         LinoValue::String(value) => value
             .parse()
             .map(Some)
             .map_err(|error| format!("{context}.{key} is invalid: {error}")),
         _ => Err(format!("{context}.{key} must be a string or null")),
+    }
+}
+
+fn optional_i64_string_field(
+    value: &LinoValue,
+    key: &str,
+    context: &str,
+) -> Result<Option<i64>, String> {
+    let LinoValue::Object(fields) = value else {
+        return Err(format!("{context} must be an object"));
+    };
+    let Some(value) = fields
+        .iter()
+        .find_map(|(field, value)| (field == key).then_some(value))
+    else {
+        return Ok(None);
+    };
+    match value {
+        LinoValue::String(value) => value
+            .parse()
+            .map(Some)
+            .map_err(|error| format!("{context}.{key} is invalid: {error}")),
+        _ => Err(format!("{context}.{key} must be a string")),
     }
 }
 
@@ -433,6 +502,35 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         "used_requests",
         &record.used_requests.to_string(),
     );
+    if let Some(max_tokens) = record.max_tokens {
+        add_field(&mut links, &value, "max_tokens", &max_tokens.to_string());
+    }
+    add_field(
+        &mut links,
+        &value,
+        "used_tokens",
+        &record.used_tokens.to_string(),
+    );
+    if let Some(rate_limit) = record.rate_limit_per_minute {
+        add_field(
+            &mut links,
+            &value,
+            "rate_limit_per_minute",
+            &rate_limit.to_string(),
+        );
+    }
+    add_field(
+        &mut links,
+        &value,
+        "rate_window_started_at",
+        &record.rate_window_started_at.to_string(),
+    );
+    add_field(
+        &mut links,
+        &value,
+        "rate_window_requests",
+        &record.rate_window_requests.to_string(),
+    );
     add_field(&mut links, &value, "scope", &record.scope);
     links
 }
@@ -515,6 +613,12 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         account: fields.get("account").cloned(),
         max_requests: optional_parsed_field(&fields, "max_requests")?,
         used_requests: parse_field(&fields, "used_requests")?,
+        max_tokens: optional_parsed_field(&fields, "max_tokens")?,
+        used_tokens: optional_parsed_field(&fields, "used_tokens")?.unwrap_or(0),
+        rate_limit_per_minute: optional_parsed_field(&fields, "rate_limit_per_minute")?,
+        rate_window_started_at: optional_parsed_field(&fields, "rate_window_started_at")?
+            .unwrap_or(0),
+        rate_window_requests: optional_parsed_field(&fields, "rate_window_requests")?.unwrap_or(0),
         scope: required_field(&fields, "scope")?.to_string(),
     })
 }
@@ -619,6 +723,11 @@ mod tests {
             account: Some(String::new()),
             max_requests: Some(u64::MAX),
             used_requests: u64::MAX,
+            max_tokens: Some(u64::MAX),
+            used_tokens: u64::MAX,
+            rate_limit_per_minute: Some(u64::MAX),
+            rate_window_started_at: i64::MAX,
+            rate_window_requests: u64::MAX,
             scope: "admin".into(),
         }
     }

@@ -289,7 +289,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         state
             .logger
             .debug(|| format!("Token budget check failed: {e}"));
-        return token_budget_error_response(&e);
+        return crate::token_http::budget_error_response(&e);
     }
 
     // Read the body before account selection so the router gets a copy of
@@ -417,9 +417,15 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
 
     // Stream the response body
     let response_log = std::sync::Arc::clone(&state.request_log);
+    let mut usage = status
+        .is_success()
+        .then(|| crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub));
     let stream = upstream_resp.bytes_stream().map(move |chunk| {
         if let Ok(bytes) = &chunk {
             response_log.record_upstream_body(&correlation_id, bytes);
+            if let Some(tracker) = &mut usage {
+                tracker.feed(bytes);
+            }
         }
         chunk.map_err(std::io::Error::other)
     });
@@ -775,7 +781,7 @@ async fn forward_openai(
         Err(response) => return *response,
     };
     if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        return token_budget_error_response(&e);
+        return crate::token_http::budget_error_response(&e);
     }
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
@@ -870,9 +876,12 @@ async fn forward_openai(
         let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model)
             .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
+        let mut usage =
+            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Ok(bytes) => {
                 response_log.record_upstream_body(&correlation_id, &bytes);
+                usage.feed(&bytes);
                 Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
                     translator.push(&bytes).join(""),
                 ))
@@ -946,6 +955,13 @@ async fn forward_openai(
             );
         }
     };
+    state
+        .token_manager
+        .record_token_usage(
+            &claims.sub,
+            crate::usage::token_count(&anthropic).unwrap_or(0),
+        )
+        .unwrap_or_else(|error| tracing::warn!("failed to persist token usage: {error}"));
 
     let translated = match shape {
         OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, &served_model),
@@ -962,26 +978,6 @@ async fn forward_openai(
         .headers_mut()
         .insert("content-type", HeaderValue::from_static("application/json"));
     response
-}
-
-pub(crate) fn token_budget_error_response(error: &crate::token::TokenError) -> Response {
-    match error {
-        crate::token::TokenError::LimitExceeded => error_response(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limit_error",
-            &error.to_string(),
-        ),
-        crate::token::TokenError::Storage(_) => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "storage_error",
-            &error.to_string(),
-        ),
-        _ => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            &error.to_string(),
-        ),
-    }
 }
 
 pub(crate) fn maybe_mpp_challenge(

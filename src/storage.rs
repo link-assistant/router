@@ -65,6 +65,22 @@ pub struct TokenRecord {
     /// Number of upstream requests already made with this token.
     #[serde(default)]
     pub used_requests: u64,
+    /// Optional cap on tokens reported by successful upstream responses.
+    /// `None` means unlimited.
+    #[serde(default)]
+    pub max_tokens: Option<u64>,
+    /// Total input and output tokens reported for this credential.
+    #[serde(default)]
+    pub used_tokens: u64,
+    /// Optional fixed-window request rate limit. `None` means unlimited.
+    #[serde(default)]
+    pub rate_limit_per_minute: Option<u64>,
+    /// Unix timestamp at which the current rate-limit window began.
+    #[serde(default)]
+    pub rate_window_started_at: i64,
+    /// Requests admitted during the current rate-limit window.
+    #[serde(default)]
+    pub rate_window_requests: u64,
     /// Privilege scope carried by the token. Empty (the default) means an
     /// ordinary client token that may only proxy inference; `"admin"` marks a
     /// credential that also unlocks the administrative endpoints. See
@@ -153,6 +169,36 @@ pub trait TokenStore: Send + Sync {
         }
         Ok(true)
     }
+
+    /// Atomically enforce every pre-request limit and record an admitted call.
+    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        let Some(mut record) = self.get(id)? else {
+            return Ok(RequestAdmission::Admitted);
+        };
+        let admission = admit_request(Some(&mut record), now);
+        if admission == RequestAdmission::Admitted {
+            self.put(record)?;
+        }
+        Ok(admission)
+    }
+
+    /// Add actual input and output usage reported by an upstream response.
+    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
+        if let Some(mut record) = self.get(id)? {
+            record.used_tokens = record.used_tokens.saturating_add(tokens);
+            self.put(record)?;
+        }
+        Ok(())
+    }
+}
+
+/// Result of applying a token's request, spend, and rate controls.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RequestAdmission {
+    Admitted,
+    RequestLimitExceeded,
+    TokenLimitExceeded,
+    RateLimitExceeded,
 }
 
 /// Trivial in-memory store. No persistence. Useful for tests.
@@ -193,6 +239,17 @@ impl TokenStore for MemoryTokenStore {
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
         let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
         Ok(consume_request(guard.get_mut(id)))
+    }
+
+    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        Ok(admit_request(guard.get_mut(id), now))
+    }
+
+    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        add_token_usage(guard.get_mut(id), tokens);
+        Ok(())
     }
 }
 
@@ -278,6 +335,24 @@ impl TokenStore for TextTokenStore {
         }
         Ok(permitted)
     }
+
+    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        let admission = admit_request(guard.get_mut(id), now);
+        if admission == RequestAdmission::Admitted && guard.contains_key(id) {
+            self.flush(&guard)?;
+        }
+        Ok(admission)
+    }
+
+    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        add_token_usage(guard.get_mut(id), tokens);
+        if guard.contains_key(id) {
+            self.flush(&guard)?;
+        }
+        Ok(())
+    }
 }
 
 /// Native file-mapped doublets token store.
@@ -358,6 +433,24 @@ impl TokenStore for BinaryTokenStore {
         }
         Ok(permitted)
     }
+
+    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        let admission = admit_request(guard.get_mut(id), now);
+        if admission == RequestAdmission::Admitted && guard.contains_key(id) {
+            self.flush(&guard)?;
+        }
+        Ok(admission)
+    }
+
+    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        add_token_usage(guard.get_mut(id), tokens);
+        if guard.contains_key(id) {
+            self.flush(&guard)?;
+        }
+        Ok(())
+    }
 }
 
 fn consume_request(record: Option<&mut TokenRecord>) -> bool {
@@ -372,6 +465,42 @@ fn consume_request(record: Option<&mut TokenRecord>) -> bool {
     }
     record.used_requests = record.used_requests.saturating_add(1);
     true
+}
+
+fn admit_request(record: Option<&mut TokenRecord>, now: i64) -> RequestAdmission {
+    let Some(record) = record else {
+        return RequestAdmission::Admitted;
+    };
+    if record
+        .max_requests
+        .is_some_and(|max| record.used_requests >= max)
+    {
+        return RequestAdmission::RequestLimitExceeded;
+    }
+    if record
+        .max_tokens
+        .is_some_and(|max| record.used_tokens >= max)
+    {
+        return RequestAdmission::TokenLimitExceeded;
+    }
+    if let Some(max) = record.rate_limit_per_minute {
+        if now.saturating_sub(record.rate_window_started_at) >= 60 {
+            record.rate_window_started_at = now;
+            record.rate_window_requests = 0;
+        }
+        if record.rate_window_requests >= max {
+            return RequestAdmission::RateLimitExceeded;
+        }
+        record.rate_window_requests = record.rate_window_requests.saturating_add(1);
+    }
+    record.used_requests = record.used_requests.saturating_add(1);
+    RequestAdmission::Admitted
+}
+
+const fn add_token_usage(record: Option<&mut TokenRecord>, tokens: u64) {
+    if let Some(record) = record {
+        record.used_tokens = record.used_tokens.saturating_add(tokens);
+    }
 }
 
 /// Dual-write store: every mutation goes to *both* primary and secondary;
@@ -420,6 +549,19 @@ impl TokenStore for DualTokenStore {
             return Ok(false);
         }
         self.secondary.try_consume_request(id)
+    }
+
+    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        let admission = self.primary.try_admit_request(id, now)?;
+        if admission != RequestAdmission::Admitted {
+            return Ok(admission);
+        }
+        self.secondary.try_admit_request(id, now)
+    }
+
+    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
+        self.primary.record_token_usage(id, tokens)?;
+        self.secondary.record_token_usage(id, tokens)
     }
 }
 
@@ -505,6 +647,11 @@ mod tests {
             account: Some("primary".into()),
             max_requests: None,
             used_requests: 0,
+            max_tokens: None,
+            used_tokens: 0,
+            rate_limit_per_minute: None,
+            rate_window_started_at: 0,
+            rate_window_requests: 0,
             scope: String::new(),
         }
     }
@@ -671,6 +818,11 @@ mod tests {
             account: None,
             max_requests: Some(100),
             used_requests: 7,
+            max_tokens: Some(1_000),
+            used_tokens: 250,
+            rate_limit_per_minute: Some(10),
+            rate_window_started_at: 1_700_000_000,
+            rate_window_requests: 2,
             scope: crate::token::ADMIN_SCOPE.to_string(),
         };
         let s = associative::encode_text(std::iter::once(&rec));

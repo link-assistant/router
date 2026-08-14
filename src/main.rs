@@ -445,12 +445,16 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             label,
             account,
             max_requests,
+            max_tokens,
+            rate_limit_per_minute,
             admin,
         } => match mgr.issue(&IssueRequest {
             ttl_hours: *ttl_hours,
             label,
             account: account.as_deref(),
             max_requests: *max_requests,
+            max_tokens: *max_tokens,
+            rate_limit_per_minute: *rate_limit_per_minute,
             scope: if *admin { ADMIN_SCOPE } else { "" },
         }) {
             Ok(t) => {
@@ -466,7 +470,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             id,
             ttl_hours,
             label,
-        } => match mgr.rotate_admin_token(id, *ttl_hours, label) {
+        } => match mgr.rotate_token(id, *ttl_hours, label) {
             Ok(t) => {
                 println!("{t}");
                 eprintln!("revoked {id}");
@@ -480,8 +484,15 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
         TokenOp::List => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
-                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<6}  label",
-                    "id", "issued_at", "expires_at", "revoked", "requests", "scope"
+                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<8}  {:<6}  label",
+                    "id",
+                    "issued_at",
+                    "expires_at",
+                    "revoked",
+                    "requests",
+                    "tokens",
+                    "rpm",
+                    "scope"
                 );
                 for r in records {
                     let requests = r.max_requests.map_or_else(
@@ -493,9 +504,16 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                     } else {
                         r.scope.as_str()
                     };
+                    let tokens = r.max_tokens.map_or_else(
+                        || format!("{}/-", r.used_tokens),
+                        |max| format!("{}/{max}", r.used_tokens),
+                    );
+                    let rpm = r
+                        .rate_limit_per_minute
+                        .map_or_else(|| "-".to_string(), |limit| limit.to_string());
                     println!(
-                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {scope:<6}  {}",
-                        r.id, r.issued_at, r.expires_at, r.revoked, requests, r.label
+                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<8}  {scope:<6}  {}",
+                        r.id, r.issued_at, r.expires_at, r.revoked, requests, tokens, rpm, r.label
                     );
                 }
                 ExitCode::SUCCESS

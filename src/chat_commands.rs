@@ -170,6 +170,8 @@ fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
         label,
         account: None,
         max_requests,
+        max_tokens: None,
+        rate_limit_per_minute: None,
         scope: "",
     }) {
         Ok(token) => Reply::secret(format!(

@@ -576,15 +576,22 @@ pub enum TokenOp {
         /// Omit for an unlimited token.
         #[arg(long)]
         max_requests: Option<u64>,
+        /// Cap on actual input plus output tokens reported by upstreams.
+        /// Omit for unlimited spend.
+        #[arg(long)]
+        max_tokens: Option<u64>,
+        /// Maximum requests admitted per one-minute window.
+        #[arg(long)]
+        rate_limit_per_minute: Option<u64>,
         /// Issue an administrative token (`scope: admin`) that unlocks the
         /// admin endpoints instead of only the inference proxy.
         #[arg(long)]
         admin: bool,
     },
-    /// Replace an administrative token: issue a new one and revoke the old.
+    /// Replace a token, preserving its controls, and revoke the old token.
     #[command(override_usage = "link-assistant-router tokens rotate [OPTIONS] <ID>")]
     Rotate {
-        /// Subject id (`sub`) of the admin token being replaced.
+        /// Subject id (`sub`) of the token being replaced.
         id: String,
         #[arg(long, default_value_t = 24)]
         ttl_hours: i64,

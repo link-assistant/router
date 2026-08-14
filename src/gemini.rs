@@ -225,6 +225,7 @@ enum ShapeIn {
 struct RoutedGeminiToken {
     token: crate::subscription::SubscriptionToken,
     account: String,
+    token_id: String,
 }
 
 async fn route_gemini_token(
@@ -238,7 +239,7 @@ async fn route_gemini_token(
     state
         .token_manager
         .enforce_request_budget(&claims.sub)
-        .map_err(|error| crate::proxy::token_budget_error_response(&error))?;
+        .map_err(|error| crate::token_http::budget_error_response(&error))?;
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
     let pinned_account = state
         .token_manager
@@ -295,6 +296,7 @@ async fn route_gemini_token(
     Ok(RoutedGeminiToken {
         token,
         account: selected.name,
+        token_id: claims.sub,
     })
 }
 
@@ -315,6 +317,7 @@ async fn forward(
         };
     let sub_token = routed.token;
     let selected_account = Some(routed.account);
+    let token_id = routed.token_id;
 
     // Normalize Responses input into the Chat `messages` shape so a single
     // translator handles both surfaces.
@@ -429,6 +432,8 @@ async fn forward(
         );
         return response;
     }
+    let mut usage = crate::usage::UsageTracker::new(state.token_manager.clone(), token_id);
+    usage.feed(&upstream_body);
 
     let gemini_json: Value = match serde_json::from_slice(&upstream_body) {
         Ok(v) => v,
