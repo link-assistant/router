@@ -13,9 +13,10 @@ RUN apt-get update && \
 COPY Cargo.toml Cargo.lock ./
 
 # Create a dummy src to build dependencies
-RUN mkdir src && \
+RUN mkdir -p src/bin && \
     echo "pub const VERSION: &str = \"0.0.0\";" > src/lib.rs && \
     echo "fn main() {}" > src/main.rs && \
+    echo "fn main() {}" > src/bin/with-router.rs && \
     cargo build --release --locked && \
     rm -rf src
 
@@ -46,6 +47,7 @@ RUN apt-get update && \
 COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
 
 COPY --from=builder /app/target/release/link-assistant-router /usr/local/bin/link-assistant-router
+COPY --from=builder /app/target/release/with-router /usr/local/bin/with-router
 
 # Default environment
 ENV ROUTER_PORT=8080

@@ -19,6 +19,10 @@ path = "src/lib.rs"
 name = "link-assistant-router"
 path = "src/main.rs"
 
+[[bin]]
+name = "with-router"
+path = "src/bin/with-router.rs"
+
 [dependencies]
 axum = { version = "0.8", features = ["macros"] }
 hyper = { version = "1.10", features = ["full"] }
@@ -54,12 +58,14 @@ hex = "0.4"
 aes-gcm = "0.10"
 portable-pty = "0.9"
 rust-embed = { version = "8.12.0", default-features = false }
+fs2 = "0.4"
+tempfile = "3"
 
 [dev-dependencies]
 proptest = "1"
 tokio-test = "0.4"
 tower = { version = "0.5", features = ["util"] }
-tempfile = "3"
+wait-timeout = "0.2"
 
 [lints.rust]
 # The file-mapping compatibility adapter has a scoped exception; unsafe code
