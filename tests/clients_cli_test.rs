@@ -63,6 +63,9 @@ fn mock_router(
                 }
             };
             stream
+                .set_nonblocking(false)
+                .expect("make mock router connection blocking");
+            stream
                 .set_read_timeout(Some(Duration::from_secs(5)))
                 .expect("set timeout");
             let mut bytes = Vec::new();
