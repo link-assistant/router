@@ -3,7 +3,18 @@
 **Dialect:** OpenAI Chat Completions. **Router endpoint:**
 `/v1/chat/completions`.
 
-## Configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with grok-cli "hi"
+```
+
+The wrapper isolates `HOME` and supplies `GROK_BASE_URL=URL/v1` and a per-run
+`GROK_API_KEY`. Grok has no persistent base-URL field, so `--global` directs
+users to the temporary or manual environment path. See
+[with-router.md](with-router.md).
+
+## Manual configuration
 
 [superagent-ai/grok-cli](https://github.com/superagent-ai/grok-cli) documents
 `GROK_API_KEY` for authentication and an optional `GROK_BASE_URL` (default

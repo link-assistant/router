@@ -17,15 +17,17 @@ come first; the per-CLI documents follow.
 | [chat-admin-bots.md](chat-admin-bots.md) | The optional Telegram and VK admin bots: private chats only, sharing one system-wide admin claim with the web UI |
 | [per-task-tokens.md](per-task-tokens.md) | One `la_sk_…` token per task, for audit, monitoring, security and isolation |
 | [audit-and-monitoring.md](audit-and-monitoring.md) | Public aggregate metrics, admin-only per-token usage, and the JSONL audit log |
+| [with-router.md](with-router.md) | Temporary one-line client launcher, remote selection, managed Docker server, per-run credentials, and exact global undo |
 | [claude-max-in-codex.md](claude-max-in-codex.md) | Use a **Claude MAX** subscription from **Codex CLI** (and any other OpenAI-dialect client) |
 | [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) | Use a **ChatGPT/Codex** subscription from **Claude Code** (and any other Anthropic-dialect client) |
 
 ## Per-CLI configuration
 
-Use [`configure-clients.md`](configure-clients.md) for automatic configuration,
-safe merge, backup, removal, and live diagnosis across the full client matrix.
-The individual documents below also describe manual configuration and protocol
-details.
+Use [`with-router.md`](with-router.md) for temporary-by-default launches and
+[`configure-clients.md`](configure-clients.md) for permanent safe merge,
+backup, removal, and live diagnosis across the full client matrix. The
+individual documents below also describe binary-free manual configuration and
+protocol details.
 
 | Document | CLI | Dialect it speaks to the router |
 | --- | --- | --- |

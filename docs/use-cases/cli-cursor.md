@@ -3,6 +3,17 @@
 **Status: unsupported.** This document exists so the gap is explicit rather than
 silently missing from the list.
 
+## One-line capability check
+
+```bash
+link-assistant-router with cursor "hi"
+```
+
+This exits nonzero before launching Cursor and explains the missing custom
+endpoint/MCP adapter. It does not edit `~/.cursor` or silently proxy unrelated
+traffic. The supported client registry is summarized in
+[with-router.md](with-router.md).
+
 ## The finding
 
 The [Cursor CLI configuration reference](https://cursor.com/docs/cli/reference/configuration)

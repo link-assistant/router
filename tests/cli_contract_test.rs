@@ -62,11 +62,16 @@ fn help_never_prints_secret_environment_values() {
 
 #[test]
 fn boolean_environment_variables_accept_documented_spellings() {
+    let home = tempfile::tempdir().expect("isolated CLI home");
     for name in BOOLEAN_ENV {
         for value in ["1", "true", "yes", "on", "0", "false", "no", "off"] {
             let result = output(
                 router(&["doctor"])
                     .env("TOKEN_SECRET", "boolean-test-secret")
+                    .env("HOME", home.path())
+                    .env_remove("CLAUDE_CODE_HOME")
+                    .env_remove("XDG_CONFIG_HOME")
+                    .env_remove("APPDATA")
                     .env(name, value),
             );
             assert_eq!(
@@ -74,6 +79,11 @@ fn boolean_environment_variables_accept_documented_spellings() {
                 Some(0),
                 "{name}={value}: {}",
                 String::from_utf8_lossy(&result.stderr)
+            );
+            assert!(
+                String::from_utf8_lossy(&result.stdout)
+                    .contains(home.path().to_string_lossy().as_ref()),
+                "{name}={value}: doctor inspected a non-isolated home"
             );
         }
     }

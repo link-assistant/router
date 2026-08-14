@@ -243,6 +243,7 @@ need:
 | --- | --- |
 | [per-task-tokens.md](docs/use-cases/per-task-tokens.md) | One `la_sk_…` token per task — audit, monitoring, security, isolation |
 | [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Aggregate `/metrics`, admin-only per-token `/v1/usage`, and the JSONL audit log |
+| [with-router.md](docs/use-cases/with-router.md) | Temporary-by-default one-line launcher, remote selection, managed Docker lifecycle, and exact global undo |
 | [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | A Claude MAX subscription inside Codex CLI and other OpenAI-dialect clients |
 | [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | A ChatGPT/Qwen/Gemini/LiteLLM backend inside Claude Code and other Anthropic-dialect clients |
 | [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |

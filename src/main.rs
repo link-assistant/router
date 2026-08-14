@@ -36,7 +36,22 @@ type AnyError = Box<dyn std::error::Error>;
 
 #[tokio::main]
 async fn main() -> ExitCode {
-    let cli = <Cli as lino_arguments::Parser>::parse();
+    let arguments =
+        link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
+    let cli = <Cli as lino_arguments::Parser>::parse_from(arguments);
+
+    // The wrapper and managed-server commands do not start a router and must
+    // not require server-only configuration or pollute client stdout with
+    // router startup logs.
+    match cli.command.as_ref() {
+        Some(Command::With(args)) => {
+            return link_assistant_router::with_command::run(args).await;
+        }
+        Some(Command::Server { op }) => {
+            return link_assistant_router::server_command::run(op);
+        }
+        _ => {}
+    }
 
     let verbose = cli.verbose;
     let request_log = cli.request_log.clone();
@@ -80,6 +95,7 @@ async fn main() -> ExitCode {
         Some(Command::Clients { op }) => {
             link_assistant_router::client_command::run(&config, op).await
         }
+        Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
     }

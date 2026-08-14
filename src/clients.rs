@@ -11,12 +11,15 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use clap::ValueEnum;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{Value, json};
 use toml_edit::{DocumentMut, Item, Table, value};
 
+mod catalog;
 mod json_config;
 
+pub(crate) use catalog::RouterModel;
+use catalog::doctor_model;
 use json_config::{read_json_provider_base_url, read_qwen_base_url};
 
 const CODEX_PROVIDER: &str = "link-assistant";
@@ -29,18 +32,170 @@ const GROK_BASE_ENV: &str = "GROK_BASE_URL";
 const ROUTER_PROVIDER: &str = "link-assistant";
 const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
 
+/// How a client can be isolated from its normal user configuration.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ClientIsolation {
+    Home,
+    ClaudeConfig,
+    GeminiHome,
+    ConfigFile,
+    Environment,
+    Unsupported,
+}
+
+/// Declarative client integration data shared by setup, status, and `with`.
+#[derive(Clone, Copy, Debug)]
+pub struct ClientIntegration {
+    pub kind: ClientKind,
+    pub name: &'static str,
+    pub command: &'static str,
+    pub dialect: &'static str,
+    pub token_env: Option<&'static str>,
+    pub base_url_env: Option<&'static str>,
+    pub endpoint_suffix: &'static str,
+    pub default_model: &'static str,
+    pub model_arg: Option<&'static str>,
+    pub non_interactive_arg: Option<&'static str>,
+    pub isolation: ClientIsolation,
+    pub setup_limitation: Option<&'static str>,
+}
+
 /// Documented local clients, including clients whose vendor gates prevent setup.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
 pub enum ClientKind {
     Codex,
+    #[value(alias = "claude")]
     ClaudeCode,
     Cursor,
+    #[value(alias = "gemini")]
     GeminiCli,
+    #[value(alias = "grok")]
     GrokCli,
     Opencode,
+    #[value(alias = "qwen")]
     QwenCode,
     Agent,
 }
+
+/// Single source of truth for supported client launch mechanics.
+pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
+    ClientIntegration {
+        kind: ClientKind::Codex,
+        name: "Codex CLI",
+        command: "codex",
+        dialect: "OpenAI Responses",
+        token_env: Some(CODEX_TOKEN_ENV),
+        base_url_env: None,
+        endpoint_suffix: "/v1",
+        default_model: "gpt-5",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("exec"),
+        isolation: ClientIsolation::Home,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::ClaudeCode,
+        name: "Claude Code",
+        command: "claude",
+        dialect: "Anthropic Messages",
+        token_env: Some(CLAUDE_TOKEN_ENV),
+        base_url_env: Some(CLAUDE_BASE_ENV),
+        endpoint_suffix: "",
+        default_model: "claude-sonnet-4-5-20250929",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("--print"),
+        isolation: ClientIsolation::ClaudeConfig,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::Cursor,
+        name: "Cursor CLI",
+        command: "cursor-agent",
+        dialect: "Cursor private",
+        token_env: None,
+        base_url_env: None,
+        endpoint_suffix: "",
+        default_model: "",
+        model_arg: None,
+        non_interactive_arg: None,
+        isolation: ClientIsolation::Unsupported,
+        setup_limitation: Some(
+            "Cursor CLI does not expose a base-URL override; this router also does not expose the MCP adapter Cursor would require",
+        ),
+    },
+    ClientIntegration {
+        kind: ClientKind::GeminiCli,
+        name: "Gemini CLI",
+        command: "gemini",
+        dialect: "Gemini native",
+        token_env: Some("GEMINI_API_KEY"),
+        base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
+        endpoint_suffix: "/api/gemini",
+        default_model: "gemini-2.5-pro",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("-p"),
+        isolation: ClientIsolation::GeminiHome,
+        setup_limitation: Some(
+            "Gemini CLI permanent setup is unavailable because its individual Code Assist flow aborts with IneligibleTierError; use `link-assistant-router with gemini` for isolated API-key mode",
+        ),
+    },
+    ClientIntegration {
+        kind: ClientKind::GrokCli,
+        name: "Grok CLI",
+        command: "grok",
+        dialect: "OpenAI Chat",
+        token_env: Some(GROK_TOKEN_ENV),
+        base_url_env: Some(GROK_BASE_ENV),
+        endpoint_suffix: "/v1",
+        default_model: "gpt-4o",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("-p"),
+        isolation: ClientIsolation::Home,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::Opencode,
+        name: "OpenCode",
+        command: "opencode",
+        dialect: "OpenAI Chat",
+        token_env: Some(ROUTER_TOKEN_ENV),
+        base_url_env: None,
+        endpoint_suffix: "/v1",
+        default_model: "claude-sonnet-4-5-20250929",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("run"),
+        isolation: ClientIsolation::ConfigFile,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::QwenCode,
+        name: "Qwen Code",
+        command: "qwen",
+        dialect: "OpenAI Chat",
+        token_env: Some(ROUTER_TOKEN_ENV),
+        base_url_env: Some("OPENAI_BASE_URL"),
+        endpoint_suffix: "/v1",
+        default_model: "claude-sonnet-4-5-20250929",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("-p"),
+        isolation: ClientIsolation::Home,
+        setup_limitation: None,
+    },
+    ClientIntegration {
+        kind: ClientKind::Agent,
+        name: "Link.Assistant Agent",
+        command: "agent",
+        dialect: "OpenAI Chat",
+        token_env: Some(ROUTER_TOKEN_ENV),
+        base_url_env: None,
+        endpoint_suffix: "/v1",
+        default_model: "claude-sonnet-4-5-20250929",
+        model_arg: Some("--model"),
+        non_interactive_arg: Some("--prompt"),
+        isolation: ClientIsolation::ConfigFile,
+        setup_limitation: None,
+    },
+];
 
 impl ClientKind {
     pub const ALL: [Self; 8] = [
@@ -56,74 +211,37 @@ impl ClientKind {
 
     #[must_use]
     pub const fn command(self) -> &'static str {
-        match self {
-            Self::Codex => "codex",
-            Self::ClaudeCode => "claude",
-            Self::Cursor => "cursor-agent",
-            Self::GeminiCli => "gemini",
-            Self::GrokCli => "grok",
-            Self::Opencode => "opencode",
-            Self::QwenCode => "qwen",
-            Self::Agent => "agent",
-        }
+        self.integration().command
     }
 
     #[must_use]
     pub const fn display_name(self) -> &'static str {
-        match self {
-            Self::Codex => "Codex CLI",
-            Self::ClaudeCode => "Claude Code",
-            Self::Cursor => "Cursor CLI",
-            Self::GeminiCli => "Gemini CLI",
-            Self::GrokCli => "Grok CLI",
-            Self::Opencode => "OpenCode",
-            Self::QwenCode => "Qwen Code",
-            Self::Agent => "Link.Assistant Agent",
-        }
+        self.integration().name
     }
 
     #[must_use]
     pub const fn dialect(self) -> &'static str {
-        match self {
-            Self::Codex => "OpenAI Responses",
-            Self::ClaudeCode => "Anthropic Messages",
-            Self::GeminiCli => "Gemini native",
-            Self::Cursor => "Cursor private",
-            Self::GrokCli | Self::Opencode | Self::QwenCode | Self::Agent => "OpenAI Chat",
-        }
+        self.integration().dialect
     }
 
     #[must_use]
     pub const fn token_env(self) -> Option<&'static str> {
-        match self {
-            Self::Codex => Some(CODEX_TOKEN_ENV),
-            Self::ClaudeCode => Some(CLAUDE_TOKEN_ENV),
-            Self::GeminiCli => Some("GEMINI_API_KEY"),
-            Self::GrokCli => Some(GROK_TOKEN_ENV),
-            Self::Opencode | Self::QwenCode | Self::Agent => Some(ROUTER_TOKEN_ENV),
-            Self::Cursor => None,
-        }
+        self.integration().token_env
     }
 
     #[must_use]
     pub const fn setup_limitation(self) -> Option<&'static str> {
-        match self {
-            Self::Cursor => Some(
-                "Cursor CLI does not expose a base-URL override and rejects non-Cursor keys before making an HTTP request",
-            ),
-            Self::GeminiCli => Some(
-                "Gemini CLI aborts with IneligibleTierError before contacting the router on the tested individual Code Assist flow",
-            ),
-            _ => None,
-        }
+        self.integration().setup_limitation
     }
 
     #[must_use]
     pub const fn base_url_env(self) -> Option<&'static str> {
-        match self {
-            Self::GrokCli => Some(GROK_BASE_ENV),
-            _ => None,
-        }
+        self.integration().base_url_env
+    }
+
+    #[must_use]
+    pub const fn integration(self) -> &'static ClientIntegration {
+        &CLIENT_INTEGRATIONS[self as usize]
     }
 }
 
@@ -192,19 +310,6 @@ pub struct SetupResult {
     pub changed: bool,
 }
 
-/// One model advertised by the configured router.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-pub(crate) struct RouterModel {
-    pub id: String,
-    #[serde(default)]
-    pub owned_by: String,
-}
-
-#[derive(Deserialize)]
-struct RouterCatalog {
-    data: Vec<RouterModel>,
-}
-
 /// Reads and updates supported clients below their normal user config roots.
 #[derive(Debug)]
 pub struct ClientManager {
@@ -213,6 +318,8 @@ pub struct ClientManager {
     claude_home: PathBuf,
     config_home: PathBuf,
     qwen_home: PathBuf,
+    gemini_home: PathBuf,
+    cursor_home: PathBuf,
 }
 
 impl ClientManager {
@@ -229,13 +336,33 @@ impl ClientManager {
             std::env::var_os("XDG_CONFIG_HOME").map_or_else(|| home.join(".config"), PathBuf::from);
         let qwen_home =
             std::env::var_os("QWEN_HOME").map_or_else(|| home.join(".qwen"), PathBuf::from);
+        let gemini_home =
+            std::env::var_os("GEMINI_CLI_HOME").map_or_else(|| home.join(".gemini"), PathBuf::from);
+        let cursor_home = std::env::var_os("CURSOR_CONFIG_DIR")
+            .map_or_else(|| home.join(".cursor"), PathBuf::from);
         Ok(Self {
             home,
             codex_home,
             claude_home,
             config_home,
             qwen_home,
+            gemini_home,
+            cursor_home,
         })
+    }
+
+    /// Build a manager whose every client path is rooted below `home`.
+    #[must_use]
+    pub fn isolated(home: &Path) -> Self {
+        Self {
+            home: home.to_path_buf(),
+            codex_home: home.join(".codex"),
+            claude_home: home.join(".claude"),
+            config_home: home.join(".config"),
+            qwen_home: home.join(".qwen"),
+            gemini_home: home.join(".gemini"),
+            cursor_home: home.join(".cursor"),
+        }
     }
 
     #[must_use]
@@ -243,15 +370,29 @@ impl ClientManager {
         match client {
             ClientKind::Codex => self.codex_home.join("config.toml"),
             ClientKind::ClaudeCode => self.claude_home.join("settings.json"),
-            ClientKind::Cursor => std::env::var_os("CURSOR_CONFIG_DIR").map_or_else(
-                || self.home.join(".cursor/cli-config.json"),
-                |path| PathBuf::from(path).join("cli-config.json"),
-            ),
-            ClientKind::GeminiCli => self.home.join(".gemini/settings.json"),
+            ClientKind::Cursor => self.cursor_home.join("cli-config.json"),
+            ClientKind::GeminiCli => self.gemini_home.join("settings.json"),
             ClientKind::GrokCli => self.home.join(".grok/user-settings.json"),
             ClientKind::Opencode => self.config_home.join("opencode/opencode.json"),
             ClientKind::QwenCode => self.qwen_home.join("settings.json"),
             ClientKind::Agent => self.config_home.join("link-assistant-agent/opencode.json"),
+        }
+    }
+
+    /// Ownership marker used to make a managed configuration reversible.
+    #[must_use]
+    pub fn ownership_marker_path(&self, client: ClientKind) -> Option<PathBuf> {
+        match client {
+            ClientKind::Codex => Some(self.codex_home.join(OWNERSHIP_MARKER)),
+            ClientKind::ClaudeCode => Some(self.claude_home.join(OWNERSHIP_MARKER)),
+            ClientKind::Opencode | ClientKind::Agent => Some(
+                self.config_path(client)
+                    .parent()
+                    .expect("client config has a parent")
+                    .join(OWNERSHIP_MARKER),
+            ),
+            ClientKind::QwenCode => Some(self.qwen_home.join(OWNERSHIP_MARKER)),
+            ClientKind::Cursor | ClientKind::GeminiCli | ClientKind::GrokCli => None,
         }
     }
 
@@ -300,53 +441,6 @@ impl ClientManager {
         }
     }
 
-    /// Read the authenticated model catalog used by setup and doctor.
-    pub(crate) async fn catalog(
-        &self,
-        base_url: &str,
-        token: &str,
-    ) -> Result<Vec<RouterModel>, ClientError> {
-        let base_url = normalize_base_url(base_url)?;
-        let url = models_url(&base_url);
-        let response = reqwest::Client::new()
-            .get(&url)
-            .bearer_auth(token)
-            .timeout(Duration::from_secs(15))
-            .send()
-            .await
-            .map_err(|error| {
-                ClientError::message(format!("router catalog is not reachable at {url}: {error}"))
-            })?;
-        let code = response.status();
-        let response_body = response.text().await.unwrap_or_default();
-        if !code.is_success() {
-            return Err(ClientError::message(format!(
-                "router catalog request failed at {url} ({code}): {}",
-                compact_body(&response_body)
-            )));
-        }
-        let catalog: RouterCatalog = serde_json::from_str(&response_body).map_err(|error| {
-            ClientError::message(format!("router returned an invalid model catalog: {error}"))
-        })?;
-        let mut models = catalog
-            .data
-            .into_iter()
-            .filter(|model| !model.id.trim().is_empty())
-            .collect::<Vec<_>>();
-        models.sort_by(|left, right| {
-            left.id
-                .cmp(&right.id)
-                .then_with(|| left.owned_by.cmp(&right.owned_by))
-        });
-        models.dedup_by(|left, right| left.id == right.id && left.owned_by == right.owned_by);
-        if models.is_empty() {
-            return Err(ClientError::message(
-                "router catalog contains no models from healthy subscriptions",
-            ));
-        }
-        Ok(models)
-    }
-
     pub fn remove(&self, client: ClientKind) -> Result<SetupResult, ClientError> {
         match client {
             ClientKind::Codex => self.remove_codex(),
@@ -374,10 +468,15 @@ impl ClientManager {
         let path = directory.join(format!("{client}.env"));
         let mut contents = String::new();
         if let Some(base_url_env) = client.base_url_env() {
+            let endpoint = format!(
+                "{}{}",
+                base_url.trim_end_matches('/'),
+                client.integration().endpoint_suffix
+            );
             writeln!(
                 &mut contents,
                 "export {base_url_env}={}",
-                shell_quote(&format!("{}/v1", base_url.trim_end_matches('/')))
+                shell_quote(&endpoint)
             )
             .expect("writing to a String cannot fail");
         }
@@ -613,36 +712,6 @@ impl ClientManager {
         }
         Ok(result)
     }
-}
-
-fn models_url(base_url: &str) -> String {
-    let base_url = base_url.trim_end_matches('/');
-    if base_url.ends_with("/v1") {
-        format!("{base_url}/models")
-    } else {
-        format!("{base_url}/v1/models")
-    }
-}
-
-fn doctor_model(client: ClientKind, catalog: &[RouterModel]) -> Result<&str, ClientError> {
-    let required_owner = match client {
-        ClientKind::Codex => Some("openai"),
-        ClientKind::ClaudeCode => Some("anthropic"),
-        ClientKind::GrokCli | ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent => {
-            None
-        }
-        ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
-    };
-    catalog
-        .iter()
-        .find(|model| required_owner.is_none_or(|owner| model.owned_by == owner))
-        .map(|model| model.id.as_str())
-        .ok_or_else(|| {
-            let subscription = required_owner.unwrap_or("compatible");
-            ClientError::message(format!(
-                "router catalog has no model for the {subscription} subscription"
-            ))
-        })
 }
 
 fn normalize_base_url(base_url: &str) -> Result<String, ClientError> {

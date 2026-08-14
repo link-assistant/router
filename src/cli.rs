@@ -33,6 +33,10 @@ use crate::config::{
     default_activitypub_public_key_pem, default_data_dir,
 };
 
+mod with;
+
+pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
+
 /// Parse a boolean switch that may also arrive from the environment.
 ///
 /// Clap's plain `bool` accepts only `true`/`false` from an env var, which makes
@@ -487,6 +491,13 @@ pub enum Command {
     Clients {
         #[command(subcommand)]
         op: ClientOp,
+    },
+    /// Launch an agentic CLI with an isolated router configuration.
+    With(WithArgs),
+    /// Select and manage the server used by `with`.
+    Server {
+        #[command(subcommand)]
+        op: ServerOp,
     },
     /// Obtain or inspect vendor subscription credentials.
     Auth {

@@ -1,0 +1,294 @@
+//! Exact, edit-aware backup and undo for `router with --global`.
+
+use std::fs::{self, OpenOptions};
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
+use sha2::{Digest as _, Sha256};
+
+use crate::clients::{ClientKind, ClientManager, RouterModel};
+
+type AnyError = Box<dyn std::error::Error + Send + Sync>;
+
+#[derive(Debug, Deserialize, Serialize)]
+struct BackupState {
+    config_existed: bool,
+    #[serde(default)]
+    config_mode: Option<u32>,
+    config_hash_after_setup: String,
+    marker_existed: bool,
+    #[serde(default)]
+    marker_mode: Option<u32>,
+    #[serde(default)]
+    marker_hash_after_setup: Option<String>,
+    marker_path: Option<PathBuf>,
+    setup_backup: Option<PathBuf>,
+}
+
+pub(crate) fn configure(
+    client: ClientKind,
+    base_url: &str,
+    models: &[RouterModel],
+) -> Result<(), AnyError> {
+    if matches!(client, ClientKind::Cursor | ClientKind::GeminiCli) {
+        return Err(client
+            .setup_limitation()
+            .unwrap_or("client cannot be configured globally")
+            .into());
+    }
+    if client == ClientKind::GrokCli {
+        return Err(
+            "Grok CLI has no persistent base-URL setting; use temporary `with` or persist GROK_BASE_URL and GROK_API_KEY in your shell profile"
+                .into(),
+        );
+    }
+    let manager = ClientManager::from_env()?;
+    let config_path = manager.config_path(client);
+    let paths = backup_paths(&config_path);
+    if paths.state.exists() {
+        return Err(format!(
+            "a global backup already exists for {client}; run `link-assistant-router with --global --undo {client}` first"
+        )
+        .into());
+    }
+    let marker_path = manager.ownership_marker_path(client);
+    let config_existed = config_path.exists();
+    let marker_existed = marker_path.as_ref().is_some_and(|path| path.exists());
+    let config_mode = file_mode(&config_path);
+    let marker_mode = marker_path.as_deref().and_then(file_mode);
+    if config_existed {
+        copy_private(&config_path, &paths.config)?;
+    }
+    if let Some(marker) = marker_path.as_ref().filter(|_| marker_existed) {
+        copy_private(marker, &paths.marker)?;
+    }
+    let setup = match manager.setup(client, base_url, models) {
+        Ok(result) => result,
+        Err(error) => {
+            rollback(
+                &paths,
+                &config_path,
+                config_existed,
+                config_mode,
+                marker_path.as_deref(),
+                marker_existed,
+                marker_mode,
+            )?;
+            remove_if_present(&paths.config)?;
+            remove_if_present(&paths.marker)?;
+            return Err(error.into());
+        }
+    };
+    let configured_contents = fs::read(&config_path)?;
+    let state = BackupState {
+        config_existed,
+        config_mode,
+        config_hash_after_setup: digest(&configured_contents),
+        marker_existed,
+        marker_mode,
+        marker_hash_after_setup: marker_path
+            .as_deref()
+            .and_then(|path| fs::read(path).ok())
+            .map(|contents| digest(&contents)),
+        marker_path,
+        setup_backup: setup.backup,
+    };
+    if let Err(error) = write_private(&paths.state, &serde_json::to_vec_pretty(&state)?) {
+        rollback(
+            &paths,
+            &config_path,
+            config_existed,
+            config_mode,
+            state.marker_path.as_deref(),
+            marker_existed,
+            marker_mode,
+        )?;
+        if let Some(setup_backup) = state.setup_backup {
+            remove_if_present(&setup_backup)?;
+        }
+        remove_if_present(&paths.config)?;
+        remove_if_present(&paths.marker)?;
+        return Err(format!("could not save global undo state: {error}").into());
+    }
+    println!(
+        "configured {} globally in {}",
+        client.display_name(),
+        config_path.display()
+    );
+    println!("undo: link-assistant-router with --global --undo {client}");
+    if let Some(token_env) = client.token_env() {
+        println!(
+            "No credential was stored; set {token_env} before launching {}.",
+            client.display_name()
+        );
+    }
+    Ok(())
+}
+
+pub fn undo(client: ClientKind) -> Result<(), AnyError> {
+    let manager = ClientManager::from_env()?;
+    let config_path = manager.config_path(client);
+    let paths = backup_paths(&config_path);
+    let source = fs::read(&paths.state).map_err(|error| {
+        if error.kind() == std::io::ErrorKind::NotFound {
+            format!("no global backup exists for {client}; nothing was restored")
+        } else {
+            format!("could not read {}: {error}", paths.state.display())
+        }
+    })?;
+    let state: BackupState = serde_json::from_slice(&source)?;
+    let current = fs::read(&config_path).unwrap_or_default();
+    if digest(&current) != state.config_hash_after_setup {
+        return Err(format!(
+            "refusing to overwrite {} because it changed after `with --global`; preserve your edits or restore the managed version before retrying",
+            config_path.display()
+        )
+        .into());
+    }
+    if let Some(marker_path) = state.marker_path.as_ref() {
+        if let Some(expected) = state.marker_hash_after_setup.as_deref() {
+            let current = fs::read(marker_path).unwrap_or_default();
+            if digest(&current) != expected {
+                return Err(format!(
+                    "refusing to overwrite {} because it changed after `with --global`",
+                    marker_path.display()
+                )
+                .into());
+            }
+        }
+        if state.marker_existed {
+            restore(&paths.marker, marker_path, state.marker_mode)?;
+        } else {
+            remove_if_present(marker_path)?;
+        }
+    }
+    if state.config_existed {
+        restore(&paths.config, &config_path, state.config_mode)?;
+    } else {
+        remove_if_present(&config_path)?;
+    }
+    if let Some(setup_backup) = state.setup_backup {
+        remove_if_present(&setup_backup)?;
+    }
+    remove_if_present(&paths.config)?;
+    remove_if_present(&paths.marker)?;
+    remove_if_present(&paths.state)?;
+    println!("restored {} exactly", config_path.display());
+    Ok(())
+}
+
+struct BackupPaths {
+    config: PathBuf,
+    marker: PathBuf,
+    state: PathBuf,
+}
+
+fn backup_paths(config: &Path) -> BackupPaths {
+    BackupPaths {
+        config: append(config, ".with-router.bak"),
+        marker: append(config, ".with-router-marker.bak"),
+        state: append(config, ".with-router-state.json"),
+    }
+}
+
+fn append(path: &Path, suffix: &str) -> PathBuf {
+    let mut value = path.as_os_str().to_os_string();
+    value.push(suffix);
+    PathBuf::from(value)
+}
+
+fn restore(backup: &Path, destination: &Path, mode: Option<u32>) -> Result<(), AnyError> {
+    let contents = fs::read(backup)?;
+    remove_if_present(destination)?;
+    write_private(destination, &contents)?;
+    set_file_mode(destination, mode)?;
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn rollback(
+    paths: &BackupPaths,
+    config_path: &Path,
+    config_existed: bool,
+    config_mode: Option<u32>,
+    marker_path: Option<&Path>,
+    marker_existed: bool,
+    marker_mode: Option<u32>,
+) -> Result<(), AnyError> {
+    if let Some(marker_path) = marker_path {
+        if marker_existed {
+            restore(&paths.marker, marker_path, marker_mode)?;
+        } else {
+            remove_if_present(marker_path)?;
+        }
+    }
+    if config_existed {
+        restore(&paths.config, config_path, config_mode)?;
+    } else {
+        remove_if_present(config_path)?;
+    }
+    Ok(())
+}
+
+fn copy_private(source: &Path, destination: &Path) -> Result<(), AnyError> {
+    write_private(destination, &fs::read(source)?)
+}
+
+fn write_private(path: &Path, contents: &[u8]) -> Result<(), AnyError> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut options = OpenOptions::new();
+    options.create_new(true).write(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    file.write_all(contents)?;
+    file.sync_all()?;
+    Ok(())
+}
+
+fn remove_if_present(path: &Path) -> Result<(), std::io::Error> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+fn digest(contents: &[u8]) -> String {
+    hex::encode(Sha256::digest(contents))
+}
+
+#[cfg(unix)]
+fn file_mode(path: &Path) -> Option<u32> {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    fs::metadata(path)
+        .ok()
+        .map(|metadata| metadata.permissions().mode())
+}
+
+#[cfg(not(unix))]
+fn file_mode(_path: &Path) -> Option<u32> {
+    None
+}
+
+#[cfg(unix)]
+fn set_file_mode(path: &Path, mode: Option<u32>) -> Result<(), std::io::Error> {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    if let Some(mode) = mode {
+        fs::set_permissions(path, fs::Permissions::from_mode(mode))?;
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn set_file_mode(_path: &Path, _mode: Option<u32>) -> Result<(), std::io::Error> {
+    Ok(())
+}

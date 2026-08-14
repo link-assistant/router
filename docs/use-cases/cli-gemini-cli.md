@@ -3,7 +3,19 @@
 **Dialect:** Gemini / Vertex. **Router endpoints:** `/api/gemini/v1beta/…` and
 `/api/vertex/v1/…`.
 
-## Configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with gemini-cli "hi"
+```
+
+The wrapper selects the Gemini API-key flow below a disposable
+`GEMINI_CLI_HOME`, sets `GOOGLE_GEMINI_BASE_URL` to `URL/api/gemini`, and
+passes the run token as `GEMINI_API_KEY`. The normal Gemini home is untouched.
+Permanent setup is not offered because this endpoint override belongs to the
+API-key environment. See [with-router.md](with-router.md).
+
+## Manual configuration
 
 The [Gemini CLI configuration reference](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md)
 documents `GOOGLE_GEMINI_BASE_URL`:
