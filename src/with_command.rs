@@ -4,7 +4,9 @@ use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::path::Path;
-use std::process::{Command, ExitCode, Stdio};
+#[cfg(unix)]
+use std::process::Stdio;
+use std::process::{Command, ExitCode};
 use std::time::Duration;
 
 use serde_json::json;
@@ -419,6 +421,8 @@ fn process_alive(pid: u32) -> bool {
 }
 
 fn set_directory_owner_only(path: &Path) -> Result<(), std::io::Error> {
+    #[cfg(not(unix))]
+    let _ = path;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt as _;

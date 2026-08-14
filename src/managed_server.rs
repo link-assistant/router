@@ -918,6 +918,8 @@ fn write_private_json(path: &Path, value: &impl Serialize) -> Result<(), AnyErro
 }
 
 fn set_owner_only(path: &Path) -> Result<(), std::io::Error> {
+    #[cfg(not(unix))]
+    let _ = path;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt as _;
