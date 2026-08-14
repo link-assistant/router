@@ -16,8 +16,8 @@ This is the first requirement of
 | --- | --- |
 | **Audit** | Every request carries a token id, so the JSONL audit log answers "which task did this?" after the fact |
 | **Monitoring** | Admin-only `/v1/usage` exposes per-token request counts while public `/metrics` stays aggregate-only |
-| **Security** | A leaked task token exposes one task's budget, not the subscription — the vendor OAuth credential never leaves the router |
-| **Isolation** | `--max-requests` bounds the blast radius of a runaway agent; `--account` pins a task to one subscription in a pool |
+| **Security** | A leaked task token exposes one task's limits, not the vendor credential, which never leaves the router |
+| **Containment** | `--max-tokens` bounds actual reported token spend and `--rate-limit-per-minute` prevents one runaway agent from consuming its allowance in a burst |
 
 ## 1. Start the router
 
@@ -34,7 +34,9 @@ Via the CLI:
 link-assistant-router tokens issue \
   --label "issue-45-solver" \
   --ttl-hours 24 \
-  --max-requests 500
+  --max-requests 500 \
+  --max-tokens 100000 \
+  --rate-limit-per-minute 10
 ```
 
 Or via the admin endpoint, which is what a CI job or an orchestrator will use:
@@ -42,7 +44,7 @@ Or via the admin endpoint, which is what a CI job or an orchestrator will use:
 ```bash
 curl -s -X POST http://127.0.0.1:8080/api/tokens \
   -H "Content-Type: application/json" \
-  -d '{"ttl_hours": 24, "label": "issue-45-solver", "max_requests": 500}' \
+  -d '{"ttl_hours":24,"label":"issue-45-solver","max_requests":500,"max_tokens":100000,"rate_limit_per_minute":10}' \
   | jq -r .token
 ```
 
@@ -60,9 +62,11 @@ Issuing is **universal**: one endpoint issues every token. What makes a token
 | `--label` / `label` | Name shown in `tokens list`, admin-only `/v1/usage`, and the audit log |
 | `--ttl-hours` / `ttl_hours` | Token stops working after this many hours; short TTLs make revocation mostly unnecessary |
 | `--max-requests` / `max_requests` | Hard cap on forwarded requests; `429 rate_limit_error` after that. Omit for unlimited |
-| `--account` / `account` | Strict pin to one account in a multi-subscription pool. Pinned requests fail rather than silently changing identity |
+| `--max-tokens` / `max_tokens` | Cap on actual input plus output tokens reported by successful upstream responses; the next request after exhaustion gets `429` |
+| `--rate-limit-per-minute` / `rate_limit_per_minute` | Per-token fixed one-minute request window; a burst does not affect other tokens |
+| `--account` / `account` | Strict pin to one account in a multi-subscription pool. With only one subscription it has no effect. Pinned requests fail rather than silently changing identity |
 
-The budget is enforced for **every** upstream — Anthropic, Codex, Gemini, Qwen,
+The controls are enforced for **every** upstream — Anthropic, Codex, Gemini, Qwen,
 Gonka, Crater and generic OpenAI-compatible providers — so a task token cannot
 escape its cap by being pointed at a different backend.
 
@@ -89,9 +93,11 @@ each client reads.
 ## 5. Watch and retire the token
 
 ```bash
-link-assistant-router tokens list          # id, label, expiry, used/max requests
+link-assistant-router tokens list          # expiry, requests, actual tokens, rpm
 link-assistant-router tokens show <id>     # one token's metadata
 link-assistant-router tokens revoke <id>   # immediate, persisted across restarts
+link-assistant-router tokens expire <id>   # explicit revoke alias
+link-assistant-router tokens rotate <id>   # replace and revoke; preserves controls
 ```
 
 Usage and revocation live in the persistent token store, so both survive a
@@ -110,6 +116,18 @@ those directories according to their own retention policy.
 
 For where the usage numbers surface, see
 [audit-and-monitoring.md](audit-and-monitoring.md).
+
+## What isolation does and does not mean
+
+Per-token isolation covers attribution, independent budgets, rate windows,
+expiry, revocation, and optional account pinning. It is **not data isolation**:
+tokens routed to the same subscription can reach the same models, and the
+router does not create separate vendor context, history, or cache boundaries.
+The operator can read the default diagnostic request log, which records full
+prompts and completions under
+`$DATA_DIR/requests/<token-hash>/requests.jsonl`. Protect that directory as
+sensitive household or team data. The separate optional audit log contains
+metadata only and deliberately excludes prompt and completion content.
 
 ## Operational notes
 

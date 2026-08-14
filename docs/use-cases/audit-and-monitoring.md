@@ -1,7 +1,8 @@
 # Use case: auditing and monitoring per-task usage
 
 > **Goal** — answer "which task token made which request, against which
-> subscription, and how many requests has it spent?" both live and after the
+> subscription, and how many requests and upstream-reported tokens has it
+> spent?" both live and after the
 > fact.
 
 This is the observability half of [per-task-tokens.md](per-task-tokens.md).
@@ -35,8 +36,9 @@ curl -s http://127.0.0.1:8080/v1/usage \
 ```
 
 The count increments once per *authorised* request — the same unit
-`--max-requests` budgets — so `requests` here and `used/max` in `tokens list`
-count the same events. `/metrics` remains unauthenticated for standard
+`--max-requests` budgets. Persisted `used_tokens/max_tokens` in `tokens list`
+instead comes from actual vendor response usage and survives restarts.
+`/metrics` remains unauthenticated for standard
 Prometheus scrapers, so it exposes aggregate totals and status codes only; it
 never emits token ids, token labels, or account names.
 
