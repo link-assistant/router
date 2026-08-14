@@ -29,6 +29,190 @@ fn router_with_env(home: &std::path::Path, args: &[&str], env: &[(&str, &str)]) 
     command.output().expect("router CLI should run")
 }
 
+fn mock_router(
+    models: &[(&str, &str)],
+    request_count: usize,
+) -> (String, std::thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock catalog");
+    listener
+        .set_nonblocking(true)
+        .expect("make mock catalog nonblocking");
+    let port = listener.local_addr().expect("listener address").port();
+    let body = serde_json::json!({
+        "object": "list",
+        "data": models
+            .iter()
+            .map(|(id, owner)| serde_json::json!({"id": id, "owned_by": owner}))
+            .collect::<Vec<_>>()
+    })
+    .to_string();
+    let server = std::thread::spawn(move || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let mut requests = Vec::new();
+        while requests.len() < request_count {
+            let mut stream = loop {
+                match listener.accept() {
+                    Ok((stream, _)) => break stream,
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        if std::time::Instant::now() >= deadline {
+                            return requests;
+                        }
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(error) => panic!("accept mock router request: {error}"),
+                }
+            };
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .expect("set timeout");
+            let mut bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let count = stream.read(&mut buffer).expect("read request");
+                if count == 0 {
+                    break;
+                }
+                bytes.extend_from_slice(&buffer[..count]);
+                if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let request = String::from_utf8_lossy(&bytes).into_owned();
+            let response_body = if request.starts_with("GET ") {
+                &body
+            } else {
+                "{}"
+            };
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response_body}",
+                response_body.len()
+            );
+            stream
+                .write_all(response.as_bytes())
+                .expect("write mock router response");
+            requests.push(request);
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), server)
+}
+
+fn catalog_server(models: &[(&str, &str)]) -> (String, std::thread::JoinHandle<Vec<String>>) {
+    mock_router(models, 1)
+}
+
+#[test]
+fn opencode_setup_populates_models_from_the_live_catalog() {
+    let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = catalog_server(&[("gpt-live-only", "openai")]);
+
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "opencode",
+            "--token",
+            "la_sk_catalog",
+            "--base-url",
+            &base_url,
+        ],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+    let requests = server.join().expect("mock catalog server");
+    let request = &requests[0];
+    assert!(request.starts_with("GET /v1/models HTTP/1.1"));
+    assert!(
+        request
+            .to_ascii_lowercase()
+            .contains("authorization: bearer la_sk_catalog")
+    );
+    let configured = fs::read_to_string(home.path().join(".config/opencode/opencode.json"))
+        .expect("read OpenCode config");
+    let configured: serde_json::Value =
+        serde_json::from_str(&configured).expect("valid OpenCode config");
+    let models = configured["provider"]["link-assistant"]["models"]
+        .as_object()
+        .expect("provider models object");
+    assert_eq!(models.len(), 1);
+    assert!(models.contains_key("gpt-live-only"));
+}
+
+#[test]
+fn opencode_reconfiguration_preserves_user_added_models() {
+    let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = mock_router(&[("gpt-live", "openai")], 2);
+    let args = [
+        "clients",
+        "setup",
+        "opencode",
+        "--token",
+        "la_sk_catalog",
+        "--base-url",
+        &base_url,
+    ];
+    assert!(router(home.path(), &args).status.success());
+    let path = home.path().join(".config/opencode/opencode.json");
+    let mut configured: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&path).expect("read config"))
+            .expect("valid config");
+    configured["provider"]["link-assistant"]["models"]["user-model"] =
+        serde_json::json!({"name": "My model"});
+    fs::write(
+        &path,
+        format!(
+            "{}\n",
+            serde_json::to_string_pretty(&configured).expect("render config")
+        ),
+    )
+    .expect("add user model");
+
+    let repeated = router(home.path(), &args);
+    assert!(
+        repeated.status.success(),
+        "{}",
+        String::from_utf8_lossy(&repeated.stderr)
+    );
+    assert_eq!(server.join().expect("catalog server").len(), 2);
+    let configured: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("read repeated config"))
+            .expect("valid repeated config");
+    assert_eq!(
+        configured["provider"]["link-assistant"]["models"]["user-model"]["name"],
+        "My model"
+    );
+}
+
+#[test]
+fn catalog_dependent_setup_fails_before_writing_when_router_is_unreachable() {
+    let home = tempfile::tempdir().expect("temp home");
+    let listener = TcpListener::bind("127.0.0.1:0").expect("reserve unused port");
+    let base_url = format!(
+        "http://{}",
+        listener.local_addr().expect("listener address")
+    );
+    drop(listener);
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "opencode",
+            "--token",
+            "la_sk_catalog",
+            "--base-url",
+            &base_url,
+        ],
+    );
+    assert!(!setup.status.success());
+    assert!(String::from_utf8_lossy(&setup.stderr).contains("catalog is not reachable"));
+    assert!(!home.path().join(".config/opencode/opencode.json").exists());
+}
+
 #[test]
 fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     let home = tempfile::tempdir().expect("temp home");
@@ -65,7 +249,8 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
         !configured.contains("la_sk_existing"),
         "secret leaked into config"
     );
-    assert!(String::from_utf8_lossy(&first.stdout).contains("LINK_ASSISTANT_TOKEN"));
+    assert!(String::from_utf8_lossy(&first.stdout).contains("credentials:"));
+    assert!(!String::from_utf8_lossy(&first.stdout).contains("la_sk_existing"));
     assert!(
         fs::read_dir(&codex_dir)
             .expect("list codex dir")
@@ -131,7 +316,16 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     );
     assert!(settings["env"].get("ANTHROPIC_AUTH_TOKEN").is_none());
     assert!(!settings.to_string().contains("la_sk_existing"));
-    assert!(String::from_utf8_lossy(&setup.stdout).contains("ANTHROPIC_AUTH_TOKEN"));
+    assert!(String::from_utf8_lossy(&setup.stdout).contains("credentials:"));
+    assert!(!String::from_utf8_lossy(&setup.stdout).contains("la_sk_existing"));
+    assert!(
+        fs::read_to_string(
+            home.path()
+                .join(".config/link-assistant-router/clients/claude-code.env")
+        )
+        .expect("read Claude credential file")
+        .contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'")
+    );
 
     let removed = router(home.path(), &["clients", "remove", "claude-code"]);
     assert!(removed.status.success());
@@ -194,7 +388,28 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
         String::from_utf8_lossy(&setup.stderr)
     );
     let output = String::from_utf8_lossy(&setup.stdout);
-    assert!(output.contains("export LINK_ASSISTANT_TOKEN='la_sk_"));
+    assert!(output.contains("credentials:"));
+    assert!(
+        !output.contains("la_sk_"),
+        "setup stdout must not disclose the token"
+    );
+    let environment_path = home
+        .path()
+        .join(".config/link-assistant-router/clients/codex.env");
+    let environment = fs::read_to_string(&environment_path).expect("read credential file");
+    assert!(environment.contains("export LINK_ASSISTANT_TOKEN='la_sk_"));
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(
+            fs::metadata(environment_path)
+                .expect("credential metadata")
+                .permissions()
+                .mode()
+                & 0o777,
+            0o600
+        );
+    }
 
     let tokens = router(home.path(), &["tokens", "list"]);
     assert!(tokens.status.success());
@@ -237,9 +452,7 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
 #[test]
 fn doctor_uses_the_configured_codex_path_and_token_variable() {
     let home = tempfile::tempdir().expect("temp home");
-    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
-    let port = listener.local_addr().expect("listener address").port();
-    let base_url = format!("http://127.0.0.1:{port}");
+    let (base_url, server) = mock_router(&[("gpt-codex-live", "openai")], 2);
     let setup = router(
         home.path(),
         &[
@@ -254,28 +467,6 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
     );
     assert!(setup.status.success());
 
-    let server = std::thread::spawn(move || {
-        let (mut stream, _) = listener.accept().expect("accept doctor request");
-        stream
-            .set_read_timeout(Some(Duration::from_secs(5)))
-            .expect("set timeout");
-        let mut bytes = Vec::new();
-        let mut buffer = [0_u8; 4096];
-        loop {
-            let count = stream.read(&mut buffer).expect("read request");
-            if count == 0 {
-                break;
-            }
-            bytes.extend_from_slice(&buffer[..count]);
-            if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
-                break;
-            }
-        }
-        stream
-            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}")
-            .expect("write response");
-        String::from_utf8_lossy(&bytes).into_owned()
-    });
     let doctor = router_with_env(
         home.path(),
         &["clients", "doctor", "codex"],
@@ -287,8 +478,11 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
         String::from_utf8_lossy(&doctor.stderr)
     );
     assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
-    let request = server.join().expect("mock server thread");
+    let requests = server.join().expect("mock server thread");
+    assert!(requests[0].starts_with("GET /v1/models HTTP/1.1"));
+    let request = &requests[1];
     assert!(request.starts_with("POST /v1/responses HTTP/1.1"));
+    assert!(request.contains("gpt-codex-live"));
     assert!(
         request
             .to_ascii_lowercase()
@@ -297,11 +491,41 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
 }
 
 #[test]
+fn codex_doctor_requires_an_openai_owned_catalog_model() {
+    let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = catalog_server(&[("claude-live", "anthropic")]);
+    assert!(
+        router(
+            home.path(),
+            &[
+                "clients",
+                "setup",
+                "codex",
+                "--token",
+                "la_sk_doctor",
+                "--base-url",
+                &base_url,
+            ],
+        )
+        .status
+        .success()
+    );
+    let doctor = router_with_env(
+        home.path(),
+        &["clients", "doctor", "codex"],
+        &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
+    );
+    assert!(!doctor.status.success());
+    assert!(
+        String::from_utf8_lossy(&doctor.stderr).contains("no model for the openai subscription")
+    );
+    assert_eq!(server.join().expect("catalog server").len(), 1);
+}
+
+#[test]
 fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
     let home = tempfile::tempdir().expect("temp home");
-    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
-    let port = listener.local_addr().expect("listener address").port();
-    let base_url = format!("http://127.0.0.1:{port}");
+    let (base_url, server) = mock_router(&[("gpt-chat-live", "openai")], 3);
     let setup = router(
         home.path(),
         &[
@@ -316,28 +540,6 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
     );
     assert!(setup.status.success());
 
-    let server = std::thread::spawn(move || {
-        let (mut stream, _) = listener.accept().expect("accept doctor request");
-        stream
-            .set_read_timeout(Some(Duration::from_secs(5)))
-            .expect("set timeout");
-        let mut bytes = Vec::new();
-        let mut buffer = [0_u8; 4096];
-        loop {
-            let count = stream.read(&mut buffer).expect("read request");
-            if count == 0 {
-                break;
-            }
-            bytes.extend_from_slice(&buffer[..count]);
-            if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
-                break;
-            }
-        }
-        stream
-            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}")
-            .expect("write response");
-        String::from_utf8_lossy(&bytes).into_owned()
-    });
     let doctor = router_with_env(
         home.path(),
         &["clients", "doctor", "opencode"],
@@ -348,8 +550,12 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
         "{}",
         String::from_utf8_lossy(&doctor.stderr)
     );
-    let request = server.join().expect("mock server thread");
+    let requests = server.join().expect("mock server thread");
+    assert!(requests[0].starts_with("GET /v1/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /v1/models HTTP/1.1"));
+    let request = &requests[2];
     assert!(request.starts_with("POST /v1/chat/completions HTTP/1.1"));
+    assert!(request.contains("gpt-chat-live"));
     assert!(
         request
             .to_ascii_lowercase()
@@ -388,6 +594,12 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
         "agent",
     ] {
         let home = tempfile::tempdir().expect("temp home");
+        let (base_url, server) = if matches!(client, "opencode" | "qwen-code" | "agent") {
+            let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+            (base_url, Some(server))
+        } else {
+            ("http://router.test:8080".to_string(), None)
+        };
         let configured = router_with_env(
             home.path(),
             &[
@@ -397,7 +609,7 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
                 "--token",
                 "la_sk_existing",
                 "--base-url",
-                "http://router.test:8080",
+                &base_url,
             ],
             &[("PATH", "")],
         );
@@ -406,6 +618,9 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
             "{client} setup unexpectedly required its executable: {}",
             String::from_utf8_lossy(&configured.stderr)
         );
+        if let Some(server) = server {
+            assert_eq!(server.join().expect("catalog server").len(), 1);
+        }
     }
 }
 
@@ -423,6 +638,7 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
             r#"{"theme":"user-theme","provider":{"mine":{"name":"Mine"}}}"#,
         )
         .expect("seed config");
+        let (base_url, server) = mock_router(&[("gpt-live", "openai")], 2);
         let args = [
             "clients",
             "setup",
@@ -430,7 +646,7 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
             "--token",
             "la_sk_existing",
             "--base-url",
-            "http://router.test:8080/",
+            &base_url,
         ];
 
         let first = router(home.path(), &args);
@@ -445,7 +661,7 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
         assert_eq!(document["provider"]["mine"]["name"], "Mine");
         assert_eq!(
             document["provider"]["link-assistant"]["options"]["baseURL"],
-            "http://router.test:8080/v1"
+            format!("{base_url}/v1")
         );
         assert_eq!(
             document["provider"]["link-assistant"]["options"]["apiKey"],
@@ -455,6 +671,7 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
 
         let second = router(home.path(), &args);
         assert!(second.status.success());
+        assert_eq!(server.join().expect("catalog server").len(), 2);
         assert_eq!(
             configured,
             fs::read_to_string(&path).expect("read idempotent config")
@@ -481,6 +698,7 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
         r#"{"theme":"dark","modelProviders":{"openai":[{"id":"mine","baseUrl":"http://mine.test/v1"}]}}"#,
     )
     .expect("seed settings");
+    let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
 
     let setup = router(
         home.path(),
@@ -491,7 +709,7 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
             "--token",
             "la_sk_existing",
             "--base-url",
-            "http://router.test:8080",
+            &base_url,
         ],
     );
     assert!(
@@ -507,9 +725,9 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
         .expect("current Qwen modelProviders array");
     assert!(models.iter().any(|model| model["id"] == "mine"));
     assert!(models.iter().any(|model| {
-        model["baseUrl"] == "http://router.test:8080/v1"
-            && model["envKey"] == "LINK_ASSISTANT_TOKEN"
+        model["baseUrl"] == format!("{base_url}/v1") && model["envKey"] == "LINK_ASSISTANT_TOKEN"
     }));
+    assert_eq!(server.join().expect("catalog server").len(), 1);
     assert!(!configured.contains("la_sk_existing"));
 
     let removed = router(home.path(), &["clients", "remove", "qwen-code"]);
@@ -526,7 +744,52 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
 }
 
 #[test]
-fn grok_setup_prints_both_required_exports_without_persisting_the_token() {
+fn qwen_keeps_stable_ownership_when_the_user_changes_the_model() {
+    let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) =
+        mock_router(&[("gpt-live", "openai"), ("gpt-user-choice", "openai")], 2);
+    let args = [
+        "clients",
+        "setup",
+        "qwen-code",
+        "--token",
+        "la_sk_existing",
+        "--base-url",
+        &base_url,
+    ];
+    assert!(router(home.path(), &args).status.success());
+    let path = home.path().join(".qwen/settings.json");
+    let mut configured: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&path).expect("read Qwen settings"))
+            .expect("valid settings");
+    configured["modelProviders"]["openai"][0]["id"] = serde_json::json!("gpt-user-choice");
+    fs::write(
+        &path,
+        format!(
+            "{}\n",
+            serde_json::to_string_pretty(&configured).expect("render settings")
+        ),
+    )
+    .expect("change configured model");
+
+    let shown = router(home.path(), &["clients", "show", "qwen-code"]);
+    assert!(shown.status.success());
+    assert!(String::from_utf8_lossy(&shown.stdout).contains("\"configured\": true"));
+    assert!(router(home.path(), &args).status.success());
+    assert_eq!(server.join().expect("catalog server").len(), 2);
+    let configured: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(path).expect("read repeated settings"))
+            .expect("valid repeated settings");
+    let models = configured["modelProviders"]["openai"]
+        .as_array()
+        .expect("Qwen models array");
+    assert_eq!(models.len(), 1, "repeat setup must update in place");
+    assert_eq!(models[0]["id"], "gpt-user-choice");
+    assert_eq!(models[0]["name"], "Link.Assistant.Router");
+}
+
+#[test]
+fn grok_setup_stores_both_required_exports_without_persisting_in_client_config() {
     let home = tempfile::tempdir().expect("temp home");
     let grok_dir = home.path().join(".grok");
     fs::create_dir_all(&grok_dir).expect("create grok dir");
@@ -552,8 +815,15 @@ fn grok_setup_prints_both_required_exports_without_persisting_the_token() {
         String::from_utf8_lossy(&setup.stderr)
     );
     let output = String::from_utf8_lossy(&setup.stdout);
-    assert!(output.contains("export GROK_BASE_URL='http://router.test:8080/v1'"));
-    assert!(output.contains("export GROK_API_KEY='la_sk_existing'"));
+    assert!(output.contains("credentials:"));
+    assert!(!output.contains("la_sk_existing"));
+    let environment = fs::read_to_string(
+        home.path()
+            .join(".config/link-assistant-router/clients/grok-cli.env"),
+    )
+    .expect("read Grok credential file");
+    assert!(environment.contains("export GROK_BASE_URL='http://router.test:8080/v1'"));
+    assert!(environment.contains("export GROK_API_KEY='la_sk_existing'"));
     assert_eq!(
         fs::read_to_string(settings_path).expect("read Grok settings"),
         original,
@@ -596,9 +866,18 @@ fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
         r#"{"modelProviders":{"openai":{"models":[{"id":"mine"}]}}}"#,
     )
     .expect("seed legacy settings");
+    let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
     let setup = router(
         home.path(),
-        &["clients", "setup", "qwen-code", "--token", "la_sk_existing"],
+        &[
+            "clients",
+            "setup",
+            "qwen-code",
+            "--token",
+            "la_sk_existing",
+            "--base-url",
+            &base_url,
+        ],
     );
     assert!(
         setup.status.success(),
@@ -614,6 +893,7 @@ fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
         .expect("legacy models remain wrapped");
     assert_eq!(models.len(), 2);
     assert_eq!(models[0]["id"], "mine");
+    assert_eq!(server.join().expect("catalog server").len(), 1);
 }
 
 #[test]
@@ -627,11 +907,21 @@ fn opencode_remove_restores_a_provider_that_setup_replaced() {
         r#"{"provider":{"link-assistant":{"name":"User-owned"}}}"#,
     )
     .expect("seed provider");
+    let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
     let setup = router(
         home.path(),
-        &["clients", "setup", "opencode", "--token", "la_sk_existing"],
+        &[
+            "clients",
+            "setup",
+            "opencode",
+            "--token",
+            "la_sk_existing",
+            "--base-url",
+            &base_url,
+        ],
     );
     assert!(setup.status.success());
+    assert_eq!(server.join().expect("catalog server").len(), 1);
     let removed = router(home.path(), &["clients", "remove", "opencode"]);
     assert!(removed.status.success());
     let document: serde_json::Value =
@@ -644,7 +934,8 @@ fn opencode_remove_restores_a_provider_that_setup_replaced() {
 fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
     for client in ["opencode", "qwen-code"] {
         let home = tempfile::tempdir().expect("temp home");
-        for base_url in ["http://router-one.test", "http://router-two.test"] {
+        for _ in 0..2 {
+            let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
             let setup = router(
                 home.path(),
                 &[
@@ -654,7 +945,7 @@ fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
                     "--token",
                     "la_sk_existing",
                     "--base-url",
-                    base_url,
+                    &base_url,
                 ],
             );
             assert!(
@@ -662,6 +953,7 @@ fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
                 "{}",
                 String::from_utf8_lossy(&setup.stderr)
             );
+            assert_eq!(server.join().expect("catalog server").len(), 1);
         }
 
         let removed = router(home.path(), &["clients", "remove", client]);
