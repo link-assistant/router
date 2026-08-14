@@ -6,9 +6,9 @@ use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::os::unix::fs::PermissionsExt;
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 fn read_request(stream: &mut std::net::TcpStream) -> String {
     stream
@@ -461,6 +461,93 @@ fn concurrent_managed_launches_create_one_shared_container() {
         1,
         "the lifecycle lock must serialize container creation: {docker_log}"
     );
+}
+
+#[test]
+fn reaper_releases_its_reference_when_the_owner_pipe_closes() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let log = directory.path().join("docker.log");
+    fs::create_dir_all(&home).expect("create home");
+    fs::write(&log, "").expect("create Docker log");
+    fake_docker(&bin);
+    fs::create_dir_all(
+        managed_state_path(&home)
+            .parent()
+            .expect("managed state parent"),
+    )
+    .expect("create managed state directory");
+    fs::write(
+        managed_state_path(&home),
+        format!(
+            "{{\"port\":18080,\"token_secret\":\"test-secret\",\"references\":[{}],\"keep_running\":false}}",
+            std::process::id()
+        ),
+    )
+    .expect("seed live managed reference");
+
+    let inherited_path = std::env::var_os("PATH").unwrap_or_default();
+    let path =
+        std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
+            .expect("compose fake Docker PATH");
+    let mut reaper = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["server", "reap", &std::process::id().to_string()])
+        .env("HOME", &home)
+        .env("PATH", path)
+        .env("DOCKER_LOG", &log)
+        .env("FAKE_DOCKER_STATE", "running")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("APPDATA")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("spawn crash reaper");
+
+    thread::sleep(Duration::from_millis(100));
+    assert!(
+        reaper.try_wait().expect("inspect running reaper").is_none(),
+        "the reaper must remain armed while the owner pipe is open"
+    );
+    drop(reaper.stdin.take());
+
+    let deadline = Instant::now() + Duration::from_secs(1);
+    let status = loop {
+        if let Some(status) = reaper.try_wait().expect("inspect released reaper") {
+            break status;
+        }
+        if Instant::now() >= deadline {
+            reaper.kill().expect("kill stuck reaper");
+            reaper.wait().expect("collect stuck reaper");
+            panic!("the reaper did not exit after its owner pipe closed");
+        }
+        thread::sleep(Duration::from_millis(20));
+    };
+    assert!(status.success());
+    let state = fs::read_to_string(managed_state_path(&home)).expect("read reaped state");
+    assert!(state.contains(r#""references": []"#));
+    assert!(
+        fs::read_to_string(log)
+            .expect("read Docker log")
+            .contains("stop link-assistant-router-managed")
+    );
+}
+
+#[test]
+fn reaper_reports_cleanup_failures() {
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["server", "reap", "4294967294"])
+        .env_remove("HOME")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("APPDATA")
+        .output()
+        .expect("run crash reaper without a state directory");
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("could not reap managed router reference 4294967294"));
+    assert!(stderr.contains("HOME, XDG_CONFIG_HOME, and APPDATA are unset"));
 }
 
 #[test]

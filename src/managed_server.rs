@@ -5,7 +5,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitCode, Stdio};
+use std::process::{Child, Command, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -84,12 +84,21 @@ struct Revocation {
 
 struct ManagedLease {
     pid: u32,
+    reaper: Child,
 }
 
 impl Drop for ManagedLease {
     fn drop(&mut self) {
         if let Err(error) = release_reference(self.pid) {
             eprintln!("warning: could not release managed router reference: {error}");
+        }
+        // Closing the pipe tells the crash reaper that this owner has finished
+        // normally. Wait for its idempotent cleanup so detached subprocesses
+        // (and their coverage profiles) cannot outlive the wrapper.
+        drop(self.reaper.stdin.take());
+        let status = self.reaper.wait();
+        if !status.as_ref().is_ok_and(std::process::ExitStatus::success) {
+            eprintln!("warning: managed router crash reaper failed: {status:?}");
         }
     }
 }
@@ -539,8 +548,12 @@ pub fn remove_managed(yes: bool) -> Result<(), AnyError> {
 
 #[must_use]
 pub fn reap(pid: u32) -> ExitCode {
-    while process_alive(pid) {
-        thread::sleep(Duration::from_secs(2));
+    // The owner holds this pipe open for the lifetime of its managed lease.
+    // EOF is delivered both on orderly teardown and if the wrapper is killed,
+    // without PID polling races or waiting for a reused PID to disappear.
+    let pipe_result = std::io::copy(&mut std::io::stdin().lock(), &mut std::io::sink());
+    if let Err(error) = pipe_result {
+        eprintln!("warning: managed router crash-reaper pipe failed: {error}");
     }
     match release_reference(pid) {
         Ok(()) => ExitCode::SUCCESS,
@@ -561,9 +574,9 @@ fn acquire_managed() -> Result<(ManagedState, ManagedLease), AnyError> {
         state.references.push(pid);
     }
     save_managed(&state)?;
-    spawn_reaper(pid)?;
+    let reaper = spawn_reaper(pid)?;
     drop(lock);
-    Ok((state, ManagedLease { pid }))
+    Ok((state, ManagedLease { pid, reaper }))
 }
 
 fn release_reference(pid: u32) -> Result<(), AnyError> {
@@ -585,7 +598,7 @@ fn release_reference(pid: u32) -> Result<(), AnyError> {
     Ok(())
 }
 
-fn spawn_reaper(pid: u32) -> Result<(), AnyError> {
+fn spawn_reaper(pid: u32) -> Result<Child, AnyError> {
     let current = std::env::current_exe()?;
     let executable = if current
         .file_stem()
@@ -601,11 +614,10 @@ fn spawn_reaper(pid: u32) -> Result<(), AnyError> {
     };
     Command::new(executable)
         .args(["server", "reap", &pid.to_string()])
-        .stdin(Stdio::null())
+        .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-        .map(|_| ())
         .map_err(|error| format!("could not start managed-server crash reaper: {error}").into())
 }
 
