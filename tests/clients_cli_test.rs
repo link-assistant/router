@@ -321,14 +321,14 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     assert!(!settings.to_string().contains("la_sk_existing"));
     assert!(String::from_utf8_lossy(&setup.stdout).contains("credentials:"));
     assert!(!String::from_utf8_lossy(&setup.stdout).contains("la_sk_existing"));
-    assert!(
-        fs::read_to_string(
-            home.path()
-                .join(".config/link-assistant-router/clients/claude-code.env")
-        )
-        .expect("read Claude credential file")
-        .contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'")
-    );
+    let environment = fs::read_to_string(
+        home.path()
+            .join(".config/link-assistant-router/clients/claude-code.env"),
+    )
+    .expect("read Claude credential file");
+    assert!(environment.contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'"));
+    assert!(environment.contains("export ANTHROPIC_BASE_URL='http://router.test:8080'"));
+    assert!(!environment.contains("http://router.test:8080/v1"));
 
     let removed = router(home.path(), &["clients", "remove", "claude-code"]);
     assert!(removed.status.success());

@@ -468,10 +468,15 @@ impl ClientManager {
         let path = directory.join(format!("{client}.env"));
         let mut contents = String::new();
         if let Some(base_url_env) = client.base_url_env() {
+            let endpoint = format!(
+                "{}{}",
+                base_url.trim_end_matches('/'),
+                client.integration().endpoint_suffix
+            );
             writeln!(
                 &mut contents,
                 "export {base_url_env}={}",
-                shell_quote(&format!("{}/v1", base_url.trim_end_matches('/')))
+                shell_quote(&endpoint)
             )
             .expect("writing to a String cannot fail");
         }
