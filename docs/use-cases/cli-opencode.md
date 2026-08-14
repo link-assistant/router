@@ -39,9 +39,13 @@ Identical, with `"npm": "@ai-sdk/openai"`. Use this when the active upstream is
 `codex`, whose native protocol is Responses.
 
 ```bash
-export LINK_ASSISTANT_TOKEN=la_sk_...
+link-assistant-router clients setup opencode
+# Run the `source …/opencode.env` command printed by setup.
 opencode
 ```
+
+Automatic setup authenticates to `/v1/models`, adds every advertised model to
+the provider, and preserves user-added model entries on later runs.
 
 `options.apiKey` accepts `"{env:VAR}"` interpolation, so a per-task token needs
 no config edit; `options.headers` can add custom headers if you front the router
@@ -71,5 +75,5 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | Symptom | Cause |
 | --- | --- |
 | `404` on `/v1/responses` | the provider is configured with `@ai-sdk/openai` but you meant `@ai-sdk/openai-compatible` (or `--disable-openai-api` is set) |
-| Empty model list in the UI | declare the models explicitly under `provider.<id>.models`; opencode does not discover them from a custom base URL |
+| Setup reports an empty model catalog | connect at least one healthy subscription; setup refuses to write an unusable provider |
 | `401` | `LINK_ASSISTANT_TOKEN` is unset in the environment opencode inherits |

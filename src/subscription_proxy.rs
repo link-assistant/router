@@ -571,13 +571,13 @@ fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut ser
 /// Reject a caller-supplied output cap that the `ChatGPT` backend cannot honor.
 ///
 /// Every client surface has already converged on Responses shape at this point,
-/// so `surface` preserves the otherwise-lost distinction between an optional
-/// `OpenAI` limit and the protocol-required `max_tokens` on Anthropic Messages.
+/// so `surface` preserves the otherwise-lost distinction between a native
+/// Responses spend cap and compatibility fields sent by Chat/Messages clients.
 /// The backend rejects the parameter, and enforcing only visible text in the
 /// router would still leave hidden reasoning tokens unbounded. Failing before
 /// the upstream call is therefore the only way to preserve optional `OpenAI`
-/// caps as spend controls. Messages requests remain usable and normalization
-/// removes their mandatory field before the Codex request is serialized.
+/// caps as spend controls. Compatibility clients remain usable and normalization
+/// removes their unsupported field before the Codex request is serialized.
 fn reject_unsupported_codex_output_limit(
     provider: SubscriptionProvider,
     surface: Surface,
@@ -586,7 +586,8 @@ fn reject_unsupported_codex_output_limit(
     let has_limit = body
         .get("max_output_tokens")
         .is_some_and(|value| !value.is_null());
-    if provider != SubscriptionProvider::Codex || surface == Surface::Anthropic || !has_limit {
+    if provider != SubscriptionProvider::Codex || surface != Surface::OpenAIResponses || !has_limit
+    {
         return None;
     }
     Some(error_response(
@@ -675,24 +676,32 @@ mod tests {
             "messages": [{"role": "user", "content": "hi"}],
             "max_completion_tokens": 16,
         }));
-        for (surface, body) in [
-            (Surface::OpenAIResponses, &responses),
-            (Surface::OpenAIChat, &chat),
-            (Surface::OpenAIChat, &chat_completion),
-        ] {
-            let response =
-                reject_unsupported_codex_output_limit(SubscriptionProvider::Codex, surface, body)
-                    .expect("Codex must reject an optional limit it cannot honor");
-            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-            let error = axum::body::to_bytes(response.into_body(), 4096)
-                .await
-                .expect("read error body");
-            let error: serde_json::Value =
-                serde_json::from_slice(&error).expect("valid JSON error");
-            assert_eq!(error["error"]["type"], "invalid_request_error");
-            assert!(error["error"]["message"].as_str().is_some_and(|message| {
-                message.contains("rejected this request instead of silently ignoring")
-            }));
+        let response = reject_unsupported_codex_output_limit(
+            SubscriptionProvider::Codex,
+            Surface::OpenAIResponses,
+            &responses,
+        )
+        .expect("Codex must reject a native Responses limit it cannot honor");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let error = axum::body::to_bytes(response.into_body(), 4096)
+            .await
+            .expect("read error body");
+        let error: serde_json::Value = serde_json::from_slice(&error).expect("valid JSON error");
+        assert_eq!(error["error"]["type"], "invalid_request_error");
+        assert!(error["error"]["message"].as_str().is_some_and(|message| {
+            message.contains("rejected this request instead of silently ignoring")
+        }));
+
+        for body in [&chat, &chat_completion] {
+            assert!(
+                reject_unsupported_codex_output_limit(
+                    SubscriptionProvider::Codex,
+                    Surface::OpenAIChat,
+                    body,
+                )
+                .is_none(),
+                "Chat compatibility limits must be dropped for the Codex backend"
+            );
         }
     }
 

@@ -774,48 +774,55 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
             .is_some_and(|message| message.contains("max_tokens is required"))
     );
 
-    // The optional caps on both OpenAI surfaces retain PR #103's explicit
-    // rejection, including both Chat Completions spellings.
-    for (path, body) in [
-        (
+    // Native Responses caps retain PR #103's explicit rejection because users
+    // may rely on them as a spend control.
+    let capped = codex
+        .post(
             "/v1/responses",
-            json!({"model":"gpt-5","input":"hi","max_output_tokens":16}),
-        ),
-        (
-            "/v1/chat/completions",
-            json!({
-                "model":"gpt-5",
-                "max_tokens":16,
-                "messages":[{"role":"user","content":"hi"}]
-            }),
-        ),
-        (
-            "/v1/chat/completions",
-            json!({
-                "model":"gpt-5",
-                "max_completion_tokens":16,
-                "messages":[{"role":"user","content":"hi"}]
-            }),
-        ),
+            &json!({"model":"gpt-5","input":"hi","max_output_tokens":16}),
+        )
+        .send()
+        .await
+        .expect("capped Codex Responses response");
+    assert_eq!(capped.status(), StatusCode::BAD_REQUEST);
+    assert!(
+        capped
+            .text()
+            .await
+            .expect("limit error body")
+            .contains("cannot honor output-token limits")
+    );
+
+    // Chat-compatible clients such as grok-cli always send a cap and cannot
+    // disable it. Keep that surface usable by dropping the translated field.
+    for body in [
+        json!({
+            "model":"gpt-5",
+            "max_tokens":16,
+            "messages":[{"role":"user","content":"hi"}]
+        }),
+        json!({
+            "model":"gpt-5",
+            "max_completion_tokens":16,
+            "messages":[{"role":"user","content":"hi"}]
+        }),
     ] {
-        let capped = codex
-            .post(path, &body)
+        let response = codex
+            .post("/v1/chat/completions", &body)
             .send()
             .await
-            .expect("capped Codex OpenAI response");
-        assert_eq!(capped.status(), StatusCode::BAD_REQUEST, "{path}");
-        let message = capped.text().await.expect("limit error body");
-        assert!(
-            message.contains("cannot honor output-token limits"),
-            "{path}"
-        );
+            .expect("capped Codex Chat response");
+        assert_eq!(response.status(), StatusCode::OK);
     }
 
-    assert_eq!(
-        codex.requests.lock().expect("stub requests").len(),
-        1,
-        "rejected requests must not reach the Codex subscription"
-    );
+    let requests = codex.requests.lock().expect("stub requests");
+    assert_eq!(requests.len(), 3);
+    for request in &requests[1..] {
+        assert!(
+            request.get("max_output_tokens").is_none(),
+            "Chat compatibility cap must not reach the Codex subscription"
+        );
+    }
 }
 
 #[tokio::test]

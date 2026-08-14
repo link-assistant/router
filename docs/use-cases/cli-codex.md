@@ -13,7 +13,8 @@ for this CLI.
 Automatic setup (merges this provider and backs up an existing config):
 
 ```bash
-eval "$(link-assistant-router clients setup codex | grep '^export ')"
+link-assistant-router clients setup codex
+# Run the `source …/codex.env` command printed by setup.
 ```
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
