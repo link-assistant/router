@@ -52,7 +52,11 @@ one-shot mode; use `--interactive` to suppress that behavior, or
 `--non-interactive` to request it explicitly. `--model` overrides the registry
 default. OpenAI-family clients default to `gpt-5.6-sol` with `xhigh` reasoning;
 Claude Code defaults to `claude-opus-5` (`opus-5`) with a `high` thinking
-budget. Caller-supplied reasoning settings take precedence. Before execution,
+effort. On adaptive-thinking Claude models this is sent as
+`thinking.type=adaptive` plus `output_config.effort=high`; on legacy fixed-
+budget models `high` maps to 16,384 thinking tokens and the router reserves
+8,192 additional output tokens. Caller-supplied token limits and reasoning
+settings take precedence. Before execution,
 the wrapper fetches `/v1/models` with the run token
 and refuses an unavailable model, listing the models the selected server
 advertises.

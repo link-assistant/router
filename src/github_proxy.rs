@@ -93,6 +93,7 @@ impl GitHubProxyConfig {
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GitHubPolicy {
     /// First matching configured rule wins; built-in destructive denials are
     /// evaluated afterwards.
@@ -151,6 +152,7 @@ impl From<PolicyEffect> for PolicyDecision {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct PolicyRule {
     pub effect: PolicyEffect,
     #[serde(default)]
@@ -210,16 +212,93 @@ fn destructive_graphql(body: &[u8]) -> bool {
         .filter(|character| !character.is_whitespace())
         .collect::<String>()
         .to_ascii_lowercase();
-    if !compact.starts_with("mutation") {
+    let names = graphql_name_tokens(query);
+    if !names.iter().any(|name| name == "mutation") {
         return false;
     }
-    let has_delete = query
-        .split(|character: char| !(character.is_ascii_alphanumeric() || character == '_'))
-        .any(|token| token.to_ascii_lowercase().starts_with("delete"));
-    let forced_ref = compact.contains("updateref(")
+    let has_delete = names.iter().any(|name| name.starts_with("delete"));
+    let updates_ref = names
+        .iter()
+        .any(|name| matches!(name.as_str(), "updateref" | "updaterefs"));
+    let forced_ref = updates_ref
         && (compact.contains("force:true")
             || value.get("variables").is_some_and(contains_forced_true));
-    has_delete || forced_ref
+    let deletes_ref = names.iter().any(|name| name == "updaterefs")
+        && (contains_inline_zero_after_oid(&compact)
+            || value.get("variables").is_some_and(contains_zero_after_oid));
+    has_delete || forced_ref || deletes_ref
+}
+
+/// GraphQL names outside comments and quoted values. Destructive operations
+/// may follow fragments or another named operation, so checking only the
+/// document prefix is unsafe.
+fn graphql_name_tokens(query: &str) -> Vec<String> {
+    let characters = query.chars().collect::<Vec<_>>();
+    let mut tokens = Vec::new();
+    let mut position = 0;
+    while position < characters.len() {
+        if characters[position] == '#' {
+            position += 1;
+            while position < characters.len() && characters[position] != '\n' {
+                position += 1;
+            }
+            continue;
+        }
+        if characters[position] == '"' {
+            let block = characters.get(position + 1) == Some(&'"')
+                && characters.get(position + 2) == Some(&'"');
+            position += if block { 3 } else { 1 };
+            while position < characters.len() {
+                if block
+                    && characters.get(position) == Some(&'"')
+                    && characters.get(position + 1) == Some(&'"')
+                    && characters.get(position + 2) == Some(&'"')
+                {
+                    position += 3;
+                    break;
+                }
+                if !block && characters[position] == '"' {
+                    position += 1;
+                    break;
+                }
+                if !block && characters[position] == '\\' {
+                    position += 1;
+                }
+                position += 1;
+            }
+            continue;
+        }
+        if characters[position].is_ascii_alphabetic() || characters[position] == '_' {
+            let start = position;
+            position += 1;
+            while position < characters.len()
+                && (characters[position].is_ascii_alphanumeric() || characters[position] == '_')
+            {
+                position += 1;
+            }
+            tokens.push(
+                characters[start..position]
+                    .iter()
+                    .collect::<String>()
+                    .to_ascii_lowercase(),
+            );
+            continue;
+        }
+        position += 1;
+    }
+    tokens
+}
+
+fn contains_inline_zero_after_oid(compact_query: &str) -> bool {
+    let mut remainder = compact_query;
+    while let Some((_, after)) = remainder.split_once("afteroid:\"") {
+        let value = after.split('"').next().unwrap_or_default();
+        if value.len() >= 40 && value.bytes().all(|byte| byte == b'0') {
+            return true;
+        }
+        remainder = after;
+    }
+    false
 }
 
 fn contains_forced_true(value: &Value) -> bool {
@@ -229,6 +308,20 @@ fn contains_forced_true(value: &Value) -> bool {
                 || contains_forced_true(value)
         }),
         Value::Array(values) => values.iter().any(contains_forced_true),
+        _ => false,
+    }
+}
+
+fn contains_zero_after_oid(value: &Value) -> bool {
+    match value {
+        Value::Object(fields) => fields.iter().any(|(name, value)| {
+            (name.eq_ignore_ascii_case("afterOid")
+                && value
+                    .as_str()
+                    .is_some_and(|oid| oid.len() >= 40 && oid.bytes().all(|byte| byte == b'0')))
+                || contains_zero_after_oid(value)
+        }),
+        Value::Array(values) => values.iter().any(contains_zero_after_oid),
         _ => false,
     }
 }
@@ -379,10 +472,24 @@ mod tests {
     #[test]
     fn default_policy_blocks_each_destructive_class() {
         let policy = GitHubPolicy::default();
-        assert_eq!(
-            policy.decision("DELETE", "/repos/o/r", b""),
-            PolicyDecision::Deny
-        );
+        for path in [
+            "/repos/o/r",
+            "/repos/o/r/git/refs/heads/main",
+            "/repos/o/r/git/refs/tags/v1",
+            "/repos/o/r/releases/1",
+            "/repos/o/r/issues/1",
+            "/repos/o/r/issues/comments/1",
+            "/repos/o/r/actions/workflows/ci.yml",
+            "/orgs/o/packages/container/p/versions/1",
+            "/repos/o/r/deploy-keys/1",
+            "/repos/o/r/hooks/1",
+        ] {
+            assert_eq!(
+                policy.decision("DELETE", path, b""),
+                PolicyDecision::Deny,
+                "DELETE {path} must be blocked by default"
+            );
+        }
         assert_eq!(
             policy.decision(
                 "PATCH",
@@ -415,6 +522,39 @@ mod tests {
             ),
             PolicyDecision::Deny
         );
+        assert_eq!(
+            policy.decision(
+                "POST",
+                "/graphql",
+                br##"{"query":"# a harmless preface\nfragment F on Repository { name }\nmutation Remove { deleteRelease(input:{releaseId:\"x\"}) { clientMutationId } }"}"##
+            ),
+            PolicyDecision::Deny
+        );
+        assert_eq!(
+            policy.decision(
+                "POST",
+                "/graphql",
+                br#"{"query":"mutation($updates:[RefUpdate!]!){updateRefs(input:{repositoryId:\"r\",refUpdates:$updates}){clientMutationId}}","variables":{"updates":[{"name":"refs/heads/main","afterOid":"0000000000000000000000000000000000000000"}]}}"#
+            ),
+            PolicyDecision::Deny
+        );
+        assert_eq!(
+            policy.decision(
+                "POST",
+                "/graphql",
+                br#"{"query":"mutation { updateRefs(input:{repositoryId:\"r\",refUpdates:[{name:\"refs/heads/main\",afterOid:\"0000000000000000000000000000000000000000\"}]}) { clientMutationId } }"}"#
+            ),
+            PolicyDecision::Deny
+        );
+    }
+
+    #[test]
+    fn policy_rejects_misspelled_configuration_fields() {
+        let error = serde_json::from_value::<GitHubPolicy>(json!({
+            "rules": [{"effect":"deny", "path":"/**", "methd":"POST"}]
+        }))
+        .unwrap_err();
+        assert!(error.to_string().contains("unknown field `methd`"));
     }
 
     #[test]

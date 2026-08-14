@@ -21,6 +21,8 @@ fn main() {
         "rust-script scripts/wait-for-crate.rs",
         "cargo install rust-script --version 0.36.0 --locked",
         "cargo install cargo-audit --version 0.22.2 --locked --force",
+        "cargo install cargo-cyclonedx --version 0.5.9 --locked",
+        "cargo cyclonedx --format json --all-features --all --spec-version 1.5",
         "toolchain: 1.96.1",
         "docker/login-action@",
         "docker/setup-buildx-action@",

@@ -117,6 +117,31 @@ fn tool_choice_any_becomes_required() {
 }
 
 #[test]
+fn malformed_or_unknown_tools_fail_validation_instead_of_disappearing() {
+    for (body, expected) in [
+        (
+            json!({"tools":[{"input_schema":{}}]}),
+            "missing a string name",
+        ),
+        (
+            json!({"tools":[{"type":"computer_20990101","name":"computer"}]}),
+            "unsupported Anthropic tool type",
+        ),
+        (
+            json!({"tool_choice":{"type":"future"}}),
+            "unsupported Anthropic tool_choice type",
+        ),
+    ] {
+        assert!(
+            untranslatable_anthropic_tool(&body)
+                .as_deref()
+                .is_some_and(|reason| reason.contains(expected)),
+            "{body} must fail with {expected}"
+        );
+    }
+}
+
+#[test]
 fn translates_tool_use_and_tool_result_blocks() {
     let body = json!({
         "messages": [

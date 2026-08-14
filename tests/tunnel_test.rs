@@ -21,6 +21,7 @@ fn tunnel_entrypoint_names_each_missing_required_variable() {
         ("TUNNEL_SSH_USER", "router"),
         ("TUNNEL_REMOTE_PORT", "18080"),
         ("TUNNEL_SSH_KEY", "/dev/null"),
+        ("TUNNEL_KNOWN_HOSTS", "/etc/hosts"),
     ];
     for missing in complete.map(|(name, _)| name) {
         let environment = complete
@@ -45,13 +46,14 @@ fn tunnel_entrypoint_builds_a_restart_safe_reverse_forward() {
         ("TUNNEL_SSH_USER", "router"),
         ("TUNNEL_REMOTE_PORT", "18080"),
         ("TUNNEL_SSH_KEY", "/dev/null"),
+        ("TUNNEL_KNOWN_HOSTS", "/etc/hosts"),
         ("AUTOSSH_BIN", "echo"),
     ]);
     assert!(output.status.success());
     let command = String::from_utf8_lossy(&output.stdout);
     assert!(command.contains("ExitOnForwardFailure=yes"));
-    assert!(command.contains("StrictHostKeyChecking=accept-new"));
-    assert!(command.contains("UserKnownHostsFile=/home/tunnel/.ssh/known_hosts"));
+    assert!(command.contains("StrictHostKeyChecking=yes"));
+    assert!(command.contains("UserKnownHostsFile=/etc/hosts"));
     assert!(command.contains("ServerAliveInterval=30"));
     assert!(command.contains("127.0.0.1:18080:link-assistant-router:8080"));
     assert!(command.contains("router@far.example"));

@@ -172,7 +172,7 @@ fn drops_temperature_for_claude_5_models() {
 }
 
 #[test]
-fn caller_reasoning_effort_maps_to_a_clamped_claude_thinking_budget() {
+fn caller_reasoning_effort_uses_adaptive_thinking_and_preserves_explicit_limit() {
     let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
         "model":"claude-opus-5",
         "messages":[{"role":"user","content":"hi"}],
@@ -182,9 +182,40 @@ fn caller_reasoning_effort_maps_to_a_clamped_claude_thinking_budget() {
     .unwrap();
     let body = chat_completion_to_anthropic(&req);
 
-    assert_eq!(body["thinking"]["type"], "enabled");
-    assert_eq!(body["thinking"]["budget_tokens"], 2999);
+    assert_eq!(body["thinking"]["type"], "adaptive");
+    assert_eq!(body["output_config"]["effort"], "low");
+    assert_eq!(body["max_tokens"], 3000);
     assert!(body.get("reasoning").is_none());
+}
+
+#[test]
+fn omitted_limit_reserves_output_headroom_for_adaptive_thinking() {
+    let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model":"claude-opus-5",
+        "messages":[{"role":"user","content":"hi"}],
+        "reasoning_effort":"high"
+    }))
+    .unwrap();
+    let body = chat_completion_to_anthropic(&req);
+
+    assert_eq!(body["thinking"]["type"], "adaptive");
+    assert_eq!(body["output_config"]["effort"], "high");
+    assert_eq!(body["max_tokens"], 24_576);
+}
+
+#[test]
+fn legacy_thinking_budget_keeps_visible_output_headroom() {
+    let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model":"claude-sonnet-4-5",
+        "messages":[{"role":"user","content":"hi"}],
+        "reasoning_effort":"high"
+    }))
+    .unwrap();
+    let body = chat_completion_to_anthropic(&req);
+
+    assert_eq!(body["thinking"]["type"], "enabled");
+    assert_eq!(body["thinking"]["budget_tokens"], 16_384);
+    assert_eq!(body["max_tokens"], 24_576);
 }
 
 #[test]

@@ -14,6 +14,10 @@ The wrapper writes a disposable OpenCode file, selects it with
 `OPENCODE_CONFIG`, supplies `LINK_ASSISTANT_TOKEN`, and removes it on exit. The
 normal `opencode.json` remains untouched. See [with-router.md](with-router.md).
 
+Wrapper flags may appear before or after `opencode`; an explicit `--` forwards
+every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual configuration
 
 [opencode's provider documentation](https://opencode.ai/docs/providers/) defines

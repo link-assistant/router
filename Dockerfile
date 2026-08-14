@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1-slim-bookworm AS builder
+FROM rust:1.96.1-slim-bookworm@sha256:e18a79fc84dfcfc3ab5ba72290398a644c135c97eaa881447fddc354ee4701a3 AS builder
 
 WORKDIR /app
 
@@ -34,11 +34,11 @@ RUN touch src/lib.rs src/main.rs && \
 
 # Runtime base
 #
-FROM oven/bun:1 AS bun-runtime
+FROM oven/bun:1@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS bun-runtime
 
 # Deliberately contains no vendor CLI. Native OAuth creates and refreshes the
 # credential; bun is only a small runner for a disposable compatibility flow.
-FROM debian:bookworm-slim AS runtime-base
+FROM debian:bookworm-slim@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241 AS runtime-base
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \

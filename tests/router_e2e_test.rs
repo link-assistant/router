@@ -292,12 +292,12 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
             serde_json::to_vec(&anthropic_message_with_server_tools(&body))
                 .expect("serialize Anthropic response"),
         )),
-        StubDialect::Codex => Response::new(Body::from(codex_stream())),
+        StubDialect::Codex => Response::new(Body::from(codex_stream_for_request(&body))),
     };
     response.headers_mut().insert(
         "content-type",
         HeaderValue::from_static(match (state.dialect, stream) {
-            (StubDialect::Anthropic, true) => "text/event-stream",
+            (StubDialect::Anthropic, true) | (StubDialect::Codex, _) => "text/event-stream",
             _ => "application/json",
         }),
     );
@@ -342,31 +342,65 @@ fn anthropic_message_with_server_tools(request: &Value) -> Value {
         .flatten()
         .filter_map(|tool| tool["type"].as_str())
         .collect::<Vec<_>>();
-    if !tool_types
+    let has_web_search = tool_types
         .iter()
-        .any(|kind| kind.starts_with("web_search_") || kind.starts_with("web_fetch_"))
-    {
-        return anthropic_message();
-    }
-    json!({
-        "id": "msg_server_tools",
-        "type": "message",
-        "role": "assistant",
-        "model": "claude-sonnet-4-5",
-        "content": [
-            {"type":"server_tool_use","id":"srvtoolu_search","name":"web_search","input":{"query":"rust"}},
-            {"type":"web_search_tool_result","tool_use_id":"srvtoolu_search","content":[{"type":"web_search_result","url":"https://www.rust-lang.org","title":"Rust","encrypted_content":"opaque"}]},
-            {"type":"server_tool_use","id":"srvtoolu_fetch","name":"web_fetch","input":{"url":"https://www.rust-lang.org"}},
-            {"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_fetch","content":{"type":"web_fetch_result","url":"https://www.rust-lang.org","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"Rust"}}}}
-        ],
-        "stop_reason": "end_turn",
-        "stop_sequence": null,
-        "usage": {
-            "input_tokens": 3,
-            "output_tokens": 2,
-            "server_tool_use": {"web_search_requests":1,"web_fetch_requests":1}
+        .any(|kind| kind.starts_with("web_search_"));
+    let has_web_fetch = tool_types.iter().any(|kind| kind.starts_with("web_fetch_"));
+    if has_web_search || has_web_fetch {
+        let mut content = Vec::new();
+        if has_web_search {
+            content.extend([
+                json!({"type":"server_tool_use","id":"srvtoolu_search","name":"web_search","input":{"query":"rust"}}),
+                json!({"type":"web_search_tool_result","tool_use_id":"srvtoolu_search","content":[{"type":"web_search_result","url":"https://www.rust-lang.org","title":"Rust","encrypted_content":"opaque"}]}),
+            ]);
         }
-    })
+        if has_web_fetch {
+            content.extend([
+                json!({"type":"server_tool_use","id":"srvtoolu_fetch","name":"web_fetch","input":{"url":"https://www.rust-lang.org"}}),
+                json!({"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_fetch","content":{"type":"web_fetch_result","url":"https://www.rust-lang.org","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"Rust"}}}}),
+            ]);
+        }
+        return json!({
+            "id": "msg_server_tools",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-sonnet-4-5",
+            "content": content,
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "usage": {
+                "input_tokens": 3,
+                "output_tokens": 2,
+                "server_tool_use": {
+                    "web_search_requests": u8::from(has_web_search),
+                    "web_fetch_requests": u8::from(has_web_fetch)
+                }
+            }
+        });
+    }
+    let has_client_function = request["tools"]
+        .as_array()
+        .is_some_and(|tools| tools.iter().any(|tool| tool.get("name").is_some()));
+    let has_tool_result = request["messages"].as_array().is_some_and(|messages| {
+        messages.iter().any(|message| {
+            message["content"]
+                .as_array()
+                .is_some_and(|blocks| blocks.iter().any(|block| block["type"] == "tool_result"))
+        })
+    });
+    if has_client_function && !has_tool_result {
+        return json!({
+            "id":"msg_tool_call",
+            "type":"message",
+            "role":"assistant",
+            "model":"claude-sonnet-4-5",
+            "content":[{"type":"tool_use","id":"call_router_e2e","name":"lookup","input":{"key":"value"}}],
+            "stop_reason":"tool_use",
+            "stop_sequence":null,
+            "usage":{"input_tokens":3,"output_tokens":2}
+        });
+    }
+    anthropic_message()
 }
 
 fn anthropic_stream() -> String {
@@ -382,32 +416,80 @@ fn anthropic_stream() -> String {
     .concat()
 }
 
-fn codex_stream() -> String {
-    let response = json!({
-        "id": "resp_stub",
-        "object": "response",
-        "status": "completed",
-        "model": "gpt-5",
-        "output": [{
+fn codex_stream_for_request(request: &Value) -> String {
+    let has_server_search = request["tools"]
+        .as_array()
+        .is_some_and(|tools| tools.iter().any(|tool| tool["type"] == "web_search"));
+    let has_client_function = request["tools"].as_array().is_some_and(|tools| {
+        tools
+            .iter()
+            .any(|tool| tool["type"] == "function" && tool.get("name").is_some())
+    });
+    let has_tool_result = request["input"].as_array().is_some_and(|items| {
+        items
+            .iter()
+            .any(|item| item["type"] == "function_call_output")
+    });
+    let output = if has_server_search {
+        json!([{
+            "id":"ws_stub",
+            "type":"web_search_call",
+            "status":"completed",
+            "action":{"type":"search","query":"rust"}
+        }])
+    } else if has_client_function && !has_tool_result {
+        json!([{
+            "id":"fc_stub",
+            "type":"function_call",
+            "status":"completed",
+            "call_id":"call_router_e2e",
+            "name":"lookup",
+            "arguments":"{\"key\":\"value\"}"
+        }])
+    } else {
+        json!([{
             "id": "msg_stub",
             "type": "message",
             "status": "completed",
             "role": "assistant",
             "content": [{"type": "output_text", "text": "stub answer", "annotations": []}]
-        }],
+        }])
+    };
+    let response = json!({
+        "id": "resp_stub",
+        "object": "response",
+        "status": "completed",
+        "model": "gpt-5",
+        "output": output,
         "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
     });
-    let events = [
+    let mut events = vec![
         json!({"type":"response.created","response":{"id":"resp_stub","status":"in_progress","model":"gpt-5","output":[]}}),
         json!({"type":"response.in_progress","response":{"id":"resp_stub","status":"in_progress"}}),
-        json!({"type":"response.output_item.added","output_index":0,"item":{"id":"msg_stub","type":"message","status":"in_progress","role":"assistant","content":[]}}),
-        json!({"type":"response.content_part.added","item_id":"msg_stub","output_index":0,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}),
-        json!({"type":"response.output_text.delta","item_id":"msg_stub","output_index":0,"content_index":0,"delta":"stub answer"}),
-        json!({"type":"response.output_text.done","item_id":"msg_stub","output_index":0,"content_index":0,"text":"stub answer"}),
-        json!({"type":"response.content_part.done","item_id":"msg_stub","output_index":0,"content_index":0,"part":{"type":"output_text","text":"stub answer","annotations":[]}}),
-        json!({"type":"response.output_item.done","output_index":0,"item":{"id":"msg_stub","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"stub answer","annotations":[]}]}}),
-        json!({"type":"response.completed","response":response}),
     ];
+    if has_server_search {
+        events.extend([
+            json!({"type":"response.output_item.added","output_index":0,"item":{"id":"ws_stub","type":"web_search_call","status":"in_progress","action":{"type":"search","query":"rust"}}}),
+            json!({"type":"response.output_item.done","output_index":0,"item":output[0].clone()}),
+        ]);
+    } else if has_client_function && !has_tool_result {
+        events.extend([
+            json!({"type":"response.output_item.added","output_index":0,"item":{"id":"fc_stub","type":"function_call","status":"in_progress","call_id":"call_router_e2e","name":"lookup","arguments":""}}),
+            json!({"type":"response.function_call_arguments.delta","item_id":"fc_stub","output_index":0,"delta":"{\"key\":\"value\"}"}),
+            json!({"type":"response.function_call_arguments.done","item_id":"fc_stub","output_index":0,"arguments":"{\"key\":\"value\"}"}),
+            json!({"type":"response.output_item.done","output_index":0,"item":output[0].clone()}),
+        ]);
+    } else {
+        events.extend([
+            json!({"type":"response.output_item.added","output_index":0,"item":{"id":"msg_stub","type":"message","status":"in_progress","role":"assistant","content":[]}}),
+            json!({"type":"response.content_part.added","item_id":"msg_stub","output_index":0,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}),
+            json!({"type":"response.output_text.delta","item_id":"msg_stub","output_index":0,"content_index":0,"delta":"stub answer"}),
+            json!({"type":"response.output_text.done","item_id":"msg_stub","output_index":0,"content_index":0,"text":"stub answer"}),
+            json!({"type":"response.content_part.done","item_id":"msg_stub","output_index":0,"content_index":0,"part":{"type":"output_text","text":"stub answer","annotations":[]}}),
+            json!({"type":"response.output_item.done","output_index":0,"item":output[0].clone()}),
+        ]);
+    }
+    events.push(json!({"type":"response.completed","response":response}));
     let mut stream = String::new();
     for event in events {
         write!(
@@ -421,788 +503,8 @@ fn codex_stream() -> String {
     stream
 }
 
-#[tokio::test]
-async fn request_larger_than_logging_buffer_reaches_handler() {
-    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
-    let body = vec![b'x'; 10 * 1024 * 1024 + 1];
+#[path = "router_e2e/cases_core.rs"]
+mod cases_core;
 
-    let response = router
-        .client
-        .post(format!("{}/test/large-request", router.url))
-        .body(body)
-        .send()
-        .await
-        .expect("large request response");
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response.text().await.expect("large response body"),
-        (10 * 1024 * 1024 + 1).to_string()
-    );
-    let log = std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
-        .expect("request log");
-    assert!(log.contains("client_request"));
-    assert!(log.contains("[OMITTED:"));
-    assert!(!log.contains("client_request_error"));
-}
-
-#[tokio::test]
-async fn configured_proxy_body_ceiling_returns_413_without_reaching_upstream() {
-    let router = TestRouter::start_with_max_request_bytes(UpstreamProvider::Anthropic, 1024).await;
-    let response = router
-        .post(
-            "/v1/messages",
-            &json!({
-                "model":"claude-sonnet-4-5",
-                "max_tokens":64,
-                "messages":[{"role":"user","content":"x".repeat(2048)}]
-            }),
-        )
-        .send()
-        .await
-        .expect("oversize response");
-
-    assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
-    let payload: Value = response.json().await.expect("Anthropic error JSON");
-    assert_eq!(payload["type"], "error");
-    assert!(
-        payload["error"]["message"]
-            .as_str()
-            .is_some_and(|message| message.contains("1024 byte proxy limit"))
-    );
-    assert!(router.requests.lock().expect("stub requests").is_empty());
-}
-
-#[tokio::test]
-async fn anthropic_upstream_returns_each_client_dialect_and_pinned_alias() {
-    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
-    let cases = [
-        (
-            "/v1/messages",
-            json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
-            "content",
-        ),
-        (
-            "/api/anthropic/v1/messages",
-            json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
-            "content",
-        ),
-        (
-            "/v1/chat/completions",
-            json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
-            "choices",
-        ),
-        (
-            "/api/codex/v1/chat/completions",
-            json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
-            "choices",
-        ),
-        (
-            "/api/qwen/v1/chat/completions",
-            json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
-            "choices",
-        ),
-        (
-            "/api/openai/v1/responses",
-            json!({"model":"claude-sonnet-4-5","input":"hi"}),
-            "output",
-        ),
-        (
-            "/api/qwen/v1/responses",
-            json!({"model":"claude-sonnet-4-5","input":"hi"}),
-            "output",
-        ),
-    ];
-
-    for (path, body, envelope) in cases {
-        let response = router
-            .post(path, &body)
-            .send()
-            .await
-            .expect("router response");
-        assert_eq!(response.status(), StatusCode::OK, "{path}");
-        let payload: Value = response.json().await.expect("JSON client response");
-        assert!(
-            payload[envelope].is_array(),
-            "{path} must return {envelope}[]"
-        );
-    }
-}
-
-#[tokio::test]
-async fn both_upstream_dialects_serve_all_three_buffered_client_surfaces() {
-    for (provider, requested_model, served_model) in [
-        (
-            UpstreamProvider::Anthropic,
-            "claude-sonnet-4-5",
-            "claude-sonnet-4-5",
-        ),
-        (UpstreamProvider::Codex, "gpt-5", "gpt-5"),
-    ] {
-        let router = TestRouter::start(provider).await;
-        let cases = [
-            (
-                "/v1/messages",
-                json!({"model":requested_model,"max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
-                "content",
-            ),
-            (
-                "/v1/chat/completions",
-                json!({"model":requested_model,"messages":[{"role":"user","content":"hi"}]}),
-                "choices",
-            ),
-            (
-                "/v1/responses",
-                json!({"model":requested_model,"input":"hi"}),
-                "output",
-            ),
-        ];
-
-        for (path, body, envelope) in cases {
-            let response = router
-                .post(path, &body)
-                .send()
-                .await
-                .expect("cross-dialect response");
-            assert_eq!(response.status(), StatusCode::OK, "{provider:?} {path}");
-            let payload: Value = response.json().await.expect("JSON response");
-            assert!(
-                payload[envelope].is_array(),
-                "{provider:?} {path} must return {envelope}[]"
-            );
-            assert_eq!(
-                payload["model"], served_model,
-                "{provider:?} {path} must report the upstream-served model"
-            );
-        }
-    }
-}
-
-#[tokio::test]
-async fn anthropic_upstream_relays_vendor_headers_across_client_dialects() {
-    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
-    let cases = [
-        (
-            "/v1/messages",
-            json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
-        ),
-        (
-            "/v1/responses",
-            json!({"model":"claude-sonnet-4-5","input":"hi"}),
-        ),
-        (
-            "/v1/chat/completions",
-            json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
-        ),
-    ];
-
-    for (path, body) in cases {
-        let response = router
-            .post(path, &body)
-            .send()
-            .await
-            .expect("router response");
-        assert_eq!(response.status(), StatusCode::OK, "{path}");
-        assert_eq!(
-            response
-                .headers()
-                .get("anthropic-ratelimit-unified-reset")
-                .and_then(|value| value.to_str().ok()),
-            Some("1786546200"),
-            "{path} must relay Anthropic quota headers"
-        );
-        assert_eq!(
-            response
-                .headers()
-                .get("request-id")
-                .and_then(|value| value.to_str().ok()),
-            Some("req_anthropic_stub_123"),
-            "{path} must relay the vendor request ID"
-        );
-    }
-}
-
-#[tokio::test]
-async fn native_anthropic_server_tools_and_beta_headers_survive_the_full_route() {
-    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
-    let response = router
-        .post(
-            "/v1/messages",
-            &json!({
-                "model":"claude-sonnet-4-5",
-                "max_tokens":256,
-                "messages":[{"role":"user","content":"research Rust"}],
-                "tools":[
-                    {"type":"web_search_20250305","name":"web_search","max_uses":2},
-                    {"type":"web_fetch_20250910","name":"web_fetch","max_uses":2}
-                ]
-            }),
-        )
-        .header("anthropic-beta", "web-fetch-2025-09-10")
-        .send()
-        .await
-        .expect("native server-tool response");
-    assert_eq!(response.status(), StatusCode::OK);
-    let payload: Value = response.json().await.expect("Anthropic JSON");
-    let types = payload["content"]
-        .as_array()
-        .expect("content blocks")
-        .iter()
-        .filter_map(|block| block["type"].as_str())
-        .collect::<Vec<_>>();
-    assert_eq!(
-        types,
-        [
-            "server_tool_use",
-            "web_search_tool_result",
-            "server_tool_use",
-            "web_fetch_tool_result"
-        ]
-    );
-    assert_eq!(
-        payload["usage"]["server_tool_use"]["web_search_requests"],
-        1
-    );
-    assert_eq!(payload["usage"]["server_tool_use"]["web_fetch_requests"], 1);
-
-    let requests = router.requests.lock().expect("stub requests");
-    assert_eq!(requests[0]["tools"][0]["type"], "web_search_20250305");
-    assert_eq!(requests[0]["tools"][1]["type"], "web_fetch_20250910");
-    drop(requests);
-    let beta = {
-        let headers = router.upstream_headers.lock().expect("stub headers");
-        headers[0]["anthropic-beta"]
-            .to_str()
-            .expect("ASCII beta header")
-            .to_string()
-    };
-    assert!(beta.contains("web-fetch-2025-09-10"));
-    assert!(beta.contains(proxy::OAUTH_BETA_FLAG));
-}
-
-#[tokio::test]
-async fn responses_stream_has_complete_named_lifecycle() {
-    for (provider, model) in [
-        (UpstreamProvider::Anthropic, "claude-sonnet-4-5"),
-        (UpstreamProvider::Codex, "gpt-5"),
-    ] {
-        let router = TestRouter::start(provider).await;
-        let response = router
-            .post(
-                "/v1/responses",
-                &json!({"model":model,"input":"hi","stream":true}),
-            )
-            .send()
-            .await
-            .expect("streaming response");
-        assert_eq!(response.status(), StatusCode::OK);
-        let stream = response.text().await.expect("SSE body");
-        let names = stream
-            .lines()
-            .filter_map(|line| line.strip_prefix("event: "))
-            .collect::<Vec<_>>();
-        assert_eq!(
-            names,
-            [
-                "response.created",
-                "response.in_progress",
-                "response.output_item.added",
-                "response.content_part.added",
-                "response.output_text.delta",
-                "response.output_text.done",
-                "response.content_part.done",
-                "response.output_item.done",
-                "response.completed",
-            ],
-            "wrong lifecycle for {model}"
-        );
-        assert!(stream.trim_end().ends_with("data: [DONE]"));
-    }
-}
-
-#[tokio::test]
-async fn codex_upstream_is_translated_and_relays_vendor_headers() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-
-    let response = router
-        .post(
-            "/v1/chat/completions",
-            &json!({
-                "model":"gpt-5",
-                "messages":[{"role":"user","content":"hi"}],
-                "tools":[{"type":"function","function":{"name":"lookup","description":"look up a value","parameters":{"type":"object"}}}]
-            }),
-        )
-        .header("x-test-marker", "client-boundary-marker")
-        .send()
-        .await
-        .expect("chat completion response");
-    assert_eq!(response.status(), StatusCode::OK);
-    assert!(response.headers().get("x-codex-active-limit").is_none());
-    assert_eq!(response.headers()["x-ratelimit-remaining-requests"], "41");
-    assert_eq!(response.headers()["x-oai-request-id"], "req_stub_123");
-    let chat: Value = response.json().await.expect("chat completion JSON");
-    assert_eq!(chat["object"], "chat.completion");
-    assert_eq!(chat["choices"][0]["message"]["content"], "stub answer");
-
-    let response = router
-        .post(
-            "/api/codex/v1/responses",
-            &json!({"model":"gpt-5","input":"hi"}),
-        )
-        .send()
-        .await
-        .expect("Responses response");
-    assert_eq!(response.status(), StatusCode::OK);
-    assert!(response.headers().get("x-codex-active-limit").is_none());
-    assert_eq!(response.headers()["x-ratelimit-remaining-requests"], "41");
-    let responses: Value = response.json().await.expect("Responses JSON");
-    assert_eq!(responses["object"], "response");
-    assert!(responses["output"].is_array());
-
-    let requests = router.requests.lock().expect("stub requests");
-    let translated_tools = requests[0]["tools"].as_array().expect("translated tools");
-    assert_eq!(translated_tools[0]["name"], "lookup");
-    assert_eq!(translated_tools[0]["type"], "function");
-    assert!(translated_tools[0].get("function").is_none());
-    drop(requests);
-
-    let records =
-        std::fs::read_to_string(router.log_path_for(&router.token)).expect("request exchange log");
-    let records = records
-        .lines()
-        .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL record"))
-        .collect::<Vec<_>>();
-    let correlation_id = records
-        .iter()
-        .find(|record| {
-            record["phase"] == "client_request"
-                && record.to_string().contains("client-boundary-marker")
-        })
-        .and_then(|record| record["correlation_id"].as_str())
-        .expect("marked client request")
-        .to_string();
-    let exchange = records
-        .iter()
-        .filter(|record| record["correlation_id"] == correlation_id)
-        .collect::<Vec<_>>();
-    for phase in [
-        "client_request",
-        "upstream_request",
-        "upstream_response",
-        "upstream_response_body",
-        "client_response",
-        "client_response_body",
-    ] {
-        assert!(
-            exchange.iter().any(|record| record["phase"] == phase),
-            "missing {phase} for one correlation id"
-        );
-    }
-    let token_log_path = router.log_path_for(&router.token);
-    let expected_hash = token_log_path
-        .parent()
-        .and_then(std::path::Path::file_name)
-        .and_then(std::ffi::OsStr::to_str)
-        .expect("token hash");
-    assert!(exchange.iter().all(|record| {
-        record["token_hash"] == expected_hash
-            && record["token_label"] == "router e2e client"
-            && record["token_id"].as_str().is_some_and(|id| !id.is_empty())
-    }));
-    let rendered = exchange
-        .iter()
-        .map(std::string::ToString::to_string)
-        .collect::<String>();
-    assert!(rendered.contains("client-boundary-marker"));
-    assert!(rendered.contains("Bearer la_"));
-    assert!(rendered.contains("***"));
-    assert!(!rendered.contains(&router.token));
-}
-
-#[tokio::test]
-async fn unavailable_server_tool_fails_explicitly_without_reaching_codex() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-    let response = router
-        .post(
-            "/v1/responses",
-            &json!({"model":"gpt-5","input":"fetch this","tools":[{"type":"web_fetch"}]}),
-        )
-        .send()
-        .await
-        .expect("unsupported server-tool response");
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    let payload: Value = response.json().await.expect("OpenAI error JSON");
-    assert!(
-        payload["error"]["message"]
-            .as_str()
-            .is_some_and(|message| message.contains("web_fetch"))
-    );
-    assert!(router.requests.lock().expect("stub requests").is_empty());
-}
-
-#[tokio::test]
-async fn auth_unknown_models_and_admin_isolation() {
-    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
-    for path in [
-        "/v1/models",
-        "/api/anthropic/v1/models",
-        "/api/openai/v1/models",
-        "/api/codex/v1/models",
-        "/api/qwen/v1/models",
-    ] {
-        let missing = router
-            .client
-            .get(format!("{}{path}", router.url))
-            .send()
-            .await
-            .expect("missing-token response");
-        assert_eq!(missing.status(), StatusCode::UNAUTHORIZED, "{path}");
-        let malformed = router
-            .client
-            .get(format!("{}{path}", router.url))
-            .bearer_auth("not-a-router-token")
-            .send()
-            .await
-            .expect("malformed-token response");
-        assert_eq!(malformed.status(), StatusCode::UNAUTHORIZED, "{path}");
-    }
-
-    for (path, body) in [
-        (
-            "/v1/messages",
-            json!({"model":"claude-sonnet-4-5","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}),
-        ),
-        (
-            "/v1/chat/completions",
-            json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
-        ),
-        (
-            "/v1/responses",
-            json!({"model":"claude-sonnet-4-5","input":"hi"}),
-        ),
-    ] {
-        let missing = router
-            .client
-            .post(format!("{}{path}", router.url))
-            .json(&body)
-            .send()
-            .await
-            .expect("missing-token inference response");
-        assert_eq!(missing.status(), StatusCode::UNAUTHORIZED, "{path}");
-        let malformed = router
-            .client
-            .post(format!("{}{path}", router.url))
-            .bearer_auth("not-a-router-token")
-            .json(&body)
-            .send()
-            .await
-            .expect("malformed-token inference response");
-        assert_eq!(malformed.status(), StatusCode::UNAUTHORIZED, "{path}");
-    }
-
-    let unknown = router
-        .post(
-            "/v1/responses",
-            &json!({"model":"definitely-not-a-model","input":"hi"}),
-        )
-        .send()
-        .await
-        .expect("unknown-model response");
-    assert_eq!(unknown.status(), StatusCode::NOT_FOUND);
-    assert!(
-        unknown
-            .text()
-            .await
-            .expect("error body")
-            .contains("not available")
-    );
-
-    let admin = router
-        .get("/api/tokens/list")
-        .send()
-        .await
-        .expect("admin response");
-    assert_eq!(admin.status(), StatusCode::UNAUTHORIZED);
-
-    let unauthenticated =
-        std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
-            .expect("unauthenticated request log");
-    assert!(unauthenticated.lines().all(|line| {
-        let record: Value = serde_json::from_str(line).expect("valid JSONL");
-        record["token_hash"] == "unauthenticated"
-            && record["token_id"].is_null()
-            && record["token_label"].is_null()
-    }));
-}
-
-#[tokio::test]
-async fn codex_output_limit_policy_distinguishes_client_surfaces() {
-    let codex = TestRouter::start(UpstreamProvider::Codex).await;
-
-    // Messages requires max_tokens, so its required protocol field must not
-    // make the entire Anthropic surface unusable with a Codex subscription.
-    let messages = codex
-        .post(
-            "/v1/messages",
-            &json!({
-                "model":"gpt-5",
-                "max_tokens":16,
-                "messages":[{"role":"user","content":"hi"}]
-            }),
-        )
-        .send()
-        .await
-        .expect("capped Codex Messages response");
-    assert_eq!(messages.status(), StatusCode::OK);
-    assert!(messages.headers().get("x-codex-active-limit").is_none());
-    assert_eq!(messages.headers()["x-ratelimit-remaining-requests"], "41");
-    assert!(messages.headers().get("warning").is_none());
-    assert!(
-        messages
-            .headers()
-            .get("x-link-assistant-output-limit")
-            .is_none()
-    );
-    let payload: Value = messages.json().await.expect("Messages JSON response");
-    assert!(payload["content"].is_array());
-
-    {
-        let requests = codex.requests.lock().expect("stub requests");
-        assert_eq!(requests.len(), 1);
-        assert!(
-            requests[0].get("max_output_tokens").is_none(),
-            "the unsupported field must still be omitted from the Codex request"
-        );
-        drop(requests);
-    }
-
-    // A Messages request without its required field is a protocol error, not
-    // an unsupported-Codex-cap error, and must not reach the subscription.
-    let missing = codex
-        .post(
-            "/v1/messages",
-            &json!({"model":"gpt-5","messages":[{"role":"user","content":"hi"}]}),
-        )
-        .send()
-        .await
-        .expect("missing max_tokens response");
-    assert_eq!(missing.status(), StatusCode::BAD_REQUEST);
-    let missing_payload: Value = missing.json().await.expect("Messages error response");
-    assert_eq!(missing_payload["error"]["type"], "invalid_request_error");
-    assert!(
-        missing_payload["error"]["message"]
-            .as_str()
-            .is_some_and(|message| message.contains("max_tokens is required"))
-    );
-
-    // Native Responses caps retain PR #103's explicit rejection because users
-    // may rely on them as a spend control.
-    let capped = codex
-        .post(
-            "/v1/responses",
-            &json!({"model":"gpt-5","input":"hi","max_output_tokens":16}),
-        )
-        .send()
-        .await
-        .expect("capped Codex Responses response");
-    assert_eq!(capped.status(), StatusCode::BAD_REQUEST);
-    assert!(
-        capped
-            .text()
-            .await
-            .expect("limit error body")
-            .contains("cannot honor output-token limits")
-    );
-
-    // Chat caps are optional. Refuse them when the backend cannot enforce
-    // them, rather than returning more tokens than the caller authorised.
-    for body in [
-        json!({
-            "model":"gpt-5",
-            "max_tokens":16,
-            "messages":[{"role":"user","content":"hi"}]
-        }),
-        json!({
-            "model":"gpt-5",
-            "max_completion_tokens":16,
-            "messages":[{"role":"user","content":"hi"}]
-        }),
-    ] {
-        let response = codex
-            .post("/v1/chat/completions", &body)
-            .send()
-            .await
-            .expect("capped Codex Chat response");
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        let payload: Value = response.json().await.expect("OpenAI error response");
-        assert!(payload.get("type").is_none());
-        assert_eq!(payload["error"]["type"], "invalid_request_error");
-    }
-
-    let requests = codex.requests.lock().expect("stub requests");
-    assert_eq!(requests.len(), 1, "rejected caps must not reach upstream");
-    drop(requests);
-}
-
-#[tokio::test]
-async fn malformed_json_uses_each_http_surfaces_json_error_envelope() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-
-    for path in ["/v1/messages", "/v1/chat/completions", "/v1/responses"] {
-        let response = router
-            .client
-            .post(format!("{}{path}", router.url))
-            .bearer_auth(&router.token)
-            .header("content-type", "application/json")
-            .body(r#"{"model":"gpt-5",broken"#)
-            .send()
-            .await
-            .expect("malformed JSON response");
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
-        assert_eq!(
-            response
-                .headers()
-                .get("content-type")
-                .and_then(|value| value.to_str().ok()),
-            Some("application/json"),
-            "{path}"
-        );
-        let payload: Value = response.json().await.expect("JSON error envelope");
-        assert_eq!(payload["error"]["type"], "invalid_request_error", "{path}");
-        assert!(
-            payload["error"]["message"]
-                .as_str()
-                .is_some_and(|message| message.to_ascii_lowercase().contains("json")),
-            "{path}: {payload}"
-        );
-    }
-    assert!(router.requests.lock().expect("stub requests").is_empty());
-
-    let auto = TestRouter::start(UpstreamProvider::Auto).await;
-    let response = auto
-        .client
-        .post(format!("{}/v1/messages", auto.url))
-        .bearer_auth(&auto.token)
-        .header("content-type", "application/json")
-        .body(r#"{"model":"gpt-5",broken"#)
-        .send()
-        .await
-        .expect("automatic-routing malformed JSON response");
-    let payload: Value = response.json().await.expect("JSON error envelope");
-    assert_eq!(payload["error"]["type"], "invalid_request_error");
-    assert!(
-        payload["error"]["message"]
-            .as_str()
-            .is_some_and(|message| message.to_ascii_lowercase().contains("json"))
-    );
-}
-
-#[tokio::test]
-async fn empty_messages_is_reported_in_the_anthropic_dialect() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-
-    for body in [
-        json!({"model":"gpt-5","max_tokens":16,"messages":[]}),
-        json!({"model":"gpt-5","max_tokens":16}),
-    ] {
-        let response = router
-            .post("/v1/messages", &body)
-            .send()
-            .await
-            .expect("invalid Messages response");
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        let payload: Value = response.json().await.expect("Anthropic error envelope");
-        assert_eq!(payload["error"]["type"], "invalid_request_error");
-        let message = payload["error"]["message"].as_str().expect("error message");
-        assert!(message.contains("messages"), "{message}");
-        for leaked in ["input", "previous_response_id", "prompt", "conversation"] {
-            assert!(!message.contains(leaked), "leaked {leaked}: {message}");
-        }
-    }
-    assert!(router.requests.lock().expect("stub requests").is_empty());
-}
-
-#[tokio::test]
-async fn translated_streams_preserve_usage_in_the_client_dialect() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-
-    let anthropic = router
-        .post(
-            "/v1/messages",
-            &json!({
-                "model":"gpt-5",
-                "max_tokens":16,
-                "messages":[{"role":"user","content":"hi"}],
-                "stream":true
-            }),
-        )
-        .send()
-        .await
-        .expect("Anthropic stream")
-        .text()
-        .await
-        .expect("Anthropic SSE body");
-    let message_delta = anthropic
-        .split("\n\n")
-        .filter_map(|block| block.lines().find_map(|line| line.strip_prefix("data: ")))
-        .filter_map(|data| serde_json::from_str::<Value>(data).ok())
-        .find(|event| event["type"] == "message_delta")
-        .expect("message_delta event");
-    assert_eq!(message_delta["usage"]["input_tokens"], 3);
-    assert_eq!(message_delta["usage"]["output_tokens"], 2);
-
-    let chat = router
-        .post(
-            "/v1/chat/completions",
-            &json!({
-                "model":"gpt-5",
-                "messages":[{"role":"user","content":"hi"}],
-                "stream":true,
-                "stream_options":{"include_usage":true}
-            }),
-        )
-        .send()
-        .await
-        .expect("Chat Completions stream")
-        .text()
-        .await
-        .expect("Chat SSE body");
-    let usage = chat
-        .split("\n\n")
-        .filter_map(|block| block.lines().find_map(|line| line.strip_prefix("data: ")))
-        .filter(|data| *data != "[DONE]")
-        .filter_map(|data| serde_json::from_str::<Value>(data).ok())
-        .find(|chunk| chunk["choices"].as_array().is_some_and(Vec::is_empty))
-        .expect("final usage chunk");
-    assert_eq!(usage["usage"]["prompt_tokens"], 3);
-    assert_eq!(usage["usage"]["completion_tokens"], 2);
-    assert_eq!(usage["usage"]["total_tokens"], 5);
-}
-
-#[tokio::test]
-async fn invalid_upstream_body_is_not_disclosed_to_anthropic_clients() {
-    let router = TestRouter::start_with_invalid_body(UpstreamProvider::Codex, true).await;
-    let response = router
-        .post(
-            "/v1/messages",
-            &json!({
-                "model":"gpt-5",
-                "max_tokens":16,
-                "messages":[{"role":"user","content":"hi"}]
-            }),
-        )
-        .send()
-        .await
-        .expect("invalid upstream response");
-    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
-    let payload: Value = response.json().await.expect("Anthropic error envelope");
-    assert_eq!(
-        payload["error"]["message"],
-        "Upstream returned a malformed response"
-    );
-    let rendered = payload.to_string();
-    assert!(!rendered.contains("safety_identifier"));
-    assert!(!rendered.contains("prompt_cache_key"));
-}
+#[path = "router_e2e/cases_regressions.rs"]
+mod cases_regressions;

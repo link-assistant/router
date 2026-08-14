@@ -5,9 +5,14 @@ set -eu
 : "${TUNNEL_SSH_USER:?TUNNEL_SSH_USER is required}"
 : "${TUNNEL_REMOTE_PORT:?TUNNEL_REMOTE_PORT is required}"
 : "${TUNNEL_SSH_KEY:?TUNNEL_SSH_KEY is required}"
+: "${TUNNEL_KNOWN_HOSTS:?TUNNEL_KNOWN_HOSTS is required}"
 
 if [ ! -r "$TUNNEL_SSH_KEY" ]; then
   echo "TUNNEL_SSH_KEY is not readable: $TUNNEL_SSH_KEY" >&2
+  exit 1
+fi
+if [ ! -s "$TUNNEL_KNOWN_HOSTS" ]; then
+  echo "TUNNEL_KNOWN_HOSTS must be a readable, non-empty pinned host-key file: $TUNNEL_KNOWN_HOSTS" >&2
   exit 1
 fi
 
@@ -21,8 +26,8 @@ exec "${AUTOSSH_BIN:-autossh}" \
   -p "${TUNNEL_SSH_PORT:-22}" \
   -o BatchMode=yes \
   -o ExitOnForwardFailure=yes \
-  -o StrictHostKeyChecking=accept-new \
-  -o "UserKnownHostsFile=${TUNNEL_KNOWN_HOSTS:-/home/tunnel/.ssh/known_hosts}" \
+  -o StrictHostKeyChecking=yes \
+  -o "UserKnownHostsFile=${TUNNEL_KNOWN_HOSTS}" \
   -o ServerAliveInterval=30 \
   -o ServerAliveCountMax=3 \
   -R "${TUNNEL_REMOTE_BIND:-127.0.0.1}:${TUNNEL_REMOTE_PORT}:${ROUTER_HOST:-link-assistant-router}:${ROUTER_PORT:-8080}" \

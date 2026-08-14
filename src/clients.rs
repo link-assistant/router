@@ -128,7 +128,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         non_interactive_arg: None,
         isolation: ClientIsolation::Unsupported,
         setup_limitation: Some(
-            "Cursor CLI accepts CURSOR_API_ENDPOINT, but it speaks Connect-RPC over Cursor's private agent.v1/aiserver.v1 services; this router does not yet implement that RPC surface",
+            "Cursor CLI accepts CURSOR_API_ENDPOINT, but speaks Connect-RPC over an unversioned private agent.v1/aiserver.v1 protocol rather than a supported vendor API; native Cursor routing is intentionally unsupported",
         ),
     },
     ClientIntegration {
@@ -572,8 +572,9 @@ impl ClientManager {
                 format!("{}/v1/messages", base_url.trim_end_matches('/')),
                 json!({
                     "model":model,
-                    "max_tokens":16_385,
-                    "thinking":{"type":"enabled", "budget_tokens":16_384},
+                    "max_tokens":24_576,
+                    "thinking":{"type":"adaptive"},
+                    "output_config":{"effort":"high"},
                     "messages":[{"role":"user", "content":"Reply OK"}]
                 }),
             ),

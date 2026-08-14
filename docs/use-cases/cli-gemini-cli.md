@@ -15,6 +15,10 @@ passes the run token as `GEMINI_API_KEY`. The normal Gemini home is untouched.
 Permanent setup is not offered because this endpoint override belongs to the
 API-key environment. See [with-router.md](with-router.md).
 
+Wrapper flags may appear before or after `gemini-cli`; an explicit `--`
+forwards every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual configuration
 
 The [Gemini CLI configuration reference](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md)

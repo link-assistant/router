@@ -1013,14 +1013,16 @@ docker run --restart unless-stopped \
   -e TUNNEL_SSH_USER=router \
   -e TUNNEL_REMOTE_PORT=18080 \
   -e TUNNEL_SSH_KEY=/run/secrets/ssh-key \
+  -e TUNNEL_KNOWN_HOSTS=/run/secrets/known-hosts \
   -v /path/to/tunnel-key:/run/secrets/ssh-key:ro \
+  -v /path/to/pinned-known-hosts:/run/secrets/known-hosts:ro \
   link-assistant-router-tunnel
 ```
 
 The remote bind defaults to loopback. Set `TUNNEL_REMOTE_BIND` only when the
 far-side SSH server is deliberately configured to expose remote forwards.
-The first connection records the host key with `accept-new`; mount a pinned
-known-hosts file and set `TUNNEL_KNOWN_HOSTS` for stricter production trust.
+Host verification is strict and fail-closed: `TUNNEL_KNOWN_HOSTS` must point to
+a readable, non-empty file containing the pinned far-side host key.
 
 ### Akash and Kubernetes
 

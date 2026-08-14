@@ -317,6 +317,11 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
     );
     assert!(!release.contains("cargo install rust-script\n"));
     assert!(release.contains("cargo install rust-script --version 0.36.0 --locked"));
+    assert!(release.contains("cargo install cargo-cyclonedx --version 0.5.9 --locked"));
+    assert!(
+        release.contains("cargo cyclonedx --format json --all-features --all --spec-version 1.5")
+    );
+    assert!(release.contains("(.components | length > 1) and (.dependencies | length > 0)"));
     assert!(release.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
     assert!(
         release
@@ -661,6 +666,7 @@ fn dockerfile_apt_installs(section: &str, package: &str) -> bool {
 }
 
 fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
+    let tag = tag.split('@').next().unwrap_or(tag);
     if tag == "1-slim-bookworm" {
         true
     } else {
@@ -671,6 +677,29 @@ fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
 
         matches!((major, minor), (Some(1), Some(minor)) if minor >= 85)
             || matches!(major, Some(major) if major > 1)
+    }
+}
+
+#[test]
+fn external_container_bases_are_digest_pinned() {
+    for path in ["Dockerfile", "docker/tunnel/Dockerfile"] {
+        let dockerfile = read_lf(path);
+        for line in dockerfile.lines().filter(|line| line.starts_with("FROM ")) {
+            let image = line
+                .split_whitespace()
+                .nth(1)
+                .expect("FROM image reference");
+            if image == "runtime-base" {
+                continue;
+            }
+            assert!(
+                image.contains("@sha256:")
+                    && image
+                        .rsplit_once("@sha256:")
+                        .is_some_and(|(_, digest)| digest.len() == 64),
+                "{path} base image must use an immutable digest: {line}"
+            );
+        }
     }
 }
 

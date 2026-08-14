@@ -255,23 +255,23 @@ fn tool_result_text(content: Option<&Value>) -> String {
 fn translate_tools(tools: &[Value]) -> Vec<Value> {
     tools
         .iter()
-        .filter_map(|tool| {
+        .map(|tool| {
             if tool
                 .get("type")
                 .and_then(Value::as_str)
                 .is_some_and(|kind| kind.starts_with("web_search_"))
             {
-                return Some(json!({"type": "web_search"}));
+                return json!({"type": "web_search"});
             }
             if tool
                 .get("type")
                 .and_then(Value::as_str)
                 .is_some_and(|kind| kind.starts_with("web_fetch_"))
             {
-                return Some(json!({"type": "web_fetch"}));
+                return json!({"type": "web_fetch"});
             }
-            let name = tool.get("name").and_then(Value::as_str)?;
-            Some(json!({
+            let name = tool.get("name").and_then(Value::as_str).unwrap_or_default();
+            json!({
                 "type": "function",
                 "function": {
                     "name": name,
@@ -284,7 +284,7 @@ fn translate_tools(tools: &[Value]) -> Vec<Value> {
                         .cloned()
                         .unwrap_or_else(|| json!({"type": "object", "properties": {}})),
                 }
-            }))
+            })
         })
         .collect()
 }
@@ -523,6 +523,42 @@ fn unsupported_server_tool(body: &Value, provider: UpstreamProvider) -> Option<S
     })
 }
 
+pub(crate) fn untranslatable_anthropic_tool(body: &Value) -> Option<String> {
+    if let Some(tools) = body.get("tools") {
+        let Some(tools) = tools.as_array() else {
+            return Some("tools must be an array".into());
+        };
+        for tool in tools {
+            let kind = tool.get("type").and_then(Value::as_str);
+            if kind.is_some_and(|kind| {
+                kind.starts_with("web_search_") || kind.starts_with("web_fetch_")
+            }) {
+                continue;
+            }
+            if let Some(kind) = kind
+                && kind != "custom"
+            {
+                return Some(format!("unsupported Anthropic tool type: {kind}"));
+            }
+            if tool.get("name").and_then(Value::as_str).is_none() {
+                return Some("client tool is missing a string name".into());
+            }
+        }
+    }
+    if let Some(choice) = body.get("tool_choice") {
+        let Some(kind) = choice.get("type").and_then(Value::as_str) else {
+            return Some("tool_choice is missing a string type".into());
+        };
+        if !matches!(kind, "auto" | "any" | "none" | "tool") {
+            return Some(format!("unsupported Anthropic tool_choice type: {kind}"));
+        }
+        if kind == "tool" && choice.get("name").and_then(Value::as_str).is_none() {
+            return Some("tool_choice type=tool is missing a string name".into());
+        }
+    }
+    None
+}
+
 /// Estimate the input token count of an Anthropic Messages request.
 ///
 /// `POST /v1/messages/count_tokens` has no equivalent on the bridged
@@ -663,6 +699,12 @@ pub async fn forward_anthropic_messages(
             StatusCode::BAD_REQUEST,
             format!("Unsupported tool type for selected provider: {kind}").as_bytes(),
         );
+    }
+    if let Some(reason) = untranslatable_anthropic_tool(&anthropic_body) {
+        if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
+            return *response;
+        }
+        return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
     }
     let requested_model = anthropic_body
         .get("model")

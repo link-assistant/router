@@ -30,6 +30,11 @@ fn run_wrapper(client: &str, prompt: &str, working_directory: &Path) -> std::pro
             prompt,
         ])
         .current_dir(working_directory)
+        // The wrapper must be the only source of client configuration. Never
+        // let an opt-in real-client test discover or mutate the developer's
+        // normal home-directory state.
+        .env("HOME", working_directory)
+        .env("XDG_CONFIG_HOME", working_directory.join(".config"))
         .stdin(Stdio::null())
         .output()
         .expect("launch with-router real-client tier")
@@ -44,6 +49,7 @@ fn installed_supported_clients_complete_a_real_single_turn() {
     for (client, executable) in [
         ("claude-code", "claude"),
         ("codex", "codex"),
+        ("gemini-cli", "gemini"),
         ("qwen-code", "qwen"),
         ("grok-cli", "grok"),
         ("opencode", "opencode"),

@@ -135,6 +135,36 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: rust-script scripts/check-version-modification.rs
 
+  # Build and execute the separately shipped reverse-tunnel image. The echo
+  # transport verifies entrypoint validation and the final autossh argv without
+  # opening an external SSH connection.
+  tunnel-image-smoke:
+    name: Tunnel Image Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Build tunnel image
+        run: docker build --file docker/tunnel/Dockerfile --tag router-tunnel:test .
+      - name: Missing configuration fails closed
+        shell: bash
+        run: |
+          if docker run --rm router-tunnel:test 2>tunnel-error.log; then
+            echo "tunnel image unexpectedly started without configuration" >&2
+            exit 1
+          fi
+          grep -Fq "TUNNEL_SSH_HOST" tunnel-error.log
+      - name: Complete configuration reaches autossh
+        run: >-
+          docker run --rm
+          -e TUNNEL_SSH_HOST=far.example
+          -e TUNNEL_SSH_USER=router
+          -e TUNNEL_REMOTE_PORT=18080
+          -e TUNNEL_SSH_KEY=/dev/null
+          -e TUNNEL_KNOWN_HOSTS=/etc/hosts
+          -e AUTOSSH_BIN=/bin/echo
+          router-tunnel:test
+
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
   # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
@@ -825,15 +855,21 @@ jobs:
       - name: Build release binaries
         run: cargo build --locked --release --bins
 
+      - name: Install pinned CycloneDX generator
+        run: cargo install cargo-cyclonedx --version 0.5.9 --locked
+
       - name: Package binaries, checksums, and CycloneDX SBOM
         shell: bash
         run: |
           mkdir -p dist/package
           cp target/release/link-assistant-router target/release/with-router dist/package/
           cp LICENSE README.md dist/package/
-          cargo metadata --locked --format-version 1 |
-            jq '{bomFormat:"CycloneDX",specVersion:"1.5",version:1,metadata:{component:{type:"application",name:"link-assistant-router",version:"${{ env.RELEASE_VERSION }}"}},components:[.packages[]|{type:"library",name:.name,version:.version,purl:("pkg:cargo/"+.name+"@"+.version)}]}' \
-            > "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json"
+          cargo cyclonedx --format json --all-features --all --spec-version 1.5 \
+            --override-filename link-assistant-router.cdx.json
+          mv link-assistant-router.cdx.json \
+            "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json"
+          jq -e '.bomFormat == "CycloneDX" and (.components | length > 1) and (.dependencies | length > 0)' \
+            "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json" >/dev/null
           tar -C dist/package -czf "dist/link-assistant-router-${RELEASE_VERSION}-linux-${{ matrix.arch }}.tar.gz" .
           rm -rf dist/package
           sha256sum dist/*.tar.gz dist/*.cdx.json > "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.sha256"

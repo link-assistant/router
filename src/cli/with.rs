@@ -209,43 +209,87 @@ mod tests {
 
     #[test]
     fn wrapper_flags_after_client_are_protected() {
-        let arguments = ["router", "with", "--global", "codex", "--global", "prompt"]
-            .into_iter()
-            .map(OsString::from)
-            .collect();
-        assert_eq!(
-            protect_client_arguments(arguments, true),
-            [
-                "router", "with", "--global", "--global", "codex", "--", "prompt"
-            ]
-            .map(OsString::from)
-        );
+        for option in [
+            "--global",
+            "--undo",
+            "--non-interactive",
+            "--interactive",
+            "--token-stdin",
+        ] {
+            let arguments = ["router", "with", "codex", option, "prompt"]
+                .into_iter()
+                .map(OsString::from)
+                .collect();
+            assert_eq!(
+                protect_client_arguments(arguments, true),
+                ["router", "with", option, "codex", "--", "prompt"].map(OsString::from),
+                "{option} after the client must remain wrapper-owned"
+            );
+        }
     }
 
     #[test]
     fn value_wrapper_flags_after_client_are_accepted() {
-        let arguments = [
-            "with-router",
-            "codex",
+        for (option, value) in [
+            ("--server", "https://router.test"),
+            ("--token", "test-token"),
+            ("--model", "gpt-test"),
+            ("--run-ttl-hours", "2"),
+            ("--run-max-requests", "3"),
+        ] {
+            let arguments = ["with-router", "codex", option, value, "hi"]
+                .into_iter()
+                .map(OsString::from)
+                .collect();
+            assert_eq!(
+                protect_client_arguments(arguments, false),
+                ["with-router", option, value, "codex", "--", "hi"].map(OsString::from),
+                "{option} VALUE after the client must remain wrapper-owned"
+            );
+
+            let equals = format!("{option}={value}");
+            let arguments = ["with-router", "codex", &equals, "hi"]
+                .into_iter()
+                .map(OsString::from)
+                .collect();
+            assert_eq!(
+                protect_client_arguments(arguments, false),
+                [
+                    OsString::from("with-router"),
+                    OsString::from(&equals),
+                    OsString::from("codex"),
+                    OsString::from("--"),
+                    OsString::from("hi"),
+                ],
+                "{option}=VALUE after the client must remain wrapper-owned"
+            );
+        }
+    }
+
+    #[test]
+    fn explicit_boundary_forwards_every_colliding_wrapper_flag_verbatim() {
+        for option in [
+            "--global",
+            "--undo",
+            "--non-interactive",
+            "--interactive",
+            "--token-stdin",
             "--server",
-            "https://router.test",
-            "hi",
-        ]
-        .into_iter()
-        .map(OsString::from)
-        .collect();
-        assert_eq!(
-            protect_client_arguments(arguments, false),
-            [
-                "with-router",
-                "--server",
-                "https://router.test",
-                "codex",
-                "--",
-                "hi"
-            ]
-            .map(OsString::from)
-        );
+            "--token",
+            "--model",
+            "--run-ttl-hours",
+            "--run-max-requests",
+        ] {
+            let arguments = ["with-router", "codex", "--", option, "client-value"]
+                .into_iter()
+                .map(OsString::from)
+                .collect::<Vec<_>>();
+            assert_eq!(
+                protect_client_arguments(arguments.clone(), false),
+                arguments,
+                "{option} after -- must be forwarded to the client"
+            );
+        }
     }
 
     #[test]

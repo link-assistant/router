@@ -13,6 +13,10 @@ The wrapper supplies disposable OpenCode-compatible config content and a
 per-run `LINK_ASSISTANT_TOKEN`; the normal Agent configuration is untouched.
 See [with-router.md](with-router.md).
 
+Wrapper flags may appear before or after `agent`; an explicit `--` forwards
+every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual or permanent configuration
 
 ```bash

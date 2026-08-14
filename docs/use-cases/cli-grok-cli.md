@@ -14,6 +14,10 @@ The wrapper isolates `HOME` and supplies `GROK_BASE_URL=URL/v1` and a per-run
 users to the temporary or manual environment path. See
 [with-router.md](with-router.md).
 
+Wrapper flags may appear before or after `grok-cli`; an explicit `--` forwards
+every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual configuration
 
 [superagent-ai/grok-cli](https://github.com/superagent-ai/grok-cli) documents
