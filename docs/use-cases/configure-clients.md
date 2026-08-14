@@ -15,10 +15,17 @@ link-assistant-router clients remove codex
 ```
 
 `setup` mints a 24-hour router token unless `--token` supplies one. The token is
-shown once as a shell `export` command and is **not written to either client
-configuration**. Export it in every shell that launches the client. Use
+never printed or written to the client configuration. Instead, setup writes the
+required exports to a mode-`0600` file below
+`$XDG_CONFIG_HOME/link-assistant-router/clients/` and prints the `source`
+command to run in every shell that launches the client. Use
 `--ttl-hours` to change the minted token lifetime and `--base-url` when the
 router is not reachable at the local CLI host and port.
+
+OpenCode, Qwen Code, and Agent setup authenticate to `/v1/models` and configure
+models that the router currently advertises. Setup fails before changing the
+client config if the router is unreachable or has no healthy model. Re-running
+setup refreshes catalog models while preserving user-added OpenCode entries.
 
 | Client | File used | Base-URL setting | Token input | Arbitrary router URL? |
 | --- | --- | --- | --- | --- |
@@ -37,9 +44,9 @@ unknown settings are preserved. Running `setup` again updates the same entry;
 it never creates a duplicate.
 
 Grok's current settings schema can persist `apiKey`, but it reads the API base
-URL only from `GROK_BASE_URL`. To keep router tokens out of files and avoid
-writing an ignored setting, `clients setup grok-cli` prints both required
-exports and leaves `user-settings.json` untouched.
+URL only from `GROK_BASE_URL`. To avoid writing an ignored setting,
+`clients setup grok-cli` puts both required exports in the protected environment
+file and leaves `user-settings.json` untouched.
 
 `clients setup cursor` and `clients setup gemini-cli` return the verified
 client-side limitation before minting a token or writing a file. Their matching
@@ -55,7 +62,7 @@ models, and settings remain untouched.
 
 `show` reports the path, URL, dialect, installed/configured state, and whether
 the expected token variable is set, but never prints its value. `doctor` sends
-one minimal request to the configured endpoint and distinguishes missing
+one catalog-selected minimal request to the configured endpoint and distinguishes missing
 configuration, missing token environment, an unreachable router, rejected
 tokens, unavailable upstream credentials, and other HTTP failures.
 

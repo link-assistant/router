@@ -7,7 +7,8 @@
 Automatic setup (merges the router URL and backs up an existing settings file):
 
 ```bash
-eval "$(link-assistant-router clients setup claude-code | grep '^export ')"
+link-assistant-router clients setup claude-code
+# Run the `source …/claude-code.env` command printed by setup.
 ```
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
