@@ -8,7 +8,18 @@ states that `responses` is the only supported value of `wire_api` and the
 default when omitted. Chat Completions is therefore not an integration option
 for this CLI.
 
-## Configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with codex "hi"
+```
+
+This creates an isolated `HOME`, writes a disposable `~/.codex/config.toml`,
+passes the run token through `LINK_ASSISTANT_TOKEN`, and removes the temporary
+home afterward. The normal `$CODEX_HOME` and `~/.codex` are untouched. See
+[with-router.md](with-router.md) for remote servers and token input.
+
+## Manual or permanent configuration
 
 Automatic setup (merges this provider and backs up an existing config):
 
@@ -17,7 +28,8 @@ eval "$(link-assistant-router clients setup codex | grep '^export ')"
 ```
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
-For manual setup, use the following configuration.
+For a machine without the router binary, use the following client-only
+configuration with the remote router URL and task token.
 
 `~/.codex/config.toml`:
 

@@ -3,14 +3,24 @@
 **Dialect:** OpenAI Chat Completions through Agent's OpenCode-compatible
 provider configuration. **Router endpoint:** `/v1/chat/completions`.
 
-## Automatic configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with agent "ping"
+```
+
+The wrapper supplies disposable OpenCode-compatible config content and a
+per-run `LINK_ASSISTANT_TOKEN`; the normal Agent configuration is untouched.
+See [with-router.md](with-router.md).
+
+## Manual or permanent configuration
 
 ```bash
 eval "$(link-assistant-router clients setup agent | grep '^export ')"
 agent --model link-assistant/claude-sonnet-4-5-20250929 -p "ping"
 ```
 
-Setup merges a `link-assistant` provider into
+Permanent setup merges a `link-assistant` provider into
 `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` (normally
 `~/.config/link-assistant-agent/opencode.json`). It preserves other providers
 and settings, creates a timestamped backup, and refers to the token as
@@ -37,6 +47,11 @@ and settings, creates a timestamped backup, and refers to the token as
     }
   }
 }
+```
+
+```bash
+export LINK_ASSISTANT_TOKEN=la_sk_...
+agent --model link-assistant/claude-sonnet-4-5-20250929 -p "ping"
 ```
 
 Agent already uses this OpenCode JSON provider shape for configurable local

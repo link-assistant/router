@@ -2,7 +2,17 @@
 
 **Dialect:** Anthropic Messages only. **Router endpoint:** `/v1/messages`.
 
-## Configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with claude-code "hi"
+```
+
+The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
+`ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN`; the normal Claude settings are
+not changed. See [with-router.md](with-router.md) for server and token options.
+
+## Manual or permanent configuration
 
 Automatic setup (merges the router URL and backs up an existing settings file):
 
@@ -11,7 +21,8 @@ eval "$(link-assistant-router clients setup claude-code | grep '^export ')"
 ```
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
-For manual or per-task setup, export the variables directly.
+Without the router binary, export the variables directly using the remote
+router URL and task token.
 
 Claude Code's [settings reference](https://code.claude.com/docs/en/settings)
 documents the two variables that matter:

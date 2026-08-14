@@ -9,7 +9,18 @@ defines `modelProviders` in `settings.json`, keyed by auth type, with `id`,
 persisted in `settings.json` — the runtime reads them from `process.env[envKey]`,
 which is exactly what a per-task `la_sk_…` token wants.
 
-## OpenAI-compatible configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with qwen-code "hi"
+```
+
+The wrapper uses an isolated `HOME`, writes a disposable Qwen settings file,
+and supplies `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and
+`LINK_ASSISTANT_TOKEN`. The normal `$QWEN_HOME` is untouched. See
+[with-router.md](with-router.md).
+
+## Manual OpenAI-compatible configuration
 
 ```json
 {

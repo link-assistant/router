@@ -4,7 +4,17 @@
 Completions or OpenAI Responses. **Router endpoints:** `/v1/chat/completions`
 or `/v1/responses`.
 
-## Configuration
+## One-line temporary launch
+
+```bash
+link-assistant-router with opencode run "hi"
+```
+
+The wrapper writes a disposable OpenCode file, selects it with
+`OPENCODE_CONFIG`, supplies `LINK_ASSISTANT_TOKEN`, and removes it on exit. The
+normal `opencode.json` remains untouched. See [with-router.md](with-router.md).
+
+## Manual configuration
 
 [opencode's provider documentation](https://opencode.ai/docs/providers/) defines
 custom providers in `opencode.json`. The npm package selects the dialect:

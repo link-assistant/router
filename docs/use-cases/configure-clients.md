@@ -1,7 +1,19 @@
 # Configure local agentic CLIs
 
-The `clients` command configures every local client that exposes a supported
-router URL without replacing unrelated user settings:
+For one run, use the temporary launcher. It is the default path and does not
+modify normal client configuration:
+
+```bash
+link-assistant-router with codex "hi"
+with-router claude-code "hi"
+```
+
+See [with-router.md](with-router.md) for the integration registry, server
+selection, token mint/revoke behavior, Docker lifecycle, and argument boundary.
+
+The older `clients` command and `with --global` are permanent, opt-in paths.
+They configure every local client that exposes a supported router URL without
+replacing unrelated user settings:
 
 ```bash
 link-assistant-router clients list
