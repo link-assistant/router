@@ -10,7 +10,7 @@ use std::time::Duration;
 use serde_json::json;
 
 use crate::cli::WithArgs;
-use crate::clients::{ClientIsolation, ClientKind, ClientManager};
+use crate::clients::{ClientIsolation, ClientKind, ClientManager, RouterModel};
 use crate::managed_server::{
     cleanup_run_credential, ensure_model_available, prepare_run_credential, resolve,
 };
@@ -55,8 +55,13 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         if server.source == "managed local container" {
             crate::managed_server::start_managed()?;
         }
-        crate::client_global::configure(args.client, &server.base_url)?;
-        return Ok(ExitCode::SUCCESS);
+        if !matches!(
+            args.client,
+            ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
+        ) {
+            crate::client_global::configure(args.client, &server.base_url, &[])?;
+            return Ok(ExitCode::SUCCESS);
+        }
     }
     let working_directory = std::env::current_dir()
         .ok()
@@ -67,6 +72,16 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .unwrap_or_else(|| "unknown-workdir".to_string());
     let label = format!("with-{}-{working_directory}", args.client);
     let credential = prepare_run_credential(&server, &label, args.run_ttl_hours).await?;
+    if args.global {
+        let configured =
+            crate::client_global::configure(args.client, &server.base_url, credential.models());
+        let cleanup = cleanup_run_credential(credential).await;
+        configured?;
+        if let Err(error) = cleanup {
+            eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
+        }
+        return Ok(ExitCode::SUCCESS);
+    }
     let model = args
         .model
         .as_deref()
@@ -80,6 +95,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         &server.base_url,
         &credential.token,
         Some(model),
+        credential.models(),
     ) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -120,6 +136,7 @@ impl TemporaryClient {
         base_url: &str,
         token: &str,
         model_override: Option<&str>,
+        models: &[RouterModel],
     ) -> Result<Self, AnyError> {
         sweep_stale_directories();
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
@@ -135,7 +152,7 @@ impl TemporaryClient {
                     .into());
             }
             _ => {
-                manager.setup(client, base_url)?;
+                manager.setup(client, base_url, models)?;
             }
         }
         let integration = client.integration();
@@ -476,16 +493,26 @@ mod tests {
 
     #[test]
     fn every_supported_client_prepares_below_a_disposable_root() {
+        let models = [RouterModel {
+            id: "test-model".to_string(),
+            owned_by: "test".to_string(),
+        }];
         for client in ClientKind::ALL {
             if client == ClientKind::Cursor {
                 assert!(
-                    TemporaryClient::prepare(client, "http://router.test", "task-token", None)
-                        .is_err()
+                    TemporaryClient::prepare(
+                        client,
+                        "http://router.test",
+                        "task-token",
+                        None,
+                        &models,
+                    )
+                    .is_err()
                 );
                 continue;
             }
             let temporary =
-                TemporaryClient::prepare(client, "http://router.test", "task-token", None)
+                TemporaryClient::prepare(client, "http://router.test", "task-token", None, &models)
                     .unwrap_or_else(|error| panic!("{client} failed temporary setup: {error}"));
             let root = temporary.directory.path().to_path_buf();
             assert_eq!(temporary.command.get_program(), client.command());

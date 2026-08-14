@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
 
-use crate::clients::{ClientKind, ClientManager};
+use crate::clients::{ClientKind, ClientManager, RouterModel};
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -26,7 +26,11 @@ struct BackupState {
     setup_backup: Option<PathBuf>,
 }
 
-pub fn configure(client: ClientKind, base_url: &str) -> Result<(), AnyError> {
+pub(crate) fn configure(
+    client: ClientKind,
+    base_url: &str,
+    models: &[RouterModel],
+) -> Result<(), AnyError> {
     if matches!(client, ClientKind::Cursor | ClientKind::GeminiCli) {
         return Err(client
             .setup_limitation()
@@ -59,7 +63,7 @@ pub fn configure(client: ClientKind, base_url: &str) -> Result<(), AnyError> {
     if let Some(marker) = marker_path.as_ref().filter(|_| marker_existed) {
         copy_private(marker, &paths.marker)?;
     }
-    let setup = match manager.setup(client, base_url) {
+    let setup = match manager.setup(client, base_url, models) {
         Ok(result) => result,
         Err(error) => {
             rollback(

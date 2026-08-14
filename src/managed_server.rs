@@ -14,6 +14,8 @@ use fs2::FileExt as _;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::clients::RouterModel;
+
 mod bootstrap;
 
 const CONFIG_DIRECTORY: &str = "link-assistant-router";
@@ -61,8 +63,14 @@ pub struct ResolvedServer {
 /// An ordinary token suitable for a wrapped client.
 pub struct RunCredential {
     pub token: String,
-    available_models: Vec<String>,
+    available_models: Vec<RouterModel>,
     revocation: Option<Revocation>,
+}
+
+impl RunCredential {
+    pub(crate) fn models(&self) -> &[RouterModel] {
+        &self.available_models
+    }
 }
 
 struct Revocation {
@@ -233,7 +241,11 @@ pub async fn prepare_run_credential(
 
 /// Refuse to launch a client with a model the selected router cannot serve.
 pub fn ensure_model_available(credential: &RunCredential, model: &str) -> Result<(), AnyError> {
-    if credential.available_models.iter().any(|item| item == model) {
+    if credential
+        .available_models
+        .iter()
+        .any(|item| item.id == model)
+    {
         return Ok(());
     }
     if credential.available_models.is_empty() {
@@ -244,7 +256,12 @@ pub fn ensure_model_available(credential: &RunCredential, model: &str) -> Result
     }
     Err(format!(
         "model `{model}` is not available from the selected router; available models: {}",
-        credential.available_models.join(", ")
+        credential
+            .available_models
+            .iter()
+            .map(|item| item.id.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
     )
     .into())
 }
@@ -277,7 +294,7 @@ async fn fetch_models(
     client: &reqwest::Client,
     base_url: &str,
     token: &str,
-) -> Result<Vec<String>, AnyError> {
+) -> Result<Vec<RouterModel>, AnyError> {
     let url = format!("{base_url}/v1/models");
     let response = client
         .get(&url)
@@ -295,7 +312,16 @@ async fn fetch_models(
             .and_then(Value::as_array)
             .ok_or("router model catalog did not contain a data array")?
             .iter()
-            .filter_map(|model| model.get("id").and_then(Value::as_str).map(str::to_string))
+            .filter_map(|model| {
+                Some(RouterModel {
+                    id: model.get("id")?.as_str()?.to_string(),
+                    owned_by: model
+                        .get("owned_by")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default()
+                        .to_string(),
+                })
+            })
             .collect();
         return Ok(models);
     }
