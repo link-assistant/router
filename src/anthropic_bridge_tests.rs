@@ -73,12 +73,72 @@ fn translates_tools_and_tool_choice() {
 }
 
 #[test]
+fn anthropic_web_search_stays_server_side_for_codex_projection() {
+    let body = json!({
+        "messages": [{"role": "user", "content": "search"}],
+        "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}]
+    });
+    let chat = anthropic_to_chat_request(&body, "gpt-5.6-sol");
+    assert_eq!(chat["tools"][0]["type"], "web_search");
+    let responses = crate::responses::chat_completion_to_responses(&chat);
+    assert_eq!(responses["tools"][0]["type"], "web_search");
+    assert!(responses["tools"][0].get("function").is_none());
+
+    let translated = openai_json_to_anthropic_message(
+        &json!({
+            "id": "resp_1",
+            "model": "gpt-5.6-sol",
+            "status": "completed",
+            "output": [{
+                "type": "web_search_call",
+                "id": "ws_1",
+                "status": "completed",
+                "action": {"query": "Rust"}
+            }],
+            "usage": {"input_tokens": 2, "output_tokens": 3}
+        }),
+        "gpt-5.6-sol",
+    );
+    assert_eq!(translated["content"][0]["type"], "server_tool_use");
+    assert_eq!(translated["content"][1]["type"], "web_search_tool_result");
+    assert_eq!(
+        translated["usage"]["server_tool_use"]["web_search_requests"],
+        1
+    );
+}
+
+#[test]
 fn tool_choice_any_becomes_required() {
     let chat = anthropic_to_chat_request(
         &json!({"messages": [], "tool_choice": {"type": "any"}}),
         "m",
     );
     assert_eq!(chat["tool_choice"], "required");
+}
+
+#[test]
+fn malformed_or_unknown_tools_fail_validation_instead_of_disappearing() {
+    for (body, expected) in [
+        (
+            json!({"tools":[{"input_schema":{}}]}),
+            "missing a string name",
+        ),
+        (
+            json!({"tools":[{"type":"computer_20990101","name":"computer"}]}),
+            "unsupported Anthropic tool type",
+        ),
+        (
+            json!({"tool_choice":{"type":"future"}}),
+            "unsupported Anthropic tool_choice type",
+        ),
+    ] {
+        assert!(
+            untranslatable_anthropic_tool(&body)
+                .as_deref()
+                .is_some_and(|reason| reason.contains(expected)),
+            "{body} must fail with {expected}"
+        );
+    }
 }
 
 #[test]

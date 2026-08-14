@@ -428,8 +428,8 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
     let doctor = router(home.path(), &["clients", "doctor", "codex"]);
     assert!(!doctor.status.success());
     let diagnostic = String::from_utf8_lossy(&doctor.stderr);
-    assert!(diagnostic.contains("LINK_ASSISTANT_TOKEN is unset"));
-    assert!(diagnostic.contains("clients setup codex"));
+    assert!(diagnostic.contains("router catalog is not reachable"));
+    assert!(!diagnostic.contains("la_sk_"));
 
     let config_path = home.path().join(".codex/config.toml");
     let config = fs::read_to_string(&config_path).expect("read configured Codex file");
@@ -786,9 +786,18 @@ fn qwen_keeps_stable_ownership_when_the_user_changes_the_model() {
     let models = configured["modelProviders"]["openai"]
         .as_array()
         .expect("Qwen models array");
-    assert_eq!(models.len(), 1, "repeat setup must update in place");
-    assert_eq!(models[0]["id"], "gpt-user-choice");
-    assert_eq!(models[0]["name"], "Link.Assistant.Router");
+    assert_eq!(
+        models.len(),
+        2,
+        "repeat setup must refresh the full catalog"
+    );
+    assert_eq!(models[0]["id"], "gpt-live");
+    assert_eq!(models[1]["id"], "gpt-user-choice");
+    assert!(
+        models
+            .iter()
+            .all(|model| model["name"] == "Link.Assistant.Router")
+    );
 }
 
 #[test]
@@ -837,7 +846,7 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
 #[test]
 fn vendor_gated_clients_fail_before_minting_tokens_or_writing_configs() {
     for (client, expected) in [
-        ("cursor", "does not expose a base-URL override"),
+        ("cursor", "speaks Connect-RPC"),
         ("gemini-cli", "IneligibleTierError"),
     ] {
         let home = tempfile::tempdir().expect("temp home");

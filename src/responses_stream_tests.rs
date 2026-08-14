@@ -51,3 +51,20 @@ data: {"type":"response.completed","response":{"id":"resp_1","model":"gpt-5.6-so
     assert_eq!(usage["usage"]["completion_tokens"], 2);
     assert_eq!(usage["usage"]["total_tokens"], 11);
 }
+
+#[test]
+fn codex_chat_stream_holds_a_cross_chunk_stop_sequence() {
+    let mut translator =
+        ResponsesChatStreamTranslator::new("gpt-5.6-sol").with_stop_sequences(vec!["<END>".into()]);
+    let first = translator
+        .push(b"data:{\"type\":\"response.output_text.delta\",\"delta\":\"visible<E\"}\n\n");
+    let second = translator
+        .push(b"data:{\"type\":\"response.output_text.delta\",\"delta\":\"ND>hidden\"}\n\n");
+    let joined = first.into_iter().chain(second).collect::<String>();
+
+    assert!(joined.contains("visible"));
+    assert!(!joined.contains("<END>"));
+    assert!(!joined.contains("hidden"));
+    assert!(joined.contains("\"finish_reason\":\"stop\""));
+    assert!(joined.ends_with("data: [DONE]\n\n"));
+}

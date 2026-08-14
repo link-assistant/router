@@ -299,6 +299,7 @@ pub(super) fn write_binary<'a>(
             fs::set_permissions(&tmp, metadata.permissions())?;
         }
         fs::rename(&tmp, path)?;
+        crate::durable_file::sync_directory(parent)?;
         Ok(())
     })();
     if result.is_err() {

@@ -85,11 +85,15 @@ fn translates_basic_chat_completion() {
                 role: "system".into(),
                 content: Value::String("You are helpful.".into()),
                 name: None,
+                tool_call_id: None,
+                tool_calls: None,
             },
             ChatMessage {
                 role: "user".into(),
                 content: Value::String("Hello".into()),
                 name: None,
+                tool_call_id: None,
+                tool_calls: None,
             },
         ],
         max_tokens: Some(100),
@@ -100,6 +104,8 @@ fn translates_basic_chat_completion() {
         stop: None,
         tools: None,
         tool_choice: None,
+        reasoning_effort: None,
+        reasoning: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
@@ -120,6 +126,8 @@ fn preserves_claude_native_model_id() {
             role: "user".into(),
             content: Value::String("hi".into()),
             name: None,
+            tool_call_id: None,
+            tool_calls: None,
         }],
         max_tokens: None,
         max_completion_tokens: None,
@@ -129,6 +137,8 @@ fn preserves_claude_native_model_id() {
         stop: None,
         tools: None,
         tool_choice: None,
+        reasoning_effort: None,
+        reasoning: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert_eq!(body["model"], "claude-opus-4-7");
@@ -143,6 +153,8 @@ fn drops_temperature_for_claude_5_models() {
             role: "user".into(),
             content: Value::String("hi".into()),
             name: None,
+            tool_call_id: None,
+            tool_calls: None,
         }],
         max_tokens: None,
         max_completion_tokens: None,
@@ -152,9 +164,58 @@ fn drops_temperature_for_claude_5_models() {
         stop: None,
         tools: None,
         tool_choice: None,
+        reasoning_effort: None,
+        reasoning: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert!(body.get("temperature").is_none());
+}
+
+#[test]
+fn caller_reasoning_effort_uses_adaptive_thinking_and_preserves_explicit_limit() {
+    let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model":"claude-opus-5",
+        "messages":[{"role":"user","content":"hi"}],
+        "max_tokens":3000,
+        "reasoning_effort":"low"
+    }))
+    .unwrap();
+    let body = chat_completion_to_anthropic(&req);
+
+    assert_eq!(body["thinking"]["type"], "adaptive");
+    assert_eq!(body["output_config"]["effort"], "low");
+    assert_eq!(body["max_tokens"], 3000);
+    assert!(body.get("reasoning").is_none());
+}
+
+#[test]
+fn omitted_limit_reserves_output_headroom_for_adaptive_thinking() {
+    let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model":"claude-opus-5",
+        "messages":[{"role":"user","content":"hi"}],
+        "reasoning_effort":"high"
+    }))
+    .unwrap();
+    let body = chat_completion_to_anthropic(&req);
+
+    assert_eq!(body["thinking"]["type"], "adaptive");
+    assert_eq!(body["output_config"]["effort"], "high");
+    assert_eq!(body["max_tokens"], 24_576);
+}
+
+#[test]
+fn legacy_thinking_budget_keeps_visible_output_headroom() {
+    let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model":"claude-sonnet-4-5",
+        "messages":[{"role":"user","content":"hi"}],
+        "reasoning_effort":"high"
+    }))
+    .unwrap();
+    let body = chat_completion_to_anthropic(&req);
+
+    assert_eq!(body["thinking"]["type"], "enabled");
+    assert_eq!(body["thinking"]["budget_tokens"], 16_384);
+    assert_eq!(body["max_tokens"], 24_576);
 }
 
 #[test]
@@ -182,6 +243,8 @@ fn translates_multipart_user_content() {
                 {"type": "image_url", "image_url": {"url": "https://example.com/x.png"}}
             ]),
             name: None,
+            tool_call_id: None,
+            tool_calls: None,
         }],
         max_tokens: Some(50),
         max_completion_tokens: None,
@@ -191,6 +254,8 @@ fn translates_multipart_user_content() {
         stop: None,
         tools: None,
         tool_choice: None,
+        reasoning_effort: None,
+        reasoning: None,
     };
     let body = chat_completion_to_anthropic(&req);
     let parts = body["messages"][0]["content"].as_array().unwrap();
@@ -198,4 +263,57 @@ fn translates_multipart_user_content() {
     assert_eq!(parts[0]["text"], "describe");
     assert_eq!(parts[1]["type"], "image");
     assert_eq!(parts[1]["source"]["url"], "https://example.com/x.png");
+}
+
+#[test]
+fn chat_tool_loop_preserves_call_and_result_ids() {
+    let req: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "gpt-4o",
+        "messages": [
+            {"role": "user", "content": "weather?"},
+            {
+                "role": "assistant",
+                "content": null,
+                "tool_calls": [{
+                    "id": "toolu_test123",
+                    "type": "function",
+                    "function": {"name": "weather", "arguments": "{\"city\":\"Paris\"}"}
+                }]
+            },
+            {"role": "tool", "tool_call_id": "toolu_test123", "content": "sunny"}
+        ]
+    }))
+    .unwrap();
+
+    let body = chat_completion_to_anthropic(&req);
+    assert_eq!(body["messages"][1]["content"][0]["id"], "toolu_test123");
+    assert_eq!(body["messages"][1]["content"][0]["input"]["city"], "Paris");
+    assert_eq!(
+        body["messages"][2]["content"][0]["tool_use_id"],
+        "toolu_test123"
+    );
+}
+
+#[test]
+fn responses_flat_tools_translate_without_silent_loss() {
+    let tools = json!([{
+        "type": "function",
+        "name": "get_weather",
+        "description": "Get weather",
+        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}}
+    }]);
+    let translated = translate_tools(&tools);
+    assert_eq!(translated[0]["name"], "get_weather");
+    assert_eq!(
+        translated[0]["input_schema"]["properties"]["city"]["type"],
+        "string"
+    );
+}
+
+#[test]
+fn responses_web_search_maps_to_anthropic_server_tool() {
+    let translated = translate_tools(&json!([{"type": "web_search", "max_uses": 2}]));
+    assert_eq!(translated[0]["type"], "web_search_20250305");
+    assert_eq!(translated[0]["name"], "web_search");
+    assert_eq!(translated[0]["max_uses"], 2);
 }

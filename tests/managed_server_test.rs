@@ -92,7 +92,10 @@ fn mock_managed_router(
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJtYW5hZ2VkLXJ1biJ9.signature"}"#,
                 ),
-                "/v1/models" => ("200 OK", r#"{"object":"list","data":[{"id":"gpt-5"}]}"#),
+                "/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                ),
                 "/api/tokens/revoke" => ("200 OK", r#"{"revoked":"managed-run"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -512,7 +515,10 @@ fn reaper_releases_its_reference_when_the_owner_pipe_closes() {
     );
     drop(reaper.stdin.take());
 
-    let deadline = Instant::now() + Duration::from_secs(1);
+    // Full CI runs can briefly starve this child while hundreds of tests are
+    // completing in parallel. Keep the assertion bounded without making the
+    // scheduler itself part of the contract.
+    let deadline = Instant::now() + Duration::from_secs(5);
     let status = loop {
         if let Some(status) = reaper.try_wait().expect("inspect released reaper") {
             break status;
@@ -584,7 +590,8 @@ fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
         .env_remove("CODEX_HOME")
         .spawn()
         .expect("spawn wrapper to kill");
-    for _ in 0..100 {
+    let start_deadline = Instant::now() + Duration::from_secs(10);
+    while Instant::now() < start_deadline {
         if capture.join("pid").exists() {
             break;
         }

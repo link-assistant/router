@@ -162,10 +162,13 @@ an approximation for budgeting, not as a billing figure.
   ignored.
 - **Codex cannot enforce `max_tokens`.** The field remains required by the
   Anthropic Messages protocol, but the ChatGPT backend rejects its Responses
-  equivalent. Successful Codex-backed Messages responses therefore include
-  `x-link-assistant-output-limit: unsupported` and an HTTP `Warning` header;
-  callers that require a hard spend cap must select a provider that supports
-  one.
+  equivalent. The translated response stays a canonical Anthropic response and
+  carries no router-specific warning header. Callers that require a hard
+  per-request output cap must select a provider that supports one; optional
+  OpenAI Chat/Responses caps on Codex are rejected explicitly rather than
+  silently dropped.
+- **`stop_sequences` is enforced locally for Codex**, including a sequence
+  split across SSE chunks. The matched sequence is withheld from the client.
 - Anthropic-only beta features and vendor-specific fields are not emulated.
 - Token *estimates* replace exact `count_tokens` results (see above).
 - Cost and quota accounting are the upstream vendor's; the router only counts

@@ -4,7 +4,6 @@
 //! authorization, with its PKCE loopback callback server available as fallback.
 
 use std::collections::HashMap;
-use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -552,22 +551,8 @@ fn persist_codex_auth(home: &Path, tokens: &TokenResponse) -> Result<PathBuf, St
         },
         "last_refresh": chrono::Utc::now().to_rfc3339(),
     });
-    let temporary = home.join(format!(".auth.json.{}.tmp", uuid::Uuid::new_v4()));
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&temporary)
-        .map_err(|error| format!("could not create {}: {error}", temporary.display()))?;
-    file.write_all(&serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?)
-        .and_then(|()| file.sync_all())
-        .map_err(|error| format!("could not write {}: {error}", temporary.display()))?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&temporary, std::fs::Permissions::from_mode(0o600))
-            .map_err(|error| format!("could not secure {}: {error}", temporary.display()))?;
-    }
-    std::fs::rename(&temporary, &path)
+    let body = serde_json::to_vec_pretty(&value).map_err(|error| error.to_string())?;
+    crate::durable_file::atomic_write_owner_only(&path, &body)
         .map_err(|error| format!("could not install {}: {error}", path.display()))?;
     Ok(path)
 }

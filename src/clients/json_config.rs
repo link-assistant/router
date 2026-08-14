@@ -93,38 +93,48 @@ impl ClientManager {
             Some(parse_json_object(&marker, &marker_source)?)
         };
         let models = qwen_models_mut(&mut document, &path)?;
-        let position = models.iter().position(qwen_model_is_managed).or_else(|| {
-            ownership
-                .as_ref()
-                .and_then(|marker| marker.get("managed_model"))
-                .and_then(|previous| models.iter().position(|model| model == previous))
-        });
-        let selected_id = position
-            .and_then(|position| models[position].get("id").and_then(Value::as_str))
-            .filter(|id| catalog.iter().any(|model| model.id == *id))
-            .map(str::to_string)
-            .or_else(|| catalog.first().map(|model| model.id.clone()))
-            .ok_or_else(|| {
-                ClientError::message("router catalog contains no models from healthy subscriptions")
-            })?;
-        let managed = qwen_router_model(base_url, &selected_id);
-        if models.contains(&managed) {
+        if catalog.is_empty() {
+            return Err(ClientError::message(
+                "router catalog contains no models from healthy subscriptions",
+            ));
+        }
+        let previous = ownership
+            .as_ref()
+            .and_then(|marker| marker.get("managed_models"))
+            .and_then(Value::as_array)
+            .cloned()
+            .or_else(|| {
+                ownership
+                    .as_ref()
+                    .and_then(|marker| marker.get("managed_model"))
+                    .cloned()
+                    .map(|model| vec![model])
+            })
+            .unwrap_or_default();
+        let managed = catalog
+            .iter()
+            .map(|model| qwen_router_model(base_url, &model.id))
+            .collect::<Vec<_>>();
+        let current = models
+            .iter()
+            .filter(|model| qwen_model_is_managed(model) || previous.contains(model))
+            .cloned()
+            .collect::<Vec<_>>();
+        if current == managed {
             return Ok(unchanged(path));
         }
-        if let Some(position) = position {
-            models[position] = managed.clone();
-        } else {
-            models.push(managed.clone());
-        }
+        models.retain(|model| !qwen_model_is_managed(model) && !previous.contains(model));
+        models.extend(managed.iter().cloned());
         let result = write_if_changed(&path, &source, &render_json(&document)?)?;
         if let Some(ownership) = ownership.as_mut() {
-            ownership
+            let ownership = ownership
                 .as_object_mut()
-                .expect("parse_json_object always returns an object")
-                .insert("managed_model".into(), managed);
-            write_json_marker(&marker, ownership)?;
+                .expect("parse_json_object always returns an object");
+            ownership.remove("managed_model");
+            ownership.insert("managed_models".into(), Value::Array(managed));
+            write_json_marker(&marker, &Value::Object(ownership.clone()))?;
         } else {
-            write_json_marker(&marker, &json!({"managed_model": managed}))?;
+            write_json_marker(&marker, &json!({"managed_models": managed}))?;
         }
         Ok(result)
     }
@@ -195,16 +205,26 @@ impl ClientManager {
             return Ok(unchanged(path));
         }
         let marker: Value = serde_json::from_str(&marker_source)?;
-        let managed = marker.get("managed_model").cloned().ok_or_else(|| {
-            ClientError::message(format!(
-                "invalid ownership marker {}",
-                marker_path.display()
-            ))
-        })?;
+        let managed = marker
+            .get("managed_models")
+            .and_then(Value::as_array)
+            .cloned()
+            .or_else(|| {
+                marker
+                    .get("managed_model")
+                    .cloned()
+                    .map(|model| vec![model])
+            })
+            .ok_or_else(|| {
+                ClientError::message(format!(
+                    "invalid ownership marker {}",
+                    marker_path.display()
+                ))
+            })?;
         let mut document = parse_json_object(&path, &source)?;
         let models = qwen_models_mut(&mut document, &path)?;
         let before = models.len();
-        models.retain(|model| model != &managed);
+        models.retain(|model| !managed.contains(model));
         if models.len() == before {
             fs::remove_file(marker_path)?;
             return Ok(unchanged(path));

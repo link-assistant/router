@@ -182,12 +182,12 @@ fn release_workflow_publishes_one_native_image_per_architecture() {
         "a second image variant must not return"
     );
     assert_eq!(
-        workflow.matches("docker/build-push-action@v7").count(),
+        workflow.matches("docker/build-push-action@").count(),
         workflow.matches("cache-to: type=gha").count(),
         "every Buildx invocation should persist its cache"
     );
     assert_eq!(
-        workflow.matches("docker/build-push-action@v7").count(),
+        workflow.matches("docker/build-push-action@").count(),
         workflow.matches("cache-from: type=gha").count(),
         "every Buildx invocation should restore its architecture- and target-specific cache"
     );
@@ -198,7 +198,7 @@ fn release_workflow_refreshes_cached_cargo_audit_binary() {
     let workflow = read_lf(".github/workflows/release.yml");
 
     assert!(
-        workflow.contains("cargo install cargo-audit --locked --force"),
+        workflow.contains("cargo install cargo-audit --version 0.22.2 --locked --force"),
         "the audit job should overwrite a cargo-audit binary restored from its cache"
     );
 }
@@ -275,9 +275,9 @@ fn release_workflow_uses_supported_action_runtimes() {
         );
     }
     for supported in [
-        "actions/checkout@v6",
-        "actions/cache@v5",
-        "actions/setup-node@v6",
+        "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "actions/cache@caa296126883cff596d87d8935842f9db880ef25",
+        "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
         "node-version: '24'",
     ] {
         assert!(
@@ -285,6 +285,53 @@ fn release_workflow_uses_supported_action_runtimes() {
             "CI should use supported runtime configuration `{supported}`"
         );
     }
+}
+
+#[test]
+fn release_workflows_pin_actions_tools_and_artifact_identity() {
+    let release = read_lf(".github/workflows/release.yml");
+    let verify = read_lf(".github/workflows/verify-releases.yml");
+    for line in release
+        .lines()
+        .chain(verify.lines())
+        .filter(|line| line.trim_start().starts_with("uses:"))
+    {
+        let revision = line
+            .split_once('@')
+            .map(|(_, revision)| revision.split_whitespace().next().unwrap_or_default())
+            .unwrap_or_default();
+        assert_eq!(
+            revision.len(),
+            40,
+            "action must use a full commit SHA: {line}"
+        );
+        assert!(
+            revision.bytes().all(|byte| byte.is_ascii_hexdigit()),
+            "action revision must be hexadecimal: {line}"
+        );
+    }
+    assert_eq!(
+        release.matches("dtolnay/rust-toolchain@").count(),
+        release.matches("toolchain: 1.96.1").count(),
+        "a SHA-pinned rust-toolchain action needs an explicit numeric toolchain"
+    );
+    assert!(!release.contains("cargo install rust-script\n"));
+    assert!(release.contains("cargo install rust-script --version 0.36.0 --locked"));
+    assert!(release.contains("cargo install cargo-cyclonedx --version 0.5.9 --locked"));
+    assert!(
+        release.contains("cargo cyclonedx --format json --all-features --all --spec-version 1.5")
+    );
+    assert!(release.contains("(.components | length > 1) and (.dependencies | length > 0)"));
+    assert!(release.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
+    assert!(
+        release
+            .contains("link-assistant-router-${RELEASE_VERSION}-linux-${{ matrix.arch }}.tar.gz")
+    );
+    assert!(release.contains("subject-path: dist/*"));
+    assert!(release.contains("gh attestation verify \"$artifact\""));
+    assert!(release.contains("Verify tag and package version"));
+    assert!(release.contains("Verify published image attestation"));
+    assert!(release.contains("gh release view \"v${RELEASE_VERSION}\""));
 }
 
 #[test]
@@ -502,17 +549,17 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
         "Docker build and manifest jobs should publish as the konard Docker Hub user"
     );
     assert_eq!(
-        workflow.matches("docker/login-action@v4").count(),
+        workflow.matches("docker/login-action@").count(),
         4,
         "Docker build and manifest jobs should log in to both GHCR and Docker Hub"
     );
     assert_eq!(
-        workflow.matches("docker/metadata-action@v6").count(),
+        workflow.matches("docker/metadata-action@").count(),
         1,
         "the shared native matrix should preserve standard OCI image metadata"
     );
     assert_eq!(
-        workflow.matches("docker/build-push-action@v7").count(),
+        workflow.matches("docker/build-push-action@").count(),
         1,
         "all native matrix legs should share one image build step"
     );
@@ -619,6 +666,7 @@ fn dockerfile_apt_installs(section: &str, package: &str) -> bool {
 }
 
 fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
+    let tag = tag.split('@').next().unwrap_or(tag);
     if tag == "1-slim-bookworm" {
         true
     } else {
@@ -629,6 +677,29 @@ fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
 
         matches!((major, minor), (Some(1), Some(minor)) if minor >= 85)
             || matches!(major, Some(major) if major > 1)
+    }
+}
+
+#[test]
+fn external_container_bases_are_digest_pinned() {
+    for path in ["Dockerfile", "docker/tunnel/Dockerfile"] {
+        let dockerfile = read_lf(path);
+        for line in dockerfile.lines().filter(|line| line.starts_with("FROM ")) {
+            let image = line
+                .split_whitespace()
+                .nth(1)
+                .expect("FROM image reference");
+            if image == "runtime-base" {
+                continue;
+            }
+            assert!(
+                image.contains("@sha256:")
+                    && image
+                        .rsplit_once("@sha256:")
+                        .is_some_and(|(_, digest)| digest.len() == 64),
+                "{path} base image must use an immutable digest: {line}"
+            );
+        }
     }
 }
 

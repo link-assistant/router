@@ -8,13 +8,16 @@ use crate::proxy::{
 };
 
 #[test]
-fn extract_client_token_accepts_bearer_or_x_api_key() {
+fn extract_client_token_accepts_bearer_github_token_or_x_api_key() {
     let mut headers = HeaderMap::new();
     headers.insert("x-api-key", HeaderValue::from_static("la_sk_x"));
     assert_eq!(extract_client_token(&headers), Some("la_sk_x"));
 
     headers.insert("authorization", HeaderValue::from_static("Bearer la_sk_b"));
     assert_eq!(extract_client_token(&headers), Some("la_sk_b"));
+
+    headers.insert("authorization", HeaderValue::from_static("token la_sk_gh"));
+    assert_eq!(extract_client_token(&headers), Some("la_sk_gh"));
 }
 
 #[test]

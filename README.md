@@ -564,7 +564,61 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
 | `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first |
+| `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
+
+### GitHub API credential proxy
+
+The opt-in GitHub proxy lets an agent authenticate with its router-issued task
+token while the real GitHub credential remains inside the router. It supports
+bare REST paths, GitHub CLI's custom-host `/api/v3/*` rewrite, and GraphQL at
+`/api/graphql` and `/graphql`. The `/github/*` namespace exposes arbitrary REST
+paths without colliding with inference/admin routes. Plain git over SSH/HTTPS
+is outside this proxy.
+
+```env
+GITHUB_PROXY_TOKEN_FILE=/run/secrets/github-token
+# Or: GITHUB_PROXY_TOKEN=github_pat_...
+# Optional enterprise/test upstream:
+# GITHUB_PROXY_BASE_URL=https://github.example/api/v3
+# Optional ordered JSON policy:
+GITHUB_PROXY_POLICY=/etc/link-assistant/github-policy.json
+```
+
+No GitHub routes are mounted until a real upstream credential is configured.
+Client `Authorization` is never forwarded; the router validates it as an
+`la_sk_…` token and injects the operator credential upstream. Rate-limit and
+request-id headers return to the client, while cookies and credentials do not.
+
+Deletion, forced REST ref updates, GraphQL mutations whose operation deletes an
+object, and forced GraphQL ref updates are denied by default. An ordered policy
+file can override a narrow operation without weakening the remaining defaults:
+
+```json
+{
+  "rules": [
+    {"effect":"allow", "method":"DELETE", "path":"/repos/acme/demo/issues/*"},
+    {"effect":"deny", "method":"POST", "path":"/repos/acme/production/**"}
+  ]
+}
+```
+
+The first matching configured rule wins, then the built-in destructive policy
+applies. `*` matches one path segment and `/**` matches the remainder. A blocked
+call returns `403` with a GitHub-shaped `message` and
+`x-link-assistant-policy: blocked`. This protects API-mediated ref deletion and
+forced ref updates; branch protection remains necessary because a force-push
+over the git transport never reaches these routes.
+
+For GitHub CLI, terminate trusted HTTPS at the router host and set the
+router-issued token as the custom-host credential:
+
+```bash
+export GH_HOST=router.example.internal
+export GH_ENTERPRISE_TOKEN="$LINK_ASSISTANT_TOKEN"
+gh api rate_limit
+gh issue list -R acme/demo
+```
 
 ### Gonka provider
 
@@ -942,6 +996,33 @@ sudo systemctl start link-assistant-router
 sudo systemctl status link-assistant-router
 journalctl -u link-assistant-router -f
 ```
+
+### Resilient reverse SSH tunnel
+
+The companion [`docker/tunnel/Dockerfile`](docker/tunnel/Dockerfile) runs
+`autossh` as a non-root user and republishes the router on a far-side host. It
+fails fast with a diagnostic naming any missing required variable and uses SSH
+keepalives plus `ExitOnForwardFailure`, allowing the container restart policy
+and `autossh` to recover a dropped connection.
+
+```bash
+docker build -f docker/tunnel/Dockerfile -t link-assistant-router-tunnel .
+docker run --restart unless-stopped \
+  --network router-network \
+  -e TUNNEL_SSH_HOST=far.example \
+  -e TUNNEL_SSH_USER=router \
+  -e TUNNEL_REMOTE_PORT=18080 \
+  -e TUNNEL_SSH_KEY=/run/secrets/ssh-key \
+  -e TUNNEL_KNOWN_HOSTS=/run/secrets/known-hosts \
+  -v /path/to/tunnel-key:/run/secrets/ssh-key:ro \
+  -v /path/to/pinned-known-hosts:/run/secrets/known-hosts:ro \
+  link-assistant-router-tunnel
+```
+
+The remote bind defaults to loopback. Set `TUNNEL_REMOTE_BIND` only when the
+far-side SSH server is deliberately configured to expose remote forwards.
+Host verification is strict and fail-closed: `TUNNEL_KNOWN_HOSTS` must point to
+a readable, non-empty file containing the pinned far-side host key.
 
 ### Akash and Kubernetes
 

@@ -89,6 +89,8 @@ fn test_app_with_mpp(dir: &std::path::Path, mpp: bool) -> (axum::Router, String)
             link_assistant_router::config::default_activitypub_public_key_pem(),
         mpp: config.mpp.clone(),
         login_manager: link_assistant_router::login::LoginManager::new(config.login.clone()),
+        github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
+        max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     };
     (
         link_assistant_router::server_router::router(state, &config),

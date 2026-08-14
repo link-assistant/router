@@ -38,7 +38,7 @@ protocol details.
 | [cli-opencode.md](cli-opencode.md) | opencode | OpenAI Chat Completions or Responses |
 | [cli-grok-cli.md](cli-grok-cli.md) | Grok CLI | OpenAI Chat Completions |
 | [cli-agent.md](cli-agent.md) | Link.Assistant Agent | OpenAI Chat Completions |
-| [cli-cursor.md](cli-cursor.md) | Cursor CLI (`cursor-agent`) | **Not supported** — no base-URL override exists |
+| [cli-cursor.md](cli-cursor.md) | Cursor CLI (`cursor-agent`) | **Not supported** — endpoint override exists, but its private Connect-RPC surface is not implemented |
 
 ## The one rule that makes all of this work
 

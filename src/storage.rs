@@ -30,8 +30,8 @@
 #![allow(clippy::significant_drop_tightening)]
 
 use std::collections::HashMap;
-use std::fs::{self, OpenOptions};
-use std::io::{self, Write};
+use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
@@ -260,6 +260,7 @@ impl TokenStore for MemoryTokenStore {
 #[derive(Clone)]
 pub struct TextTokenStore {
     path: PathBuf,
+    lock_path: PathBuf,
     inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
 }
 
@@ -283,6 +284,7 @@ impl TextTokenStore {
         };
         let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
         let store = Self {
+            lock_path: path.with_extension("lock"),
             path,
             inner: Arc::new(RwLock::new(map)),
         };
@@ -299,59 +301,92 @@ impl TextTokenStore {
         let body = associative::encode_text(sorted.iter().copied());
         atomic_write(&self.path, body.as_bytes())
     }
+
+    fn load_map(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
+        if !self.path.exists() {
+            return Ok(HashMap::new());
+        }
+        let contents = fs::read_to_string(&self.path)?;
+        let records = associative::decode_text(&contents)
+            .or_else(|_| legacy::decode_text(&contents))
+            .map_err(StorageError::Codec)?;
+        Ok(records
+            .into_iter()
+            .map(|record| (record.id.clone(), record))
+            .collect())
+    }
+
+    fn refresh(&self) -> Result<(), StorageError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            let map = self.load_map()?;
+            *self.inner.write().map_err(|_| StorageError::LockPoisoned)? = map;
+            Ok(())
+        })
+    }
+
+    fn mutate<T>(
+        &self,
+        operation: impl FnOnce(&mut HashMap<String, TokenRecord>) -> T,
+    ) -> Result<T, StorageError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+            *guard = self.load_map()?;
+            let before = guard.clone();
+            let result = operation(&mut guard);
+            if let Err(error) = self.flush(&guard) {
+                *guard = before;
+                return Err(error);
+            }
+            Ok(result)
+        })
+    }
+
+    fn replace_all(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
+        self.mutate(|current| {
+            current.clear();
+            current.extend(
+                records
+                    .iter()
+                    .cloned()
+                    .map(|record| (record.id.clone(), record)),
+            );
+        })
+    }
 }
 
 impl TokenStore for TextTokenStore {
     fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
+        self.refresh()?;
         let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
         Ok(guard.values().cloned().collect())
     }
 
     fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError> {
+        self.refresh()?;
         let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
         Ok(guard.get(id).cloned())
     }
 
     fn put(&self, record: TokenRecord) -> Result<(), StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        guard.insert(record.id.clone(), record);
-        self.flush(&guard)
+        self.mutate(|records| {
+            records.insert(record.id.clone(), record);
+        })
     }
 
     fn delete(&self, id: &str) -> Result<bool, StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        let removed = guard.remove(id).is_some();
-        if removed {
-            self.flush(&guard)?;
-        }
-        Ok(removed)
+        self.mutate(|records| records.remove(id).is_some())
     }
 
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        let permitted = consume_request(guard.get_mut(id));
-        if permitted && guard.contains_key(id) {
-            self.flush(&guard)?;
-        }
-        Ok(permitted)
+        self.mutate(|records| consume_request(records.get_mut(id)))
     }
 
     fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        let admission = admit_request(guard.get_mut(id), now);
-        if admission == RequestAdmission::Admitted && guard.contains_key(id) {
-            self.flush(&guard)?;
-        }
-        Ok(admission)
+        self.mutate(|records| admit_request(records.get_mut(id), now))
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        add_token_usage(guard.get_mut(id), tokens);
-        if guard.contains_key(id) {
-            self.flush(&guard)?;
-        }
-        Ok(())
+        self.mutate(|records| add_token_usage(records.get_mut(id), tokens))
     }
 }
 
@@ -362,6 +397,7 @@ impl TokenStore for TextTokenStore {
 #[derive(Clone)]
 pub struct BinaryTokenStore {
     path: PathBuf,
+    lock_path: PathBuf,
     inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
 }
 
@@ -382,6 +418,7 @@ impl BinaryTokenStore {
         };
         let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
         let store = Self {
+            lock_path: path.with_extension("lock"),
             path,
             inner: Arc::new(RwLock::new(map)),
         };
@@ -397,59 +434,93 @@ impl BinaryTokenStore {
         sorted.sort_by(|a, b| a.id.cmp(&b.id));
         associative::write_binary(&self.path, sorted)
     }
+
+    fn load_map(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
+        if !self.path.exists() {
+            return Ok(HashMap::new());
+        }
+        let records = if legacy::is_binary(&self.path)? {
+            legacy::decode_binary(&self.path)?
+        } else {
+            associative::read_binary(&self.path)?
+        };
+        Ok(records
+            .into_iter()
+            .map(|record| (record.id.clone(), record))
+            .collect())
+    }
+
+    fn refresh(&self) -> Result<(), StorageError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            let map = self.load_map()?;
+            *self.inner.write().map_err(|_| StorageError::LockPoisoned)? = map;
+            Ok(())
+        })
+    }
+
+    fn mutate<T>(
+        &self,
+        operation: impl FnOnce(&mut HashMap<String, TokenRecord>) -> T,
+    ) -> Result<T, StorageError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+            *guard = self.load_map()?;
+            let before = guard.clone();
+            let result = operation(&mut guard);
+            if let Err(error) = self.flush(&guard) {
+                *guard = before;
+                return Err(error);
+            }
+            Ok(result)
+        })
+    }
+
+    fn replace_all(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
+        self.mutate(|current| {
+            current.clear();
+            current.extend(
+                records
+                    .iter()
+                    .cloned()
+                    .map(|record| (record.id.clone(), record)),
+            );
+        })
+    }
 }
 
 impl TokenStore for BinaryTokenStore {
     fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
+        self.refresh()?;
         let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
         Ok(guard.values().cloned().collect())
     }
 
     fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError> {
+        self.refresh()?;
         let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
         Ok(guard.get(id).cloned())
     }
 
     fn put(&self, record: TokenRecord) -> Result<(), StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        guard.insert(record.id.clone(), record);
-        self.flush(&guard)
+        self.mutate(|records| {
+            records.insert(record.id.clone(), record);
+        })
     }
 
     fn delete(&self, id: &str) -> Result<bool, StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        let removed = guard.remove(id).is_some();
-        if removed {
-            self.flush(&guard)?;
-        }
-        Ok(removed)
+        self.mutate(|records| records.remove(id).is_some())
     }
 
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        let permitted = consume_request(guard.get_mut(id));
-        if permitted && guard.contains_key(id) {
-            self.flush(&guard)?;
-        }
-        Ok(permitted)
+        self.mutate(|records| consume_request(records.get_mut(id)))
     }
 
     fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        let admission = admit_request(guard.get_mut(id), now);
-        if admission == RequestAdmission::Admitted && guard.contains_key(id) {
-            self.flush(&guard)?;
-        }
-        Ok(admission)
+        self.mutate(|records| admit_request(records.get_mut(id), now))
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
-        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        add_token_usage(guard.get_mut(id), tokens);
-        if guard.contains_key(id) {
-            self.flush(&guard)?;
-        }
-        Ok(())
+        self.mutate(|records| add_token_usage(records.get_mut(id), tokens))
     }
 }
 
@@ -565,6 +636,130 @@ impl TokenStore for DualTokenStore {
     }
 }
 
+/// Crash-recoverable dual-format store used by the default persistence mode.
+/// A journal containing the complete target state is synced before either
+/// representation changes and removed only after both replacements succeed.
+struct DurableDualTokenStore {
+    text: TextTokenStore,
+    binary: BinaryTokenStore,
+    lock_path: PathBuf,
+    journal_path: PathBuf,
+}
+
+impl DurableDualTokenStore {
+    fn open(data_dir: &Path) -> Result<Self, StorageError> {
+        let store = Self {
+            text: TextTokenStore::open(data_dir.join("tokens.lino"))?,
+            binary: BinaryTokenStore::open(data_dir.join("tokens.bin"))?,
+            lock_path: data_dir.join("tokens.transaction.lock"),
+            journal_path: data_dir.join("tokens.transaction.json"),
+        };
+        store.with_records(|_| ())?;
+        Ok(store)
+    }
+
+    fn merged_records(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
+        let mut records = HashMap::new();
+        for record in self.text.list()? {
+            records.insert(record.id.clone(), record);
+        }
+        for record in self.binary.list()? {
+            records
+                .entry(record.id.clone())
+                .and_modify(|current| merge_safer_record(current, &record))
+                .or_insert(record);
+        }
+        Ok(records)
+    }
+
+    fn recover(&self) -> Result<(), StorageError> {
+        if !self.journal_path.exists() {
+            return Ok(());
+        }
+        let records: Vec<TokenRecord> = serde_json::from_slice(&fs::read(&self.journal_path)?)
+            .map_err(|error| StorageError::Codec(format!("transaction journal: {error}")))?;
+        self.install(&records)
+    }
+
+    fn install(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
+        self.text.replace_all(records)?;
+        self.binary.replace_all(records)?;
+        if self.journal_path.exists() {
+            fs::remove_file(&self.journal_path)?;
+            if let Some(parent) = self.journal_path.parent() {
+                crate::durable_file::sync_directory(parent)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn commit(&self, records: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
+        let mut records = records.values().cloned().collect::<Vec<_>>();
+        records.sort_by(|left, right| left.id.cmp(&right.id));
+        let journal = serde_json::to_vec(&records)
+            .map_err(|error| StorageError::Codec(format!("transaction journal: {error}")))?;
+        crate::durable_file::atomic_write_owner_only(&self.journal_path, &journal)?;
+        self.install(&records)
+    }
+
+    fn with_records<T>(
+        &self,
+        operation: impl FnOnce(&mut HashMap<String, TokenRecord>) -> T,
+    ) -> Result<T, StorageError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            self.recover()?;
+            let mut records = self.merged_records()?;
+            let result = operation(&mut records);
+            self.commit(&records)?;
+            Ok(result)
+        })
+    }
+}
+
+fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
+    current.revoked |= other.revoked;
+    current.used_requests = current.used_requests.max(other.used_requests);
+    current.used_tokens = current.used_tokens.max(other.used_tokens);
+    if other.rate_window_started_at > current.rate_window_started_at {
+        current.rate_window_started_at = other.rate_window_started_at;
+        current.rate_window_requests = other.rate_window_requests;
+    } else if other.rate_window_started_at == current.rate_window_started_at {
+        current.rate_window_requests = current.rate_window_requests.max(other.rate_window_requests);
+    }
+}
+
+impl TokenStore for DurableDualTokenStore {
+    fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
+        self.with_records(|records| records.values().cloned().collect())
+    }
+
+    fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError> {
+        self.with_records(|records| records.get(id).cloned())
+    }
+
+    fn put(&self, record: TokenRecord) -> Result<(), StorageError> {
+        self.with_records(|records| {
+            records.insert(record.id.clone(), record);
+        })
+    }
+
+    fn delete(&self, id: &str) -> Result<bool, StorageError> {
+        self.with_records(|records| records.remove(id).is_some())
+    }
+
+    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
+        self.with_records(|records| consume_request(records.get_mut(id)))
+    }
+
+    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        self.with_records(|records| admit_request(records.get_mut(id), now))
+    }
+
+    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
+        self.with_records(|records| add_token_usage(records.get_mut(id), tokens))
+    }
+}
+
 /// Build a [`TokenStore`] following the configured [`StoragePolicy`].
 pub fn build_token_store(
     policy: StoragePolicy,
@@ -580,254 +775,14 @@ pub fn build_token_store(
             let s = BinaryTokenStore::open(data_dir.join("tokens.bin"))?;
             Ok(Arc::new(s))
         }
-        StoragePolicy::Both => {
-            let text = Arc::new(TextTokenStore::open(data_dir.join("tokens.lino"))?);
-            let binary = Arc::new(BinaryTokenStore::open(data_dir.join("tokens.bin"))?);
-            Ok(Arc::new(DualTokenStore {
-                primary: text,
-                secondary: binary,
-            }))
-        }
+        StoragePolicy::Both => Ok(Arc::new(DurableDualTokenStore::open(data_dir)?)),
     }
 }
 
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), StorageError> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| io::Error::other("storage path has no parent directory"))?;
-    fs::create_dir_all(parent)?;
-    let file_name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .ok_or_else(|| io::Error::other("storage file name is not valid UTF-8"))?;
-    let tmp = parent.join(format!(
-        ".{file_name}.{}.{}.tmp",
-        std::process::id(),
-        uuid::Uuid::new_v4()
-    ));
-
-    let result = (|| -> Result<(), StorageError> {
-        let mut options = OpenOptions::new();
-        options.write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.mode(0o600);
-        }
-        let mut file = options.open(&tmp)?;
-        file.write_all(contents)?;
-        file.sync_all()?;
-        if let Ok(metadata) = fs::metadata(path) {
-            fs::set_permissions(&tmp, metadata.permissions())?;
-        }
-        fs::rename(&tmp, path)?;
-        Ok(())
-    })();
-
-    if result.is_err() {
-        let _ = fs::remove_file(&tmp);
-    }
-    result
+    crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::sync::Barrier;
-    use std::thread;
-    use tempfile::tempdir;
-
-    fn sample_record(id: &str) -> TokenRecord {
-        TokenRecord {
-            id: id.into(),
-            label: "test \"label\"".into(),
-            issued_at: 1_700_000_000,
-            expires_at: 1_700_001_000,
-            revoked: false,
-            account: Some("primary".into()),
-            max_requests: None,
-            used_requests: 0,
-            max_tokens: None,
-            used_tokens: 0,
-            rate_limit_per_minute: None,
-            rate_window_started_at: 0,
-            rate_window_requests: 0,
-            scope: String::new(),
-        }
-    }
-
-    #[test]
-    fn memory_store_roundtrip() {
-        let s = MemoryTokenStore::new();
-        s.put(sample_record("a")).unwrap();
-        assert_eq!(s.list().unwrap().len(), 1);
-        assert!(s.get("a").unwrap().is_some());
-        assert!(s.delete("a").unwrap());
-        assert!(s.get("a").unwrap().is_none());
-    }
-
-    #[test]
-    fn text_store_roundtrip() {
-        let dir = tempdir().unwrap();
-        let path = dir.path().join("tokens.lino");
-        let s = TextTokenStore::open(&path).unwrap();
-        s.put(sample_record("a")).unwrap();
-        s.put(sample_record("b")).unwrap();
-        let s2 = TextTokenStore::open(&path).unwrap();
-        let mut list = s2.list().unwrap();
-        list.sort_by(|x, y| x.id.cmp(&y.id));
-        assert_eq!(list.len(), 2);
-        assert_eq!(list[0].id, "a");
-        assert_eq!(list[0].label, "test \"label\"");
-        assert_eq!(list[0].account.as_deref(), Some("primary"));
-    }
-
-    #[test]
-    fn binary_store_roundtrip() {
-        let dir = tempdir().unwrap();
-        let path = dir.path().join("tokens.bin");
-        let s = BinaryTokenStore::open(&path).unwrap();
-        s.put(sample_record("a")).unwrap();
-        s.put(sample_record("b")).unwrap();
-        let s2 = BinaryTokenStore::open(&path).unwrap();
-        let mut list = s2.list().unwrap();
-        list.sort_by(|x, y| x.id.cmp(&y.id));
-        assert_eq!(list.len(), 2);
-        assert_eq!(list[1].id, "b");
-    }
-
-    #[test]
-    fn stores_persist_the_admin_scope() {
-        let dir = tempdir().unwrap();
-        let mut admin = sample_record("admin");
-        admin.scope = crate::token::ADMIN_SCOPE.to_string();
-
-        let text_path = dir.path().join("tokens.lino");
-        let text = TextTokenStore::open(&text_path).unwrap();
-        text.put(admin.clone()).unwrap();
-        text.put(sample_record("client")).unwrap();
-        let text = TextTokenStore::open(&text_path).unwrap();
-        assert_eq!(
-            text.get("admin").unwrap().unwrap().scope,
-            crate::token::ADMIN_SCOPE
-        );
-        assert!(text.get("client").unwrap().unwrap().scope.is_empty());
-
-        let bin_path = dir.path().join("tokens.bin");
-        let bin = BinaryTokenStore::open(&bin_path).unwrap();
-        bin.put(admin).unwrap();
-        let bin = BinaryTokenStore::open(&bin_path).unwrap();
-        assert_eq!(
-            bin.get("admin").unwrap().unwrap().scope,
-            crate::token::ADMIN_SCOPE
-        );
-    }
-
-    #[test]
-    fn dual_store_writes_both() {
-        let dir = tempdir().unwrap();
-        let text = Arc::new(TextTokenStore::open(dir.path().join("a.lino")).unwrap());
-        let bin = Arc::new(BinaryTokenStore::open(dir.path().join("a.bin")).unwrap());
-        let dual = DualTokenStore {
-            primary: text.clone(),
-            secondary: bin.clone(),
-        };
-        dual.put(sample_record("a")).unwrap();
-        assert_eq!(text.list().unwrap().len(), 1);
-        assert_eq!(bin.list().unwrap().len(), 1);
-    }
-
-    #[test]
-    fn dual_store_concurrent_consumption_is_atomic_and_preserves_formats() {
-        const REQUESTS: usize = 32;
-
-        let dir = tempdir().unwrap();
-        let store = build_token_store(StoragePolicy::Both, dir.path()).unwrap();
-        store.put(sample_record("shared")).unwrap();
-
-        let barrier = Arc::new(Barrier::new(REQUESTS));
-        let handles: Vec<_> = (0..REQUESTS)
-            .map(|_| {
-                let store = Arc::clone(&store);
-                let barrier = Arc::clone(&barrier);
-                thread::spawn(move || {
-                    barrier.wait();
-                    store.try_consume_request("shared")
-                })
-            })
-            .collect();
-
-        for handle in handles {
-            assert!(handle.join().unwrap().unwrap());
-        }
-
-        let text = TextTokenStore::open(dir.path().join("tokens.lino")).unwrap();
-        let binary = BinaryTokenStore::open(dir.path().join("tokens.bin")).unwrap();
-        assert_eq!(
-            text.get("shared").unwrap().unwrap().used_requests,
-            REQUESTS as u64
-        );
-        assert_eq!(
-            binary.get("shared").unwrap().unwrap().used_requests,
-            REQUESTS as u64
-        );
-    }
-
-    #[test]
-    fn revoke_marks_record() {
-        let s = MemoryTokenStore::new();
-        s.put(sample_record("a")).unwrap();
-        assert!(s.revoke("a").unwrap());
-        assert!(s.get("a").unwrap().unwrap().revoked);
-        // second revoke is a no-op
-        assert!(!s.revoke("a").unwrap());
-        // unknown id returns false
-        assert!(!s.revoke("missing").unwrap());
-    }
-
-    #[test]
-    fn build_token_store_dispatches_correctly() {
-        let dir = tempdir().unwrap();
-        let mem = build_token_store(StoragePolicy::Memory, dir.path()).unwrap();
-        mem.put(sample_record("m")).unwrap();
-        assert!(mem.get("m").unwrap().is_some());
-
-        let text = build_token_store(StoragePolicy::Text, dir.path()).unwrap();
-        text.put(sample_record("t")).unwrap();
-        assert!(dir.path().join("tokens.lino").exists());
-
-        let bin = build_token_store(StoragePolicy::Binary, dir.path()).unwrap();
-        bin.put(sample_record("b")).unwrap();
-        assert!(dir.path().join("tokens.bin").exists());
-
-        let dual = build_token_store(StoragePolicy::Both, dir.path()).unwrap();
-        dual.put(sample_record("d")).unwrap();
-        // both files updated
-        let text_contents = std::fs::read_to_string(dir.path().join("tokens.lino")).unwrap();
-        assert_eq!(associative::decode_text(&text_contents).unwrap()[0].id, "d");
-    }
-
-    #[test]
-    fn lino_codec_handles_special_chars() {
-        let rec = TokenRecord {
-            id: "id1".into(),
-            label: "with \"quote\" and \\ backslash and\nnewline".into(),
-            issued_at: 1,
-            expires_at: 2,
-            revoked: true,
-            account: None,
-            max_requests: Some(100),
-            used_requests: 7,
-            max_tokens: Some(1_000),
-            used_tokens: 250,
-            rate_limit_per_minute: Some(10),
-            rate_window_started_at: 1_700_000_000,
-            rate_window_requests: 2,
-            scope: crate::token::ADMIN_SCOPE.to_string(),
-        };
-        let s = associative::encode_text(std::iter::once(&rec));
-        let parsed = associative::decode_text(&s).unwrap();
-        assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0], rec);
-    }
-}
+#[path = "storage_tests.rs"]
+mod tests;

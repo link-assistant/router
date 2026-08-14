@@ -20,6 +20,10 @@ and supplies `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and
 `LINK_ASSISTANT_TOKEN`. The normal `$QWEN_HOME` is untouched. See
 [with-router.md](with-router.md).
 
+Wrapper flags may appear before or after `qwen-code`; an explicit `--`
+forwards every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual OpenAI-compatible configuration
 
 ```json

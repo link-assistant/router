@@ -12,6 +12,10 @@ The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
 `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN`; the normal Claude settings are
 not changed. See [with-router.md](with-router.md) for server and token options.
 
+Wrapper flags may appear before or after `claude-code`; an explicit `--`
+forwards every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual or permanent configuration
 
 Automatic setup (merges the router URL and backs up an existing settings file):

@@ -18,6 +18,10 @@ use std::time::Duration;
 use crate::accounts::SelectionStrategy;
 use crate::subscription::SubscriptionProvider;
 
+/// Deliberate request-body ceiling for proxied traffic. This is independent
+/// of the smaller amount retained in the diagnostic request log.
+pub const DEFAULT_MAX_PROXY_REQUEST_BYTES: usize = 64 * 1024 * 1024;
+
 /// Supported upstream inference providers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum UpstreamProvider {
@@ -188,6 +192,8 @@ pub struct Config {
     pub upstream_base_url: String,
     /// Whether verbose logging is enabled.
     pub verbose: bool,
+    /// Maximum request body accepted by raw proxy surfaces.
+    pub max_proxy_request_bytes: usize,
     /// Optional explicit upstream API format restriction.
     pub api_format: Option<ApiFormat>,
     /// Routing mode (direct / cli / hybrid).
@@ -276,6 +282,10 @@ impl Config {
         let upstream_base_url = env::var("UPSTREAM_BASE_URL")
             .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
         let verbose = env::var("VERBOSE").is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+        let max_proxy_request_bytes = env::var("MAX_PROXY_REQUEST_BYTES")
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or(DEFAULT_MAX_PROXY_REQUEST_BYTES);
         let api_format = env::var("UPSTREAM_API_FORMAT")
             .ok()
             .and_then(|s| ApiFormat::from_str_opt(&s));
@@ -413,6 +423,7 @@ impl Config {
             claude_code_home: &claude_code_home,
             upstream_base_url: &upstream_base_url,
             verbose,
+            max_proxy_request_bytes,
             api_format,
             routing_mode,
             storage_policy,
@@ -480,6 +491,7 @@ impl Config {
             claude_code_home: args.claude_code_home.to_string(),
             upstream_base_url: args.upstream_base_url.to_string(),
             verbose: args.verbose,
+            max_proxy_request_bytes: args.max_proxy_request_bytes,
             api_format: args.api_format,
             routing_mode: args.routing_mode,
             storage_policy: args.storage_policy,
@@ -528,6 +540,7 @@ pub struct BuildArgs<'a> {
     pub claude_code_home: &'a str,
     pub upstream_base_url: &'a str,
     pub verbose: bool,
+    pub max_proxy_request_bytes: usize,
     pub api_format: Option<ApiFormat>,
     pub routing_mode: RoutingMode,
     pub storage_policy: StoragePolicy,
@@ -721,6 +734,7 @@ mod tests {
             claude_code_home: "/tmp/claude",
             upstream_base_url: "https://api.anthropic.com",
             verbose: false,
+            max_proxy_request_bytes: DEFAULT_MAX_PROXY_REQUEST_BYTES,
             api_format: None,
             routing_mode: RoutingMode::Direct,
             storage_policy: StoragePolicy::Memory,
@@ -863,6 +877,7 @@ mod tests {
             claude_code_home: "/tmp/claude",
             upstream_base_url: "https://api.anthropic.com",
             verbose: false,
+            max_proxy_request_bytes: DEFAULT_MAX_PROXY_REQUEST_BYTES,
             api_format: None,
             routing_mode: RoutingMode::Direct,
             storage_policy: StoragePolicy::Memory,

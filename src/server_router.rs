@@ -7,7 +7,7 @@
 use axum::extract::{Request, State};
 use axum::middleware::{Next, from_fn_with_state};
 use axum::response::Response;
-use axum::routing::{get, post};
+use axum::routing::{any, get, post};
 use axum::{Router, http::StatusCode};
 
 use crate::activitypub;
@@ -121,6 +121,28 @@ pub fn router(state: AppState, config: &Config) -> Router {
                 "/api/vertex/v1/{*path}",
                 post(gemini::forward_native_vertex),
             );
+    }
+
+    if state.github.enabled() {
+        // GitHub CLI uses `/api/v3` and `/api/graphql` for custom hosts. The
+        // bare routes make the same listener useful as a conventional API
+        // base URL for SDKs and agents.
+        client_routes = client_routes
+            .route("/api/v3/{*path}", any(crate::github_proxy::proxy))
+            .route("/github/{*path}", any(crate::github_proxy::proxy))
+            .route("/api/graphql", post(crate::github_proxy::proxy))
+            .route("/graphql", post(crate::github_proxy::proxy))
+            .route("/rate_limit", get(crate::github_proxy::proxy))
+            .route("/user", any(crate::github_proxy::proxy))
+            .route("/user/{*path}", any(crate::github_proxy::proxy))
+            .route("/users/{*path}", any(crate::github_proxy::proxy))
+            .route("/repos/{*path}", any(crate::github_proxy::proxy))
+            .route("/orgs/{*path}", any(crate::github_proxy::proxy))
+            .route("/search/{*path}", any(crate::github_proxy::proxy))
+            .route("/notifications", any(crate::github_proxy::proxy))
+            .route("/notifications/{*path}", any(crate::github_proxy::proxy))
+            .route("/gists", any(crate::github_proxy::proxy))
+            .route("/gists/{*path}", any(crate::github_proxy::proxy));
     }
 
     if config.enable_metrics {

@@ -56,6 +56,10 @@ pub const DEFAULT_ANTHROPIC_VERSION: &str = "2023-06-01";
 /// OAuth credential — otherwise upstream rejects the request.
 pub const OAUTH_BETA_FLAG: &str = "oauth-2025-04-20";
 
+/// Deliberate proxy request-body ceiling, independent of the smaller amount
+/// retained by the diagnostic request log.
+pub const MAX_PROXY_REQUEST_BYTES: usize = crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES;
+
 /// Merge [`OAUTH_BETA_FLAG`] into an optional existing `anthropic-beta` header
 /// value without creating duplicates.
 #[must_use]
@@ -109,7 +113,7 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         let name_lower = name.as_str();
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
-            || name_lower.starts_with("x-codex-")
+            || is_operator_subscription_header(name_lower)
             || name_lower == "content-length"
             || connection_headers.contains(name_lower)
         {
@@ -118,6 +122,19 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         relayed.append(name.clone(), value.clone());
     }
     relayed
+}
+
+fn is_operator_subscription_header(name: &str) -> bool {
+    matches!(
+        name,
+        "x-codex-plan-type"
+            | "x-codex-active-limit"
+            | "x-codex-credits-balance"
+            | "x-codex-entitlement"
+            | "x-codex-entitlements"
+            | "x-codex-state-token"
+    ) || name.starts_with("x-codex-credits-")
+        || name.starts_with("x-codex-entitlement-")
 }
 
 /// Health check endpoint.
@@ -154,7 +171,12 @@ fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {
     headers
         .get("authorization")
         .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
+        .and_then(|value| {
+            let (scheme, token) = value.split_once(' ')?;
+            (scheme.eq_ignore_ascii_case("bearer") || scheme.eq_ignore_ascii_case("token"))
+                .then_some(token)
+        })
+        .filter(|token| !token.is_empty())
 }
 
 pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
@@ -254,16 +276,20 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     // enforcement, and account selection, so none of it is done twice here).
     // Every other provider keeps the pass-through path below unchanged.
     if crate::anthropic_bridge::is_bridged(state.upstream_provider) {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
-            Ok(bytes) => bytes,
-            Err(e) => {
-                return error_response(
-                    StatusCode::BAD_REQUEST,
-                    "invalid_request_error",
-                    &format!("Failed to read request body: {e}"),
-                );
-            }
-        };
+        let body_bytes =
+            match axum::body::to_bytes(req.into_body(), state.max_proxy_request_bytes).await {
+                Ok(bytes) => bytes,
+                Err(e) => {
+                    return error_response(
+                        StatusCode::PAYLOAD_TOO_LARGE,
+                        "invalid_request_error",
+                        &format!(
+                            "request body exceeds the {} byte proxy limit: {e}",
+                            state.max_proxy_request_bytes
+                        ),
+                    );
+                }
+            };
         let body = match serde_json::from_slice(&body_bytes) {
             Ok(body) => body,
             Err(error) => return malformed_json_response(&error.to_string()),
@@ -294,16 +320,20 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
 
     // Read the body before account selection so the router gets a copy of
     // stable request metadata and can preserve conversation affinity.
-    let mut body_bytes = match axum::body::to_bytes(req.into_body(), 10 * 1024 * 1024).await {
-        Ok(bytes) => bytes,
-        Err(e) => {
-            return error_response(
-                StatusCode::BAD_REQUEST,
-                "invalid_request_error",
-                &format!("Failed to read request body: {e}"),
-            );
-        }
-    };
+    let mut body_bytes =
+        match axum::body::to_bytes(req.into_body(), state.max_proxy_request_bytes).await {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return error_response(
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    "invalid_request_error",
+                    &format!(
+                        "request body exceeds the {} byte proxy limit: {e}",
+                        state.max_proxy_request_bytes
+                    ),
+                );
+            }
+        };
     let routing_body = match serde_json::from_slice(&body_bytes) {
         Ok(body) => body,
         Err(error) => return malformed_json_response(&error.to_string()),
@@ -567,189 +597,10 @@ async fn resolve_upstream_credentials(
 ///
 /// Translates to Anthropic Messages, forwards via the same OAuth-substituting
 /// pipeline used by [`proxy_handler`], and converts the response back.
-pub async fn openai_chat_completions(
-    State(state): State<AppState>,
-    Query(query): Query<BTreeMap<String, String>>,
-    headers: HeaderMap,
-    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
-) -> Response {
-    let mut body = match body {
-        Ok(axum::Json(body)) => body,
-        Err(error) => return malformed_json_response(&error.body_text()),
-    };
-    let include_usage = body
-        .pointer("/stream_options/include_usage")
-        .and_then(serde_json::Value::as_bool)
-        .unwrap_or(false);
-    let stream_from_query = openai::query_stream_requested(&query);
-    if stream_from_query {
-        body["stream"] = serde_json::json!(true);
-    }
-    let state = match crate::model_routing::route_state(&state, &body).await {
-        Ok(state) => state,
-        Err(error) => return crate::model_routing::model_route_error_response(&error),
-    };
-    if state.upstream_provider == UpstreamProvider::Gonka {
-        return crate::gonka::forward_openai(
-            &state,
-            &headers,
-            body,
-            "/v1/chat/completions",
-            crate::metrics::Surface::OpenAIChat,
-        )
-        .await;
-    }
-    if state.upstream_provider == UpstreamProvider::Crater {
-        let stream_requested = body
-            .get("stream")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-        return crate::crater::forward_chat_completions(&state, &headers, body, stream_requested)
-            .await;
-    }
-    if state.upstream_provider == UpstreamProvider::OpenAICompatible {
-        return crate::provider_proxy::forward_openai_compatible(
-            &state,
-            &headers,
-            body,
-            "/v1/chat/completions",
-            crate::metrics::Surface::OpenAIChat,
-        )
-        .await;
-    }
-    if state.upstream_provider == UpstreamProvider::Qwen {
-        let routing_body = body.clone();
-        return crate::subscription_proxy::forward_subscription_openai(
-            &state,
-            &headers,
-            body,
-            &routing_body,
-            "/v1/chat/completions",
-            crate::metrics::Surface::OpenAIChat,
-        )
-        .await;
-    }
-    if state.upstream_provider == UpstreamProvider::Gemini {
-        return crate::gemini::forward_chat_completions(&state, &headers, body).await;
-    }
-    if state.upstream_provider == UpstreamProvider::Codex {
-        // The ChatGPT backend speaks only the Responses API; translate the
-        // Chat Completions request before forwarding.
-        let responses_body = responses::chat_completion_to_responses(&body);
-        return crate::subscription_proxy::forward_codex_chat_completions(
-            &state,
-            &headers,
-            responses_body,
-            &body,
-            crate::metrics::Surface::OpenAIChat,
-        )
-        .await;
-    }
-    let routing_body = body.clone();
-    let req = match serde_json::from_value::<openai::OpenAIChatCompletionRequest>(body) {
-        Ok(req) => req,
-        Err(e) => {
-            return error_response(
-                StatusCode::BAD_REQUEST,
-                "invalid_request_error",
-                &format!("invalid OpenAI chat completion request: {e}"),
-            );
-        }
-    };
-    let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
-    if openai::resolve_model(&req.model).is_none() {
-        return crate::model_routing::model_not_found_response(&req.model);
-    }
-    let body = openai::chat_completion_to_anthropic(&req);
-    forward_openai(
-        &state,
-        &headers,
-        body,
-        &routing_body,
-        crate::metrics::Surface::OpenAIChat,
-        (stream_requested, OpenAIShape::Chat, include_usage),
-    )
-    .await
-}
+#[path = "proxy_openai.rs"]
+mod openai_handlers;
 
-/// `POST /v1/responses` — `OpenAI` Responses API.
-pub async fn openai_responses(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
-) -> Response {
-    let body = match body {
-        Ok(axum::Json(body)) => body,
-        Err(error) => return malformed_json_response(&error.body_text()),
-    };
-    let state = match crate::model_routing::route_state(&state, &body).await {
-        Ok(state) => state,
-        Err(error) => return crate::model_routing::model_route_error_response(&error),
-    };
-    if state.upstream_provider == UpstreamProvider::Gonka {
-        return crate::gonka::forward_openai(
-            &state,
-            &headers,
-            body,
-            "/v1/responses",
-            crate::metrics::Surface::OpenAIResponses,
-        )
-        .await;
-    }
-    if state.upstream_provider == UpstreamProvider::OpenAICompatible {
-        return crate::provider_proxy::forward_openai_compatible(
-            &state,
-            &headers,
-            body,
-            "/v1/responses",
-            crate::metrics::Surface::OpenAIResponses,
-        )
-        .await;
-    }
-    if matches!(
-        state.upstream_provider,
-        UpstreamProvider::Codex | UpstreamProvider::Qwen
-    ) {
-        let routing_body = body.clone();
-        return crate::subscription_proxy::forward_subscription_openai(
-            &state,
-            &headers,
-            body,
-            &routing_body,
-            "/v1/responses",
-            crate::metrics::Surface::OpenAIResponses,
-        )
-        .await;
-    }
-    if state.upstream_provider == UpstreamProvider::Gemini {
-        return crate::gemini::forward_responses(&state, &headers, body).await;
-    }
-    let routing_body = body.clone();
-    let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
-        Ok(req) => req,
-        Err(e) => {
-            return error_response(
-                StatusCode::BAD_REQUEST,
-                "invalid_request_error",
-                &format!("invalid OpenAI responses request: {e}"),
-            );
-        }
-    };
-    let stream_requested = req.stream.unwrap_or(false);
-    if openai::resolve_model(&req.model).is_none() {
-        return crate::model_routing::model_not_found_response(&req.model);
-    }
-    let body = responses::response_to_anthropic(&req);
-    forward_openai(
-        &state,
-        &headers,
-        body,
-        &routing_body,
-        crate::metrics::Surface::OpenAIResponses,
-        (stream_requested, OpenAIShape::Response, false),
-    )
-    .await
-}
+pub use openai_handlers::{openai_chat_completions, openai_responses};
 
 #[derive(Clone, Copy)]
 enum OpenAIShape {

@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::openai::{
-    extract_text, map_model, reconcile_subscription_parameters, translate_parts, translate_tools,
+    extract_text, map_model, reconcile_subscription_parameters_with_limit_origin, translate_parts,
+    translate_tools,
 };
 
 /// `OpenAI` `POST /v1/responses` request body. We accept the superset and
@@ -31,6 +32,10 @@ pub struct OpenAIResponseRequest {
     pub stream: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tools: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_choice: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<Value>,
 }
 
 /// Translate an `OpenAI` Responses-API request to Anthropic Messages.
@@ -65,6 +70,30 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
                         }
                         _ => {}
                     }
+                } else if item.get("type").and_then(Value::as_str) == Some("function_call") {
+                    let arguments = item
+                        .get("arguments")
+                        .and_then(Value::as_str)
+                        .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+                        .unwrap_or_else(|| json!({}));
+                    messages.push(json!({
+                        "role": "assistant",
+                        "content": [{
+                            "type": "tool_use",
+                            "id": item.get("call_id").or_else(|| item.get("id")).and_then(Value::as_str).unwrap_or_default(),
+                            "name": item.get("name").and_then(Value::as_str).unwrap_or_default(),
+                            "input": arguments,
+                        }]
+                    }));
+                } else if item.get("type").and_then(Value::as_str) == Some("function_call_output") {
+                    messages.push(json!({
+                        "role": "user",
+                        "content": [{
+                            "type": "tool_result",
+                            "tool_use_id": item.get("call_id").and_then(Value::as_str).unwrap_or_default(),
+                            "content": item.get("output").and_then(Value::as_str).unwrap_or_default(),
+                        }]
+                    }));
                 } else if let Some(text) = item.as_str() {
                     messages.push(json!({"role": "user", "content": text}));
                 }
@@ -91,7 +120,17 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     if let Some(tools) = &req.tools {
         body["tools"] = translate_tools(tools);
     }
-    reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
+    if let Some(choice) = &req.tool_choice {
+        body["tool_choice"] = crate::openai::translate_tool_choice(choice);
+    }
+    if let Some(reasoning) = &req.reasoning {
+        body["reasoning"] = reasoning.clone();
+    }
+    reconcile_subscription_parameters_with_limit_origin(
+        crate::subscription::SubscriptionProvider::Claude,
+        &mut body,
+        req.max_output_tokens.is_some(),
+    );
     body
 }
 
@@ -122,6 +161,49 @@ pub fn normalize_input_items(input: &Value) -> Value {
         ),
         other => other.clone(),
     }
+}
+
+/// Validate prior Responses tool items before conversion to Anthropic.
+#[must_use]
+pub fn untranslatable_tool_history(input: &Value) -> Option<String> {
+    let items = input.as_array()?;
+    for item in items {
+        match item.get("type").and_then(Value::as_str) {
+            Some("function_call") => {
+                if item
+                    .get("call_id")
+                    .or_else(|| item.get("id"))
+                    .and_then(Value::as_str)
+                    .is_none_or(str::is_empty)
+                {
+                    return Some("function_call is missing call_id".into());
+                }
+                if item
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .is_none_or(str::is_empty)
+                {
+                    return Some("function_call is missing name".into());
+                }
+                let Some(arguments) = item.get("arguments").and_then(Value::as_str) else {
+                    return Some("function_call is missing string arguments".into());
+                };
+                if serde_json::from_str::<Value>(arguments).is_err() {
+                    return Some("function_call arguments is not valid JSON".into());
+                }
+            }
+            Some("function_call_output")
+                if item
+                    .get("call_id")
+                    .and_then(Value::as_str)
+                    .is_none_or(str::is_empty) =>
+            {
+                return Some("function_call_output is missing call_id".into());
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 /// Translate an `OpenAI` Chat Completions request body to an `OpenAI`
@@ -190,6 +272,15 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
         "model": model,
         "input": input,
     });
+    out["reasoning"] = body
+        .get("reasoning")
+        .cloned()
+        .or_else(|| {
+            body.get("reasoning_effort")
+                .cloned()
+                .map(|effort| json!({"effort": effort}))
+        })
+        .unwrap_or_else(|| json!({"effort": crate::clients::DEFAULT_OPENAI_REASONING_EFFORT}));
     if !instructions.is_empty() {
         out["instructions"] = Value::String(instructions.join("\n\n"));
     }
@@ -388,6 +479,29 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
     })
 }
 
+/// Enforce Chat stop sequences on a buffered translated response.
+pub(crate) fn enforce_chat_stop(response: &mut Value, sequences: &[String]) {
+    let Some(choice) = response
+        .get_mut("choices")
+        .and_then(Value::as_array_mut)
+        .and_then(|choices| choices.first_mut())
+    else {
+        return;
+    };
+    let Some(text) = choice
+        .pointer_mut("/message/content")
+        .and_then(|value| value.as_str())
+        .map(str::to_string)
+    else {
+        return;
+    };
+    let mut visible = text;
+    if crate::stop_sequences::truncate(&mut visible, sequences).is_some() {
+        choice["message"]["content"] = Value::String(visible);
+        choice["finish_reason"] = Value::String("stop".into());
+    }
+}
+
 /// Incrementally translate Responses SSE events into Chat Completions chunks.
 pub struct ResponsesChatStreamTranslator {
     model: String,
@@ -401,6 +515,7 @@ pub struct ResponsesChatStreamTranslator {
     output_tokens: u64,
     total_tokens: u64,
     tool_indices: std::collections::BTreeSet<u64>,
+    stop_filter: crate::stop_sequences::StopSequenceFilter,
 }
 
 impl ResponsesChatStreamTranslator {
@@ -419,6 +534,7 @@ impl ResponsesChatStreamTranslator {
             output_tokens: 0,
             total_tokens: 0,
             tool_indices: std::collections::BTreeSet::new(),
+            stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
         }
     }
 
@@ -426,6 +542,13 @@ impl ResponsesChatStreamTranslator {
     #[must_use]
     pub const fn with_include_usage(mut self, include_usage: bool) -> Self {
         self.include_usage = include_usage;
+        self
+    }
+
+    /// Enforce Chat `stop` locally when the Responses backend cannot accept it.
+    #[must_use]
+    pub fn with_stop_sequences(mut self, sequences: Vec<String>) -> Self {
+        self.stop_filter = crate::stop_sequences::StopSequenceFilter::new(sequences);
         self
     }
 
@@ -461,6 +584,9 @@ impl ResponsesChatStreamTranslator {
     }
 
     fn translate_event(&mut self, event: &Value) -> Vec<String> {
+        if self.sent_final {
+            return Vec::new();
+        }
         match event.get("type").and_then(Value::as_str) {
             Some("response.created") => {
                 if let Some(response) = event.get("response") {
@@ -474,8 +600,16 @@ impl ResponsesChatStreamTranslator {
                     .get("delta")
                     .and_then(Value::as_str)
                     .unwrap_or_default();
+                let (text, matched) = self.stop_filter.push(text);
                 let mut frames = self.role_frame();
-                frames.push(self.chat_frame(&json!({"content": text}), None));
+                if !text.is_empty() {
+                    frames.push(self.chat_frame(&json!({"content": text}), None));
+                }
+                if matched.is_some() {
+                    self.sent_final = true;
+                    frames.push(self.chat_frame(&json!({}), Some("stop")));
+                    frames.push(done_frame());
+                }
                 frames
             }
             Some("response.output_item.added" | "response.output_item.done") => {
@@ -499,9 +633,6 @@ impl ResponsesChatStreamTranslator {
                 )]
             }
             Some("response.completed" | "response.incomplete" | "response.failed") => {
-                if self.sent_final {
-                    return Vec::new();
-                }
                 if let Some(response) = event.get("response") {
                     self.capture_identity(response);
                     self.capture_usage(response);
@@ -513,8 +644,14 @@ impl ResponsesChatStreamTranslator {
                 } else {
                     "stop"
                 };
+                let mut frames = Vec::new();
+                let pending = self.stop_filter.finish();
+                if !pending.is_empty() {
+                    frames.extend(self.role_frame());
+                    frames.push(self.chat_frame(&json!({"content": pending}), None));
+                }
                 self.sent_final = true;
-                let mut frames = vec![self.chat_frame(&json!({}), Some(finish_reason))];
+                frames.push(self.chat_frame(&json!({}), Some(finish_reason)));
                 if self.include_usage {
                     frames.push(self.usage_frame());
                 }
@@ -538,6 +675,10 @@ impl ResponsesChatStreamTranslator {
             return Vec::new();
         }
         let mut frames = self.role_frame();
+        let pending = self.stop_filter.finish();
+        if !pending.is_empty() {
+            frames.push(self.chat_frame(&json!({"content": pending}), None));
+        }
         frames.push(self.chat_frame(
             &json!({"tool_calls": [{
                 "index": index,
@@ -659,14 +800,60 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
         .and_then(Value::as_str)
         .map_or_else(|| format!("resp-{}", uuid::Uuid::new_v4()), String::from);
     let mut text = String::new();
+    let mut output = Vec::new();
     if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
         for block in blocks {
-            if block.get("type").and_then(Value::as_str) == Some("text") {
-                if let Some(t) = block.get("text").and_then(Value::as_str) {
-                    text.push_str(t);
+            match block.get("type").and_then(Value::as_str) {
+                Some("text") => {
+                    if let Some(t) = block.get("text").and_then(Value::as_str) {
+                        text.push_str(t);
+                    }
                 }
+                Some("tool_use") => output.push(json!({
+                    "type": "function_call",
+                    "call_id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
+                    "name": block.get("name").and_then(Value::as_str).unwrap_or_default(),
+                    "arguments": serde_json::to_string(
+                        block.get("input").unwrap_or(&Value::Null)
+                    ).unwrap_or_else(|_| "{}".into()),
+                    "status": "completed",
+                })),
+                Some("server_tool_use") => {
+                    let call_type = match block.get("name").and_then(Value::as_str) {
+                        Some("web_fetch") => "web_fetch_call",
+                        _ => "web_search_call",
+                    };
+                    output.push(json!({
+                        "type": call_type,
+                        "id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
+                        "status": "in_progress",
+                        "action": block.get("input").cloned().unwrap_or_else(|| json!({})),
+                    }));
+                }
+                Some(result_type @ ("web_search_tool_result" | "web_fetch_tool_result")) => {
+                    let call_type = if result_type == "web_fetch_tool_result" {
+                        "web_fetch_call"
+                    } else {
+                        "web_search_call"
+                    };
+                    if let Some(item) = output.iter_mut().rev().find(|item| {
+                        item.get("type").and_then(Value::as_str) == Some(call_type)
+                            && item.get("id") == block.get("tool_use_id")
+                    }) {
+                        item["status"] = Value::String("completed".into());
+                        item["result"] = block.get("content").cloned().unwrap_or(Value::Null);
+                    }
+                }
+                _ => {}
             }
         }
+    }
+    if !text.is_empty() || output.is_empty() {
+        output.push(json!({
+            "type": "message",
+            "role": "assistant",
+            "content": [{ "type": "output_text", "text": text }]
+        }));
     }
     let served_model = anthropic
         .get("model")
@@ -678,15 +865,7 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
         "created_at": chrono::Utc::now().timestamp(),
         "model": served_model,
         "status": "completed",
-        "output": [
-            {
-                "type": "message",
-                "role": "assistant",
-                "content": [
-                    { "type": "output_text", "text": text }
-                ]
-            }
-        ],
+        "output": output,
         "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
     })
 }
@@ -696,289 +875,5 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
 mod stream_tests;
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn responses_api_translation() {
-        let req = OpenAIResponseRequest {
-            model: "gpt-4o".into(),
-            input: Value::String("write a haiku".into()),
-            instructions: Some("be poetic".into()),
-            max_output_tokens: Some(128),
-            temperature: Some(0.9),
-            stream: None,
-            tools: None,
-        };
-        let body = response_to_anthropic(&req);
-        assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
-        assert_eq!(body["system"], "be poetic");
-        assert_eq!(body["max_tokens"], 128);
-        assert_eq!(body["messages"][0]["content"], "write a haiku");
-
-        let resp = json!({
-            "id": "msg_1",
-            "model": "claude-sonnet-4-5-20250929",
-            "content": [{"type":"text","text":"line1"}]
-        });
-        let out = anthropic_to_response(&resp, "gpt-4o");
-        assert_eq!(out["object"], "response");
-        assert_eq!(out["model"], "claude-sonnet-4-5-20250929");
-        assert_eq!(out["output"][0]["content"][0]["text"], "line1");
-    }
-
-    #[test]
-    fn responses_structured_input_translates_to_anthropic() {
-        let req = OpenAIResponseRequest {
-            model: "gpt-5".into(),
-            input: json!([
-                {
-                    "role": "developer",
-                    "content": [{"type": "input_text", "text": "be terse"}]
-                },
-                {
-                    "role": "system",
-                    "content": [{"type": "input_text", "text": "answer plainly"}]
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "input_text", "text": "describe this"},
-                        {"type": "input_image", "image_url": "https://example.com/image.png"}
-                    ]
-                },
-                {
-                    "role": "assistant",
-                    "content": [{"type": "output_text", "text": "a prior answer"}]
-                }
-            ]),
-            instructions: Some("follow policy".into()),
-            max_output_tokens: None,
-            temperature: None,
-            stream: None,
-            tools: None,
-        };
-
-        let body = response_to_anthropic(&req);
-
-        assert_eq!(
-            body["system"],
-            "follow policy\n\nbe terse\n\nanswer plainly"
-        );
-        assert_eq!(body["messages"].as_array().map(Vec::len), Some(2));
-        assert_eq!(body["messages"][0]["role"], "user");
-        assert_eq!(
-            body["messages"][0]["content"],
-            json!([
-                {"type": "text", "text": "describe this"},
-                {
-                    "type": "image",
-                    "source": {"type": "url", "url": "https://example.com/image.png"}
-                }
-            ])
-        );
-        assert_eq!(body["messages"][1]["role"], "assistant");
-        assert_eq!(
-            body["messages"][1]["content"],
-            json!([{"type": "text", "text": "a prior answer"}])
-        );
-    }
-
-    #[test]
-    fn chat_completion_projects_to_responses_input() {
-        let body = json!({
-            "model": "gpt-5-codex",
-            "messages": [
-                {"role": "system", "content": "be terse"},
-                {"role": "user", "content": "hello"},
-                {"role": "assistant", "content": "hi"}
-            ],
-            "max_tokens": 256,
-        });
-        let out = chat_completion_to_responses(&body);
-        assert_eq!(out["model"], "gpt-5-codex");
-        assert_eq!(out["instructions"], "be terse");
-        assert_eq!(out["max_output_tokens"], 256);
-        assert_eq!(out["input"][0]["role"], "user");
-        assert_eq!(out["input"][0]["content"][0]["type"], "input_text");
-        assert_eq!(out["input"][1]["content"][0]["type"], "output_text");
-    }
-
-    #[test]
-    fn chat_completion_projects_tools_and_results_to_responses() {
-        let body = json!({
-            "model": "gpt-5.6-sol",
-            "tools": [{
-                "type": "function",
-                "function": {
-                    "name": "get_weather",
-                    "description": "Get the weather",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {"city": {"type": "string"}}
-                    },
-                    "strict": true
-                }
-            }],
-            "tool_choice": {"type": "function", "function": {"name": "get_weather"}},
-            "messages": [
-                {"role": "user", "content": "weather in Moscow?"},
-                {
-                    "role": "assistant",
-                    "content": null,
-                    "tool_calls": [{
-                        "id": "call_weather_1",
-                        "type": "function",
-                        "function": {
-                            "name": "get_weather",
-                            "arguments": "{\"city\":\"Moscow\"}"
-                        }
-                    }]
-                },
-                {
-                    "role": "tool",
-                    "tool_call_id": "call_weather_1",
-                    "content": "cold"
-                }
-            ]
-        });
-
-        let out = chat_completion_to_responses(&body);
-
-        assert_eq!(
-            out["tools"][0],
-            json!({
-                "type": "function",
-                "name": "get_weather",
-                "description": "Get the weather",
-                "parameters": {
-                    "type": "object",
-                    "properties": {"city": {"type": "string"}}
-                },
-                "strict": true
-            })
-        );
-        assert_eq!(
-            out["tool_choice"],
-            json!({"type": "function", "name": "get_weather"})
-        );
-        assert_eq!(
-            out["input"][1],
-            json!({
-                "type": "function_call",
-                "call_id": "call_weather_1",
-                "name": "get_weather",
-                "arguments": "{\"city\":\"Moscow\"}"
-            })
-        );
-        assert_eq!(
-            out["input"][2],
-            json!({
-                "type": "function_call_output",
-                "call_id": "call_weather_1",
-                "output": "cold"
-            })
-        );
-    }
-
-    #[test]
-    fn chat_completion_preserves_stream_request_for_codex() {
-        let body = json!({
-            "model": "gpt-5.6-sol",
-            "messages": [{"role": "user", "content": "hello"}],
-            "stream": true,
-        });
-
-        let out = chat_completion_to_responses(&body);
-
-        assert_eq!(out["stream"], true);
-    }
-
-    #[test]
-    fn codex_response_converts_to_chat_completion() {
-        let response = json!({
-            "id": "resp_1",
-            "object": "response",
-            "created_at": 1_786_448_400,
-            "model": "gpt-5.6-sol",
-            "status": "completed",
-            "output": [{
-                "id": "msg_1",
-                "type": "message",
-                "role": "assistant",
-                "content": [{"type": "output_text", "text": "13"}]
-            }],
-            "usage": {"input_tokens": 9, "output_tokens": 2, "total_tokens": 11}
-        });
-
-        let out = response_to_chat_completion(&response, "gpt-5.6-sol");
-
-        assert_eq!(out["object"], "chat.completion");
-        assert_eq!(out["choices"][0]["message"]["role"], "assistant");
-        assert_eq!(out["choices"][0]["message"]["content"], "13");
-        assert_eq!(out["choices"][0]["finish_reason"], "stop");
-        assert_eq!(out["usage"]["prompt_tokens"], 9);
-        assert_eq!(out["usage"]["completion_tokens"], 2);
-        assert_eq!(out["usage"]["total_tokens"], 11);
-        assert!(out.get("output").is_none());
-        assert!(out.get("instructions").is_none());
-    }
-
-    #[test]
-    fn codex_function_calls_convert_to_chat_tool_calls() {
-        let response = json!({
-            "id": "resp_tools",
-            "model": "gpt-5.6-sol",
-            "status": "completed",
-            "output": [{
-                "id": "fc_1",
-                "call_id": "call_1",
-                "type": "function_call",
-                "name": "get_weather",
-                "arguments": "{\"city\":\"Paris\"}"
-            }]
-        });
-
-        let out = response_to_chat_completion(&response, "gpt-5.6-sol");
-
-        assert!(out["choices"][0]["message"]["content"].is_null());
-        assert_eq!(out["choices"][0]["finish_reason"], "tool_calls");
-        assert_eq!(
-            out["choices"][0]["message"]["tool_calls"][0]["id"],
-            "call_1"
-        );
-        assert_eq!(
-            out["choices"][0]["message"]["tool_calls"][0]["function"]["name"],
-            "get_weather"
-        );
-    }
-
-    #[test]
-    fn normalizes_string_input_and_preserves_typed_input() {
-        let typed = json!([{
-            "type": "message",
-            "role": "user",
-            "content": [{"type": "input_text", "text": "скажи ок"}],
-        }]);
-        assert_eq!(
-            normalize_input_items(&Value::String("скажи ок".into())),
-            typed
-        );
-        assert_eq!(normalize_input_items(&typed), typed);
-    }
-
-    #[test]
-    fn drops_temperature_for_claude_5_models() {
-        let req = OpenAIResponseRequest {
-            model: "claude-opus-5".into(),
-            input: Value::String("hello".into()),
-            instructions: None,
-            max_output_tokens: None,
-            temperature: Some(0.7),
-            stream: None,
-            tools: None,
-        };
-        let body = response_to_anthropic(&req);
-        assert!(body.get("temperature").is_none());
-    }
-}
+#[path = "responses_tests.rs"]
+mod tests;

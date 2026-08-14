@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
-use std::io::{self, Write};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
@@ -145,6 +145,7 @@ pub struct ResolvedProvider {
 #[derive(Clone)]
 pub struct ProviderStore {
     path: PathBuf,
+    lock_path: PathBuf,
     token_secret: Arc<String>,
     inner: Arc<RwLock<HashMap<String, ProviderRecord>>>,
 }
@@ -166,6 +167,7 @@ impl ProviderStore {
             .map(|record| (record.name.clone(), record))
             .collect();
         Ok(Self {
+            lock_path: path.with_extension("lock"),
             path,
             token_secret: Arc::new(token_secret.to_string()),
             inner: Arc::new(RwLock::new(inner)),
@@ -174,6 +176,7 @@ impl ProviderStore {
 
     /// Return all providers sorted by name.
     pub fn list(&self) -> Result<Vec<ProviderRecord>, ProviderError> {
+        self.refresh()?;
         let mut records: Vec<_> = {
             let guard = self.inner.read().map_err(|_| ProviderError::LockPoisoned)?;
             guard.values().cloned().collect()
@@ -189,42 +192,23 @@ impl ProviderStore {
 
     /// Get one provider by name.
     pub fn get(&self, name: &str) -> Result<Option<ProviderRecord>, ProviderError> {
+        self.refresh()?;
         let guard = self.inner.read().map_err(|_| ProviderError::LockPoisoned)?;
         Ok(guard.get(name).cloned())
     }
 
     /// Add or replace a provider, encrypting any inline API key.
-    // Keep the write guard through flush so the in-memory map and file stay in sync.
-    #[allow(clippy::significant_drop_tightening)]
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let record = self.build_record(input)?;
-        {
-            let mut guard = self
-                .inner
-                .write()
-                .map_err(|_| ProviderError::LockPoisoned)?;
-            guard.insert(record.name.clone(), record.clone());
-            self.flush(&guard)?;
-        }
+        self.mutate(|records| {
+            records.insert(record.name.clone(), record.clone());
+        })?;
         Ok(record)
     }
 
     /// Delete a provider by name.
-    // Keep the write guard through flush so the in-memory map and file stay in sync.
-    #[allow(clippy::significant_drop_tightening)]
     pub fn delete(&self, name: &str) -> Result<bool, ProviderError> {
-        let removed = {
-            let mut guard = self
-                .inner
-                .write()
-                .map_err(|_| ProviderError::LockPoisoned)?;
-            let removed = guard.remove(name).is_some();
-            if removed {
-                self.flush(&guard)?;
-            }
-            removed
-        };
-        Ok(removed)
+        self.mutate(|records| records.remove(name).is_some())
     }
 
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
@@ -302,6 +286,49 @@ impl ProviderStore {
         let body = encode_provider_lenv(records.iter().copied())?;
         atomic_write(&self.path, body.as_bytes())?;
         Ok(())
+    }
+
+    fn load_map(&self) -> Result<HashMap<String, ProviderRecord>, ProviderError> {
+        if !self.path.exists() {
+            return Ok(HashMap::new());
+        }
+        Ok(decode_provider_lenv(&fs::read_to_string(&self.path)?)?
+            .into_iter()
+            .map(|record| (record.name.clone(), record))
+            .collect())
+    }
+
+    fn refresh(&self) -> Result<(), ProviderError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            let records = self.load_map()?;
+            *self
+                .inner
+                .write()
+                .map_err(|_| ProviderError::LockPoisoned)? = records;
+            Ok(())
+        })
+    }
+
+    fn mutate<T>(
+        &self,
+        operation: impl FnOnce(&mut HashMap<String, ProviderRecord>) -> T,
+    ) -> Result<T, ProviderError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            let mut guard = self
+                .inner
+                .write()
+                .map_err(|_| ProviderError::LockPoisoned)?;
+            *guard = self.load_map()?;
+            let before = guard.clone();
+            let result = operation(&mut guard);
+            if let Err(error) = self.flush(&guard) {
+                *guard = before;
+                drop(guard);
+                return Err(error);
+            }
+            drop(guard);
+            Ok(result)
+        })
     }
 }
 
@@ -598,17 +625,7 @@ fn unquote(value: &str) -> String {
 }
 
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ProviderError> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let tmp = path.with_extension("tmp");
-    {
-        let mut file = fs::File::create(&tmp)?;
-        file.write_all(contents)?;
-        file.sync_all()?;
-    }
-    fs::rename(&tmp, path)?;
-    Ok(())
+    crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
 }
 
 #[cfg(test)]
@@ -663,6 +680,21 @@ mod tests {
 
         let redacted = store.list_redacted().unwrap();
         assert!(redacted[0].has_encrypted_api_key);
+    }
+
+    #[test]
+    fn independently_opened_provider_stores_do_not_lose_updates() {
+        let dir = tempdir().unwrap();
+        let first = ProviderStore::open(dir.path(), "secret").unwrap();
+        let second = ProviderStore::open(dir.path(), "secret").unwrap();
+        first.upsert(upsert()).unwrap();
+        let mut other = upsert();
+        other.name = "other".into();
+        other.base_url = "https://other.example/v1".into();
+        second.upsert(other).unwrap();
+
+        assert_eq!(first.list().unwrap().len(), 2);
+        assert_eq!(second.list().unwrap().len(), 2);
     }
 
     #[test]

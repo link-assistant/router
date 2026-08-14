@@ -19,6 +19,10 @@ passes the run token through `LINK_ASSISTANT_TOKEN`, and removes the temporary
 home afterward. The normal `$CODEX_HOME` and `~/.codex` are untouched. See
 [with-router.md](with-router.md) for remote servers and token input.
 
+Wrapper flags may appear before or after `codex`; an explicit `--` forwards
+every later token verbatim. See
+[with-router.md](with-router.md#arguments-interaction-and-models).
+
 ## Manual or permanent configuration
 
 Automatic setup (merges this provider and backs up an existing config):

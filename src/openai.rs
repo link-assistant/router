@@ -36,6 +36,12 @@ pub struct ChatMessage {
     pub content: Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    /// Identifier of the tool call answered by a `role=tool` message.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    /// Function calls emitted by an assistant turn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_calls: Option<Value>,
 }
 
 /// `OpenAI` `POST /v1/chat/completions` request body.
@@ -59,6 +65,10 @@ pub struct OpenAIChatCompletionRequest {
     pub tools: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tool_choice: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<Value>,
 }
 
 /// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
@@ -77,11 +87,36 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
                 }
             }
             "user" | "assistant" => {
-                let anthropic_content = match &msg.content {
+                let mut anthropic_content = match &msg.content {
                     Value::String(s) => Value::String(s.clone()),
                     Value::Array(parts) => Value::Array(translate_parts(parts)),
                     _ => Value::String(extract_text(&msg.content).unwrap_or_default()),
                 };
+                if role == "assistant"
+                    && let Some(tool_calls) = msg.tool_calls.as_ref().and_then(Value::as_array)
+                {
+                    let mut blocks = match anthropic_content {
+                        Value::String(ref text) if text.is_empty() => Vec::new(),
+                        Value::String(text) => vec![json!({"type": "text", "text": text})],
+                        Value::Array(blocks) => blocks,
+                        _ => Vec::new(),
+                    };
+                    blocks.extend(tool_calls.iter().map(|call| {
+                        let function = call.get("function").unwrap_or(&Value::Null);
+                        let arguments = function
+                            .get("arguments")
+                            .and_then(Value::as_str)
+                            .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+                            .unwrap_or_else(|| json!({}));
+                        json!({
+                            "type": "tool_use",
+                            "id": call.get("id").and_then(Value::as_str).unwrap_or_default(),
+                            "name": function.get("name").and_then(Value::as_str).unwrap_or_default(),
+                            "input": arguments,
+                        })
+                    }));
+                    anthropic_content = Value::Array(blocks);
+                }
                 messages.push(json!({
                     "role": role,
                     "content": anthropic_content,
@@ -94,7 +129,11 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
                 messages.push(json!({
                     "role": "user",
                     "content": [
-                        { "type": "tool_result", "content": txt }
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": msg.tool_call_id.clone().unwrap_or_default(),
+                            "content": txt
+                        }
                     ]
                 }));
             }
@@ -102,7 +141,8 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
         }
     }
 
-    let max_tokens = req.max_completion_tokens.or(req.max_tokens).unwrap_or(4096);
+    let explicit_max_tokens = req.max_completion_tokens.or(req.max_tokens);
+    let max_tokens = explicit_max_tokens.unwrap_or(4096);
 
     let mut body = json!({
         "model": map_model(&req.model),
@@ -134,7 +174,16 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
     }
-    reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
+    if let Some(reasoning) = &req.reasoning {
+        body["reasoning"] = reasoning.clone();
+    } else if let Some(effort) = &req.reasoning_effort {
+        body["reasoning"] = json!({"effort": effort});
+    }
+    reconcile_subscription_parameters_with_limit_origin(
+        crate::subscription::SubscriptionProvider::Claude,
+        &mut body,
+        explicit_max_tokens.is_some(),
+    );
     body
 }
 
@@ -146,22 +195,129 @@ pub(crate) fn reconcile_subscription_parameters(
     provider: crate::subscription::SubscriptionProvider,
     body: &mut Value,
 ) {
-    let rejects_temperature = provider == crate::subscription::SubscriptionProvider::Codex
-        || (provider == crate::subscription::SubscriptionProvider::Claude
-            && body
-                .get("model")
-                .and_then(Value::as_str)
-                .and_then(|model| model.strip_prefix("claude-"))
-                .and_then(|model| {
-                    let mut parts = model.split('-');
-                    let family = parts.next()?;
-                    let generation = parts.next()?.parse::<u32>().ok()?;
-                    matches!(family, "haiku" | "sonnet" | "opus").then_some(generation)
-                })
-                .is_some_and(|generation| generation >= 5));
-    if rejects_temperature {
+    reconcile_subscription_parameters_with_limit_origin(provider, body, true);
+}
+
+pub(crate) fn reconcile_subscription_parameters_with_limit_origin(
+    provider: crate::subscription::SubscriptionProvider,
+    body: &mut Value,
+    output_limit_was_explicit: bool,
+) {
+    let model = body.get("model").and_then(Value::as_str);
+    let adaptive_thinking = crate::capabilities::claude_uses_adaptive_thinking(model);
+    let capabilities = crate::capabilities::subscription(provider, model);
+    if capabilities.temperature == crate::capabilities::Capability::Unsupported {
         if let Some(object) = body.as_object_mut() {
             object.remove("temperature");
+        }
+    }
+    if provider == crate::subscription::SubscriptionProvider::Claude {
+        reconcile_claude_thinking(body, adaptive_thinking, output_limit_was_explicit);
+    }
+}
+
+const CLAUDE_DEFAULT_MAX_TOKENS: u64 = 8_192;
+const CLAUDE_MIN_THINKING_BUDGET: u64 = 1_024;
+const CLAUDE_OUTPUT_HEADROOM: u64 = 8_192;
+const CLAUDE_OUTPUT_FLOOR: u64 = 4_096;
+const CLAUDE_FIXED_TOKEN_CEILING: u64 = 32_000;
+const CLAUDE_ADAPTIVE_TOKEN_CEILING: u64 = 40_192;
+
+fn reasoning_budget(effort: &str) -> u64 {
+    match effort {
+        "minimal" => 1_024,
+        "low" => 4_096,
+        "medium" => 8_192,
+        "xhigh" => 24_576,
+        "max" => 32_000,
+        _ => 16_384,
+    }
+}
+
+fn adaptive_effort(effort: &str) -> &'static str {
+    match effort {
+        "minimal" | "low" => "low",
+        "medium" => "medium",
+        "xhigh" | "max" => "max",
+        _ => "high",
+    }
+}
+
+fn reconcile_claude_thinking(
+    body: &mut Value,
+    adaptive_thinking: bool,
+    output_limit_was_explicit: bool,
+) {
+    let requested_effort = body
+        .pointer("/reasoning/effort")
+        .and_then(Value::as_str)
+        .map(str::to_string);
+    if let Some(object) = body.as_object_mut() {
+        object.remove("reasoning");
+    }
+    let thinking_present = body.get("thinking").is_some();
+    if !thinking_present
+        && requested_effort
+            .as_deref()
+            .is_some_and(|effort| effort != "none")
+    {
+        let effort = requested_effort.as_deref().unwrap_or("high");
+        let requested_budget = reasoning_budget(effort);
+        if adaptive_thinking {
+            body["thinking"] = json!({"type": "adaptive"});
+            body["output_config"] = json!({"effort": adaptive_effort(effort)});
+            if !output_limit_was_explicit {
+                body["max_tokens"] = json!(
+                    CLAUDE_DEFAULT_MAX_TOKENS
+                        .max(requested_budget.saturating_add(CLAUDE_OUTPUT_HEADROOM))
+                        .min(CLAUDE_ADAPTIVE_TOKEN_CEILING)
+                );
+            }
+        } else {
+            let mut max_tokens = body
+                .get("max_tokens")
+                .and_then(Value::as_u64)
+                .unwrap_or(CLAUDE_DEFAULT_MAX_TOKENS);
+            if !output_limit_was_explicit {
+                max_tokens = max_tokens
+                    .max(requested_budget.saturating_add(CLAUDE_OUTPUT_HEADROOM))
+                    .min(CLAUDE_FIXED_TOKEN_CEILING);
+                body["max_tokens"] = json!(max_tokens);
+            }
+            let available = max_tokens
+                .saturating_sub(CLAUDE_OUTPUT_FLOOR)
+                .max(CLAUDE_MIN_THINKING_BUDGET);
+            body["thinking"] = json!({
+                "type": "enabled",
+                "budget_tokens": requested_budget.min(available),
+            });
+        }
+    }
+    let max_tokens = body
+        .get("max_tokens")
+        .and_then(Value::as_u64)
+        .unwrap_or(CLAUDE_DEFAULT_MAX_TOKENS);
+    let thinking_enabled = body
+        .get("thinking")
+        .and_then(|thinking| thinking.get("type"))
+        .and_then(Value::as_str)
+        .is_some_and(|kind| matches!(kind, "enabled" | "adaptive"));
+    if thinking_enabled {
+        if let Some(budget) = body
+            .pointer("/thinking/budget_tokens")
+            .and_then(Value::as_u64)
+            && budget.saturating_add(CLAUDE_OUTPUT_FLOOR) > max_tokens
+            && max_tokens > CLAUDE_MIN_THINKING_BUDGET
+        {
+            body["thinking"]["budget_tokens"] = json!(
+                max_tokens
+                    .saturating_sub(CLAUDE_OUTPUT_FLOOR)
+                    .max(CLAUDE_MIN_THINKING_BUDGET)
+            );
+        }
+        if let Some(object) = body.as_object_mut() {
+            object.remove("temperature");
+            object.remove("top_p");
         }
     }
 }
@@ -718,270 +874,19 @@ pub fn list_models() -> Value {
     json!({"object": "list", "data": data})
 }
 
-pub(crate) fn extract_text(content: &Value) -> Option<String> {
-    match content {
-        Value::String(s) => Some(s.clone()),
-        Value::Array(parts) => {
-            let mut buf = String::new();
-            for p in parts {
-                if let Some(t) = p.get("text").and_then(Value::as_str) {
-                    buf.push_str(t);
-                } else if let Some(s) = p.as_str() {
-                    buf.push_str(s);
-                }
-            }
-            if buf.is_empty() { None } else { Some(buf) }
-        }
-        _ => None,
-    }
-}
+#[path = "openai_tools.rs"]
+mod tools;
 
-pub(crate) fn translate_parts(parts: &[Value]) -> Vec<Value> {
-    parts
-        .iter()
-        .filter_map(|p| {
-            let kind = p.get("type").and_then(Value::as_str).unwrap_or("text");
-            match kind {
-                "text" | "input_text" | "output_text" => {
-                    let text = p.get("text").and_then(Value::as_str).unwrap_or("");
-                    Some(json!({"type": "text", "text": text}))
-                }
-                "image_url" => {
-                    let url = p
-                        .get("image_url")
-                        .and_then(|v| v.get("url"))
-                        .and_then(Value::as_str)
-                        .unwrap_or("");
-                    Some(json!({
-                        "type": "image",
-                        "source": {"type": "url", "url": url}
-                    }))
-                }
-                "input_image" => {
-                    let url = p.get("image_url").and_then(Value::as_str).unwrap_or("");
-                    Some(json!({
-                        "type": "image",
-                        "source": {"type": "url", "url": url}
-                    }))
-                }
-                _ => None,
-            }
-        })
-        .collect()
-}
-
-pub(crate) fn translate_tools(tools: &Value) -> Value {
-    match tools {
-        Value::Array(arr) => {
-            let mapped: Vec<Value> = arr
-                .iter()
-                .filter_map(|t| {
-                    let kind = t.get("type").and_then(Value::as_str).unwrap_or("function");
-                    if kind != "function" {
-                        return None;
-                    }
-                    let func = t.get("function")?;
-                    let name = func.get("name").and_then(Value::as_str)?.to_string();
-                    let description = func
-                        .get("description")
-                        .cloned()
-                        .unwrap_or(Value::String(String::new()));
-                    let parameters = func.get("parameters").cloned().unwrap_or_else(|| json!({}));
-                    Some(json!({
-                        "name": name,
-                        "description": description,
-                        "input_schema": parameters,
-                    }))
-                })
-                .collect();
-            Value::Array(mapped)
-        }
-        other => other.clone(),
-    }
-}
-
-fn translate_tool_choice(choice: &Value) -> Value {
-    match choice {
-        Value::String(s) => match s.as_str() {
-            "required" => json!({"type": "any"}),
-            "none" => json!({"type": "none"}),
-            // "auto" plus any unrecognised string default to auto.
-            _ => json!({"type": "auto"}),
-        },
-        Value::Object(map) => {
-            if let Some(func) = map.get("function").and_then(Value::as_object) {
-                if let Some(name) = func.get("name").and_then(Value::as_str) {
-                    return json!({"type": "tool", "name": name});
-                }
-            }
-            json!({"type": "auto"})
-        }
-        _ => json!({"type": "auto"}),
-    }
-}
+pub(crate) use tools::{extract_text, translate_parts, translate_tool_choice, translate_tools};
+pub use tools::{
+    unsupported_anthropic_tool_type, untranslatable_anthropic_tool_choice,
+    untranslatable_chat_tool_history,
+};
 
 #[cfg(test)]
 #[path = "openai_request_tests.rs"]
 mod request_tests;
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn translates_tool_call_blocks() {
-        let req = OpenAIChatCompletionRequest {
-            model: "gpt-4".into(),
-            messages: vec![ChatMessage {
-                role: "user".into(),
-                content: Value::String("search for X".into()),
-                name: None,
-            }],
-            max_tokens: None,
-            max_completion_tokens: None,
-            temperature: None,
-            top_p: None,
-            stream: None,
-            stop: None,
-            tools: Some(json!([
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "search",
-                        "description": "search",
-                        "parameters": {"type": "object"}
-                    }
-                }
-            ])),
-            tool_choice: Some(json!("required")),
-        };
-        let body = chat_completion_to_anthropic(&req);
-        assert_eq!(body["tools"][0]["name"], "search");
-        assert_eq!(body["tool_choice"]["type"], "any");
-    }
-
-    #[test]
-    fn anthropic_to_chat_basic() {
-        let antrhopic_resp = json!({
-            "id": "msg_1",
-            "content": [
-                {"type": "text", "text": "hello back"}
-            ],
-            "stop_reason": "end_turn",
-            "usage": {"input_tokens": 5, "output_tokens": 3}
-        });
-        let out = anthropic_to_chat_completion(&antrhopic_resp, "claude-sonnet-4-5-20250929");
-        assert_eq!(out["model"], "claude-sonnet-4-5-20250929");
-        assert_eq!(out["choices"][0]["message"]["role"], "assistant");
-        assert_eq!(out["choices"][0]["message"]["content"], "hello back");
-        assert_eq!(out["choices"][0]["finish_reason"], "stop");
-        assert_eq!(out["usage"]["prompt_tokens"], 5);
-        assert_eq!(out["usage"]["completion_tokens"], 3);
-        assert_eq!(out["usage"]["total_tokens"], 8);
-    }
-
-    #[test]
-    fn anthropic_tool_use_to_openai_tool_calls() {
-        let resp = json!({
-            "id": "msg_x",
-            "content": [
-                {"type": "tool_use", "id": "t1", "name": "lookup", "input": {"q": "rust"}}
-            ],
-            "stop_reason": "tool_use"
-        });
-        let out = anthropic_to_chat_completion(&resp, "gpt-4");
-        let calls = out["choices"][0]["message"]["tool_calls"]
-            .as_array()
-            .unwrap();
-        assert_eq!(calls[0]["id"], "t1");
-        assert_eq!(calls[0]["function"]["name"], "lookup");
-        assert!(
-            calls[0]["function"]["arguments"]
-                .as_str()
-                .unwrap()
-                .contains("rust")
-        );
-        assert_eq!(out["choices"][0]["finish_reason"], "tool_calls");
-    }
-
-    #[test]
-    fn response_stream_emits_named_output_item_lifecycle() {
-        let mut translator =
-            OpenAIStreamTranslator::new(OpenAIStreamShape::Response, "claude-haiku-4-5");
-        let frames = translator.push(
-            br#"event: message_start
-data: {"type":"message_start","message":{"id":"msg_1","model":"claude-haiku-4-5"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hel"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"lo"}}
-
-event: message_stop
-data: {"type":"message_stop"}
-
-"#,
-        );
-        let event_names = frames
-            .iter()
-            .filter_map(|frame| frame.lines().next()?.strip_prefix("event: "))
-            .collect::<Vec<_>>();
-
-        assert_eq!(
-            event_names,
-            vec![
-                "response.created",
-                "response.in_progress",
-                "response.output_item.added",
-                "response.content_part.added",
-                "response.output_text.delta",
-                "response.output_text.delta",
-                "response.output_text.done",
-                "response.content_part.done",
-                "response.output_item.done",
-                "response.completed",
-            ]
-        );
-
-        let events = frames
-            .iter()
-            .filter_map(|frame| {
-                frame
-                    .lines()
-                    .find_map(|line| line.strip_prefix("data: "))
-                    .filter(|data| *data != "[DONE]")
-                    .map(|data| serde_json::from_str::<Value>(data).unwrap())
-            })
-            .collect::<Vec<_>>();
-        let item_id = events[2]["item"]["id"].as_str().unwrap();
-        for event in &events[3..8] {
-            assert_eq!(event["item_id"], item_id);
-            assert_eq!(event["output_index"], 0);
-        }
-        assert_eq!(events[3]["content_index"], 0);
-        assert_eq!(events[4]["content_index"], 0);
-        assert_eq!(events[5]["content_index"], 0);
-        assert_eq!(events[6]["text"], "hello");
-        assert_eq!(events[7]["part"]["text"], "hello");
-        assert_eq!(events[8]["item"]["content"][0]["text"], "hello");
-        assert_eq!(events[9]["response"]["output"][0]["id"], item_id);
-        assert_eq!(
-            events[9]["response"]["output"][0]["content"][0]["text"],
-            "hello"
-        );
-        assert_eq!(frames.last().map(String::as_str), Some("data: [DONE]\n\n"));
-    }
-
-    #[test]
-    fn list_models_includes_known_ids() {
-        let v = list_models();
-        let arr = v["data"].as_array().unwrap();
-        let ids: Vec<&str> = arr
-            .iter()
-            .filter_map(|m| m.get("id").and_then(Value::as_str))
-            .collect();
-        assert!(ids.contains(&"claude-opus-4-7"));
-        assert!(ids.contains(&"claude-sonnet-4-5-20250929"));
-    }
-}
+#[path = "openai_response_tests.rs"]
+mod tests;
