@@ -245,6 +245,19 @@ fn server_command(
         .expect("run server command")
 }
 
+fn with_router_command(home: &std::path::Path) -> Command {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    command
+        .env("HOME", home)
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("APPDATA")
+        .env_remove("LINK_ASSISTANT_ROUTER_URL")
+        .env_remove("ROUTER_URL")
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .env_remove("LINK_ASSISTANT_TOKEN");
+    command
+}
+
 fn fake_codex(bin_dir: &std::path::Path) {
     fs::create_dir_all(bin_dir).expect("create fake bin directory");
     let path = bin_dir.join("codex");
@@ -362,9 +375,8 @@ fn managed_admin_is_used_only_for_unclaimed_per_run_minting() {
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
 
-    let output = Command::new(env!("CARGO_BIN_EXE_with-router"))
+    let output = with_router_command(&home)
         .args(["codex", "hello"])
-        .env("HOME", &home)
         .env("PATH", path)
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_STATE", "running")
@@ -374,8 +386,6 @@ fn managed_admin_is_used_only_for_unclaimed_per_run_minting() {
         .env("CAPTURE_CONFIG", capture.join("config"))
         .env("CAPTURE_TOKEN", capture.join("token"))
         .env_remove("CODEX_HOME")
-        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
-        .env_remove("LINK_ASSISTANT_TOKEN")
         .output()
         .expect("run against unclaimed managed router");
 
@@ -422,9 +432,8 @@ fn concurrent_managed_launches_create_one_shared_container() {
     for index in 0..2 {
         let capture = directory.path().join(format!("capture-{index}"));
         fs::create_dir_all(&capture).expect("create capture directory");
-        let child = Command::new(env!("CARGO_BIN_EXE_with-router"))
+        let child = with_router_command(&home)
             .args(["codex", "hello"])
-            .env("HOME", &home)
             .env("PATH", &path)
             .env("DOCKER_LOG", &log)
             .env("FAKE_DOCKER_FILE", &docker_state)
@@ -435,8 +444,6 @@ fn concurrent_managed_launches_create_one_shared_container() {
             .env("CAPTURE_CONFIG", capture.join("config"))
             .env("CAPTURE_TOKEN", capture.join("token"))
             .env_remove("CODEX_HOME")
-            .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
-            .env_remove("LINK_ASSISTANT_TOKEN")
             .spawn()
             .expect("spawn concurrent managed wrapper");
         children.push(child);
@@ -475,9 +482,8 @@ fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
     let path =
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
-    let mut wrapper = Command::new(env!("CARGO_BIN_EXE_with-router"))
+    let mut wrapper = with_router_command(&home)
         .args(["codex", "wait"])
-        .env("HOME", &home)
         .env("PATH", path)
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_FILE", &docker_state)
@@ -489,8 +495,6 @@ fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
         .env("CAPTURE_TOKEN", capture.join("token"))
         .env("CAPTURE_PID", capture.join("pid"))
         .env_remove("CODEX_HOME")
-        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
-        .env_remove("LINK_ASSISTANT_TOKEN")
         .spawn()
         .expect("spawn wrapper to kill");
     for _ in 0..100 {
@@ -567,14 +571,11 @@ fn managed_claim_is_one_time_and_requires_a_later_token() {
     let path =
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
-    let rejected = Command::new(env!("CARGO_BIN_EXE_with-router"))
+    let rejected = with_router_command(&home)
         .arg("codex")
-        .env("HOME", &home)
         .env("PATH", path)
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_STATE", "running")
-        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
-        .env_remove("LINK_ASSISTANT_TOKEN")
         .output()
         .expect("run claimed managed router without token");
     assert!(!rejected.status.success());
@@ -606,9 +607,8 @@ fn claimed_managed_router_accepts_an_explicit_ordinary_token() {
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
 
-    let output = Command::new(env!("CARGO_BIN_EXE_with-router"))
+    let output = with_router_command(&home)
         .args(["--token", "ordinary-after-claim", "codex", "hello"])
-        .env("HOME", &home)
         .env("PATH", path)
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_STATE", "running")
