@@ -1,0 +1,1086 @@
+Lint and Format Check	Set up job	﻿2026-08-15T14:13:36.4433165Z Current runner version: '2.336.0'
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4458045Z ##[group]Runner Image Provisioner
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4458905Z Hosted Compute Agent
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4459427Z Version: 20260729.566
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4459976Z Commit: cf7153fe6e25b664e8693c24944bf2b00355d109
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4460680Z Build Date: 2026-07-29T19:17:02Z
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4461277Z Worker ID: {6a4170bb-d06d-42a8-9952-1945ffb8706f}
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4461913Z Azure Region: centralus
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4462434Z ##[endgroup]
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4463884Z ##[group]Operating System
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4464516Z Ubuntu
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4464974Z 24.04.4
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4465408Z LTS
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4465889Z ##[endgroup]
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4466430Z ##[group]Runner Image
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4467004Z Image: ubuntu-24.04
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4467510Z Version: 20260810.271.1
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4468437Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260810.271/images/ubuntu/Ubuntu2404-Readme.md
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4469973Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260810.271
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4470889Z ##[endgroup]
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4471837Z ##[group]GITHUB_TOKEN Permissions
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4474072Z Contents: read
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4474604Z Metadata: read
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4475074Z ##[endgroup]
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4477141Z Secret source: Actions
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4478062Z Prepare workflow directory
+Lint and Format Check	Set up job	2026-08-15T14:13:36.4968814Z Prepare all required actions
+Lint and Format Check	Set up job	2026-08-15T14:13:36.5018531Z Getting action download info
+Lint and Format Check	Set up job	2026-08-15T14:13:36.8103914Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Lint and Format Check	Set up job	2026-08-15T14:13:36.9562258Z Download action repository 'dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c' (SHA:4360b52568e2003a75bf9bc1d59f33a8e3fc893c)
+Lint and Format Check	Set up job	2026-08-15T14:13:37.1254118Z Download action repository 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' (SHA:55cc8345863c7cc4c66a329aec7e433d2d1c52a9)
+Lint and Format Check	Set up job	2026-08-15T14:13:37.2869118Z Download action repository 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' (SHA:820762786026740c76f36085b0efc47a31fe5020)
+Lint and Format Check	Set up job	2026-08-15T14:13:37.5160753Z Complete job name: Lint and Format Check
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-08-15T14:13:37.5863589Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5864847Z with:
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5865304Z   repository: link-assistant/router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5871707Z   token: ***
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5872135Z   ssh-strict: true
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5872708Z   ssh-user: git
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5873356Z   persist-credentials: true
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5873997Z   clean: true
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5874454Z   sparse-checkout-cone-mode: true
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5875032Z   fetch-depth: 1
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5875471Z   fetch-tags: false
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5875917Z   show-progress: true
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5876366Z   lfs: false
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5876766Z   submodules: false
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5877270Z   set-safe-directory: true
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5877802Z   allow-unsafe-pr-checkout: false
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5878666Z env:
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5879061Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5879565Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5880046Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5880637Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5881118Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5881709Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5882217Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5882936Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5883724Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.5884416Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6874847Z Syncing repository: link-assistant/router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6878287Z ##[group]Getting Git version info
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6879751Z Working directory is '/home/runner/work/router/router'
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6881791Z [command]/usr/bin/git version
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6951414Z git version 2.54.0
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6979636Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6988184Z Temporarily overriding HOME='/home/runner/work/_temp/67322ec2-765f-4415-9dca-29f236ed0d45' before making global git config changes
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6991224Z Adding repository directory to the temporary git global config as a safe directory
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.6992819Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7036738Z Deleting the contents of '/home/runner/work/router/router'
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7040059Z ##[group]Determining repository object format
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7042180Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7043829Z ##[group]Initializing the repository
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7048113Z [command]/usr/bin/git init /home/runner/work/router/router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7154654Z Initialized empty Git repository in /home/runner/work/router/router/.git/
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7160311Z [command]/usr/bin/git remote add origin https://github.com/link-assistant/router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7201527Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7203193Z ##[group]Disabling automatic garbage collection
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7205021Z [command]/usr/bin/git config --local gc.auto 0
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7227765Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7229275Z ##[group]Setting up auth
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7230435Z Removing SSH command configuration
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7233174Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7264551Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7584391Z Removing HTTP extra header
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7592771Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7631195Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7828682Z Removing includeIf entries pointing to credentials config files
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7833312Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.7863274Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8040892Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8074393Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git.path /home/runner/work/_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8102461Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8132032Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8157412Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8178693Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8179551Z ##[group]Fetching the repository
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:37.8185719Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +dd4addcc115d5a507a2c3c091201b37f179657cb:refs/remotes/pull/185/merge
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.1532313Z From https://github.com/link-assistant/router
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.1534442Z  * [new ref]         dd4addcc115d5a507a2c3c091201b37f179657cb -> pull/185/merge
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.1565651Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.1568080Z ##[group]Determining the checkout info
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.1570565Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.1576510Z [command]/usr/bin/git sparse-checkout disable
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.3541735Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.3581647Z ##[group]Checking out the ref
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.3585983Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/185/merge
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5138188Z Note: switching to 'refs/remotes/pull/185/merge'.
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5151748Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5152523Z You are in 'detached HEAD' state. You can look around, make experimental
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5153758Z changes and commit them, and you can discard any commits you make in this
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5154888Z state without impacting any branches by switching back to a branch.
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5155787Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5156171Z If you want to create a new branch to retain commits you create, you may
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5156967Z do so (now or later) by using -c with the switch command. Example:
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5157534Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5157788Z   git switch -c <new-branch-name>
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5158169Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5158424Z Or undo this operation with:
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5158760Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5158970Z   git switch -
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5159250Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5159686Z Turn off this advice by setting config variable advice.detachedHead to false
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5160253Z 
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5160889Z HEAD is now at dd4addc Merge 12aee5c5f6a71f15123f282150c96fa2a7005ae2 into 380ec6f1c7582847ac3f35459fab33dee4bac038
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.5162825Z ##[endgroup]
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.6077426Z [command]/usr/bin/git log -1 --format=%H
+Lint and Format Check	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:13:39.6106936Z dd4addcc115d5a507a2c3c091201b37f179657cb
+Lint and Format Check	Setup Rust	﻿2026-08-15T14:13:39.6434815Z ##[group]Run dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6435265Z with:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6435513Z   toolchain: 1.97.1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6435778Z   components: rustfmt, clippy
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6436061Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6436302Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6436620Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6436881Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6437162Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6437430Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6437733Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6438102Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6438773Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6439162Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6439494Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6504948Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6566613Z ##[group]Run if [[ -z $toolchain ]]; then
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6567152Z ^[[36;1mif [[ -z $toolchain ]]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6567875Z ^[[36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6568552Z ^[[36;1m  echo "'toolchain' is a required input" >&2^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6568928Z ^[[36;1m  exit 1^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6569354Z ^[[36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6569825Z ^[[36;1m  if [[ Linux == macOS ]]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6570379Z ^[[36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6570890Z ^[[36;1m  else^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6571309Z ^[[36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6571768Z ^[[36;1m  fi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6572093Z ^[[36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6572763Z ^[[36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6573575Z ^[[36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6574182Z ^[[36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6574691Z ^[[36;1melse^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6574973Z ^[[36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6575299Z ^[[36;1mfi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6604253Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6604651Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6604893Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6605170Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6605452Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6605762Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6606033Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6606355Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6606617Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6607055Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6607359Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6607688Z   toolchain: 1.97.1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6607932Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6704162Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=19]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6711197Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6746081Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6746731Z ^[[36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6747389Z ^[[36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6747915Z ^[[36;1mecho "downgrade=" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6770725Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6771104Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6771358Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6771636Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6771905Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6772181Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6772444Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6772738Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6773005Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6773570Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6773880Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6774199Z   targets: 
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6774442Z   components: rustfmt, clippy
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6774719Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6828260Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=11]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6830535Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6857408Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6857905Z ^[[36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6879197Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6879572Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6879819Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6880084Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6880354Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6880640Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6880916Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6881229Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6881495Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6881911Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6882220Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.6882558Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7530496Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=69]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7533261Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7651108Z ##[group]Run if ! command -v rustup &>/dev/null; then
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7651864Z ^[[36;1mif ! command -v rustup &>/dev/null; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7652862Z ^[[36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7654079Z ^[[36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7654528Z ^[[36;1mfi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7682439Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7682831Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7683072Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7683347Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7683704Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7683991Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7684264Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7684587Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7684867Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7685336Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7685659Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7686003Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7686293Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7735956Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=20]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7738524Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7746581Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7757885Z ##[start-action display=rustup toolchain install 1.97.1;id=__dtolnay_rust-toolchain.__run_4]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7784812Z ##[group]Run rustup toolchain install 1.97.1 --component rustfmt --component clippy --profile minimal --no-self-update
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7785717Z ^[[36;1mrustup toolchain install 1.97.1 --component rustfmt --component clippy --profile minimal --no-self-update^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7810123Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7810515Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7810760Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7811032Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7811295Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7811575Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7811841Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7812150Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7812412Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7812850Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7813154Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7813633Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7813950Z   RUSTUP_PERMIT_COPY_RENAME: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.7814217Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:39.8934120Z info: syncing channel updates for 1.97.1-x86_64-unknown-linux-gnu
+Lint and Format Check	Setup Rust	2026-08-15T14:13:40.3694171Z info: latest update on 2026-07-16 for version 1.97.1 (8bab26f4f 2026-07-14)
+Lint and Format Check	Setup Rust	2026-08-15T14:13:40.3753893Z info: downloading 5 components
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8125283Z 
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8190804Z   1.97.1-x86_64-unknown-linux-gnu installed - rustc 1.97.1 (8bab26f4f 2026-07-14)
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8191464Z 
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8219989Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=10046]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8224772Z ##[start-action display=rustup default 1.97.1;id=__dtolnay_rust-toolchain.__run_5]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8240460Z ##[group]Run rustup default 1.97.1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8240756Z ^[[36;1mrustup default 1.97.1^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8262463Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8262794Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8262984Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8263209Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8263562Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8263821Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8264048Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8264310Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8264665Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8265266Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8265534Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8265828Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8266056Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8348901Z info: using existing install for 1.97.1-x86_64-unknown-linux-gnu
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8354931Z info: default toolchain set to 1.97.1-x86_64-unknown-linux-gnu
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8355405Z 
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8417037Z   1.97.1-x86_64-unknown-linux-gnu unchanged - rustc 1.97.1 (8bab26f4f 2026-07-14)
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8417620Z 
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8429092Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=20]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8431184Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8447497Z ##[group]Run DATE=$(rustc +1.97.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8448246Z ^[[36;1mDATE=$(rustc +1.97.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8448800Z ^[[36;1mHASH=$(rustc +1.97.1 --version --verbose | sed -ne 's/^commit-hash: //p')^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8449240Z ^[[36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8470323Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8470637Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8470824Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8471044Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8471259Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8471491Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8471706Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8472084Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8472309Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8472695Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8472958Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8473239Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8473972Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8755917Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=32]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8758136Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8772871Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8773237Z ^[[36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8773787Z ^[[36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8774065Z ^[[36;1mfi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8795093Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8795411Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8795612Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8795831Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8796052Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8796296Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8796507Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8796753Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8796966Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8797350Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8797605Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8797894Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8798126Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8838941Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=8]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8840862Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8855359Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8855717Z ^[[36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8856042Z ^[[36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8856308Z ^[[36;1mfi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8874630Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8875066Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8875255Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8875470Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8875687Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8875921Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8876136Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8876384Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8876598Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8876948Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8877199Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8877482Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8877713Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8877911Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8916771Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=7]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8918688Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8934335Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8934802Z ^[[36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8935449Z ^[[36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8936097Z ^[[36;1m  if rustc +1.97.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8936608Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8937092Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8937536Z ^[[36;1m  elif rustc +1.97.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8938164Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8938632Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8938960Z ^[[36;1m  fi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8939152Z ^[[36;1mfi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8957082Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8957398Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8957588Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8957810Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8958030Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8958263Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8958479Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8958728Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8958941Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8959291Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8959539Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8959838Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8960079Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.8960294Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9219348Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=29]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9221661Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9237872Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9238566Z ^[[36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9239118Z ^[[36;1mif rustc +1.97.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9239536Z ^[[36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9239827Z ^[[36;1mfi^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9260775Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9261110Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9261302Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9261525Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9261745Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9262106Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9262333Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9262594Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9262819Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9263215Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9263736Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9264035Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9264283Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9264489Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9416349Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=19]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9419620Z ##[start-action display=rustc +1.97.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9435203Z ##[group]Run rustc +1.97.1 --version --verbose
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9435535Z ^[[36;1mrustc +1.97.1 --version --verbose^[[0m
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9456296Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9456625Z env:
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9456816Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9457034Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9457249Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9457480Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9457693Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9457942Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9458152Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9458551Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9458803Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9459086Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9459322Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9459534Z ##[endgroup]
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9594828Z rustc 1.97.1 (8bab26f4f 2026-07-14)
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9595438Z binary: rustc
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9596200Z commit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9596674Z commit-date: 2026-07-14
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9597041Z host: x86_64-unknown-linux-gnu
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9597446Z release: 1.97.1
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9597801Z LLVM version: 22.1.6
+Lint and Format Check	Setup Rust	2026-08-15T14:13:49.9609814Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=18]
+Lint and Format Check	Install rust-script	﻿2026-08-15T14:13:49.9662724Z ##[group]Run cargo install rust-script --version 0.36.0 --locked
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9663176Z ^[[36;1mcargo install rust-script --version 0.36.0 --locked^[[0m
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9684895Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9685155Z env:
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9685352Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9685581Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9685800Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9686037Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9686251Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9686500Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9686712Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9687096Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9687352Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9687652Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9687899Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9688105Z ##[endgroup]
+Lint and Format Check	Install rust-script	2026-08-15T14:13:49.9931230Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Lint and Format Check	Install rust-script	2026-08-15T14:13:50.0678613Z ^[[1m^[[92m Downloading^[[0m crates ...
+Lint and Format Check	Install rust-script	2026-08-15T14:13:50.1416125Z ^[[1m^[[92m  Downloaded^[[0m rust-script v0.36.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:50.1875203Z ^[[1m^[[92m  Installing^[[0m rust-script v0.36.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:50.1898203Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Lint and Format Check	Install rust-script	2026-08-15T14:13:51.5786036Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.1599018Z ^[[1m^[[92m Downloading^[[0m crates ...
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2067401Z ^[[1m^[[92m  Downloaded^[[0m aho-corasick v1.1.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2149065Z ^[[1m^[[92m  Downloaded^[[0m anstream v0.6.20
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2264575Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.9.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2418624Z ^[[1m^[[92m  Downloaded^[[0m clap v4.5.45
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2481591Z ^[[1m^[[92m  Downloaded^[[0m colorchoice v1.0.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2617370Z ^[[1m^[[92m  Downloaded^[[0m digest v0.10.7
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2639531Z ^[[1m^[[92m  Downloaded^[[0m env_filter v0.1.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2805686Z ^[[1m^[[92m  Downloaded^[[0m errno v0.3.13
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.2830923Z ^[[1m^[[92m  Downloaded^[[0m getopts v0.2.23
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3052757Z ^[[1m^[[92m  Downloaded^[[0m indexmap v2.10.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3269352Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.7.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3452319Z ^[[1m^[[92m  Downloaded^[[0m libc v0.2.175
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3613756Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark v0.13.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3728671Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.219
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3799121Z ^[[1m^[[92m  Downloaded^[[0m regex-automata v0.4.9
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3924598Z ^[[1m^[[92m  Downloaded^[[0m shell-words v1.1.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.3996285Z ^[[1m^[[92m  Downloaded^[[0m toml v0.9.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4107266Z ^[[1m^[[92m  Downloaded^[[0m toml_writer v1.0.2
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4212037Z ^[[1m^[[92m  Downloaded^[[0m unicode-width v0.2.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4332741Z ^[[1m^[[92m  Downloaded^[[0m winnow v0.7.12
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4392395Z ^[[1m^[[92m  Downloaded^[[0m anstyle-query v1.1.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4549935Z ^[[1m^[[92m  Downloaded^[[0m clap_builder v4.5.44
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4591144Z ^[[1m^[[92m  Downloaded^[[0m crypto-common v0.1.6
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4745954Z ^[[1m^[[92m  Downloaded^[[0m env_logger v0.11.8
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4764063Z ^[[1m^[[92m  Downloaded^[[0m generic-array v0.14.7
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4932145Z ^[[1m^[[92m  Downloaded^[[0m is_terminal_polyfill v1.70.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.4939732Z ^[[1m^[[92m  Downloaded^[[0m log v0.4.27
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5116768Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark-escape v0.11.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5164088Z ^[[1m^[[92m  Downloaded^[[0m rustix v1.0.8
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5309870Z ^[[1m^[[92m  Downloaded^[[0m strsim v0.11.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5359444Z ^[[1m^[[92m  Downloaded^[[0m toml_parser v1.0.2
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5478971Z ^[[1m^[[92m  Downloaded^[[0m utf8parse v0.2.2
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5562459Z ^[[1m^[[92m  Downloaded^[[0m anstyle-parse v0.2.7
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5694849Z ^[[1m^[[92m  Downloaded^[[0m clap_lex v0.7.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5758661Z ^[[1m^[[92m  Downloaded^[[0m dirs-sys v0.5.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.5878054Z ^[[1m^[[92m  Downloaded^[[0m getrandom v0.3.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6119062Z ^[[1m^[[92m  Downloaded^[[0m regex v1.11.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6240577Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.9.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6574424Z ^[[1m^[[92m  Downloaded^[[0m sha1 v0.10.6
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6584090Z ^[[1m^[[92m  Downloaded^[[0m typenum v1.18.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6602752Z ^[[1m^[[92m  Downloaded^[[0m anstyle v1.0.11
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6613053Z ^[[1m^[[92m  Downloaded^[[0m cpufeatures v0.2.17
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6681293Z ^[[1m^[[92m  Downloaded^[[0m fastrand v2.3.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6802572Z ^[[1m^[[92m  Downloaded^[[0m once_cell v1.21.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.6873886Z ^[[1m^[[92m  Downloaded^[[0m serde_spanned v1.0.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7002353Z ^[[1m^[[92m  Downloaded^[[0m unicase v2.8.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7058555Z ^[[1m^[[92m  Downloaded^[[0m cfg-if v1.0.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7286761Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.15.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7317791Z ^[[1m^[[92m  Downloaded^[[0m regex-syntax v0.8.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7475330Z ^[[1m^[[92m  Downloaded^[[0m equivalent v1.0.2
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7482323Z ^[[1m^[[92m  Downloaded^[[0m version_check v0.9.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7664901Z ^[[1m^[[92m  Downloaded^[[0m block-buffer v0.10.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7672178Z ^[[1m^[[92m  Downloaded^[[0m tempfile v3.20.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7845782Z ^[[1m^[[92m  Downloaded^[[0m dirs v6.0.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.7854702Z ^[[1m^[[92m  Downloaded^[[0m toml_datetime v0.7.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.8033129Z ^[[1m^[[92m  Downloaded^[[0m option-ext v0.2.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.8086113Z ^[[1m^[[92m  Downloaded^[[0m jiff v0.2.15
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.8384632Z ^[[1m^[[92m   Compiling^[[0m version_check v0.9.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.8385297Z ^[[1m^[[92m   Compiling^[[0m typenum v1.18.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.8385789Z ^[[1m^[[92m   Compiling^[[0m libc v0.2.175
+Lint and Format Check	Install rust-script	2026-08-15T14:13:52.8386211Z ^[[1m^[[92m   Compiling^[[0m memchr v2.7.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.0188646Z ^[[1m^[[92m   Compiling^[[0m generic-array v0.14.7
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.1678330Z ^[[1m^[[92m   Compiling^[[0m utf8parse v0.2.2
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.1765414Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.219
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.2064878Z ^[[1m^[[92m   Compiling^[[0m anstyle-parse v0.2.7
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.3024967Z ^[[1m^[[92m   Compiling^[[0m aho-corasick v1.1.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.6154569Z ^[[1m^[[92m   Compiling^[[0m anstyle-query v1.1.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.6528493Z ^[[1m^[[92m   Compiling^[[0m regex-syntax v0.8.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.8655059Z ^[[1m^[[92m   Compiling^[[0m is_terminal_polyfill v1.70.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.9015301Z ^[[1m^[[92m   Compiling^[[0m colorchoice v1.0.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:53.9434715Z ^[[1m^[[92m   Compiling^[[0m anstyle v1.0.11
+Lint and Format Check	Install rust-script	2026-08-15T14:13:54.1137454Z ^[[1m^[[92m   Compiling^[[0m anstream v0.6.20
+Lint and Format Check	Install rust-script	2026-08-15T14:13:54.4044679Z ^[[1m^[[92m   Compiling^[[0m rustix v1.0.8
+Lint and Format Check	Install rust-script	2026-08-15T14:13:54.5654538Z ^[[1m^[[92m   Compiling^[[0m getrandom v0.3.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:54.7004707Z ^[[1m^[[92m   Compiling^[[0m cfg-if v1.0.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:54.7454513Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.9.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:55.0024924Z ^[[1m^[[92m   Compiling^[[0m crypto-common v0.1.6
+Lint and Format Check	Install rust-script	2026-08-15T14:13:55.0694881Z ^[[1m^[[92m   Compiling^[[0m block-buffer v0.10.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:55.1394684Z ^[[1m^[[92m   Compiling^[[0m winnow v0.7.12
+Lint and Format Check	Install rust-script	2026-08-15T14:13:56.3864831Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.9
+Lint and Format Check	Install rust-script	2026-08-15T14:13:56.8481445Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.9.4
+Lint and Format Check	Install rust-script	2026-08-15T14:13:56.8754564Z ^[[1m^[[92m   Compiling^[[0m unicode-width v0.2.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.0626883Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark v0.13.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.1262095Z ^[[1m^[[92m   Compiling^[[0m strsim v0.11.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.1535562Z ^[[1m^[[92m   Compiling^[[0m clap_lex v0.7.5
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.3474730Z ^[[1m^[[92m   Compiling^[[0m option-ext v0.2.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.3748005Z ^[[1m^[[92m   Compiling^[[0m log v0.4.27
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.5654593Z ^[[1m^[[92m   Compiling^[[0m dirs-sys v0.5.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.6174991Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.5.44
+Lint and Format Check	Install rust-script	2026-08-15T14:13:57.8404613Z ^[[1m^[[92m   Compiling^[[0m getopts v0.2.23
+Lint and Format Check	Install rust-script	2026-08-15T14:13:58.4408461Z ^[[1m^[[92m   Compiling^[[0m toml_datetime v0.7.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:58.7102075Z ^[[1m^[[92m   Compiling^[[0m regex v1.11.1
+Lint and Format Check	Install rust-script	2026-08-15T14:13:59.4391055Z ^[[1m^[[92m   Compiling^[[0m env_filter v0.1.3
+Lint and Format Check	Install rust-script	2026-08-15T14:13:59.7704766Z ^[[1m^[[92m   Compiling^[[0m serde_spanned v1.0.0
+Lint and Format Check	Install rust-script	2026-08-15T14:13:59.8350142Z ^[[1m^[[92m   Compiling^[[0m toml_parser v1.0.2
+Lint and Format Check	Install rust-script	2026-08-15T14:13:59.9134880Z ^[[1m^[[92m   Compiling^[[0m digest v0.10.7
+Lint and Format Check	Install rust-script	2026-08-15T14:14:00.1695290Z ^[[1m^[[92m   Compiling^[[0m fastrand v2.3.0
+Lint and Format Check	Install rust-script	2026-08-15T14:14:00.3484644Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark-escape v0.11.0
+Lint and Format Check	Install rust-script	2026-08-15T14:14:00.4178856Z ^[[1m^[[92m   Compiling^[[0m unicase v2.8.1
+Lint and Format Check	Install rust-script	2026-08-15T14:14:00.5711469Z ^[[1m^[[92m   Compiling^[[0m jiff v0.2.15
+Lint and Format Check	Install rust-script	2026-08-15T14:14:00.7834710Z ^[[1m^[[92m   Compiling^[[0m once_cell v1.21.3
+Lint and Format Check	Install rust-script	2026-08-15T14:14:00.9304779Z ^[[1m^[[92m   Compiling^[[0m toml_writer v1.0.2
+Lint and Format Check	Install rust-script	2026-08-15T14:14:01.1024822Z ^[[1m^[[92m   Compiling^[[0m cpufeatures v0.2.17
+Lint and Format Check	Install rust-script	2026-08-15T14:14:01.1264667Z ^[[1m^[[92m   Compiling^[[0m sha1 v0.10.6
+Lint and Format Check	Install rust-script	2026-08-15T14:14:01.3404721Z ^[[1m^[[92m   Compiling^[[0m toml v0.9.5
+Lint and Format Check	Install rust-script	2026-08-15T14:14:02.6736888Z ^[[1m^[[92m   Compiling^[[0m tempfile v3.20.0
+Lint and Format Check	Install rust-script	2026-08-15T14:14:03.4207977Z ^[[1m^[[92m   Compiling^[[0m clap v4.5.45
+Lint and Format Check	Install rust-script	2026-08-15T14:14:03.4494836Z ^[[1m^[[92m   Compiling^[[0m dirs v6.0.0
+Lint and Format Check	Install rust-script	2026-08-15T14:14:03.4804808Z ^[[1m^[[92m   Compiling^[[0m shell-words v1.1.0
+Lint and Format Check	Install rust-script	2026-08-15T14:14:03.9422734Z ^[[1m^[[92m   Compiling^[[0m env_logger v0.11.8
+Lint and Format Check	Install rust-script	2026-08-15T14:14:05.4890117Z ^[[1m^[[92m   Compiling^[[0m rust-script v0.36.0
+Lint and Format Check	Install rust-script	2026-08-15T14:14:25.5617156Z ^[[1m^[[92m    Finished^[[0m `release` profile [optimized] target(s) in 35.58s
+Lint and Format Check	Install rust-script	2026-08-15T14:14:25.5665311Z ^[[1m^[[92m  Installing^[[0m /home/runner/.cargo/bin/rust-script
+Lint and Format Check	Install rust-script	2026-08-15T14:14:25.5669278Z ^[[1m^[[92m   Installed^[[0m package `rust-script v0.36.0` (executable `rust-script`)
+Lint and Format Check	Cache cargo registry	﻿2026-08-15T14:14:25.7088530Z ##[group]Run actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7088877Z with:
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7089094Z   path: ~/.cargo/registry
+Lint and Format Check	Cache cargo registry	~/.cargo/git
+Lint and Format Check	Cache cargo registry	target
+Lint and Format Check	Cache cargo registry	
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7089666Z   key: Linux-cargo-d18db5b9e49e987eb2d29ae2e149dc246bb196ccdf02cffe227f3f6fb66d6fd0
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7090089Z   restore-keys: Linux-cargo-
+Lint and Format Check	Cache cargo registry	
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7090340Z   enableCrossOsArchive: false
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7090585Z   fail-on-cache-miss: false
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7090810Z   lookup-only: false
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7091012Z   save-always: false
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7091200Z env:
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7091379Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7091593Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7091805Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7092034Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7092249Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7092500Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7092721Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7093204Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7093664Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7093995Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7094239Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.7094439Z ##[endgroup]
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:25.9922153Z Cache hit for: Linux-cargo-d18db5b9e49e987eb2d29ae2e149dc246bb196ccdf02cffe227f3f6fb66d6fd0
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:27.1366257Z Received 117440512 of 1378325353 (8.5%), 111.9 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:28.1414488Z Received 281018368 of 1378325353 (20.4%), 133.9 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:29.1382540Z Received 528482304 of 1378325353 (38.3%), 167.8 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:30.1381427Z Received 704643072 of 1378325353 (51.1%), 167.9 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:31.1384754Z Received 910163968 of 1378325353 (66.0%), 173.5 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:32.1386448Z Received 1073741824 of 1378325353 (77.9%), 170.6 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:33.1404646Z Received 1212153856 of 1378325353 (87.9%), 165.0 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:34.1408425Z Received 1374131049 of 1378325353 (99.7%), 163.7 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:34.1934691Z Received 1378325353 of 1378325353 (100.0%), 163.1 MBs/sec
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:34.1936831Z Cache Size: ~1314 MB (1378325353 B)
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:34.1973298Z [command]/usr/bin/tar -xf /home/runner/work/_temp/b04fba4a-66ea-418a-989a-cad26d3523db/cache.tzst -P -C /home/runner/work/router/router --use-compress-program unzstd
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:45.2047220Z Cache restored successfully
+Lint and Format Check	Cache cargo registry	2026-08-15T14:14:45.2556651Z Cache restored from key: Linux-cargo-d18db5b9e49e987eb2d29ae2e149dc246bb196ccdf02cffe227f3f6fb66d6fd0
+Lint and Format Check	Check formatting	﻿2026-08-15T14:14:45.2673199Z ##[group]Run cargo fmt --all -- --check
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2673753Z ^[[36;1mcargo fmt --all -- --check^[[0m
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2694758Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2695009Z env:
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2695201Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2695432Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2695672Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2695922Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2696143Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2696397Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2696627Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2696986Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2697246Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2697540Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2697783Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Check formatting	2026-08-15T14:14:45.2697986Z ##[endgroup]
+Lint and Format Check	Verify Cargo.lock is current	﻿2026-08-15T14:14:45.9560370Z ##[group]Run cargo check --locked --all-targets --all-features
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9560912Z ^[[36;1mcargo check --locked --all-targets --all-features^[[0m
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9594198Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9594475Z env:
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9594670Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9594893Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9595121Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9595367Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9595590Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9595846Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9596065Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9596854Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9597480Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9597937Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9598323Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:45.9598654Z ##[endgroup]
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.2887136Z ^[[1m^[[92m    Checking^[[0m cfg-if v1.0.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.2888522Z ^[[1m^[[92m    Checking^[[0m typenum v1.20.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.2934444Z ^[[1m^[[92m    Checking^[[0m libc v0.2.189
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.2964203Z ^[[1m^[[92m    Checking^[[0m zeroize v1.9.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.3154756Z ^[[1m^[[92m    Checking^[[0m subtle v2.6.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.3761088Z ^[[1m^[[92m    Checking^[[0m once_cell v1.21.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.3919497Z ^[[1m^[[92m    Checking^[[0m const-oid v0.9.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.4834756Z ^[[1m^[[92m    Checking^[[0m rand_core v0.10.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.4874942Z ^[[1m^[[92m    Checking^[[0m pin-project-lite v0.2.17
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.5174781Z ^[[1m^[[92m    Checking^[[0m bytes v1.12.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.5570490Z ^[[1m^[[92m    Checking^[[0m itoa v1.0.18
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.6374606Z ^[[1m^[[92m    Checking^[[0m futures-core v0.3.34
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.6944574Z ^[[1m^[[92m    Checking^[[0m zerofrom v0.1.8
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.7504794Z ^[[1m^[[92m    Checking^[[0m stable_deref_trait v1.2.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.7724797Z ^[[1m^[[92m    Checking^[[0m log v0.4.33
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.8624621Z ^[[1m^[[92m    Checking^[[0m base64ct v1.8.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:47.9144871Z ^[[1m^[[92m    Checking^[[0m yoke v0.8.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.0154994Z ^[[1m^[[92m    Checking^[[0m pem-rfc7468 v0.7.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.0211261Z ^[[1m^[[92m    Checking^[[0m tracing-core v0.1.36
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.0315564Z ^[[1m^[[92m    Checking^[[0m generic-array v0.14.9
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.0948391Z ^[[1m^[[92m    Checking^[[0m hybrid-array v0.4.14
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.2660448Z ^[[1m^[[92m    Checking^[[0m smallvec v1.15.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.3854699Z ^[[1m^[[92m    Checking^[[0m der v0.7.10
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.4787637Z ^[[1m^[[92m    Checking^[[0m block-buffer v0.10.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.5344852Z ^[[1m^[[92m    Checking^[[0m getrandom v0.4.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.5374427Z ^[[1m^[[92m    Checking^[[0m getrandom v0.2.17
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.5664736Z ^[[1m^[[92m    Checking^[[0m crypto-common v0.1.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.6141940Z ^[[1m^[[92m    Checking^[[0m errno v0.3.14
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.6169545Z ^[[1m^[[92m    Checking^[[0m digest v0.10.7
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.6173280Z ^[[1m^[[92m    Checking^[[0m rand_core v0.6.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.6681942Z ^[[1m^[[92m    Checking^[[0m signal-hook-registry v1.4.8
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.7224651Z ^[[1m^[[92m    Checking^[[0m mio v1.2.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.7454841Z ^[[1m^[[92m    Checking^[[0m socket2 v0.6.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.7677856Z ^[[1m^[[92m    Checking^[[0m libm v0.2.16
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.9484455Z ^[[1m^[[92m    Checking^[[0m zerovec v0.11.7
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:48.9497524Z ^[[1m^[[92m    Checking^[[0m tokio v1.53.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.0895187Z ^[[1m^[[92m    Checking^[[0m spki v0.7.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.1778078Z ^[[1m^[[92m    Checking^[[0m crypto-common v0.2.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.3684521Z ^[[1m^[[92m    Checking^[[0m serde_core v1.0.229
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.4674706Z ^[[1m^[[92m    Checking^[[0m num-traits v0.2.19
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.7311520Z ^[[1m^[[92m    Checking^[[0m tracing v0.1.44
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.8665733Z ^[[1m^[[92m    Checking^[[0m pkcs8 v0.10.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.9414506Z ^[[1m^[[92m    Checking^[[0m http v1.5.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:49.9701097Z ^[[1m^[[92m    Checking^[[0m bitflags v2.13.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.0704959Z ^[[1m^[[92m    Checking^[[0m tinystr v0.8.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.1715406Z ^[[1m^[[92m    Checking^[[0m slab v0.4.12
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.2665145Z ^[[1m^[[92m    Checking^[[0m litemap v0.8.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.3788940Z ^[[1m^[[92m    Checking^[[0m writeable v0.6.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.4864533Z ^[[1m^[[92m    Checking^[[0m http-body v1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.5175336Z ^[[1m^[[92m    Checking^[[0m percent-encoding v2.3.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.5424876Z ^[[1m^[[92m    Checking^[[0m icu_locale_core v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.5934784Z ^[[1m^[[92m    Checking^[[0m zerocopy v0.8.56
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:50.9964721Z ^[[1m^[[92m    Checking^[[0m serde v1.0.229
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.1304671Z ^[[1m^[[92m    Checking^[[0m zerotrie v0.2.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.2914978Z ^[[1m^[[92m    Checking^[[0m potential_utf v0.1.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.3454862Z ^[[1m^[[92m    Checking^[[0m hmac v0.12.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.3704944Z ^[[1m^[[92m    Checking^[[0m block-buffer v0.12.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.4075048Z ^[[1m^[[92m    Checking^[[0m utf8_iter v1.0.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.4434711Z ^[[1m^[[92m    Checking^[[0m memchr v2.8.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.7974748Z ^[[1m^[[92m    Checking^[[0m tower-service v0.3.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.8264766Z ^[[1m^[[92m    Checking^[[0m equivalent v1.0.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:51.8489913Z ^[[1m^[[92m    Checking^[[0m hashbrown v0.17.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.1994783Z ^[[1m^[[92m    Checking^[[0m fnv v1.0.7
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.2284787Z ^[[1m^[[92m    Checking^[[0m icu_collections v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.2854867Z ^[[1m^[[92m    Checking^[[0m indexmap v2.14.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.4594807Z ^[[1m^[[92m    Checking^[[0m icu_provider v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.6345074Z ^[[1m^[[92m    Checking^[[0m aws-lc-sys v0.44.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.7704896Z ^[[1m^[[92m    Checking^[[0m signature v2.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.8184565Z ^[[1m^[[92m    Checking^[[0m ff v0.13.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.8244500Z ^[[1m^[[92m    Checking^[[0m rustls-pki-types v1.15.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.8844591Z ^[[1m^[[92m    Checking^[[0m cpufeatures v0.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.9084801Z ^[[1m^[[92m    Checking^[[0m futures-task v0.3.34
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:52.9771462Z ^[[1m^[[92m    Checking^[[0m futures-sink v0.3.34
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.0224870Z ^[[1m^[[92m    Checking^[[0m base16ct v0.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.0394825Z ^[[1m^[[92m    Checking^[[0m tokio-util v0.7.19
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.0845395Z ^[[1m^[[92m    Checking^[[0m aws-lc-rs v1.18.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.0894369Z ^[[1m^[[92m    Checking^[[0m sec1 v0.7.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.2148725Z ^[[1m^[[92m    Checking^[[0m futures-util v0.3.34
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.4314939Z ^[[1m^[[92m    Checking^[[0m group v0.13.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.5204694Z ^[[1m^[[92m    Checking^[[0m icu_properties_data v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.5980862Z ^[[1m^[[92m    Checking^[[0m icu_normalizer_data v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.6304704Z ^[[1m^[[92m    Checking^[[0m hkdf v0.12.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.6534771Z ^[[1m^[[92m    Checking^[[0m ppv-lite86 v0.2.21
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.6924649Z ^[[1m^[[92m    Checking^[[0m crypto-bigint v0.5.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.9094949Z ^[[1m^[[92m    Checking^[[0m linux-raw-sys v0.12.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.9644803Z ^[[1m^[[92m    Checking^[[0m try-lock v0.2.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:53.9974890Z ^[[1m^[[92m    Checking^[[0m base64 v0.22.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.1654746Z ^[[1m^[[92m    Checking^[[0m spin v0.9.9
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.1775190Z ^[[1m^[[92m    Checking^[[0m tower-layer v0.3.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.2185151Z ^[[1m^[[92m    Checking^[[0m untrusted v0.9.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.2634595Z ^[[1m^[[92m    Checking^[[0m cpufeatures v0.2.17
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.2755107Z ^[[1m^[[92m    Checking^[[0m atomic-waker v1.1.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.2865120Z ^[[1m^[[92m    Checking^[[0m rustls-webpki v0.103.14
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.3065876Z ^[[1m^[[92m    Checking^[[0m h2 v0.4.15
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.6224833Z ^[[1m^[[92m    Checking^[[0m elliptic-curve v0.13.8
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.6465823Z ^[[1m^[[92m    Checking^[[0m lazy_static v1.5.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.6575132Z ^[[1m^[[92m    Checking^[[0m rustix v1.1.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.6734623Z ^[[1m^[[92m    Checking^[[0m want v0.3.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.7304796Z ^[[1m^[[92m    Checking^[[0m icu_normalizer v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.8794610Z ^[[1m^[[92m    Checking^[[0m icu_properties v2.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:54.9604563Z ^[[1m^[[92m    Checking^[[0m httparse v1.10.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:55.1065051Z ^[[1m^[[92m    Checking^[[0m zmij v1.0.23
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:55.7451368Z ^[[1m^[[92m    Checking^[[0m form_urlencoded v1.2.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:55.8068881Z ^[[1m^[[92m    Checking^[[0m inout v0.2.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:55.8655108Z ^[[1m^[[92m    Checking^[[0m sync_wrapper v1.0.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:55.9054679Z ^[[1m^[[92m    Checking^[[0m futures-channel v0.3.34
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:55.9275016Z ^[[1m^[[92m    Checking^[[0m fastrand v2.5.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.0305345Z ^[[1m^[[92m    Checking^[[0m cmov v0.5.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.0330533Z ^[[1m^[[92m    Checking^[[0m httpdate v1.0.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.1084745Z ^[[1m^[[92m    Checking^[[0m utf8parse v0.2.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.1430136Z ^[[1m^[[92m   Compiling^[[0m const-oid v0.10.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.1597428Z ^[[1m^[[92m    Checking^[[0m ctutils v0.4.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.2654956Z ^[[1m^[[92m   Compiling^[[0m digest v0.11.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.2785117Z ^[[1m^[[92m    Checking^[[0m anstyle-parse v1.0.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.2965068Z ^[[1m^[[92m    Checking^[[0m tempfile v3.27.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.3554867Z ^[[1m^[[92m    Checking^[[0m idna_adapter v1.2.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.3714721Z ^[[1m^[[92m    Checking^[[0m serde_json v1.0.151
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.4044300Z ^[[1m^[[92m    Checking^[[0m rustls v0.23.43
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.4285209Z ^[[1m^[[92m    Checking^[[0m sha2 v0.10.9
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.6274589Z ^[[1m^[[92m    Checking^[[0m rand_chacha v0.3.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.7504859Z ^[[1m^[[92m    Checking^[[0m rfc6979 v0.4.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:56.7975311Z ^[[1m^[[92m    Checking^[[0m num-integer v0.1.47
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.0414764Z ^[[1m^[[92m    Checking^[[0m anstyle-query v1.1.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.0523141Z ^[[1m^[[92m    Checking^[[0m is_terminal_polyfill v1.70.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.0735089Z ^[[1m^[[92m    Checking^[[0m cpubits v0.1.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.0814750Z ^[[1m^[[92m    Checking^[[0m anstyle v1.0.14
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.1274971Z ^[[1m^[[92m    Checking^[[0m colorchoice v1.0.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.1594903Z ^[[1m^[[92m    Checking^[[0m ipnet v2.12.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.2144621Z ^[[1m^[[92m   Compiling^[[0m same-file v1.0.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.2652467Z ^[[1m^[[92m    Checking^[[0m hyper v1.11.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.2830675Z ^[[1m^[[92m    Checking^[[0m regex-syntax v0.8.11
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.3295129Z ^[[1m^[[92m   Compiling^[[0m walkdir v2.5.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:57.5345046Z ^[[1m^[[92m   Compiling^[[0m sha2 v0.11.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.1695111Z ^[[1m^[[92m    Checking^[[0m hyper-util v0.1.20
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.2546443Z ^[[1m^[[92m    Checking^[[0m anstream v1.0.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.4644562Z ^[[1m^[[92m    Checking^[[0m thiserror v1.0.69
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.4984962Z ^[[1m^[[92m    Checking^[[0m thiserror v2.0.20
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.5334820Z ^[[1m^[[92m    Checking^[[0m num-iter v0.1.46
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.5764719Z ^[[1m^[[92m    Checking^[[0m ecdsa v0.16.9
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.5821737Z ^[[1m^[[92m    Checking^[[0m rand v0.8.7
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.7332316Z ^[[1m^[[92m    Checking^[[0m idna v1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.8624946Z ^[[1m^[[92m    Checking^[[0m universal-hash v0.6.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.9074813Z ^[[1m^[[92m    Checking^[[0m tower v0.5.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:58.9154605Z ^[[1m^[[92m    Checking^[[0m cipher v0.5.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.0695014Z ^[[1m^[[92m    Checking^[[0m primeorder v0.13.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.0755338Z ^[[1m^[[92m    Checking^[[0m http-body-util v0.1.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.2458761Z ^[[1m^[[92m    Checking^[[0m platform-num v0.8.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.2528674Z ^[[1m^[[92m    Checking^[[0m ryu v1.0.23
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.2529791Z ^[[1m^[[92m    Checking^[[0m mime v0.3.17
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.2954984Z ^[[1m^[[92m    Checking^[[0m clap_lex v1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.3105415Z ^[[1m^[[92m    Checking^[[0m openssl-probe v0.2.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.3504678Z ^[[1m^[[92m    Checking^[[0m strsim v0.11.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.3765198Z ^[[1m^[[92m    Checking^[[0m rustls-native-certs v0.8.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.4384894Z ^[[1m^[[92m    Checking^[[0m serde_urlencoded v0.7.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.4454850Z ^[[1m^[[92m    Checking^[[0m clap_builder v4.6.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.4885345Z ^[[1m^[[92m   Compiling^[[0m mime_guess v2.0.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.5044693Z ^[[1m^[[92m    Checking^[[0m dtor v0.0.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.5304781Z ^[[1m^[[92m    Checking^[[0m curve25519-dalek v4.1.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.5804882Z ^[[1m^[[92m    Checking^[[0m num-bigint-dig v0.8.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:14:59.8541906Z ^[[1m^[[92m    Checking^[[0m url v2.5.8
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.1854759Z ^[[1m^[[92m    Checking^[[0m polyval v0.7.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.2405326Z ^[[1m^[[92m    Checking^[[0m tokio-rustls v0.26.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.2685791Z ^[[1m^[[92m    Checking^[[0m regex-automata v0.4.18
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.4065164Z ^[[1m^[[92m   Compiling^[[0m rust-embed-utils v8.12.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.5064727Z ^[[1m^[[92m    Checking^[[0m getrandom v0.3.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.5914828Z ^[[1m^[[92m    Checking^[[0m ed25519 v2.2.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.6744465Z ^[[1m^[[92m    Checking^[[0m nom v8.0.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.7334816Z ^[[1m^[[92m    Checking^[[0m pkcs1 v0.7.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.8471297Z ^[[1m^[[92m    Checking^[[0m memmap2 v0.9.11
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.8671073Z ^[[1m^[[92m    Checking^[[0m allocator-api2 v0.4.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:00.9500488Z ^[[1m^[[92m    Checking^[[0m winnow v1.0.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.1334646Z ^[[1m^[[92m    Checking^[[0m iana-time-zone v0.1.65
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.1905021Z ^[[1m^[[92m    Checking^[[0m beef v0.5.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.2565164Z ^[[1m^[[92m    Checking^[[0m platform-data v2.0.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.3655041Z ^[[1m^[[92m    Checking^[[0m chrono v0.4.45
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.5749302Z ^[[1m^[[92m    Checking^[[0m matchers v0.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.6255189Z ^[[1m^[[92m    Checking^[[0m platform-mem v0.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.7544750Z ^[[1m^[[92m    Checking^[[0m ctor v0.4.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.7804546Z ^[[1m^[[92m    Checking^[[0m rsa v0.9.10
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:01.8476667Z ^[[1m^[[92m    Checking^[[0m toml_parser v1.1.3+spec-1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.1223206Z ^[[1m^[[92m    Checking^[[0m clap v4.6.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.1326166Z ^[[1m^[[92m    Checking^[[0m ed25519-dalek v2.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.1495131Z ^[[1m^[[92m    Checking^[[0m rand_core v0.9.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.2194857Z ^[[1m^[[92m   Compiling^[[0m rust-embed-impl v8.12.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.2436676Z ^[[1m^[[92m    Checking^[[0m nix v0.28.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.2454091Z ^[[1m^[[92m    Checking^[[0m hyper-rustls v0.27.9
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.3514559Z ^[[1m^[[92m    Checking^[[0m ghash v0.6.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.3904520Z ^[[1m^[[92m    Checking^[[0m tower-http v0.6.11
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.5955066Z ^[[1m^[[92m    Checking^[[0m anyhow v1.0.104
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.7069796Z ^[[1m^[[92m    Checking^[[0m rustls-platform-verifier v0.7.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.7197878Z ^[[1m^[[92m    Checking^[[0m axum-core v0.5.6
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.7705149Z ^[[1m^[[92m    Checking^[[0m platform-trees v0.3.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:02.8574968Z ^[[1m^[[92m    Checking^[[0m p384 v0.13.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.0025051Z ^[[1m^[[92m    Checking^[[0m links-notation v0.13.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.2014955Z ^[[1m^[[92m    Checking^[[0m p256 v0.13.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.2244709Z ^[[1m^[[92m    Checking^[[0m ctr v0.10.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.2592016Z ^[[1m^[[92m    Checking^[[0m aes v0.9.2
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.3135013Z ^[[1m^[[92m    Checking^[[0m filedescriptor v0.8.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.3814846Z ^[[1m^[[92m    Checking^[[0m aead v0.6.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.3995121Z ^[[1m^[[92m    Checking^[[0m sharded-slab v0.1.7
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.4385190Z ^[[1m^[[92m    Checking^[[0m tracing-serde v0.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.5164962Z ^[[1m^[[92m    Checking^[[0m serde_path_to_error v0.1.20
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.5220808Z ^[[1m^[[92m    Checking^[[0m serial2 v0.2.38
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.6584841Z ^[[1m^[[92m    Checking^[[0m tracing-log v0.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.7335040Z ^[[1m^[[92m    Checking^[[0m encoding_rs v0.8.35
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.7454943Z ^[[1m^[[92m    Checking^[[0m thread_local v1.1.10
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.7771358Z ^[[1m^[[92m    Checking^[[0m tap v1.0.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.8244775Z ^[[1m^[[92m    Checking^[[0m toml_datetime v1.1.1+spec-1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.8328224Z ^[[1m^[[92m    Checking^[[0m shell-words v1.1.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.8776438Z ^[[1m^[[92m    Checking^[[0m lino-env v0.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.8834770Z ^[[1m^[[92m    Checking^[[0m leak_slice v0.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.9115110Z ^[[1m^[[92m    Checking^[[0m matchit v0.8.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.9234567Z ^[[1m^[[92m    Checking^[[0m nu-ansi-term v0.50.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:03.9344966Z ^[[1m^[[92m    Checking^[[0m dotenvy v0.15.7
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.0179638Z ^[[1m^[[92m    Checking^[[0m downcast-rs v1.2.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.0495098Z ^[[1m^[[92m    Checking^[[0m toml_writer v1.1.2+spec-1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.0564637Z ^[[1m^[[92m    Checking^[[0m axum v0.8.9
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.0645112Z ^[[1m^[[92m    Checking^[[0m tracing-subscriber v0.3.23
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.1604865Z ^[[1m^[[92m    Checking^[[0m toml_edit v0.25.13+spec-1.1.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.5894799Z ^[[1m^[[92m    Checking^[[0m portable-pty v0.9.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.5954602Z ^[[1m^[[92m    Checking^[[0m reqwest v0.13.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.7624910Z ^[[1m^[[92m    Checking^[[0m lino-arguments v0.3.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.8524823Z ^[[1m^[[92m    Checking^[[0m doublets v0.4.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:04.9714983Z ^[[1m^[[92m    Checking^[[0m aes-gcm v0.11.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.0464738Z ^[[1m^[[92m    Checking^[[0m jsonwebtoken v11.0.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.2164831Z ^[[1m^[[92m    Checking^[[0m lino-objects-codec v0.2.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.3395125Z ^[[1m^[[92m    Checking^[[0m rust-embed v8.12.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.3714886Z ^[[1m^[[92m    Checking^[[0m log-lazy v0.2.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.3774607Z ^[[1m^[[92m    Checking^[[0m tower-http v0.7.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.4854946Z ^[[1m^[[92m    Checking^[[0m uuid v1.24.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.6754553Z ^[[1m^[[92m    Checking^[[0m fs2 v0.4.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.7324642Z ^[[1m^[[92m    Checking^[[0m hex v0.4.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.8044529Z ^[[1m^[[92m    Checking^[[0m base64 v0.23.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.8914844Z ^[[1m^[[92m    Checking^[[0m wait-timeout v0.2.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.9183760Z ^[[1m^[[92m    Checking^[[0m quick-error v1.2.3
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.9434802Z ^[[1m^[[92m    Checking^[[0m bit-vec v0.8.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:05.9664974Z ^[[1m^[[92m    Checking^[[0m rusty-fork v0.3.1
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.0194871Z ^[[1m^[[92m    Checking^[[0m rand_xorshift v0.4.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.0739178Z ^[[1m^[[92m    Checking^[[0m bit-set v0.8.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.0794644Z ^[[1m^[[92m    Checking^[[0m rand v0.9.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.0804260Z ^[[1m^[[92m    Checking^[[0m rand_chacha v0.9.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.1604811Z ^[[1m^[[92m    Checking^[[0m tokio-stream v0.1.19
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.1804556Z ^[[1m^[[92m    Checking^[[0m unarray v0.1.4
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.4524065Z ^[[1m^[[92m    Checking^[[0m tokio-test v0.4.5
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.4581434Z ^[[1m^[[92m    Checking^[[0m proptest v1.11.0
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:06.7556367Z ^[[1m^[[92m    Checking^[[0m link-assistant-router v0.76.0 (/home/runner/work/router/router)
+Lint and Format Check	Verify Cargo.lock is current	2026-08-15T14:15:12.4767261Z ^[[1m^[[92m    Finished^[[0m `dev` profile [unoptimized + debuginfo] target(s) in 26.50s
+Lint and Format Check	Run Clippy	﻿2026-08-15T14:15:12.5041886Z ##[group]Run cargo clippy --locked --all-targets --all-features
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5042360Z ^[[36;1mcargo clippy --locked --all-targets --all-features^[[0m
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5063968Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5064237Z env:
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5064426Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5064646Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5064865Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5065106Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5065324Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5065576Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5065793Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5066153Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5066411Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5066705Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5066946Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.5067150Z ##[endgroup]
+Lint and Format Check	Run Clippy	2026-08-15T14:15:12.7462488Z ^[[1m^[[92m    Checking^[[0m link-assistant-router v0.76.0 (/home/runner/work/router/router)
+Lint and Format Check	Run Clippy	2026-08-15T14:15:21.7352763Z ^[[1m^[[92m    Finished^[[0m `dev` profile [unoptimized + debuginfo] target(s) in 9.19s
+Lint and Format Check	Build documentation	﻿2026-08-15T14:15:21.7634010Z ##[group]Run cargo doc --locked --no-deps --all-features
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7634421Z ^[[36;1mcargo doc --locked --no-deps --all-features^[[0m
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7655700Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7655955Z env:
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7656150Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7656375Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7656598Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7656848Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7657066Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7657320Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7657539Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7657901Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7658163Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7658465Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7658717Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7658946Z   RUSTDOCFLAGS: -D warnings
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.7659311Z ##[endgroup]
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.9622566Z ^[[1m^[[92m    Checking^[[0m tokio v1.53.1
+Lint and Format Check	Build documentation	2026-08-15T14:15:21.9679519Z ^[[1m^[[92m    Checking^[[0m regex-syntax v0.8.11
+Lint and Format Check	Build documentation	2026-08-15T14:15:22.4635106Z ^[[1m^[[92m    Checking^[[0m regex-automata v0.4.18
+Lint and Format Check	Build documentation	2026-08-15T14:15:23.2941878Z ^[[1m^[[92m    Checking^[[0m matchers v0.2.0
+Lint and Format Check	Build documentation	2026-08-15T14:15:23.3273163Z ^[[1m^[[92m    Checking^[[0m tracing-subscriber v0.3.23
+Lint and Format Check	Build documentation	2026-08-15T14:15:24.1754370Z ^[[1m^[[92m    Checking^[[0m tokio-util v0.7.19
+Lint and Format Check	Build documentation	2026-08-15T14:15:24.1755000Z ^[[1m^[[92m    Checking^[[0m tower v0.5.3
+Lint and Format Check	Build documentation	2026-08-15T14:15:24.1755641Z ^[[1m^[[92m    Checking^[[0m tokio-rustls v0.26.4
+Lint and Format Check	Build documentation	2026-08-15T14:15:24.4474032Z ^[[1m^[[92m    Checking^[[0m tower-http v0.6.11
+Lint and Format Check	Build documentation	2026-08-15T14:15:24.4674746Z ^[[1m^[[92m    Checking^[[0m h2 v0.4.15
+Lint and Format Check	Build documentation	2026-08-15T14:15:26.3331097Z ^[[1m^[[92m    Checking^[[0m hyper v1.11.0
+Lint and Format Check	Build documentation	2026-08-15T14:15:26.9333589Z ^[[1m^[[92m    Checking^[[0m hyper-util v0.1.20
+Lint and Format Check	Build documentation	2026-08-15T14:15:27.6956608Z ^[[1m^[[92m    Checking^[[0m hyper-rustls v0.27.9
+Lint and Format Check	Build documentation	2026-08-15T14:15:27.6957206Z ^[[1m^[[92m    Checking^[[0m axum v0.8.9
+Lint and Format Check	Build documentation	2026-08-15T14:15:27.7670823Z ^[[1m^[[92m    Checking^[[0m reqwest v0.13.4
+Lint and Format Check	Build documentation	2026-08-15T14:15:29.5754884Z ^[[1m^[[92m    Checking^[[0m link-assistant-router v0.76.0 (/home/runner/work/router/router)
+Lint and Format Check	Build documentation	2026-08-15T14:15:29.5756066Z ^[[1m^[[92m Documenting^[[0m link-assistant-router v0.76.0 (/home/runner/work/router/router)
+Lint and Format Check	Build documentation	2026-08-15T14:15:33.9678360Z ^[[1m^[[92m    Finished^[[0m `dev` profile [unoptimized + debuginfo] target(s) in 12.19s
+Lint and Format Check	Build documentation	2026-08-15T14:15:33.9836468Z ^[[1m^[[92m   Generated^[[0m /home/runner/work/router/router/target/doc/link_assistant_router/index.html and 1 other file
+Lint and Format Check	Setup Node	﻿2026-08-15T14:15:33.9951215Z ##[group]Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9951570Z with:
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9951768Z   node-version: 24
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9951967Z   cache: npm
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9952188Z   cache-dependency-path: ui/package-lock.json
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9952472Z   check-latest: false
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9955057Z   token: ***
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9955292Z   package-manager-cache: true
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9955523Z env:
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9955705Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9955935Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9956152Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9956386Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9956604Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9956856Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9957089Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9957379Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9957636Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9957924Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9958200Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Setup Node	2026-08-15T14:15:33.9958400Z ##[endgroup]
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.1176989Z Found in cache @ /opt/hostedtoolcache/node/24.19.0/x64
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.1178570Z ##[group]Environment details
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.5238187Z node: v24.19.0
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.5238616Z npm: 11.17.0
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.5238915Z yarn: 1.22.22
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.5239450Z ##[endgroup]
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.5254065Z [command]/opt/hostedtoolcache/node/24.19.0/x64/bin/npm config get cache
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.6253146Z /home/runner/.npm
+Lint and Format Check	Setup Node	2026-08-15T14:15:34.7615008Z npm cache is not found
+Lint and Format Check	Install admin console dependencies	﻿2026-08-15T14:15:34.7711980Z ##[group]Run npm ci
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7712227Z ^[[36;1mnpm ci^[[0m
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7742383Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7742651Z env:
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7742846Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7743072Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7743306Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7743780Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7744106Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7744439Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7744657Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7745024Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7745289Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7745580Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7745995Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:34.7746213Z ##[endgroup]
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6980349Z 
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6988843Z added 171 packages, and audited 172 packages in 4s
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6989189Z 
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6989386Z 16 packages are looking for funding
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6989797Z   run `npm fund` for details
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6992338Z 
+Lint and Format Check	Install admin console dependencies	2026-08-15T14:15:38.6992667Z found 0 vulnerabilities
+Lint and Format Check	Build admin console	﻿2026-08-15T14:15:38.7310196Z ##[group]Run set -o pipefail
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7310502Z ^[[36;1mset -o pipefail^[[0m
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7310791Z ^[[36;1mnpm run build 2>&1 | tee /tmp/admin-ui-build.log^[[0m
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7311206Z ^[[36;1mif grep -E '(^|[[:space:]])\(!\)|[Ww]arn(ing)?' /tmp/admin-ui-build.log; then^[[0m
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7311637Z ^[[36;1m  echo "::error::Admin console build emitted a warning"^[[0m
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7311942Z ^[[36;1m  exit 1^[[0m
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7312139Z ^[[36;1mfi^[[0m
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7334024Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7334371Z env:
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7334566Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7334806Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7335029Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7335268Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7335491Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7335755Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7335985Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7336385Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7336639Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7336930Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7337176Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.7337388Z ##[endgroup]
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.8247492Z 
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.8248283Z > link-assistant-router-admin-ui@0.0.0 build
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.8248765Z > vite build
+Lint and Format Check	Build admin console	2026-08-15T14:15:38.8248897Z 
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.0426451Z ^[[36mvite v8.2.1 ^[[32mbuilding client environment for production...^[[36m^[[39m
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.0526824Z ^[[2K
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.2502237Z transforming...✓ 1917 modules transformed.
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3004992Z rendering chunks...
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3370970Z computing gzip size...
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3415691Z dist/index.html                    0.60 kB │ gzip:  0.31 kB
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3419091Z dist/assets/rolldown-runtime.js    0.58 kB │ gzip:  0.36 kB
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3419635Z dist/assets/app.js                14.28 kB │ gzip:  4.69 kB
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3420309Z dist/assets/react.js             191.73 kB │ gzip: 60.17 kB
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3420790Z dist/assets/ui-vendor.js         326.12 kB │ gzip: 86.46 kB
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3421017Z 
+Lint and Format Check	Build admin console	2026-08-15T14:15:39.3421200Z ^[[32m✓ built in 298ms^[[39m
+Lint and Format Check	Verify embedded admin console bundle is current	﻿2026-08-15T14:15:39.3640603Z ##[group]Run git diff --exit-code -- ui/dist
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3640939Z ^[[36;1mgit diff --exit-code -- ui/dist^[[0m
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3662546Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3662813Z env:
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3663001Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3663251Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3663665Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3663910Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3664130Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3664397Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3664636Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3665000Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3665261Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3665551Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3665803Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Verify embedded admin console bundle is current	2026-08-15T14:15:39.3666006Z ##[endgroup]
+Lint and Format Check	Check file size limit	﻿2026-08-15T14:15:39.4758867Z ##[group]Run rust-script scripts/check-file-size.rs
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4759269Z ^[[36;1mrust-script scripts/check-file-size.rs^[[0m
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4782034Z shell: /usr/bin/bash -e {0}
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4782446Z env:
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4782748Z   CARGO_TERM_COLOR: always
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4783123Z   CARGO_NET_RETRY: 10
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4783927Z   CARGO_HTTP_MULTIPLEXING: false
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4784343Z   GIT_CONFIG_COUNT: 1
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4784695Z   GIT_CONFIG_KEY_0: init.defaultBranch
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4785032Z   GIT_CONFIG_VALUE_0: main
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4785256Z   RUSTFLAGS: -Dwarnings
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4785615Z   CARGO_REGISTRY_TOKEN: ***
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4785872Z   DOCKERHUB_IMAGE: konard/link-assistant-router
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4786168Z   CARGO_HOME: /home/runner/.cargo
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4786413Z   CARGO_INCREMENTAL: 0
+Lint and Format Check	Check file size limit	2026-08-15T14:15:39.4786621Z ##[endgroup]
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.3912788Z 
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.3913799Z Checking Rust files for maximum 1000 lines...
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.3914334Z 
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4231722Z Found files exceeding the line limit:
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4232147Z 
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4232356Z   tests/release_workflow_test.rs: 1008 lines (exceeds 1000)
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4232600Z 
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4232782Z Please refactor these files to be under 1000 lines
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4232992Z 
+Lint and Format Check	Check file size limit	2026-08-15T14:15:40.4246231Z ##[error]Process completed with exit code 1.
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-08-15T14:15:40.4354323Z Post job cleanup.
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5168577Z [command]/usr/bin/git version
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5207233Z git version 2.54.0
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5241980Z Temporarily overriding HOME='/home/runner/work/_temp/3c3197f6-0e57-490e-a1c5-2d2747a9a521' before making global git config changes
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5243747Z Adding repository directory to the temporary git global config as a safe directory
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5246757Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5275697Z Removing SSH command configuration
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5281911Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5314844Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5518869Z Removing HTTP extra header
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5524386Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5556389Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5753785Z Removing includeIf entries pointing to credentials config files
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5759252Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5788481Z includeif.gitdir:/home/runner/work/router/router/.git.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5789799Z includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5790690Z includeif.gitdir:/github/workspace/.git.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5791487Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5799641Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5824447Z /home/runner/work/_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5835486Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-9b4b8b94\-4579\-4fbf\-9cdf\-0d3cf94b04c1\.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5876797Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5899342Z /home/runner/work/_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5908347Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-9b4b8b94\-4579\-4fbf\-9cdf\-0d3cf94b04c1\.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5939799Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5961671Z /github/runner_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.5968108Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-9b4b8b94\-4579\-4fbf\-9cdf\-0d3cf94b04c1\.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.6000482Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.6025242Z /github/runner_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.6039372Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-9b4b8b94\-4579\-4fbf\-9cdf\-0d3cf94b04c1\.config
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.6072033Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Lint and Format Check	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:15:40.6260211Z Removing credentials config '/home/runner/work/_temp/git-credentials-9b4b8b94-4579-4fbf-9cdf-0d3cf94b04c1.config'
+Lint and Format Check	Complete job	﻿2026-08-15T14:15:40.6415986Z Cleaning up orphan processes
