@@ -275,9 +275,9 @@ fn release_workflow_uses_supported_action_runtimes() {
         );
     }
     for supported in [
-        "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
-        "actions/cache@caa296126883cff596d87d8935842f9db880ef25",
-        "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+        "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+        "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
         "node-version: '24'",
     ] {
         assert!(
