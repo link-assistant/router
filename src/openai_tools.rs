@@ -196,10 +196,10 @@ pub fn translate_tool_choice(choice: &Value) -> Value {
             _ => json!({"type": "auto"}),
         },
         Value::Object(map) => {
-            if let Some(func) = map.get("function").and_then(Value::as_object) {
-                if let Some(name) = func.get("name").and_then(Value::as_str) {
-                    return json!({"type": "tool", "name": name});
-                }
+            if let Some(func) = map.get("function").and_then(Value::as_object)
+                && let Some(name) = func.get("name").and_then(Value::as_str)
+            {
+                return json!({"type": "tool", "name": name});
             }
             if map.get("type").and_then(Value::as_str) == Some("function")
                 && let Some(name) = map.get("name").and_then(Value::as_str)

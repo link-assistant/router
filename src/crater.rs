@@ -657,10 +657,10 @@ fn extract_result_content(task: &Value) -> String {
         &["summary"][..],
         &["name"][..],
     ] {
-        if let Some(value) = get_path(task, path).and_then(Value::as_str) {
-            if !value.trim().is_empty() {
-                return value.to_string();
-            }
+        if let Some(value) = get_path(task, path).and_then(Value::as_str)
+            && !value.trim().is_empty()
+        {
+            return value.to_string();
         }
     }
     task.get("choices")

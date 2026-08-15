@@ -115,10 +115,10 @@ impl SubscriptionProvider {
     /// env var, then falling back to `<home>/<home_subdir>`.
     #[must_use]
     pub fn resolve_home(self, home: &str) -> PathBuf {
-        if let Ok(dir) = std::env::var(self.home_env()) {
-            if !dir.is_empty() {
-                return PathBuf::from(dir);
-            }
+        if let Ok(dir) = std::env::var(self.home_env())
+            && !dir.is_empty()
+        {
+            return PathBuf::from(dir);
         }
         PathBuf::from(home).join(self.home_subdir())
     }
@@ -385,16 +385,16 @@ impl RawCredentials {
     fn claude_token(self) -> Option<SubscriptionToken> {
         // Prefer the nested `claudeAiOauth` block (real Claude Code layout),
         // then fall back to flat fields.
-        if let Some(block) = self.claude_ai_oauth {
-            if let Some(access) = non_empty(block.access_token).or_else(|| non_empty(block.token)) {
-                return Some(SubscriptionToken {
-                    access_token: access,
-                    refresh_token: non_empty(block.refresh_token),
-                    expires_at_ms: block.expires_at,
-                    account_id: None,
-                    resource_url: None,
-                });
-            }
+        if let Some(block) = self.claude_ai_oauth
+            && let Some(access) = non_empty(block.access_token).or_else(|| non_empty(block.token))
+        {
+            return Some(SubscriptionToken {
+                access_token: access,
+                refresh_token: non_empty(block.refresh_token),
+                expires_at_ms: block.expires_at,
+                account_id: None,
+                resource_url: None,
+            });
         }
         let access = non_empty(self.access_token).or_else(|| non_empty(self.token))?;
         Some(SubscriptionToken {

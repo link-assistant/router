@@ -206,10 +206,10 @@ pub(crate) fn reconcile_subscription_parameters_with_limit_origin(
     let model = body.get("model").and_then(Value::as_str);
     let adaptive_thinking = crate::capabilities::claude_uses_adaptive_thinking(model);
     let capabilities = crate::capabilities::subscription(provider, model);
-    if capabilities.temperature == crate::capabilities::Capability::Unsupported {
-        if let Some(object) = body.as_object_mut() {
-            object.remove("temperature");
-        }
+    if capabilities.temperature == crate::capabilities::Capability::Unsupported
+        && let Some(object) = body.as_object_mut()
+    {
+        object.remove("temperature");
     }
     if provider == crate::subscription::SubscriptionProvider::Claude {
         reconcile_claude_thinking(body, adaptive_thinking, output_limit_was_explicit);

@@ -236,16 +236,15 @@ async fn forward_subscription_openai_inner(
         .subscription_cache
         .record_status(provider, status.as_u16());
     let retry_after = retry_after_duration(upstream_resp.headers());
-    if status == StatusCode::TOO_MANY_REQUESTS {
-        if let (Some(router), Some(account)) =
+    if status == StatusCode::TOO_MANY_REQUESTS
+        && let (Some(router), Some(account)) =
             (state.account_router.as_ref(), selected_account.as_deref())
-        {
-            router.report_failure_with_retry_after(
-                account,
-                "subscription upstream returned 429",
-                retry_after,
-            );
-        }
+    {
+        router.report_failure_with_retry_after(
+            account,
+            "subscription upstream returned 429",
+            retry_after,
+        );
     }
 
     let content_type = upstream_resp
@@ -663,10 +662,10 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
 
     // Merge existing instructions + hoisted system turns; fall back to a default.
     let mut parts: Vec<String> = Vec::new();
-    if let Some(existing) = obj.get("instructions").and_then(serde_json::Value::as_str) {
-        if !existing.trim().is_empty() {
-            parts.push(existing.to_string());
-        }
+    if let Some(existing) = obj.get("instructions").and_then(serde_json::Value::as_str)
+        && !existing.trim().is_empty()
+    {
+        parts.push(existing.to_string());
     }
     parts.extend(hoisted);
     let instructions = if parts.is_empty() {

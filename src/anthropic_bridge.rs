@@ -53,10 +53,10 @@ pub const fn is_bridged(provider: UpstreamProvider) -> bool {
 /// provider's own `default_model` is applied by its forwarder.
 #[must_use]
 pub fn resolve_bridge_model(state: &AppState) -> String {
-    if let Some(model) = state.bridge_model.as_deref() {
-        if !model.is_empty() {
-            return model.to_string();
-        }
+    if let Some(model) = state.bridge_model.as_deref()
+        && !model.is_empty()
+    {
+        return model.to_string();
     }
     match state.upstream_provider {
         UpstreamProvider::Codex => "gpt-5-codex".to_string(),
@@ -82,10 +82,10 @@ pub fn resolve_bridge_model(state: &AppState) -> String {
 pub fn anthropic_to_chat_request(body: &Value, upstream_model: &str) -> Value {
     let mut messages: Vec<Value> = Vec::new();
 
-    if let Some(system) = body.get("system") {
-        if let Some(text) = system_text(system) {
-            messages.push(json!({"role": "system", "content": text}));
-        }
+    if let Some(system) = body.get("system")
+        && let Some(text) = system_text(system)
+    {
+        messages.push(json!({"role": "system", "content": text}));
     }
 
     for message in body
@@ -136,10 +136,10 @@ pub fn anthropic_to_chat_request(body: &Value, upstream_model: &str) -> Value {
             out["tools"] = Value::Array(mapped);
         }
     }
-    if let Some(choice) = body.get("tool_choice") {
-        if let Some(mapped) = translate_tool_choice(choice) {
-            out["tool_choice"] = mapped;
-        }
+    if let Some(choice) = body.get("tool_choice")
+        && let Some(mapped) = translate_tool_choice(choice)
+    {
+        out["tool_choice"] = mapped;
     }
     out
 }
@@ -329,10 +329,10 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
     let message = choice.get("message").unwrap_or(&Value::Null);
 
     let mut content: Vec<Value> = Vec::new();
-    if let Some(text) = message.get("content").and_then(Value::as_str) {
-        if !text.is_empty() {
-            content.push(json!({"type": "text", "text": text}));
-        }
+    if let Some(text) = message.get("content").and_then(Value::as_str)
+        && !text.is_empty()
+    {
+        content.push(json!({"type": "text", "text": text}));
     }
     for call in message
         .get("tool_calls")

@@ -91,10 +91,10 @@ pub fn code_assist_envelope(model: &str, request: &Value) -> Value {
         "model": model,
         "request": request,
     });
-    if let Ok(project) = std::env::var(PROJECT_ENV) {
-        if !project.is_empty() {
-            envelope["project"] = Value::String(project);
-        }
+    if let Ok(project) = std::env::var(PROJECT_ENV)
+        && !project.is_empty()
+    {
+        envelope["project"] = Value::String(project);
     }
     envelope
 }
@@ -390,16 +390,15 @@ async fn forward(
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
     let retry_after = retry_after_duration(upstream_resp.headers());
-    if status == StatusCode::TOO_MANY_REQUESTS {
-        if let (Some(router), Some(account)) =
+    if status == StatusCode::TOO_MANY_REQUESTS
+        && let (Some(router), Some(account)) =
             (state.account_router.as_ref(), selected_account.as_deref())
-        {
-            router.report_failure_with_retry_after(
-                account,
-                "Gemini subscription upstream returned 429",
-                retry_after,
-            );
-        }
+    {
+        router.report_failure_with_retry_after(
+            account,
+            "Gemini subscription upstream returned 429",
+            retry_after,
+        );
     }
 
     let upstream_body = match upstream_resp.bytes().await {
@@ -707,14 +706,14 @@ async fn forward_native(
     state
         .metrics
         .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
-    if status == StatusCode::TOO_MANY_REQUESTS {
-        if let Some(router) = state.account_router.as_ref() {
-            router.report_failure_with_retry_after(
-                &routed.account,
-                "Gemini subscription upstream returned 429",
-                retry_after,
-            );
-        }
+    if status == StatusCode::TOO_MANY_REQUESTS
+        && let Some(router) = state.account_router.as_ref()
+    {
+        router.report_failure_with_retry_after(
+            &routed.account,
+            "Gemini subscription upstream returned 429",
+            retry_after,
+        );
     }
     if !status.is_success() {
         let mut response = Response::new(Body::from(response_body));

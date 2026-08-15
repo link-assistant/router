@@ -6,12 +6,12 @@ fn dockerfile_builder_uses_supported_rust_toolchain() {
     let builder_tag = rust_builder_tag(&dockerfile).expect("Dockerfile should have a Rust builder");
 
     assert!(
-        builder_tag.contains("bookworm"),
-        "Rust builder image should stay on bookworm to match the runtime image"
+        builder_tag.contains("trixie"),
+        "Rust builder image should stay on trixie to match the runtime image"
     );
     assert!(
         rust_builder_tag_tracks_supported_toolchain(builder_tag),
-        "Rust builder image `{builder_tag}` should use Rust 1.85+ or track the current Rust 1.x line"
+        "Rust builder image `{builder_tag}` should use Rust 1.88+ or track the current Rust 1.x line"
     );
 }
 
@@ -312,7 +312,7 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
     }
     assert_eq!(
         release.matches("dtolnay/rust-toolchain@").count(),
-        release.matches("toolchain: 1.96.1").count(),
+        release.matches("toolchain: 1.97.1").count(),
         "a SHA-pinned rust-toolchain action needs an explicit numeric toolchain"
     );
     assert!(!release.contains("cargo install rust-script\n"));
@@ -667,7 +667,7 @@ fn dockerfile_apt_installs(section: &str, package: &str) -> bool {
 
 fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
     let tag = tag.split('@').next().unwrap_or(tag);
-    if tag == "1-slim-bookworm" {
+    if tag == "1-slim-trixie" {
         true
     } else {
         let version = tag.split('-').next().unwrap_or_default();
@@ -675,7 +675,7 @@ fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
         let major = parts.next().and_then(|part| part.parse::<u64>().ok());
         let minor = parts.next().and_then(|part| part.parse::<u64>().ok());
 
-        matches!((major, minor), (Some(1), Some(minor)) if minor >= 85)
+        matches!((major, minor), (Some(1), Some(minor)) if minor >= 88)
             || matches!(major, Some(major) if major > 1)
     }
 }

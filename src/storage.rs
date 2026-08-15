@@ -159,10 +159,10 @@ pub trait TokenStore: Send + Sync {
     /// enforcement can override this with a locked read-modify-write.
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
         if let Some(mut rec) = self.get(id)? {
-            if let Some(max) = rec.max_requests {
-                if rec.used_requests >= max {
-                    return Ok(false);
-                }
+            if let Some(max) = rec.max_requests
+                && rec.used_requests >= max
+            {
+                return Ok(false);
             }
             rec.used_requests = rec.used_requests.saturating_add(1);
             self.put(rec)?;

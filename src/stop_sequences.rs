@@ -25,7 +25,7 @@ impl StopSequenceFilter {
     }
 
     #[must_use]
-    pub fn enabled(&self) -> bool {
+    pub const fn enabled(&self) -> bool {
         !self.sequences.is_empty()
     }
 
