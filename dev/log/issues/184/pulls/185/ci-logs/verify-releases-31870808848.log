@@ -1,0 +1,615 @@
+Every Tag Has a GitHub Release	UNKNOWN STEP	﻿2026-08-15T06:59:35.9230326Z Current runner version: '2.336.0'
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9255387Z ##[group]Runner Image Provisioner
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9256216Z Hosted Compute Agent
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9256792Z Version: 20260729.566
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9257511Z Commit: cf7153fe6e25b664e8693c24944bf2b00355d109
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9258256Z Build Date: 2026-07-29T19:17:02Z
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9258984Z Worker ID: {167aa48f-386c-44a7-a41b-b53fa822a913}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9260149Z Azure Region: eastus2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9260747Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9262462Z ##[group]Operating System
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9263108Z Ubuntu
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9263633Z 24.04.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9264270Z LTS
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9264800Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9265387Z ##[group]Runner Image
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9266009Z Image: ubuntu-24.04
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9266591Z Version: 20260810.271.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9267953Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260810.271/images/ubuntu/Ubuntu2404-Readme.md
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9270760Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260810.271
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9272234Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9273839Z ##[group]GITHUB_TOKEN Permissions
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9276166Z Contents: read
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9276791Z Metadata: read
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9277450Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9279514Z Secret source: Actions
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9281302Z Prepare workflow directory
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9602560Z Prepare all required actions
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:35.9650211Z Getting action download info
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.2176262Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.3506053Z Download action repository 'dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c' (SHA:4360b52568e2003a75bf9bc1d59f33a8e3fc893c)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.5760899Z Complete job name: Every Tag Has a GitHub Release
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6512478Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6513495Z with:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6513914Z   fetch-depth: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6514369Z   repository: link-assistant/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6518528Z   token: ***
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6518966Z   ssh-strict: true
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6519395Z   ssh-user: git
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6520008Z   persist-credentials: true
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6520489Z   clean: true
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6520928Z   sparse-checkout-cone-mode: true
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6521439Z   fetch-tags: false
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6521876Z   show-progress: true
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6522314Z   lfs: false
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6522719Z   submodules: false
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6523165Z   set-safe-directory: true
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6523668Z   allow-unsafe-pr-checkout: false
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.6524355Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7557926Z Syncing repository: link-assistant/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7560191Z ##[group]Getting Git version info
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7560907Z Working directory is '/home/runner/work/router/router'
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7561974Z [command]/usr/bin/git version
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7590472Z git version 2.54.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7617814Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7625294Z Temporarily overriding HOME='/home/runner/work/_temp/e6000910-6095-4bb9-9749-8d07d17ddb15' before making global git config changes
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7627432Z Adding repository directory to the temporary git global config as a safe directory
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7631591Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7688522Z Deleting the contents of '/home/runner/work/router/router'
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7693360Z ##[group]Determining repository object format
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7694947Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7696190Z ##[group]Initializing the repository
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7700020Z [command]/usr/bin/git init /home/runner/work/router/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7776643Z hint: Using 'master' as the name for the initial branch. This default branch name
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7778696Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7780947Z hint: to use in all of your new repositories, which will suppress this warning,
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7782135Z hint: call:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7782740Z hint:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7783500Z hint: 	git config --global init.defaultBranch <name>
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7784408Z hint:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7785261Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7786730Z hint: 'development'. The just-created branch can be renamed via this command:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7787877Z hint:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7788491Z hint: 	git branch -m <name>
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7789195Z hint:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7790276Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7791755Z Initialized empty Git repository in /home/runner/work/router/router/.git/
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7794245Z [command]/usr/bin/git remote add origin https://github.com/link-assistant/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7840435Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7841577Z ##[group]Disabling automatic garbage collection
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7843855Z [command]/usr/bin/git config --local gc.auto 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7878640Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7880076Z ##[group]Setting up auth
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7880864Z Removing SSH command configuration
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7885971Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.7923801Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8378652Z Removing HTTP extra header
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8401519Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8446932Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8693472Z Removing includeIf entries pointing to credentials config files
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8700718Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8740667Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.8995592Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9040179Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git.path /home/runner/work/_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9076836Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9117308Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9158147Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9198935Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9208166Z ##[group]Fetching the repository
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:36.9209407Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2935031Z From https://github.com/link-assistant/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2938498Z  * [new branch]      dependabot/cargo/reviewed-rust-dependencies-1d7d99f4b6 -> origin/dependabot/cargo/reviewed-rust-dependencies-1d7d99f4b6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2942091Z  * [new branch]      fix/all-open-issues    -> origin/fix/all-open-issues
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2944098Z  * [new branch]      issue-1-1bf9ef21c1ac   -> origin/issue-1-1bf9ef21c1ac
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2945988Z  * [new branch]      issue-100-dba0bf9a4973 -> origin/issue-100-dba0bf9a4973
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2948894Z  * [new branch]      issue-102-0e736e883951 -> origin/issue-102-0e736e883951
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2950499Z  * [new branch]      issue-104-1284ecf6cd3e -> origin/issue-104-1284ecf6cd3e
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2952271Z  * [new branch]      issue-105-cdb3c0de6b44 -> origin/issue-105-cdb3c0de6b44
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2954269Z  * [new branch]      issue-108-a18689e74c37 -> origin/issue-108-a18689e74c37
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2955514Z  * [new branch]      issue-109-f8c988b35e34 -> origin/issue-109-f8c988b35e34
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2956675Z  * [new branch]      issue-11-0f880923289a  -> origin/issue-11-0f880923289a
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2957878Z  * [new branch]      issue-112-dcf3a4c1f37c -> origin/issue-112-dcf3a4c1f37c
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2959104Z  * [new branch]      issue-113-1110124f8fe4 -> origin/issue-113-1110124f8fe4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2960797Z  * [new branch]      issue-116-23f22ee79006 -> origin/issue-116-23f22ee79006
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2962082Z  * [new branch]      issue-118-f22842a1cf41 -> origin/issue-118-f22842a1cf41
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2963561Z  * [new branch]      issue-120-2cbee18ae165 -> origin/issue-120-2cbee18ae165
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2965023Z  * [new branch]      issue-122-8744d24bb30e -> origin/issue-122-8744d24bb30e
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2966442Z  * [new branch]      issue-123-5ce8de8509b4 -> origin/issue-123-5ce8de8509b4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2967821Z  * [new branch]      issue-124-eb9ceb3cb53f -> origin/issue-124-eb9ceb3cb53f
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2969236Z  * [new branch]      issue-128-36dd99b62733 -> origin/issue-128-36dd99b62733
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2971482Z  * [new branch]      issue-13-2606f9974b11  -> origin/issue-13-2606f9974b11
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2972813Z  * [new branch]      issue-130-e37eacafa11a -> origin/issue-130-e37eacafa11a
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2974113Z  * [new branch]      issue-131-26c977c11df6 -> origin/issue-131-26c977c11df6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2975413Z  * [new branch]      issue-132-2f177ee0cbd8 -> origin/issue-132-2f177ee0cbd8
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2976694Z  * [new branch]      issue-133-17788d217579 -> origin/issue-133-17788d217579
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2977664Z  * [new branch]      issue-133-9d3a7e5e4cc9 -> origin/issue-133-9d3a7e5e4cc9
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2978850Z  * [new branch]      issue-134-c7f8700e9e78 -> origin/issue-134-c7f8700e9e78
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2980286Z  * [new branch]      issue-135-ce7088043612 -> origin/issue-135-ce7088043612
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2981188Z  * [new branch]      issue-142-0621d4ec1020 -> origin/issue-142-0621d4ec1020
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2982503Z  * [new branch]      issue-143-5b0ea61bdeaf -> origin/issue-143-5b0ea61bdeaf
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2983573Z  * [new branch]      issue-144-561edd8d8533 -> origin/issue-144-561edd8d8533
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2984654Z  * [new branch]      issue-145-3ecb8cc850af -> origin/issue-145-3ecb8cc850af
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2985557Z  * [new branch]      issue-147-c6b90f82ea1f -> origin/issue-147-c6b90f82ea1f
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2986440Z  * [new branch]      issue-148-3cd968519599 -> origin/issue-148-3cd968519599
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2987324Z  * [new branch]      issue-149-a865ab1e4e9e -> origin/issue-149-a865ab1e4e9e
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2988205Z  * [new branch]      issue-15-8f76cb08364a  -> origin/issue-15-8f76cb08364a
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2989088Z  * [new branch]      issue-150-3af62c0b7aa3 -> origin/issue-150-3af62c0b7aa3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2990195Z  * [new branch]      issue-151-68c0c68f8036 -> origin/issue-151-68c0c68f8036
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2991077Z  * [new branch]      issue-17-eb0edbddcdb5  -> origin/issue-17-eb0edbddcdb5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2991978Z  * [new branch]      issue-18-aafa1060453e  -> origin/issue-18-aafa1060453e
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2993182Z  * [new branch]      issue-21-4e3dd79ebb0a  -> origin/issue-21-4e3dd79ebb0a
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2994062Z  * [new branch]      issue-23-c4c21ed11eba  -> origin/issue-23-c4c21ed11eba
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2994929Z  * [new branch]      issue-25-cee894a7a764  -> origin/issue-25-cee894a7a764
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2995793Z  * [new branch]      issue-27-1c4f5add71b6  -> origin/issue-27-1c4f5add71b6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2996654Z  * [new branch]      issue-29-cd7359ee3891  -> origin/issue-29-cd7359ee3891
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2997588Z  * [new branch]      issue-3-105675fe4cc7   -> origin/issue-3-105675fe4cc7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2998452Z  * [new branch]      issue-31-3689e5f485aa  -> origin/issue-31-3689e5f485aa
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.2999307Z  * [new branch]      issue-33-11cc347ca557  -> origin/issue-33-11cc347ca557
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3000384Z  * [new branch]      issue-35-62a0d9107370  -> origin/issue-35-62a0d9107370
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3001250Z  * [new branch]      issue-37-69d3f0803294  -> origin/issue-37-69d3f0803294
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3002112Z  * [new branch]      issue-42-d7c61ae8a6dd  -> origin/issue-42-d7c61ae8a6dd
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3002981Z  * [new branch]      issue-45-6e66b2c1c4f3  -> origin/issue-45-6e66b2c1c4f3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3004025Z  * [new branch]      issue-47-0560ebdac190  -> origin/issue-47-0560ebdac190
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3005195Z  * [new branch]      issue-48-1455108618b7  -> origin/issue-48-1455108618b7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3006342Z  * [new branch]      issue-49-12994bb7a470  -> origin/issue-49-12994bb7a470
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3007549Z  * [new branch]      issue-5-5a51161efdc8   -> origin/issue-5-5a51161efdc8
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3008779Z  * [new branch]      issue-50-e84c64dc1eb6  -> origin/issue-50-e84c64dc1eb6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3010228Z  * [new branch]      issue-51-837203bbb627  -> origin/issue-51-837203bbb627
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3011544Z  * [new branch]      issue-52-fbd1f6c47f72  -> origin/issue-52-fbd1f6c47f72
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3013074Z  * [new branch]      issue-59-600dc604ed7e  -> origin/issue-59-600dc604ed7e
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3014495Z  * [new branch]      issue-61-e7b1b605fa50  -> origin/issue-61-e7b1b605fa50
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3015817Z  * [new branch]      issue-63-558dde67dcc7  -> origin/issue-63-558dde67dcc7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3017098Z  * [new branch]      issue-65-24a81d950668  -> origin/issue-65-24a81d950668
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3018381Z  * [new branch]      issue-67-bf061f2d3e82  -> origin/issue-67-bf061f2d3e82
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3020003Z  * [new branch]      issue-69-c19c2eac4c50  -> origin/issue-69-c19c2eac4c50
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3021390Z  * [new branch]      issue-7-080001720a10   -> origin/issue-7-080001720a10
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3022694Z  * [new branch]      issue-70-ea51215cf0ef  -> origin/issue-70-ea51215cf0ef
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3024015Z  * [new branch]      issue-71-fee363b3db8a  -> origin/issue-71-fee363b3db8a
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3025314Z  * [new branch]      issue-72-b346370d6b72  -> origin/issue-72-b346370d6b72
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3026687Z  * [new branch]      issue-77-0415d65a3786  -> origin/issue-77-0415d65a3786
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3027959Z  * [new branch]      issue-78-0ff7a0d97703  -> origin/issue-78-0ff7a0d97703
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3028829Z  * [new branch]      issue-81-347231a9479c  -> origin/issue-81-347231a9479c
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3029906Z  * [new branch]      issue-83-f06c7bb43bd2  -> origin/issue-83-f06c7bb43bd2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3030865Z  * [new branch]      issue-85-4cee77a6357b  -> origin/issue-85-4cee77a6357b
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3031744Z  * [new branch]      issue-87-48a5a39e18d7  -> origin/issue-87-48a5a39e18d7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3032614Z  * [new branch]      issue-87-4e9d84497e8d  -> origin/issue-87-4e9d84497e8d
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3033487Z  * [new branch]      issue-9-d545a925a750   -> origin/issue-9-d545a925a750
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3034350Z  * [new branch]      issue-90-1a19c3b4dc48  -> origin/issue-90-1a19c3b4dc48
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3035239Z  * [new branch]      issue-91-ced77c4ada00  -> origin/issue-91-ced77c4ada00
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3036328Z  * [new branch]      issue-92-ec4e16dd2db9  -> origin/issue-92-ec4e16dd2db9
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3037209Z  * [new branch]      issue-93-0745b3b1497e  -> origin/issue-93-0745b3b1497e
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3038072Z  * [new branch]      issue-94-596a960acaa9  -> origin/issue-94-596a960acaa9
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3038858Z  * [new branch]      main                   -> origin/main
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3039538Z  * [new tag]         v0.10.0                -> v0.10.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3040323Z  * [new tag]         v0.11.0                -> v0.11.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3040979Z  * [new tag]         v0.12.0                -> v0.12.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3041615Z  * [new tag]         v0.13.0                -> v0.13.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3042245Z  * [new tag]         v0.14.0                -> v0.14.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3042885Z  * [new tag]         v0.15.0                -> v0.15.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3043517Z  * [new tag]         v0.16.0                -> v0.16.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3044144Z  * [new tag]         v0.17.0                -> v0.17.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3044771Z  * [new tag]         v0.18.0                -> v0.18.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3045389Z  * [new tag]         v0.19.0                -> v0.19.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3046000Z  * [new tag]         v0.20.0                -> v0.20.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3046614Z  * [new tag]         v0.21.0                -> v0.21.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3047232Z  * [new tag]         v0.22.0                -> v0.22.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3047853Z  * [new tag]         v0.23.0                -> v0.23.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3048472Z  * [new tag]         v0.24.0                -> v0.24.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3049087Z  * [new tag]         v0.25.0                -> v0.25.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3049823Z  * [new tag]         v0.26.0                -> v0.26.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3050449Z  * [new tag]         v0.27.0                -> v0.27.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3051068Z  * [new tag]         v0.28.0                -> v0.28.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3051827Z  * [new tag]         v0.29.0                -> v0.29.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3052465Z  * [new tag]         v0.3.0                 -> v0.3.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3053101Z  * [new tag]         v0.30.0                -> v0.30.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3053744Z  * [new tag]         v0.31.0                -> v0.31.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3054371Z  * [new tag]         v0.32.0                -> v0.32.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3054992Z  * [new tag]         v0.33.0                -> v0.33.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3055607Z  * [new tag]         v0.34.0                -> v0.34.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3056220Z  * [new tag]         v0.35.0                -> v0.35.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3056833Z  * [new tag]         v0.36.0                -> v0.36.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3057444Z  * [new tag]         v0.37.0                -> v0.37.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3058054Z  * [new tag]         v0.38.0                -> v0.38.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3058672Z  * [new tag]         v0.39.0                -> v0.39.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3059291Z  * [new tag]         v0.4.0                 -> v0.4.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3060027Z  * [new tag]         v0.40.0                -> v0.40.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3060651Z  * [new tag]         v0.41.0                -> v0.41.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3061271Z  * [new tag]         v0.42.0                -> v0.42.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3061888Z  * [new tag]         v0.43.0                -> v0.43.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3062502Z  * [new tag]         v0.44.0                -> v0.44.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3063123Z  * [new tag]         v0.45.0                -> v0.45.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3063749Z  * [new tag]         v0.46.0                -> v0.46.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3064368Z  * [new tag]         v0.47.0                -> v0.47.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3064993Z  * [new tag]         v0.48.0                -> v0.48.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3065610Z  * [new tag]         v0.49.0                -> v0.49.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3066229Z  * [new tag]         v0.5.0                 -> v0.5.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3066862Z  * [new tag]         v0.50.0                -> v0.50.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3067621Z  * [new tag]         v0.51.0                -> v0.51.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3068242Z  * [new tag]         v0.52.0                -> v0.52.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3068858Z  * [new tag]         v0.53.0                -> v0.53.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3069476Z  * [new tag]         v0.54.0                -> v0.54.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3070226Z  * [new tag]         v0.55.0                -> v0.55.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3070850Z  * [new tag]         v0.56.0                -> v0.56.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3071468Z  * [new tag]         v0.57.0                -> v0.57.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3072084Z  * [new tag]         v0.58.0                -> v0.58.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3072698Z  * [new tag]         v0.59.0                -> v0.59.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3073316Z  * [new tag]         v0.6.0                 -> v0.6.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3073937Z  * [new tag]         v0.60.0                -> v0.60.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3074553Z  * [new tag]         v0.61.0                -> v0.61.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3075184Z  * [new tag]         v0.62.0                -> v0.62.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3075814Z  * [new tag]         v0.63.0                -> v0.63.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3076432Z  * [new tag]         v0.64.0                -> v0.64.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3077050Z  * [new tag]         v0.65.0                -> v0.65.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3077665Z  * [new tag]         v0.66.0                -> v0.66.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3078281Z  * [new tag]         v0.67.0                -> v0.67.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3078917Z  * [new tag]         v0.68.0                -> v0.68.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3079546Z  * [new tag]         v0.69.0                -> v0.69.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3080275Z  * [new tag]         v0.7.0                 -> v0.7.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3080895Z  * [new tag]         v0.70.0                -> v0.70.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3081515Z  * [new tag]         v0.71.0                -> v0.71.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3082136Z  * [new tag]         v0.72.0                -> v0.72.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3082927Z  * [new tag]         v0.73.0                -> v0.73.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3083555Z  * [new tag]         v0.74.0                -> v0.74.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3084178Z  * [new tag]         v0.8.0                 -> v0.8.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3084799Z  * [new tag]         v0.9.0                 -> v0.9.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3175638Z [command]/usr/bin/git branch --list --remote origin/main
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3212352Z   origin/main
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3223875Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3255425Z aa378e7ed3e7f81fc5a54e08966aa00df8c76da6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3262845Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3264049Z ##[group]Determining the checkout info
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3265411Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3268529Z [command]/usr/bin/git sparse-checkout disable
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3319559Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3355893Z ##[group]Checking out the ref
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.3360962Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4214423Z Switched to a new branch 'main'
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4215589Z branch 'main' set up to track 'origin/main'.
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4231041Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4285821Z [command]/usr/bin/git log -1 --format=%H
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4319446Z aa378e7ed3e7f81fc5a54e08966aa00df8c76da6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4809281Z ##[group]Run dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4810422Z with:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4811248Z   toolchain: 1.96.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4811675Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4888662Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4949497Z ##[group]Run if [[ -z $toolchain ]]; then
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4950575Z ^[[36;1mif [[ -z $toolchain ]]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4951718Z ^[[36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4952726Z ^[[36;1m  echo "'toolchain' is a required input" >&2^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4953551Z ^[[36;1m  exit 1^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4954186Z ^[[36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4954953Z ^[[36;1m  if [[ Linux == macOS ]]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4955956Z ^[[36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4956882Z ^[[36;1m  else^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4957620Z ^[[36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4958454Z ^[[36;1m  fi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4959022Z ^[[36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4960101Z ^[[36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4960937Z ^[[36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4961900Z ^[[36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4962775Z ^[[36;1melse^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4963242Z ^[[36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.4963818Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5010526Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5011202Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5011595Z   toolchain: 1.96.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5012015Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5138930Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=24]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5153498Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5187244Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5188400Z ^[[36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5189542Z ^[[36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5190635Z ^[[36;1mecho "downgrade=" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5228481Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5229117Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5229499Z   targets: 
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5230055Z   components: 
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5230452Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5310000Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=15]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5313528Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5337422Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5338284Z ^[[36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5376307Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5376973Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5448070Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=13]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5451725Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5483078Z ##[group]Run if ! command -v rustup &>/dev/null; then
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5483775Z ^[[36;1mif ! command -v rustup &>/dev/null; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5485094Z ^[[36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5486364Z ^[[36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5486917Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5524510Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5525149Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5525560Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5526211Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5594921Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=14]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5598431Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5607765Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5620165Z ##[start-action display=rustup toolchain install 1.96.1;id=__dtolnay_rust-toolchain.__run_4]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5644104Z ##[group]Run rustup toolchain install 1.96.1 --profile minimal --no-self-update
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5645082Z ^[[36;1mrustup toolchain install 1.96.1 --profile minimal --no-self-update^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5682747Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5683397Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5683808Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5684324Z   RUSTUP_PERMIT_COPY_RENAME: 1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.5684788Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.6472656Z info: syncing channel updates for 1.96.1-x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.9276257Z info: latest update on 2026-06-30 for version 1.96.1 (31fca3adb 2026-06-26)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:38.9321261Z info: downloading 3 components
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9536193Z 
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9610821Z   1.96.1-x86_64-unknown-linux-gnu installed - rustc 1.96.1 (31fca3adb 2026-06-26)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9611638Z 
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9708930Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=8408]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9717915Z ##[start-action display=rustup default 1.96.1;id=__dtolnay_rust-toolchain.__run_5]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9742175Z ##[group]Run rustup default 1.96.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9742539Z ^[[36;1mrustup default 1.96.1^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9784889Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9785286Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9785541Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9785847Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9905565Z info: using existing install for 1.96.1-x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9911147Z info: default toolchain set to 1.96.1-x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9911630Z 
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9981292Z   1.96.1-x86_64-unknown-linux-gnu unchanged - rustc 1.96.1 (31fca3adb 2026-06-26)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9981897Z 
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:46.9998914Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=28]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0002136Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0023543Z ##[group]Run DATE=$(rustc +1.96.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0024370Z ^[[36;1mDATE=$(rustc +1.96.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0025048Z ^[[36;1mHASH=$(rustc +1.96.1 --version --verbose | sed -ne 's/^commit-hash: //p')^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0025609Z ^[[36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0064962Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0065357Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0065612Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0066171Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0422615Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=41]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0425665Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0446254Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0446703Z ^[[36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0447093Z ^[[36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0447426Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0489238Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0511430Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0511758Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0512081Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0583733Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=15]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0586120Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0606068Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0606492Z ^[[36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0606870Z ^[[36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0607213Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0647645Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0648037Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0648292Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0648591Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0648857Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0716758Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=12]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0719153Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0740852Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0741456Z ^[[36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0742226Z ^[[36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0742982Z ^[[36;1m  if rustc +1.96.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0743580Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0744153Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0744675Z ^[[36;1m  elif rustc +1.96.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0745288Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0745847Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0746237Z ^[[36;1m  fi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0746477Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0786886Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0787284Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0787543Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0787845Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0788118Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.0788388Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1120320Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=39]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1123523Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1146352Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1147178Z ^[[36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1147822Z ^[[36;1mif rustc +1.96.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1148502Z ^[[36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1148865Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1193175Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1193569Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1193824Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1194126Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1194394Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1194666Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1393059Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=26]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1397170Z ##[start-action display=rustc +1.96.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1417671Z ##[group]Run rustc +1.96.1 --version --verbose
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1418059Z ^[[36;1mrustc +1.96.1 --version --verbose^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1459395Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1460137Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1460398Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1460730Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1461004Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1461277Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1643325Z rustc 1.96.1 (31fca3adb 2026-06-26)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1643857Z binary: rustc
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1644341Z commit-hash: 31fca3adb283cc9dfd56b49cdee9a96eb9c96ffd
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1644920Z commit-date: 2026-06-26
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1645358Z host: x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1645751Z release: 1.96.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1646287Z LLVM version: 22.1.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1662258Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=26]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1724616Z ##[group]Run cargo install rust-script --version 0.36.0 --locked
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1725130Z ^[[36;1mcargo install rust-script --version 0.36.0 --locked^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1768195Z shell: /usr/bin/bash -e {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1768506Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1768759Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1769064Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1769337Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.1769829Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.2072078Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.3773331Z ^[[1m^[[92m Downloading^[[0m crates ...
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.6117065Z ^[[1m^[[92m  Downloaded^[[0m rust-script v0.36.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.6489168Z ^[[1m^[[92m  Installing^[[0m rust-script v0.36.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.6504741Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.8844997Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.9426984Z ^[[1m^[[92m Downloading^[[0m crates ...
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.9921907Z ^[[1m^[[92m  Downloaded^[[0m anstyle v1.0.11
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:47.9940121Z ^[[1m^[[92m  Downloaded^[[0m anstyle-query v1.1.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0031474Z ^[[1m^[[92m  Downloaded^[[0m env_filter v0.1.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0047788Z ^[[1m^[[92m  Downloaded^[[0m is_terminal_polyfill v1.70.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0058224Z ^[[1m^[[92m  Downloaded^[[0m anstyle-parse v0.2.7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0077194Z ^[[1m^[[92m  Downloaded^[[0m anstream v0.6.20
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0181884Z ^[[1m^[[92m  Downloaded^[[0m sha1 v0.10.6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0200790Z ^[[1m^[[92m  Downloaded^[[0m option-ext v0.2.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0215372Z ^[[1m^[[92m  Downloaded^[[0m clap_lex v0.7.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0230988Z ^[[1m^[[92m  Downloaded^[[0m aho-corasick v1.1.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0291159Z ^[[1m^[[92m  Downloaded^[[0m utf8parse v0.2.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0302442Z ^[[1m^[[92m  Downloaded^[[0m cfg-if v1.0.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0317864Z ^[[1m^[[92m  Downloaded^[[0m strsim v0.11.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0332991Z ^[[1m^[[92m  Downloaded^[[0m equivalent v1.0.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0348249Z ^[[1m^[[92m  Downloaded^[[0m version_check v0.9.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0362299Z ^[[1m^[[92m  Downloaded^[[0m block-buffer v0.10.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0373469Z ^[[1m^[[92m  Downloaded^[[0m shell-words v1.1.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0383359Z ^[[1m^[[92m  Downloaded^[[0m dirs-sys v0.5.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0401118Z ^[[1m^[[92m  Downloaded^[[0m generic-array v0.14.7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0417800Z ^[[1m^[[92m  Downloaded^[[0m unicase v2.8.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0432628Z ^[[1m^[[92m  Downloaded^[[0m serde_spanned v1.0.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0445002Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark-escape v0.11.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0455887Z ^[[1m^[[92m  Downloaded^[[0m toml_writer v1.0.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0473469Z ^[[1m^[[92m  Downloaded^[[0m toml_datetime v0.7.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0487029Z ^[[1m^[[92m  Downloaded^[[0m errno v0.3.13
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0503772Z ^[[1m^[[92m  Downloaded^[[0m digest v0.10.7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0527852Z ^[[1m^[[92m  Downloaded^[[0m toml v0.9.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0578518Z ^[[1m^[[92m  Downloaded^[[0m toml_parser v1.0.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0607930Z ^[[1m^[[92m  Downloaded^[[0m typenum v1.18.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0646177Z ^[[1m^[[92m  Downloaded^[[0m indexmap v2.10.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0695228Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.7.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0760258Z ^[[1m^[[92m  Downloaded^[[0m clap v4.5.45
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0859053Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.15.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.0912867Z ^[[1m^[[92m  Downloaded^[[0m winnow v0.7.12
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1011326Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark v0.13.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1067144Z ^[[1m^[[92m  Downloaded^[[0m clap_builder v4.5.44
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1135205Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.219
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1168829Z ^[[1m^[[92m  Downloaded^[[0m regex v1.11.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1317310Z ^[[1m^[[92m  Downloaded^[[0m once_cell v1.21.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1346654Z ^[[1m^[[92m  Downloaded^[[0m getrandom v0.3.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1383320Z ^[[1m^[[92m  Downloaded^[[0m unicode-width v0.2.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1442146Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.9.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1488659Z ^[[1m^[[92m  Downloaded^[[0m tempfile v3.20.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1520108Z ^[[1m^[[92m  Downloaded^[[0m getopts v0.2.23
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1537709Z ^[[1m^[[92m  Downloaded^[[0m regex-syntax v0.8.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1612369Z ^[[1m^[[92m  Downloaded^[[0m crypto-common v0.1.6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1624700Z ^[[1m^[[92m  Downloaded^[[0m log v0.4.27
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1650304Z ^[[1m^[[92m  Downloaded^[[0m rustix v1.0.8
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1948676Z ^[[1m^[[92m  Downloaded^[[0m fastrand v2.3.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1963653Z ^[[1m^[[92m  Downloaded^[[0m env_logger v0.11.8
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.1991053Z ^[[1m^[[92m  Downloaded^[[0m dirs v6.0.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.2005499Z ^[[1m^[[92m  Downloaded^[[0m cpufeatures v0.2.17
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.2021296Z ^[[1m^[[92m  Downloaded^[[0m colorchoice v1.0.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.2034542Z ^[[1m^[[92m  Downloaded^[[0m jiff v0.2.15
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.2196619Z ^[[1m^[[92m  Downloaded^[[0m regex-automata v0.4.9
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.2360277Z ^[[1m^[[92m  Downloaded^[[0m libc v0.2.175
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.2717208Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.9.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.3453751Z ^[[1m^[[92m   Compiling^[[0m typenum v1.18.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.3454385Z ^[[1m^[[92m   Compiling^[[0m version_check v0.9.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.3455120Z ^[[1m^[[92m   Compiling^[[0m memchr v2.7.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.3456134Z ^[[1m^[[92m   Compiling^[[0m libc v0.2.175
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.5546506Z ^[[1m^[[92m   Compiling^[[0m generic-array v0.14.7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.6183768Z ^[[1m^[[92m   Compiling^[[0m utf8parse v0.2.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.6288440Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.219
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.6605456Z ^[[1m^[[92m   Compiling^[[0m anstyle-parse v0.2.7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.7728663Z ^[[1m^[[92m   Compiling^[[0m anstyle v1.0.11
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:48.9411269Z ^[[1m^[[92m   Compiling^[[0m aho-corasick v1.1.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.1811098Z ^[[1m^[[92m   Compiling^[[0m colorchoice v1.0.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.2166348Z ^[[1m^[[92m   Compiling^[[0m is_terminal_polyfill v1.70.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.2531580Z ^[[1m^[[92m   Compiling^[[0m anstyle-query v1.1.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.2901510Z ^[[1m^[[92m   Compiling^[[0m regex-syntax v0.8.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.2949419Z ^[[1m^[[92m   Compiling^[[0m anstream v0.6.20
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.7151225Z ^[[1m^[[92m   Compiling^[[0m rustix v1.0.8
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.8901092Z ^[[1m^[[92m   Compiling^[[0m cfg-if v1.0.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:49.9170767Z ^[[1m^[[92m   Compiling^[[0m getrandom v0.3.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:50.0791021Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.9.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:50.3192838Z ^[[1m^[[92m   Compiling^[[0m block-buffer v0.10.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:50.3877929Z ^[[1m^[[92m   Compiling^[[0m crypto-common v0.1.6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:50.4481222Z ^[[1m^[[92m   Compiling^[[0m log v0.4.27
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:50.6171179Z ^[[1m^[[92m   Compiling^[[0m strsim v0.11.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:51.0731486Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.9
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:51.9641380Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.9.4
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:52.2431278Z ^[[1m^[[92m   Compiling^[[0m option-ext v0.2.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:52.2667284Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark v0.13.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:52.2751036Z ^[[1m^[[92m   Compiling^[[0m unicode-width v0.2.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:52.3359958Z ^[[1m^[[92m   Compiling^[[0m clap_lex v0.7.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:52.4561669Z ^[[1m^[[92m   Compiling^[[0m winnow v0.7.12
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:52.5241285Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.5.44
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:53.3328287Z ^[[1m^[[92m   Compiling^[[0m getopts v0.2.23
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:53.9471137Z ^[[1m^[[92m   Compiling^[[0m regex v1.11.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:54.1865240Z ^[[1m^[[92m   Compiling^[[0m toml_parser v1.0.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:54.7143310Z ^[[1m^[[92m   Compiling^[[0m env_filter v0.1.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:55.0871114Z ^[[1m^[[92m   Compiling^[[0m dirs-sys v0.5.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:55.3467627Z ^[[1m^[[92m   Compiling^[[0m toml_datetime v0.7.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:55.6171231Z ^[[1m^[[92m   Compiling^[[0m serde_spanned v1.0.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:55.6871637Z ^[[1m^[[92m   Compiling^[[0m digest v0.10.7
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:55.9321280Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark-escape v0.11.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:55.9891081Z ^[[1m^[[92m   Compiling^[[0m toml_writer v1.0.2
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:56.1458011Z ^[[1m^[[92m   Compiling^[[0m jiff v0.2.15
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:57.2161095Z ^[[1m^[[92m   Compiling^[[0m unicase v2.8.1
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:57.2622535Z ^[[1m^[[92m   Compiling^[[0m once_cell v1.21.3
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:57.3651097Z ^[[1m^[[92m   Compiling^[[0m fastrand v2.3.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:57.4108620Z ^[[1m^[[92m   Compiling^[[0m cpufeatures v0.2.17
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:57.4372350Z ^[[1m^[[92m   Compiling^[[0m sha1 v0.10.6
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:57.5471275Z ^[[1m^[[92m   Compiling^[[0m tempfile v3.20.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:58.0630993Z ^[[1m^[[92m   Compiling^[[0m toml v0.9.5
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:58.2479135Z ^[[1m^[[92m   Compiling^[[0m dirs v6.0.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:58.3200546Z ^[[1m^[[92m   Compiling^[[0m clap v4.5.45
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:58.3761062Z ^[[1m^[[92m   Compiling^[[0m shell-words v1.1.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T06:59:59.6946175Z ^[[1m^[[92m   Compiling^[[0m env_logger v0.11.8
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:00.6745338Z ^[[1m^[[92m   Compiling^[[0m rust-script v0.36.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.8771613Z ^[[1m^[[92m    Finished^[[0m `release` profile [optimized] target(s) in 33.68s
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.8848045Z ^[[1m^[[92m  Installing^[[0m /home/runner/.cargo/bin/rust-script
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.8851415Z ^[[1m^[[92m   Installed^[[0m package `rust-script v0.36.0` (executable `rust-script`)
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9169946Z ##[group]Run rust-script scripts/check-github-releases.rs --repository "link-assistant/router" --default-branch main
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9170787Z ^[[36;1mrust-script scripts/check-github-releases.rs --repository "link-assistant/router" --default-branch main^[[0m
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210140Z shell: /usr/bin/bash -e {0}
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210392Z env:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210595Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210852Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9211076Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9214009Z   GH_TOKEN: ***
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9214225Z ##[endgroup]
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8788696Z Error: pre-existing tags without a GitHub Release:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8789143Z v0.56.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8789395Z v0.73.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8789950Z Resolve each orphan tag by either creating the missing release
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8790627Z   gh release create v0.56.0 --title v0.56.0 --notes-from-tag
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8791322Z or deleting the tag if that version was never meant to ship
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8791828Z   git push origin :refs/tags/v0.56.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8805752Z ##[error]Process completed with exit code 1.
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8994699Z Post job cleanup.
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9822311Z [command]/usr/bin/git version
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9867380Z git version 2.54.0
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9904736Z Temporarily overriding HOME='/home/runner/work/_temp/183b83d7-074e-497c-8441-554f88f499d7' before making global git config changes
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9906020Z Adding repository directory to the temporary git global config as a safe directory
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9920829Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9954512Z Removing SSH command configuration
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9961441Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0000662Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0259889Z Removing HTTP extra header
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0265797Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0303557Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0585568Z Removing includeIf entries pointing to credentials config files
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0592363Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0625356Z includeif.gitdir:/home/runner/work/router/router/.git.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0626327Z includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0627212Z includeif.gitdir:/github/workspace/.git.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0627955Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0634173Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0664426Z /home/runner/work/_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0676593Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-ece4084e\-6045\-46e3\-9adf\-786c5b2e2600\.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0721805Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0753012Z /home/runner/work/_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0762937Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-ece4084e\-6045\-46e3\-9adf\-786c5b2e2600\.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0820682Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0855724Z /github/runner_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0882305Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-ece4084e\-6045\-46e3\-9adf\-786c5b2e2600\.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0921909Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0950392Z /github/runner_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0958956Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-ece4084e\-6045\-46e3\-9adf\-786c5b2e2600\.config
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0999280Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.1255744Z Removing credentials config '/home/runner/work/_temp/git-credentials-ece4084e-6045-46e3-9adf-786c5b2e2600.config'
+Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.1395901Z Cleaning up orphan processes

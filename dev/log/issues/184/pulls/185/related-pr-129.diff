@@ -1,0 +1,289 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 9512940..4791379 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -628,15 +628,25 @@ jobs:
+       - name: Install rust-script
+         run: cargo install rust-script
+ 
++      # Surface orphan tags left by earlier runs *before* anything is published, so the
++      # log names them while they can still be fixed without a half-finished release.
++      # They only warn here: an unrelated historical orphan must not block today's images.
++      # The scheduled verify-releases workflow still fails hard on them.
++      - name: Report pre-existing release drift
++        env:
++          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main --historical-orphans warn
++
+       - name: Create GitHub Release
+         env:
+           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         run: rust-script scripts/create-github-release.rs --release-version "${{ env.RELEASE_VERSION }}" --repository "${{ github.repository }}" --crates-io-url "https://crates.io/crates/link-assistant-router" --docker-hub-url "https://hub.docker.com/r/konard/link-assistant-router"
+ 
++      # Scoped to the version just published: this run is responsible for that release only.
+       - name: Verify GitHub Releases
+         env:
+           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+-        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main
++        run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main --release-version "${{ env.RELEASE_VERSION }}" --historical-orphans warn
+ 
+   # === MANUAL CHANGELOG PR ===
+   changelog-pr:
+diff --git a/.gitkeep b/.gitkeep
+new file mode 100644
+index 0000000..8074d83
+--- /dev/null
++++ b/.gitkeep
+@@ -0,0 +1 @@
++# .gitkeep file auto-generated at 2026-08-13T05:45:04.642Z for PR creation at branch issue-128-36dd99b62733 for issue https://github.com/link-assistant/router/issues/128
+\ No newline at end of file
+diff --git a/changelog.d/20260813_090000_issue_128_scoped_release_guard.md b/changelog.d/20260813_090000_issue_128_scoped_release_guard.md
+new file mode 100644
+index 0000000..0a5daa5
+--- /dev/null
++++ b/changelog.d/20260813_090000_issue_128_scoped_release_guard.md
+@@ -0,0 +1,11 @@
++---
++bump: patch
++---
++
++### Fixed
++- An orphan tag from an earlier run no longer blocks the current release's Docker images: the release run's `check-github-releases.rs` guard is now scoped to the version it just published (`--release-version`), while unrelated historical orphans are reported as warnings (`--historical-orphans warn`)
++- Pre-existing release drift is reported *before* the GitHub release is created, so the run can no longer leave a published release without images
++- The guard's message now names the remediation for each orphan tag (create the release or delete the tag)
++
++### Changed
++- The scheduled `verify-releases` workflow keeps failing hard on any default-branch tag without a GitHub Release
+diff --git a/scripts/check-github-releases.rs b/scripts/check-github-releases.rs
+index 72d3fb1..47f8983 100644
+--- a/scripts/check-github-releases.rs
++++ b/scripts/check-github-releases.rs
+@@ -1,5 +1,13 @@
+ #!/usr/bin/env rust-script
+-//! Fail when a version tag on the default branch has no GitHub Release.
++//! Report version tags on the default branch that have no GitHub Release.
++//!
++//! Usage: rust-script scripts/check-github-releases.rs --repository <owner/repo>
++//!   [--default-branch <branch>] [--release-version <version>] [--historical-orphans error|warn]
++//!
++//! `--release-version` scopes the hard failure to the version being released right now:
++//! its tag *must* have a release. Orphan tags left behind by earlier runs are unrelated to
++//! the current publication, so `--historical-orphans warn` reports them without failing the
++//! run — the scheduled reconciliation workflow keeps enforcing them as an error.
+ 
+ use std::collections::HashSet;
+ use std::env;
+@@ -39,7 +47,35 @@ fn missing_releases(tags: &str, releases: &str) -> Vec<String> {
+         .collect()
+ }
+ 
+-fn check(repository: &str, default_branch: &str) -> Result<(), String> {
++/// Human-readable remediation, so a failing log alone explains how to unblock releases.
++fn remediation(tags: &[String]) -> String {
++    let first = tags
++        .first()
++        .map(String::as_str)
++        .unwrap_or("<tag>")
++        .to_string();
++    format!(
++        "Resolve each orphan tag by either creating the missing release\n  \
++         gh release create {first} --title {first} --notes-from-tag\n\
++         or deleting the tag if that version was never meant to ship\n  \
++         git push origin :refs/tags/{first}"
++    )
++}
++
++/// Split orphans into the tag being released right now and leftovers from earlier runs.
++fn partition_orphans(missing: Vec<String>, release_tag: Option<&str>) -> (Vec<String>, Vec<String>) {
++    match release_tag {
++        Some(tag) => missing.into_iter().partition(|missing| missing == tag),
++        None => (Vec::new(), missing),
++    }
++}
++
++fn check(
++    repository: &str,
++    default_branch: &str,
++    release_tag: Option<&str>,
++    fail_on_historical: bool,
++) -> Result<(), String> {
+     let merged_ref = format!("origin/{default_branch}");
+     let tags = command_output(
+         "git",
+@@ -72,19 +108,35 @@ fn check(repository: &str, default_branch: &str) -> Result<(), String> {
+         ],
+     )?;
+     let missing = missing_releases(&tags, &releases);
++    let (current, historical) = partition_orphans(missing, release_tag);
++
++    if !historical.is_empty() {
++        let report = format!(
++            "pre-existing tags without a GitHub Release:\n{}\n{}",
++            historical.join("\n"),
++            remediation(&historical)
++        );
++        if fail_on_historical {
++            return Err(report);
++        }
++        println!("Warning: {report}");
++    }
+ 
+-    if missing.is_empty() {
++    if !current.is_empty() {
++        return Err(format!(
++            "the version being released has no GitHub Release:\n{}\n{}",
++            current.join("\n"),
++            remediation(&current)
++        ));
++    }
++
++    if historical.is_empty() {
+         println!(
+             "Verified that all {} default-branch version tags have GitHub Releases",
+             tags.lines().count()
+         );
+-        Ok(())
+-    } else {
+-        Err(format!(
+-            "tags without a GitHub Release:\n{}",
+-            missing.join("\n")
+-        ))
+     }
++    Ok(())
+ }
+ 
+ fn main() {
+@@ -96,8 +148,24 @@ fn main() {
+             exit(2);
+         });
+     let default_branch = get_arg("default-branch").unwrap_or_else(|| "main".to_string());
+-
+-    if let Err(error) = check(&repository, &default_branch) {
++    let release_tag = get_arg("release-version")
++        .filter(|value| !value.is_empty())
++        .map(|version| format!("v{}", version.trim_start_matches('v')));
++    let fail_on_historical = match get_arg("historical-orphans").as_deref() {
++        None | Some("error") => true,
++        Some("warn") => false,
++        Some(mode) => {
++            eprintln!("Error: unknown --historical-orphans mode: {mode} (expected error or warn)");
++            exit(2);
++        }
++    };
++
++    if let Err(error) = check(
++        &repository,
++        &default_branch,
++        release_tag.as_deref(),
++        fail_on_historical,
++    ) {
+         eprintln!("Error: {error}");
+         exit(1);
+     }
+@@ -105,7 +173,35 @@ fn main() {
+ 
+ #[cfg(test)]
+ mod tests {
+-    use super::missing_releases;
++    use super::{missing_releases, partition_orphans, remediation};
++
++    #[test]
++    fn scopes_the_current_release_apart_from_earlier_orphans() {
++        let missing = vec!["v0.56.0".to_string(), "v0.58.0".to_string()];
++
++        let (current, historical) = partition_orphans(missing, Some("v0.58.0"));
++
++        assert_eq!(current, vec!["v0.58.0"]);
++        assert_eq!(historical, vec!["v0.56.0"]);
++    }
++
++    #[test]
++    fn treats_every_orphan_as_historical_without_a_release_version() {
++        let missing = vec!["v0.56.0".to_string()];
++
++        let (current, historical) = partition_orphans(missing, None);
++
++        assert!(current.is_empty());
++        assert_eq!(historical, vec!["v0.56.0"]);
++    }
++
++    #[test]
++    fn remediation_names_both_ways_out_for_the_reported_tag() {
++        let message = remediation(&["v0.56.0".to_string()]);
++
++        assert!(message.contains("gh release create v0.56.0"));
++        assert!(message.contains("git push origin :refs/tags/v0.56.0"));
++    }
+ 
+     #[test]
+     fn reports_every_tag_without_a_release() {
+diff --git a/tests/release_workflow_test.rs b/tests/release_workflow_test.rs
+index 216d12d..164f64d 100644
+--- a/tests/release_workflow_test.rs
++++ b/tests/release_workflow_test.rs
+@@ -102,8 +102,10 @@ fn release_workflows_detect_missing_github_releases() {
+     let verification_command = "rust-script scripts/check-github-releases.rs --repository \"${{ github.repository }}\" --default-branch main";
+ 
+     assert!(
+-        release_workflow.contains(verification_command),
+-        "each release run should fail if any default-branch version tag lacks a GitHub Release"
++        release_workflow.contains(&format!(
++            "{verification_command} --release-version \"${{{{ env.RELEASE_VERSION }}}}\""
++        )),
++        "each release run should fail if the version it just published lacks a GitHub Release"
+     );
+     assert!(
+         release_workflow
+@@ -113,8 +115,9 @@ fn release_workflows_detect_missing_github_releases() {
+     assert!(
+         reconciliation_workflow.contains("schedule:")
+             && reconciliation_workflow.contains("fetch-depth: 0")
+-            && reconciliation_workflow.contains(verification_command),
+-        "a scheduled reconciliation should detect release drift outside release runs"
++            && reconciliation_workflow.contains(verification_command)
++            && !reconciliation_workflow.contains("--historical-orphans warn"),
++        "a scheduled reconciliation should fail on any release drift outside release runs"
+     );
+     assert!(
+         release_workflow.contains("rust-script --test scripts/check-github-releases.rs"),
+@@ -122,6 +125,40 @@ fn release_workflows_detect_missing_github_releases() {
+     );
+ }
+ 
++/// A tag left without a release by an earlier run is unrelated to the version being
++/// published now. It must not block that version's Docker images, and whatever the
++/// release run does check has to run *before* the release is created, never between
++/// release creation and image build. See issue #128.
++#[test]
++fn historical_orphan_tags_do_not_block_the_current_release() {
++    let workflow = read_lf(".github/workflows/release.yml");
++
++    let drift_report = workflow
++        .find("- name: Report pre-existing release drift")
++        .expect("the release job should report pre-existing orphan tags");
++    let create_release = workflow
++        .find("- name: Create GitHub Release\n        env:")
++        .expect("the release job should create the GitHub release");
++    assert!(
++        drift_report < create_release,
++        "orphan tags should be reported before a release is published, not after"
++    );
++
++    let drift_step = &workflow[drift_report..create_release];
++    assert!(
++        drift_step.contains("--historical-orphans warn"),
++        "the pre-release drift report should warn, not fail, on unrelated orphan tags"
++    );
++
++    let verification = workflow
++        .find("--release-version \"${{ env.RELEASE_VERSION }}\" --historical-orphans warn")
++        .expect("the post-release verification should be scoped to the published version");
++    assert!(
++        create_release < verification,
++        "the scoped verification should confirm the release that was just created"
++    );
++}
++
+ #[test]
+ fn release_workflow_publishes_one_native_image_per_architecture() {
+     let workflow = read_lf(".github/workflows/release.yml");

@@ -10,6 +10,7 @@ categories = ["web-programming::http-server"]
 repository = "https://github.com/link-assistant/router"
 documentation = "https://github.com/link-assistant/router"
 rust-version = "1.88"
+exclude = ["dev/log/**"]
 
 [lib]
 name = "link_assistant_router"

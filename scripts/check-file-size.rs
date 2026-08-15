@@ -16,7 +16,7 @@ use walkdir::WalkDir;
 
 const MAX_LINES: usize = 1000;
 const FILE_EXTENSIONS: &[&str] = &[".rs"];
-const EXCLUDE_PATTERNS: &[&str] = &["target", ".git", "node_modules"];
+const EXCLUDE_PATTERNS: &[&str] = &["target", ".git", "node_modules", "dev/log"];
 
 fn should_exclude(path: &Path) -> bool {
     let path_str = path.to_string_lossy();

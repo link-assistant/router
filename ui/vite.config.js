@@ -13,6 +13,18 @@ export default defineConfig({
         entryFileNames: 'assets/app.js',
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/app.[ext]',
+        manualChunks(id) {
+          if (id.includes('/node_modules/react') || id.includes('/node_modules/scheduler')) {
+            return 'react'
+          }
+          if (
+            id.includes('/node_modules/@chakra-ui') ||
+            id.includes('/node_modules/@emotion') ||
+            id.includes('/node_modules/next-themes')
+          ) {
+            return 'ui-vendor'
+          }
+        },
       },
     },
   },

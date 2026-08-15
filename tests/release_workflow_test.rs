@@ -123,6 +123,11 @@ fn release_workflows_detect_missing_github_releases() {
         release_workflow.contains("rust-script --test scripts/check-github-releases.rs"),
         "CI should exercise the release reconciliation script's regression tests"
     );
+    assert!(
+        reconciliation_workflow.contains("GIT_CONFIG_KEY_0: init.defaultBranch")
+            && reconciliation_workflow.contains("GIT_CONFIG_VALUE_0: main"),
+        "standalone checkout must not emit Git's default-branch hint"
+    );
 }
 
 /// A tag left without a release by an earlier run is unrelated to the version being

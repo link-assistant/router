@@ -1,0 +1,1094 @@
+       Fresh unicode-ident v1.0.24
+       Fresh cfg-if v1.0.4
+       Fresh typenum v1.20.1
+       Fresh proc-macro2 v1.0.107
+       Fresh subtle v2.6.1
+       Fresh version_check v0.9.5
+       Fresh once_cell v1.21.4
+       Fresh quote v1.0.47
+       Fresh const-oid v0.9.6
+       Fresh hybrid-array v0.4.14
+       Fresh syn v2.0.119
+       Fresh syn v3.0.3
+       Fresh rand_core v0.10.1
+       Fresh pin-project-lite v0.2.17
+       Fresh zeroize_derive v1.5.0
+       Fresh getrandom v0.4.3
+       Fresh synstructure v0.13.2
+       Fresh bytes v1.12.1
+       Fresh getrandom v0.2.17
+       Fresh itoa v1.0.18
+       Fresh zeroize v1.9.0
+       Fresh zerofrom-derive v0.1.7
+       Fresh rand_core v0.6.4
+       Fresh futures-core v0.3.34
+       Fresh yoke-derive v0.8.2
+       Fresh generic-array v0.14.9
+       Fresh zerofrom v0.1.8
+       Fresh base64ct v1.8.3
+       Fresh stable_deref_trait v1.2.1
+       Fresh block-buffer v0.10.4
+       Fresh crypto-common v0.1.6
+       Fresh libc v0.2.189
+       Fresh log v0.4.33
+       Fresh autocfg v1.5.1
+       Fresh pem-rfc7468 v0.7.0
+       Fresh digest v0.10.7
+       Fresh jobserver v0.1.35
+       Fresh yoke v0.8.3
+       Fresh errno v0.3.14
+       Fresh tracing-core v0.1.36
+       Fresh find-msvc-tools v0.1.11
+       Fresh shlex v2.0.1
+       Fresh smallvec v1.15.2
+       Fresh cc v1.4.3
+       Fresh signal-hook-registry v1.4.8
+       Fresh libm v0.2.16
+       Fresh der v0.7.10
+       Fresh zerovec-derive v0.11.4
+       Fresh tokio-macros v2.7.2
+       Fresh socket2 v0.6.5
+       Fresh mio v1.2.2
+       Fresh spki v0.7.3
+       Fresh cmake v0.1.58
+       Fresh num-traits v0.2.19
+       Fresh tokio v1.53.1
+       Fresh zerovec v0.11.7
+       Fresh serde_core v1.0.229
+       Fresh tracing-attributes v0.1.31
+       Fresh displaydoc v0.2.7
+       Fresh block-buffer v0.12.1
+       Fresh dunce v1.0.5
+       Fresh pkg-config v0.3.34
+       Fresh fs_extra v1.3.0
+       Fresh tracing v0.1.44
+       Fresh pkcs8 v0.10.2
+       Fresh http v1.5.0
+       Fresh bitflags v2.13.1
+       Fresh serde_derive v1.0.229
+       Fresh cpufeatures v0.3.0
+       Fresh http-body v1.1.0
+       Fresh tinystr v0.8.4
+       Fresh slab v0.4.12
+       Fresh serde v1.0.229
+       Fresh writeable v0.6.4
+       Fresh litemap v0.8.3
+       Fresh percent-encoding v2.3.2
+       Fresh icu_locale_core v2.3.0
+       Fresh zerocopy v0.8.56
+       Fresh zerotrie v0.2.5
+       Fresh potential_utf v0.1.6
+       Fresh hmac v0.12.1
+       Fresh const-oid v0.10.2
+       Fresh fnv v1.0.7
+       Fresh tower-service v0.3.3
+       Fresh memchr v2.8.3
+       Fresh hashbrown v0.17.1
+       Fresh utf8_iter v1.0.4
+       Fresh equivalent v1.0.2
+       Fresh ppv-lite86 v0.2.21
+       Fresh indexmap v2.14.0
+       Fresh icu_collections v2.3.0
+       Fresh icu_provider v2.3.0
+       Fresh aws-lc-sys v0.44.0
+       Fresh signature v2.2.0
+       Fresh rustls-pki-types v1.15.1
+       Fresh ff v0.13.1
+       Fresh futures-macro v0.3.34
+       Fresh futures-task v0.3.34
+       Fresh futures-sink v0.3.34
+       Fresh base16ct v0.2.0
+       Fresh futures-util v0.3.34
+       Fresh tokio-util v0.7.19
+       Fresh sec1 v0.7.3
+       Fresh group v0.13.0
+       Fresh aws-lc-rs v1.18.0
+       Fresh icu_properties_data v2.3.0
+       Fresh icu_normalizer_data v2.3.0
+       Fresh hkdf v0.12.4
+       Fresh crypto-bigint v0.5.5
+       Fresh spin v0.9.9
+       Fresh untrusted v0.9.0
+       Fresh try-lock v0.2.5
+       Fresh base64 v0.22.1
+       Fresh linux-raw-sys v0.12.1
+       Fresh atomic-waker v1.1.2
+       Fresh cpufeatures v0.2.17
+       Fresh semver v1.0.28
+       Fresh tower-layer v0.3.3
+       Fresh mime v0.3.17
+       Fresh rustc_version v0.4.1
+       Fresh rustix v1.1.4
+       Fresh h2 v0.4.15
+       Fresh lazy_static v1.5.0
+       Fresh elliptic-curve v0.13.8
+       Fresh want v0.3.1
+       Fresh rustls-webpki v0.103.14
+       Fresh icu_properties v2.3.0
+       Fresh zmij v1.0.23
+       Fresh icu_normalizer v2.3.0
+       Fresh httparse v1.10.1
+       Fresh form_urlencoded v1.2.2
+       Fresh futures-channel v0.3.34
+       Fresh sync_wrapper v1.0.2
+       Fresh crypto-common v0.2.2
+       Fresh inout v0.2.2
+       Fresh httpdate v1.0.3
+       Fresh utf8parse v0.2.2
+       Fresh cmov v0.5.4
+       Fresh unicase v2.9.0
+       Fresh same-file v1.0.6
+       Fresh fastrand v2.5.0
+       Fresh hyper v1.11.0
+       Fresh tempfile v3.27.0
+       Fresh walkdir v2.5.0
+       Fresh anstyle-parse v1.0.0
+       Fresh ctutils v0.4.2
+       Fresh idna_adapter v1.2.2
+       Fresh serde_json v1.0.151
+       Fresh rustls v0.23.43
+       Fresh sha2 v0.10.9
+       Fresh rand_chacha v0.3.1
+       Fresh rfc6979 v0.4.0
+       Fresh num-integer v0.1.47
+       Fresh thiserror-impl v2.0.20
+       Fresh thiserror-impl v1.0.69
+       Fresh cpubits v0.1.1
+       Fresh is_terminal_polyfill v1.70.2
+       Fresh cfg_aliases v0.1.1
+       Fresh regex-syntax v0.8.11
+       Fresh anstyle v1.0.14
+       Fresh colorchoice v1.0.5
+       Fresh ipnet v2.12.1
+       Fresh anstyle-query v1.1.5
+       Fresh anstream v1.0.0
+       Fresh hyper-util v0.1.20
+       Fresh rand v0.8.7
+       Fresh thiserror v1.0.69
+       Fresh thiserror v2.0.20
+       Fresh num-iter v0.1.46
+       Fresh ecdsa v0.16.9
+       Fresh idna v1.1.0
+       Fresh universal-hash v0.6.1
+       Fresh cipher v0.5.2
+       Fresh tower v0.5.3
+       Fresh primeorder v0.13.6
+       Fresh digest v0.11.3
+       Fresh http-body-util v0.1.5
+       Fresh platform-num v0.8.0
+       Fresh curve25519-dalek-derive v0.1.1
+       Fresh dtor-proc-macro v0.0.5
+       Fresh openssl-probe v0.2.1
+       Fresh heck v0.5.0
+       Fresh clap_lex v1.1.0
+       Fresh strsim v0.11.1
+       Fresh ryu v1.0.23
+       Fresh clap_derive v4.6.4
+       Fresh curve25519-dalek v4.1.3
+       Fresh rustls-native-certs v0.8.4
+       Fresh clap_builder v4.6.6
+       Fresh serde_urlencoded v0.7.1
+       Fresh dtor v0.0.6
+       Fresh sha2 v0.11.0
+       Fresh polyval v0.7.3
+       Fresh url v2.5.8
+       Fresh mime_guess v2.0.5
+       Fresh num-bigint-dig v0.8.6
+       Fresh getrandom v0.3.4
+       Fresh regex-automata v0.4.18
+       Fresh tokio-rustls v0.26.4
+       Fresh ed25519 v2.2.3
+       Fresh nom v8.0.0
+       Fresh pkcs1 v0.7.5
+       Fresh memmap2 v0.9.11
+       Fresh winnow v1.0.4
+       Fresh allocator-api2 v0.4.0
+       Fresh ctor-proc-macro v0.0.6
+       Fresh iana-time-zone v0.1.65
+       Fresh beef v0.5.2
+       Fresh toml_parser v1.1.3+spec-1.1.0
+       Fresh rsa v0.9.10
+       Fresh platform-mem v0.3.0
+       Fresh platform-data v2.0.0
+       Fresh chrono v0.4.45
+       Fresh ctor v0.4.3
+       Fresh ed25519-dalek v2.2.0
+       Fresh links-notation v0.13.0
+       Fresh hyper-rustls v0.27.9
+       Fresh nix v0.28.0
+       Fresh matchers v0.2.0
+       Fresh rust-embed-impl v8.12.0
+       Fresh rand_core v0.9.5
+       Fresh tower-http v0.6.11
+       Fresh anyhow v1.0.104
+       Fresh rust-embed-utils v8.12.0
+       Fresh ghash v0.6.0
+       Fresh rustls-platform-verifier v0.7.0
+       Fresh clap v4.6.6
+       Fresh p256 v0.13.2
+       Fresh p384 v0.13.1
+       Fresh ctr v0.10.1
+       Fresh platform-trees v0.3.4
+       Fresh axum-core v0.5.6
+       Fresh aes v0.9.2
+       Fresh filedescriptor v0.8.3
+       Fresh aead v0.6.1
+       Fresh sharded-slab v0.1.7
+       Fresh tracing-serde v0.2.0
+       Fresh serde_path_to_error v0.1.20
+       Fresh tracing-log v0.2.0
+       Fresh axum-macros v0.5.1
+       Fresh serial2 v0.2.38
+       Fresh thread_local v1.1.10
+       Fresh encoding_rs v0.8.35
+       Fresh lino-env v0.1.0
+       Fresh downcast-rs v1.2.1
+       Fresh toml_datetime v1.1.1+spec-1.1.0
+       Fresh leak_slice v0.2.0
+       Fresh shell-words v1.1.1
+       Fresh matchit v0.8.4
+       Fresh tap v1.0.1
+       Fresh nu-ansi-term v0.50.3
+       Fresh dotenvy v0.15.7
+       Fresh toml_writer v1.1.2+spec-1.1.0
+       Fresh lino-arguments v0.3.0
+       Fresh axum v0.8.9
+       Fresh portable-pty v0.9.0
+       Fresh doublets v0.4.0
+       Fresh tracing-subscriber v0.3.23
+       Fresh toml_edit v0.25.13+spec-1.1.0
+       Fresh reqwest v0.13.4
+       Fresh aes-gcm v0.11.0
+       Fresh jsonwebtoken v11.0.0
+       Fresh rust-embed v8.12.0
+       Fresh lino-objects-codec v0.2.1
+       Fresh log-lazy v0.2.0
+       Fresh tower-http v0.7.0
+       Fresh uuid v1.24.1
+       Fresh async-trait v0.1.92
+       Fresh fs2 v0.4.3
+       Fresh base64 v0.23.1
+       Fresh hex v0.4.3
+       Fresh wait-timeout v0.2.1
+       Fresh bit-vec v0.8.0
+       Fresh quick-error v1.2.3
+       Fresh rand v0.9.5
+       Fresh rand_chacha v0.9.0
+       Fresh rusty-fork v0.3.1
+       Fresh bit-set v0.8.0
+       Fresh rand_xorshift v0.4.0
+       Fresh tokio-stream v0.1.19
+       Fresh unarray v0.1.4
+       Fresh tokio-test v0.4.5
+       Fresh proptest v1.11.0
+   Compiling link-assistant-router v0.76.0 (/tmp/gh-issue-solver-1786801366338)
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name ghcr_visibility_test --edition=2024 tests/ghcr_visibility_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=6dd8d61b1dd12e2d -C extra-filename=-03e25009de407aa2 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name real_clients_test --edition=2024 tests/real_clients_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=4cdafee52e0587b3 -C extra-filename=-638a9427171e2513 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name tunnel_test --edition=2024 tests/tunnel_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=e5f8bdcf310198c6 -C extra-filename=-05656efa6db888d5 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name security_review_test --edition=2024 tests/security_review_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=559177d4cda1e008 -C extra-filename=-6a0a709be007a456 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name admin_ui_test --edition=2024 tests/admin_ui_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=da1c694b1aa84fa8 -C extra-filename=-8973c57d8602271d --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name chat_admin_test --edition=2024 tests/chat_admin_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=99e661497684be0b -C extra-filename=-901bf09ba8eb75df --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name login_flow_test --edition=2024 tests/login_flow_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=d3d9f1efba56981f -C extra-filename=-1a0949a7a7bc7ccf --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name with_router_test --edition=2024 tests/with_router_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=4a4695679556bfe6 -C extra-filename=-72547b55ccaeea12 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name network_security_audit_test --edition=2024 tests/network_security_audit_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=b393e3eb858659c8 -C extra-filename=-482e1e2ebbd381f3 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name cli_contract_test --edition=2024 tests/cli_contract_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=be6e22fcee6dec17 -C extra-filename=-192b2fe1b4e15972 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name clients_cli_test --edition=2024 tests/clients_cli_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=8b1a62d76dcf2144 -C extra-filename=-a317bf7a5a0f2866 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name claude_auth_test --edition=2024 tests/claude_auth_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=c5a60d0e44013694 -C extra-filename=-c17bdb65f9f3b3f9 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name link_assistant_router --edition=2024 src/main.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=5e080d9948cd4d94 -C extra-filename=-446da027aca7b00d --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name managed_server_test --edition=2024 tests/managed_server_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=ccf162e539dad05b -C extra-filename=-782bf75d631381b9 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name link_assistant_router --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=576201552c6dbd61 -C extra-filename=-99da369fedb2d481 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name associative_storage_test --edition=2024 tests/associative_storage_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=2e68486c0afeac88 -C extra-filename=-303eaf8141d79598 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name multiprocess_storage_test --edition=2024 tests/multiprocess_storage_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=acc762c90d44168a -C extra-filename=-f2c554228cf37080 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name router_e2e_test --edition=2024 tests/router_e2e_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=0b5ba3c4fe77a35e -C extra-filename=-2d4fc99163aca2fa --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name basic_usage --edition=2024 examples/basic_usage.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=d1a066c5e38b7876 -C extra-filename=-c5636c24b033b187 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/examples -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name admin_endpoints_test --edition=2024 tests/admin_endpoints_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=c3f598b444899f37 -C extra-filename=-7cc96a6f2b83b971 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name integration_test --edition=2024 tests/integration_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=c327a918b5f14cb9 -C extra-filename=-77f3f990a47c4cae --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name release_workflow_test --edition=2024 tests/release_workflow_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=061a3755ff490bde -C extra-filename=-e1a021fd920d7e37 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name with_router --edition=2024 src/bin/with-router.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=38f39901419d707c -C extra-filename=-59ec881bb83fa531 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name auth_cli_test --edition=2024 tests/auth_cli_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=ed9b60f025c75517 -C extra-filename=-a465a77b13f7aab0 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc --crate-name request_logging_test --edition=2024 tests/request_logging_test.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=181baf0c52c1aeaa -C extra-filename=-816d4b18dffe2de0 --out-dir /tmp/gh-issue-solver-1786801366338/target/debug/deps -C incremental=/tmp/gh-issue-solver-1786801366338/target/debug/incremental -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 50.25s
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/link_assistant_router-99da369fedb2d481`
+
+running 409 tests
+test accounts::tests::explicit_account_pins_are_strict ... ok
+test accounts::tests::concurrent_selection_cannot_oversubscribe_an_account_cap ... ok
+test accounts::tests::an_unavailable_session_account_is_not_silently_changed ... ok
+test accounts::tests::no_healthy_returns_error ... ok
+test accounts::tests::least_used_compares_normalized_spend_for_uneven_limits ... ok
+test accounts::tests::cooldown_skips_unhealthy_account ... ok
+test accounts::tests::least_used_picks_lowest_count ... ok
+test accounts::tests::configured_request_limits_remove_spent_accounts ... ok
+test accounts::tests::strategy_aliases_ignore_surrounding_whitespace ... ok
+test accounts::tests::round_robin_distributes_calls ... ok
+test activitypub::tests::follow_activity_targets_problemsets_actor ... ok
+test activitypub::tests::actor_contains_required_activitypub_and_forgefed_metadata ... ok
+test accounts::tests::session_affinity_keeps_a_conversation_on_one_account ... ok
+test activitypub::tests::inbound_activity_requires_core_fields ... ok
+test admin::tests::candidate_alone_does_not_authorise ... ok
+test admin::tests::environment_key_disables_bootstrap ... ok
+test admin::tests::expired_candidate_leaves_system_unclaimed ... ok
+test admin::tests::confirm_activates_and_closes_bootstrap ... ok
+test accounts::tests::vendor_subscription_accounts_use_the_same_pool ... ok
+test admin::tests::rotate_replaces_the_credential ... ok
+test accounts::tests::session_activity_renews_the_affinity_timeout ... ok
+test admin::tests::mint_never_persists_anything ... ok
+test admin::tests::unconfirmed_mint_is_always_recoverable ... ok
+test admin::tests::rotate_requires_an_existing_claim ... ok
+test admin::tests::unclaimed_by_default ... ok
+test admin::tests::wrong_token_is_rejected ... ok
+test admin_auth::tests::anonymous_access_requires_an_explicit_opt_out ... ok
+test admin_auth::tests::flat_admin_key_still_works_as_a_bootstrap_credential ... ok
+test admin_auth::tests::expired_admin_token_is_rejected ... ok
+test admin_auth::tests::admin_scoped_token_is_accepted ... ok
+test admin_auth::tests::unauthenticated_request_is_refused_when_an_admin_key_is_configured ... ok
+test admin_auth::tests::unauthenticated_request_is_refused_when_no_credential_is_configured ... ok
+test admin_auth::tests::ordinary_client_token_is_rejected ... ok
+test admin_ui::tests::content_types_are_mapped ... ok
+test admin_ui::tests::index_is_embedded ... ok
+test anthropic_bridge_tests::anthropic_web_search_stays_server_side_for_codex_projection ... ok
+test admin_auth::tests::revoked_admin_token_is_rejected ... ok
+test anthropic_bridge_tests::bridged_providers_are_the_non_anthropic_openai_dialect_ones ... ok
+test anthropic_bridge_tests::chat_completion_becomes_anthropic_message ... ok
+test anthropic_bridge_tests::chat_tool_calls_become_tool_use_blocks ... ok
+test anthropic_bridge_tests::codex_projection_uses_native_responses_tool_items ... ok
+test anthropic_bridge_tests::count_tokens_auth::rejects_a_missing_token_with_401 ... ok
+test anthropic_bridge_tests::count_tokens_auth::rejects_a_forged_token_with_401 ... ok
+test anthropic_bridge_tests::count_tokens_auth::accepts_a_valid_token_and_returns_its_claims ... ok
+test anthropic_bridge_tests::count_tokens_estimate_scales_with_input ... ok
+test anthropic_bridge_tests::defaults_max_tokens_when_absent ... ok
+test anthropic_bridge_tests::count_tokens_auth::rejects_a_revoked_token_with_403 ... ok
+test anthropic_bridge_tests::malformed_or_unknown_tools_fail_validation_instead_of_disappearing ... ok
+test anthropic_bridge_tests::drops_thinking_blocks ... ok
+test anthropic_bridge_tests::max_tokens_finish_reason_maps_to_anthropic ... ok
+test anthropic_bridge_tests::tool_choice_any_becomes_required ... ok
+test anthropic_bridge_tests::system_block_array_is_joined ... ok
+test anthropic_bridge_tests::responses_object_becomes_anthropic_message ... ok
+test anthropic_bridge_tests::translates_base64_images ... ok
+test anthropic_bridge_tests::translates_system_and_messages ... ok
+test anthropic_bridge_tests::translates_tool_use_and_tool_result_blocks ... ok
+test anthropic_bridge_tests::translates_tools_and_tool_choice ... ok
+test anthropic_stream::tests::anthropic_stop_sequence_is_enforced_across_sse_chunks ... ok
+test admin::tests::independently_loaded_claims_have_one_cross_process_winner ... ok
+test anthropic_stream::tests::finish_is_idempotent_and_always_terminates_the_stream ... ok
+test admin::tests::claim_survives_restart ... ok
+test anthropic_stream::tests::responses_function_calls_become_tool_use ... ok
+test anthropic_stream::tests::responses_web_search_stays_a_server_tool_and_reports_usage ... ok
+test anthropic_stream::tests::translates_chat_chunks_to_anthropic_events ... ok
+test anthropic_stream::tests::translates_chat_tool_calls_to_tool_use_blocks ... ok
+test anthropic_stream::tests::translates_responses_events_to_anthropic_events ... ok
+test api_error::tests::one_error_renders_in_each_vendor_dialect ... ok
+test audit::tests::disabled_log_writes_nothing ... ok
+test audit::tests::empty_path_is_treated_as_disabled ... ok
+test audit::tests::events_never_carry_the_token_string_or_credentials ... ok
+test auth::tests::device_polling_handles_pending_slow_down_and_expiry ... ok
+test audit::tests::enabled_log_is_owner_only ... ok
+test audit::tests::enabled_log_appends_one_json_line_per_event ... ok
+test auth::tests::dropping_loopback_login_closes_listener ... ok
+test capabilities::tests::matrix_distinguishes_server_tools_and_local_emulation ... ok
+test capabilities::tests::unknown_providers_are_never_assumed_unsupported ... ok
+test chat_admin::tests::a_bare_token_is_accepted_as_the_confirmation ... ok
+test chat_admin::tests::a_claim_made_in_chat_closes_the_web_ui_bootstrap ... ok
+test chat_admin::tests::a_claim_made_in_the_web_ui_closes_start_for_chat ... ok
+test auth::tests::callback_listener_closes_on_timeout ... ok
+test chat_admin::tests::a_second_chat_user_must_present_a_credential ... ok
+test chat_admin::tests::an_admin_scoped_jwt_is_accepted_as_a_credential ... ok
+test chat_admin::tests::an_environment_provisioned_key_starts_claimed ... ok
+test chat_admin::tests::an_unconfirmed_mint_leaves_the_router_claimable ... ok
+test chat_admin::tests::channels_are_independently_configurable ... ok
+test chat_admin::tests::confirm_activates_the_claim_and_signs_the_user_in ... ok
+test chat_admin::tests::logout_forgets_the_binding ... ok
+test chat_admin::tests::revoking_the_credential_unbinds_the_chat_user ... ok
+test chat_admin::tests::sensitive_commands_are_rate_limited ... ok
+test chat_admin::tests::sessions_do_not_leak_across_channels_or_users ... ok
+test chat_admin::tests::start_mints_a_candidate_that_authorises_nothing ... ok
+test chat_admin::tests::telegram_style_command_suffixes_are_understood ... ok
+test auth::tests::device_login_starts_without_binding_the_loopback_port ... ok
+test chat_admin::tests::unknown_commands_get_the_help_text ... ok
+test chat_commands::tests::an_environment_key_cannot_rotate_itself ... ok
+test chat_commands::tests::issue_rejects_a_nonsense_ttl ... ok
+test chat_commands::tests::issue_returns_the_value_once_and_marks_it_secret ... ok
+test auth::tests::provider_error_closes_listener_immediately ... ok
+test chat_commands::tests::listing_never_echoes_a_token_value ... ok
+test chat_commands::tests::revoke_without_an_id_explains_itself ... ok
+test chat_commands::tests::rotating_a_claimed_credential_replaces_it ... ok
+test chat_commands::tests::revoke_marks_the_token_revoked ... ok
+test chat_commands::tests::status_reports_the_credential_state ... ok
+test chat_admin::tests::a_flood_of_strangers_cannot_grow_the_session_map_without_bound ... ok
+test chat_config::tests::an_empty_token_is_not_a_configured_channel ... ok
+test chat_config::tests::each_channel_is_independent ... ok
+test chat_commands::tests::timestamps_render_as_utc ... ok
+test chat_config::tests::no_tokens_means_no_channels ... ok
+test chat_config::tests::secrets_can_be_kept_by_setting_a_zero_ttl ... ok
+test claude_identity::tests::adds_the_identity_when_no_system_prompt_is_present ... ok
+test claude_identity::tests::byte_bodies_are_returned_untouched_when_nothing_changes ... ok
+test claude_identity::tests::byte_bodies_are_rewritten_when_the_identity_is_missing ... ok
+test claude_identity::tests::is_idempotent_for_claude_codes_own_requests ... ok
+test claude_identity::tests::keeps_the_caller_system_prompt_after_the_identity ... ok
+test claude_identity::tests::only_oauth_credentials_are_patched ... ok
+test claude_identity::tests::leaves_a_plain_string_identity_alone ... ok
+test claude_identity::tests::prepends_to_an_existing_block_array ... ok
+test cli::tests::cli_invalid_routing_mode_rejected ... ok
+test cli::tests::cli_defaults_round_trip_to_config ... ok
+test cli::tests::sensitive_environment_values_are_hidden_from_help ... ok
+test cli::with::tests::explicit_boundary_forwards_every_colliding_wrapper_flag_verbatim ... ok
+test cli::with::tests::option_values_that_match_clients_are_not_boundaries ... ok
+test cli::with::tests::value_wrapper_flags_after_client_are_accepted ... ok
+test cli::with::tests::wrapper_flags_after_client_are_protected ... ok
+test clients::tests::compact_diagnostics_do_not_echo_unbounded_upstream_bodies ... ok
+test clients::tests::rejects_non_http_router_urls ... ok
+test config::tests::account_limit_parser_accepts_zero_as_unlimited ... ok
+test config::tests::account_limits_must_align_with_the_configured_pool ... ok
+test cli::tests::login_cli_defaults_to_bare_tui ... ok
+test config::tests::crater_provider_builds_with_forgefed_inbox ... ok
+test config::tests::default_provider_routes_across_subscriptions ... ok
+test config::tests::gonka_provider_builds_with_private_key_and_defaults ... ok
+test config::tests::crater_provider_requires_forgefed_inbox ... ok
+test config::tests::gonka_provider_requires_private_key ... ok
+test config::tests::test_config_default_port ... ok
+test config::tests::test_api_format_parsing ... ok
+test config::tests::test_config_empty_token_secret ... ok
+test config::tests::test_config_invalid_port ... ok
+test config::tests::test_config_missing_token_secret ... ok
+test config::tests::test_config_with_valid_values ... ok
+test config::tests::test_storage_policy_parsing ... ok
+test config::tests::test_routing_mode_parsing ... ok
+test config::tests::test_verbose_default_false ... ok
+test crater::tests::builds_forgefed_offer_with_ticket_without_ticket_id ... ok
+test chat_admin::tests::the_active_conversation_survives_the_cap ... ok
+test crater::tests::normalizes_chat_request_into_ticket_fields ... ok
+test crater::tests::maps_resolved_task_to_openai_response ... ok
+test crater::tests::parses_accept_result_uri_or_object_id ... ok
+test gemini::tests::envelope_includes_model ... ok
+test crater::tests::task_provider_trait_submits_and_polls ... ok
+test gemini::tests::map_model_passes_gemini_through ... ok
+test gemini::tests::parses_gemini_and_vertex_native_actions ... ok
+test gemini::tests::responses_input_projects_to_messages ... ok
+test gemini::tests::translates_chat_to_gemini_contents_and_system ... ok
+test gemini::tests::translates_gemini_response_to_chat ... ok
+test gemini::tests::unwraps_code_assist_response_envelope ... ok
+test github_proxy::tests::default_policy_blocks_each_destructive_class ... ok
+test github_proxy::tests::enterprise_and_bare_paths_normalize_to_github_rest ... ok
+test github_proxy::tests::explicit_allow_overrides_one_default_without_weakening_others ... ok
+test github_proxy::tests::policy_rejects_misspelled_configuration_fields ... ok
+test gonka::tests::default_model_is_added_when_missing ... ok
+test gonka::tests::existing_model_is_preserved ... ok
+test gonka::tests::models_endpoint_uses_gonka_owner ... ok
+test gonka::tests::signing_headers_do_not_include_private_key ... ok
+test logging::tests::rust_log_takes_precedence_over_default_level ... ok
+test logging::tests::verbosity_is_only_used_without_a_valid_environment_filter ... ok
+test login::tests::a_failure_excerpt_carries_neither_the_token_nor_the_pasted_code ... ok
+test login::tests::an_expired_session_becomes_evictable ... ok
+test login::tests::compacted_oauth_verdicts_are_restored_for_api_errors ... ok
+test cli::tests::every_declared_default_is_visible_in_its_long_help ... ok
+test login::tests::disabled_manager_refuses_to_begin ... ok
+test login::tests::finished_sessions_are_evicted_once_their_result_has_been_retained ... ok
+test login::tests::login_config_defaults_to_bare_tui ... ok
+test login::tests::ensure_writable_dir_creates_missing_directories ... ok
+test login::tests::tui_only_types_into_recognized_screens ... ok
+test login_api::tests::provider_defaults_to_claude_and_rejects_unexposed_aliases ... ok
+test login_pty::tests::keys_map_to_terminal_sequences ... ok
+test login::tests::write_credential_is_readable_by_the_oauth_reader ... ok
+test login_pty::tests::strips_osc_title_sequences ... ok
+test login_url::tests::a_known_pasted_value_is_removed_verbatim ... ok
+test login_url::tests::a_printed_credential_never_survives_redaction ... ok
+test login_url::tests::a_url_ending_exactly_on_the_boundary_absorbs_the_next_line ... ok
+test login_pty::tests::strips_colour_and_cursor_sequences ... ok
+test login_url::tests::finds_current_claude_cli_url ... ok
+test durable_file::tests::durable_write_is_owner_only_and_leaves_no_temporary_file ... ok
+test login_url::tests::finds_setup_token ... ok
+test login_url::tests::finds_url_on_its_own_line ... ok
+test login_url::tests::ignores_a_bare_token_prefix_mention ... ok
+test login_url::tests::prefers_the_last_repaint ... ok
+test login_url::tests::ignores_unrelated_urls ... ok
+test login_url::tests::text_without_a_credential_is_returned_unchanged ... ok
+test login_url::tests::the_routers_own_credentials_are_redacted_whole ... ok
+test login_url::tests::rejoins_a_url_wrapped_at_the_terminal_width ... ok
+test login_url::tests::trims_trailing_sentence_punctuation ... ok
+test metrics::tests::public_metrics_omit_token_labels_and_account_names ... ok
+test metrics::tests::per_token_requests_are_counted_and_labelled ... ok
+test metrics::tests::token_counters_are_absent_until_a_token_is_used ... ok
+test metrics::tests::usage_snapshot_returns_consistent_values ... ok
+test metrics::tests::record_and_render_basic_counters ... ok
+test auth::tests::mismatched_state_is_rejected_and_listener_closes_after_valid_callback ... ok
+test github_proxy::tests::forwarding_contains_credentials_and_preserves_rate_limits ... ok
+test model_catalog::tests::failed_refresh_preserves_last_known_models ... ok
+test model_catalog::tests::parses_each_vendor_response_shape ... ok
+test model_catalog::tests::catalog_refresh_uses_an_in_memory_refreshed_token ... ok
+test model_catalog::tests::codex_fetch_uses_live_response_and_required_auth_metadata ... ok
+test model_catalog::tests::catalog_auth_rejection_is_recorded_as_credential_evidence ... ok
+test model_routing::tests::catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names ... ok
+test model_routing::tests::catalog_unions_models_with_their_real_owners ... ok
+test model_catalog::tests::expired_credential_is_still_probed_and_keeps_its_cached_catalog ... ok
+test model_routing::tests::automatic_messages_authenticate_before_model_routing ... ok
+test model_routing::tests::automatic_state_never_uses_a_claude_alias_for_an_unadvertised_openai_model ... ok
+test model_routing::tests::automatic_state_selects_the_models_healthy_reader ... ok
+test model_routing::tests::expired_credentials_with_a_cached_refresh_are_healthy ... ok
+test auth::tests::device_login_polls_pending_then_exchanges_and_persists_tokens ... ok
+test model_routing::tests::model_ids_route_to_the_subscription_that_serves_them ... ok
+test model_routing::tests::newly_discovered_model_is_immediately_routable ... ok
+test model_routing::tests::malformed_client_tokens_return_a_fixed_message ... ok
+test model_routing::tests::expired_credential_stays_routable_without_an_upstream_rejection ... ok
+test mpp::tests::challenge_response_uses_http_402_and_payment_auth_scheme ... ok
+test mpp::tests::detects_payment_authorization_credentials ... ok
+test mpp::tests::requires_enabled_and_charge_details ... ok
+test oauth::tests::test_cached_token_returned ... ok
+test oauth::tests::test_expired_nested_token_still_returned ... ok
+test oauth::tests::test_flat_layout_refresh_token_is_read ... ok
+test model_routing::tests::model_catalog_routes_require_a_valid_client_token ... ok
+test model_routing::tests::missing_credentials_are_not_healthy ... ok
+test model_routing::tests::models_omits_a_rejected_provider_and_names_only_healthy_ones ... ok
+test oauth::tests::test_get_fresh_token_errors_without_credentials ... ok
+test model_routing::tests::rejected_credential_is_unhealthy_even_without_an_expiry_timestamp ... ok
+test oauth::tests::test_nested_block_does_not_borrow_flat_refresh_token ... ok
+test oauth::tests::test_nested_credentials_preferred_over_flat ... ok
+test oauth::tests::test_read_credential_file ... ok
+test oauth::tests::test_read_nested_claude_code_credentials ... ok
+test oauth::tests::test_no_credential_files ... ok
+test oauth::tests::test_set_token_manually ... ok
+test oauth::tests::test_reads_refresh_token_and_expiry_from_nested_block ... ok
+test on_demand_cli::tests::disposable_directory_is_removed_on_drop ... ok
+test on_demand_cli::tests::cleanup_keeps_the_resulting_credential ... ok
+test openai::request_tests::caller_reasoning_effort_uses_adaptive_thinking_and_preserves_explicit_limit ... ok
+test openai::request_tests::chat_stream_emits_usage_only_when_requested ... ok
+test on_demand_cli::tests::fallback_runs_the_dedicated_subscription_login_command ... ok
+test openai::request_tests::chat_tool_loop_preserves_call_and_result_ids ... ok
+test openai::request_tests::drops_temperature_for_claude_5_models ... ok
+test openai::request_tests::legacy_thinking_budget_keeps_visible_output_headroom ... ok
+test openai::request_tests::model_resolution_keeps_intentional_aliases_explicit ... ok
+test openai::request_tests::model_resolution_rejects_unknown_ids ... ok
+test openai::request_tests::preserves_claude_native_model_id ... ok
+test openai::request_tests::omitted_limit_reserves_output_headroom_for_adaptive_thinking ... ok
+test openai::request_tests::responses_flat_tools_translate_without_silent_loss ... ok
+test openai::request_tests::responses_web_search_maps_to_anthropic_server_tool ... ok
+test openai::request_tests::translates_anthropic_text_stream_to_openai_response_events ... ok
+test openai::request_tests::translates_basic_chat_completion ... ok
+test openai::request_tests::translates_anthropic_text_stream_to_openai_chat_chunks ... ok
+test openai::tests::anthropic_to_chat_basic ... ok
+test openai::request_tests::translates_multipart_user_content ... ok
+test openai::tests::anthropic_tool_use_to_openai_tool_calls ... ok
+test openai::tests::list_models_includes_known_ids ... ok
+test openai::tests::response_stream_emits_named_output_item_lifecycle ... ok
+test providers::tests::import_indented_provider_config ... ok
+test openai::tests::translates_tool_call_blocks ... ok
+test providers::tests::import_json_provider_config ... ok
+test model_routing::tests::openai_request_rejects_unknown_model_in_pinned_and_auto_modes ... ok
+test oauth::tests::test_get_fresh_token_prefers_manual_token ... ok
+test oauth::tests::test_get_fresh_token_uses_cached_refresh_result ... ok
+test oauth::tests::test_get_fresh_token_returns_unexpired_disk_token ... ok
+test proxy_tests::budget_errors_distinguish_limits_from_storage_failures ... ok
+test proxy_tests::build_upstream_headers_injects_required_oauth_headers_when_missing ... ok
+test proxy_tests::build_upstream_headers_preserves_and_merges_client_beta ... ok
+test proxy_tests::extract_client_token_accepts_bearer_github_token_or_x_api_key ... ok
+test proxy_tests::build_upstream_headers_strips_client_auth_headers ... ok
+test proxy_tests::merge_oauth_beta_is_idempotent_and_dedups ... ok
+test proxy_tests::retry_after_delta_seconds_is_used_for_account_cooldown ... ok
+test proxy_tests::routing_context_falls_back_to_standard_body_session_fields ... ok
+test proxy_tests::retry_after_http_date_is_used_for_account_cooldown ... ok
+test proxy_tests::routing_context_prefers_token_pin_and_detects_sessions ... ok
+test refresh::refresh_state::tests::terminal_failure_is_rearmed_only_by_changed_credentials ... ok
+test refresh::refresh_state::tests::transient_failures_back_off_exponentially_with_a_ceiling ... ok
+test providers::tests::import_provider_store_lenv_preserves_encrypted_key ... ok
+test providers::tests::independently_opened_provider_stores_do_not_lose_updates ... ok
+test providers::tests::provider_store_encrypts_and_resolves_api_key ... ok
+test providers::tests::provider_store_redacts_saved_secret ... ok
+test refresh::tests::config_present_for_subscription_providers ... ok
+test refresh::tests::credential_evidence_records_the_latest_upstream_verdict ... ok
+test refresh::tests::encode_form_percent_encodes_reserved_bytes ... ok
+test refresh::tests::changed_valid_credential_clears_terminal_rejection ... ok
+test refresh::tests::claude_refresh_exchanges_the_refresh_token_and_never_touches_disk ... ok
+test refresh::tests::invalid_grant_is_reported_as_a_re_authentication_prompt ... ok
+test refresh::tests::merge_carries_metadata_and_computes_expiry ... ok
+test refresh::tests::merge_requires_access_token ... ok
+test refresh::tests::claude_refresh_requires_a_refresh_token ... ok
+test refresh::tests::merge_rotates_refresh_token_when_present ... ok
+test refresh::tests::claude_refresh_result_is_cached_and_reused ... ok
+test refresh::tests::refresh_errors_are_recorded_per_provider_and_cleared ... ok
+test refresh::tests::refreshed_tokens_are_isolated_by_account ... ok
+test refresh::tests::concurrent_successful_refreshes_share_one_exchange ... ok
+test request_log::isolation_tests::oversized_record_placeholder_keeps_token_identity ... ok
+test request_log::isolation_tests::partial_redaction_is_stable_distinguishable_and_shared_across_sites ... ok
+test request_log::isolation_tests::token_routes_have_complete_attribution_without_cross_contamination ... ok
+test refresh::tests::get_fresh_prefers_cached_valid_token ... ok
+test request_log::tests::credentials_are_redacted_from_headers_and_json_bodies ... ok
+test request_log::tests::credentials_are_redacted_from_uri_queries ... ok
+test request_log::tests::long_credentials_are_partially_redacted_and_short_ones_are_fully_masked ... ok
+test request_log::tests::request_log_is_created_owner_only ... ok
+test request_log::tests::log_never_exceeds_limit_and_keeps_newest_complete_record ... ok
+test responses::stream_tests::codex_chat_stream_emits_requested_usage_chunk ... ok
+test responses::stream_tests::codex_chat_stream_holds_a_cross_chunk_stop_sequence ... ok
+test responses::stream_tests::codex_response_stream_converts_to_chat_chunks ... ok
+test responses::tests::anthropic_server_tool_results_keep_their_kind_payload_and_usage ... ok
+test responses::tests::buffered_chat_stop_is_enforced_locally ... ok
+test responses::tests::chat_completion_preserves_stream_request_for_codex ... ok
+test responses::tests::chat_completion_projects_to_responses_input ... ok
+test responses::tests::chat_completion_projects_tools_and_results_to_responses ... ok
+test responses::tests::codex_function_calls_convert_to_chat_tool_calls ... ok
+test responses::tests::codex_response_converts_to_chat_completion ... ok
+test request_log::isolation_tests::each_token_has_an_independent_size_budget ... ok
+test responses::tests::drops_temperature_for_claude_5_models ... ok
+test responses::tests::normalizes_string_input_and_preserves_typed_input ... ok
+test responses::tests::prior_function_items_survive_responses_to_anthropic_translation ... ok
+test responses::tests::responses_api_translation ... ok
+test responses::tests::responses_reasoning_is_preserved_as_claude_thinking ... ok
+test security_headers::tests::every_hardening_header_has_a_valid_value ... ok
+test security_headers::tests::the_policy_pins_scripts_to_this_origin_and_forbids_framing ... ok
+test responses::tests::responses_structured_input_translates_to_anthropic ... ok
+test stop_sequences::tests::unicode_tail_is_held_on_a_character_boundary ... ok
+test stop_sequences::tests::detects_a_stop_split_across_chunks_without_leaking_its_prefix ... ok
+test storage::associative::tests::official_lino_codec_roundtrip_is_lossless ... ok
+test storage::associative::tests::semantic_reduction_is_lossless ... ok
+test refresh::tests::get_fresh_returns_valid_disk_token_unchanged ... ok
+test request_log::tests::complete_credentials_never_survive_any_redaction_site ... ok
+test request_log::tests::transformed_upstream_exchange_is_logged_with_same_id ... ok
+test refresh::tests::terminal_refresh_failure_is_attempted_only_once_for_same_credential ... ok
+test storage::tests::dual_store_writes_both ... ok
+test storage::associative::tests::native_doublets_graph_reopens_across_growth_boundary ... ok
+test storage::tests::lino_codec_handles_special_chars ... ok
+test storage::tests::memory_store_roundtrip ... ok
+test storage::tests::revoke_marks_record ... ok
+test storage::tests::independently_opened_text_stores_do_not_lose_updates ... ok
+test storage::tests::text_store_roundtrip ... ok
+test subscription::tests::claude_pool_reader_preserves_legacy_credential_candidates ... ok
+test subscription::tests::discover_credential_path_finds_existing ... ok
+test subscription::tests::expiry_detection ... ok
+test subscription::tests::missing_credentials_errors ... ok
+test subscription::tests::provider_roundtrip_strings ... ok
+test subscription::tests::qwen_without_resource_url_uses_default_base ... ok
+test subscription::tests::reads_claude_nested_credentials ... ok
+test subscription::tests::reads_codex_account_id_from_id_token ... ok
+test subscription::tests::reads_codex_auth_json ... ok
+test subscription::tests::reads_codex_expiry_from_access_token ... ok
+test subscription::tests::reads_gemini_oauth_creds ... ok
+test subscription::tests::reads_qwen_oauth_creds_with_resource_url ... ok
+test subscription::tests::resolve_home_uses_subdir ... ok
+test subscription_proxy::tests::codex_headers_include_account_id ... ok
+test subscription_proxy::tests::codex_headers_include_version ... ok
+test subscription_proxy::tests::codex_hoists_system_messages_into_instructions ... ok
+test subscription_proxy::tests::codex_normalizes_both_documented_input_forms_to_a_list ... ok
+test subscription_proxy::tests::codex_normalizes_responses_body_for_chatgpt_backend ... ok
+test subscription_proxy::tests::codex_preserves_caller_instructions ... ok
+test subscription_proxy::tests::codex_rejects_optional_openai_output_limits ... ok
+test subscription_proxy::tests::codex_sse_collapses_to_completed_response ... ok
+test subscription_proxy::tests::codex_sse_without_completed_returns_none ... ok
+test subscription_proxy::tests::codex_url_collapses_v1_responses ... ok
+test subscription_proxy::tests::output_limit_gate_leaves_uncapped_codex_and_other_providers_unchanged ... ok
+test subscription_proxy::tests::qwen_has_no_extra_headers ... ok
+test subscription_proxy::tests::qwen_url_strips_v1_against_compatible_base ... ok
+test subscription_proxy::tests::safe_upstream_response_headers_are_selected ... ok
+test telegram::tests::a_message_without_a_chat_type_is_not_private ... ok
+test telegram::tests::only_private_chats_are_accepted ... ok
+test telegram::tests::the_update_offset_advances_past_the_last_update ... ok
+test token::tests::account_binding_is_available_during_request_routing ... ok
+test token::tests::actual_token_spend_stops_only_the_exhausted_token ... ok
+test token::tests::ordinary_token_rotation_preserves_its_controls_and_revokes_the_old_token ... ok
+test token::tests::per_token_rate_limit_rejects_only_the_bursting_token ... ok
+test token::tests::test_admin_scope_is_carried_by_claims_and_records ... ok
+test token::tests::test_budget_for_unknown_token_is_permitted ... ok
+test token::tests::test_client_tokens_carry_no_scope ... ok
+test token::tests::test_constant_time_eq_matches_string_equality ... ok
+test token::tests::test_expired_token ... ok
+test token::tests::test_has_active_admin_token_tracks_revocation_and_expiry ... ok
+test token::tests::test_issue_token_has_prefix ... ok
+test token::tests::test_list_tokens_returns_records ... ok
+test token::tests::test_persistent_store_roundtrip ... ok
+test token::tests::test_request_budget_enforced ... ok
+test token::tests::test_revoke_token ... ok
+test token::tests::test_revoke_unknown_token_reports_not_found ... ok
+test token::tests::test_rotate_admin_token_issues_a_replacement_and_revokes_the_old_one ... ok
+test token::tests::test_rotate_admin_token_rejects_an_unknown_subject ... ok
+test token::tests::test_unlimited_token_never_hits_budget ... ok
+test token::tests::test_validate_invalid_jwt ... ok
+test token::tests::test_validate_valid_token ... ok
+test token::tests::test_validate_wrong_prefix ... ok
+test usage::tests::extracts_supported_vendor_usage_shapes ... ok
+test usage::tests::multiline_json_usage_is_persisted ... ok
+test usage::tests::streamed_usage_is_accumulated_and_persisted ... ok
+test usage::tests::unterminated_final_sse_frame_is_persisted ... ok
+test vk::tests::community_and_mismatched_senders_are_ignored ... ok
+test vk::tests::multi_user_chats_are_ignored ... ok
+test vk::tests::only_one_to_one_conversations_are_accepted ... ok
+test vk::tests::random_ids_differ_between_sends ... ok
+test vk::tests::ts_is_read_whether_it_arrives_as_text_or_a_number ... ok
+test with_command::tests::colliding_wrapper_flags_after_client_are_forwarded ... ok
+test with_command::tests::command_mode_word_inside_prompt_is_not_treated_as_the_subcommand ... ok
+test storage::tests::binary_store_roundtrip ... ok
+test with_command::tests::explicit_separator_is_not_forwarded ... ok
+test with_command::tests::registry_order_matches_client_discriminants ... ok
+test with_command::tests::every_supported_client_prepares_below_a_disposable_root ... ok
+test storage::tests::stores_persist_the_admin_scope ... ok
+test storage::tests::dual_store_recovers_a_synced_transaction_journal ... ok
+test storage::tests::build_token_store_dispatches_correctly ... ok
+test storage::tests::dual_store_concurrent_consumption_is_atomic_and_preserves_formats ... ok
+
+test result: ok. 409 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.85s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/link_assistant_router-446da027aca7b00d`
+
+running 1 test
+test auth_cli::tests::provider_flow_support_matrix_matches_the_oauth_implementations ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/with_router-59ec881bb83fa531`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/admin_endpoints_test-7cc96a6f2b83b971`
+
+running 8 tests
+test the_binary_under_test_comes_from_this_workspace ... ok
+test an_unknown_scope_is_rejected ... ok
+test allow_anonymous_admin_restores_the_open_surface ... ok
+test the_flat_admin_key_still_authorises ... ok
+test admin_scoped_tokens_are_issuable_and_rotatable_over_http ... ok
+test client_tokens_cannot_reach_the_admin_surface ... ok
+test bootstrap_admin_token_is_printed_and_opens_the_admin_surface ... ok
+test unauthenticated_token_issuance_is_refused_by_default ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/admin_ui_test-8973c57d8602271d`
+
+running 12 tests
+test an_expired_candidate_leaves_bootstrap_open ... ok
+test an_environment_key_disables_bootstrap_entirely ... ok
+test mint_alone_does_not_close_bootstrap_or_authorise ... ok
+test confirm_activates_the_credential_and_closes_bootstrap ... ok
+test admin_api_is_closed_before_a_claim_exists ... ok
+test confirm_requires_the_candidate_token_itself ... ok
+test only_the_first_confirmer_wins ... ok
+test status_reports_an_open_bootstrap_before_any_claim ... ok
+test rotation_replaces_the_claimed_credential ... ok
+test unknown_api_paths_do_not_fall_back_to_the_app_shell ... ok
+test tokens_can_be_issued_listed_and_revoked_through_the_admin_port ... ok
+test the_ui_is_served_from_the_embedded_bundle ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/associative_storage_test-303eaf8141d79598`
+
+running 4 tests
+test text_store_is_decodable_by_the_official_lino_codec ... ok
+test legacy_text_store_is_loaded_and_migrated ... ok
+test legacy_binary_store_is_loaded_and_migrated ... ok
+test binary_store_is_a_reopenable_native_doublets_graph ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/auth_cli_test-a465a77b13f7aab0`
+
+running 4 tests
+test claude_code_without_a_pending_login_does_not_start_a_new_login ... ok
+test claude_code_is_rejected_for_the_cli_fallback_without_starting_it ... ok
+test unsupported_provider_flows_are_rejected_during_parsing ... ok
+test provider_help_lists_supported_flows ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/chat_admin_test-901bf09ba8eb75df`
+
+running 4 tests
+test group_traffic_never_reaches_the_command_parser ... ok
+test a_claim_made_in_chat_closes_the_web_ui_bootstrap ... ok
+test the_chat_credential_administers_the_router ... ok
+test a_claim_made_in_the_web_ui_closes_start_in_chat ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/claude_auth_test-c17bdb65f9f3b3f9`
+
+running 3 tests
+test native_login_uses_the_current_claude_code_token_endpoint ... ok
+test native_login_builds_the_claude_pkce_authorization_url ... ok
+test native_login_exchanges_code_and_persists_a_refreshable_credential ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/cli_contract_test-192b2fe1b4e15972`
+
+running 5 tests
+test missing_argument_usage_does_not_present_configured_globals_as_required ... ok
+test help_never_prints_secret_environment_values ... ok
+test revoke_and_expire_reject_unknown_token_ids ... ok
+test invalid_configuration_enum_values_are_rejected ... ok
+test boolean_environment_variables_accept_documented_spellings ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.71s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/clients_cli_test-a317bf7a5a0f2866`
+
+running 21 tests
+test codex_remove_without_an_ownership_marker_is_a_noop ... ok
+test claude_remove_without_an_ownership_marker_is_a_noop ... ok
+test catalog_dependent_setup_fails_before_writing_when_router_is_unreachable ... ok
+test grok_setup_stores_both_required_exports_without_persisting_in_client_config ... ok
+test claude_code_setup_preserves_settings_without_storing_the_token ... ok
+test list_covers_every_documented_client_and_agent ... ok
+test codex_doctor_requires_an_openai_owned_catalog_model ... ok
+test codex_setup_merges_idempotently_and_remove_is_surgical ... ok
+test doctor_uses_chat_completions_for_opencode_compatible_clients ... ok
+test opencode_setup_populates_models_from_the_live_catalog ... ok
+test opencode_remove_restores_a_provider_that_setup_replaced ... ok
+test doctor_uses_the_configured_codex_path_and_token_variable ... ok
+test opencode_reconfiguration_preserves_user_added_models ... ok
+test qwen_setup_remains_compatible_with_legacy_wrapped_models ... ok
+test qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry ... ok
+test vendor_gated_clients_fail_before_minting_tokens_or_writing_configs ... ok
+test setup_can_mint_a_persisted_token_and_status_never_discloses_it ... ok
+test qwen_keeps_stable_ownership_when_the_user_changes_the_model ... ok
+test opencode_and_agent_setup_merge_owned_provider_without_storing_token ... ok
+test setup_for_every_supported_client_needs_no_preinstalled_vendor_binary ... ok
+test reconfiguration_updates_owned_entries_so_remove_stays_surgical ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.39s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/ghcr_visibility_test-03e25009de407aa2`
+
+running 8 tests
+test release_manifest_job_checks_public_visibility_and_source_metadata ... ok
+test missing_image_and_invalid_bash_are_rejected ... ok
+test success_without_an_anonymous_token_fails_closed ... ok
+test public_package_passes_without_printing_its_token ... ok
+test private_and_missing_packages_fail_with_distinct_diagnostics ... ok
+test scope_omits_registry_tag_and_digest_and_request_has_no_credentials ... ok
+test transport_failures_use_the_bounded_retry_budget ... ok
+test transient_server_failures_use_the_bounded_retry_budget ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/integration_test-77f3f990a47c4cae`
+
+running 52 tests
+test activitypub_tests::collections_are_addressable_ordered_collections ... ok
+test activitypub_tests::follow_activity_can_be_posted_to_problemsets_inbox ... ok
+test activitypub_tests::actor_document_exposes_required_activitypub_fields ... ok
+test api_format_tests::test_api_format_anthropic_parsing ... ok
+test activitypub_tests::inbox_validation_rejects_objects_without_actor_or_attributed_to ... ok
+test activitypub_tests::actor_context_includes_forgefed_and_fep_ef61_aliases ... ok
+test api_format_tests::test_api_format_bedrock_parsing ... ok
+test api_format_tests::test_api_format_unknown ... ok
+test api_format_tests::test_api_format_vertex_parsing ... ok
+test cli_parser_tests::cli_parses_disable_flags ... ok
+test cli_parser_tests::cli_parses_serve_subcommand ... ok
+test cli_parser_tests::cli_default_subcommand_is_none ... ok
+test config_verbose_tests::test_verbose_enabled ... ok
+test cli_parser_tests::cli_parses_doctor_subcommand ... ok
+test config_verbose_tests::test_verbose_disabled ... ok
+test metrics_rendering_tests::prometheus_output_contains_only_aggregate_required_counters ... ok
+test cli_parser_tests::cli_parses_tokens_issue_with_label ... ok
+test metrics_rendering_tests::usage_snapshot_serialises_cleanly ... ok
+test oauth_integration_tests::test_manual_token_set_and_get ... ok
+test mpp_tests::openai_mpp_challenge_is_machine_readable_402 ... ok
+test oauth_integration_tests::test_credential_file_parsing ... ok
+test openai_translation_tests::anthropic_response_to_openai_chat_completion ... ok
+test openai_translation_tests::chat_completion_translates_system_and_user ... ok
+test cli_parser_tests::cli_parses_per_token_spend_and_rate_controls ... ok
+test openai_translation_tests::models_endpoint_includes_known_claude_ids ... ok
+test oauth_integration_tests::test_missing_credentials_error ... ok
+test openai_translation_tests::maps_openai_aliases_to_claude_models ... ok
+test mpp_tests::mpp_payment_authorization_is_not_treated_as_bearer_token ... ok
+test path_routing_tests::test_anthropic_count_tokens_path ... ok
+test path_routing_tests::test_bedrock_invoke_path ... ok
+test path_routing_tests::test_bedrock_invoke_stream_path ... ok
+test path_routing_tests::test_legacy_prefix_root ... ok
+test path_routing_tests::test_legacy_prefix_stripped ... ok
+test path_routing_tests::test_anthropic_messages_path ... ok
+test path_routing_tests::test_vertex_count_tokens_raw_predict_path ... ok
+test path_routing_tests::test_vertex_raw_predict_path ... ok
+test path_routing_tests::test_namespaced_anthropic_messages_path ... ok
+test path_routing_tests::test_legacy_prefix_with_nested_path ... ok
+test path_routing_tests::test_vertex_stream_raw_predict_path ... ok
+test required_headers_tests::test_required_headers_include_session_id ... ok
+test required_headers_tests::test_required_headers_include_anthropic_version ... ok
+test required_headers_tests::test_required_headers_include_anthropic_beta ... ok
+test support_docs_tests::akash_template_exposes_router_and_required_configuration ... ok
+test token_integration_tests::test_different_secrets_reject ... ok
+test token_integration_tests::test_multiple_tokens_independent ... ok
+test support_docs_tests::kubernetes_template_includes_deployment_service_and_health_probes ... ok
+test support_docs_tests::forgefed_docs_describe_public_actor_and_inbox ... ok
+test token_integration_tests::test_revoke_then_reject ... ok
+test version_tests::test_version_matches_cargo_toml ... ok
+test version_tests::test_version_is_not_empty ... ok
+test token_integration_tests::test_token_roundtrip ... ok
+test cli_parser_tests::cli_parses_provider_auth_flows ... ok
+
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/login_flow_test-1a0949a7a7bc7ccf`
+
+running 10 tests
+test a_disabled_manager_serves_nothing ... ok
+test codex_login_defaults_to_device_auth_without_a_callback_listener ... ok
+test native_claude_login_starts_without_spawning_the_vendor_cli ... ok
+test a_rejected_code_fails_the_session_without_writing_a_credential ... ok
+test setup_token_remains_an_explicit_alternative ... ok
+test cancelling_releases_the_session_and_its_process ... ok
+test an_expired_session_reports_expired_and_stops_accepting_codes ... ok
+test login_produces_a_url_then_a_usable_credential ... ok
+test a_code_cannot_be_submitted_twice ... ok
+test pending_sessions_are_capped ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.99s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/managed_server_test-782bf75d631381b9`
+
+running 12 tests
+test managed_server_edge_failures_preserve_state_and_hide_credentials ... ok
+test claimed_managed_router_accepts_an_explicit_ordinary_token ... ok
+test managed_claim_is_one_time_and_requires_a_later_token ... ok
+test managed_server_reports_actionable_docker_failures ... ok
+test reaper_reports_cleanup_failures ... ok
+test reaper_releases_its_reference_when_the_owner_pipe_closes ... ok
+test remove_never_deletes_an_unowned_container ... ok
+test killed_last_wrapper_is_reaped_and_stops_the_shared_container ... ok
+test managed_admin_is_used_only_for_unclaimed_per_run_minting ... ok
+test managed_server_lifecycle_is_idempotent_and_preserves_data_until_remove ... ok
+test server_selection_rejects_ambiguous_or_invalid_updates_and_can_clear ... ok
+test concurrent_managed_launches_create_one_shared_container ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.08s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/multiprocess_storage_test-f2c554228cf37080`
+
+running 1 test
+test concurrent_processes_do_not_lose_dual_store_updates ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.10s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/network_security_audit_test-482e1e2ebbd381f3`
+
+running 5 tests
+test operational_details_require_admin_not_an_ordinary_task_token ... ok
+test only_documented_legacy_and_vertex_shapes_are_routable ... ok
+test configured_mpp_challenge_precedes_client_authentication_and_parsing ... ok
+test client_authentication_precedes_body_parsing_and_provider_discovery ... ok
+test unknown_paths_never_reach_the_oauth_upstream ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/real_clients_test-638a9427171e2513`
+
+running 2 tests
+test installed_claude_and_codex_complete_a_real_tool_cycle ... ok
+test installed_supported_clients_complete_a_real_single_turn ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/release_workflow_test-e1a021fd920d7e37`
+
+running 35 tests
+test artifact_download_avoids_the_known_node_buffer_warning ... ok
+test coverage_gate_is_behaviorally_tested_in_ci ... ok
+test cargo_lock_package_version_matches_manifest ... ok
+test coverage_tool_install_is_idempotent_after_cache_restore ... ok
+test committed_admin_ui_chunks_stay_below_vites_warning_threshold ... ok
+test dependency_audit_fails_on_warnings ... ok
+test dockerfile_builder_uses_supported_rust_toolchain ... ok
+test dockerfile_builder_installs_native_tls_build_dependencies ... ok
+test dockerfile_keeps_vendor_clis_out_of_the_single_runtime_image ... ok
+test external_container_bases_are_digest_pinned ... ok
+test dockerfile_builder_copies_embedded_admin_ui_before_building_source ... ok
+test historical_orphan_tags_do_not_block_the_current_release ... ok
+test lint_builds_and_checks_the_committed_admin_ui_bundle ... ok
+test lockfile_package_version_handles_windows_line_endings ... ok
+test image_attestation_can_persist_artifact_metadata_without_warnings ... ok
+test release_scripts_check_all_release_artifacts ... ok
+test readme_exposes_release_status_badges ... ok
+test release_workflow_maps_crates_io_token_fallback_to_cargo_native_env ... ok
+test release_version_bump_updates_and_commits_cargo_lock ... ok
+test release_workflow_enforces_single_platform_coverage ... ok
+test release_script_avoids_unsupported_regex_lookaround ... ok
+test release_workflow_prevents_silent_lockfile_rewrites ... ok
+test release_workflow_publishes_only_the_runtime_image ... ok
+test release_workflow_adds_crates_io_link_to_github_releases ... ok
+test release_workflow_refreshes_cached_cargo_audit_binary ... ok
+test release_workflow_reuses_current_cached_coverage_tools ... ok
+test release_workflow_uses_the_cyclonedx_filename_that_the_generator_creates ... ok
+test release_workflows_detect_missing_github_releases ... ok
+test release_workflow_uses_supported_action_runtimes ... ok
+test release_writers_are_not_cancelled_by_a_new_run ... ok
+test release_workflow_does_not_gate_releases_on_docker_builds ... ok
+test release_workflow_publishes_and_verifies_multi_platform_images ... ok
+test release_workflows_pin_actions_tools_and_artifact_identity ... ok
+test release_workflow_publishes_synced_docker_hub_image_after_crate ... ok
+test release_workflow_publishes_one_native_image_per_architecture ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/request_logging_test-816d4b18dffe2de0`
+
+running 1 test
+test successful_request_is_logged_by_default ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/router_e2e_test-2d4fc99163aca2fa`
+
+running 21 tests
+test cases_core::configured_proxy_body_ceiling_returns_413_without_reaching_upstream ... ok
+test cases_core::anthropic_upstream_relays_vendor_headers_across_client_dialects ... ok
+test cases_core::anthropic_web_search_translates_to_codex_without_becoming_a_client_tool ... ok
+test cases_core::anthropic_upstream_returns_each_client_dialect_and_pinned_alias ... ok
+test cases_core::request_larger_than_logging_buffer_reaches_handler ... ok
+test cases_core::native_anthropic_server_tools_and_beta_headers_survive_the_full_route ... ok
+test cases_core::both_upstream_dialects_serve_all_three_buffered_client_surfaces ... ok
+test cases_core::responses_stream_has_complete_named_lifecycle ... ok
+test cases_core::both_upstream_dialects_stream_all_three_client_surfaces ... ok
+test cases_core::responses_web_search_translates_to_anthropic_with_result_and_usage ... ok
+test cases_regressions::empty_messages_is_reported_in_the_anthropic_dialect ... ok
+test cases_regressions::codex_upstream_is_translated_and_relays_vendor_headers ... ok
+test cases_regressions::codex_output_limit_policy_distinguishes_client_surfaces ... ok
+test cases_regressions::auth_unknown_models_and_admin_isolation ... ok
+test cases_regressions::invalid_upstream_body_is_not_disclosed_to_anthropic_clients ... ok
+test token_budget::actual_token_spend_rejects_only_the_exhausted_token ... ok
+test cases_regressions::unavailable_server_tool_fails_explicitly_without_reaching_codex ... ok
+test cases_regressions::translated_streams_preserve_usage_in_the_client_dialect ... ok
+test cases_regressions::untranslatable_tool_state_fails_semantically_without_reaching_upstream ... ok
+test cases_regressions::malformed_json_uses_each_http_surfaces_json_error_envelope ... ok
+test cases_core::every_surface_and_upstream_completes_a_two_turn_tool_loop ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.08s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/security_review_test-6a0a709be007a456`
+
+running 4 tests
+test the_disclosing_read_endpoints_require_admin_but_metrics_stays_scrapable ... ok
+test every_admin_response_is_hardened ... ok
+test the_bootstrap_claim_can_be_won_only_once_across_channels ... ok
+test a_client_token_is_refused_where_an_admin_credential_is_required ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/tunnel_test-05656efa6db888d5`
+
+running 2 tests
+test tunnel_entrypoint_builds_a_restart_safe_reverse_forward ... ok
+test tunnel_entrypoint_names_each_missing_required_variable ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running `/tmp/gh-issue-solver-1786801366338/target/debug/deps/with_router_test-72547b55ccaeea12`
+
+running 9 tests
+test global_undo_removes_a_config_that_did_not_exist_before_setup ... ok
+test persisted_remote_token_is_private_and_never_echoed ... ok
+test global_undo_restores_exact_config_and_permissions ... ok
+test global_undo_refuses_to_overwrite_later_user_edits ... ok
+test router_with_uses_temporary_config_and_preserves_status ... ok
+test admin_credentials_are_exchanged_and_revoked_per_run ... ok
+test standalone_with_router_uses_the_same_safe_contract ... ok
+test launcher_rejects_missing_credentials_and_unavailable_models_before_exec ... ok
+test interrupt_reaches_client_and_still_cleans_temporary_home ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.54s
+
+   Doc-tests link_assistant_router
+     Running `/home/box/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustdoc --edition=2024 --crate-type lib --color auto --crate-name link_assistant_router --test src/lib.rs --test-run-directory /tmp/gh-issue-solver-1786801366338 -L native=/tmp/gh-issue-solver-1786801366338/target/debug/build/aws-lc-sys-e2dd917116be2d0a/out '--warn=clippy::pedantic' '--warn=clippy::nursery' '--warn=clippy::all' --deny=unsafe_code '--allow=clippy::too_many_lines' '--allow=clippy::module_name_repetitions' '--allow=clippy::missing_panics_doc' '--allow=clippy::missing_errors_doc' --extern aes_gcm=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaes_gcm-f1a582206979b1b6.rlib --extern async_trait=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libasync_trait-8ce4cddf079e477d.so --extern axum=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libaxum-e7ada777009f27bc.rlib --extern base64=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbase64-6c86aa28334bba9c.rlib --extern bytes=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libbytes-eea7049dbc98ca80.rlib --extern chrono=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libchrono-798b2b25c02aa03a.rlib --extern clap=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libclap-9281b5ebae2fa307.rlib --extern doublets=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libdoublets-6667ce39bc6156c1.rlib --extern fs2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfs2-2d561b74f1983674.rlib --extern futures_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libfutures_util-ddf19875a57c5372.rlib --extern getrandom=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libgetrandom-0a3693b03dfa28b0.rlib --extern hex=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhex-37c69d260b94eb5f.rlib --extern http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp-dd797e7e8cda27c1.rlib --extern http_body_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhttp_body_util-8de7361012a28dfe.rlib --extern hyper=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper-e975d51acc11e543.rlib --extern hyper_util=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libhyper_util-ed1bd4723f20b712.rlib --extern jsonwebtoken=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libjsonwebtoken-ef4e2094b6c1f424.rlib --extern link_assistant_router=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblink_assistant_router-604de506bc3f564b.rlib --extern links_notation=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblinks_notation-d79446335169060d.rlib --extern lino_arguments=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_arguments-6f557207430bdd71.rlib --extern lino_objects_codec=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblino_objects_codec-56bc103f2c36a26e.rlib --extern log_lazy=/tmp/gh-issue-solver-1786801366338/target/debug/deps/liblog_lazy-bca0cf0b66f7c7cf.rlib --extern mem=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libplatform_mem-6a0d44a31e40f4d1.rlib --extern portable_pty=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libportable_pty-0549a728ef804426.rlib --extern proptest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libproptest-c640791d0c884578.rlib --extern reqwest=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libreqwest-2f41a8dcc30acae3.rlib --extern rust_embed=/tmp/gh-issue-solver-1786801366338/target/debug/deps/librust_embed-413f42ca33aa86c2.rlib --extern serde=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde-2ec2efbb823d18c7.rlib --extern serde_json=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libserde_json-e97f841cc2bfb129.rlib --extern sha2=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libsha2-3209c4cb13f04e5e.rlib --extern tempfile=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtempfile-43b3da7b4efdd9f4.rlib --extern tokio=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio-a9f9bafea059a9d0.rlib --extern tokio_test=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtokio_test-488ccb06ea061df3.rlib --extern toml_edit=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtoml_edit-1f06452372a43a1d.rlib --extern tower=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower-3a43780d11638412.rlib --extern tower_http=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtower_http-00e8286951c999f3.rlib --extern tracing=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing-71337d5b1d183c51.rlib --extern tracing_subscriber=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libtracing_subscriber-dabc6dd3d3bca430.rlib --extern uuid=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libuuid-91769cd456191949.rlib --extern wait_timeout=/tmp/gh-issue-solver-1786801366338/target/debug/deps/libwait_timeout-c57b7e103379b9dd.rlib -L dependency=/tmp/gh-issue-solver-1786801366338/target/debug/deps -C embed-bitcode=no --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' --error-format human`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

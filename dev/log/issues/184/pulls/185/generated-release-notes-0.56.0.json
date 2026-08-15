@@ -1,0 +1,1 @@
+{"name":"v0.56.0","body":"## What's Changed\n* fix(auth): reject unsupported provider flows by @konard in https://github.com/link-assistant/router/pull/126\n\n\n**Full Changelog**: https://github.com/link-assistant/router/compare/v0.55.0...v0.56.0"}

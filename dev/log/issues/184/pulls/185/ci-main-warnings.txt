@@ -1,0 +1,7 @@
+17170:Create GitHub Release	UNKNOWN STEP	2026-08-15T12:19:44.6440071Z Warning: pre-existing tags without a GitHub Release:
+17216:Create GitHub Release	UNKNOWN STEP	2026-08-15T12:19:57.6975877Z Warning: pre-existing tags without a GitHub Release:
+19486:Build Docker Image (runtime / arm64)	UNKNOWN STEP	2026-08-15T12:25:33.2860672Z ##[warning]Failed to create storage record: Error: Failed to persist storage record: no artifacts found - https://docs.github.com/rest/orgs/artifact-metadata#create-artifact-metadata-storage-record
+19487:Build Docker Image (runtime / arm64)	UNKNOWN STEP	2026-08-15T12:25:33.2863199Z ##[warning]Please check that the "artifact-metadata:write" permission has been included
+23364:Build Docker Image (runtime / amd64)	UNKNOWN STEP	2026-08-15T12:26:02.8396929Z ##[warning]Failed to create storage record: Error: Failed to persist storage record: no artifacts found - https://docs.github.com/rest/orgs/artifact-metadata#create-artifact-metadata-storage-record
+23365:Build Docker Image (runtime / amd64)	UNKNOWN STEP	2026-08-15T12:26:02.8399200Z ##[warning]Please check that the "artifact-metadata:write" permission has been included
+25896:Publish Multi-Platform Docker Manifests	UNKNOWN STEP	2026-08-15T12:27:16.9697772Z (node:3689) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.

@@ -1,0 +1,31 @@
+567-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9170787Z ^[[36;1mrust-script scripts/check-github-releases.rs --repository "link-assistant/router" --default-branch main^[[0m
+568-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210140Z shell: /usr/bin/bash -e {0}
+569-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210392Z env:
+570-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210595Z   CARGO_HOME: /home/runner/.cargo
+571-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9210852Z   CARGO_INCREMENTAL: 0
+572-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9211076Z   CARGO_TERM_COLOR: always
+573-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9214009Z   GH_TOKEN: ***
+574-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:20.9214225Z ##[endgroup]
+575-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8788696Z Error: pre-existing tags without a GitHub Release:
+576-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8789143Z v0.56.0
+577-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8789395Z v0.73.0
+578-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8789950Z Resolve each orphan tag by either creating the missing release
+579-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8790627Z   gh release create v0.56.0 --title v0.56.0 --notes-from-tag
+580-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8791322Z or deleting the tag if that version was never meant to ship
+581-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8791828Z   git push origin :refs/tags/v0.56.0
+582:Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8805752Z ##[error]Process completed with exit code 1.
+583-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.8994699Z Post job cleanup.
+584-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9822311Z [command]/usr/bin/git version
+585-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9867380Z git version 2.54.0
+586-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9904736Z Temporarily overriding HOME='/home/runner/work/_temp/183b83d7-074e-497c-8441-554f88f499d7' before making global git config changes
+587-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9906020Z Adding repository directory to the temporary git global config as a safe directory
+588-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9920829Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+589-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9954512Z Removing SSH command configuration
+590-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:21.9961441Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+591-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0000662Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+592-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0259889Z Removing HTTP extra header
+593-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0265797Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+594-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0303557Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+595-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0585568Z Removing includeIf entries pointing to credentials config files
+596-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0592363Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+597-Every Tag Has a GitHub Release	UNKNOWN STEP	2026-08-15T07:00:22.0625356Z includeif.gitdir:/home/runner/work/router/router/.git.path
