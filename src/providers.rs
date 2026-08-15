@@ -5,7 +5,7 @@
 //! `.lenv`-style key-value file under the router data directory, and saved API
 //! keys are encrypted with a key derived from `TOKEN_SECRET`.
 
-use aes_gcm::aead::{Aead, KeyInit, OsRng};
+use aes_gcm::aead::{Aead, Generate, KeyInit};
 use aes_gcm::{Aes256Gcm, Nonce};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
@@ -446,15 +446,13 @@ fn cipher(token_secret: &str) -> Result<Aes256Gcm, ProviderError> {
 }
 
 fn encrypt_api_key(api_key: &str, token_secret: &str) -> Result<String, ProviderError> {
-    use aes_gcm::aead::rand_core::RngCore;
-
     let cipher = cipher(token_secret)?;
-    let mut nonce_bytes = [0_u8; 12];
-    OsRng.fill_bytes(&mut nonce_bytes);
+    let nonce = Nonce::try_generate()
+        .map_err(|e| ProviderError::Crypto(format!("nonce generation failed: {e}")))?;
     let encrypted = cipher
-        .encrypt(Nonce::from_slice(&nonce_bytes), api_key.as_bytes())
+        .encrypt(&nonce, api_key.as_bytes())
         .map_err(|e| ProviderError::Crypto(format!("encrypt failed: {e}")))?;
-    let mut packed = nonce_bytes.to_vec();
+    let mut packed = nonce.to_vec();
     packed.extend_from_slice(&encrypted);
     Ok(format!("aes256gcm:{}", STANDARD.encode(packed)))
 }
@@ -469,9 +467,11 @@ fn decrypt_api_key(encrypted: &str, token_secret: &str) -> Result<String, Provid
             "encrypted provider secret is too short".into(),
         ));
     }
-    let (nonce, ciphertext) = packed.split_at(12);
+    let (nonce_bytes, ciphertext) = packed.split_at(12);
+    let mut nonce = Nonce::default();
+    nonce.copy_from_slice(nonce_bytes);
     let plaintext = cipher(token_secret)?
-        .decrypt(Nonce::from_slice(nonce), ciphertext)
+        .decrypt(&nonce, ciphertext)
         .map_err(|e| ProviderError::Crypto(format!("decrypt failed: {e}")))?;
     String::from_utf8(plaintext)
         .map_err(|e| ProviderError::Crypto(format!("secret is not UTF-8: {e}")))
