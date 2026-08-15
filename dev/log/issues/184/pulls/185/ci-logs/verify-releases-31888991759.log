@@ -1,0 +1,611 @@
+Every Tag Has a GitHub Release	Set up job	﻿2026-08-15T14:06:04.3086990Z Current runner version: '2.336.0'
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3115408Z ##[group]Runner Image Provisioner
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3116430Z Hosted Compute Agent
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3117016Z Version: 20260729.566
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3117615Z Commit: cf7153fe6e25b664e8693c24944bf2b00355d109
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3118429Z Build Date: 2026-07-29T19:17:02Z
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3119141Z Worker ID: {95d59ea9-e61c-4c9c-8fd1-e954fe9f33e8}
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3119864Z Azure Region: westus
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3120433Z ##[endgroup]
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3122220Z ##[group]Operating System
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3123019Z Ubuntu
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3123558Z 24.04.4
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3124033Z LTS
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3124592Z ##[endgroup]
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3125140Z ##[group]Runner Image
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3125759Z Image: ubuntu-24.04
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3126329Z Version: 20260810.271.1
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3127423Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260810.271/images/ubuntu/Ubuntu2404-Readme.md
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3129174Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260810.271
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3130137Z ##[endgroup]
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3131319Z ##[group]GITHUB_TOKEN Permissions
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3133864Z Contents: read
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3134608Z Metadata: read
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3135157Z ##[endgroup]
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3137666Z Secret source: Actions
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3138865Z Prepare workflow directory
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3540500Z Prepare all required actions
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.3628858Z Getting action download info
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.7050020Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:04.8597381Z Download action repository 'dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c' (SHA:4360b52568e2003a75bf9bc1d59f33a8e3fc893c)
+Every Tag Has a GitHub Release	Set up job	2026-08-15T14:06:05.1880345Z Complete job name: Every Tag Has a GitHub Release
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-08-15T14:06:05.2672712Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2673925Z with:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2674361Z   fetch-depth: 0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2674830Z   repository: link-assistant/router
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2678836Z   token: ***
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2679317Z   ssh-strict: true
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2679746Z   ssh-user: git
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2680179Z   persist-credentials: true
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2680660Z   clean: true
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2681093Z   sparse-checkout-cone-mode: true
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2681804Z   fetch-tags: false
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2682253Z   show-progress: true
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2682685Z   lfs: false
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2683088Z   submodules: false
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2683530Z   set-safe-directory: true
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2684029Z   allow-unsafe-pr-checkout: false
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.2684817Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3770711Z Syncing repository: link-assistant/router
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3774603Z ##[group]Getting Git version info
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3775887Z Working directory is '/home/runner/work/router/router'
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3777522Z [command]/usr/bin/git version
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3873082Z git version 2.54.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3892615Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3908697Z Temporarily overriding HOME='/home/runner/work/_temp/fbc6cf0d-6b06-4c84-8667-4dd10b2027c9' before making global git config changes
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3911204Z Adding repository directory to the temporary git global config as a safe directory
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3925145Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.3997547Z Deleting the contents of '/home/runner/work/router/router'
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4004434Z ##[group]Determining repository object format
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4006512Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4007848Z ##[group]Initializing the repository
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4013651Z [command]/usr/bin/git init /home/runner/work/router/router
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4139772Z hint: Using 'master' as the name for the initial branch. This default branch name
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4142787Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4145059Z hint: to use in all of your new repositories, which will suppress this warning,
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4148684Z hint: call:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4150819Z hint:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4152402Z hint: 	git config --global init.defaultBranch <name>
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4153763Z hint:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4155440Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4157688Z hint: 'development'. The just-created branch can be renamed via this command:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4159298Z hint:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4160286Z hint: 	git branch -m <name>
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4161349Z hint:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4163015Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4165350Z Initialized empty Git repository in /home/runner/work/router/router/.git/
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4169009Z [command]/usr/bin/git remote add origin https://github.com/link-assistant/router
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4217800Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4219125Z ##[group]Disabling automatic garbage collection
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4223502Z [command]/usr/bin/git config --local gc.auto 0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4275511Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4277056Z ##[group]Setting up auth
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4278643Z Removing SSH command configuration
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4288099Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4365454Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4762563Z Removing HTTP extra header
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4768545Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.4805553Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5034970Z Removing includeIf entries pointing to credentials config files
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5040954Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5078085Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5325565Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5369741Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git.path /home/runner/work/_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5407430Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5447084Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5484252Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5518403Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5519756Z ##[group]Fetching the repository
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:05.5526917Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5942955Z From https://github.com/link-assistant/router
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5945867Z  * [new branch]      chore/update-all-dependencies -> origin/chore/update-all-dependencies
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5949306Z  * [new branch]      fix/all-open-issues    -> origin/fix/all-open-issues
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5951148Z  * [new branch]      issue-1-1bf9ef21c1ac   -> origin/issue-1-1bf9ef21c1ac
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5953705Z  * [new branch]      issue-100-dba0bf9a4973 -> origin/issue-100-dba0bf9a4973
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5956347Z  * [new branch]      issue-102-0e736e883951 -> origin/issue-102-0e736e883951
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5958242Z  * [new branch]      issue-104-1284ecf6cd3e -> origin/issue-104-1284ecf6cd3e
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5959834Z  * [new branch]      issue-105-cdb3c0de6b44 -> origin/issue-105-cdb3c0de6b44
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5961456Z  * [new branch]      issue-108-a18689e74c37 -> origin/issue-108-a18689e74c37
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5963249Z  * [new branch]      issue-109-f8c988b35e34 -> origin/issue-109-f8c988b35e34
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5964830Z  * [new branch]      issue-11-0f880923289a  -> origin/issue-11-0f880923289a
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5966381Z  * [new branch]      issue-112-dcf3a4c1f37c -> origin/issue-112-dcf3a4c1f37c
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5967951Z  * [new branch]      issue-113-1110124f8fe4 -> origin/issue-113-1110124f8fe4
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5969539Z  * [new branch]      issue-116-23f22ee79006 -> origin/issue-116-23f22ee79006
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5971417Z  * [new branch]      issue-118-f22842a1cf41 -> origin/issue-118-f22842a1cf41
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5973436Z  * [new branch]      issue-120-2cbee18ae165 -> origin/issue-120-2cbee18ae165
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5975237Z  * [new branch]      issue-122-8744d24bb30e -> origin/issue-122-8744d24bb30e
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5977057Z  * [new branch]      issue-123-5ce8de8509b4 -> origin/issue-123-5ce8de8509b4
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5978909Z  * [new branch]      issue-124-eb9ceb3cb53f -> origin/issue-124-eb9ceb3cb53f
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5980780Z  * [new branch]      issue-128-36dd99b62733 -> origin/issue-128-36dd99b62733
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5983092Z  * [new branch]      issue-13-2606f9974b11  -> origin/issue-13-2606f9974b11
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5985401Z  * [new branch]      issue-130-e37eacafa11a -> origin/issue-130-e37eacafa11a
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5987599Z  * [new branch]      issue-131-26c977c11df6 -> origin/issue-131-26c977c11df6
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5989914Z  * [new branch]      issue-132-2f177ee0cbd8 -> origin/issue-132-2f177ee0cbd8
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5992519Z  * [new branch]      issue-133-17788d217579 -> origin/issue-133-17788d217579
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5994862Z  * [new branch]      issue-133-9d3a7e5e4cc9 -> origin/issue-133-9d3a7e5e4cc9
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5997223Z  * [new branch]      issue-134-c7f8700e9e78 -> origin/issue-134-c7f8700e9e78
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.5999550Z  * [new branch]      issue-135-ce7088043612 -> origin/issue-135-ce7088043612
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6002011Z  * [new branch]      issue-142-0621d4ec1020 -> origin/issue-142-0621d4ec1020
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6004500Z  * [new branch]      issue-143-5b0ea61bdeaf -> origin/issue-143-5b0ea61bdeaf
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6006874Z  * [new branch]      issue-144-561edd8d8533 -> origin/issue-144-561edd8d8533
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6009174Z  * [new branch]      issue-145-3ecb8cc850af -> origin/issue-145-3ecb8cc850af
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6011492Z  * [new branch]      issue-147-c6b90f82ea1f -> origin/issue-147-c6b90f82ea1f
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6014169Z  * [new branch]      issue-148-3cd968519599 -> origin/issue-148-3cd968519599
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6016465Z  * [new branch]      issue-149-a865ab1e4e9e -> origin/issue-149-a865ab1e4e9e
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6018739Z  * [new branch]      issue-15-8f76cb08364a  -> origin/issue-15-8f76cb08364a
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6020986Z  * [new branch]      issue-150-3af62c0b7aa3 -> origin/issue-150-3af62c0b7aa3
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6023599Z  * [new branch]      issue-151-68c0c68f8036 -> origin/issue-151-68c0c68f8036
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6025931Z  * [new branch]      issue-17-eb0edbddcdb5  -> origin/issue-17-eb0edbddcdb5
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6028200Z  * [new branch]      issue-18-aafa1060453e  -> origin/issue-18-aafa1060453e
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6030450Z  * [new branch]      issue-184-29444c5d9f92 -> origin/issue-184-29444c5d9f92
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6033481Z  * [new branch]      issue-21-4e3dd79ebb0a  -> origin/issue-21-4e3dd79ebb0a
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6035792Z  * [new branch]      issue-23-c4c21ed11eba  -> origin/issue-23-c4c21ed11eba
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6038076Z  * [new branch]      issue-25-cee894a7a764  -> origin/issue-25-cee894a7a764
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6040283Z  * [new branch]      issue-27-1c4f5add71b6  -> origin/issue-27-1c4f5add71b6
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6042576Z  * [new branch]      issue-29-cd7359ee3891  -> origin/issue-29-cd7359ee3891
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6044711Z  * [new branch]      issue-3-105675fe4cc7   -> origin/issue-3-105675fe4cc7
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6046892Z  * [new branch]      issue-31-3689e5f485aa  -> origin/issue-31-3689e5f485aa
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6049168Z  * [new branch]      issue-33-11cc347ca557  -> origin/issue-33-11cc347ca557
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6052320Z  * [new branch]      issue-35-62a0d9107370  -> origin/issue-35-62a0d9107370
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6054553Z  * [new branch]      issue-37-69d3f0803294  -> origin/issue-37-69d3f0803294
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6056735Z  * [new branch]      issue-42-d7c61ae8a6dd  -> origin/issue-42-d7c61ae8a6dd
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6058890Z  * [new branch]      issue-45-6e66b2c1c4f3  -> origin/issue-45-6e66b2c1c4f3
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6061025Z  * [new branch]      issue-47-0560ebdac190  -> origin/issue-47-0560ebdac190
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6063422Z  * [new branch]      issue-48-1455108618b7  -> origin/issue-48-1455108618b7
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6065534Z  * [new branch]      issue-49-12994bb7a470  -> origin/issue-49-12994bb7a470
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6067586Z  * [new branch]      issue-5-5a51161efdc8   -> origin/issue-5-5a51161efdc8
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6069668Z  * [new branch]      issue-50-e84c64dc1eb6  -> origin/issue-50-e84c64dc1eb6
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6071859Z  * [new branch]      issue-51-837203bbb627  -> origin/issue-51-837203bbb627
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6073941Z  * [new branch]      issue-52-fbd1f6c47f72  -> origin/issue-52-fbd1f6c47f72
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6076335Z  * [new branch]      issue-59-600dc604ed7e  -> origin/issue-59-600dc604ed7e
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6078397Z  * [new branch]      issue-61-e7b1b605fa50  -> origin/issue-61-e7b1b605fa50
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6080438Z  * [new branch]      issue-63-558dde67dcc7  -> origin/issue-63-558dde67dcc7
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6082619Z  * [new branch]      issue-65-24a81d950668  -> origin/issue-65-24a81d950668
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6084716Z  * [new branch]      issue-67-bf061f2d3e82  -> origin/issue-67-bf061f2d3e82
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6086855Z  * [new branch]      issue-69-c19c2eac4c50  -> origin/issue-69-c19c2eac4c50
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6088931Z  * [new branch]      issue-7-080001720a10   -> origin/issue-7-080001720a10
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6090999Z  * [new branch]      issue-70-ea51215cf0ef  -> origin/issue-70-ea51215cf0ef
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6093383Z  * [new branch]      issue-71-fee363b3db8a  -> origin/issue-71-fee363b3db8a
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6095561Z  * [new branch]      issue-72-b346370d6b72  -> origin/issue-72-b346370d6b72
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6097655Z  * [new branch]      issue-77-0415d65a3786  -> origin/issue-77-0415d65a3786
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6099775Z  * [new branch]      issue-78-0ff7a0d97703  -> origin/issue-78-0ff7a0d97703
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6102149Z  * [new branch]      issue-81-347231a9479c  -> origin/issue-81-347231a9479c
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6104321Z  * [new branch]      issue-83-f06c7bb43bd2  -> origin/issue-83-f06c7bb43bd2
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6106457Z  * [new branch]      issue-85-4cee77a6357b  -> origin/issue-85-4cee77a6357b
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6108578Z  * [new branch]      issue-87-48a5a39e18d7  -> origin/issue-87-48a5a39e18d7
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6110701Z  * [new branch]      issue-87-4e9d84497e8d  -> origin/issue-87-4e9d84497e8d
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6113002Z  * [new branch]      issue-9-d545a925a750   -> origin/issue-9-d545a925a750
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6115143Z  * [new branch]      issue-90-1a19c3b4dc48  -> origin/issue-90-1a19c3b4dc48
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6117254Z  * [new branch]      issue-91-ced77c4ada00  -> origin/issue-91-ced77c4ada00
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6119549Z  * [new branch]      issue-92-ec4e16dd2db9  -> origin/issue-92-ec4e16dd2db9
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6121782Z  * [new branch]      issue-93-0745b3b1497e  -> origin/issue-93-0745b3b1497e
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6123854Z  * [new branch]      issue-94-596a960acaa9  -> origin/issue-94-596a960acaa9
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6125709Z  * [new branch]      main                   -> origin/main
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6127265Z  * [new tag]         v0.10.0                -> v0.10.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6128753Z  * [new tag]         v0.11.0                -> v0.11.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6130234Z  * [new tag]         v0.12.0                -> v0.12.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6132029Z  * [new tag]         v0.13.0                -> v0.13.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6133552Z  * [new tag]         v0.14.0                -> v0.14.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6134974Z  * [new tag]         v0.15.0                -> v0.15.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6136386Z  * [new tag]         v0.16.0                -> v0.16.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6137827Z  * [new tag]         v0.17.0                -> v0.17.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6139262Z  * [new tag]         v0.18.0                -> v0.18.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6140684Z  * [new tag]         v0.19.0                -> v0.19.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6142241Z  * [new tag]         v0.20.0                -> v0.20.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6143667Z  * [new tag]         v0.21.0                -> v0.21.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6145082Z  * [new tag]         v0.22.0                -> v0.22.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6146519Z  * [new tag]         v0.23.0                -> v0.23.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6147937Z  * [new tag]         v0.24.0                -> v0.24.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6149348Z  * [new tag]         v0.25.0                -> v0.25.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6150755Z  * [new tag]         v0.26.0                -> v0.26.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6152296Z  * [new tag]         v0.27.0                -> v0.27.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6153710Z  * [new tag]         v0.28.0                -> v0.28.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6155338Z  * [new tag]         v0.29.0                -> v0.29.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6156748Z  * [new tag]         v0.3.0                 -> v0.3.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6158139Z  * [new tag]         v0.30.0                -> v0.30.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6159534Z  * [new tag]         v0.31.0                -> v0.31.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6160932Z  * [new tag]         v0.32.0                -> v0.32.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6163042Z  * [new tag]         v0.33.0                -> v0.33.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6165295Z  * [new tag]         v0.34.0                -> v0.34.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6166884Z  * [new tag]         v0.35.0                -> v0.35.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6168310Z  * [new tag]         v0.36.0                -> v0.36.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6169719Z  * [new tag]         v0.37.0                -> v0.37.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6172090Z  * [new tag]         v0.38.0                -> v0.38.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6174260Z  * [new tag]         v0.39.0                -> v0.39.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6176508Z  * [new tag]         v0.4.0                 -> v0.4.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6178945Z  * [new tag]         v0.40.0                -> v0.40.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6181232Z  * [new tag]         v0.41.0                -> v0.41.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6183786Z  * [new tag]         v0.42.0                -> v0.42.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6186155Z  * [new tag]         v0.43.0                -> v0.43.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6188679Z  * [new tag]         v0.44.0                -> v0.44.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6190554Z  * [new tag]         v0.45.0                -> v0.45.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6192376Z  * [new tag]         v0.46.0                -> v0.46.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6194750Z  * [new tag]         v0.47.0                -> v0.47.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6197098Z  * [new tag]         v0.48.0                -> v0.48.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6199405Z  * [new tag]         v0.49.0                -> v0.49.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6201928Z  * [new tag]         v0.5.0                 -> v0.5.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6204257Z  * [new tag]         v0.50.0                -> v0.50.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6206842Z  * [new tag]         v0.51.0                -> v0.51.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6209114Z  * [new tag]         v0.52.0                -> v0.52.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6211396Z  * [new tag]         v0.53.0                -> v0.53.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6213910Z  * [new tag]         v0.54.0                -> v0.54.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6216193Z  * [new tag]         v0.55.0                -> v0.55.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6218472Z  * [new tag]         v0.56.0                -> v0.56.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6220736Z  * [new tag]         v0.57.0                -> v0.57.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6223217Z  * [new tag]         v0.58.0                -> v0.58.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6225503Z  * [new tag]         v0.59.0                -> v0.59.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6227745Z  * [new tag]         v0.6.0                 -> v0.6.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6230250Z  * [new tag]         v0.60.0                -> v0.60.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6232719Z  * [new tag]         v0.61.0                -> v0.61.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6235051Z  * [new tag]         v0.62.0                -> v0.62.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6237299Z  * [new tag]         v0.63.0                -> v0.63.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6239560Z  * [new tag]         v0.64.0                -> v0.64.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6242051Z  * [new tag]         v0.65.0                -> v0.65.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6244309Z  * [new tag]         v0.66.0                -> v0.66.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6246667Z  * [new tag]         v0.67.0                -> v0.67.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6248935Z  * [new tag]         v0.68.0                -> v0.68.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6251034Z  * [new tag]         v0.69.0                -> v0.69.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6253016Z  * [new tag]         v0.7.0                 -> v0.7.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6255337Z  * [new tag]         v0.70.0                -> v0.70.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6257605Z  * [new tag]         v0.71.0                -> v0.71.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6259826Z  * [new tag]         v0.72.0                -> v0.72.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6262128Z  * [new tag]         v0.73.0                -> v0.73.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6263610Z  * [new tag]         v0.74.0                -> v0.74.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6265043Z  * [new tag]         v0.75.0                -> v0.75.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6266475Z  * [new tag]         v0.76.0                -> v0.76.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6269070Z  * [new tag]         v0.8.0                 -> v0.8.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6271350Z  * [new tag]         v0.9.0                 -> v0.9.0
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6275425Z [command]/usr/bin/git branch --list --remote origin/main
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6277298Z   origin/main
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6280145Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6282615Z 380ec6f1c7582847ac3f35459fab33dee4bac038
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6286234Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6287766Z ##[group]Determining the checkout info
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6289512Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6290530Z [command]/usr/bin/git sparse-checkout disable
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6314165Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6348967Z ##[group]Checking out the ref
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.6352427Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.7183847Z Switched to a new branch 'main'
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.7186356Z branch 'main' set up to track 'origin/main'.
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.7201318Z ##[endgroup]
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.7251958Z [command]/usr/bin/git log -1 --format=%H
+Every Tag Has a GitHub Release	Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:07.7284220Z 380ec6f1c7582847ac3f35459fab33dee4bac038
+Every Tag Has a GitHub Release	Setup Rust	﻿2026-08-15T14:06:07.7993007Z ##[group]Run dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.7994644Z with:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.7995456Z   toolchain: 1.97.1
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.7996345Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8092321Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8172247Z ##[group]Run if [[ -z $toolchain ]]; then
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8173850Z ^[[36;1mif [[ -z $toolchain ]]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8175809Z ^[[36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8177915Z ^[[36;1m  echo "'toolchain' is a required input" >&2^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8179139Z ^[[36;1m  exit 1^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8180463Z ^[[36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8182275Z ^[[36;1m  if [[ Linux == macOS ]]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8184268Z ^[[36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8186332Z ^[[36;1m  else^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8187911Z ^[[36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8189737Z ^[[36;1m  fi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8190934Z ^[[36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8193183Z ^[[36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8194989Z ^[[36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8197019Z ^[[36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8198957Z ^[[36;1melse^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8199968Z ^[[36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8201196Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8244355Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8245714Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8246530Z   toolchain: 1.97.1
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8247412Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8383881Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=28]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8402763Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8454324Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8456656Z ^[[36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8459017Z ^[[36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8460886Z ^[[36;1mecho "downgrade=" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8503423Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8505024Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8505870Z   targets: 
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8506816Z   components: 
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8507788Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8605683Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=20]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8612555Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8653525Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8655317Z ^[[36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8694291Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8695608Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8780715Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=16]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8787634Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8837847Z ##[group]Run if ! command -v rustup &>/dev/null; then
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8839397Z ^[[36;1mif ! command -v rustup &>/dev/null; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8842361Z ^[[36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8845047Z ^[[36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8846376Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8883704Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8884985Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8885790Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8886781Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8968880Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=17]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8975867Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.8993427Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9010196Z ##[start-action display=rustup toolchain install 1.97.1;id=__dtolnay_rust-toolchain.__run_4]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9051132Z ##[group]Run rustup toolchain install 1.97.1 --profile minimal --no-self-update
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9053412Z ^[[36;1mrustup toolchain install 1.97.1 --profile minimal --no-self-update^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9092244Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9093546Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9094340Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9095379Z   RUSTUP_PERMIT_COPY_RENAME: 1
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9096328Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:07.9893322Z info: syncing channel updates for 1.97.1-x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:08.2297259Z info: latest update on 2026-07-16 for version 1.97.1 (8bab26f4f 2026-07-14)
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:08.2380448Z info: downloading 3 components
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9393166Z 
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9467509Z   1.97.1-x86_64-unknown-linux-gnu installed - rustc 1.97.1 (8bab26f4f 2026-07-14)
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9468122Z 
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9580588Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=8056]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9589412Z ##[start-action display=rustup default 1.97.1;id=__dtolnay_rust-toolchain.__run_5]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9614153Z ##[group]Run rustup default 1.97.1
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9614514Z ^[[36;1mrustup default 1.97.1^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9654832Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9655239Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9655489Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9655796Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9774061Z info: using existing install for 1.97.1-x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9782742Z info: default toolchain set to 1.97.1-x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9783088Z 
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9854642Z   1.97.1-x86_64-unknown-linux-gnu unchanged - rustc 1.97.1 (8bab26f4f 2026-07-14)
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9855389Z 
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9873031Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=28]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9876275Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9899561Z ##[group]Run DATE=$(rustc +1.97.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9900471Z ^[[36;1mDATE=$(rustc +1.97.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9901168Z ^[[36;1mHASH=$(rustc +1.97.1 --version --verbose | sed -ne 's/^commit-hash: //p')^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9902097Z ^[[36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9942248Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9942662Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9942926Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:15.9943236Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0300795Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=42]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0304711Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0352962Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0353530Z ^[[36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0354131Z ^[[36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0354479Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0394365Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0394828Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0395152Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0395501Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0467965Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=16]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0470955Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0493707Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0494135Z ^[[36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0494530Z ^[[36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0494868Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0533347Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0533757Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0534018Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0534323Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0534579Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0604383Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=13]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0607815Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0632021Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0632647Z ^[[36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0633452Z ^[[36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0634251Z ^[[36;1m  if rustc +1.97.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0634898Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0635538Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0636098Z ^[[36;1m  elif rustc +1.97.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0636722Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0637307Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0637703Z ^[[36;1m  fi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0637935Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0677288Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0677700Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0677946Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0678248Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0678507Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.0678776Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1006451Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=39]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1009990Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1033732Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1034585Z ^[[36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1035262Z ^[[36;1mif rustc +1.97.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1035768Z ^[[36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1036344Z ^[[36;1mfi^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1078141Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1078539Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1078787Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1079097Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1079358Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1079623Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1278915Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=26]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1284912Z ##[start-action display=rustc +1.97.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1307102Z ##[group]Run rustc +1.97.1 --version --verbose
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1307503Z ^[[36;1mrustc +1.97.1 --version --verbose^[[0m
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1349281Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1349684Z env:
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1349923Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1350227Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1350524Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1350794Z ##[endgroup]
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1530086Z rustc 1.97.1 (8bab26f4f 2026-07-14)
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1530854Z binary: rustc
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1531351Z commit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1532541Z commit-date: 2026-07-14
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1533376Z host: x86_64-unknown-linux-gnu
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1534282Z release: 1.97.1
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1535149Z LLVM version: 22.1.6
+Every Tag Has a GitHub Release	Setup Rust	2026-08-15T14:06:16.1550644Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=26]
+Every Tag Has a GitHub Release	Install rust-script	﻿2026-08-15T14:06:16.1616501Z ##[group]Run cargo install rust-script --version 0.36.0 --locked
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1617068Z ^[[36;1mcargo install rust-script --version 0.36.0 --locked^[[0m
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1659238Z shell: /usr/bin/bash -e {0}
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1659556Z env:
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1659802Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1660109Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1660371Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1660635Z ##[endgroup]
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.1963704Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.2293039Z ^[[1m^[[92m Downloading^[[0m crates ...
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.2631252Z ^[[1m^[[92m  Downloaded^[[0m rust-script v0.36.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.2921131Z ^[[1m^[[92m  Installing^[[0m rust-script v0.36.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.2939096Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.4737583Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5013701Z ^[[1m^[[92m Downloading^[[0m crates ...
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5148719Z ^[[1m^[[92m  Downloaded^[[0m errno v0.3.13
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5172589Z ^[[1m^[[92m  Downloaded^[[0m anstyle-parse v0.2.7
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5197502Z ^[[1m^[[92m  Downloaded^[[0m block-buffer v0.10.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5211908Z ^[[1m^[[92m  Downloaded^[[0m env_filter v0.1.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5230212Z ^[[1m^[[92m  Downloaded^[[0m anstyle v1.0.11
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5253513Z ^[[1m^[[92m  Downloaded^[[0m anstyle-query v1.1.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5268937Z ^[[1m^[[92m  Downloaded^[[0m digest v0.10.7
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5291156Z ^[[1m^[[92m  Downloaded^[[0m getopts v0.2.23
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5310970Z ^[[1m^[[92m  Downloaded^[[0m aho-corasick v1.1.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5396279Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.9.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5450752Z ^[[1m^[[92m  Downloaded^[[0m serde_spanned v1.0.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5462961Z ^[[1m^[[92m  Downloaded^[[0m indexmap v2.10.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5504575Z ^[[1m^[[92m  Downloaded^[[0m anstream v0.6.20
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5524896Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.7.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5580448Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark-escape v0.11.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5588432Z ^[[1m^[[92m  Downloaded^[[0m clap_builder v4.5.44
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5651921Z ^[[1m^[[92m  Downloaded^[[0m once_cell v1.21.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5677893Z ^[[1m^[[92m  Downloaded^[[0m toml_datetime v0.7.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5690748Z ^[[1m^[[92m  Downloaded^[[0m typenum v1.18.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5724131Z ^[[1m^[[92m  Downloaded^[[0m colorchoice v1.0.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5733697Z ^[[1m^[[92m  Downloaded^[[0m winnow v0.7.12
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5826321Z ^[[1m^[[92m  Downloaded^[[0m is_terminal_polyfill v1.70.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5835307Z ^[[1m^[[92m  Downloaded^[[0m log v0.4.27
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5858501Z ^[[1m^[[92m  Downloaded^[[0m getrandom v0.3.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5892341Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.15.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5941640Z ^[[1m^[[92m  Downloaded^[[0m unicode-width v0.2.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.5996754Z ^[[1m^[[92m  Downloaded^[[0m env_logger v0.11.8
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6022366Z ^[[1m^[[92m  Downloaded^[[0m crypto-common v0.1.6
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6031390Z ^[[1m^[[92m  Downloaded^[[0m option-ext v0.2.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6039911Z ^[[1m^[[92m  Downloaded^[[0m regex-syntax v0.8.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6107147Z ^[[1m^[[92m  Downloaded^[[0m dirs-sys v0.5.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6118800Z ^[[1m^[[92m  Downloaded^[[0m toml_parser v1.0.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6143098Z ^[[1m^[[92m  Downloaded^[[0m version_check v0.9.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6155747Z ^[[1m^[[92m  Downloaded^[[0m cpufeatures v0.2.17
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6171693Z ^[[1m^[[92m  Downloaded^[[0m equivalent v1.0.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6182037Z ^[[1m^[[92m  Downloaded^[[0m generic-array v0.14.7
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6196420Z ^[[1m^[[92m  Downloaded^[[0m strsim v0.11.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6210108Z ^[[1m^[[92m  Downloaded^[[0m unicase v2.8.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6224160Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.219
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6254425Z ^[[1m^[[92m  Downloaded^[[0m sha1 v0.10.6
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6270911Z ^[[1m^[[92m  Downloaded^[[0m cfg-if v1.0.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6284841Z ^[[1m^[[92m  Downloaded^[[0m dirs v6.0.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6298093Z ^[[1m^[[92m  Downloaded^[[0m tempfile v3.20.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6326962Z ^[[1m^[[92m  Downloaded^[[0m utf8parse v0.2.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6336920Z ^[[1m^[[92m  Downloaded^[[0m clap_lex v0.7.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6348123Z ^[[1m^[[92m  Downloaded^[[0m shell-words v1.1.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6357750Z ^[[1m^[[92m  Downloaded^[[0m fastrand v2.3.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6370681Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark v0.13.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6422796Z ^[[1m^[[92m  Downloaded^[[0m toml v0.9.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6464695Z ^[[1m^[[92m  Downloaded^[[0m toml_writer v1.0.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6478515Z ^[[1m^[[92m  Downloaded^[[0m clap v4.5.45
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6572043Z ^[[1m^[[92m  Downloaded^[[0m libc v0.2.175
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.6852513Z ^[[1m^[[92m  Downloaded^[[0m rustix v1.0.8
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.7135937Z ^[[1m^[[92m  Downloaded^[[0m regex v1.11.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.7278611Z ^[[1m^[[92m  Downloaded^[[0m regex-automata v0.4.9
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.7431745Z ^[[1m^[[92m  Downloaded^[[0m jiff v0.2.15
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.7588465Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.9.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.8385103Z ^[[1m^[[92m   Compiling^[[0m typenum v1.18.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.8386573Z ^[[1m^[[92m   Compiling^[[0m version_check v0.9.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.8411821Z ^[[1m^[[92m   Compiling^[[0m libc v0.2.175
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:16.8439765Z ^[[1m^[[92m   Compiling^[[0m memchr v2.7.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:17.0795703Z ^[[1m^[[92m   Compiling^[[0m generic-array v0.14.7
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:17.2233228Z ^[[1m^[[92m   Compiling^[[0m utf8parse v0.2.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:17.2272693Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.219
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:17.3043115Z ^[[1m^[[92m   Compiling^[[0m anstyle-parse v0.2.7
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:17.3633507Z ^[[1m^[[92m   Compiling^[[0m aho-corasick v1.1.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:17.7483936Z ^[[1m^[[92m   Compiling^[[0m regex-syntax v0.8.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.0867688Z ^[[1m^[[92m   Compiling^[[0m colorchoice v1.0.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.1313133Z ^[[1m^[[92m   Compiling^[[0m anstyle v1.0.11
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.2963225Z ^[[1m^[[92m   Compiling^[[0m anstyle-query v1.1.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.3383107Z ^[[1m^[[92m   Compiling^[[0m is_terminal_polyfill v1.70.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.3683047Z ^[[1m^[[92m   Compiling^[[0m anstream v0.6.20
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.6942264Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.9.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.9352964Z ^[[1m^[[92m   Compiling^[[0m cfg-if v1.0.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:18.9657826Z ^[[1m^[[92m   Compiling^[[0m rustix v1.0.8
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:19.1623034Z ^[[1m^[[92m   Compiling^[[0m getrandom v0.3.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:19.3652976Z ^[[1m^[[92m   Compiling^[[0m block-buffer v0.10.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:19.4433295Z ^[[1m^[[92m   Compiling^[[0m crypto-common v0.1.6
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:19.5082807Z ^[[1m^[[92m   Compiling^[[0m clap_lex v0.7.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:19.7109658Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.9
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:20.6624481Z ^[[1m^[[92m   Compiling^[[0m log v0.4.27
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:20.8849975Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.9.4
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:21.2293444Z ^[[1m^[[92m   Compiling^[[0m unicode-width v0.2.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:21.4212964Z ^[[1m^[[92m   Compiling^[[0m strsim v0.11.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:21.5493252Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark v0.13.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:21.6163370Z ^[[1m^[[92m   Compiling^[[0m winnow v0.7.12
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:21.9193049Z ^[[1m^[[92m   Compiling^[[0m option-ext v0.2.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:21.9553060Z ^[[1m^[[92m   Compiling^[[0m dirs-sys v0.5.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:22.1852999Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.5.44
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:22.2282970Z ^[[1m^[[92m   Compiling^[[0m serde_spanned v1.0.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:22.3032869Z ^[[1m^[[92m   Compiling^[[0m toml_datetime v0.7.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:22.5870394Z ^[[1m^[[92m   Compiling^[[0m regex v1.11.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:23.3953143Z ^[[1m^[[92m   Compiling^[[0m env_filter v0.1.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:23.5623263Z ^[[1m^[[92m   Compiling^[[0m toml_parser v1.0.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:23.8899356Z ^[[1m^[[92m   Compiling^[[0m getopts v0.2.23
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:24.5403062Z ^[[1m^[[92m   Compiling^[[0m digest v0.10.7
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:24.8163459Z ^[[1m^[[92m   Compiling^[[0m jiff v0.2.15
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.4785419Z ^[[1m^[[92m   Compiling^[[0m once_cell v1.21.3
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.6399448Z ^[[1m^[[92m   Compiling^[[0m unicase v2.8.1
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.7803596Z ^[[1m^[[92m   Compiling^[[0m toml_writer v1.0.2
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.8013004Z ^[[1m^[[92m   Compiling^[[0m cpufeatures v0.2.17
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.8323207Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark-escape v0.11.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.9143099Z ^[[1m^[[92m   Compiling^[[0m fastrand v2.3.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:26.9343001Z ^[[1m^[[92m   Compiling^[[0m toml v0.9.5
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:27.1113036Z ^[[1m^[[92m   Compiling^[[0m tempfile v3.20.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:28.5023050Z ^[[1m^[[92m   Compiling^[[0m sha1 v0.10.6
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:28.7273109Z ^[[1m^[[92m   Compiling^[[0m clap v4.5.45
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:28.7599282Z ^[[1m^[[92m   Compiling^[[0m dirs v6.0.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:28.8323456Z ^[[1m^[[92m   Compiling^[[0m shell-words v1.1.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:28.9440915Z ^[[1m^[[92m   Compiling^[[0m env_logger v0.11.8
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:30.6017460Z ^[[1m^[[92m   Compiling^[[0m rust-script v0.36.0
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:50.9202545Z ^[[1m^[[92m    Finished^[[0m `release` profile [optimized] target(s) in 34.73s
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:50.9254677Z ^[[1m^[[92m  Installing^[[0m /home/runner/.cargo/bin/rust-script
+Every Tag Has a GitHub Release	Install rust-script	2026-08-15T14:06:50.9256992Z ^[[1m^[[92m   Installed^[[0m package `rust-script v0.36.0` (executable `rust-script`)
+Every Tag Has a GitHub Release	Verify GitHub Releases	﻿2026-08-15T14:06:50.9592356Z ##[group]Run rust-script scripts/check-github-releases.rs --repository "link-assistant/router" --default-branch main
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9593287Z ^[[36;1mrust-script scripts/check-github-releases.rs --repository "link-assistant/router" --default-branch main^[[0m
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9629410Z shell: /usr/bin/bash -e {0}
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9629662Z env:
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9629855Z   CARGO_HOME: /home/runner/.cargo
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9630127Z   CARGO_INCREMENTAL: 0
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9630352Z   CARGO_TERM_COLOR: always
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9633950Z   GH_TOKEN: ***
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:50.9634183Z ##[endgroup]
+Every Tag Has a GitHub Release	Verify GitHub Releases	2026-08-15T14:06:53.6795942Z Verified that all 74 default-branch version tags have GitHub Releases
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	﻿2026-08-15T14:06:53.6976812Z Post job cleanup.
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7822237Z [command]/usr/bin/git version
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7867725Z git version 2.54.0
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7919236Z Temporarily overriding HOME='/home/runner/work/_temp/c258a973-22c8-4031-8436-fec7b8c35db6' before making global git config changes
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7920809Z Adding repository directory to the temporary git global config as a safe directory
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7926123Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7961346Z Removing SSH command configuration
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.7968956Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8010360Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8259879Z Removing HTTP extra header
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8266105Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8313561Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8570179Z Removing includeIf entries pointing to credentials config files
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8577152Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8617212Z includeif.gitdir:/home/runner/work/router/router/.git.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8617793Z includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8618221Z includeif.gitdir:/github/workspace/.git.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8618608Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8632191Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8662564Z /home/runner/work/_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8674251Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-f84e1032\-2212\-4a4a\-9a9f\-a09bd32f552a\.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8720242Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8750858Z /home/runner/work/_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8761901Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-f84e1032\-2212\-4a4a\-9a9f\-a09bd32f552a\.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8807770Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8835696Z /github/runner_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8843502Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-f84e1032\-2212\-4a4a\-9a9f\-a09bd32f552a\.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8881867Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8908169Z /github/runner_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8917062Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-f84e1032\-2212\-4a4a\-9a9f\-a09bd32f552a\.config
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.8955521Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Every Tag Has a GitHub Release	Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1	2026-08-15T14:06:53.9205239Z Removing credentials config '/home/runner/work/_temp/git-credentials-f84e1032-2212-4a4a-9a9f-a09bd32f552a.config'
+Every Tag Has a GitHub Release	Complete job	﻿2026-08-15T14:06:53.9350028Z Cleaning up orphan processes

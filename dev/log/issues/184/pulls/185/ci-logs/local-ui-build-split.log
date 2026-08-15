@@ -1,0 +1,15 @@
+
+> link-assistant-router-admin-ui@0.0.0 build
+> vite build
+
+vite v8.2.1 building client environment for production...
+[2Ktransforming...✓ 1917 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                    0.60 kB │ gzip:  0.31 kB
+dist/assets/rolldown-runtime.js    0.58 kB │ gzip:  0.36 kB
+dist/assets/app.js                14.28 kB │ gzip:  4.69 kB
+dist/assets/react.js             191.73 kB │ gzip: 60.17 kB
+dist/assets/ui-vendor.js         326.12 kB │ gzip: 86.46 kB
+
+✓ built in 915ms

@@ -1,0 +1,181 @@
+4652-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7389263Z test anthropic_bridge_tests::translates_system_and_messages ... ok
+4653-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7389571Z test anthropic_bridge_tests::translates_tools_and_tool_choice ... ok
+4654-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7390842Z test anthropic_stream::tests::anthropic_stop_sequence_is_enforced_across_sse_chunks ... ok
+4655-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7391554Z test anthropic_bridge_tests::translates_tool_use_and_tool_result_blocks ... ok
+4656-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7392168Z test anthropic_stream::tests::finish_is_idempotent_and_always_terminates_the_stream ... ok
+4657-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7392894Z test anthropic_stream::tests::responses_function_calls_become_tool_use ... ok
+4658-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7394455Z test anthropic_stream::tests::responses_web_search_stays_a_server_tool_and_reports_usage ... ok
+4659-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7395282Z test anthropic_stream::tests::translates_chat_chunks_to_anthropic_events ... ok
+4660-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7396067Z test anthropic_stream::tests::translates_responses_events_to_anthropic_events ... ok
+4661-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7396886Z test anthropic_stream::tests::translates_chat_tool_calls_to_tool_use_blocks ... ok
+4662-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7397489Z test audit::tests::disabled_log_writes_nothing ... ok
+4663-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7398228Z test audit::tests::empty_path_is_treated_as_disabled ... ok
+4664:Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7400469Z test api_error::tests::one_error_renders_in_each_vendor_dialect ... ok
+4665-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7401086Z test audit::tests::enabled_log_appends_one_json_line_per_event ... ok
+4666-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7401532Z test audit::tests::events_never_carry_the_token_string_or_credentials ... ok
+4667-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7401954Z test audit::tests::enabled_log_is_owner_only ... ok
+4668-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7527107Z test auth::tests::callback_listener_closes_on_timeout ... ok
+4669-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7737951Z test auth::tests::device_login_starts_without_binding_the_loopback_port ... ok
+4670-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7738887Z test auth::tests::device_polling_handles_pending_slow_down_and_expiry ... ok
+4671-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:36.7743779Z test auth::tests::dropping_loopback_login_closes_listener ... ok
+4672-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:37.1738155Z test admin::tests::independently_loaded_claims_have_one_cross_process_winner ... ok
+4673-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:37.1738706Z test admin::tests::claim_survives_restart ... ok
+4674-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:37.1739098Z test auth::tests::mismatched_state_is_rejected_and_listener_closes_after_valid_callback ... ok
+4675-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:37.1760151Z test capabilities::tests::matrix_distinguishes_server_tools_and_local_emulation ... ok
+4676-Test (ubuntu-latest)	UNKNOWN STEP	2026-08-15T12:05:37.1763574Z test capabilities::tests::unknown_providers_are_never_assumed_unsupported ... ok
+--
+7193-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5034940Z test anthropic_bridge_tests::translates_system_and_messages ... ok
+7194-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5035771Z test anthropic_bridge_tests::translates_tool_use_and_tool_result_blocks ... ok
+7195-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5036623Z test anthropic_bridge_tests::translates_tools_and_tool_choice ... ok
+7196-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5038447Z test anthropic_stream::tests::finish_is_idempotent_and_always_terminates_the_stream ... ok
+7197-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5041189Z test anthropic_stream::tests::anthropic_stop_sequence_is_enforced_across_sse_chunks ... ok
+7198-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5044746Z test anthropic_stream::tests::responses_function_calls_become_tool_use ... ok
+7199-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5047029Z test anthropic_stream::tests::responses_web_search_stays_a_server_tool_and_reports_usage ... ok
+7200-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5050967Z test anthropic_stream::tests::translates_chat_chunks_to_anthropic_events ... ok
+7201-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5052528Z test anthropic_stream::tests::translates_chat_tool_calls_to_tool_use_blocks ... ok
+7202-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5056959Z test anthropic_stream::tests::translates_responses_events_to_anthropic_events ... ok
+7203-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5060103Z test audit::tests::disabled_log_writes_nothing ... ok
+7204-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5063143Z test audit::tests::empty_path_is_treated_as_disabled ... ok
+7205:Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5066538Z test api_error::tests::one_error_renders_in_each_vendor_dialect ... ok
+7206-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5069958Z test audit::tests::events_never_carry_the_token_string_or_credentials ... ok
+7207-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5107483Z test audit::tests::enabled_log_appends_one_json_line_per_event ... ok
+7208-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5129409Z test admin::tests::independently_loaded_claims_have_one_cross_process_winner ... ok
+7209-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5131960Z test admin::tests::claim_survives_restart ... ok
+7210-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5135286Z test auth::tests::device_polling_handles_pending_slow_down_and_expiry ... ok
+7211-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5154254Z test auth::tests::dropping_loopback_login_closes_listener ... ok
+7212-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5190291Z test auth::tests::device_login_starts_without_binding_the_loopback_port ... ok
+7213-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5248057Z test auth::tests::provider_error_closes_listener_immediately ... ok
+7214-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5251225Z test auth::tests::callback_listener_closes_on_timeout ... ok
+7215-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5253099Z test capabilities::tests::matrix_distinguishes_server_tools_and_local_emulation ... ok
+7216-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5254294Z test capabilities::tests::unknown_providers_are_never_assumed_unsupported ... ok
+7217-Test (windows-latest)	UNKNOWN STEP	2026-08-15T12:08:11.5258963Z test chat_admin::tests::a_claim_made_in_chat_closes_the_web_ui_bootstrap ... ok
+--
+9739-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5939233Z test anthropic_bridge_tests::translates_system_and_messages ... ok
+9740-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5940479Z test anthropic_bridge_tests::translates_tools_and_tool_choice ... ok
+9741-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5941412Z test anthropic_stream::tests::anthropic_stop_sequence_is_enforced_across_sse_chunks ... ok
+9742-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5942644Z test anthropic_stream::tests::responses_web_search_stays_a_server_tool_and_reports_usage ... ok
+9743-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5943545Z test anthropic_bridge_tests::max_tokens_finish_reason_maps_to_anthropic ... ok
+9744-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5944363Z test anthropic_stream::tests::responses_function_calls_become_tool_use ... ok
+9745-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5946733Z test anthropic_stream::tests::finish_is_idempotent_and_always_terminates_the_stream ... ok
+9746-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5947687Z test anthropic_stream::tests::translates_chat_chunks_to_anthropic_events ... ok
+9747-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5948571Z test anthropic_stream::tests::translates_chat_tool_calls_to_tool_use_blocks ... ok
+9748-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5952907Z test anthropic_stream::tests::translates_responses_events_to_anthropic_events ... ok
+9749-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5953778Z test audit::tests::empty_path_is_treated_as_disabled ... ok
+9750-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5958462Z test audit::tests::disabled_log_writes_nothing ... ok
+9751:Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5960004Z test api_error::tests::one_error_renders_in_each_vendor_dialect ... ok
+9752-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5961614Z test audit::tests::enabled_log_appends_one_json_line_per_event ... ok
+9753-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5962474Z test audit::tests::enabled_log_is_owner_only ... ok
+9754-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5963190Z test audit::tests::events_never_carry_the_token_string_or_credentials ... ok
+9755-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5964136Z test auth::tests::device_polling_handles_pending_slow_down_and_expiry ... ok
+9756-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.5970505Z test auth::tests::dropping_loopback_login_closes_listener ... ok
+9757-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6074775Z test auth::tests::callback_listener_closes_on_timeout ... ok
+9758-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6460637Z test auth::tests::device_login_starts_without_binding_the_loopback_port ... ok
+9759-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6463717Z test capabilities::tests::matrix_distinguishes_server_tools_and_local_emulation ... ok
+9760-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6464895Z test capabilities::tests::unknown_providers_are_never_assumed_unsupported ... ok
+9761-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6468852Z test chat_admin::tests::a_bare_token_is_accepted_as_the_confirmation ... ok
+9762-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6470255Z test chat_admin::tests::a_claim_made_in_chat_closes_the_web_ui_bootstrap ... ok
+9763-Test Coverage	UNKNOWN STEP	2026-08-15T12:07:43.6471279Z test chat_admin::tests::a_claim_made_in_the_web_ui_closes_start_for_chat ... ok
+--
+10517-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9107864Z 
+10518-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9108263Z | Metric | Value |
+10519-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9108775Z | --- | ---: |
+10520-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9109045Z | Status | **Pass** |
+10521-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9109343Z | Lines | 18290 / 23392 |
+10522-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9110196Z | Line coverage | 78.19% |
+10523-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9110591Z | Default-branch baseline | 78.18% |
+10524-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9110989Z | Delta | +0.01% |
+10525-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9111330Z | Enforced floor | 78.18% |
+10526-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9111716Z | Target floor | 80.00% |
+10527-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9143394Z ##[group]Run if ! git diff --exit-code -- coverage-baseline.txt; then
+10528-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9143870Z ^[[36;1mif ! git diff --exit-code -- coverage-baseline.txt; then^[[0m
+10529:Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9144460Z ^[[36;1m  echo "::error::Coverage changed the baseline. Commit coverage-baseline.txt so the ratchet update is reviewable."^[[0m
+10530-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9144963Z ^[[36;1m  exit 1^[[0m
+10531-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9145170Z ^[[36;1mfi^[[0m
+10532-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9166743Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+10533-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9167076Z env:
+10534-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9167294Z   CARGO_TERM_COLOR: always
+10535-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9167525Z   CARGO_NET_RETRY: 10
+10536-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9167750Z   CARGO_HTTP_MULTIPLEXING: false
+10537-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9167993Z   GIT_CONFIG_COUNT: 1
+10538-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9168224Z   GIT_CONFIG_KEY_0: init.defaultBranch
+10539-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9168483Z   GIT_CONFIG_VALUE_0: main
+10540-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9168706Z   RUSTFLAGS: -Dwarnings
+10541-Test Coverage	UNKNOWN STEP	2026-08-15T12:08:21.9169080Z   CARGO_REGISTRY_TOKEN: ***
+--
+12085-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8738780Z test anthropic_bridge_tests::tool_choice_any_becomes_required ... ok
+12086-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8739170Z test anthropic_bridge_tests::translates_base64_images ... ok
+12087-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8739610Z test anthropic_bridge_tests::translates_system_and_messages ... ok
+12088-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8740050Z test anthropic_bridge_tests::translates_tool_use_and_tool_result_blocks ... ok
+12089-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8740560Z test anthropic_bridge_tests::translates_tools_and_tool_choice ... ok
+12090-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8741080Z test anthropic_stream::tests::anthropic_stop_sequence_is_enforced_across_sse_chunks ... ok
+12091-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8746200Z test anthropic_stream::tests::finish_is_idempotent_and_always_terminates_the_stream ... ok
+12092-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8754960Z test anthropic_stream::tests::responses_function_calls_become_tool_use ... ok
+12093-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8755570Z test anthropic_stream::tests::responses_web_search_stays_a_server_tool_and_reports_usage ... ok
+12094-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8756150Z test anthropic_stream::tests::translates_chat_chunks_to_anthropic_events ... ok
+12095-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8756660Z test anthropic_stream::tests::translates_chat_tool_calls_to_tool_use_blocks ... ok
+12096-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8757250Z test anthropic_stream::tests::translates_responses_events_to_anthropic_events ... ok
+12097:Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8757760Z test api_error::tests::one_error_renders_in_each_vendor_dialect ... ok
+12098-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8758220Z test audit::tests::disabled_log_writes_nothing ... ok
+12099-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8758630Z test audit::tests::empty_path_is_treated_as_disabled ... ok
+12100-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8759060Z test admin::tests::claim_survives_restart ... ok
+12101-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8759570Z test admin::tests::independently_loaded_claims_have_one_cross_process_winner ... ok
+12102-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8760280Z test audit::tests::enabled_log_appends_one_json_line_per_event ... ok
+12103-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8773760Z test audit::tests::enabled_log_is_owner_only ... ok
+12104-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8776940Z test audit::tests::events_never_carry_the_token_string_or_credentials ... ok
+12105-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8946040Z test auth::tests::device_login_starts_without_binding_the_loopback_port ... ok
+12106-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.8994920Z test auth::tests::device_polling_handles_pending_slow_down_and_expiry ... ok
+12107-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.9025880Z test auth::tests::callback_listener_closes_on_timeout ... ok
+12108-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.9026860Z test auth::tests::dropping_loopback_login_closes_listener ... ok
+12109-Test (macos-latest)	UNKNOWN STEP	2026-08-15T12:06:46.9029150Z test auth::tests::provider_error_closes_listener_immediately ... ok
+--
+21081-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2302547Z ^[[1m^[[92m  Downloaded^[[0m rand v0.9.5
+21082-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2332348Z ^[[1m^[[92m  Downloaded^[[0m rand_xorshift v0.4.0
+21083-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2433720Z ^[[1m^[[92m  Downloaded^[[0m tokio-test v0.4.5
+21084-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2562227Z ^[[1m^[[92m  Downloaded^[[0m rand_core v0.9.5
+21085-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2584568Z ^[[1m^[[92m  Downloaded^[[0m proptest v1.11.0
+21086-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2687396Z ^[[1m^[[92m  Downloaded^[[0m unarray v0.1.4
+21087-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2709958Z ^[[1m^[[92m  Downloaded^[[0m rand_chacha v0.9.0
+21088-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2812910Z ^[[1m^[[92m  Downloaded^[[0m wait-timeout v0.2.1
+21089-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2845126Z ^[[1m^[[92m  Downloaded^[[0m tokio-stream v0.1.19
+21090-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2939132Z ^[[1m^[[92m  Downloaded^[[0m quick-error v1.2.3
+21091-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.2974686Z ^[[1m^[[92m  Downloaded^[[0m rusty-fork v0.3.1
+21092-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.3579522Z mv: cannot stat 'link-assistant-router.cdx.json': No such file or directory
+21093:Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.3592385Z ##[error]Process completed with exit code 1.
+21094-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.3698894Z Post job cleanup.
+21095-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4564061Z [command]/usr/bin/git version
+21096-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4604760Z git version 2.54.0
+21097-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4649563Z Temporarily overriding HOME='/home/runner/work/_temp/d972786f-44e6-494c-9f87-029fbb21823a' before making global git config changes
+21098-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4651359Z Adding repository directory to the temporary git global config as a safe directory
+21099-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4655352Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+21100-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4685677Z Removing SSH command configuration
+21101-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4692193Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+21102-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4727050Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+21103-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4928224Z Removing HTTP extra header
+21104-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4934035Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+21105-Publish attested binaries (amd64)	UNKNOWN STEP	2026-08-15T12:24:48.4966073Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+--
+24957-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6074863Z ^[[1m^[[92m  Downloaded^[[0m rand_xorshift v0.4.0
+24958-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6080968Z ^[[1m^[[92m  Downloaded^[[0m rand v0.9.5
+24959-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6203799Z ^[[1m^[[92m  Downloaded^[[0m tokio-test v0.4.5
+24960-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6285750Z ^[[1m^[[92m  Downloaded^[[0m proptest v1.11.0
+24961-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6337393Z ^[[1m^[[92m  Downloaded^[[0m rand_core v0.9.5
+24962-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6395217Z ^[[1m^[[92m  Downloaded^[[0m unarray v0.1.4
+24963-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6418001Z ^[[1m^[[92m  Downloaded^[[0m rand_chacha v0.9.0
+24964-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6514995Z ^[[1m^[[92m  Downloaded^[[0m wait-timeout v0.2.1
+24965-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6523308Z ^[[1m^[[92m  Downloaded^[[0m tokio-stream v0.1.19
+24966-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6628831Z ^[[1m^[[92m  Downloaded^[[0m quick-error v1.2.3
+24967-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.6636142Z ^[[1m^[[92m  Downloaded^[[0m rusty-fork v0.3.1
+24968-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.7166869Z mv: cannot stat 'link-assistant-router.cdx.json': No such file or directory
+24969:Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.7180739Z ##[error]Process completed with exit code 1.
+24970-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.7321263Z Post job cleanup.
+24971-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.7984848Z [command]/usr/bin/git version
+24972-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8021265Z git version 2.54.0
+24973-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8059000Z Temporarily overriding HOME='/home/runner/work/_temp/bdbdf233-6f96-468c-a927-3770de2861e1' before making global git config changes
+24974-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8060588Z Adding repository directory to the temporary git global config as a safe directory
+24975-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8063071Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+24976-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8095309Z Removing SSH command configuration
+24977-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8100537Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+24978-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8132565Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+24979-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8319156Z Removing HTTP extra header
+24980-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8324455Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+24981-Publish attested binaries (arm64)	UNKNOWN STEP	2026-08-15T12:24:04.8356131Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
