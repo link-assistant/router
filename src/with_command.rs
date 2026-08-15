@@ -315,12 +315,13 @@ fn client_arguments(args: &WithArgs) -> Vec<OsString> {
     let mut result = Vec::new();
     if command_mode && has_mode {
         result.push(forwarded.remove(0));
-    } else if command_mode && non_interactive {
-        if let Some(mode) = mode {
-            result.push(mode.into());
-            if args.client == ClientKind::Codex {
-                result.push("--skip-git-repo-check".into());
-            }
+    } else if command_mode
+        && non_interactive
+        && let Some(mode) = mode
+    {
+        result.push(mode.into());
+        if args.client == ClientKind::Codex {
+            result.push("--skip-git-repo-check".into());
         }
     }
     if let Some(model) = model {
@@ -341,10 +342,12 @@ fn client_arguments(args: &WithArgs) -> Vec<OsString> {
             )),
         ]);
     }
-    if !command_mode && non_interactive && !has_mode {
-        if let Some(mode) = mode {
-            result.push(mode.into());
-        }
+    if !command_mode
+        && non_interactive
+        && !has_mode
+        && let Some(mode) = mode
+    {
+        result.push(mode.into());
     }
     result.extend(forwarded);
     result

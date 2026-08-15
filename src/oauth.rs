@@ -86,18 +86,17 @@ impl ClaudeCredentials {
             value.filter(|v| !v.is_empty())
         }
 
-        if let Some(block) = self.claude_ai_oauth {
-            if let Some(access) =
+        if let Some(block) = self.claude_ai_oauth
+            && let Some(access) =
                 non_empty(block.access_token).or_else(|| non_empty(block.oauth_token))
-            {
-                return Some(SubscriptionToken {
-                    access_token: access,
-                    refresh_token: non_empty(block.refresh_token),
-                    expires_at_ms: block.expires_at,
-                    account_id: None,
-                    resource_url: None,
-                });
-            }
+        {
+            return Some(SubscriptionToken {
+                access_token: access,
+                refresh_token: non_empty(block.refresh_token),
+                expires_at_ms: block.expires_at,
+                account_id: None,
+                resource_url: None,
+            });
         }
         let access = non_empty(self.access_token).or_else(|| non_empty(self.oauth_token))?;
         Some(SubscriptionToken {
@@ -221,10 +220,10 @@ impl OAuthProvider {
     /// Falls back to reading from files if the cache is empty.
     pub fn get_token(&self) -> Result<String, OAuthError> {
         // Check cache first
-        if let Ok(guard) = self.cached_token.read() {
-            if let Some(ref token) = *guard {
-                return Ok(token.clone());
-            }
+        if let Ok(guard) = self.cached_token.read()
+            && let Some(ref token) = *guard
+        {
+            return Ok(token.clone());
         }
 
         // Read from files
@@ -271,10 +270,10 @@ impl OAuthProvider {
         client: &reqwest::Client,
         cache: &crate::refresh::TokenCache,
     ) -> Result<String, OAuthError> {
-        if let Ok(guard) = self.manual_token.read() {
-            if let Some(ref token) = *guard {
-                return Ok(token.clone());
-            }
+        if let Ok(guard) = self.manual_token.read()
+            && let Some(ref token) = *guard
+        {
+            return Ok(token.clone());
         }
 
         let disk_token = match self.read_subscription_token() {

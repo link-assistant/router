@@ -98,12 +98,12 @@ impl UsageTracker {
         if bytes == b"[DONE]" {
             return;
         }
-        if let Ok(value) = serde_json::from_slice::<Value>(bytes) {
-            if let Some((total, input, output)) = token_parts(&value) {
-                self.total_tokens = self.total_tokens.max(total.unwrap_or(0));
-                self.input_tokens = self.input_tokens.max(input.unwrap_or(0));
-                self.output_tokens = self.output_tokens.max(output.unwrap_or(0));
-            }
+        if let Ok(value) = serde_json::from_slice::<Value>(bytes)
+            && let Some((total, input, output)) = token_parts(&value)
+        {
+            self.total_tokens = self.total_tokens.max(total.unwrap_or(0));
+            self.input_tokens = self.input_tokens.max(input.unwrap_or(0));
+            self.output_tokens = self.output_tokens.max(output.unwrap_or(0));
         }
     }
 }

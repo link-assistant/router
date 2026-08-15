@@ -158,10 +158,10 @@ impl AnthropicStreamTranslator {
             return frames;
         };
         if let Some(delta) = choice.get("delta") {
-            if let Some(text) = delta.get("content").and_then(Value::as_str) {
-                if !text.is_empty() {
-                    frames.extend(self.text_delta(text));
-                }
+            if let Some(text) = delta.get("content").and_then(Value::as_str)
+                && !text.is_empty()
+            {
+                frames.extend(self.text_delta(text));
             }
             if let Some(calls) = delta.get("tool_calls").and_then(Value::as_array) {
                 for call in calls {
@@ -210,17 +210,16 @@ impl AnthropicStreamTranslator {
             .get("function")
             .and_then(|f| f.get("arguments"))
             .and_then(Value::as_str)
+            && !args.is_empty()
         {
-            if !args.is_empty() {
-                frames.push(anthropic_frame(
-                    "content_block_delta",
-                    &json!({
-                        "type": "content_block_delta",
-                        "index": index,
-                        "delta": {"type": "input_json_delta", "partial_json": args},
-                    }),
-                ));
-            }
+            frames.push(anthropic_frame(
+                "content_block_delta",
+                &json!({
+                    "type": "content_block_delta",
+                    "index": index,
+                    "delta": {"type": "input_json_delta", "partial_json": args},
+                }),
+            ));
         }
         frames
     }
@@ -240,10 +239,10 @@ impl AnthropicStreamTranslator {
         let mut frames = self.ensure_started();
         match kind {
             "response.output_text.delta" => {
-                if let Some(text) = event.get("delta").and_then(Value::as_str) {
-                    if !text.is_empty() {
-                        frames.extend(self.text_delta(text));
-                    }
+                if let Some(text) = event.get("delta").and_then(Value::as_str)
+                    && !text.is_empty()
+                {
+                    frames.extend(self.text_delta(text));
                 }
             }
             "response.output_item.added" | "response.output_item.done" => {

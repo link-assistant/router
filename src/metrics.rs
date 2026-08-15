@@ -74,10 +74,10 @@ impl Metrics {
         if let Ok(mut g) = self.status_counts.lock() {
             *g.entry(status).or_insert(0) += 1;
         }
-        if let Some(acct) = account {
-            if let Ok(mut g) = self.account_calls.lock() {
-                *g.entry(acct.to_string()).or_insert(0) += 1;
-            }
+        if let Some(acct) = account
+            && let Ok(mut g) = self.account_calls.lock()
+        {
+            *g.entry(acct.to_string()).or_insert(0) += 1;
         }
     }
 

@@ -378,10 +378,10 @@ impl AccountRouter {
             };
             return Ok((vec![index], SelectionMode::Pinned));
         }
-        if let Some(session) = context.session_key.as_deref() {
-            if let Some(index) = self.bound_account(session) {
-                return Ok((vec![index], SelectionMode::Session));
-            }
+        if let Some(session) = context.session_key.as_deref()
+            && let Some(index) = self.bound_account(session)
+        {
+            return Ok((vec![index], SelectionMode::Session));
         }
         let mut indices: Vec<usize> = (0..self.inner.accounts.len()).collect();
         match self.inner.strategy {

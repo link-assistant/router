@@ -398,10 +398,9 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
                             if matches!(
                                 part.get("type").and_then(Value::as_str),
                                 Some("output_text" | "text")
-                            ) {
-                                if let Some(text) = part.get("text").and_then(Value::as_str) {
-                                    content.push_str(text);
-                                }
+                            ) && let Some(text) = part.get("text").and_then(Value::as_str)
+                            {
+                                content.push_str(text);
                             }
                         }
                     }

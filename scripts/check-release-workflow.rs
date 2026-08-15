@@ -23,7 +23,7 @@ fn main() {
         "cargo install cargo-audit --version 0.22.2 --locked --force",
         "cargo install cargo-cyclonedx --version 0.5.9 --locked",
         "cargo cyclonedx --format json --all-features --all --spec-version 1.5",
-        "toolchain: 1.96.1",
+        "toolchain: 1.97.1",
         "docker/login-action@",
         "docker/setup-buildx-action@",
         "docker/metadata-action@",
@@ -105,8 +105,8 @@ fn main() {
 
     let toolchain_actions = count_occurrences(&workflow, "dtolnay/rust-toolchain@")
         + count_occurrences(&reconciliation, "dtolnay/rust-toolchain@");
-    let pinned_toolchains = count_occurrences(&workflow, "toolchain: 1.96.1")
-        + count_occurrences(&reconciliation, "toolchain: 1.96.1");
+    let pinned_toolchains = count_occurrences(&workflow, "toolchain: 1.97.1")
+        + count_occurrences(&reconciliation, "toolchain: 1.97.1");
     if toolchain_actions != pinned_toolchains {
         failures.push("every Rust action must select the reviewed numeric toolchain".to_string());
     }

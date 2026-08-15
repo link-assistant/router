@@ -160,10 +160,10 @@ pub async fn forward_openai_compatible(
         }
     };
 
-    if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty()) {
-        if let Some(model) = provider.default_model.as_deref() {
-            body["model"] = serde_json::Value::String(model.to_string());
-        }
+    if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty())
+        && let Some(model) = provider.default_model.as_deref()
+    {
+        body["model"] = serde_json::Value::String(model.to_string());
     }
     let stream_requested = body
         .get("stream")
@@ -279,10 +279,10 @@ pub fn openai_compatible_models(state: &AppState) -> serde_json::Value {
         mut models,
         ..
     } = provider;
-    if models.is_empty() {
-        if let Some(model) = default_model {
-            models.push(model);
-        }
+    if models.is_empty()
+        && let Some(model) = default_model
+    {
+        models.push(model);
     }
     if models.is_empty() {
         models.push("default".to_string());

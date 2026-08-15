@@ -434,12 +434,11 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         status.as_u16(),
         selected_account.as_deref(),
     );
-    if status.as_u16() == 429 {
-        if let (Some(router), Some(name)) =
+    if status.as_u16() == 429
+        && let (Some(router), Some(name)) =
             (state.account_router.as_ref(), selected_account.as_deref())
-        {
-            router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
-        }
+    {
+        router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
     }
 
     // Build the response -- stream it back to preserve SSE
@@ -768,12 +767,11 @@ async fn forward_openai(
     state.metrics.record_bytes(bytes_sent, bytes_received);
 
     if !upstream_status.is_success() {
-        if upstream_status.as_u16() == 429 {
-            if let (Some(router), Some(name)) =
+        if upstream_status.as_u16() == 429
+            && let (Some(router), Some(name)) =
                 (state.account_router.as_ref(), selected_account.as_deref())
-            {
-                router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
-            }
+        {
+            router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
         }
         state.metrics.record_request(
             surface,
