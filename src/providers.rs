@@ -467,9 +467,9 @@ fn decrypt_api_key(encrypted: &str, token_secret: &str) -> Result<String, Provid
             "encrypted provider secret is too short".into(),
         ));
     }
-    let (nonce, ciphertext) = packed.split_at(12);
-    let nonce = Nonce::try_from(nonce)
-        .map_err(|e| ProviderError::Crypto(format!("invalid AES nonce: {e}")))?;
+    let (nonce_bytes, ciphertext) = packed.split_at(12);
+    let mut nonce = Nonce::default();
+    nonce.copy_from_slice(nonce_bytes);
     let plaintext = cipher(token_secret)?
         .decrypt(&nonce, ciphertext)
         .map_err(|e| ProviderError::Crypto(format!("decrypt failed: {e}")))?;
