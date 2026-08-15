@@ -15,14 +15,8 @@
 //!   - 0: Check passed (fragment added or no source changes)
 //!   - 1: Check failed (source changes without changelog fragment)
 //!
-//! ```cargo
-//! [dependencies]
-//! regex = "1"
-//! ```
-
 use std::env;
 use std::process::{Command, exit};
-use regex::Regex;
 
 fn exec(command: &str, args: &[&str]) -> String {
     match Command::new(command).args(args).output() {
@@ -59,14 +53,51 @@ fn get_changed_files() -> Vec<String> {
 }
 
 fn is_source_file(file_path: &str) -> bool {
-    let source_patterns = [
-        Regex::new(r"^src/").unwrap(),
-        Regex::new(r"^tests/").unwrap(),
-        Regex::new(r"^scripts/").unwrap(),
-        Regex::new(r"^Cargo\.toml$").unwrap(),
-    ];
+    !file_path.ends_with(".md")
+        && ![
+            "changelog.d/",
+            "dev/log/",
+            "docs/",
+            "examples/",
+            "experiments/",
+        ]
+        .iter()
+        .any(|prefix| file_path.starts_with(prefix))
+}
 
-    source_patterns.iter().any(|pattern| pattern.is_match(file_path))
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_build_relevant_surface_requires_a_fragment() {
+        for path in [
+            "Cargo.lock",
+            "Dockerfile",
+            ".github/workflows/release.yml",
+            "scripts/check.sh",
+            "src/main.rs",
+            "tests/integration.rs",
+            "ui/package-lock.json",
+            "ui/src/App.jsx",
+        ] {
+            assert!(is_source_file(path), "{path} must require a changelog fragment");
+        }
+    }
+
+    #[test]
+    fn evidence_and_documentation_do_not_require_a_fragment() {
+        for path in [
+            "README.md",
+            "changelog.d/fix.md",
+            "dev/log/issues/184/run.json",
+            "docs/design.txt",
+            "examples/demo.rs",
+            "experiments/repro.sh",
+        ] {
+            assert!(!is_source_file(path), "{path} should not require a fragment");
+        }
+    }
 }
 
 fn is_changelog_fragment(file_path: &str) -> bool {

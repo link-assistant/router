@@ -29,18 +29,12 @@
 //!   - mjs-changed: 'true' if any .mjs files changed
 //!   - docs-changed: 'true' if any .md files changed
 //!   - workflow-changed: 'true' if any .github/workflows/ files changed
-//!   - any-code-changed: 'true' if any code files changed (excludes docs, changelog.d, experiments, examples)
-//!
-//! ```cargo
-//! [dependencies]
-//! regex = "1"
-//! ```
+//!   - any-code-changed: 'true' if any build-relevant file changed
 
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::process::Command;
-use regex::Regex;
 
 fn exec(command: &str, args: &[&str]) -> String {
     match Command::new(command).args(args).output() {
@@ -118,7 +112,13 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
     }
 
     // Exclude specific folders from code changes
-    let excluded_folders = ["changelog.d/", "docs/", "experiments/", "examples/"];
+    let excluded_folders = [
+        "changelog.d/",
+        "dev/log/",
+        "docs/",
+        "experiments/",
+        "examples/",
+    ];
 
     for folder in &excluded_folders {
         if file_path.starts_with(folder) {
@@ -127,6 +127,43 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
     }
 
     false
+}
+
+fn is_manifest_or_lockfile_change(file_path: &str) -> bool {
+    file_path.ends_with(".toml") || file_path.ends_with("Cargo.lock")
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct ChangeKinds {
+    rs: bool,
+    toml: bool,
+    mjs: bool,
+    docs: bool,
+    workflow: bool,
+    any_code: bool,
+}
+
+fn classify_changes(changed_files: &[String]) -> ChangeKinds {
+    let included: Vec<&String> = changed_files
+        .iter()
+        .filter(|file| !is_excluded_from_code_changes(file))
+        .collect();
+
+    ChangeKinds {
+        rs: included.iter().any(|file| file.ends_with(".rs")),
+        toml: included
+            .iter()
+            .any(|file| is_manifest_or_lockfile_change(file)),
+        mjs: included.iter().any(|file| file.ends_with(".mjs")),
+        docs: changed_files.iter().any(|file| file.ends_with(".md")),
+        workflow: included
+            .iter()
+            .any(|file| file.starts_with(".github/workflows/")),
+        // Use an allowlist only for files that are intentionally non-code. An
+        // extension allowlist silently misses Dockerfiles, lockfiles, shell
+        // scripts, JSON manifests, and future languages.
+        any_code: !included.is_empty(),
+    }
 }
 
 fn main() {
@@ -144,25 +181,15 @@ fn main() {
     }
     println!();
 
-    // Detect .rs file changes (Rust source)
-    let rs_changed = changed_files.iter().any(|f| f.ends_with(".rs"));
-    set_output("rs-changed", if rs_changed { "true" } else { "false" });
-
-    // Detect .toml file changes (Cargo.toml, Cargo.lock, etc.)
-    let toml_changed = changed_files.iter().any(|f| f.ends_with(".toml"));
-    set_output("toml-changed", if toml_changed { "true" } else { "false" });
-
-    // Detect .mjs file changes (scripts)
-    let mjs_changed = changed_files.iter().any(|f| f.ends_with(".mjs"));
-    set_output("mjs-changed", if mjs_changed { "true" } else { "false" });
-
-    // Detect documentation changes (any .md file)
-    let docs_changed = changed_files.iter().any(|f| f.ends_with(".md"));
-    set_output("docs-changed", if docs_changed { "true" } else { "false" });
-
-    // Detect workflow changes
-    let workflow_changed = changed_files.iter().any(|f| f.starts_with(".github/workflows/"));
-    set_output("workflow-changed", if workflow_changed { "true" } else { "false" });
+    let kinds = classify_changes(&changed_files);
+    set_output("rs-changed", if kinds.rs { "true" } else { "false" });
+    set_output("toml-changed", if kinds.toml { "true" } else { "false" });
+    set_output("mjs-changed", if kinds.mjs { "true" } else { "false" });
+    set_output("docs-changed", if kinds.docs { "true" } else { "false" });
+    set_output(
+        "workflow-changed",
+        if kinds.workflow { "true" } else { "false" },
+    );
 
     // Detect code changes (excluding docs, changelog.d, experiments, examples folders, and markdown files)
     let code_changed_files: Vec<&String> = changed_files
@@ -180,10 +207,52 @@ fn main() {
     }
     println!();
 
-    // Check if any code files changed (.rs, .toml, .mjs, .yml, .yaml, or workflow files)
-    let code_pattern = Regex::new(r"\.(rs|toml|mjs|js|yml|yaml)$|\.github/workflows/").unwrap();
-    let code_changed = code_changed_files.iter().any(|f| code_pattern.is_match(f));
-    set_output("any-code-changed", if code_changed { "true" } else { "false" });
+    set_output(
+        "any-code-changed",
+        if kinds.any_code { "true" } else { "false" },
+    );
 
     println!("\nChange detection completed.");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn paths(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| (*value).to_string()).collect()
+    }
+
+    #[test]
+    fn detects_extensionless_and_non_rust_build_inputs() {
+        for path in [
+            "Cargo.lock",
+            "Dockerfile",
+            "scripts/check.sh",
+            "ui/package-lock.json",
+            "ui/src/App.jsx",
+        ] {
+            assert!(
+                classify_changes(&paths(&[path])).any_code,
+                "{path} must trigger code checks"
+            );
+        }
+        assert!(classify_changes(&paths(&["Cargo.lock"])).toml);
+    }
+
+    #[test]
+    fn excludes_only_deliberately_non_build_inputs() {
+        let kinds = classify_changes(&paths(&[
+            "README.md",
+            "docs/design.md",
+            "dev/log/issues/184/run.json",
+            "changelog.d/fix.md",
+            "examples/demo.rs",
+            "experiments/repro.sh",
+        ]));
+
+        assert!(!kinds.any_code);
+        assert!(kinds.docs);
+        assert!(!kinds.rs);
+    }
 }

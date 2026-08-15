@@ -31,7 +31,9 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # PR checks are disposable; release-capable main/manual runs must finish once
+  # they start or cancellation can leave tags, crates, and releases out of sync.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -180,8 +182,7 @@ jobs:
       always() && !cancelled() && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.rs-changed == 'true' ||
-        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
         needs.detect-changes.outputs.docs-changed == 'true' ||
         needs.detect-changes.outputs.workflow-changed == 'true'
       )
@@ -222,6 +223,31 @@ jobs:
           RUSTDOCFLAGS: -D warnings
         run: cargo doc --locked --no-deps --all-features
 
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install admin console dependencies
+        working-directory: ui
+        run: npm ci
+
+      - name: Build admin console
+        working-directory: ui
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee /tmp/admin-ui-build.log
+          if grep -E '(^|[[:space:]])\(!\)|[Ww]arn(ing)?' /tmp/admin-ui-build.log; then
+            echo "::error::Admin console build emitted a warning"
+            exit 1
+          fi
+
+      - name: Verify embedded admin console bundle is current
+        run: git diff --exit-code -- ui/dist
+
       - name: Check file size limit
         run: rust-script scripts/check-file-size.rs
 
@@ -231,6 +257,8 @@ jobs:
           rust-script --test scripts/check-docker-platforms.rs
           rust-script --test scripts/check-github-releases.rs
           rust-script --test scripts/check-coverage.rs
+          rust-script --test scripts/detect-code-changes.rs
+          rust-script --test scripts/check-changelog-fragment.rs
 
   # === DEPENDENCY AUDIT ===
   # Both dependency surfaces the router carries: the Rust crates and the JS
@@ -248,8 +276,7 @@ jobs:
       always() && !cancelled() && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.rs-changed == 'true' ||
-        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
         needs.detect-changes.outputs.workflow-changed == 'true'
       )
     steps:
@@ -610,6 +637,7 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     env:
       RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
     steps:
@@ -727,7 +755,8 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
       - name: Download runtime digests
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        # v8 emits Node DEP0005 through its bundled unzip dependency (upstream #484).
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: runtime-*
           path: /tmp/digests/runtime
@@ -865,7 +894,7 @@ jobs:
           cp target/release/link-assistant-router target/release/with-router dist/package/
           cp LICENSE README.md dist/package/
           cargo cyclonedx --format json --all-features --all --spec-version 1.5 \
-            --override-filename link-assistant-router.cdx.json
+            --override-filename link-assistant-router.cdx
           mv link-assistant-router.cdx.json \
             "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json"
           jq -e '.bomFormat == "CycloneDX" and (.components | length > 1) and (.dependencies | length > 0)' \
