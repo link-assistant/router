@@ -419,10 +419,15 @@ fn committed_admin_ui_chunks_stay_below_vites_warning_threshold() {
 #[test]
 fn archived_development_evidence_is_not_treated_as_product_source() {
     let file_size_check = read_lf("scripts/check-file-size.rs");
+    let manifest = read_lf("Cargo.toml");
 
     assert!(
         file_size_check.contains(r#""dev/log""#),
         "archived issue evidence must not create source line-count false positives"
+    );
+    assert!(
+        manifest.contains(r#"exclude = ["dev/log/**"]"#),
+        "archived issue evidence must not be included in published crates"
     );
 }
 
