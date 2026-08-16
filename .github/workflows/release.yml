@@ -676,13 +676,26 @@ jobs:
             ghcr.io/${{ github.repository }}
             ${{ env.DOCKERHUB_IMAGE }}
           tags: type=raw,value=${{ env.RELEASE_VERSION }}
-          # metadata-action defaults the revision label to github.sha, which for a release
-          # push is the merge commit *before* the release commit. Pin it to the commit the
-          # release tag resolves to so the image proves which source it was built from.
           labels: |
             org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
-            org.opencontainers.image.revision=${{ env.RELEASE_COMMIT }}
             org.opencontainers.image.source=https://github.com/link-assistant/router
+
+      # metadata-action always emits org.opencontainers.image.revision=github.sha, which on a
+      # release push is the merge commit *before* the release commit. Passing a second value
+      # for the same key would leave the winner up to label ordering, so drop the generated
+      # entry and append the commit the release tag actually resolves to.
+      - name: Pin the image revision to the release tag commit
+        id: image-labels
+        shell: bash
+        env:
+          GENERATED_LABELS: ${{ steps.docker-meta.outputs.labels }}
+        run: |
+          {
+            echo 'labels<<LABELS_EOF'
+            grep -v '^org.opencontainers.image.revision=' <<<"$GENERATED_LABELS"
+            echo "org.opencontainers.image.revision=${RELEASE_COMMIT}"
+            echo 'LABELS_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and push image by digest
         id: build-image
@@ -691,7 +704,7 @@ jobs:
           context: .
           target: ${{ matrix.target }}
           platforms: ${{ matrix.platform }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
+          labels: ${{ steps.image-labels.outputs.labels }}
           outputs: type=image,"name=ghcr.io/${{ github.repository }},${{ env.DOCKERHUB_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.arch }}-${{ matrix.variant }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}-${{ matrix.variant }}
@@ -706,7 +719,7 @@ jobs:
         shell: bash
         run: |
           labels="$(docker buildx imagetools inspect \
-            "ghcr.io/${{ github.repository }}@${IMAGE_DIGEST}" --format '{{json .Image.config.Labels}}')"
+            "ghcr.io/${{ github.repository }}@${IMAGE_DIGEST}" --format '{{json .Image}}' | jq '.config.Labels')"
           echo "$labels"
           test "$(jq -r '."org.opencontainers.image.revision"' <<<"$labels")" = "$RELEASE_COMMIT"
           test "$(jq -r '."org.opencontainers.image.version"' <<<"$labels")" = "$RELEASE_VERSION"
