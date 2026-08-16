@@ -524,7 +524,7 @@ impl AdminClaim {
             self.persist(&file).map_err(|_| ClaimError::Storage)?;
             self.activate_jwt(candidate.token_id.as_deref())
         })?;
-        state.active_sha256 = Some(digest).filter(|_| candidate.token_id.is_none());
+        state.active_sha256 = candidate.token_id.is_none().then_some(digest);
         state.active_token_id = candidate.token_id;
         state.ttl_hours = candidate.ttl_hours;
         state.claimed_at = Some(claimed_at);
@@ -631,7 +631,7 @@ impl AdminClaim {
             }
             self.persist(&file).map_err(|_| ClaimError::Storage)
         })?;
-        state.active_sha256 = Some(digest).filter(|_| token_id.is_none());
+        state.active_sha256 = token_id.is_none().then_some(digest);
         state.active_token_id = token_id;
         state.ttl_hours = ttl_hours;
         state.claimed_at = Some(claimed_at);
