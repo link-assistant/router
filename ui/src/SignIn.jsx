@@ -49,7 +49,7 @@ export default function SignIn({ onSignedIn, provisionedByEnvironment }) {
               value={token}
               autoComplete="off"
               onChange={(e) => setToken(e.target.value)}
-              placeholder="la_admin_…"
+              placeholder="la_sk_…"
             />
           </Field.Root>
           <Button type="submit" loading={busy} disabled={!token} alignSelf="flex-start">

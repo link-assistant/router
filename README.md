@@ -1158,7 +1158,30 @@ Admin token (shown once, store it now): la_sk_eyJ0eXAi...
 ```
 
 A client token presented to an admin endpoint is rejected: authorisation is by
-scope, not by "any valid token".
+scope, not by "any valid token". The converse does not hold: `scope=admin` is a
+**superset** of client access, so one administrator credential both manages
+tokens (`/api/tokens/list`) and reaches the models (`/v1/models`). The same is
+true of the flat `TOKEN_ADMIN_KEY`.
+
+#### The first-visitor claim
+
+The web UI and the chat bots (Telegram, VK) share one system-wide first-visitor
+claim, and it produces an ordinary admin-scoped `la_sk_…` JWT — the credential
+model above, not a parallel one. The two-phase handshake is unchanged: phase one
+mints the candidate **already revoked**, so an undelivered mint authorises
+nothing and cannot brick the deployment; confirming it activates the credential,
+closes bootstrap on every channel, and retires the startup `bootstrap-admin`
+token by id, so the Tokens table, the CLI and the bots all show it revoked.
+
+`POST /api/admin/bootstrap` and `POST /api/admin/rotate` accept an optional
+`{"ttl_hours": n}` body to limit the credential lifetime (capped at one year;
+omitted means the cap). Expiry and revocation are enforced on the same path as
+every other token. Rotation is atomic: the replacement is minted and the
+previous credential revoked by id under the claim lock.
+
+Deployments claimed by an older version still hold an opaque `la_admin_…`
+credential. It keeps working, `doctor` warns about it, and the first
+`/api/admin/rotate` converts the claim into a JWT.
 
 ### Per-token containment controls
 
