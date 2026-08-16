@@ -192,6 +192,13 @@ impl TestRouter {
             .bearer_auth(&self.token)
     }
 
+    /// A GET carrying a credential other than the default client token.
+    fn get_as(&self, path: &str, credential: &str) -> reqwest::RequestBuilder {
+        self.client
+            .get(format!("{}{path}", self.url))
+            .bearer_auth(credential)
+    }
+
     fn log_path_for(&self, token: &str) -> std::path::PathBuf {
         let digest = hex::encode(Sha256::digest(token.as_bytes()));
         self.log_root.join(&digest[..32]).join("requests.jsonl")

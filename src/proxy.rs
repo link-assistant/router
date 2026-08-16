@@ -162,6 +162,32 @@ pub(crate) fn is_admin_authorised(state: &AppState, headers: &HeaderMap) -> bool
     )
 }
 
+/// Whether `token` is an administrator credential that is not itself a JWT —
+/// the flat `TOKEN_ADMIN_KEY` or a legacy claimed `la_admin_…` value.
+fn is_admin_credential(state: &AppState, token: &str) -> bool {
+    if state.admin.verify(token) {
+        return true;
+    }
+    state
+        .admin_key
+        .as_deref()
+        .is_some_and(|required| crate::token::constant_time_eq(token, required))
+}
+
+/// Synthetic claims describing a non-JWT administrator credential, so the
+/// proxy path downstream can treat every caller uniformly. The subject is
+/// stable and carries no stored budget, matching how the flat key has always
+/// behaved on the admin endpoints.
+fn admin_credential_claims(token: &str) -> crate::token::TokenClaims {
+    crate::token::TokenClaims {
+        sub: format!("admin-credential-{}", crate::admin::sha256_hex(token)),
+        iat: 0,
+        exp: i64::MAX,
+        label: "admin credential".to_string(),
+        scope: crate::token::ADMIN_SCOPE.to_string(),
+    }
+}
+
 /// Bearer credential presented for an administrative request, if any.
 pub(crate) fn extract_admin_bearer(headers: &HeaderMap) -> Option<&str> {
     extract_bearer_token(headers)
@@ -201,6 +227,15 @@ pub(crate) fn authenticate_client(
             "Missing Authorization Bearer token or x-api-key",
         )));
     };
+    // An administrator credential is a superset of client access: the person
+    // who administers the router must be able to call the models with the same
+    // credential they manage tokens with. Admin-scoped JWTs already validate
+    // below; this covers the flat `TOKEN_ADMIN_KEY` and a legacy claimed
+    // `la_admin_` credential. Anonymous admin access is deliberately *not*
+    // consulted — it opens the admin surface, never the proxy.
+    if is_admin_credential(state, token) {
+        return Ok(admin_credential_claims(token));
+    }
     state.token_manager.validate_token(token).map_err(|error| {
         let status = if matches!(error, crate::token::TokenError::Revoked) {
             StatusCode::FORBIDDEN

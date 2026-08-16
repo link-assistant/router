@@ -70,15 +70,16 @@ delivery that failed must not brick administration.
 
 | Step | Message | Effect on the router |
 | --- | --- | --- |
-| 1 | `/start` | Mints a candidate token. **Nothing is persisted. The candidate authorises nothing. The router is still unclaimed.** |
+| 1 | `/start` | Mints a candidate admin JWT, already revoked. **Nothing is persisted. The candidate authorises nothing. The router is still unclaimed.** |
 | 2 | `/confirm <token>` (or just the token) | Proves the message arrived, activates the credential and closes bootstrap everywhere |
 
 If the mint never reaches you, nothing is locked: the candidate expires
 (`--admin-claim-ttl-secs`, two minutes by default) and `/start` works again.
 
 After the claim, every other chat user must present a valid admin credential
-with `/auth <token>` — the claimed `la_admin_…` credential, an admin-scoped
-`la_sk_…` token, or `TOKEN_ADMIN_KEY`. The platform user id is only a **cache**
+with `/auth <token>` — the claimed credential (an admin-scoped `la_sk_…` JWT,
+or a legacy `la_admin_…` value on a deployment claimed before the JWT model),
+any other admin-scoped `la_sk_…` token, or `TOKEN_ADMIN_KEY`. The platform user id is only a **cache**
 for that credential: every command re-validates it, so revoking or rotating
 signs the chat user out on their next message. A Telegram or VK id is never an
 authorisation factor on its own, and `--allow-anonymous-admin` deliberately does
