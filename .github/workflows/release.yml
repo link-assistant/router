@@ -259,6 +259,8 @@ jobs:
           rust-script --test scripts/check-coverage.rs
           rust-script --test scripts/detect-code-changes.rs
           rust-script --test scripts/check-changelog-fragment.rs
+          rust-script --test scripts/check-release-provenance.rs
+          rust-script scripts/check-release-workflow.rs
 
   # === DEPENDENCY AUDIT ===
   # Both dependency surfaces the router carries: the Rust crates and the JS
@@ -640,10 +642,15 @@ jobs:
       artifact-metadata: write
     env:
       RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+          ref: ${{ needs.create-github-release.outputs.release-commit }}
+
+      - name: Verify the workspace is the release tag commit
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
@@ -669,8 +676,12 @@ jobs:
             ghcr.io/${{ github.repository }}
             ${{ env.DOCKERHUB_IMAGE }}
           tags: type=raw,value=${{ env.RELEASE_VERSION }}
+          # metadata-action defaults the revision label to github.sha, which for a release
+          # push is the merge commit *before* the release commit. Pin it to the commit the
+          # release tag resolves to so the image proves which source it was built from.
           labels: |
             org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+            org.opencontainers.image.revision=${{ env.RELEASE_COMMIT }}
             org.opencontainers.image.source=https://github.com/link-assistant/router
 
       - name: Build and push image by digest
@@ -686,6 +697,19 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}-${{ matrix.variant }}
           provenance: mode=max
           sbom: true
+
+      # Fail before the digest is ever tagged if the built config still carries the
+      # workflow-context revision instead of the tag commit.
+      - name: Verify image labels record the release tag commit
+        env:
+          IMAGE_DIGEST: ${{ steps.build-image.outputs.digest }}
+        shell: bash
+        run: |
+          labels="$(docker buildx imagetools inspect \
+            "ghcr.io/${{ github.repository }}@${IMAGE_DIGEST}" --format '{{json .Image.config.Labels}}')"
+          echo "$labels"
+          test "$(jq -r '."org.opencontainers.image.revision"' <<<"$labels")" = "$RELEASE_COMMIT"
+          test "$(jq -r '."org.opencontainers.image.version"' <<<"$labels")" = "$RELEASE_VERSION"
 
       - name: Attest GHCR image provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -725,10 +749,16 @@ jobs:
       packages: write
     env:
       RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          fetch-depth: 0
+
+      - name: Verify the workspace is the release tag commit
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
@@ -794,6 +824,19 @@ jobs:
             "${{ env.DOCKERHUB_IMAGE }}:latest" \
             "${{ env.DOCKERHUB_IMAGE }}:${{ env.RELEASE_VERSION }}"
 
+      # Post-publication guard: re-resolve the annotated tag and compare it against the
+      # revision every published platform manifest claims.
+      - name: Verify published image provenance
+        run: |
+          rust-script scripts/check-release-provenance.rs \
+            --release-version "${RELEASE_VERSION}" \
+            --expected-commit "${RELEASE_COMMIT}" \
+            --repository "${{ github.repository }}" \
+            --image "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
+            --image "ghcr.io/${{ github.repository }}:latest" \
+            --image "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
+            --image "${{ env.DOCKERHUB_IMAGE }}:latest"
+
   create-github-release:
     name: Create GitHub Release
     needs: [auto-release, manual-release]
@@ -804,6 +847,7 @@ jobs:
       )
     outputs:
       release-version: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+      release-commit: ${{ steps.tag-commit.outputs.commit }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -815,6 +859,22 @@ jobs:
         with:
           ref: refs/tags/v${{ env.RELEASE_VERSION }}
           fetch-depth: 0
+
+      # Every packaging job must build the immutable tag commit, not the commit that
+      # triggered this run: the release commit is created *after* the trigger, so
+      # github.sha still names the previous merge commit (issue #191).
+      - name: Resolve release tag commit
+        id: tag-commit
+        shell: bash
+        run: |
+          git fetch --force --tags --quiet
+          commit="$(git rev-parse "refs/tags/v${RELEASE_VERSION}^{commit}")"
+          if [ "$commit" != "$(git rev-parse HEAD)" ]; then
+            echo "::error::v${RELEASE_VERSION} resolves to $commit but the workspace is $(git rev-parse HEAD)"
+            exit 1
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "v${RELEASE_VERSION} -> $commit" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
@@ -879,10 +939,12 @@ jobs:
       attestations: write
     env:
       RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          fetch-depth: 0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
@@ -895,7 +957,8 @@ jobs:
         run: |
           package_version="$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "link-assistant-router") | .version')"
           test "$package_version" = "$RELEASE_VERSION"
-          test "$(git rev-parse "v${RELEASE_VERSION}^{commit}")" = "$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          test "$(git rev-parse "v${RELEASE_VERSION}^{commit}")" = "$RELEASE_COMMIT"
 
       - name: Build release binaries
         run: cargo build --locked --release --bins --target ${{ matrix.target }}
@@ -922,11 +985,27 @@ jobs:
           rm -rf dist/package
           # macOS ships `shasum` instead of GNU coreutils' `sha256sum`; both
           # emit the same "<digest>  <path>" lines consumers verify against.
-          if command -v sha256sum >/dev/null 2>&1; then
-            sha256sum dist/*.tar.gz dist/*.cdx.json
-          else
-            shasum -a 256 dist/*.tar.gz dist/*.cdx.json
-          fi > "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256"
+          # Digest the assets from inside dist/ so the recorded names are the flat
+          # names `gh release download` writes; a `dist/` prefix makes a consumer's
+          # `sha256sum -c` fail with "No such file or directory".
+          (
+            cd dist
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum *.tar.gz *.cdx.json
+            else
+              shasum -a 256 *.tar.gz *.cdx.json
+            fi
+          ) > "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256"
+          # Smoke test the published checksum file the way a consumer runs it: flat,
+          # in the directory the assets were downloaded into.
+          (
+            cd dist
+            if command -v sha256sum >/dev/null 2>&1; then
+              sha256sum -c "link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256"
+            else
+              shasum -a 256 -c "link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256"
+            fi
+          )
 
       - name: Attest release artifacts
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -954,6 +1033,89 @@ jobs:
             grep -Fqx "$expected" <<<"$assets"
           done
 
+  # === POST-PUBLICATION PROVENANCE GUARD ===
+  # Everything above trusts the release-commit output computed at tag time. This job
+  # starts from the default branch, re-resolves the annotated tag itself, and compares
+  # that commit against what was actually published: the labels on both platform
+  # manifests in both registries, and the attestations of the downloadable archives.
+  # It also runs the consumer's own `sha256sum -c` in the download directory.
+  verify-release-provenance:
+    name: Verify published release provenance
+    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts]
+    if: |
+      always() && !cancelled() &&
+      needs.publish-docker-manifests.result == 'success' &&
+      needs.publish-release-artifacts.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    env:
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+
+      - name: Install rust-script
+        run: cargo install rust-script --version 0.36.0 --locked
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          username: konard
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Download the published release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p published
+          gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --dir published --clobber
+
+      - name: Verify checksums exactly as a consumer does
+        shell: bash
+        run: |
+          cd published
+          shopt -s nullglob
+          checksums=(*.sha256)
+          if [ "${#checksums[@]}" -eq 0 ]; then
+            echo "::error::the release published no checksum files"
+            exit 1
+          fi
+          for checksum in "${checksums[@]}"; do
+            sha256sum -c "$checksum"
+          done
+
+      - name: Verify every artifact points at the release tag commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          rust-script scripts/check-release-provenance.rs \
+            --release-version "${RELEASE_VERSION}" \
+            --expected-commit "${RELEASE_COMMIT}" \
+            --repository "${{ github.repository }}" \
+            --image "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
+            --image "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
+            --asset-dir published
+
   # === MACOS HOST CLI LIFECYCLE ===
   verify-macos-client-lifecycle:
     name: Verify macOS client lifecycle
@@ -965,10 +1127,15 @@ jobs:
       contents: read
     env:
       RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+          ref: ${{ needs.create-github-release.outputs.release-commit }}
+
+      - name: Verify the workspace is the release tag commit
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable

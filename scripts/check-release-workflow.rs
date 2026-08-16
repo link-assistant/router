@@ -63,6 +63,11 @@ fn main() {
         "labels: ${{ steps.docker-meta.outputs.labels }}",
         "needs: [create-github-release]",
         "ref: refs/tags/v${{ env.RELEASE_VERSION }}",
+        "release-commit: ${{ steps.tag-commit.outputs.commit }}",
+        "ref: ${{ needs.create-github-release.outputs.release-commit }}",
+        "org.opencontainers.image.revision=${{ env.RELEASE_COMMIT }}",
+        "rust-script scripts/check-release-provenance.rs",
+        "verify-release-provenance:",
         "--crates-io-url \"https://crates.io/crates/link-assistant-router\"",
         "--docker-hub-url \"https://hub.docker.com/r/konard/link-assistant-router\"",
         "rust-script scripts/check-github-releases.rs --repository \"${{ github.repository }}\" --default-branch main",
@@ -115,6 +120,43 @@ fn main() {
         + count_occurrences(&reconciliation, "toolchain: 1.97.1");
     if toolchain_actions != pinned_toolchains {
         failures.push("every Rust action must select the reviewed numeric toolchain".to_string());
+    }
+
+    // Only the job that creates the release may resolve the mutable tag ref; every
+    // packaging job must check out the commit that ref resolved to (issue #191).
+    if count_occurrences(&workflow, "ref: refs/tags/v${{ env.RELEASE_VERSION }}") != 1 {
+        failures.push(
+            "packaging jobs must check out the resolved release commit, not the tag ref"
+                .to_string(),
+        );
+    }
+
+    if count_occurrences(&workflow, "ref: ${{ needs.create-github-release.outputs.release-commit }}") < 4 {
+        failures.push(
+            "every image, binary, and verification job must check out the release tag commit"
+                .to_string(),
+        );
+    }
+
+    // Checksum files must name the assets the way `gh release download` writes them.
+    if workflow.contains("sha256sum dist/*") || workflow.contains("shasum -a 256 dist/*") {
+        failures.push(
+            "checksum files must be generated from inside dist/ so they list flat names"
+                .to_string(),
+        );
+    }
+
+    if count_occurrences(&workflow, "sha256sum -c") < 2 {
+        failures.push(
+            "packaging and the post-publication guard must both verify checksums the way a consumer does"
+                .to_string(),
+        );
+    }
+
+    if !reconciliation.contains("rust-script scripts/check-release-provenance.rs") {
+        failures.push(
+            "the scheduled reconciliation must re-verify published release provenance".to_string(),
+        );
     }
 
     if count_occurrences(&workflow, "push-by-digest=true") != 1 {

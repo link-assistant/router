@@ -35,3 +35,76 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main
+
+  # Independent re-check of the newest release: resolve the annotated tag here and
+  # compare it with what the registries and the release assets actually claim.
+  verify-release-provenance:
+    name: Latest Release Matches Its Tag Commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+
+      - name: Install rust-script
+        run: cargo install rust-script --version 0.36.0 --locked
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Resolve the latest published release
+        id: latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(gh release view --repo "${{ github.repository }}" --json tagName --jq '.tagName' | sed 's/^v//')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Download the published release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          mkdir -p published
+          gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --dir published --clobber
+
+      - name: Verify checksums exactly as a consumer does
+        shell: bash
+        run: |
+          cd published
+          shopt -s nullglob
+          checksums=(*.sha256)
+          if [ "${#checksums[@]}" -eq 0 ]; then
+            echo "::error::the latest release published no checksum files"
+            exit 1
+          fi
+          for checksum in "${checksums[@]}"; do
+            sha256sum -c "$checksum"
+          done
+
+      - name: Verify the latest release matches its tag commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          rust-script scripts/check-release-provenance.rs \
+            --release-version "${RELEASE_VERSION}" \
+            --repository "${{ github.repository }}" \
+            --image "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
+            --asset-dir published
