@@ -295,8 +295,8 @@ mod jwt_model {
         )
         .expect("write claim");
 
-        let admin = AdminClaim::load(None, dir.path(), Duration::from_secs(60))
-            .with_token_manager(tokens);
+        let admin =
+            AdminClaim::load(None, dir.path(), Duration::from_secs(60)).with_token_manager(tokens);
         assert!(admin.is_claimed(), "the claim itself is still on record");
         assert!(
             !admin.verify(&stale),
@@ -357,8 +357,8 @@ mod jwt_model {
     fn the_claim_file_never_holds_the_token() {
         let dir = tempfile::tempdir().expect("tempdir");
         let tokens = manager();
-        let admin = AdminClaim::load(None, dir.path(), Duration::from_secs(60))
-            .with_token_manager(tokens);
+        let admin =
+            AdminClaim::load(None, dir.path(), Duration::from_secs(60)).with_token_manager(tokens);
         let candidate = admin.begin().expect("mint");
         admin
             .confirm(&candidate.claim_id, &candidate.token)

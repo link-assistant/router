@@ -784,3 +784,59 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         }
     }
 }
+
+/// Issue #189: one administrator credential, both surfaces.
+///
+/// `scope=admin` is a superset of client access, so whatever administers the
+/// router also reaches the models. Before this, an admin credential could list
+/// tokens and still get `401 invalid token` from `/v1/models`.
+#[tokio::test]
+async fn an_admin_credential_both_manages_tokens_and_reaches_the_models() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+
+    // Every shape an administrator can hold: the environment-supplied
+    // `TOKEN_ADMIN_KEY`, and an admin-scoped `la_sk_` JWT — the credential the
+    // web and chat first-visitor claims now mint.
+    let admin_jwt = router
+        .token_manager
+        .issue_admin_token(1, "issue-189-admin")
+        .expect("issue admin token");
+    for credential in ["admin-only", admin_jwt.as_str()] {
+        for path in ["/api/tokens/list", "/v1/models"] {
+            let response = router
+                .get_as(path, credential)
+                .send()
+                .await
+                .expect("response");
+            assert_eq!(
+                response.status(),
+                StatusCode::OK,
+                "{path} must accept the admin credential {credential}"
+            );
+        }
+    }
+
+    // A revoked admin JWT loses both at once.
+    let id = router
+        .token_manager
+        .list_tokens()
+        .expect("list")
+        .into_iter()
+        .find(|record| record.label == "issue-189-admin")
+        .expect("record")
+        .id;
+    router.token_manager.revoke_token(&id).expect("revoke");
+    for path in ["/api/tokens/list", "/v1/models"] {
+        let response = router
+            .get_as(path, &admin_jwt)
+            .send()
+            .await
+            .expect("response");
+        assert!(
+            response.status() == StatusCode::UNAUTHORIZED
+                || response.status() == StatusCode::FORBIDDEN,
+            "{path} must reject a revoked admin credential, got {}",
+            response.status()
+        );
+    }
+}

@@ -29,8 +29,13 @@ struct Harness {
 impl Harness {
     fn new() -> Self {
         let dir = tempfile::tempdir().expect("tempdir");
-        let admin = Arc::new(AdminClaim::load(None, dir.path(), Duration::from_secs(120)));
         let tokens = TokenManager::new("chat-admin-integration-secret");
+        // One token manager behind the claim and the API: a chat claim mints a
+        // real admin-scoped `la_sk_` JWT, exactly as a deployment does.
+        let admin = Arc::new(
+            AdminClaim::load(None, dir.path(), Duration::from_secs(120))
+                .with_token_manager(tokens.clone()),
+        );
         let state = state_with(Arc::clone(&admin), tokens.clone(), dir.path());
         let chat = ChatAdmin::new(
             admin,
@@ -160,9 +165,16 @@ fn state_with(
 }
 
 /// Pull the candidate token out of a `/start` reply.
+///
+/// A router wired to a token manager mints `la_sk_…` JWTs; the legacy
+/// `la_admin_…` prefix is still recognised so this helper keeps working on a
+/// deployment that has not been upgraded yet.
 fn token_from(text: &str) -> String {
     text.split_whitespace()
-        .find(|word| word.starts_with(link_assistant_router::admin::ADMIN_TOKEN_PREFIX))
+        .find(|word| {
+            word.starts_with(link_assistant_router::token::TOKEN_PREFIX)
+                || word.starts_with(link_assistant_router::admin::ADMIN_TOKEN_PREFIX)
+        })
         .expect("the mint reply carries a token")
         .to_string()
 }
@@ -264,6 +276,69 @@ async fn the_chat_credential_administers_the_router() {
     assert!(
         harness.state.token_manager.validate_token(&value).is_err(),
         "revoking from chat must take effect immediately"
+    );
+}
+
+#[tokio::test]
+async fn a_chat_claim_yields_an_admin_scoped_jwt() {
+    let harness = Harness::new();
+    let minted = harness.chat.handle(ChatChannel::Telegram, "9", "/start");
+    let token = token_from(&minted.text);
+    assert!(
+        token.starts_with(link_assistant_router::token::TOKEN_PREFIX),
+        "a chat claim mints the same credential model as everything else: {token}"
+    );
+
+    // Phase one is inert: the candidate authorises nothing anywhere.
+    let (status, _) = harness
+        .request("GET", "/api/tokens/list", Some(&token), None)
+        .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+
+    harness
+        .chat
+        .handle(ChatChannel::Telegram, "9", &format!("/confirm {token}"));
+
+    let claims = harness
+        .state
+        .token_manager
+        .validate_admin_token(&token)
+        .expect("the confirmed credential is an admin-scoped JWT");
+    assert_eq!(claims.scope, link_assistant_router::token::ADMIN_SCOPE);
+    assert!(claims.exp > claims.iat, "the credential carries a lifetime");
+
+    let (status, _) = harness
+        .request("GET", "/api/tokens/list", Some(&token), None)
+        .await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "the chat credential administers the HTTP surface too"
+    );
+}
+
+#[tokio::test]
+async fn a_claim_in_one_chat_channel_closes_the_other() {
+    let harness = Harness::new();
+    let minted = harness.chat.handle(ChatChannel::Telegram, "3", "/start");
+    let token = token_from(&minted.text);
+    harness
+        .chat
+        .handle(ChatChannel::Telegram, "3", &format!("/confirm {token}"));
+
+    let reply = harness.chat.handle(ChatChannel::Vk, "8", "/start");
+    assert!(
+        reply.text.contains("already claimed"),
+        "the first-claim lock is global, not per-channel: {}",
+        reply.text
+    );
+    assert!(
+        !harness
+            .chat
+            .handle(ChatChannel::Vk, "8", "/tokens")
+            .text
+            .contains("ci-runner"),
+        "a stranger on another channel administers nothing"
     );
 }
 
