@@ -18,10 +18,14 @@ use link_assistant_router::providers::ProviderStore;
 use link_assistant_router::token::TokenManager;
 use tower::ServiceExt;
 
-fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
+fn state_with(
+    admin: Arc<AdminClaim>,
+    tokens: TokenManager,
+    data_dir: &std::path::Path,
+) -> AppState {
     AppState {
         client: reqwest::Client::new(),
-        token_manager: TokenManager::new("test-secret"),
+        token_manager: tokens,
         oauth_provider: link_assistant_router::oauth::OAuthProvider::new(
             data_dir.to_str().expect("utf-8 path"),
         ),
@@ -62,17 +66,61 @@ fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
 
 struct Harness {
     state: AppState,
-    _dir: tempfile::TempDir,
+    env_key: Option<String>,
+    ttl: Duration,
+    dir: tempfile::TempDir,
 }
 
 impl Harness {
     fn new(env_key: Option<String>, ttl: Duration) -> Self {
         let dir = tempfile::tempdir().expect("tempdir");
-        let admin = Arc::new(AdminClaim::load(env_key, dir.path(), ttl));
+        Self::boot(dir, env_key, ttl)
+    }
+
+    /// Boot a router over an existing data directory — a real deployment keeps
+    /// both the claim file and the token store on disk, so this is what a
+    /// restart looks like.
+    fn boot(dir: tempfile::TempDir, env_key: Option<String>, ttl: Duration) -> Self {
+        let store: Arc<dyn link_assistant_router::storage::TokenStore> = Arc::new(
+            link_assistant_router::storage::TextTokenStore::open(dir.path().join("tokens.lino"))
+                .expect("token store"),
+        );
+        let tokens = TokenManager::with_store("test-secret", store);
+        // The claim shares the router's token manager, so the credential it
+        // mints is an ordinary admin-scoped `la_sk_` JWT.
+        let admin = Arc::new(
+            AdminClaim::load(env_key.clone(), dir.path(), ttl).with_token_manager(tokens.clone()),
+        );
         Self {
-            state: state_with(admin, dir.path()),
-            _dir: dir,
+            state: state_with(admin, tokens, dir.path()),
+            env_key,
+            ttl,
+            dir,
         }
+    }
+
+    fn restart(self) -> Self {
+        let Self {
+            dir, env_key, ttl, ..
+        } = self;
+        Self::boot(dir, env_key, ttl)
+    }
+
+    /// Complete the two-phase claim and return the credential.
+    async fn claim(&self, ttl_hours: Option<i64>) -> String {
+        let body = ttl_hours.map(|hours| serde_json::json!({"ttl_hours": hours}));
+        let (status, minted) = self.post("/api/admin/bootstrap", None, body).await;
+        assert_eq!(status, StatusCode::OK, "mint: {minted}");
+        let token = minted["token"].as_str().expect("token").to_string();
+        let (status, _) = self
+            .post(
+                "/api/admin/bootstrap/confirm",
+                Some(&token),
+                Some(serde_json::json!({"claim_id": minted["claim_id"]})),
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK);
+        token
     }
 
     async fn call(&self, request: Request<Body>) -> (StatusCode, serde_json::Value) {
@@ -376,4 +424,173 @@ async fn unknown_api_paths_do_not_fall_back_to_the_app_shell() {
         .await
         .expect("router responds");
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+// ---------------------------------------------------------------------------
+// The credential model itself: what the first visitor actually receives.
+// ---------------------------------------------------------------------------
+
+#[tokio::test]
+async fn the_first_visitor_receives_an_admin_scoped_jwt() {
+    let harness = Harness::new(None, minutes(2));
+    let token = harness.claim(None).await;
+    assert!(
+        token.starts_with(link_assistant_router::token::TOKEN_PREFIX),
+        "the web claim mints the same credential model as everything else: {token}"
+    );
+
+    let claims = harness
+        .state
+        .token_manager
+        .validate_admin_token(&token)
+        .expect("an admin-scoped JWT");
+    assert!(!claims.sub.is_empty(), "the credential has an identity");
+    assert_eq!(claims.scope, link_assistant_router::token::ADMIN_SCOPE);
+    assert!(claims.exp > claims.iat, "and a lifetime");
+    assert_eq!(claims.label, "first-visitor-admin");
+
+    let (_, status) = harness.get("/api/admin/status", None).await;
+    assert_eq!(status["credential_kind"], "jwt");
+    assert_eq!(status["token_id"], claims.sub);
+}
+
+#[tokio::test]
+async fn the_first_administrator_may_limit_the_credential_lifetime() {
+    let harness = Harness::new(None, minutes(2));
+    let (_, minted) = harness
+        .post(
+            "/api/admin/bootstrap",
+            None,
+            Some(serde_json::json!({"ttl_hours": 3})),
+        )
+        .await;
+    assert_eq!(minted["ttl_hours"], 3);
+    let token = minted["token"].as_str().expect("token").to_string();
+    harness
+        .post(
+            "/api/admin/bootstrap/confirm",
+            Some(&token),
+            Some(serde_json::json!({"claim_id": minted["claim_id"]})),
+        )
+        .await;
+
+    let claims = harness
+        .state
+        .token_manager
+        .validate_admin_token(&token)
+        .expect("claims");
+    assert_eq!(
+        claims.exp - claims.iat,
+        3 * 3600,
+        "the chosen TTL is honoured"
+    );
+}
+
+#[tokio::test]
+async fn claiming_retires_the_startup_bootstrap_credential() {
+    let harness = Harness::new(None, minutes(2));
+    // What `main` prints at startup so a fresh deployment is administrable.
+    let bootstrap = harness
+        .state
+        .token_manager
+        .issue_admin_token(24, "bootstrap-admin")
+        .expect("bootstrap token");
+    let (status, _) = harness.get("/api/tokens/list", Some(&bootstrap)).await;
+    assert_eq!(status, StatusCode::OK, "it administers the router");
+
+    let claimed = harness.claim(None).await;
+
+    // One credential model means the superseded one is retired, not merely
+    // ignored: the API says so, so the UI, the CLI and the bots agree.
+    let (status, _) = harness.get("/api/tokens/list", Some(&bootstrap)).await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    let (_, listed) = harness.get("/api/tokens/list", Some(&claimed)).await;
+    let records = listed["data"].as_array().expect("records");
+    let retired = records
+        .iter()
+        .find(|record| record["label"] == "bootstrap-admin")
+        .expect("the startup token is still listed");
+    assert_eq!(retired["revoked"], true, "and shown as revoked: {retired}");
+}
+
+#[tokio::test]
+async fn a_claimed_credential_survives_a_restart() {
+    let harness = Harness::new(None, minutes(2));
+    let token = harness.claim(None).await;
+
+    let harness = harness.restart();
+    let (_, status) = harness.get("/api/admin/status", None).await;
+    assert_eq!(status["claimed"], true);
+    assert_eq!(status["bootstrap_open"], false);
+    let (status, _) = harness.get("/api/tokens/list", Some(&token)).await;
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "the credential the operator stored still works after a restart"
+    );
+}
+
+#[tokio::test]
+async fn rotation_is_atomic_across_a_restart() {
+    let harness = Harness::new(None, minutes(2));
+    let old = harness.claim(None).await;
+    let (_, before) = harness.get("/api/admin/status", None).await;
+
+    let (status, rotated) = harness.post("/api/admin/rotate", Some(&old), None).await;
+    assert_eq!(status, StatusCode::OK);
+    let new = rotated["token"].as_str().expect("token").to_string();
+    assert_eq!(rotated["credential_kind"], "jwt");
+    assert_ne!(
+        rotated["token_id"], before["token_id"],
+        "rotation mints a new identity"
+    );
+
+    // Both halves of the swap are on disk: the new credential is the claim and
+    // the old one is revoked by id.
+    let harness = harness.restart();
+    let (status, _) = harness.get("/api/tokens/list", Some(&new)).await;
+    assert_eq!(status, StatusCode::OK);
+    let (status, _) = harness.get("/api/tokens/list", Some(&old)).await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn an_expired_credential_stops_administering() {
+    let harness = Harness::new(None, minutes(2));
+    harness.claim(Some(1)).await;
+
+    // Age the deployment past its TTL: the claim names an admin JWT that has
+    // expired. Nothing else about the router changes.
+    let stale = harness
+        .state
+        .token_manager
+        .issue_admin_token(-1, "aged-admin")
+        .expect("issue");
+    let id = harness
+        .state
+        .token_manager
+        .list_tokens()
+        .expect("list")
+        .into_iter()
+        .find(|record| record.label == "aged-admin")
+        .expect("record")
+        .id;
+    std::fs::write(
+        harness
+            .dir
+            .path()
+            .join(link_assistant_router::admin::CLAIM_FILE_NAME),
+        serde_json::json!({"token_id": id, "ttl_hours": 1, "claimed_at": 1}).to_string(),
+    )
+    .expect("write claim");
+
+    let harness = harness.restart();
+    let (_, status) = harness.get("/api/admin/status", None).await;
+    assert_eq!(status["claimed"], true, "the claim is still on record");
+    let (status, _) = harness.get("/api/tokens/list", Some(&stale)).await;
+    assert_eq!(
+        status,
+        StatusCode::UNAUTHORIZED,
+        "expiry is enforced on the admin surface like any other token"
+    );
 }

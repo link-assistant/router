@@ -60,16 +60,17 @@ pub fn router(state: AppState) -> Router {
 /// Reject every admin-port API request that does not carry the admin
 /// credential, except the bootstrap routes and the UI assets themselves.
 ///
-/// The proxy-port check in [`crate::proxy::is_admin_authorised`] also accepts
-/// admin-scoped tokens and the flat `TOKEN_ADMIN_KEY`; the admin port accepts
-/// only the claimed credential, because that is the one the UI holds.
+/// Both ports now run the same rule ([`crate::proxy::is_admin_authorised`]):
+/// the claimed credential, any admin-scoped `la_sk_…` JWT, or the flat
+/// `TOKEN_ADMIN_KEY`. One credential model means an administrator does not
+/// need a different token depending on which port they reach for.
 async fn require_admin(State(state): State<AppState>, request: Request, next: Next) -> Response {
     let path = request.uri().path();
     let is_api = path.starts_with("/api/");
     if !is_api || OPEN_PATHS.contains(&path) {
         return next.run(request).await;
     }
-    if authorised(&state.admin, request.headers()) {
+    if proxy::is_admin_authorised(&state, request.headers()) {
         return next.run(request).await;
     }
     error_response(
@@ -77,11 +78,6 @@ async fn require_admin(State(state): State<AppState>, request: Request, next: Ne
         "authentication_error",
         "admin credential required",
     )
-}
-
-/// Whether the request carries the active admin credential as a Bearer token.
-fn authorised(admin: &AdminClaim, headers: &HeaderMap) -> bool {
-    bearer(headers).is_some_and(|token| admin.verify(token))
 }
 
 fn bearer(headers: &HeaderMap) -> Option<&str> {
@@ -98,16 +94,25 @@ pub async fn admin_status(State(state): State<AppState>) -> impl IntoResponse {
 
 /// `POST /api/admin/bootstrap` — phase 1 of the claim.
 ///
-/// Mints a candidate admin token. Bootstrap stays **open**: the token is not
-/// valid for anything until the client confirms it.
-pub async fn bootstrap(State(state): State<AppState>) -> impl IntoResponse {
-    match state.admin.begin() {
+/// Mints a candidate admin JWT. Bootstrap stays **open**: the token is minted
+/// revoked, so it is not valid for anything until the client confirms it.
+///
+/// An optional `{"ttl_hours": n}` body lets the first administrator choose the
+/// credential lifetime; it is clamped to
+/// [`crate::admin::DEFAULT_CLAIM_TTL_HOURS`].
+pub async fn bootstrap(
+    State(state): State<AppState>,
+    body: Option<axum::Json<TtlRequest>>,
+) -> impl IntoResponse {
+    let ttl_hours = body.and_then(|axum::Json(request)| request.ttl_hours);
+    match state.admin.begin_with_ttl(ttl_hours) {
         Ok(candidate) => (
             StatusCode::OK,
             axum::Json(serde_json::json!({
                 "claim_id": candidate.claim_id,
                 "token": candidate.token,
                 "expires_in_secs": candidate.expires_in_secs,
+                "ttl_hours": candidate.ttl_hours,
                 "confirm_url": "/api/admin/bootstrap/confirm",
             })),
         )
@@ -144,15 +149,34 @@ pub async fn bootstrap_confirm(
 
 /// `POST /api/admin/rotate` — issue a replacement admin credential and retire
 /// the current one. Requires the current credential.
-pub async fn rotate_credential(State(state): State<AppState>) -> impl IntoResponse {
-    match state.admin.rotate() {
-        Ok(token) => (
-            StatusCode::OK,
-            axum::Json(serde_json::json!({"token": token})),
-        )
-            .into_response(),
+pub async fn rotate_credential(
+    State(state): State<AppState>,
+    body: Option<axum::Json<TtlRequest>>,
+) -> impl IntoResponse {
+    let ttl_hours = body.and_then(|axum::Json(request)| request.ttl_hours);
+    match state.admin.rotate_with_ttl(ttl_hours) {
+        Ok(token) => {
+            let status = state.admin.status();
+            (
+                StatusCode::OK,
+                axum::Json(serde_json::json!({
+                    "token": token,
+                    "token_id": status.token_id,
+                    "credential_kind": status.credential_kind,
+                })),
+            )
+                .into_response()
+        }
         Err(e) => claim_error_response(e),
     }
+}
+
+/// Optional body carrying an administrator-chosen credential lifetime.
+#[derive(Debug, Default, serde::Deserialize)]
+pub struct TtlRequest {
+    /// Requested lifetime in hours; clamped by the claim.
+    #[serde(default)]
+    pub ttl_hours: Option<i64>,
 }
 
 /// `GET /api/admin/summary` — `doctor`-style read-only view of what the router
