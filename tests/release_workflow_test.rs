@@ -329,8 +329,41 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
     assert!(release.contains("(.components | length > 1) and (.dependencies | length > 0)"));
     assert!(release.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
     assert!(
-        release
-            .contains("link-assistant-router-${RELEASE_VERSION}-linux-${{ matrix.arch }}.tar.gz")
+        release.contains("link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.tar.gz"),
+        "release assets must be named per platform, not per architecture alone"
+    );
+    for target in [
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+    ] {
+        assert!(
+            release.contains(target),
+            "release must publish binaries for {target}"
+        );
+    }
+    assert!(
+        release.contains("cargo build --locked --release --bins --target ${{ matrix.target }}"),
+        "each matrix leg must build its own target explicitly"
+    );
+    assert!(
+        release.contains("shasum -a 256 dist/*.tar.gz dist/*.cdx.json"),
+        "macOS runners have no sha256sum, so checksums need a shasum fallback"
+    );
+    assert!(
+        release.contains("verify-macos-client-lifecycle:")
+            && release.contains("runs-on: macos-latest"),
+        "the release must exercise the client lifecycle on macOS"
+    );
+    assert!(
+        release.contains("ROUTER_HOST_CLI_TESTS")
+            && release.contains("cargo test --locked --test host_client_lifecycle_test"),
+        "the macOS job must run the host CLI lifecycle test"
+    );
+    assert!(
+        release.contains("-L \"18080:${ROUTER_REMOTE_ADDRESS}\""),
+        "the macOS lifecycle must reach the remote router over an SSH forward"
     );
     assert!(release.contains("subject-path: dist/*"));
     assert!(release.contains("gh attestation verify \"$artifact\""));

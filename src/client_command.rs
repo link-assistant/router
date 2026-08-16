@@ -1,5 +1,6 @@
 //! Output and dispatch layer for the `clients` CLI command.
 
+use std::path::Path;
 use std::process::ExitCode;
 
 use crate::cli::ClientOp;
@@ -8,25 +9,38 @@ use crate::config::Config;
 use crate::storage::build_token_store;
 use crate::token::{IssueRequest, TokenManager};
 
+/// Environment variable holding an existing router token for `clients setup`.
+pub const CLIENT_TOKEN_ENV: &str = "LINK_ASSISTANT_ROUTER_TOKEN";
+/// Compatibility alias shared with the client integrations themselves.
+pub const CLIENT_TOKEN_ENV_ALIAS: &str = "LINK_ASSISTANT_TOKEN";
+
 /// Run one local client-management operation.
-pub async fn run(config: &Config, op: &ClientOp) -> ExitCode {
-    let manager = match ClientManager::from_env() {
-        Ok(manager) => manager,
-        Err(error) => return failed(error),
+pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCode {
+    let manager = match home {
+        Some(home) => ClientManager::isolated(home),
+        None => match ClientManager::from_env() {
+            Ok(manager) => manager,
+            Err(error) => return failed(error),
+        },
     };
     match op {
         ClientOp::List => list(&manager),
         ClientOp::Setup {
             client,
             token,
+            token_stdin,
             base_url,
             ttl_hours,
         } => {
+            let supplied = match resolve_supplied_token(token.clone(), *token_stdin) {
+                Ok(token) => token,
+                Err(error) => return failed(error),
+            };
             setup(
                 config,
                 &manager,
                 *client,
-                token.as_deref(),
+                supplied.as_deref(),
                 base_url.as_deref(),
                 *ttl_hours,
             )
@@ -42,6 +56,25 @@ pub async fn run(config: &Config, op: &ClientOp) -> ExitCode {
             Err(error) => failed(error),
         },
     }
+}
+
+/// Resolve an existing router token from argv, standard input, or the
+/// environment, in that order. Returns `None` when setup should mint one.
+fn resolve_supplied_token(
+    token: Option<String>,
+    token_stdin: bool,
+) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
+    if token_stdin {
+        return crate::server_command::read_token().map(Some);
+    }
+    if let Some(token) = token {
+        return Ok(Some(token));
+    }
+    Ok(std::env::var(CLIENT_TOKEN_ENV)
+        .or_else(|_| std::env::var(CLIENT_TOKEN_ENV_ALIAS))
+        .ok()
+        .map(|token| token.trim().to_string())
+        .filter(|token| !token.is_empty()))
 }
 
 fn list(manager: &ClientManager) -> ExitCode {
@@ -74,7 +107,9 @@ async fn setup(
     ttl_hours: i64,
 ) -> ExitCode {
     if supplied_token.is_some_and(|token| !token.starts_with("la_sk_")) {
-        eprintln!("error: --token must be a router token beginning with la_sk_");
+        eprintln!(
+            "error: the supplied router token must begin with la_sk_ (checked --token, --token-stdin, then {CLIENT_TOKEN_ENV})"
+        );
         return ExitCode::from(2);
     }
     let base_url = base_url.map_or_else(|| local_client_base_url(config), str::to_string);
@@ -211,6 +246,9 @@ fn shell_quote(value: &str) -> String {
 }
 
 fn failed(error: impl std::fmt::Display) -> ExitCode {
-    eprintln!("error: {error}");
+    eprintln!(
+        "error: {}",
+        crate::login_url::redact_secrets(&error.to_string())
+    );
     ExitCode::from(1)
 }

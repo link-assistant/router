@@ -845,17 +845,32 @@ jobs:
         run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main --release-version "${{ env.RELEASE_VERSION }}" --historical-orphans warn
 
   publish-release-artifacts:
-    name: Publish attested binaries (${{ matrix.arch }})
+    name: Publish attested binaries (${{ matrix.os }}-${{ matrix.arch }})
     needs: [create-github-release]
     if: always() && !cancelled() && needs.create-github-release.result == 'success'
     strategy:
       fail-fast: false
       matrix:
         include:
-          - arch: amd64
+          - os: linux
+            arch: amd64
             runner: ubuntu-latest
-          - arch: arm64
+            target: x86_64-unknown-linux-gnu
+          - os: linux
+            arch: arm64
             runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          # Both Darwin slices are produced on the Apple Silicon runner: the
+          # Xcode SDK it ships builds either architecture, so the x86_64 asset
+          # does not depend on the shrinking pool of Intel macOS runners.
+          - os: darwin
+            arch: arm64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+          - os: darwin
+            arch: amd64
+            runner: macos-latest
+            target: x86_64-apple-darwin
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
@@ -873,6 +888,7 @@ jobs:
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
         with:
           toolchain: 1.97.1
+          targets: ${{ matrix.target }}
 
       - name: Verify tag and package version
         shell: bash
@@ -882,26 +898,35 @@ jobs:
           test "$(git rev-parse "v${RELEASE_VERSION}^{commit}")" = "$(git rev-parse HEAD)"
 
       - name: Build release binaries
-        run: cargo build --locked --release --bins
+        run: cargo build --locked --release --bins --target ${{ matrix.target }}
 
       - name: Install pinned CycloneDX generator
         run: cargo install cargo-cyclonedx --version 0.5.9 --locked
 
       - name: Package binaries, checksums, and CycloneDX SBOM
         shell: bash
+        env:
+          PLATFORM: ${{ matrix.os }}-${{ matrix.arch }}
         run: |
           mkdir -p dist/package
-          cp target/release/link-assistant-router target/release/with-router dist/package/
+          cp "target/${{ matrix.target }}/release/link-assistant-router" \
+            "target/${{ matrix.target }}/release/with-router" dist/package/
           cp LICENSE README.md dist/package/
           cargo cyclonedx --format json --all-features --all --spec-version 1.5 \
             --override-filename link-assistant-router.cdx
           mv link-assistant-router.cdx.json \
-            "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json"
+            "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.cdx.json"
           jq -e '.bomFormat == "CycloneDX" and (.components | length > 1) and (.dependencies | length > 0)' \
-            "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json" >/dev/null
-          tar -C dist/package -czf "dist/link-assistant-router-${RELEASE_VERSION}-linux-${{ matrix.arch }}.tar.gz" .
+            "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.cdx.json" >/dev/null
+          tar -C dist/package -czf "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.tar.gz" .
           rm -rf dist/package
-          sha256sum dist/*.tar.gz dist/*.cdx.json > "dist/link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.sha256"
+          # macOS ships `shasum` instead of GNU coreutils' `sha256sum`; both
+          # emit the same "<digest>  <path>" lines consumers verify against.
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum dist/*.tar.gz dist/*.cdx.json
+          else
+            shasum -a 256 dist/*.tar.gz dist/*.cdx.json
+          fi > "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256"
 
       - name: Attest release artifacts
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -923,11 +948,77 @@ jobs:
           done
           assets="$(gh release view "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
           for expected in \
-            "link-assistant-router-${RELEASE_VERSION}-linux-${{ matrix.arch }}.tar.gz" \
-            "link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.cdx.json" \
-            "link-assistant-router-${RELEASE_VERSION}-${{ matrix.arch }}.sha256"; do
+            "link-assistant-router-${RELEASE_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.tar.gz" \
+            "link-assistant-router-${RELEASE_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.cdx.json" \
+            "link-assistant-router-${RELEASE_VERSION}-${{ matrix.os }}-${{ matrix.arch }}.sha256"; do
             grep -Fqx "$expected" <<<"$assets"
           done
+
+  # === MACOS HOST CLI LIFECYCLE ===
+  verify-macos-client-lifecycle:
+    name: Verify macOS client lifecycle
+    needs: [create-github-release, publish-release-artifacts]
+    if: always() && !cancelled() && needs.publish-release-artifacts.result == 'success'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+
+      - name: Download and verify the published darwin-arm64 asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLATFORM: darwin-arm64
+        run: |
+          mkdir -p dist
+          gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --dir dist \
+            --pattern "link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.*"
+          (cd dist && shasum -a 256 -c "link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256")
+          mkdir -p dist/package
+          tar -C dist/package -xzf "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.tar.gz"
+          # The shipped binary must run natively before the lifecycle is tried.
+          dist/package/link-assistant-router --version
+          dist/package/with-router --help >/dev/null
+
+      - name: Forward the remote router to a localhost port
+        id: forward
+        shell: bash
+        env:
+          ROUTER_SSH_TARGET: ${{ secrets.ROUTER_SSH_TARGET }}
+          ROUTER_SSH_KEY: ${{ secrets.ROUTER_SSH_KEY }}
+          ROUTER_REMOTE_ADDRESS: ${{ secrets.ROUTER_REMOTE_ADDRESS }}
+        run: |
+          if [ -z "$ROUTER_SSH_TARGET" ] || [ -z "$ROUTER_SSH_KEY" ] || [ -z "$ROUTER_REMOTE_ADDRESS" ]; then
+            echo "SSH secrets are absent; skipping the remote lifecycle."
+            echo "forwarded=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$ROUTER_SSH_KEY" > ~/.ssh/router_release
+          chmod 600 ~/.ssh/router_release
+          ssh-keyscan -H "${ROUTER_SSH_TARGET#*@}" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/router_release -f -N -o ExitOnForwardFailure=yes \
+            -L "18080:${ROUTER_REMOTE_ADDRESS}" "$ROUTER_SSH_TARGET"
+          echo "forwarded=true" >> "$GITHUB_OUTPUT"
+
+      - name: Run the host CLI lifecycle against the forwarded router
+        if: steps.forward.outputs.forwarded == 'true'
+        env:
+          ROUTER_HOST_CLI_TESTS: "1"
+          ROUTER_HOST_CLI_URL: http://127.0.0.1:18080
+          ROUTER_HOST_CLI_TOKEN: ${{ secrets.ROUTER_HOST_CLI_TOKEN }}
+        run: cargo test --locked --test host_client_lifecycle_test -- --nocapture
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:

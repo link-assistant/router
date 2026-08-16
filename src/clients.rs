@@ -7,7 +7,7 @@
 use std::fmt::{self, Write as _};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use clap::ValueEnum;
 use serde::Serialize;
@@ -15,10 +15,15 @@ use serde_json::{Value, json};
 use toml_edit::{DocumentMut, Item, Table, value};
 
 mod catalog;
+mod files;
 mod json_config;
 
 pub(crate) use catalog::RouterModel;
 use catalog::doctor_model;
+use files::{
+    atomic_write, read_claude_marker, read_codex_marker, read_environment_value, read_or_empty,
+    unchanged, write_claude_marker, write_codex_marker, write_if_changed,
+};
 use json_config::{read_json_provider_base_url, read_qwen_base_url};
 
 const CODEX_PROVIDER: &str = "link-assistant";
@@ -277,8 +282,14 @@ impl fmt::Display for ClientKind {
 pub struct ClientError(String);
 
 impl ClientError {
+    /// Build a diagnostic with credential-looking runs already removed.
+    ///
+    /// Every client diagnostic quotes something the router or an upstream sent
+    /// back — a URL, a response body, a transport error — and any of those can
+    /// carry the bearer token that was just used. Redacting here, at the single
+    /// constructor, keeps that out of terminals, logs, and CI output.
     fn message(message: impl Into<String>) -> Self {
-        Self(message.into())
+        Self(crate::login_url::redact_secrets(&message.into()))
     }
 }
 
@@ -292,13 +303,13 @@ impl std::error::Error for ClientError {}
 
 impl From<std::io::Error> for ClientError {
     fn from(error: std::io::Error) -> Self {
-        Self(error.to_string())
+        Self::message(error.to_string())
     }
 }
 
 impl From<serde_json::Error> for ClientError {
     fn from(error: serde_json::Error) -> Self {
-        Self(error.to_string())
+        Self::message(error.to_string())
     }
 }
 
@@ -333,6 +344,12 @@ pub struct ClientManager {
     qwen_home: PathBuf,
     gemini_home: PathBuf,
     cursor_home: PathBuf,
+    /// Whether ambient process environment may answer "is the token set?".
+    ///
+    /// An isolated root exists to prove a lifecycle without touching real user
+    /// settings, so it must not report a variable exported in the calling shell
+    /// as if the isolated setup had produced it.
+    respect_environment: bool,
 }
 
 impl ClientManager {
@@ -361,6 +378,7 @@ impl ClientManager {
             qwen_home,
             gemini_home,
             cursor_home,
+            respect_environment: true,
         })
     }
 
@@ -375,7 +393,15 @@ impl ClientManager {
             qwen_home: home.join(".qwen"),
             gemini_home: home.join(".gemini"),
             cursor_home: home.join(".cursor"),
+            respect_environment: false,
         }
+    }
+
+    /// Read a process environment variable unless this root is isolated.
+    fn environment_var(&self, name: &str) -> Option<String> {
+        self.respect_environment
+            .then(|| std::env::var(name).ok())
+            .flatten()
     }
 
     #[must_use]
@@ -423,7 +449,7 @@ impl ClientManager {
             ClientKind::ClaudeCode => read_claude_base_url(&path)?,
             ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path)?,
             ClientKind::QwenCode => read_qwen_base_url(&path)?,
-            ClientKind::GrokCli => std::env::var(GROK_BASE_ENV).ok().or_else(|| {
+            ClientKind::GrokCli => self.environment_var(GROK_BASE_ENV).or_else(|| {
                 read_environment_value(&self.environment_path(client), GROK_BASE_ENV)
                     .ok()
                     .flatten()
@@ -440,7 +466,7 @@ impl ClientManager {
             base_url,
             token_env,
             token_env_set: token_env.is_some_and(|name| {
-                std::env::var_os(name).is_some()
+                self.environment_var(name).is_some()
                     || read_environment_value(&self.environment_path(client), name)
                         .ok()
                         .flatten()
@@ -545,8 +571,8 @@ impl ClientManager {
         let token_env = client
             .token_env()
             .ok_or_else(|| ClientError::message("client has no router token environment"))?;
-        let token = std::env::var(token_env)
-            .ok()
+        let token = self
+            .environment_var(token_env)
             .or_else(|| {
                 read_environment_value(&self.environment_path(client), token_env)
                     .ok()
@@ -821,129 +847,6 @@ fn read_claude_base_url(path: &Path) -> Result<Option<String>, ClientError> {
     Ok(document
         .get("env")
         .and_then(|env| env.get(CLAUDE_BASE_ENV))
-        .and_then(Value::as_str)
-        .map(str::to_string))
-}
-
-fn read_or_empty(path: &Path) -> Result<String, ClientError> {
-    match fs::read_to_string(path) {
-        Ok(source) => Ok(source),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
-        Err(error) => Err(ClientError::message(format!(
-            "could not read {}: {error}",
-            path.display()
-        ))),
-    }
-}
-
-fn read_environment_value(path: &Path, name: &str) -> Result<Option<String>, ClientError> {
-    let source = read_or_empty(path)?;
-    let prefix = format!("export {name}=");
-    Ok(source.lines().find_map(|line| {
-        let raw = line.strip_prefix(&prefix)?.trim();
-        Some(
-            raw.strip_prefix('\'')
-                .and_then(|value| value.strip_suffix('\''))
-                .unwrap_or(raw)
-                .replace("'\\''", "'"),
-        )
-    }))
-}
-
-fn write_if_changed(path: &Path, before: &str, after: &str) -> Result<SetupResult, ClientError> {
-    if before == after {
-        return Ok(unchanged(path.to_path_buf()));
-    }
-    let parent = path.parent().ok_or_else(|| {
-        ClientError::message(format!("{} has no parent directory", path.display()))
-    })?;
-    fs::create_dir_all(parent)?;
-    let backup = path.exists().then(|| backup_file(path)).transpose()?;
-    atomic_write(path, after.as_bytes())?;
-    Ok(SetupResult {
-        path: path.to_path_buf(),
-        backup,
-        changed: true,
-    })
-}
-
-const fn unchanged(path: PathBuf) -> SetupResult {
-    SetupResult {
-        path,
-        backup: None,
-        changed: false,
-    }
-}
-
-fn backup_file(path: &Path) -> Result<PathBuf, ClientError> {
-    let stamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
-    let file_name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .ok_or_else(|| ClientError::message("config file name is not valid UTF-8"))?;
-    let backup = path.with_file_name(format!("{file_name}.link-assistant-router.{stamp}.bak"));
-    fs::copy(path, &backup)?;
-    Ok(backup)
-}
-
-fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ClientError> {
-    crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
-}
-
-fn write_claude_marker(path: &Path, base_url: &str) -> Result<(), ClientError> {
-    let rendered = format!(
-        "{}\n",
-        serde_json::to_string_pretty(&json!({
-            "anthropic_base_url": base_url
-        }))?
-    );
-    if read_or_empty(path)? != rendered {
-        let parent = path
-            .parent()
-            .ok_or_else(|| ClientError::message("missing marker parent"))?;
-        fs::create_dir_all(parent)?;
-        atomic_write(path, rendered.as_bytes())?;
-    }
-    Ok(())
-}
-
-fn read_claude_marker(path: &Path) -> Result<Option<String>, ClientError> {
-    let source = read_or_empty(path)?;
-    if source.trim().is_empty() {
-        return Ok(None);
-    }
-    let marker: Value = serde_json::from_str(&source)?;
-    Ok(marker
-        .get("anthropic_base_url")
-        .and_then(Value::as_str)
-        .map(str::to_string))
-}
-
-fn write_codex_marker(path: &Path, previous_provider: Option<&str>) -> Result<(), ClientError> {
-    let rendered = format!(
-        "{}\n",
-        serde_json::to_string_pretty(&json!({
-            "previous_model_provider": previous_provider
-        }))?
-    );
-    let parent = path
-        .parent()
-        .ok_or_else(|| ClientError::message("missing marker parent"))?;
-    fs::create_dir_all(parent)?;
-    atomic_write(path, rendered.as_bytes())
-}
-
-fn read_codex_marker(path: &Path) -> Result<Option<String>, ClientError> {
-    let source = read_or_empty(path)?;
-    if source.trim().is_empty() {
-        return Ok(None);
-    }
-    let marker: Value = serde_json::from_str(&source)?;
-    Ok(marker
-        .get("previous_model_provider")
         .and_then(Value::as_str)
         .map(str::to_string))
 }
