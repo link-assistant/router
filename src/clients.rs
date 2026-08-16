@@ -277,8 +277,14 @@ impl fmt::Display for ClientKind {
 pub struct ClientError(String);
 
 impl ClientError {
+    /// Build a diagnostic with credential-looking runs already removed.
+    ///
+    /// Every client diagnostic quotes something the router or an upstream sent
+    /// back — a URL, a response body, a transport error — and any of those can
+    /// carry the bearer token that was just used. Redacting here, at the single
+    /// constructor, keeps that out of terminals, logs, and CI output.
     fn message(message: impl Into<String>) -> Self {
-        Self(message.into())
+        Self(crate::login_url::redact_secrets(&message.into()))
     }
 }
 
@@ -292,13 +298,13 @@ impl std::error::Error for ClientError {}
 
 impl From<std::io::Error> for ClientError {
     fn from(error: std::io::Error) -> Self {
-        Self(error.to_string())
+        Self::message(error.to_string())
     }
 }
 
 impl From<serde_json::Error> for ClientError {
     fn from(error: serde_json::Error) -> Self {
-        Self(error.to_string())
+        Self::message(error.to_string())
     }
 }
 
@@ -333,6 +339,12 @@ pub struct ClientManager {
     qwen_home: PathBuf,
     gemini_home: PathBuf,
     cursor_home: PathBuf,
+    /// Whether ambient process environment may answer "is the token set?".
+    ///
+    /// An isolated root exists to prove a lifecycle without touching real user
+    /// settings, so it must not report a variable exported in the calling shell
+    /// as if the isolated setup had produced it.
+    respect_environment: bool,
 }
 
 impl ClientManager {
@@ -361,6 +373,7 @@ impl ClientManager {
             qwen_home,
             gemini_home,
             cursor_home,
+            respect_environment: true,
         })
     }
 
@@ -375,7 +388,15 @@ impl ClientManager {
             qwen_home: home.join(".qwen"),
             gemini_home: home.join(".gemini"),
             cursor_home: home.join(".cursor"),
+            respect_environment: false,
         }
+    }
+
+    /// Read a process environment variable unless this root is isolated.
+    fn environment_var(&self, name: &str) -> Option<String> {
+        self.respect_environment
+            .then(|| std::env::var(name).ok())
+            .flatten()
     }
 
     #[must_use]
@@ -423,7 +444,7 @@ impl ClientManager {
             ClientKind::ClaudeCode => read_claude_base_url(&path)?,
             ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path)?,
             ClientKind::QwenCode => read_qwen_base_url(&path)?,
-            ClientKind::GrokCli => std::env::var(GROK_BASE_ENV).ok().or_else(|| {
+            ClientKind::GrokCli => self.environment_var(GROK_BASE_ENV).or_else(|| {
                 read_environment_value(&self.environment_path(client), GROK_BASE_ENV)
                     .ok()
                     .flatten()
@@ -440,7 +461,7 @@ impl ClientManager {
             base_url,
             token_env,
             token_env_set: token_env.is_some_and(|name| {
-                std::env::var_os(name).is_some()
+                self.environment_var(name).is_some()
                     || read_environment_value(&self.environment_path(client), name)
                         .ok()
                         .flatten()
@@ -545,8 +566,8 @@ impl ClientManager {
         let token_env = client
             .token_env()
             .ok_or_else(|| ClientError::message("client has no router token environment"))?;
-        let token = std::env::var(token_env)
-            .ok()
+        let token = self
+            .environment_var(token_env)
             .or_else(|| {
                 read_environment_value(&self.environment_path(client), token_env)
                     .ok()
