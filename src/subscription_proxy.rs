@@ -106,9 +106,6 @@ async fn forward_subscription_openai_inner(
             "active upstream is not a subscription provider",
         );
     };
-    if let Some(response) = reject_unsupported_codex_output_limit(provider, surface, &body) {
-        return response;
-    }
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
         Err(error) => {
@@ -168,6 +165,18 @@ async fn forward_subscription_openai_inner(
         )
         .await;
     let selected_account = Some(selected.name);
+
+    // The Codex backend rejects every explicit output cap, so the field is
+    // stripped below and enforced locally instead of refusing the request
+    // (see `crate::output_limit`). Providers that accept the field keep it.
+    let emulated_output_limit = (crate::capabilities::subscription(provider, None)
+        .output_token_limit
+        == crate::capabilities::Capability::Emulated)
+        .then(|| {
+            body.get("max_output_tokens")
+                .and_then(serde_json::Value::as_u64)
+        })
+        .flatten();
 
     let stream_requested = body
         .get("stream")
@@ -276,7 +285,14 @@ async fn forward_subscription_openai_inner(
         let stop_sequences = crate::stop_sequences::from_value(routing_body.get("stop"));
         let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
             .with_include_usage(include_usage)
-            .with_stop_sequences(stop_sequences);
+            .with_stop_sequences(stop_sequences)
+            .with_output_token_limit(emulated_output_limit);
+        let mut rewriter = crate::output_limit::ResponsesStreamRewriter::new(
+            requested_model,
+            emulated_output_limit,
+        );
+        let rewrite_passthrough =
+            codex && response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = status.is_success().then(|| {
             crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
@@ -291,6 +307,8 @@ async fn forward_subscription_openai_inner(
                     }
                     if codex && response_shape == SubscriptionResponseShape::ChatCompletion {
                         Ok(bytes::Bytes::from(translator.push(&bytes).join("")))
+                    } else if rewrite_passthrough {
+                        Ok(bytes::Bytes::from(rewriter.push(&bytes)))
                     } else {
                         Ok(bytes)
                     }
@@ -338,6 +356,7 @@ async fn forward_subscription_openai_inner(
     // incomplete result. Collapse the SSE into the final `response.completed`
     // payload and return it as a normal JSON Responses object.
     let mut response_body = upstream_body;
+    let mut upstream_model: Option<String> = None;
     if codex && status.is_success() {
         if let Some(json) = codex_sse_to_response_json(&response_body) {
             response_body = bytes::Bytes::from(json);
@@ -365,8 +384,28 @@ async fn forward_subscription_openai_inner(
                 &mut translated,
                 &crate::stop_sequences::from_value(routing_body.get("stop")),
             );
+            if let Some(limit) = emulated_output_limit {
+                crate::output_limit::enforce_chat_limit(&mut translated, limit);
+            }
+            upstream_model = translated
+                .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_string);
             response_body = bytes::Bytes::from(
                 serde_json::to_vec(&translated).expect("JSON values always serialize"),
+            );
+        } else if let Ok(mut parsed) = serde_json::from_slice::<serde_json::Value>(&response_body) {
+            let requested_model = routing_body
+                .get("model")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default();
+            upstream_model =
+                crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+            if let Some(limit) = emulated_output_limit {
+                crate::output_limit::enforce_response_limit(&mut parsed, limit);
+            }
+            response_body = bytes::Bytes::from(
+                serde_json::to_vec(&parsed).expect("JSON values always serialize"),
             );
         }
 
@@ -376,6 +415,13 @@ async fn forward_subscription_openai_inner(
         response
             .headers_mut()
             .insert("content-type", HeaderValue::from_static("application/json"));
+        if let Some(served) = upstream_model.as_deref()
+            && let Ok(value) = HeaderValue::from_str(served)
+        {
+            response
+                .headers_mut()
+                .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+        }
         return response;
     }
 
@@ -582,40 +628,6 @@ fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut ser
     if provider == SubscriptionProvider::Codex {
         normalize_codex_responses_body(body);
     }
-}
-
-/// Reject a caller-supplied output cap that the `ChatGPT` backend cannot honor.
-///
-/// Every client surface has already converged on Responses shape at this point,
-/// so `surface` preserves the otherwise-lost distinction between a native
-/// Responses spend cap and compatibility fields sent by Chat/Messages clients.
-/// The backend rejects the parameter, and enforcing only visible text in the
-/// router would still leave hidden reasoning tokens unbounded. Failing before
-/// the upstream call is therefore the only way to preserve optional `OpenAI`
-/// caps as spend controls. Anthropic Messages remains usable because its
-/// mandatory `max_tokens` field has no optional/unset spelling; Chat and
-/// Responses callers receive an explicit refusal rather than silent overspend.
-fn reject_unsupported_codex_output_limit(
-    provider: SubscriptionProvider,
-    surface: Surface,
-    body: &serde_json::Value,
-) -> Option<Response> {
-    let has_limit = body
-        .get("max_output_tokens")
-        .is_some_and(|value| !value.is_null());
-    let support = crate::capabilities::subscription(provider, None).output_token_limit;
-    if support != crate::capabilities::Capability::Unsupported
-        || surface == Surface::Anthropic
-        || !has_limit
-    {
-        return None;
-    }
-    Some(crate::api_error::error_response_for_surface(
-        surface,
-        StatusCode::BAD_REQUEST,
-        "invalid_request_error",
-        "Codex subscriptions cannot honor output-token limits because the ChatGPT backend rejects max_output_tokens. Remove the limit or select a provider that supports it; the router rejected this request instead of silently ignoring the cap.",
-    ))
 }
 
 /// Shape a Responses-API request body for the `ChatGPT` Codex backend.
