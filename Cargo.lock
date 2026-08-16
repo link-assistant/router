@@ -1442,7 +1442,7 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "link-assistant-router"
-version = "0.81.0"
+version = "0.82.0"
 dependencies = [
  "aes-gcm",
  "async-trait",
