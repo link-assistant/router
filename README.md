@@ -403,9 +403,9 @@ in a browser *or* in a chat. See
 | `/api/openai/v1/*` | GET/POST | Namespaced aliases for models, Chat Completions, and Responses |
 | `/api/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
 | `/api/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
-| `/api/gemini/v1beta/models` | GET | Native Gemini model list |
+| `/api/gemini/v1beta/models` | GET | Native Gemini model list (union of every connected subscription) |
 | `/api/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
-| `/api/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation |
+| `/api/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation, routed to the model's owning subscription (Codex, Claude, Qwen or Gemini) |
 | `/api/gemini/v1beta/models/{model}:streamGenerateContent` | POST | Native Gemini SSE response |
 | `/api/vertex/v1/projects/.../models/{model}:generateContent` | POST | Native Vertex-style generation through Gemini Code Assist |
 
@@ -559,6 +559,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
 | `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy subscriptions, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, or `openai-compatible` |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
+| `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
