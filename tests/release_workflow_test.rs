@@ -348,8 +348,12 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
         "each matrix leg must build its own target explicitly"
     );
     assert!(
-        release.contains("shasum -a 256 dist/*.tar.gz dist/*.cdx.json"),
+        release.contains("shasum -a 256 *.tar.gz *.cdx.json"),
         "macOS runners have no sha256sum, so checksums need a shasum fallback"
+    );
+    assert!(
+        release.contains("sha256sum *.tar.gz *.cdx.json"),
+        "checksums must be digested from inside dist/ so consumers see flat names"
     );
     assert!(
         release.contains("verify-macos-client-lifecycle:")
@@ -578,18 +582,18 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
         workflow
             .matches("password: ${{ secrets.DOCKERHUB_TOKEN }}")
             .count(),
-        2,
-        "Docker build and manifest jobs should authenticate with DOCKERHUB_TOKEN"
+        3,
+        "Docker build, manifest and provenance-verification jobs should authenticate with DOCKERHUB_TOKEN"
     );
     assert_eq!(
         workflow.matches("username: konard").count(),
-        2,
-        "Docker build and manifest jobs should publish as the konard Docker Hub user"
+        3,
+        "Docker build, manifest and provenance-verification jobs should use the konard Docker Hub user"
     );
     assert_eq!(
         workflow.matches("docker/login-action@").count(),
-        4,
-        "Docker build and manifest jobs should log in to both GHCR and Docker Hub"
+        6,
+        "Docker build, manifest and provenance-verification jobs should log in to both GHCR and Docker Hub"
     );
     assert_eq!(
         workflow.matches("docker/metadata-action@").count(),
