@@ -422,6 +422,24 @@ advertised by multiple healthy subscriptions is rejected until
 instead of silently selecting a default model. Successful Anthropic-backed
 responses report the resolved Claude model that actually served the request.
 
+#### Model identity and output limits
+
+Responses always report the model id the client requested, including catalog
+aliases such as `codex-auto-review`, in `model` — for buffered replies and for
+every streamed chunk on each OpenAI surface. When the provider serves a
+different concrete model, the router reports it separately in the
+`x_router_upstream_model` response field and the `x-router-upstream-model`
+response header, instead of replacing the requested identity.
+
+Codex subscriptions accept `max_output_tokens`, `max_tokens`, and
+`max_completion_tokens`. The ChatGPT backend rejects an explicit cap, so the
+router strips the field from the upstream request and enforces the cap itself:
+visible output is truncated at the caller's budget and the exchange ends with
+`finish_reason: "length"` on Chat Completions, or `status: "incomplete"` with
+`incomplete_details.reason: "max_output_tokens"` on Responses. The budget is
+estimated at roughly four characters per token, and hidden reasoning tokens are
+not observable, so the cap bounds visible output rather than billed tokens.
+
 With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
 forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
 request omits `model`, the router uses `GONKA_MODEL`.
