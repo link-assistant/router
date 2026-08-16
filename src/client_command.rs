@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use crate::cli::ClientOp;
-use crate::clients::{ClientKind, ClientManager};
+use crate::clients::{ClientKind, ClientManager, ManagedCredential, TokenSource};
 use crate::config::Config;
 use crate::storage::build_token_store;
 use crate::token::{IssueRequest, TokenManager};
@@ -47,7 +47,11 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             .await
         }
         ClientOp::Show { client } => show(&manager, *client),
-        ClientOp::Remove { client } => remove(&manager, *client),
+        ClientOp::Remove {
+            client,
+            revoke_supplied,
+            force,
+        } => remove(config, &manager, *client, *revoke_supplied, *force),
         ClientOp::Doctor { client } => match manager.doctor(*client).await {
             Ok(message) => {
                 println!("ok: {message}");
@@ -122,10 +126,30 @@ async fn setup(
             client.display_name()
         ));
     }
-    let token = match supplied_token {
-        Some(token) => token.to_string(),
+    let (token, credential) = match supplied_token {
+        Some(token) => (
+            token.to_string(),
+            ManagedCredential {
+                client: client.to_string(),
+                source: TokenSource::Supplied,
+                // Recorded only when this router can recognise the token, so
+                // `--revoke-supplied` has an id to act on.
+                token_id: local_token_id(config, token),
+                label: None,
+                issued_at: None,
+            },
+        ),
         None => match issue_client_token(config, client, ttl_hours) {
-            Ok(token) => token,
+            Ok((token, id)) => (
+                token,
+                ManagedCredential {
+                    client: client.to_string(),
+                    source: TokenSource::Minted,
+                    token_id: Some(id),
+                    label: Some(format!("client-{client}")),
+                    issued_at: Some(chrono::Utc::now().timestamp()),
+                },
+            ),
             Err(error) => return failed(error),
         },
     };
@@ -148,6 +172,11 @@ async fn setup(
         Ok(path) => path,
         Err(error) => return failed(error),
     };
+    // Written after the secret so a recorded token id always describes a
+    // credential that actually exists on disk.
+    if let Err(error) = manager.write_credential_metadata(client, &credential) {
+        return failed(error);
+    }
     if client == ClientKind::GrokCli {
         println!(
             "{} uses shell environment; no client config was changed",
@@ -191,7 +220,40 @@ fn show(manager: &ClientManager, client: ClientKind) -> ExitCode {
     }
 }
 
-fn remove(manager: &ClientManager, client: ClientKind) -> ExitCode {
+/// Remove the local settings, revoking the credential they contain first.
+///
+/// Order matters: the token is revoked before the environment file that holds
+/// it is deleted. Deleting first would leave a live credential that nobody can
+/// name any more, which is exactly the regression from issue #190.
+fn remove(
+    config: &Config,
+    manager: &ClientManager,
+    client: ClientKind,
+    revoke_supplied: bool,
+    force: bool,
+) -> ExitCode {
+    let credential = match manager.credential_metadata(client) {
+        Ok(credential) => credential,
+        Err(error) if force => {
+            eprintln!("warning: {error}; continuing because --force was given");
+            None
+        }
+        Err(error) => return failed(error),
+    };
+    let revoked = match revoke_managed_credential(config, credential.as_ref(), revoke_supplied) {
+        Ok(revoked) => revoked,
+        Err(error) => {
+            if !force {
+                eprintln!("error: {error}");
+                eprintln!(
+                    "the credential file was left in place; revoke the token with `link-assistant-router tokens revoke <ID>` against the router's DATA_DIR and rerun `link-assistant-router clients remove {client}`, or pass --force to delete the local settings anyway"
+                );
+                return ExitCode::from(1);
+            }
+            eprintln!("warning: {error}; continuing because --force was given");
+            None
+        }
+    };
     match manager.remove(client) {
         Ok(result) => {
             if result.changed {
@@ -205,23 +267,67 @@ fn remove(manager: &ClientManager, client: ClientKind) -> ExitCode {
             if let Some(backup) = result.backup {
                 println!("backup: {}", backup.display());
             }
+            if let Some(id) = revoked {
+                println!("revoked managed token {id}");
+            }
             ExitCode::SUCCESS
         }
         Err(error) => failed(error),
     }
 }
 
-fn issue_client_token(
+/// Revoke the recorded token when removal owns it. Returns the revoked id.
+fn revoke_managed_credential(
     config: &Config,
-    client: ClientKind,
-    ttl_hours: i64,
-) -> Result<String, Box<dyn std::error::Error>> {
+    credential: Option<&ManagedCredential>,
+    revoke_supplied: bool,
+) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    let Some(credential) = credential else {
+        return Ok(None);
+    };
+    let wanted = credential.revocable_by_default()
+        || (revoke_supplied && credential.source == TokenSource::Supplied);
+    if !wanted {
+        return Ok(None);
+    }
+    let Some(id) = credential.token_id.as_deref() else {
+        if revoke_supplied {
+            return Err(format!(
+                "the token configured for {} was supplied by the operator and this router does not recognise it, so it cannot be revoked here",
+                credential.client
+            )
+            .into());
+        }
+        return Ok(None);
+    };
+    token_manager(config)?.revoke_token(id)?;
+    Ok(Some(id.to_string()))
+}
+
+/// Recognise a supplied token issued by this router and return its record id.
+fn local_token_id(config: &Config, token: &str) -> Option<String> {
+    token_manager(config)
+        .ok()?
+        .validate_token(token)
+        .ok()
+        .map(|claims| claims.sub)
+}
+
+fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Error>> {
     if !config.data_dir.exists() {
         std::fs::create_dir_all(&config.data_dir)?;
     }
     let store = build_token_store(config.storage_policy, &config.data_dir)?;
-    let manager = TokenManager::with_store(&config.token_secret, store);
-    Ok(manager.issue(&IssueRequest {
+    Ok(TokenManager::with_store(&config.token_secret, store))
+}
+
+fn issue_client_token(
+    config: &Config,
+    client: ClientKind,
+    ttl_hours: i64,
+) -> Result<(String, String), Box<dyn std::error::Error>> {
+    let manager = token_manager(config)?;
+    Ok(manager.issue_with_id(&IssueRequest {
         ttl_hours,
         label: &format!("client-{client}"),
         account: None,
