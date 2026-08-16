@@ -268,11 +268,17 @@ async fn run_server(
 
     // The admin credential: a deploy-time key when provided, otherwise the
     // persisted first-visitor claim (unclaimed until someone confirms one).
-    let admin_claim = Arc::new(link_assistant_router::admin::AdminClaim::load(
-        config.admin_key.clone(),
-        &config.data_dir,
-        config.admin_ui.candidate_ttl,
-    ));
+    // The claim mints its credential through the shared token manager, so a
+    // first-visitor administrator holds the same admin-scoped `la_sk_` JWT the
+    // CLI and the bootstrap path hand out — one credential model, one store.
+    let admin_claim = Arc::new(
+        link_assistant_router::admin::AdminClaim::load(
+            config.admin_key.clone(),
+            &config.data_dir,
+            config.admin_ui.candidate_ttl,
+        )
+        .with_token_manager(token_manager.clone()),
+    );
 
     let state = AppState {
         client,
@@ -785,14 +791,26 @@ async fn run_doctor(config: &Config) -> ExitCode {
         let status = claim.status();
         println!(
             "admin_credential       : {}",
-            if status.provisioned_by_environment {
-                "provisioned by environment"
-            } else if status.claimed {
-                "claimed (first-visitor bootstrap closed)"
-            } else {
-                "UNCLAIMED (bootstrap open)"
+            match status.credential_kind {
+                link_assistant_router::admin::CredentialKind::Environment =>
+                    "provisioned by environment".to_string(),
+                link_assistant_router::admin::CredentialKind::Jwt => format!(
+                    "claimed admin JWT {} (first-visitor bootstrap closed)",
+                    status.token_id.as_deref().unwrap_or("<unknown>")
+                ),
+                link_assistant_router::admin::CredentialKind::LegacyOpaque =>
+                    "claimed (first-visitor bootstrap closed)".to_string(),
+                link_assistant_router::admin::CredentialKind::None =>
+                    "UNCLAIMED (bootstrap open)".to_string(),
             }
         );
+        if status.credential_kind == link_assistant_router::admin::CredentialKind::LegacyOpaque {
+            println!(
+                "admin_credential_warning: WARNING legacy opaque `la_admin_` credential; \
+                 it carries no expiry, scope or revocation. Rotate it into an admin JWT \
+                 with POST /api/admin/rotate (or /rotate in the chat admin bot)."
+            );
+        }
     }
     println!(
         "admin_endpoints        : {}",

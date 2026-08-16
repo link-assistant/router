@@ -368,6 +368,61 @@ impl TokenManager {
         Ok(replacement)
     }
 
+    /// Re-enable a previously revoked token by its subject ID.
+    ///
+    /// This exists for exactly one caller: the two-phase admin claim (see
+    /// [`crate::admin`]). Phase one mints the admin JWT *revoked*, so an
+    /// abandoned mint is inert everywhere — it cannot authorise anything and
+    /// cannot brick the deployment. Phase two reinstates it, which is what
+    /// turns the candidate into the active administrator credential.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TokenError::NotFound`] when no record carries `token_id`, and
+    /// [`TokenError::Storage`] when the store cannot be written.
+    pub fn reinstate_token(&self, token_id: &str) -> Result<(), TokenError> {
+        let mut record = self
+            .store
+            .get(token_id)
+            .map_err(|error| TokenError::Storage(error.to_string()))?
+            .ok_or_else(|| TokenError::NotFound(token_id.to_string()))?;
+        record.revoked = false;
+        self.store
+            .put(record)
+            .map_err(|error| TokenError::Storage(error.to_string()))
+    }
+
+    /// Revoke every usable admin token except `keep_id`.
+    ///
+    /// Used when a first visitor claims administration: the credential minted
+    /// at startup (`bootstrap-admin`) must stop working at that instant, and
+    /// must *show* as revoked in the API, CLI and UI rather than lingering as
+    /// an apparently active row.
+    ///
+    /// Returns the ids that were revoked.
+    ///
+    /// # Errors
+    ///
+    /// Propagates store failures from listing or revoking.
+    pub fn revoke_other_admin_tokens(&self, keep_id: &str) -> Result<Vec<String>, TokenError> {
+        let now = Utc::now().timestamp();
+        let stale: Vec<String> = self
+            .list_tokens()?
+            .into_iter()
+            .filter(|record| {
+                record.scope == ADMIN_SCOPE
+                    && !record.revoked
+                    && record.expires_at > now
+                    && record.id != keep_id
+            })
+            .map(|record| record.id)
+            .collect();
+        for id in &stale {
+            self.revoke_token(id)?;
+        }
+        Ok(stale)
+    }
+
     /// Revoke a token by its subject ID. Idempotent.
     pub fn revoke_token(&self, token_id: &str) -> Result<(), TokenError> {
         match self.store.revoke(token_id) {
