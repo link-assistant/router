@@ -41,6 +41,17 @@ pub async fn openai_chat_completions(
             &format!("Unsupported server-side tool for selected provider: {kind}"),
         );
     }
+    if let Some(reason) = crate::capabilities::unhonourable_server_tool_request(
+        body.get("tools"),
+        body.get("tool_choice"),
+    ) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     if state.upstream_provider == UpstreamProvider::Gonka {
         return crate::gonka::forward_openai(
             &state,
@@ -185,6 +196,17 @@ pub async fn openai_responses(
             StatusCode::BAD_REQUEST,
             "invalid_request_error",
             &format!("Unsupported server-side tool for selected provider: {kind}"),
+        );
+    }
+    if let Some(reason) = crate::capabilities::unhonourable_server_tool_request(
+        body.get("tools"),
+        body.get("tool_choice"),
+    ) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
         );
     }
     if state.upstream_provider == UpstreamProvider::Gonka {

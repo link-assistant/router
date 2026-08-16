@@ -173,6 +173,18 @@ impl TokenManager {
 
     /// Issue a token described by [`IssueRequest`].
     pub fn issue(&self, request: &IssueRequest<'_>) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue_with_id(request).map(|(token, _)| token)
+    }
+
+    /// Issue a token and return it together with its record id (`sub`).
+    ///
+    /// Callers that persist a credential on behalf of a user need the id to be
+    /// able to revoke exactly that token later; recovering it by decoding the
+    /// JWT afterwards would duplicate the trust decision made here.
+    pub fn issue_with_id(
+        &self,
+        request: &IssueRequest<'_>,
+    ) -> Result<(String, String), jsonwebtoken::errors::Error> {
         let ttl_hours = request.ttl_hours;
         let label = request.label;
         let account = request.account;
@@ -209,10 +221,11 @@ impl TokenManager {
             rate_window_requests: 0,
             scope: claims.scope,
         };
+        let id = record.id.clone();
         if let Err(e) = self.store.put(record) {
             tracing::warn!("token store put failed: {e}");
         }
-        Ok(format!("{TOKEN_PREFIX}{jwt}"))
+        Ok((format!("{TOKEN_PREFIX}{jwt}"), id))
     }
 
     /// Enforce (and record) the per-token request budget for `token_id`.

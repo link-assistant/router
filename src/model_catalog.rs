@@ -84,7 +84,11 @@ impl ModelCatalogCache {
             })
     }
 
-    pub(crate) fn record_success(&self, provider: SubscriptionProvider, mut models: Vec<String>) {
+    /// Replace a provider's catalog with a freshly observed listing.
+    ///
+    /// Public so integration tests can seed deterministic live catalogs
+    /// instead of depending on the stale-tolerated fallbacks.
+    pub fn record_success(&self, provider: SubscriptionProvider, mut models: Vec<String>) {
         models.sort();
         models.dedup();
         let mut entries = self

@@ -700,6 +700,15 @@ pub async fn forward_anthropic_messages(
             format!("Unsupported tool type for selected provider: {kind}").as_bytes(),
         );
     }
+    if let Some(reason) = crate::capabilities::unhonourable_server_tool_request(
+        anthropic_body.get("tools"),
+        anthropic_body.get("tool_choice"),
+    ) {
+        if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
+            return *response;
+        }
+        return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
+    }
     if let Some(reason) = untranslatable_anthropic_tool(&anthropic_body) {
         if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
             return *response;
