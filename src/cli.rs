@@ -499,6 +499,10 @@ pub enum Command {
     },
     /// Configure local agentic CLIs to use this router.
     Clients {
+        /// Treat this directory as the home for every client configuration
+        /// root, instead of `$HOME` and the clients' own override variables.
+        #[arg(long, value_name = "DIR")]
+        home: Option<PathBuf>,
         #[command(subcommand)]
         op: ClientOp,
     },
@@ -678,9 +682,14 @@ pub enum ClientOp {
     Setup {
         #[arg(value_enum)]
         client: ClientKind,
-        /// Existing router token. Omit to mint one in the configured token store.
-        #[arg(long)]
+        /// Existing router token. Prefer `--token-stdin` or
+        /// `LINK_ASSISTANT_ROUTER_TOKEN` over argv, which is visible in shell
+        /// history and process listings.
+        #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
         token: Option<String>,
+        /// Read an existing router token as one line from standard input.
+        #[arg(long, conflicts_with = "token")]
+        token_stdin: bool,
         /// Router URL reachable from the client (defaults to this CLI's host/port).
         #[arg(long)]
         base_url: Option<String>,

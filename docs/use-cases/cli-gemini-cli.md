@@ -65,15 +65,17 @@ owning vendor, exactly like `/v1/models` and `/v1/chat/completions`. A Codex or
 Claude subscription therefore serves Gemini CLI without a Gemini credential;
 pinning `UPSTREAM_PROVIDER=gemini` narrows the namespace to Gemini models only.
 
-Two provider gaps surface here as explicit errors rather than silent
-truncation:
+Two provider gaps are handled here explicitly:
 
-- `generationConfig.maxOutputTokens` against a Codex-owned model is refused
-  with `INVALID_ARGUMENT`, because the ChatGPT backend cannot enforce an
-  output-token cap;
+- `generationConfig.maxOutputTokens` is honoured on every model. Gemini and
+  Claude enforce the cap upstream; the ChatGPT backend rejects the field, so
+  the router strips it and enforces the budget itself, returning the truncated
+  answer with `finishReason: "MAX_TOKENS"`. Because the router has no upstream
+  tokenizer, that local bound is an estimate (see the README's output-limit
+  note), not exact token accounting;
 - a request whose only tools are server-side (`web_search`) together with a
-  forced tool choice is refused, because the backend executes those tools
-  itself and can never emit the demanded function call.
+  forced tool choice is refused with `INVALID_ARGUMENT`, because the backend
+  executes those tools itself and can never emit the demanded function call.
 
 ## Setup
 
@@ -115,4 +117,5 @@ subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
 | Base URL appears ignored | you are on the OAuth login path; the override only applies to API-key auth |
 | `404` on a Gemini namespace | the route is disabled, or the model is not owned by any connected subscription |
 | Empty `models` list | no subscription is healthy; run `link-assistant-router doctor` |
-| `INVALID_ARGUMENT` about output limits | the model is Codex-owned; drop `maxOutputTokens` |
+| `INVALID_ARGUMENT` about server-side tools | a forced tool choice offers only `web_search`; use `AUTO` or add a client function |
+| Answer ends early with `finishReason: "MAX_TOKENS"` | `generationConfig.maxOutputTokens` was reached; raise or drop the cap |

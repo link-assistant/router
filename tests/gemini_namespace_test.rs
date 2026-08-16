@@ -242,20 +242,38 @@ fn anthropic_message(request: &Value) -> Value {
                 .is_some_and(|blocks| blocks.iter().any(|block| block["type"] == "tool_result"))
         })
     });
-    let content = if has_client_function && !has_tool_result {
-        json!([{"type":"tool_use","id":"toolu_stub","name":"lookup","input":{"key":"value"}}])
-    } else {
-        json!([{"type": "text", "text": "stub answer"}])
-    };
+    if has_client_function && !has_tool_result {
+        return json!({
+            "id": "msg_stub",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-opus-4-7",
+            "content": [{"type":"tool_use","id":"toolu_stub","name":"lookup","input":{"key":"value"}}],
+            "stop_reason": "tool_use",
+            "stop_sequence": null,
+            "usage": {"input_tokens": 3, "output_tokens": 2}
+        });
+    }
+    // Anthropic accepts `max_tokens` and honours it upstream, unlike the
+    // ChatGPT backend the router has to emulate the cap for. The stub counts
+    // one token per whitespace-separated word, matching the `output_tokens` it
+    // reports for the untruncated answer.
+    let answer = "stub answer";
+    let words = answer.split_whitespace().collect::<Vec<_>>();
+    let budget = request["max_tokens"].as_u64().map_or(words.len(), |cap| {
+        usize::try_from(cap).unwrap_or(usize::MAX)
+    });
+    let capped = budget < words.len();
+    let text = words[..budget.min(words.len())].join(" ");
     json!({
         "id": "msg_stub",
         "type": "message",
         "role": "assistant",
         "model": "claude-opus-4-7",
-        "content": content,
-        "stop_reason": if has_client_function && !has_tool_result { "tool_use" } else { "end_turn" },
+        "content": [{"type": "text", "text": text}],
+        "stop_reason": if capped { "max_tokens" } else { "end_turn" },
         "stop_sequence": null,
-        "usage": {"input_tokens": 3, "output_tokens": 2}
+        "usage": {"input_tokens": 3, "output_tokens": budget.min(words.len())}
     })
 }
 
@@ -423,41 +441,59 @@ async fn generate_content_serves_codex_and_claude_models_natively() {
     }
 }
 
-/// `maxOutputTokens` is optional in Gemini's protocol and the `ChatGPT` backend
-/// rejects output caps, so the router refuses instead of silently overspending —
-/// the same rule the Chat and Responses surfaces already apply. Claude honours
-/// the cap. The refusal must arrive in Gemini's own error envelope.
+/// `maxOutputTokens` is optional in Gemini's protocol, and the `ChatGPT`
+/// backend rejects the field outright, so the router enforces the cap itself
+/// (see [`link_assistant_router::output_limit`]) instead of refusing an
+/// ordinary client request. The native namespace must inherit that emulation
+/// on every cross-provider model and report it in Gemini's own vocabulary:
+/// truncated text with `finishReason: MAX_TOKENS`.
 #[tokio::test]
-async fn generate_content_reports_the_codex_output_limit_gap_natively() {
+async fn generate_content_emulates_the_output_cap_natively() {
     let router = TestRouter::start().await;
-    let request = json!({
-        "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
-        "generationConfig": {"maxOutputTokens": 32}
-    });
 
-    let (status, body) = router
-        .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
-            &request,
-        )
-        .await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
-    let error: Value = serde_json::from_str(&body).expect("Gemini error JSON");
-    assert_eq!(error["error"]["status"], "INVALID_ARGUMENT");
-    assert!(
-        error["error"]["message"]
+    for model in ["gpt-5.4-mini", "claude-opus-4-7"] {
+        // A cap the answer fits into must not disturb an ordinary exchange.
+        let (status, body) = router
+            .post_native(
+                &format!("/api/gemini/v1beta/models/{model}:generateContent"),
+                &json!({
+                    "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
+                    "generationConfig": {"maxOutputTokens": 32}
+                }),
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK, "{model}: {body}");
+        let native: Value = serde_json::from_str(&body).expect("Gemini response JSON");
+        assert_eq!(
+            native["candidates"][0]["content"]["parts"][0]["text"], "stub answer",
+            "{model} returned {native}"
+        );
+        assert_eq!(native["candidates"][0]["finishReason"], "STOP", "{model}");
+
+        // A cap below the answer truncates it and says so natively.
+        let (status, body) = router
+            .post_native(
+                &format!("/api/gemini/v1beta/models/{model}:generateContent"),
+                &json!({
+                    "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
+                    "generationConfig": {"maxOutputTokens": 1}
+                }),
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK, "{model}: {body}");
+        let native: Value = serde_json::from_str(&body).expect("Gemini response JSON");
+        let text = native["candidates"][0]["content"]["parts"][0]["text"]
             .as_str()
-            .expect("error message")
-            .contains("max_output_tokens")
-    );
-
-    let (status, body) = router
-        .post_native(
-            "/api/gemini/v1beta/models/claude-opus-4-7:generateContent",
-            &request,
-        )
-        .await;
-    assert_eq!(status, StatusCode::OK, "{body}");
+            .expect("candidate text");
+        assert!(
+            !text.is_empty() && "stub answer".starts_with(text) && text != "stub answer",
+            "{model} returned {native}"
+        );
+        assert_eq!(
+            native["candidates"][0]["finishReason"], "MAX_TOKENS",
+            "{model} returned {native}"
+        );
+    }
 }
 
 #[tokio::test]

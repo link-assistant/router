@@ -42,7 +42,7 @@ pub fn subscription(provider: SubscriptionProvider, model: Option<&str>) -> Prov
         SubscriptionProvider::Codex => ProviderCapabilities {
             temperature: Capability::Unsupported,
             stop_sequences: Capability::Emulated,
-            output_token_limit: Capability::Unsupported,
+            output_token_limit: Capability::Emulated,
             reasoning: Capability::Native,
             web_search: Capability::Native,
             web_fetch: Capability::Unsupported,
@@ -187,7 +187,7 @@ mod tests {
         assert_eq!(codex.web_search, Capability::Native);
         assert_eq!(codex.web_fetch, Capability::Unsupported);
         assert_eq!(codex.stop_sequences, Capability::Emulated);
-        assert_eq!(codex.output_token_limit, Capability::Unsupported);
+        assert_eq!(codex.output_token_limit, Capability::Emulated);
         assert_eq!(
             unsupported_server_tool_type(
                 SubscriptionProvider::Codex,

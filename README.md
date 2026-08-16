@@ -114,7 +114,33 @@ changing identity.
 - [Docker](https://docs.docker.com/get-docker/) (for containerized deployment)
 - A Claude MAX subscription with an active Claude Code OAuth session
 
-### 1. Build from source
+### 1. Install a released binary (Linux and macOS)
+
+Every release publishes attested, checksummed archives for `linux-amd64`,
+`linux-arm64`, `darwin-arm64`, and `darwin-amd64`. Pick the platform slice that
+matches the machine, verify it, and install both binaries:
+
+```bash
+VERSION=$(gh release view --repo link-assistant/router --json tagName --jq '.tagName | ltrimstr("v")')
+# macOS on Apple Silicon: darwin-arm64. Intel Macs: darwin-amd64.
+PLATFORM=darwin-arm64
+gh release download "v${VERSION}" --repo link-assistant/router \
+  --pattern "link-assistant-router-${VERSION}-${PLATFORM}.*"
+
+# Checksums, then the signed provenance of the build itself.
+shasum -a 256 -c "link-assistant-router-${VERSION}-${PLATFORM}.sha256"
+gh attestation verify "link-assistant-router-${VERSION}-${PLATFORM}.tar.gz" \
+  --repo link-assistant/router
+
+tar -xzf "link-assistant-router-${VERSION}-${PLATFORM}.tar.gz"
+install -m 755 link-assistant-router with-router /usr/local/bin/
+```
+
+Updating is the same sequence with a newer `VERSION`: the archive contains only
+the two binaries, so overwriting them in place leaves configuration untouched.
+On Linux, `sha256sum -c` replaces `shasum -a 256 -c`.
+
+### 2. Build from source
 
 ```bash
 git clone https://github.com/link-assistant/router.git
@@ -124,7 +150,7 @@ cargo build --release
 
 The binary will be at `target/release/link-assistant-router`.
 
-### 2. Set up Claude Code credentials
+### 3. Set up Claude Code credentials
 
 The router reads OAuth credentials from the Claude Code home directory. By default, it looks in `~/.claude` for credential files. Make sure you have an active Claude Code session:
 
@@ -168,7 +194,7 @@ For the nested layout the router reads `accessToken` and `expiresAt` from inside
 file is only ever read — the router never writes back to or deletes your
 credential files.
 
-### 3. Start the router
+### 4. Start the router
 
 ```bash
 # Required: set the JWT signing secret
@@ -196,7 +222,7 @@ INFO Claude Code home: /home/user/.claude
 INFO Listening on 0.0.0.0:8080
 ```
 
-### 4. Issue a custom token
+### 5. Issue a custom token
 
 ```bash
 curl -s -X POST http://localhost:8080/api/tokens \
@@ -216,7 +242,7 @@ Response:
 
 Save the `token` value for use in API requests.
 
-### 5. Use the router as an Anthropic API proxy
+### 6. Use the router as an Anthropic API proxy
 
 ```bash
 # Use the custom token to make requests through the router
@@ -421,6 +447,24 @@ advertised by multiple healthy subscriptions is rejected until
 `UPSTREAM_PROVIDER` is pinned. Other model names return `404 not_found_error`
 instead of silently selecting a default model. Successful Anthropic-backed
 responses report the resolved Claude model that actually served the request.
+
+#### Model identity and output limits
+
+Responses always report the model id the client requested, including catalog
+aliases such as `codex-auto-review`, in `model` — for buffered replies and for
+every streamed chunk on each OpenAI surface. When the provider serves a
+different concrete model, the router reports it separately in the
+`x_router_upstream_model` response field and the `x-router-upstream-model`
+response header, instead of replacing the requested identity.
+
+Codex subscriptions accept `max_output_tokens`, `max_tokens`, and
+`max_completion_tokens`. The ChatGPT backend rejects an explicit cap, so the
+router strips the field from the upstream request and enforces the cap itself:
+visible output is truncated at the caller's budget and the exchange ends with
+`finish_reason: "length"` on Chat Completions, or `status: "incomplete"` with
+`incomplete_details.reason: "max_output_tokens"` on Responses. The budget is
+estimated at roughly four characters per token, and hidden reasoning tokens are
+not observable, so the cap bounds visible output rather than billed tokens.
 
 With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
 forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a

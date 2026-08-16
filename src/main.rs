@@ -92,8 +92,8 @@ async fn main() -> ExitCode {
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
         Some(Command::Providers { op }) => run_providers(&config, op),
-        Some(Command::Clients { op }) => {
-            link_assistant_router::client_command::run(&config, op).await
+        Some(Command::Clients { home, op }) => {
+            link_assistant_router::client_command::run(&config, home.as_deref(), op).await
         }
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,

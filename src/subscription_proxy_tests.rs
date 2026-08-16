@@ -1,79 +1,20 @@
 use super::*;
 
-#[tokio::test]
-async fn codex_rejects_optional_openai_output_limits() {
-    let responses = serde_json::json!({
+#[test]
+fn codex_strips_the_output_cap_it_enforces_locally() {
+    // Every OpenAI-compatible client sends an output cap; the ChatGPT backend
+    // rejects the field, so it is removed here and enforced by
+    // `crate::output_limit` instead of failing the request.
+    let mut body = serde_json::json!({
         "model": "gpt-5.6-sol",
         "input": "hi",
         "max_output_tokens": 16,
     });
-    let chat = crate::responses::chat_completion_to_responses(&serde_json::json!({
-        "model": "gpt-5.6-sol",
-        "messages": [{"role": "user", "content": "hi"}],
-        "max_tokens": 16,
-    }));
-    let chat_completion = crate::responses::chat_completion_to_responses(&serde_json::json!({
-        "model": "gpt-5.6-sol",
-        "messages": [{"role": "user", "content": "hi"}],
-        "max_completion_tokens": 16,
-    }));
-    let response = reject_unsupported_codex_output_limit(
-        SubscriptionProvider::Codex,
-        Surface::OpenAIResponses,
-        &responses,
-    )
-    .expect("Codex must reject a native Responses limit it cannot honor");
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    let error = axum::body::to_bytes(response.into_body(), 4096)
-        .await
-        .expect("read error body");
-    let error: serde_json::Value = serde_json::from_slice(&error).expect("valid JSON error");
-    assert_eq!(error["error"]["type"], "invalid_request_error");
-    assert!(error["error"]["message"].as_str().is_some_and(|message| {
-        message.contains("rejected this request instead of silently ignoring")
-    }));
-
-    for body in [&chat, &chat_completion] {
-        assert!(
-            reject_unsupported_codex_output_limit(
-                SubscriptionProvider::Codex,
-                Surface::OpenAIChat,
-                body,
-            )
-            .is_some(),
-            "Chat limits must be rejected rather than silently dropped"
-        );
-    }
-}
-
-#[test]
-fn output_limit_gate_leaves_uncapped_codex_and_other_providers_unchanged() {
-    let capped = serde_json::json!({"max_output_tokens": 16});
-    let uncapped = serde_json::json!({"model": "gpt-5.6-sol", "input": "hi"});
-
-    assert!(
-        reject_unsupported_codex_output_limit(
-            SubscriptionProvider::Codex,
-            Surface::OpenAIResponses,
-            &uncapped,
-        )
-        .is_none()
-    );
-    assert!(
-        reject_unsupported_codex_output_limit(
-            SubscriptionProvider::Qwen,
-            Surface::OpenAIResponses,
-            &capped,
-        )
-        .is_none()
-    );
-    assert!(
-        reject_unsupported_codex_output_limit(
-            SubscriptionProvider::Codex,
-            Surface::Anthropic,
-            &capped,
-        )
-        .is_none()
+    normalize_subscription_request(SubscriptionProvider::Codex, &mut body);
+    assert!(body.get("max_output_tokens").is_none());
+    assert_eq!(
+        crate::capabilities::subscription(SubscriptionProvider::Codex, None).output_token_limit,
+        crate::capabilities::Capability::Emulated
     );
 }
 

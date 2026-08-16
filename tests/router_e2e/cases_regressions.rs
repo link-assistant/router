@@ -372,36 +372,33 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
             .is_some_and(|message| message.contains("max_tokens is required"))
     );
 
-    // Native Responses caps retain PR #103's explicit rejection because users
-    // may rely on them as a spend control.
+    // Native Responses caps are honoured locally: the field is stripped from
+    // the upstream request (the backend rejects it) and the router truncates
+    // the answer instead of refusing an ordinary client request.
     let capped = codex
         .post(
             "/v1/responses",
-            &json!({"model":"gpt-5","input":"hi","max_output_tokens":16}),
+            &json!({"model":"gpt-5","input":"hi","max_output_tokens":1}),
         )
         .send()
         .await
         .expect("capped Codex Responses response");
-    assert_eq!(capped.status(), StatusCode::BAD_REQUEST);
-    assert!(
-        capped
-            .text()
-            .await
-            .expect("limit error body")
-            .contains("cannot honor output-token limits")
-    );
+    assert_eq!(capped.status(), StatusCode::OK);
+    let payload: Value = capped.json().await.expect("Responses JSON payload");
+    assert_eq!(payload["status"], "incomplete");
+    assert_eq!(payload["incomplete_details"]["reason"], "max_output_tokens");
+    assert_eq!(payload["output"][0]["content"][0]["text"], "stub");
 
-    // Chat caps are optional. Refuse them when the backend cannot enforce
-    // them, rather than returning more tokens than the caller authorised.
+    // Chat caps are honoured the same way, under either spelling.
     for body in [
         json!({
             "model":"gpt-5",
-            "max_tokens":16,
+            "max_tokens":1,
             "messages":[{"role":"user","content":"hi"}]
         }),
         json!({
             "model":"gpt-5",
-            "max_completion_tokens":16,
+            "max_completion_tokens":1,
             "messages":[{"role":"user","content":"hi"}]
         }),
     ] {
@@ -410,14 +407,20 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
             .send()
             .await
             .expect("capped Codex Chat response");
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        let payload: Value = response.json().await.expect("OpenAI error response");
-        assert!(payload.get("type").is_none());
-        assert_eq!(payload["error"]["type"], "invalid_request_error");
+        assert_eq!(response.status(), StatusCode::OK);
+        let payload: Value = response.json().await.expect("OpenAI JSON response");
+        assert_eq!(payload["choices"][0]["message"]["content"], "stub");
+        assert_eq!(payload["choices"][0]["finish_reason"], "length");
     }
 
     let requests = codex.requests.lock().expect("stub requests");
-    assert_eq!(requests.len(), 1, "rejected caps must not reach upstream");
+    assert_eq!(requests.len(), 4, "capped requests still reach upstream");
+    assert!(
+        requests
+            .iter()
+            .all(|request| request.get("max_output_tokens").is_none()),
+        "the unsupported field must never be forwarded"
+    );
     drop(requests);
 }
 
@@ -580,6 +583,206 @@ async fn invalid_upstream_body_is_not_disclosed_to_anthropic_clients() {
     let rendered = payload.to_string();
     assert!(!rendered.contains("safety_identifier"));
     assert!(!rendered.contains("prompt_cache_key"));
+}
+
+/// The exact request shape `OpenCode` sends through its `OpenAI`-compatible
+/// provider: an output cap plus a tool definition. Issue #186 reported this
+/// body being refused with HTTP 400 against a Codex subscription.
+fn opencode_chat_body(model: &str, stream: bool) -> Value {
+    json!({
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are opencode, an autonomous coding agent."},
+            {"role": "user", "content": "hi"}
+        ],
+        "max_tokens": 32000,
+        "temperature": 0,
+        "stream": stream,
+        "tools": [{
+            "type": "function",
+            "function": {
+                "name": "lookup",
+                "description": "look up a value",
+                "parameters": {"type": "object", "properties": {"key": {"type": "string"}}}
+            }
+        }],
+        "tool_choice": "auto"
+    })
+}
+
+#[tokio::test]
+async fn opencode_request_body_with_an_output_cap_works_against_codex() {
+    let codex = TestRouter::start(UpstreamProvider::Codex).await;
+
+    let buffered = codex
+        .post("/v1/chat/completions", &opencode_chat_body("gpt-5", false))
+        .send()
+        .await
+        .expect("buffered OpenCode response");
+    assert_eq!(buffered.status(), StatusCode::OK);
+    let payload: Value = buffered.json().await.expect("OpenAI JSON response");
+    assert_eq!(payload["object"], "chat.completion");
+    // The generous OpenCode cap must not truncate an ordinary answer.
+    assert_eq!(
+        payload["choices"][0]["message"]["tool_calls"][0]["function"]["name"],
+        "lookup"
+    );
+
+    let streamed = codex
+        .post("/v1/chat/completions", &opencode_chat_body("gpt-5", true))
+        .send()
+        .await
+        .expect("streamed OpenCode response");
+    assert_eq!(streamed.status(), StatusCode::OK);
+    let stream = streamed.text().await.expect("SSE body");
+    assert!(stream.contains("chat.completion.chunk"), "{stream}");
+    assert!(stream.contains("data: [DONE]"), "{stream}");
+
+    // The OpenCode tool loop: the second turn carries the tool result back.
+    let follow_up = codex
+        .post(
+            "/v1/chat/completions",
+            &json!({
+                "model": "gpt-5",
+                "max_tokens": 32000,
+                "messages": [
+                    {"role": "user", "content": "hi"},
+                    {"role": "assistant", "tool_calls": [{
+                        "id": "call_router_e2e",
+                        "type": "function",
+                        "function": {"name": "lookup", "arguments": "{\"key\":\"value\"}"}
+                    }]},
+                    {"role": "tool", "tool_call_id": "call_router_e2e", "content": "value"}
+                ],
+                "tools": [{"type":"function","function":{"name":"lookup","parameters":{"type":"object"}}}]
+            }),
+        )
+        .send()
+        .await
+        .expect("OpenCode tool-loop response");
+    assert_eq!(follow_up.status(), StatusCode::OK);
+    let payload: Value = follow_up.json().await.expect("OpenAI JSON response");
+    assert_eq!(payload["choices"][0]["message"]["content"], "stub answer");
+
+    let requests = codex.requests.lock().expect("stub requests");
+    assert_eq!(requests.len(), 3);
+    assert!(
+        requests
+            .iter()
+            .all(|request| request.get("max_output_tokens").is_none()),
+        "the cap the ChatGPT backend rejects must never be forwarded"
+    );
+    drop(requests);
+}
+
+#[tokio::test]
+async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
+    let codex = TestRouter::start(UpstreamProvider::Codex).await;
+
+    let catalog: Value = codex
+        .get("/v1/models")
+        .send()
+        .await
+        .expect("model catalog response")
+        .json()
+        .await
+        .expect("model catalog JSON");
+    let mut ids = catalog["data"]
+        .as_array()
+        .expect("catalog data array")
+        .iter()
+        .filter_map(|model| model["id"].as_str().map(str::to_string))
+        .collect::<Vec<_>>();
+    // The stub never refreshes a live catalog, so cover the two shapes issue
+    // #186 cares about explicitly: a concrete id the upstream also serves, and
+    // a service alias the upstream resolves to a different concrete model.
+    for id in ["gpt-5", "codex-auto-review"] {
+        if !ids.iter().any(|known| known == id) {
+            ids.push(id.to_string());
+        }
+    }
+
+    for id in &ids {
+        // Buffered Chat Completions.
+        let payload: Value = codex
+            .post(
+                "/v1/chat/completions",
+                &json!({"model": id, "messages": [{"role":"user","content":"hi"}]}),
+            )
+            .send()
+            .await
+            .expect("buffered chat response")
+            .json()
+            .await
+            .expect("chat JSON");
+        assert_eq!(payload["model"], id.as_str(), "buffered chat identity");
+        if payload.get("x_router_upstream_model").is_some() {
+            assert_eq!(payload["x_router_upstream_model"], "gpt-5");
+        }
+
+        // Streaming Chat Completions.
+        let stream = codex
+            .post(
+                "/v1/chat/completions",
+                &json!({"model": id, "messages": [{"role":"user","content":"hi"}], "stream": true}),
+            )
+            .send()
+            .await
+            .expect("streamed chat response")
+            .text()
+            .await
+            .expect("SSE body");
+        for chunk in stream
+            .lines()
+            .filter_map(|line| line.strip_prefix("data: "))
+            .filter(|payload| *payload != "[DONE]")
+            .filter_map(|payload| serde_json::from_str::<Value>(payload).ok())
+        {
+            assert_eq!(chunk["model"], id.as_str(), "streamed chat identity");
+        }
+
+        // Buffered Responses, including the upstream-model header.
+        let response = codex
+            .post("/v1/responses", &json!({"model": id, "input": "hi"}))
+            .send()
+            .await
+            .expect("buffered responses response");
+        let upstream_header = response
+            .headers()
+            .get("x-router-upstream-model")
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_string);
+        let payload: Value = response.json().await.expect("responses JSON");
+        assert_eq!(payload["model"], id.as_str(), "buffered responses identity");
+        if id != "gpt-5" {
+            assert_eq!(upstream_header.as_deref(), Some("gpt-5"));
+            assert_eq!(payload["x_router_upstream_model"], "gpt-5");
+        }
+
+        // Streaming Responses.
+        let stream = codex
+            .post(
+                "/v1/responses",
+                &json!({"model": id, "input": "hi", "stream": true}),
+            )
+            .send()
+            .await
+            .expect("streamed responses response")
+            .text()
+            .await
+            .expect("SSE body");
+        for event in stream
+            .lines()
+            .filter_map(|line| line.strip_prefix("data: "))
+            .filter(|payload| *payload != "[DONE]")
+            .filter_map(|payload| serde_json::from_str::<Value>(payload).ok())
+        {
+            let Some(model) = event["response"]["model"].as_str() else {
+                continue;
+            };
+            assert_eq!(model, id.as_str(), "streamed responses identity: {event}");
+        }
+    }
 }
 
 /// Issue #187 (comment): an Anthropic `web_search_20250305` request with

@@ -50,6 +50,7 @@ pub mod mpp;
 pub mod oauth;
 pub mod on_demand_cli;
 pub mod openai;
+pub mod output_limit;
 pub mod provider_proxy;
 pub mod providers;
 pub mod proxy;

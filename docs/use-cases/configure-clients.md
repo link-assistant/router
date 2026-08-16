@@ -26,6 +26,39 @@ link-assistant-router clients doctor codex
 link-assistant-router clients remove codex
 ```
 
+An existing router token can also be supplied without ever putting it in argv,
+where shell history and process listings would expose it:
+
+```bash
+# Read one line from standard input.
+pass show router/token | link-assistant-router clients setup codex --token-stdin
+
+# Or export the documented variable (`LINK_ASSISTANT_TOKEN` is accepted too).
+export LINK_ASSISTANT_ROUTER_TOKEN=la_sk_...
+link-assistant-router clients setup codex
+```
+
+The precedence is `--token`, then `--token-stdin`, then
+`LINK_ASSISTANT_ROUTER_TOKEN`, then `LINK_ASSISTANT_TOKEN`. `--token` and
+`--token-stdin` are mutually exclusive. A supplied value that is not a router
+token is rejected before any file is written, and the rejection names the
+inputs that were checked without echoing the value. Every diagnostic this
+command prints, including router error bodies and transport errors, is passed
+through the same redaction used by the login surface, so a token cannot leak
+into logs through an error message.
+
+`--home DIR`, placed before the subcommand, treats `DIR` as the home for every
+client configuration root and ignores the clients' own override variables and
+any token variable exported in the calling shell. Automation can therefore prove
+setup → doctor → launch → remove without touching real user settings:
+
+```bash
+link-assistant-router clients --home /tmp/router-check setup codex --token-stdin
+link-assistant-router clients --home /tmp/router-check show codex
+link-assistant-router clients --home /tmp/router-check doctor codex
+link-assistant-router clients --home /tmp/router-check remove codex
+```
+
 `setup` mints a 24-hour router token unless `--token` supplies one. The token is
 never printed or written to the client configuration. Instead, setup writes the
 required exports to a mode-`0600` file below
