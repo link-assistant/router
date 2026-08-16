@@ -15,10 +15,12 @@
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
-use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
-use axum::response::{IntoResponse, Response};
+use axum::response::Response;
 use serde_json::{Value, json};
+
+mod native;
+pub use native::{forward_native_gemini, forward_native_vertex, native_model, native_models};
 
 use crate::metrics::Surface;
 use crate::proxy::{
@@ -501,255 +503,6 @@ fn sse_from_chat_completion(chat: &Value, model: &str) -> Response {
     response
 }
 
-fn native_model_document(model: &str) -> Value {
-    let model = model.trim_start_matches("models/");
-    json!({
-        "name": format!("models/{model}"),
-        "displayName": model,
-        "description": "Gemini Code Assist subscription model routed by Link.Assistant.Router",
-        "inputTokenLimit": 1_048_576,
-        "outputTokenLimit": 65_536,
-        "supportedGenerationMethods": ["generateContent", "streamGenerateContent"]
-    })
-}
-
-/// Native Gemini `ListModels` response.
-pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
-    let healthy = crate::model_routing::healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
-    let available = matches!(
-        state.upstream_provider,
-        crate::config::UpstreamProvider::Gemini | crate::config::UpstreamProvider::Auto
-    ) && healthy.contains(&crate::subscription::SubscriptionProvider::Gemini);
-    let models = state
-        .model_catalogs
-        .models(crate::subscription::SubscriptionProvider::Gemini)
-        .iter()
-        .filter(|_| available)
-        .map(|model| native_model_document(model))
-        .collect::<Vec<_>>();
-    (StatusCode::OK, axum::Json(json!({"models": models})))
-}
-
-/// Native Gemini `GetModel` response.
-pub async fn native_model(
-    State(state): State<AppState>,
-    Path(model): Path<String>,
-) -> impl IntoResponse {
-    let healthy = crate::model_routing::healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
-    let available = matches!(
-        state.upstream_provider,
-        crate::config::UpstreamProvider::Gemini | crate::config::UpstreamProvider::Auto
-    ) && healthy.contains(&crate::subscription::SubscriptionProvider::Gemini)
-        && crate::model_routing::provider_for_model(&model, &state.model_catalogs)
-            == Some(crate::subscription::SubscriptionProvider::Gemini);
-    let status = if available {
-        StatusCode::OK
-    } else {
-        StatusCode::NOT_FOUND
-    };
-    (status, axum::Json(native_model_document(&model)))
-}
-
-fn parse_native_target(path: &str) -> Option<(String, bool)> {
-    let (resource, action) = path.rsplit_once(':')?;
-    let streaming = match action {
-        "generateContent" => false,
-        "streamGenerateContent" => true,
-        _ => return None,
-    };
-    let model = resource
-        .rsplit_once("/models/")
-        .map_or(resource, |(_, model)| model)
-        .trim_start_matches("models/")
-        .trim_matches('/');
-    (!model.is_empty()).then(|| (model.to_string(), streaming))
-}
-
-/// Forward a native Gemini `GenerateContentRequest` without translating it to
-/// an `OpenAI` shape.
-pub async fn forward_native_gemini(
-    State(state): State<AppState>,
-    Path(path): Path<String>,
-    headers: HeaderMap,
-    axum::Json(body): axum::Json<Value>,
-) -> Response {
-    forward_native(&state, &headers, &path, body).await
-}
-
-/// Forward a Vertex publisher-model request using the same native Gemini body.
-pub async fn forward_native_vertex(
-    State(state): State<AppState>,
-    Path(path): Path<String>,
-    headers: HeaderMap,
-    axum::Json(body): axum::Json<Value>,
-) -> Response {
-    forward_native(&state, &headers, &path, body).await
-}
-
-async fn forward_native(
-    state: &AppState,
-    headers: &HeaderMap,
-    path: &str,
-    body: Value,
-) -> Response {
-    let routed_state = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
-        match crate::model_routing::route_provider(
-            state,
-            crate::subscription::SubscriptionProvider::Gemini,
-        )
-        .await
-        {
-            Ok(state) => Some(state),
-            Err(error) => {
-                return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &error);
-            }
-        }
-    } else {
-        None
-    };
-    let state = routed_state.as_ref().unwrap_or(state);
-    if state.upstream_provider != crate::config::UpstreamProvider::Gemini {
-        return error_response(
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            "native Gemini and Vertex routes require UPSTREAM_PROVIDER=gemini",
-        );
-    }
-    let Some((model, streaming)) = parse_native_target(path) else {
-        return error_response(
-            StatusCode::NOT_FOUND,
-            "not_found_error",
-            "expected a model :generateContent or :streamGenerateContent action",
-        );
-    };
-    let routed = match route_gemini_token(state, headers, &body, Surface::OpenAIChat, path).await {
-        Ok(routed) => routed,
-        Err(response) => return response,
-    };
-    let envelope = code_assist_envelope(&model, &body);
-    let serialized = match serde_json::to_vec(&envelope) {
-        Ok(serialized) => serialized,
-        Err(error) => {
-            return error_response(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "api_error",
-                &format!("failed to serialize Gemini request: {error}"),
-            );
-        }
-    };
-    let base = routed
-        .token
-        .base_url(crate::subscription::SubscriptionProvider::Gemini);
-    // Code Assist accepts the same envelope for both client modes. A
-    // non-streaming upstream call lets us unwrap the native response reliably;
-    // stream callers receive that response as a valid Gemini SSE data event.
-    let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
-    let upstream_request = state
-        .client
-        .post(upstream_url)
-        .header("content-type", "application/json")
-        .header(
-            "authorization",
-            format!("Bearer {}", routed.token.access_token),
-        )
-        .body(serialized.clone());
-    let correlation_id = crate::request_log::correlation_id(headers);
-    let upstream = match state
-        .request_log
-        .send_upstream(&correlation_id, &state.client, upstream_request)
-        .await
-    {
-        Ok(response) => response,
-        Err(error) => {
-            state
-                .metrics
-                .record_request(Surface::OpenAIChat, 502, Some(&routed.account));
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                &format!("Gemini subscription upstream request failed: {error}"),
-            );
-        }
-    };
-    let status = StatusCode::from_u16(upstream.status().as_u16())
-        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-    let retry_after = retry_after_duration(upstream.headers());
-    let retry_header = upstream.headers().get("retry-after").cloned();
-    let response_body = match upstream.bytes().await {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                &format!("Gemini subscription upstream body read failed: {error}"),
-            );
-        }
-    };
-    state
-        .request_log
-        .record_upstream_body(&correlation_id, &response_body);
-    state
-        .metrics
-        .record_bytes(serialized.len() as u64, response_body.len() as u64);
-    state
-        .metrics
-        .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
-    if status == StatusCode::TOO_MANY_REQUESTS
-        && let Some(router) = state.account_router.as_ref()
-    {
-        router.report_failure_with_retry_after(
-            &routed.account,
-            "Gemini subscription upstream returned 429",
-            retry_after,
-        );
-    }
-    if !status.is_success() {
-        let mut response = Response::new(Body::from(response_body));
-        *response.status_mut() = status;
-        response.headers_mut().insert(
-            "content-type",
-            axum::http::HeaderValue::from_static("application/json"),
-        );
-        if let Some(value) = retry_header {
-            response.headers_mut().insert("retry-after", value);
-        }
-        return response;
-    }
-    let parsed: Value = match serde_json::from_slice(&response_body) {
-        Ok(parsed) => parsed,
-        Err(error) => {
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                &format!("failed to parse Gemini response: {error}"),
-            );
-        }
-    };
-    let native = parsed.get("response").cloned().unwrap_or(parsed);
-    if streaming {
-        let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
-        *response.status_mut() = StatusCode::OK;
-        response.headers_mut().insert(
-            "content-type",
-            axum::http::HeaderValue::from_static("text/event-stream"),
-        );
-        return response;
-    }
-    (StatusCode::OK, axum::Json(native)).into_response()
-}
-
 /// Project an `OpenAI` Responses request onto the Chat Completions shape.
 fn responses_to_chat(body: &Value) -> Value {
     let mut messages: Vec<Value> = Vec::new();
@@ -886,15 +639,15 @@ mod tests {
     #[test]
     fn parses_gemini_and_vertex_native_actions() {
         assert_eq!(
-            parse_native_target("models/gemini-2.5-pro:generateContent"),
+            native::parse_native_target("models/gemini-2.5-pro:generateContent"),
             Some(("gemini-2.5-pro".into(), false))
         );
         assert_eq!(
-            parse_native_target(
+            native::parse_native_target(
                 "projects/p/locations/us/publishers/google/models/gemini-2.5-flash:streamGenerateContent"
             ),
             Some(("gemini-2.5-flash".into(), true))
         );
-        assert!(parse_native_target("models/gemini-2.5-pro:countTokens").is_none());
+        assert!(native::parse_native_target("models/gemini-2.5-pro:countTokens").is_none());
     }
 }

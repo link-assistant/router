@@ -233,9 +233,7 @@ async fn run_server(
     let metrics = Arc::new(Metrics::default());
     let provider_store = ProviderStore::open(&config.data_dir, &config.token_secret)?;
 
-    let client = reqwest::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .build()?;
+    let client = link_assistant_router::upstream_client::build_upstream_client()?;
     let crater_provider =
         if config.upstream_provider == link_assistant_router::config::UpstreamProvider::Crater {
             Some(Arc::new(ForgeFedTaskProvider::new(

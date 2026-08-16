@@ -59,14 +59,28 @@ Two consequences of the documented rule above:
 | `POST /api/gemini/v1beta/models/{model}:streamGenerateContent` | SSE generation |
 | `POST /api/vertex/v1/projects/.../models/{model}:generateContent` | Vertex-style generation |
 
-These native namespaces require `UPSTREAM_PROVIDER=gemini`: they are additive
-client-facing protocol aliases, not cross-provider fallback rules.
+These native namespaces work under the default `UPSTREAM_PROVIDER=auto`: they
+list the union of every connected subscription and route each model to its
+owning vendor, exactly like `/v1/models` and `/v1/chat/completions`. A Codex or
+Claude subscription therefore serves Gemini CLI without a Gemini credential;
+pinning `UPSTREAM_PROVIDER=gemini` narrows the namespace to Gemini models only.
+
+Two provider gaps are handled here explicitly:
+
+- `generationConfig.maxOutputTokens` is honoured on every model. Gemini and
+  Claude enforce the cap upstream; the ChatGPT backend rejects the field, so
+  the router strips it and enforces the budget itself, returning the truncated
+  answer with `finishReason: "MAX_TOKENS"`. Because the router has no upstream
+  tokenizer, that local bound is an estimate (see the README's output-limit
+  note), not exact token accounting;
+- a request whose only tools are server-side (`web_search`) together with a
+  forced tool choice is refused with `INVALID_ARGUMENT`, because the backend
+  executes those tools itself and can never emit the demanded function call.
 
 ## Setup
 
 ```bash
 gemini                                  # log in once; writes ~/.gemini/oauth_creds.json
-export UPSTREAM_PROVIDER=gemini
 export TOKEN_SECRET=$(openssl rand -hex 32)
 link-assistant-router serve
 link-assistant-router doctor            # confirms the credential file and token validity
@@ -90,7 +104,7 @@ curl -s "http://127.0.0.1:8080/api/gemini/v1beta/models/gemini-2.5-pro:generateC
 
 ## Using a Gemini subscription from other CLIs
 
-With `UPSTREAM_PROVIDER=gemini` the router also serves
+The router also serves
 `/v1/chat/completions`, `/v1/responses` and — via the bridge —
 `/v1/messages`, so Claude Code, Codex CLI and opencode can all run on a Gemini
 subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
@@ -101,4 +115,7 @@ subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
 | --- | --- |
 | CLI rejects the base URL | non-localhost addresses must be HTTPS |
 | Base URL appears ignored | you are on the OAuth login path; the override only applies to API-key auth |
-| `404` on a Gemini namespace | the router is not running with `UPSTREAM_PROVIDER=gemini` |
+| `404` on a Gemini namespace | the route is disabled, or the model is not owned by any connected subscription |
+| Empty `models` list | no subscription is healthy; run `link-assistant-router doctor` |
+| `INVALID_ARGUMENT` about server-side tools | a forced tool choice offers only `web_search`; use `AUTO` or add a client function |
+| Answer ends early with `finishReason: "MAX_TOKENS"` | `generationConfig.maxOutputTokens` was reached; raise or drop the cap |

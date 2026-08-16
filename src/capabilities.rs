@@ -126,6 +126,50 @@ pub fn unsupported_server_tool_type(
     })
 }
 
+/// Whether a request forces a tool call it can never satisfy.
+///
+/// `tool_choice: any`/`required` demands a *function* call, but server-side
+/// tools such as `web_search` are executed by the backend and never surface as
+/// one. A request carrying only server tools therefore leaves the upstream with
+/// no way to comply, which is how the reported request stalled instead of
+/// answering.
+#[must_use]
+pub fn unsatisfiable_forced_tool_choice(tools: Option<&Value>, forced: bool) -> Option<String> {
+    if !forced {
+        return None;
+    }
+    let tools = tools?.as_array()?;
+    if tools.is_empty() {
+        return None;
+    }
+    let has_function = tools.iter().any(|tool| {
+        let kind = tool.get("type").and_then(Value::as_str).unwrap_or("custom");
+        !(kind.starts_with("web_search") || kind.starts_with("web_fetch"))
+    });
+    (!has_function).then(|| {
+        "tool_choice requires a tool call, but the request offers only server-side tools that the \
+         provider executes itself; use tool_choice auto or add a client tool"
+            .to_string()
+    })
+}
+
+/// Return why a server-tool request cannot be honoured as written.
+///
+/// Accepts either dialect's spelling of a forced tool call: Anthropic's
+/// `{"type": "any"}` and `OpenAI`'s `"required"`.
+#[must_use]
+pub fn unhonourable_server_tool_request(
+    tools: Option<&Value>,
+    tool_choice: Option<&Value>,
+) -> Option<String> {
+    let forced = match tool_choice {
+        Some(Value::String(mode)) => mode == "required",
+        Some(choice) => choice.get("type").and_then(Value::as_str) == Some("any"),
+        None => false,
+    };
+    unsatisfiable_forced_tool_choice(tools, forced)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -159,5 +203,45 @@ mod tests {
         assert!(claude_uses_adaptive_thinking(Some("opus-4-7")));
         assert!(!claude_uses_adaptive_thinking(Some("claude-sonnet-4-5")));
         assert_eq!(claude.web_fetch, Capability::Native);
+    }
+
+    #[test]
+    fn both_dialects_spell_a_forced_tool_call() {
+        let server_only = serde_json::json!([
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 1}
+        ]);
+        assert!(
+            unhonourable_server_tool_request(
+                Some(&server_only),
+                Some(&serde_json::json!({"type": "any"}))
+            )
+            .is_some()
+        );
+        assert!(
+            unhonourable_server_tool_request(
+                Some(&server_only),
+                Some(&serde_json::json!("required"))
+            )
+            .is_some()
+        );
+        assert!(
+            unhonourable_server_tool_request(Some(&server_only), Some(&serde_json::json!("auto")))
+                .is_none()
+        );
+        assert!(unhonourable_server_tool_request(Some(&server_only), None).is_none());
+    }
+
+    #[test]
+    fn forcing_a_tool_call_with_only_server_tools_is_refused() {
+        let server_only =
+            serde_json::json!([{"type": "web_search_20250305", "name": "web_search"}]);
+        assert!(unsatisfiable_forced_tool_choice(Some(&server_only), true).is_some());
+        assert!(unsatisfiable_forced_tool_choice(Some(&server_only), false).is_none());
+        let with_client_tool = serde_json::json!([
+            {"type": "web_search"},
+            {"name": "lookup", "input_schema": {"type": "object"}}
+        ]);
+        assert!(unsatisfiable_forced_tool_choice(Some(&with_client_tool), true).is_none());
+        assert!(unsatisfiable_forced_tool_choice(None, true).is_none());
     }
 }
