@@ -708,6 +708,15 @@ pub enum ClientOp {
     Remove {
         #[arg(value_enum)]
         client: ClientKind,
+        /// Also revoke a token that was supplied by the operator instead of
+        /// minted by `clients setup`. Off by default because the same token
+        /// is often shared with other machines.
+        #[arg(long)]
+        revoke_supplied: bool,
+        /// Delete the local settings even when the managed token could not be
+        /// revoked. The credential stays usable until it expires.
+        #[arg(long)]
+        force: bool,
     },
     /// Make a real request using the client's configured URL and token variable.
     #[command(override_usage = "link-assistant-router clients doctor [OPTIONS] <CLIENT>")]

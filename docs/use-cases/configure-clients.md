@@ -26,6 +26,15 @@ link-assistant-router clients doctor codex
 link-assistant-router clients remove codex
 ```
 
+`remove` revokes the token before it deletes the local credential file, so a
+copy of that file stops working immediately. When setup minted the token, the
+command prints `revoked managed token <ID>`. When revocation fails, nothing is
+deleted, the command exits nonzero, and it prints how to recover; pass `--force`
+to delete the local settings anyway and leave the token valid until it expires.
+Tokens the operator supplied with `--token`, `--token-stdin`, or the environment
+are left alone unless `--revoke-supplied` is given, because the same token is
+often shared with other machines.
+
 An existing router token can also be supplied without ever putting it in argv,
 where shell history and process listings would expose it:
 

@@ -74,4 +74,7 @@ link-assistant-router clients remove agent
 `doctor` discovers the live catalog and sends a minimal request with an
 advertised model using the configured URL and token variable.
 `remove` restores a pre-existing `link-assistant` provider when setup replaced
-one; otherwise it removes only the managed provider.
+one; otherwise it removes only the managed provider. It also revokes the token
+that setup minted before deleting the credential file, and refuses to delete
+anything if that revocation fails (`--force` overrides, `--revoke-supplied`
+extends this to operator-supplied tokens).

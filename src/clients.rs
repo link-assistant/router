@@ -15,11 +15,13 @@ use serde_json::{Value, json};
 use toml_edit::{DocumentMut, Item, Table, value};
 
 mod catalog;
+pub mod credentials;
 mod files;
 mod json_config;
 
 pub(crate) use catalog::RouterModel;
 use catalog::doctor_model;
+pub use credentials::{ManagedCredential, TokenSource};
 use files::{
     atomic_write, read_claude_marker, read_codex_marker, read_environment_value, read_or_empty,
     unchanged, write_claude_marker, write_codex_marker, write_if_changed,
@@ -425,6 +427,31 @@ impl ClientManager {
             .join(format!("{client}.env"))
     }
 
+    /// Where the secret-free record of the managed credential is kept.
+    #[must_use]
+    pub fn credential_metadata_path(&self, client: ClientKind) -> PathBuf {
+        self.config_home
+            .join("link-assistant-router/clients")
+            .join(format!("{client}.credential.json"))
+    }
+
+    /// Read the credential record written by the last `clients setup`.
+    pub fn credential_metadata(
+        &self,
+        client: ClientKind,
+    ) -> Result<Option<ManagedCredential>, ClientError> {
+        credentials::read(&self.credential_metadata_path(client))
+    }
+
+    /// Record which token the managed environment file now holds.
+    pub fn write_credential_metadata(
+        &self,
+        client: ClientKind,
+        credential: &ManagedCredential,
+    ) -> Result<(), ClientError> {
+        credentials::write(&self.credential_metadata_path(client), credential)
+    }
+
     /// Ownership marker used to make a managed configuration reversible.
     #[must_use]
     pub fn ownership_marker_path(&self, client: ClientKind) -> Option<PathBuf> {
@@ -515,6 +542,9 @@ impl ClientManager {
                 result.changed = true;
             }
         }
+        // The credential record only describes a secret that no longer exists
+        // locally, so it goes last and never outlives the environment file.
+        credentials::remove(&self.credential_metadata_path(client))?;
         Ok(result)
     }
 
