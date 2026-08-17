@@ -81,7 +81,8 @@ pub struct TokenRecord {
     /// (issue #195). Admission therefore reserves the request's declared output
     /// budget up front and counts it against the cap; settlement swaps the
     /// reservation for the real figure. Requests still in flight after a crash
-    /// leave a stale reservation, which [`release_stale_reservations`] clears.
+    /// leave a stale reservation, which [`TokenStore::release_stale_reservations`]
+    /// clears.
     #[serde(default)]
     pub reserved_tokens: u64,
     /// Optional fixed-window request rate limit. `None` means unlimited.
