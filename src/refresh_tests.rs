@@ -815,3 +815,151 @@ fn refreshed_tokens_are_isolated_by_account() {
         "access-b"
     );
 }
+
+/// The upstream-status classifier is the sibling of the refresh classifier and
+/// must agree with it: only 401/403 proves a credential is bad, and a 429 --
+/// the status behind issue #203 -- says nothing about the credential at all.
+#[test]
+fn upstream_status_marks_only_authentication_failures_as_rejected() {
+    for status in [401, 403] {
+        let cache = TokenCache::new();
+        cache.record_status(SubscriptionProvider::Claude, status);
+        assert_eq!(
+            cache.evidence(SubscriptionProvider::Claude),
+            Some(CredentialEvidence::Rejected),
+            "{status} must reject"
+        );
+    }
+
+    for status in [200, 201, 299] {
+        let cache = TokenCache::new();
+        cache.record_status(SubscriptionProvider::Claude, status);
+        assert_eq!(
+            cache.evidence(SubscriptionProvider::Claude),
+            Some(CredentialEvidence::Working),
+            "{status} must prove the credential works"
+        );
+    }
+
+    // Everything else describes the request, not the credential.
+    for status in [400, 404, 429, 500, 502, 503] {
+        let cache = TokenCache::new();
+        cache.record_status(SubscriptionProvider::Claude, status);
+        assert_eq!(
+            cache.evidence(SubscriptionProvider::Claude),
+            None,
+            "{status} must leave the credential verdict untouched"
+        );
+    }
+}
+
+/// Every failure variant renders a distinct, non-empty message; `doctor` and
+/// the logs surface these verbatim.
+#[test]
+fn every_refresh_error_variant_renders_a_message() {
+    let rendered: Vec<String> = [
+        RefreshError::Unsupported,
+        RefreshError::NoRefreshToken,
+        RefreshError::Request("connection refused".into()),
+        RefreshError::Parse("expected value".into()),
+        RefreshError::Status(500, "boom".into(), None),
+    ]
+    .iter()
+    .map(ToString::to_string)
+    .collect();
+
+    for message in &rendered {
+        assert!(!message.is_empty());
+        // None of these are terminal, so none may advise re-authentication.
+        assert!(!message.contains("re-authenticate"), "{message}");
+    }
+    assert!(rendered[0].contains("does not support"), "{}", rendered[0]);
+    assert!(rendered[1].contains("no refresh token"), "{}", rendered[1]);
+    assert!(
+        rendered[2].contains("connection refused"),
+        "{}",
+        rendered[2]
+    );
+    assert!(rendered[3].contains("parse error"), "{}", rendered[3]);
+    assert!(rendered[4].contains("500"), "{}", rendered[4]);
+}
+
+/// The form-encoded providers send the same grant over
+/// `application/x-www-form-urlencoded`, and percent-encode token bytes that
+/// would otherwise break the body.
+#[tokio::test]
+async fn qwen_refresh_sends_a_form_encoded_grant() {
+    let (url, server) = stub_token_endpoint(
+        r#"{"access_token":"qwen-new","refresh_token":"qwen-rt-new","expires_in":3600}"#,
+    )
+    .await;
+    // A refresh token containing reserved bytes must survive transit.
+    let expired = SubscriptionToken {
+        access_token: "expired".into(),
+        refresh_token: Some("a+b/c=d".into()),
+        expires_at_ms: Some(1),
+        account_id: None,
+        resource_url: None,
+    };
+    let fresh = refresh_at(
+        &reqwest::Client::new(),
+        &url,
+        SubscriptionProvider::Qwen,
+        &expired,
+        10_000,
+    )
+    .await
+    .expect("qwen refresh should succeed");
+
+    assert_eq!(fresh.access_token, "qwen-new");
+    assert_eq!(fresh.refresh_token.as_deref(), Some("qwen-rt-new"));
+
+    let (head, body) = server.await.unwrap();
+    assert!(
+        head.to_ascii_lowercase()
+            .contains("content-type: application/x-www-form-urlencoded"),
+        "{head}"
+    );
+    assert!(body.contains("grant_type=refresh_token"), "{body}");
+    assert!(
+        body.contains("refresh_token=a%2Bb%2Fc%3Dd"),
+        "reserved bytes must be percent-encoded: {body}"
+    );
+}
+
+/// `refresh` is the public wrapper used by callers that do not go through the
+/// cache; it resolves the provider's own token URL.
+#[tokio::test]
+async fn the_public_refresh_wrapper_reports_a_missing_refresh_token() {
+    let without = SubscriptionToken {
+        access_token: "expired".into(),
+        refresh_token: None,
+        expires_at_ms: Some(1),
+        account_id: None,
+        resource_url: None,
+    };
+    let error = refresh(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Claude,
+        &without,
+        10_000,
+    )
+    .await
+    .expect_err("a token with no refresh token cannot be refreshed");
+    assert!(matches!(error, RefreshError::NoRefreshToken));
+    // An empty string is treated the same as absent.
+    let blank = SubscriptionToken {
+        refresh_token: Some(String::new()),
+        ..without
+    };
+    assert!(matches!(
+        refresh(
+            &reqwest::Client::new(),
+            SubscriptionProvider::Claude,
+            &blank,
+            10_000,
+        )
+        .await,
+        Err(RefreshError::NoRefreshToken)
+    ));
+}
