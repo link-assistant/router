@@ -1205,8 +1205,22 @@ curl -s -X POST http://localhost:8080/api/tokens \
 - Omitting `--max-requests` / `max_requests` leaves the token **unlimited**.
 - Omitting `--max-tokens` / `max_tokens` leaves actual token spend unlimited.
   Counts come from vendor response `usage` fields and are persisted across
-  restarts; the response that crosses a cap completes, and the next request is
-  rejected.
+  restarts.
+
+  When a cap is set the router **reserves** each request's declared output
+  budget before dispatching it, so a single response cannot push the persisted
+  total past the cap. A request is admitted only while
+  `used + reserved + this request's budget <= max_tokens`; one that cannot fit
+  is rejected up front with `429` rather than truncated mid-answer. The
+  reservation is released and replaced by the real figure once the response
+  completes, and is also released when a request fails, is cancelled, or
+  reports no usage. Because reserving happens inside the same atomic
+  read-modify-write that counts the request, concurrent requests cannot
+  overshoot together. Actual usage is always recorded in full, so a provider
+  that reports more than the caller declared (hidden reasoning tokens, for
+  example) can still land above the cap by that provider-side excess — bounded
+  by one request's surplus rather than unbounded. `tokens list` shows reserved
+  alongside actual spend.
 - Omitting `--rate-limit-per-minute` / `rate_limit_per_minute` disables the
   per-token one-minute request window.
 - Usage is counted per forwarded request and persisted in the token store, so

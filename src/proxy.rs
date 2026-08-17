@@ -343,18 +343,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         Err(response) => return *response,
     };
 
-    // Enforce the per-token request budget (max_requests). This is what lets
-    // an operator cap how much of the shared subscription a single task can
-    // consume. Tokens issued without a cap are always permitted.
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
-        state
-            .logger
-            .debug(|| format!("Token budget check failed: {e}"));
-        return crate::token_http::budget_error_response(&e);
-    }
-
     // Read the body before account selection so the router gets a copy of
-    // stable request metadata and can preserve conversation affinity.
+    // stable request metadata and can preserve conversation affinity. It is
+    // also what the spend reservation below is computed from.
     let mut body_bytes =
         match axum::body::to_bytes(req.into_body(), state.max_proxy_request_bytes).await {
             Ok(bytes) => bytes,
@@ -373,6 +364,28 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
         Ok(body) => body,
         Err(error) => return malformed_json_response(&error.to_string()),
     };
+
+    // Enforce the per-token budgets (max_requests, rate limit, and the token
+    // spend cap). The spend cap reserves this request's declared output budget
+    // so one response cannot push the persisted total past it (issue #195).
+    let reservation = crate::token_reservation::estimate(&routing_body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reservation)
+    {
+        state
+            .logger
+            .debug(|| format!("Token budget check failed: {e}"));
+        return crate::token_http::budget_error_response(&e);
+    }
+    // Every early return from here on must release the reservation, so bind it
+    // to a guard that settles on drop.
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reservation,
+    );
+
     crate::audit::record_authorised_request(
         &state,
         &claims,
@@ -481,9 +494,11 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
 
     // Stream the response body
     let response_log = std::sync::Arc::clone(&state.request_log);
+    // On success the reservation follows the response body and is settled with
+    // the real usage; otherwise dropping the guard releases it immediately.
     let mut usage = status
         .is_success()
-        .then(|| crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub));
+        .then(|| reservation.take().into_tracker());
     let stream = upstream_resp.bytes_stream().map(move |chunk| {
         if let Ok(bytes) = &chunk {
             response_log.record_upstream_body(&correlation_id, bytes);
@@ -665,9 +680,18 @@ async fn forward_openai(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
@@ -761,8 +785,7 @@ async fn forward_openai(
         let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model)
             .with_include_usage(include_usage);
         let response_log = std::sync::Arc::clone(&state.request_log);
-        let mut usage =
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        let mut usage = reservation.take().into_tracker();
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Ok(bytes) => {
                 response_log.record_upstream_body(&correlation_id, &bytes);
@@ -839,13 +862,9 @@ async fn forward_openai(
             );
         }
     };
-    state
-        .token_manager
-        .record_token_usage(
-            &claims.sub,
-            crate::usage::token_count(&anthropic).unwrap_or(0),
-        )
-        .unwrap_or_else(|error| tracing::warn!("failed to persist token usage: {error}"));
+    reservation
+        .take()
+        .settle(crate::usage::token_count(&anthropic).unwrap_or(0));
 
     let translated = match shape {
         OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, &served_model),

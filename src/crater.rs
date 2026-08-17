@@ -522,9 +522,18 @@ pub async fn forward_chat_completions(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(
         state,
         &claims,
@@ -550,18 +559,15 @@ pub async fn forward_chat_completions(
             provider,
             request,
             Arc::clone(&state.metrics),
-            state.token_manager.clone(),
-            claims.sub,
+            reservation.take(),
         );
     }
 
     match provider.complete_task(request).await {
         Ok(result) => {
-            if let Some(tokens) = crate::usage::token_count(&result.raw)
-                && let Err(error) = state.token_manager.record_token_usage(&claims.sub, tokens)
-            {
-                tracing::warn!("failed to persist token usage: {error}");
-            }
+            reservation
+                .take()
+                .settle(crate::usage::token_count(&result.raw).unwrap_or(0));
             state
                 .metrics
                 .record_request(crate::metrics::Surface::OpenAIChat, 200, None);
@@ -586,19 +592,14 @@ fn stream_chat_completion(
     provider: Arc<dyn TaskProvider>,
     request: CraterTaskRequest,
     metrics: Arc<crate::metrics::Metrics>,
-    token_manager: crate::token::TokenManager,
-    token_id: String,
+    reservation: crate::usage::ReservationGuard,
 ) -> Response {
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Bytes, std::io::Error>>(4);
     tokio::spawn(async move {
         let model = request.model.clone();
         let frames = match provider.complete_task(request).await {
             Ok(result) => {
-                if let Some(tokens) = crate::usage::token_count(&result.raw)
-                    && let Err(error) = token_manager.record_token_usage(&token_id, tokens)
-                {
-                    tracing::warn!("failed to persist token usage: {error}");
-                }
+                reservation.settle(crate::usage::token_count(&result.raw).unwrap_or(0));
                 metrics.record_request(crate::metrics::Surface::OpenAIChat, 200, None);
                 chat_completion_stream_frames(&model, &result.content)
             }

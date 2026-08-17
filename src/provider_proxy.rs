@@ -144,9 +144,18 @@ pub async fn forward_openai_compatible(
     // Per-token request budgets apply to every upstream, not just the
     // subscription ones, so a task token cannot escape its cap by being
     // pointed at an OpenAI-compatible gateway.
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let provider = match resolve_openai_compatible_provider(state) {
@@ -219,9 +228,9 @@ pub async fn forward_openai_compatible(
 
     if stream_requested || is_event_stream(&content_type) {
         let response_log = std::sync::Arc::clone(&state.request_log);
-        let mut usage = status.is_success().then(|| {
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
-        });
+        let mut usage = status
+            .is_success()
+            .then(|| reservation.take().into_tracker());
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             if let Ok(bytes) = &chunk {
                 response_log.record_upstream_body(&correlation_id, bytes);
@@ -255,8 +264,7 @@ pub async fn forward_openai_compatible(
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
     if status.is_success() {
-        let mut usage =
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
     }
 

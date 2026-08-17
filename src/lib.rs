@@ -69,6 +69,7 @@ pub mod telegram;
 pub mod token;
 pub mod token_admin;
 mod token_http;
+pub mod token_reservation;
 pub mod upstream_client;
 pub mod usage;
 pub mod vk;

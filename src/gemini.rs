@@ -227,7 +227,9 @@ enum ShapeIn {
 struct RoutedGeminiToken {
     token: crate::subscription::SubscriptionToken,
     account: String,
-    token_id: String,
+    /// Spend reserved at admission, carrying the token id it was taken
+    /// against; released when the response settles.
+    reservation: crate::usage::ReservationGuard,
 }
 
 async fn route_gemini_token(
@@ -238,10 +240,16 @@ async fn route_gemini_token(
     path: &str,
 ) -> Result<RoutedGeminiToken, Response> {
     let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+    let reserved = crate::token_reservation::estimate(body).total();
     state
         .token_manager
-        .enforce_request_budget(&claims.sub)
+        .enforce_request_budget_reserving(&claims.sub, reserved)
         .map_err(|error| crate::token_http::budget_error_response(&error))?;
+    let reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
     let pinned_account = state
         .token_manager
@@ -298,7 +306,7 @@ async fn route_gemini_token(
     Ok(RoutedGeminiToken {
         token,
         account: selected.name,
-        token_id: claims.sub,
+        reservation,
     })
 }
 
@@ -319,7 +327,8 @@ async fn forward(
         };
     let sub_token = routed.token;
     let selected_account = Some(routed.account);
-    let token_id = routed.token_id;
+    // The reservation carries the token id; usage settles through it.
+    let mut reservation = routed.reservation;
 
     // Normalize Responses input into the Chat `messages` shape so a single
     // translator handles both surfaces.
@@ -433,7 +442,7 @@ async fn forward(
         );
         return response;
     }
-    let mut usage = crate::usage::UsageTracker::new(state.token_manager.clone(), token_id);
+    let mut usage = reservation.take().into_tracker();
     usage.feed(&upstream_body);
 
     let gemini_json: Value = match serde_json::from_slice(&upstream_body) {

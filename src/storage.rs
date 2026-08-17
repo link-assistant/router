@@ -72,6 +72,18 @@ pub struct TokenRecord {
     /// Total input and output tokens reported for this credential.
     #[serde(default)]
     pub used_tokens: u64,
+    /// Tokens reserved by requests that have been admitted but have not yet
+    /// reported their actual usage.
+    ///
+    /// A hard `max_tokens` cap cannot be enforced from `used_tokens` alone:
+    /// usage is only known *after* a response completes, so a single large
+    /// answer could push the persisted total arbitrarily far past the cap
+    /// (issue #195). Admission therefore reserves the request's declared output
+    /// budget up front and counts it against the cap; settlement swaps the
+    /// reservation for the real figure. Requests still in flight after a crash
+    /// leave a stale reservation, which [`release_stale_reservations`] clears.
+    #[serde(default)]
+    pub reserved_tokens: u64,
     /// Optional fixed-window request rate limit. `None` means unlimited.
     #[serde(default)]
     pub rate_limit_per_minute: Option<u64>,
@@ -172,10 +184,24 @@ pub trait TokenStore: Send + Sync {
 
     /// Atomically enforce every pre-request limit and record an admitted call.
     fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+        self.try_admit_request_reserving(id, now, 0)
+    }
+
+    /// Atomically enforce every pre-request limit, reserving `reserve` tokens of
+    /// spend budget for the admitted call.
+    ///
+    /// Every admitted request must later be settled with
+    /// [`TokenStore::settle_token_usage`] so the reservation is released.
+    fn try_admit_request_reserving(
+        &self,
+        id: &str,
+        now: i64,
+        reserve: u64,
+    ) -> Result<RequestAdmission, StorageError> {
         let Some(mut record) = self.get(id)? else {
             return Ok(RequestAdmission::Admitted);
         };
-        let admission = admit_request(Some(&mut record), now);
+        let admission = admit_request_reserving(Some(&mut record), now, reserve);
         if admission == RequestAdmission::Admitted {
             self.put(record)?;
         }
@@ -189,6 +215,32 @@ pub trait TokenStore: Send + Sync {
             self.put(record)?;
         }
         Ok(())
+    }
+
+    /// Release `reserved` tokens of budget and record `actual` usage in one step.
+    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
+        if let Some(mut record) = self.get(id)? {
+            settle_token_usage(Some(&mut record), reserved, actual);
+            self.put(record)?;
+        }
+        Ok(())
+    }
+
+    /// Clear reservations left behind by requests that never settled.
+    ///
+    /// A process that dies mid-request leaves its reservation pinned against the
+    /// cap forever, which would eventually reject every subsequent request. The
+    /// router calls this once at startup, when by definition nothing is in flight.
+    fn release_stale_reservations(&self) -> Result<usize, StorageError> {
+        let mut cleared = 0;
+        for mut record in self.list()? {
+            if record.reserved_tokens > 0 {
+                record.reserved_tokens = 0;
+                self.put(record)?;
+                cleared += 1;
+            }
+        }
+        Ok(cleared)
     }
 }
 
@@ -241,14 +293,25 @@ impl TokenStore for MemoryTokenStore {
         Ok(consume_request(guard.get_mut(id)))
     }
 
-    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
+    fn try_admit_request_reserving(
+        &self,
+        id: &str,
+        now: i64,
+        reserve: u64,
+    ) -> Result<RequestAdmission, StorageError> {
         let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-        Ok(admit_request(guard.get_mut(id), now))
+        Ok(admit_request_reserving(guard.get_mut(id), now, reserve))
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
         let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
         add_token_usage(guard.get_mut(id), tokens);
+        Ok(())
+    }
+
+    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        settle_token_usage(guard.get_mut(id), reserved, actual);
         Ok(())
     }
 }
@@ -381,12 +444,21 @@ impl TokenStore for TextTokenStore {
         self.mutate(|records| consume_request(records.get_mut(id)))
     }
 
-    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
-        self.mutate(|records| admit_request(records.get_mut(id), now))
+    fn try_admit_request_reserving(
+        &self,
+        id: &str,
+        now: i64,
+        reserve: u64,
+    ) -> Result<RequestAdmission, StorageError> {
+        self.mutate(|records| admit_request_reserving(records.get_mut(id), now, reserve))
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
         self.mutate(|records| add_token_usage(records.get_mut(id), tokens))
+    }
+
+    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
+        self.mutate(|records| settle_token_usage(records.get_mut(id), reserved, actual))
     }
 }
 
@@ -515,12 +587,21 @@ impl TokenStore for BinaryTokenStore {
         self.mutate(|records| consume_request(records.get_mut(id)))
     }
 
-    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
-        self.mutate(|records| admit_request(records.get_mut(id), now))
+    fn try_admit_request_reserving(
+        &self,
+        id: &str,
+        now: i64,
+        reserve: u64,
+    ) -> Result<RequestAdmission, StorageError> {
+        self.mutate(|records| admit_request_reserving(records.get_mut(id), now, reserve))
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
         self.mutate(|records| add_token_usage(records.get_mut(id), tokens))
+    }
+
+    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
+        self.mutate(|records| settle_token_usage(records.get_mut(id), reserved, actual))
     }
 }
 
@@ -538,7 +619,17 @@ fn consume_request(record: Option<&mut TokenRecord>) -> bool {
     true
 }
 
-fn admit_request(record: Option<&mut TokenRecord>, now: i64) -> RequestAdmission {
+/// Apply every pre-request control, reserving `reserve` tokens against the spend cap.
+///
+/// The spend check compares `used + reserved + reserve` against `max_tokens`, so a
+/// request is only admitted when its own declared output budget still fits. Reserving
+/// inside the same locked read-modify-write as the counters is what makes concurrent
+/// admissions unable to overshoot together.
+fn admit_request_reserving(
+    record: Option<&mut TokenRecord>,
+    now: i64,
+    reserve: u64,
+) -> RequestAdmission {
     let Some(record) = record else {
         return RequestAdmission::Admitted;
     };
@@ -548,11 +639,13 @@ fn admit_request(record: Option<&mut TokenRecord>, now: i64) -> RequestAdmission
     {
         return RequestAdmission::RequestLimitExceeded;
     }
-    if record
-        .max_tokens
-        .is_some_and(|max| record.used_tokens >= max)
-    {
-        return RequestAdmission::TokenLimitExceeded;
+    if let Some(max) = record.max_tokens {
+        let committed = record.used_tokens.saturating_add(record.reserved_tokens);
+        // `>= max` (not `>`) keeps an exhausted budget rejecting even when the
+        // request declares no output budget of its own.
+        if committed >= max || committed.saturating_add(reserve) > max {
+            return RequestAdmission::TokenLimitExceeded;
+        }
     }
     if let Some(max) = record.rate_limit_per_minute {
         if now.saturating_sub(record.rate_window_started_at) >= 60 {
@@ -565,12 +658,26 @@ fn admit_request(record: Option<&mut TokenRecord>, now: i64) -> RequestAdmission
         record.rate_window_requests = record.rate_window_requests.saturating_add(1);
     }
     record.used_requests = record.used_requests.saturating_add(1);
+    record.reserved_tokens = record.reserved_tokens.saturating_add(reserve);
     RequestAdmission::Admitted
 }
 
 const fn add_token_usage(record: Option<&mut TokenRecord>, tokens: u64) {
     if let Some(record) = record {
         record.used_tokens = record.used_tokens.saturating_add(tokens);
+    }
+}
+
+/// Replace a request's reservation with the usage the upstream actually reported.
+///
+/// `reserved` is released whether or not the request produced usage, so cancelled
+/// requests, upstream errors, and responses with no usage block all free their budget.
+/// `actual` is recorded in full even when it exceeds the reservation: the persisted
+/// total must stay truthful about what was really spent.
+const fn settle_token_usage(record: Option<&mut TokenRecord>, reserved: u64, actual: u64) {
+    if let Some(record) = record {
+        record.reserved_tokens = record.reserved_tokens.saturating_sub(reserved);
+        record.used_tokens = record.used_tokens.saturating_add(actual);
     }
 }
 
@@ -622,17 +729,27 @@ impl TokenStore for DualTokenStore {
         self.secondary.try_consume_request(id)
     }
 
-    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
-        let admission = self.primary.try_admit_request(id, now)?;
+    fn try_admit_request_reserving(
+        &self,
+        id: &str,
+        now: i64,
+        reserve: u64,
+    ) -> Result<RequestAdmission, StorageError> {
+        let admission = self.primary.try_admit_request_reserving(id, now, reserve)?;
         if admission != RequestAdmission::Admitted {
             return Ok(admission);
         }
-        self.secondary.try_admit_request(id, now)
+        self.secondary.try_admit_request_reserving(id, now, reserve)
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
         self.primary.record_token_usage(id, tokens)?;
         self.secondary.record_token_usage(id, tokens)
+    }
+
+    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
+        self.primary.settle_token_usage(id, reserved, actual)?;
+        self.secondary.settle_token_usage(id, reserved, actual)
     }
 }
 
@@ -720,6 +837,7 @@ fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
     current.revoked |= other.revoked;
     current.used_requests = current.used_requests.max(other.used_requests);
     current.used_tokens = current.used_tokens.max(other.used_tokens);
+    current.reserved_tokens = current.reserved_tokens.max(other.reserved_tokens);
     if other.rate_window_started_at > current.rate_window_started_at {
         current.rate_window_started_at = other.rate_window_started_at;
         current.rate_window_requests = other.rate_window_requests;
@@ -751,12 +869,21 @@ impl TokenStore for DurableDualTokenStore {
         self.with_records(|records| consume_request(records.get_mut(id)))
     }
 
-    fn try_admit_request(&self, id: &str, now: i64) -> Result<RequestAdmission, StorageError> {
-        self.with_records(|records| admit_request(records.get_mut(id), now))
+    fn try_admit_request_reserving(
+        &self,
+        id: &str,
+        now: i64,
+        reserve: u64,
+    ) -> Result<RequestAdmission, StorageError> {
+        self.with_records(|records| admit_request_reserving(records.get_mut(id), now, reserve))
     }
 
     fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
         self.with_records(|records| add_token_usage(records.get_mut(id), tokens))
+    }
+
+    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
+        self.with_records(|records| settle_token_usage(records.get_mut(id), reserved, actual))
     }
 }
 

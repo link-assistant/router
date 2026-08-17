@@ -129,9 +129,18 @@ pub(crate) async fn forward_openai(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let body = with_default_model(body, &gonka.model);
@@ -211,8 +220,7 @@ pub(crate) async fn forward_openai(
         .record_bytes(bytes_sent, upstream_body.len() as u64);
     state.metrics.record_request(surface, status.as_u16(), None);
     if status.is_success() {
-        let mut usage =
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
     }
 

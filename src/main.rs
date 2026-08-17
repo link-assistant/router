@@ -228,6 +228,14 @@ async fn run_server(
     }
 
     let token_manager = TokenManager::with_store(&config.token_secret, store);
+    // Requests in flight when the previous process stopped never settled their
+    // spend reservations. Nothing is in flight yet, so any reservation still on
+    // disk is stale and would otherwise pin budget against the cap forever.
+    match token_manager.release_stale_reservations() {
+        Ok(0) => {}
+        Ok(cleared) => tracing::info!("released {cleared} stale token spend reservation(s)"),
+        Err(error) => tracing::warn!("failed to release stale token reservations: {error}"),
+    }
     announce_admin_access(&config, &token_manager);
     let oauth_provider = OAuthProvider::new(&config.claude_code_home);
     let metrics = Arc::new(Metrics::default());
@@ -491,13 +499,14 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
         TokenOp::List => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
-                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<8}  {:<6}  label",
+                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {:<6}  label",
                     "id",
                     "issued_at",
                     "expires_at",
                     "revoked",
                     "requests",
                     "tokens",
+                    "reserved",
                     "rpm",
                     "scope"
                 );
@@ -519,8 +528,16 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                         .rate_limit_per_minute
                         .map_or_else(|| "-".to_string(), |limit| limit.to_string());
                     println!(
-                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<8}  {scope:<6}  {}",
-                        r.id, r.issued_at, r.expires_at, r.revoked, requests, tokens, rpm, r.label
+                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {scope:<6}  {}",
+                        r.id,
+                        r.issued_at,
+                        r.expires_at,
+                        r.revoked,
+                        requests,
+                        tokens,
+                        r.reserved_tokens,
+                        rpm,
+                        r.label
                     );
                 }
                 ExitCode::SUCCESS
