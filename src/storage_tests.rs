@@ -254,3 +254,105 @@ fn lino_codec_handles_special_chars() {
     assert_eq!(parsed.len(), 1);
     assert_eq!(parsed[0], rec);
 }
+
+/// Reservations are enforced inside the same locked read-modify-write that
+/// counts requests, so concurrent admissions cannot overshoot (issue #195).
+#[test]
+fn reservations_bound_concurrent_admissions() {
+    use std::sync::Arc;
+    use std::thread;
+
+    let store: Arc<dyn TokenStore> = Arc::new(MemoryTokenStore::new());
+    let mut record = sample_record("concurrent");
+    record.max_tokens = Some(100);
+    store.put(record).expect("put");
+
+    // Eight threads each try to reserve 40; only two can fit under 100.
+    let admitted = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let mut handles = Vec::new();
+    for _ in 0..8 {
+        let store = Arc::clone(&store);
+        let admitted = Arc::clone(&admitted);
+        handles.push(thread::spawn(move || {
+            if store
+                .try_admit_request_reserving("concurrent", 0, 40)
+                .expect("admit")
+                == RequestAdmission::Admitted
+            {
+                admitted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            }
+        }));
+    }
+    for handle in handles {
+        handle.join().expect("join");
+    }
+
+    assert_eq!(
+        admitted.load(std::sync::atomic::Ordering::SeqCst),
+        2,
+        "only the reservations that fit may be admitted"
+    );
+    let stored = store.get("concurrent").expect("get").expect("record");
+    assert_eq!(stored.reserved_tokens, 80);
+    assert!(stored.used_tokens + stored.reserved_tokens <= 100);
+}
+
+#[test]
+fn settlement_releases_the_reservation_and_records_real_usage() {
+    let store: Arc<dyn TokenStore> = Arc::new(MemoryTokenStore::new());
+    let mut record = sample_record("settle");
+    record.max_tokens = Some(1_000);
+    store.put(record).expect("put");
+
+    assert_eq!(
+        store.try_admit_request_reserving("settle", 0, 500).unwrap(),
+        RequestAdmission::Admitted
+    );
+    store
+        .settle_token_usage("settle", 500, 120)
+        .expect("settle");
+
+    let stored = store.get("settle").expect("get").expect("record");
+    assert_eq!(stored.reserved_tokens, 0);
+    assert_eq!(stored.used_tokens, 120);
+}
+
+#[test]
+fn stale_reservations_are_cleared_on_demand() {
+    let store: Arc<dyn TokenStore> = Arc::new(MemoryTokenStore::new());
+    let mut record = sample_record("stale");
+    record.max_tokens = Some(100);
+    store.put(record).expect("put");
+
+    store
+        .try_admit_request_reserving("stale", 0, 100)
+        .expect("admit");
+    // The budget is fully reserved, so nothing more fits.
+    assert_eq!(
+        store.try_admit_request_reserving("stale", 0, 1).unwrap(),
+        RequestAdmission::TokenLimitExceeded
+    );
+
+    assert_eq!(store.release_stale_reservations().expect("release"), 1);
+    assert_eq!(
+        store.try_admit_request_reserving("stale", 0, 100).unwrap(),
+        RequestAdmission::Admitted
+    );
+    // A second sweep has nothing left to clear.
+    store.release_stale_reservations().expect("release");
+}
+
+/// A request declaring no output budget is still refused once the cap is spent.
+#[test]
+fn an_exhausted_budget_rejects_even_a_zero_reservation() {
+    let store: Arc<dyn TokenStore> = Arc::new(MemoryTokenStore::new());
+    let mut record = sample_record("spent");
+    record.max_tokens = Some(10);
+    record.used_tokens = 10;
+    store.put(record).expect("put");
+
+    assert_eq!(
+        store.try_admit_request_reserving("spent", 0, 0).unwrap(),
+        RequestAdmission::TokenLimitExceeded
+    );
+}

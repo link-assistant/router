@@ -133,3 +133,75 @@ pub async fn subscription_catalog_diagnostics(
     }
     catalog_error
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(command: &str, args: &[&str]) -> LoginConfig {
+        LoginConfig {
+            command: command.to_string(),
+            args: args.iter().map(|value| (*value).to_string()).collect(),
+            ..LoginConfig::default()
+        }
+    }
+
+    /// Both in-process modes are always available, and the report names the
+    /// scopes each would request before a login is attempted (issue #193).
+    #[test]
+    fn both_native_modes_are_reported_available() {
+        let report = login_mode_report(&config("claude", &[])).join("\n");
+        assert!(report.contains("login_mode full"), "{report}");
+        assert!(report.contains("login_mode setup-token"), "{report}");
+        assert_eq!(
+            report.matches("available (in-process OAuth)").count(),
+            2,
+            "{report}"
+        );
+        assert!(report.contains("user:inference"), "{report}");
+        assert!(report.contains("org:create_api_key"), "{report}");
+    }
+
+    /// The default marker follows `LOGIN_CLI_ARGS`.
+    #[test]
+    fn the_configured_mode_is_marked_as_the_default() {
+        let full = login_mode_report(&config("claude", &[]));
+        assert!(full[0].contains("(default)"), "{full:?}");
+        assert!(!full[1].contains("(default)"), "{full:?}");
+
+        let narrow = login_mode_report(&config("claude", &["setup-token"]));
+        assert!(!narrow[0].contains("(default)"), "{narrow:?}");
+        assert!(narrow[1].contains("(default)"), "{narrow:?}");
+    }
+
+    /// An operator-supplied backend that is absent is reported as unavailable
+    /// rather than failing later with an HTTP 502.
+    #[test]
+    fn a_missing_external_command_is_reported_unavailable() {
+        let report = login_mode_report(&config("definitely-not-on-path-98765", &[])).join("\n");
+        assert!(report.contains("UNAVAILABLE"), "{report}");
+        assert!(report.contains("definitely-not-on-path-98765"), "{report}");
+    }
+
+    /// An absolute path that exists resolves; one that does not is reported.
+    #[test]
+    fn an_absolute_command_path_is_probed_directly() {
+        let existing = std::env::current_exe().expect("test binary path");
+        let report = login_mode_report(&config(&existing.to_string_lossy(), &[])).join("\n");
+        assert!(report.contains("via "), "{report}");
+        assert!(!report.contains("UNAVAILABLE"), "{report}");
+
+        let missing = login_mode_report(&config("/nonexistent/router/login-cli", &[])).join("\n");
+        assert!(missing.contains("UNAVAILABLE"), "{missing}");
+    }
+
+    #[test]
+    fn resolve_in_path_finds_a_real_executable() {
+        // `sh` exists on every platform this test runs on.
+        assert!(
+            resolve_in_path("sh").is_some() || cfg!(windows),
+            "sh should be resolvable"
+        );
+        assert!(resolve_in_path("definitely-not-on-path-98765").is_none());
+    }
+}

@@ -260,6 +260,116 @@ async fn rotation_preserves_constraints_and_revokes_the_old_value() {
     );
 }
 
+/// Rotation refuses ids it cannot safely act on, rather than failing later or
+/// minting a credential for the wrong record.
+#[tokio::test]
+async fn rotation_rejects_unknown_ids_and_admin_credentials() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+
+    let unknown = router
+        .client
+        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .bearer_auth(ADMIN_KEY)
+        .json(&json!({"id": "no-such-token-id"}))
+        .send()
+        .await
+        .expect("rotate unknown");
+    assert_eq!(unknown.status(), StatusCode::NOT_FOUND);
+
+    // An admin credential must go through the proof-of-possession rotate.
+    let (_admin_token, admin_id) = router
+        .token_manager
+        .issue_with_id(&IssueRequest {
+            ttl_hours: 1,
+            label: "ops",
+            scope: link_assistant_router::token::ADMIN_SCOPE,
+            ..IssueRequest::default()
+        })
+        .expect("issue admin token");
+    let refused = router
+        .client
+        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .bearer_auth(ADMIN_KEY)
+        .json(&json!({"id": admin_id}))
+        .send()
+        .await
+        .expect("rotate admin");
+    assert_eq!(refused.status(), StatusCode::BAD_REQUEST);
+    assert!(
+        refused
+            .text()
+            .await
+            .expect("body")
+            .contains("/api/tokens/rotate")
+    );
+}
+
+/// The token endpoints refuse unauthenticated callers.
+#[tokio::test]
+async fn the_token_endpoints_require_an_admin_credential() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+    for (path, body) in [
+        ("/api/tokens", json!({"label": "x"})),
+        ("/api/tokens/rotate-client", json!({"id": "x"})),
+    ] {
+        let response = router
+            .client
+            .post(format!("{}{path}", router.url))
+            .json(&body)
+            .send()
+            .await
+            .expect("unauthenticated request");
+        assert_eq!(
+            response.status(),
+            StatusCode::UNAUTHORIZED,
+            "{path} must require an admin credential"
+        );
+    }
+}
+
+/// Rotation applies explicit overrides on top of the preserved constraints.
+#[tokio::test]
+async fn rotation_applies_explicit_overrides() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+    issue_over_http(
+        &router,
+        json!({"label": "override", "ttl_hours": 6, "max_requests": 9, "max_tokens": 4_000}),
+    )
+    .await;
+    let id = router
+        .token_manager
+        .list_tokens()
+        .expect("list")
+        .into_iter()
+        .find(|record| record.label == "override")
+        .expect("stored record")
+        .id;
+
+    let response = router
+        .client
+        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .bearer_auth(ADMIN_KEY)
+        .json(&json!({"id": id, "max_tokens": 9_000, "label": "renamed"}))
+        .send()
+        .await
+        .expect("rotate");
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let replacement = router
+        .token_manager
+        .list_tokens()
+        .expect("list")
+        .into_iter()
+        .find(|record| record.label == "renamed" && !record.revoked)
+        .expect("replacement record");
+    assert_eq!(replacement.max_tokens, Some(9_000), "override applies");
+    assert_eq!(
+        replacement.max_requests,
+        Some(9),
+        "unspecified constraints are preserved"
+    );
+}
+
 /// Constraints and counters survive a restart, so a cap cannot be reset by
 /// bouncing the process.
 #[test]
