@@ -1096,6 +1096,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
+      # The guard resolves the release tag and its parent locally: the tag is created
+      # after this run started, so a plain checkout does not have it yet.
+      - name: Fetch the release tag
+        run: |
+          git fetch --force --tags --quiet
+          git rev-parse "refs/tags/v${RELEASE_VERSION}^{commit}" >/dev/null
+          git rev-parse "refs/tags/v${RELEASE_VERSION}^{commit}^1" >/dev/null
+
       - name: Download the published release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
