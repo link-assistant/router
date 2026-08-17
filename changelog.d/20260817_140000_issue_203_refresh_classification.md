@@ -1,0 +1,8 @@
+### Fixed
+- A rate-limited token refresh no longer marks a subscription permanently revoked. Refresh failures were classified by searching the response body for `invalid_grant` with the HTTP status discarded, so a `429` — or any body that merely mentioned the string, such as a proxy error page — put the subscription into a terminal state that only a re-login or a restart could leave, while telling the operator that "waiting will not help" precisely when waiting was the fix.
+
+  A failure is now terminal only when a client-error status (`400`, `401`, `403`) is paired with a *parsed* OAuth error code from a small allowlist. Rate limits, `5xx` responses, timeouts and connection errors are all retried with the existing exponential backoff, and never record rejection evidence that would drop the provider out of routing.
+- A rate-limited refresh honours the endpoint's `Retry-After` (both the delta-seconds and HTTP-date forms), waiting the longer of that value and the router's own backoff.
+- Tokens are refreshed shortly before expiry rather than only after a request has already failed, so an access token no longer lapses mid-flight. A still-valid cached token is preferred over an expired one when a refresh is unavailable.
+- The README's CI badge reported "failing" while `main` was green. The legacy `/workflows/<name>/badge.svg` URL is not branch-scoped, so it showed the newest run on *any* branch — including in-flight pull requests. It now reports `main` explicitly.
+- The Rust version badge advertised 1.70+ while `Cargo.toml` declares 1.88 (edition 2024). It now reads `rust-version` from the manifest, so it cannot drift again. Both are covered by tests that fail against the previous badges.

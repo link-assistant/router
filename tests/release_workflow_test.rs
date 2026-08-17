@@ -567,6 +567,50 @@ fn readme_exposes_release_status_badges() {
         ),
         "README should show the Docker Hub image version badge"
     );
+
+    // The legacy `/workflows/<name>/badge.svg` form is not branch-scoped, so it
+    // reports the newest run on *any* branch — a failing PR branch made the
+    // README claim main was broken while main was green.
+    assert!(
+        !readme.contains("/workflows/CI%2FCD%20Pipeline/badge.svg"),
+        "the CI badge must not use the unscoped legacy URL"
+    );
+    assert!(
+        readme.contains(
+            "https://github.com/link-assistant/router/actions/workflows/release.yml/badge.svg?branch=main"
+        ),
+        "the CI badge must report the default branch explicitly"
+    );
+
+    // A hardcoded minimum Rust version drifts out of date silently; read it
+    // from the manifest instead so the badge cannot contradict the build.
+    assert!(
+        !readme.contains("badge/rust-1.70"),
+        "the Rust badge must not hardcode a version that Cargo.toml contradicts"
+    );
+    assert!(
+        readme.contains("query=%24.package.rust-version"),
+        "the Rust badge should read rust-version from Cargo.toml"
+    );
+}
+
+/// The advertised minimum Rust version must be the one the manifest declares.
+#[test]
+fn readme_rust_badge_tracks_the_manifest() {
+    let manifest = fs::read_to_string("Cargo.toml").expect("manifest should be readable");
+    let declared = manifest
+        .lines()
+        .find_map(|line| line.strip_prefix("rust-version = "))
+        .map(|value| value.trim().trim_matches('"').to_string())
+        .expect("Cargo.toml should declare rust-version");
+
+    let readme = fs::read_to_string("README.md").expect("README should be readable");
+    // The badge renders the manifest value, so the README must not also state a
+    // different one in prose.
+    assert!(
+        !readme.contains("rust-1.70"),
+        "README still advertises Rust 1.70 while the manifest declares {declared}"
+    );
 }
 
 #[test]

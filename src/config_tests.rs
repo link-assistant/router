@@ -354,3 +354,110 @@ fn enum_parsing_accepts_documented_spellings() {
     );
     assert_eq!(UpstreamProvider::from_str_opt("nonsense"), None);
 }
+
+/// Startup validation refuses configurations that would fail later, at the
+/// first request, instead of at boot.
+#[test]
+fn build_rejects_configurations_that_cannot_serve_requests() {
+    // A missing token secret is fatal: nothing could be signed or validated.
+    let mut args = default_args(None);
+    args.token_secret = None;
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MissingTokenSecret)
+    ));
+
+    // An empty secret is the same as none.
+    let mut args = default_args(None);
+    args.token_secret = Some("");
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MissingTokenSecret)
+    ));
+
+    // A port that is not a port.
+    let mut args = default_args(Some("secret"));
+    args.port = "not-a-port";
+    assert!(matches!(Config::build(args), Err(ConfigError::InvalidPort)));
+
+    // A host that cannot form a socket address.
+    let mut args = default_args(Some("secret"));
+    args.host = "not a host";
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::InvalidAddress)
+    ));
+}
+
+/// Selecting a provider without the credential it needs is refused at boot.
+#[test]
+fn build_requires_the_credentials_the_selected_provider_needs() {
+    let mut args = default_args(Some("secret"));
+    args.upstream_provider = UpstreamProvider::Gonka;
+    args.gonka_private_key = None;
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MissingGonkaPrivateKey)
+    ));
+
+    // An empty key is treated as absent.
+    let mut args = default_args(Some("secret"));
+    args.upstream_provider = UpstreamProvider::Gonka;
+    args.gonka_private_key = Some(String::new());
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MissingGonkaPrivateKey)
+    ));
+
+    // Crater needs an inbox to deliver its Offer activities to.
+    let mut args = default_args(Some("secret"));
+    args.upstream_provider = UpstreamProvider::Crater;
+    args.crater.inbox = None;
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MissingCraterForgeFedInbox)
+    ));
+}
+
+/// Per-account request caps must line up with the accounts they describe, or
+/// the mapping between them is ambiguous.
+#[test]
+fn build_rejects_account_limits_that_do_not_match_the_accounts() {
+    let mut args = default_args(Some("secret"));
+    args.additional_account_dirs = vec![std::path::PathBuf::from("/tmp/second")];
+    // Two accounts (primary + one extra) but three limits.
+    args.account_request_limits = vec![1, 2, 3];
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MismatchedAccountRequestLimits)
+    ));
+
+    // The matching count is accepted.
+    let mut args = default_args(Some("secret"));
+    args.additional_account_dirs = vec![std::path::PathBuf::from("/tmp/second")];
+    args.account_request_limits = vec![1, 2];
+    assert!(Config::build(args).is_ok());
+
+    // No limits at all is always fine.
+    let mut args = default_args(Some("secret"));
+    args.additional_account_dirs = vec![std::path::PathBuf::from("/tmp/second")];
+    args.account_request_limits = Vec::new();
+    assert!(Config::build(args).is_ok());
+}
+
+/// Every configuration error renders a message that names the setting to fix.
+#[test]
+fn configuration_errors_name_the_setting_to_fix() {
+    let cases = [
+        (ConfigError::InvalidPort, "ROUTER_PORT"),
+        (ConfigError::MissingTokenSecret, "TOKEN_SECRET"),
+        (ConfigError::InvalidRoutingMode, "ROUTING_MODE"),
+        (ConfigError::InvalidApiFormat, "UPSTREAM_API_FORMAT"),
+        (ConfigError::InvalidStoragePolicy, "STORAGE_POLICY"),
+        (ConfigError::InvalidUpstreamProvider, "UPSTREAM_PROVIDER"),
+    ];
+    for (error, needle) in cases {
+        let message = error.to_string();
+        assert!(message.contains(needle), "{message} should name {needle}");
+    }
+}

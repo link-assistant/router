@@ -11,11 +11,11 @@ user. Per-token request and actual-token budgets contain runaway agents and
 make usage attributable. The router also supports additional subscription and
 OpenAI-compatible providers when a deployment needs them.
 
-[![CI/CD Pipeline](https://github.com/link-assistant/router/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/link-assistant/router/actions)
+[![CI/CD Pipeline](https://github.com/link-assistant/router/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/link-assistant/router/actions/workflows/release.yml?query=branch%3Amain)
 [![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)](https://crates.io/crates/link-assistant-router)
 [![Docker Hub](https://img.shields.io/docker/v/konard/link-assistant-router?label=docker%20hub)](https://hub.docker.com/r/konard/link-assistant-router)
 [![docs.rs](https://img.shields.io/docsrs/link-assistant-router?label=docs.rs)](https://docs.rs/link-assistant-router)
-[![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flink-assistant%2Frouter%2Fmain%2FCargo.toml&query=%24.package.rust-version&label=rust&prefix=v&suffix=%2B&color=blue)](https://www.rust-lang.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ## Overview
