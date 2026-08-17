@@ -108,7 +108,8 @@ fn translates_basic_chat_completion() {
         reasoning: None,
     };
     let body = chat_completion_to_anthropic(&req);
-    assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
+    // The requested model is preserved verbatim; nothing rewrites it.
+    assert_eq!(body["model"], "gpt-4o");
     assert_eq!(body["max_tokens"], 100);
     assert_eq!(body["temperature"], 0.5);
     assert_eq!(body["system"], "You are helpful.");
@@ -218,18 +219,46 @@ fn legacy_thinking_budget_keeps_visible_output_headroom() {
     assert_eq!(body["max_tokens"], 24_576);
 }
 
+/// With no catalog to check against, a directly named model passes through:
+/// the upstream is the authority on whether it exists. The router keeps no
+/// built-in alias table to rewrite it with (issue #192).
 #[test]
-fn model_resolution_rejects_unknown_ids() {
-    assert_eq!(resolve_model("totally-made-up-model-xyz"), None);
+fn model_resolution_passes_a_named_model_through_without_a_catalog() {
+    assert_eq!(
+        resolve_model("aurora-2-base").as_deref(),
+        Some("aurora-2-base")
+    );
+    assert_eq!(resolve_model(""), None);
 }
 
+/// Against a live catalog, only advertised models resolve, and an operator
+/// alias is honoured only while its target is still advertised.
 #[test]
-fn model_resolution_keeps_intentional_aliases_explicit() {
+fn model_resolution_is_bounded_by_the_live_catalog() {
+    use std::collections::BTreeMap;
+    let catalog = vec!["aurora-2-base".to_string(), "borealis-9-ultra".to_string()];
+    let mut aliases = BTreeMap::new();
+    aliases.insert("fast".to_string(), "aurora-2-base".to_string());
+    aliases.insert("stale".to_string(), "withdrawn-1".to_string());
+
     assert_eq!(
-        resolve_model("gpt-4o").as_deref(),
-        Some("claude-sonnet-4-5-20250929")
+        resolve_model_with("aurora-2-base", &aliases, &catalog).as_deref(),
+        Some("aurora-2-base")
     );
-    assert_eq!(resolve_model("gpt-5").as_deref(), Some("claude-opus-4-7"));
+    assert_eq!(
+        resolve_model_with("fast", &aliases, &catalog).as_deref(),
+        Some("aurora-2-base"),
+        "an operator alias resolves to a model the account advertises"
+    );
+    assert_eq!(
+        resolve_model_with("stale", &aliases, &catalog),
+        None,
+        "an alias pointing at a withdrawn model must not route anywhere"
+    );
+    assert_eq!(
+        resolve_model_with("never-advertised", &aliases, &catalog),
+        None
+    );
 }
 
 #[test]

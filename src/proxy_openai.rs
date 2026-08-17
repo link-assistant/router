@@ -121,7 +121,13 @@ pub async fn openai_chat_completions(
         }
     };
     let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
-    if openai::resolve_model(&req.model).is_none() {
+    // Validate against the account's live catalog rather than a built-in alias
+    // table (issue #192). An account that has discovered nothing cannot judge
+    // the name, so the upstream is left to decide.
+    let catalog = state
+        .model_catalogs
+        .models(crate::subscription::SubscriptionProvider::Claude);
+    if openai::resolve_model_with(&req.model, &BTreeMap::new(), &catalog).is_none() {
         return crate::model_routing::model_not_found_response(&req.model);
     }
     if let Some(kind) = req
@@ -260,7 +266,13 @@ pub async fn openai_responses(
         }
     };
     let stream_requested = req.stream.unwrap_or(false);
-    if openai::resolve_model(&req.model).is_none() {
+    // Validate against the account's live catalog rather than a built-in alias
+    // table (issue #192). An account that has discovered nothing cannot judge
+    // the name, so the upstream is left to decide.
+    let catalog = state
+        .model_catalogs
+        .models(crate::subscription::SubscriptionProvider::Claude);
+    if openai::resolve_model_with(&req.model, &BTreeMap::new(), &catalog).is_none() {
         return crate::model_routing::model_not_found_response(&req.model);
     }
     if let Some(kind) = req

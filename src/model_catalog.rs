@@ -12,17 +12,51 @@ use crate::subscription::{SubscriptionProvider, SubscriptionReader, Subscription
 pub const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const FETCH_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// Last known catalog state for one provider.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Last known catalog state for one provider account.
+///
+/// Nothing here is ever seeded from source-code model names: a catalog exists
+/// only once a live, authenticated discovery has succeeded for that exact
+/// account (issue #192). Until then `models` is empty and `discovered` is
+/// false, so the router advertises and routes nothing it has not actually seen.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CatalogStatus {
-    /// Models currently used for advertising and routing.
+    /// Models observed in a successful live discovery.
     pub models: Vec<String>,
+    /// Account identity the catalog was discovered for.
+    pub account: Option<String>,
     /// Unix timestamp of the last successful live refresh.
     pub refreshed_at: Option<i64>,
     /// Most recent refresh failure, cleared by a successful refresh.
     pub last_error: Option<String>,
-    /// Whether the bundled stale-tolerated fallback is still in use.
-    pub using_fallback: bool,
+    /// Whether a live discovery has ever succeeded for this account.
+    pub discovered: bool,
+    /// Whether the credential is currently usable. A persisted catalog is
+    /// retained across a credential failure for diagnostics, but is not
+    /// exposed for routing while this is false.
+    pub credential_healthy: bool,
+}
+
+impl CatalogStatus {
+    /// Models that may be advertised and routed right now.
+    ///
+    /// Empty unless a live discovery has succeeded *and* the credential still
+    /// works, so a revoked credential stops exposing models immediately while
+    /// administrators can still see what was last discovered.
+    #[must_use]
+    pub fn routable_models(&self) -> &[String] {
+        if self.discovered && self.credential_healthy {
+            &self.models
+        } else {
+            &[]
+        }
+    }
+
+    /// Whether this account is degraded: it has a catalog that cannot be used,
+    /// or has never discovered one.
+    #[must_use]
+    pub const fn is_degraded(&self) -> bool {
+        !self.discovered || !self.credential_healthy
+    }
 }
 
 /// Thread-safe, immediately readable model catalogs shared by all handlers.
@@ -37,35 +71,22 @@ impl Default for ModelCatalogCache {
 }
 
 impl ModelCatalogCache {
-    /// Seed the cache with explicitly stale-tolerated fallback catalogs.
+    /// An empty cache.
+    ///
+    /// Every provider starts with no catalog at all. Models appear only after
+    /// a successful authenticated discovery, so the router can never advertise
+    /// a model name that came from its own source code (issue #192).
     #[must_use]
     pub fn new() -> Self {
-        let entries = SubscriptionProvider::ALL
-            .into_iter()
-            .map(|provider| {
-                (
-                    provider,
-                    CatalogStatus {
-                        models: fallback_models(provider)
-                            .iter()
-                            .map(ToString::to_string)
-                            .collect(),
-                        refreshed_at: None,
-                        last_error: None,
-                        using_fallback: true,
-                    },
-                )
-            })
-            .collect();
         Self {
-            entries: RwLock::new(entries),
+            entries: RwLock::new(HashMap::new()),
         }
     }
 
-    /// Return the last known list without performing network I/O.
+    /// Models that may be advertised and routed for `provider` right now.
     #[must_use]
     pub fn models(&self, provider: SubscriptionProvider) -> Vec<String> {
-        self.status(provider).models
+        self.status(provider).routable_models().to_vec()
     }
 
     /// Return diagnostic state for a provider.
@@ -76,19 +97,37 @@ impl ModelCatalogCache {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .get(&provider)
             .cloned()
-            .unwrap_or_else(|| CatalogStatus {
-                models: Vec::new(),
-                refreshed_at: None,
-                last_error: Some("catalog cache entry is missing".to_string()),
-                using_fallback: true,
-            })
+            .unwrap_or_default()
+    }
+
+    /// Diagnostic state for every provider the cache knows about.
+    #[must_use]
+    pub fn statuses(&self) -> Vec<(SubscriptionProvider, CatalogStatus)> {
+        let mut entries: Vec<_> = self
+            .entries
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .map(|(provider, status)| (*provider, status.clone()))
+            .collect();
+        entries.sort_by_key(|(provider, _)| provider.to_string());
+        entries
     }
 
     /// Replace a provider's catalog with a freshly observed listing.
     ///
-    /// Public so integration tests can seed deterministic live catalogs
-    /// instead of depending on the stale-tolerated fallbacks.
-    pub fn record_success(&self, provider: SubscriptionProvider, mut models: Vec<String>) {
+    /// Public so integration tests can seed deterministic live catalogs.
+    pub fn record_success(&self, provider: SubscriptionProvider, models: Vec<String>) {
+        self.record_success_for(provider, None, models);
+    }
+
+    /// Record a successful discovery against the account it was made for.
+    pub fn record_success_for(
+        &self,
+        provider: SubscriptionProvider,
+        account: Option<String>,
+        mut models: Vec<String>,
+    ) {
         models.sort();
         models.dedup();
         let mut entries = self
@@ -99,21 +138,33 @@ impl ModelCatalogCache {
             provider,
             CatalogStatus {
                 models,
+                account,
                 refreshed_at: Some(chrono::Utc::now().timestamp()),
                 last_error: None,
-                using_fallback: false,
+                discovered: true,
+                credential_healthy: true,
             },
         );
     }
 
-    fn record_failure(&self, provider: SubscriptionProvider, error: &str) {
+    /// Record a refresh failure, keeping any previously discovered catalog for
+    /// diagnostics but marking the credential unhealthy so it stops being used.
+    fn record_failure(
+        &self,
+        provider: SubscriptionProvider,
+        error: &str,
+        credential_rejected: bool,
+    ) {
         let mut entries = self
             .entries
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(entry) = entries.get_mut(&provider) {
-            entry.last_error = Some(error.to_string());
+        let entry = entries.entry(provider).or_default();
+        entry.last_error = Some(error.to_string());
+        if credential_rejected {
+            entry.credential_healthy = false;
         }
+        drop(entries);
     }
 }
 
@@ -141,24 +192,30 @@ pub async fn refresh_catalogs(
             // hint, and the catalog endpoint is the authority on whether this
             // token works for *it*.
             let stamped_expired = token.is_expired(now_ms);
-            let result = fetch_provider_catalog(client, provider, &token, None).await;
+            // Bind the discovery to the account it was made for, so a catalog
+            // is never reused across accounts (issue #192).
+            let account = token.account_id.clone();
+            let result = fetch_provider_catalog(client, provider, &token, None)
+                .await
+                .map(|models| (account, models));
             (provider, stamped_expired, result)
         });
     for (provider, stamped_expired, result) in futures_util::future::join_all(refreshes).await {
         match result {
-            Ok(models) => {
+            Ok((account, models)) => {
                 tracing::info!(
                     "refreshed {provider} model catalog with {} model(s)",
                     models.len()
                 );
                 token_cache.record_credential_working(provider);
-                cache.record_success(provider, models);
+                cache.record_success_for(provider, account, models);
             }
             Err(error) => {
                 // Keep the last known models in the cache for transient
                 // failures, but an authentication rejection makes them unsafe
                 // to advertise or route until a later probe succeeds.
-                if is_credential_rejection(&error) {
+                let rejected = is_credential_rejection(&error);
+                if rejected {
                     token_cache.record_credential_rejected(provider);
                 }
                 let error = if stamped_expired {
@@ -167,7 +224,7 @@ pub async fn refresh_catalogs(
                     error
                 };
                 tracing::warn!("failed to refresh {provider} model catalog: {error}");
-                cache.record_failure(provider, &error);
+                cache.record_failure(provider, &error, rejected);
             }
         }
     }
@@ -283,32 +340,6 @@ fn parse_catalog(provider: SubscriptionProvider, body: &Value) -> Result<Vec<Str
         Err("response contained no model identifiers".to_string())
     } else {
         Ok(models)
-    }
-}
-
-/// Bundled catalogs are a last resort until the first successful live fetch.
-const fn fallback_models(provider: SubscriptionProvider) -> &'static [&'static str] {
-    match provider {
-        SubscriptionProvider::Claude => &[
-            "claude-opus-4-7",
-            "claude-sonnet-4-5-20250929",
-            "claude-haiku-4-5-20251001",
-            "claude-sonnet-3-5-20241022",
-            "claude-haiku-3-5-20241022",
-        ],
-        SubscriptionProvider::Codex => &["gpt-5-codex", "gpt-5", "codex-mini-latest"],
-        SubscriptionProvider::Gemini => &[
-            "gemini-2.5-pro",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-2.0-flash-lite",
-        ],
-        SubscriptionProvider::Qwen => &[
-            "qwen3-coder-plus",
-            "qwen3-coder-flash",
-            "qwen-max",
-            "qwen-plus",
-        ],
     }
 }
 
@@ -443,7 +474,7 @@ mod tests {
         refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &catalogs).await;
 
         assert_eq!(catalogs.models(SubscriptionProvider::Qwen), ["qwen-live"]);
-        assert!(!catalogs.status(SubscriptionProvider::Qwen).using_fallback);
+        assert!(catalogs.status(SubscriptionProvider::Qwen).discovered);
         assert_eq!(
             token_cache.evidence(SubscriptionProvider::Qwen),
             Some(crate::refresh::CredentialEvidence::Working)
@@ -538,10 +569,20 @@ mod tests {
     fn failed_refresh_preserves_last_known_models() {
         let cache = ModelCatalogCache::new();
         cache.record_success(SubscriptionProvider::Codex, vec!["gpt-live".to_string()]);
-        cache.record_failure(SubscriptionProvider::Codex, "vendor unavailable");
+        cache.record_failure(SubscriptionProvider::Codex, "vendor unavailable", false);
         let status = cache.status(SubscriptionProvider::Codex);
+        // A transient failure keeps the catalog usable ...
         assert_eq!(status.models, ["gpt-live"]);
         assert_eq!(status.last_error.as_deref(), Some("vendor unavailable"));
-        assert!(!status.using_fallback);
+        assert!(status.discovered);
+        assert_eq!(status.routable_models(), ["gpt-live"]);
+
+        // ... but a credential rejection stops it being routed while keeping it
+        // visible to administrators (issue #192).
+        cache.record_failure(SubscriptionProvider::Codex, "HTTP 401", true);
+        let status = cache.status(SubscriptionProvider::Codex);
+        assert_eq!(status.models, ["gpt-live"], "retained for diagnostics");
+        assert!(status.routable_models().is_empty(), "not routable");
+        assert!(status.is_degraded());
     }
 }

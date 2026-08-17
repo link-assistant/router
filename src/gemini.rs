@@ -30,8 +30,8 @@ use crate::proxy::{
 /// Environment variable carrying the Google Cloud project id for Code Assist.
 pub const PROJECT_ENV: &str = "GEMINI_PROJECT";
 
-/// Default Gemini model used when a request omits `model`.
-pub const DEFAULT_MODEL: &str = "gemini-2.5-pro";
+/// Model owner reported for Gemini catalog entries.
+pub const MODEL_OWNER: &str = "google";
 
 /// Translate an `OpenAI` Chat Completions request body to a Gemini
 /// `GenerateContentRequest`.
@@ -337,10 +337,20 @@ async fn forward(
         ShapeIn::Responses => responses_to_chat(&body),
     };
 
-    let model = chat_body
-        .get("model")
-        .and_then(Value::as_str)
-        .map_or_else(|| DEFAULT_MODEL.to_string(), map_model);
+    let catalog = state
+        .model_catalogs
+        .models(crate::subscription::SubscriptionProvider::Gemini);
+    let Some(model) = select_model(
+        chat_body.get("model").and_then(Value::as_str),
+        &catalog,
+        state.bridge_model_policy,
+    ) else {
+        return error_response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            crate::bridge_selection::MODEL_SELECTION_REQUIRED,
+            "the requested model is not advertised by the Gemini account's live catalog",
+        );
+    };
     let stream_requested = chat_body
         .get("stream")
         .and_then(Value::as_bool)
@@ -552,14 +562,26 @@ fn responses_to_chat(body: &Value) -> Value {
     out
 }
 
-/// Map a requested model name to a Gemini model id.
-fn map_model(requested: &str) -> String {
-    if requested.starts_with("gemini") {
-        return requested.to_string();
-    }
+/// Choose the Gemini model to serve a request with.
+///
+/// The router holds no built-in Gemini model names and never substitutes one
+/// for an unknown request (issue #192): a request that names a model the
+/// account advertises is served, a request that names nothing falls back to the
+/// operator policy over the live catalog, and anything else fails so the caller
+/// learns the model is unavailable instead of silently getting a different one.
+fn select_model(
+    requested: Option<&str>,
+    catalog: &[String],
+    policy: crate::bridge_selection::BridgeModelPolicy,
+) -> Option<String> {
     match requested {
-        "gpt-4o-mini" | "gpt-4-mini" | "haiku" => "gemini-2.5-flash".to_string(),
-        _ => DEFAULT_MODEL.to_string(),
+        Some(model) if !model.is_empty() => {
+            // An empty catalog means discovery has not completed; the upstream
+            // remains the authority on whether the name is real.
+            (catalog.is_empty() || catalog.iter().any(|entry| entry == model))
+                .then(|| model.to_string())
+        }
+        _ => policy.choose(catalog),
     }
 }
 
@@ -640,9 +662,45 @@ mod tests {
     }
 
     #[test]
-    fn map_model_passes_gemini_through() {
-        assert_eq!(map_model("gemini-2.5-flash"), "gemini-2.5-flash");
-        assert_eq!(map_model("gpt-4o"), DEFAULT_MODEL);
+    fn select_model_uses_the_live_catalog_only() {
+        // Synthetic names: the router must hold no real Gemini ids (issue #192).
+        let catalog = vec!["nimbus-3-flash".to_string(), "nimbus-9-pro".to_string()];
+        // A model the account advertises is served unchanged.
+        assert_eq!(
+            select_model(
+                Some("nimbus-3-flash"),
+                &catalog,
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            Some("nimbus-3-flash".to_string())
+        );
+        // A model it does not advertise is refused, not substituted.
+        assert_eq!(
+            select_model(
+                Some("absent-1"),
+                &catalog,
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            None
+        );
+        // No requested model falls back to the operator policy over the catalog.
+        assert_eq!(
+            select_model(
+                None,
+                &catalog,
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            Some("nimbus-3-flash".to_string())
+        );
+        // Nothing discovered and nothing requested selects nothing.
+        assert_eq!(
+            select_model(
+                None,
+                &[],
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            None
+        );
     }
 
     #[test]

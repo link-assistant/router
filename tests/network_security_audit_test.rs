@@ -67,6 +67,7 @@ fn test_app_with_mpp(dir: &std::path::Path, mpp: bool) -> (axum::Router, String)
         upstream_provider: config.upstream_provider,
         gonka: None,
         bridge_model: None,
+        bridge_model_policy: link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
         crater: None,
         openai_compatible: config.openai_compatible.clone(),
         provider_store: ProviderStore::open(dir, "network-audit-secret").expect("provider store"),

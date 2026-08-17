@@ -815,21 +815,51 @@ fn map_finish_reason(reason: &str) -> &'static str {
 
 /// Resolve a model that the Anthropic-backed `OpenAI` surface can serve.
 ///
-/// If the model already looks like a Claude model id (`claude-...`) it
-/// is returned unchanged. `OpenAI` aliases are deliberately finite so a typo
-/// cannot silently fall through to an unrelated Claude tier.
+/// The router keeps **no built-in alias table**. A table of vendor names
+/// compiled into the binary inevitably points at models that are renamed,
+/// withdrawn or not entitled for the account (issue #192), so an alias is now
+/// purely operator configuration, checked against the live catalog by
+/// [`resolve_model_with`].
+///
+/// This form passes a request through only when the caller already named a
+/// model directly; anything else returns `None` so the handler answers
+/// `model_selection_required` rather than substituting a guess.
 #[must_use]
 pub fn resolve_model(requested: &str) -> Option<String> {
-    let lower = requested.to_lowercase();
-    if lower.starts_with("claude-") {
+    resolve_model_with(requested, &BTreeMap::new(), &[])
+}
+
+/// Resolve `requested` against operator aliases and a live catalog.
+///
+/// Order: an exact catalog entry wins, then an operator alias whose target the
+/// catalog still advertises. An alias pointing at a model the account no longer
+/// has resolves to `None` rather than routing somewhere unintended.
+///
+/// An empty `catalog` means "not discovered yet"; the request is then accepted
+/// only if an alias names it, so a router that has not finished its first
+/// discovery does not reject everything outright.
+#[must_use]
+pub fn resolve_model_with(
+    requested: &str,
+    aliases: &BTreeMap<String, String>,
+    catalog: &[String],
+) -> Option<String> {
+    let advertises = |id: &str| catalog.is_empty() || catalog.iter().any(|entry| entry == id);
+
+    if catalog.iter().any(|entry| entry == requested) {
         return Some(requested.to_string());
     }
-    match lower.as_str() {
-        "gpt-4o-mini" | "gpt-4-mini" => Some("claude-haiku-4-5-20251001".to_string()),
-        "o1" | "o1-pro" | "o3" | "o4" | "gpt-5" => Some("claude-opus-4-7".to_string()),
-        "gpt-4" | "gpt-4-turbo" | "gpt-4o" => Some("claude-sonnet-4-5-20250929".to_string()),
-        _ => None,
+    let lower = requested.to_lowercase();
+    if let Some(target) = aliases
+        .get(requested)
+        .or_else(|| aliases.get(lower.as_str()))
+        && advertises(target)
+    {
+        return Some(target.clone());
     }
+    // With no catalog to check against, a directly named model is taken at
+    // face value; the upstream is the authority on whether it exists.
+    (catalog.is_empty() && !requested.is_empty()).then(|| requested.to_string())
 }
 
 pub(crate) fn query_stream_requested(query: &BTreeMap<String, String>) -> bool {
@@ -848,26 +878,23 @@ pub fn map_model(requested: &str) -> String {
     resolve_model(requested).unwrap_or_else(|| requested.to_string())
 }
 
-/// Static `/v1/models` listing (Anthropic-issued models, presented in the
-/// `OpenAI` list-shape so OpenAI-SDK clients see something familiar).
+/// `/v1/models` listing in the `OpenAI` list-shape.
+///
+/// Takes the ids to advertise rather than embedding any: the router must never
+/// publish a model name that came from its own source code (issue #192).
+/// Callers pass a live catalog, so an account that has discovered nothing
+/// advertises nothing.
 #[must_use]
-pub fn list_models() -> Value {
+pub fn list_models_from(models: &[String], owner: &str) -> Value {
     let now = chrono::Utc::now().timestamp();
-    let entries = [
-        "claude-opus-4-7",
-        "claude-sonnet-4-5-20250929",
-        "claude-haiku-4-5-20251001",
-        "claude-sonnet-3-5-20241022",
-        "claude-haiku-3-5-20241022",
-    ];
-    let data: Vec<Value> = entries
+    let data: Vec<Value> = models
         .iter()
         .map(|id| {
             json!({
                 "id": id,
                 "object": "model",
                 "created": now,
-                "owned_by": "anthropic",
+                "owned_by": owner,
             })
         })
         .collect();

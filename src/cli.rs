@@ -144,6 +144,11 @@ pub struct Cli {
     #[arg(long, env = "ANTHROPIC_BRIDGE_MODEL", global = true)]
     pub bridge_model: Option<String>,
 
+    /// How to pick a bridge model from the live catalog when `--bridge-model`
+    /// is unset: `first-advertised` (default) or `last-advertised`.
+    #[arg(long, env = "BRIDGE_MODEL_POLICY", global = true)]
+    pub bridge_model_policy: Option<String>,
+
     /// Append one JSON line per authorised request to this file, recording the
     /// router token id and label. Disabled when unset.
     #[arg(long, env = "AUDIT_LOG", global = true)]
@@ -833,6 +838,7 @@ impl Cli {
             gonka_source_url: self.gonka_source_url.clone(),
             gonka_model: self.gonka_model.clone(),
             bridge_model: self.bridge_model.clone().filter(|s| !s.is_empty()),
+            bridge_model_policy: self.bridge_model_policy.clone(),
             audit_log: self
                 .audit_log
                 .as_ref()

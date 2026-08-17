@@ -254,6 +254,11 @@ async fn auth_unknown_models_and_admin_isolation() {
         assert_eq!(malformed.status(), StatusCode::UNAUTHORIZED, "{path}");
     }
 
+    // An unknown id is only knowably unknown against a discovered catalog;
+    // with none, the upstream remains the authority (issue #192).
+    router
+        .state_catalogs()
+        .record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
     let unknown = router
         .post(
             "/v1/responses",

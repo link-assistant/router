@@ -304,6 +304,7 @@ async fn run_server(
             config.gonka_model.clone(),
         ),
         bridge_model: config.bridge_model.clone(),
+        bridge_model_policy: config.bridge_model_policy,
         audit: std::sync::Arc::new(link_assistant_router::audit::AuditLog::to_path(
             config.audit_log.as_deref(),
         )),

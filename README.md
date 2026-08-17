@@ -440,15 +440,22 @@ in a browser *or* in a chat. See
 Provider-specific namespaces use the matching healthy subscription in
 automatic mode, or the provider pinned by `UPSTREAM_PROVIDER`.
 
-When `UPSTREAM_PROVIDER=anthropic`, `gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the
-`o*` reasoning families are explicit aliases for the Claude Sonnet / Haiku /
-Opus tiers respectively. Native `claude-*` IDs pass through unchanged. In
-automatic mode, routing uses only subscription catalogs: vendor-shaped IDs
-prefer their matching vendor if catalogs overlap, and an unqualified name
-advertised by multiple healthy subscriptions is rejected until
-`UPSTREAM_PROVIDER` is pinned. Other model names return `404 not_found_error`
-instead of silently selecting a default model. Successful Anthropic-backed
-responses report the resolved Claude model that actually served the request.
+**Every advertised and routable model comes from a live provider catalog.** The
+router ships no built-in model list, no per-provider default model, and no alias
+table: a catalog exists only after a successful authenticated discovery for that
+exact account, and is recorded with the account identity, the fetch time and an
+explicit health flag. Before the first discovery a provider advertises nothing;
+`GET /v1/models` reports it under `degraded_providers` rather than filling the
+gap from source. When a credential is revoked its last known catalog stays
+visible to administrators but stops being advertised or routed.
+
+Requested model names pass through unchanged. In automatic mode, routing uses
+only subscription catalogs: vendor-shaped IDs prefer their matching vendor if
+catalogs overlap, and an unqualified name advertised by multiple healthy
+subscriptions is rejected until `UPSTREAM_PROVIDER` is pinned. A model no
+catalog advertises returns `404 not_found_error` instead of silently selecting a
+default. Successful Anthropic-backed responses report the model that actually
+served the request.
 
 #### Model identity and output limits
 
@@ -607,7 +614,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
-| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
+| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (from live catalog) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream. Unset selects one from the account's live catalog ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
+| `--bridge-model-policy` / `BRIDGE_MODEL_POLICY` | `first-advertised` | No | How to pick that model from the catalog: `first-advertised` or `last-advertised`. When no compatible model exists the request fails with `model_selection_required` rather than falling back to a built-in name |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
 | `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first |

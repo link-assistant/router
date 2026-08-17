@@ -74,6 +74,23 @@ impl RunCredential {
     pub(crate) fn models(&self) -> &[RouterModel] {
         &self.available_models
     }
+
+    /// Choose a model for `client` from the router's live catalog.
+    ///
+    /// The router ships no default model names, so the concrete id is resolved
+    /// here, at execution time, from what the authenticated account actually
+    /// advertises (issue #192). `owner` narrows the choice to models a
+    /// dialect-specific client can use; an empty owner accepts any.
+    pub(crate) fn select_model(&self, owner: &str) -> Option<&str> {
+        // Prefer a model the catalog attributes to the client's dialect owner,
+        // but fall back to any advertised model: a catalog that declares no
+        // owner still describes real, usable models.
+        self.available_models
+            .iter()
+            .find(|model| !owner.is_empty() && model.owned_by == owner)
+            .or_else(|| self.available_models.first())
+            .map(|model| model.id.as_str())
+    }
 }
 
 struct Revocation {

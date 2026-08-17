@@ -39,6 +39,7 @@ fn state_with(
         upstream_provider: link_assistant_router::config::UpstreamProvider::Anthropic,
         gonka: None,
         bridge_model: None,
+        bridge_model_policy: link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
         crater: None,
         openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
         provider_store: ProviderStore::open(data_dir, "test-secret").expect("provider store"),

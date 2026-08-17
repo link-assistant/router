@@ -47,6 +47,7 @@ struct StubState {
 
 struct TestRouter {
     client: reqwest::Client,
+    model_catalogs: Arc<ModelCatalogCache>,
     url: String,
     token: String,
     token_manager: TokenManager,
@@ -120,6 +121,7 @@ impl TestRouter {
             .then(|| SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home));
 
         let log_root = data.path().join("requests");
+        let model_catalogs = Arc::new(ModelCatalogCache::new());
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager: token_manager.clone(),
@@ -128,12 +130,14 @@ impl TestRouter {
             subscription_reader,
             subscription_base_url: Some(stub_url.clone()),
             subscription_readers: Vec::new(),
-            model_catalogs: Arc::new(ModelCatalogCache::new()),
+            model_catalogs: Arc::clone(&model_catalogs),
             subscription_cache: Arc::new(TokenCache::new()),
             upstream_base_url: stub_url,
             upstream_provider: provider,
             gonka: None,
             bridge_model: Some("gpt-5".to_string()),
+            bridge_model_policy:
+                link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
             crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             provider_store: link_assistant_router::providers::ProviderStore::open(
@@ -170,6 +174,7 @@ impl TestRouter {
 
         Self {
             client: reqwest::Client::new(),
+            model_catalogs,
             url,
             token,
             token_manager,
@@ -179,6 +184,11 @@ impl TestRouter {
             tasks: vec![stub_task, router_task],
             _data: data,
         }
+    }
+
+    /// The live catalog cache backing this router, for seeding discoveries.
+    fn state_catalogs(&self) -> &ModelCatalogCache {
+        &self.model_catalogs
     }
 
     fn post(&self, path: &str, body: &Value) -> reqwest::RequestBuilder {
