@@ -963,3 +963,6 @@ async fn the_public_refresh_wrapper_reports_a_missing_refresh_token() {
         Err(RefreshError::NoRefreshToken)
     ));
 }
+
+#[path = "refresh_reactive_tests.rs"]
+mod reactive;

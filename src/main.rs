@@ -66,6 +66,8 @@ async fn main() -> ExitCode {
         tracing::info!("Verbose logging enabled");
     }
 
+    let cli = auth_cli::relax_token_secret_for_auth(cli);
+
     let config = match cli.into_config() {
         Ok(c) => c,
         Err(e) => {

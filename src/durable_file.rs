@@ -6,6 +6,25 @@ use std::path::Path;
 
 use fs2::FileExt;
 
+/// Describe a credential-write failure in terms an operator can act on.
+///
+/// A read-only mount is the common case — the deployment docs tell you to mount
+/// the credential directory `:ro` — and it otherwise surfaces as a bare
+/// `Read-only file system (os error 30)`, which does not say what to change
+/// (issue #205).
+#[must_use]
+pub fn describe_write_failure(path: &Path, error: &io::Error) -> String {
+    if error.kind() == io::ErrorKind::ReadOnlyFilesystem {
+        return format!(
+            "cannot write {}: the credential directory is mounted read-only. \
+             Re-run without `:ro` to authorize, then restore it — serving and \
+             token renewal do not need write access.",
+            path.display()
+        );
+    }
+    format!("could not create {}: {error}", path.display())
+}
+
 /// Replace `path` atomically, syncing both the file and its containing
 /// directory so the rename survives power loss.
 pub fn atomic_write_owner_only(path: &Path, contents: &[u8]) -> io::Result<()> {
@@ -117,5 +136,36 @@ mod tests {
                 0o600
             );
         }
+    }
+
+    /// A read-only mount is the common cause of a failed credential write, and
+    /// the bare `errno` does not say what to change (issue #205).
+    #[test]
+    fn a_read_only_mount_is_named_as_the_cause() {
+        let message = describe_write_failure(
+            Path::new("/data/claude/.credentials.json"),
+            &io::Error::from(io::ErrorKind::ReadOnlyFilesystem),
+        );
+        assert!(
+            message.contains("/data/claude/.credentials.json"),
+            "{message}"
+        );
+        assert!(message.contains("read-only"), "{message}");
+        // The remedy must be actionable, and say the cost of applying it.
+        assert!(message.contains(":ro"), "{message}");
+        assert!(
+            message.contains("token renewal do not need write"),
+            "{message}"
+        );
+    }
+
+    #[test]
+    fn other_write_failures_keep_the_underlying_error() {
+        let message = describe_write_failure(
+            Path::new("/data/x.json"),
+            &io::Error::from(io::ErrorKind::PermissionDenied),
+        );
+        assert!(message.contains("/data/x.json"), "{message}");
+        assert!(!message.contains("read-only"), "{message}");
     }
 }

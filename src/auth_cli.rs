@@ -7,6 +7,26 @@ use link_assistant_router::config::Config;
 use link_assistant_router::login::{LoginManager, LoginStatus};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 
+/// Let `auth` run without `TOKEN_SECRET`.
+///
+/// The auth commands neither issue nor validate client tokens, so demanding an
+/// unrelated secret only obstructs the operator recovering a subscription — the
+/// moment the router is least usable (issue #205). Every other command still
+/// requires a real secret, so this substitutes a placeholder for `auth` alone.
+#[must_use]
+pub fn relax_token_secret_for_auth(
+    mut cli: link_assistant_router::cli::Cli,
+) -> link_assistant_router::cli::Cli {
+    if matches!(
+        cli.command.as_ref(),
+        Some(link_assistant_router::cli::Command::Auth { .. })
+    ) && cli.token_secret.as_deref().is_none_or(str::is_empty)
+    {
+        cli.token_secret = Some("unused-by-auth".to_string());
+    }
+    cli
+}
+
 pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     match op {
         AuthOp::Claude { code, flow, mode } => {
@@ -25,7 +45,7 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
             run_claude(config, code.clone(), *flow, mode).await
         }
         AuthOp::Codex { flow, port } => run_codex(config, *flow, *port).await,
-        AuthOp::Status => status(config),
+        AuthOp::Status => status(config).await,
     }
 }
 
@@ -256,9 +276,19 @@ async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
     }
 }
 
-fn status(config: &Config) -> ExitCode {
+/// Report each provider credential's state, verified against the vendor.
+///
+/// The verdict used to come entirely from the stored `exp` claim, so a
+/// credential the vendor had already invalidated printed `usable` while every
+/// request through it returned `401` (issue #205). A local timestamp cannot
+/// answer this question: only the vendor can. Each credential is therefore
+/// probed, and the answer says plainly whether it was checked or merely read.
+async fn status(config: &Config) -> ExitCode {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let now = chrono::Utc::now().timestamp_millis();
+    let client = reqwest::Client::new();
+    let token_cache = link_assistant_router::refresh::TokenCache::new();
+
     for provider in SubscriptionProvider::ALL {
         let home = match provider {
             SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
@@ -269,12 +299,33 @@ fn status(config: &Config) -> ExitCode {
         };
         let reader = SubscriptionReader::new(provider, home);
         let value = match reader.read_token() {
-            Ok(token) if token.is_expired(now) => "expired",
-            Ok(_) => "usable",
+            Ok(disk_token) => {
+                // Refresh first when the stored expiry says to, exactly as the
+                // proxy would, so the probe reflects what a real request sees.
+                let token = token_cache
+                    .get_fresh(&client, provider, disk_token, now)
+                    .await;
+                match link_assistant_router::model_catalog::fetch_provider_catalog(
+                    &client, provider, &token, None,
+                )
+                .await
+                {
+                    Ok(_) => "usable",
+                    Err(error)
+                        if link_assistant_router::model_catalog::is_credential_rejection(
+                            &error,
+                        ) =>
+                    {
+                        "rejected"
+                    }
+                    // The credential may well be fine; the probe could not say.
+                    Err(_) => "unverified",
+                }
+            }
             Err(_) => "absent",
         };
         println!(
-            "{:<8} {value:<7} {}",
+            "{:<8} {value:<10} {}",
             reader.provider(),
             reader.home().display()
         );
@@ -300,5 +351,37 @@ mod tests {
             assert_eq!(claude_supports_flow(flow), claude_supported, "{flow:?}");
             assert_eq!(codex_supports_flow(flow), codex_supported, "{flow:?}");
         }
+    }
+
+    /// Recovering a subscription must not require an unrelated secret
+    /// (issue #205); every other command still does.
+    #[test]
+    fn auth_runs_without_a_token_secret_but_other_commands_still_need_one() {
+        use link_assistant_router::cli::Cli;
+        use lino_arguments::Parser as _;
+
+        let relaxed = relax_token_secret_for_auth(
+            Cli::try_parse_from(["bin", "auth", "status"]).expect("parses auth"),
+        );
+        assert!(
+            relaxed.into_config().is_ok(),
+            "auth must not demand TOKEN_SECRET"
+        );
+
+        // A secret the operator did supply is never overwritten.
+        let supplied = relax_token_secret_for_auth(
+            Cli::try_parse_from(["bin", "--token-secret", "real-secret", "auth", "status"])
+                .expect("parses auth"),
+        );
+        assert_eq!(supplied.token_secret.as_deref(), Some("real-secret"));
+
+        // Serving still requires a real secret.
+        let serving = relax_token_secret_for_auth(
+            Cli::try_parse_from(["bin", "serve"]).expect("parses serve"),
+        );
+        assert!(
+            serving.into_config().is_err(),
+            "serve must still demand TOKEN_SECRET"
+        );
     }
 }

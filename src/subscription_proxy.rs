@@ -214,23 +214,23 @@ async fn forward_subscription_openai_inner(
         .unwrap_or_else(|| sub_token.base_url(provider));
     let upstream_url = join_subscription_url(provider, &base_url, path);
 
-    let mut upstream_req = state
-        .client
-        .post(upstream_url)
-        .header("content-type", "application/json")
-        .header(
-            "authorization",
-            format!("Bearer {}", sub_token.access_token),
-        )
-        .body(serialized);
-    for (name, value) in subscription_headers(provider, &sub_token) {
-        upstream_req = upstream_req.header(name, value);
-    }
+    let build_request = |token: &crate::subscription::SubscriptionToken| {
+        let mut request = state
+            .client
+            .post(upstream_url.clone())
+            .header("content-type", "application/json")
+            .header("authorization", format!("Bearer {}", token.access_token))
+            .body(serialized.clone());
+        for (name, value) in subscription_headers(provider, token) {
+            request = request.header(name, value);
+        }
+        request
+    };
 
     let correlation_id = crate::request_log::correlation_id(headers);
-    let upstream_resp = match state
+    let mut upstream_resp = match state
         .request_log
-        .send_upstream(&correlation_id, &state.client, upstream_req)
+        .send_upstream(&correlation_id, &state.client, build_request(&sub_token))
         .await
     {
         Ok(resp) => resp,
@@ -245,6 +245,39 @@ async fn forward_subscription_openai_inner(
             );
         }
     };
+    // A `401` is the vendor disproving the token's own `exp` claim: it may have
+    // invalidated the access token early, and the stored expiry is no evidence
+    // to the contrary. Refresh and replay the request exactly once, so a
+    // recoverable credential is not reported as dead (issue #205).
+    if upstream_resp.status() == reqwest::StatusCode::UNAUTHORIZED
+        && let Some(account) = selected_account.as_deref()
+        && let Some(refreshed) = state
+            .subscription_cache
+            .refresh_rejected(
+                &state.client,
+                provider,
+                account,
+                sub_token.clone(),
+                chrono::Utc::now().timestamp_millis(),
+            )
+            .await
+    {
+        tracing::info!(
+            "{provider} rejected an unexpired access token; retrying once with a refreshed one"
+        );
+        match state
+            .request_log
+            .send_upstream(&correlation_id, &state.client, build_request(&refreshed))
+            .await
+        {
+            // Only one retry: a second 401 is surfaced rather than looped.
+            Ok(retried) => upstream_resp = retried,
+            Err(error) => {
+                tracing::warn!("{provider} retry after refresh failed: {error}");
+            }
+        }
+    }
+
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     state
