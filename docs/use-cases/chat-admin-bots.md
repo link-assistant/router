@@ -94,10 +94,37 @@ not open a chat channel.
 | `/auth <token>` | Sign in with an existing admin credential |
 | `/logout` | Forget the credential bound to this conversation |
 | `/status` | Read-only: credential state, upstream, account health, usage |
-| `/tokens` | List issued tokens: id, label, expiry, usage, revoked state |
-| `/issue <label> [ttl_hours] [max_requests]` | Issue a token |
+| `/tokens` | List issued tokens: id, label, expiry, every limit, usage, revoked state |
+| `/issue [label] [ttl_hours] [max_requests] [key=value …]` | Issue a token |
+| `/show <id>` | Every constraint, counter and state for one token |
+| `/rotate-token <id> [key=value …]` | Reissue a token, preserving its limits |
 | `/revoke <id>` | Revoke a token |
 | `/rotate` | Replace the admin credential (also invalidates it in the web UI) |
+
+### Token constraints from chat
+
+`/issue` and `/rotate-token` accept every control the CLI and HTTP APIs accept,
+so no limit is reachable only from a terminal. Beyond the positional
+`[label] [ttl_hours] [max_requests]` short form, give options as `key=value`:
+
+| Option | Aliases | Means |
+| --- | --- | --- |
+| `label` | `name` | Human-readable label |
+| `ttl_hours` | `ttl` | Lifetime in hours |
+| `max_requests` | `requests` | Upstream request cap |
+| `max_tokens` | `tokens` | Token spend cap |
+| `rate_limit_per_minute` | `rpm`, `rate` | Requests allowed per minute |
+| `account` | `pin` | Bind the token to one account |
+
+```text
+/issue ci-runner ttl_hours=12 max_requests=500 max_tokens=200000 rpm=10
+/rotate-token 6f2c… max_tokens=400000
+```
+
+Values are validated against the same bounds as `tokens issue` and
+`POST /api/tokens`, so a request accepted in one surface is accepted in all of
+them. Rotation keeps every constraint that is not named explicitly and revokes
+the previous value as part of the same operation.
 
 ## Secrets in a chat transport
 
@@ -109,7 +136,7 @@ Chat history lives on the platform *and* on every device signed into it, so:
   bot may delete its own messages, and a client may have cached it already;
 - `/tokens` never echoes a token **value** — ids, labels, expiry, usage and
   revocation only, exactly like the web UI;
-- `/start`, `/auth`, `/confirm`, `/issue` and `/rotate` are rate limited per
+- `/start`, `/auth`, `/confirm`, `/issue`, `/rotate-token` and `/rotate` are rate limited per
   user, so the credential prompt is not a free brute-force oracle.
 
 Treat a phone that is signed into the bot's chat as a device that holds the

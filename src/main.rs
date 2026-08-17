@@ -463,29 +463,51 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             max_tokens,
             rate_limit_per_minute,
             admin,
-        } => match mgr.issue(&IssueRequest {
-            ttl_hours: *ttl_hours,
-            label,
-            account: account.as_deref(),
-            max_requests: *max_requests,
-            max_tokens: *max_tokens,
-            rate_limit_per_minute: *rate_limit_per_minute,
-            scope: if *admin { ADMIN_SCOPE } else { "" },
-        }) {
-            Ok(t) => {
-                println!("{t}");
-                ExitCode::SUCCESS
+        } => {
+            let request = IssueRequest {
+                ttl_hours: *ttl_hours,
+                label,
+                account: account.as_deref(),
+                max_requests: *max_requests,
+                max_tokens: *max_tokens,
+                rate_limit_per_minute: *rate_limit_per_minute,
+                scope: if *admin { ADMIN_SCOPE } else { "" },
+            };
+            // Shared with the HTTP and chat surfaces (issue #194).
+            if let Err(message) = request.validate() {
+                eprintln!("error: {message}");
+                return ExitCode::from(2);
             }
-            Err(e) => {
-                eprintln!("error: {e}");
-                ExitCode::from(1)
+            match mgr.issue(&request) {
+                Ok(t) => {
+                    println!("{t}");
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    ExitCode::from(1)
+                }
             }
-        },
+        }
         TokenOp::Rotate {
             id,
             ttl_hours,
             label,
-        } => match mgr.rotate_token(id, *ttl_hours, label) {
+            max_requests,
+            max_tokens,
+            rate_limit_per_minute,
+            account,
+        } => match mgr.rotate_token_with(
+            id,
+            &link_assistant_router::token::RotateOverrides {
+                label: (!label.is_empty()).then_some(label.as_str()),
+                ttl_hours: Some(*ttl_hours),
+                max_requests: *max_requests,
+                max_tokens: *max_tokens,
+                rate_limit_per_minute: *rate_limit_per_minute,
+                account: account.as_deref(),
+            },
+        ) {
             Ok(t) => {
                 println!("{t}");
                 eprintln!("revoked {id}");

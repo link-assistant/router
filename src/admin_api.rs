@@ -48,6 +48,10 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/api/tokens/list", get(token_admin::list_tokens))
         .route("/api/tokens/revoke", post(token_admin::revoke_token))
+        .route(
+            "/api/tokens/rotate-client",
+            post(token_admin::rotate_client_token),
+        )
         .route("/api/providers", get(provider_proxy::list_providers))
         .route_layer(from_fn_with_state(state.clone(), require_admin))
         .fallback(crate::admin_ui::serve_asset)

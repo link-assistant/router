@@ -75,6 +75,73 @@ pub struct IssueRequest<'a> {
     pub scope: &'a str,
 }
 
+/// Constraint changes to apply while rotating a token.
+///
+/// Every field is optional: `None` keeps whatever the existing record carries,
+/// so a rotation preserves the credential's blast radius by default and only
+/// changes what the operator named explicitly.
+#[derive(Debug, Default, Clone)]
+pub struct RotateOverrides<'a> {
+    /// Replacement label; `None` keeps the existing one.
+    pub label: Option<&'a str>,
+    /// Replacement TTL in hours; `None` keeps the remaining lifetime.
+    pub ttl_hours: Option<i64>,
+    /// Replacement request cap.
+    pub max_requests: Option<u64>,
+    /// Replacement token spend cap.
+    pub max_tokens: Option<u64>,
+    /// Replacement per-minute request rate.
+    pub rate_limit_per_minute: Option<u64>,
+    /// Replacement account pin.
+    pub account: Option<&'a str>,
+}
+
+/// Largest TTL an issued token may carry, in hours (about ten years).
+///
+/// A cap keeps a mistyped TTL from minting a credential that outlives every
+/// operator who remembers it, while staying far above any legitimate use.
+pub const MAX_TTL_HOURS: i64 = 24 * 365 * 10;
+
+impl IssueRequest<'_> {
+    /// Check the constraint values before a token is minted.
+    ///
+    /// Every admin surface — CLI, HTTP, Telegram and VK — funnels through this
+    /// so the same input is accepted or rejected identically everywhere
+    /// (issue #194); previously only the chat commands validated anything, and
+    /// they did it with their own rules.
+    ///
+    /// # Errors
+    ///
+    /// Returns a human-readable message naming the offending field.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.ttl_hours <= 0 {
+            return Err("ttl_hours must be a positive whole number of hours.".to_string());
+        }
+        if self.ttl_hours > MAX_TTL_HOURS {
+            return Err(format!(
+                "ttl_hours must not exceed {MAX_TTL_HOURS} (about ten years)."
+            ));
+        }
+        // A zero budget mints a credential that can never serve a request; that
+        // is a typo rather than an intent, so it is rejected instead of stored.
+        if self.max_requests == Some(0) {
+            return Err("max_requests must be greater than zero.".to_string());
+        }
+        if self.max_tokens == Some(0) {
+            return Err("max_tokens must be greater than zero.".to_string());
+        }
+        if self.rate_limit_per_minute == Some(0) {
+            return Err("rate_limit_per_minute must be greater than zero.".to_string());
+        }
+        if !self.scope.is_empty() && self.scope != ADMIN_SCOPE {
+            return Err(format!(
+                "scope must be empty (client) or \"{ADMIN_SCOPE}\"."
+            ));
+        }
+        Ok(())
+    }
+}
+
 /// Manages creation, validation, and revocation of custom tokens.
 #[derive(Clone)]
 pub struct TokenManager {
@@ -390,26 +457,58 @@ impl TokenManager {
         ttl_hours: i64,
         label: &str,
     ) -> Result<String, TokenError> {
+        self.rotate_token_with(
+            current_sub,
+            &RotateOverrides {
+                label: (!label.is_empty()).then_some(label),
+                ttl_hours: Some(ttl_hours),
+                ..RotateOverrides::default()
+            },
+        )
+    }
+
+    /// Rotate a token, preserving every constraint that is not overridden.
+    ///
+    /// Reissue must not silently widen or narrow a credential's blast radius,
+    /// so each unset override carries the stored value forward (issue #194).
+    /// The replacement is minted before the old value is revoked, so a failed
+    /// mint leaves the existing credential working.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TokenError::Invalid`] when the id is unknown or the resulting
+    /// constraints fail [`IssueRequest::validate`], and [`TokenError::Storage`]
+    /// when the store cannot be read or written.
+    pub fn rotate_token_with(
+        &self,
+        current_sub: &str,
+        overrides: &RotateOverrides<'_>,
+    ) -> Result<String, TokenError> {
         let record = self
             .store
             .get(current_sub)
             .map_err(|error| TokenError::Storage(error.to_string()))?
             .ok_or_else(|| TokenError::Invalid(format!("unknown token id {current_sub}")))?;
-        let replacement_label = if label.is_empty() {
-            &record.label
-        } else {
-            label
+        // Remaining lifetime is preserved when no new TTL is requested, so a
+        // rotation is not a silent extension of the credential's validity.
+        let remaining_hours = || {
+            let remaining = record.expires_at.saturating_sub(Utc::now().timestamp());
+            (remaining / 3600).max(1)
         };
+        let request = IssueRequest {
+            ttl_hours: overrides.ttl_hours.unwrap_or_else(remaining_hours),
+            label: overrides.label.unwrap_or(&record.label),
+            account: overrides.account.or(record.account.as_deref()),
+            max_requests: overrides.max_requests.or(record.max_requests),
+            max_tokens: overrides.max_tokens.or(record.max_tokens),
+            rate_limit_per_minute: overrides
+                .rate_limit_per_minute
+                .or(record.rate_limit_per_minute),
+            scope: &record.scope,
+        };
+        request.validate().map_err(TokenError::Invalid)?;
         let replacement = self
-            .issue(&IssueRequest {
-                ttl_hours,
-                label: replacement_label,
-                account: record.account.as_deref(),
-                max_requests: record.max_requests,
-                max_tokens: record.max_tokens,
-                rate_limit_per_minute: record.rate_limit_per_minute,
-                scope: &record.scope,
-            })
+            .issue(&request)
             .map_err(|error| TokenError::Invalid(error.to_string()))?;
         self.revoke_token(current_sub)?;
         Ok(replacement)

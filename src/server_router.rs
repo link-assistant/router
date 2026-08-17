@@ -33,6 +33,10 @@ pub fn router(state: AppState, config: &Config) -> Router {
         .route("/api/tokens/revoke", post(token_admin::revoke_token))
         .route("/api/tokens/rotate", post(token_admin::rotate_admin_token))
         .route(
+            "/api/tokens/rotate-client",
+            post(token_admin::rotate_client_token),
+        )
+        .route(
             "/api/providers",
             get(provider_proxy::list_providers).post(provider_proxy::upsert_provider),
         )

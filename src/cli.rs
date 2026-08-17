@@ -611,6 +611,18 @@ pub enum TokenOp {
         ttl_hours: i64,
         #[arg(long, default_value = "")]
         label: String,
+        /// Replacement request cap; omitted keeps the existing one.
+        #[arg(long)]
+        max_requests: Option<u64>,
+        /// Replacement token spend cap; omitted keeps the existing one.
+        #[arg(long)]
+        max_tokens: Option<u64>,
+        /// Replacement per-minute request rate; omitted keeps the existing one.
+        #[arg(long)]
+        rate_limit_per_minute: Option<u64>,
+        /// Replacement account pin; omitted keeps the existing one.
+        #[arg(long)]
+        account: Option<String>,
     },
     /// List all known tokens.
     List,

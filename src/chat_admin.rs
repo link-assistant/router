@@ -196,6 +196,9 @@ const MAX_SESSIONS: usize = 512;
 /// bootstrap claim system-wide rather than per-channel.
 pub struct ChatAdmin {
     admin: Arc<AdminClaim>,
+    #[cfg(test)]
+    pub(crate) tokens: TokenManager,
+    #[cfg(not(test))]
     tokens: TokenManager,
     /// Flat deploy-time key, accepted as a credential exactly as HTTP does.
     admin_key: Option<String>,
@@ -287,7 +290,13 @@ impl ChatAdmin {
         let Some(credential) = self.authorised_credential(channel, user_id) else {
             return self.unauthorised_reply();
         };
-        if matches!(command, "issue" | "rotate") && !self.allow(channel, user_id) {
+        // Every command that returns a token value is rate limited, so a
+        // compromised chat cannot mint credentials in bulk.
+        if matches!(
+            command,
+            "issue" | "new" | "rotate" | "rotate-token" | "reissue"
+        ) && !self.allow(channel, user_id)
+        {
             return Reply::plain(RATE_LIMITED);
         }
         let context = CommandContext {
@@ -581,8 +590,12 @@ const RATE_LIMITED: &str = "Too many attempts. Wait a minute and try again.";
 /// Command list, appended to most replies so the channel is self-documenting.
 pub const HELP: &str = "Commands:\n\
     /status — credential state, accounts and usage\n\
-    /tokens — list issued tokens (ids and labels only, never values)\n\
-    /issue <label> [ttl_hours] [max_requests] — issue a token\n\
+    /tokens — list issued tokens (ids, labels and limits, never values)\n\
+    /issue [label] [ttl_hours] [max_requests] [key=value …] — issue a token;\n\
+    \x20   options: label, ttl_hours, max_requests, max_tokens,\n\
+    \x20   rate_limit_per_minute, account\n\
+    /show <id> — every constraint, counter and state for one token\n\
+    /rotate-token <id> [key=value …] — reissue a token, keeping its limits\n\
     /revoke <id> — revoke a token\n\
     /rotate — replace the admin credential\n\
     /auth <token> — sign in with an admin credential\n\

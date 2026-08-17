@@ -56,6 +56,8 @@ pub fn execute(context: &CommandContext<'_>, command: &str, rest: &str) -> Optio
         "status" => Some(status(context)),
         "tokens" | "list" => Some(list(context)),
         "issue" | "new" => Some(issue(context, rest)),
+        "show" => Some(show(context, rest)),
+        "rotate-token" | "reissue" => Some(rotate_client_token(context, rest)),
         "revoke" => Some(revoke(context, rest)),
         _ => None,
     }
@@ -119,19 +121,38 @@ fn list(context: &CommandContext<'_>) -> Reply {
     }
 }
 
-/// One line per token: id, label, expiry, usage, revocation. No value.
-fn describe(record: &TokenRecord) -> String {
-    let usage = record.max_requests.map_or_else(
-        || format!("{}", record.used_requests),
-        |max| format!("{}/{max}", record.used_requests),
-    );
-    let state = if record.revoked {
+/// Lifecycle state of a token, shared by `/tokens` and `/show`.
+fn token_state(record: &TokenRecord) -> &'static str {
+    if record.revoked {
         "revoked"
     } else if record.expires_at <= Utc::now().timestamp() {
         "expired"
     } else {
         "active"
-    };
+    }
+}
+
+/// One line per token: id, label, expiry, every constraint, revocation.
+/// Never the token value.
+fn describe(record: &TokenRecord) -> String {
+    let usage = record.max_requests.map_or_else(
+        || format!("{}", record.used_requests),
+        |max| format!("{}/{max}", record.used_requests),
+    );
+    let state = token_state(record);
+    // Every supported constraint is visible here, so an operator can audit a
+    // token from chat without reaching for the CLI (issue #194).
+    let spend = record.max_tokens.map_or_else(
+        || format!("{}", record.used_tokens),
+        |max| format!("{}/{max}", record.used_tokens),
+    );
+    let rpm = record
+        .rate_limit_per_minute
+        .map_or_else(String::new, |rpm| format!(", {rpm}/min"));
+    let account = record
+        .account
+        .as_deref()
+        .map_or_else(String::new, |account| format!(", account `{account}`"));
     let label = if record.label.is_empty() {
         "(no label)"
     } else {
@@ -143,46 +164,248 @@ fn describe(record: &TokenRecord) -> String {
         ""
     };
     format!(
-        "• {id} — {label}{scope}\n  {state}, expires {expires}, used {usage}",
+        "• {id} — {label}{scope}\n  {state}, expires {expires}, \
+         requests {usage}, tokens {spend}{rpm}{account}",
         id = record.id,
         expires = format_unix(record.expires_at),
     )
 }
 
-/// `/issue <label> [ttl_hours] [max_requests]` — mint a client token.
+/// Constraints parsed from a chat `/issue` or `/rotate-token` command.
+///
+/// Chat surfaces accept every control the CLI and HTTP APIs accept
+/// (issue #194). Positional `<label> [ttl_hours] [max_requests]` is still
+/// honoured for the documented short form; anything beyond that is given as
+/// `key=value`, which stays readable as the option set grows.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub(crate) struct IssueOptions {
+    pub label: Option<String>,
+    pub ttl_hours: Option<i64>,
+    pub max_requests: Option<u64>,
+    pub max_tokens: Option<u64>,
+    pub rate_limit_per_minute: Option<u64>,
+    pub account: Option<String>,
+}
+
+/// Keys accepted in the `key=value` form, with their documented aliases.
+const ISSUE_KEYS: &[(&str, &[&str])] = &[
+    ("label", &["label", "name"]),
+    ("ttl_hours", &["ttl_hours", "ttl"]),
+    ("max_requests", &["max_requests", "requests"]),
+    ("max_tokens", &["max_tokens", "tokens"]),
+    (
+        "rate_limit_per_minute",
+        &["rate_limit_per_minute", "rpm", "rate"],
+    ),
+    ("account", &["account", "pin"]),
+];
+
+fn canonical_issue_key(key: &str) -> Option<&'static str> {
+    let key = key.to_ascii_lowercase();
+    ISSUE_KEYS
+        .iter()
+        .find(|(_, aliases)| aliases.contains(&key.as_str()))
+        .map(|(canonical, _)| *canonical)
+}
+
+/// Parse the shared `/issue` and `/rotate-token` argument grammar.
+pub(crate) fn parse_issue_options(rest: &str) -> Result<IssueOptions, String> {
+    let mut options = IssueOptions::default();
+    let mut positional = 0;
+    for part in rest.split_whitespace() {
+        if let Some((key, value)) = part.split_once('=') {
+            let Some(canonical) = canonical_issue_key(key) else {
+                let known: Vec<&str> = ISSUE_KEYS.iter().map(|(name, _)| *name).collect();
+                return Err(format!(
+                    "unknown option `{key}`. Supported: {}.",
+                    known.join(", ")
+                ));
+            };
+            if value.is_empty() {
+                return Err(format!("{canonical} needs a value, as `{canonical}=…`."));
+            }
+            match canonical {
+                "label" => options.label = Some(value.to_string()),
+                "account" => options.account = Some(value.to_string()),
+                "ttl_hours" => {
+                    options.ttl_hours = Some(parse_number::<i64>(value, "ttl_hours")?);
+                }
+                "max_requests" => {
+                    options.max_requests = Some(parse_number::<u64>(value, "max_requests")?);
+                }
+                "max_tokens" => {
+                    options.max_tokens = Some(parse_number::<u64>(value, "max_tokens")?);
+                }
+                _ => {
+                    options.rate_limit_per_minute =
+                        Some(parse_number::<u64>(value, "rate_limit_per_minute")?);
+                }
+            }
+            continue;
+        }
+        // Positional short form, kept for the documented command shape.
+        match positional {
+            0 => options.label = Some(part.to_string()),
+            1 => options.ttl_hours = Some(parse_number::<i64>(part, "ttl_hours")?),
+            2 => options.max_requests = Some(parse_number::<u64>(part, "max_requests")?),
+            _ => {
+                return Err(
+                    "too many positional values. Use `key=value` for the remaining options."
+                        .to_string(),
+                );
+            }
+        }
+        positional += 1;
+    }
+    Ok(options)
+}
+
+fn parse_number<T: std::str::FromStr>(value: &str, field: &str) -> Result<T, String> {
+    value
+        .parse::<T>()
+        .map_err(|_| format!("{field} must be a whole number."))
+}
+
+/// Human-readable summary of the constraints attached to a token.
+fn describe_constraints(request: &IssueRequest<'_>) -> String {
+    let mut parts = vec![format!("valid {}h", request.ttl_hours)];
+    if let Some(max) = request.max_requests {
+        parts.push(format!("{max} requests"));
+    }
+    if let Some(max) = request.max_tokens {
+        parts.push(format!("{max} tokens"));
+    }
+    if let Some(rpm) = request.rate_limit_per_minute {
+        parts.push(format!("{rpm}/min"));
+    }
+    if let Some(account) = request.account {
+        parts.push(format!("account `{account}`"));
+    }
+    parts.join(", ")
+}
+
+/// `/issue [label] [ttl_hours] [max_requests] [key=value …]` — mint a client token.
 ///
 /// The value is returned once, in a message marked secret.
 fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
-    let parts: Vec<&str> = rest.split_whitespace().collect();
-    let label = parts.first().copied().unwrap_or("chat-issued");
-    let ttl_hours = match parts.get(1).map(|value| value.parse::<i64>()) {
-        Some(Ok(value)) if value > 0 => value,
-        Some(_) => return Reply::plain("ttl_hours must be a positive whole number of hours."),
-        None => DEFAULT_ISSUE_TTL_HOURS,
+    let options = match parse_issue_options(rest) {
+        Ok(options) => options,
+        Err(message) => return Reply::plain(message),
     };
-    let max_requests = match parts.get(2).map(|value| value.parse::<u64>()) {
-        Some(Ok(value)) => Some(value),
-        Some(Err(_)) => return Reply::plain("max_requests must be a whole number."),
-        None => None,
-    };
-    match context.tokens.issue(&IssueRequest {
-        ttl_hours,
+    let label = options.label.as_deref().unwrap_or("chat-issued");
+    let request = IssueRequest {
+        ttl_hours: options.ttl_hours.unwrap_or(DEFAULT_ISSUE_TTL_HOURS),
         label,
-        account: None,
-        max_requests,
-        max_tokens: None,
-        rate_limit_per_minute: None,
+        account: options.account.as_deref(),
+        max_requests: options.max_requests,
+        max_tokens: options.max_tokens,
+        rate_limit_per_minute: options.rate_limit_per_minute,
         scope: "",
-    }) {
+    };
+    // Same bounds as the CLI and HTTP surfaces, rather than chat-only rules.
+    if let Err(message) = request.validate() {
+        return Reply::plain(message);
+    }
+    match context.tokens.issue(&request) {
         Ok(token) => Reply::secret(format!(
-            "Token issued — label `{label}`, valid {ttl_hours}h{cap}.\n\n\
+            "Token issued — label `{label}`, {constraints}.\n\n\
              {token}\n\nThis value is shown once and never appears in /tokens.{note}",
-            cap =
-                max_requests.map_or_else(String::new, |max| format!(", capped at {max} requests")),
+            constraints = describe_constraints(&request),
             note = deletion_note(context.secret_ttl),
         )),
         Err(e) => Reply::plain(format!("Could not issue a token: {e}")),
     }
+}
+
+/// `/rotate-token <id> [key=value …]` — reissue a client token.
+///
+/// Constraints are preserved unless explicitly overridden, and the old value is
+/// revoked atomically by [`crate::token::TokenManager::rotate_token`].
+fn rotate_client_token(context: &CommandContext<'_>, rest: &str) -> Reply {
+    let (id, rest) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
+    if id.is_empty() {
+        return Reply::plain("Usage: /rotate-token <id> [label=… ttl_hours=… max_tokens=…]");
+    }
+    let options = match parse_issue_options(rest) {
+        Ok(options) => options,
+        Err(message) => return Reply::plain(message),
+    };
+    let existing = match context.tokens.store().get(id) {
+        Ok(Some(record)) => record,
+        Ok(None) => return Reply::plain(format!("No token with id `{id}`.")),
+        Err(error) => return Reply::plain(format!("Could not read token `{id}`: {error}")),
+    };
+    if existing.scope == crate::token::ADMIN_SCOPE {
+        return Reply::plain("Use /rotate to rotate the admin credential.");
+    }
+    match context.tokens.rotate_token_with(
+        id,
+        &crate::token::RotateOverrides {
+            label: options.label.as_deref(),
+            ttl_hours: options.ttl_hours,
+            max_requests: options.max_requests,
+            max_tokens: options.max_tokens,
+            rate_limit_per_minute: options.rate_limit_per_minute,
+            account: options.account.as_deref(),
+        },
+    ) {
+        Ok(token) => Reply::secret(format!(
+            "Token `{id}` rotated; the previous value is revoked.\n\n\
+             {token}\n\nThis value is shown once and never appears in /tokens.{note}",
+            note = deletion_note(context.secret_ttl),
+        )),
+        Err(e) => Reply::plain(format!("Could not rotate the token: {e}")),
+    }
+}
+
+/// `/show <id>` — every constraint, counter, and state for one token.
+fn show(context: &CommandContext<'_>, rest: &str) -> Reply {
+    let id = rest.trim();
+    if id.is_empty() {
+        return Reply::plain("Usage: /show <id>");
+    }
+    match context.tokens.store().get(id) {
+        Ok(Some(record)) => Reply::plain(describe_full(&record)),
+        Ok(None) => Reply::plain(format!("No token with id `{id}`.")),
+        Err(error) => Reply::plain(format!("Could not read token `{id}`: {error}")),
+    }
+}
+
+/// Full constraint and usage detail for one token, for `/show`.
+fn describe_full(record: &crate::storage::TokenRecord) -> String {
+    let limit = |used: u64, max: Option<u64>| {
+        max.map_or_else(
+            || format!("{used}/unlimited"),
+            |max| format!("{used}/{max}"),
+        )
+    };
+    format!(
+        "`{id}` — {label}{scope}\n\
+         state: {state}\n\
+         issued: {issued}\n\
+         expires: {expires}\n\
+         requests: {requests}\n\
+         tokens: {tokens} (reserved {reserved})\n\
+         rate limit: {rpm}\n\
+         account: {account}",
+        id = record.id,
+        label = record.label,
+        scope = if record.scope.is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", record.scope)
+        },
+        state = token_state(record),
+        issued = format_unix(record.issued_at),
+        expires = format_unix(record.expires_at),
+        requests = limit(record.used_requests, record.max_requests),
+        tokens = limit(record.used_tokens, record.max_tokens),
+        reserved = record.reserved_tokens,
+        rpm = record
+            .rate_limit_per_minute
+            .map_or_else(|| "unlimited".to_string(), |rpm| format!("{rpm}/min")),
+        account = record.account.as_deref().unwrap_or("(any)"),
+    )
 }
 
 /// `/revoke <id>` — revoke by token id (the id from `/tokens`, not a value).
@@ -337,7 +560,148 @@ mod tests {
         assert!(reply.secret);
         assert!(reply.text.contains("la_sk_"));
         assert!(reply.text.contains("48h"));
-        assert!(reply.text.contains("capped at 100 requests"));
+        assert!(reply.text.contains("100 requests"));
+    }
+
+    /// Every constraint the CLI and HTTP APIs accept is reachable from chat
+    /// through `key=value` options (issue #194).
+    #[test]
+    fn issue_accepts_every_supported_constraint() {
+        let chat = signed_in();
+        let reply = say(
+            &chat,
+            "/issue ci ttl_hours=12 max_requests=5 max_tokens=9000 rpm=3 account=primary",
+        );
+        assert!(reply.secret, "{}", reply.text);
+        assert!(reply.text.contains("12h"), "{}", reply.text);
+        assert!(reply.text.contains("5 requests"), "{}", reply.text);
+        assert!(reply.text.contains("9000 tokens"), "{}", reply.text);
+        assert!(reply.text.contains("3/min"), "{}", reply.text);
+        assert!(reply.text.contains("primary"), "{}", reply.text);
+    }
+
+    #[test]
+    fn issue_reports_unknown_and_malformed_options() {
+        let chat = signed_in();
+        assert!(
+            say(&chat, "/issue ci nonsense=1")
+                .text
+                .contains("unknown option")
+        );
+        assert!(
+            say(&chat, "/issue ci max_tokens=lots")
+                .text
+                .contains("max_tokens must be a whole number")
+        );
+        // The shared bounds apply here exactly as they do on the CLI.
+        assert!(
+            say(&chat, "/issue ci ttl_hours=0")
+                .text
+                .contains("ttl_hours must be a positive")
+        );
+        assert!(
+            say(&chat, "/issue ci max_tokens=0")
+                .text
+                .contains("max_tokens must be greater than zero")
+        );
+    }
+
+    #[test]
+    fn show_reports_every_constraint_for_one_token() {
+        let chat = signed_in();
+        say(&chat, "/issue audited 24 7 max_tokens=500 rpm=2");
+        let id = chat
+            .tokens
+            .list_tokens()
+            .expect("list")
+            .into_iter()
+            .find(|record| record.label == "audited")
+            .expect("issued record")
+            .id;
+
+        let reply = say(&chat, &format!("/show {id}"));
+        assert!(!reply.secret, "/show must never be a secret reply");
+        assert!(reply.text.contains("requests: 0/7"), "{}", reply.text);
+        assert!(reply.text.contains("tokens: 0/500"), "{}", reply.text);
+        assert!(reply.text.contains("2/min"), "{}", reply.text);
+        assert!(reply.text.contains("active"), "{}", reply.text);
+        assert!(
+            !reply.text.contains(crate::token::TOKEN_PREFIX),
+            "/show must not echo a token value"
+        );
+    }
+
+    #[test]
+    fn rotating_a_client_token_preserves_its_constraints() {
+        let chat = signed_in();
+        say(&chat, "/issue rotating 24 7 max_tokens=500 rpm=2");
+        let original = chat
+            .tokens
+            .list_tokens()
+            .expect("list")
+            .into_iter()
+            .find(|record| record.label == "rotating")
+            .expect("issued record");
+
+        let reply = say(&chat, &format!("/rotate-token {}", original.id));
+        assert!(reply.secret, "{}", reply.text);
+        assert!(reply.text.contains("la_sk_"), "{}", reply.text);
+
+        let records = chat.tokens.list_tokens().expect("list");
+        let old = records
+            .iter()
+            .find(|record| record.id == original.id)
+            .expect("old record");
+        assert!(old.revoked, "the previous value must be revoked");
+
+        let replacement = records
+            .iter()
+            .find(|record| record.label == "rotating" && !record.revoked)
+            .expect("replacement record");
+        assert_eq!(replacement.max_requests, Some(7));
+        assert_eq!(replacement.max_tokens, Some(500));
+        assert_eq!(replacement.rate_limit_per_minute, Some(2));
+    }
+
+    #[test]
+    fn rotating_a_client_token_applies_explicit_overrides() {
+        let chat = signed_in();
+        say(&chat, "/issue changing 24 7 max_tokens=500");
+        let original = chat
+            .tokens
+            .list_tokens()
+            .expect("list")
+            .into_iter()
+            .find(|record| record.label == "changing")
+            .expect("issued record");
+
+        say(
+            &chat,
+            &format!("/rotate-token {} max_tokens=900", original.id),
+        );
+        let replacement = chat
+            .tokens
+            .list_tokens()
+            .expect("list")
+            .into_iter()
+            .find(|record| record.label == "changing" && !record.revoked)
+            .expect("replacement record");
+        assert_eq!(replacement.max_tokens, Some(900), "override applies");
+        assert_eq!(
+            replacement.max_requests,
+            Some(7),
+            "unspecified constraints are preserved"
+        );
+    }
+
+    #[test]
+    fn listing_shows_every_constraint() {
+        let chat = signed_in();
+        say(&chat, "/issue listed 24 7 max_tokens=500 rpm=2");
+        let reply = say(&chat, "/tokens");
+        assert!(reply.text.contains("requests 0/7"), "{}", reply.text);
+        assert!(reply.text.contains("tokens 0/500"), "{}", reply.text);
+        assert!(reply.text.contains("2/min"), "{}", reply.text);
     }
 
     /// The central secrecy rule: listing never re-exposes a token value.

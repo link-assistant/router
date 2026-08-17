@@ -84,4 +84,7 @@ export const api = {
   listTokens: (token) => request('/api/tokens/list', { token }),
   issueToken: (token, body) => request('/api/tokens', { method: 'POST', body, token }),
   revokeToken: (token, id) => request('/api/tokens/revoke', { method: 'POST', body: { id }, token }),
+  // Reissues one client token. Omitted constraints are preserved server-side.
+  rotateClientToken: (token, body) =>
+    request('/api/tokens/rotate-client', { method: 'POST', body, token }),
 }

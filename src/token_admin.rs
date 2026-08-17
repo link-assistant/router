@@ -43,15 +43,8 @@ pub async fn issue_token(
     let ttl = req.ttl_hours.unwrap_or(24);
     let label = req.label.unwrap_or_default();
     let scope = req.scope.unwrap_or_default();
-    if !scope.is_empty() && scope != ADMIN_SCOPE {
-        return error_response(
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            &format!("unknown scope '{scope}'; expected '{ADMIN_SCOPE}' or none"),
-        );
-    }
 
-    match state.token_manager.issue(&IssueRequest {
+    let request = IssueRequest {
         ttl_hours: ttl,
         label: &label,
         account: req.account.as_deref(),
@@ -59,7 +52,14 @@ pub async fn issue_token(
         max_tokens: req.max_tokens,
         rate_limit_per_minute: req.rate_limit_per_minute,
         scope: &scope,
-    }) {
+    };
+    // One shared rule set across HTTP, CLI and chat (issue #194), so the same
+    // request cannot be accepted on one surface and refused on another.
+    if let Err(message) = request.validate() {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
+    }
+
+    match state.token_manager.issue(&request) {
         Ok(token) => {
             state.metrics.record_token_issued();
             (
@@ -194,6 +194,103 @@ pub async fn rotate_admin_token(
             &format!("Failed to rotate admin token: {e}"),
         ),
     }
+}
+
+/// `POST /api/tokens/rotate-client` — reissue one client token by id.
+///
+/// Distinct from [`rotate_admin_token`], which rotates the caller's own admin
+/// credential. Every constraint is preserved unless explicitly overridden, and
+/// the previous value is revoked as part of the same operation (issue #194).
+pub async fn rotate_client_token(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    axum::Json(req): axum::Json<RotateClientTokenRequest>,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "missing or invalid admin Bearer key",
+        );
+    }
+
+    // Rotating an admin credential through the client route would bypass the
+    // proof-of-possession that `rotate_admin_token` requires.
+    match state.token_manager.store().get(&req.id) {
+        Ok(Some(record)) if record.scope == ADMIN_SCOPE => {
+            return error_response(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                "use /api/tokens/rotate to rotate an admin credential",
+            );
+        }
+        Ok(Some(_)) => {}
+        Ok(None) => {
+            return error_response(
+                StatusCode::NOT_FOUND,
+                "invalid_request_error",
+                &format!("unknown token id {}", req.id),
+            );
+        }
+        Err(error) => {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("failed to read token: {error}"),
+            );
+        }
+    }
+
+    let overrides = crate::token::RotateOverrides {
+        label: req.label.as_deref(),
+        ttl_hours: req.ttl_hours,
+        max_requests: req.max_requests,
+        max_tokens: req.max_tokens,
+        rate_limit_per_minute: req.rate_limit_per_minute,
+        account: req.account.as_deref(),
+    };
+    match state.token_manager.rotate_token_with(&req.id, &overrides) {
+        Ok(token) => {
+            state.metrics.record_token_issued();
+            state.metrics.record_token_revoked();
+            (
+                StatusCode::OK,
+                axum::Json(serde_json::json!({
+                    "token": token,
+                    "revoked": req.id,
+                })),
+            )
+                .into_response()
+        }
+        Err(crate::token::TokenError::Invalid(message)) => {
+            error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message)
+        }
+        Err(e) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &format!("Failed to rotate token: {e}"),
+        ),
+    }
+}
+
+/// Request body for [`rotate_client_token`]. Every constraint is optional and
+/// omitting one preserves the stored value.
+#[derive(serde::Deserialize)]
+pub struct RotateClientTokenRequest {
+    /// Id of the token to reissue.
+    pub id: String,
+    /// Replacement label.
+    pub label: Option<String>,
+    /// Replacement TTL in hours.
+    pub ttl_hours: Option<i64>,
+    /// Replacement request cap.
+    pub max_requests: Option<u64>,
+    /// Replacement token spend cap.
+    pub max_tokens: Option<u64>,
+    /// Replacement per-minute request rate.
+    pub rate_limit_per_minute: Option<u64>,
+    /// Replacement account pin.
+    pub account: Option<String>,
 }
 
 /// Request body for the token issuance endpoint.

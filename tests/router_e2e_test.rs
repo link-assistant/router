@@ -28,6 +28,8 @@ use tempfile::TempDir;
 
 #[path = "router_e2e/token_budget.rs"]
 mod token_budget;
+#[path = "router_e2e/token_surfaces.rs"]
+mod token_surfaces;
 
 #[derive(Clone, Copy)]
 enum StubDialect {
@@ -244,6 +246,14 @@ fn test_app(state: AppState) -> Router {
         .route(
             "/api/tokens/list",
             get(link_assistant_router::token_admin::list_tokens),
+        )
+        .route(
+            "/api/tokens",
+            post(link_assistant_router::token_admin::issue_token),
+        )
+        .route(
+            "/api/tokens/rotate-client",
+            post(link_assistant_router::token_admin::rotate_client_token),
         )
         .with_state(state)
         .layer(from_fn_with_state(
