@@ -38,8 +38,10 @@ const GROK_BASE_ENV: &str = "GROK_BASE_URL";
 const ROUTER_PROVIDER: &str = "link-assistant";
 const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
 
-pub const DEFAULT_OPENAI_MODEL: &str = "gpt-5.6-sol";
-pub const DEFAULT_ANTHROPIC_MODEL: &str = "claude-opus-5";
+/// Catalog owner whose models suit an `OpenAI`-dialect client.
+pub const OPENAI_MODEL_OWNER: &str = "openai";
+/// Catalog owner whose models suit an Anthropic-dialect client.
+pub const ANTHROPIC_MODEL_OWNER: &str = "anthropic";
 pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
 pub const DEFAULT_ANTHROPIC_REASONING_EFFORT: &str = "high";
 
@@ -64,7 +66,12 @@ pub struct ClientIntegration {
     pub token_env: Option<&'static str>,
     pub base_url_env: Option<&'static str>,
     pub endpoint_suffix: &'static str,
-    pub default_model: &'static str,
+    /// Catalog owner whose models this client can use.
+    ///
+    /// The router holds no default model *name*: the concrete id is chosen from
+    /// the account's live catalog at execution time (issue #192). An empty
+    /// owner means the client accepts any advertised model.
+    pub model_owner: &'static str,
     pub default_reasoning_effort: &'static str,
     pub model_arg: Option<&'static str>,
     pub non_interactive_arg: Option<&'static str>,
@@ -99,7 +106,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        default_model: DEFAULT_OPENAI_MODEL,
+        model_owner: OPENAI_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("exec"),
@@ -114,7 +121,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
         endpoint_suffix: "",
-        default_model: DEFAULT_ANTHROPIC_MODEL,
+        model_owner: ANTHROPIC_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--print"),
@@ -129,7 +136,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: None,
         base_url_env: None,
         endpoint_suffix: "",
-        default_model: "",
+        model_owner: "",
         default_reasoning_effort: "",
         model_arg: None,
         non_interactive_arg: None,
@@ -146,7 +153,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some("GEMINI_API_KEY"),
         base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
         endpoint_suffix: "/api/gemini",
-        default_model: DEFAULT_OPENAI_MODEL,
+        model_owner: OPENAI_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
@@ -163,7 +170,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(GROK_TOKEN_ENV),
         base_url_env: Some(GROK_BASE_ENV),
         endpoint_suffix: "/v1",
-        default_model: DEFAULT_OPENAI_MODEL,
+        model_owner: OPENAI_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
@@ -178,7 +185,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        default_model: DEFAULT_OPENAI_MODEL,
+        model_owner: OPENAI_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("run"),
@@ -193,7 +200,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: Some("OPENAI_BASE_URL"),
         endpoint_suffix: "/v1",
-        default_model: DEFAULT_OPENAI_MODEL,
+        model_owner: OPENAI_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
@@ -208,7 +215,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        default_model: DEFAULT_OPENAI_MODEL,
+        model_owner: OPENAI_MODEL_OWNER,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--prompt"),

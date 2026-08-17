@@ -94,9 +94,18 @@ async fn forward_subscription_openai_inner(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(routing_body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
 
     let Some(provider) = state.upstream_provider.subscription_provider() else {
@@ -294,9 +303,9 @@ async fn forward_subscription_openai_inner(
         let rewrite_passthrough =
             codex && response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
-        let mut usage = status.is_success().then(|| {
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
-        });
+        let mut usage = status
+            .is_success()
+            .then(|| reservation.take().into_tracker());
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             chunk.map_or_else(
                 |error| Err(std::io::Error::other(error)),
@@ -344,8 +353,7 @@ async fn forward_subscription_openai_inner(
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
     if status.is_success() {
-        let mut usage =
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
     }
 

@@ -522,9 +522,18 @@ pub async fn forward_chat_completions(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(
         state,
         &claims,
@@ -550,18 +559,15 @@ pub async fn forward_chat_completions(
             provider,
             request,
             Arc::clone(&state.metrics),
-            state.token_manager.clone(),
-            claims.sub,
+            reservation.take(),
         );
     }
 
     match provider.complete_task(request).await {
         Ok(result) => {
-            if let Some(tokens) = crate::usage::token_count(&result.raw)
-                && let Err(error) = state.token_manager.record_token_usage(&claims.sub, tokens)
-            {
-                tracing::warn!("failed to persist token usage: {error}");
-            }
+            reservation
+                .take()
+                .settle(crate::usage::token_count(&result.raw).unwrap_or(0));
             state
                 .metrics
                 .record_request(crate::metrics::Surface::OpenAIChat, 200, None);
@@ -586,19 +592,14 @@ fn stream_chat_completion(
     provider: Arc<dyn TaskProvider>,
     request: CraterTaskRequest,
     metrics: Arc<crate::metrics::Metrics>,
-    token_manager: crate::token::TokenManager,
-    token_id: String,
+    reservation: crate::usage::ReservationGuard,
 ) -> Response {
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<Bytes, std::io::Error>>(4);
     tokio::spawn(async move {
         let model = request.model.clone();
         let frames = match provider.complete_task(request).await {
             Ok(result) => {
-                if let Some(tokens) = crate::usage::token_count(&result.raw)
-                    && let Err(error) = token_manager.record_token_usage(&token_id, tokens)
-                {
-                    tracing::warn!("failed to persist token usage: {error}");
-                }
+                reservation.settle(crate::usage::token_count(&result.raw).unwrap_or(0));
                 metrics.record_request(crate::metrics::Surface::OpenAIChat, 200, None);
                 chat_completion_stream_frames(&model, &result.content)
             }
@@ -851,5 +852,55 @@ mod tests {
             provider.submitted.lock().expect("lock").as_slice(),
             &["Task title".to_string()]
         );
+    }
+
+    #[test]
+    fn stream_frames_are_well_formed_sse() {
+        let frames = chat_completion_stream_frames("crater-forgefed", "hello");
+        assert!(frames.len() >= 2, "{frames:?}");
+        assert!(
+            frames.iter().all(|frame| frame.starts_with("data: ")),
+            "{frames:?}"
+        );
+        assert!(
+            frames.last().expect("last frame").contains("[DONE]"),
+            "the stream must terminate with [DONE]"
+        );
+        assert!(
+            frames.iter().any(|frame| frame.contains("hello")),
+            "the content must be carried"
+        );
+    }
+
+    #[test]
+    fn an_error_stream_frame_is_valid_sse_carrying_the_message() {
+        let frame = error_stream_frame(&CraterError::MissingConfig("CRATER_FORGEFED_INBOX"));
+        assert!(frame.starts_with("data: "), "{frame}");
+        assert!(frame.contains("CRATER_FORGEFED_INBOX"), "{frame}");
+    }
+
+    #[test]
+    fn extracting_openai_content_handles_both_shapes() {
+        assert_eq!(extract_openai_content(Some(&json!("plain"))), "plain");
+        assert_eq!(
+            extract_openai_content(Some(&json!([{"type": "text", "text": "a"}]))),
+            "a"
+        );
+        assert_eq!(extract_openai_content(None), "");
+    }
+
+    #[test]
+    fn get_path_walks_nested_values() {
+        let value = json!({"a": {"b": {"c": 7}}});
+        assert_eq!(get_path(&value, &["a", "b", "c"]), Some(&json!(7)));
+        assert_eq!(get_path(&value, &["a", "missing"]), None);
+        assert_eq!(get_path(&value, &[]), Some(&value));
+    }
+
+    #[test]
+    fn an_sse_frame_serialises_its_value() {
+        let frame = sse_frame(&json!({"id": "x"}));
+        assert!(frame.starts_with("data: {"), "{frame}");
+        assert!(frame.ends_with("\n\n"), "frames end with a blank line");
     }
 }

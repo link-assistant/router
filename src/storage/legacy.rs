@@ -88,6 +88,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         used_requests: 0,
         max_tokens: None,
         used_tokens: 0,
+        reserved_tokens: 0,
         rate_limit_per_minute: None,
         rate_window_started_at: 0,
         rate_window_requests: 0,
@@ -117,6 +118,7 @@ fn parse_field(record: &mut TokenRecord, field: &str) -> Result<(), String> {
         "used_requests" => record.used_requests = required_number(&mut tokens, key)?,
         "max_tokens" => record.max_tokens = Some(required_number(&mut tokens, key)?),
         "used_tokens" => record.used_tokens = required_number(&mut tokens, key)?,
+        "reserved_tokens" => record.reserved_tokens = required_number(&mut tokens, key)?,
         "rate_limit_per_minute" => {
             record.rate_limit_per_minute = Some(required_number(&mut tokens, key)?);
         }

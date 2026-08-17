@@ -213,13 +213,13 @@ pub fn untranslatable_tool_history(input: &Value) -> Option<String> {
 /// API, so Chat Completions requests are projected onto it: `system`/`developer`
 /// turns become `instructions`, remaining turns become typed `input` items, and
 /// the token/sampling knobs are renamed to their Responses equivalents. The
-/// caller's `model` is preserved verbatim (Codex expects e.g. `gpt-5-codex`).
+/// caller's `model` is preserved verbatim; the router never substitutes a
+/// vendor model name of its own.
 #[must_use]
 pub fn chat_completion_to_responses(body: &Value) -> Value {
-    let model = body
-        .get("model")
-        .and_then(Value::as_str)
-        .unwrap_or("gpt-5-codex");
+    // No vendor default: an absent model stays absent so the forwarder applies
+    // the provider's configured default or fails loudly (issue #192).
+    let model = body.get("model").and_then(Value::as_str).unwrap_or("");
 
     let mut instructions: Vec<String> = Vec::new();
     let mut input: Vec<Value> = Vec::new();

@@ -84,10 +84,23 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         }
         return Ok(ExitCode::SUCCESS);
     }
-    let model = args
-        .model
-        .as_deref()
-        .unwrap_or_else(|| args.client.integration().default_model);
+    // Resolve the concrete model from the live catalog rather than a name
+    // compiled into the router (issue #192).
+    let owner = args.client.integration().model_owner;
+    let selected = if let Some(model) = args.model.clone() {
+        model
+    } else if let Some(model) = credential.select_model(owner) {
+        model.to_string()
+    } else {
+        cleanup_after_setup_failure(credential).await;
+        return Err(format!(
+            "the router advertises no model for {}; authorize a matching subscription on the \
+             router host, or pass --model explicitly",
+            args.client.integration().name
+        )
+        .into());
+    };
+    let model = selected.as_str();
     if let Err(error) = ensure_model_available(&credential, model) {
         cleanup_after_setup_failure(credential).await;
         return Err(error);
@@ -105,7 +118,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             return Err(error);
         }
     };
-    let arguments = client_arguments(args);
+    let arguments = client_arguments(args, model);
     let launch = temporary.launch(&arguments).await;
     if launch.as_ref().is_ok_and(|status| !status.success())
         && server.source == "managed local container"
@@ -166,7 +179,7 @@ impl TemporaryClient {
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
         }
-        let model = model_override.unwrap_or(integration.default_model);
+        let model = model_override.unwrap_or("");
         match client {
             ClientKind::ClaudeCode => {
                 command
@@ -292,7 +305,12 @@ fn configure_isolation(
     Ok(())
 }
 
-fn client_arguments(args: &WithArgs) -> Vec<OsString> {
+/// Build the wrapped client's argv.
+///
+/// `resolved_model` is the id chosen from the live catalog by the caller; it is
+/// passed in rather than read from `args` because auto-selection leaves
+/// `args.model` empty (issue #192).
+fn client_arguments(args: &WithArgs, resolved_model: &str) -> Vec<OsString> {
     let integration = args.client.integration();
     let mut forwarded = args.client_args.clone();
     if forwarded.first().is_some_and(|value| value == "--") {
@@ -305,7 +323,7 @@ fn client_arguments(args: &WithArgs) -> Vec<OsString> {
         .then_some(integration.model_arg)
         .flatten()
         .map(|flag| {
-            let model = args.model.as_deref().unwrap_or(integration.default_model);
+            let model = resolved_model;
             [
                 OsString::from(flag),
                 model_selector(args.client, model).into(),
@@ -498,7 +516,7 @@ mod tests {
             client,
             client_args: client_args.iter().map(OsString::from).collect(),
         };
-        client_arguments(&args)
+        client_arguments(&args, "")
             .iter()
             .map(|value| value.to_string_lossy().into_owned())
             .collect()

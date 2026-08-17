@@ -352,10 +352,12 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 Authorizes a deployment that has no credential file — see
 [docs/use-cases/remote-login.md](docs/use-cases/remote-login.md). The optional
 `provider` request field selects `claude` (the backwards-compatible default)
-or `codex`. Claude drives the TUI `/login` flow and requests its full scope set;
-`LOGIN_CLI_ARGS=setup-token` explicitly selects the narrower `user:inference`
-flow. Codex defaults to its device-code flow, which needs no callback port or
-vendor CLI; its PKCE loopback flow remains available as a CLI fallback.
+or `codex`. The optional `mode` field selects `full` (the default, requesting
+Claude Code's whole scope set) or `setup-token` (the narrower `user:inference`
+scope); `LOGIN_CLI_ARGS=setup-token` sets the deployment default. Both modes are
+in-process OAuth and need no vendor CLI, so one image serves both. Codex
+defaults to its device-code flow, which needs no callback port or vendor CLI;
+its PKCE loopback flow remains available as a CLI fallback.
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -438,15 +440,22 @@ in a browser *or* in a chat. See
 Provider-specific namespaces use the matching healthy subscription in
 automatic mode, or the provider pinned by `UPSTREAM_PROVIDER`.
 
-When `UPSTREAM_PROVIDER=anthropic`, `gpt-4o`, `gpt-4o-mini`, `gpt-4`, and the
-`o*` reasoning families are explicit aliases for the Claude Sonnet / Haiku /
-Opus tiers respectively. Native `claude-*` IDs pass through unchanged. In
-automatic mode, routing uses only subscription catalogs: vendor-shaped IDs
-prefer their matching vendor if catalogs overlap, and an unqualified name
-advertised by multiple healthy subscriptions is rejected until
-`UPSTREAM_PROVIDER` is pinned. Other model names return `404 not_found_error`
-instead of silently selecting a default model. Successful Anthropic-backed
-responses report the resolved Claude model that actually served the request.
+**Every advertised and routable model comes from a live provider catalog.** The
+router ships no built-in model list, no per-provider default model, and no alias
+table: a catalog exists only after a successful authenticated discovery for that
+exact account, and is recorded with the account identity, the fetch time and an
+explicit health flag. Before the first discovery a provider advertises nothing;
+`GET /v1/models` reports it under `degraded_providers` rather than filling the
+gap from source. When a credential is revoked its last known catalog stays
+visible to administrators but stops being advertised or routed.
+
+Requested model names pass through unchanged. In automatic mode, routing uses
+only subscription catalogs: vendor-shaped IDs prefer their matching vendor if
+catalogs overlap, and an unqualified name advertised by multiple healthy
+subscriptions is rejected until `UPSTREAM_PROVIDER` is pinned. A model no
+catalog advertises returns `404 not_found_error` instead of silently selecting a
+default. Successful Anthropic-backed responses report the model that actually
+served the request.
 
 #### Model identity and output limits
 
@@ -605,7 +614,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
-| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (per provider) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
+| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (from live catalog) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream. Unset selects one from the account's live catalog ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
+| `--bridge-model-policy` / `BRIDGE_MODEL_POLICY` | `first-advertised` | No | How to pick that model from the catalog: `first-advertised` or `last-advertised`. When no compatible model exists the request fails with `model_selection_required` rather than falling back to a built-in name |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
 | `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first |
@@ -826,8 +836,8 @@ Other files keep the format of the boundary they serve:
 | `--disable-anthropic-api` / `DISABLE_ANTHROPIC_API` | off | Hide `/v1/messages*` and Bedrock paths |
 | `--disable-metrics` / `DISABLE_METRICS` | off | Hide `/metrics`, `/v1/usage`, `/v1/accounts` |
 | `--disable-login-api` / `DISABLE_LOGIN_API` | off | Hide `/api/login*` |
-| `--login-cli-command` / `LOGIN_CLI_COMMAND` | `claude` | Program `/api/login` drives on a PTY |
-| `--login-cli-args` / `LOGIN_CLI_ARGS` | (none; TUI `/login`) | Comma-separated arguments for that program; set `setup-token` for the narrow-scope alternative |
+| `--login-cli-command` / `LOGIN_CLI_COMMAND` | `claude` | Compatibility backend driven on a PTY. The default value spawns nothing: both login modes run in-process |
+| `--login-cli-args` / `LOGIN_CLI_ARGS` | (none; full scopes) | Comma-separated arguments for that program; set `setup-token` to make the narrow `user:inference` mode the deployment default |
 | `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | How long a pending login waits for its code before expiring |
 | `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Maximum simultaneously pending logins; beyond it, `429` |
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
@@ -1205,8 +1215,22 @@ curl -s -X POST http://localhost:8080/api/tokens \
 - Omitting `--max-requests` / `max_requests` leaves the token **unlimited**.
 - Omitting `--max-tokens` / `max_tokens` leaves actual token spend unlimited.
   Counts come from vendor response `usage` fields and are persisted across
-  restarts; the response that crosses a cap completes, and the next request is
-  rejected.
+  restarts.
+
+  When a cap is set the router **reserves** each request's declared output
+  budget before dispatching it, so a single response cannot push the persisted
+  total past the cap. A request is admitted only while
+  `used + reserved + this request's budget <= max_tokens`; one that cannot fit
+  is rejected up front with `429` rather than truncated mid-answer. The
+  reservation is released and replaced by the real figure once the response
+  completes, and is also released when a request fails, is cancelled, or
+  reports no usage. Because reserving happens inside the same atomic
+  read-modify-write that counts the request, concurrent requests cannot
+  overshoot together. Actual usage is always recorded in full, so a provider
+  that reports more than the caller declared (hidden reasoning tokens, for
+  example) can still land above the cap by that provider-side excess — bounded
+  by one request's surplus rather than unbounded. `tokens list` shows reserved
+  alongside actual spend.
 - Omitting `--rate-limit-per-minute` / `rate_limit_per_minute` disables the
   per-token one-minute request window.
 - Usage is counted per forwarded request and persisted in the token store, so

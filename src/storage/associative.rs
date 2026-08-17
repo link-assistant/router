@@ -110,6 +110,10 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                     LinoValue::String(record.used_tokens.to_string()),
                 ),
                 (
+                    "reserved_tokens",
+                    LinoValue::String(record.reserved_tokens.to_string()),
+                ),
+                (
                     "rate_limit_per_minute",
                     record
                         .rate_limit_per_minute
@@ -152,6 +156,8 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         used_requests: expect_u64_field(fields, "used_requests", "record value")?,
         max_tokens: optional_u64_field(fields, "max_tokens", "record value")?,
         used_tokens: optional_u64_field(fields, "used_tokens", "record value")?.unwrap_or(0),
+        reserved_tokens: optional_u64_field(fields, "reserved_tokens", "record value")?
+            .unwrap_or(0),
         rate_limit_per_minute: optional_u64_field(fields, "rate_limit_per_minute", "record value")?,
         rate_window_started_at: optional_i64_string_field(
             fields,
@@ -512,6 +518,12 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         "used_tokens",
         &record.used_tokens.to_string(),
     );
+    add_field(
+        &mut links,
+        &value,
+        "reserved_tokens",
+        &record.reserved_tokens.to_string(),
+    );
     if let Some(rate_limit) = record.rate_limit_per_minute {
         add_field(
             &mut links,
@@ -616,6 +628,7 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         used_requests: parse_field(&fields, "used_requests")?,
         max_tokens: optional_parsed_field(&fields, "max_tokens")?,
         used_tokens: optional_parsed_field(&fields, "used_tokens")?.unwrap_or(0),
+        reserved_tokens: optional_parsed_field(&fields, "reserved_tokens")?.unwrap_or(0),
         rate_limit_per_minute: optional_parsed_field(&fields, "rate_limit_per_minute")?,
         rate_window_started_at: optional_parsed_field(&fields, "rate_window_started_at")?
             .unwrap_or(0),
@@ -726,6 +739,7 @@ mod tests {
             used_requests: u64::MAX,
             max_tokens: Some(u64::MAX),
             used_tokens: u64::MAX,
+            reserved_tokens: u64::MAX,
             rate_limit_per_minute: Some(u64::MAX),
             rate_window_started_at: i64::MAX,
             rate_window_requests: u64::MAX,

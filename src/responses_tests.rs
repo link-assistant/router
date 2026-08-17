@@ -14,7 +14,8 @@ fn responses_api_translation() {
         reasoning: None,
     };
     let body = response_to_anthropic(&req);
-    assert_eq!(body["model"], "claude-sonnet-4-5-20250929");
+    // The requested model is preserved verbatim (issue #192).
+    assert_eq!(body["model"], "gpt-4o");
     assert_eq!(body["system"], "be poetic");
     assert_eq!(body["max_tokens"], 128);
     assert_eq!(body["messages"][0]["content"], "write a haiku");

@@ -18,7 +18,59 @@ pub const CLAUDE_REDIRECT_URI: &str = "https://platform.claude.com/oauth/code/ca
 /// Scopes requested by the interactive Claude Code login.
 pub const CLAUDE_SCOPES: &str = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload";
 
+/// Scope requested by the narrow `setup-token` alternative.
+///
+/// The vendor CLI's `setup-token` command asks for inference only; the router
+/// requests the same single scope in-process, so the narrow mode needs no
+/// vendor binary (issue #193).
+pub const CLAUDE_INFERENCE_SCOPE: &str = "user:inference";
+
 const PENDING_LOGIN_FILE: &str = ".link-assistant-router-claude-login.json";
+
+/// Which set of OAuth scopes a login asks for.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ClaudeAuthMode {
+    /// Full Claude Code `/login`-equivalent scopes.
+    #[default]
+    Full,
+    /// Narrow `user:inference` only, matching `setup-token`.
+    SetupToken,
+}
+
+impl ClaudeAuthMode {
+    /// The space-separated scope string this mode requests.
+    #[must_use]
+    pub const fn scopes(self) -> &'static str {
+        match self {
+            Self::Full => CLAUDE_SCOPES,
+            Self::SetupToken => CLAUDE_INFERENCE_SCOPE,
+        }
+    }
+
+    /// Parse an operator-facing mode name.
+    ///
+    /// # Errors
+    ///
+    /// Returns the list of accepted names when `value` is not one of them.
+    pub fn parse(value: &str) -> Result<Self, String> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "" | "full" | "login" | "default" => Ok(Self::Full),
+            "setup-token" | "setup_token" | "inference" | "narrow" => Ok(Self::SetupToken),
+            other => Err(format!(
+                "unknown login mode '{other}'; expected 'full' or 'setup-token'"
+            )),
+        }
+    }
+
+    /// The operator-facing name of this mode.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Full => "full",
+            Self::SetupToken => "setup-token",
+        }
+    }
+}
 
 /// Testable settings for one native Claude authorization.
 #[derive(Clone, Debug)]
@@ -28,17 +80,26 @@ pub struct ClaudeAuthConfig {
     pub client_id: String,
     pub redirect_uri: String,
     pub claude_home: PathBuf,
+    /// Scopes to request; see [`ClaudeAuthMode`].
+    pub scopes: String,
 }
 
 impl ClaudeAuthConfig {
     #[must_use]
     pub fn production(claude_home: PathBuf) -> Self {
+        Self::for_mode(claude_home, ClaudeAuthMode::Full)
+    }
+
+    /// Production settings requesting the scopes of `mode`.
+    #[must_use]
+    pub fn for_mode(claude_home: PathBuf, mode: ClaudeAuthMode) -> Self {
         Self {
             authorize_url: CLAUDE_AUTHORIZE_URL.to_string(),
             token_url: CLAUDE_TOKEN_URL.to_string(),
             client_id: CLAUDE_CLIENT_ID.to_string(),
             redirect_uri: CLAUDE_REDIRECT_URI.to_string(),
             claude_home,
+            scopes: mode.scopes().to_string(),
         }
     }
 }
@@ -85,7 +146,7 @@ impl ClaudeLogin {
             .append_pair("client_id", &config.client_id)
             .append_pair("response_type", "code")
             .append_pair("redirect_uri", &config.redirect_uri)
-            .append_pair("scope", CLAUDE_SCOPES)
+            .append_pair("scope", &config.scopes)
             .append_pair("code_challenge", &challenge)
             .append_pair("code_challenge_method", "S256")
             .append_pair("state", &state);
@@ -178,7 +239,7 @@ impl ClaudeLogin {
         if token.access_token.trim().is_empty() {
             return Err("invalid Claude token response: missing access_token".to_string());
         }
-        persist(&self.config.claude_home, token)
+        persist(&self.config.claude_home, token, &self.config.scopes)
     }
 }
 
@@ -226,12 +287,14 @@ fn take_pending(home: &Path) -> Result<PendingLogin, String> {
     result
 }
 
-fn persist(home: &Path, token: TokenResponse) -> Result<PathBuf, String> {
+fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<PathBuf, String> {
     std::fs::create_dir_all(home)
         .map_err(|error| format!("could not create {}: {error}", home.display()))?;
     let now = chrono::Utc::now().timestamp_millis();
+    // Fall back to what this login actually asked for, so a narrow
+    // `setup-token` credential is not recorded as carrying full scopes.
     let scopes = token.scope.as_deref().map_or_else(
-        || CLAUDE_SCOPES.split_whitespace().collect::<Vec<_>>(),
+        || requested_scopes.split_whitespace().collect::<Vec<_>>(),
         |scope| scope.split_whitespace().collect::<Vec<_>>(),
     );
     let mut oauth = serde_json::json!({

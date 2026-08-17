@@ -16,6 +16,7 @@ fn native_login_builds_the_claude_pkce_authorization_url() {
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
+        scopes: CLAUDE_SCOPES.into(),
     });
     let url = reqwest::Url::parse(login.authorization_url()).unwrap();
     let query = url
@@ -59,6 +60,7 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
+        scopes: CLAUDE_SCOPES.into(),
     };
     let login = ClaudeLogin::begin_persisted(config.clone(), Duration::from_secs(900)).unwrap();
     let state = reqwest::Url::parse(login.authorization_url())

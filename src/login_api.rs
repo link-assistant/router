@@ -45,7 +45,18 @@ pub async fn begin_login(
             "`provider` must be `claude` or `codex`",
         );
     };
-    match manager.begin_for(provider).await {
+    // An explicit mode wins; otherwise fall back to what configuration selects,
+    // so `LOGIN_CLI_ARGS=setup-token` keeps working (issue #193).
+    let mode = match request.as_ref().and_then(|body| body.mode.as_deref()) {
+        Some(value) => match crate::claude_auth::ClaudeAuthMode::parse(value) {
+            Ok(mode) => mode,
+            Err(message) => {
+                return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
+            }
+        },
+        None => manager.configured_mode(),
+    };
+    match manager.begin_with_mode(provider, mode).await {
         Ok(view) => (StatusCode::OK, axum::Json(view)).into_response(),
         Err(e) => login_error_response(&e),
     }
@@ -57,6 +68,9 @@ pub async fn begin_login(
 pub struct BeginLoginRequest {
     /// Subscription provider (`claude` or `codex`).
     pub provider: Option<String>,
+    /// Claude login mode: `full` (default) or `setup-token` for the narrow
+    /// `user:inference` scope. Ignored for Codex, which has one flow.
+    pub mode: Option<String>,
 }
 
 fn requested_provider(value: Option<&str>) -> Option<SubscriptionProvider> {
@@ -184,5 +198,60 @@ mod tests {
         );
         assert_eq!(requested_provider(Some("chatgpt")), None);
         assert_eq!(requested_provider(Some("gemini")), None);
+    }
+
+    /// The mode field accepts the documented spellings and rejects the rest,
+    /// so a typo cannot silently start the wrong-scope flow (issue #193).
+    #[test]
+    fn login_modes_parse_from_the_documented_spellings() {
+        use crate::claude_auth::ClaudeAuthMode;
+        for value in ["full", "FULL", "login", "default", ""] {
+            assert_eq!(
+                ClaudeAuthMode::parse(value),
+                Ok(ClaudeAuthMode::Full),
+                "{value}"
+            );
+        }
+        for value in ["setup-token", "setup_token", "inference", "NARROW"] {
+            assert_eq!(
+                ClaudeAuthMode::parse(value),
+                Ok(ClaudeAuthMode::SetupToken),
+                "{value}"
+            );
+        }
+        let error = ClaudeAuthMode::parse("scopes-please").expect_err("must reject");
+        assert!(error.contains("setup-token"), "{error}");
+    }
+
+    /// Each error maps onto the status code that describes it, so a caller can
+    /// tell a disabled surface from a broken one.
+    #[test]
+    fn login_errors_map_onto_their_status_codes() {
+        for (error, expected) in [
+            (LoginError::Disabled, StatusCode::NOT_FOUND),
+            (LoginError::NotFound, StatusCode::NOT_FOUND),
+            (
+                LoginError::TooManySessions(4),
+                StatusCode::TOO_MANY_REQUESTS,
+            ),
+            (
+                LoginError::NotPending(crate::login::LoginStatus::Authorized),
+                StatusCode::CONFLICT,
+            ),
+            (LoginError::Spawn("boom".into()), StatusCode::BAD_GATEWAY),
+            (LoginError::NoUrl("boom".into()), StatusCode::BAD_GATEWAY),
+            (LoginError::Storage("boom".into()), StatusCode::BAD_GATEWAY),
+        ] {
+            assert_eq!(
+                login_error_response(&error).status(),
+                expected,
+                "{error:?} should map to {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unauthorised_caller_is_told_a_bearer_key_is_required() {
+        assert_eq!(unauthorised().status(), StatusCode::UNAUTHORIZED);
     }
 }

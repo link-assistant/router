@@ -144,6 +144,11 @@ pub struct Cli {
     #[arg(long, env = "ANTHROPIC_BRIDGE_MODEL", global = true)]
     pub bridge_model: Option<String>,
 
+    /// How to pick a bridge model from the live catalog when `--bridge-model`
+    /// is unset: `first-advertised` (default) or `last-advertised`.
+    #[arg(long, env = "BRIDGE_MODEL_POLICY", global = true)]
+    pub bridge_model_policy: Option<String>,
+
     /// Append one JSON line per authorised request to this file, recording the
     /// router token id and label. Disabled when unset.
     #[arg(long, env = "AUDIT_LOG", global = true)]
@@ -562,6 +567,11 @@ pub enum AuthOp {
         /// Force an OAuth flow instead of automatic selection.
         #[arg(long, value_parser = auth_flow_parser(&CLAUDE_AUTH_FLOWS), default_value = "auto")]
         flow: AuthFlow,
+        /// Scope set to request: `full` (Claude Code `/login` equivalent) or
+        /// `setup-token` for `user:inference` only. Defaults to what
+        /// `LOGIN_CLI_ARGS` selects, then `full`.
+        #[arg(long)]
+        mode: Option<String>,
     },
     /// Authorize an `OpenAI` Codex / `ChatGPT` subscription.
     Codex {
@@ -611,6 +621,18 @@ pub enum TokenOp {
         ttl_hours: i64,
         #[arg(long, default_value = "")]
         label: String,
+        /// Replacement request cap; omitted keeps the existing one.
+        #[arg(long)]
+        max_requests: Option<u64>,
+        /// Replacement token spend cap; omitted keeps the existing one.
+        #[arg(long)]
+        max_tokens: Option<u64>,
+        /// Replacement per-minute request rate; omitted keeps the existing one.
+        #[arg(long)]
+        rate_limit_per_minute: Option<u64>,
+        /// Replacement account pin; omitted keeps the existing one.
+        #[arg(long)]
+        account: Option<String>,
     },
     /// List all known tokens.
     List,
@@ -816,6 +838,7 @@ impl Cli {
             gonka_source_url: self.gonka_source_url.clone(),
             gonka_model: self.gonka_model.clone(),
             bridge_model: self.bridge_model.clone().filter(|s| !s.is_empty()),
+            bridge_model_policy: self.bridge_model_policy.clone(),
             audit_log: self
                 .audit_log
                 .as_ref()

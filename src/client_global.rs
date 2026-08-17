@@ -292,3 +292,55 @@ fn set_file_mode(path: &Path, mode: Option<u32>) -> Result<(), std::io::Error> {
 fn set_file_mode(_path: &Path, _mode: Option<u32>) -> Result<(), std::io::Error> {
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn backup_paths_are_derived_from_the_config_path() {
+        let paths = backup_paths(std::path::Path::new("/tmp/router/config.json"));
+        // Both siblings live beside the config so a rollback is a local rename.
+        assert!(
+            paths
+                .config
+                .to_string_lossy()
+                .starts_with("/tmp/router/config.json")
+        );
+        assert_ne!(paths.config, paths.marker);
+        assert_ne!(paths.marker, paths.state);
+    }
+
+    #[test]
+    fn append_adds_a_suffix_without_losing_the_stem() {
+        let appended = append(std::path::Path::new("/tmp/a/config.json"), ".bak");
+        assert_eq!(appended.to_string_lossy(), "/tmp/a/config.json.bak");
+    }
+
+    #[test]
+    fn digest_is_stable_and_distinguishes_contents() {
+        assert_eq!(digest(b"same"), digest(b"same"));
+        assert_ne!(digest(b"same"), digest(b"other"));
+        assert!(!digest(b"").is_empty());
+    }
+
+    #[test]
+    fn removing_an_absent_path_succeeds() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        // Idempotent: undo runs on machines where the file was never written.
+        remove_if_present(&dir.path().join("nothing-here")).expect("absent path is fine");
+
+        let present = dir.path().join("present");
+        std::fs::write(&present, b"x").expect("write");
+        remove_if_present(&present).expect("remove");
+        assert!(!present.exists());
+    }
+
+    #[test]
+    fn writing_privately_creates_a_readable_file() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let path = dir.path().join("secret.json");
+        write_private(&path, b"{}").expect("write");
+        assert_eq!(std::fs::read(&path).expect("read"), b"{}");
+    }
+}

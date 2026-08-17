@@ -149,14 +149,25 @@ data: {"type":"message_stop"}
     assert_eq!(frames.last().map(String::as_str), Some("data: [DONE]\n\n"));
 }
 
+/// The listing carries exactly the ids it is given -- the router holds no
+/// model names of its own (issue #192).
 #[test]
-fn list_models_includes_known_ids() {
-    let v = list_models();
+fn list_models_advertises_only_the_supplied_catalog() {
+    let catalog = vec!["aurora-2-base".to_string(), "borealis-9-ultra".to_string()];
+    let v = list_models_from(&catalog, "examplecorp");
     let arr = v["data"].as_array().unwrap();
     let ids: Vec<&str> = arr
         .iter()
         .filter_map(|m| m.get("id").and_then(Value::as_str))
         .collect();
-    assert!(ids.contains(&"claude-opus-4-7"));
-    assert!(ids.contains(&"claude-sonnet-4-5-20250929"));
+    assert_eq!(ids, ["aurora-2-base", "borealis-9-ultra"]);
+    assert_eq!(arr[0]["owned_by"], "examplecorp");
+
+    // An account that has discovered nothing advertises nothing.
+    assert!(
+        list_models_from(&[], "examplecorp")["data"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
 }

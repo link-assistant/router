@@ -22,6 +22,7 @@ use serde_json::{Value, json};
 
 use crate::anthropic_stream::{AnthropicStreamTranslator, map_stop_reason};
 use crate::app_state::AppState;
+use crate::bridge_selection::{ModelSelectionRequired, SelectionFailure};
 use crate::config::UpstreamProvider;
 use crate::metrics::Surface;
 
@@ -47,29 +48,56 @@ pub const fn is_bridged(provider: UpstreamProvider) -> bool {
 /// Resolve the upstream model id for a bridged request.
 ///
 /// The client sends an Anthropic model name (`claude-…`), which means nothing
-/// to a Codex or Qwen upstream. Resolution order: the operator's configured
-/// `--bridge-model`, then a per-provider default. For the generic
-/// OpenAI-compatible provider an empty string is returned so that the
-/// provider's own `default_model` is applied by its forwarder.
-#[must_use]
-pub fn resolve_bridge_model(state: &AppState) -> String {
+/// to a Codex or Qwen upstream. Resolution order:
+///
+/// 1. the operator's configured `--bridge-model`, when set;
+/// 2. otherwise the account's **live catalog**, narrowed by the operator's
+///    `--bridge-model-policy`.
+///
+/// No per-provider constant is consulted. When the live catalog cannot supply a
+/// model the request fails with `model_selection_required` instead of being
+/// routed to a name from the router's own source (issue #192).
+///
+/// For the generic OpenAI-compatible provider an empty string is returned so
+/// that the provider's own `default_model` is applied by its forwarder.
+///
+/// # Errors
+///
+/// Returns [`ModelSelectionRequired`] when the provider's catalog has not been
+/// discovered, its credential is unusable, or it advertises no models.
+pub fn resolve_bridge_model(state: &AppState) -> Result<String, ModelSelectionRequired> {
     if let Some(model) = state.bridge_model.as_deref()
         && !model.is_empty()
     {
-        return model.to_string();
+        return Ok(model.to_string());
     }
-    match state.upstream_provider {
-        UpstreamProvider::Codex => "gpt-5-codex".to_string(),
-        UpstreamProvider::Qwen => "qwen3-coder-plus".to_string(),
-        UpstreamProvider::Gemini => crate::gemini::DEFAULT_MODEL.to_string(),
+    let Some(provider) = state.upstream_provider.subscription_provider() else {
         // Left empty on purpose: `forward_openai_compatible` substitutes the
         // provider record's `default_model` when `model` is absent or empty.
-        _ => state
+        return Ok(state
             .openai_compatible
             .default_model
             .clone()
-            .unwrap_or_default(),
+            .unwrap_or_default());
+    };
+
+    let status = state.model_catalogs.status(provider);
+    let fail = |reason| {
+        Err(ModelSelectionRequired {
+            provider: provider.as_str().to_string(),
+            reason,
+        })
+    };
+    if !status.discovered {
+        return fail(SelectionFailure::NotDiscovered);
     }
+    if !status.credential_healthy {
+        return fail(SelectionFailure::CredentialUnavailable);
+    }
+    state
+        .bridge_model_policy
+        .choose(status.routable_models())
+        .map_or_else(|| fail(SelectionFailure::EmptyCatalog), Ok)
 }
 
 /// Translate an Anthropic Messages request body into an `OpenAI` Chat
@@ -715,17 +743,31 @@ pub async fn forward_anthropic_messages(
         }
         return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
     }
+    // Preserve the requested identity for the reply. A request that names no
+    // model has none to echo; the resolved upstream model is reported
+    // separately, so nothing is invented here (issue #192).
     let requested_model = anthropic_body
         .get("model")
         .and_then(Value::as_str)
-        .unwrap_or("claude-3-5-sonnet")
+        .unwrap_or_default()
         .to_string();
     let stream_requested = anthropic_body
         .get("stream")
         .and_then(Value::as_bool)
         .unwrap_or(false);
     let stop_sequences = crate::stop_sequences::from_value(anthropic_body.get("stop_sequences"));
-    let upstream_model = resolve_bridge_model(state);
+    // No source-code fallback: when the live catalog cannot name a model the
+    // request is refused rather than routed to a guess (issue #192).
+    let upstream_model = match resolve_bridge_model(state) {
+        Ok(model) => model,
+        Err(error) => {
+            return crate::proxy::error_response(
+                StatusCode::SERVICE_UNAVAILABLE,
+                crate::bridge_selection::MODEL_SELECTION_REQUIRED,
+                &error.to_string(),
+            );
+        }
+    };
     let chat_body = anthropic_to_chat_request(&anthropic_body, &upstream_model);
 
     let upstream = match state.upstream_provider {

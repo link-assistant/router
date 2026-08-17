@@ -344,6 +344,7 @@ mod config_verbose_tests {
 
     fn args_with_verbose(verbose: bool) -> BuildArgs<'static> {
         BuildArgs {
+            bridge_model_policy: None,
             host: "0.0.0.0",
             port: "8080",
             token_secret: Some("secret"),
@@ -400,24 +401,21 @@ mod config_verbose_tests {
 mod openai_translation_tests {
     use link_assistant_router::openai::{
         ChatMessage, OpenAIChatCompletionRequest, anthropic_to_chat_completion,
-        chat_completion_to_anthropic, list_models, map_model,
+        chat_completion_to_anthropic, list_models_from, map_model,
     };
     use serde_json::json;
 
+    /// The router keeps no built-in alias table, so a requested model is
+    /// passed through unchanged rather than rewritten to a vendor id compiled
+    /// into the binary (issue #192).
     #[test]
-    fn maps_openai_aliases_to_claude_models() {
-        assert!(map_model("gpt-4o").contains("claude"));
-        assert!(map_model("gpt-4o-mini").contains("haiku"));
-        assert!(map_model("o1").contains("opus"));
+    fn model_names_are_passed_through_not_rewritten() {
+        assert_eq!(map_model("aurora-2-base"), "aurora-2-base");
+        assert_eq!(map_model("borealis-9-ultra"), "borealis-9-ultra");
         assert_eq!(
-            map_model("claude-opus-4-7"),
-            "claude-opus-4-7",
-            "native claude IDs pass through"
-        );
-        assert_eq!(
-            link_assistant_router::openai::resolve_model("totally-made-up-model-xyz"),
+            link_assistant_router::openai::resolve_model(""),
             None,
-            "unknown model IDs are not routable"
+            "an empty model id is not routable"
         );
     }
 
@@ -468,12 +466,22 @@ mod openai_translation_tests {
         assert_eq!(v["model"], "claude-sonnet-4-5-20250929");
     }
 
+    /// The listing reflects the supplied live catalog and nothing else: the
+    /// router carries no model names of its own (issue #192).
     #[test]
-    fn models_endpoint_includes_known_claude_ids() {
-        let v = list_models();
+    fn models_endpoint_advertises_only_the_live_catalog() {
+        let catalog = vec!["aurora-2-base".to_string()];
+        let v = list_models_from(&catalog, "examplecorp");
         let data = v["data"].as_array().expect("data array");
         let ids: Vec<&str> = data.iter().filter_map(|m| m["id"].as_str()).collect();
-        assert!(ids.iter().any(|id| id.contains("claude")));
+        assert_eq!(ids, ["aurora-2-base"]);
+        assert!(
+            list_models_from(&[], "examplecorp")["data"]
+                .as_array()
+                .expect("data array")
+                .is_empty(),
+            "an undiscovered account must advertise nothing"
+        );
     }
 }
 
@@ -639,8 +647,18 @@ mod cli_parser_tests {
         assert!(matches!(
             claude.command,
             Some(Command::Auth {
-                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto }
+                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto, mode: None }
             }) if code == "copied"
+        ));
+
+        // The narrow scope set is selectable explicitly (issue #193).
+        let narrow = Cli::try_parse_from(["bin", "auth", "claude", "--mode", "setup-token"])
+            .expect("parses Claude auth mode");
+        assert!(matches!(
+            narrow.command,
+            Some(Command::Auth {
+                op: AuthOp::Claude { mode: Some(mode), .. }
+            }) if mode == "setup-token"
         ));
 
         let codex = Cli::try_parse_from([

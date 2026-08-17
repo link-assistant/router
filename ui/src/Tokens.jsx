@@ -16,7 +16,16 @@ import {
 } from '@chakra-ui/react'
 import { api } from './api.js'
 
-const EMPTY_FORM = { label: '', ttl_hours: '24', max_requests: '', account: '' }
+// Every constraint the token API supports is editable here, so the web surface
+// is not weaker than the CLI or the chat commands (issue #194).
+const EMPTY_FORM = {
+  label: '',
+  ttl_hours: '24',
+  max_requests: '',
+  max_tokens: '',
+  rate_limit_per_minute: '',
+  account: '',
+}
 
 // `issued_at` / `expires_at` are JWT `iat` / `exp`: unix seconds.
 function formatTimestamp(seconds) {
@@ -30,6 +39,33 @@ function usage(record) {
   return record.max_requests ? `${used} / ${record.max_requests}` : `${used} / ∞`
 }
 
+function spend(record) {
+  const used = record.used_tokens ?? 0
+  const total = record.max_tokens ? `${used} / ${record.max_tokens}` : `${used} / ∞`
+  // Reserved budget is shown separately so an administrator can tell committed
+  // spend from spend that is merely held for requests still in flight.
+  return record.reserved_tokens ? `${total} (+${record.reserved_tokens} held)` : total
+}
+
+/** Lifecycle state, matching what the CLI and chat surfaces report. */
+function state(record) {
+  if (record.revoked) return { label: 'revoked', palette: 'red' }
+  if (record.expires_at && Number(record.expires_at) * 1000 <= Date.now()) {
+    return { label: 'expired', palette: 'orange' }
+  }
+  return { label: 'active', palette: 'green' }
+}
+
+/** Numeric form fields are sent only when filled, so blank means "unlimited". */
+function constraintsFrom(form) {
+  const body = {}
+  for (const field of ['max_requests', 'max_tokens', 'rate_limit_per_minute']) {
+    if (form[field]) body[field] = Number(form[field])
+  }
+  if (form.account) body.account = form.account
+  return body
+}
+
 /** Token list, issuance, and revocation. */
 export default function Tokens({ token }) {
   const [records, setRecords] = useState([])
@@ -38,6 +74,7 @@ export default function Tokens({ token }) {
   const [issued, setIssued] = useState('')
   const [busy, setBusy] = useState(false)
   const [pendingRevoke, setPendingRevoke] = useState(null)
+  const [pendingRotate, setPendingRotate] = useState(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -57,9 +94,11 @@ export default function Tokens({ token }) {
     event.preventDefault()
     setBusy(true)
     try {
-      const body = { label: form.label, ttl_hours: Number(form.ttl_hours) || 24 }
-      if (form.max_requests) body.max_requests = Number(form.max_requests)
-      if (form.account) body.account = form.account
+      const body = {
+        label: form.label,
+        ttl_hours: Number(form.ttl_hours) || 24,
+        ...constraintsFrom(form),
+      }
       const response = await api.issueToken(token, body)
       // Shown once, here, and never re-displayed: the list keeps records only.
       setIssued(response.token)
@@ -78,6 +117,21 @@ export default function Tokens({ token }) {
     if (!target) return
     try {
       await api.revokeToken(token, target.id)
+      await refresh()
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  // Rotation keeps every stored constraint; the server revokes the old value
+  // as part of the same call, so there is no window with two live tokens.
+  async function rotate() {
+    const target = pendingRotate
+    setPendingRotate(null)
+    if (!target) return
+    try {
+      const response = await api.rotateClientToken(token, { id: target.id })
+      setIssued(response.token)
       await refresh()
     } catch (e) {
       setError(e.message)
@@ -127,6 +181,24 @@ export default function Tokens({ token }) {
               />
             </Field.Root>
             <Field.Root>
+              <Field.Label>Token cap</Field.Label>
+              <Input
+                value={form.max_tokens}
+                onChange={(e) => setForm({ ...form, max_tokens: e.target.value })}
+                placeholder="unlimited"
+                inputMode="numeric"
+              />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>Requests / minute</Field.Label>
+              <Input
+                value={form.rate_limit_per_minute}
+                onChange={(e) => setForm({ ...form, rate_limit_per_minute: e.target.value })}
+                placeholder="unlimited"
+                inputMode="numeric"
+              />
+            </Field.Root>
+            <Field.Root>
               <Field.Label>Account pin</Field.Label>
               <Input
                 value={form.account}
@@ -169,6 +241,9 @@ export default function Tokens({ token }) {
                 <Table.ColumnHeader>Issued</Table.ColumnHeader>
                 <Table.ColumnHeader>Expires</Table.ColumnHeader>
                 <Table.ColumnHeader>Requests</Table.ColumnHeader>
+                <Table.ColumnHeader>Tokens</Table.ColumnHeader>
+                <Table.ColumnHeader>Req/min</Table.ColumnHeader>
+                <Table.ColumnHeader>Account</Table.ColumnHeader>
                 <Table.ColumnHeader>State</Table.ColumnHeader>
                 <Table.ColumnHeader />
               </Table.Row>
@@ -181,21 +256,32 @@ export default function Tokens({ token }) {
                   <Table.Cell>{formatTimestamp(record.issued_at)}</Table.Cell>
                   <Table.Cell>{formatTimestamp(record.expires_at)}</Table.Cell>
                   <Table.Cell>{usage(record)}</Table.Cell>
+                  <Table.Cell>{spend(record)}</Table.Cell>
+                  <Table.Cell>{record.rate_limit_per_minute ?? '∞'}</Table.Cell>
+                  <Table.Cell>{record.account || 'any'}</Table.Cell>
                   <Table.Cell>
-                    <Badge colorPalette={record.revoked ? 'red' : 'green'}>
-                      {record.revoked ? 'revoked' : 'active'}
-                    </Badge>
+                    <Badge colorPalette={state(record).palette}>{state(record).label}</Badge>
                   </Table.Cell>
                   <Table.Cell>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      colorPalette="red"
-                      disabled={record.revoked}
-                      onClick={() => setPendingRevoke(record)}
-                    >
-                      Revoke
-                    </Button>
+                    <Stack direction="row" gap="2">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        disabled={record.revoked || record.scope === 'admin'}
+                        onClick={() => setPendingRotate(record)}
+                      >
+                        Rotate
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        colorPalette="red"
+                        disabled={record.revoked}
+                        onClick={() => setPendingRevoke(record)}
+                      >
+                        Revoke
+                      </Button>
+                    </Stack>
                   </Table.Cell>
                 </Table.Row>
               ))}
@@ -203,6 +289,33 @@ export default function Tokens({ token }) {
           </Table.Root>
         )}
       </Box>
+
+      <Dialog.Root open={Boolean(pendingRotate)} onOpenChange={() => setPendingRotate(null)}>
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Rotate token</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Text>
+                  Issue a replacement for <Code>{pendingRotate?.id}</Code>
+                  {pendingRotate?.label ? ` (${pendingRotate.label})` : ''}? Its limits are kept and
+                  the current value is revoked immediately, so anything still using it will start
+                  failing.
+                </Text>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Button variant="outline" onClick={() => setPendingRotate(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={rotate}>Rotate</Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       <Dialog.Root open={Boolean(pendingRevoke)} onOpenChange={() => setPendingRevoke(null)}>
         <Portal>

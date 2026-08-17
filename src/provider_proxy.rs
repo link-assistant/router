@@ -144,9 +144,18 @@ pub async fn forward_openai_compatible(
     // Per-token request budgets apply to every upstream, not just the
     // subscription ones, so a task token cannot escape its cap by being
     // pointed at an OpenAI-compatible gateway.
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let provider = match resolve_openai_compatible_provider(state) {
@@ -219,9 +228,9 @@ pub async fn forward_openai_compatible(
 
     if stream_requested || is_event_stream(&content_type) {
         let response_log = std::sync::Arc::clone(&state.request_log);
-        let mut usage = status.is_success().then(|| {
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone())
-        });
+        let mut usage = status
+            .is_success()
+            .then(|| reservation.take().into_tracker());
         let stream = upstream_resp.bytes_stream().map(move |chunk| {
             if let Ok(bytes) = &chunk {
                 response_log.record_upstream_body(&correlation_id, bytes);
@@ -255,8 +264,7 @@ pub async fn forward_openai_compatible(
         .metrics
         .record_bytes(bytes_sent, upstream_body.len() as u64);
     if status.is_success() {
-        let mut usage =
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
     }
 
@@ -322,4 +330,56 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
     content_type
         .to_str()
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `/v1` in the configured base URL must not be duplicated by the request
+    /// path, and a base without it keeps the path verbatim.
+    #[test]
+    fn base_urls_are_joined_without_duplicating_the_version_segment() {
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/v1", "/v1/chat/completions"),
+            "https://api.example/v1/chat/completions"
+        );
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/v1/", "/v1/chat/completions"),
+            "https://api.example/v1/chat/completions"
+        );
+        assert_eq!(
+            join_openai_compatible_url("https://api.example", "/v1/chat/completions"),
+            "https://api.example/v1/chat/completions"
+        );
+        // A path that does not start with /v1 is appended as-is.
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/v1", "/responses"),
+            "https://api.example/v1/responses"
+        );
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/", "/responses"),
+            "https://api.example/responses"
+        );
+    }
+
+    #[test]
+    fn event_stream_content_types_are_detected_case_insensitively() {
+        for value in [
+            "text/event-stream",
+            "text/event-stream; charset=utf-8",
+            "TEXT/EVENT-STREAM",
+        ] {
+            assert!(
+                is_event_stream(&HeaderValue::from_str(value).expect("header")),
+                "{value} should be recognised as a stream"
+            );
+        }
+        for value in ["application/json", "text/plain"] {
+            assert!(
+                !is_event_stream(&HeaderValue::from_str(value).expect("header")),
+                "{value} should not be recognised as a stream"
+            );
+        }
+    }
 }

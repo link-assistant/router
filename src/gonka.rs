@@ -129,9 +129,18 @@ pub(crate) async fn forward_openai(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    if let Err(e) = state.token_manager.enforce_request_budget(&claims.sub) {
+    let reserved = crate::token_reservation::estimate(&body).total();
+    if let Err(e) = state
+        .token_manager
+        .enforce_request_budget_reserving(&claims.sub, reserved)
+    {
         return crate::token_http::budget_error_response(&e);
     }
+    let mut reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let body = with_default_model(body, &gonka.model);
@@ -211,8 +220,7 @@ pub(crate) async fn forward_openai(
         .record_bytes(bytes_sent, upstream_body.len() as u64);
     state.metrics.record_request(surface, status.as_u16(), None);
     if status.is_success() {
-        let mut usage =
-            crate::usage::UsageTracker::new(state.token_manager.clone(), claims.sub.clone());
+        let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
     }
 
@@ -262,5 +270,36 @@ mod tests {
             .expect("signature");
         assert!(!signature.contains("secret-key"));
         assert!(headers.contains_key("x-gonka-timestamp"));
+    }
+
+    #[test]
+    fn a_missing_or_blank_model_is_filled_from_the_configured_default() {
+        let filled = with_default_model(json!({"messages": []}), "quillon-4-vector");
+        assert_eq!(filled["model"], "quillon-4-vector");
+
+        let blank = with_default_model(json!({"model": ""}), "quillon-4-vector");
+        assert_eq!(blank["model"], "quillon-4-vector");
+    }
+
+    #[test]
+    fn an_explicit_model_is_left_alone() {
+        let explicit = with_default_model(json!({"model": "aurora-2-base"}), "quillon-4-vector");
+        assert_eq!(explicit["model"], "aurora-2-base");
+    }
+
+    #[test]
+    fn the_listing_advertises_the_configured_model() {
+        let listing = list_models("quillon-4-vector");
+        assert_eq!(listing["object"], "list");
+        let data = listing["data"].as_array().expect("data");
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0]["id"], "quillon-4-vector");
+        assert_eq!(data[0]["object"], "model");
+    }
+
+    #[test]
+    fn provider_errors_carry_their_status_and_message() {
+        let response = provider_error(StatusCode::BAD_GATEWAY, "upstream is unreachable");
+        assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
     }
 }

@@ -4,10 +4,7 @@ use std::time::Duration;
 
 use serde::Deserialize;
 
-use super::{
-    ClientError, ClientKind, ClientManager, DEFAULT_ANTHROPIC_MODEL, DEFAULT_OPENAI_MODEL,
-    compact_body, normalize_base_url,
-};
+use super::{ClientError, ClientKind, ClientManager, compact_body, normalize_base_url};
 
 /// One model advertised by the configured router.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
@@ -92,20 +89,12 @@ pub(super) fn doctor_model(
         }
         ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
     };
-    let preferred = match client {
-        ClientKind::ClaudeCode => DEFAULT_ANTHROPIC_MODEL,
-        _ => DEFAULT_OPENAI_MODEL,
-    };
+    // No preferred model *name*: the first catalog entry owned by the right
+    // provider is used, so nothing here can point at a withdrawn or
+    // unentitled vendor id (issue #192).
     catalog
         .iter()
-        .find(|model| {
-            model.id == preferred && required_owner.is_none_or(|owner| model.owned_by == owner)
-        })
-        .or_else(|| {
-            catalog
-                .iter()
-                .find(|model| required_owner.is_none_or(|owner| model.owned_by == owner))
-        })
+        .find(|model| required_owner.is_none_or(|owner| model.owned_by == owner))
         .map(|model| model.id.as_str())
         .ok_or_else(|| {
             let subscription = required_owner.unwrap_or("compatible");

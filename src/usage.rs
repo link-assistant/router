@@ -57,11 +57,27 @@ pub struct UsageTracker {
     input_tokens: u64,
     output_tokens: u64,
     saw_sse: bool,
+    /// Spend reserved for this request at admission, released on drop.
+    reserved_tokens: u64,
 }
 
 impl UsageTracker {
     #[must_use]
     pub fn new(manager: TokenManager, token_id: impl Into<String>) -> Self {
+        Self::with_reservation(manager, token_id, 0)
+    }
+
+    /// Track a request that reserved `reserved_tokens` of spend budget.
+    ///
+    /// Dropping the tracker releases the reservation whether or not any usage
+    /// was reported, so cancelled requests, upstream errors, and responses with
+    /// no usage block all return their budget (issue #195).
+    #[must_use]
+    pub fn with_reservation(
+        manager: TokenManager,
+        token_id: impl Into<String>,
+        reserved_tokens: u64,
+    ) -> Self {
         Self {
             manager,
             token_id: token_id.into(),
@@ -71,6 +87,7 @@ impl UsageTracker {
             input_tokens: 0,
             output_tokens: 0,
             saw_sse: false,
+            reserved_tokens,
         }
     }
 
@@ -108,6 +125,84 @@ impl UsageTracker {
     }
 }
 
+/// Holds a spend reservation until it is either handed to a [`UsageTracker`] or
+/// released.
+///
+/// A request can leave the handler on many paths — upstream failure, a
+/// translation error, a client disconnect — and each one must give the reserved
+/// budget back or the cap leaks until restart. Binding the reservation to a
+/// guard makes the release automatic: every early return drops it, and the
+/// success path calls [`ReservationGuard::into_tracker`] so the reservation is
+/// settled together with the real usage instead.
+pub struct ReservationGuard {
+    manager: TokenManager,
+    token_id: String,
+    reserved_tokens: u64,
+}
+
+impl ReservationGuard {
+    #[must_use]
+    pub fn new(manager: TokenManager, token_id: impl Into<String>, reserved_tokens: u64) -> Self {
+        Self {
+            manager,
+            token_id: token_id.into(),
+            reserved_tokens,
+        }
+    }
+
+    /// Tokens reserved for this request.
+    #[must_use]
+    pub const fn reserved(&self) -> u64 {
+        self.reserved_tokens
+    }
+
+    /// Hand the reservation to a usage tracker, which settles it with the
+    /// actual usage once the response completes.
+    #[must_use]
+    pub fn into_tracker(mut self) -> UsageTracker {
+        let reserved = std::mem::take(&mut self.reserved_tokens);
+        UsageTracker::with_reservation(self.manager.clone(), self.token_id.clone(), reserved)
+    }
+
+    /// Detach the reservation, leaving this guard with nothing left to release.
+    ///
+    /// Lets a handler that only has a mutable borrow move the reservation into
+    /// a tracker while the original guard stays in scope.
+    #[must_use]
+    pub fn take(&mut self) -> Self {
+        Self {
+            manager: self.manager.clone(),
+            token_id: self.token_id.clone(),
+            reserved_tokens: std::mem::take(&mut self.reserved_tokens),
+        }
+    }
+
+    /// Release the reservation now, recording `actual` usage against it.
+    ///
+    /// Used by non-streaming paths that already have the complete response.
+    pub fn settle(mut self, actual: u64) {
+        let reserved = std::mem::take(&mut self.reserved_tokens);
+        if let Err(error) = self
+            .manager
+            .settle_token_usage(&self.token_id, reserved, actual)
+        {
+            tracing::warn!(token_id = %self.token_id, "failed to persist token usage: {error}");
+        }
+    }
+}
+
+impl Drop for ReservationGuard {
+    fn drop(&mut self) {
+        if self.reserved_tokens == 0 {
+            return;
+        }
+        let reserved = std::mem::take(&mut self.reserved_tokens);
+        if let Err(error) = self.manager.settle_token_usage(&self.token_id, reserved, 0) {
+            tracing::warn!(token_id = %self.token_id, "failed to release token reservation: {error}");
+        }
+    }
+}
+
 impl Drop for UsageTracker {
     fn drop(&mut self) {
         if !self.saw_sse {
@@ -124,8 +219,12 @@ impl Drop for UsageTracker {
         let tokens = self
             .total_tokens
             .max(self.input_tokens.saturating_add(self.output_tokens));
-        if tokens > 0
-            && let Err(error) = self.manager.record_token_usage(&self.token_id, tokens)
+        // Settle unconditionally: a request that reported no usage still has to
+        // give its reservation back, or the budget leaks until restart.
+        if (tokens > 0 || self.reserved_tokens > 0)
+            && let Err(error) =
+                self.manager
+                    .settle_token_usage(&self.token_id, self.reserved_tokens, tokens)
         {
             tracing::warn!(token_id = %self.token_id, "failed to persist token usage: {error}");
         }

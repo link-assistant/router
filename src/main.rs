@@ -228,6 +228,14 @@ async fn run_server(
     }
 
     let token_manager = TokenManager::with_store(&config.token_secret, store);
+    // Requests in flight when the previous process stopped never settled their
+    // spend reservations. Nothing is in flight yet, so any reservation still on
+    // disk is stale and would otherwise pin budget against the cap forever.
+    match token_manager.release_stale_reservations() {
+        Ok(0) => {}
+        Ok(cleared) => tracing::info!("released {cleared} stale token spend reservation(s)"),
+        Err(error) => tracing::warn!("failed to release stale token reservations: {error}"),
+    }
     announce_admin_access(&config, &token_manager);
     let oauth_provider = OAuthProvider::new(&config.claude_code_home);
     let metrics = Arc::new(Metrics::default());
@@ -296,6 +304,7 @@ async fn run_server(
             config.gonka_model.clone(),
         ),
         bridge_model: config.bridge_model.clone(),
+        bridge_model_policy: config.bridge_model_policy,
         audit: std::sync::Arc::new(link_assistant_router::audit::AuditLog::to_path(
             config.audit_log.as_deref(),
         )),
@@ -455,29 +464,51 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             max_tokens,
             rate_limit_per_minute,
             admin,
-        } => match mgr.issue(&IssueRequest {
-            ttl_hours: *ttl_hours,
-            label,
-            account: account.as_deref(),
-            max_requests: *max_requests,
-            max_tokens: *max_tokens,
-            rate_limit_per_minute: *rate_limit_per_minute,
-            scope: if *admin { ADMIN_SCOPE } else { "" },
-        }) {
-            Ok(t) => {
-                println!("{t}");
-                ExitCode::SUCCESS
+        } => {
+            let request = IssueRequest {
+                ttl_hours: *ttl_hours,
+                label,
+                account: account.as_deref(),
+                max_requests: *max_requests,
+                max_tokens: *max_tokens,
+                rate_limit_per_minute: *rate_limit_per_minute,
+                scope: if *admin { ADMIN_SCOPE } else { "" },
+            };
+            // Shared with the HTTP and chat surfaces (issue #194).
+            if let Err(message) = request.validate() {
+                eprintln!("error: {message}");
+                return ExitCode::from(2);
             }
-            Err(e) => {
-                eprintln!("error: {e}");
-                ExitCode::from(1)
+            match mgr.issue(&request) {
+                Ok(t) => {
+                    println!("{t}");
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    ExitCode::from(1)
+                }
             }
-        },
+        }
         TokenOp::Rotate {
             id,
             ttl_hours,
             label,
-        } => match mgr.rotate_token(id, *ttl_hours, label) {
+            max_requests,
+            max_tokens,
+            rate_limit_per_minute,
+            account,
+        } => match mgr.rotate_token_with(
+            id,
+            &link_assistant_router::token::RotateOverrides {
+                label: (!label.is_empty()).then_some(label.as_str()),
+                ttl_hours: Some(*ttl_hours),
+                max_requests: *max_requests,
+                max_tokens: *max_tokens,
+                rate_limit_per_minute: *rate_limit_per_minute,
+                account: account.as_deref(),
+            },
+        ) {
             Ok(t) => {
                 println!("{t}");
                 eprintln!("revoked {id}");
@@ -491,13 +522,14 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
         TokenOp::List => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
-                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<8}  {:<6}  label",
+                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {:<6}  label",
                     "id",
                     "issued_at",
                     "expires_at",
                     "revoked",
                     "requests",
                     "tokens",
+                    "reserved",
                     "rpm",
                     "scope"
                 );
@@ -519,8 +551,16 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                         .rate_limit_per_minute
                         .map_or_else(|| "-".to_string(), |limit| limit.to_string());
                     println!(
-                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<8}  {scope:<6}  {}",
-                        r.id, r.issued_at, r.expires_at, r.revoked, requests, tokens, rpm, r.label
+                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {scope:<6}  {}",
+                        r.id,
+                        r.issued_at,
+                        r.expires_at,
+                        r.revoked,
+                        requests,
+                        tokens,
+                        r.reserved_tokens,
+                        rpm,
+                        r.label
                     );
                 }
                 ExitCode::SUCCESS
@@ -847,6 +887,10 @@ async fn run_doctor(config: &Config) -> ExitCode {
         config.login.command,
         config.login.args.join(" ")
     );
+    // Whether each auth mode can run here, before any login is attempted.
+    for line in link_assistant_router::doctor::login_mode_report(&config.login) {
+        println!("{line}");
+    }
     println!(
         "mpp_openai_charge      : {}",
         if config.mpp.is_configured() {

@@ -1,0 +1,2 @@
+### Fixed
+- Release provenance verification no longer fails for every published binary and SBOM. `actions/attest-build-provenance` records the commit the run started from, and the `chore: release vX.Y.Z` commit is created later by the same run, so the attestation can never name it. The guard now accepts the release commit or exactly its parent, and still rejects an artifact attesting any unrelated commit.

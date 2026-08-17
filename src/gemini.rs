@@ -30,8 +30,8 @@ use crate::proxy::{
 /// Environment variable carrying the Google Cloud project id for Code Assist.
 pub const PROJECT_ENV: &str = "GEMINI_PROJECT";
 
-/// Default Gemini model used when a request omits `model`.
-pub const DEFAULT_MODEL: &str = "gemini-2.5-pro";
+/// Model owner reported for Gemini catalog entries.
+pub const MODEL_OWNER: &str = "google";
 
 /// Translate an `OpenAI` Chat Completions request body to a Gemini
 /// `GenerateContentRequest`.
@@ -227,7 +227,9 @@ enum ShapeIn {
 struct RoutedGeminiToken {
     token: crate::subscription::SubscriptionToken,
     account: String,
-    token_id: String,
+    /// Spend reserved at admission, carrying the token id it was taken
+    /// against; released when the response settles.
+    reservation: crate::usage::ReservationGuard,
 }
 
 async fn route_gemini_token(
@@ -238,10 +240,16 @@ async fn route_gemini_token(
     path: &str,
 ) -> Result<RoutedGeminiToken, Response> {
     let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+    let reserved = crate::token_reservation::estimate(body).total();
     state
         .token_manager
-        .enforce_request_budget(&claims.sub)
+        .enforce_request_budget_reserving(&claims.sub, reserved)
         .map_err(|error| crate::token_http::budget_error_response(&error))?;
+    let reservation = crate::usage::ReservationGuard::new(
+        state.token_manager.clone(),
+        claims.sub.clone(),
+        reserved,
+    );
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
     let pinned_account = state
         .token_manager
@@ -298,7 +306,7 @@ async fn route_gemini_token(
     Ok(RoutedGeminiToken {
         token,
         account: selected.name,
-        token_id: claims.sub,
+        reservation,
     })
 }
 
@@ -319,7 +327,8 @@ async fn forward(
         };
     let sub_token = routed.token;
     let selected_account = Some(routed.account);
-    let token_id = routed.token_id;
+    // The reservation carries the token id; usage settles through it.
+    let mut reservation = routed.reservation;
 
     // Normalize Responses input into the Chat `messages` shape so a single
     // translator handles both surfaces.
@@ -328,10 +337,20 @@ async fn forward(
         ShapeIn::Responses => responses_to_chat(&body),
     };
 
-    let model = chat_body
-        .get("model")
-        .and_then(Value::as_str)
-        .map_or_else(|| DEFAULT_MODEL.to_string(), map_model);
+    let catalog = state
+        .model_catalogs
+        .models(crate::subscription::SubscriptionProvider::Gemini);
+    let Some(model) = select_model(
+        chat_body.get("model").and_then(Value::as_str),
+        &catalog,
+        state.bridge_model_policy,
+    ) else {
+        return error_response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            crate::bridge_selection::MODEL_SELECTION_REQUIRED,
+            "the requested model is not advertised by the Gemini account's live catalog",
+        );
+    };
     let stream_requested = chat_body
         .get("stream")
         .and_then(Value::as_bool)
@@ -433,7 +452,7 @@ async fn forward(
         );
         return response;
     }
-    let mut usage = crate::usage::UsageTracker::new(state.token_manager.clone(), token_id);
+    let mut usage = reservation.take().into_tracker();
     usage.feed(&upstream_body);
 
     let gemini_json: Value = match serde_json::from_slice(&upstream_body) {
@@ -543,14 +562,26 @@ fn responses_to_chat(body: &Value) -> Value {
     out
 }
 
-/// Map a requested model name to a Gemini model id.
-fn map_model(requested: &str) -> String {
-    if requested.starts_with("gemini") {
-        return requested.to_string();
-    }
+/// Choose the Gemini model to serve a request with.
+///
+/// The router holds no built-in Gemini model names and never substitutes one
+/// for an unknown request (issue #192): a request that names a model the
+/// account advertises is served, a request that names nothing falls back to the
+/// operator policy over the live catalog, and anything else fails so the caller
+/// learns the model is unavailable instead of silently getting a different one.
+fn select_model(
+    requested: Option<&str>,
+    catalog: &[String],
+    policy: crate::bridge_selection::BridgeModelPolicy,
+) -> Option<String> {
     match requested {
-        "gpt-4o-mini" | "gpt-4-mini" | "haiku" => "gemini-2.5-flash".to_string(),
-        _ => DEFAULT_MODEL.to_string(),
+        Some(model) if !model.is_empty() => {
+            // An empty catalog means discovery has not completed; the upstream
+            // remains the authority on whether the name is real.
+            (catalog.is_empty() || catalog.iter().any(|entry| entry == model))
+                .then(|| model.to_string())
+        }
+        _ => policy.choose(catalog),
     }
 }
 
@@ -631,9 +662,45 @@ mod tests {
     }
 
     #[test]
-    fn map_model_passes_gemini_through() {
-        assert_eq!(map_model("gemini-2.5-flash"), "gemini-2.5-flash");
-        assert_eq!(map_model("gpt-4o"), DEFAULT_MODEL);
+    fn select_model_uses_the_live_catalog_only() {
+        // Synthetic names: the router must hold no real Gemini ids (issue #192).
+        let catalog = vec!["nimbus-3-flash".to_string(), "nimbus-9-pro".to_string()];
+        // A model the account advertises is served unchanged.
+        assert_eq!(
+            select_model(
+                Some("nimbus-3-flash"),
+                &catalog,
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            Some("nimbus-3-flash".to_string())
+        );
+        // A model it does not advertise is refused, not substituted.
+        assert_eq!(
+            select_model(
+                Some("absent-1"),
+                &catalog,
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            None
+        );
+        // No requested model falls back to the operator policy over the catalog.
+        assert_eq!(
+            select_model(
+                None,
+                &catalog,
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            Some("nimbus-3-flash".to_string())
+        );
+        // Nothing discovered and nothing requested selects nothing.
+        assert_eq!(
+            select_model(
+                None,
+                &[],
+                crate::bridge_selection::BridgeModelPolicy::default()
+            ),
+            None
+        );
     }
 
     #[test]
@@ -649,5 +716,114 @@ mod tests {
             Some(("gemini-2.5-flash".into(), true))
         );
         assert!(native::parse_native_target("models/gemini-2.5-pro:countTokens").is_none());
+    }
+
+    /// Translation of an `OpenAI` chat body into Gemini's request shape,
+    /// including the system-instruction split and generation config.
+    #[test]
+    fn chat_requests_translate_into_the_gemini_shape() {
+        let body = json!({
+            "messages": [
+                {"role": "system", "content": "be brief"},
+                {"role": "user", "content": "hello"},
+                {"role": "assistant", "content": "hi"},
+                {"role": "tool", "content": "result"}
+            ],
+            "max_tokens": 128,
+            "temperature": 0.4,
+            "top_p": 0.9
+        });
+        let request = chat_to_gemini_request(&body);
+
+        assert_eq!(request["systemInstruction"]["parts"][0]["text"], "be brief");
+        let contents = request["contents"].as_array().expect("contents");
+        assert_eq!(contents.len(), 3, "system is lifted out of the turn list");
+        assert_eq!(contents[0]["role"], "user");
+        assert_eq!(contents[1]["role"], "model", "assistant maps to model");
+        assert_eq!(
+            contents[2]["role"], "user",
+            "tool results map to a user turn"
+        );
+        assert_eq!(request["generationConfig"]["maxOutputTokens"], 128);
+        assert_eq!(request["generationConfig"]["temperature"], 0.4);
+        assert_eq!(request["generationConfig"]["topP"], 0.9);
+    }
+
+    #[test]
+    fn a_request_without_knobs_omits_the_generation_config() {
+        let request = chat_to_gemini_request(&json!({"messages": []}));
+        assert!(request.get("generationConfig").is_none());
+        assert!(request.get("systemInstruction").is_none());
+    }
+
+    #[test]
+    fn max_completion_tokens_is_accepted_as_the_output_cap() {
+        let request = chat_to_gemini_request(&json!({
+            "messages": [],
+            "max_completion_tokens": 64
+        }));
+        assert_eq!(request["generationConfig"]["maxOutputTokens"], 64);
+    }
+
+    #[test]
+    fn the_code_assist_envelope_carries_the_model() {
+        let envelope = code_assist_envelope("nimbus-3-flash", &json!({"contents": []}));
+        assert_eq!(envelope["model"], "nimbus-3-flash");
+        assert_eq!(envelope["request"]["contents"], json!([]));
+    }
+
+    /// Responses are translated back into the `OpenAI` completion shape, with
+    /// usage carried across so spend accounting stays truthful.
+    #[test]
+    fn gemini_responses_translate_back_with_usage() {
+        let response = json!({
+            "candidates": [{
+                "content": {"parts": [{"text": "one "}, {"text": "two"}]},
+                "finishReason": "STOP"
+            }],
+            "usageMetadata": {"promptTokenCount": 11, "candidatesTokenCount": 5}
+        });
+        let chat = gemini_response_to_chat(&response, "nimbus-3-flash");
+
+        assert_eq!(chat["model"], "nimbus-3-flash");
+        assert_eq!(chat["choices"][0]["message"]["content"], "one two");
+        assert_eq!(chat["choices"][0]["finish_reason"], "stop");
+        assert_eq!(chat["usage"]["prompt_tokens"], 11);
+        assert_eq!(chat["usage"]["completion_tokens"], 5);
+        assert_eq!(chat["usage"]["total_tokens"], 16);
+    }
+
+    /// Code Assist nests the payload under `response`; both shapes are read.
+    #[test]
+    fn a_nested_code_assist_response_is_unwrapped() {
+        let nested = json!({
+            "response": {
+                "candidates": [{"content": {"parts": [{"text": "inner"}]}}]
+            }
+        });
+        let chat = gemini_response_to_chat(&nested, "nimbus-3-flash");
+        assert_eq!(chat["choices"][0]["message"]["content"], "inner");
+    }
+
+    #[test]
+    fn finish_reasons_map_onto_the_openai_vocabulary() {
+        assert_eq!(map_finish_reason("MAX_TOKENS"), "length");
+        for blocked in ["SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT"] {
+            assert_eq!(map_finish_reason(blocked), "content_filter", "{blocked}");
+        }
+        assert_eq!(map_finish_reason("STOP"), "stop");
+        assert_eq!(map_finish_reason("SOMETHING_NEW"), "stop");
+    }
+
+    #[test]
+    fn message_text_is_extracted_from_both_content_shapes() {
+        assert_eq!(extract_message_text(Some(&json!("plain"))), "plain");
+        assert_eq!(
+            extract_message_text(Some(&json!([{"text": "a"}, {"text": "b"}]))),
+            "ab"
+        );
+        assert_eq!(extract_message_text(Some(&json!(["a", "b"]))), "ab");
+        assert_eq!(extract_message_text(None), "");
+        assert_eq!(extract_message_text(Some(&json!(42))), "");
     }
 }

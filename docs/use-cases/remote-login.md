@@ -136,20 +136,42 @@ With it disabled the routes are not registered at all, and requests to them are
 
 ## Choosing the login mode
 
-The default is router-native Claude OAuth with the same public client, callback,
-PKCE method and scopes as Claude Code. The vendor CLI is not consulted.
-
-`setup-token` remains available by setting `LOGIN_CLI_ARGS=setup-token` or
-passing `--login-cli-args setup-token`.
+**Both modes are router-native OAuth and run in-process.** Neither consults nor
+requires a vendor CLI, so one published image serves both without a rebuild or a
+custom variant. They differ only in the scopes they request.
 
 | Mode | How to select it | OAuth scopes requested |
 | --- | --- | --- |
-| TUI `/login` (default) | Leave `LOGIN_CLI_ARGS` unset or empty | `org:create_api_key`, `user:profile`, `user:inference`, `user:sessions:claude_code`, `user:mcp_servers`, `user:file_upload` |
-| `setup-token` | `LOGIN_CLI_ARGS=setup-token` | `user:inference` |
+| Full (default) | `{"mode":"full"}`, `--mode full`, or leave `LOGIN_CLI_ARGS` unset | `org:create_api_key`, `user:profile`, `user:inference`, `user:sessions:claude_code`, `user:mcp_servers`, `user:file_upload` |
+| `setup-token` | `{"mode":"setup-token"}`, `--mode setup-token`, or `LOGIN_CLI_ARGS=setup-token` | `user:inference` |
 
 Use the default when the deployment should receive the same credential Claude
 Code produces interactively. Choose `setup-token` explicitly when the narrower,
 long-lived credential intended for non-interactive consumers is preferable.
+
+The mode is selectable **per request**, so a single running router serves both:
+
+```bash
+curl -X POST http://localhost:8080/api/login \
+  -H 'content-type: application/json' \
+  -d '{"provider":"claude","mode":"setup-token"}'
+
+link-assistant-router auth claude --mode setup-token
+```
+
+`LOGIN_CLI_ARGS=setup-token` keeps selecting the narrow mode as the default for
+a deployment, and an explicit `mode` in the request overrides it. `doctor`
+reports whether each mode can run, and the scopes it would request, before any
+login is started:
+
+```text
+login_mode full        : available (in-process OAuth); scopes: org:create_api_key …
+login_mode setup-token : available (in-process OAuth) (default); scopes: user:inference
+```
+
+`LOGIN_CLI_COMMAND` remains an escape hatch for pointing the router at your own
+compatibility backend. That is the only configuration that spawns a process, and
+the only one `doctor` can report as `UNAVAILABLE`.
 
 For local or scripted authorization, use the foreground commands:
 
@@ -177,9 +199,11 @@ OAuth state; the listener closes on success, denial, timeout and cancellation.
 
 ## Requirements
 
-* **No vendor CLI must exist in the image.** Native Claude OAuth is the primary
-  path. The image carries bun, which downloads a current CLI package into a
-  disposable directory only when the foreground fallback is needed.
+* **No vendor CLI must exist in the image.** Native Claude OAuth is the only
+  path used by `POST /api/login`, in both the full and `setup-token` modes. The
+  image carries bun, which downloads a current CLI package into a disposable
+  directory only when the foreground `--flow cli` fallback is explicitly asked
+  for.
 * **`CLAUDE_CODE_HOME` must be writable.** This is checked *before* the URL is
   returned, so a read-only mount fails immediately rather than after the human
   has already finished the browser step.

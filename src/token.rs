@@ -75,6 +75,73 @@ pub struct IssueRequest<'a> {
     pub scope: &'a str,
 }
 
+/// Constraint changes to apply while rotating a token.
+///
+/// Every field is optional: `None` keeps whatever the existing record carries,
+/// so a rotation preserves the credential's blast radius by default and only
+/// changes what the operator named explicitly.
+#[derive(Debug, Default, Clone)]
+pub struct RotateOverrides<'a> {
+    /// Replacement label; `None` keeps the existing one.
+    pub label: Option<&'a str>,
+    /// Replacement TTL in hours; `None` keeps the remaining lifetime.
+    pub ttl_hours: Option<i64>,
+    /// Replacement request cap.
+    pub max_requests: Option<u64>,
+    /// Replacement token spend cap.
+    pub max_tokens: Option<u64>,
+    /// Replacement per-minute request rate.
+    pub rate_limit_per_minute: Option<u64>,
+    /// Replacement account pin.
+    pub account: Option<&'a str>,
+}
+
+/// Largest TTL an issued token may carry, in hours (about ten years).
+///
+/// A cap keeps a mistyped TTL from minting a credential that outlives every
+/// operator who remembers it, while staying far above any legitimate use.
+pub const MAX_TTL_HOURS: i64 = 24 * 365 * 10;
+
+impl IssueRequest<'_> {
+    /// Check the constraint values before a token is minted.
+    ///
+    /// Every admin surface — CLI, HTTP, Telegram and VK — funnels through this
+    /// so the same input is accepted or rejected identically everywhere
+    /// (issue #194); previously only the chat commands validated anything, and
+    /// they did it with their own rules.
+    ///
+    /// # Errors
+    ///
+    /// Returns a human-readable message naming the offending field.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.ttl_hours <= 0 {
+            return Err("ttl_hours must be a positive whole number of hours.".to_string());
+        }
+        if self.ttl_hours > MAX_TTL_HOURS {
+            return Err(format!(
+                "ttl_hours must not exceed {MAX_TTL_HOURS} (about ten years)."
+            ));
+        }
+        // A zero budget mints a credential that can never serve a request; that
+        // is a typo rather than an intent, so it is rejected instead of stored.
+        if self.max_requests == Some(0) {
+            return Err("max_requests must be greater than zero.".to_string());
+        }
+        if self.max_tokens == Some(0) {
+            return Err("max_tokens must be greater than zero.".to_string());
+        }
+        if self.rate_limit_per_minute == Some(0) {
+            return Err("rate_limit_per_minute must be greater than zero.".to_string());
+        }
+        if !self.scope.is_empty() && self.scope != ADMIN_SCOPE {
+            return Err(format!(
+                "scope must be empty (client) or \"{ADMIN_SCOPE}\"."
+            ));
+        }
+        Ok(())
+    }
+}
+
 /// Manages creation, validation, and revocation of custom tokens.
 #[derive(Clone)]
 pub struct TokenManager {
@@ -216,6 +283,7 @@ impl TokenManager {
             used_requests: 0,
             max_tokens: request.max_tokens,
             used_tokens: 0,
+            reserved_tokens: 0,
             rate_limit_per_minute: request.rate_limit_per_minute,
             rate_window_started_at: 0,
             rate_window_requests: 0,
@@ -238,9 +306,23 @@ impl TokenManager {
     ///
     /// Tokens issued without a `max_requests` cap are always permitted.
     pub fn enforce_request_budget(&self, token_id: &str) -> Result<(), TokenError> {
+        self.enforce_request_budget_reserving(token_id, 0)
+    }
+
+    /// Enforce every per-token budget and reserve `reserve` tokens of spend.
+    ///
+    /// `reserve` is the largest number of tokens this request could report, so a
+    /// request is admitted only when its own worst case still fits under
+    /// `max_tokens`. The caller must pair every `Ok(())` with
+    /// [`TokenManager::settle_token_usage`] so the reservation is released.
+    pub fn enforce_request_budget_reserving(
+        &self,
+        token_id: &str,
+        reserve: u64,
+    ) -> Result<(), TokenError> {
         match self
             .store
-            .try_admit_request(token_id, Utc::now().timestamp())
+            .try_admit_request_reserving(token_id, Utc::now().timestamp(), reserve)
         {
             Ok(RequestAdmission::Admitted) => Ok(()),
             Ok(RequestAdmission::RequestLimitExceeded) => Err(TokenError::LimitExceeded),
@@ -254,6 +336,25 @@ impl TokenManager {
     pub fn record_token_usage(&self, token_id: &str, tokens: u64) -> Result<(), TokenError> {
         self.store
             .record_token_usage(token_id, tokens)
+            .map_err(|error| TokenError::Storage(error.to_string()))
+    }
+
+    /// Release a request's reservation and record what it actually spent.
+    pub fn settle_token_usage(
+        &self,
+        token_id: &str,
+        reserved: u64,
+        actual: u64,
+    ) -> Result<(), TokenError> {
+        self.store
+            .settle_token_usage(token_id, reserved, actual)
+            .map_err(|error| TokenError::Storage(error.to_string()))
+    }
+
+    /// Clear reservations orphaned by a previous process.
+    pub fn release_stale_reservations(&self) -> Result<usize, TokenError> {
+        self.store
+            .release_stale_reservations()
             .map_err(|error| TokenError::Storage(error.to_string()))
     }
 
@@ -356,26 +457,58 @@ impl TokenManager {
         ttl_hours: i64,
         label: &str,
     ) -> Result<String, TokenError> {
+        self.rotate_token_with(
+            current_sub,
+            &RotateOverrides {
+                label: (!label.is_empty()).then_some(label),
+                ttl_hours: Some(ttl_hours),
+                ..RotateOverrides::default()
+            },
+        )
+    }
+
+    /// Rotate a token, preserving every constraint that is not overridden.
+    ///
+    /// Reissue must not silently widen or narrow a credential's blast radius,
+    /// so each unset override carries the stored value forward (issue #194).
+    /// The replacement is minted before the old value is revoked, so a failed
+    /// mint leaves the existing credential working.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TokenError::Invalid`] when the id is unknown or the resulting
+    /// constraints fail [`IssueRequest::validate`], and [`TokenError::Storage`]
+    /// when the store cannot be read or written.
+    pub fn rotate_token_with(
+        &self,
+        current_sub: &str,
+        overrides: &RotateOverrides<'_>,
+    ) -> Result<String, TokenError> {
         let record = self
             .store
             .get(current_sub)
             .map_err(|error| TokenError::Storage(error.to_string()))?
             .ok_or_else(|| TokenError::Invalid(format!("unknown token id {current_sub}")))?;
-        let replacement_label = if label.is_empty() {
-            &record.label
-        } else {
-            label
+        // Remaining lifetime is preserved when no new TTL is requested, so a
+        // rotation is not a silent extension of the credential's validity.
+        let remaining_hours = || {
+            let remaining = record.expires_at.saturating_sub(Utc::now().timestamp());
+            (remaining / 3600).max(1)
         };
+        let request = IssueRequest {
+            ttl_hours: overrides.ttl_hours.unwrap_or_else(remaining_hours),
+            label: overrides.label.unwrap_or(&record.label),
+            account: overrides.account.or(record.account.as_deref()),
+            max_requests: overrides.max_requests.or(record.max_requests),
+            max_tokens: overrides.max_tokens.or(record.max_tokens),
+            rate_limit_per_minute: overrides
+                .rate_limit_per_minute
+                .or(record.rate_limit_per_minute),
+            scope: &record.scope,
+        };
+        request.validate().map_err(TokenError::Invalid)?;
         let replacement = self
-            .issue(&IssueRequest {
-                ttl_hours,
-                label: replacement_label,
-                account: record.account.as_deref(),
-                max_requests: record.max_requests,
-                max_tokens: record.max_tokens,
-                rate_limit_per_minute: record.rate_limit_per_minute,
-                scope: &record.scope,
-            })
+            .issue(&request)
             .map_err(|error| TokenError::Invalid(error.to_string()))?;
         self.revoke_token(current_sub)?;
         Ok(replacement)
@@ -552,346 +685,5 @@ impl TokenError {
 impl std::error::Error for TokenError {}
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn test_manager() -> TokenManager {
-        TokenManager::new("test-secret-for-unit-tests")
-    }
-
-    #[test]
-    fn test_issue_token_has_prefix() {
-        let mgr = test_manager();
-        let token = mgr.issue_token(24, "test").expect("should issue token");
-        assert!(token.starts_with(TOKEN_PREFIX));
-    }
-
-    #[test]
-    fn test_validate_valid_token() {
-        let mgr = test_manager();
-        let token = mgr.issue_token(24, "my-label").expect("should issue");
-        let claims = mgr.validate_token(&token).expect("should validate");
-        assert_eq!(claims.label, "my-label");
-        assert!(!claims.sub.is_empty());
-    }
-
-    #[test]
-    fn test_validate_wrong_prefix() {
-        let mgr = test_manager();
-        let result = mgr.validate_token("wrong_prefix_abc");
-        assert!(matches!(result, Err(TokenError::InvalidPrefix)));
-    }
-
-    #[test]
-    fn test_validate_invalid_jwt() {
-        let mgr = test_manager();
-        let result = mgr.validate_token("la_sk_not-a-valid-jwt");
-        assert!(matches!(result, Err(TokenError::Invalid(_))));
-    }
-
-    #[test]
-    fn test_revoke_token() {
-        let mgr = test_manager();
-        let token = mgr.issue_token(24, "revoke-me").expect("should issue");
-        let claims = mgr.validate_token(&token).expect("should validate first");
-
-        mgr.revoke_token(&claims.sub).expect("should revoke");
-        mgr.revoke_token(&claims.sub)
-            .expect("repeated revocation should stay idempotent");
-
-        let result = mgr.validate_token(&token);
-        assert!(matches!(result, Err(TokenError::Revoked)));
-    }
-
-    #[test]
-    fn test_revoke_unknown_token_reports_not_found() {
-        let result = test_manager().revoke_token("missing-token-id");
-        assert!(matches!(result, Err(TokenError::NotFound(id)) if id == "missing-token-id"));
-    }
-
-    #[test]
-    fn test_expired_token() {
-        let mgr = test_manager();
-        // Issue with 0 hours TTL — should expire immediately
-        let token = mgr.issue_token(0, "expired").expect("should issue");
-        // Token with exp == iat should be expired by the time we validate
-        let result = mgr.validate_token(&token);
-        // This might or might not be expired depending on clock resolution,
-        // so we just verify it doesn't panic
-        match result {
-            Ok(_) | Err(TokenError::Expired) => {} // both acceptable
-            Err(e) => panic!("Unexpected error: {e}"),
-        }
-    }
-
-    #[test]
-    fn test_list_tokens_returns_records() {
-        let mgr = test_manager();
-        let _t1 = mgr.issue_token(1, "one").unwrap();
-        let _t2 = mgr.issue_token(1, "two").unwrap();
-        let list = mgr.list_tokens().unwrap();
-        assert_eq!(list.len(), 2);
-        let labels: Vec<_> = list.iter().map(|r| r.label.as_str()).collect();
-        assert!(labels.contains(&"one"));
-        assert!(labels.contains(&"two"));
-    }
-
-    #[test]
-    fn account_binding_is_available_during_request_routing() {
-        let mgr = test_manager();
-        let token = mgr.issue_token_for(1, "bound", Some("account-2")).unwrap();
-        let claims = mgr.validate_token(&token).unwrap();
-
-        assert_eq!(
-            mgr.account_for(&claims.sub).unwrap().as_deref(),
-            Some("account-2")
-        );
-    }
-
-    #[test]
-    fn test_unlimited_token_never_hits_budget() {
-        let mgr = test_manager();
-        let token = mgr.issue_token(24, "unlimited").unwrap();
-        let claims = mgr.validate_token(&token).unwrap();
-        // No max_requests → every request is permitted.
-        for _ in 0..1000 {
-            mgr.enforce_request_budget(&claims.sub)
-                .expect("unlimited token must never be limited");
-        }
-    }
-
-    #[test]
-    fn test_request_budget_enforced() {
-        let mgr = test_manager();
-        let token = mgr
-            .issue_token_full(24, "capped", None, Some(3))
-            .expect("should issue capped token");
-        let claims = mgr.validate_token(&token).unwrap();
-
-        // First three requests are allowed and recorded.
-        mgr.enforce_request_budget(&claims.sub).unwrap();
-        mgr.enforce_request_budget(&claims.sub).unwrap();
-        mgr.enforce_request_budget(&claims.sub).unwrap();
-
-        // The fourth exceeds the budget.
-        let r = mgr.enforce_request_budget(&claims.sub);
-        assert!(matches!(r, Err(TokenError::LimitExceeded)));
-
-        // Usage is persisted on the record.
-        let rec = mgr
-            .list_tokens()
-            .unwrap()
-            .into_iter()
-            .find(|r| r.id == claims.sub)
-            .unwrap();
-        assert_eq!(rec.max_requests, Some(3));
-        assert_eq!(rec.used_requests, 3);
-    }
-
-    #[test]
-    fn actual_token_spend_stops_only_the_exhausted_token() {
-        let mgr = test_manager();
-        let capped = mgr
-            .issue(&IssueRequest {
-                ttl_hours: 24,
-                label: "capped",
-                max_tokens: Some(5),
-                ..IssueRequest::default()
-            })
-            .unwrap();
-        let other = mgr.issue_token(24, "other").unwrap();
-        let capped_id = mgr.validate_token(&capped).unwrap().sub;
-        let other_id = mgr.validate_token(&other).unwrap().sub;
-
-        mgr.enforce_request_budget(&capped_id).unwrap();
-        mgr.record_token_usage(&capped_id, 5).unwrap();
-
-        assert!(matches!(
-            mgr.enforce_request_budget(&capped_id),
-            Err(TokenError::TokenLimitExceeded)
-        ));
-        mgr.enforce_request_budget(&other_id)
-            .expect("one token's spend must not affect another token");
-    }
-
-    #[test]
-    fn per_token_rate_limit_rejects_only_the_bursting_token() {
-        let mgr = test_manager();
-        let limited = mgr
-            .issue(&IssueRequest {
-                ttl_hours: 24,
-                label: "limited",
-                rate_limit_per_minute: Some(1),
-                ..IssueRequest::default()
-            })
-            .unwrap();
-        let other = mgr.issue_token(24, "other").unwrap();
-        let limited_id = mgr.validate_token(&limited).unwrap().sub;
-        let other_id = mgr.validate_token(&other).unwrap().sub;
-
-        mgr.enforce_request_budget(&limited_id).unwrap();
-        assert!(matches!(
-            mgr.enforce_request_budget(&limited_id),
-            Err(TokenError::RateLimitExceeded)
-        ));
-        mgr.enforce_request_budget(&other_id)
-            .expect("rate windows must be isolated by token id");
-    }
-
-    #[test]
-    fn test_budget_for_unknown_token_is_permitted() {
-        // A token id with no stored record (e.g. memory store cleared) is not
-        // budget-limited — validation, not budgeting, is the gate there.
-        let mgr = test_manager();
-        mgr.enforce_request_budget("no-such-id").unwrap();
-    }
-
-    #[test]
-    fn test_persistent_store_roundtrip() {
-        use crate::storage::TextTokenStore;
-        let dir = tempfile::tempdir().unwrap();
-        let store: Arc<dyn TokenStore> =
-            Arc::new(TextTokenStore::open(dir.path().join("t.lino")).unwrap());
-        let mgr = TokenManager::with_store("k", Arc::clone(&store));
-        let tok = mgr.issue_token(1, "persisted").unwrap();
-        let claims = mgr.validate_token(&tok).unwrap();
-
-        // re-open the same store with a fresh manager
-        let store2: Arc<dyn TokenStore> =
-            Arc::new(TextTokenStore::open(dir.path().join("t.lino")).unwrap());
-        let mgr2 = TokenManager::with_store("k", store2);
-        // record should still be there
-        assert_eq!(mgr2.list_tokens().unwrap().len(), 1);
-        // revocation persists
-        mgr2.revoke_token(&claims.sub).unwrap();
-        let store3: Arc<dyn TokenStore> =
-            Arc::new(TextTokenStore::open(dir.path().join("t.lino")).unwrap());
-        let mgr3 = TokenManager::with_store("k", store3);
-        let r = mgr3.validate_token(&tok);
-        assert!(matches!(r, Err(TokenError::Revoked)));
-    }
-
-    #[test]
-    fn test_admin_scope_is_carried_by_claims_and_records() {
-        let mgr = test_manager();
-        let token = mgr.issue_admin_token(1, "ops").expect("should issue");
-        let claims = mgr.validate_token(&token).expect("should validate");
-        assert!(claims.is_admin());
-        assert_eq!(claims.scope, ADMIN_SCOPE);
-
-        let records = mgr.list_tokens().expect("should list");
-        assert_eq!(records.len(), 1);
-        assert_eq!(records[0].scope, ADMIN_SCOPE);
-    }
-
-    #[test]
-    fn test_client_tokens_carry_no_scope() {
-        let mgr = test_manager();
-        let token = mgr.issue_token(1, "client").expect("should issue");
-        let claims = mgr.validate_token(&token).expect("should validate");
-        assert!(!claims.is_admin());
-        assert!(claims.scope.is_empty());
-        assert!(matches!(
-            mgr.validate_admin_token(&token),
-            Err(TokenError::InsufficientScope)
-        ));
-    }
-
-    #[test]
-    fn test_has_active_admin_token_tracks_revocation_and_expiry() {
-        let mgr = test_manager();
-        assert!(!mgr.has_active_admin_token().expect("should query"));
-
-        mgr.issue_token(1, "client").expect("should issue");
-        assert!(
-            !mgr.has_active_admin_token().expect("should query"),
-            "client tokens must not satisfy the admin-credential check"
-        );
-
-        mgr.issue(&IssueRequest {
-            ttl_hours: -1,
-            label: "stale",
-            scope: ADMIN_SCOPE,
-            ..IssueRequest::default()
-        })
-        .expect("should issue");
-        assert!(
-            !mgr.has_active_admin_token().expect("should query"),
-            "expired admin tokens must not count"
-        );
-
-        let token = mgr.issue_admin_token(1, "ops").expect("should issue");
-        assert!(mgr.has_active_admin_token().expect("should query"));
-
-        let claims = mgr.validate_token(&token).expect("should validate");
-        mgr.revoke_token(&claims.sub).expect("should revoke");
-        assert!(!mgr.has_active_admin_token().expect("should query"));
-    }
-
-    #[test]
-    fn test_rotate_admin_token_issues_a_replacement_and_revokes_the_old_one() {
-        let mgr = test_manager();
-        let old = mgr.issue_admin_token(1, "ops").expect("should issue");
-        let old_claims = mgr.validate_token(&old).expect("should validate");
-
-        let new = mgr
-            .rotate_admin_token(&old_claims.sub, 2, "ops-rotated")
-            .expect("should rotate");
-
-        let new_claims = mgr.validate_admin_token(&new).expect("should validate");
-        assert_eq!(new_claims.label, "ops-rotated");
-        assert_ne!(new_claims.sub, old_claims.sub);
-        assert!(matches!(mgr.validate_token(&old), Err(TokenError::Revoked)));
-        assert!(mgr.has_active_admin_token().expect("should query"));
-    }
-
-    #[test]
-    fn test_rotate_admin_token_rejects_an_unknown_subject() {
-        let mgr = test_manager();
-        let live = mgr.issue_admin_token(1, "ops").expect("should issue");
-
-        assert!(mgr.rotate_admin_token("not-an-id", 1, "typo").is_err());
-        // The existing credential must survive a failed rotation, and no
-        // replacement may have been handed out.
-        assert!(mgr.validate_admin_token(&live).is_ok());
-        assert_eq!(mgr.list_tokens().expect("should list").len(), 1);
-    }
-
-    #[test]
-    fn ordinary_token_rotation_preserves_its_controls_and_revokes_the_old_token() {
-        let mgr = test_manager();
-        let old = mgr
-            .issue(&IssueRequest {
-                ttl_hours: 1,
-                label: "worker",
-                account: Some("account-2"),
-                max_requests: Some(10),
-                max_tokens: Some(1_000),
-                rate_limit_per_minute: Some(3),
-                scope: "",
-            })
-            .unwrap();
-        let old_claims = mgr.validate_token(&old).unwrap();
-
-        let new = mgr.rotate_token(&old_claims.sub, 2, "").unwrap();
-        let new_claims = mgr.validate_token(&new).unwrap();
-        let record = mgr.store().get(&new_claims.sub).unwrap().unwrap();
-
-        assert_eq!(record.label, "worker");
-        assert_eq!(record.account.as_deref(), Some("account-2"));
-        assert_eq!(record.max_requests, Some(10));
-        assert_eq!(record.max_tokens, Some(1_000));
-        assert_eq!(record.rate_limit_per_minute, Some(3));
-        assert!(matches!(mgr.validate_token(&old), Err(TokenError::Revoked)));
-    }
-
-    #[test]
-    fn test_constant_time_eq_matches_string_equality() {
-        assert!(constant_time_eq("", ""));
-        assert!(constant_time_eq("s3cret", "s3cret"));
-        assert!(!constant_time_eq("s3cret", "s3crev"));
-        // Length differences must not short-circuit into a match.
-        assert!(!constant_time_eq("s3cret", "s3cre"));
-        assert!(!constant_time_eq("s3cre", "s3cret"));
-    }
-}
+#[path = "token_tests.rs"]
+mod tests;

@@ -8,6 +8,15 @@
 //! the commit against the published image configs, the release checksum files, and the
 //! build provenance attestations of the downloadable archives.
 //!
+//! Image labels are written by the workflow, so they carry the release commit exactly.
+//! Attestations are not: `actions/attest-build-provenance` reads the source commit from
+//! the Actions context, so the SLSA predicate always names `github.sha` — the commit the
+//! run started from — and no workflow change can make it name a commit that did not yet
+//! exist. The release commit is created on top of that commit by the same run, so the
+//! honest check is that the attested commit is the release tag's *parent* (issue #195's
+//! sibling: a release built from an unrelated commit is still rejected). Anything else —
+//! a commit that is not the tag's parent, or a missing attestation — fails.
+//!
 //! Usage:
 //!   rust-script scripts/check-release-provenance.rs \
 //!     --release-version 0.77.0 \
@@ -210,6 +219,14 @@ fn git_commits_in_attestation(raw_json: &str) -> Result<BTreeSet<String>, String
     Ok(commits)
 }
 
+fn commits_summary(commits: &BTreeSet<String>) -> String {
+    if commits.is_empty() {
+        "<none>".to_string()
+    } else {
+        commits.iter().cloned().collect::<Vec<_>>().join(", ")
+    }
+}
+
 fn collect_git_commits(value: &Value, commits: &mut BTreeSet<String>) {
     match value {
         Value::Object(fields) => {
@@ -241,6 +258,35 @@ fn run(command: &mut Command, description: &str) -> Result<String, String> {
     }
     String::from_utf8(output.stdout)
         .map_err(|error| format!("{description} returned non-UTF-8 output: {error}"))
+}
+
+/// Decide whether an attestation's source commits are acceptable for this release.
+///
+/// `expected` (the release tag commit) is always accepted. `parent` — the commit the
+/// release commit was built on top of, which is what the Actions context recorded — is
+/// accepted only when it is genuinely the tag's parent, so an artifact attesting some
+/// unrelated commit is still rejected.
+fn attested_commit_is_acceptable(
+    commits: &BTreeSet<String>,
+    expected: &str,
+    parent: Option<&str>,
+) -> bool {
+    if commits.contains(expected) {
+        return true;
+    }
+    parent.is_some_and(|parent| commits.contains(parent))
+}
+
+/// The first parent of the release tag commit, when a checkout is available.
+fn resolve_tag_parent(release_version: &str) -> Option<String> {
+    let reference = format!("refs/tags/v{release_version}^{{commit}}^1");
+    let commit = run(
+        Command::new("git").args(["rev-parse", &reference]),
+        &format!("git rev-parse {reference}"),
+    )
+    .ok()?;
+    let commit = commit.trim().to_string();
+    is_commit_sha(&commit).then_some(commit)
 }
 
 fn resolve_tag_commit(release_version: &str) -> Result<String, String> {
@@ -342,6 +388,14 @@ fn main() {
         options.release_version
     );
 
+    // Attestations record the commit the run started from, never the release commit the
+    // run creates. Resolving the tag's parent lets the guard accept exactly that commit
+    // and nothing else.
+    let tag_parent = resolve_tag_parent(&options.release_version);
+    if let Some(parent) = &tag_parent {
+        println!("Attestations may name the release commit's parent {parent}");
+    }
+
     for image in &options.images {
         match inspect_image_config(image).and_then(|raw| {
             verify_image_labels(image, &raw, &expected_commit, &options.release_version)
@@ -392,15 +446,21 @@ fn main() {
 
             match attestation_json(path, repository).and_then(|raw| git_commits_in_attestation(&raw))
             {
-                Ok(commits) if commits.contains(&expected_commit) => {
-                    println!("Verified {file_name} attests {expected_commit}")
+                Ok(commits)
+                    if attested_commit_is_acceptable(
+                        &commits,
+                        &expected_commit,
+                        tag_parent.as_deref(),
+                    ) =>
+                {
+                    println!("Verified {file_name} attests {}", commits_summary(&commits))
                 }
                 Ok(commits) => failures.push(format!(
-                    "{file_name} attests source commit(s) {}, expected {expected_commit}",
-                    if commits.is_empty() {
-                        "<none>".to_string()
-                    } else {
-                        commits.into_iter().collect::<Vec<_>>().join(", ")
+                    "{file_name} attests source commit(s) {}, expected {expected_commit}{}",
+                    commits_summary(&commits),
+                    match &tag_parent {
+                        Some(parent) => format!(" or its parent {parent}"),
+                        None => String::new(),
                     }
                 )),
                 Err(error) => failures.push(error),
@@ -516,6 +576,66 @@ mod tests {
         );
         let commits = git_commits_in_attestation(&raw).unwrap();
         assert!(commits.contains(TAG_COMMIT));
+    }
+
+    fn commit_set(commits: &[&str]) -> BTreeSet<String> {
+        commits.iter().map(|commit| commit.to_string()).collect()
+    }
+
+    #[test]
+    fn accepts_an_attestation_naming_the_release_commit_itself() {
+        let commits = commit_set(&[TAG_COMMIT]);
+        assert!(attested_commit_is_acceptable(
+            &commits,
+            TAG_COMMIT,
+            Some(PREVIOUS_MERGE)
+        ));
+    }
+
+    /// The v0.83.0 regression: `attest-build-provenance` records `github.sha`, which is
+    /// the commit the release commit was built on top of.
+    #[test]
+    fn accepts_an_attestation_naming_the_release_commits_parent() {
+        let commits = commit_set(&[PREVIOUS_MERGE]);
+        assert!(attested_commit_is_acceptable(
+            &commits,
+            TAG_COMMIT,
+            Some(PREVIOUS_MERGE)
+        ));
+    }
+
+    #[test]
+    fn rejects_an_attestation_naming_an_unrelated_commit() {
+        let unrelated = "f".repeat(40);
+        let commits = commit_set(&[unrelated.as_str()]);
+        assert!(!attested_commit_is_acceptable(
+            &commits,
+            TAG_COMMIT,
+            Some(PREVIOUS_MERGE)
+        ));
+    }
+
+    /// Without a checkout the parent cannot be resolved, so only the exact release
+    /// commit is acceptable — the guard must not degrade into accepting anything.
+    #[test]
+    fn rejects_the_parent_when_no_parent_could_be_resolved() {
+        let commits = commit_set(&[PREVIOUS_MERGE]);
+        assert!(!attested_commit_is_acceptable(&commits, TAG_COMMIT, None));
+    }
+
+    #[test]
+    fn rejects_an_attestation_with_no_source_commit_at_all() {
+        assert!(!attested_commit_is_acceptable(
+            &BTreeSet::new(),
+            TAG_COMMIT,
+            Some(PREVIOUS_MERGE)
+        ));
+    }
+
+    #[test]
+    fn summarises_missing_commits_as_none() {
+        assert_eq!(commits_summary(&BTreeSet::new()), "<none>");
+        assert_eq!(commits_summary(&commit_set(&[TAG_COMMIT])), TAG_COMMIT);
     }
 
     #[test]
