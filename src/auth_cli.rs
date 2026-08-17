@@ -9,7 +9,21 @@ use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionRead
 
 pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     match op {
-        AuthOp::Claude { code, flow } => run_claude(config, code.clone(), *flow).await,
+        AuthOp::Claude { code, flow, mode } => {
+            let mode = match mode.as_deref() {
+                Some(value) => {
+                    match link_assistant_router::claude_auth::ClaudeAuthMode::parse(value) {
+                        Ok(mode) => mode,
+                        Err(message) => {
+                            eprintln!("error: {message}");
+                            return ExitCode::from(2);
+                        }
+                    }
+                }
+                None => configured_mode(&config.login),
+            };
+            run_claude(config, code.clone(), *flow, mode).await
+        }
         AuthOp::Codex { flow, port } => run_codex(config, *flow, *port).await,
         AuthOp::Status => status(config),
     }
@@ -23,7 +37,24 @@ fn codex_supports_flow(flow: AuthFlow) -> bool {
     CODEX_AUTH_FLOWS.contains(&flow)
 }
 
-async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> ExitCode {
+/// The login mode `LOGIN_CLI_ARGS` selects, mirroring
+/// [`crate::login::LoginManager::configured_mode`] for the foreground command.
+fn configured_mode(
+    login: &link_assistant_router::login::LoginConfig,
+) -> link_assistant_router::claude_auth::ClaudeAuthMode {
+    if login.args.iter().any(|argument| argument == "setup-token") {
+        link_assistant_router::claude_auth::ClaudeAuthMode::SetupToken
+    } else {
+        link_assistant_router::claude_auth::ClaudeAuthMode::Full
+    }
+}
+
+async fn run_claude(
+    config: &Config,
+    code: Option<String>,
+    flow: AuthFlow,
+    mode: link_assistant_router::claude_auth::ClaudeAuthMode,
+) -> ExitCode {
     if !claude_supports_flow(flow) {
         eprintln!("error: Claude does not support {flow:?}; use --flow code or --flow cli");
         return ExitCode::from(1);
@@ -39,7 +70,7 @@ async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> Ex
         return run_claude_cli_fallback(config, login_config, code).await;
     }
     let has_code = code.is_some();
-    match complete_native_claude(config, code).await {
+    match complete_native_claude(config, code, mode).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) if flow == AuthFlow::Auto && !has_code => {
             eprintln!("native Claude OAuth failed: {error}");
@@ -53,9 +84,14 @@ async fn run_claude(config: &Config, code: Option<String>, flow: AuthFlow) -> Ex
     }
 }
 
-async fn complete_native_claude(config: &Config, code: Option<String>) -> Result<(), String> {
-    let auth_config = link_assistant_router::claude_auth::ClaudeAuthConfig::production(
+async fn complete_native_claude(
+    config: &Config,
+    code: Option<String>,
+    mode: link_assistant_router::claude_auth::ClaudeAuthMode,
+) -> Result<(), String> {
+    let auth_config = link_assistant_router::claude_auth::ClaudeAuthConfig::for_mode(
         config.login.claude_code_home.clone(),
+        mode,
     );
     let submitted = if let Some(code) = code {
         code

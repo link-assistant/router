@@ -30,20 +30,19 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use portable_pty::CommandBuilder;
 use serde::Serialize;
 
-use crate::login_pty::{Key, PtySession, WaitError};
-use crate::login_url::{extract_login_url, extract_token};
+use crate::login_pty::PtySession;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
 /// Markers that mean the CLI accepted the code and finished.
-const SUCCESS_MARKERS: &[&str] = &["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"];
+pub(crate) const SUCCESS_MARKERS: &[&str] =
+    &["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"];
 /// Markers that mean the CLI rejected the code.
-const FAILURE_MARKERS: &[&str] = &[
+pub(crate) const FAILURE_MARKERS: &[&str] = &[
     "OAutherror",
     "PressEntertoretry",
     "Invalidcode",
@@ -57,10 +56,10 @@ const FAILURE_MARKERS: &[&str] = &[
 /// Each marker names the screen whose currently selected safe/default action
 /// is accepted with Enter. Unknown screens are deliberately left untouched so
 /// a changed onboarding flow times out loudly instead of receiving blind input.
-const THEME_PICKER_MARKER: &str = "Choosethetextstylethatlooksbestwithyourterminal";
-const WORKSPACE_TRUST_MARKER: &str = "Quicksafetycheck:Isthisaprojectyoucreated";
-const LOGIN_METHOD_MARKER: &str = "Selectloginmethod:";
-const READY_PROMPT_MARKER: &str = "Tipsforgettingstarted";
+pub(crate) const THEME_PICKER_MARKER: &str = "Choosethetextstylethatlooksbestwithyourterminal";
+pub(crate) const WORKSPACE_TRUST_MARKER: &str = "Quicksafetycheck:Isthisaprojectyoucreated";
+pub(crate) const LOGIN_METHOD_MARKER: &str = "Selectloginmethod:";
+pub(crate) const READY_PROMPT_MARKER: &str = "Tipsforgettingstarted";
 
 /// Settings for the login flow.
 #[derive(Clone, Debug)]
@@ -298,6 +297,42 @@ impl LoginManager {
 
     /// Start the authorization flow supported by `provider`.
     pub async fn begin_for(&self, provider: SubscriptionProvider) -> Result<LoginView, LoginError> {
+        self.begin_with_mode(provider, self.configured_mode()).await
+    }
+
+    /// The login mode selected by configuration.
+    ///
+    /// `LOGIN_CLI_ARGS=setup-token` historically selected the narrow flow by
+    /// naming an argument for the vendor CLI. It keeps working, but now selects
+    /// the in-process narrow-scope OAuth rather than a subprocess (issue #193).
+    #[must_use]
+    pub fn configured_mode(&self) -> crate::claude_auth::ClaudeAuthMode {
+        if self
+            .config
+            .args
+            .iter()
+            .any(|argument| argument == "setup-token")
+        {
+            crate::claude_auth::ClaudeAuthMode::SetupToken
+        } else {
+            crate::claude_auth::ClaudeAuthMode::Full
+        }
+    }
+
+    /// Whether the compatibility backend would be spawned instead of the
+    /// in-process OAuth, i.e. an operator pointed `LOGIN_CLI_COMMAND` at their
+    /// own program. This is the only path that still needs an external binary.
+    #[must_use]
+    pub fn uses_external_command(&self) -> bool {
+        self.config.command != "claude"
+    }
+
+    /// Start the authorization flow for `provider` in an explicit `mode`.
+    pub async fn begin_with_mode(
+        &self,
+        provider: SubscriptionProvider,
+        mode: crate::claude_auth::ClaudeAuthMode,
+    ) -> Result<LoginView, LoginError> {
         if !self.config.enabled {
             return Err(LoginError::Disabled);
         }
@@ -316,20 +351,22 @@ impl LoginManager {
         }
         ensure_writable_dir(&self.config.claude_code_home)?;
 
-        // A non-default command is an intentional compatibility/test backend.
-        // Normal deployments never locate or spawn the vendor CLI.
-        let (pty, claude_login, url) = if self.config.command != "claude"
-            || !self.config.args.is_empty()
-        {
+        // Only an operator-supplied compatibility backend spawns a process.
+        // Both real login modes run in-process, so the published image needs no
+        // vendor binary for either of them (issue #193).
+        let (pty, claude_login, url) = if self.uses_external_command() {
             let config = Arc::clone(&self.config);
-            let (pty, url) = tokio::task::spawn_blocking(move || spawn_and_wait_for_url(&config))
-                .await
-                .map_err(|e| LoginError::Spawn(e.to_string()))??;
+            let (pty, url) = tokio::task::spawn_blocking(move || {
+                crate::login_pty_backend::spawn_and_wait_for_url(&config)
+            })
+            .await
+            .map_err(|e| LoginError::Spawn(e.to_string()))??;
             (Some(pty), None, url)
         } else {
             let login = crate::claude_auth::ClaudeLogin::begin(
-                crate::claude_auth::ClaudeAuthConfig::production(
+                crate::claude_auth::ClaudeAuthConfig::for_mode(
                     self.config.claude_code_home.clone(),
+                    mode,
                 ),
             );
             let url = login.authorization_url().to_string();
@@ -470,9 +507,11 @@ impl LoginManager {
             }
         } else if let Some(pty) = pty {
             let config = Arc::clone(&self.config);
-            tokio::task::spawn_blocking(move || submit_and_finalize(&config, &pty, &code))
-                .await
-                .map_err(|e| LoginError::Spawn(e.to_string()))?
+            tokio::task::spawn_blocking(move || {
+                crate::login_pty_backend::submit_and_finalize(&config, &pty, &code)
+            })
+            .await
+            .map_err(|e| LoginError::Spawn(e.to_string()))?
         } else {
             return Err(LoginError::NotFound);
         };
@@ -617,299 +656,19 @@ impl LoginManager {
 }
 
 /// Result of feeding a code to the CLI.
-enum Outcome {
+pub(crate) enum Outcome {
     Authorized { expires_at: Option<i64> },
     Failed(String),
 }
 
-/// Spawn the login CLI and block until its authorization URL has settled.
-fn spawn_and_wait_for_url(config: &LoginConfig) -> Result<(Arc<PtySession>, String), LoginError> {
-    let mut command = CommandBuilder::new(&config.command);
-    for arg in &config.args {
-        command.arg(arg);
-    }
-    // The CLI decides where to write credentials from its environment, so it
-    // is pointed at exactly the directory the router reads.
-    command.env("CLAUDE_CONFIG_DIR", &config.claude_code_home);
-    if let Some(parent) = config.claude_code_home.parent() {
-        command.env("HOME", parent);
-    }
-    command.env("TERM", "xterm-256color");
-    if let Some(cache) = &config.package_cache {
-        command.env("BUN_INSTALL_CACHE_DIR", cache);
-    }
-    if let Ok(path) = std::env::var("PATH") {
-        command.env("PATH", path);
-    }
-
-    let session =
-        Arc::new(PtySession::spawn(command).map_err(|e| LoginError::Spawn(e.to_string()))?);
-    let result = if config.args.is_empty() {
-        drive_tui_to_login_url(&session, config)
-    } else {
-        wait_for_login_url(&session, config)
-    };
-    match result {
-        Ok(url) => Ok((session, url)),
-        Err(detail) => {
-            session.kill();
-            Err(LoginError::NoUrl(detail))
-        }
-    }
-}
-
-/// Progress through the known TUI screens without re-reacting to old text in
-/// the append-only PTY transcript.
-#[derive(Default)]
-struct TuiProgress {
-    completed: Vec<TuiAction>,
-}
-
-impl TuiProgress {
-    fn needs(&self, action: TuiAction) -> bool {
-        !self.completed.contains(&action)
-    }
-
-    fn complete(&mut self, action: TuiAction) {
-        self.completed.push(action);
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum TuiAction {
-    AcceptTheme,
-    AcceptWorkspaceTrust,
-    SendLogin,
-    SelectLoginMethod,
-}
-
-fn next_tui_action(text: &str, progress: &TuiProgress) -> Option<TuiAction> {
-    // Ink-based TUIs position words with cursor escapes instead of printing
-    // literal spaces. `strip_ansi` intentionally removes those escapes, so a
-    // rendered "Select login method:" may arrive as "Selectloginmethod:".
-    let compact = compact_terminal_text(text);
-    if progress.needs(TuiAction::AcceptTheme) && compact.contains(THEME_PICKER_MARKER) {
-        Some(TuiAction::AcceptTheme)
-    } else if progress.needs(TuiAction::AcceptWorkspaceTrust)
-        && compact.contains(WORKSPACE_TRUST_MARKER)
-    {
-        Some(TuiAction::AcceptWorkspaceTrust)
-    } else if progress.needs(TuiAction::SendLogin) && compact.contains(READY_PROMPT_MARKER) {
-        Some(TuiAction::SendLogin)
-    } else if progress.needs(TuiAction::SelectLoginMethod) && compact.contains(LOGIN_METHOD_MARKER)
-    {
-        Some(TuiAction::SelectLoginMethod)
-    } else {
-        None
-    }
-}
-
-/// Match terminal text independently of whether a TUI printed spaces or used
-/// cursor-positioning escapes that disappeared during ANSI stripping.
-fn compact_terminal_text(text: &str) -> String {
-    text.chars().filter(|ch| !ch.is_whitespace()).collect()
-}
-
-fn contains_marker(compact: &str, markers: &[&str]) -> bool {
-    markers.iter().any(|marker| compact.contains(marker))
-}
-
-/// Drive bare `claude` to the full-scope OAuth URL exposed by its `/login`
-/// command. The one timeout covers the whole startup sequence, not each screen.
-fn drive_tui_to_login_url(session: &PtySession, config: &LoginConfig) -> Result<String, String> {
-    let deadline = Instant::now() + config.url_timeout;
-    let mut progress = TuiProgress::default();
-    loop {
-        let remaining = deadline.saturating_duration_since(Instant::now());
-        if remaining.is_zero() {
-            return Err(format!(
-                "timed out; last output: {}",
-                session.transcript_tail(400)
-            ));
-        }
-        let text = session
-            .wait_for(
-                |text| {
-                    extract_login_url(text).is_some() || next_tui_action(text, &progress).is_some()
-                },
-                config.idle_settle,
-                remaining,
-            )
-            .map_err(|err| wait_error_detail(session, &err))?;
-        if let Some(url) = extract_login_url(&text) {
-            return Ok(url);
-        }
-        let action = next_tui_action(&text, &progress);
-        match action {
-            Some(TuiAction::AcceptTheme) => {
-                session
-                    .send_key(Key::Enter)
-                    .map_err(|e| format!("could not accept the Claude Code theme screen: {e}"))?;
-            }
-            Some(TuiAction::AcceptWorkspaceTrust) => {
-                session.send_key(Key::Enter).map_err(|e| {
-                    format!("could not accept the Claude Code workspace trust screen: {e}")
-                })?;
-            }
-            Some(TuiAction::SendLogin) => {
-                session
-                    .send_text("/login")
-                    .and_then(|()| session.send_key(Key::Enter))
-                    .map_err(|e| format!("could not type /login at the Claude Code prompt: {e}"))?;
-            }
-            Some(TuiAction::SelectLoginMethod) => {
-                session.send_key(Key::Enter).map_err(|e| {
-                    format!("could not select the Claude subscription login method: {e}")
-                })?;
-            }
-            None => {
-                return Err(format!(
-                    "Claude Code reached an unrecognized screen; last output: {}",
-                    session.transcript_tail(400)
-                ));
-            }
-        }
-        if let Some(action) = action {
-            progress.complete(action);
-        }
-    }
-}
-
-/// Preserve the existing custom-argument behaviour: wait for whichever login
-/// URL the configured command prints without sending TUI input first.
-fn wait_for_login_url(session: &PtySession, config: &LoginConfig) -> Result<String, String> {
-    let text = session
-        .wait_for(
-            |text| extract_login_url(text).is_some(),
-            config.idle_settle,
-            config.url_timeout,
-        )
-        .map_err(|err| wait_error_detail(session, &err))?;
-    extract_login_url(&text).ok_or_else(|| {
-        format!(
-            "authorization URL disappeared; last output: {}",
-            session.transcript_tail(400)
-        )
-    })
-}
-
-fn wait_error_detail(session: &PtySession, err: &WaitError) -> String {
-    match err {
-        WaitError::Timeout => format!("timed out; last output: {}", session.transcript_tail(400)),
-        WaitError::ChildExited(_) => {
-            format!("{err}; last output: {}", session.transcript_tail(400))
-        }
-    }
-}
-
-/// Type the code into the live session and decide what happened.
-fn submit_and_finalize(config: &LoginConfig, pty: &PtySession, code: &str) -> Outcome {
-    // The default flow is an Ink TUI. A real terminal wraps pasted text so the
-    // controlled input receives it as one transaction instead of racing its
-    // repaint one keypress at a time. Preserve raw input for the explicit
-    // `setup-token` alternative, whose line reader does not enable this mode.
-    let send_result = if config.args.is_empty() {
-        pty.send_bracketed_paste(code)
-    } else {
-        pty.send_text(code)
-    };
-    if let Err(e) = send_result {
-        return Outcome::Failed(format!("could not send the code to the login process: {e}"));
-    }
-    if let Err(e) = pty.wait_idle(config.idle_settle, config.code_timeout) {
-        return Outcome::Failed(format!(
-            "login timed out while waiting for the pasted authorization code to settle: {e}"
-        ));
-    }
-    if let Err(e) = pty.send_key(Key::Enter) {
-        return Outcome::Failed(format!("could not submit the authorization code: {e}"));
-    }
-
-    // Either the CLI prints a verdict, or it simply exits. Both are handled;
-    // the authoritative check is whether a credential exists afterwards.
-    let verdict = pty.wait_for(
-        |text| {
-            let compact = compact_terminal_text(text);
-            contains_marker(&compact, SUCCESS_MARKERS) || contains_marker(&compact, FAILURE_MARKERS)
-        },
-        config.idle_settle,
-        config.code_timeout,
-    );
-    if !pty.is_running() {
-        let _ = pty.wait_for_exit(Duration::from_secs(1));
-    }
-
-    let transcript = pty.transcript();
-    if let Some(credential) = read_credential(&config.claude_code_home) {
-        return Outcome::Authorized {
-            expires_at: credential.expires_at,
-        };
-    }
-    // `claude setup-token` prints a long-lived token instead of writing a
-    // credential file. Persisting it in the layout `crate::oauth` reads is
-    // what makes the deployment authorized.
-    if let Some(token) = extract_token(&transcript) {
-        return match write_credential(&config.claude_code_home, &token) {
-            Ok(()) => Outcome::Authorized { expires_at: None },
-            Err(e) => Outcome::Failed(format!(
-                "login succeeded but the credential could not be saved: {e}"
-            )),
-        };
-    }
-    let compact = compact_terminal_text(&transcript);
-    let failure = if contains_marker(&compact, FAILURE_MARKERS) {
-        format!(
-            "authorization code was rejected; CLI reported: {}. Request a fresh login URL and code",
-            rejection_verdict(&compact)
-        )
-    } else if matches!(verdict, Err(WaitError::Timeout)) {
-        format!(
-            "login timed out waiting for the CLI to accept or reject the authorization code; last output: {}",
-            excerpt(&transcript, code, 400)
-        )
-    } else {
-        format!(
-            "login process ended without producing a credential; last output: {}",
-            excerpt(&transcript, code, 400)
-        )
-    };
-    Outcome::Failed(failure)
-}
-
-/// Turn the CLI's known compacted verdicts back into readable API text.
-fn rejection_verdict(compact: &str) -> String {
-    const STATUS_PREFIX: &str = "OAutherror:Requestfailedwithstatuscode";
-
-    if compact.contains("OAutherror:Invalidcode") {
-        return "OAuth error: Invalid code. Please make sure the full code was copied".into();
-    }
-    if let Some(start) = compact.rfind(STATUS_PREFIX) {
-        let rest = &compact[start + STATUS_PREFIX.len()..];
-        let status: String = rest.chars().take_while(char::is_ascii_digit).collect();
-        if !status.is_empty() {
-            return format!("OAuth error: Request failed with status code {status}");
-        }
-    }
-    if compact.contains("invalid_grant") {
-        return "OAuth error: invalid_grant".into();
-    }
-    if compact.contains("Authenticationfailed") {
-        return "Authentication failed".into();
-    }
-    if compact.contains("Loginfailed") {
-        return "Login failed".into();
-    }
-    "OAuth error: the CLI rejected the authorization code".into()
-}
-
 /// A credential the router can now read.
-struct FoundCredential {
+pub(crate) struct FoundCredential {
     /// Expiry timestamp in milliseconds, when the credential carries one.
-    expires_at: Option<i64>,
+    pub(crate) expires_at: Option<i64>,
 }
 
 /// Probe the credential directory the same way the proxy does.
-fn read_credential(home: &Path) -> Option<FoundCredential> {
+pub(crate) fn read_credential(home: &Path) -> Option<FoundCredential> {
     let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home);
     reader.read_token().ok().map(|token| FoundCredential {
         expires_at: token.expires_at_ms,
@@ -917,7 +676,7 @@ fn read_credential(home: &Path) -> Option<FoundCredential> {
 }
 
 /// Write a Claude Code credential file in the nested layout the router reads.
-fn write_credential(home: &Path, token: &str) -> std::io::Result<()> {
+pub(crate) fn write_credential(home: &Path, token: &str) -> std::io::Result<()> {
     std::fs::create_dir_all(home)?;
     let path = home.join(".credentials.json");
     let body = serde_json::json!({
@@ -967,13 +726,13 @@ fn ensure_writable_dir(home: &Path) -> Result<(), LoginError> {
 /// the text is truncated: the account token the CLI prints (recognised by its
 /// prefix) and the authorization code the human pasted, which the terminal
 /// echoes back and which no pattern could identify — so it is passed in.
-fn excerpt(text: &str, code: &str, limit: usize) -> String {
+pub(crate) fn excerpt(text: &str, code: &str, limit: usize) -> String {
     let redacted = crate::login_url::redact_value(&crate::login_url::redact_secrets(text), code);
     tail(&redacted, limit)
 }
 
 /// Last `limit` characters of `text`, trimmed.
-fn tail(text: &str, limit: usize) -> String {
+pub(crate) fn tail(text: &str, limit: usize) -> String {
     let trimmed = text.trim();
     let count = trimmed.chars().count();
     if count <= limit {

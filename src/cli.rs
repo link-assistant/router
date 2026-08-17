@@ -562,6 +562,11 @@ pub enum AuthOp {
         /// Force an OAuth flow instead of automatic selection.
         #[arg(long, value_parser = auth_flow_parser(&CLAUDE_AUTH_FLOWS), default_value = "auto")]
         flow: AuthFlow,
+        /// Scope set to request: `full` (Claude Code `/login` equivalent) or
+        /// `setup-token` for `user:inference` only. Defaults to what
+        /// `LOGIN_CLI_ARGS` selects, then `full`.
+        #[arg(long)]
+        mode: Option<String>,
     },
     /// Authorize an `OpenAI` Codex / `ChatGPT` subscription.
     Codex {

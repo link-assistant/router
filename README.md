@@ -352,10 +352,12 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 Authorizes a deployment that has no credential file — see
 [docs/use-cases/remote-login.md](docs/use-cases/remote-login.md). The optional
 `provider` request field selects `claude` (the backwards-compatible default)
-or `codex`. Claude drives the TUI `/login` flow and requests its full scope set;
-`LOGIN_CLI_ARGS=setup-token` explicitly selects the narrower `user:inference`
-flow. Codex defaults to its device-code flow, which needs no callback port or
-vendor CLI; its PKCE loopback flow remains available as a CLI fallback.
+or `codex`. The optional `mode` field selects `full` (the default, requesting
+Claude Code's whole scope set) or `setup-token` (the narrower `user:inference`
+scope); `LOGIN_CLI_ARGS=setup-token` sets the deployment default. Both modes are
+in-process OAuth and need no vendor CLI, so one image serves both. Codex
+defaults to its device-code flow, which needs no callback port or vendor CLI;
+its PKCE loopback flow remains available as a CLI fallback.
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -826,8 +828,8 @@ Other files keep the format of the boundary they serve:
 | `--disable-anthropic-api` / `DISABLE_ANTHROPIC_API` | off | Hide `/v1/messages*` and Bedrock paths |
 | `--disable-metrics` / `DISABLE_METRICS` | off | Hide `/metrics`, `/v1/usage`, `/v1/accounts` |
 | `--disable-login-api` / `DISABLE_LOGIN_API` | off | Hide `/api/login*` |
-| `--login-cli-command` / `LOGIN_CLI_COMMAND` | `claude` | Program `/api/login` drives on a PTY |
-| `--login-cli-args` / `LOGIN_CLI_ARGS` | (none; TUI `/login`) | Comma-separated arguments for that program; set `setup-token` for the narrow-scope alternative |
+| `--login-cli-command` / `LOGIN_CLI_COMMAND` | `claude` | Compatibility backend driven on a PTY. The default value spawns nothing: both login modes run in-process |
+| `--login-cli-args` / `LOGIN_CLI_ARGS` | (none; full scopes) | Comma-separated arguments for that program; set `setup-token` to make the narrow `user:inference` mode the deployment default |
 | `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | How long a pending login waits for its code before expiring |
 | `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Maximum simultaneously pending logins; beyond it, `429` |
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |

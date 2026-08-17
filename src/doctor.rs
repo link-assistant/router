@@ -1,7 +1,65 @@
 //! Subscription diagnostics shared by the `doctor` CLI command.
 
+use crate::claude_auth::ClaudeAuthMode;
+use crate::login::LoginConfig;
 use crate::model_catalog::{fetch_provider_catalog, is_credential_rejection};
 use crate::subscription::{SubscriptionProvider, all_subscription_readers};
+
+/// One line per Claude login mode, saying whether it can run here and which
+/// scopes it would request.
+///
+/// Issue #193: an operator must be able to see *before* starting a login that
+/// the mode they intend to use is actually available in this image, rather than
+/// discovering a missing binary from an HTTP 502.
+#[must_use]
+pub fn login_mode_report(login: &LoginConfig) -> Vec<String> {
+    // Both real modes are in-process OAuth, so neither depends on a binary.
+    // Only an operator-supplied compatibility backend can be unavailable.
+    let uses_external = login.command != "claude";
+    let selected = if login.args.iter().any(|argument| argument == "setup-token") {
+        ClaudeAuthMode::SetupToken
+    } else {
+        ClaudeAuthMode::Full
+    };
+
+    let mut lines = Vec::new();
+    for mode in [ClaudeAuthMode::Full, ClaudeAuthMode::SetupToken] {
+        let marker = if mode == selected { " (default)" } else { "" };
+        let availability = if uses_external {
+            let resolved = resolve_in_path(&login.command);
+            resolved.map_or_else(
+                || {
+                    format!(
+                        "UNAVAILABLE — LOGIN_CLI_COMMAND `{}` is not in PATH",
+                        login.command
+                    )
+                },
+                |path| format!("via {}", path.display()),
+            )
+        } else {
+            "available (in-process OAuth)".to_string()
+        };
+        lines.push(format!(
+            "login_mode {:<12}: {availability}{marker}; scopes: {}",
+            mode.name(),
+            mode.scopes()
+        ));
+    }
+    lines
+}
+
+/// Locate an executable on `PATH`, as the process spawner would.
+fn resolve_in_path(command: &str) -> Option<std::path::PathBuf> {
+    let candidate = std::path::Path::new(command);
+    if candidate.is_absolute() {
+        return candidate.is_file().then(|| candidate.to_path_buf());
+    }
+    std::env::var_os("PATH").and_then(|paths| {
+        std::env::split_paths(&paths)
+            .map(|directory| directory.join(command))
+            .find(|path| path.is_file())
+    })
+}
 
 /// Report credential and live-catalog health for every provider.
 ///

@@ -45,7 +45,18 @@ pub async fn begin_login(
             "`provider` must be `claude` or `codex`",
         );
     };
-    match manager.begin_for(provider).await {
+    // An explicit mode wins; otherwise fall back to what configuration selects,
+    // so `LOGIN_CLI_ARGS=setup-token` keeps working (issue #193).
+    let mode = match request.as_ref().and_then(|body| body.mode.as_deref()) {
+        Some(value) => match crate::claude_auth::ClaudeAuthMode::parse(value) {
+            Ok(mode) => mode,
+            Err(message) => {
+                return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
+            }
+        },
+        None => manager.configured_mode(),
+    };
+    match manager.begin_with_mode(provider, mode).await {
         Ok(view) => (StatusCode::OK, axum::Json(view)).into_response(),
         Err(e) => login_error_response(&e),
     }
@@ -57,6 +68,9 @@ pub async fn begin_login(
 pub struct BeginLoginRequest {
     /// Subscription provider (`claude` or `codex`).
     pub provider: Option<String>,
+    /// Claude login mode: `full` (default) or `setup-token` for the narrow
+    /// `user:inference` scope. Ignored for Codex, which has one flow.
+    pub mode: Option<String>,
 }
 
 fn requested_provider(value: Option<&str>) -> Option<SubscriptionProvider> {

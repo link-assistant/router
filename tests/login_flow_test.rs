@@ -134,6 +134,155 @@ async fn login_produces_a_url_then_a_usable_credential() {
     assert_eq!(manager.pending_count(), 0);
 }
 
+/// Issue #193: the published image carries no vendor CLI, so `setup-token`
+/// must run entirely in-process.
+///
+/// The reported failure was a spawn of the vendor binary. This test asserts the
+/// flow never reaches a spawn: it starts the narrow mode with the default
+/// command and checks that the session is a live in-process OAuth
+/// authorization, which is true whether or not a `claude` binary happens to
+/// exist on the machine running the test.
+#[tokio::test]
+async fn setup_token_starts_without_any_vendor_binary() {
+    let home = temp_home();
+    let manager = LoginManager::new(LoginConfig {
+        command: "claude".into(),
+        args: vec!["setup-token".to_string()],
+        claude_code_home: home.clone(),
+        ..LoginConfig::default()
+    });
+    assert!(
+        !manager.uses_external_command(),
+        "the default command must never spawn a process"
+    );
+
+    let begun = manager
+        .begin()
+        .await
+        .expect("setup-token must start without a vendor binary");
+    let url = begun.url.as_deref().expect("a URL must be reported");
+    assert!(
+        url.contains("scope=user%3Ainference"),
+        "the narrow mode must request user:inference: {url}"
+    );
+    assert!(
+        !url.contains("user%3Aprofile") && !url.contains("org%3Acreate_api_key"),
+        "the narrow mode must not request the full scope set: {url}"
+    );
+    assert!(
+        url.starts_with(link_assistant_router::claude_auth::CLAUDE_AUTHORIZE_URL),
+        "the narrow mode must use the real authorize host: {url}"
+    );
+    // The waiting session stays alive rather than dying on a spawn failure.
+    assert_eq!(manager.pending_count(), 1);
+    assert_eq!(
+        manager
+            .status(&begun.login_id)
+            .expect("session must still exist")
+            .status,
+        LoginStatus::AwaitingCode
+    );
+}
+
+/// The default mode keeps requesting the full Claude Code scope set, also
+/// without a vendor binary, so one image serves both modes.
+#[tokio::test]
+async fn both_modes_run_in_process_in_the_same_image() {
+    let home = temp_home();
+    let full = LoginManager::new(LoginConfig {
+        command: "claude".into(),
+        args: vec![],
+        claude_code_home: home.clone(),
+        ..LoginConfig::default()
+    })
+    .begin()
+    .await
+    .expect("full mode must start");
+    let full_url = full.url.as_deref().expect("a URL must be reported");
+    assert!(full_url.contains("user%3Ainference"), "{full_url}");
+    assert!(full_url.contains("org%3Acreate_api_key"), "{full_url}");
+
+    let narrow = LoginManager::new(LoginConfig {
+        command: "claude".into(),
+        args: vec!["setup-token".to_string()],
+        claude_code_home: temp_home(),
+        ..LoginConfig::default()
+    })
+    .begin()
+    .await
+    .expect("narrow mode must start");
+    let narrow_url = narrow.url.as_deref().expect("a URL must be reported");
+    assert!(!narrow_url.contains("org%3Acreate_api_key"), "{narrow_url}");
+}
+
+/// The mode can be chosen per request, so one running router serves both
+/// without a restart or a rebuild.
+#[tokio::test]
+async fn the_mode_is_selectable_per_request() {
+    let manager = LoginManager::new(LoginConfig {
+        command: "claude".into(),
+        args: vec![],
+        claude_code_home: temp_home(),
+        ..LoginConfig::default()
+    });
+
+    let narrow = manager
+        .begin_with_mode(
+            SubscriptionProvider::Claude,
+            link_assistant_router::claude_auth::ClaudeAuthMode::SetupToken,
+        )
+        .await
+        .expect("per-request narrow mode must start");
+    let narrow_url = narrow.url.as_deref().expect("a URL must be reported");
+    assert!(
+        narrow_url.contains("scope=user%3Ainference"),
+        "{narrow_url}"
+    );
+    assert!(!narrow_url.contains("org%3Acreate_api_key"), "{narrow_url}");
+
+    // ... and the same manager still serves the full flow.
+    let full = manager
+        .begin_with_mode(
+            SubscriptionProvider::Claude,
+            link_assistant_router::claude_auth::ClaudeAuthMode::Full,
+        )
+        .await
+        .expect("per-request full mode must start");
+    let full_url = full.url.as_deref().expect("a URL must be reported");
+    assert!(full_url.contains("org%3Acreate_api_key"), "{full_url}");
+}
+
+/// `doctor` states whether each mode can run before a login is attempted.
+#[test]
+fn doctor_reports_the_availability_of_each_login_mode() {
+    let in_process = link_assistant_router::doctor::login_mode_report(&LoginConfig {
+        command: "claude".into(),
+        args: vec!["setup-token".to_string()],
+        ..LoginConfig::default()
+    });
+    let report = in_process.join("\n");
+    assert!(report.contains("login_mode full"), "{report}");
+    assert!(report.contains("login_mode setup-token"), "{report}");
+    assert!(
+        report.matches("available (in-process OAuth)").count() == 2,
+        "both modes must be available without a binary: {report}"
+    );
+    assert!(
+        report.contains("user:inference"),
+        "the reported scopes must be visible: {report}"
+    );
+
+    // An operator-supplied backend that is missing is reported as unavailable
+    // rather than failing later with an HTTP 502.
+    let external = link_assistant_router::doctor::login_mode_report(&LoginConfig {
+        command: "definitely-not-on-path-12345".into(),
+        args: vec![],
+        ..LoginConfig::default()
+    })
+    .join("\n");
+    assert!(external.contains("UNAVAILABLE"), "{external}");
+}
+
 #[tokio::test]
 async fn setup_token_remains_an_explicit_alternative() {
     let home = temp_home();

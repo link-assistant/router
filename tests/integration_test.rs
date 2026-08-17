@@ -639,8 +639,18 @@ mod cli_parser_tests {
         assert!(matches!(
             claude.command,
             Some(Command::Auth {
-                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto }
+                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto, mode: None }
             }) if code == "copied"
+        ));
+
+        // The narrow scope set is selectable explicitly (issue #193).
+        let narrow = Cli::try_parse_from(["bin", "auth", "claude", "--mode", "setup-token"])
+            .expect("parses Claude auth mode");
+        assert!(matches!(
+            narrow.command,
+            Some(Command::Auth {
+                op: AuthOp::Claude { mode: Some(mode), .. }
+            }) if mode == "setup-token"
         ));
 
         let codex = Cli::try_parse_from([

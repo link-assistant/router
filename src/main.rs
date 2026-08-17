@@ -886,6 +886,10 @@ async fn run_doctor(config: &Config) -> ExitCode {
         config.login.command,
         config.login.args.join(" ")
     );
+    // Whether each auth mode can run here, before any login is attempted.
+    for line in link_assistant_router::doctor::login_mode_report(&config.login) {
+        println!("{line}");
+    }
     println!(
         "mpp_openai_charge      : {}",
         if config.mpp.is_configured() {

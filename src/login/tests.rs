@@ -1,36 +1,8 @@
 use super::*;
 
 #[test]
-fn tui_only_types_into_recognized_screens() {
-    let progress = TuiProgress::default();
-    let rendered_theme = crate::login_pty::strip_ansi(
-        "Choose\x1b[9Gthe\x1b[13Gtext\x1b[18Gstyle\x1b[24Gthat\x1b[29Glooks\x1b[35Gbest\x1b[40Gwith\x1b[45Gyour\x1b[50Gterminal",
-    );
-    assert_eq!(
-        next_tui_action(&rendered_theme, &progress),
-        Some(TuiAction::AcceptTheme)
-    );
-    assert_eq!(
-        next_tui_action("A future, unknown onboarding screen", &progress),
-        None
-    );
-}
-
-#[test]
 fn login_config_defaults_to_bare_tui() {
     assert!(LoginConfig::default().args.is_empty());
-}
-
-#[test]
-fn compacted_oauth_verdicts_are_restored_for_api_errors() {
-    assert_eq!(
-        rejection_verdict("promptOAutherror:Invalidcode.Pleasemakesurethefullcodewascopied"),
-        "OAuth error: Invalid code. Please make sure the full code was copied"
-    );
-    assert_eq!(
-        rejection_verdict("promptOAutherror:Requestfailedwithstatuscode400"),
-        "OAuth error: Request failed with status code 400"
-    );
 }
 
 fn settled_session(id: &str, status: LoginStatus, age: chrono::Duration) -> Arc<Session> {
