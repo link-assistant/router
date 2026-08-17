@@ -340,3 +340,138 @@ fn the_model_listing_advertises_the_crater_model() {
     assert_eq!(listing["data"][0]["id"], DEFAULT_MODEL);
     assert_eq!(listing["data"][0]["owned_by"], "crater");
 }
+
+fn test_config(target: Option<&str>, inbox: Option<&str>) -> CraterConfig {
+    CraterConfig {
+        inbox: inbox.map(ToString::to_string),
+        actor: "https://router.test/actor/code".to_string(),
+        target: target.map(ToString::to_string),
+        poll_interval: Duration::from_millis(10),
+        poll_timeout: Duration::from_secs(1),
+    }
+}
+
+fn test_request() -> CraterTaskRequest {
+    CraterTaskRequest {
+        model: "crater-forgefed".to_string(),
+        title: "a title".to_string(),
+        content: "the body".to_string(),
+        assignee: None,
+        attributed_to: "https://router.test/actor/code".to_string(),
+    }
+}
+
+/// The Offer activity is the wire format the `ForgeFed` inbox receives, so its
+/// shape is worth pinning.
+#[test]
+fn an_offer_activity_wraps_the_ticket_with_forgefed_context() {
+    let offer = build_offer_activity(
+        &test_request(),
+        &test_config(Some("https://tracker.test"), None),
+    )
+    .expect("a well-formed offer");
+
+    assert_eq!(offer["type"], "Offer");
+    assert_eq!(offer["actor"], "https://router.test/actor/code");
+    assert_eq!(offer["target"], "https://tracker.test");
+    assert_eq!(offer["to"][0], "https://tracker.test");
+    assert!(
+        offer["@context"]
+            .as_array()
+            .expect("context array")
+            .iter()
+            .any(|entry| entry == "https://forgefed.org/ns"),
+        "the ForgeFed context must be declared"
+    );
+
+    let ticket = &offer["object"];
+    assert_eq!(ticket["type"], "Ticket");
+    assert_eq!(ticket["summary"], "a title");
+    assert_eq!(ticket["content"], "the body");
+    assert_eq!(ticket["model"], "crater-forgefed");
+    assert_eq!(ticket["source"]["content"], "the body");
+    // No assignee was requested, so none is asserted.
+    assert!(ticket.get("assignee").is_none());
+}
+
+#[test]
+fn an_offer_falls_back_to_the_inbox_when_no_target_is_configured() {
+    let offer = build_offer_activity(
+        &test_request(),
+        &test_config(None, Some("https://inbox.test")),
+    )
+    .expect("inbox is used as the target");
+    assert_eq!(offer["target"], "https://inbox.test");
+
+    // With neither, the misconfiguration is reported rather than guessed.
+    let missing = build_offer_activity(&test_request(), &test_config(None, None));
+    assert!(matches!(
+        missing,
+        Err(CraterError::MissingConfig(name)) if name.contains("CRATER_FORGEFED")
+    ));
+}
+
+#[test]
+fn an_assignee_is_carried_onto_the_ticket() {
+    let request = CraterTaskRequest {
+        assignee: Some("https://tracker.test/user/1".to_string()),
+        ..test_request()
+    };
+    let offer = build_offer_activity(&request, &test_config(Some("https://tracker.test"), None))
+        .expect("offer");
+    assert_eq!(offer["object"]["assignee"], "https://tracker.test/user/1");
+}
+
+/// Each provider error maps onto the status a client should see, and renders a
+/// message that names the cause.
+#[test]
+fn crater_errors_map_onto_status_codes_and_messages() {
+    let cases = [
+        (
+            CraterError::MissingConfig("CRATER_FORGEFED_INBOX"),
+            StatusCode::BAD_GATEWAY,
+            "CRATER_FORGEFED_INBOX",
+        ),
+        (
+            CraterError::InvalidRequest("model is required".into()),
+            StatusCode::BAD_REQUEST,
+            "model is required",
+        ),
+        (
+            CraterError::InvalidResponse("missing result".into()),
+            StatusCode::BAD_GATEWAY,
+            "missing result",
+        ),
+        (
+            CraterError::Upstream("connection refused".into()),
+            StatusCode::BAD_GATEWAY,
+            "connection refused",
+        ),
+    ];
+    for (error, status, needle) in cases {
+        assert_eq!(error.status_code(), status, "{error}");
+        assert!(error.to_string().contains(needle), "{error}");
+    }
+
+    // A delivery failure renders with and without an upstream message.
+    let bare = CraterError::Delivery {
+        status: 503,
+        message: String::new(),
+    };
+    assert_eq!(bare.status_code(), StatusCode::BAD_GATEWAY);
+    assert!(bare.to_string().contains("503"), "{bare}");
+    let detailed = CraterError::Delivery {
+        status: 503,
+        message: "inbox down".into(),
+    };
+    assert!(detailed.to_string().contains("inbox down"), "{detailed}");
+
+    // A timeout reports the task and the elapsed budget in seconds.
+    let timeout = CraterError::Timeout {
+        task_uri: "https://tracker.test/task/9".into(),
+        timeout: Duration::from_secs(45),
+    };
+    assert_eq!(timeout.status_code(), StatusCode::GATEWAY_TIMEOUT);
+    assert!(timeout.to_string().contains("task/9"), "{timeout}");
+    assert!(timeout.to_string().contains("45"), "{timeout}");
+}
