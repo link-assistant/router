@@ -275,3 +275,82 @@ fn test_verbose_default_false() {
     let config = build_default(Some("secret")).expect("should build");
     assert!(!config.verbose);
 }
+
+/// The bridge model policy is parsed from configuration and surfaces a clear
+/// error for an unknown name (issue #192).
+#[test]
+fn the_bridge_model_policy_is_configurable_and_validated() {
+    use crate::bridge_selection::BridgeModelPolicy;
+
+    let default = Config::build(default_args(Some("secret"))).expect("default config");
+    assert_eq!(
+        default.bridge_model_policy,
+        BridgeModelPolicy::FirstAdvertised,
+        "an unset policy keeps the deterministic default"
+    );
+
+    let mut args = default_args(Some("secret"));
+    args.bridge_model_policy = Some("last-advertised".to_string());
+    assert_eq!(
+        Config::build(args)
+            .expect("explicit policy")
+            .bridge_model_policy,
+        BridgeModelPolicy::LastAdvertised
+    );
+
+    let mut args = default_args(Some("secret"));
+    args.bridge_model_policy = Some("cheapest-possible".to_string());
+    let error = Config::build(args).expect_err("unknown policy must fail startup");
+    assert!(error.to_string().contains("cheapest-possible"), "{error}");
+
+    // An empty value is treated as unset rather than as an error.
+    let mut args = default_args(Some("secret"));
+    args.bridge_model_policy = Some(String::new());
+    assert_eq!(
+        Config::build(args)
+            .expect("empty policy")
+            .bridge_model_policy,
+        BridgeModelPolicy::FirstAdvertised
+    );
+}
+
+#[test]
+fn csv_parsing_trims_and_drops_blank_entries() {
+    assert_eq!(parse_csv("a, b ,,c"), vec!["a", "b", "c"]);
+    assert!(parse_csv("").is_empty());
+    assert!(parse_csv("  ,  ").is_empty());
+}
+
+#[test]
+fn usize_csv_parsing_rejects_non_numeric_entries() {
+    assert_eq!(parse_usize_csv("1, 2,3").expect("numbers"), vec![1, 2, 3]);
+    assert!(parse_usize_csv("").expect("empty").is_empty());
+    assert!(parse_usize_csv("1,not-a-number").is_err());
+}
+
+#[test]
+fn enum_parsing_accepts_documented_spellings() {
+    assert_eq!(
+        ApiFormat::from_str_opt("ANTHROPIC"),
+        Some(ApiFormat::Anthropic)
+    );
+    assert_eq!(ApiFormat::from_str_opt("nonsense"), None);
+
+    assert_eq!(
+        RoutingMode::from_str_opt("direct"),
+        Some(RoutingMode::Direct)
+    );
+    assert_eq!(RoutingMode::from_str_opt("nonsense"), None);
+
+    assert_eq!(
+        StoragePolicy::from_str_opt("memory"),
+        Some(StoragePolicy::Memory)
+    );
+    assert_eq!(StoragePolicy::from_str_opt("nonsense"), None);
+
+    assert_eq!(
+        UpstreamProvider::from_str_opt("codex"),
+        Some(UpstreamProvider::Codex)
+    );
+    assert_eq!(UpstreamProvider::from_str_opt("nonsense"), None);
+}

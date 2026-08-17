@@ -499,3 +499,146 @@ fn test_constant_time_eq_matches_string_equality() {
     assert!(!constant_time_eq("s3cret", "s3cre"));
     assert!(!constant_time_eq("s3cre", "s3cret"));
 }
+
+/// The shared bounds accept every reasonable request and reject the ones that
+/// would mint an unusable or unbounded credential (issue #194).
+#[test]
+fn issue_request_validation_covers_every_constraint() {
+    let base = IssueRequest {
+        ttl_hours: 24,
+        label: "ok",
+        ..IssueRequest::default()
+    };
+    assert!(base.validate().is_ok());
+
+    // TTL must be positive and bounded.
+    for ttl in [0, -1, MAX_TTL_HOURS + 1] {
+        let request = IssueRequest {
+            ttl_hours: ttl,
+            ..base.clone()
+        };
+        assert!(request.validate().is_err(), "ttl {ttl} must be rejected");
+    }
+    assert!(
+        IssueRequest {
+            ttl_hours: MAX_TTL_HOURS,
+            ..base.clone()
+        }
+        .validate()
+        .is_ok(),
+        "the maximum TTL itself is allowed"
+    );
+
+    // Zero-valued caps mint a credential that can never serve a request.
+    for request in [
+        IssueRequest {
+            max_requests: Some(0),
+            ..base.clone()
+        },
+        IssueRequest {
+            max_tokens: Some(0),
+            ..base.clone()
+        },
+        IssueRequest {
+            rate_limit_per_minute: Some(0),
+            ..base.clone()
+        },
+    ] {
+        let error = request.validate().expect_err("zero caps are rejected");
+        assert!(error.contains("greater than zero"), "{error}");
+    }
+
+    // Scope must be empty (client) or the admin scope.
+    assert!(
+        IssueRequest {
+            scope: "superuser",
+            ..base.clone()
+        }
+        .validate()
+        .is_err()
+    );
+    assert!(
+        IssueRequest {
+            scope: ADMIN_SCOPE,
+            ..base
+        }
+        .validate()
+        .is_ok()
+    );
+}
+
+/// Rotation preserves the stored constraints and lifetime unless overridden.
+#[test]
+fn rotate_preserves_constraints_and_remaining_lifetime() {
+    let mgr = test_manager();
+    let (_token, id) = mgr
+        .issue_with_id(&IssueRequest {
+            ttl_hours: 48,
+            label: "original",
+            max_requests: Some(3),
+            max_tokens: Some(500),
+            rate_limit_per_minute: Some(2),
+            account: Some("primary"),
+            ..IssueRequest::default()
+        })
+        .expect("issue");
+
+    let replacement = mgr
+        .rotate_token_with(&id, &RotateOverrides::default())
+        .expect("rotate");
+    assert!(replacement.starts_with(TOKEN_PREFIX));
+
+    let records = mgr.list_tokens().expect("list");
+    assert!(
+        records
+            .iter()
+            .find(|record| record.id == id)
+            .expect("old record")
+            .revoked,
+        "the previous value is revoked"
+    );
+    let new = records
+        .iter()
+        .find(|record| !record.revoked)
+        .expect("replacement");
+    assert_eq!(new.label, "original", "the label carries over");
+    assert_eq!(new.max_requests, Some(3));
+    assert_eq!(new.max_tokens, Some(500));
+    assert_eq!(new.rate_limit_per_minute, Some(2));
+    assert_eq!(new.account.as_deref(), Some("primary"));
+    // The remaining lifetime is preserved rather than silently extended.
+    assert!(new.expires_at <= chrono::Utc::now().timestamp() + 48 * 3600);
+}
+
+#[test]
+fn rotate_rejects_an_unknown_id_and_invalid_overrides() {
+    let mgr = test_manager();
+    assert!(matches!(
+        mgr.rotate_token_with("no-such-id", &RotateOverrides::default()),
+        Err(TokenError::Invalid(_))
+    ));
+
+    let (_token, id) = mgr
+        .issue_with_id(&IssueRequest {
+            ttl_hours: 24,
+            label: "target",
+            ..IssueRequest::default()
+        })
+        .expect("issue");
+    // An override that would produce an unusable credential is refused, and
+    // the existing token keeps working.
+    assert!(matches!(
+        mgr.rotate_token_with(
+            &id,
+            &RotateOverrides {
+                max_tokens: Some(0),
+                ..RotateOverrides::default()
+            }
+        ),
+        Err(TokenError::Invalid(_))
+    ));
+    assert!(
+        !mgr.store().get(&id).expect("get").expect("record").revoked,
+        "a failed rotation must not revoke the original"
+    );
+}
