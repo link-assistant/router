@@ -302,4 +302,42 @@ mod tests {
         let response = provider_error(StatusCode::BAD_GATEWAY, "upstream is unreachable");
         assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
     }
+
+    #[test]
+    fn gonka_config_requires_a_private_key() {
+        assert!(GonkaConfig::new(None, "https://node.test", "m".into()).is_none());
+        assert!(
+            GonkaConfig::new(Some(String::new()), "https://node.test", "m".into()).is_none(),
+            "an empty key is not a key"
+        );
+        let configured = GonkaConfig::new(Some("k".into()), "https://node.test/", "m".into())
+            .expect("a configured provider");
+        // The trailing slash is normalised away so endpoints join cleanly.
+        assert_eq!(
+            configured.endpoint("/v1/models"),
+            "https://node.test/v1/models"
+        );
+    }
+
+    #[test]
+    fn signing_adds_deterministic_headers_without_leaking_the_key() {
+        let mut headers = HeaderMap::new();
+        sign_headers(
+            &mut headers,
+            "POST",
+            "/v1/chat/completions",
+            b"{}",
+            "secret-key",
+        )
+        .expect("signing succeeds");
+
+        let signature = headers
+            .get("x-gonka-signature")
+            .expect("a signature header")
+            .to_str()
+            .expect("ascii");
+        assert!(headers.contains_key("x-gonka-timestamp"));
+        assert!(!signature.contains("secret-key"), "the key must not appear");
+        assert_eq!(signature.len(), 64, "hex-encoded sha256");
+    }
 }

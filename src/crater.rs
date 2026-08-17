@@ -903,4 +903,93 @@ mod tests {
         assert!(frame.starts_with("data: {"), "{frame}");
         assert!(frame.ends_with("\n\n"), "frames end with a blank line");
     }
+
+    #[test]
+    fn normalising_a_chat_request_requires_a_model_and_messages() {
+        let missing_model = normalize_chat_request(&json!({"messages": []}), "actor");
+        assert!(matches!(
+            missing_model,
+            Err(CraterError::InvalidRequest(ref m)) if m.contains("model")
+        ));
+
+        let blank_model = normalize_chat_request(&json!({"model": "   ", "messages": []}), "actor");
+        assert!(blank_model.is_err(), "a blank model is not a model");
+
+        let missing_messages = normalize_chat_request(&json!({"model": "m"}), "actor");
+        assert!(matches!(
+            missing_messages,
+            Err(CraterError::InvalidRequest(ref m)) if m.contains("messages")
+        ));
+    }
+
+    #[test]
+    fn normalising_a_chat_request_joins_turns_and_keeps_the_first_user_line() {
+        let request = normalize_chat_request(
+            &json!({
+                "model": "crater-forgefed",
+                "messages": [
+                    {"role": "system", "content": "be terse"},
+                    {"role": "user", "content": "first question"},
+                    {"role": "assistant", "content": ""},
+                    {"role": "user", "content": "second question"}
+                ]
+            }),
+            "https://router.test/actor/code",
+        )
+        .expect("a well-formed request");
+
+        assert_eq!(request.model, "crater-forgefed");
+        // Empty turns are dropped rather than emitted as blank lines.
+        assert!(
+            !request.content.contains("assistant:"),
+            "{}",
+            request.content
+        );
+        assert!(
+            request.content.contains("system: be terse"),
+            "{}",
+            request.content
+        );
+        assert!(
+            request.content.contains("user: first question"),
+            "{}",
+            request.content
+        );
+        // The first user turn becomes the task title.
+        assert_eq!(request.title, "first question");
+    }
+
+    #[test]
+    fn task_resolution_is_read_from_the_activity() {
+        assert!(is_resolved(&json!({"isResolved": true})));
+        assert!(!is_resolved(&json!({"isResolved": false})));
+        // Absent or wrongly typed means "not resolved", never a panic.
+        assert!(!is_resolved(&json!({})));
+        assert!(!is_resolved(&json!({"isResolved": "yes"})));
+    }
+
+    #[test]
+    fn usage_defaults_to_zero_when_the_task_reports_none() {
+        let reported = usage_from_result(&json!({"usage": {"total_tokens": 12}}));
+        assert_eq!(reported["total_tokens"], 12);
+
+        let absent = usage_from_result(&json!({}));
+        assert_eq!(absent["prompt_tokens"], 0);
+        assert_eq!(absent["completion_tokens"], 0);
+        assert_eq!(absent["total_tokens"], 0);
+    }
+
+    #[test]
+    fn a_completion_response_carries_the_model_and_content() {
+        let response = chat_completion_response(&CraterTaskResult {
+            task_uri: "https://tracker.test/task/1".to_string(),
+            model: "crater-forgefed".to_string(),
+            content: "answer".to_string(),
+            raw: json!({"usage": {"total_tokens": 3}}),
+        });
+        assert_eq!(response["model"], "crater-forgefed");
+        assert_eq!(response["object"], "chat.completion");
+        assert_eq!(response["choices"][0]["message"]["content"], "answer");
+        assert_eq!(response["usage"]["total_tokens"], 3);
+    }
 }

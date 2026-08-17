@@ -254,4 +254,21 @@ mod tests {
     fn an_unauthorised_caller_is_told_a_bearer_key_is_required() {
         assert_eq!(unauthorised().status(), StatusCode::UNAUTHORIZED);
     }
+
+    /// Provider selection is an allowlist: an unknown or unexposed provider is
+    /// rejected rather than silently defaulting.
+    #[test]
+    fn provider_selection_rejects_unknown_names() {
+        assert_eq!(
+            requested_provider(Some("CLAUDE")),
+            Some(SubscriptionProvider::Claude)
+        );
+        assert_eq!(
+            requested_provider(Some("  codex  ")),
+            Some(SubscriptionProvider::Codex)
+        );
+        for unknown in ["qwen", "gemini", "anthropic", ""] {
+            assert_eq!(requested_provider(Some(unknown)), None, "{unknown}");
+        }
+    }
 }

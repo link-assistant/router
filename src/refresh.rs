@@ -64,6 +64,15 @@ pub const CLAUDE_CLIENT_ID: &str = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 /// Anthropic's OAuth token endpoint.
 pub const CLAUDE_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
 
+/// How long before a token's stated expiry it is treated as due for refresh.
+///
+/// Refreshing reactively — only once a token is already expired — means the
+/// request that discovers the expiry has to fail first, and leaves an idle
+/// deployment's refresh token sitting unused until it too goes stale
+/// (issue #203). A minute of skew renews the credential ahead of the failure
+/// without meaningfully shortening its usable life.
+const REFRESH_SKEW_MS: i64 = 60_000;
+
 /// Refresh parameters for a provider. Every subscription provider now has a
 /// public OAuth client, so this is total.
 const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
@@ -156,21 +165,85 @@ pub enum RefreshError {
     /// The HTTP request to the token endpoint failed.
     Request(String),
     /// The token endpoint returned a non-success status.
-    Status(u16, String),
+    ///
+    /// Carries the `Retry-After` delay in seconds when the endpoint sent one,
+    /// so a rate-limited refresh can honour the vendor's own pacing instead of
+    /// guessing.
+    Status(u16, String, Option<i64>),
     /// The response body could not be parsed or lacked an access token.
     Parse(String),
+}
+
+/// OAuth error codes that mean the refresh token itself will never work again.
+///
+/// Deliberately an allowlist rather than a substring search: only these codes,
+/// and only under a client-error status, justify telling an operator to
+/// re-authenticate (issue #203).
+const TERMINAL_OAUTH_ERRORS: [&str; 4] = [
+    "invalid_grant",
+    "invalid_client",
+    "unauthorized_client",
+    "unsupported_grant_type",
+];
+
+/// The `error` field of an OAuth error response, when the body is one.
+///
+/// Parsed rather than matched textually so a proxy error page or a success body
+/// that merely *mentions* a code cannot be mistaken for the endpoint reporting
+/// it. Accepts the nested `{"error": {"type": …}}` shape vendors also use.
+#[must_use]
+fn oauth_error_code(body: &str) -> Option<String> {
+    let parsed: serde_json::Value = serde_json::from_str(body).ok()?;
+    let error = parsed.get("error")?;
+    if let Some(code) = error.as_str() {
+        return Some(code.to_string());
+    }
+    error
+        .get("type")
+        .or_else(|| error.get("code"))
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string)
 }
 
 impl RefreshError {
     /// Whether the token endpoint rejected the *refresh token itself*.
     ///
-    /// OAuth reports this as `invalid_grant`. It is worth separating from every
-    /// other refresh failure because it is the one case waiting cannot fix:
-    /// the stored refresh token is gone or revoked, so the only remedy is to
-    /// re-authenticate.
+    /// True only when a client-error status (`400`, `401`, `403`) is paired
+    /// with a parsed OAuth error code from a small terminal allowlist. This is
+    /// the one case waiting cannot fix, so it is the only case that may stop
+    /// the router from retrying.
+    ///
+    /// Everything else — `429`, `5xx`, timeouts, connection resets, and any
+    /// body that merely contains the text `invalid_grant` under an unrelated
+    /// status — is retryable (issue #203).
     #[must_use]
     pub fn is_invalid_grant(&self) -> bool {
-        matches!(self, Self::Status(_, body) if body.contains("invalid_grant"))
+        let Self::Status(code, body, _) = self else {
+            return false;
+        };
+        if !matches!(code, 400 | 401 | 403) {
+            return false;
+        }
+        oauth_error_code(body).is_some_and(|code| TERMINAL_OAUTH_ERRORS.contains(&code.as_str()))
+    }
+
+    /// Whether the endpoint rate-limited this refresh.
+    ///
+    /// Rate limiting is explicitly *not* terminal: the credential is fine and
+    /// the correct response is to wait, which is precisely the case the old
+    /// substring classifier reported as permanently revoked.
+    #[must_use]
+    pub const fn is_rate_limited(&self) -> bool {
+        matches!(self, Self::Status(429, _, _))
+    }
+
+    /// The delay the endpoint asked callers to wait, in milliseconds.
+    #[must_use]
+    pub const fn retry_after_ms(&self) -> Option<i64> {
+        match self {
+            Self::Status(_, _, Some(seconds)) => Some(seconds.saturating_mul(1_000)),
+            _ => None,
+        }
     }
 }
 
@@ -180,12 +253,20 @@ impl std::fmt::Display for RefreshError {
             Self::Unsupported => write!(f, "provider does not support router-driven refresh"),
             Self::NoRefreshToken => write!(f, "no refresh token available"),
             Self::Request(m) => write!(f, "refresh request failed: {m}"),
-            Self::Status(_, m) if self.is_invalid_grant() => write!(
+            Self::Status(_, m, _) if self.is_invalid_grant() => write!(
                 f,
                 "refresh token is no longer valid (invalid_grant) — re-authenticate this \
-                 subscription; waiting will not help: {m}"
+                 subscription with `link-assistant-router auth <provider>`; waiting will not \
+                 help: {m}"
             ),
-            Self::Status(code, m) => write!(f, "refresh endpoint returned {code}: {m}"),
+            // Say plainly that this one *is* recoverable, so the operator is
+            // not told to re-authenticate over a transient rate limit.
+            Self::Status(429, m, _) => write!(
+                f,
+                "refresh endpoint rate-limited this request (429); it will be retried \
+                 automatically and the subscription remains usable: {m}"
+            ),
+            Self::Status(code, m, _) => write!(f, "refresh endpoint returned {code}: {m}"),
             Self::Parse(m) => write!(f, "refresh response parse error: {m}"),
         }
     }
@@ -308,8 +389,13 @@ async fn refresh_at(
         .map_err(|e| RefreshError::Request(e.to_string()))?;
     let status = response.status();
     if !status.is_success() {
+        // Read `Retry-After` before the body is consumed, so a rate limit can
+        // be paced by the vendor's own figure rather than by our backoff alone.
+        // Reuses the shared parser, which also accepts the HTTP-date form.
+        let retry_after = crate::request_routing::retry_after_duration(response.headers())
+            .and_then(|delay| i64::try_from(delay.as_secs()).ok());
         let body = response.text().await.unwrap_or_default();
-        return Err(RefreshError::Status(status.as_u16(), body));
+        return Err(RefreshError::Status(status.as_u16(), body, retry_after));
     }
     let parsed: RefreshResponse = response
         .json()
@@ -412,7 +498,11 @@ impl TokenCache {
                 guard.remove(&provider);
             }
         }
-        if !disk_token.is_expired(now_ms) {
+        // Refresh slightly *before* expiry rather than after a request has
+        // already failed: a token that expires mid-flight surfaces to the
+        // caller as an upstream error, and a credential only ever refreshed
+        // reactively can sit unused past its refresh window (issue #203).
+        if !disk_token.is_expired(now_ms.saturating_add(REFRESH_SKEW_MS)) {
             return disk_token;
         }
         if let Some(cached) = self.cached_valid_for(provider, account, now_ms) {
@@ -438,7 +528,11 @@ impl TokenCache {
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                 } else {
-                    attempt.record_transient_failure(now_ms);
+                    // Everything else is retryable. In particular a 429 must
+                    // not record rejection evidence: the credential is fine,
+                    // and marking it rejected would drop the provider out of
+                    // routing until restart (issue #203).
+                    attempt.record_transient_failure_after(now_ms, e.retry_after_ms());
                 }
                 // The stamped-expired token is returned unchanged on purpose:
                 // it may still be honoured by the inference endpoint.
@@ -536,444 +630,5 @@ impl TokenCache {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn token(refresh: Option<&str>, exp: Option<i64>) -> SubscriptionToken {
-        SubscriptionToken {
-            access_token: "old-access".into(),
-            refresh_token: refresh.map(ToString::to_string),
-            expires_at_ms: exp,
-            account_id: Some("acct_1".into()),
-            resource_url: Some("portal.qwen.ai".into()),
-        }
-    }
-
-    #[test]
-    fn config_present_for_subscription_providers() {
-        assert_eq!(
-            refresh_config(SubscriptionProvider::Codex).token_url,
-            "https://auth.openai.com/oauth/token"
-        );
-        assert_eq!(
-            refresh_config(SubscriptionProvider::Gemini).client_secret_env,
-            Some(GEMINI_CLIENT_SECRET_ENV)
-        );
-        assert_eq!(
-            refresh_config(SubscriptionProvider::Qwen).style,
-            BodyStyle::Form
-        );
-        // Claude is refreshed by the router too: the runtime image has no
-        // Claude CLI to keep the credential file current.
-        let claude = refresh_config(SubscriptionProvider::Claude);
-        assert_eq!(claude.token_url, CLAUDE_TOKEN_URL);
-        assert_eq!(claude.client_id, CLAUDE_CLIENT_ID);
-        assert!(claude.client_secret_env.is_none());
-        assert_eq!(claude.style, BodyStyle::Json);
-    }
-
-    /// Serve one JSON response on loopback and hand back the request that was
-    /// received, so a test can assert the exact refresh body sent upstream.
-    async fn stub_token_endpoint(
-        response_body: &'static str,
-    ) -> (String, tokio::task::JoinHandle<(String, String)>) {
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let url = format!("http://{}/v1/oauth/token", listener.local_addr().unwrap());
-        let handle = tokio::spawn(async move {
-            let (mut socket, _) = listener.accept().await.unwrap();
-            let mut raw = Vec::new();
-            let mut buf = [0u8; 2048];
-            // Read until the body (after the blank line) is fully present.
-            loop {
-                let n = socket.read(&mut buf).await.unwrap();
-                raw.extend_from_slice(&buf[..n]);
-                let text = String::from_utf8_lossy(&raw);
-                if n == 0
-                    || text
-                        .split_once("\r\n\r\n")
-                        .is_some_and(|(_, b)| !b.is_empty())
-                {
-                    break;
-                }
-            }
-            let request = String::from_utf8_lossy(&raw).to_string();
-            let (head, body) = request.split_once("\r\n\r\n").unwrap();
-            socket
-                .write_all(
-                    format!(
-                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{response_body}",
-                        response_body.len()
-                    )
-                    .as_bytes(),
-                )
-                .await
-                .unwrap();
-            socket.flush().await.unwrap();
-            (head.to_string(), body.to_string())
-        });
-        (url, handle)
-    }
-
-    #[tokio::test]
-    async fn claude_refresh_exchanges_the_refresh_token_and_never_touches_disk() {
-        // The container case from issue #48: the on-disk Claude token has
-        // expired and there is no Claude CLI to renew it.
-        let (url, server) = stub_token_endpoint(
-            r#"{"access_token":"sk-ant-oat-new","refresh_token":"sk-ant-ort-new","expires_in":3600}"#,
-        )
-        .await;
-
-        let expired = SubscriptionToken {
-            access_token: "sk-ant-oat-old".into(),
-            refresh_token: Some("sk-ant-ort-old".into()),
-            expires_at_ms: Some(1),
-            account_id: None,
-            resource_url: None,
-        };
-        let fresh = refresh_at(
-            &reqwest::Client::new(),
-            &url,
-            SubscriptionProvider::Claude,
-            &expired,
-            10_000,
-        )
-        .await
-        .expect("claude refresh should succeed");
-
-        assert_eq!(fresh.access_token, "sk-ant-oat-new");
-        assert_eq!(fresh.refresh_token.as_deref(), Some("sk-ant-ort-new"));
-        assert_eq!(fresh.expires_at_ms, Some(10_000 + 3_600_000));
-
-        let (head, body) = server.await.unwrap();
-        assert!(head.starts_with("POST /v1/oauth/token"));
-        let sent: serde_json::Value = serde_json::from_str(&body).expect("json body");
-        assert_eq!(sent["grant_type"], "refresh_token");
-        assert_eq!(sent["refresh_token"], "sk-ant-ort-old");
-        assert_eq!(sent["client_id"], CLAUDE_CLIENT_ID);
-        // Claude's public client takes no secret.
-        assert!(sent.get("client_secret").is_none());
-    }
-
-    #[tokio::test]
-    async fn claude_refresh_result_is_cached_and_reused() {
-        // A single exchange must serve subsequent requests: the stub answers
-        // once, so a second refresh attempt would hang/fail instead.
-        let (url, server) =
-            stub_token_endpoint(r#"{"access_token":"cached-once","expires_in":3600}"#).await;
-        let expired = SubscriptionToken {
-            access_token: "expired".into(),
-            refresh_token: Some("r".into()),
-            expires_at_ms: Some(1),
-            account_id: None,
-            resource_url: None,
-        };
-        let client = reqwest::Client::new();
-        let fresh = refresh_at(
-            &client,
-            &url,
-            SubscriptionProvider::Claude,
-            &expired,
-            10_000,
-        )
-        .await
-        .unwrap();
-
-        let cache = TokenCache::new();
-        cache.store_refreshed(SubscriptionProvider::Claude, "primary", fresh);
-        let reused = cache
-            .get_fresh(&client, SubscriptionProvider::Claude, expired, 20_000)
-            .await;
-        assert_eq!(reused.access_token, "cached-once");
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn concurrent_successful_refreshes_share_one_exchange() {
-        let (url, server) =
-            stub_token_endpoint(r#"{"access_token":"shared-refresh","expires_in":3600}"#).await;
-        let cache = TokenCache::new();
-        let client = reqwest::Client::new();
-        let expired = token(Some("one-refresh-token"), Some(1));
-        let requests = (0..10).map(|_| {
-            cache.get_fresh_for_at(
-                &client,
-                &url,
-                SubscriptionProvider::Claude,
-                "primary",
-                expired.clone(),
-                10_000,
-            )
-        });
-        let refreshed = futures_util::future::join_all(requests).await;
-
-        assert!(
-            refreshed
-                .iter()
-                .all(|token| token.access_token == "shared-refresh")
-        );
-        server.await.expect("single refresh exchange");
-    }
-
-    #[tokio::test]
-    async fn terminal_refresh_failure_is_attempted_only_once_for_same_credential() {
-        use std::sync::Arc;
-        use std::sync::atomic::{AtomicUsize, Ordering};
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let url = format!("http://{}/token", listener.local_addr().unwrap());
-        let calls = Arc::new(AtomicUsize::new(0));
-        let server_calls = Arc::clone(&calls);
-        let server = tokio::spawn(async move {
-            loop {
-                let Ok(Ok((mut socket, _))) =
-                    tokio::time::timeout(std::time::Duration::from_millis(200), listener.accept())
-                        .await
-                else {
-                    break;
-                };
-                server_calls.fetch_add(1, Ordering::SeqCst);
-                let mut request = [0; 2048];
-                let _ = socket.read(&mut request).await.unwrap();
-                let body = r#"{"error":"invalid_grant","error_description":"revoked"}"#;
-                socket
-                    .write_all(
-                        format!(
-                            "HTTP/1.1 400 Bad Request\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
-                            body.len()
-                        )
-                        .as_bytes(),
-                    )
-                    .await
-                    .unwrap();
-            }
-        });
-
-        let cache = TokenCache::new();
-        let client = reqwest::Client::new();
-        let expired = token(Some("revoked-refresh"), Some(1));
-        let requests = (0..8).map(|_| {
-            cache.get_fresh_for_at(
-                &client,
-                &url,
-                SubscriptionProvider::Claude,
-                "primary",
-                expired.clone(),
-                10_000,
-            )
-        });
-        futures_util::future::join_all(requests).await;
-        server.await.unwrap();
-
-        assert_eq!(calls.load(Ordering::SeqCst), 1);
-        assert_eq!(
-            cache.evidence(SubscriptionProvider::Claude),
-            Some(CredentialEvidence::Rejected)
-        );
-    }
-
-    #[tokio::test]
-    async fn changed_valid_credential_clears_terminal_rejection() {
-        let cache = TokenCache::new();
-        let expired = token(Some("revoked"), Some(1));
-        let attempt =
-            cache
-                .attempts
-                .for_subscription(SubscriptionProvider::Claude, "primary", &expired);
-        attempt.lock().await.record_terminal_failure();
-        cache.record_credential_rejected(SubscriptionProvider::Claude);
-
-        let replacement = token(Some("new-login"), Some(20_000));
-        let result = cache
-            .get_fresh_for_at(
-                &reqwest::Client::new(),
-                "http://unused.invalid",
-                SubscriptionProvider::Claude,
-                "primary",
-                replacement.clone(),
-                10_000,
-            )
-            .await;
-
-        assert_eq!(result, replacement);
-        assert!(cache.evidence(SubscriptionProvider::Claude).is_none());
-    }
-
-    #[tokio::test]
-    async fn claude_refresh_requires_a_refresh_token() {
-        // Without a `refreshToken` in `claudeAiOauth` there is nothing to
-        // exchange; the error must be explicit rather than `Unsupported`.
-        let client = reqwest::Client::new();
-        let no_refresh = token(None, Some(0));
-        let err = refresh(&client, SubscriptionProvider::Claude, &no_refresh, 1_000)
-            .await
-            .expect_err("must fail without a refresh token");
-        assert!(matches!(err, RefreshError::NoRefreshToken));
-    }
-
-    #[test]
-    fn encode_form_percent_encodes_reserved_bytes() {
-        let body = encode_form(&[
-            ("grant_type", "refresh_token"),
-            ("refresh_token", "a/b+c=d"),
-        ]);
-        assert_eq!(body, "grant_type=refresh_token&refresh_token=a%2Fb%2Bc%3Dd");
-    }
-
-    #[test]
-    fn merge_carries_metadata_and_computes_expiry() {
-        let prev = token(Some("r1"), Some(0));
-        let resp = RefreshResponse {
-            access_token: Some("new-access".into()),
-            refresh_token: None,
-            expires_in: Some(3600),
-        };
-        let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
-        assert_eq!(merged.access_token, "new-access");
-        // refresh_token not rotated -> reuse previous.
-        assert_eq!(merged.refresh_token.as_deref(), Some("r1"));
-        assert_eq!(merged.expires_at_ms, Some(1_000 + 3_600_000));
-        assert_eq!(merged.account_id.as_deref(), Some("acct_1"));
-        assert_eq!(merged.resource_url.as_deref(), Some("portal.qwen.ai"));
-    }
-
-    #[test]
-    fn merge_rotates_refresh_token_when_present() {
-        let prev = token(Some("r1"), Some(0));
-        let resp = RefreshResponse {
-            access_token: Some("new-access".into()),
-            refresh_token: Some("r2".into()),
-            expires_in: None,
-        };
-        let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
-        assert_eq!(merged.refresh_token.as_deref(), Some("r2"));
-        assert_eq!(merged.expires_at_ms, None);
-    }
-
-    #[test]
-    fn merge_requires_access_token() {
-        let prev = token(Some("r1"), Some(0));
-        let resp = RefreshResponse::default();
-        assert!(merge_refresh_response(&prev, &resp, 1_000).is_none());
-    }
-
-    #[tokio::test]
-    async fn get_fresh_returns_valid_disk_token_unchanged() {
-        let cache = TokenCache::new();
-        let client = reqwest::Client::new();
-        let valid = token(Some("r1"), Some(10_000));
-        let out = cache
-            .get_fresh(&client, SubscriptionProvider::Qwen, valid.clone(), 1_000)
-            .await;
-        assert_eq!(out.access_token, valid.access_token);
-    }
-
-    #[tokio::test]
-    async fn get_fresh_prefers_cached_valid_token() {
-        let cache = TokenCache::new();
-        let client = reqwest::Client::new();
-        let cached = SubscriptionToken {
-            access_token: "cached-access".into(),
-            refresh_token: Some("r1".into()),
-            expires_at_ms: Some(10_000),
-            account_id: None,
-            resource_url: None,
-        };
-        cache.store_for(SubscriptionProvider::Qwen, "primary", cached);
-        let expired_disk = token(Some("r1"), Some(0));
-        let out = cache
-            .get_fresh(&client, SubscriptionProvider::Qwen, expired_disk, 1_000)
-            .await;
-        assert_eq!(out.access_token, "cached-access");
-    }
-
-    /// "expired" invites waiting; a dead refresh token needs re-authentication,
-    /// so the two must not read the same.
-    #[test]
-    fn invalid_grant_is_reported_as_a_re_authentication_prompt() {
-        let dead = RefreshError::Status(
-            400,
-            r#"{"error":"invalid_grant","error_description":"Refresh token not found or invalid"}"#
-                .to_string(),
-        );
-        assert!(dead.is_invalid_grant());
-        let message = dead.to_string();
-        assert!(message.contains("re-authenticate"), "{message}");
-        assert!(message.contains("invalid_grant"), "{message}");
-
-        let transient = RefreshError::Status(503, "upstream busy".to_string());
-        assert!(!transient.is_invalid_grant());
-        assert!(!transient.to_string().contains("re-authenticate"));
-    }
-
-    /// A failed refresh must leave an actionable trace for `doctor`, and a later
-    /// success must clear it.
-    #[test]
-    fn refresh_errors_are_recorded_per_provider_and_cleared() {
-        let cache = TokenCache::new();
-        assert!(
-            cache
-                .last_refresh_error(SubscriptionProvider::Claude)
-                .is_none()
-        );
-        cache.record_refresh_error(SubscriptionProvider::Claude, "invalid_grant");
-        assert_eq!(
-            cache
-                .last_refresh_error(SubscriptionProvider::Claude)
-                .as_deref(),
-            Some("invalid_grant")
-        );
-        assert!(
-            cache
-                .last_refresh_error(SubscriptionProvider::Codex)
-                .is_none()
-        );
-    }
-
-    /// Upstream verdicts, not timestamps, decide whether a credential is dead.
-    #[test]
-    fn credential_evidence_records_the_latest_upstream_verdict() {
-        let cache = TokenCache::new();
-        assert!(cache.evidence(SubscriptionProvider::Claude).is_none());
-        cache.record_credential_rejected(SubscriptionProvider::Claude);
-        assert_eq!(
-            cache.evidence(SubscriptionProvider::Claude),
-            Some(CredentialEvidence::Rejected)
-        );
-        // A credential can come back (re-authentication, vendor-side fix).
-        cache.record_credential_working(SubscriptionProvider::Claude);
-        assert_eq!(
-            cache.evidence(SubscriptionProvider::Claude),
-            Some(CredentialEvidence::Working)
-        );
-    }
-
-    #[test]
-    fn refreshed_tokens_are_isolated_by_account() {
-        let cache = TokenCache::new();
-        let mut first = token(Some("refresh-a"), Some(10_000));
-        first.access_token = "access-a".into();
-        let mut second = token(Some("refresh-b"), Some(10_000));
-        second.access_token = "access-b".into();
-
-        cache.store_for(SubscriptionProvider::Qwen, "primary", first);
-        cache.store_for(SubscriptionProvider::Qwen, "account-1", second);
-
-        assert_eq!(
-            cache
-                .cached_valid_for(SubscriptionProvider::Qwen, "primary", 1_000)
-                .unwrap()
-                .access_token,
-            "access-a"
-        );
-        assert_eq!(
-            cache
-                .cached_valid_for(SubscriptionProvider::Qwen, "account-1", 1_000)
-                .unwrap()
-                .access_token,
-            "access-b"
-        );
-    }
-}
+#[path = "refresh_tests.rs"]
+mod tests;

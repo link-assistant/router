@@ -82,7 +82,17 @@ impl RefreshAttempt {
         self.failure = Some(CachedFailure::Terminal);
     }
 
-    pub(super) fn record_transient_failure(&mut self, now_ms: i64) {
+    /// Record a retryable failure, waiting at least `retry_after_ms` when the
+    /// endpoint named its own delay.
+    ///
+    /// The larger of the two wins: our backoff must not undercut a `Retry-After`
+    /// the vendor asked for, and a small `Retry-After` must not reset a backoff
+    /// that repeated failures have already grown (issue #203).
+    pub(super) fn record_transient_failure_after(
+        &mut self,
+        now_ms: i64,
+        retry_after_ms: Option<i64>,
+    ) {
         let failures = match self.failure {
             Some(CachedFailure::Transient { failures, .. }) => failures.saturating_add(1),
             _ => 1,
@@ -90,7 +100,8 @@ impl RefreshAttempt {
         let shift = failures.saturating_sub(1).min(18);
         let delay = INITIAL_BACKOFF_MS
             .saturating_mul(1_i64 << shift)
-            .min(MAX_BACKOFF_MS);
+            .min(MAX_BACKOFF_MS)
+            .max(retry_after_ms.unwrap_or(0));
         self.failure = Some(CachedFailure::Transient {
             failures,
             retry_at_ms: now_ms.saturating_add(delay),
@@ -162,14 +173,14 @@ mod tests {
         let attempt =
             attempts.for_subscription(SubscriptionProvider::Claude, "primary", &token("transient"));
         let mut state = attempt.lock().await;
-        state.record_transient_failure(10_000);
+        state.record_transient_failure_after(10_000, None);
         assert!(state.suppresses_attempt(10_999));
         assert!(!state.suppresses_attempt(11_000));
-        state.record_transient_failure(11_000);
+        state.record_transient_failure_after(11_000, None);
         assert!(state.suppresses_attempt(12_999));
         assert!(!state.suppresses_attempt(13_000));
         for _ in 0..30 {
-            state.record_transient_failure(20_000);
+            state.record_transient_failure_after(20_000, None);
         }
         assert!(state.suppresses_attempt(319_999));
         assert!(!state.suppresses_attempt(320_000));
