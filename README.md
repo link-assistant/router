@@ -949,11 +949,13 @@ The single image intentionally contains no vendor CLI. It performs Claude OAuth 
 | Operation | Needs the Claude CLI in the image? | Mount mode |
 | --- | --- | --- |
 | Serve requests with a valid access token | No | `:ro` |
-| Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` |
+| Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` (see below) |
 | **First-time login** (no credential file yet) | No — native OAuth | writable |
 | `POST /api/login` (remote login over HTTP) | No — native OAuth | writable |
 
-Renewal happens in memory: the router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and keeps the result in RAM. The credential file is never written to, which is why `:ro` keeps working across expiry — and why a restarted container refreshes again from the same file. The same mechanism already covers Codex, Gemini, and Qwen.
+Renewal happens in memory: the router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and keeps the result in RAM, so serving continues across expiry. The same mechanism covers Codex, Gemini, and Qwen.
+
+One case needs write access. Vendors **rotate** refresh tokens: the refresh response often carries a replacement and spends the old one. When that happens the router writes the new token back to the credential file, so a restart does not replay a spent token. On a `:ro` mount the write is skipped with a logged warning — the router keeps working for the life of the process, but a restart may then require re-authorizing. Mount the credential directory writable if you want rotation to survive restarts.
 
 Two things still require a real login: a directory with no credential file at all, and a `refreshToken` that has itself been revoked or expired.
 

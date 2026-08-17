@@ -245,7 +245,7 @@ impl ClaudeLogin {
 
 fn write_pending(home: &Path, pending: &PendingLogin) -> Result<(), String> {
     std::fs::create_dir_all(home)
-        .map_err(|error| format!("could not create {}: {error}", home.display()))?;
+        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
     let path = home.join(PENDING_LOGIN_FILE);
     let temporary = home.join(format!("{PENDING_LOGIN_FILE}.{}.tmp", uuid::Uuid::new_v4()));
     let bytes = serde_json::to_vec(pending)
@@ -254,7 +254,7 @@ fn write_pending(home: &Path, pending: &PendingLogin) -> Result<(), String> {
         .write(true)
         .create_new(true)
         .open(&temporary)
-        .map_err(|error| format!("could not create {}: {error}", temporary.display()))?;
+        .map_err(|error| crate::durable_file::describe_write_failure(&temporary, &error))?;
     file.write_all(&bytes)
         .and_then(|()| file.sync_all())
         .map_err(|error| format!("could not write {}: {error}", temporary.display()))?;
@@ -289,7 +289,7 @@ fn take_pending(home: &Path) -> Result<PendingLogin, String> {
 
 fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<PathBuf, String> {
     std::fs::create_dir_all(home)
-        .map_err(|error| format!("could not create {}: {error}", home.display()))?;
+        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
     let now = chrono::Utc::now().timestamp_millis();
     // Fall back to what this login actually asked for, so a narrow
     // `setup-token` credential is not recorded as carrying full scopes.
@@ -320,7 +320,7 @@ fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<
         .write(true)
         .create_new(true)
         .open(&temporary)
-        .map_err(|error| format!("could not create {}: {error}", temporary.display()))?;
+        .map_err(|error| crate::durable_file::describe_write_failure(&temporary, &error))?;
     file.write_all(&bytes)
         .and_then(|()| file.sync_all())
         .map_err(|error| format!("could not write {}: {error}", temporary.display()))?;

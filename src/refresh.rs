@@ -1,10 +1,15 @@
 //! In-memory OAuth refresh for vendor subscription tokens.
 //!
-//! Vendor credential files are treated as read-only: the router never writes
-//! back to `~/.codex`, `~/.gemini`, or `~/.qwen`. When a token read from disk
-//! has expired, this module exchanges its `refresh_token` for a fresh access
-//! token using the vendor's public OAuth client (the same client ids embedded
-//! in each vendor's open-source CLI) and caches the result **in memory only**.
+//! When a token read from disk has expired, this module exchanges its
+//! `refresh_token` for a fresh access token using the vendor's public OAuth
+//! client (the same client ids embedded in each vendor's open-source CLI) and
+//! caches the result in memory.
+//!
+//! Vendor credential files are otherwise left alone, with one exception: when
+//! the vendor **rotates** the refresh token, the replacement is written back
+//! (see [`crate::subscription::SubscriptionReader::write_token`]) so a restart
+//! does not replay a token the vendor has already spent (issue #205). That
+//! write is best effort — a read-only mount logs and continues.
 //!
 //! This is the same behavior `ProxyPal` relies on so the proxy keeps working even
 //! when the vendor CLI is not running to refresh its own credential file.
@@ -12,8 +17,7 @@
 //! Claude is included here too: the runtime container image ships no Claude CLI,
 //! so nothing else would keep `~/.claude/.credentials.json` current. The
 //! `refreshToken` stored in the nested `claudeAiOauth` block is exchanged the
-//! same way, and the result stays in memory — the credential file is never
-//! written back to, so a read-only mount keeps working across expiry.
+//! same way.
 //!
 //! Secrets (access/refresh tokens) are never logged.
 
@@ -471,6 +475,86 @@ impl TokenCache {
             now_ms,
         )
         .await
+    }
+
+    /// Refresh regardless of what the token's own `exp` claim says.
+    ///
+    /// A vendor may invalidate an access token *before* its stated expiry —
+    /// a plan change, a session reset — and answers `401` to a token whose
+    /// `exp` is still days away (issue #205). `exp` is therefore only ever an
+    /// optimisation for refreshing early; a `401` from the resource endpoint
+    /// is the authority on whether a token is actually accepted.
+    ///
+    /// Returns `None` when no fresher token could be obtained, so a caller can
+    /// tell "retry with this" from "there is nothing new to retry with" and
+    /// avoid replaying a request with the credential that just failed.
+    pub async fn refresh_rejected(
+        &self,
+        client: &reqwest::Client,
+        provider: SubscriptionProvider,
+        account: &str,
+        disk_token: SubscriptionToken,
+        now_ms: i64,
+    ) -> Option<SubscriptionToken> {
+        self.refresh_rejected_at(
+            client,
+            refresh_config(provider).token_url,
+            provider,
+            account,
+            disk_token,
+            now_ms,
+        )
+        .await
+    }
+
+    async fn refresh_rejected_at(
+        &self,
+        client: &reqwest::Client,
+        token_url: &str,
+        provider: SubscriptionProvider,
+        account: &str,
+        rejected: SubscriptionToken,
+        now_ms: i64,
+    ) -> Option<SubscriptionToken> {
+        let attempt = self.attempts.for_subscription(provider, account, &rejected);
+        // The same lock the pre-flight path uses, so concurrent 401s share one
+        // exchange instead of each spending the refresh token.
+        let mut attempt = attempt.lock().await;
+
+        // A concurrent caller may have refreshed while we waited for the lock.
+        // Anything that differs from the token just rejected is worth retrying.
+        if let Some(cached) = self.cached_valid_for(provider, account, now_ms)
+            && cached.access_token != rejected.access_token
+        {
+            return Some(cached);
+        }
+        if attempt.suppresses_attempt(now_ms) {
+            return None;
+        }
+        match refresh_at(client, token_url, provider, &rejected, now_ms).await {
+            Ok(fresh) => {
+                self.store_for(provider, account, fresh.clone());
+                attempt.record_success();
+                self.record_credential_working(provider);
+                if let Ok(mut guard) = self.refresh_errors.lock() {
+                    guard.remove(&provider);
+                }
+                // A refresh that returned the same access token has not
+                // recovered anything; replaying would just repeat the 401.
+                (fresh.access_token != rejected.access_token).then_some(fresh)
+            }
+            Err(error) => {
+                tracing::warn!("refresh after a rejected {provider} token failed: {error}");
+                self.record_refresh_error(provider, &error.to_string());
+                if error.is_invalid_grant() {
+                    attempt.record_terminal_failure();
+                    self.record_credential_rejected(provider);
+                } else {
+                    attempt.record_transient_failure_after(now_ms, error.retry_after_ms());
+                }
+                None
+            }
+        }
     }
 
     async fn get_fresh_for_at(

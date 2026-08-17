@@ -540,7 +540,7 @@ async fn exchange_and_store(
 
 fn persist_codex_auth(home: &Path, tokens: &TokenResponse) -> Result<PathBuf, String> {
     std::fs::create_dir_all(home)
-        .map_err(|error| format!("could not create {}: {error}", home.display()))?;
+        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
     let path = home.join("auth.json");
     let value = serde_json::json!({
         "auth_mode": "chatgpt",
