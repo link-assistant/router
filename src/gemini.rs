@@ -717,4 +717,113 @@ mod tests {
         );
         assert!(native::parse_native_target("models/gemini-2.5-pro:countTokens").is_none());
     }
+
+    /// Translation of an `OpenAI` chat body into Gemini's request shape,
+    /// including the system-instruction split and generation config.
+    #[test]
+    fn chat_requests_translate_into_the_gemini_shape() {
+        let body = json!({
+            "messages": [
+                {"role": "system", "content": "be brief"},
+                {"role": "user", "content": "hello"},
+                {"role": "assistant", "content": "hi"},
+                {"role": "tool", "content": "result"}
+            ],
+            "max_tokens": 128,
+            "temperature": 0.4,
+            "top_p": 0.9
+        });
+        let request = chat_to_gemini_request(&body);
+
+        assert_eq!(request["systemInstruction"]["parts"][0]["text"], "be brief");
+        let contents = request["contents"].as_array().expect("contents");
+        assert_eq!(contents.len(), 3, "system is lifted out of the turn list");
+        assert_eq!(contents[0]["role"], "user");
+        assert_eq!(contents[1]["role"], "model", "assistant maps to model");
+        assert_eq!(
+            contents[2]["role"], "user",
+            "tool results map to a user turn"
+        );
+        assert_eq!(request["generationConfig"]["maxOutputTokens"], 128);
+        assert_eq!(request["generationConfig"]["temperature"], 0.4);
+        assert_eq!(request["generationConfig"]["topP"], 0.9);
+    }
+
+    #[test]
+    fn a_request_without_knobs_omits_the_generation_config() {
+        let request = chat_to_gemini_request(&json!({"messages": []}));
+        assert!(request.get("generationConfig").is_none());
+        assert!(request.get("systemInstruction").is_none());
+    }
+
+    #[test]
+    fn max_completion_tokens_is_accepted_as_the_output_cap() {
+        let request = chat_to_gemini_request(&json!({
+            "messages": [],
+            "max_completion_tokens": 64
+        }));
+        assert_eq!(request["generationConfig"]["maxOutputTokens"], 64);
+    }
+
+    #[test]
+    fn the_code_assist_envelope_carries_the_model() {
+        let envelope = code_assist_envelope("nimbus-3-flash", &json!({"contents": []}));
+        assert_eq!(envelope["model"], "nimbus-3-flash");
+        assert_eq!(envelope["request"]["contents"], json!([]));
+    }
+
+    /// Responses are translated back into the `OpenAI` completion shape, with
+    /// usage carried across so spend accounting stays truthful.
+    #[test]
+    fn gemini_responses_translate_back_with_usage() {
+        let response = json!({
+            "candidates": [{
+                "content": {"parts": [{"text": "one "}, {"text": "two"}]},
+                "finishReason": "STOP"
+            }],
+            "usageMetadata": {"promptTokenCount": 11, "candidatesTokenCount": 5}
+        });
+        let chat = gemini_response_to_chat(&response, "nimbus-3-flash");
+
+        assert_eq!(chat["model"], "nimbus-3-flash");
+        assert_eq!(chat["choices"][0]["message"]["content"], "one two");
+        assert_eq!(chat["choices"][0]["finish_reason"], "stop");
+        assert_eq!(chat["usage"]["prompt_tokens"], 11);
+        assert_eq!(chat["usage"]["completion_tokens"], 5);
+        assert_eq!(chat["usage"]["total_tokens"], 16);
+    }
+
+    /// Code Assist nests the payload under `response`; both shapes are read.
+    #[test]
+    fn a_nested_code_assist_response_is_unwrapped() {
+        let nested = json!({
+            "response": {
+                "candidates": [{"content": {"parts": [{"text": "inner"}]}}]
+            }
+        });
+        let chat = gemini_response_to_chat(&nested, "nimbus-3-flash");
+        assert_eq!(chat["choices"][0]["message"]["content"], "inner");
+    }
+
+    #[test]
+    fn finish_reasons_map_onto_the_openai_vocabulary() {
+        assert_eq!(map_finish_reason("MAX_TOKENS"), "length");
+        for blocked in ["SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT"] {
+            assert_eq!(map_finish_reason(blocked), "content_filter", "{blocked}");
+        }
+        assert_eq!(map_finish_reason("STOP"), "stop");
+        assert_eq!(map_finish_reason("SOMETHING_NEW"), "stop");
+    }
+
+    #[test]
+    fn message_text_is_extracted_from_both_content_shapes() {
+        assert_eq!(extract_message_text(Some(&json!("plain"))), "plain");
+        assert_eq!(
+            extract_message_text(Some(&json!([{"text": "a"}, {"text": "b"}]))),
+            "ab"
+        );
+        assert_eq!(extract_message_text(Some(&json!(["a", "b"]))), "ab");
+        assert_eq!(extract_message_text(None), "");
+        assert_eq!(extract_message_text(Some(&json!(42))), "");
+    }
 }

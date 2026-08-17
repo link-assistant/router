@@ -331,3 +331,55 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
         .to_str()
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `/v1` in the configured base URL must not be duplicated by the request
+    /// path, and a base without it keeps the path verbatim.
+    #[test]
+    fn base_urls_are_joined_without_duplicating_the_version_segment() {
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/v1", "/v1/chat/completions"),
+            "https://api.example/v1/chat/completions"
+        );
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/v1/", "/v1/chat/completions"),
+            "https://api.example/v1/chat/completions"
+        );
+        assert_eq!(
+            join_openai_compatible_url("https://api.example", "/v1/chat/completions"),
+            "https://api.example/v1/chat/completions"
+        );
+        // A path that does not start with /v1 is appended as-is.
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/v1", "/responses"),
+            "https://api.example/v1/responses"
+        );
+        assert_eq!(
+            join_openai_compatible_url("https://api.example/", "/responses"),
+            "https://api.example/responses"
+        );
+    }
+
+    #[test]
+    fn event_stream_content_types_are_detected_case_insensitively() {
+        for value in [
+            "text/event-stream",
+            "text/event-stream; charset=utf-8",
+            "TEXT/EVENT-STREAM",
+        ] {
+            assert!(
+                is_event_stream(&HeaderValue::from_str(value).expect("header")),
+                "{value} should be recognised as a stream"
+            );
+        }
+        for value in ["application/json", "text/plain"] {
+            assert!(
+                !is_event_stream(&HeaderValue::from_str(value).expect("header")),
+                "{value} should not be recognised as a stream"
+            );
+        }
+    }
+}

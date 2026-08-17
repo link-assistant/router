@@ -853,4 +853,54 @@ mod tests {
             &["Task title".to_string()]
         );
     }
+
+    #[test]
+    fn stream_frames_are_well_formed_sse() {
+        let frames = chat_completion_stream_frames("crater-forgefed", "hello");
+        assert!(frames.len() >= 2, "{frames:?}");
+        assert!(
+            frames.iter().all(|frame| frame.starts_with("data: ")),
+            "{frames:?}"
+        );
+        assert!(
+            frames.last().expect("last frame").contains("[DONE]"),
+            "the stream must terminate with [DONE]"
+        );
+        assert!(
+            frames.iter().any(|frame| frame.contains("hello")),
+            "the content must be carried"
+        );
+    }
+
+    #[test]
+    fn an_error_stream_frame_is_valid_sse_carrying_the_message() {
+        let frame = error_stream_frame(&CraterError::MissingConfig("CRATER_FORGEFED_INBOX"));
+        assert!(frame.starts_with("data: "), "{frame}");
+        assert!(frame.contains("CRATER_FORGEFED_INBOX"), "{frame}");
+    }
+
+    #[test]
+    fn extracting_openai_content_handles_both_shapes() {
+        assert_eq!(extract_openai_content(Some(&json!("plain"))), "plain");
+        assert_eq!(
+            extract_openai_content(Some(&json!([{"type": "text", "text": "a"}]))),
+            "a"
+        );
+        assert_eq!(extract_openai_content(None), "");
+    }
+
+    #[test]
+    fn get_path_walks_nested_values() {
+        let value = json!({"a": {"b": {"c": 7}}});
+        assert_eq!(get_path(&value, &["a", "b", "c"]), Some(&json!(7)));
+        assert_eq!(get_path(&value, &["a", "missing"]), None);
+        assert_eq!(get_path(&value, &[]), Some(&value));
+    }
+
+    #[test]
+    fn an_sse_frame_serialises_its_value() {
+        let frame = sse_frame(&json!({"id": "x"}));
+        assert!(frame.starts_with("data: {"), "{frame}");
+        assert!(frame.ends_with("\n\n"), "frames end with a blank line");
+    }
 }

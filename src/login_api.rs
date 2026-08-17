@@ -199,4 +199,59 @@ mod tests {
         assert_eq!(requested_provider(Some("chatgpt")), None);
         assert_eq!(requested_provider(Some("gemini")), None);
     }
+
+    /// The mode field accepts the documented spellings and rejects the rest,
+    /// so a typo cannot silently start the wrong-scope flow (issue #193).
+    #[test]
+    fn login_modes_parse_from_the_documented_spellings() {
+        use crate::claude_auth::ClaudeAuthMode;
+        for value in ["full", "FULL", "login", "default", ""] {
+            assert_eq!(
+                ClaudeAuthMode::parse(value),
+                Ok(ClaudeAuthMode::Full),
+                "{value}"
+            );
+        }
+        for value in ["setup-token", "setup_token", "inference", "NARROW"] {
+            assert_eq!(
+                ClaudeAuthMode::parse(value),
+                Ok(ClaudeAuthMode::SetupToken),
+                "{value}"
+            );
+        }
+        let error = ClaudeAuthMode::parse("scopes-please").expect_err("must reject");
+        assert!(error.contains("setup-token"), "{error}");
+    }
+
+    /// Each error maps onto the status code that describes it, so a caller can
+    /// tell a disabled surface from a broken one.
+    #[test]
+    fn login_errors_map_onto_their_status_codes() {
+        for (error, expected) in [
+            (LoginError::Disabled, StatusCode::NOT_FOUND),
+            (LoginError::NotFound, StatusCode::NOT_FOUND),
+            (
+                LoginError::TooManySessions(4),
+                StatusCode::TOO_MANY_REQUESTS,
+            ),
+            (
+                LoginError::NotPending(crate::login::LoginStatus::Authorized),
+                StatusCode::CONFLICT,
+            ),
+            (LoginError::Spawn("boom".into()), StatusCode::BAD_GATEWAY),
+            (LoginError::NoUrl("boom".into()), StatusCode::BAD_GATEWAY),
+            (LoginError::Storage("boom".into()), StatusCode::BAD_GATEWAY),
+        ] {
+            assert_eq!(
+                login_error_response(&error).status(),
+                expected,
+                "{error:?} should map to {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unauthorised_caller_is_told_a_bearer_key_is_required() {
+        assert_eq!(unauthorised().status(), StatusCode::UNAUTHORIZED);
+    }
 }

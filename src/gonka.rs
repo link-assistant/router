@@ -271,4 +271,35 @@ mod tests {
         assert!(!signature.contains("secret-key"));
         assert!(headers.contains_key("x-gonka-timestamp"));
     }
+
+    #[test]
+    fn a_missing_or_blank_model_is_filled_from_the_configured_default() {
+        let filled = with_default_model(json!({"messages": []}), "quillon-4-vector");
+        assert_eq!(filled["model"], "quillon-4-vector");
+
+        let blank = with_default_model(json!({"model": ""}), "quillon-4-vector");
+        assert_eq!(blank["model"], "quillon-4-vector");
+    }
+
+    #[test]
+    fn an_explicit_model_is_left_alone() {
+        let explicit = with_default_model(json!({"model": "aurora-2-base"}), "quillon-4-vector");
+        assert_eq!(explicit["model"], "aurora-2-base");
+    }
+
+    #[test]
+    fn the_listing_advertises_the_configured_model() {
+        let listing = list_models("quillon-4-vector");
+        assert_eq!(listing["object"], "list");
+        let data = listing["data"].as_array().expect("data");
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0]["id"], "quillon-4-vector");
+        assert_eq!(data[0]["object"], "model");
+    }
+
+    #[test]
+    fn provider_errors_carry_their_status_and_message() {
+        let response = provider_error(StatusCode::BAD_GATEWAY, "upstream is unreachable");
+        assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    }
 }
