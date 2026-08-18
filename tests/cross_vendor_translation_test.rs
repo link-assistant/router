@@ -184,8 +184,36 @@ async fn capture_upstream(captured: Captured, request: Request) -> Response {
     let body = to_bytes(request.into_body(), 4 * 1024 * 1024)
         .await
         .expect("read upstream body");
-    if let Ok(value) = serde_json::from_slice::<Value>(&body) {
+    let parsed = serde_json::from_slice::<Value>(&body).ok();
+    let streaming = parsed
+        .as_ref()
+        .and_then(|value| value.get("stream"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    if let Some(value) = parsed {
         captured.lock().expect("capture lock").push(value);
+    }
+    if streaming {
+        // The frames a forced-tool turn actually produces: a `tool_use` block
+        // and its arguments in fragments, with no text at all.
+        let sse = concat!(
+            "event: message_start\n",
+            "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-haiku-4-5-20251001\"}}\n\n",
+            "event: content_block_start\n",
+            "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01\",\"name\":\"write_file\"}}\n\n",
+            "event: content_block_delta\n",
+            "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"path\\\":\\\"result.txt\\\"}\"}}\n\n",
+            "event: content_block_stop\n",
+            "data: {\"type\":\"content_block_stop\",\"index\":0}\n\n",
+            "event: message_stop\n",
+            "data: {\"type\":\"message_stop\"}\n\n",
+        );
+        let mut response = Response::new(Body::from(sse));
+        response.headers_mut().insert(
+            "content-type",
+            HeaderValue::from_static("text/event-stream"),
+        );
+        return response;
     }
     let mut response = Response::new(Body::from(
         json!({
@@ -359,4 +387,54 @@ async fn a_lone_top_p_still_reaches_anthropic() {
     let forwarded = router.forwarded();
     assert!(forwarded.get("top_p").is_some(), "{forwarded:#}");
     assert!(forwarded.get("temperature").is_none(), "{forwarded:#}");
+}
+
+/// Issue #218: a streamed tool call must reach the caller on `/v1/responses`.
+/// It previously arrived as an empty `output_text`, so an agentic CLI saw a
+/// successful, completely empty answer and stopped.
+#[tokio::test]
+async fn a_streamed_tool_call_reaches_the_responses_caller() {
+    let router = TestRouter::start().await;
+    let response = router
+        .client
+        .post(format!("{}/v1/responses", router.url))
+        .bearer_auth(&router.token)
+        .json(&json!({
+            "model": CLAUDE_MODEL,
+            "stream": true,
+            "tool_choice": "required",
+            "input": "create result.txt",
+            "tools": [{
+                "type": "function",
+                "name": "write_file",
+                "parameters": {"type": "object", "properties": {"path": {"type": "string"}}}
+            }]
+        }))
+        .send()
+        .await
+        .expect("router POST");
+    assert_eq!(response.status(), StatusCode::OK);
+    let stream = response.text().await.expect("stream body");
+
+    assert!(
+        stream.contains("response.output_item.added"),
+        "no item announced: {stream}"
+    );
+    assert!(
+        stream.contains("function_call"),
+        "the tool call was dropped: {stream}"
+    );
+    assert!(
+        stream.contains("write_file") && stream.contains("toolu_01"),
+        "the call identity was lost: {stream}"
+    );
+    assert!(
+        stream.contains("response.function_call_arguments.done"),
+        "arguments were never closed: {stream}"
+    );
+    // The defect's signature: a successful, empty text answer.
+    assert!(
+        !stream.contains(r#""text":"""#),
+        "a tool-only turn must not carry an empty output_text: {stream}"
+    );
 }
