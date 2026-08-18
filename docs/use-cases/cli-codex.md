@@ -70,6 +70,19 @@ codex "explain this repository"
 | `codex` | native: forwarded to the ChatGPT backend Responses API with the `~/.codex/auth.json` OAuth token |
 | `qwen`, `gemini`, `openai-compatible`, `gonka`, `crater` | translated to that provider's dialect |
 
+### Tools that do not cross to another vendor
+
+Codex CLI sends a tool set richer than the `function` and server-side tools
+other dialects define — `namespace`, `custom` and `tool_search` appear in
+ordinary use. Anthropic has no equivalent for these.
+
+Rather than refuse the whole turn, the router **drops the untranslatable
+entries and forwards the rest**: a model is never obliged to call a tool, so a
+request carrying its remaining usable tools is far more useful than an error
+naming the one that did not fit. Anything dropped is named in the
+`x-router-dropped-tools` response header and in the request log, so an agent
+that quietly never uses sub-agents is diagnosable rather than mysterious.
+
 ## Smoke test
 
 ```bash

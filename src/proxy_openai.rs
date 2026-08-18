@@ -3,6 +3,31 @@ use super::{
     UpstreamProvider, forward_openai, openai, responses,
 };
 
+/// Names the tools that were dropped on the way to Anthropic.
+///
+/// A silent drop is the failure mode issue #215 warns about: an agent that
+/// "just doesn't use sub-agents" gives the user nothing to search for. The
+/// header is additive, so a client that ignores it is unaffected.
+pub const DROPPED_TOOLS_HEADER: &str = "x-router-dropped-tools";
+
+/// Attach the dropped-tool report to a response, and log it.
+fn report_dropped_tools(state: &AppState, mut response: Response, dropped: &[String]) -> Response {
+    if dropped.is_empty() {
+        return response;
+    }
+    let summary = dropped.join(", ");
+    state.logger.debug(|| {
+        format!(
+            "dropped {} tool(s) Anthropic cannot represent: {summary}",
+            dropped.len()
+        )
+    });
+    if let Ok(value) = axum::http::HeaderValue::from_str(&summary) {
+        response.headers_mut().insert(DROPPED_TOOLS_HEADER, value);
+    }
+    response
+}
+
 pub async fn openai_chat_completions(
     State(state): State<AppState>,
     Query(query): Query<BTreeMap<String, String>>,
@@ -130,18 +155,16 @@ pub async fn openai_chat_completions(
     if openai::resolve_model_with(&req.model, &BTreeMap::new(), &catalog).is_none() {
         return crate::model_routing::model_not_found_response(&req.model);
     }
-    if let Some(kind) = req
+    // A tool entry Anthropic cannot represent is dropped, not fatal. Codex CLI
+    // sends `namespace`, `custom` and `tool_search` in its ordinary tool set, so
+    // rejecting the request refused nine usable tools over one that did not fit
+    // — and made a documented client unable to drive Claude models at all
+    // (issue #215). The drop is reported below so it is discoverable.
+    let dropped_tools = req
         .tools
         .as_ref()
-        .and_then(openai::unsupported_anthropic_tool_type)
-    {
-        return crate::api_error::error_response_for_surface(
-            crate::metrics::Surface::OpenAIChat,
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            &format!("Unsupported tool type: {kind}"),
-        );
-    }
+        .map(openai::untranslatable_anthropic_tools)
+        .unwrap_or_default();
     if let Some(reason) = req
         .tool_choice
         .as_ref()
@@ -163,7 +186,7 @@ pub async fn openai_chat_completions(
         );
     }
     let body = openai::chat_completion_to_anthropic(&req);
-    forward_openai(
+    let response = forward_openai(
         &state,
         &headers,
         body,
@@ -171,7 +194,8 @@ pub async fn openai_chat_completions(
         crate::metrics::Surface::OpenAIChat,
         (stream_requested, OpenAIShape::Chat, include_usage),
     )
-    .await
+    .await;
+    report_dropped_tools(&state, response, &dropped_tools)
 }
 
 /// `POST /v1/responses` — `OpenAI` Responses API.
@@ -275,18 +299,16 @@ pub async fn openai_responses(
     if openai::resolve_model_with(&req.model, &BTreeMap::new(), &catalog).is_none() {
         return crate::model_routing::model_not_found_response(&req.model);
     }
-    if let Some(kind) = req
+    // A tool entry Anthropic cannot represent is dropped, not fatal. Codex CLI
+    // sends `namespace`, `custom` and `tool_search` in its ordinary tool set, so
+    // rejecting the request refused nine usable tools over one that did not fit
+    // — and made a documented client unable to drive Claude models at all
+    // (issue #215). The drop is reported below so it is discoverable.
+    let dropped_tools = req
         .tools
         .as_ref()
-        .and_then(openai::unsupported_anthropic_tool_type)
-    {
-        return crate::api_error::error_response_for_surface(
-            crate::metrics::Surface::OpenAIResponses,
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            &format!("Unsupported tool type: {kind}"),
-        );
-    }
+        .map(openai::untranslatable_anthropic_tools)
+        .unwrap_or_default();
     if let Some(reason) = req
         .tool_choice
         .as_ref()
@@ -308,7 +330,7 @@ pub async fn openai_responses(
         );
     }
     let body = responses::response_to_anthropic(&req);
-    forward_openai(
+    let response = forward_openai(
         &state,
         &headers,
         body,
@@ -316,5 +338,6 @@ pub async fn openai_responses(
         crate::metrics::Surface::OpenAIResponses,
         (stream_requested, OpenAIShape::Response, false),
     )
-    .await
+    .await;
+    report_dropped_tools(&state, response, &dropped_tools)
 }

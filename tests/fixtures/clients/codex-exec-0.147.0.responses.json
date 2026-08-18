@@ -1,7 +1,7 @@
 {
   "client": "codex",
   "version": "0.147.0",
-  "source": "issue #211, captured from a real codex_exec/0.147.0 run",
+  "source": "issue #211 (headers) and issue #215 (the real tool array, including the `namespace` entry Anthropic cannot represent)",
   "method": "POST",
   "path": "/api/codex/v1/responses",
   "credential_carrier": "authorization",
@@ -18,6 +18,81 @@
   },
   "body": {
     "model": "{model}",
-    "input": [{"role": "user", "content": [{"type": "input_text", "text": "ping"}]}]
+    "input": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "ping"
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "name": "exec_command",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "function",
+        "name": "write_stdin",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "function",
+        "name": "update_plan",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "function",
+        "name": "request_user_input",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "function",
+        "name": "view_image",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "namespace",
+        "name": "multi_agent_v1"
+      },
+      {
+        "type": "function",
+        "name": "get_goal",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "function",
+        "name": "create_goal",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "function",
+        "name": "update_goal",
+        "parameters": {
+          "type": "object"
+        }
+      },
+      {
+        "type": "web_search"
+      }
+    ]
   }
 }

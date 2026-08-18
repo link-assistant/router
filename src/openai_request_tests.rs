@@ -346,3 +346,151 @@ fn responses_web_search_maps_to_anthropic_server_tool() {
     assert_eq!(translated[0]["name"], "web_search");
     assert_eq!(translated[0]["max_uses"], 2);
 }
+
+/// Anthropic rejects a request that specifies both `temperature` and `top_p`,
+/// and Gemini CLI sends both by default with no way to suppress either — so a
+/// valid Gemini request and a reachable Claude model produced a permanent `400`
+/// (issue #216).
+#[test]
+fn anthropic_never_receives_both_temperature_and_top_p() {
+    let sampling = |temperature: Option<f32>, top_p: Option<f32>| {
+        let req = OpenAIChatCompletionRequest {
+            model: "claude-haiku-4-5-20251001".into(),
+            messages: vec![ChatMessage {
+                role: "user".into(),
+                content: Value::String("hi".into()),
+                name: None,
+                tool_call_id: None,
+                tool_calls: None,
+            }],
+            max_tokens: Some(16),
+            max_completion_tokens: None,
+            temperature,
+            top_p,
+            stream: None,
+            stop: None,
+            tools: None,
+            tool_choice: None,
+            reasoning_effort: None,
+            reasoning: None,
+        };
+        chat_completion_to_anthropic(&req)
+    };
+
+    // Both supplied: exactly one survives, and it is the documented winner.
+    let body = sampling(Some(1.0), Some(0.95));
+    assert_eq!(body["temperature"], 1.0);
+    assert!(body.get("top_p").is_none(), "{body}");
+
+    // Only `top_p`: it is mapped through, not dropped merely because it is the
+    // parameter that loses a conflict. A caller who tuned only nucleus sampling
+    // still gets it.
+    let body = sampling(None, Some(0.95));
+    // Compared as f64: the value round-trips through f32, which is where the
+    // `0.949999988079071` seen on the wire in issue #216 comes from.
+    assert!(
+        (body["top_p"].as_f64().expect("top_p is a number") - 0.95).abs() < 1e-6,
+        "{body}"
+    );
+    assert!(body.get("temperature").is_none(), "{body}");
+
+    // Only `temperature`: unchanged behaviour.
+    let body = sampling(Some(0.5), None);
+    assert_eq!(body["temperature"], 0.5);
+    assert!(body.get("top_p").is_none(), "{body}");
+
+    // Neither: nothing is invented.
+    let body = sampling(None, None);
+    assert!(body.get("temperature").is_none(), "{body}");
+    assert!(body.get("top_p").is_none(), "{body}");
+}
+
+/// Codex CLI sends `namespace`, `custom` and `tool_search` alongside ordinary
+/// function tools. Rejecting the whole request over one untranslatable entry
+/// refused nine usable tools and made a documented client unable to drive Claude
+/// models at all (issue #215). The unknown entries are dropped; the rest survive.
+#[test]
+fn untranslatable_tools_are_dropped_rather_than_failing_the_request() {
+    // The real `codex_exec/0.147.0` tool array, from the issue.
+    let tools = json!([
+        {"type": "function", "name": "exec_command"},
+        {"type": "function", "name": "write_stdin"},
+        {"type": "function", "name": "update_plan"},
+        {"type": "function", "name": "request_user_input"},
+        {"type": "function", "name": "view_image"},
+        {"type": "namespace", "name": "multi_agent_v1"},
+        {"type": "function", "name": "get_goal"},
+        {"type": "function", "name": "create_goal"},
+        {"type": "function", "name": "update_goal"},
+        {"type": "web_search"}
+    ]);
+
+    let translated = crate::openai::translate_tools(&tools);
+    let translated = translated
+        .as_array()
+        .expect("translated tools are an array");
+    // Nine of ten entries survive: eight functions and the server-side search.
+    assert_eq!(translated.len(), 9, "{translated:#?}");
+    let rendered = serde_json::to_string(&translated).expect("serialize");
+    assert!(!rendered.contains("multi_agent_v1"), "{rendered}");
+    assert!(!rendered.contains("namespace"), "{rendered}");
+    // The function tools are translated, not merely copied.
+    assert!(rendered.contains("exec_command"), "{rendered}");
+    assert!(rendered.contains("input_schema"), "{rendered}");
+    // `web_search` keeps its existing translation.
+    assert!(rendered.contains("web_search_20250305"), "{rendered}");
+
+    // The drop is reported rather than silent.
+    let dropped = crate::openai::untranslatable_anthropic_tools(&tools);
+    assert_eq!(dropped, vec!["namespace (multi_agent_v1)".to_string()]);
+}
+
+/// `namespace` is not the only type that would have hit the wall: `custom` and
+/// `tool_search` fail the same way, so fixing only the type named in the error
+/// message would leave the same barrier two steps later.
+#[test]
+fn every_untranslatable_codex_tool_type_is_handled() {
+    for kind in ["namespace", "custom", "tool_search"] {
+        let tools = json!([
+            {"type": "function", "name": "kept"},
+            {"type": kind, "name": "dropped_one"}
+        ]);
+        let translated = crate::openai::translate_tools(&tools);
+        let translated = translated.as_array().expect("array");
+        assert_eq!(translated.len(), 1, "{kind}: {translated:#?}");
+        assert_eq!(translated[0]["name"], "kept", "{kind}");
+        assert_eq!(
+            crate::openai::untranslatable_anthropic_tools(&tools),
+            vec![format!("{kind} (dropped_one)")],
+            "{kind}"
+        );
+    }
+}
+
+/// A request whose tools are *all* untranslatable must still be sensible: an
+/// empty tool list, not a `400` mid-conversation and not a malformed array.
+#[test]
+fn a_wholly_untranslatable_tool_set_yields_an_empty_list() {
+    let tools = json!([
+        {"type": "namespace", "name": "a"},
+        {"type": "tool_search"}
+    ]);
+    let translated = crate::openai::translate_tools(&tools);
+    assert_eq!(translated, json!([]), "{translated}");
+    assert_eq!(
+        crate::openai::untranslatable_anthropic_tools(&tools),
+        vec!["namespace (a)".to_string(), "tool_search".to_string()]
+    );
+}
+
+/// A function tool without a usable name cannot be translated either, and must
+/// not slip through as a nameless Anthropic tool.
+#[test]
+fn a_nameless_function_tool_is_dropped() {
+    let tools = json!([{"type": "function"}, {"type": "function", "name": ""}]);
+    assert_eq!(crate::openai::translate_tools(&tools), json!([]));
+    assert_eq!(
+        crate::openai::untranslatable_anthropic_tools(&tools).len(),
+        2
+    );
+}
