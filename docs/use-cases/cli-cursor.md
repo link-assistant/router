@@ -1,7 +1,13 @@
-# CLI: Cursor CLI (`cursor-agent`) — not supported
+# CLI: Cursor CLI (`cursor-agent`) — not implemented
 
-**Status: unsupported.** This document exists so the gap is explicit rather than
-silently missing from the list.
+**Status: not implemented.** No router version routes Cursor CLI natively, and
+`with cursor` fails before launch. This is a statement about what exists, not a
+prediction: the adapter below is scoped and buildable, it has simply not been
+built, and a contributor is welcome to take it (issue #207).
+
+An advanced, opt-in TLS-proxy route is described under
+[If you want to try it anyway](#if-you-want-to-try-it-anyway). It is unverified
+and carries a real security cost, which that section states in full.
 
 ## One-line capability check
 
@@ -35,22 +41,64 @@ schema, streamed tool calls/results, and the supporting `aiserver.v1` RPCs.
 the same boundary and implements a version-specific adapter aligned to Cursor
 message dumps. That evidence also makes the maintenance and security cost
 clear: this is a private, unversioned application protocol, not a stable vendor
-API. Native Cursor routing is therefore unsupported by design and is not an
-advertised router capability.
+API. Any adapter is therefore version-pinned by nature: it targets one
+`cursor-agent` release and is expected to break when Cursor changes the wire
+format, which it may do without notice. That is the cost to accept before
+starting — not a reason the work cannot be done.
 
-## Why a generic TLS proxy does not supply the missing adapter
+## What a minimal adapter would have to cover
+
+The protocol investigation is complete, so the remaining work can be judged
+rather than estimated. An adapter targeting one pinned `cursor-agent` release
+would need:
+
+- [ ] an HTTP/2 server speaking Connect-RPC framing (unary and server-streaming)
+      on the endpoint `CURSOR_API_ENDPOINT` points at;
+- [ ] the protobuf schema for `agent.v1` and the `aiserver.v1` messages the run
+      path touches, captured from a pinned client build;
+- [ ] the session handshake the client performs before its first turn;
+- [ ] `/agent.v1.AgentService/Run` — the entry point — translating each turn to
+      an existing router surface (`/v1/chat/completions` is the closest fit);
+- [ ] streamed tool calls and tool results in both directions, which is where
+      the shape diverges most from the chat dialects;
+- [ ] the supporting `aiserver.v1` RPCs the client calls during a run;
+- [ ] a recorded-fixture test per RPC, so drift is a test failure rather than a
+      user-visible break;
+- [ ] a version assertion that fails loudly and names the pinned release when
+      the client is upgraded.
+
+[Agent Vibes](https://github.com/funny-vibes/agent-vibes) implements a
+version-specific adapter against the same boundary and is the closest available
+reference for the wire format.
+
+Nothing above depends on the router's internals beyond one existing surface, so
+this can be built and reviewed independently. What it cannot be is
+maintenance-free: see the pinning note above.
+
+## If you want to try it anyway
+
+This route is **advanced, opt-in and unverified**. It is documented because
+users who accept the tradeoff currently have to rediscover it themselves, which
+is worse for security than a reviewed description — not because it is
+recommended, and not because it is supported.
 
 `cursor-agent` honours the standard proxy variables and `NODE_EXTRA_CA_CERTS`,
-so a TLS-terminating forward proxy with a CA the process trusts could in
-principle rewrite its traffic toward the router.
+so a TLS-terminating forward proxy with a CA the process trusts can in principle
+rewrite its traffic toward the router.
 
-We deliberately do not document that as a supported configuration:
+Understand the cost before doing it:
 
-- it requires installing a CA that can decrypt all of the agent's traffic, not
-  just model calls — a significant security decision;
-- it depends on Cursor's private wire protocol, which is undocumented and can
-  change without notice;
-- it is **unverified**: no test in this repository exercises it.
+- the CA you install decrypts **all** of that process's traffic, not just model
+  calls. Anything else it talks to is readable by whatever holds that key;
+- it still depends on Cursor's private, unversioned wire protocol, so it can
+  stop working after any client upgrade;
+- it is **unverified**: no test in this repository exercises it, and none of the
+  guarantees the supported clients get apply here.
+
+If you proceed, scope the trusted CA and the proxy to that one process — never
+install the CA into the system trust store — and expect to maintain it yourself.
+Without the Connect-RPC adapter above, a TLS proxy only relocates the traffic;
+it does not translate it, so the router still has no matching route.
 
 ## Wrapper argument boundary
 
@@ -58,9 +106,6 @@ Cursor is rejected before launch regardless of argument placement. For
 supported clients, router wrapper flags may appear before or after the client;
 an explicit `--` forwards every later token verbatim. See
 [with-router.md](with-router.md#arguments-interaction-and-models).
-
-If you attempt it, you are on your own, and you should scope the trusted CA and
-the proxy to that process only.
 
 ## What to do instead
 

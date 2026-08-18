@@ -26,7 +26,7 @@ later invocation sweeps directories left behind by a wrapper killed with
 | `opencode` | Chat Completions, `URL/v1` | `OPENCODE_CONFIG` | `$XDG_CONFIG_HOME/opencode/opencode.json` |
 | `qwen-code` (`qwen`) | Chat Completions, `URL/v1` | isolated `HOME` | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
 | `agent` | Chat Completions, `URL/v1` | temporary config content | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
-| `cursor` | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | unsupported: router RPC adapter not implemented | none |
+| `cursor` | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | not implemented: router RPC adapter does not exist | none |
 
 Each client-specific document keeps a binary-free manual path with the exact
 environment variables or config fields. Cursor deliberately fails before

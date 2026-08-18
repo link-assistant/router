@@ -142,7 +142,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         non_interactive_arg: None,
         isolation: ClientIsolation::Unsupported,
         setup_limitation: Some(
-            "Cursor CLI accepts CURSOR_API_ENDPOINT, but speaks Connect-RPC over an unversioned private agent.v1/aiserver.v1 protocol rather than a supported vendor API; native Cursor routing is intentionally unsupported",
+            "Cursor CLI accepts CURSOR_API_ENDPOINT, but speaks Connect-RPC over an unversioned private agent.v1/aiserver.v1 protocol rather than a supported vendor API; native Cursor routing is not implemented. See docs/use-cases/cli-cursor.md for the support tier, the scoped adapter work, and the opt-in TLS-proxy route",
         ),
     },
     ClientIntegration {

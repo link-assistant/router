@@ -291,7 +291,7 @@ need:
 | [cli-opencode.md](docs/use-cases/cli-opencode.md) | opencode configuration |
 | [cli-grok-cli.md](docs/use-cases/cli-grok-cli.md) | Grok CLI configuration |
 | [cli-agent.md](docs/use-cases/cli-agent.md) | Link.Assistant Agent configuration |
-| [cli-cursor.md](docs/use-cases/cli-cursor.md) | Cursor CLI — explicitly **not supported**, and why |
+| [cli-cursor.md](docs/use-cases/cli-cursor.md) | Cursor CLI — **not implemented**, why, and what an adapter would take |
 
 ## Using with Claude Code
 

@@ -20,6 +20,29 @@ fn extract_client_token_accepts_bearer_github_token_or_x_api_key() {
     assert_eq!(extract_client_token(&headers), Some("la_sk_gh"));
 }
 
+/// Gemini CLI sends the credential as `x-goog-api-key` — the name Google's own
+/// documentation specifies, and what `GEMINI_API_KEY` becomes (issue #206).
+#[test]
+fn extract_client_token_accepts_the_gemini_key_header() {
+    let mut headers = HeaderMap::new();
+    headers.insert("x-goog-api-key", HeaderValue::from_static("la_sk_g"));
+    assert_eq!(extract_client_token(&headers), Some("la_sk_g"));
+
+    // An explicit `Authorization` still wins, so a client that sends both is
+    // authenticated by the carrier it most likely configured deliberately.
+    headers.insert("authorization", HeaderValue::from_static("Bearer la_sk_b"));
+    assert_eq!(extract_client_token(&headers), Some("la_sk_b"));
+}
+
+/// An empty carrier is not a credential, and must not shadow a later one.
+#[test]
+fn an_empty_carrier_is_not_treated_as_a_credential() {
+    let mut headers = HeaderMap::new();
+    headers.insert("x-api-key", HeaderValue::from_static(""));
+    headers.insert("x-goog-api-key", HeaderValue::from_static("la_sk_g"));
+    assert_eq!(extract_client_token(&headers), Some("la_sk_g"));
+}
+
 #[test]
 fn build_upstream_headers_strips_client_auth_headers() {
     let mut incoming = HeaderMap::new();
@@ -28,6 +51,7 @@ fn build_upstream_headers_strips_client_auth_headers() {
         HeaderValue::from_static("Bearer la_sk_edge"),
     );
     incoming.insert("x-api-key", HeaderValue::from_static("la_sk_edge"));
+    incoming.insert("x-goog-api-key", HeaderValue::from_static("la_sk_edge"));
     incoming.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
     let logger = LogLazy::with_level(levels::NONE);
 
@@ -40,6 +64,10 @@ fn build_upstream_headers_strips_client_auth_headers() {
         Some("Bearer oauth-token")
     );
     assert!(upstream.get("x-api-key").is_none());
+    // A credential that authenticates the caller to *us* must never reach a
+    // vendor. Accepting a new carrier without stripping it would forward the
+    // router's own client token upstream (issue #206).
+    assert!(upstream.get("x-goog-api-key").is_none());
     assert_eq!(
         upstream
             .get("anthropic-version")

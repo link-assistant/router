@@ -49,6 +49,29 @@ Two consequences of the documented rule above:
 - a plain `http://127.0.0.1:PORT` router address is explicitly permitted, so no
   TLS termination is needed for local use. A remote router does need HTTPS.
 
+## How the token reaches the router
+
+`GEMINI_API_KEY` is sent by the CLI as the `x-goog-api-key` header, which is
+the carrier Google's own API documents. The router accepts the task token in
+any of the three carriers its supported dialects use:
+
+| Carrier | Sent by |
+| --- | --- |
+| `Authorization: Bearer <token>` | most clients, and every `curl` example here |
+| `x-api-key: <token>` | the Anthropic SDKs |
+| `x-goog-api-key: <token>` | Gemini CLI, and anything using `GEMINI_API_KEY` |
+
+The `?key=<token>` query parameter that some Google clients support is
+**deliberately not accepted**. A token in a URL is recorded by proxies, server
+access logs and shell history, none of which is true of a header; the router
+answers such a request with `401` and says so in the message rather than
+failing opaquely.
+
+Before router version 0.87.0 only the first two carriers were accepted, so the
+setup above returned `401` on every request even with a valid token. If you see
+that on an older router, either upgrade or send the token as
+`Authorization: Bearer`.
+
 ## Router endpoints used
 
 | Endpoint | Purpose |
@@ -115,6 +138,8 @@ subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
 | --- | --- |
 | CLI rejects the base URL | non-localhost addresses must be HTTPS |
 | Base URL appears ignored | you are on the OAuth login path; the override only applies to API-key auth |
+| `401` on every request with a valid token | a router older than 0.87.0 did not accept `x-goog-api-key`; upgrade, or send `Authorization: Bearer` |
+| `401` mentioning `?key=` | the token was put in the URL; move it into a header |
 | `404` on a Gemini namespace | the route is disabled, or the model is not owned by any connected subscription |
 | Empty `models` list | no subscription is healthy; run `link-assistant-router doctor` |
 | `INVALID_ARGUMENT` about server-side tools | a forced tool choice offers only `web_search`; use `AUTO` or add a client function |
