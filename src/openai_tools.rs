@@ -54,11 +54,69 @@ pub fn translate_parts(parts: &[Value]) -> Vec<Value> {
         .collect()
 }
 
+/// Whether a tool entry can be represented in the Anthropic dialect.
+///
+/// Anthropic understands function tools and the two server-side tools. Codex
+/// CLI additionally sends `namespace`, `custom` and `tool_search` as part of its
+/// ordinary tool set, and those have no Anthropic equivalent.
+fn is_translatable(tool: &Value) -> bool {
+    let kind = tool
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("function");
+    match kind {
+        "function" => tool
+            .get("function")
+            .unwrap_or(tool)
+            .get("name")
+            .and_then(Value::as_str)
+            .is_some_and(|name| !name.is_empty()),
+        "web_search" | "web_fetch" => true,
+        _ => false,
+    }
+}
+
+/// A human-readable name for a tool entry, for reporting what was dropped.
+fn tool_label(tool: &Value) -> String {
+    let kind = tool
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("function");
+    tool.get("function")
+        .unwrap_or(tool)
+        .get("name")
+        .and_then(Value::as_str)
+        .filter(|name| !name.is_empty())
+        .map_or_else(|| kind.to_string(), |name| format!("{kind} ({name})"))
+}
+
+/// Tool entries that cannot cross into the Anthropic dialect, in order.
+///
+/// Dropping these is preferable to refusing the request. A model is never
+/// obliged to call a tool, so a request carrying the nine usable tools of a
+/// Codex turn is far more useful than a `400` naming the one that did not fit
+/// (issue #215). The caller is told what was dropped rather than left to infer
+/// it from an agent that quietly never uses sub-agents.
+#[must_use]
+pub fn untranslatable_anthropic_tools(tools: &Value) -> Vec<String> {
+    tools.as_array().map_or_else(Vec::new, |tools| {
+        tools
+            .iter()
+            .filter(|tool| !is_translatable(tool))
+            .map(tool_label)
+            .collect()
+    })
+}
+
 pub fn translate_tools(tools: &Value) -> Value {
     match tools {
         Value::Array(arr) => {
             let mapped: Vec<Value> = arr
                 .iter()
+                // An untranslatable entry is dropped rather than passed through
+                // verbatim: forwarding a shape Anthropic does not define would
+                // trade a router `400` for a vendor one (issue #215).
+                .filter(|t| is_translatable(t))
                 .map(|t| {
                     let kind = t.get("type").and_then(Value::as_str).unwrap_or("function");
                     match kind {
@@ -116,31 +174,6 @@ pub fn translate_tools(tools: &Value) -> Value {
         }
         other => other.clone(),
     }
-}
-
-/// Return the first tool type that cannot be represented by Anthropic.
-#[must_use]
-pub fn unsupported_anthropic_tool_type(tools: &Value) -> Option<String> {
-    tools.as_array()?.iter().find_map(|tool| {
-        let kind = tool
-            .get("type")
-            .and_then(Value::as_str)
-            .unwrap_or("function");
-        match kind {
-            "function"
-                if tool
-                    .get("function")
-                    .unwrap_or(tool)
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .is_some() =>
-            {
-                None
-            }
-            "web_search" | "web_fetch" => None,
-            other => Some(other.to_string()),
-        }
-    })
 }
 
 /// Validate prior Chat tool turns before translating them to Anthropic. Empty

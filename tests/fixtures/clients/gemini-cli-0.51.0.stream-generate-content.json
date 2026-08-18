@@ -1,7 +1,7 @@
 {
   "client": "gemini-cli",
   "version": "0.51.0",
-  "source": "issue #211, captured from a real GeminiCLI-tui/0.51.0 run; the path is the streaming form the CLI actually calls",
+  "source": "issue #211 (headers, streaming path) and issue #216 (the real generationConfig, which carries temperature and topP together)",
   "method": "POST",
   "path": "/api/gemini/v1beta/models/{model}:streamGenerateContent?alt=sse",
   "credential_carrier": "x-goog-api-key",
@@ -13,6 +13,23 @@
     "x-gemini-api-privileged-user-id": "redacted"
   },
   "body": {
-    "contents": [{"role": "user", "parts": [{"text": "ping"}]}]
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "ping"
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "temperature": 1,
+      "topP": 0.95,
+      "topK": 64,
+      "thinkingConfig": {
+        "includeThoughts": true
+      }
+    }
   }
 }

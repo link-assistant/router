@@ -88,7 +88,17 @@ owning vendor, exactly like `/v1/models` and `/v1/chat/completions`. A Codex or
 Claude subscription therefore serves Gemini CLI without a Gemini credential;
 pinning `UPSTREAM_PROVIDER=gemini` narrows the namespace to Gemini models only.
 
-Two provider gaps are handled here explicitly:
+Three provider gaps are handled here explicitly:
+
+- `generationConfig` normally carries **both** `temperature` and `topP`, which
+  is Gemini CLI's default and not a user setting. Anthropic rejects a request
+  specifying both, so driving a Claude model this way used to fail with `400`
+  on every request. The router now forwards **only one**: an explicit
+  `temperature` wins and `topP` is dropped, because `temperature` is the more
+  commonly tuned knob and the one a user is likelier to have set deliberately.
+  A request carrying only `topP` still has it honoured — the parameter is
+  mapped, not discarded whenever it is inconvenient. `topK` and
+  `thinkingConfig` have no Anthropic equivalent and are not forwarded;
 
 - `generationConfig.maxOutputTokens` is honoured on every model. Gemini and
   Claude enforce the cap upstream; the ChatGPT backend rejects the field, so

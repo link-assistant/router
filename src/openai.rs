@@ -153,11 +153,17 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if !system_chunks.is_empty() {
         body["system"] = Value::String(system_chunks.join("\n\n"));
     }
-    if let Some(t) = req.temperature {
-        body["temperature"] = json!(t);
-    }
-    if let Some(t) = req.top_p {
-        body["top_p"] = json!(t);
+    // Anthropic rejects a request specifying both, and Gemini CLI sends both by
+    // default with no way to suppress either — so a valid Gemini request and a
+    // reachable Claude model combined into a permanent `400` (issue #216).
+    // `temperature` wins because it is the more commonly tuned knob and the one
+    // a caller is likelier to have set deliberately; `top_p` is carried only
+    // when it is the sole nucleus-sampling parameter, so a caller who tuned just
+    // that still gets the sampling they asked for.
+    match (req.temperature, req.top_p) {
+        (Some(t), _) => body["temperature"] = json!(t),
+        (None, Some(p)) => body["top_p"] = json!(p),
+        (None, None) => {}
     }
     if req.stream == Some(true) {
         body["stream"] = json!(true);
@@ -906,7 +912,7 @@ mod tools;
 
 pub(crate) use tools::{extract_text, translate_parts, translate_tool_choice, translate_tools};
 pub use tools::{
-    unsupported_anthropic_tool_type, untranslatable_anthropic_tool_choice,
+    untranslatable_anthropic_tool_choice, untranslatable_anthropic_tools,
     untranslatable_chat_tool_history,
 };
 

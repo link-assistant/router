@@ -145,7 +145,7 @@ Expect the Anthropic SSE vocabulary, in order: `message_start`,
 | `image` blocks | OpenAI image parts |
 | `tools` / `tool_choice` | OpenAI function tools |
 | `tool_use` / `tool_result` blocks | assistant `tool_calls` / `tool` messages |
-| `temperature`, `top_p`, `stop_sequences`, `stream` | direct equivalents |
+| `temperature`, `top_p`, `stop_sequences`, `stream` | direct equivalents, except that `temperature` and `top_p` are never sent **together** to an Anthropic upstream — it rejects the pair, so an explicit `temperature` wins and `top_p` is dropped |
 | `max_tokens` | forwarded when supported; see the Codex caveat below |
 | `stop_reason` | mapped from the OpenAI `finish_reason` |
 | `usage.input_tokens` / `output_tokens` | mapped from upstream usage when reported |
