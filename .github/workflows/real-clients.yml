@@ -1,0 +1,59 @@
+# The real-client tier: run the actual vendor CLIs against a live router.
+#
+# `tests/real_clients_test.rs` is opt-in behind ROUTER_REAL_CLIENT_TESTS=1 and
+# was referenced by no workflow, so it never ran (issue #211). It cannot run on
+# pull requests — it needs vendor subscriptions and takes minutes — but "never"
+# is not the right cadence either. This runs it nightly, where credentials can
+# live, and leaves the fast fixture tier (tests/client_fixture_test.rs) to cover
+# every pull request offline.
+name: Real Clients
+
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
+jobs:
+  real-clients:
+    name: Real Client Single Turn
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+
+      # The tier needs a running router and a task token. Without them there is
+      # nothing to test against, and a run that quietly asserts nothing is the
+      # problem this workflow exists to fix — so say so and stop.
+      - name: Check for a configured router
+        id: configured
+        env:
+          ROUTER_REAL_SERVER: ${{ secrets.ROUTER_REAL_SERVER }}
+        run: |
+          if [ -z "$ROUTER_REAL_SERVER" ]; then
+            echo "::notice::ROUTER_REAL_SERVER is not configured; the real-client tier cannot run."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run the real-client tier
+        if: steps.configured.outputs.run == 'true'
+        env:
+          ROUTER_REAL_CLIENT_TESTS: '1'
+          ROUTER_REAL_SERVER: ${{ secrets.ROUTER_REAL_SERVER }}
+          ROUTER_REAL_TOKEN: ${{ secrets.ROUTER_REAL_TOKEN }}
+        run: cargo test --locked --test real_clients_test -- --nocapture

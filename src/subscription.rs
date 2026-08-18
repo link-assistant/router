@@ -126,7 +126,10 @@ impl SubscriptionProvider {
 
 impl std::fmt::Display for SubscriptionProvider {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
+        // `pad`, not `write_str`: only `pad` applies the width, fill and
+        // alignment the caller asked for, so `{:<8}` is silently ignored by a
+        // `write_str` implementation (issue #212).
+        f.pad(self.as_str())
     }
 }
 
@@ -583,6 +586,27 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
 mod tests {
     use super::*;
     use std::fs;
+
+    /// `auth status` prints a padded provider column. A `Display` built on
+    /// `write_str` silently discards the requested width, so the format string
+    /// looks correct and only the rendered output disagrees — invisible to the
+    /// compiler, which is why this needs a test (issue #212).
+    #[test]
+    fn provider_display_honours_the_requested_width() {
+        assert_eq!(
+            format!("[{:<8}]", SubscriptionProvider::Codex),
+            "[codex   ]"
+        );
+        assert_eq!(
+            format!("[{:>8}]", SubscriptionProvider::Claude),
+            "[  claude]"
+        );
+        // Padding must never truncate or alter a value that already fills the
+        // column.
+        assert_eq!(format!("[{:<3}]", SubscriptionProvider::Gemini), "[gemini]");
+        // The unpadded rendering is unchanged.
+        assert_eq!(SubscriptionProvider::Qwen.to_string(), "qwen");
+    }
 
     fn tempdir() -> PathBuf {
         let dir = std::env::temp_dir().join(format!("router-sub-{}", uuid::Uuid::new_v4()));

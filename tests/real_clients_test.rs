@@ -46,6 +46,8 @@ fn installed_supported_clients_complete_a_real_single_turn() {
         return;
     }
     let directory = tempfile::tempdir().unwrap();
+    let mut skipped = Vec::new();
+    let mut exercised = Vec::new();
     for (client, executable) in [
         ("claude-code", "claude"),
         ("codex", "codex"),
@@ -56,8 +58,13 @@ fn installed_supported_clients_complete_a_real_single_turn() {
         ("agent", "agent"),
     ] {
         if !command_exists(executable) {
+            // A silently skipped client is indistinguishable from a passing
+            // one, which is how this tier can report success while covering
+            // nothing (issue #211). Collect it and say so at the end.
+            skipped.push(client);
             continue;
         }
+        exercised.push(client);
         let output = run_wrapper(client, "Reply with exactly ROUTER_OK", directory.path());
         assert!(
             output.status.success(),
@@ -69,6 +76,12 @@ fn installed_supported_clients_complete_a_real_single_turn() {
             "{client} did not return the expected marker"
         );
     }
+    println!("real-client tier: exercised {exercised:?}, skipped (not installed) {skipped:?}");
+    assert!(
+        !exercised.is_empty(),
+        "ROUTER_REAL_CLIENT_TESTS=1 was set but no supported client is installed, so this \
+         tier asserted nothing. Install at least one of {skipped:?}, or leave the tier off."
+    );
 }
 
 #[test]

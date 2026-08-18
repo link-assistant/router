@@ -1,0 +1,18 @@
+{
+  "client": "claude-code",
+  "version": "unpinned",
+  "source": "the Anthropic Messages shape Claude Code sends; the router's primary surface",
+  "method": "POST",
+  "path": "/v1/messages",
+  "credential_carrier": "x-api-key",
+  "expected_surface": "anthropic",
+  "headers": {
+    "content-type": "application/json",
+    "anthropic-version": "2023-06-01"
+  },
+  "body": {
+    "model": "{model}",
+    "max_tokens": 16,
+    "messages": [{"role": "user", "content": "ping"}]
+  }
+}
