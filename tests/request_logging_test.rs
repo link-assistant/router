@@ -214,3 +214,26 @@ fn a_declared_content_length_implies_a_non_empty_logged_body() {
         "content-length {declared} contradicts an empty body: {record}"
     );
 }
+
+/// A request whose body was genuinely read and was empty must not be labelled
+/// as unread. The marker keys on the contradiction between a declared length
+/// and an empty buffer, so a `content-length: 0` body takes the normal path.
+#[test]
+fn a_zero_length_body_is_not_reported_as_unread() {
+    let router = Router::start();
+    router
+        .post(
+            "/v1/chat/completions",
+            "authorization: Bearer la_sk_invalid\r\nx-test-marker: issue-210-zero-length\r\n",
+            "",
+        )
+        .expect("zero-length request");
+
+    let record = router.await_client_request("issue-210-zero-length");
+    let record: serde_json::Value = serde_json::from_str(&record).expect("record is JSON");
+    let body = record["body"].as_str().unwrap_or_default();
+    assert!(
+        !body.contains("NOT READ"),
+        "a declared-empty body must not be marked unread: {record}"
+    );
+}
