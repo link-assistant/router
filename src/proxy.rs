@@ -91,6 +91,7 @@ const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
     "set-cookie",
     "set-cookie2",
     "x-api-key",
+    "x-goog-api-key",
 ];
 
 /// Select end-to-end upstream response headers that are safe to relay to a client.
@@ -205,27 +206,74 @@ fn extract_bearer_token(headers: &HeaderMap) -> Option<&str> {
         .filter(|token| !token.is_empty())
 }
 
+/// Headers that may carry the router's own client token.
+///
+/// Every vendor dialect names its credential differently, and a client sends
+/// the name its own SDK uses: Anthropic's send `x-api-key`, Google's send
+/// `x-goog-api-key` (which is what `GEMINI_API_KEY` becomes), and everything
+/// else sends `Authorization: Bearer`. The router speaks all of these dialects,
+/// so it accepts the credential in whichever one the caller chose — a valid
+/// token in the wrong header was a `401` that cost real time to diagnose
+/// (issue #206).
+///
+/// These are checked after `Authorization`, in order. Keep
+/// [`ACCEPTED_CREDENTIAL_CARRIERS`] and [`CREDENTIAL_CARRIER_HINT`] in step:
+/// the hint is what an unauthenticated caller is told, and it is only useful
+/// while it names exactly what is accepted.
+pub(crate) const ACCEPTED_CREDENTIAL_CARRIERS: &[&str] = &["x-api-key", "x-goog-api-key"];
+
+/// What a caller presenting no recognised credential is told.
+pub(crate) const CREDENTIAL_CARRIER_HINT: &str = "Missing client token. Present it as `Authorization: Bearer <token>`, `x-api-key: <token>` \
+     or `x-goog-api-key: <token>`. The `?key=` query parameter is deliberately not accepted, \
+     because a URL is recorded by proxies and server logs.";
+
 pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
     extract_bearer_token(headers).or_else(|| {
-        headers
-            .get("x-api-key")
-            .and_then(|value| value.to_str().ok())
-            .filter(|value| !value.is_empty())
+        ACCEPTED_CREDENTIAL_CARRIERS.iter().find_map(|carrier| {
+            headers
+                .get(*carrier)
+                .and_then(|value| value.to_str().ok())
+                .filter(|value| !value.is_empty())
+        })
     })
 }
 
-/// Validate the caller credential without exposing token parser internals.
-pub(crate) fn authenticate_client(
+/// Why a caller credential was refused, before it is rendered in any dialect.
+///
+/// Kept separate from the rendered response so the same verdict can be
+/// presented in the vendor dialect of whichever surface the caller used: a
+/// Gemini client must receive a Gemini error envelope even when the failure is
+/// authentication (issue #206).
+pub(crate) struct ClientAuthError {
+    pub status: StatusCode,
+    pub message: String,
+}
+
+impl ClientAuthError {
+    pub(crate) fn render(&self, dialect: crate::api_error::ApiDialect) -> Response {
+        crate::api_error::PresentedError {
+            status: self.status,
+            error_type: "authentication_error",
+            message: &self.message,
+        }
+        .render(dialect)
+    }
+}
+
+/// Validate the caller credential, returning the verdict unrendered.
+///
+/// This is the primitive: [`authenticate_client`] renders the same verdict in
+/// the Anthropic dialect for callers that have no surface context.
+pub(crate) fn authenticate_client_error(
     state: &AppState,
     headers: &HeaderMap,
-) -> Result<crate::token::TokenClaims, Box<Response>> {
+) -> Result<crate::token::TokenClaims, ClientAuthError> {
     let Some(token) = extract_client_token(headers) else {
-        state.logger.debug(|| "Missing Authorization header");
-        return Err(Box::new(error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Missing Authorization Bearer token or x-api-key",
-        )));
+        state.logger.debug(|| "Missing client credential");
+        return Err(ClientAuthError {
+            status: StatusCode::UNAUTHORIZED,
+            message: CREDENTIAL_CARRIER_HINT.to_string(),
+        });
     };
     // An administrator credential is a superset of client access: the person
     // who administers the router must be able to call the models with the same
@@ -245,12 +293,20 @@ pub(crate) fn authenticate_client(
         state
             .logger
             .debug(|| format!("Token validation failed: {error}"));
-        Box::new(error_response(
+        ClientAuthError {
             status,
-            "authentication_error",
-            error.client_message(),
-        ))
+            message: error.client_message().to_string(),
+        }
     })
+}
+
+/// Validate the caller credential without exposing token parser internals.
+pub(crate) fn authenticate_client(
+    state: &AppState,
+    headers: &HeaderMap,
+) -> Result<crate::token::TokenClaims, Box<Response>> {
+    authenticate_client_error(state, headers)
+        .map_err(|error| Box::new(error.render(crate::api_error::ApiDialect::Anthropic)))
 }
 
 /// Proxy handler for upstream API forwarding.
@@ -557,13 +613,14 @@ pub(crate) fn build_upstream_headers(
 
     for (name, value) in incoming {
         let name_lower = name.as_str().to_lowercase();
-        // `content-length` is dropped on purpose: the forwarded body may differ
-        // in length from the client's (the Claude Code identity block is
+        // Every header that may carry the *router's* client token is dropped:
+        // it authenticates the caller to us and must never travel to a vendor.
+        // `content-length` is dropped on purpose too: the forwarded body may
+        // differ in length from the client's (the Claude Code identity block is
         // prepended for OAuth upstreams), and the HTTP client recomputes it.
-        if matches!(
-            name_lower.as_str(),
-            "authorization" | "x-api-key" | "content-length"
-        ) || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
+        if matches!(name_lower.as_str(), "authorization" | "content-length")
+            || ACCEPTED_CREDENTIAL_CARRIERS.contains(&name_lower.as_str())
+            || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
         {
             continue;
         }

@@ -671,7 +671,7 @@ pub(crate) fn count_tokens_claims(
     let Some(token) = crate::proxy::extract_client_token(headers) else {
         return Err(Box::new(anthropic_error(
             StatusCode::UNAUTHORIZED,
-            b"Missing Authorization Bearer token or x-api-key",
+            crate::proxy::CREDENTIAL_CARRIER_HINT.as_bytes(),
         )));
     };
     token_manager.validate_token(token).map_err(|e| {

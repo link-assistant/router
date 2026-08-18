@@ -172,8 +172,10 @@ async fn authenticate_client_route(
     {
         return response;
     }
-    if let Err(response) = proxy::authenticate_client(&state, request.headers()) {
-        return *response;
+    // The refusal is rendered in the dialect of the surface the caller used, so
+    // a Gemini client can parse its own error envelope (issue #206).
+    if let Err(error) = proxy::authenticate_client_error(&state, request.headers()) {
+        return error.render(crate::api_error::dialect_for_path(path));
     }
     next.run(request).await
 }
