@@ -1,0 +1,23 @@
+{
+  "client": "codex",
+  "version": "0.147.0",
+  "source": "issue #211, captured from a real codex_exec/0.147.0 run",
+  "method": "POST",
+  "path": "/api/codex/v1/responses",
+  "credential_carrier": "authorization",
+  "expected_surface": "openai-responses",
+  "headers": {
+    "user-agent": "codex_exec/0.147.0",
+    "content-type": "application/json",
+    "session-id": "redacted",
+    "x-codex-beta-features": "redacted",
+    "x-codex-turn-metadata": "redacted",
+    "x-codex-turn-state": "redacted",
+    "x-codex-window-id": "redacted",
+    "x-client-request-id": "redacted"
+  },
+  "body": {
+    "model": "{model}",
+    "input": [{"role": "user", "content": [{"type": "input_text", "text": "ping"}]}]
+  }
+}

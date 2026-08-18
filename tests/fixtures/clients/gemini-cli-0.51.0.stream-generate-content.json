@@ -1,0 +1,18 @@
+{
+  "client": "gemini-cli",
+  "version": "0.51.0",
+  "source": "issue #211, captured from a real GeminiCLI-tui/0.51.0 run; the path is the streaming form the CLI actually calls",
+  "method": "POST",
+  "path": "/api/gemini/v1beta/models/{model}:streamGenerateContent?alt=sse",
+  "credential_carrier": "x-goog-api-key",
+  "expected_surface": "gemini",
+  "headers": {
+    "user-agent": "GeminiCLI-tui/0.51.0 (darwin; arm64)",
+    "content-type": "application/json",
+    "x-goog-api-client": "gl-node/22.14.0",
+    "x-gemini-api-privileged-user-id": "redacted"
+  },
+  "body": {
+    "contents": [{"role": "user", "parts": [{"text": "ping"}]}]
+  }
+}

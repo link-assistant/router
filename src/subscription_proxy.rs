@@ -466,6 +466,24 @@ async fn forward_subscription_openai_inner(
         return response;
     }
 
+    // An upstream failure is re-shaped into the dialect of the surface the
+    // caller used, as the Anthropic and Gemini surfaces already do. Relaying the
+    // vendor body verbatim left an OpenAI client unable to classify the error,
+    // and forwarded fields describing the operator's own subscription
+    // (`plan_type`, `eligible_promo`) to a caller who is often a different party
+    // (issue #213). The raw body stays in the request log for diagnosis.
+    let (response_body, content_type) = if status.is_success() {
+        (response_body, content_type)
+    } else {
+        let rendered = crate::api_error::openai_error_body(status.as_u16(), &response_body);
+        (
+            bytes::Bytes::from(
+                serde_json::to_vec(&rendered).expect("JSON values always serialize"),
+            ),
+            HeaderValue::from_static("application/json"),
+        )
+    };
+
     let mut response = Response::new(Body::from(response_body));
     *response.status_mut() = status;
     *response.headers_mut() = response_headers;

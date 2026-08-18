@@ -118,7 +118,10 @@ impl ChatChannel {
 
 impl std::fmt::Display for ChatChannel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
+        // `pad`, not `write_str`: only `pad` applies the width, fill and
+        // alignment the caller asked for, so `{:<8}` is silently ignored by a
+        // `write_str` implementation (issue #212).
+        f.pad(self.as_str())
     }
 }
 

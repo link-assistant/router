@@ -96,6 +96,74 @@ pub fn error_response_for_surface(
     .render(dialect)
 }
 
+/// `OpenAI` error `type` for an upstream status.
+///
+/// Mirrors the mappings the Anthropic and Gemini surfaces already apply
+/// (`anthropic_bridge::anthropic_error`, `gemini_bridge::openai_error_to_gemini`)
+/// so one upstream failure is classified the same way on every surface.
+const fn openai_error_type(status: u16) -> &'static str {
+    match status {
+        400 | 404 | 422 => "invalid_request_error",
+        401 => "authentication_error",
+        403 => "permission_error",
+        429 => "rate_limit_error",
+        _ => "api_error",
+    }
+}
+
+/// The `code` an `OpenAI` client reads to classify a failure programmatically.
+const fn openai_error_code(status: u16) -> Option<&'static str> {
+    match status {
+        401 => Some("invalid_api_key"),
+        403 => Some("permission_denied"),
+        404 => Some("model_not_found"),
+        429 => Some("rate_limit_exceeded"),
+        _ => None,
+    }
+}
+
+/// Re-shape an upstream vendor error as an `OpenAI` error envelope.
+///
+/// The `OpenAI` surfaces used to relay the vendor's body verbatim, which had two
+/// consequences (issue #213): a client written against the `OpenAI` SDK could not
+/// classify the failure, because the vendor's `type` is not an `OpenAI` error
+/// type; and the body carried fields describing the *router operator's*
+/// subscription — `plan_type`, `eligible_promo`, `resets_at` — which say nothing
+/// about the caller's request and, in a shared deployment, disclose the
+/// operator's billing posture to every caller who triggers a `429`.
+///
+/// Only what the caller can act on is preserved: the status, the message, and
+/// retry timing. The full upstream body is still captured by the request log
+/// (`record_upstream_body`), so nothing is lost for diagnosis.
+#[must_use]
+pub fn openai_error_body(status: u16, upstream: &[u8]) -> serde_json::Value {
+    let parsed = serde_json::from_slice::<serde_json::Value>(upstream).ok();
+    let vendor_message = parsed.as_ref().and_then(|value| {
+        value
+            .pointer("/error/message")
+            .or_else(|| value.pointer("/message"))
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_string)
+    });
+    let message = vendor_message.unwrap_or_else(|| {
+        let text = String::from_utf8_lossy(upstream);
+        let text = text.trim();
+        if text.is_empty() {
+            "upstream request failed".to_string()
+        } else {
+            text.to_string()
+        }
+    });
+    serde_json::json!({
+        "error": {
+            "message": message,
+            "type": openai_error_type(status),
+            "param": serde_json::Value::Null,
+            "code": openai_error_code(status),
+        }
+    })
+}
+
 pub fn malformed_json_response(error: &str) -> Response {
     error_response(
         StatusCode::BAD_REQUEST,

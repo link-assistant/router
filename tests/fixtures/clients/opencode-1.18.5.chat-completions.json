@@ -1,0 +1,19 @@
+{
+  "client": "opencode",
+  "version": "1.18.5",
+  "source": "issue #211, captured from a real opencode/1.18.5 run",
+  "method": "POST",
+  "path": "/v1/chat/completions",
+  "credential_carrier": "authorization",
+  "expected_surface": "openai-chat",
+  "headers": {
+    "user-agent": "opencode/1.18.5",
+    "content-type": "application/json",
+    "x-session-id": "redacted",
+    "x-session-affinity": "redacted"
+  },
+  "body": {
+    "model": "{model}",
+    "messages": [{"role": "user", "content": "ping"}]
+  }
+}
