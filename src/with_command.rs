@@ -292,9 +292,21 @@ fn configure_isolation(
             command.env("CLAUDE_CONFIG_DIR", directory);
         }
         ClientIsolation::GeminiHome => {
-            let config_path = manager.config_path(client);
-            let directory = config_path.parent().expect("Gemini config has a parent");
-            command.env("GEMINI_CLI_HOME", directory);
+            // Gemini CLI resolves its settings as `<home>/.gemini/settings.json`,
+            // where `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise.
+            // The router pointed `GEMINI_CLI_HOME` at the `.gemini` directory
+            // itself, so the CLI looked in `<root>/.gemini/.gemini/` — found no
+            // settings, fell back to the user's personal ones, and refused the
+            // run with `Invalid auth method selected.` (issue #227).
+            //
+            // Both variables therefore name the *root*, and `HOME` is overridden
+            // as well so nothing else the CLI stores escapes into the real home.
+            command
+                .env("HOME", root)
+                .env("GEMINI_CLI_HOME", root)
+                // With auth fixed the next wall is the trusted-directory
+                // prompt, which a `--non-interactive` run cannot answer.
+                .env("GEMINI_CLI_TRUST_WORKSPACE", "true");
         }
         ClientIsolation::ConfigFile => {
             let path = manager.config_path(client);
@@ -421,8 +433,11 @@ fn write_gemini_settings(path: &Path) -> Result<(), AnyError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
+    // Truncating, not `create_new`: an isolated run must be governed by the
+    // settings the router wrote. Deferring to a pre-existing file would let an
+    // inherited `oauth-personal` survive and fail the run (issue #227).
     let mut options = OpenOptions::new();
-    options.create_new(true).write(true);
+    options.create(true).truncate(true).write(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt as _;
@@ -530,6 +545,121 @@ mod tests {
             .iter()
             .map(|value| value.to_string_lossy().into_owned())
             .collect()
+    }
+
+    /// Gemini CLI resolves settings as `<home>/.gemini/settings.json`, where
+    /// `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise. Pointing
+    /// `GEMINI_CLI_HOME` at the `.gemini` directory made it look one level too
+    /// deep, fall back to the user's personal settings, and refuse the run
+    /// (issue #227). Both variables must therefore name the root.
+    #[test]
+    fn the_gemini_client_is_pointed_at_the_isolated_home() {
+        let root = tempfile::tempdir().expect("isolated root");
+        let manager = ClientManager::isolated(root.path());
+        let mut command = Command::new("gemini");
+        configure_isolation(&mut command, &manager, root.path(), ClientKind::GeminiCli)
+            .expect("configure gemini isolation");
+
+        let environment: std::collections::HashMap<_, _> = command
+            .get_envs()
+            .filter_map(|(key, value)| Some((key.to_string_lossy().into_owned(), value?)))
+            .collect();
+
+        for name in ["HOME", "GEMINI_CLI_HOME"] {
+            assert_eq!(
+                environment.get(name).map(|value| value.to_string_lossy()),
+                Some(root.path().to_string_lossy()),
+                "{name} must name the isolated root, not the .gemini directory \
+                 inside it — the CLI appends `.gemini` itself"
+            );
+        }
+        // The file the CLI actually reads lives under that home.
+        assert_eq!(
+            manager.config_path(ClientKind::GeminiCli),
+            root.path().join(".gemini/settings.json")
+        );
+        // The trusted-directory prompt cannot be answered non-interactively.
+        assert_eq!(
+            environment
+                .get("GEMINI_CLI_TRUST_WORKSPACE")
+                .map(|value| value.to_string_lossy()),
+            Some(std::borrow::Cow::Borrowed("true"))
+        );
+    }
+
+    /// End to end: after preparing the client, the file Gemini CLI actually
+    /// reads must exist and select the API-key flow. The router previously
+    /// wrote a correct file the CLI never opened (issue #227).
+    #[test]
+    fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
+        let models = [RouterModel {
+            id: "test-model".to_string(),
+            owned_by: "test".to_string(),
+        }];
+        let temporary = TemporaryClient::prepare(
+            ClientKind::GeminiCli,
+            "http://router.test",
+            "task-token",
+            None,
+            &models,
+        )
+        .expect("prepare gemini");
+        let root = temporary.directory.path();
+        let home = temporary
+            .command
+            .get_envs()
+            .find_map(|(name, value)| (name == "HOME").then_some(value?))
+            .expect("gemini run sets HOME");
+        // The CLI resolves its settings from HOME; the file must be there.
+        let settings = Path::new(home).join(".gemini/settings.json");
+        assert!(
+            settings.is_file(),
+            "no settings at {}, which is where the CLI looks",
+            settings.display()
+        );
+        let written = fs::read_to_string(&settings).expect("read settings");
+        assert!(written.contains("gemini-api-key"), "{written}");
+        assert!(Path::new(home).starts_with(root), "HOME escaped the root");
+    }
+
+    /// An isolated run must be governed by the settings the router wrote. The
+    /// previous `create_new` silently deferred to whatever was already there,
+    /// which with the `HOME` fix would let an inherited `oauth-personal`
+    /// survive and fail the run.
+    #[test]
+    fn written_gemini_settings_replace_an_existing_file() {
+        let root = tempfile::tempdir().expect("isolated root");
+        let path = root.path().join(".gemini/settings.json");
+        fs::create_dir_all(path.parent().expect("parent")).expect("create directory");
+        fs::write(
+            &path,
+            r#"{"security":{"auth":{"selectedType":"oauth-personal"}}}"#,
+        )
+        .expect("seed a conflicting file");
+
+        write_gemini_settings(&path).expect("write settings");
+
+        let written = fs::read_to_string(&path).expect("read settings");
+        assert!(written.contains("gemini-api-key"), "{written}");
+        assert!(
+            !written.contains("oauth-personal"),
+            "the inherited value survived: {written}"
+        );
+    }
+
+    /// The value itself is the one the CLI accepts; a wrong spelling is what
+    /// produced the original error, so it is pinned rather than assumed.
+    #[test]
+    fn gemini_settings_select_the_api_key_flow() {
+        let root = tempfile::tempdir().expect("isolated root");
+        let path = root.path().join(".gemini/settings.json");
+        write_gemini_settings(&path).expect("write settings");
+        let written: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).expect("read")).expect("valid JSON");
+        assert_eq!(
+            written["security"]["auth"]["selectedType"],
+            "gemini-api-key"
+        );
     }
 
     #[test]
