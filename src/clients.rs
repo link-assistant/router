@@ -80,18 +80,31 @@ pub struct ClientIntegration {
 }
 
 /// Documented local clients, including clients whose vendor gates prevent setup.
+/// A supported client, named as the user's own shell names it.
+///
+/// The canonical value of each variant is the **installed command**, because
+/// that is the name the user typed to install the tool and types to run it. The
+/// descriptive long forms (`claude-code`, `qwen-code`, …) are kept as aliases so
+/// existing scripts and documented commands keep working.
+///
+/// Before this, the advertised names were the descriptive ones while the short
+/// names existed only as invisible aliases — so `--help` and the `invalid value`
+/// error taught a name the user's shell does not have (issue #220). The
+/// invariant that keeps the two in step is asserted in the tests below: every
+/// variant's canonical string equals its [`ClientIntegration::command`].
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
 pub enum ClientKind {
     Codex,
-    #[value(alias = "claude")]
+    #[value(name = "claude", alias = "claude-code")]
     ClaudeCode,
+    #[value(name = "cursor-agent", alias = "cursor")]
     Cursor,
-    #[value(alias = "gemini")]
+    #[value(name = "gemini", alias = "gemini-cli")]
     GeminiCli,
-    #[value(alias = "grok")]
+    #[value(name = "grok", alias = "grok-cli")]
     GrokCli,
     Opencode,
-    #[value(alias = "qwen")]
+    #[value(name = "qwen", alias = "qwen-code")]
     QwenCode,
     Agent,
 }
@@ -272,18 +285,42 @@ impl ClientKind {
     }
 }
 
+impl ClientKind {
+    /// The canonical name: the command the client installs as.
+    ///
+    /// This is the single source of the name every surface shows, so
+    /// `clients list`, `--help` and the `invalid value` error cannot disagree
+    /// (issue #220). It is asserted equal to [`ClientIntegration::command`] in
+    /// the tests, which is the invariant that keeps them from drifting.
+    #[must_use]
+    pub const fn canonical_name(self) -> &'static str {
+        self.integration().command
+    }
+
+    /// The name this client used before v0.91.0.
+    ///
+    /// Kept because it names files already on disk — the managed environment
+    /// and credential-metadata paths are derived from the client name, so a
+    /// rename alone would orphan an existing installation's `claude-code.env`
+    /// rather than migrate it.
+    #[must_use]
+    pub const fn legacy_name(self) -> &'static str {
+        match self {
+            Self::ClaudeCode => "claude-code",
+            Self::Cursor => "cursor",
+            Self::GeminiCli => "gemini-cli",
+            Self::GrokCli => "grok-cli",
+            Self::Codex => "codex",
+            Self::Opencode => "opencode",
+            Self::QwenCode => "qwen-code",
+            Self::Agent => "agent",
+        }
+    }
+}
+
 impl fmt::Display for ClientKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Codex => write!(f, "codex"),
-            Self::ClaudeCode => write!(f, "claude-code"),
-            Self::Cursor => write!(f, "cursor"),
-            Self::GeminiCli => write!(f, "gemini-cli"),
-            Self::GrokCli => write!(f, "grok-cli"),
-            Self::Opencode => write!(f, "opencode"),
-            Self::QwenCode => write!(f, "qwen-code"),
-            Self::Agent => write!(f, "agent"),
-        }
+        f.pad(self.canonical_name())
     }
 }
 
@@ -429,17 +466,33 @@ impl ClientManager {
 
     #[must_use]
     pub fn environment_path(&self, client: ClientKind) -> PathBuf {
-        self.config_home
-            .join("link-assistant-router/clients")
-            .join(format!("{client}.env"))
+        self.managed_path(client, "env")
+    }
+
+    /// The managed file for `client`, preferring the canonical name but
+    /// honouring a file already written under the pre-v0.91.0 name.
+    ///
+    /// The client names became the real command names in v0.91.0 (issue #220),
+    /// and these paths are derived from the name — so without this an existing
+    /// installation's `claude-code.env` would simply stop being found, and the
+    /// user would be told to run a setup they had already run.
+    fn managed_path(&self, client: ClientKind, extension: &str) -> PathBuf {
+        let directory = self.config_home.join("link-assistant-router/clients");
+        let canonical = directory.join(format!("{}.{extension}", client.canonical_name()));
+        if canonical.exists() {
+            return canonical;
+        }
+        let legacy = directory.join(format!("{}.{extension}", client.legacy_name()));
+        if legacy.exists() {
+            return legacy;
+        }
+        canonical
     }
 
     /// Where the secret-free record of the managed credential is kept.
     #[must_use]
     pub fn credential_metadata_path(&self, client: ClientKind) -> PathBuf {
-        self.config_home
-            .join("link-assistant-router/clients")
-            .join(format!("{client}.credential.json"))
+        self.managed_path(client, "credential.json")
     }
 
     /// Read the credential record written by the last `clients setup`.
@@ -909,19 +962,5 @@ fn shell_quote(value: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn rejects_non_http_router_urls() {
-        assert!(normalize_base_url("router.internal:8080").is_err());
-    }
-
-    #[test]
-    fn compact_diagnostics_do_not_echo_unbounded_upstream_bodies() {
-        let body = "x".repeat(500);
-        let compact = compact_body(&body);
-        assert!(compact.ends_with('…'));
-        assert!(compact.chars().count() <= 241);
-    }
-}
+#[path = "clients_tests.rs"]
+mod tests;

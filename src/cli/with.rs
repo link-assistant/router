@@ -28,20 +28,13 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         "--run-ttl-hours",
         "--run-max-requests",
     ];
-    let clients = [
-        "codex",
-        "claude-code",
-        "claude",
-        "cursor",
-        "gemini-cli",
-        "gemini",
-        "grok-cli",
-        "grok",
-        "opencode",
-        "qwen-code",
-        "qwen",
-        "agent",
-    ];
+    // Derived from the client table rather than hand-listed: a name missing
+    // here silently stops protecting that client's arguments, which is what a
+    // hardcoded copy invites every time a name changes (issue #220).
+    let clients: Vec<&str> = crate::clients::ClientKind::ALL
+        .iter()
+        .flat_map(|kind| [kind.canonical_name(), kind.legacy_name()])
+        .collect();
     let boolean_options = [
         "--global",
         "--undo",

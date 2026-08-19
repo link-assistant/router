@@ -225,7 +225,7 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     assert!(!String::from_utf8_lossy(&setup.stdout).contains("la_sk_existing"));
     let environment = fs::read_to_string(
         home.path()
-            .join(".config/link-assistant-router/clients/claude-code.env"),
+            .join(".config/link-assistant-router/clients/claude.env"),
     )
     .expect("read Claude credential file");
     assert!(environment.contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'"));
@@ -474,17 +474,26 @@ fn list_covers_every_documented_client_and_agent() {
     let listed = router(home.path(), &["clients", "list"]);
     assert!(listed.status.success());
     let output = String::from_utf8_lossy(&listed.stdout);
+    // The canonical names are the real commands, so what `clients list` shows
+    // is what the user's shell has (issue #220).
     for client in [
         "codex",
-        "claude-code",
-        "cursor",
-        "gemini-cli",
-        "grok-cli",
+        "claude",
+        "cursor-agent",
+        "gemini",
+        "grok",
         "opencode",
-        "qwen-code",
+        "qwen",
         "agent",
     ] {
         assert!(output.contains(client), "missing {client} from:\n{output}");
+    }
+    // The superseded long forms must not reappear as displayed names.
+    for legacy in ["claude-code", "gemini-cli", "grok-cli", "qwen-code"] {
+        assert!(
+            !output.contains(legacy),
+            "list still shows the legacy name {legacy}:\n{output}"
+        );
     }
 }
 
@@ -733,7 +742,7 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
     assert!(!output.contains("la_sk_existing"));
     let environment = fs::read_to_string(
         home.path()
-            .join(".config/link-assistant-router/clients/grok-cli.env"),
+            .join(".config/link-assistant-router/clients/grok.env"),
     )
     .expect("read Grok credential file");
     assert!(environment.contains("export GROK_BASE_URL='http://router.test:8080/v1'"));

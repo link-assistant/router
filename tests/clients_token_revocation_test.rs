@@ -16,18 +16,13 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 /// Clients whose permanent setup this router supports.
-const SUPPORTED: [&str; 6] = [
-    "codex",
-    "claude-code",
-    "opencode",
-    "qwen-code",
-    "agent",
-    "grok-cli",
-];
+/// Named canonically: the client names are the real commands (issue #220), and
+/// these names also derive the managed file paths asserted below.
+const SUPPORTED: [&str; 6] = ["codex", "claude", "opencode", "qwen", "agent", "grok"];
 
 /// Clients whose setup fetches the model catalog before writing anything.
 fn needs_catalog(client: &str) -> bool {
-    matches!(client, "opencode" | "qwen-code" | "agent")
+    matches!(client, "opencode" | "qwen" | "agent")
 }
 
 const BACKENDS: [&str; 2] = ["text", "binary"];

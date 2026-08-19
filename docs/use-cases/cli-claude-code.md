@@ -5,14 +5,14 @@
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with claude-code "hi"
+link-assistant-router with claude "hi"
 ```
 
 The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
 `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN`; the normal Claude settings are
 not changed. See [with-router.md](with-router.md) for server and token options.
 
-Wrapper flags may appear before or after `claude-code`; an explicit `--`
+Wrapper flags may appear before or after `claude`; an explicit `--`
 forwards every later token verbatim. See
 [with-router.md](with-router.md#arguments-interaction-and-models).
 
@@ -21,8 +21,8 @@ forwards every later token verbatim. See
 Automatic setup (merges the router URL and backs up an existing settings file):
 
 ```bash
-link-assistant-router clients setup claude-code
-# Run the `source …/claude-code.env` command printed by setup.
+link-assistant-router clients setup claude
+# Run the `source …/claude.env` command printed by setup.
 ```
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.

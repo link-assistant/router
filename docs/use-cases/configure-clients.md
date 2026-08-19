@@ -5,7 +5,7 @@ modify normal client configuration:
 
 ```bash
 link-assistant-router with codex "hi"
-with-router claude-code "hi"
+with-router claude "hi"
 ```
 
 See [with-router.md](with-router.md) for the integration registry, server
@@ -19,7 +19,7 @@ replacing unrelated user settings:
 link-assistant-router clients list
 link-assistant-router clients setup codex
 link-assistant-router clients setup opencode --token la_sk_...
-link-assistant-router clients setup qwen-code
+link-assistant-router clients setup qwen
 link-assistant-router clients setup agent
 link-assistant-router clients show codex
 link-assistant-router clients doctor codex
@@ -99,10 +99,10 @@ it never creates a duplicate.
 
 Grok's current settings schema can persist `apiKey`, but it reads the API base
 URL only from `GROK_BASE_URL`. To avoid writing an ignored setting,
-`clients setup grok-cli` puts both required exports in the protected environment
+`clients setup grok` puts both required exports in the protected environment
 file and leaves `user-settings.json` untouched.
 
-`clients setup cursor` and `clients setup gemini-cli` return the verified
+`clients setup cursor-agent` and `clients setup gemini` return the verified
 client-side limitation before minting a token or writing a file. Their matching
 `doctor` commands report the same reason directly; they do not misdiagnose a
 request that never reached the router.
