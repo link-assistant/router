@@ -881,11 +881,11 @@ link-assistant-router providers list
 # Safely configure local agentic CLIs against this router:
 link-assistant-router clients list
 link-assistant-router clients setup codex
-link-assistant-router clients setup claude-code --token la_sk_...
+link-assistant-router clients setup claude --token la_sk_...
 link-assistant-router clients setup opencode
-link-assistant-router clients setup qwen-code
+link-assistant-router clients setup qwen
 link-assistant-router clients setup agent
-link-assistant-router clients setup grok-cli
+link-assistant-router clients setup grok
 link-assistant-router clients show codex
 link-assistant-router clients doctor codex
 link-assistant-router clients remove codex

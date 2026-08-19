@@ -12,7 +12,7 @@ which is exactly what a per-task `la_sk_…` token wants.
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with qwen-code "hi"
+link-assistant-router with qwen "hi"
 ```
 
 The wrapper uses an isolated `HOME`, writes a disposable Qwen settings file,
@@ -20,7 +20,7 @@ and supplies `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and
 `LINK_ASSISTANT_TOKEN`. The normal `$QWEN_HOME` is untouched. See
 [with-router.md](with-router.md).
 
-Wrapper flags may appear before or after `qwen-code`; an explicit `--`
+Wrapper flags may appear before or after `qwen`; an explicit `--`
 forwards every later token verbatim. See
 [with-router.md](with-router.md#arguments-interaction-and-models).
 
@@ -42,8 +42,8 @@ forwards every later token verbatim. See
 ```
 
 ```bash
-link-assistant-router clients setup qwen-code
-# Run the `source …/qwen-code.env` command printed by setup.
+link-assistant-router clients setup qwen
+# Run the `source …/qwen.env` command printed by setup.
 qwen
 ```
 

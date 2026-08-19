@@ -1,7 +1,7 @@
 # CLI: Cursor CLI (`cursor-agent`) — not implemented
 
 **Status: not implemented.** No router version routes Cursor CLI natively, and
-`with cursor` fails before launch. This is a statement about what exists, not a
+`with cursor-agent` fails before launch. This is a statement about what exists, not a
 prediction: the adapter below is scoped and buildable, it has simply not been
 built, and a contributor is welcome to take it (issue #207).
 
@@ -12,7 +12,7 @@ and carries a real security cost, which that section states in full.
 ## One-line capability check
 
 ```bash
-link-assistant-router with cursor "hi"
+link-assistant-router with cursor-agent "hi"
 ```
 
 This exits nonzero before launching Cursor and explains the missing Connect-RPC

@@ -20,13 +20,17 @@ later invocation sweeps directories left behind by a wrapper killed with
 | Tool | Dialect and router base | Temporary isolation | Permanent target |
 | --- | --- | --- | --- |
 | `codex` | Responses, `URL/v1` | isolated `HOME` | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
-| `claude-code` (`claude`) | Anthropic Messages, `URL` | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
-| `gemini-cli` (`gemini`) | Gemini native, `URL/api/gemini` | `GEMINI_CLI_HOME` | temporary only; API-key endpoint override is environmental |
-| `grok-cli` (`grok`) | Chat Completions, `URL/v1` | isolated `HOME` plus environment | owner-only managed environment file |
+| `claude` (`claude-code`) | Anthropic Messages, `URL` | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
+| `gemini` (`gemini-cli`) | Gemini native, `URL/api/gemini` | `GEMINI_CLI_HOME` | temporary only; API-key endpoint override is environmental |
+| `grok` (`grok-cli`) | Chat Completions, `URL/v1` | isolated `HOME` plus environment | owner-only managed environment file |
 | `opencode` | Chat Completions, `URL/v1` | `OPENCODE_CONFIG` | `$XDG_CONFIG_HOME/opencode/opencode.json` |
-| `qwen-code` (`qwen`) | Chat Completions, `URL/v1` | isolated `HOME` | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
+| `qwen` (`qwen-code`) | Chat Completions, `URL/v1` | isolated `HOME` | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
 | `agent` | Chat Completions, `URL/v1` | temporary config content | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
-| `cursor` | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | not implemented: router RPC adapter does not exist | none |
+| `cursor-agent` (`cursor`) | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | not implemented: router RPC adapter does not exist | none |
+
+Each name is the command the client installs as, which is what your shell
+already has; the descriptive form in parentheses is kept as an alias, so
+`with claude-code` and `clients setup qwen-code` continue to work.
 
 Each client-specific document keeps a binary-free manual path with the exact
 environment variables or config fields. Cursor deliberately fails before
