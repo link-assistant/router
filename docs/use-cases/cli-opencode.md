@@ -7,7 +7,7 @@ or `/v1/responses`.
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with opencode run "hi"
+router with opencode run "hi"
 ```
 
 The wrapper writes a disposable OpenCode file, selects it with
@@ -53,7 +53,7 @@ Identical, with `"npm": "@ai-sdk/openai"`. Use this when the active upstream is
 `codex`, whose native protocol is Responses.
 
 ```bash
-link-assistant-router clients setup opencode
+router clients setup opencode
 # Run the `source …/opencode.env` command printed by setup.
 opencode
 ```

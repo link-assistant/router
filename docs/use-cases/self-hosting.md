@@ -86,7 +86,7 @@ credential is a third thing that never leaves the process.
 export TOKEN_SECRET="$(openssl rand -hex 32)"
 export TOKEN_ADMIN_KEY="$(openssl rand -hex 32)"
 export ROUTER_HOST=127.0.0.1          # personal machine: do not listen publicly
-link-assistant-router serve
+router serve
 ```
 
 `ROUTER_HOST` is honoured as given — bound to `127.0.0.1` the port is reachable

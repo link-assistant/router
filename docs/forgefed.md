@@ -30,7 +30,7 @@ Example:
 export ACTIVITYPUB_ACTOR_BASE_URL=https://router.example.com
 export ACTIVITYPUB_PUBLIC_KEY_PEM="$(cat public.pem)"
 export TOKEN_SECRET="$(openssl rand -hex 32)"
-link-assistant-router serve
+router serve
 ```
 
 ## Discovery Check

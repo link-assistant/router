@@ -5,7 +5,7 @@
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with claude "hi"
+router with claude "hi"
 ```
 
 The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
@@ -21,7 +21,7 @@ forwards every later token verbatim. See
 Automatic setup (merges the router URL and backs up an existing settings file):
 
 ```bash
-link-assistant-router clients setup claude
+router clients setup claude
 # Run the `source …/claude.env` command printed by setup.
 ```
 

@@ -47,9 +47,9 @@ never emits token ids, token labels, or account names.
 The audit log is **off by default**. Enable it with a path:
 
 ```bash
-link-assistant-router serve --audit-log /var/log/link-assistant/audit.jsonl
+router serve --audit-log /var/log/link-assistant/audit.jsonl
 # or
-AUDIT_LOG=/var/log/link-assistant/audit.jsonl link-assistant-router serve
+AUDIT_LOG=/var/log/link-assistant/audit.jsonl router serve
 ```
 
 One JSON object per line is appended as each request is authorised:
@@ -100,7 +100,7 @@ jq -r .label audit.jsonl | sort | uniq -c | sort -rn
 jq -r 'select(.label=="issue-45-solver") | [.surface,.provider,.model] | @tsv' audit.jsonl | sort -u
 
 # tokens that are close to their budget
-link-assistant-router tokens list
+router tokens list
 ```
 
 ```promql

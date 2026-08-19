@@ -133,7 +133,7 @@ gh attestation verify "link-assistant-router-${VERSION}-${PLATFORM}.tar.gz" \
   --repo link-assistant/router
 
 tar -xzf "link-assistant-router-${VERSION}-${PLATFORM}.tar.gz"
-install -m 755 link-assistant-router with-router /usr/local/bin/
+install -m 755 router with-router /usr/local/bin/
 ```
 
 Updating is the same sequence with a newer `VERSION`: the archive contains only
@@ -366,7 +366,7 @@ its PKCE loopback flow remains available as a CLI fallback.
 | `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
 | `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
 
-For a foreground local login, use `link-assistant-router auth claude` or
+For a foreground local login, use `router auth claude` or
 `auth codex`. Claude's `--flow code` stores its pending PKCE login for 15
 minutes, so the code can be redeemed from a later process with
 `auth claude --flow code --code <code>`. `auth status` reports each
@@ -753,16 +753,16 @@ provider API keys are encrypted with AES-GCM using a key derived from
 present.
 
 ```bash
-link-assistant-router providers add \
+router providers add \
   --name litellm \
   --base-url http://litellm:4000/v1 \
   --model claude-sonnet \
   --models claude-sonnet,gpt-4o \
   --api-key "$LITELLM_MASTER_KEY"
 
-link-assistant-router providers list
-link-assistant-router providers show litellm
-link-assistant-router providers remove litellm
+router providers list
+router providers show litellm
+router providers remove litellm
 ```
 
 Provider records can also be imported from JSON, provider-store `.lenv`, or an
@@ -854,44 +854,48 @@ Other files keep the format of the boundary they serve:
 
 ### CLI subcommands
 
+The command is `router`. Installing also puts `link-assistant-router` on `PATH`,
+the name used before v0.92.0, so existing scripts and deployment units keep
+working; the two are the same program and either may be used.
+
 ```bash
 # Default: starts the HTTP server (same as `serve`).
-link-assistant-router
+router
 
 # Issue / list / revoke / show tokens locally (no HTTP needed):
-link-assistant-router tokens issue --ttl-hours 168 --label alice
+router tokens issue --ttl-hours 168 --label alice
 # ...optionally cap how many upstream requests the token may make:
-link-assistant-router tokens issue --ttl-hours 168 --label alice --max-requests 500
+router tokens issue --ttl-hours 168 --label alice --max-requests 500
 # ...cap actual input + output tokens and bursts as well:
-link-assistant-router tokens issue --label alice --max-tokens 100000 --rate-limit-per-minute 10
-link-assistant-router tokens list
-link-assistant-router tokens revoke <id>
-link-assistant-router tokens expire <id>
-link-assistant-router tokens rotate <id> --ttl-hours 168
-link-assistant-router tokens show <id>
+router tokens issue --label alice --max-tokens 100000 --rate-limit-per-minute 10
+router tokens list
+router tokens revoke <id>
+router tokens expire <id>
+router tokens rotate <id> --ttl-hours 168
+router tokens show <id>
 
 # Inspect configured accounts:
-link-assistant-router accounts list
+router accounts list
 
 # Manage OpenAI-compatible upstream providers:
-link-assistant-router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
-link-assistant-router providers import providers.lenv
-link-assistant-router providers list
+router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
+router providers import providers.lenv
+router providers list
 
 # Safely configure local agentic CLIs against this router:
-link-assistant-router clients list
-link-assistant-router clients setup codex
-link-assistant-router clients setup claude --token la_sk_...
-link-assistant-router clients setup opencode
-link-assistant-router clients setup qwen
-link-assistant-router clients setup agent
-link-assistant-router clients setup grok
-link-assistant-router clients show codex
-link-assistant-router clients doctor codex
-link-assistant-router clients remove codex
+router clients list
+router clients setup codex
+router clients setup claude --token la_sk_...
+router clients setup opencode
+router clients setup qwen
+router clients setup agent
+router clients setup grok
+router clients show codex
+router clients doctor codex
+router clients remove codex
 
 # Print resolved configuration + credential / store probes:
-link-assistant-router doctor
+router doctor
 ```
 
 ### Logging
@@ -1137,7 +1141,7 @@ The `/api/tokens*` endpoints — and every other endpoint marked *(admin)* above
 
    ```bash
    # CLI
-   link-assistant-router tokens issue --admin --ttl-hours 168 --label ops
+   router tokens issue --admin --ttl-hours 168 --label ops
    # HTTP (from an existing admin credential)
    curl -s -X POST http://localhost:8080/api/tokens \
      -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
@@ -1148,7 +1152,7 @@ The `/api/tokens*` endpoints — and every other endpoint marked *(admin)* above
    that asked for it:
 
    ```bash
-   link-assistant-router tokens rotate <sub> --ttl-hours 168 --label ops
+   router tokens rotate <sub> --ttl-hours 168 --label ops
    curl -s -X POST http://localhost:8080/api/tokens/rotate \
      -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" -d '{}' | jq .
    ```
@@ -1205,7 +1209,7 @@ one runaway loop immediately consume the shared subscription.
 
 ```bash
 # CLI
-link-assistant-router tokens issue --ttl-hours 24 --label scoped-agent \
+router tokens issue --ttl-hours 24 --label scoped-agent \
   --max-requests 100 --max-tokens 100000 --rate-limit-per-minute 10
 
 # HTTP: same, via the admin endpoint

@@ -4,7 +4,7 @@ For one run, use the temporary launcher. It is the default path and does not
 modify normal client configuration:
 
 ```bash
-link-assistant-router with codex "hi"
+router with codex "hi"
 with-router claude "hi"
 ```
 
@@ -16,14 +16,14 @@ They configure every local client that exposes a supported router URL without
 replacing unrelated user settings:
 
 ```bash
-link-assistant-router clients list
-link-assistant-router clients setup codex
-link-assistant-router clients setup opencode --token la_sk_...
-link-assistant-router clients setup qwen
-link-assistant-router clients setup agent
-link-assistant-router clients show codex
-link-assistant-router clients doctor codex
-link-assistant-router clients remove codex
+router clients list
+router clients setup codex
+router clients setup opencode --token la_sk_...
+router clients setup qwen
+router clients setup agent
+router clients show codex
+router clients doctor codex
+router clients remove codex
 ```
 
 `remove` revokes the token before it deletes the local credential file, so a
@@ -40,11 +40,11 @@ where shell history and process listings would expose it:
 
 ```bash
 # Read one line from standard input.
-pass show router/token | link-assistant-router clients setup codex --token-stdin
+pass show router/token | router clients setup codex --token-stdin
 
 # Or export the documented variable (`LINK_ASSISTANT_TOKEN` is accepted too).
 export LINK_ASSISTANT_ROUTER_TOKEN=la_sk_...
-link-assistant-router clients setup codex
+router clients setup codex
 ```
 
 The precedence is `--token`, then `--token-stdin`, then
@@ -62,10 +62,10 @@ any token variable exported in the calling shell. Automation can therefore prove
 setup → doctor → launch → remove without touching real user settings:
 
 ```bash
-link-assistant-router clients --home /tmp/router-check setup codex --token-stdin
-link-assistant-router clients --home /tmp/router-check show codex
-link-assistant-router clients --home /tmp/router-check doctor codex
-link-assistant-router clients --home /tmp/router-check remove codex
+router clients --home /tmp/router-check setup codex --token-stdin
+router clients --home /tmp/router-check show codex
+router clients --home /tmp/router-check doctor codex
+router clients --home /tmp/router-check remove codex
 ```
 
 `setup` mints a 24-hour router token unless `--token` supplies one. The token is

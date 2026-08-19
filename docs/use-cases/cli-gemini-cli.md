@@ -6,7 +6,7 @@
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with gemini "hi"
+router with gemini "hi"
 ```
 
 The wrapper selects the Gemini API-key flow below a disposable
@@ -115,8 +115,8 @@ Three provider gaps are handled here explicitly:
 ```bash
 gemini                                  # log in once; writes ~/.gemini/oauth_creds.json
 export TOKEN_SECRET=$(openssl rand -hex 32)
-link-assistant-router serve
-link-assistant-router doctor            # confirms the credential file and token validity
+router serve
+router doctor            # confirms the credential file and token validity
 ```
 
 The router reads `~/.gemini/oauth_creds.json` read-only and refreshes expired
@@ -151,6 +151,6 @@ subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
 | `401` on every request with a valid token | a router older than 0.87.0 did not accept `x-goog-api-key`; upgrade, or send `Authorization: Bearer` |
 | `401` mentioning `?key=` | the token was put in the URL; move it into a header |
 | `404` on a Gemini namespace | the route is disabled, or the model is not owned by any connected subscription |
-| Empty `models` list | no subscription is healthy; run `link-assistant-router doctor` |
+| Empty `models` list | no subscription is healthy; run `router doctor` |
 | `INVALID_ARGUMENT` about server-side tools | a forced tool choice offers only `web_search`; use `AUTO` or add a client function |
 | Answer ends early with `finishReason: "MAX_TOKENS"` | `generationConfig.maxOutputTokens` was reached; raise or drop the cap |

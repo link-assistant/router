@@ -399,7 +399,8 @@ async fn run_server(
 /// Start the optional Telegram and VK admin channels.
 ///
 /// Both are off unless a bot token is configured, so an upgrade adds no new
-/// behaviour; when they do run they share the *same* [`AdminClaim`] as the web
+/// behaviour; when they do run they share the *same*
+/// [`link_assistant_router::admin::AdminClaim`] as the web
 /// UI, which is what makes the first-admin claim system-wide rather than one
 /// per channel.
 fn spawn_chat_channels(

@@ -12,7 +12,7 @@ which is exactly what a per-task `la_sk_…` token wants.
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with qwen "hi"
+router with qwen "hi"
 ```
 
 The wrapper uses an isolated `HOME`, writes a disposable Qwen settings file,
@@ -42,7 +42,7 @@ forwards every later token verbatim. See
 ```
 
 ```bash
-link-assistant-router clients setup qwen
+router clients setup qwen
 # Run the `source …/qwen.env` command printed by setup.
 qwen
 ```

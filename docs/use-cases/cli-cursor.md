@@ -12,7 +12,7 @@ and carries a real security cost, which that section states in full.
 ## One-line capability check
 
 ```bash
-link-assistant-router with cursor-agent "hi"
+router with cursor-agent "hi"
 ```
 
 This exits nonzero before launching Cursor and explains the missing Connect-RPC
