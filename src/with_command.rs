@@ -92,10 +92,20 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else if let Some(model) = credential.select_model(owner) {
         model.to_string()
     } else {
+        // Name what the catalog *does* hold: "only openai models" is a much
+        // shorter path to the real cause — a lapsed subscription — than the
+        // unrecognised-model error the client would otherwise report about
+        // itself (issue #225).
+        let advertised = credential.advertised_owners();
+        let holdings = if advertised.is_empty() {
+            "the catalog is empty".to_string()
+        } else {
+            format!("it advertises only {} models", advertised.join(", "))
+        };
         cleanup_after_setup_failure(credential).await;
         return Err(format!(
-            "the router advertises no model for {}; authorize a matching subscription on the \
-             router host, or pass --model explicitly",
+            "the router advertises no model for {} ({owner} models): {holdings}. Authorize a \
+             matching subscription on the router host, or pass --model explicitly",
             args.client.integration().name
         )
         .into());
