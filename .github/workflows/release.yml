@@ -985,7 +985,13 @@ jobs:
           PLATFORM: ${{ matrix.os }}-${{ matrix.arch }}
         run: |
           mkdir -p dist/package
-          cp "target/${{ matrix.target }}/release/link-assistant-router" \
+          # `router` is the canonical command (issue #222); the other two names
+          # ship beside it so existing scripts and deployment units keep working.
+          # A name missing here is absent from every published archive, which is
+          # how `router` shipped in v0.92.0 without reaching anyone who installs
+          # from a release rather than with `cargo install`.
+          cp "target/${{ matrix.target }}/release/router" \
+            "target/${{ matrix.target }}/release/link-assistant-router" \
             "target/${{ matrix.target }}/release/with-router" dist/package/
           cp LICENSE README.md dist/package/
           cargo cyclonedx --format json --all-features --all --spec-version 1.5 \
@@ -1175,7 +1181,11 @@ jobs:
           (cd dist && shasum -a 256 -c "link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256")
           mkdir -p dist/package
           tar -C dist/package -xzf "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.tar.gz"
-          # The shipped binary must run natively before the lifecycle is tried.
+          # The shipped binaries must run natively before the lifecycle is
+          # tried. `router` is checked first: it is the canonical command, and
+          # asserting it here is what would have caught its absence from the
+          # v0.92.0 archives (issue #222).
+          dist/package/router --version
           dist/package/link-assistant-router --version
           dist/package/with-router --help >/dev/null
 
