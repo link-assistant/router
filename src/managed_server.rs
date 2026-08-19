@@ -1,16 +1,15 @@
 //! Server selection, managed Docker lifecycle, and per-run token handling.
 
 use std::ffi::OsStr;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Child, Command, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
-use fs2::FileExt as _;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -82,14 +81,41 @@ impl RunCredential {
     /// advertises (issue #192). `owner` narrows the choice to models a
     /// dialect-specific client can use; an empty owner accepts any.
     pub(crate) fn select_model(&self, owner: &str) -> Option<&str> {
-        // Prefer a model the catalog attributes to the client's dialect owner,
-        // but fall back to any advertised model: a catalog that declares no
-        // owner still describes real, usable models.
+        if owner.is_empty() {
+            // No dialect constraint: any advertised model will do.
+            return self.available_models.first().map(|model| model.id.as_str());
+        }
+        if let Some(model) = self
+            .available_models
+            .iter()
+            .find(|model| model.owned_by == owner)
+        {
+            return Some(model.id.as_str());
+        }
+        // Falling back is defensible only when the catalog does not say who owns
+        // its models: then the router cannot tell, and a usable model beats
+        // refusing. When every entry names a *different* owner it does know, and
+        // substituting one launched Claude Code against an `OpenAI` model — so the
+        // client blamed its own model name rather than the lapsed subscription
+        // (issue #225).
         self.available_models
             .iter()
-            .find(|model| !owner.is_empty() && model.owned_by == owner)
-            .or_else(|| self.available_models.first())
-            .map(|model| model.id.as_str())
+            .all(|model| model.owned_by.is_empty())
+            .then(|| self.available_models.first().map(|m| m.id.as_str()))
+            .flatten()
+    }
+
+    /// The distinct owners the catalog names, for reporting why nothing fit.
+    pub(crate) fn advertised_owners(&self) -> Vec<&str> {
+        let mut owners: Vec<&str> = self
+            .available_models
+            .iter()
+            .map(|model| model.owned_by.as_str())
+            .filter(|owner| !owner.is_empty())
+            .collect();
+        owners.sort_unstable();
+        owners.dedup();
+        owners
     }
 }
 
@@ -885,79 +911,6 @@ fn process_alive(pid: u32) -> bool {
     }
 }
 
-fn state_directory() -> Result<PathBuf, AnyError> {
-    let root = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
-        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))
-        .ok_or("HOME, XDG_CONFIG_HOME, and APPDATA are unset; cannot store server state")?;
-    let path = root.join(CONFIG_DIRECTORY);
-    fs::create_dir_all(&path)?;
-    set_owner_only(&path)?;
-    Ok(path)
-}
-
-fn lock_state() -> Result<File, AnyError> {
-    let path = state_directory()?.join(MANAGED_LOCK);
-    let file = OpenOptions::new()
-        .create(true)
-        .truncate(false)
-        .read(true)
-        .write(true)
-        .open(path)?;
-    file.lock_exclusive()?;
-    Ok(file)
-}
-
-fn load_managed() -> Result<Option<ManagedState>, AnyError> {
-    let path = state_directory()?.join(MANAGED_STATE);
-    match fs::read_to_string(&path) {
-        Ok(source) => Ok(Some(serde_json::from_str(&source).map_err(|error| {
-            format!("invalid managed server state {}: {error}", path.display())
-        })?)),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(error.into()),
-    }
-}
-
-fn save_managed(state: &ManagedState) -> Result<(), AnyError> {
-    write_private_json(&state_directory()?.join(MANAGED_STATE), state)
-}
-
-fn write_private_json(path: &Path, value: &impl Serialize) -> Result<(), AnyError> {
-    let temporary = path.with_extension(format!("tmp-{}", uuid::Uuid::new_v4()));
-    let mut options = OpenOptions::new();
-    options.write(true).create_new(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt as _;
-        options.mode(0o600);
-    }
-    let mut file = options.open(&temporary)?;
-    serde_json::to_writer_pretty(&mut file, value)?;
-    file.write_all(b"\n")?;
-    file.sync_all()?;
-    #[cfg(windows)]
-    if path.exists() {
-        fs::remove_file(path)?;
-    }
-    fs::rename(&temporary, path)?;
-    set_owner_only(path)?;
-    Ok(())
-}
-
-fn set_owner_only(path: &Path) -> Result<(), std::io::Error> {
-    #[cfg(not(unix))]
-    let _ = path;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        let mode = if path.is_dir() { 0o700 } else { 0o600 };
-        fs::set_permissions(path, fs::Permissions::from_mode(mode))?;
-    }
-    Ok(())
-}
-
 fn normalize_server(server: &str) -> Result<String, AnyError> {
     let server = server.trim().trim_end_matches('/');
     if server.starts_with("http://") || server.starts_with("https://") {
@@ -976,3 +929,12 @@ fn compact(value: &str) -> String {
         format!("{}…", compact.chars().take(LIMIT).collect::<String>())
     }
 }
+
+#[path = "managed_server_state.rs"]
+mod state;
+
+use state::{load_managed, lock_state, save_managed, state_directory, write_private_json};
+
+#[cfg(test)]
+#[path = "managed_server_tests.rs"]
+mod tests;
