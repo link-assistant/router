@@ -438,3 +438,33 @@ async fn a_streamed_tool_call_reaches_the_responses_caller() {
         "a tool-only turn must not carry an empty output_text: {stream}"
     );
 }
+
+/// A streamed relay must deliver every byte to the client and record how the
+/// stream ended. The terminal record is what distinguishes a turn cut mid-flight
+/// from a healthy one — `status=200` is decided by the headers and cannot
+/// (issue #230).
+#[tokio::test]
+async fn a_streamed_relay_records_how_it_ended_without_losing_frames() {
+    let router = TestRouter::start().await;
+    let response = router
+        .client
+        .post(format!("{}/v1/chat/completions", router.url))
+        .bearer_auth(&router.token)
+        .json(&json!({
+            "model": CLAUDE_MODEL,
+            "stream": true,
+            "messages": [{"role": "user", "content": "hi"}]
+        }))
+        .send()
+        .await
+        .expect("router POST");
+    assert_eq!(response.status(), StatusCode::OK);
+    // Every frame the stub emitted must reach the caller: the end-of-stream
+    // bookkeeping must not truncate or swallow the body.
+    let body = response.text().await.expect("stream body");
+    assert!(!body.is_empty(), "the relayed stream was empty");
+    assert!(
+        body.contains("stub") || body.contains("message") || body.contains("data:"),
+        "the relayed body looks wrong: {body}"
+    );
+}

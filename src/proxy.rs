@@ -555,15 +555,59 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let mut usage = status
         .is_success()
         .then(|| reservation.take().into_tracker());
-    let stream = upstream_resp.bytes_stream().map(move |chunk| {
-        if let Ok(bytes) = &chunk {
-            response_log.record_upstream_body(&correlation_id, bytes);
-            if let Some(tracker) = &mut usage {
-                tracker.feed(bytes);
+    // Track how the stream ends, not only how it started: `status` above was
+    // decided by the response headers, so it cannot report a turn that is cut
+    // mid-flight (issue #230).
+    let started = std::time::Instant::now();
+    let outcome = std::sync::Arc::new(std::sync::Mutex::new(crate::request_log::StreamOutcome {
+        terminated: false,
+        detail: None,
+        frames: 0,
+        bytes: 0,
+        duration_ms: 0,
+    }));
+    let end_outcome = std::sync::Arc::clone(&outcome);
+    let end_log = std::sync::Arc::clone(&response_log);
+    let end_id = correlation_id.clone();
+    let logger = state.logger.clone();
+    let stream = upstream_resp
+        .bytes_stream()
+        .map(move |chunk| {
+            let mut state = outcome.lock().expect("stream outcome lock");
+            match &chunk {
+                Ok(bytes) => {
+                    response_log.record_upstream_body(&correlation_id, bytes);
+                    state.frames += 1;
+                    state.bytes += bytes.len() as u64;
+                    if crate::request_log::frame_terminates_stream(bytes) {
+                        state.terminated = true;
+                    }
+                    if let Some(tracker) = &mut usage {
+                        tracker.feed(bytes);
+                    }
+                }
+                Err(error) => state.detail = Some(error.to_string()),
             }
-        }
-        chunk.map_err(std::io::Error::other)
-    });
+            drop(state);
+            chunk.map_err(std::io::Error::other)
+        })
+        .chain(futures_util::stream::once(async move {
+            crate::request_log::settle_stream(
+                &end_log,
+                &end_id,
+                &end_outcome,
+                started.elapsed().as_millis(),
+                &logger,
+            );
+            Err(std::io::Error::other(
+                crate::request_log::STREAM_END_MARKER,
+            ))
+        }))
+        .take_while(|item| {
+            futures_util::future::ready(
+                !matches!(item, Err(error) if error.to_string() == crate::request_log::STREAM_END_MARKER),
+            )
+        });
 
     let body = Body::from_stream(stream);
 

@@ -267,6 +267,112 @@ impl RequestLog {
             json!({"body": redacted_body(body)}),
         );
     }
+
+    /// Record how a streamed exchange *ended*.
+    ///
+    /// The status line is written when the response headers arrive, so for a
+    /// streaming turn `status=200` says nothing about whether the turn
+    /// completed. A stream cut mid-flight was therefore logged as a clean
+    /// success while the client reported a truncated answer — a false negative
+    /// in the router's own observability (issue #230).
+    pub fn record_stream_end(&self, correlation_id: &str, outcome: &StreamOutcome) {
+        self.record(
+            correlation_id,
+            "stream_end",
+            json!({
+                "outcome": outcome.label(),
+                "complete": outcome.is_complete(),
+                "frames": outcome.frames,
+                "bytes": outcome.bytes,
+                "duration_ms": outcome.duration_ms,
+                "detail": outcome.detail,
+            }),
+        );
+    }
+}
+
+/// How a streamed relay finished, for the terminal log record.
+#[derive(Debug, Clone)]
+pub struct StreamOutcome {
+    /// Whether the dialect's own terminator was seen.
+    pub terminated: bool,
+    /// Set when the upstream or the transport failed mid-stream.
+    pub detail: Option<String>,
+    pub frames: u64,
+    pub bytes: u64,
+    pub duration_ms: u128,
+}
+
+impl StreamOutcome {
+    #[must_use]
+    pub const fn is_complete(&self) -> bool {
+        self.terminated && self.detail.is_none()
+    }
+
+    /// A short, greppable name for the outcome.
+    #[must_use]
+    pub const fn label(&self) -> &'static str {
+        if self.detail.is_some() {
+            "upstream_error"
+        } else if self.terminated {
+            "completed"
+        } else {
+            "ended_without_terminator"
+        }
+    }
+}
+
+/// Sentinel that ends the relayed stream after its outcome has been recorded.
+///
+/// The terminal record is emitted by a final stream item, which is then filtered
+/// out so the client sees only the real body.
+pub const STREAM_END_MARKER: &str = "stream-end marker";
+
+/// Record how a relayed stream finished, warning when it was cut short.
+///
+/// Silence is what made the defect invisible: an operator reading the log saw
+/// only `status=200` while the user's answer was truncated (issue #230).
+pub fn settle_stream(
+    log: &RequestLog,
+    correlation_id: &str,
+    outcome: &std::sync::Mutex<StreamOutcome>,
+    duration_ms: u128,
+    logger: &log_lazy::LogLazy,
+) {
+    let outcome = {
+        let mut outcome = outcome.lock().expect("stream outcome lock");
+        outcome.duration_ms = duration_ms;
+        outcome.clone()
+    };
+    if !outcome.is_complete() {
+        logger.warn(|| {
+            format!(
+                "stream {correlation_id} ended without its terminator after {} frames in {}ms{}",
+                outcome.frames,
+                outcome.duration_ms,
+                outcome
+                    .detail
+                    .as_ref()
+                    .map_or_else(String::new, |detail| format!(": {detail}"))
+            )
+        });
+    }
+    log.record_stream_end(correlation_id, &outcome);
+}
+
+/// Whether `frame` carries the terminating event of a streaming dialect.
+///
+/// Anthropic ends a turn with `message_stop`; the `OpenAI` surfaces end with
+/// `[DONE]`, and the Responses shape with `response.completed`. A stream that
+/// stops without one of these was cut mid-flight (issue #230).
+#[must_use]
+pub fn frame_terminates_stream(frame: &[u8]) -> bool {
+    let Ok(text) = std::str::from_utf8(frame) else {
+        // A compressed frame cannot be inspected; absence of a terminator is
+        // then unknowable rather than false, and the caller says so.
+        return false;
+    };
+    text.contains("message_stop") || text.contains("[DONE]") || text.contains("response.completed")
 }
 
 fn ensure_owner_only_dir(path: &Path) -> std::io::Result<()> {
@@ -398,12 +504,37 @@ pub fn redacted_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
         .collect()
 }
 
-/// Represent a body as JSON when possible, redacting credential-shaped keys.
+/// How a body that is not valid UTF-8 is represented in the log.
+///
+/// `String::from_utf8_lossy` replaces every invalid byte with U+FFFD, which for
+/// a compressed body destroys it: the record is then neither readable nor
+/// decodable after the fact (issue #231). Such a body is base64-encoded instead,
+/// under a marker that says what the reader is looking at.
+const BINARY_BODY_KEY: &str = "base64";
+
+/// Encode a body for the log without losing it.
+///
+/// A body is stored as JSON when it parses as JSON, as text when it is valid
+/// UTF-8, and otherwise as base64 — which is what a `gzip`, `br` or `zstd`
+/// response looks like here, because the router does not decompress upstream
+/// bodies and a single frame of a compressed *stream* cannot be decoded on its
+/// own anyway.
 #[must_use]
 pub fn redacted_body(body: &[u8]) -> Value {
-    serde_json::from_slice(body).map_or_else(
-        |_| Value::String(String::from_utf8_lossy(body).into_owned()),
-        redact_value,
+    if let Ok(value) = serde_json::from_slice::<Value>(body) {
+        return redact_value(value);
+    }
+    std::str::from_utf8(body).map_or_else(
+        |_| {
+            json!({
+                BINARY_BODY_KEY: base64::Engine::encode(
+                    &base64::engine::general_purpose::STANDARD,
+                    body,
+                ),
+                "bytes": body.len(),
+            })
+        },
+        |text| Value::String(text.to_string()),
     )
 }
 
