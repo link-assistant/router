@@ -46,6 +46,48 @@ API. Any adapter is therefore version-pinned by nature: it targets one
 format, which it may do without notice. That is the cost to accept before
 starting — not a reason the work cannot be done.
 
+## How to capture its traffic
+
+Anyone implementing this hits the same wall first: pointing `CURSOR_API_ENDPOINT`
+at a listener yields **zero connections**, which reads as "the client never talks
+to the endpoint". That reading is wrong, and so is the common explanation that
+HTTP/2 or proxy variables are to blame.
+
+Verified against `cursor-agent 2025.08.27-24c29c1`:
+
+- the binary is a shell wrapper around a bundled **Node 22**, so a
+  `NODE_OPTIONS` preload does work — but it is not needed;
+- `CURSOR_API_ENDPOINT` is read, then **overridden**: the CLI has an undocumented
+  `-e, --endpoint <url>` option whose default (`https://api2.cursor.sh`) is always
+  present, so the environment variable never takes effect;
+- passing the flag instead captures the traffic in plaintext:
+
+  ```bash
+  cursor-agent --endpoint http://127.0.0.1:PORT --print --output-format text "hi"
+  ```
+
+  Related undocumented flags: `--insecure`, `--http-version`, `--repo-endpoint`,
+  `--repo-http-version`, `--repo-insecure`. Point `--repo-endpoint` at the local
+  listener too, or the client still calls out to `repo42.cursor.sh`.
+
+What that capture shows: Connect-RPC (`user-agent: connect-es`,
+`content-type: application/proto`) over plain HTTP for the bootstrap calls —
+`/auth/exchange_user_api_key`, `aiserver.v1.DashboardService/GetUserPrivacyMode`,
+`aiserver.v1.AiService/GetUsableModels`, `GetDefaultModelForCli` — and a
+**cleartext h2c** connection for the chat turn itself, whose transport is pinned
+to HTTP/2 regardless of `--http-version`. So an adapter needs an h2c server, not
+a TLS-terminating proxy and not a CA.
+
+`/auth/exchange_user_api_key` is directed at `--endpoint` as well, so a local
+adapter can mint the token it then accepts; vendor authentication is not a
+prerequisite for development.
+
+**One prerequisite is outside the code**: a valid Cursor login. With an expired
+credential the CLI opens an interactive login before issuing any request, so
+neither capture nor an end-to-end test can run. Confirm `cursor-agent status`
+reports `Logged in` *and* that a `--print` run does not drop into a login screen
+before starting.
+
 ## What a minimal adapter would have to cover
 
 The protocol investigation is complete, so the remaining work can be judged
@@ -70,6 +112,11 @@ would need:
 [Agent Vibes](https://github.com/funny-vibes/agent-vibes) implements a
 version-specific adapter against the same boundary and is the closest available
 reference for the wire format.
+[tces1/cursor-agent-proxy](https://github.com/tces1/cursor-agent-proxy) forces the
+client's traffic through a proxy by preloading an HTTP/2 shim via `NODE_OPTIONS`.
+It is worth reading, but note it targets a build where the endpoint could not be
+redirected; against the version measured above the `--endpoint` flag makes the
+shim unnecessary.
 
 Nothing above depends on the router's internals beyond one existing surface, so
 this can be built and reviewed independently. What it cannot be is
