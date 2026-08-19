@@ -154,3 +154,70 @@ fn missing_argument_usage_does_not_present_configured_globals_as_required() {
         }
     }
 }
+
+/// The project calls itself `router` everywhere — repository, documentation,
+/// conversation — while the installed command was `link-assistant-router`
+/// (issue #222). Both names must now resolve, and to the same program.
+#[test]
+fn both_the_canonical_and_legacy_commands_run() {
+    for binary in [
+        env!("CARGO_BIN_EXE_router"),
+        env!("CARGO_BIN_EXE_link-assistant-router"),
+    ] {
+        let result = Command::new(binary)
+            .arg("--version")
+            .output()
+            .unwrap_or_else(|error| panic!("{binary} should run: {error}"));
+        assert!(result.status.success(), "{binary} exited with failure");
+        let version = String::from_utf8_lossy(&result.stdout);
+        assert!(
+            version.starts_with("router "),
+            "{binary} reported {version:?}"
+        );
+    }
+}
+
+/// Both names are one program, so their behaviour must not diverge. `--help` is
+/// compared with the usage line removed: that line deliberately echoes the name
+/// the user actually typed, so a caller who ran the legacy command is shown a
+/// command that works for them. Everything else must be identical, which catches
+/// a future change wired into one entry point but not the other.
+#[test]
+fn the_two_commands_describe_the_same_program() {
+    let body = |binary: &str| {
+        let out = Command::new(binary)
+            .arg("--help")
+            .output()
+            .unwrap_or_else(|error| panic!("{binary} --help: {error}"));
+        String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|line| !line.starts_with("Usage:"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    assert_eq!(
+        body(env!("CARGO_BIN_EXE_router")),
+        body(env!("CARGO_BIN_EXE_link-assistant-router")),
+        "the two installed names must describe the same program"
+    );
+}
+
+/// The usage line reflects the name that was invoked, so a reader copying it
+/// gets a command that exists on their machine under that name.
+#[test]
+fn usage_reflects_the_invoked_name() {
+    for (binary, expected) in [
+        (env!("CARGO_BIN_EXE_router"), "Usage: router"),
+        (
+            env!("CARGO_BIN_EXE_link-assistant-router"),
+            "Usage: link-assistant-router",
+        ),
+    ] {
+        let out = Command::new(binary)
+            .arg("--help")
+            .output()
+            .unwrap_or_else(|error| panic!("{binary} --help: {error}"));
+        let text = String::from_utf8_lossy(&out.stdout);
+        assert!(text.contains(expected), "{binary} usage:\n{text}");
+    }
+}

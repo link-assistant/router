@@ -53,8 +53,12 @@ fn parse_truthy(value: &str) -> Result<bool, String> {
 
 /// Top-level CLI parser.
 #[derive(Debug, LinoParser)]
+// `router` is the canonical name — what the project, its repository and its
+// documentation call this tool (issue #222). It is pinned here rather than
+// taken from `argv[0]` so `--version` reads the same whichever of the two
+// installed names was invoked.
 #[command(
-    name = "link-assistant-router",
+    name = "router",
     about = "Claude MAX OAuth proxy and token gateway for Anthropic APIs",
     version
 )]

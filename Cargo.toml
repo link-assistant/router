@@ -16,6 +16,14 @@ exclude = ["dev/log/**"]
 name = "link_assistant_router"
 path = "src/lib.rs"
 
+# The canonical command is `router`: the name the project, its repository and
+# its documentation already use for itself (issue #222). The original name is
+# kept as a second binary from the same source so existing scripts, deployments
+# and documented commands keep working.
+[[bin]]
+name = "router"
+path = "src/main.rs"
+
 [[bin]]
 name = "link-assistant-router"
 path = "src/main.rs"

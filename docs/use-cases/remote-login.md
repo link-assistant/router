@@ -128,7 +128,7 @@ If you authorize by mounting a credential file and never want this surface,
 remove it entirely:
 
 ```bash
-link-assistant-router --disable-login-api    # or DISABLE_LOGIN_API=1
+router --disable-login-api    # or DISABLE_LOGIN_API=1
 ```
 
 With it disabled the routes are not registered at all, and requests to them are
@@ -156,7 +156,7 @@ curl -X POST http://localhost:8080/api/login \
   -H 'content-type: application/json' \
   -d '{"provider":"claude","mode":"setup-token"}'
 
-link-assistant-router auth claude --mode setup-token
+router auth claude --mode setup-token
 ```
 
 `LOGIN_CLI_ARGS=setup-token` keeps selecting the narrow mode as the default for
@@ -176,9 +176,9 @@ the only one `doctor` can report as `UNAVAILABLE`.
 For local or scripted authorization, use the foreground commands:
 
 ```bash
-link-assistant-router auth claude
-link-assistant-router auth codex
-link-assistant-router auth status
+router auth claude
+router auth codex
+router auth status
 ```
 
 To split Claude authorization across processes or containers sharing the same
@@ -187,7 +187,7 @@ pending PKCE state remains usable for 15 minutes if that process exits. Redeem
 the copied code without printing a different URL:
 
 ```bash
-link-assistant-router auth claude --flow code --code "$CODE"
+router auth claude --flow code --code "$CODE"
 ```
 
 `--flow cli` forces the disposable bun fallback and cannot be combined with

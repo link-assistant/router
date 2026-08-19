@@ -11,7 +11,7 @@ for this CLI.
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with codex "hi"
+router with codex "hi"
 ```
 
 This creates an isolated `HOME`, writes a disposable `~/.codex/config.toml`,
@@ -28,7 +28,7 @@ every later token verbatim. See
 Automatic setup (merges this provider and backs up an existing config):
 
 ```bash
-link-assistant-router clients setup codex
+router clients setup codex
 # Run the `source …/codex.env` command printed by setup.
 ```
 

@@ -37,7 +37,7 @@ the deployment can stay behind NAT with no public surface.
 `doctor` reports each channel:
 
 ```console
-$ link-assistant-router doctor | grep bot
+$ router doctor | grep bot
 telegram_admin_bot: enabled (private chats only)
 vk_admin_bot: disabled
 ```

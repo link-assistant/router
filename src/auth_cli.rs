@@ -58,7 +58,8 @@ fn codex_supports_flow(flow: AuthFlow) -> bool {
 }
 
 /// The login mode `LOGIN_CLI_ARGS` selects, mirroring
-/// [`crate::login::LoginManager::configured_mode`] for the foreground command.
+/// [`link_assistant_router::login::LoginManager::configured_mode`] for the
+/// foreground command.
 fn configured_mode(
     login: &link_assistant_router::login::LoginConfig,
 ) -> link_assistant_router::claude_auth::ClaudeAuthMode {

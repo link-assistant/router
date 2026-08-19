@@ -53,20 +53,20 @@ and never writes back.
 ```bash
 export TOKEN_SECRET=$(openssl rand -hex 32)
 export UPSTREAM_PROVIDER=codex
-link-assistant-router serve
+router serve
 ```
 
 Check the credential:
 
 ```bash
-link-assistant-router doctor
+router doctor
 ```
 
 ## 3. Issue a task token
 
 ```bash
 export TASK_TOKEN=$(
-  link-assistant-router tokens issue --label claude-code-on-chatgpt --ttl-hours 8 --max-requests 200
+  router tokens issue --label claude-code-on-chatgpt --ttl-hours 8 --max-requests 200
 )
 ```
 
@@ -97,9 +97,9 @@ backend. The router resolves the upstream model in this order:
 | `openai-compatible` | the stored provider's `default_model` |
 
 ```bash
-link-assistant-router serve --bridge-model gpt-5
+router serve --bridge-model gpt-5
 # or
-ANTHROPIC_BRIDGE_MODEL=gpt-5 link-assistant-router serve
+ANTHROPIC_BRIDGE_MODEL=gpt-5 router serve
 ```
 
 The response echoes back the model id **the client asked for**, so Claude Code's

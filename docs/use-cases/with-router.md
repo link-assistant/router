@@ -4,7 +4,7 @@ The safe default is a one-command, one-run configuration that never edits the
 client's normal files:
 
 ```bash
-link-assistant-router with codex "explain this repository"
+router with codex "explain this repository"
 # Equivalent standalone entry point:
 with-router codex "explain this repository"
 ```
@@ -44,10 +44,10 @@ Wrapper options are accepted before or after the tool name. After an explicit
 with a wrapper option:
 
 ```bash
-link-assistant-router with --non-interactive gemini "hi"
-link-assistant-router with opencode run "hi"
-link-assistant-router with codex --server https://router.example "hi"
-link-assistant-router with codex -- --server client-owned-value
+router with --non-interactive gemini "hi"
+router with opencode run "hi"
+router with codex --server https://router.example "hi"
+router with codex -- --server client-owned-value
 ```
 
 The explicit `--` is optional, but useful to make the boundary visible in
@@ -72,7 +72,7 @@ Resolution is deterministic:
 1. `--server` and `--token` / `--token-stdin`;
 2. `LINK_ASSISTANT_ROUTER_URL` (or `ROUTER_URL`) and
    `LINK_ASSISTANT_ROUTER_TOKEN` (or `LINK_ASSISTANT_TOKEN`);
-3. `link-assistant-router server use` configuration;
+3. `router server use` configuration;
 4. the shared managed local Docker container.
 
 ```bash
@@ -82,9 +82,9 @@ printf '%s\n' "$ROUTER_TOKEN" | \
 
 # Persist a selection. The token file is owner-readable only and never echoed.
 printf '%s\n' "$ROUTER_TOKEN" | \
-  link-assistant-router server use https://router.example.internal --token-stdin
-link-assistant-router server status
-link-assistant-router server use --clear
+  router server use https://router.example.internal --token-stdin
+router server status
+router server use --clear
 ```
 
 Passing `--token` is convenient but records the value in shell history. Prefer
@@ -105,12 +105,12 @@ the last live user stops the container but never removes it. A detached reaper
 and next-run stale-PID pruning handle wrapper crashes.
 
 ```bash
-link-assistant-router server status
-link-assistant-router server start       # keep running explicitly
-link-assistant-router server claim       # reveal and claim bootstrap admin once
-link-assistant-router server stop        # preserves container and volume
-link-assistant-router server remove      # refuses and explains credential loss
-link-assistant-router server remove --yes
+router server status
+router server start       # keep running explicitly
+router server claim       # reveal and claim bootstrap admin once
+router server stop        # preserves container and volume
+router server remove      # refuses and explains credential loss
+router server remove --yes
 ```
 
 `remove --yes` permanently deletes issued tokens, logs, and authorized vendor
@@ -133,7 +133,7 @@ each later run must receive `--token`, `--token-stdin`, or
 managed container with:
 
 ```bash
-docker exec link-assistant-router-managed link-assistant-router tokens issue \
+docker exec link-assistant-router-managed router tokens issue \
   --ttl-hours 24 --label with-router
 ```
 
@@ -142,8 +142,8 @@ docker exec link-assistant-router-managed link-assistant-router tokens issue \
 Permanent changes are opt-in:
 
 ```bash
-link-assistant-router with --server https://router.example.internal --global codex
-link-assistant-router with --global --undo codex
+router with --server https://router.example.internal --global codex
+router with --global --undo codex
 ```
 
 The first command saves the original bytes, ownership marker, and permissions.
@@ -164,4 +164,4 @@ with-router --server https://router.example.internal --token-stdin codex "reply 
 
 Expect the health check to identify a reachable router and the client to reply
 `hi`. If no subscription is usable, the wrapper stops before launch and names
-the `link-assistant-router auth <provider>` command to run on the router host.
+the `router auth <provider>` command to run on the router host.

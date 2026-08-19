@@ -16,7 +16,7 @@ The UI is served by the router itself, but on a **separate listener** that only
 exists when you give it a port:
 
 ```bash
-link-assistant-router --admin-port 8081
+router --admin-port 8081
 ```
 
 | Flag / env | Default | Does |
@@ -29,7 +29,7 @@ The two listeners are independent, which is the point: the proxy can face the
 network while the console stays on loopback.
 
 ```bash
-link-assistant-router --host 0.0.0.0 --port 8080 --admin-host 127.0.0.1 --admin-port 8081
+router --host 0.0.0.0 --port 8080 --admin-host 127.0.0.1 --admin-port 8081
 ```
 
 Under Docker, publish the admin port to loopback only — and reach it through an
@@ -50,7 +50,7 @@ reachable; `-p 127.0.0.1:8081:8081` is what keeps it off the network.
 `doctor` reports both the listener and the credential state:
 
 ```console
-$ link-assistant-router doctor | grep admin
+$ router doctor | grep admin
 admin_ui: enabled on 127.0.0.1:8081
 admin_credential: UNCLAIMED (bootstrap open)
 ```

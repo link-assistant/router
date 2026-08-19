@@ -59,20 +59,20 @@ claude          # completes the OAuth login, writes ~/.claude/.credentials.json
 ```bash
 export TOKEN_SECRET=$(openssl rand -hex 32)
 export UPSTREAM_PROVIDER=anthropic          # the default
-link-assistant-router serve                 # listens on 0.0.0.0:8080
+router serve                 # listens on 0.0.0.0:8080
 ```
 
 Verify the credential is readable and unexpired:
 
 ```bash
-link-assistant-router doctor
+router doctor
 ```
 
 ## 3. Issue a token for this task
 
 ```bash
 export LINK_ASSISTANT_TOKEN=$(
-  link-assistant-router tokens issue --label codex-on-claude --ttl-hours 24 --max-requests 200
+  router tokens issue --label codex-on-claude --ttl-hours 24 --max-requests 200
 )
 ```
 

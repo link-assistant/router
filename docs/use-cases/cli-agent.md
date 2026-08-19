@@ -6,7 +6,7 @@ provider configuration. **Router endpoint:** `/v1/chat/completions`.
 ## One-line temporary launch
 
 ```bash
-link-assistant-router with agent "ping"
+router with agent "ping"
 ```
 
 The wrapper supplies disposable OpenCode-compatible config content and a
@@ -20,7 +20,7 @@ every later token verbatim. See
 ## Manual or permanent configuration
 
 ```bash
-link-assistant-router clients setup agent
+router clients setup agent
 # Run the printed `source …/agent.env` command, then choose a configured model.
 agent --model link-assistant/<model-from-v1-models> -p "ping"
 ```
@@ -67,8 +67,8 @@ configured upstream.
 ## Diagnosis and removal
 
 ```bash
-link-assistant-router clients doctor agent
-link-assistant-router clients remove agent
+router clients doctor agent
+router clients remove agent
 ```
 
 `doctor` discovers the live catalog and sends a minimal request with an

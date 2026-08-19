@@ -23,7 +23,7 @@ This is the first requirement of
 
 ```bash
 export TOKEN_SECRET=$(openssl rand -hex 32)
-link-assistant-router serve
+router serve
 ```
 
 ## 2. Issue one token per task
@@ -31,7 +31,7 @@ link-assistant-router serve
 Via the CLI:
 
 ```bash
-link-assistant-router tokens issue \
+router tokens issue \
   --label "issue-45-solver" \
   --ttl-hours 24 \
   --max-requests 500 \
@@ -93,11 +93,11 @@ each client reads.
 ## 5. Watch and retire the token
 
 ```bash
-link-assistant-router tokens list          # expiry, requests, actual tokens, rpm
-link-assistant-router tokens show <id>     # one token's metadata
-link-assistant-router tokens revoke <id>   # immediate, persisted across restarts
-link-assistant-router tokens expire <id>   # explicit revoke alias
-link-assistant-router tokens rotate <id>   # replace and revoke; preserves controls
+router tokens list          # expiry, requests, actual tokens, rpm
+router tokens show <id>     # one token's metadata
+router tokens revoke <id>   # immediate, persisted across restarts
+router tokens expire <id>   # explicit revoke alias
+router tokens rotate <id>   # replace and revoke; preserves controls
 ```
 
 Usage and revocation live in the persistent token store, so both survive a
