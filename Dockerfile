@@ -49,6 +49,14 @@ COPY --from=bun-runtime /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=builder /app/target/release/link-assistant-router /usr/local/bin/link-assistant-router
 COPY --from=builder /app/target/release/with-router /usr/local/bin/with-router
 
+# `router` is the canonical command name every document uses, and the one
+# `cargo install` puts on a workstation's PATH. Without it here, a runbook step
+# copied from the docs fails inside the container with "executable file not
+# found" (issue #243). A symlink rather than a second copy: the two Cargo bin
+# targets build the same `src/main.rs`, so shipping both would add ~15 MB of
+# identical bytes to the image.
+RUN ln -s link-assistant-router /usr/local/bin/router
+
 # Default environment
 ENV ROUTER_PORT=8080
 ENV CLAUDE_CODE_HOME=/data/claude
