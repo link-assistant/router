@@ -132,6 +132,22 @@ impl Drop for FileLockGuard {
 /// How often a contended lock is re-tried while waiting.
 const LOCK_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(20);
 
+/// Whether a failed lock attempt means "somebody else holds it" rather than
+/// "this lock cannot work here".
+///
+/// `fs2` reports contention with the platform's own error and only unix spells
+/// it in a way `io::ErrorKind` recognises: `EWOULDBLOCK` maps to
+/// [`io::ErrorKind::WouldBlock`], while Windows answers `ERROR_LOCK_VIOLATION`,
+/// which maps to nothing in particular. Comparing against the error `fs2`
+/// itself documents keeps the two apart on every platform — mistaking
+/// contention for a broken lock silently drops the serialisation that keeps two
+/// holders of one credential from spending the same refresh token twice.
+fn is_contended(error: &io::Error) -> bool {
+    error.kind() == io::ErrorKind::WouldBlock
+        || (error.raw_os_error().is_some()
+            && error.raw_os_error() == fs2::lock_contended_error().raw_os_error())
+}
+
 /// Acquire an exclusive advisory lock on `path`, waiting up to `timeout`.
 ///
 /// `flock` has no async form, so the lock is polled rather than waited on: a
@@ -167,10 +183,7 @@ pub async fn lock_exclusive_async(
                     path: path.to_path_buf(),
                 });
             }
-            Err(error)
-                if error.kind() == io::ErrorKind::WouldBlock
-                    || error.raw_os_error() == Some(11) =>
-            {
+            Err(error) if is_contended(&error) => {
                 if waited >= timeout {
                     return Err(io::Error::new(
                         io::ErrorKind::WouldBlock,
@@ -218,6 +231,27 @@ mod tests {
                 0o600
             );
         }
+    }
+
+    /// Contention has to be recognised on every platform, not only where it
+    /// happens to map onto `WouldBlock`.
+    ///
+    /// Windows answers a contended `LockFileEx` with `ERROR_LOCK_VIOLATION`,
+    /// which `io::ErrorKind` does not classify; reading that as a broken lock
+    /// makes the waiter proceed *unlocked*, and two holders of one credential
+    /// then spend the same refresh token twice — exactly the race the lock
+    /// exists to prevent (issue #239).
+    #[test]
+    fn contention_is_told_apart_from_a_lock_that_cannot_work() {
+        assert!(
+            is_contended(&fs2::lock_contended_error()),
+            "the error fs2 documents for a contended lock must be recognised"
+        );
+        assert!(is_contended(&io::Error::from(io::ErrorKind::WouldBlock)));
+        assert!(!is_contended(&io::Error::from(
+            io::ErrorKind::PermissionDenied
+        )));
+        assert!(!is_contended(&io::Error::other("read-only file system")));
     }
 
     /// Two holders of one credential must serialise, and a holder that cannot
