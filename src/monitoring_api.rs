@@ -62,7 +62,7 @@ pub async fn accounts_endpoint(
             .into_response();
     };
     let snap: Vec<serde_json::Value> = router
-        .health_snapshot()
+        .health_snapshot_with(Some(&state.subscription_cache))
         .into_iter()
         .map(|health| {
             serde_json::json!({

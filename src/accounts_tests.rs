@@ -411,3 +411,80 @@ fn vendor_subscription_accounts_use_the_same_pool() {
     assert_eq!(selected.token.access_token, "codex-b");
     assert_eq!(selected.token.account_id.as_deref(), Some("acct-b"));
 }
+
+/// A rejection is a fact about one chain link, not about the account: once the
+/// credential on disk differs from the one that was refused, the account is
+/// reported recoverable again without a restart (issue #239's rule, kept).
+#[tokio::test]
+async fn a_rotated_credential_clears_an_earlier_refusal() {
+    let dir = tempdir("rotated-after-refusal");
+    write_creds_expiring(&dir, "revoked-refresh-token", 1_600_000_000_000);
+    let router = AccountRouter::new(
+        dir.clone(),
+        &[],
+        SelectionStrategy::RoundRobin,
+        Duration::from_secs(60),
+    );
+    let cache = crate::refresh::TokenCache::new();
+
+    let refused = crate::subscription::SubscriptionToken {
+        access_token: "tok".into(),
+        refresh_token: Some("revoked-refresh-token".into()),
+        expires_at_ms: Some(1_600_000_000_000),
+        account_id: None,
+        resource_url: None,
+    };
+    cache.record_refresh_refused(SubscriptionProvider::Claude, "primary", &refused);
+    assert_eq!(
+        router.health_snapshot_with(Some(&cache))[0].credential,
+        CredentialState::Rejected
+    );
+
+    // Another holder rotates the chain forward; the file no longer matches the
+    // link that was refused.
+    write_creds_expiring(&dir, "rotated-refresh-token", 1_600_000_000_000);
+
+    let snapshot = router.health_snapshot_with(Some(&cache));
+    assert_eq!(snapshot[0].credential, CredentialState::Refreshable);
+    assert!(snapshot[0].healthy, "a rotated chain must recover");
+}
+
+/// One revoked account must not make its healthy neighbours look revoked.
+///
+/// The evidence the ladder records alongside this is keyed by *provider*, which
+/// is right for routing a vendor away and wrong for a per-account report: every
+/// account in a Claude pool shares that key. The refusal is keyed per account
+/// and per credential precisely so this stays true (issue #245).
+#[tokio::test]
+async fn one_revoked_account_does_not_condemn_the_pool() {
+    let dead = tempdir("pool-dead");
+    let live = tempdir("pool-live");
+    write_creds_expiring(&dead, "revoked-refresh-token", 1_600_000_000_000);
+    write_creds_expiring(&live, "healthy-refresh-token", 1_600_000_000_000);
+    let router = AccountRouter::new(
+        dead,
+        &[live],
+        SelectionStrategy::RoundRobin,
+        Duration::from_secs(60),
+    );
+    let cache = crate::refresh::TokenCache::new();
+
+    let refused = crate::subscription::SubscriptionToken {
+        access_token: "tok".into(),
+        refresh_token: Some("revoked-refresh-token".into()),
+        expires_at_ms: Some(1_600_000_000_000),
+        account_id: None,
+        resource_url: None,
+    };
+    cache.record_refresh_refused(SubscriptionProvider::Claude, "primary", &refused);
+
+    let snapshot = router.health_snapshot_with(Some(&cache));
+    assert_eq!(snapshot[0].credential, CredentialState::Rejected);
+    assert!(!snapshot[0].healthy);
+    assert_eq!(
+        snapshot[1].credential,
+        CredentialState::Refreshable,
+        "the second account shares only a provider, not a credential"
+    );
+    assert!(snapshot[1].healthy, "a healthy neighbour was condemned");
+}

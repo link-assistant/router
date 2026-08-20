@@ -121,7 +121,19 @@ impl AccountState {
     /// refresh can replace the file underneath a long-lived process, and a
     /// stale verdict is the failure this signal exists to prevent. The read is
     /// a small local file, and reaches only the `accounts` surfaces.
-    fn credential_state(&self, now_ms: i64) -> CredentialState {
+    /// As [`Self::credential_state`], but consulting what the refresh ladder
+    /// has already learned about this account's current credential.
+    ///
+    /// Without the ladder's verdict, "expired but a refresh token is present"
+    /// is as far as the file on disk can take us — and a *revoked* refresh
+    /// token is still a non-empty string, so a dead chain reported itself
+    /// `refreshable` and healthy while every request it served returned 401
+    /// (issue #245).
+    fn credential_state_with(
+        &self,
+        now_ms: i64,
+        refreshes: Option<&crate::refresh::TokenCache>,
+    ) -> CredentialState {
         match self.reader.read_token() {
             Ok(token) if !token.is_expired(now_ms) => CredentialState::Usable,
             // `expiresAt` is a hint, not a verdict: an expired access token
@@ -129,14 +141,18 @@ impl AccountState {
             // ladder on the next request, exactly as `doctor` reports it. Only
             // an expired token with nothing left to refresh with is terminal.
             Ok(token) => {
-                if token
-                    .refresh_token
-                    .as_deref()
-                    .is_some_and(|refresh| !refresh.is_empty())
-                {
-                    CredentialState::Refreshable
+                if token.refresh_token.as_deref().is_none_or(str::is_empty) {
+                    return CredentialState::Expired;
+                }
+                // The refusal is keyed to this exact credential, so a chain
+                // another holder has rotated forward stops matching and the
+                // account reports recoverable again (issue #239).
+                if refreshes.is_some_and(|cache| {
+                    cache.refresh_was_refused(self.reader.provider(), &self.name, &token)
+                }) {
+                    CredentialState::Rejected
                 } else {
-                    CredentialState::Expired
+                    CredentialState::Refreshable
                 }
             }
             Err(error) => CredentialState::Unusable(error.to_string()),
@@ -325,12 +341,28 @@ impl AccountRouter {
     /// request (issue #242).
     #[must_use]
     pub fn health_snapshot(&self) -> Vec<AccountHealth> {
+        self.health_snapshot_with(None)
+    }
+
+    /// As [`Self::health_snapshot`], but consulting the refresh ladder's
+    /// record of which credentials it has already been refused for.
+    ///
+    /// The file on disk cannot distinguish a live refresh token from a revoked
+    /// one — both are non-empty strings — so a running router that had already
+    /// been told `invalid_grant` still reported the account `refreshable` and
+    /// healthy (issue #245). Callers that hold the cache should pass it; the
+    /// short-lived CLI has none, and reports what the file alone can support.
+    #[must_use]
+    pub fn health_snapshot_with(
+        &self,
+        refreshes: Option<&crate::refresh::TokenCache>,
+    ) -> Vec<AccountHealth> {
         let now_ms = chrono::Utc::now().timestamp_millis();
         self.inner
             .accounts
             .iter()
             .map(|a| {
-                let credential = a.credential_state(now_ms);
+                let credential = a.credential_state_with(now_ms, refreshes);
                 AccountHealth {
                     name: a.name.clone(),
                     home: a.home.clone(),
@@ -568,6 +600,9 @@ pub enum CredentialState {
     Usable,
     /// The access token expired, but a refresh token can renew it.
     Refreshable,
+    /// A refresh with this exact credential was refused as terminal — the
+    /// chain is revoked, and waiting will not recover it.
+    Rejected,
     /// The access token expired and no refresh token remains.
     Expired,
     /// No credential file, or one that cannot be read or parsed.
@@ -587,6 +622,7 @@ impl CredentialState {
         match self {
             Self::Usable => "ok",
             Self::Refreshable => "refreshable",
+            Self::Rejected => "rejected",
             Self::Expired => "expired",
             Self::Unusable(_) => "missing",
         }

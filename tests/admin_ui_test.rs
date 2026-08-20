@@ -670,3 +670,54 @@ fn the_chat_status_summary_names_why_an_account_is_unhealthy() {
     assert!(lines.contains("Accounts: 0/1 healthy"), "{lines}");
     assert!(lines.contains("primary: expired"), "{lines}");
 }
+
+/// `GET /api/admin/accounts` must not call a revoked chain `refreshable`.
+///
+/// The endpoint is what the admin UI and any automated health check read. A
+/// revoked refresh token is still a non-empty string on disk, so the file alone
+/// cannot tell it from a live one; the refresh ladder can, and until now the
+/// endpoint never asked it (issue #245).
+#[tokio::test]
+async fn the_accounts_endpoint_reports_a_refused_chain_as_rejected() {
+    let mut harness = Harness::new(None, Duration::from_secs(60));
+    let credentials = tempfile::tempdir().expect("credential home");
+    std::fs::write(
+        credentials.path().join("credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat01-probe","refreshToken":"revoked-chain","expiresAt":1600000000000}}"#,
+    )
+    .expect("write the credential");
+    harness.state.account_router = Some(link_assistant_router::accounts::AccountRouter::new(
+        credentials.path().to_path_buf(),
+        &[],
+        link_assistant_router::accounts::SelectionStrategy::RoundRobin,
+        Duration::from_secs(60),
+    ));
+    let token = harness.claim(None).await;
+
+    // With nothing yet known, "expired but holds a refresh token" is honest.
+    let (_, before) = harness.get("/api/admin/accounts", Some(&token)).await;
+    assert_eq!(before["accounts"][0]["credential"], "refreshable");
+    assert_eq!(before["accounts"][0]["healthy"], true);
+
+    // The ladder is refused for exactly this credential.
+    harness.state.subscription_cache.record_refresh_refused(
+        link_assistant_router::subscription::SubscriptionProvider::Claude,
+        "primary",
+        &link_assistant_router::subscription::SubscriptionToken {
+            access_token: "sk-ant-oat01-probe".into(),
+            refresh_token: Some("revoked-chain".into()),
+            expires_at_ms: Some(1_600_000_000_000),
+            account_id: None,
+            resource_url: None,
+        },
+    );
+
+    let (status, body) = harness.get("/api/admin/accounts", Some(&token)).await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["accounts"][0]["credential"], "rejected");
+    assert_eq!(
+        body["accounts"][0]["healthy"], false,
+        "a refused chain reported healthy"
+    );
+}

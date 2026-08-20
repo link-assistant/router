@@ -966,3 +966,6 @@ async fn the_public_refresh_wrapper_reports_a_missing_refresh_token() {
 
 #[path = "refresh_reactive_tests.rs"]
 mod reactive;
+
+#[path = "refresh_refusal_tests.rs"]
+mod refusal;

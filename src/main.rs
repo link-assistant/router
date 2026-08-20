@@ -324,6 +324,11 @@ async fn run_server(
     };
 
     state.register_credential_recovery(config.claude_cli_bin.as_deref());
+    // Persist terminal refusals so the CLI — a separate short-lived process
+    // that performs no refresh — can report a revoked chain too (issue #245).
+    state
+        .subscription_cache
+        .persist_rejections_in(&config.data_dir);
 
     let catalog_refresh = tokio::spawn(
         link_assistant_router::model_catalog::refresh_catalogs_forever(
@@ -622,7 +627,11 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    accounts_cli::run(&router, op)
+    // The CLI performs no refresh of its own, so it reads what a running
+    // router recorded rather than guessing from the file alone (issue #245).
+    let refreshes = link_assistant_router::refresh::TokenCache::new();
+    refreshes.persist_rejections_in(&config.data_dir);
+    accounts_cli::run(&router, Some(&refreshes), op)
 }
 
 fn run_providers(config: &Config, op: &ProviderOp) -> ExitCode {
@@ -910,6 +919,7 @@ async fn run_doctor(config: &Config) -> ExitCode {
         active_provider,
         &config.claude_code_home,
         &user_home,
+        Some(&config.data_dir),
     )
     .await;
 

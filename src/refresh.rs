@@ -508,6 +508,17 @@ pub struct TokenCache {
     /// because a newer link was picked up from disk, that fact is worth keeping
     /// where diagnostics can read it back (issue #239).
     recoveries: Mutex<HashMap<SubscriptionProvider, &'static str>>,
+    /// Credentials a refresh has already been refused for, per subscription.
+    ///
+    /// Keyed by account *and* by a fingerprint of the credential that was
+    /// rejected, so the verdict answers "has this exact chain link been tried
+    /// and refused?" rather than the weaker "does a refresh token exist?" that
+    /// let a revoked chain report itself refreshable (issue #245). Storing the
+    /// fingerprint rather than the token keeps the secret out of this map, and
+    /// makes the record expire by itself: once another holder rotates the file
+    /// forward, the fingerprint no longer matches and the account recovers
+    /// without a restart, which is the rule the ladder already follows (#239).
+    rejections: crate::refresh_rejections::RejectionRecord,
     /// Where each subscription's credential lives, when it is known.
     ///
     /// Without this the cache can only ever reason about the token it was
@@ -647,6 +658,10 @@ impl TokenCache {
                 if rejection.error.is_invalid_grant() {
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
+                    // Per account as well as per provider: the provider-wide
+                    // verdict cannot say *which* account of a pool is dead,
+                    // and `accounts list` reports one row each (issue #245).
+                    self.record_refresh_refused(provider, account, &base);
                 } else {
                     attempt
                         .record_transient_failure_after(now_ms, rejection.error.retry_after_ms());
@@ -718,6 +733,7 @@ impl TokenCache {
                 if rejection.error.is_invalid_grant() {
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
+                    self.record_refresh_refused(provider, account, &base);
                 } else {
                     // Everything else is retryable. In particular a 429 must
                     // not record rejection evidence: the credential is fine,
@@ -814,6 +830,9 @@ impl TokenCache {
         if let Ok(mut guard) = self.refresh_errors.lock() {
             guard.remove(&provider);
         }
+        // A refresh that succeeded settles the question for this account: any
+        // earlier refusal was about a link the chain has since moved past.
+        self.rejections.clear(provider, account);
     }
 
     /// Drop cached state derived from a credential that has been replaced.
@@ -827,6 +846,7 @@ impl TokenCache {
         if let Ok(mut guard) = self.refresh_errors.lock() {
             guard.remove(&provider);
         }
+        self.rejections.clear(provider, &key.1);
     }
 
     /// Record that an upstream call succeeded with `provider`'s credential.
@@ -851,6 +871,42 @@ impl TokenCache {
     /// Record that an upstream rejected `provider`'s credential (401/403).
     pub fn record_credential_rejected(&self, provider: SubscriptionProvider) {
         self.record_evidence(provider, CredentialEvidence::Rejected);
+    }
+
+    /// Record that a refresh for `account` was refused for `credential` itself.
+    ///
+    /// The evidence recorded alongside this is per *provider*, which is right
+    /// for routing a vendor away but wrong for reporting one account of a pool:
+    /// several accounts share a provider, and one revoked chain must not make
+    /// its healthy neighbours look revoked too (issue #245).
+    pub fn record_refresh_refused(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+        credential: &SubscriptionToken,
+    ) {
+        self.rejections.record(provider, account, credential);
+    }
+
+    /// Persist refusals in `data_dir`, so a later process can read them.
+    pub fn persist_rejections_in(&self, data_dir: &std::path::Path) {
+        self.rejections.persist_in(data_dir);
+    }
+
+    /// Whether a refresh has already been refused for exactly this credential.
+    ///
+    /// `false` once the file on disk differs from the one that was refused: a
+    /// rejection is a fact about one chain link, not about the account, so a
+    /// credential rotated forward by another holder is reported as recoverable
+    /// again with no restart (issue #239).
+    #[must_use]
+    pub fn refresh_was_refused(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+        credential: &SubscriptionToken,
+    ) -> bool {
+        self.rejections.was_refused(provider, account, credential)
     }
 
     /// The most recent upstream verdict for `provider`, if any call was made.
@@ -915,6 +971,15 @@ impl TokenCache {
             guard.insert((provider, account.to_string()), token);
         }
     }
+}
+
+/// Fingerprint of a credential's contents, for the durable refusal record.
+///
+/// Re-exported from the private attempt state so [`crate::refresh_rejections`]
+/// identifies a chain link exactly as the in-memory ladder does (issue #245).
+#[must_use]
+pub(crate) fn credential_fingerprint(credential: &SubscriptionToken) -> [u8; 32] {
+    refresh_state::credential_fingerprint(credential)
 }
 
 #[cfg(test)]

@@ -111,7 +111,11 @@ impl RefreshAttempt {
 
 /// Identify every credential-file change without retaining another plaintext
 /// copy of its secrets in failure state.
-fn credential_fingerprint(token: &SubscriptionToken) -> [u8; 32] {
+/// A stable identity for one credential's contents, without storing it.
+///
+/// Shared with the rejection registry so a verdict reached about one chain link
+/// is discarded the moment the file on disk holds a different one (issue #245).
+pub(super) fn credential_fingerprint(token: &SubscriptionToken) -> [u8; 32] {
     fn hash_field(hasher: &mut Sha256, value: Option<&str>) {
         match value {
             Some(value) => {
