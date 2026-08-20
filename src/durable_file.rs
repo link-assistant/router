@@ -220,6 +220,59 @@ mod tests {
         }
     }
 
+    /// Two holders of one credential must serialise, and a holder that cannot
+    /// get in must give up rather than wait forever: a stale lock must never be
+    /// able to wedge token renewal (issue #239).
+    ///
+    /// Linux-only because the contending holder is `flock(1)`, which macOS does
+    /// not ship; the code under test is the same on both.
+    #[cfg(target_os = "linux")]
+    #[tokio::test]
+    async fn an_exclusive_lock_excludes_and_then_gives_up() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("nested").join("credential.lock");
+        let taken = directory.path().join("taken");
+        {
+            let guard = lock_exclusive_async(&path, std::time::Duration::from_secs(1))
+                .await
+                .expect("first holder");
+            assert_eq!(guard.path(), path);
+            assert_eq!(
+                fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+
+        // Contention is exercised from another process: two lock attempts on
+        // the same descriptor within one process would not exclude each other.
+        let mut holder = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(format!(
+                "exec 9>>'{}'; flock 9 && touch '{}' && sleep 5",
+                path.display(),
+                taken.display()
+            ))
+            .spawn()
+            .expect("spawn the competing holder");
+        for _ in 0..200 {
+            if taken.exists() {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+        assert!(taken.exists(), "the competing holder never took the lock");
+
+        let refused = lock_exclusive_async(&path, std::time::Duration::from_millis(60)).await;
+        let error = refused.expect_err("the lock was held by another process");
+        assert_eq!(error.kind(), io::ErrorKind::WouldBlock);
+        assert!(error.to_string().contains("credential.lock"), "{error}");
+
+        let _ = holder.kill();
+        let _ = holder.wait();
+    }
+
     /// A read-only mount is the common cause of a failed credential write, and
     /// the bare `errno` does not say what to change (issue #205).
     #[test]

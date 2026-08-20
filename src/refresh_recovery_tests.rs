@@ -572,3 +572,146 @@ async fn the_vendor_client_rotates_a_chain_the_router_could_not() {
         )
     );
 }
+
+/// The vendor client sometimes leaves a rotated *refresh* token behind without
+/// a usable access token — it wrote the chain forward and then failed, or its
+/// access token is already spent. That link is still worth an exchange.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_link_the_vendor_client_left_behind_is_exchanged() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let home = tempfile::tempdir().expect("temp home");
+    seed_credential(home.path(), "access-1", "refresh-1", NOW_MS - 1);
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+    let (url, received, server) = scripted_endpoint(
+        vec![
+            Answer::new(400, INVALID_GRANT),
+            Answer::new(
+                200,
+                r#"{"access_token":"access-4","refresh_token":"refresh-4","expires_in":3600}"#,
+            ),
+        ],
+        |_| {},
+    )
+    .await;
+
+    // Expired access token, newer refresh link: nothing to serve with, but
+    // something to exchange.
+    let stub = home.path().join("stub-vendor-cli");
+    std::fs::write(
+        &stub,
+        format!(
+            "#!/bin/sh\ncat > \"$CLAUDE_CONFIG_DIR/.credentials.json\" <<'JSON'\n{}\nJSON\n",
+            serde_json::json!({
+                "claudeAiOauth": {
+                    "accessToken": "access-3-expired",
+                    "refreshToken": "refresh-3",
+                    "expiresAt": NOW_MS - 1,
+                    "scopes": ["user:inference"],
+                }
+            })
+        ),
+    )
+    .expect("write stub");
+    std::fs::set_permissions(&stub, std::fs::Permissions::from_mode(0o755)).expect("chmod stub");
+
+    let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
+    cache.register_vendor_cli(
+        "primary",
+        Arc::new(crate::vendor_cli_refresh::VendorCli::claude(
+            &stub,
+            home.path(),
+        )),
+    );
+    let fresh = cache
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            "primary",
+            token("access-1", "refresh-1", NOW_MS - 1),
+            NOW_MS,
+        )
+        .await;
+    drain(server).await;
+
+    assert_eq!(fresh.access_token, "access-4");
+    let spent: Vec<String> = {
+        let requests = received.lock().unwrap();
+        requests
+            .iter()
+            .map(|(_, body)| {
+                serde_json::from_str::<serde_json::Value>(body).expect("json body")["refresh_token"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_string()
+            })
+            .collect()
+    };
+    assert_eq!(spent, vec!["refresh-1", "refresh-3"]);
+    // And the exchange the client's link earned is written back.
+    assert_eq!(
+        CredentialStore::reload(&reader)
+            .expect("credential")
+            .refresh_token
+            .as_deref(),
+        Some("refresh-4")
+    );
+}
+
+/// When even the newer link on disk is rejected, the whole token family really
+/// is gone — and the message has to say that it checked, rather than repeat the
+/// same advice it would have given without looking.
+#[tokio::test]
+async fn a_family_that_is_revoked_wholesale_says_the_newer_link_was_tried_too() {
+    let home = tempfile::tempdir().expect("temp home");
+    seed_credential(home.path(), "access-1", "refresh-1", NOW_MS - 1);
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+
+    let rotated_home = home.path().to_path_buf();
+    let (url, _received, server) = scripted_endpoint(
+        vec![
+            Answer::new(400, INVALID_GRANT),
+            Answer::new(400, INVALID_GRANT),
+        ],
+        move |index| {
+            if index == 0 {
+                seed_credential(&rotated_home, "access-2", "refresh-2", NOW_MS - 1);
+            }
+        },
+    )
+    .await;
+
+    let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
+    cache
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            "primary",
+            token("access-1", "refresh-1", NOW_MS - 1),
+            NOW_MS,
+        )
+        .await;
+    drain(server).await;
+
+    let reported = cache
+        .last_refresh_error(SubscriptionProvider::Claude)
+        .expect("a terminal rejection is reported");
+    assert!(
+        reported.contains("was rejected as well"),
+        "the message must say the newer link was tried too: {reported}"
+    );
+    assert!(
+        reported.contains("token family has been revoked"),
+        "{reported}"
+    );
+    assert!(reported.contains(".credentials.json"), "{reported}");
+    assert!(
+        reported.contains("link-assistant-router auth claude"),
+        "{reported}"
+    );
+}

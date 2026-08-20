@@ -6,9 +6,12 @@
 //! observes are whether the process ran and whether the chain link on disk
 //! moved.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
+#[cfg(unix)]
+use std::path::PathBuf;
 
 use super::{VendorCli, link_digest};
+#[cfg(unix)]
 use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
 
@@ -63,10 +66,14 @@ async fn a_client_that_rotates_the_credential_hands_the_new_link_back() {
     // Writing through $CLAUDE_CONFIG_DIR rather than a path the test bakes in
     // proves the child is pointed at the router's credential home, not at the
     // invoking user's own.
+    // The stub also writes the debug log the rung asks for, with the kind of
+    // already-redacted token line the real client emits, so the journalling
+    // path is exercised rather than assumed.
     let cli = VendorCli::claude(
         stub_cli(
             home.path(),
-            r#"cat > "$CLAUDE_CONFIG_DIR/.credentials.json" <<'JSON'
+            r#"printf 'POST /v1/oauth/token 200\nrefresh_token: [REDACTED]\nsession start\n' > "$2"
+cat > "$CLAUDE_CONFIG_DIR/.credentials.json" <<'JSON'
 {"claudeAiOauth":{"accessToken":"access-2","refreshToken":"refresh-2","expiresAt":9999999999999,"scopes":["user:inference"]}}
 JSON"#,
         ),
@@ -89,7 +96,17 @@ async fn a_client_that_changes_nothing_recovers_nothing() {
     let home = tempfile::tempdir().expect("temp home");
     seed_credential(home.path(), "access-1", "refresh-1");
     let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
-    let cli = VendorCli::claude(stub_cli(home.path(), "exit 1"), home.path());
+    // A debug log that says nothing about the token exchange: the rung must
+    // report that rather than pretend it learned something.
+    let cli = VendorCli::claude(
+        stub_cli(
+            home.path(),
+            r#"printf 'session start
+event loop stall
+' > "$2"; exit 1"#,
+        ),
+        home.path(),
+    );
 
     assert!(
         cli.rotate(&reader, &token("access-1", "refresh-1"))

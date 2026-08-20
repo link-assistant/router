@@ -703,3 +703,45 @@ fn an_unavailable_credential_is_named_in_the_routing_error() {
         "{message}"
     );
 }
+
+/// Registration is what lets a refresh on the serving path re-read and write
+/// back the same credential file the catalog poller uses; without it a rotation
+/// performed while serving is lost at restart (issue #239). The vendor-client
+/// rung stays inert until an operator configures a binary.
+#[test]
+fn credential_recovery_registers_stores_and_only_an_asked_for_vendor_client() {
+    let dir = tempdir().unwrap();
+    let home = dir.path().join("claude-home");
+    fs::create_dir_all(&home).unwrap();
+    fs::write(
+        home.join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"a","refreshToken":"r","expiresAt":1}}"#,
+    )
+    .unwrap();
+    let readers = vec![SubscriptionReader::new(SubscriptionProvider::Claude, &home)];
+
+    let without = auto_state(readers.clone(), dir.path());
+    without.register_credential_recovery(None);
+    assert!(
+        without
+            .subscription_cache
+            .store_for_subscription(SubscriptionProvider::Claude, "primary")
+            .is_some(),
+        "the serving path must know where the credential lives"
+    );
+    assert!(
+        without
+            .subscription_cache
+            .vendor_cli_for(SubscriptionProvider::Claude, "primary")
+            .is_none(),
+        "running a vendor binary must be opt-in"
+    );
+
+    let with = auto_state(readers, dir.path());
+    with.register_credential_recovery(Some(&dir.path().join("claude")));
+    let registered = with
+        .subscription_cache
+        .vendor_cli_for(SubscriptionProvider::Claude, "primary")
+        .expect("the configured client is registered");
+    assert_eq!(registered.provider(), SubscriptionProvider::Claude);
+}

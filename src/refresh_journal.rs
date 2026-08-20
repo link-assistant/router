@@ -54,7 +54,7 @@ fn exchange_shape(
 
 /// The exchange the router itself would send for `provider`, without sending it.
 ///
-/// Built from the same configuration [`refresh_at`] uses, so a fallback record
+/// Built from the same configuration `refresh_at` uses, so a fallback record
 /// can be compared against what the vendor's own client does: if the two send
 /// different headers, the journal shows it without further debugging (issue
 /// #239).
