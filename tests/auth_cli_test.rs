@@ -112,3 +112,115 @@ fn provider_help_lists_supported_flows() {
         }
     }
 }
+
+/// A selected server is what `auth` acts on, exactly as `with` does.
+///
+/// `server use` establishes which router the CLI is talking to; `auth` exists
+/// to give *that* router a subscription. Writing a local credential instead
+/// made the obvious `server use` → `auth` → `with` sequence silently authorize
+/// the wrong place, surfacing much later as a 401 (issue #246). Here the
+/// selected server is deliberately unreachable, so the command must fail
+/// naming it rather than quietly falling back to a local directory.
+#[test]
+fn a_selected_server_is_not_silently_replaced_by_a_local_directory() {
+    let config = tempfile::tempdir().expect("config home");
+    let selection = config.path().join("link-assistant-router");
+    std::fs::create_dir_all(&selection).expect("selection directory");
+    std::fs::write(
+        selection.join("server.json"),
+        r#"{"server":"http://127.0.0.1:1","token":"probe"}"#,
+    )
+    .expect("write the selection");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "status"])
+        .env("XDG_CONFIG_HOME", config.path())
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .output()
+        .expect("router CLI should run");
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stderr.contains("127.0.0.1:1"),
+        "the selected server was not mentioned: {stderr}"
+    );
+    assert!(
+        !stdout.contains(".claude"),
+        "a local credential directory was reported instead: {stdout}"
+    );
+}
+
+/// `--local` keeps the previous behaviour, explicitly.
+///
+/// The point of the switch is that the choice is visible: an operator who does
+/// want a local credential while a server is selected can say so, instead of
+/// getting it by surprise.
+#[test]
+fn local_authorizes_the_local_directory_even_with_a_server_selected() {
+    let config = tempfile::tempdir().expect("config home");
+    let home = tempfile::tempdir().expect("temp home");
+    let selection = config.path().join("link-assistant-router");
+    std::fs::create_dir_all(&selection).expect("selection directory");
+    std::fs::write(
+        selection.join("server.json"),
+        r#"{"server":"http://127.0.0.1:1","token":"probe"}"#,
+    )
+    .expect("write the selection");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "status", "--local"])
+        .env("XDG_CONFIG_HOME", config.path())
+        .env("HOME", home.path())
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .output()
+        .expect("router CLI should run");
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !stderr.contains("127.0.0.1:1"),
+        "--local still consulted the selected server: {stderr}"
+    );
+    assert!(output.status.success(), "auth status --local failed");
+}
+
+/// With no server selected, `auth` behaves exactly as it always did.
+#[test]
+fn without_a_selection_auth_stays_local() {
+    let config = tempfile::tempdir().expect("config home");
+    let home = tempfile::tempdir().expect("temp home");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "status"])
+        .env("XDG_CONFIG_HOME", config.path())
+        .env("HOME", home.path())
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .output()
+        .expect("router CLI should run");
+
+    assert!(
+        output.status.success(),
+        "auth status without a selection failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+/// `--local` and `--server` are mutually exclusive: the target must be one
+/// unambiguous thing, which is the entire point of naming it.
+#[test]
+fn local_and_server_cannot_be_combined() {
+    let output = router(&[
+        "auth",
+        "status",
+        "--local",
+        "--server",
+        "http://127.0.0.1:1",
+    ]);
+
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("cannot be used with"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
