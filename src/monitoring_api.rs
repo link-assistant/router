@@ -69,6 +69,7 @@ pub async fn accounts_endpoint(
                 "name": health.name,
                 "home": health.home.display().to_string(),
                 "healthy": health.healthy,
+                "credential": health.credential.label(),
                 "used": health.used,
                 "request_limit": health.request_limit,
                 "remaining_requests": health.remaining_requests,

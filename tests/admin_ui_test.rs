@@ -595,3 +595,78 @@ async fn an_expired_credential_stops_administering() {
         "expiry is enforced on the admin surface like any other token"
     );
 }
+
+/// `GET /api/admin/accounts` must report a credential that cannot serve a
+/// request as unhealthy, and say why.
+///
+/// The admin API is what the UI and any automated health check read. It
+/// reported `healthy: true` for an account whose token was expired with no
+/// refresh token left, because health consulted only an in-memory cooldown
+/// timer that is unset until a live request has already failed (issue #242).
+/// The endpoint's payload had no test at all, only its authorisation.
+#[tokio::test]
+async fn the_accounts_endpoint_reports_a_dead_credential_as_unhealthy() {
+    let mut harness = Harness::new(None, Duration::from_secs(60));
+    let credentials = tempfile::tempdir().expect("credential home");
+    // Expired, and nothing left to refresh with: terminally unusable.
+    std::fs::write(
+        credentials.path().join("credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat01-probe","expiresAt":1600000000000}}"#,
+    )
+    .expect("write the credential");
+    harness.state.account_router = Some(link_assistant_router::accounts::AccountRouter::new(
+        credentials.path().to_path_buf(),
+        &[],
+        link_assistant_router::accounts::SelectionStrategy::RoundRobin,
+        Duration::from_secs(60),
+    ));
+    let token = harness.claim(None).await;
+
+    let (status, body) = harness.get("/api/admin/accounts", Some(&token)).await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let account = &body["accounts"][0];
+    assert_eq!(
+        account["healthy"], false,
+        "dead credential reported healthy"
+    );
+    assert_eq!(account["credential"], "expired");
+}
+
+/// The chat `/status` summary must name *why* an account is unhealthy.
+///
+/// An account that failed a live request carries a `last_error` to print. One
+/// that was never tried does not, so before this the line degraded to a bare
+/// "unhealthy" — which is the same non-answer `accounts list` used to give
+/// (issue #242). The credential state is the reason, so it is what gets shown.
+#[test]
+fn the_chat_status_summary_names_why_an_account_is_unhealthy() {
+    use link_assistant_router::chat_commands::RouterStatus as _;
+
+    let dir = tempfile::tempdir().expect("tempdir");
+    let store: Arc<dyn link_assistant_router::storage::TokenStore> = Arc::new(
+        link_assistant_router::storage::TextTokenStore::open(dir.path().join("tokens.lino"))
+            .expect("token store"),
+    );
+    let tokens = TokenManager::with_store("test-secret", store);
+    let admin = Arc::new(AdminClaim::in_memory(None, Duration::from_secs(60)));
+    let mut state = state_with(admin, tokens, dir.path());
+
+    let credentials = tempfile::tempdir().expect("credential home");
+    std::fs::write(
+        credentials.path().join("credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat01-probe","expiresAt":1600000000000}}"#,
+    )
+    .expect("write the credential");
+    state.account_router = Some(link_assistant_router::accounts::AccountRouter::new(
+        credentials.path().to_path_buf(),
+        &[],
+        link_assistant_router::accounts::SelectionStrategy::RoundRobin,
+        Duration::from_secs(60),
+    ));
+
+    let lines = state.status_lines().join("\n");
+
+    assert!(lines.contains("Accounts: 0/1 healthy"), "{lines}");
+    assert!(lines.contains("primary: expired"), "{lines}");
+}

@@ -13,6 +13,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
+#[path = "accounts_cli.rs"]
+mod accounts_cli;
 mod auth_cli;
 #[path = "logs_cli.rs"]
 mod logs_cli;
@@ -620,33 +622,7 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    match op {
-        AccountOp::List => {
-            let snap = router.health_snapshot();
-            println!(
-                "{:<16}  {:<8}  {:<6}  {:<9}  {:<9}  home",
-                "name", "healthy", "used", "limit", "remaining"
-            );
-            for h in snap {
-                let limit = h
-                    .request_limit
-                    .map_or_else(|| "-".to_string(), |value| value.to_string());
-                let remaining = h
-                    .remaining_requests
-                    .map_or_else(|| "-".to_string(), |value| value.to_string());
-                println!(
-                    "{:<16}  {:<8}  {:<6}  {:<9}  {:<9}  {}",
-                    h.name,
-                    h.healthy,
-                    h.used,
-                    limit,
-                    remaining,
-                    h.home.display()
-                );
-            }
-            ExitCode::SUCCESS
-        }
-    }
+    accounts_cli::run(&router, op)
 }
 
 fn run_providers(config: &Config, op: &ProviderOp) -> ExitCode {

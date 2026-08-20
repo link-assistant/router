@@ -115,6 +115,34 @@ impl AccountState {
         !matches!(*guard, Some(t) if t > Instant::now())
     }
 
+    /// What the credential on disk says about this account, right now.
+    ///
+    /// Read on demand rather than cached: the vendor CLI, a login, or a token
+    /// refresh can replace the file underneath a long-lived process, and a
+    /// stale verdict is the failure this signal exists to prevent. The read is
+    /// a small local file, and reaches only the `accounts` surfaces.
+    fn credential_state(&self, now_ms: i64) -> CredentialState {
+        match self.reader.read_token() {
+            Ok(token) if !token.is_expired(now_ms) => CredentialState::Usable,
+            // `expiresAt` is a hint, not a verdict: an expired access token
+            // that still holds a refresh token is recovered by the refresh
+            // ladder on the next request, exactly as `doctor` reports it. Only
+            // an expired token with nothing left to refresh with is terminal.
+            Ok(token) => {
+                if token
+                    .refresh_token
+                    .as_deref()
+                    .is_some_and(|refresh| !refresh.is_empty())
+                {
+                    CredentialState::Refreshable
+                } else {
+                    CredentialState::Expired
+                }
+            }
+            Err(error) => CredentialState::Unusable(error.to_string()),
+        }
+    }
+
     fn is_available(&self) -> bool {
         self.is_healthy()
             && self
@@ -288,30 +316,42 @@ impl AccountRouter {
     }
 
     /// Snapshot of account names + health (used by `/v1/accounts` admin endpoint).
+    ///
+    /// `healthy` combines cooldown, the configured request cap, and the state
+    /// of the credential on disk. Consulting only the cooldown timer meant a
+    /// freshly started process reported every account healthy, including one
+    /// whose token was revoked, which contradicted `doctor` and turned an
+    /// automated health check green on a pool that could not serve a single
+    /// request (issue #242).
     #[must_use]
     pub fn health_snapshot(&self) -> Vec<AccountHealth> {
+        let now_ms = chrono::Utc::now().timestamp_millis();
         self.inner
             .accounts
             .iter()
-            .map(|a| AccountHealth {
-                name: a.name.clone(),
-                home: a.home.clone(),
-                healthy: a.is_available(),
-                used: a.used.load(Ordering::Relaxed),
-                request_limit: a.request_limit,
-                remaining_requests: a
-                    .request_limit
-                    .map(|limit| limit.saturating_sub(a.used.load(Ordering::Relaxed))),
-                last_error: a
-                    .last_error
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .clone(),
-                cooldown_remaining: a
-                    .cooldown_until
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .and_then(|t| t.checked_duration_since(Instant::now())),
+            .map(|a| {
+                let credential = a.credential_state(now_ms);
+                AccountHealth {
+                    name: a.name.clone(),
+                    home: a.home.clone(),
+                    healthy: a.is_available() && credential.can_serve(),
+                    credential,
+                    used: a.used.load(Ordering::Relaxed),
+                    request_limit: a.request_limit,
+                    remaining_requests: a
+                        .request_limit
+                        .map(|limit| limit.saturating_sub(a.used.load(Ordering::Relaxed))),
+                    last_error: a
+                        .last_error
+                        .lock()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                        .clone(),
+                    cooldown_remaining: a
+                        .cooldown_until
+                        .lock()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                        .and_then(|t| t.checked_duration_since(Instant::now())),
+                }
             })
             .collect()
     }
@@ -516,12 +556,59 @@ impl AccountRouter {
     }
 }
 
+/// What an account's credential file says it can do, before any request.
+///
+/// Cooldown answers "did a recent request fail?"; this answers "is there a
+/// credential here that can serve one at all?" A fresh process has no cooldown
+/// to consult, so without this every account — including one whose refresh
+/// chain is revoked — reported healthy (issue #242).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CredentialState {
+    /// A credential is present and its access token has not expired.
+    Usable,
+    /// The access token expired, but a refresh token can renew it.
+    Refreshable,
+    /// The access token expired and no refresh token remains.
+    Expired,
+    /// No credential file, or one that cannot be read or parsed.
+    Unusable(String),
+}
+
+impl CredentialState {
+    /// Whether this credential can serve a request, now or after a refresh.
+    #[must_use]
+    pub const fn can_serve(&self) -> bool {
+        matches!(self, Self::Usable | Self::Refreshable)
+    }
+
+    /// Short label for the `accounts list` column.
+    #[must_use]
+    pub const fn label(&self) -> &'static str {
+        match self {
+            Self::Usable => "ok",
+            Self::Refreshable => "refreshable",
+            Self::Expired => "expired",
+            Self::Unusable(_) => "missing",
+        }
+    }
+}
+
+impl std::fmt::Display for CredentialState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.pad(self.label())
+    }
+}
+
 /// Health status snapshot for one account.
 #[derive(Debug, Clone)]
 pub struct AccountHealth {
     pub name: String,
     pub home: PathBuf,
+    /// Whether this account can serve a request: no active cooldown, quota
+    /// left, and a credential that is usable or renewable.
     pub healthy: bool,
+    /// What the credential on disk says, independent of cooldown.
+    pub credential: CredentialState,
     pub used: usize,
     pub request_limit: Option<usize>,
     pub remaining_requests: Option<usize>,
@@ -565,323 +652,5 @@ impl std::fmt::Display for AccountError {
 impl std::error::Error for AccountError {}
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::subscription::SubscriptionProvider;
-    use std::fs;
-
-    fn tempdir(slug: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("router-acct-{slug}-{}", uuid::Uuid::new_v4()));
-        fs::create_dir_all(&dir).unwrap();
-        dir
-    }
-
-    fn write_creds(dir: &std::path::Path, token: &str) {
-        fs::write(
-            dir.join("credentials.json"),
-            format!("{{\"accessToken\":\"{token}\"}}"),
-        )
-        .unwrap();
-    }
-
-    #[test]
-    fn round_robin_distributes_calls() {
-        let a = tempdir("a");
-        let b = tempdir("b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new(
-            a,
-            &[b],
-            SelectionStrategy::RoundRobin,
-            Duration::from_secs(60),
-        );
-        let s1 = router.select().unwrap();
-        let s2 = router.select().unwrap();
-        let s3 = router.select().unwrap();
-        let names: Vec<_> = vec![s1.name, s2.name, s3.name];
-        assert!(names.contains(&"primary".to_string()));
-        assert!(names.contains(&"account-1".to_string()));
-    }
-
-    #[test]
-    fn cooldown_skips_unhealthy_account() {
-        let a = tempdir("aa");
-        let b = tempdir("bb");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new(
-            a,
-            &[b],
-            SelectionStrategy::RoundRobin,
-            Duration::from_secs(60),
-        );
-        router.report_failure("primary", "rate limited");
-        let snap = router.health_snapshot();
-        assert!(!snap[0].healthy);
-        assert!(snap[1].healthy);
-        let chosen = router.select().unwrap();
-        assert_eq!(chosen.name, "account-1");
-    }
-
-    #[test]
-    fn no_healthy_returns_error() {
-        let a = tempdir("a2");
-        write_creds(&a, "tok-a");
-        let router = AccountRouter::new(
-            a,
-            &[],
-            SelectionStrategy::RoundRobin,
-            Duration::from_secs(60),
-        );
-        router.report_failure("primary", "fail");
-        let r = router.select();
-        assert!(matches!(r, Err(AccountError::NoHealthyAccounts)));
-    }
-
-    #[test]
-    fn least_used_picks_lowest_count() {
-        let a = tempdir("la");
-        let b = tempdir("lb");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new(
-            a,
-            &[b],
-            SelectionStrategy::LeastUsed,
-            Duration::from_secs(60),
-        );
-        let _ = router.select().unwrap();
-        let _ = router.select().unwrap();
-        let _ = router.select().unwrap();
-        let snap = router.health_snapshot();
-        let total: usize = snap.iter().map(|s| s.used).sum();
-        assert_eq!(total, 3);
-        // both accounts should be exercised (LeastUsed prefers the unused one)
-        assert!(snap.iter().any(|s| s.used >= 1));
-    }
-
-    #[test]
-    fn strategy_aliases_ignore_surrounding_whitespace() {
-        assert_eq!(
-            SelectionStrategy::from_str_opt("  quota-first  "),
-            Some(SelectionStrategy::LeastUsed)
-        );
-    }
-
-    #[test]
-    fn least_used_compares_normalized_spend_for_uneven_limits() {
-        let a = tempdir("normalized-a");
-        let b = tempdir("normalized-b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[b],
-            SubscriptionProvider::Claude,
-            AccountRouterOptions {
-                strategy: SelectionStrategy::LeastUsed,
-                request_limits: vec![Some(2), Some(100)],
-                ..AccountRouterOptions::default()
-            },
-        );
-
-        assert_eq!(router.select().unwrap().name, "primary");
-        assert_eq!(router.select().unwrap().name, "account-1");
-        assert_eq!(router.select().unwrap().name, "account-1");
-    }
-
-    #[test]
-    fn session_affinity_keeps_a_conversation_on_one_account() {
-        let a = tempdir("session-a");
-        let b = tempdir("session-b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[b],
-            SubscriptionProvider::Claude,
-            AccountRouterOptions::default(),
-        );
-
-        let first = router
-            .select_with_context(&RoutingContext::for_session("conversation-1"))
-            .unwrap();
-        let again = router
-            .select_with_context(&RoutingContext::for_session("conversation-1"))
-            .unwrap();
-        let other = router
-            .select_with_context(&RoutingContext::for_session("conversation-2"))
-            .unwrap();
-
-        assert_eq!(first.name, again.name);
-        assert_ne!(first.name, other.name);
-    }
-
-    #[test]
-    fn session_activity_renews_the_affinity_timeout() {
-        let a = tempdir("session-renew-a");
-        let b = tempdir("session-renew-b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[b],
-            SubscriptionProvider::Claude,
-            AccountRouterOptions::default(),
-        );
-        let context = RoutingContext::for_session("active-conversation");
-        router.select_with_context(&context).unwrap();
-
-        let shortened_expiry = Instant::now() + Duration::from_secs(1);
-        router
-            .inner
-            .affinities
-            .lock()
-            .unwrap()
-            .get_mut("active-conversation")
-            .unwrap()
-            .expires_at = shortened_expiry;
-
-        router.select_with_context(&context).unwrap();
-        let renewed_expiry = router
-            .inner
-            .affinities
-            .lock()
-            .unwrap()
-            .get("active-conversation")
-            .unwrap()
-            .expires_at;
-        assert!(renewed_expiry > shortened_expiry);
-    }
-
-    #[test]
-    fn an_unavailable_session_account_is_not_silently_changed() {
-        let a = tempdir("strict-session-a");
-        let b = tempdir("strict-session-b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[b],
-            SubscriptionProvider::Claude,
-            AccountRouterOptions::default(),
-        );
-        let context = RoutingContext::for_session("strict-conversation");
-        let selected = router.select_with_context(&context).unwrap();
-        router.report_failure(&selected.name, "quota exhausted");
-
-        assert!(matches!(
-            router.select_with_context(&context),
-            Err(AccountError::SessionAccountUnavailable(_))
-        ));
-    }
-
-    #[test]
-    fn explicit_account_pins_are_strict() {
-        let a = tempdir("pin-a");
-        let b = tempdir("pin-b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[b],
-            SubscriptionProvider::Claude,
-            AccountRouterOptions::default(),
-        );
-
-        let selected = router
-            .select_with_context(&RoutingContext::pinned("account-1"))
-            .unwrap();
-        assert_eq!(selected.name, "account-1");
-        router.report_failure("account-1", "quota exhausted");
-        assert!(matches!(
-            router.select_with_context(&RoutingContext::pinned("account-1")),
-            Err(AccountError::PinnedAccountUnavailable(_))
-        ));
-        assert!(matches!(
-            router.select_with_context(&RoutingContext::pinned("missing")),
-            Err(AccountError::UnknownPinnedAccount(_))
-        ));
-    }
-
-    #[test]
-    fn configured_request_limits_remove_spent_accounts() {
-        let a = tempdir("limits-a");
-        let b = tempdir("limits-b");
-        write_creds(&a, "tok-a");
-        write_creds(&b, "tok-b");
-        let options = AccountRouterOptions {
-            request_limits: vec![Some(1), Some(2)],
-            ..AccountRouterOptions::default()
-        };
-        let router =
-            AccountRouter::new_for_provider(a, &[b], SubscriptionProvider::Claude, options);
-
-        assert_eq!(router.select().unwrap().name, "primary");
-        assert_eq!(router.select().unwrap().name, "account-1");
-        assert_eq!(router.select().unwrap().name, "account-1");
-        assert!(matches!(
-            router.select(),
-            Err(AccountError::NoHealthyAccounts)
-        ));
-        let health = router.health_snapshot();
-        assert_eq!(health[0].remaining_requests, Some(0));
-        assert_eq!(health[1].remaining_requests, Some(0));
-    }
-
-    #[test]
-    fn concurrent_selection_cannot_oversubscribe_an_account_cap() {
-        let a = tempdir("atomic-limit");
-        write_creds(&a, "tok-a");
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[],
-            SubscriptionProvider::Claude,
-            AccountRouterOptions {
-                request_limits: vec![Some(1)],
-                ..AccountRouterOptions::default()
-            },
-        );
-        let successful = (0..16)
-            .map(|_| {
-                let router = router.clone();
-                std::thread::spawn(move || router.select().is_ok())
-            })
-            .map(|worker| worker.join().unwrap())
-            .filter(|successful| *successful)
-            .count();
-
-        assert_eq!(successful, 1);
-        assert_eq!(router.health_snapshot()[0].used, 1);
-    }
-
-    #[test]
-    fn vendor_subscription_accounts_use_the_same_pool() {
-        let a = tempdir("codex-a");
-        let b = tempdir("codex-b");
-        fs::write(
-            a.join("auth.json"),
-            r#"{"tokens":{"access_token":"codex-a","account_id":"acct-a"}}"#,
-        )
-        .unwrap();
-        fs::write(
-            b.join("auth.json"),
-            r#"{"tokens":{"access_token":"codex-b","account_id":"acct-b"}}"#,
-        )
-        .unwrap();
-        let router = AccountRouter::new_for_provider(
-            a,
-            &[b],
-            SubscriptionProvider::Codex,
-            AccountRouterOptions::default(),
-        );
-
-        let selected = router
-            .select_subscription(&RoutingContext::pinned("account-1"))
-            .unwrap();
-        assert_eq!(selected.name, "account-1");
-        assert_eq!(selected.token.access_token, "codex-b");
-        assert_eq!(selected.token.account_id.as_deref(), Some("acct-b"));
-    }
-}
+#[path = "accounts_tests.rs"]
+mod tests;

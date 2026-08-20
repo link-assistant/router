@@ -490,10 +490,15 @@ impl RouterStatus for crate::app_state::AppState {
                         .iter()
                         .filter(|account| !account.healthy)
                         .map(|account| {
+                            // A credential that was never tried has no
+                            // `last_error`; its state is the reason (#242).
                             format!(
                                 "  ⚠ {}: {}",
                                 account.name,
-                                account.last_error.as_deref().unwrap_or("unhealthy")
+                                account
+                                    .last_error
+                                    .as_deref()
+                                    .unwrap_or_else(|| account.credential.label())
                             )
                         }),
                 );

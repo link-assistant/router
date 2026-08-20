@@ -47,3 +47,42 @@ fn every_declared_binary_is_packaged_and_smoke_tested() {
         );
     }
 }
+
+/// Every command name the release archive ships must also resolve inside the
+/// published container image.
+///
+/// The image copied one binary under its long name while `cargo install` put
+/// both names on a workstation's PATH, so `docker exec … router --version`
+/// failed with "executable file not found" on the exact command the docs
+/// prescribe (issue #243). The two installation paths are described in
+/// different files, which is how they drifted; this ties them together.
+#[test]
+fn every_packaged_binary_is_reachable_in_the_container_image() {
+    let manifest = read_lf("Cargo.toml");
+    let dockerfile = read_lf("Dockerfile");
+
+    let binaries: Vec<String> = manifest
+        .lines()
+        .skip_while(|line| !line.starts_with("[[bin]]"))
+        .filter_map(|line| {
+            line.strip_prefix("name = \"")
+                .and_then(|rest| rest.strip_suffix('"'))
+                .map(str::to_string)
+        })
+        .collect();
+    assert!(
+        binaries.len() >= 3,
+        "expected the declared binaries, found {binaries:?}"
+    );
+
+    for binary in binaries {
+        let copied = dockerfile.contains(&format!("/usr/local/bin/{binary}\n"));
+        let linked = dockerfile.contains(&format!(
+            "ln -s link-assistant-router /usr/local/bin/{binary}"
+        ));
+        assert!(
+            copied || linked,
+            "{binary} is packaged for release but is not on PATH in the container image"
+        );
+    }
+}
