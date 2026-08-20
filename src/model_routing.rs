@@ -119,7 +119,8 @@ fn credential_state(
     }
     Some(match (status.discovered, status.last_error) {
         (true, error) => format!(
-            "the {provider} catalog is retained for diagnostics but its credential is not usable              ({})",
+            "the {provider} catalog is retained for diagnostics but its credential is not usable \
+             ({})",
             error.unwrap_or_else(|| "the last refresh was rejected".to_string())
         ),
         (false, Some(error)) => {
