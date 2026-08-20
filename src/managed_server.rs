@@ -418,12 +418,14 @@ pub fn clear_persisted() -> Result<PathBuf, AnyError> {
 pub fn load_persisted() -> Result<Option<PersistedServer>, AnyError> {
     let path = state_directory()?.join(SERVER_CONFIG);
     match fs::read_to_string(&path) {
-        Ok(source) => Ok(Some(serde_json::from_str(&source).map_err(|error| {
-            format!(
-                "invalid persisted server configuration {}: {error}",
-                path.display()
-            )
-        })?)),
+        Ok(source) => Ok(Some(crate::lino_json::decode(&source).map_err(
+            |error| {
+                format!(
+                    "invalid persisted server configuration {}: {error}",
+                    path.display()
+                )
+            },
+        )?)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error.into()),
     }

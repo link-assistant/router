@@ -1461,7 +1461,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "jsonwebtoken",
- "links-notation",
+ "links-notation 0.13.0",
  "lino-arguments",
  "lino-objects-codec",
  "log-lazy",
@@ -1495,6 +1495,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "links-notation"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b6e5f36d99612ea82da43dbd5efb37b0b4e9c4b8197228e073b60ef5a0e78f2"
+dependencies = [
+ "links-notation-macro",
+ "nom",
+]
+
+[[package]]
+name = "links-notation-macro"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f30ea96250240a92d69d45579dbd199a713e7a79acfa53033d24628dad23cff5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.3",
+]
+
+[[package]]
 name = "lino-arguments"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1516,12 +1537,12 @@ checksum = "5f453c53827aabe91a3d3856d61d14ae3867ab1a4344db22f9fa5396664c8d0e"
 
 [[package]]
 name = "lino-objects-codec"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4db12a09a113afcfa4bd1ba32e76b5e4cb22a37b8d3f130b198f8c14dded0ad0"
+checksum = "ddca5f17dbe7caf9dbbbb499cb5022db7ed884bb57808c3a367f0df83f24c976"
 dependencies = [
  "base64 0.22.1",
- "links-notation",
+ "links-notation 0.14.0",
 ]
 
 [[package]]

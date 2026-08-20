@@ -55,7 +55,7 @@ futures-util = "0.3"
 http = "1.5"
 http-body-util = "0.1"
 lino-arguments = "0.3"
-lino-objects-codec = "0.2.1"
+lino-objects-codec = "0.3.0"
 links-notation = "0.13.0"
 doublets = "0.4.0"
 mem = { package = "platform-mem", version = "0.3.0" }

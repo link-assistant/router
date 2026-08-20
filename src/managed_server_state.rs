@@ -40,9 +40,9 @@ pub(super) fn lock_state() -> Result<File, AnyError> {
 pub(super) fn load_managed() -> Result<Option<ManagedState>, AnyError> {
     let path = state_directory()?.join(MANAGED_STATE);
     match fs::read_to_string(&path) {
-        Ok(source) => Ok(Some(serde_json::from_str(&source).map_err(|error| {
-            format!("invalid managed server state {}: {error}", path.display())
-        })?)),
+        Ok(source) => Ok(Some(crate::lino_json::decode(&source).map_err(
+            |error| format!("invalid managed server state {}: {error}", path.display()),
+        )?)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error.into()),
     }
@@ -62,7 +62,9 @@ pub(super) fn write_private_json(path: &Path, value: &impl Serialize) -> Result<
         options.mode(0o600);
     }
     let mut file = options.open(&temporary)?;
-    serde_json::to_writer_pretty(&mut file, value)?;
+    // Links notation, readable, with the file name unchanged so an existing
+    // installation keeps its path and migrates on the next write (issue #235).
+    file.write_all(crate::lino_json::encode(value)?.as_bytes())?;
     file.write_all(b"\n")?;
     file.sync_all()?;
     #[cfg(windows)]

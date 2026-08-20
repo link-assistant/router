@@ -323,7 +323,8 @@ fn managed_server_lifecycle_is_idempotent_and_preserves_data_until_remove() {
     );
     health.join().expect("managed health thread");
     let state = fs::read_to_string(managed_state_path(&home)).expect("read started state");
-    assert!(state.contains(r#""keep_running": true"#));
+    // The state file is links notation, so a field reads `name value` (issue #235).
+    assert!(state.contains("keep_running true"), "{state}");
 
     let status = server_command(&home, &bin, &log, "running", &["status"]);
     assert!(status.status.success());
@@ -532,7 +533,7 @@ fn reaper_releases_its_reference_when_the_owner_pipe_closes() {
     };
     assert!(status.success());
     let state = fs::read_to_string(managed_state_path(&home)).expect("read reaped state");
-    assert!(state.contains(r#""references": []"#));
+    assert!(state.contains("references ()"), "{state}");
     assert!(
         fs::read_to_string(log)
             .expect("read Docker log")
@@ -611,7 +612,7 @@ fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
             .expect("read Docker log")
             .contains("stop link-assistant-router-managed");
         let reaped = fs::read_to_string(managed_state_path(&home))
-            .is_ok_and(|state| state.contains(r#""references": []"#));
+            .is_ok_and(|state| state.contains("references ()"));
         if stopped && reaped {
             break;
         }
@@ -620,7 +621,7 @@ fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
     let docker_log = fs::read_to_string(&log).expect("read final Docker log");
     assert!(docker_log.contains("stop link-assistant-router-managed"));
     let state = fs::read_to_string(managed_state_path(&home)).expect("read reaped state");
-    assert!(state.contains(r#""references": []"#));
+    assert!(state.contains("references ()"), "{state}");
 
     let client_pid = fs::read_to_string(capture.join("pid")).expect("read client pid");
     let _ = Command::new("kill")
@@ -649,7 +650,7 @@ fn managed_claim_is_one_time_and_requires_a_later_token() {
     assert!(
         fs::read_to_string(managed_state_path(&home))
             .expect("read claimed state")
-            .contains(r#""claimed": true"#)
+            .contains("claimed true")
     );
     let repeated = server_command(&home, &bin, &log, "running", &["claim"]);
     assert!(!repeated.status.success());
@@ -838,4 +839,40 @@ fn server_selection_rejects_ambiguous_or_invalid_updates_and_can_clear() {
 
     let cleared = server_command(&home, &bin, &log, "absent", &["use", "--clear"]);
     assert!(cleared.status.success());
+}
+
+/// State written by an earlier release is JSON, and must keep loading: the
+/// stores moved to links notation without changing their file names, so an
+/// existing installation migrates on its next write rather than losing its
+/// configuration (issue #235).
+#[test]
+fn a_json_server_selection_from_an_earlier_release_still_loads() {
+    let home = tempfile::tempdir().expect("temporary home");
+    let directory = home.path().join(".config/link-assistant-router");
+    fs::create_dir_all(&directory).expect("create config directory");
+    fs::write(
+        directory.join("server.json"),
+        r#"{"server":"https://legacy.example","token":"la_sk_legacy","run_max_requests":5}"#,
+    )
+    .expect("seed a legacy JSON selection");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["server", "status"])
+        .env("HOME", home.path())
+        .env("TOKEN_SECRET", "legacy-load-secret")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("APPDATA")
+        .output()
+        .expect("server status runs");
+    let rendered = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        rendered.contains("https://legacy.example"),
+        "the legacy selection must still load: {rendered}"
+    );
+    // And the secret is still not echoed while doing it.
+    assert!(!rendered.contains("la_sk_legacy"), "{rendered}");
 }
