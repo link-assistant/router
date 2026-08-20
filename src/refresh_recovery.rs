@@ -192,6 +192,20 @@ fn persist_rotation(
     }
 }
 
+/// What the endpoint actually answered.
+///
+/// [`RefreshError`]'s own `Display` appends generic "waiting will not help"
+/// advice to every `invalid_grant`, which is exactly the sentence issue #239
+/// calls misleading for a rotated token. By the time the ladder builds a
+/// terminal message it has established which advice applies, so it quotes the
+/// endpoint and gives the advice itself.
+fn endpoint_answer(error: &RefreshError) -> String {
+    match error {
+        RefreshError::Status(code, body, _) => format!("the endpoint answered HTTP {code}: {body}"),
+        other => other.to_string(),
+    }
+}
+
 /// Explain a terminal rejection in terms of the two causes it can have.
 ///
 /// "Waiting will not help, re-authenticate" is only true once we have checked
@@ -215,15 +229,16 @@ fn terminal_message(
         return format!(
             "refresh token is no longer valid (invalid_grant): a newer refresh token found in \
              {location} was rejected as well, so the whole token family has been revoked — \
-             re-authenticate this subscription with `link-assistant-router auth {provider}`: \
-             {error}"
+             re-authenticate this subscription with `link-assistant-router auth {provider}` ({})",
+            endpoint_answer(error)
         );
     }
     format!(
         "refresh token is no longer valid (invalid_grant): {location} still holds the same \
          refresh token that was just rejected, so it was revoked or already spent elsewhere \
          rather than rotated past — re-authenticate this subscription with \
-         `link-assistant-router auth {provider}`: {error}"
+         `link-assistant-router auth {provider}` ({})",
+        endpoint_answer(error)
     )
 }
 
@@ -342,3 +357,7 @@ pub(super) async fn exchange_with_recovery(
         error,
     })
 }
+
+#[cfg(test)]
+#[path = "refresh_recovery_tests.rs"]
+mod tests;
