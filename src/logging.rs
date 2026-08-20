@@ -17,7 +17,11 @@ pub fn request_log(
 
 /// Install the process-wide tracing subscriber.
 pub fn init(verbose: bool) {
+    // Diagnostics go to stderr so a command's own output stays machine-readable
+    // on stdout: `logs summary --json` is the input to a monitoring check, and a
+    // startup line mixed into it made the JSON unparsable (issue #234).
     tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
         .with_env_filter(env_filter(
             verbose,
             std::env::var("RUST_LOG").ok().as_deref(),
