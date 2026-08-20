@@ -22,10 +22,19 @@
 use std::process::ExitCode;
 use std::time::Duration;
 
-use link_assistant_router::managed_server::ResolvedServer;
+use crate::managed_server::ResolvedServer;
 
 /// How long to wait for one HTTP call to the selected router.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// How often a device-flow login asks the router whether it was approved.
+///
+/// Short enough that approval feels immediate, long enough not to hammer the
+/// router while a human is reading their browser.
+#[cfg(not(test))]
+const POLL_INTERVAL: Duration = Duration::from_secs(3);
+#[cfg(test)]
+const POLL_INTERVAL: Duration = Duration::from_millis(20);
 
 /// The selected router, when one is configured and reachable.
 ///
@@ -36,7 +45,7 @@ pub async fn selected_server() -> Result<Option<ResolvedServer>, String> {
     if !has_selection() {
         return Ok(None);
     }
-    link_assistant_router::managed_server::resolve(None, None, None)
+    crate::managed_server::resolve(None, None, None)
         .await
         .map(Some)
         .map_err(|error| format!("the selected server is not usable: {error}"))
@@ -52,7 +61,7 @@ fn has_selection() -> bool {
     {
         return true;
     }
-    link_assistant_router::managed_server::load_persisted()
+    crate::managed_server::load_persisted()
         .ok()
         .flatten()
         .is_some()
@@ -124,7 +133,7 @@ async fn authorize_inner(
 
     let submitted = match code {
         Some(code) => code,
-        None => crate::auth_cli::read_code().await?,
+        None => read_code().await?,
     };
     let submitted = submitted.trim();
     if submitted.is_empty() {
@@ -161,7 +170,7 @@ async fn poll_until_authorized(
 ) -> Result<(), String> {
     let deadline = std::time::Instant::now() + Duration::from_secs(10 * 60);
     while std::time::Instant::now() < deadline {
-        tokio::time::sleep(Duration::from_secs(3)).await;
+        tokio::time::sleep(POLL_INTERVAL).await;
         let view: serde_json::Value = send(
             client,
             server,
@@ -284,3 +293,28 @@ async fn send<T: serde::de::DeserializeOwned>(
     serde_json::from_str(&text)
         .map_err(|error| format!("could not read the reply from {url}: {error}"))
 }
+
+/// Read one authorization code from standard input.
+///
+/// Duplicated from the local path rather than shared: the two prompts differ in
+/// what they say about where the pending login lives, and the shared half is
+/// one `read_line`.
+async fn read_code() -> Result<String, String> {
+    use std::io::BufRead as _;
+
+    println!("Paste authorization code:");
+    tokio::task::spawn_blocking(|| {
+        let mut line = String::new();
+        std::io::stdin()
+            .lock()
+            .read_line(&mut line)
+            .map(|_| line)
+            .map_err(|error| format!("could not read authorization code: {error}"))
+    })
+    .await
+    .map_err(|error| format!("authorization prompt failed: {error}"))?
+}
+
+#[cfg(test)]
+#[path = "auth_remote_tests.rs"]
+mod tests;

@@ -690,7 +690,9 @@ mod cli_parser_tests {
         let status = Cli::try_parse_from(["bin", "auth", "status"]).expect("parses auth status");
         assert!(matches!(
             status.command,
-            Some(Command::Auth { op: AuthOp::Status { .. } })
+            Some(Command::Auth {
+                op: AuthOp::Status { .. }
+            })
         ));
     }
 

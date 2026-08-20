@@ -80,7 +80,7 @@ async fn remote_target(
             .map(Some)
             .map_err(|error| format!("{server} is not usable: {error}"));
     }
-    crate::auth_remote::selected_server().await
+    link_assistant_router::auth_remote::selected_server().await
 }
 
 async fn run_remote(
@@ -89,10 +89,18 @@ async fn run_remote(
 ) -> ExitCode {
     match op {
         AuthOp::Claude { code, mode, .. } => {
-            crate::auth_remote::authorize(server, "claude", mode.as_deref(), code.clone()).await
+            link_assistant_router::auth_remote::authorize(
+                server,
+                "claude",
+                mode.as_deref(),
+                code.clone(),
+            )
+            .await
         }
-        AuthOp::Codex { .. } => crate::auth_remote::authorize(server, "codex", None, None).await,
-        AuthOp::Status { .. } => crate::auth_remote::status(server).await,
+        AuthOp::Codex { .. } => {
+            link_assistant_router::auth_remote::authorize(server, "codex", None, None).await
+        }
+        AuthOp::Status { .. } => link_assistant_router::auth_remote::status(server).await,
     }
 }
 
@@ -240,7 +248,7 @@ async fn run_claude_cli_fallback(
     }
 }
 
-pub async fn read_code() -> Result<String, String> {
+async fn read_code() -> Result<String, String> {
     println!("Paste authorization code:");
     tokio::task::spawn_blocking(|| {
         let mut line = String::new();

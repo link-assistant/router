@@ -62,6 +62,23 @@ pub struct ResolvedServer {
     _lease: Option<ManagedLease>,
 }
 
+impl ResolvedServer {
+    /// A server reference for an already-known origin.
+    ///
+    /// Holds no managed-container lease, so it neither starts nor keeps one
+    /// alive — for a router that is simply already running at `base_url`.
+    #[must_use]
+    pub fn at(base_url: impl Into<String>, token: Option<String>, source: &'static str) -> Self {
+        Self {
+            base_url: base_url.into(),
+            token,
+            source,
+            run_max_requests: None,
+            _lease: None,
+        }
+    }
+}
+
 /// An ordinary token suitable for a wrapped client.
 pub struct RunCredential {
     pub token: String,
