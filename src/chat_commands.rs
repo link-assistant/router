@@ -482,7 +482,7 @@ impl RouterStatus for crate::app_state::AppState {
         ];
         match self.account_router.as_ref() {
             Some(router) => {
-                let health = router.health_snapshot();
+                let health = router.health_snapshot_with(Some(&self.subscription_cache));
                 let healthy = health.iter().filter(|account| account.healthy).count();
                 lines.push(format!("Accounts: {healthy}/{} healthy", health.len()));
                 lines.extend(

@@ -66,14 +66,21 @@ fn resolve_in_path(command: &str) -> Option<std::path::PathBuf> {
 /// Expired credentials are refreshed in memory before their catalogs are
 /// fetched. Returns `true` when a present credential cannot become healthy or
 /// cannot fetch its catalog.
+/// `data_dir`, when given, is where a terminal refusal learned here is
+/// recorded, so `accounts list` — which performs no refresh of its own — stops
+/// contradicting this command about the same credential (issue #245).
 pub async fn subscription_catalog_diagnostics(
     _active_provider: SubscriptionProvider,
     claude_home: &str,
     user_home: &str,
+    data_dir: Option<&std::path::Path>,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
     let client = reqwest::Client::new();
     let token_cache = crate::refresh::TokenCache::new();
+    if let Some(dir) = data_dir {
+        token_cache.persist_rejections_in(dir);
+    }
     let now_ms = chrono::Utc::now().timestamp_millis();
     let mut catalog_error = false;
     for reader in readers {

@@ -60,6 +60,7 @@ pub mod provider_proxy;
 pub mod providers;
 pub mod proxy;
 pub mod refresh;
+pub mod refresh_rejections;
 pub mod request_log;
 mod request_routing;
 pub mod responses;

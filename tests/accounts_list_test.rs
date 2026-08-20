@@ -33,8 +33,17 @@ fn write_credential(home: &Path, refresh_token: &str, expires_at_ms: i64) {
 
 /// The row `accounts list` prints for `home`, as `(healthy, credential)`.
 fn account_row(home: &Path) -> (String, String) {
+    let data = scratch("row-data");
+    account_row_in(home, &data)
+}
+
+/// As [`account_row`], but with an explicit data directory — the durable
+/// refusal store lives there.
+fn account_row_in(home: &Path, data_dir: &Path) -> (String, String) {
     let output = Command::new(env!("CARGO_BIN_EXE_router"))
-        .args(["accounts", "list", "--claude-code-home"])
+        .args(["accounts", "list", "--data-dir"])
+        .arg(data_dir)
+        .args(["--claude-code-home"])
         .arg(home)
         .env("TOKEN_SECRET", "accounts-list-probe-secret")
         .output()
@@ -106,5 +115,78 @@ fn a_missing_credential_is_not_reported_healthy() {
     assert_eq!(
         account_row(&home),
         ("false".to_string(), "missing".to_string())
+    );
+}
+
+/// After a refresh has been refused for the credential on disk, `accounts
+/// list` must stop calling that account healthy.
+///
+/// This is the assertion issue #245 said would have caught the bug. It drives
+/// the real binary, and records the refusal the way a running router or
+/// `doctor` does — through the durable store, because `accounts list` is its
+/// own short-lived process and performs no refresh of its own.
+#[test]
+fn a_refused_chain_is_not_reported_healthy() {
+    let home = scratch("refused");
+    let data = scratch("refused-data");
+    // Expired, with a refresh token that is still a non-empty string — exactly
+    // what a revoked chain looks like on disk.
+    write_credential(&home, "sk-ant-ort01-revoked", EXPIRED_MS);
+
+    // Nothing tried yet: "expired but holds a refresh token" is honest.
+    assert_eq!(
+        account_row_in(&home, &data),
+        ("true".to_string(), "refreshable".to_string())
+    );
+
+    link_assistant_router::refresh_rejections::RejectionStore::open(&data).record(
+        link_assistant_router::subscription::SubscriptionProvider::Claude,
+        "primary",
+        &link_assistant_router::subscription::SubscriptionToken {
+            access_token: "sk-ant-oat01-probe".into(),
+            refresh_token: Some("sk-ant-ort01-revoked".into()),
+            expires_at_ms: Some(EXPIRED_MS),
+            account_id: None,
+            resource_url: None,
+        },
+    );
+
+    assert_eq!(
+        account_row_in(&home, &data),
+        ("false".to_string(), "rejected".to_string()),
+        "a chain the upstream refused was still reported healthy"
+    );
+}
+
+/// A refusal covers one chain link, not the account: once another holder
+/// rotates the credential forward, the account is reported recoverable again
+/// with no restart and no manual step (issue #239's rule, preserved).
+#[test]
+fn a_rotated_chain_recovers_from_a_recorded_refusal() {
+    let home = scratch("rotated");
+    let data = scratch("rotated-data");
+    write_credential(&home, "sk-ant-ort01-revoked", EXPIRED_MS);
+    link_assistant_router::refresh_rejections::RejectionStore::open(&data).record(
+        link_assistant_router::subscription::SubscriptionProvider::Claude,
+        "primary",
+        &link_assistant_router::subscription::SubscriptionToken {
+            access_token: "sk-ant-oat01-probe".into(),
+            refresh_token: Some("sk-ant-ort01-revoked".into()),
+            expires_at_ms: Some(EXPIRED_MS),
+            account_id: None,
+            resource_url: None,
+        },
+    );
+    assert_eq!(
+        account_row_in(&home, &data),
+        ("false".to_string(), "rejected".to_string())
+    );
+
+    write_credential(&home, "sk-ant-ort01-rotated", EXPIRED_MS);
+
+    assert_eq!(
+        account_row_in(&home, &data),
+        ("true".to_string(), "refreshable".to_string()),
+        "a rotated chain must recover without a restart"
     );
 }
