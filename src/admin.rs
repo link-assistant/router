@@ -262,7 +262,7 @@ impl AdminClaim {
         let claim_path = data_dir.join(CLAIM_FILE_NAME);
         let stored = fs::read_to_string(&claim_path)
             .ok()
-            .and_then(|raw| serde_json::from_str::<ClaimFile>(&raw).ok())
+            .and_then(|raw| crate::lino_json::decode::<ClaimFile>(&raw).ok())
             .filter(|file: &ClaimFile| !file.is_empty());
         Self {
             env_key: env_key.filter(|key| !key.is_empty()),
@@ -670,7 +670,10 @@ impl AdminClaim {
         let Some(path) = self.claim_path.as_ref() else {
             return Ok(());
         };
-        let body = serde_json::to_string_pretty(file)?;
+        // Links notation, readable: router state is one format rather than two
+        // (issue #235). The file name is unchanged so an existing deployment
+        // keeps its path; the loader below accepts either encoding.
+        let body = crate::lino_json::encode(file)?;
         crate::durable_file::atomic_write_owner_only(path, body.as_bytes())
     }
 
@@ -678,7 +681,7 @@ impl AdminClaim {
         self.claim_path
             .as_ref()
             .and_then(|path| fs::read_to_string(path).ok())
-            .and_then(|raw| serde_json::from_str(&raw).ok())
+            .and_then(|raw| crate::lino_json::decode(&raw).ok())
             .filter(|file: &ClaimFile| !file.is_empty())
     }
 
