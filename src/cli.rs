@@ -614,6 +614,8 @@ pub enum AuthOp {
         /// `LOGIN_CLI_ARGS` selects, then `full`.
         #[arg(long)]
         mode: Option<String>,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// Authorize an `OpenAI` Codex / `ChatGPT` subscription.
     Codex {
@@ -623,9 +625,31 @@ pub enum AuthOp {
         /// Local callback port registered for the Codex OAuth client.
         #[arg(long, default_value_t = 1455)]
         port: u16,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// Report whether each provider credential is usable, expired, or absent.
-    Status,
+    Status {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
+}
+
+/// Which router an `auth` command acts on.
+///
+/// `auth` used to always write a local credential even when a server was
+/// selected, so the obvious `server use` → `auth` → `with` sequence left the
+/// targeted router unauthorized and failed later as a 401 (issue #246). The
+/// default now follows the selection, exactly as `with` does; these make the
+/// choice explicit when the default is not what is wanted.
+#[derive(Debug, Clone, Default, clap::Args)]
+pub struct AuthTarget {
+    /// Authorize the local credential directory even when a server is selected.
+    #[arg(long, conflicts_with = "server")]
+    pub local: bool,
+    /// Authorize this router instead of the selected one.
+    #[arg(long, value_name = "URL", conflicts_with = "local")]
+    pub server: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]

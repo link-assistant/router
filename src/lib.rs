@@ -17,6 +17,7 @@ mod api_error;
 pub mod app_state;
 pub mod audit;
 pub mod auth;
+pub mod auth_remote;
 pub mod bridge_selection;
 pub mod capabilities;
 pub mod chat_admin;

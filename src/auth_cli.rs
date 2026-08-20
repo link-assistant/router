@@ -28,8 +28,21 @@ pub fn relax_token_secret_for_auth(
 }
 
 pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
+    // `auth` follows the selected server the way `with` does. Writing a local
+    // credential while a server is selected made the obvious `server use` →
+    // `auth` → `with` sequence silently authorize the wrong router (#246).
+    match remote_target(op).await {
+        Ok(Some(server)) => return run_remote(&server, op).await,
+        Ok(None) => {}
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    }
     match op {
-        AuthOp::Claude { code, flow, mode } => {
+        AuthOp::Claude {
+            code, flow, mode, ..
+        } => {
             let mode = match mode.as_deref() {
                 Some(value) => {
                     match link_assistant_router::claude_auth::ClaudeAuthMode::parse(value) {
@@ -44,8 +57,50 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
             };
             run_claude(config, code.clone(), *flow, mode).await
         }
-        AuthOp::Codex { flow, port } => run_codex(config, *flow, *port).await,
-        AuthOp::Status => status(config).await,
+        AuthOp::Codex { flow, port, .. } => run_codex(config, *flow, *port).await,
+        AuthOp::Status { .. } => status(config).await,
+    }
+}
+
+/// The router this `auth` invocation acts on, or `None` for the local one.
+async fn remote_target(
+    op: &AuthOp,
+) -> Result<Option<link_assistant_router::managed_server::ResolvedServer>, String> {
+    let target = match op {
+        AuthOp::Claude { target, .. }
+        | AuthOp::Codex { target, .. }
+        | AuthOp::Status { target } => target,
+    };
+    if target.local {
+        return Ok(None);
+    }
+    if let Some(server) = target.server.as_deref() {
+        return link_assistant_router::managed_server::resolve(Some(server), None, None)
+            .await
+            .map(Some)
+            .map_err(|error| format!("{server} is not usable: {error}"));
+    }
+    link_assistant_router::auth_remote::selected_server().await
+}
+
+async fn run_remote(
+    server: &link_assistant_router::managed_server::ResolvedServer,
+    op: &AuthOp,
+) -> ExitCode {
+    match op {
+        AuthOp::Claude { code, mode, .. } => {
+            link_assistant_router::auth_remote::authorize(
+                server,
+                "claude",
+                mode.as_deref(),
+                code.clone(),
+            )
+            .await
+        }
+        AuthOp::Codex { .. } => {
+            link_assistant_router::auth_remote::authorize(server, "codex", None, None).await
+        }
+        AuthOp::Status { .. } => link_assistant_router::auth_remote::status(server).await,
     }
 }
 

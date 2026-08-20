@@ -647,7 +647,7 @@ mod cli_parser_tests {
         assert!(matches!(
             claude.command,
             Some(Command::Auth {
-                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto, mode: None }
+                op: AuthOp::Claude { code: Some(code), flow: AuthFlow::Auto, mode: None, .. }
             }) if code == "copied"
         ));
 
@@ -670,7 +670,8 @@ mod cli_parser_tests {
             Some(Command::Auth {
                 op: AuthOp::Codex {
                     flow: AuthFlow::Loopback,
-                    port: 1457
+                    port: 1457,
+                    ..
                 }
             })
         ));
@@ -681,14 +682,17 @@ mod cli_parser_tests {
             Some(Command::Auth {
                 op: AuthOp::Codex {
                     flow: AuthFlow::Device,
-                    port: 1455
+                    port: 1455,
+                    ..
                 }
             })
         ));
         let status = Cli::try_parse_from(["bin", "auth", "status"]).expect("parses auth status");
         assert!(matches!(
             status.command,
-            Some(Command::Auth { op: AuthOp::Status })
+            Some(Command::Auth {
+                op: AuthOp::Status { .. }
+            })
         ));
     }
 

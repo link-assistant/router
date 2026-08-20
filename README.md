@@ -366,13 +366,28 @@ its PKCE loopback flow remains available as a CLI fallback.
 | `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
 | `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
 
-For a foreground local login, use `router auth claude` or
-`auth codex`. Claude's `--flow code` stores its pending PKCE login for 15
-minutes, so the code can be redeemed from a later process with
-`auth claude --flow code --code <code>`. `auth status` reports each
-provider credential as `usable`, `expired`, or `absent`. `auth codex` defaults
-to device authorization; `--flow device` or `--flow loopback` makes the choice
-explicit. Unsupported forced flows fail instead of falling back.
+For a foreground login, use `router auth claude` or `auth codex`. Claude's
+`--flow code` stores its pending PKCE login for 15 minutes, so the code can be
+redeemed from a later process with `auth claude --flow code --code <code>`.
+`auth status` reports each provider credential as `usable`, `expired`, or
+`absent`. `auth codex` defaults to device authorization; `--flow device` or
+`--flow loopback` makes the choice explicit. Unsupported forced flows fail
+instead of falling back.
+
+`auth` follows the server `server use` selected, exactly as `with` does: the
+browser step still happens in front of you, but the credential is stored by the
+router being targeted, so
+
+```bash
+router server use <url> --token-stdin
+router auth claude
+router with claude
+```
+
+does what it reads as. `--local` authorizes the local credential directory
+instead, and `--server <url>` targets one router for a single command. A
+selected server that cannot be reached is an error rather than a silent
+fallback to a local directory.
 
 ### Admin UI surface (`--admin-port` to opt in)
 
