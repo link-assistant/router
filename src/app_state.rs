@@ -88,3 +88,19 @@ pub struct AppState {
     /// Optional GitHub credential proxy and destructive-operation policy.
     pub github: crate::github_proxy::GitHubProxyConfig,
 }
+
+impl AppState {
+    /// Tell the token cache where every subscription credential lives.
+    ///
+    /// Called once before the first request is served, so a refresh on the
+    /// serving path can re-read and write back the same file the catalog
+    /// poller does. A rotation that only ever lives in memory is lost at
+    /// restart and leaves a spent refresh token on disk (issue #239).
+    pub fn register_credential_stores(&self) {
+        self.subscription_cache
+            .register_readers("primary", &self.subscription_readers);
+        if let Some(router) = &self.account_router {
+            router.register_credential_stores(&self.subscription_cache);
+        }
+    }
+}

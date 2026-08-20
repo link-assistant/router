@@ -168,37 +168,6 @@ impl ModelCatalogCache {
     }
 }
 
-/// Write a rotated refresh token back to the credential file that supplied it.
-///
-/// Vendors issue a *new* `refresh_token` with the refresh response and spend the
-/// old one. Keeping the replacement only in memory means the next process start
-/// replays a token the vendor has already consumed, turning a recoverable
-/// credential into a mandatory re-login (issue #205).
-///
-/// Nothing is written unless the token actually changed, so a read-only mount
-/// stays silent in the common case; when a rotation genuinely cannot be saved
-/// the reason is logged once rather than failing the refresh, because the
-/// in-memory token still works for this process.
-fn persist_rotated_refresh_token(
-    reader: &SubscriptionReader,
-    stored: Option<&str>,
-    refreshed: &SubscriptionToken,
-) {
-    let Some(rotated) = refreshed.refresh_token.as_deref() else {
-        return;
-    };
-    if stored == Some(rotated) {
-        return;
-    }
-    match reader.write_token(refreshed) {
-        Ok(()) => tracing::info!("persisted a rotated {} refresh token", reader.provider()),
-        Err(error) => tracing::warn!(
-            "could not persist the rotated {} refresh token: {error}",
-            reader.provider()
-        ),
-    }
-}
-
 /// Fetch every currently healthy credential and update the cache independently.
 pub async fn refresh_catalogs(
     client: &reqwest::Client,
@@ -207,20 +176,25 @@ pub async fn refresh_catalogs(
     cache: &ModelCatalogCache,
 ) {
     let now_ms = chrono::Utc::now().timestamp_millis();
+    // Tell the token cache where each credential lives before anything is
+    // exchanged. Without a store it can only reason about the token it was
+    // handed: it cannot notice that another holder rotated the chain forward,
+    // and it cannot write its own rotation back (issue #239).
+    for reader in readers {
+        token_cache.register_reader("primary", reader);
+    }
     let refreshes = readers
         .iter()
         .filter_map(|reader| {
             reader
                 .read_token()
                 .ok()
-                .map(|token| (reader, reader.provider(), token))
+                .map(|token| (reader.provider(), token))
         })
-        .map(|(reader, provider, disk_token)| async move {
-            let stored_refresh = disk_token.refresh_token.clone();
+        .map(|(provider, disk_token)| async move {
             let token = token_cache
                 .get_fresh(client, provider, disk_token, now_ms)
                 .await;
-            persist_rotated_refresh_token(reader, stored_refresh.as_deref(), &token);
             // A stamped-expired credential is still tried: `expiresAt` is a
             // hint, and the catalog endpoint is the authority on whether this
             // token works for *it*.
@@ -243,7 +217,6 @@ pub async fn refresh_catalogs(
                 tracing::info!(
                     "{provider} rejected an unexpired catalog token; re-probing once after refresh"
                 );
-                persist_rotated_refresh_token(reader, stored_refresh.as_deref(), &refreshed);
                 account = refreshed.account_id.clone();
                 result = fetch_provider_catalog(client, provider, &refreshed, None).await;
             }
@@ -634,84 +607,5 @@ mod tests {
         assert_eq!(status.models, ["gpt-live"], "retained for diagnostics");
         assert!(status.routable_models().is_empty(), "not routable");
         assert!(status.is_degraded());
-    }
-
-    /// A rotated refresh token reaches disk; an unchanged one writes nothing,
-    /// so a read-only mount stays quiet in the common case (issue #205).
-    #[test]
-    fn only_a_rotated_refresh_token_is_written_back() {
-        let dir = tempfile::tempdir().expect("temp dir");
-        let path = dir.path().join("auth.json");
-        std::fs::write(
-            &path,
-            r#"{"tokens":{"access_token":"old","refresh_token":"stored"}}"#,
-        )
-        .expect("seed");
-        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, dir.path());
-        let before = std::fs::read_to_string(&path).expect("read");
-
-        // Same refresh token: nothing changes on disk.
-        persist_rotated_refresh_token(
-            &reader,
-            Some("stored"),
-            &SubscriptionToken {
-                access_token: "new".into(),
-                refresh_token: Some("stored".into()),
-                expires_at_ms: None,
-                account_id: None,
-                resource_url: None,
-            },
-        );
-        assert_eq!(std::fs::read_to_string(&path).expect("read"), before);
-
-        // A response with no refresh token at all likewise writes nothing.
-        persist_rotated_refresh_token(
-            &reader,
-            Some("stored"),
-            &SubscriptionToken {
-                access_token: "new".into(),
-                refresh_token: None,
-                expires_at_ms: None,
-                account_id: None,
-                resource_url: None,
-            },
-        );
-        assert_eq!(std::fs::read_to_string(&path).expect("read"), before);
-
-        // A rotated token is persisted, so a restart does not replay a spent one.
-        persist_rotated_refresh_token(
-            &reader,
-            Some("stored"),
-            &SubscriptionToken {
-                access_token: "new".into(),
-                refresh_token: Some("rotated".into()),
-                expires_at_ms: None,
-                account_id: None,
-                resource_url: None,
-            },
-        );
-        let after = reader.read_token().expect("re-read");
-        assert_eq!(after.refresh_token.as_deref(), Some("rotated"));
-        assert_eq!(after.access_token, "new");
-    }
-
-    /// A write that cannot land must not panic or fail the refresh: the
-    /// in-memory token still serves this process.
-    #[test]
-    fn a_failed_write_back_is_tolerated() {
-        let dir = tempfile::tempdir().expect("temp dir");
-        // No credential file at all, so the write has nothing to update.
-        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, dir.path());
-        persist_rotated_refresh_token(
-            &reader,
-            Some("stored"),
-            &SubscriptionToken {
-                access_token: "new".into(),
-                refresh_token: Some("rotated".into()),
-                expires_at_ms: None,
-                account_id: None,
-                resource_url: None,
-            },
-        );
     }
 }

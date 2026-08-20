@@ -160,8 +160,9 @@ async fn forward_subscription_openai_inner(
             token: disk_token,
         }
     };
-    // Refresh in memory if the on-disk token has expired; vendor files stay
-    // read-only.
+    // Refresh if the on-disk token has expired. A rotated refresh token is
+    // written back to the credential file before the new access token is used
+    // (issue #239); a read-only mount degrades to an in-memory refresh.
     let now_ms = chrono::Utc::now().timestamp_millis();
     let sub_token = state
         .subscription_cache

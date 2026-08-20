@@ -31,6 +31,7 @@ pub mod clients;
 pub mod config;
 pub mod config_defaults;
 pub mod crater;
+pub mod credential_store;
 pub mod doctor;
 pub mod durable_file;
 pub mod gemini;

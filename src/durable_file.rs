@@ -103,6 +103,88 @@ where
     }
 }
 
+/// An exclusive advisory lock held for as long as the guard lives.
+///
+/// Returned by [`lock_exclusive_async`] so an `async` critical section — a
+/// token exchange over the network — can serialise against other holders
+/// without blocking a runtime worker on `flock`.
+#[derive(Debug)]
+pub struct FileLockGuard {
+    file: fs::File,
+    path: std::path::PathBuf,
+}
+
+impl FileLockGuard {
+    /// Path of the lock file this guard holds.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for FileLockGuard {
+    fn drop(&mut self) {
+        // Best effort: the lock is released by closing the descriptor anyway.
+        let _ = FileExt::unlock(&self.file);
+    }
+}
+
+/// How often a contended lock is re-tried while waiting.
+const LOCK_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(20);
+
+/// Acquire an exclusive advisory lock on `path`, waiting up to `timeout`.
+///
+/// `flock` has no async form, so the lock is polled rather than waited on: a
+/// blocking `lock_exclusive` inside an `async fn` would park a runtime worker
+/// for as long as another process holds it, which for a credential refresh can
+/// be a full network round trip.
+///
+/// # Errors
+///
+/// Returns [`io::ErrorKind::WouldBlock`] when the lock is still held after
+/// `timeout`, or the underlying error when the lock file cannot be opened.
+pub async fn lock_exclusive_async(
+    path: &Path,
+    timeout: std::time::Duration,
+) -> io::Result<FileLockGuard> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).create(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let file = options.open(path)?;
+    let mut waited = std::time::Duration::ZERO;
+    loop {
+        match FileExt::try_lock_exclusive(&file) {
+            Ok(()) => {
+                return Ok(FileLockGuard {
+                    file,
+                    path: path.to_path_buf(),
+                });
+            }
+            Err(error)
+                if error.kind() == io::ErrorKind::WouldBlock
+                    || error.raw_os_error() == Some(11) =>
+            {
+                if waited >= timeout {
+                    return Err(io::Error::new(
+                        io::ErrorKind::WouldBlock,
+                        format!("timed out waiting for the lock on {}", path.display()),
+                    ));
+                }
+                tokio::time::sleep(LOCK_POLL_INTERVAL).await;
+                waited = waited.saturating_add(LOCK_POLL_INTERVAL);
+            }
+            Err(error) => return Err(error),
+        }
+    }
+}
+
 /// Sync a directory entry update on platforms that support directory fsync.
 pub fn sync_directory(path: &Path) -> io::Result<()> {
     #[cfg(unix)]

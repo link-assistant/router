@@ -267,6 +267,26 @@ pub struct Config {
 }
 
 impl Config {
+    /// The vendor subscription this deployment serves and the credential home
+    /// its primary account reads from.
+    ///
+    /// Both the server and the CLI subcommands need the same answer, and it is
+    /// derived purely from configuration.
+    #[must_use]
+    pub fn subscription_pool(&self) -> (SubscriptionProvider, PathBuf) {
+        let provider = self
+            .upstream_provider
+            .subscription_provider()
+            .unwrap_or(SubscriptionProvider::Claude);
+        let primary = if provider == SubscriptionProvider::Claude {
+            PathBuf::from(&self.claude_code_home)
+        } else {
+            let user_home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+            provider.resolve_home(&user_home)
+        };
+        (provider, primary)
+    }
+
     /// Load configuration from environment variables only (legacy compatibility).
     ///
     /// The binary's CLI entrypoint layers command-line flags and `.lenv`

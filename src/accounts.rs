@@ -264,6 +264,18 @@ impl AccountRouter {
         self.inner.provider
     }
 
+    /// Tell the shared token cache where each account's credential lives.
+    ///
+    /// A pooled account refreshes on the serving path, so without this its
+    /// rotated refresh token would stay in memory and be lost at restart, and a
+    /// rejection could not be checked against the newest credential on disk
+    /// (issue #239).
+    pub fn register_credential_stores(&self, cache: &crate::refresh::TokenCache) {
+        for account in &self.inner.accounts {
+            cache.register_reader(&account.name, &account.reader);
+        }
+    }
+
     /// Number of configured accounts (incl. primary).
     #[must_use]
     pub fn len(&self) -> usize {
