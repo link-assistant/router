@@ -638,3 +638,110 @@ fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
         Ok(SubscriptionProvider::Codex)
     );
 }
+
+#[test]
+fn an_empty_catalog_names_the_credential_state_behind_it() {
+    // A rejected credential empties the catalog. "not advertised by any
+    // subscription" alone reads like a typo in the model id, so the message
+    // has to name the real cause (issue #239).
+    let catalogs = ModelCatalogCache::new();
+    catalogs.record_success(
+        SubscriptionProvider::Claude,
+        vec!["claude-sonnet-5".to_string()],
+    );
+    catalogs.record_failure(
+        SubscriptionProvider::Claude,
+        "refresh token was rejected: invalid_grant",
+        true,
+    );
+
+    let error = available_provider_for_model("claude-sonnet-5", &[], &catalogs)
+        .expect_err("a rejected credential advertises nothing");
+    let message = error.to_string();
+    assert!(
+        message.contains("not advertised by any subscription"),
+        "{message}"
+    );
+    assert!(message.contains("credential is not usable"), "{message}");
+    assert!(message.contains("invalid_grant"), "{message}");
+}
+
+#[test]
+fn a_never_discovered_subscription_says_so_rather_than_blaming_the_model_id() {
+    let catalogs = ModelCatalogCache::new();
+    let error = available_provider_for_model("gemini-3-pro", &[], &catalogs)
+        .expect_err("nothing has been discovered yet");
+    let message = error.to_string();
+    assert!(
+        message.contains("no gemini credential has been read yet"),
+        "{message}"
+    );
+
+    // An unqualified id cannot blame one vendor, and stays quiet about
+    // providers that were simply never configured.
+    let unqualified = available_provider_for_model("mystery-model", &[], &catalogs)
+        .expect_err("nothing has been discovered yet");
+    assert_eq!(
+        unqualified.to_string(),
+        "model 'mystery-model' is not advertised by any subscription"
+    );
+}
+
+#[test]
+fn an_unavailable_credential_is_named_in_the_routing_error() {
+    let catalogs = ModelCatalogCache::new();
+    catalogs.record_success(
+        SubscriptionProvider::Codex,
+        vec!["borealis-9-ultra".to_string()],
+    );
+    let error = available_provider_for_model("borealis-9-ultra", &[], &catalogs)
+        .expect_err("the catalog is live but no credential is usable");
+    let message = error.to_string();
+    assert!(message.contains("no healthy codex credential"), "{message}");
+    assert!(
+        message.contains("missing or rejected upstream"),
+        "{message}"
+    );
+}
+
+/// Registration is what lets a refresh on the serving path re-read and write
+/// back the same credential file the catalog poller uses; without it a rotation
+/// performed while serving is lost at restart (issue #239). The vendor-client
+/// rung stays inert until an operator configures a binary.
+#[test]
+fn credential_recovery_registers_stores_and_only_an_asked_for_vendor_client() {
+    let dir = tempdir().unwrap();
+    let home = dir.path().join("claude-home");
+    fs::create_dir_all(&home).unwrap();
+    fs::write(
+        home.join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"a","refreshToken":"r","expiresAt":1}}"#,
+    )
+    .unwrap();
+    let readers = vec![SubscriptionReader::new(SubscriptionProvider::Claude, &home)];
+
+    let without = auto_state(readers.clone(), dir.path());
+    without.register_credential_recovery(None);
+    assert!(
+        without
+            .subscription_cache
+            .store_for_subscription(SubscriptionProvider::Claude, "primary")
+            .is_some(),
+        "the serving path must know where the credential lives"
+    );
+    assert!(
+        without
+            .subscription_cache
+            .vendor_cli_for(SubscriptionProvider::Claude, "primary")
+            .is_none(),
+        "running a vendor binary must be opt-in"
+    );
+
+    let with = auto_state(readers, dir.path());
+    with.register_credential_recovery(Some(&dir.path().join("claude")));
+    let registered = with
+        .subscription_cache
+        .vendor_cli_for(SubscriptionProvider::Claude, "primary")
+        .expect("the configured client is registered");
+    assert_eq!(registered.provider(), SubscriptionProvider::Claude);
+}

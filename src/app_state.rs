@@ -88,3 +88,39 @@ pub struct AppState {
     /// Optional GitHub credential proxy and destructive-operation policy.
     pub github: crate::github_proxy::GitHubProxyConfig,
 }
+
+impl AppState {
+    /// Tell the token cache where every subscription credential lives, and
+    /// which vendor client may rotate one it cannot.
+    ///
+    /// Called once before the first request is served, so a refresh on the
+    /// serving path can re-read and write back the same file the catalog
+    /// poller does. A rotation that only ever lives in memory is lost at
+    /// restart and leaves a spent refresh token on disk (issue #239).
+    ///
+    /// `vendor_cli` is the operator-configured vendor binary
+    /// (`--claude-cli-bin` / `CLAUDE_CLI_BIN`). Without it the last rung of the
+    /// recovery ladder stays inert: running a vendor client is a side effect
+    /// nobody should get without asking for it.
+    pub fn register_credential_recovery(&self, vendor_cli: Option<&std::path::Path>) {
+        self.subscription_cache
+            .register_readers("primary", &self.subscription_readers);
+        if let Some(router) = &self.account_router {
+            router.register_credential_stores(&self.subscription_cache);
+        }
+        let Some(binary) = vendor_cli else {
+            return;
+        };
+        for reader in &self.subscription_readers {
+            if reader.provider() == crate::subscription::SubscriptionProvider::Claude {
+                self.subscription_cache.register_vendor_cli(
+                    "primary",
+                    Arc::new(crate::vendor_cli_refresh::VendorCli::claude(
+                        binary,
+                        reader.home(),
+                    )),
+                );
+            }
+        }
+    }
+}

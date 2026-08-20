@@ -28,7 +28,7 @@ use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
 use link_assistant_router::proxy::AppState;
 use link_assistant_router::storage::{TokenStore, build_token_store};
-use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
+use link_assistant_router::subscription::SubscriptionReader;
 use link_assistant_router::token::{ADMIN_SCOPE, IssueRequest, TokenManager};
 use log_lazy::LogLazy;
 use tower_http::trace::TraceLayer;
@@ -106,20 +106,6 @@ async fn main() -> ExitCode {
     }
 }
 
-fn subscription_pool(config: &Config) -> (SubscriptionProvider, std::path::PathBuf) {
-    let provider = config
-        .upstream_provider
-        .subscription_provider()
-        .unwrap_or(SubscriptionProvider::Claude);
-    let primary = if provider == SubscriptionProvider::Claude {
-        std::path::PathBuf::from(&config.claude_code_home)
-    } else {
-        let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-        provider.resolve_home(&user_home)
-    };
-    (provider, primary)
-}
-
 /// Construct the persistent token store and the optional multi-account router
 /// for the given [`Config`]. Both are needed by both the server and the CLI
 /// subcommands.
@@ -132,7 +118,7 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
         if config.additional_account_dirs.is_empty() && config.account_request_limits.is_empty() {
             None
         } else {
-            let (provider, primary) = subscription_pool(config);
+            let (provider, primary) = config.subscription_pool();
             let options = AccountRouterOptions {
                 strategy: config.account_routing_strategy,
                 cooldown: Duration::from_secs(config.account_cooldown_secs),
@@ -213,7 +199,7 @@ async fn run_server(
 ) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Upstream: {}", config.upstream_base_url);
     tracing::info!("Upstream provider: {:?}", config.upstream_provider);
-    let (subscription_provider, subscription_home) = subscription_pool(&config);
+    let (subscription_provider, subscription_home) = config.subscription_pool();
     tracing::info!(
         "Subscription home ({subscription_provider}): {}",
         subscription_home.display()
@@ -334,6 +320,8 @@ async fn run_server(
         github: link_assistant_router::github_proxy::GitHubProxyConfig::from_env()
             .map_err(std::io::Error::other)?,
     };
+
+    state.register_credential_recovery(config.claude_cli_bin.as_deref());
 
     let catalog_refresh = tokio::spawn(
         link_assistant_router::model_catalog::refresh_catalogs_forever(
@@ -610,7 +598,7 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
         Ok((_, Some(r))) => r,
         Ok((_, None)) => {
             // Single-account mode: synthesise a one-account router for inspection.
-            let (provider, primary) = subscription_pool(config);
+            let (provider, primary) = config.subscription_pool();
             AccountRouter::new_for_provider(
                 primary,
                 &[],
@@ -907,7 +895,7 @@ async fn run_doctor(config: &Config) -> ExitCode {
     );
 
     // Probe the active pool with its vendor-specific credential layout.
-    let (active_provider, primary_home) = subscription_pool(config);
+    let (active_provider, primary_home) = config.subscription_pool();
     let primary = SubscriptionReader::new(active_provider, &primary_home);
     match primary.discover_credential_path() {
         Some(path) => {

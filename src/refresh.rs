@@ -30,6 +30,19 @@ use serde::Deserialize;
 mod refresh_state;
 use refresh_state::RefreshAttempts;
 
+#[path = "refresh_journal.rs"]
+mod refresh_journal;
+#[path = "refresh_recovery.rs"]
+mod refresh_recovery;
+#[path = "refresh_registry.rs"]
+mod refresh_registry;
+pub use refresh_journal::direct_exchange_shape;
+use refresh_journal::{journal_request, journal_response};
+use refresh_recovery::{Exchange, RecoveryMode, exchange_with_recovery};
+
+use std::sync::Arc;
+
+use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 /// How a provider's token endpoint expects the refresh request body encoded.
@@ -54,7 +67,28 @@ struct RefreshConfig {
     /// keep the credential file current.
     client_secret_env: Option<&'static str>,
     style: BodyStyle,
+    /// Extra headers the vendor's own OAuth client sends.
+    ///
+    /// Not cosmetic: Anthropic attests the client server-side, so a refresh
+    /// that does not look like the published client can be refused even with a
+    /// perfectly good refresh token (issue #239).
+    headers: &'static [(&'static str, &'static str)],
 }
+
+/// `User-Agent` the Claude Code OAuth provider sends with a refresh.
+///
+/// Mirrors the published client rather than identifying the router, because the
+/// value participates in client attestation at the token endpoint.
+pub const CLAUDE_OAUTH_USER_AGENT: &str = "anthropic-sdk-typescript/0.94.0 userOAuthProvider";
+
+/// Headers Anthropic's OAuth client sends with a `refresh_token` grant.
+///
+/// `anthropic-beta` opts into the OAuth grant the CLI uses — the same flag the
+/// inference path already sends ([`crate::proxy::OAUTH_BETA_FLAG`]).
+const CLAUDE_OAUTH_HEADERS: &[(&str, &str)] = &[
+    ("anthropic-beta", crate::proxy::OAUTH_BETA_FLAG),
+    ("user-agent", CLAUDE_OAUTH_USER_AGENT),
+];
 
 /// Environment variable for the Gemini (Google) OAuth client secret.
 pub const GEMINI_CLIENT_SECRET_ENV: &str = "GEMINI_OAUTH_CLIENT_SECRET";
@@ -73,9 +107,10 @@ pub const CLAUDE_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
 /// Refreshing reactively — only once a token is already expired — means the
 /// request that discovers the expiry has to fail first, and leaves an idle
 /// deployment's refresh token sitting unused until it too goes stale
-/// (issue #203). A minute of skew renews the credential ahead of the failure
-/// without meaningfully shortening its usable life.
-const REFRESH_SKEW_MS: i64 = 60_000;
+/// (issue #203). Renewing ahead of the failure costs a few minutes of a token's
+/// usable life and removes a whole class of mid-flight expiries; five minutes
+/// matches what the vendor clients themselves use (issue #239).
+const REFRESH_SKEW_MS: i64 = 5 * 60_000;
 
 /// Refresh parameters for a provider. Every subscription provider now has a
 /// public OAuth client, so this is total.
@@ -88,6 +123,7 @@ const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
             client_id: CLAUDE_CLIENT_ID,
             client_secret_env: None,
             style: BodyStyle::Json,
+            headers: CLAUDE_OAUTH_HEADERS,
         },
         // The Codex CLI's public OAuth client (no client secret).
         SubscriptionProvider::Codex => RefreshConfig {
@@ -95,6 +131,7 @@ const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
             client_id: "app_EMoamEEZ73f0CkXaXp7hrann",
             client_secret_env: None,
             style: BodyStyle::Json,
+            headers: &[],
         },
         // The gemini-cli public OAuth client. Google requires a client secret;
         // it is read from the environment rather than embedded in the binary.
@@ -103,6 +140,7 @@ const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
             client_id: "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com",
             client_secret_env: Some(GEMINI_CLIENT_SECRET_ENV),
             style: BodyStyle::Form,
+            headers: &[],
         },
         // The qwen-code CLI's public OAuth client (no client secret).
         SubscriptionProvider::Qwen => RefreshConfig {
@@ -110,6 +148,7 @@ const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
             client_id: "f0304373b74a44d2b584a3fb70ca9e56",
             client_secret_env: None,
             style: BodyStyle::Form,
+            headers: &[],
         },
     }
 }
@@ -359,17 +398,23 @@ async fn refresh_at(
         .and_then(|key| std::env::var(key).ok())
         .filter(|s| !s.is_empty());
 
-    let request = match config.style {
+    let (request, content_type, body_fields) = match config.style {
         BodyStyle::Json => {
             let mut body = serde_json::json!({
                 "grant_type": "refresh_token",
                 "refresh_token": refresh_token,
                 "client_id": config.client_id,
             });
+            let mut fields = vec!["grant_type", "refresh_token", "client_id"];
             if let Some(secret) = client_secret.as_deref() {
                 body["client_secret"] = serde_json::Value::String(secret.to_string());
+                fields.push("client_secret");
             }
-            client.post(token_url).json(&body)
+            (
+                client.post(token_url).json(&body),
+                "application/json",
+                fields,
+            )
         }
         BodyStyle::Form => {
             let mut form = vec![
@@ -380,12 +425,31 @@ async fn refresh_at(
             if let Some(secret) = client_secret.as_deref() {
                 form.push(("client_secret", secret));
             }
-            client
-                .post(token_url)
-                .header("content-type", "application/x-www-form-urlencoded")
-                .body(encode_form(&form))
+            let fields = form.iter().map(|(name, _)| *name).collect();
+            (
+                client
+                    .post(token_url)
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .body(encode_form(&form)),
+                "application/x-www-form-urlencoded",
+                fields,
+            )
         }
     };
+    let request = config
+        .headers
+        .iter()
+        .fold(request, |request, (name, value)| {
+            request.header(*name, *value)
+        });
+
+    journal_request(
+        provider,
+        token_url,
+        content_type,
+        config.headers,
+        &body_fields,
+    );
 
     let response = request
         .send()
@@ -399,12 +463,22 @@ async fn refresh_at(
         let retry_after = crate::request_routing::retry_after_duration(response.headers())
             .and_then(|delay| i64::try_from(delay.as_secs()).ok());
         let body = response.text().await.unwrap_or_default();
+        tracing::debug!(
+            "{provider} token exchange answered HTTP {} (error `{}`)",
+            status.as_u16(),
+            oauth_error_code(&body).unwrap_or_else(|| "unparsed".to_string())
+        );
         return Err(RefreshError::Status(status.as_u16(), body, retry_after));
     }
-    let parsed: RefreshResponse = response
-        .json()
+    let body = response
+        .text()
         .await
         .map_err(|e| RefreshError::Parse(e.to_string()))?;
+    let document: serde_json::Value =
+        serde_json::from_str(&body).map_err(|e| RefreshError::Parse(e.to_string()))?;
+    journal_response(provider, status.as_u16(), &document);
+    let parsed: RefreshResponse =
+        serde_json::from_value(document).map_err(|e| RefreshError::Parse(e.to_string()))?;
     merge_refresh_response(prev, &parsed, now_ms)
         .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))
 }
@@ -413,13 +487,14 @@ async fn refresh_at(
 /// account. Two subscriptions for the same vendor must never reuse each
 /// other's bearer token.
 ///
-/// Holds only in-memory copies obtained via OAuth refresh; vendor credential
-/// files on disk are never modified.
+/// A rotated refresh token is written back to the credential store it came
+/// from (issue #239) so the rotation survives a restart; the write is best
+/// effort, so a read-only mount keeps serving from memory instead of failing.
 /// Also records what upstreams actually said about each credential, so health
 /// decisions can be based on observed behaviour rather than on `expiresAt`.
 #[derive(Debug, Default)]
 pub struct TokenCache {
-    inner: Mutex<HashMap<(SubscriptionProvider, String), SubscriptionToken>>,
+    inner: Mutex<HashMap<SubscriptionKey, SubscriptionToken>>,
     /// Per-subscription refresh state. Each async mutex is held across the
     /// exchange so concurrent requests share one attempt.
     attempts: RefreshAttempts,
@@ -427,7 +502,26 @@ pub struct TokenCache {
     evidence: Mutex<HashMap<SubscriptionProvider, CredentialEvidence>>,
     /// Latest refresh failure per provider, cleared by a successful refresh.
     refresh_errors: Mutex<HashMap<SubscriptionProvider, String>>,
+    /// How the last successful refresh was obtained, per provider.
+    ///
+    /// These OAuth endpoints are undocumented; when a credential recovers only
+    /// because a newer link was picked up from disk, that fact is worth keeping
+    /// where diagnostics can read it back (issue #239).
+    recoveries: Mutex<HashMap<SubscriptionProvider, &'static str>>,
+    /// Where each subscription's credential lives, when it is known.
+    ///
+    /// Without this the cache can only ever reason about the token it was
+    /// handed, which is what let a rotated credential look revoked and a
+    /// rotation performed while serving vanish at restart (issue #239).
+    stores: Mutex<HashMap<SubscriptionKey, Arc<dyn CredentialStore>>>,
+    /// Vendor clients that may be asked to rotate a credential the router
+    /// could not (issue #239). Empty unless an operator configured one.
+    vendor_clis: Mutex<HashMap<SubscriptionKey, Arc<crate::vendor_cli_refresh::VendorCli>>>,
 }
+
+/// A subscription is identified by provider *and* account: two accounts of the
+/// same vendor must never share a bearer token or a credential file.
+type SubscriptionKey = (SubscriptionProvider, String);
 
 impl TokenCache {
     /// Create an empty cache.
@@ -528,29 +622,34 @@ impl TokenCache {
         {
             return Some(cached);
         }
-        if attempt.suppresses_attempt(now_ms) {
-            return None;
-        }
-        match refresh_at(client, token_url, provider, &rejected, now_ms).await {
+        let base =
+            self.unsuppressed_base(&mut attempt, provider, account, rejected.clone(), now_ms)?;
+        let exchange = Exchange {
+            client,
+            token_url,
+            provider,
+            now_ms,
+            mode: RecoveryMode::AfterRejection,
+        };
+        match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
-                self.store_for(provider, account, fresh.clone());
-                attempt.record_success();
-                self.record_credential_working(provider);
-                if let Ok(mut guard) = self.refresh_errors.lock() {
-                    guard.remove(&provider);
-                }
+                self.accept(&mut attempt, provider, account, &fresh);
                 // A refresh that returned the same access token has not
                 // recovered anything; replaying would just repeat the 401.
                 (fresh.access_token != rejected.access_token).then_some(fresh)
             }
-            Err(error) => {
-                tracing::warn!("refresh after a rejected {provider} token failed: {error}");
-                self.record_refresh_error(provider, &error.to_string());
-                if error.is_invalid_grant() {
+            Err(rejection) => {
+                tracing::warn!(
+                    "refresh after a rejected {provider} token failed: {}",
+                    rejection.message
+                );
+                self.record_refresh_error(provider, &rejection.message);
+                if rejection.error.is_invalid_grant() {
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                 } else {
-                    attempt.record_transient_failure_after(now_ms, error.retry_after_ms());
+                    attempt
+                        .record_transient_failure_after(now_ms, rejection.error.retry_after_ms());
                 }
                 None
             }
@@ -575,12 +674,7 @@ impl TokenCache {
         // Re-authentication replaces at least one credential field. Forget
         // both negative and positive state derived from the previous file.
         if attempt.reset_if_changed(&disk_token) {
-            if let Ok(mut guard) = self.inner.lock() {
-                guard.remove(&key);
-            }
-            if let Ok(mut guard) = self.evidence.lock() {
-                guard.remove(&provider);
-            }
+            self.forget(&key, provider);
         }
         // Refresh slightly *before* expiry rather than after a request has
         // already failed: a token that expires mid-flight surfaces to the
@@ -592,23 +686,36 @@ impl TokenCache {
         if let Some(cached) = self.cached_valid_for(provider, account, now_ms) {
             return cached;
         }
-        if attempt.suppresses_attempt(now_ms) {
+        let Some(base) =
+            self.unsuppressed_base(&mut attempt, provider, account, disk_token.clone(), now_ms)
+        else {
             return disk_token;
+        };
+        if !base.is_expired(now_ms.saturating_add(REFRESH_SKEW_MS)) {
+            // The store was already ahead of the token we were handed; there is
+            // nothing to exchange.
+            self.accept(&mut attempt, provider, account, &base);
+            return base;
         }
-        match refresh_at(client, token_url, provider, &disk_token, now_ms).await {
+        let exchange = Exchange {
+            client,
+            token_url,
+            provider,
+            now_ms,
+            mode: RecoveryMode::Proactive,
+        };
+        match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
-                self.store_for(provider, account, fresh.clone());
-                attempt.record_success();
-                self.record_credential_working(provider);
-                if let Ok(mut guard) = self.refresh_errors.lock() {
-                    guard.remove(&provider);
-                }
+                self.accept(&mut attempt, provider, account, &fresh);
                 fresh
             }
-            Err(e) => {
-                tracing::warn!("subscription token refresh for {provider} failed: {e}");
-                self.record_refresh_error(provider, &e.to_string());
-                if e.is_invalid_grant() {
+            Err(rejection) => {
+                tracing::warn!(
+                    "subscription token refresh for {provider} failed: {}",
+                    rejection.message
+                );
+                self.record_refresh_error(provider, &rejection.message);
+                if rejection.error.is_invalid_grant() {
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                 } else {
@@ -616,12 +723,109 @@ impl TokenCache {
                     // not record rejection evidence: the credential is fine,
                     // and marking it rejected would drop the provider out of
                     // routing until restart (issue #203).
-                    attempt.record_transient_failure_after(now_ms, e.retry_after_ms());
+                    attempt
+                        .record_transient_failure_after(now_ms, rejection.error.retry_after_ms());
                 }
                 // The stamped-expired token is returned unchanged on purpose:
                 // it may still be honoured by the inference endpoint.
                 disk_token
             }
+        }
+    }
+
+    /// Run the recovery ladder for one subscription.
+    async fn climb(
+        &self,
+        exchange: &Exchange<'_>,
+        account: &str,
+        base: &SubscriptionToken,
+    ) -> Result<SubscriptionToken, refresh_recovery::Rejected> {
+        let provider = exchange.provider;
+        let store = self.store_for_subscription(provider, account);
+        let vendor_cli = self.vendor_cli_for(provider, account);
+        exchange_with_recovery(exchange, store.as_ref(), vendor_cli.as_ref(), base)
+            .await
+            .map(|recovered| {
+                if let Ok(mut guard) = self.recoveries.lock() {
+                    guard.insert(provider, recovered.rung.describe());
+                }
+                recovered.token
+            })
+    }
+
+    /// How `provider`'s credential was last resolved, in the operator's terms.
+    #[must_use]
+    pub fn last_recovery(&self, provider: SubscriptionProvider) -> Option<&'static str> {
+        self.recoveries
+            .lock()
+            .ok()
+            .and_then(|guard| guard.get(&provider).copied())
+    }
+
+    /// The credential to exchange, or `None` when a cached failure still
+    /// suppresses this subscription.
+    ///
+    /// A suppressed subscription is not simply skipped: the terminal verdict was
+    /// reached about *one* chain link, and another holder may have rotated the
+    /// chain forward since. Re-reading the store before honouring the
+    /// suppression is what stops a single `invalid_grant` from disabling the
+    /// subscription until someone re-authenticates by hand (issue #239).
+    fn unsuppressed_base(
+        &self,
+        attempt: &mut refresh_state::RefreshAttempt,
+        provider: SubscriptionProvider,
+        account: &str,
+        held: SubscriptionToken,
+        now_ms: i64,
+    ) -> Option<SubscriptionToken> {
+        if !attempt.suppresses_attempt(now_ms) {
+            return Some(held);
+        }
+        let stored = self
+            .store_for_subscription(provider, account)
+            .and_then(|store| store.reload())?;
+        if !attempt.reset_if_changed(&stored) {
+            return None;
+        }
+        tracing::info!(
+            "the {provider} credential on disk changed since it was last rejected; retrying with \
+             it instead of waiting for a manual re-authentication"
+        );
+        self.forget(&(provider, account.to_string()), provider);
+        Some(stored)
+    }
+
+    /// Record a successful resolution: cache the token and clear failure state.
+    fn accept(
+        &self,
+        attempt: &mut refresh_state::RefreshAttempt,
+        provider: SubscriptionProvider,
+        account: &str,
+        token: &SubscriptionToken,
+    ) {
+        self.store_for(provider, account, token.clone());
+        // The attempt fingerprint tracks the *stored* credential, not the
+        // access token we just minted from it: overwriting it here would make
+        // the next caller — handed the same credential from disk — believe the
+        // subscription had been re-authenticated and drop the cache it just
+        // filled.
+        attempt.record_success();
+        self.record_credential_working(provider);
+        if let Ok(mut guard) = self.refresh_errors.lock() {
+            guard.remove(&provider);
+        }
+    }
+
+    /// Drop cached state derived from a credential that has been replaced.
+    fn forget(&self, key: &SubscriptionKey, provider: SubscriptionProvider) {
+        if let Ok(mut guard) = self.inner.lock() {
+            guard.remove(key);
+        }
+        if let Ok(mut guard) = self.evidence.lock() {
+            guard.remove(&provider);
+        }
+        if let Ok(mut guard) = self.refresh_errors.lock() {
+            guard.remove(&provider);
         }
     }
 

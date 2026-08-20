@@ -713,10 +713,11 @@ pub(crate) fn build_upstream_headers(
 /// When `state.account_router` is set we delegate to the multi-account
 /// router; otherwise we fall back to the single-account legacy provider.
 ///
-/// Either way an expired access token is refreshed in memory via
-/// `state.subscription_cache` — the vendor credential file is never written
-/// back to, so a read-only `CLAUDE_CODE_HOME` mount survives expiry without a
-/// Claude CLI in the image.
+/// Either way an expired access token is refreshed via
+/// `state.subscription_cache`, which persists a rotated refresh token back to
+/// the credential file so the rotation survives a restart (issue #239). The
+/// write is best effort, so a read-only `CLAUDE_CODE_HOME` mount still
+/// survives expiry from memory without a Claude CLI in the image.
 async fn resolve_upstream_credentials(
     state: &AppState,
     context: &RoutingContext,

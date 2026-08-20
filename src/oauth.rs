@@ -3,11 +3,12 @@
 //! Reads Claude Code session credentials from the filesystem to obtain
 //! the OAuth bearer token for upstream API requests.
 //!
-//! The credential file is never written back to: when the access token has
-//! expired, [`OAuthProvider::get_fresh_token`] exchanges the stored
-//! `refreshToken` via [`crate::refresh`] and keeps the result in memory. That
-//! is what lets a container whose `CLAUDE_CODE_HOME` is mounted read-only
-//! survive token expiry without a Claude CLI inside the image.
+//! When the access token has expired, [`OAuthProvider::get_fresh_token`]
+//! exchanges the stored `refreshToken` via [`crate::refresh`], which writes a
+//! rotated refresh token back to the credential file so the rotation survives
+//! a restart (issue #239). That write is best effort, so a container whose
+//! `CLAUDE_CODE_HOME` is mounted read-only still survives token expiry from
+//! memory without a Claude CLI inside the image.
 
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
@@ -254,11 +255,13 @@ impl OAuthProvider {
     /// 1. A token set explicitly via [`Self::set_token`].
     /// 2. The credential file, re-read on every call so an externally
     ///    refreshed file wins over anything cached here.
-    /// 3. `cache`, which refreshes via Anthropic's token endpoint and keeps
-    ///    the result in memory — the credential file is never written to.
+    /// 3. `cache`, which refreshes via Anthropic's token endpoint, persists a
+    ///    rotated refresh token back to the credential file, and keeps the
+    ///    access token in memory.
     ///
-    /// This is what allows a container with no Claude CLI (and a read-only
-    /// `CLAUDE_CODE_HOME` mount) to keep serving requests past token expiry.
+    /// A failed write-back is tolerated, which is what allows a container with
+    /// no Claude CLI (and a read-only `CLAUDE_CODE_HOME` mount) to keep
+    /// serving requests past token expiry.
     ///
     /// # Errors
     ///

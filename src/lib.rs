@@ -31,6 +31,7 @@ pub mod clients;
 pub mod config;
 pub mod config_defaults;
 pub mod crater;
+pub mod credential_store;
 pub mod doctor;
 pub mod durable_file;
 pub mod gemini;
@@ -76,6 +77,7 @@ mod token_http;
 pub mod token_reservation;
 pub mod upstream_client;
 pub mod usage;
+pub mod vendor_cli_refresh;
 pub mod vk;
 pub mod with_command;
 

@@ -103,6 +103,101 @@ where
     }
 }
 
+/// An exclusive advisory lock held for as long as the guard lives.
+///
+/// Returned by [`lock_exclusive_async`] so an `async` critical section — a
+/// token exchange over the network — can serialise against other holders
+/// without blocking a runtime worker on `flock`.
+#[derive(Debug)]
+pub struct FileLockGuard {
+    file: fs::File,
+    path: std::path::PathBuf,
+}
+
+impl FileLockGuard {
+    /// Path of the lock file this guard holds.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for FileLockGuard {
+    fn drop(&mut self) {
+        // Best effort: the lock is released by closing the descriptor anyway.
+        let _ = FileExt::unlock(&self.file);
+    }
+}
+
+/// How often a contended lock is re-tried while waiting.
+const LOCK_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(20);
+
+/// Whether a failed lock attempt means "somebody else holds it" rather than
+/// "this lock cannot work here".
+///
+/// `fs2` reports contention with the platform's own error and only unix spells
+/// it in a way `io::ErrorKind` recognises: `EWOULDBLOCK` maps to
+/// [`io::ErrorKind::WouldBlock`], while Windows answers `ERROR_LOCK_VIOLATION`,
+/// which maps to nothing in particular. Comparing against the error `fs2`
+/// itself documents keeps the two apart on every platform — mistaking
+/// contention for a broken lock silently drops the serialisation that keeps two
+/// holders of one credential from spending the same refresh token twice.
+fn is_contended(error: &io::Error) -> bool {
+    error.kind() == io::ErrorKind::WouldBlock
+        || (error.raw_os_error().is_some()
+            && error.raw_os_error() == fs2::lock_contended_error().raw_os_error())
+}
+
+/// Acquire an exclusive advisory lock on `path`, waiting up to `timeout`.
+///
+/// `flock` has no async form, so the lock is polled rather than waited on: a
+/// blocking `lock_exclusive` inside an `async fn` would park a runtime worker
+/// for as long as another process holds it, which for a credential refresh can
+/// be a full network round trip.
+///
+/// # Errors
+///
+/// Returns [`io::ErrorKind::WouldBlock`] when the lock is still held after
+/// `timeout`, or the underlying error when the lock file cannot be opened.
+pub async fn lock_exclusive_async(
+    path: &Path,
+    timeout: std::time::Duration,
+) -> io::Result<FileLockGuard> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).create(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let file = options.open(path)?;
+    let mut waited = std::time::Duration::ZERO;
+    loop {
+        match FileExt::try_lock_exclusive(&file) {
+            Ok(()) => {
+                return Ok(FileLockGuard {
+                    file,
+                    path: path.to_path_buf(),
+                });
+            }
+            Err(error) if is_contended(&error) => {
+                if waited >= timeout {
+                    return Err(io::Error::new(
+                        io::ErrorKind::WouldBlock,
+                        format!("timed out waiting for the lock on {}", path.display()),
+                    ));
+                }
+                tokio::time::sleep(LOCK_POLL_INTERVAL).await;
+                waited = waited.saturating_add(LOCK_POLL_INTERVAL);
+            }
+            Err(error) => return Err(error),
+        }
+    }
+}
+
 /// Sync a directory entry update on platforms that support directory fsync.
 pub fn sync_directory(path: &Path) -> io::Result<()> {
     #[cfg(unix)]
@@ -136,6 +231,80 @@ mod tests {
                 0o600
             );
         }
+    }
+
+    /// Contention has to be recognised on every platform, not only where it
+    /// happens to map onto `WouldBlock`.
+    ///
+    /// Windows answers a contended `LockFileEx` with `ERROR_LOCK_VIOLATION`,
+    /// which `io::ErrorKind` does not classify; reading that as a broken lock
+    /// makes the waiter proceed *unlocked*, and two holders of one credential
+    /// then spend the same refresh token twice — exactly the race the lock
+    /// exists to prevent (issue #239).
+    #[test]
+    fn contention_is_told_apart_from_a_lock_that_cannot_work() {
+        assert!(
+            is_contended(&fs2::lock_contended_error()),
+            "the error fs2 documents for a contended lock must be recognised"
+        );
+        assert!(is_contended(&io::Error::from(io::ErrorKind::WouldBlock)));
+        assert!(!is_contended(&io::Error::from(
+            io::ErrorKind::PermissionDenied
+        )));
+        assert!(!is_contended(&io::Error::other("read-only file system")));
+    }
+
+    /// Two holders of one credential must serialise, and a holder that cannot
+    /// get in must give up rather than wait forever: a stale lock must never be
+    /// able to wedge token renewal (issue #239).
+    ///
+    /// Linux-only because the contending holder is `flock(1)`, which macOS does
+    /// not ship; the code under test is the same on both.
+    #[cfg(target_os = "linux")]
+    #[tokio::test]
+    async fn an_exclusive_lock_excludes_and_then_gives_up() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("nested").join("credential.lock");
+        let taken = directory.path().join("taken");
+        {
+            let guard = lock_exclusive_async(&path, std::time::Duration::from_secs(1))
+                .await
+                .expect("first holder");
+            assert_eq!(guard.path(), path);
+            assert_eq!(
+                fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+
+        // Contention is exercised from another process: two lock attempts on
+        // the same descriptor within one process would not exclude each other.
+        let mut holder = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(format!(
+                "exec 9>>'{}'; flock 9 && touch '{}' && sleep 5",
+                path.display(),
+                taken.display()
+            ))
+            .spawn()
+            .expect("spawn the competing holder");
+        for _ in 0..200 {
+            if taken.exists() {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+        assert!(taken.exists(), "the competing holder never took the lock");
+
+        let refused = lock_exclusive_async(&path, std::time::Duration::from_millis(60)).await;
+        let error = refused.expect_err("the lock was held by another process");
+        assert_eq!(error.kind(), io::ErrorKind::WouldBlock);
+        assert!(error.to_string().contains("credential.lock"), "{error}");
+
+        let _ = holder.kill();
+        let _ = holder.wait();
     }
 
     /// A read-only mount is the common cause of a failed credential write, and
