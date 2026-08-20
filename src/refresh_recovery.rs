@@ -31,6 +31,7 @@ use std::time::Duration;
 use super::{REFRESH_SKEW_MS, RefreshError, refresh_at};
 use crate::credential_store::{CredentialStore, has_newer_refresh_link, is_same_link};
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
+use crate::vendor_cli_refresh::VendorCli;
 
 /// How long to wait for another holder's read → refresh → write cycle.
 ///
@@ -48,6 +49,9 @@ pub(super) enum RecoveryRung {
     DirectExchange,
     /// Our link was rejected; a newer one from the store was exchanged instead.
     AdoptedRotatedLink,
+    /// Every direct exchange was rejected; the vendor's own client rotated the
+    /// chain and we adopted what it wrote.
+    VendorCliRotation,
 }
 
 impl RecoveryRung {
@@ -61,13 +65,17 @@ impl RecoveryRung {
             Self::AdoptedRotatedLink => {
                 "the stored refresh token was rejected; adopted a newer one from disk and retried"
             }
+            Self::VendorCliRotation => {
+                "every direct exchange was rejected; the vendor client rotated the chain and its \
+                 credential was adopted"
+            }
         }
     }
 
     /// Whether this rung represents recovery from a failure worth reporting at
     /// `info`, as opposed to an ordinary refresh.
     pub(super) const fn is_recovery(self) -> bool {
-        matches!(self, Self::AdoptedRotatedLink)
+        matches!(self, Self::AdoptedRotatedLink | Self::VendorCliRotation)
     }
 }
 
@@ -117,6 +125,20 @@ pub(super) enum RecoveryMode {
     /// An upstream rejected the token regardless of its stated expiry, so only
     /// a *different* access token counts as progress.
     AfterRejection,
+}
+
+/// The links this exchange has already spent.
+///
+/// Both are needed once the ladder reaches the vendor client: `base` says which
+/// access token was rejected, `newest` says which chain link the store held
+/// before the client ran, so a client that changed nothing can be told from one
+/// that rotated.
+#[derive(Debug, Clone, Copy)]
+struct Tried<'a> {
+    /// The credential the caller handed us.
+    base: &'a SubscriptionToken,
+    /// The newest link we found before giving up on direct exchanges.
+    newest: &'a SubscriptionToken,
 }
 
 /// Whether a credential found in the store can be used as-is.
@@ -247,6 +269,7 @@ fn terminal_message(
 pub(super) async fn exchange_with_recovery(
     exchange: &Exchange<'_>,
     store: Option<&Arc<dyn CredentialStore>>,
+    vendor_cli: Option<&Arc<VendorCli>>,
     base: &SubscriptionToken,
 ) -> Result<Recovered, Rejected> {
     let &Exchange {
@@ -309,6 +332,8 @@ pub(super) async fn exchange_with_recovery(
     // This is the single check that turns the common case from a mandatory
     // re-login back into a retry.
     let Some(reread) = store.and_then(|store| store.reload()) else {
+        // Without a store there is nothing to re-read, so the vendor client
+        // could rotate the chain and we would never see it.
         return Err(Rejected {
             message: terminal_message(provider, &error, store, false),
             error,
@@ -333,10 +358,18 @@ pub(super) async fn exchange_with_recovery(
                 });
             }
             Err(second) => {
-                return Err(Rejected {
-                    message: terminal_message(provider, &second, store, true),
-                    error: second,
-                });
+                return vendor_cli_or_reject(
+                    exchange,
+                    store,
+                    vendor_cli,
+                    second,
+                    Tried {
+                        base,
+                        newest: &reread,
+                    },
+                    true,
+                )
+                .await;
             }
         }
     }
@@ -352,10 +385,88 @@ pub(super) async fn exchange_with_recovery(
             rung: RecoveryRung::AdoptedStoredToken,
         });
     }
-    Err(Rejected {
-        message: terminal_message(provider, &error, store, false),
+    vendor_cli_or_reject(
+        exchange,
+        store,
+        vendor_cli,
         error,
-    })
+        Tried {
+            base,
+            newest: &candidate,
+        },
+        false,
+    )
+    .await
+}
+
+/// Ask the vendor's own client to rotate the chain before giving up.
+///
+/// This is the last rung: every direct exchange has been rejected, and the only
+/// remaining difference between us and a working client is what the client
+/// itself can do. If it leaves a newer credential behind, that credential — or
+/// one exchange spent on it — recovers the subscription without an operator
+/// touching anything (issue #239).
+async fn vendor_cli_or_reject(
+    exchange: &Exchange<'_>,
+    store: Option<&Arc<dyn CredentialStore>>,
+    vendor_cli: Option<&Arc<VendorCli>>,
+    error: RefreshError,
+    tried: Tried<'_>,
+    retried_with_newer_link: bool,
+) -> Result<Recovered, Rejected> {
+    let &Exchange {
+        client,
+        token_url,
+        provider,
+        now_ms,
+        mode,
+    } = exchange;
+    let reject = |error: RefreshError| Rejected {
+        message: terminal_message(provider, &error, store, retried_with_newer_link),
+        error,
+    };
+    let (Some(store), Some(cli)) = (store, vendor_cli) else {
+        return Err(reject(error));
+    };
+    // Record our own request shape next to the client's, so that if the vendor
+    // client succeeds where we failed, the difference between the two exchanges
+    // is readable straight from the journal (issue #239).
+    tracing::info!(
+        "{provider} credential recovery: the exchange the router sent and that was rejected was {}",
+        crate::refresh::direct_exchange_shape(provider)
+    );
+    let Some(rotated) = cli.rotate(store.as_ref(), tried.newest).await else {
+        return Err(reject(error));
+    };
+    // The client normally leaves a usable access token behind, in which case no
+    // exchange of our own is needed at all.
+    if is_usable(&rotated, tried.base, mode, now_ms) {
+        tracing::info!(
+            "{provider} credential recovery: {}",
+            RecoveryRung::VendorCliRotation.describe()
+        );
+        return Ok(Recovered {
+            token: rotated,
+            rung: RecoveryRung::VendorCliRotation,
+        });
+    }
+    if !has_newer_refresh_link(tried.newest, &rotated) {
+        return Err(reject(error));
+    }
+    match refresh_at(client, token_url, provider, &rotated, now_ms).await {
+        Ok(fresh) => {
+            persist_rotation(Some(store), &rotated, &fresh, provider);
+            tracing::info!(
+                "{provider} credential recovery: {}",
+                RecoveryRung::VendorCliRotation.describe()
+            );
+            Ok(Recovered {
+                token: fresh,
+                rung: RecoveryRung::VendorCliRotation,
+            })
+        }
+        Err(second) => Err(reject(second)),
+    }
 }
 
 #[cfg(test)]

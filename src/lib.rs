@@ -77,6 +77,7 @@ mod token_http;
 pub mod token_reservation;
 pub mod upstream_client;
 pub mod usage;
+pub mod vendor_cli_refresh;
 pub mod vk;
 pub mod with_command;
 

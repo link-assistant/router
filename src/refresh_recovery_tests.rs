@@ -501,3 +501,74 @@ async fn the_claude_exchange_carries_the_vendor_client_headers() {
         "{head}"
     );
 }
+
+/// The last rung before an operator is bothered: every direct exchange was
+/// rejected, so the vendor's own client is asked to rotate the chain and the
+/// router adopts what it wrote.
+#[cfg(unix)]
+#[tokio::test]
+async fn the_vendor_client_rotates_a_chain_the_router_could_not() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let home = tempfile::tempdir().expect("temp home");
+    seed_credential(home.path(), "access-1", "refresh-1", NOW_MS - 1);
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+    // Every exchange the router can make is rejected, so the ladder has nothing
+    // left but the vendor client.
+    let (url, received, server) =
+        scripted_endpoint(vec![Answer::new(400, INVALID_GRANT)], |_| {}).await;
+
+    let stub = home.path().join("stub-vendor-cli");
+    std::fs::write(
+        &stub,
+        format!(
+            "#!/bin/sh\ncat > \"$CLAUDE_CONFIG_DIR/.credentials.json\" <<'JSON'\n{}\nJSON\n",
+            serde_json::json!({
+                "claudeAiOauth": {
+                    "accessToken": "access-from-vendor",
+                    "refreshToken": "refresh-from-vendor",
+                    "expiresAt": NOW_MS + 3_600_000,
+                    "scopes": ["user:inference"],
+                }
+            })
+        ),
+    )
+    .expect("write stub");
+    std::fs::set_permissions(&stub, std::fs::Permissions::from_mode(0o755)).expect("chmod stub");
+
+    let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
+    cache.register_vendor_cli(
+        "primary",
+        Arc::new(crate::vendor_cli_refresh::VendorCli::claude(
+            &stub,
+            home.path(),
+        )),
+    );
+    let fresh = cache
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            "primary",
+            token("access-1", "refresh-1", NOW_MS - 1),
+            NOW_MS,
+        )
+        .await;
+    drain(server).await;
+
+    assert_eq!(fresh.access_token, "access-from-vendor");
+    assert_eq!(
+        received.lock().unwrap().len(),
+        1,
+        "the router stops exchanging once the client hands back a usable token"
+    );
+    assert_eq!(cache.last_refresh_error(SubscriptionProvider::Claude), None);
+    assert_eq!(
+        cache.last_recovery(SubscriptionProvider::Claude),
+        Some(
+            "every direct exchange was rejected; the vendor client rotated the chain and its \
+             credential was adopted"
+        )
+    );
+}

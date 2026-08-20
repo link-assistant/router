@@ -30,14 +30,20 @@ use serde::Deserialize;
 mod refresh_state;
 use refresh_state::RefreshAttempts;
 
+#[path = "refresh_journal.rs"]
+mod refresh_journal;
 #[path = "refresh_recovery.rs"]
 mod refresh_recovery;
+#[path = "refresh_registry.rs"]
+mod refresh_registry;
+pub use refresh_journal::direct_exchange_shape;
+use refresh_journal::{journal_request, journal_response};
 use refresh_recovery::{Exchange, RecoveryMode, exchange_with_recovery};
 
 use std::sync::Arc;
 
 use crate::credential_store::CredentialStore;
-use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
+use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 /// How a provider's token endpoint expects the refresh request body encoded.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -477,46 +483,6 @@ async fn refresh_at(
         .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))
 }
 
-/// Record the *shape* of an outbound token exchange, never its contents.
-///
-/// These OAuth endpoints are undocumented and attest their clients, so when a
-/// refresh only succeeds in one particular shape an operator needs to be able
-/// to reproduce that shape from the log alone. Header names with their
-/// (non-secret) values and body field *names* are enough to do that; the field
-/// values are the secrets and are never written (issue #239).
-fn journal_request(
-    provider: SubscriptionProvider,
-    token_url: &str,
-    content_type: &str,
-    headers: &[(&str, &str)],
-    body_fields: &[&str],
-) {
-    let mut sent = vec![format!("content-type: {content_type}")];
-    sent.extend(
-        headers
-            .iter()
-            .map(|(name, value)| format!("{name}: {value}")),
-    );
-    tracing::debug!(
-        "{provider} token exchange: POST {token_url} [{}] body fields [{}] (values omitted)",
-        sent.join(", "),
-        body_fields.join(", ")
-    );
-}
-
-/// Record which fields a successful token response carried.
-///
-/// Field names only: whether `refresh_token` came back at all is the difference
-/// between a rotating and a non-rotating vendor, and that is exactly what a
-/// later diagnosis needs to know.
-fn journal_response(provider: SubscriptionProvider, status: u16, document: &serde_json::Value) {
-    let fields = document.as_object().map_or_else(
-        || String::from("<not an object>"),
-        |map| map.keys().cloned().collect::<Vec<_>>().join(", "),
-    );
-    tracing::debug!("{provider} token exchange answered HTTP {status} with fields [{fields}]");
-}
-
 /// Process-wide cache of refreshed subscription tokens, keyed by provider and
 /// account. Two subscriptions for the same vendor must never reuse each
 /// other's bearer token.
@@ -548,6 +514,9 @@ pub struct TokenCache {
     /// handed, which is what let a rotated credential look revoked and a
     /// rotation performed while serving vanish at restart (issue #239).
     stores: Mutex<HashMap<SubscriptionKey, Arc<dyn CredentialStore>>>,
+    /// Vendor clients that may be asked to rotate a credential the router
+    /// could not (issue #239). Empty unless an operator configured one.
+    vendor_clis: Mutex<HashMap<SubscriptionKey, Arc<crate::vendor_cli_refresh::VendorCli>>>,
 }
 
 /// A subscription is identified by provider *and* account: two accounts of the
@@ -773,7 +742,8 @@ impl TokenCache {
     ) -> Result<SubscriptionToken, refresh_recovery::Rejected> {
         let provider = exchange.provider;
         let store = self.store_for_subscription(provider, account);
-        exchange_with_recovery(exchange, store.as_ref(), base)
+        let vendor_cli = self.vendor_cli_for(provider, account);
+        exchange_with_recovery(exchange, store.as_ref(), vendor_cli.as_ref(), base)
             .await
             .map(|recovered| {
                 if let Ok(mut guard) = self.recoveries.lock() {
@@ -857,46 +827,6 @@ impl TokenCache {
         if let Ok(mut guard) = self.refresh_errors.lock() {
             guard.remove(&provider);
         }
-    }
-
-    /// Register where a subscription's credential lives.
-    ///
-    /// Every path that can refresh a token registers its store, so a rotation
-    /// performed while serving a request is written back exactly as one
-    /// performed by catalog polling is, and a rejection can be checked against
-    /// the newest credential on disk before it is believed (issue #239).
-    pub fn register_store(
-        &self,
-        provider: SubscriptionProvider,
-        account: &str,
-        store: Arc<dyn CredentialStore>,
-    ) {
-        if let Ok(mut guard) = self.stores.lock() {
-            guard.insert((provider, account.to_string()), store);
-        }
-    }
-
-    /// Register a [`SubscriptionReader`] as the credential store for an account.
-    pub fn register_reader(&self, account: &str, reader: &SubscriptionReader) {
-        self.register_store(reader.provider(), account, Arc::new(reader.clone()));
-    }
-
-    /// Register every reader under the same account name.
-    pub fn register_readers(&self, account: &str, readers: &[SubscriptionReader]) {
-        for reader in readers {
-            self.register_reader(account, reader);
-        }
-    }
-
-    /// The registered credential store for a subscription, if any.
-    #[must_use]
-    pub fn store_for_subscription(
-        &self,
-        provider: SubscriptionProvider,
-        account: &str,
-    ) -> Option<Arc<dyn CredentialStore>> {
-        let guard = self.stores.lock().ok()?;
-        guard.get(&(provider, account.to_string())).map(Arc::clone)
     }
 
     /// Record that an upstream call succeeded with `provider`'s credential.

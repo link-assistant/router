@@ -797,7 +797,7 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--routing-mode` / `ROUTING_MODE` | `direct` | `direct` (OAuth substitution), `cli` (Claude CLI subprocess), or `hybrid` |
 | `--storage-policy` / `STORAGE_POLICY` | `both` | Persistent token store: `memory`, `text` (Lino), `binary`, or `both` |
 | `--data-dir` / `DATA_DIR` | platform-specific | Where `tokens.lino` / `tokens.bin` live |
-| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend |
+| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend, and by the last rung of credential recovery |
 | `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential homes for the active subscription provider |
 | `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
 | `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins |
@@ -957,11 +957,21 @@ The single image intentionally contains no vendor CLI. It performs Claude OAuth 
 | **First-time login** (no credential file yet) | No — native OAuth | writable |
 | `POST /api/login` (remote login over HTTP) | No — native OAuth | writable |
 
-Renewal happens in memory: the router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and keeps the result in RAM, so serving continues across expiry. The same mechanism covers Codex, Gemini, and Qwen.
+The router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and serves from the result, so serving continues across expiry. The same mechanism covers Codex, Gemini, and Qwen.
 
-One case needs write access. Vendors **rotate** refresh tokens: the refresh response often carries a replacement and spends the old one. When that happens the router writes the new token back to the credential file, so a restart does not replay a spent token. On a `:ro` mount the write is skipped with a logged warning — the router keeps working for the life of the process, but a restart may then require re-authorizing. Mount the credential directory writable if you want rotation to survive restarts.
+One case needs write access. Vendors **rotate** refresh tokens: the refresh response often carries a replacement and spends the old one. When that happens the router writes the new token back to the credential file — on every refresh path, not only the catalog poll — so a restart does not replay a spent token. On a `:ro` mount the write is skipped with a logged warning — the router keeps working for the life of the process, but a restart may then require re-authorizing. Mount the credential directory writable if you want rotation to survive restarts.
 
 Two things still require a real login: a directory with no credential file at all, and a `refreshToken` that has itself been revoked or expired.
+
+#### When a refresh is rejected
+
+Rotation makes the credential file shared mutable state: the vendor CLI, a second router, and this process each hold a link in one chain, and only the newest link is redeemable. Redeeming an older one answers `invalid_grant`, which looks exactly like revocation but is not. Rather than concluding "revoked" from that answer, the router climbs a ladder (issue #239):
+
+1. **Refresh before expiry.** A token within five minutes of expiring is renewed before it is used, so the rejected-token path is entered far less often.
+2. **Re-read the credential.** The whole read → refresh → write cycle is held under an advisory lock on a sidecar lock file, and the file is rewritten atomically, so two holders serialise instead of racing and an interrupted write leaves the previous credential intact.
+3. **Retry once with a newer link.** If the store has moved forward while the exchange was in flight, the router adopts what is on disk and retries once — the common case stops being a mandatory re-login.
+4. **Ask the vendor client.** Only when `--claude-cli-bin` is configured: the vendor's own client is run once, and if it rotates the chain the router adopts the credential it wrote. The invocation, the client's own (self-redacting) debug log, and the exchange the router itself sent — header names with values, body field *names* without them — are journalled, so the undocumented protocol can be reproduced from the log alone. Token values are never logged.
+5. **Report precisely.** Only then is the subscription reported as rejected, and the message distinguishes a revoked credential from a lost rotation race, names the credential file that was checked, and gives the re-authentication command. A request for a model whose subscription is in that state says so, instead of only reporting that the model is `not advertised by any subscription`.
 
 ### Logging in from inside a container
 

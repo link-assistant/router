@@ -321,7 +321,7 @@ async fn run_server(
             .map_err(std::io::Error::other)?,
     };
 
-    state.register_credential_stores();
+    state.register_credential_recovery(config.claude_cli_bin.as_deref());
 
     let catalog_refresh = tokio::spawn(
         link_assistant_router::model_catalog::refresh_catalogs_forever(
