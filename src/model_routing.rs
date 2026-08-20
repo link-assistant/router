@@ -103,6 +103,53 @@ pub fn provider_for_model(
     provider_hint(model).filter(|provider| providers.contains(provider))
 }
 
+/// Describe why a provider currently contributes nothing to the catalog.
+///
+/// An empty catalog is almost always a credential problem, so "not advertised
+/// by any subscription" on its own reads like a typo in the model id and sends
+/// operators looking in the wrong place (issue #239). `None` means the
+/// provider is fine and some other reason applies.
+fn credential_state(
+    provider: SubscriptionProvider,
+    catalogs: &ModelCatalogCache,
+) -> Option<String> {
+    let status = catalogs.status(provider);
+    if !status.is_degraded() {
+        return None;
+    }
+    Some(match (status.discovered, status.last_error) {
+        (true, error) => format!(
+            "the {provider} catalog is retained for diagnostics but its credential is not usable              ({})",
+            error.unwrap_or_else(|| "the last refresh was rejected".to_string())
+        ),
+        (false, Some(error)) => {
+            format!("{provider} has never completed a live catalog discovery ({error})")
+        }
+        (false, None) => format!("no {provider} credential has been read yet"),
+    })
+}
+
+/// Every credential state worth reporting for a model that nothing advertises.
+///
+/// A vendor-shaped model id blames its own vendor; an unqualified one reports
+/// each provider that has actually recorded a problem, and stays quiet about
+/// providers that were simply never configured.
+fn credential_states(model: &str, catalogs: &ModelCatalogCache) -> Vec<String> {
+    provider_hint(model).map_or_else(
+        || {
+            SubscriptionProvider::ALL
+                .into_iter()
+                .filter(|provider| {
+                    let status = catalogs.status(*provider);
+                    status.discovered || status.last_error.is_some()
+                })
+                .filter_map(|provider| credential_state(provider, catalogs))
+                .collect()
+        },
+        |provider| credential_state(provider, catalogs).into_iter().collect(),
+    )
+}
+
 /// Resolve a model only when the owning subscription is available.
 pub fn available_provider_for_model(
     model: &str,
@@ -111,8 +158,14 @@ pub fn available_provider_for_model(
 ) -> Result<SubscriptionProvider, ModelRouteError> {
     let advertised = providers_for_model(model, catalogs);
     if advertised.is_empty() {
+        let causes = credential_states(model, catalogs);
+        let detail = if causes.is_empty() {
+            String::new()
+        } else {
+            format!(": {}", causes.join("; "))
+        };
         return Err(ModelRouteError::NotFound(format!(
-            "model '{model}' is not advertised by any subscription"
+            "model '{model}' is not advertised by any subscription{detail}"
         )));
     }
     let provider = provider_hint(model)
@@ -141,8 +194,14 @@ pub fn available_provider_for_model(
         .contains(&provider)
         .then_some(provider)
         .ok_or_else(|| {
+            let cause = credential_state(provider, catalogs).unwrap_or_else(|| {
+                format!(
+                    "the last credential check found no usable {provider} credential (missing or \
+                     rejected upstream)"
+                )
+            });
             ModelRouteError::NotFound(format!(
-                "model '{model}' has no healthy {provider} credential"
+                "model '{model}' has no healthy {provider} credential: {cause}"
             ))
         })
 }

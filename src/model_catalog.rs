@@ -149,7 +149,7 @@ impl ModelCatalogCache {
 
     /// Record a refresh failure, keeping any previously discovered catalog for
     /// diagnostics but marking the credential unhealthy so it stops being used.
-    fn record_failure(
+    pub(crate) fn record_failure(
         &self,
         provider: SubscriptionProvider,
         error: &str,
