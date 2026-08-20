@@ -121,6 +121,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         &credential.token,
         Some(model),
         credential.models(),
+        args.extend_global_config,
     ) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -162,6 +163,7 @@ impl TemporaryClient {
         token: &str,
         model_override: Option<&str>,
         models: &[RouterModel],
+        extend_global_config: bool,
     ) -> Result<Self, AnyError> {
         sweep_stale_directories();
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
@@ -182,7 +184,25 @@ impl TemporaryClient {
         }
         let integration = client.integration();
         let mut command = Command::new(integration.command);
-        configure_isolation(&mut command, &manager, directory.path(), client)?;
+        if extend_global_config {
+            // Layer the router's connection settings on top of the user's own
+            // configuration rather than replacing it, so sessions and settings
+            // stay visible and a conversation started outside the router can be
+            // resumed through it (issue #233). For these clients the router's
+            // whole contribution is the two variables set below, so isolation
+            // was never needed for routing — only for isolation itself.
+            if integration.token_env.is_none() || integration.base_url_env.is_none() {
+                return Err(format!(
+                    "--extend-global-config is not available for {}: it is configured through a \
+                     file rather than environment variables, so its settings cannot be layered \
+                     without rewriting that file",
+                    integration.name
+                )
+                .into());
+            }
+        } else {
+            configure_isolation(&mut command, &manager, directory.path(), client)?;
+        }
         if let Some(token_env) = integration.token_env {
             command.env(token_env, token);
         }
@@ -532,6 +552,7 @@ mod tests {
             undo: false,
             non_interactive: false,
             interactive: false,
+            extend_global_config: false,
             server: None,
             token: None,
             token_stdin: false,
@@ -590,6 +611,83 @@ mod tests {
     /// End to end: after preparing the client, the file Gemini CLI actually
     /// reads must exist and select the API-key flow. The router previously
     /// wrote a correct file the CLI never opened (issue #227).
+    /// With `--extend-global-config` the client keeps its own configuration
+    /// directory, so sessions started outside the router remain visible and a
+    /// conversation can be resumed through it (issue #233).
+    #[test]
+    fn extending_the_global_config_does_not_repoint_the_client() {
+        let models = [RouterModel {
+            id: "test-model".to_string(),
+            owned_by: "test".to_string(),
+        }];
+        let extended = TemporaryClient::prepare(
+            ClientKind::ClaudeCode,
+            "http://router.test",
+            "task-token",
+            None,
+            &models,
+            true,
+        )
+        .expect("prepare with extended config");
+        let names: Vec<String> = extended
+            .command
+            .get_envs()
+            .map(|(name, _)| name.to_string_lossy().into_owned())
+            .collect();
+        assert!(
+            !names.iter().any(|name| name == "CLAUDE_CONFIG_DIR"),
+            "the user's configuration directory must not be repointed: {names:?}"
+        );
+        // The router's actual contribution is still applied.
+        for required in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"] {
+            assert!(
+                names.iter().any(|name| name == required),
+                "{required} missing: {names:?}"
+            );
+        }
+
+        // The default is unchanged: isolation still repoints the directory.
+        let isolated = TemporaryClient::prepare(
+            ClientKind::ClaudeCode,
+            "http://router.test",
+            "task-token",
+            None,
+            &models,
+            false,
+        )
+        .expect("prepare isolated");
+        assert!(
+            isolated
+                .command
+                .get_envs()
+                .any(|(name, _)| name == "CLAUDE_CONFIG_DIR"),
+            "isolation must remain the default"
+        );
+    }
+
+    /// A file-configured client cannot have its settings layered by setting
+    /// variables, so the flag reports that rather than silently isolating.
+    #[test]
+    fn extending_is_refused_where_it_cannot_be_honoured() {
+        let models = [RouterModel {
+            id: "test-model".to_string(),
+            owned_by: "test".to_string(),
+        }];
+        let Err(error) = TemporaryClient::prepare(
+            ClientKind::Opencode,
+            "http://router.test",
+            "task-token",
+            None,
+            &models,
+            true,
+        ) else {
+            panic!("opencode is configured through a file and cannot be extended");
+        };
+        let message = error.to_string();
+        assert!(message.contains("--extend-global-config"), "{message}");
+        assert!(message.contains("file"), "{message}");
+    }
+
     #[test]
     fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
         let models = [RouterModel {
@@ -602,6 +700,7 @@ mod tests {
             "task-token",
             None,
             &models,
+            false,
         )
         .expect("prepare gemini");
         let root = temporary.directory.path();
@@ -698,14 +797,21 @@ mod tests {
                         "task-token",
                         None,
                         &models,
+                        false,
                     )
                     .is_err()
                 );
                 continue;
             }
-            let temporary =
-                TemporaryClient::prepare(client, "http://router.test", "task-token", None, &models)
-                    .unwrap_or_else(|error| panic!("{client} failed temporary setup: {error}"));
+            let temporary = TemporaryClient::prepare(
+                client,
+                "http://router.test",
+                "task-token",
+                None,
+                &models,
+                false,
+            )
+            .unwrap_or_else(|error| panic!("{client} failed temporary setup: {error}"));
             let root = temporary.directory.path().to_path_buf();
             assert_eq!(temporary.command.get_program(), client.command());
             let environment = temporary

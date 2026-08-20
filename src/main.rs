@@ -14,6 +14,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 mod auth_cli;
+#[path = "logs_cli.rs"]
+mod logs_cli;
 
 use axum::middleware::from_fn_with_state;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
@@ -100,6 +102,7 @@ async fn main() -> ExitCode {
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
+        Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
     }
 }
 
