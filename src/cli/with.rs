@@ -41,6 +41,7 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         "--non-interactive",
         "--interactive",
         "--token-stdin",
+        "--extend-global-config",
     ];
     let mut position = start;
     while position < arguments.len() {
@@ -59,6 +60,26 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         if clients.contains(&value.as_ref()) {
             let client = arguments[position].clone();
             let prefix = arguments[..position].to_vec();
+            // Router options already given *before* the client name are the
+            // router's. A second occurrence after the client belongs to the
+            // client: `--model` is defined by five of the seven clients, so
+            // routing to one model while telling the client another was
+            // otherwise inexpressible, and the parser reported a duplicate
+            // router option instead (issue #236).
+            // A router option may be given once. The first occurrence is the
+            // router's — whether it came before the client name or after it —
+            // and any repeat belongs to the client: `--model` is defined by
+            // five of the seven clients, so routing to one model while telling
+            // the client another was otherwise inexpressible, and the parser
+            // reported a duplicate router option instead (issue #236).
+            let mut consumed: Vec<String> = prefix
+                .iter()
+                .map(|item| {
+                    let item = item.to_string_lossy();
+                    item.split_once('=')
+                        .map_or_else(|| item.to_string(), |(name, _)| name.to_string())
+                })
+                .collect();
             let mut wrapper = Vec::new();
             let mut forwarded = Vec::new();
             let mut cursor = position + 1;
@@ -76,14 +97,28 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
                     continue;
                 }
                 if boolean_options.contains(&item.as_ref()) {
-                    wrapper.push(arguments[cursor].clone());
+                    if consumed.iter().any(|seen| seen == item.as_ref()) {
+                        forwarded.push(arguments[cursor].clone());
+                    } else {
+                        consumed.push(item.to_string());
+                        wrapper.push(arguments[cursor].clone());
+                    }
                     cursor += 1;
                     continue;
                 }
                 if value_options.contains(&item.as_ref()) {
-                    wrapper.push(arguments[cursor].clone());
+                    let repeated = consumed.iter().any(|seen| seen == item.as_ref());
+                    if !repeated {
+                        consumed.push(item.to_string());
+                    }
+                    let target = if repeated {
+                        &mut forwarded
+                    } else {
+                        &mut wrapper
+                    };
+                    target.push(arguments[cursor].clone());
                     if let Some(value) = arguments.get(cursor + 1) {
-                        wrapper.push(value.clone());
+                        target.push(value.clone());
                         cursor += 2;
                     } else {
                         cursor += 1;
@@ -131,6 +166,15 @@ pub struct WithArgs {
     /// Force the client's interactive mode.
     #[arg(long, conflicts_with = "non_interactive")]
     pub interactive: bool,
+    /// Keep the user's own configuration and add only the router's connection
+    /// settings, so sessions and settings stay visible.
+    ///
+    /// The default gives the client a configuration directory of its own, which
+    /// is right for CI and one-off runs but makes a session started outside the
+    /// router impossible to resume: `/resume` lists nothing, because the user's
+    /// `projects/` and `settings.json` are not on the path (issue #233).
+    #[arg(long)]
+    pub extend_global_config: bool,
     /// Router origin. No local server is started when this is supplied.
     #[arg(long)]
     pub server: Option<String>,
@@ -294,6 +338,100 @@ mod tests {
         assert_eq!(
             protect_client_arguments(arguments, false),
             ["with-router", "--model", "codex", "qwen", "--", "hello"].map(OsString::from)
+        );
+    }
+}
+
+#[cfg(test)]
+mod collision_tests {
+    use super::protect_client_arguments;
+    use std::ffi::OsString;
+
+    fn split(arguments: &[&str]) -> Vec<String> {
+        protect_client_arguments(arguments.iter().map(OsString::from).collect(), false)
+            .iter()
+            .map(|value| value.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    /// A router option may be given once; a repeat belongs to the client.
+    /// `--model` is defined by five of the seven clients, so routing to one
+    /// model while telling the client another was inexpressible — the parser
+    /// rejected the second occurrence as a duplicate router option (#236).
+    #[test]
+    fn a_repeated_router_option_is_forwarded_to_the_client() {
+        let split = split(&["with-router", "qwen", "--model", "A", "--model", "B"]);
+        let separator = split
+            .iter()
+            .position(|value| value == "--")
+            .expect("an explicit boundary is inserted");
+        let router = &split[..separator];
+        let client = &split[separator + 1..];
+        assert!(
+            router.windows(2).any(|pair| pair == ["--model", "A"]),
+            "the router keeps the first occurrence: {router:?}"
+        );
+        assert!(
+            client.windows(2).any(|pair| pair == ["--model", "B"]),
+            "the client receives the repeat: {client:?}"
+        );
+    }
+
+    /// The same holds for a boolean router option.
+    #[test]
+    fn a_repeated_boolean_option_is_forwarded() {
+        let split = split(&[
+            "with-router",
+            "qwen",
+            "--non-interactive",
+            "--non-interactive",
+        ]);
+        let separator = split.iter().position(|value| value == "--").expect("--");
+        assert_eq!(
+            split[..separator]
+                .iter()
+                .filter(|value| *value == "--non-interactive")
+                .count(),
+            1,
+            "the router consumes exactly one"
+        );
+        assert_eq!(
+            split[separator + 1..]
+                .iter()
+                .filter(|value| *value == "--non-interactive")
+                .count(),
+            1,
+            "the repeat is forwarded"
+        );
+    }
+
+    /// A single occurrence still belongs to the router, so this is not a
+    /// behaviour change for ordinary use.
+    #[test]
+    fn a_single_router_option_is_still_consumed_by_the_router() {
+        let split = split(&["with-router", "qwen", "--model", "A", "--prompt", "hi"]);
+        let separator = split.iter().position(|value| value == "--").expect("--");
+        assert!(split[..separator].windows(2).any(|p| p == ["--model", "A"]));
+        assert!(
+            split[separator + 1..]
+                .windows(2)
+                .any(|p| p == ["--prompt", "hi"]),
+            "client options still forward: {split:?}"
+        );
+    }
+
+    /// Options before the client name are the router's, and a matching name
+    /// after it then goes to the client.
+    #[test]
+    fn an_option_before_the_client_claims_the_router_slot() {
+        let split = split(&["with-router", "--model", "A", "qwen", "--model", "B"]);
+        let separator = split.iter().position(|value| value == "--").expect("--");
+        assert!(split[..separator].windows(2).any(|p| p == ["--model", "A"]));
+        assert!(
+            split[separator + 1..]
+                .windows(2)
+                .any(|p| p == ["--model", "B"]),
+            "{split:?}"
         );
     }
 }

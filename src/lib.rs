@@ -37,6 +37,7 @@ pub mod gemini;
 pub mod gemini_bridge;
 pub mod github_proxy;
 pub mod gonka;
+pub mod log_analysis;
 pub mod logging;
 pub mod login;
 pub mod login_api;

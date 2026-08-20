@@ -529,6 +529,44 @@ pub enum Command {
     },
     /// Print environment + config diagnostics.
     Doctor,
+    /// Summarise the request log and flag anomalies.
+    ///
+    /// The log is the router's only record of what actually happened, and it
+    /// had to be read with one-liners invented on the spot — which produced
+    /// confident wrong answers in both directions (issue #234).
+    Logs {
+        #[command(subcommand)]
+        op: LogsOp,
+    },
+}
+
+/// What to ask of the request log.
+#[derive(Debug, Subcommand)]
+pub enum LogsOp {
+    /// Shape of the log: exchanges, records, statuses, time span, size.
+    Summary {
+        /// Restrict to one token's directory, by its hashed name.
+        #[arg(long)]
+        token: Option<String>,
+        /// Emit JSON, for a monitoring check rather than a human.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Anomalies worth a name, with the correlation ids to inspect.
+    ///
+    /// Exits non-zero when any are found, so it works as a health gate.
+    Anomalies {
+        #[arg(long)]
+        token: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// One exchange, decoded and in order.
+    Show {
+        correlation_id: String,
+        #[arg(long)]
+        token: Option<String>,
+    },
 }
 
 /// Authorization-flow override. `auto` selects the provider's supported flow.
