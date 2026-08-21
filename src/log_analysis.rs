@@ -21,6 +21,12 @@ use serde_json::{Value, json};
 
 /// One exchange, assembled from the records sharing a correlation id.
 #[derive(Debug, Default, Clone)]
+// Each flag is an independent fact the log either states or does not: whether
+// it streamed, whether that was established, whether a stream was asked for,
+// whether the frames were readable. They are not phases of one state machine,
+// and collapsing them into enums would hide that a log may answer some and
+// stay silent on others.
+#[allow(clippy::struct_excessive_bools)]
 pub struct Exchange {
     pub correlation_id: String,
     pub status: Option<u64>,
@@ -39,6 +45,13 @@ pub struct Exchange {
     pub response_media_type: Option<String>,
     /// Whether the request asked for a stream, as a corroborating signal.
     pub stream_requested: bool,
+    /// Whether the recorded frames could be read at all.
+    ///
+    /// A compressed stream is relayed and logged as the encoded bytes it was,
+    /// so scanning it for `message_stop` searches gzip and always fails.
+    /// Counting that as a missing terminator reported 315 of 400 streams as
+    /// failing on a healthy log (issue #255).
+    pub inspectable: bool,
     /// From the terminal `stream_end` record, when one is present (issue #230).
     pub stream_outcome: Option<String>,
     pub stream_complete: Option<bool>,
@@ -50,16 +63,27 @@ pub struct Exchange {
 
 impl Exchange {
     /// Whether this exchange finished in a way the log can vouch for.
+    ///
+    /// Only a stream whose frames could be read can testify to a truncation.
     #[must_use]
     pub fn is_incomplete_stream(&self) -> bool {
-        self.streamed && self.stream_complete == Some(false)
+        self.streamed && self.inspectable && self.stream_complete == Some(false)
+    }
+
+    /// A stream whose frames were encoded, so the log cannot say how it ended.
+    ///
+    /// Reported as its own class rather than as a truncation: "not verifiable"
+    /// is honest, "truncated" is not (issue #255).
+    #[must_use]
+    pub const fn is_unverifiable_stream(&self) -> bool {
+        self.streamed && !self.inspectable
     }
 
     /// A streamed exchange with no terminal record at all: the router was
     /// restarted mid-turn, or the relay never settled.
     #[must_use]
     pub const fn is_unterminated(&self) -> bool {
-        self.streamed && self.stream_outcome.is_none()
+        self.streamed && self.inspectable && self.stream_outcome.is_none()
     }
 }
 
@@ -76,6 +100,9 @@ pub struct Summary {
     pub non_streamed: usize,
     pub incomplete_streams: usize,
     pub unterminated_streams: usize,
+    /// Streams whose frames were encoded, so how they ended is not knowable
+    /// from the log — reported apart from the ones that demonstrably failed.
+    pub unverifiable_streams: usize,
     /// Records the analyser could not parse, stated rather than skipped.
     pub unparsable_records: u64,
     pub undecodable_bodies: u64,
@@ -92,6 +119,7 @@ impl Summary {
             "non_streamed": self.non_streamed,
             "incomplete_streams": self.incomplete_streams,
             "unterminated_streams": self.unterminated_streams,
+            "unverifiable_streams": self.unverifiable_streams,
             "unparsable_records": self.unparsable_records,
             "undecodable_bodies": self.undecodable_bodies,
             "statuses": self
@@ -113,8 +141,13 @@ impl Summary {
         );
         let _ = writeln!(
             out,
-            "streamed {}  non-streamed {}  incomplete {}  no terminal record {}",
-            self.streamed, self.non_streamed, self.incomplete_streams, self.unterminated_streams
+            "streamed {}  non-streamed {}  incomplete {}  no terminal record {}  \
+             not verifiable {}",
+            self.streamed,
+            self.non_streamed,
+            self.incomplete_streams,
+            self.unterminated_streams,
+            self.unverifiable_streams
         );
         if self.statuses.is_empty() {
             out.push_str("statuses: none recorded\n");
@@ -212,6 +245,9 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
     let phase = record.get("phase").and_then(Value::as_str).unwrap_or("");
     let exchange = by_id.entry(id.clone()).or_insert_with(|| Exchange {
         correlation_id: id,
+        // Readable until the log says otherwise, so a log written before the
+        // encoding was recorded keeps exactly the meaning it had.
+        inspectable: true,
         ..Exchange::default()
     });
     exchange.records += 1;
@@ -262,6 +298,11 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
                 .and_then(Value::as_str)
                 .map(str::to_string);
             exchange.stream_complete = record.get("complete").and_then(Value::as_bool);
+            // The relay knows whether it could read the frames, so a record
+            // that says so is believed over anything inferred from headers.
+            if let Some(inspectable) = record.get("inspectable").and_then(Value::as_bool) {
+                exchange.inspectable = inspectable;
+            }
             if let Some(frames) = record.get("frames").and_then(Value::as_u64) {
                 exchange.frames = frames;
             }
@@ -299,6 +340,16 @@ fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
         return;
     }
     exchange.response_media_type = Some(media_type.clone());
+    if let Some(encoding) = record
+        .get("headers")
+        .and_then(|headers| headers.get("content-encoding"))
+        .and_then(Value::as_str)
+        && !encoding
+            .split(',')
+            .all(|part| part.trim().is_empty() || part.trim().eq_ignore_ascii_case("identity"))
+    {
+        exchange.inspectable = false;
+    }
     // Evidence either way is conclusive, so it overrides the request's
     // `stream: true` hint: what the response actually was beats what was asked
     // for, and a request may ask for a stream that the upstream answers whole.
@@ -354,6 +405,9 @@ pub fn summarise(exchanges: &[Exchange], unparsable: u64, bytes: u64) -> Summary
             if exchange.is_unterminated() {
                 summary.unterminated_streams += 1;
             }
+            if exchange.is_unverifiable_stream() {
+                summary.unverifiable_streams += 1;
+            }
         } else {
             summary.non_streamed += 1;
         }
@@ -391,6 +445,20 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
             detail: "a streamed exchange has no terminal record, so how it ended is unknown"
                 .to_string(),
             correlation_ids: unterminated,
+        });
+    }
+
+    // Reported so the figure is visible, but worded as the absence of evidence
+    // it is: calling a healthy compressed stream truncated is what made the
+    // signal unusable (issue #255).
+    let unverifiable = collect(&Exchange::is_unverifiable_stream);
+    if !unverifiable.is_empty() {
+        found.push(Anomaly {
+            kind: "stream_not_verifiable",
+            detail: "a streamed exchange was relayed compressed, so its frames cannot be \
+                     inspected for a terminator; how it ended is not knowable from the log"
+                .to_string(),
+            correlation_ids: unverifiable,
         });
     }
 

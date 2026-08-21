@@ -427,3 +427,148 @@ fn a_json_answer_to_a_streaming_request_is_not_a_stream() {
         "the response decides, not the request"
     );
 }
+
+/// The case from issue #255: a gzip-compressed SSE stream that did complete.
+///
+/// The recorded frames are the compressed bytes that were relayed, so scanning
+/// them for `message_stop` searches gzip and always fails. Counting that as a
+/// missing terminator reported 315 of 400 streams as failing on a log whose
+/// sampled exchanges had all succeeded.
+#[test]
+fn a_compressed_sse_stream_is_not_reported_as_truncated() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &[
+            json!({
+                "correlation_id": "z",
+                "phase": "client_request",
+                "uri": "/v1/messages?beta=true",
+                "body": {"json": {"stream": true}}
+            }),
+            json!({
+                "correlation_id": "z",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {
+                    "content-type": "text/event-stream; charset=utf-8",
+                    "content-encoding": "gzip"
+                }
+            }),
+            json!({"correlation_id": "z", "phase": "upstream_response_body", "body": {"base64": "H4sIAAAAAAAA"}}),
+            json!({
+                "correlation_id": "z",
+                "phase": "stream_end",
+                "outcome": "encoded_not_verifiable",
+                "streamed": true,
+                "inspectable": false,
+                "complete": false,
+                "frames": 11
+            }),
+        ],
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(summary.streamed, 1, "it is still a stream: {summary:?}");
+    assert_eq!(
+        summary.incomplete_streams, 0,
+        "an unreadable stream is not a demonstrated truncation: {summary:?}"
+    );
+    assert_eq!(summary.unterminated_streams, 0, "{summary:?}");
+    assert_eq!(
+        summary.unverifiable_streams, 1,
+        "it is reported as its own class: {summary:?}"
+    );
+
+    let found = anomalies(&exchanges);
+    assert!(
+        !found
+            .iter()
+            .any(|anomaly| anomaly.kind == "stream_ended_without_terminator"),
+        "a healthy compressed stream must not be called truncated: {found:?}"
+    );
+    let named = found
+        .iter()
+        .find(|anomaly| anomaly.kind == "stream_not_verifiable")
+        .expect("the unverifiable stream is named");
+    assert_eq!(named.correlation_ids, vec!["z".to_string()]);
+}
+
+/// A compressed stream is recognised from the recorded headers alone, so a log
+/// written before the relay stated `inspectable` is read correctly too.
+#[test]
+fn a_compressed_stream_is_recognised_from_its_headers() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &[
+            json!({"correlation_id": "h", "phase": "client_request"}),
+            json!({
+                "correlation_id": "h",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {"content-type": "text/event-stream", "content-encoding": "gzip"}
+            }),
+            json!({"correlation_id": "h", "phase": "upstream_response_body", "body": {"base64": "H4sI"}}),
+            json!({
+                "correlation_id": "h",
+                "phase": "stream_end",
+                "outcome": "ended_without_terminator",
+                "complete": false,
+                "frames": 11
+            }),
+        ],
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(summary.unverifiable_streams, 1, "{summary:?}");
+    assert_eq!(summary.incomplete_streams, 0, "{summary:?}");
+}
+
+/// An uncompressed SSE stream that stops early must still be reported: this is
+/// the signal from issue #230, and the fix must not silence it.
+#[test]
+fn an_uncompressed_truncated_stream_is_still_reported() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &[
+            json!({"correlation_id": "t", "phase": "client_request"}),
+            json!({
+                "correlation_id": "t",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {"content-type": "text/event-stream"}
+            }),
+            json!({"correlation_id": "t", "phase": "upstream_response_body", "body": "data: x"}),
+            json!({
+                "correlation_id": "t",
+                "phase": "stream_end",
+                "outcome": "ended_without_terminator",
+                "streamed": true,
+                "inspectable": true,
+                "complete": false,
+                "frames": 444
+            }),
+        ],
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(summary.incomplete_streams, 1, "{summary:?}");
+    assert_eq!(summary.unverifiable_streams, 0, "{summary:?}");
+    assert!(
+        anomalies(&exchanges)
+            .iter()
+            .any(|anomaly| anomaly.kind == "stream_ended_without_terminator"),
+        "a real truncation must still be named"
+    );
+}

@@ -569,6 +569,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let outcome = std::sync::Arc::new(std::sync::Mutex::new(crate::request_log::StreamOutcome {
         streamed: crate::request_log::response_is_streamed(upstream_resp.headers()),
         terminated: false,
+        // A compressed body is relayed byte for byte, so its frames cannot be
+        // scanned for a terminator (issue #255).
+        inspectable: crate::request_log::body_is_inspectable(upstream_resp.headers()),
         detail: None,
         frames: 0,
         bytes: 0,

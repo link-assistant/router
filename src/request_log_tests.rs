@@ -283,6 +283,7 @@ fn text_and_json_bodies_are_unchanged() {
 fn a_stream_without_its_terminator_is_marked_incomplete() {
     let cut = StreamOutcome {
         streamed: true,
+        inspectable: true,
         terminated: false,
         detail: None,
         frames: 444,
@@ -306,6 +307,7 @@ fn a_stream_without_its_terminator_is_marked_incomplete() {
 fn an_upstream_failure_is_named_separately() {
     let failed = StreamOutcome {
         streamed: true,
+        inspectable: true,
         terminated: false,
         detail: Some("connection reset".to_string()),
         frames: 12,
@@ -359,6 +361,7 @@ fn the_terminal_record_carries_counts_and_duration() {
         "corr-1",
         &StreamOutcome {
             streamed: true,
+            inspectable: true,
             terminated: false,
             detail: None,
             frames: 444,
@@ -390,6 +393,7 @@ fn the_terminal_record_carries_counts_and_duration() {
 fn a_non_streamed_reply_settles_as_complete() {
     let json_reply = StreamOutcome {
         streamed: false,
+        inspectable: true,
         terminated: false,
         detail: None,
         frames: 2,
@@ -410,6 +414,7 @@ fn a_non_streamed_reply_settles_as_complete() {
 fn a_failed_non_streamed_reply_is_still_a_failure() {
     let failed = StreamOutcome {
         streamed: false,
+        inspectable: true,
         terminated: false,
         detail: Some("connection reset".to_string()),
         frames: 1,
@@ -446,4 +451,146 @@ fn only_event_stream_is_treated_as_streaming() {
 #[test]
 fn an_undeclared_media_type_stays_eligible_for_truncation_detection() {
     assert!(is_streaming_media_type(None));
+}
+
+/// The case from issue #255: a genuine SSE stream relayed compressed.
+///
+/// The router forwards a compressed body byte for byte, so its frames are gzip
+/// on the way through and scanning them for `message_stop` can only fail.
+/// Reporting that as a truncation warned once per healthy streamed turn — 19
+/// warnings in 25 minutes of ordinary use, every one of them a turn that
+/// succeeded.
+#[test]
+fn a_compressed_stream_is_not_reported_as_cut() {
+    let compressed = StreamOutcome {
+        streamed: true,
+        inspectable: false,
+        terminated: false,
+        detail: None,
+        frames: 11,
+        bytes: 1447,
+        duration_ms: 536,
+    };
+
+    assert!(
+        !compressed.is_demonstrably_cut(),
+        "an unreadable stream is not evidence of a truncation"
+    );
+    assert_eq!(compressed.label(), "encoded_not_verifiable");
+}
+
+/// A readable stream that stops early must still be reported: this is the
+/// signal from issue #230 that the fix must not silence.
+#[test]
+fn a_readable_stream_without_its_terminator_is_still_cut() {
+    let cut = StreamOutcome {
+        streamed: true,
+        inspectable: true,
+        terminated: false,
+        detail: None,
+        frames: 444,
+        bytes: 120_000,
+        duration_ms: 74_000,
+    };
+
+    assert!(
+        cut.is_demonstrably_cut(),
+        "a real truncation must still fire"
+    );
+    assert_eq!(cut.label(), "ended_without_terminator");
+}
+
+/// A transport failure fails the turn whatever the encoding: the client got a
+/// truncated answer, which is a real problem even when the frames were opaque.
+#[test]
+fn a_transport_failure_is_reported_even_when_encoded() {
+    let failed = StreamOutcome {
+        streamed: true,
+        inspectable: false,
+        terminated: false,
+        detail: Some("connection reset".to_string()),
+        frames: 3,
+        bytes: 90,
+        duration_ms: 40,
+    };
+
+    assert!(failed.is_demonstrably_cut());
+    assert_eq!(failed.label(), "upstream_error");
+}
+
+/// Only an encoding the router actually decodes nothing of makes a body
+/// opaque; `identity` and an absent header are readable.
+#[test]
+fn only_a_real_encoding_makes_a_body_opaque() {
+    use reqwest::header::{CONTENT_ENCODING, HeaderMap, HeaderValue};
+
+    assert!(
+        body_is_inspectable(&HeaderMap::new()),
+        "no encoding header means the bytes are readable"
+    );
+
+    let mut identity = HeaderMap::new();
+    identity.insert(CONTENT_ENCODING, HeaderValue::from_static("identity"));
+    assert!(body_is_inspectable(&identity));
+
+    for encoding in ["gzip", "br", "zstd", "gzip, br"] {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_ENCODING, HeaderValue::from_str(encoding).unwrap());
+        assert!(
+            !body_is_inspectable(&headers),
+            "{encoding} bodies cannot be scanned"
+        );
+    }
+}
+
+/// The warning fires only for a stream that can be shown to have stopped early.
+///
+/// This is the operator-facing half of issue #255: 19 warnings in 25 minutes,
+/// every one of them a successful turn, made `grep -i warn` useless for finding
+/// the real thing.
+#[test]
+fn only_a_demonstrable_cut_warrants_a_warning() {
+    let base = StreamOutcome {
+        streamed: true,
+        inspectable: true,
+        terminated: false,
+        detail: None,
+        frames: 11,
+        bytes: 1447,
+        duration_ms: 536,
+    };
+
+    assert!(
+        stream_warrants_a_warning(&base),
+        "a readable stream with no terminator is a real truncation"
+    );
+    assert!(
+        !stream_warrants_a_warning(&StreamOutcome {
+            inspectable: false,
+            ..base.clone()
+        }),
+        "a compressed stream says nothing either way, so it must stay quiet"
+    );
+    assert!(
+        !stream_warrants_a_warning(&StreamOutcome {
+            terminated: true,
+            ..base.clone()
+        }),
+        "a completed stream must stay quiet"
+    );
+    assert!(
+        !stream_warrants_a_warning(&StreamOutcome {
+            streamed: false,
+            ..base.clone()
+        }),
+        "a single-shot reply has no terminator to miss"
+    );
+    assert!(
+        stream_warrants_a_warning(&StreamOutcome {
+            inspectable: false,
+            detail: Some("connection reset".to_string()),
+            ..base
+        }),
+        "a transport failure is reported whatever the encoding"
+    );
 }
