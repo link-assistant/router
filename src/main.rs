@@ -38,8 +38,11 @@ use tower_http::trace::TraceLayer;
 type SharedState = (Arc<dyn TokenStore>, Option<AccountRouter>);
 type AnyError = Box<dyn std::error::Error>;
 
-#[tokio::main]
-async fn main() -> ExitCode {
+fn main() -> ExitCode {
+    link_assistant_router::entrypoint::run_on_a_deep_stack(run)
+}
+
+async fn run() -> ExitCode {
     let arguments =
         link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
     let cli = <Cli as lino_arguments::Parser>::parse_from(arguments);
@@ -387,16 +390,11 @@ async fn run_server(
     match link_assistant_router::tls::from_env(std::path::Path::new(&config.data_dir)) {
         Ok(link_assistant_router::tls::TlsSetup::Enabled { cert, key }) => {
             // Boxed so the HTTPS serve future is heap-allocated: it is large,
-            // and embedding it in this function's state machine made every
-            // subcommand -- including ones that never serve -- carry it.
-            Box::pin(link_assistant_router::tls::serve_https(
-                config.listen_addr,
-                app,
-                cert,
-                key,
-            ))
-            .await
-            .map_err(|error| -> Box<dyn std::error::Error> { error.to_string().into() })?;
+            // and embedding it here would put it in every subcommand's frame.
+            let serve = link_assistant_router::tls::serve_https(config.listen_addr, app, cert, key);
+            Box::pin(serve)
+                .await
+                .map_err(|error| -> AnyError { error.to_string().into() })?;
         }
         Ok(link_assistant_router::tls::TlsSetup::Disabled) => {
             let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
