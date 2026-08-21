@@ -952,9 +952,7 @@ mod tests {
             None,
             "nothing stored yet"
         );
-        // Bound with an underscore prefix: the path is only inspected under
-        // unix, where file modes exist.
-        let _path = store_credential(data_dir.path(), "  gho_stored\n").expect("store it");
+        store_credential(data_dir.path(), "  gho_stored\n").expect("store it");
         assert_eq!(
             stored_credential(data_dir.path()),
             Some("gho_stored".to_string()),
@@ -964,7 +962,7 @@ mod tests {
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt as _;
-            let mode = std::fs::metadata(&_path)
+            let mode = std::fs::metadata(stored_credential_path(data_dir.path()))
                 .expect("stat")
                 .permissions()
                 .mode();
