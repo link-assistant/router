@@ -121,8 +121,9 @@ impl GitHubProxyConfig {
         self.base_url.clone()
     }
 
-    #[cfg(test)]
-    fn with_token(token: &str, base_url: &str) -> Self {
+    /// A proxy configured with an operator credential.
+    #[must_use]
+    pub fn with_credential(token: &str, base_url: &str) -> Self {
         Self {
             token: Some(token.into()),
             base_url: base_url.trim_end_matches('/').into(),
@@ -625,7 +626,7 @@ mod tests {
 
     #[test]
     fn enterprise_and_bare_paths_normalize_to_github_rest() {
-        assert!(GitHubProxyConfig::with_token("operator", "https://example.test").enabled());
+        assert!(GitHubProxyConfig::with_credential("operator", "https://example.test").enabled());
         assert_eq!(normalize_path("/api/v3/rate_limit"), "/rate_limit");
         assert_eq!(normalize_path("/repos/o/r"), "/repos/o/r");
         assert_eq!(normalize_path("/api/graphql"), "/graphql");
@@ -755,7 +756,8 @@ mod tests {
                 .unwrap();
             String::from_utf8_lossy(&request[..read]).to_string()
         });
-        let config = GitHubProxyConfig::with_token("operator-secret", &format!("http://{address}"));
+        let config =
+            GitHubProxyConfig::with_credential("operator-secret", &format!("http://{address}"));
         let request = HttpRequest::builder()
             .uri("/api/v3/rate_limit")
             .header("authorization", "Bearer caller-placeholder")
@@ -895,5 +897,87 @@ mod tests {
         // Reaching the unroutable upstream is a gateway failure, which proves
         // the scope let it through rather than blocking it.
         assert_ne!(response.status(), StatusCode::FORBIDDEN);
+    }
+
+    /// A mounted `gh` login is an existing credential the deployment reuses,
+    /// rather than a second token to mint and rotate (issue #263).
+    #[test]
+    fn a_gh_configuration_yields_its_credential() {
+        let directory = tempfile::tempdir().expect("gh config dir");
+        std::fs::write(
+            directory.path().join("hosts.yml"),
+            "github.com:\n    oauth_token: gho_example\n    user: someone\n",
+        )
+        .expect("write hosts.yml");
+
+        assert_eq!(
+            token_from_gh_config(directory.path()),
+            Some("gho_example".to_string())
+        );
+    }
+
+    /// A quoted value and an absent file are both handled, so a config written
+    /// by any `gh` version either works or is reported as missing.
+    #[test]
+    fn a_quoted_or_absent_credential_is_handled() {
+        let directory = tempfile::tempdir().expect("gh config dir");
+        assert_eq!(token_from_gh_config(directory.path()), None, "absent file");
+
+        std::fs::write(
+            directory.path().join("hosts.yml"),
+            "github.com:\n    oauth_token: \"gho_quoted\"\n",
+        )
+        .expect("write hosts.yml");
+        assert_eq!(
+            token_from_gh_config(directory.path()),
+            Some("gho_quoted".to_string())
+        );
+
+        std::fs::write(
+            directory.path().join("hosts.yml"),
+            "github.com:\n    user: someone\n",
+        )
+        .expect("rewrite");
+        assert_eq!(token_from_gh_config(directory.path()), None, "no token key");
+    }
+
+    /// A stored credential round-trips and is written owner-only, like every
+    /// other secret this crate persists.
+    #[test]
+    fn a_stored_credential_round_trips_owner_only() {
+        let data_dir = tempfile::tempdir().expect("data dir");
+
+        assert_eq!(
+            stored_credential(data_dir.path()),
+            None,
+            "nothing stored yet"
+        );
+        let path = store_credential(data_dir.path(), "  gho_stored\n").expect("store it");
+        assert_eq!(
+            stored_credential(data_dir.path()),
+            Some("gho_stored".to_string()),
+            "surrounding whitespace is not part of the credential"
+        );
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            let mode = std::fs::metadata(&path).expect("stat").permissions().mode();
+            assert_eq!(mode & 0o777, 0o600, "mode was {:o}", mode & 0o777);
+        }
+    }
+
+    /// The git transport base is derived from the API base, so an enterprise
+    /// or test deployment stays consistent across both surfaces.
+    #[test]
+    fn the_git_base_follows_the_api_base() {
+        assert_eq!(
+            GitHubProxyConfig::with_credential("t", "https://api.github.com").git_base_url(),
+            "https://github.com"
+        );
+        assert_eq!(
+            GitHubProxyConfig::with_credential("t", "http://127.0.0.1:9000").git_base_url(),
+            "http://127.0.0.1:9000"
+        );
     }
 }

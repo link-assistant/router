@@ -195,6 +195,40 @@ pub fn upstream_git_url(base: &str, path: &str, query: Option<&str>) -> Option<S
     Some(url)
 }
 
+/// The refusal a request earns, if any.
+///
+/// Split from the forwarding path so the decision — the part that actually
+/// contains an agent — can be exercised without a whole `AppState` behind it.
+/// Only a push carries ref updates; a fetch is read-only.
+#[must_use]
+pub fn refusal_for_request(
+    path: &str,
+    body: &[u8],
+    policy: &crate::github_proxy::GitHubPolicy,
+    repository: &str,
+) -> Option<RefRefusal> {
+    if !path.ends_with("/git-receive-pack") {
+        return None;
+    }
+    refuse_destructive_updates(
+        &parse_ref_updates(body),
+        body_requests_force(body),
+        policy,
+        repository,
+    )
+}
+
+/// Whether a token's scope admits a repository.
+///
+/// Empty is unrestricted, matching the REST surface, so one rule governs both.
+#[must_use]
+pub fn scope_admits(allowed_repositories: &[String], repository: &str) -> bool {
+    allowed_repositories.is_empty()
+        || allowed_repositories
+            .iter()
+            .any(|allowed| allowed.eq_ignore_ascii_case(repository))
+}
+
 /// Terminate a git smart-HTTP request, enforcing ref policy before forwarding.
 pub async fn proxy(State(state): State<AppState>, request: Request) -> Response {
     let scope = crate::proxy::authenticate_client_error(&state, request.headers())
@@ -215,11 +249,7 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
     let Some(repository) = repository_in_git_path(&path) else {
         return git_error(StatusCode::NOT_FOUND, "not a git repository path");
     };
-    if !allowed_repositories.is_empty()
-        && !allowed_repositories
-            .iter()
-            .any(|allowed| allowed.eq_ignore_ascii_case(&repository))
-    {
+    if !scope_admits(allowed_repositories, &repository) {
         return blocked("outside this token's repositories");
     }
     let body = match axum::body::to_bytes(body, state.max_proxy_request_bytes).await {
@@ -234,26 +264,20 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
 
     // Only a push carries ref updates; a fetch is read-only and needs no
     // ref decision.
-    if path.ends_with("/git-receive-pack") {
-        let updates = parse_ref_updates(&body);
-        if let Some(refusal) = refuse_destructive_updates(
-            &updates,
-            body_requests_force(&body),
-            state.github.policy_rules(),
-            &repository,
-        ) {
-            // Recorded like every other mediated call, so a refused push
-            // appears in the same audit trail as an API refusal.
-            state.request_log.record(
-                &crate::request_log::correlation_id(&parts.headers),
-                "git_policy_refusal",
-                serde_json::json!({
-                    "repository": repository,
-                    "refusal": refusal.message(),
-                }),
-            );
-            return blocked(&refusal.message());
-        }
+    if let Some(refusal) =
+        refusal_for_request(&path, &body, state.github.policy_rules(), &repository)
+    {
+        // Recorded like every other mediated call, so a refused push appears
+        // in the same audit trail as an API refusal.
+        state.request_log.record(
+            &crate::request_log::correlation_id(&parts.headers),
+            "git_policy_refusal",
+            serde_json::json!({
+                "repository": repository,
+                "refusal": refusal.message(),
+            }),
+        );
+        return blocked(&refusal.message());
     }
 
     let Some(url) = upstream_git_url(&state.github.git_base_url(), &path, parts.uri.query()) else {

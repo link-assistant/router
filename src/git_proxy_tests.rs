@@ -236,3 +236,214 @@ fn the_upstream_url_preserves_the_service_query() {
         None
     );
 }
+
+/// Only a push is subject to ref policy; a fetch is read-only and must not be
+/// refused, or the proxy would break cloning.
+#[test]
+fn a_fetch_earns_no_refusal() {
+    let body = [
+        pkt(&format!("{OLD} {ZERO_OID} refs/heads/main")),
+        b"0000".to_vec(),
+    ]
+    .concat();
+    let policy = crate::github_proxy::GitHubPolicy::default();
+
+    // The same body on a read-only endpoint decides nothing.
+    assert!(
+        refusal_for_request("/git/acme/demo.git/info/refs", &body, &policy, "acme/demo").is_none()
+    );
+    assert!(
+        refusal_for_request(
+            "/git/acme/demo.git/git-upload-pack",
+            &body,
+            &policy,
+            "acme/demo"
+        )
+        .is_none()
+    );
+    // On a push it is refused.
+    assert!(
+        refusal_for_request(
+            "/git/acme/demo.git/git-receive-pack",
+            &body,
+            &policy,
+            "acme/demo"
+        )
+        .is_some()
+    );
+}
+
+/// The scope rule matches the REST surface, so a token means the same thing on
+/// both (issue #262).
+#[test]
+fn the_scope_rule_matches_the_rest_surface() {
+    assert!(
+        scope_admits(&[], "anyone/anything"),
+        "empty is unrestricted"
+    );
+
+    let scope = vec!["acme/demo".to_string()];
+    assert!(scope_admits(&scope, "acme/demo"));
+    assert!(scope_admits(&scope, "ACME/Demo"), "case-insensitive");
+    assert!(!scope_admits(&scope, "someone-else/private"));
+}
+
+/// Drive the real `forward` against a live upstream, so the whole mediated
+/// path is exercised: scope, policy, credential swap and relay.
+mod forwarding {
+    use super::*;
+    use axum::http::Request as HttpRequest;
+
+    /// An upstream that echoes the credential it was presented.
+    async fn echo_upstream() -> u16 {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            while let Ok((mut socket, _)) = listener.accept().await {
+                use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+                let mut scratch = [0; 8192];
+                let read = socket.read(&mut scratch).await.unwrap_or(0);
+                let request = String::from_utf8_lossy(&scratch[..read]).to_string();
+                let credential = request
+                    .lines()
+                    .find(|line| line.to_ascii_lowercase().starts_with("authorization:"))
+                    .unwrap_or("authorization: (none)")
+                    .to_string();
+                let _ = socket
+                    .write_all(
+                        format!(
+                            "HTTP/1.1 200 OK\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{credential}",
+                            credential.len()
+                        )
+                        .as_bytes(),
+                    )
+                    .await;
+            }
+        });
+        tokio::task::yield_now().await;
+        port
+    }
+
+    fn state_for(upstream: u16, data_dir: &std::path::Path) -> crate::app_state::AppState {
+        let mut state = crate::app_state::AppState::for_tests(data_dir);
+        state.github = crate::github_proxy::GitHubProxyConfig::with_credential(
+            "operator-secret",
+            &format!("http://127.0.0.1:{upstream}"),
+        );
+        state
+    }
+
+    fn push_request(repository: &str, command: &str) -> HttpRequest<axum::body::Body> {
+        let line = format!("{command}\n");
+        let body = format!("{:04x}{line}0000PACK", line.len() + 4);
+        HttpRequest::builder()
+            .method("POST")
+            .uri(format!("/git/{repository}.git/git-receive-pack"))
+            .body(axum::body::Body::from(body))
+            .unwrap()
+    }
+
+    /// A refused push never reaches the upstream, so the agent cannot destroy
+    /// history even though the router could (issue #261).
+    #[tokio::test]
+    async fn a_refused_push_never_reaches_the_upstream() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = state_for(echo_upstream().await, data_dir.path());
+
+        let response = forward(
+            &state,
+            &[],
+            push_request("acme/demo", &format!("{OLD} {ZERO_OID} refs/heads/main")),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::FORBIDDEN);
+        assert_eq!(
+            response.headers()[crate::github_proxy::POLICY_HEADER],
+            "blocked"
+        );
+    }
+
+    /// An allowed push is relayed with the router's own credential, so the
+    /// caller never holds one.
+    #[tokio::test]
+    async fn an_allowed_push_is_relayed_with_the_routers_credential() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = state_for(echo_upstream().await, data_dir.path());
+
+        let response = forward(
+            &state,
+            &[],
+            push_request(
+                "acme/demo",
+                &format!("{OLD} {NEW} refs/heads/feature\0report-status"),
+            ),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), 65536)
+            .await
+            .unwrap();
+        let seen = String::from_utf8_lossy(&body);
+        // Basic auth of `x-access-token:operator-secret`.
+        assert!(seen.to_ascii_lowercase().contains("basic "), "{seen}");
+        assert!(
+            !seen.contains("la_sk_"),
+            "the caller token must not travel: {seen}"
+        );
+    }
+
+    /// A path that names no repository is not proxied at all.
+    #[tokio::test]
+    async fn a_path_without_a_repository_is_not_proxied() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = state_for(echo_upstream().await, data_dir.path());
+
+        let response = forward(
+            &state,
+            &[],
+            HttpRequest::builder()
+                .uri("/git/incomplete")
+                .body(axum::body::Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::NOT_FOUND);
+    }
+
+    /// A scoped token is refused before the upstream is contacted.
+    #[tokio::test]
+    async fn a_scoped_token_is_refused_before_the_upstream() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = state_for(echo_upstream().await, data_dir.path());
+
+        let response = forward(
+            &state,
+            &["acme/demo".to_string()],
+            push_request(
+                "someone-else/private",
+                &format!("{OLD} {NEW} refs/heads/feature\0report-status"),
+            ),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::FORBIDDEN);
+    }
+
+    /// Without a configured credential the proxy says so rather than
+    /// forwarding an unauthenticated request.
+    #[tokio::test]
+    async fn an_unconfigured_proxy_refuses_to_forward() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = crate::app_state::AppState::for_tests(data_dir.path());
+
+        let response = forward(&state, &[], push_request("acme/demo", "")).await;
+
+        assert_eq!(
+            response.status(),
+            axum::http::StatusCode::SERVICE_UNAVAILABLE
+        );
+    }
+}

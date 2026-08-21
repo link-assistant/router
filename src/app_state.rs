@@ -124,3 +124,56 @@ impl AppState {
         }
     }
 }
+
+impl AppState {
+    /// A minimal state for exercising handlers in-process.
+    ///
+    /// Every field is inert: no credentials, no upstreams, no listeners. A
+    /// test overrides only what it is about, so the rest cannot quietly take
+    /// part in the behaviour under test.
+    #[cfg(test)]
+    #[must_use]
+    pub fn for_tests(data_dir: &std::path::Path) -> Self {
+        use std::sync::Arc;
+        Self {
+            client: reqwest::Client::new(),
+            token_manager: crate::token::TokenManager::new("test-secret"),
+            oauth_provider: crate::oauth::OAuthProvider::new(&data_dir.to_string_lossy()),
+            account_router: None,
+            subscription_reader: None,
+            subscription_base_url: None,
+            subscription_readers: Vec::new(),
+            model_catalogs: Arc::new(crate::model_catalog::ModelCatalogCache::new()),
+            subscription_cache: Arc::new(crate::refresh::TokenCache::new()),
+            upstream_base_url: "https://api.anthropic.com".to_string(),
+            upstream_provider: crate::config::UpstreamProvider::Auto,
+            gonka: None,
+            bridge_model: None,
+            bridge_model_policy: crate::bridge_selection::BridgeModelPolicy::default(),
+            crater: None,
+            openai_compatible: crate::config::default_openai_compatible_config(),
+            provider_store: crate::providers::ProviderStore::open(data_dir, "test-secret")
+                .expect("open a provider store"),
+            logger: log_lazy::LogLazy::new(),
+            admin: Arc::new(crate::admin::AdminClaim::load(
+                None,
+                data_dir,
+                std::time::Duration::from_secs(60),
+            )),
+            admin_key: None,
+            allow_anonymous_admin: false,
+            metrics: Arc::new(crate::metrics::Metrics::default()),
+            audit: Arc::new(crate::audit::AuditLog::to_path(None)),
+            request_log: Arc::new(crate::request_log::RequestLog::new(
+                data_dir.join("requests"),
+                1024 * 1024,
+            )),
+            activitypub_actor_base_url: "https://router.example".to_string(),
+            activitypub_public_key_pem: crate::config::default_activitypub_public_key_pem(),
+            mpp: crate::config::default_mpp_config(),
+            login_manager: crate::login::LoginManager::new(crate::login::LoginConfig::default()),
+            github: crate::github_proxy::GitHubProxyConfig::default(),
+            max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+        }
+    }
+}

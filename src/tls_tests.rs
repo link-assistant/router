@@ -104,3 +104,111 @@ fn half_a_pair_is_refused_rather_than_ignored() {
         .is_enabled()
     );
 }
+
+/// `router tls generate` writes the pair without starting a server, and
+/// `router tls ca` reads it back — the two halves of distributing trust for a
+/// private deployment (issue #263).
+#[test]
+fn the_cli_generates_and_prints_the_certificate() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let generated = crate::tls_cli::run_in(
+        data_dir.path(),
+        &crate::cli::TlsOp::Generate {
+            dns: "hive-mind-router".to_string(),
+        },
+    );
+    assert_eq!(generated, std::process::ExitCode::SUCCESS);
+
+    let printed = crate::tls_cli::run_in(data_dir.path(), &crate::cli::TlsOp::Ca);
+    assert_eq!(printed, std::process::ExitCode::SUCCESS);
+    assert!(
+        read_generated_certificate(data_dir.path())
+            .expect("the certificate exists")
+            .contains("BEGIN CERTIFICATE")
+    );
+}
+
+/// Printing a certificate that was never generated fails rather than
+/// pretending trust is available.
+#[test]
+fn the_cli_reports_an_absent_certificate() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    assert_ne!(
+        crate::tls_cli::run_in(data_dir.path(), &crate::cli::TlsOp::Ca),
+        std::process::ExitCode::SUCCESS
+    );
+}
+
+/// Nothing configured means plain HTTP, exactly as the router always served.
+#[test]
+fn without_configuration_tls_stays_off() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+
+    let setup = resolve(data_dir.path(), None, None, false, None).expect("no error");
+
+    assert_eq!(setup, TlsSetup::Disabled);
+}
+
+/// An explicit pair is served as given, so an operator with a real
+/// certificate is never quietly handed a self-signed one.
+#[test]
+fn an_explicit_pair_wins_over_generation() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+
+    let setup = resolve(
+        data_dir.path(),
+        Some("/etc/tls/cert.pem".to_string()),
+        Some("/etc/tls/key.pem".to_string()),
+        true,
+        Some("ignored".to_string()),
+    )
+    .expect("no error");
+
+    assert_eq!(
+        setup,
+        TlsSetup::Enabled {
+            cert: "/etc/tls/cert.pem".into(),
+            key: "/etc/tls/key.pem".into()
+        }
+    );
+}
+
+/// Half a pair is a misconfiguration: silently serving plaintext would be the
+/// opposite of what was asked for.
+#[test]
+fn half_a_configured_pair_is_an_error() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+
+    let missing_key = resolve(data_dir.path(), Some("c.pem".into()), None, false, None)
+        .expect_err("a certificate without a key is a misconfiguration");
+    assert!(missing_key.contains("TLS_KEY_FILE"), "{missing_key}");
+
+    let missing_cert = resolve(data_dir.path(), None, Some("k.pem".into()), false, None)
+        .expect_err("a key without a certificate is a misconfiguration");
+    assert!(missing_cert.contains("TLS_CERT_FILE"), "{missing_cert}");
+}
+
+/// Self-signed generation produces a usable pair for the configured names.
+#[test]
+fn self_signed_generation_produces_a_servable_pair() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+
+    let setup = resolve(
+        data_dir.path(),
+        None,
+        None,
+        true,
+        Some("hive-mind-router".to_string()),
+    )
+    .expect("generation succeeds");
+
+    let TlsSetup::Enabled { cert, key } = setup else {
+        panic!("self-signed configuration must enable TLS");
+    };
+    assert!(cert.is_file() && key.is_file());
+    assert!(
+        read_generated_certificate(data_dir.path())
+            .expect("readable")
+            .contains("BEGIN CERTIFICATE")
+    );
+}

@@ -10,8 +10,14 @@ use crate::config::Config;
 /// Manage the self-signed certificate a private deployment serves.
 #[must_use]
 pub fn run(config: &Config, op: &crate::cli::TlsOp) -> ExitCode {
+    run_in(std::path::Path::new(&config.data_dir), op)
+}
+
+/// The same command against an explicit data directory, so the behaviour can
+/// be exercised without constructing a whole configuration.
+#[must_use]
+pub fn run_in(data_dir: &std::path::Path, op: &crate::cli::TlsOp) -> ExitCode {
     use crate::cli::TlsOp;
-    let data_dir = std::path::Path::new(&config.data_dir);
     let result = match op {
         TlsOp::Ca => crate::tls::read_generated_certificate(data_dir).map(|pem| print!("{pem}")),
         TlsOp::Generate { dns } => {

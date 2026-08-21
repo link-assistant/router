@@ -73,10 +73,33 @@ pub fn generated_subject_names(configured: &str) -> Vec<String> {
 /// misconfiguration whose silent fallback to plaintext would be the opposite of
 /// what was asked for — or when generation fails.
 pub fn from_env(data_dir: &Path) -> Result<TlsSetup, String> {
-    let cert = std::env::var("TLS_CERT_FILE")
-        .ok()
-        .filter(|v| !v.is_empty());
-    let key = std::env::var("TLS_KEY_FILE").ok().filter(|v| !v.is_empty());
+    let read = |name: &str| std::env::var(name).ok().filter(|value| !value.is_empty());
+    resolve(
+        data_dir,
+        read("TLS_CERT_FILE"),
+        read("TLS_KEY_FILE"),
+        read("TLS_SELF_SIGNED").as_deref() == Some("1"),
+        read("TLS_SELF_SIGNED_DNS"),
+    )
+}
+
+/// Decide the setup from already-read settings.
+///
+/// Split from [`from_env`] so every branch is reachable in a test: this crate
+/// forbids `unsafe`, and mutating the process environment is the only other
+/// way to drive them.
+///
+/// # Errors
+///
+/// Returns a message when only one half of the pair is given, or when
+/// generation fails.
+pub fn resolve(
+    data_dir: &Path,
+    cert: Option<String>,
+    key: Option<String>,
+    self_signed: bool,
+    self_signed_dns: Option<String>,
+) -> Result<TlsSetup, String> {
     match (cert, key) {
         (Some(cert), Some(key)) => Ok(TlsSetup::Enabled {
             cert: PathBuf::from(cert),
@@ -85,11 +108,11 @@ pub fn from_env(data_dir: &Path) -> Result<TlsSetup, String> {
         (Some(_), None) => Err("TLS_CERT_FILE is set without TLS_KEY_FILE".to_string()),
         (None, Some(_)) => Err("TLS_KEY_FILE is set without TLS_CERT_FILE".to_string()),
         (None, None) => {
-            if !std::env::var("TLS_SELF_SIGNED").is_ok_and(|value| value == "1") {
+            if !self_signed {
                 return Ok(TlsSetup::Disabled);
             }
             let names = generated_subject_names(
-                &std::env::var("TLS_SELF_SIGNED_DNS").unwrap_or_else(|_| "localhost".to_string()),
+                &self_signed_dns.unwrap_or_else(|| "localhost".to_string()),
             );
             let (cert, key) = ensure_generated(data_dir, &names)?;
             Ok(TlsSetup::Enabled { cert, key })

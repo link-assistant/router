@@ -643,3 +643,58 @@ fn rotate_rejects_an_unknown_id_and_invalid_overrides() {
         "a failed rotation must not revoke the original"
     );
 }
+
+/// A repository scope must be `owner/repo` exactly.
+///
+/// A bare owner would read as "the whole account" and a longer path would
+/// silently match nothing — the wrong failure for a security control (issue
+/// #262).
+#[test]
+fn a_repository_scope_must_name_one_repository() {
+    let valid = IssueRequest {
+        ttl_hours: 1,
+        github_repos: vec!["link-assistant/router".to_string()],
+        ..IssueRequest::default()
+    };
+    assert!(valid.validate().is_ok(), "{:?}", valid.validate());
+
+    for rejected in [
+        "link-assistant",
+        "link-assistant/router/extra",
+        "/router",
+        "link-assistant/",
+        "link assistant/router",
+        "",
+    ] {
+        let request = IssueRequest {
+            ttl_hours: 1,
+            github_repos: vec![rejected.to_string()],
+            ..IssueRequest::default()
+        };
+        assert!(
+            request.validate().is_err(),
+            "{rejected:?} should not be accepted as a repository scope"
+        );
+    }
+}
+
+/// A token carries its scope through issuance and back out of validation, so
+/// the proxy sees what the operator asked for.
+#[test]
+fn a_scope_survives_issuance_and_validation() {
+    let manager = TokenManager::new("scope-secret");
+    let token = manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "agent",
+            github_repos: vec!["acme/demo".to_string()],
+            ..IssueRequest::default()
+        })
+        .expect("issue");
+
+    let claims = manager.validate_token(&token).expect("validate");
+
+    assert_eq!(claims.github_repos, vec!["acme/demo".to_string()]);
+    assert!(claims.may_reach_repository("acme/demo"));
+    assert!(!claims.may_reach_repository("acme/other"));
+}
