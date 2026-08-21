@@ -41,11 +41,20 @@ const POLL_INTERVAL: Duration = Duration::from_millis(20);
 /// `None` means "no selection" — the caller keeps its local behaviour. An
 /// unreachable *selected* server is an error rather than a silent fallback:
 /// falling back to a local directory is exactly the surprise this fixes.
-pub async fn selected_server() -> Result<Option<ResolvedServer>, String> {
-    if !has_selection() {
+pub async fn selected_server(force_managed: bool) -> Result<Option<ResolvedServer>, String> {
+    if force_managed {
+        // `--managed` asks for a disposable container, which is what the local
+        // path already provides for `auth`.
         return Ok(None);
     }
-    crate::managed_server::resolve(None, None, None)
+    if !has_selection() {
+        // Nothing was selected, but a router already listening here is a
+        // better target than this machine's credential directory: authorizing
+        // locally when a live router is one port away lands the subscription
+        // somewhere the router in use cannot see (issue #250).
+        return Ok(crate::managed_server::discovered_local_router().await);
+    }
+    crate::managed_server::resolve(None, None, None, false)
         .await
         .map(Some)
         .map_err(|error| format!("the selected server is not usable: {error}"))

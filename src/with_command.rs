@@ -51,6 +51,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         args.server.as_deref(),
         explicit_token,
         args.run_max_requests,
+        args.managed,
     )
     .await?;
     if args.global {
@@ -548,6 +549,7 @@ mod tests {
 
     fn arguments(client: ClientKind, client_args: &[&str]) -> Vec<String> {
         let args = WithArgs {
+            managed: false,
             global: false,
             undo: false,
             non_interactive: false,

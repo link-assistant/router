@@ -166,6 +166,15 @@ The router searches these files in order:
 - `oauth.json`
 - `config.json`
 
+**On macOS**, Claude Code keeps its live credential in the login Keychain
+(`Claude Code-credentials`) and leaves `~/.claude/.credentials.json` behind as a
+snapshot that nothing rotates. The router reads both and uses whichever is
+newer, so it no longer reports a revoked subscription while the vendor client —
+on the same account — keeps working. `router doctor` names the store each
+credential came from (`store: keychain` or `store: file`). The Keychain is
+consulted only for the default home, so a pooled account or a mounted
+credential directory keeps reading exactly the file it was given.
+
 Two on-disk layouts are supported automatically:
 
 - **Nested** (the format real Claude Code writes to `~/.claude/.credentials.json`):
@@ -388,6 +397,17 @@ does what it reads as. `--local` authorizes the local credential directory
 instead, and `--server <url>` targets one router for a single command. A
 selected server that cannot be reached is an error rather than a silent
 fallback to a local directory.
+
+When nothing is selected at all, `with` and `auth` use a router that is already
+listening on this machine — including one reached over an SSH tunnel — and only
+start a managed container when none answers. The rule, in one sentence: if a
+router is already listening locally, use it. Selection order is `--server`, then
+`ROUTER_URL`/`LINK_ASSISTANT_ROUTER_URL`, then the persisted `server use`
+selection, then a running local router, then a managed container. A discovered
+endpoint is adopted only after the same `/health` check every other branch
+performs, so an unrelated service on port 8080 is not mistaken for the router.
+`router server status` names whichever one the next command will use, and
+`--managed` forces a disposable container for CI and clean-room runs.
 
 ### Admin UI surface (`--admin-port` to opt in)
 

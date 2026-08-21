@@ -86,12 +86,19 @@ pub async fn subscription_catalog_diagnostics(
     for reader in readers {
         let provider = reader.provider();
         let label = format!("{provider} subscription");
-        let Some(path) = reader.discover_credential_path() else {
-            println!("{label:<23}: {} (MISSING)", reader.home().display());
-            continue;
+        // A credential may exist with no file at all: on macOS a recent Claude
+        // Code login writes only the Keychain (issue #249). Reporting MISSING
+        // on the strength of an absent file would hide a working subscription.
+        let path = match reader.discover_credential_path() {
+            Some(path) => path,
+            None if reader.read_token().is_ok() => reader.home().to_path_buf(),
+            None => {
+                println!("{label:<23}: {} (MISSING)", reader.home().display());
+                continue;
+            }
         };
-        let disk_token = match reader.read_token() {
-            Ok(token) => token,
+        let (disk_token, origin) = match reader.read_token_from() {
+            Ok(found) => found,
             Err(error) => {
                 println!("{label:<23}: {} (found, NO TOKEN: {error})", path.display());
                 println!(
@@ -121,7 +128,22 @@ pub async fn subscription_catalog_diagnostics(
             (true, false, false) => "found, token OK (refreshed in memory)",
             (false, false, false) => "found, token OK",
         };
-        println!("{label:<23}: {} ({status})", path.display());
+        // Name the store that was actually read. An operator looking at a
+        // valid-looking file while the router reports `rejected` otherwise has
+        // no way to see that the two are reading different places (issue #249).
+        let location = match origin {
+            crate::platform_keychain::Origin::Keychain => {
+                crate::platform_keychain::service_name(provider).map_or_else(
+                    || String::from("platform keychain"),
+                    |service| format!("keychain {service:?}"),
+                )
+            }
+            crate::platform_keychain::Origin::File => path.display().to_string(),
+        };
+        println!(
+            "{label:<23}: {location} ({status}, store: {})",
+            origin.label()
+        );
         if let Some(error) = token_cache.last_refresh_error(provider) {
             println!("{:<23}: {error}", format!("{provider} refresh"));
         }

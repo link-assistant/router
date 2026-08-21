@@ -17,6 +17,13 @@ use crate::clients::RouterModel;
 
 mod bootstrap;
 mod catalog;
+mod discovery;
+
+use discovery::discover_local_router;
+pub use discovery::{discovered_local_router, effective_source};
+
+/// The default port a router binds when nothing else is specified.
+const DEFAULT_LOCAL_PORT: u16 = 8080;
 
 use catalog::fetch_models;
 
@@ -163,11 +170,16 @@ impl Drop for ManagedLease {
     }
 }
 
-/// Resolve flags, environment, persisted selection, then managed local Docker.
+/// Resolve flags, environment, persisted selection, a router already running
+/// locally, then managed local Docker.
+///
+/// `force_managed` skips the discovery step, for workflows that want a
+/// disposable instance on purpose (issue #250).
 pub async fn resolve(
     explicit_server: Option<&str>,
     explicit_token: Option<String>,
     run_max_requests: Option<u64>,
+    force_managed: bool,
 ) -> Result<ResolvedServer, AnyError> {
     let persisted = load_persisted()?;
     let environment_server = std::env::var("LINK_ASSISTANT_ROUTER_URL")
@@ -182,6 +194,16 @@ pub async fn resolve(
         (normalize_server(&server)?, "environment")
     } else if let Some(config) = persisted.as_ref() {
         (normalize_server(&config.server)?, "persisted configuration")
+    } else if let Some(discovered) = discover_local_router(force_managed).await {
+        // Nothing was selected explicitly and a router is already listening
+        // here, so use it rather than starting a second one. Starting one was
+        // both the expensive branch — an image pull and a container start on a
+        // command the operator expects to be instant — and the surprising one:
+        // the new container has its own credential directory and token store,
+        // so a subscription authorized through it is invisible to the instance
+        // already running (issue #250). Every explicit mechanism above this
+        // point still wins, and `--managed` forces a fresh container.
+        (discovered, "already-running local server")
     } else {
         let (state, lease) = acquire_managed()?;
         let base_url = format!("http://127.0.0.1:{}", state.port);
@@ -891,13 +913,13 @@ fn managed_secret() -> String {
 }
 
 fn choose_port() -> u16 {
-    TcpListener::bind(("127.0.0.1", 8080)).map_or_else(
+    TcpListener::bind(("127.0.0.1", DEFAULT_LOCAL_PORT)).map_or_else(
         |_| {
             TcpListener::bind(("127.0.0.1", 0))
                 .and_then(|listener| listener.local_addr())
                 .map_or(18080, |address| address.port())
         },
-        |_| 8080,
+        |_| DEFAULT_LOCAL_PORT,
     )
 }
 

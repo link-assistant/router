@@ -175,6 +175,13 @@ pub struct WithArgs {
     /// `projects/` and `settings.json` are not on the path (issue #233).
     #[arg(long)]
     pub extend_global_config: bool,
+    /// Start a disposable managed container even if a router is already
+    /// listening locally.
+    ///
+    /// The default reuses a running local router (issue #250); CI and
+    /// clean-room reproductions want a fresh instance on purpose.
+    #[arg(long, conflicts_with = "server")]
+    pub managed: bool,
     /// Router origin. No local server is started when this is supplied.
     #[arg(long)]
     pub server: Option<String>,

@@ -5,14 +5,14 @@ use std::process::ExitCode;
 
 use crate::cli::ServerOp;
 use crate::managed_server::{
-    PersistedServer, claim_managed, clear_persisted, configured_source, managed_status,
-    remove_managed, save_persisted, start_managed, stop_managed,
+    PersistedServer, claim_managed, clear_persisted, managed_status, remove_managed,
+    save_persisted, start_managed, stop_managed,
 };
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
 #[must_use]
-pub fn run(op: &ServerOp) -> ExitCode {
+pub async fn run(op: &ServerOp) -> ExitCode {
     let result = match op {
         ServerOp::Use {
             server,
@@ -27,7 +27,7 @@ pub fn run(op: &ServerOp) -> ExitCode {
             *clear,
             *run_max_requests,
         ),
-        ServerOp::Status => status(),
+        ServerOp::Status => status().await,
         ServerOp::Start => start_managed().map(|url| {
             println!("managed router started at {url}");
         }),
@@ -92,8 +92,11 @@ fn configure(
     Ok(())
 }
 
-fn status() -> Result<(), AnyError> {
-    println!("effective server: {}", configured_source()?);
+async fn status() -> Result<(), AnyError> {
+    println!(
+        "effective server: {}",
+        crate::managed_server::effective_source().await?
+    );
     println!("managed server: {}", managed_status()?);
     Ok(())
 }
