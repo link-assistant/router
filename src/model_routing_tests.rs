@@ -872,3 +872,93 @@ async fn a_disabled_provider_advertises_nothing() {
         "{error:?}"
     );
 }
+
+/// A qualified name that the provider does not advertise is an error naming
+/// the provider, rather than a silent fall through to a subscription.
+#[tokio::test]
+async fn a_qualified_name_the_provider_lacks_is_reported() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
+
+    let Err(error) = crate::model_routing::route_state(
+        &state,
+        &serde_json::json!({"model": "formal-ai/not-declared"}),
+    )
+    .await
+    else {
+        panic!("an undeclared qualified model must be refused");
+    };
+
+    assert!(
+        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
+        "{error:?}"
+    );
+    assert!(format!("{error:?}").contains("formal-ai"), "{error:?}");
+}
+
+/// A qualified name for a provider that does not exist falls through to
+/// ordinary routing rather than being treated as a provider reference.
+#[tokio::test]
+async fn an_unknown_provider_prefix_is_not_a_provider_reference() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+
+    let Err(error) =
+        crate::model_routing::route_state(&state, &serde_json::json!({"model": "nobody/model"}))
+            .await
+    else {
+        panic!("nothing advertises this model");
+    };
+
+    assert!(
+        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
+        "{error:?}"
+    );
+}
+
+/// A stored model whose id collides with a subscription's is listed in its
+/// qualified form, so both stay reachable and the bare id stays ambiguous.
+#[tokio::test]
+async fn a_colliding_declared_model_is_listed_qualified() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    store_provider(&state, "formal-ai", &["shared-id"]);
+
+    let mut catalog = serde_json::json!({
+        "object": "list",
+        "data": [{"id": "shared-id", "object": "model", "owned_by": "anthropic"}]
+    });
+    crate::model_routing::append_stored_provider_models(&state, &mut catalog);
+
+    let ids: Vec<&str> = catalog["data"]
+        .as_array()
+        .expect("data")
+        .iter()
+        .filter_map(|entry| entry["id"].as_str())
+        .collect();
+    assert!(
+        ids.contains(&"shared-id"),
+        "the subscription keeps its id: {ids:?}"
+    );
+    assert!(
+        ids.contains(&"formal-ai/shared-id"),
+        "the stored provider is reachable by its qualified name: {ids:?}"
+    );
+}
+
+/// A request with no model is refused before any provider is consulted.
+#[tokio::test]
+async fn a_request_without_a_model_is_refused() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+
+    let Err(error) = crate::model_routing::route_state(&state, &serde_json::json!({})).await else {
+        panic!("a model is required in automatic mode");
+    };
+
+    assert!(
+        matches!(error, crate::model_routing::ModelRouteError::ModelRequired),
+        "{error:?}"
+    );
+}
