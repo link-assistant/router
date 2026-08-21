@@ -594,3 +594,84 @@ fn only_a_demonstrable_cut_warrants_a_warning() {
         "a transport failure is reported whatever the encoding"
     );
 }
+
+/// Settling a stream writes the terminal record the analyser reads.
+///
+/// The record is the whole point of settling: without it the exchange reaches
+/// the log with nothing saying how it ended (issue #258).
+#[test]
+fn settling_a_stream_writes_its_terminal_record() {
+    let directory = tempfile::tempdir().expect("temporary log directory");
+    let log = RequestLog::new(directory.path().to_path_buf(), 1024 * 1024);
+    log.route_request("corr-settled", LogIdentity::unauthenticated());
+    let outcome = std::sync::Mutex::new(StreamOutcome {
+        streamed: true,
+        inspectable: true,
+        terminated: true,
+        detail: None,
+        frames: 7,
+        bytes: 900,
+        duration_ms: 0,
+    });
+
+    settle_stream(
+        &log,
+        "corr-settled",
+        &outcome,
+        1_234,
+        &log_lazy::LogLazy::default(),
+    );
+
+    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.jsonl"))
+        .expect("read log");
+    let record: serde_json::Value = written
+        .lines()
+        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .find(|record| record.get("phase").and_then(|p| p.as_str()) == Some("stream_end"))
+        .expect("a terminal record must be written");
+
+    assert_eq!(record["outcome"], "completed");
+    assert_eq!(record["complete"], serde_json::Value::Bool(true));
+    assert_eq!(record["streamed"], serde_json::Value::Bool(true));
+    assert_eq!(record["inspectable"], serde_json::Value::Bool(true));
+    assert_eq!(record["frames"], 7);
+    assert_eq!(record["duration_ms"], 1_234);
+}
+
+/// A stream that was cut is recorded as such, and the duration measured by the
+/// caller is what lands in the record.
+#[test]
+fn a_cut_stream_records_its_outcome_and_duration() {
+    let directory = tempfile::tempdir().expect("temporary log directory");
+    let log = RequestLog::new(directory.path().to_path_buf(), 1024 * 1024);
+    log.route_request("corr-cut", LogIdentity::unauthenticated());
+    let outcome = std::sync::Mutex::new(StreamOutcome {
+        streamed: true,
+        inspectable: true,
+        terminated: false,
+        detail: None,
+        frames: 444,
+        bytes: 120_000,
+        duration_ms: 0,
+    });
+
+    settle_stream(
+        &log,
+        "corr-cut",
+        &outcome,
+        74_000,
+        &log_lazy::LogLazy::default(),
+    );
+
+    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.jsonl"))
+        .expect("read log");
+    let record: serde_json::Value = written
+        .lines()
+        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .find(|record| record.get("phase").and_then(|p| p.as_str()) == Some("stream_end"))
+        .expect("a terminal record must be written");
+
+    assert_eq!(record["outcome"], "ended_without_terminator");
+    assert_eq!(record["complete"], serde_json::Value::Bool(false));
+    assert_eq!(record["duration_ms"], 74_000);
+}

@@ -750,3 +750,64 @@ fn a_compressed_body_is_not_settled_by_its_encoded_text() {
     assert_eq!(summary.unverifiable_streams, 1, "{summary:?}");
     assert_eq!(summary.unterminated_streams, 0, "{summary:?}");
 }
+
+/// Unparsable lines are counted rather than silently skipped, and the readable
+/// records around them are still assembled.
+#[test]
+fn a_damaged_line_does_not_discard_the_records_around_it() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    let directory = root.path().join("tokenhash");
+    std::fs::create_dir_all(&directory).expect("create token directory");
+    std::fs::write(
+        directory.join("requests.jsonl"),
+        "{\"correlation_id\":\"ok\",\"phase\":\"client_response\",\"status\":200}\n\
+         not json at all\n\
+         \n\
+         {\"correlation_id\":\"ok\",\"phase\":\"upstream_response_body\",\"body\":\"data: [DONE]\"}\n",
+    )
+    .expect("write log");
+
+    let (exchanges, unparsable, bytes) = read_exchanges(root.path(), None).expect("read the log");
+
+    assert_eq!(unparsable, 1, "the damaged line is counted");
+    assert!(bytes > 0, "the bytes read are reported");
+    assert_eq!(exchanges.len(), 1, "the readable records still assemble");
+    assert_eq!(exchanges[0].correlation_id, "ok");
+}
+
+/// A token filter narrows the analysis to one token's directory, so a busy
+/// store can be examined one caller at a time.
+#[test]
+fn a_token_filter_selects_one_directory() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "aaaa",
+        &[json!({"correlation_id": "a", "phase": "client_response", "status": 200})],
+    );
+    write_log(
+        root.path(),
+        "bbbb",
+        &[json!({"correlation_id": "b", "phase": "client_response", "status": 500})],
+    );
+
+    let (all, _, _) = read_exchanges(root.path(), None).expect("read every token");
+    assert_eq!(all.len(), 2);
+
+    let (one, _, _) = read_exchanges(root.path(), Some("aaaa")).expect("read one token");
+    assert_eq!(one.len(), 1, "only the named token is read");
+    assert_eq!(one[0].correlation_id, "a");
+}
+
+/// A log directory that does not exist is not readable data, and must not be
+/// reported as a healthy empty store.
+#[test]
+fn a_missing_root_yields_nothing() {
+    let (exchanges, unparsable, bytes) =
+        read_exchanges(std::path::Path::new("/nonexistent-log-root-258"), None)
+            .expect("a missing root is not an error");
+
+    assert!(exchanges.is_empty());
+    assert_eq!(unparsable, 0);
+    assert_eq!(bytes, 0);
+}
