@@ -104,7 +104,30 @@ async fn main() -> ExitCode {
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
+        Some(Command::Tls { op }) => run_tls(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
+    }
+}
+
+/// Manage the self-signed certificate a private deployment serves.
+fn run_tls(config: &Config, op: &link_assistant_router::cli::TlsOp) -> ExitCode {
+    use link_assistant_router::cli::TlsOp;
+    let data_dir = std::path::Path::new(&config.data_dir);
+    let result = match op {
+        TlsOp::Ca => link_assistant_router::tls::read_generated_certificate(data_dir)
+            .map(|pem| print!("{pem}")),
+        TlsOp::Generate { dns } => link_assistant_router::tls::ensure_generated(
+            data_dir,
+            &link_assistant_router::tls::generated_subject_names(dns),
+        )
+        .map(|(cert, _)| println!("{}", cert.display())),
+    };
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(message) => {
+            eprintln!("error: {message}");
+            ExitCode::from(1)
+        }
     }
 }
 
@@ -380,10 +403,32 @@ async fn run_server(
 
     let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
 
-    let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // `gh` will not talk plaintext to a custom host, so a router that cannot
+    // serve HTTPS cannot mediate GitHub traffic at all without a separate
+    // terminator in front of it (issue #263).
+    match link_assistant_router::tls::from_env(std::path::Path::new(&config.data_dir)) {
+        Ok(link_assistant_router::tls::TlsSetup::Enabled { cert, key }) => {
+            tracing::info!("Serving HTTPS with certificate {}", cert.display());
+            let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
+                .await
+                .map_err(|error| {
+                    format!(
+                        "could not load the TLS certificate {}: {error}",
+                        cert.display()
+                    )
+                })?;
+            axum_server::bind_rustls(config.listen_addr, tls)
+                .serve(app.into_make_service())
+                .await?;
+        }
+        Ok(link_assistant_router::tls::TlsSetup::Disabled) => {
+            let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
+            axum::serve(listener, app)
+                .with_graceful_shutdown(shutdown_signal())
+                .await?;
+        }
+        Err(error) => return Err(error.into()),
+    }
     if let Some(handle) = admin_server {
         handle.abort();
     }

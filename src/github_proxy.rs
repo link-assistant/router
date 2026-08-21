@@ -1,6 +1,6 @@
 //! GitHub API credential proxy with a deny-by-default destructive policy.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use axum::body::Body;
 use axum::extract::{Request, State};
@@ -59,6 +59,21 @@ impl GitHubProxyConfig {
                 .ok()
                 .and_then(|name| std::env::var(name).ok())
                 .filter(|token| !token.is_empty())
+        });
+        // A credential stored by `router auth gh`, then a mounted `gh`
+        // configuration: both are existing logins the deployment can reuse
+        // rather than a second credential to mint and rotate (issue #263).
+        // Consulted last, so every explicit environment setting still wins.
+        token = token.or_else(|| {
+            std::env::var("DATA_DIR")
+                .ok()
+                .filter(|dir| !dir.is_empty())
+                .and_then(|dir| stored_credential(Path::new(&dir)))
+        });
+        token = token.or_else(|| {
+            gh_config_directory()
+                .as_deref()
+                .and_then(token_from_gh_config)
         });
         let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
             .unwrap_or_else(|_| "https://api.github.com".into())
@@ -341,6 +356,73 @@ pub async fn proxy(State(state): State<AppState>, request: Request) -> Response 
         request,
     )
     .await
+}
+
+/// Where a credential stored by `router auth gh` lives.
+#[must_use]
+pub fn stored_credential_path(data_dir: &Path) -> PathBuf {
+    data_dir.join("github-credential")
+}
+
+/// Persist the GitHub credential the proxy will present upstream.
+///
+/// Written owner-only, like every other secret this crate stores.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the write cannot land.
+pub fn store_credential(data_dir: &Path, token: &str) -> Result<PathBuf, String> {
+    let path = stored_credential_path(data_dir);
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("could not create {}: {error}", parent.display()))?;
+    }
+    crate::durable_file::atomic_write_owner_only(&path, token.trim().as_bytes())
+        .map_err(|error| crate::durable_file::describe_write_failure(&path, &error))?;
+    Ok(path)
+}
+
+/// The credential stored by `router auth gh`, when one exists.
+#[must_use]
+pub fn stored_credential(data_dir: &Path) -> Option<String> {
+    std::fs::read_to_string(stored_credential_path(data_dir))
+        .ok()
+        .map(|token| token.trim().to_string())
+        .filter(|token| !token.is_empty())
+}
+
+/// The `gh` configuration directory this deployment should read.
+///
+/// `GH_CONFIG_DIR` is what `gh` itself honours, so mounting a host config into
+/// a container needs no router-specific variable.
+#[must_use]
+pub fn gh_config_directory() -> Option<PathBuf> {
+    if let Ok(dir) = std::env::var("GH_CONFIG_DIR")
+        && !dir.is_empty()
+    {
+        return Some(PathBuf::from(dir));
+    }
+    std::env::var("HOME")
+        .ok()
+        .filter(|home| !home.is_empty())
+        .map(|home| PathBuf::from(home).join(".config/gh"))
+}
+
+/// Read the GitHub credential out of a `gh` configuration directory.
+///
+/// `gh` stores it as `hosts.yml` with an `oauth_token:` entry under a host key.
+/// Parsed by line rather than with a YAML dependency: the file is written by
+/// `gh` in a fixed shape, and a whole parser for one scalar would be more to
+/// go wrong than it saves.
+#[must_use]
+pub fn token_from_gh_config(directory: &Path) -> Option<String> {
+    let contents = std::fs::read_to_string(directory.join("hosts.yml")).ok()?;
+    contents.lines().find_map(|line| {
+        let (key, value) = line.split_once(':')?;
+        (key.trim() == "oauth_token")
+            .then(|| value.trim().trim_matches(['"', '\'']).to_string())
+            .filter(|token| !token.is_empty())
+    })
 }
 
 /// The `owner/repo` a GitHub REST path acts on, when it names one.

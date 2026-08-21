@@ -529,6 +529,11 @@ pub enum Command {
     },
     /// Print environment + config diagnostics.
     Doctor,
+    /// TLS certificate management for a self-signed deployment.
+    Tls {
+        #[command(subcommand)]
+        op: TlsOp,
+    },
     /// Summarise the request log and flag anomalies.
     ///
     /// The log is the router's only record of what actually happened, and it
@@ -628,6 +633,24 @@ pub enum AuthOp {
         #[command(flatten)]
         target: AuthTarget,
     },
+    /// Store the GitHub credential the proxy presents upstream.
+    ///
+    /// The router mediates GitHub traffic on behalf of callers, so it needs an
+    /// operator credential of its own. Reading it from a mounted `gh` config
+    /// means a deployment can reuse an existing login instead of minting a
+    /// separate token (issue #263).
+    Gh {
+        /// Read the credential from a mounted `gh` configuration directory
+        /// (default: `$GH_CONFIG_DIR`, else `~/.config/gh`).
+        #[arg(long, value_name = "DIR")]
+        from_gh_config: Option<String>,
+        /// Read the credential as one line from standard input instead.
+        #[arg(long, conflicts_with = "from_gh_config")]
+        token_stdin: bool,
+        /// Report what is currently stored without changing it.
+        #[arg(long, conflicts_with_all = ["from_gh_config", "token_stdin"])]
+        status: bool,
+    },
     /// Report whether each provider credential is usable, expired, or absent.
     Status {
         #[command(flatten)]
@@ -654,6 +677,24 @@ pub struct AuthTarget {
     /// listening locally (issue #250).
     #[arg(long, conflicts_with_all = ["local", "server"])]
     pub managed: bool,
+}
+
+/// TLS subcommands.
+#[derive(Debug, Subcommand)]
+pub enum TlsOp {
+    /// Print the generated certificate in PEM form.
+    ///
+    /// A client that must trust a self-signed router reads it from here, so a
+    /// private-network deployment can distribute trust without a CA (issue
+    /// #263).
+    Ca,
+    /// Generate the self-signed certificate without starting the server.
+    Generate {
+        /// Names the certificate is valid for, comma-separated. A sidecar is
+        /// reached by its network alias, so that name must be present.
+        #[arg(long, value_name = "NAMES", default_value = "localhost")]
+        dns: String,
+    },
 }
 
 #[derive(Debug, Subcommand)]

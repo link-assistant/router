@@ -58,7 +58,79 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
             run_claude(config, code.clone(), *flow, mode).await
         }
         AuthOp::Codex { flow, port, .. } => run_codex(config, *flow, *port).await,
+        AuthOp::Gh {
+            from_gh_config,
+            token_stdin,
+            status,
+        } => run_gh(config, from_gh_config.as_deref(), *token_stdin, *status),
         AuthOp::Status { .. } => status(config).await,
+    }
+}
+
+/// Store, or report, the GitHub credential the proxy presents upstream.
+///
+/// The router acts on a caller's behalf against GitHub, so it holds an
+/// operator credential of its own. Reading it from a mounted `gh` config lets
+/// a deployment reuse an existing login instead of minting a second token
+/// (issue #263).
+fn run_gh(
+    config: &link_assistant_router::config::Config,
+    from_gh_config: Option<&str>,
+    token_stdin: bool,
+    status: bool,
+) -> ExitCode {
+    use link_assistant_router::github_proxy;
+
+    let stored = github_proxy::stored_credential_path(std::path::Path::new(&config.data_dir));
+    if status {
+        let source = if stored.is_file() {
+            format!("stored at {}", stored.display())
+        } else if github_proxy::GitHubProxyConfig::from_env().is_ok_and(|github| github.enabled()) {
+            "configured from the environment".to_string()
+        } else {
+            "absent".to_string()
+        };
+        println!("github credential: {source}");
+        return ExitCode::SUCCESS;
+    }
+
+    let token = if token_stdin {
+        match link_assistant_router::server_command::read_token() {
+            Ok(token) => token,
+            Err(error) => {
+                eprintln!("error: {error}");
+                return ExitCode::from(1);
+            }
+        }
+    } else {
+        let directory = from_gh_config
+            .map(std::path::PathBuf::from)
+            .or_else(github_proxy::gh_config_directory);
+        let Some(directory) = directory else {
+            eprintln!("error: no gh configuration directory; pass --from-gh-config <DIR>");
+            return ExitCode::from(1);
+        };
+        match github_proxy::token_from_gh_config(&directory) {
+            Some(token) => token,
+            None => {
+                eprintln!(
+                    "error: no GitHub credential in {}; run `gh auth login` there first",
+                    directory.display()
+                );
+                return ExitCode::from(1);
+            }
+        }
+    };
+
+    match github_proxy::store_credential(std::path::Path::new(&config.data_dir), &token) {
+        Ok(path) => {
+            println!("stored the GitHub credential in {}", path.display());
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::from(1)
+        }
     }
 }
 
@@ -70,6 +142,9 @@ async fn remote_target(
         AuthOp::Claude { target, .. }
         | AuthOp::Codex { target, .. }
         | AuthOp::Status { target } => target,
+        // `auth gh` configures the credential this router presents upstream,
+        // so it always acts on the local deployment.
+        AuthOp::Gh { .. } => return Ok(None),
     };
     link_assistant_router::auth_remote::target_for(
         target.local,
@@ -97,6 +172,8 @@ async fn run_remote(
             link_assistant_router::auth_remote::authorize(server, "codex", None, None).await
         }
         AuthOp::Status { .. } => link_assistant_router::auth_remote::status(server).await,
+        // Never reached: `remote_target` keeps `auth gh` on the local path.
+        AuthOp::Gh { .. } => ExitCode::from(1),
     }
 }
 

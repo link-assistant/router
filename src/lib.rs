@@ -74,6 +74,7 @@ pub mod storage;
 pub mod subscription;
 pub mod subscription_proxy;
 pub mod telegram;
+pub mod tls;
 pub mod token;
 pub mod token_admin;
 mod token_http;
