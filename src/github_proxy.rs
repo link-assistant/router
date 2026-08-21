@@ -1,6 +1,6 @@
 //! GitHub API credential proxy with a deny-by-default destructive policy.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use axum::body::Body;
 use axum::extract::{Request, State};
@@ -13,7 +13,7 @@ use serde_json::json;
 
 use crate::app_state::AppState;
 
-const POLICY_HEADER: &str = "x-link-assistant-policy";
+pub(crate) const POLICY_HEADER: &str = "x-link-assistant-policy";
 
 #[derive(Clone, Debug)]
 pub struct GitHubProxyConfig {
@@ -60,6 +60,21 @@ impl GitHubProxyConfig {
                 .and_then(|name| std::env::var(name).ok())
                 .filter(|token| !token.is_empty())
         });
+        // A credential stored by `router auth gh`, then a mounted `gh`
+        // configuration: both are existing logins the deployment can reuse
+        // rather than a second credential to mint and rotate (issue #263).
+        // Consulted last, so every explicit environment setting still wins.
+        token = token.or_else(|| {
+            std::env::var("DATA_DIR")
+                .ok()
+                .filter(|dir| !dir.is_empty())
+                .and_then(|dir| stored_credential(Path::new(&dir)))
+        });
+        token = token.or_else(|| {
+            gh_config_directory()
+                .as_deref()
+                .and_then(token_from_gh_config)
+        });
         let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
             .unwrap_or_else(|_| "https://api.github.com".into())
             .trim_end_matches('/')
@@ -82,8 +97,33 @@ impl GitHubProxyConfig {
         self.token.is_some()
     }
 
-    #[cfg(test)]
-    fn with_token(token: &str, base_url: &str) -> Self {
+    /// The operator credential this proxy presents upstream.
+    #[must_use]
+    pub fn credential(&self) -> Option<&str> {
+        self.token.as_deref()
+    }
+
+    /// The ordered rules this deployment enforces.
+    #[must_use]
+    pub const fn policy_rules(&self) -> &GitHubPolicy {
+        &self.policy
+    }
+
+    /// The git transport base for the configured GitHub host.
+    ///
+    /// Derived from the API base so an enterprise or test deployment stays
+    /// consistent across both surfaces rather than needing a second setting.
+    #[must_use]
+    pub fn git_base_url(&self) -> String {
+        if let Some(host) = self.base_url.strip_prefix("https://api.github.com") {
+            return format!("https://github.com{host}");
+        }
+        self.base_url.clone()
+    }
+
+    /// A proxy configured with an operator credential.
+    #[must_use]
+    pub fn with_credential(token: &str, base_url: &str) -> Self {
         Self {
             token: Some(token.into()),
             base_url: base_url.trim_end_matches('/').into(),
@@ -107,6 +147,25 @@ impl GitHubPolicy {
             .map_err(|error| format!("could not read GitHub policy {}: {error}", path.display()))?;
         serde_json::from_slice(&bytes)
             .map_err(|error| format!("invalid GitHub policy {}: {error}", path.display()))
+    }
+
+    /// Whether an operator has explicitly permitted a destructive update to
+    /// one ref of one repository.
+    ///
+    /// Expressed as an ordinary allow rule whose path is the git ref, so the
+    /// same ordered file governs both surfaces and a permission names exactly
+    /// the ref it applies to (issue #261).
+    #[must_use]
+    pub fn allows_git_ref(&self, repository: &str, git_ref: &str) -> bool {
+        let path = format!("/git/{repository}/{git_ref}");
+        self.rules.iter().any(|rule| {
+            matches!(rule.effect, PolicyEffect::Allow)
+                && rule
+                    .method
+                    .as_deref()
+                    .is_none_or(|method| method.eq_ignore_ascii_case("GIT"))
+                && glob_matches(&rule.path, &path)
+        })
     }
 
     #[must_use]
@@ -327,19 +386,108 @@ fn contains_zero_after_oid(value: &Value) -> bool {
 }
 
 pub async fn proxy(State(state): State<AppState>, request: Request) -> Response {
+    // The route layer has already authenticated this caller, but it discards
+    // the claims. Re-reading them here is what lets a token carry a repository
+    // scope (issue #262); an admin credential yields unrestricted claims.
+    let scope = crate::proxy::authenticate_client_error(&state, request.headers())
+        .map(|claims| claims.github_repos)
+        .unwrap_or_default();
     forward(
         &state.client,
         &state.github,
         state.max_proxy_request_bytes,
+        &scope,
         request,
     )
     .await
+}
+
+/// Where a credential stored by `router auth gh` lives.
+#[must_use]
+pub fn stored_credential_path(data_dir: &Path) -> PathBuf {
+    data_dir.join("github-credential")
+}
+
+/// Persist the GitHub credential the proxy will present upstream.
+///
+/// Written owner-only, like every other secret this crate stores.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the write cannot land.
+pub fn store_credential(data_dir: &Path, token: &str) -> Result<PathBuf, String> {
+    let path = stored_credential_path(data_dir);
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("could not create {}: {error}", parent.display()))?;
+    }
+    crate::durable_file::atomic_write_owner_only(&path, token.trim().as_bytes())
+        .map_err(|error| crate::durable_file::describe_write_failure(&path, &error))?;
+    Ok(path)
+}
+
+/// The credential stored by `router auth gh`, when one exists.
+#[must_use]
+pub fn stored_credential(data_dir: &Path) -> Option<String> {
+    std::fs::read_to_string(stored_credential_path(data_dir))
+        .ok()
+        .map(|token| token.trim().to_string())
+        .filter(|token| !token.is_empty())
+}
+
+/// The `gh` configuration directory this deployment should read.
+///
+/// `GH_CONFIG_DIR` is what `gh` itself honours, so mounting a host config into
+/// a container needs no router-specific variable.
+#[must_use]
+pub fn gh_config_directory() -> Option<PathBuf> {
+    if let Ok(dir) = std::env::var("GH_CONFIG_DIR")
+        && !dir.is_empty()
+    {
+        return Some(PathBuf::from(dir));
+    }
+    std::env::var("HOME")
+        .ok()
+        .filter(|home| !home.is_empty())
+        .map(|home| PathBuf::from(home).join(".config/gh"))
+}
+
+/// Read the GitHub credential out of a `gh` configuration directory.
+///
+/// `gh` stores it as `hosts.yml` with an `oauth_token:` entry under a host key.
+/// Parsed by line rather than with a YAML dependency: the file is written by
+/// `gh` in a fixed shape, and a whole parser for one scalar would be more to
+/// go wrong than it saves.
+#[must_use]
+pub fn token_from_gh_config(directory: &Path) -> Option<String> {
+    let contents = std::fs::read_to_string(directory.join("hosts.yml")).ok()?;
+    contents.lines().find_map(|line| {
+        let (key, value) = line.split_once(':')?;
+        (key.trim() == "oauth_token")
+            .then(|| value.trim().trim_matches(['"', '\'']).to_string())
+            .filter(|token| !token.is_empty())
+    })
+}
+
+/// The `owner/repo` a GitHub REST path acts on, when it names one.
+///
+/// Only paths that clearly identify a repository can be scoped; anything else
+/// (`/user`, `/graphql`, search) is left to the policy rules, since guessing a
+/// repository out of an unfamiliar shape would either leak or block wrongly.
+#[must_use]
+pub fn repository_in_path(path: &str) -> Option<String> {
+    let rest = path.strip_prefix("/repos/")?;
+    let mut parts = rest.split('/');
+    let owner = parts.next().filter(|part| !part.is_empty())?;
+    let repo = parts.next().filter(|part| !part.is_empty())?;
+    Some(format!("{owner}/{repo}"))
 }
 
 async fn forward(
     client: &reqwest::Client,
     github: &GitHubProxyConfig,
     max_request_bytes: usize,
+    allowed_repositories: &[String],
     request: Request,
 ) -> Response {
     let Some(token) = github.token.as_deref() else {
@@ -359,6 +507,25 @@ async fn forward(
         }
     };
     let upstream_path = normalize_path(parts.uri.path());
+    // A token's repository scope is evaluated ahead of the shared rules, so a
+    // scoped credential cannot reach outside its repositories even where the
+    // global policy would allow the call (issue #262).
+    if !allowed_repositories.is_empty()
+        && !repository_in_path(&upstream_path).is_some_and(|repository| {
+            allowed_repositories
+                .iter()
+                .any(|allowed| allowed.eq_ignore_ascii_case(&repository))
+        })
+    {
+        let mut response = github_error(
+            StatusCode::FORBIDDEN,
+            "Blocked by Link.Assistant.Router GitHub policy: outside this token's repositories",
+        );
+        response
+            .headers_mut()
+            .insert(POLICY_HEADER, HeaderValue::from_static("blocked"));
+        return response;
+    }
     if github
         .policy
         .decision(parts.method.as_str(), &upstream_path, &body)
@@ -459,7 +626,7 @@ mod tests {
 
     #[test]
     fn enterprise_and_bare_paths_normalize_to_github_rest() {
-        assert!(GitHubProxyConfig::with_token("operator", "https://example.test").enabled());
+        assert!(GitHubProxyConfig::with_credential("operator", "https://example.test").enabled());
         assert_eq!(normalize_path("/api/v3/rate_limit"), "/rate_limit");
         assert_eq!(normalize_path("/repos/o/r"), "/repos/o/r");
         assert_eq!(normalize_path("/api/graphql"), "/graphql");
@@ -589,7 +756,8 @@ mod tests {
                 .unwrap();
             String::from_utf8_lossy(&request[..read]).to_string()
         });
-        let config = GitHubProxyConfig::with_token("operator-secret", &format!("http://{address}"));
+        let config =
+            GitHubProxyConfig::with_credential("operator-secret", &format!("http://{address}"));
         let request = HttpRequest::builder()
             .uri("/api/v3/rate_limit")
             .header("authorization", "Bearer caller-placeholder")
@@ -600,6 +768,7 @@ mod tests {
             &reqwest::Client::new(),
             &config,
             crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+            &[],
             request,
         )
         .await;
@@ -609,5 +778,209 @@ mod tests {
         assert!(!response.headers().contains_key("set-cookie"));
         assert!(forwarded.contains("authorization: bearer operator-secret"));
         assert!(!forwarded.contains("caller-placeholder"));
+    }
+
+    /// A scoped token reaches only its own repositories.
+    ///
+    /// Without this, every token that could reach the proxy acted as the
+    /// operator across their whole account, so one task going wrong had the
+    /// account as its blast radius rather than the one repository it was
+    /// given (issue #262).
+    #[test]
+    fn a_scoped_token_names_only_its_own_repositories() {
+        assert_eq!(
+            repository_in_path("/repos/link-assistant/hive-mind/issues"),
+            Some("link-assistant/hive-mind".to_string())
+        );
+        assert_eq!(
+            repository_in_path("/repos/acme/demo"),
+            Some("acme/demo".to_string())
+        );
+        // Not repository-shaped: left to the policy rules rather than guessed at.
+        assert_eq!(repository_in_path("/user"), None);
+        assert_eq!(repository_in_path("/graphql"), None);
+        assert_eq!(repository_in_path("/repos/onlyowner"), None);
+        assert_eq!(repository_in_path("/orgs/acme/repos"), None);
+    }
+
+    /// An unrestricted token keeps reaching everything the operator credential
+    /// reaches, which is the default and the pre-existing behaviour.
+    #[tokio::test]
+    async fn an_unrestricted_token_is_not_narrowed() {
+        let claims = crate::token::TokenClaims {
+            sub: "t".into(),
+            iat: 0,
+            exp: i64::MAX,
+            label: String::new(),
+            scope: String::new(),
+            github_repos: Vec::new(),
+        };
+
+        assert!(claims.may_reach_repository("acme/anything"));
+        assert!(claims.may_reach_repository("other/repo"));
+    }
+
+    /// A scope is matched case-insensitively, as GitHub treats these names —
+    /// otherwise a differently-cased request would evade the restriction.
+    #[tokio::test]
+    async fn a_scope_is_case_insensitive_and_exclusive() {
+        let claims = crate::token::TokenClaims {
+            sub: "t".into(),
+            iat: 0,
+            exp: i64::MAX,
+            label: String::new(),
+            scope: String::new(),
+            github_repos: vec!["link-assistant/hive-mind".to_string()],
+        };
+
+        assert!(claims.may_reach_repository("link-assistant/hive-mind"));
+        assert!(claims.may_reach_repository("Link-Assistant/Hive-Mind"));
+        assert!(!claims.may_reach_repository("link-assistant/router"));
+        assert!(!claims.may_reach_repository("someone-else/hive-mind"));
+    }
+
+    /// The scope is enforced by the proxy, not merely representable.
+    ///
+    /// A request outside the token's repositories must be refused before the
+    /// operator credential is attached — the whole point being that the caller
+    /// never acts as the operator outside its scope (issue #262).
+    #[tokio::test]
+    async fn a_request_outside_the_scope_never_reaches_github() {
+        let config = GitHubProxyConfig {
+            base_url: "http://127.0.0.1:1".to_string(),
+            token: Some("operator-secret".to_string()),
+            policy: GitHubPolicy::default(),
+        };
+        let scope = vec!["link-assistant/hive-mind".to_string()];
+
+        let refused = forward(
+            &reqwest::Client::new(),
+            &config,
+            crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+            &scope,
+            HttpRequest::builder()
+                .uri("/api/v3/repos/someone-else/private/issues")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(refused.status(), StatusCode::FORBIDDEN);
+        assert_eq!(refused.headers()[POLICY_HEADER], "blocked");
+        // The upstream is an unroutable port: had the request been forwarded,
+        // this would be a transport error rather than a policy refusal.
+    }
+
+    /// A request inside the scope is not refused by the scope check, so the
+    /// restriction narrows access without breaking the repository it names.
+    #[tokio::test]
+    async fn a_request_inside_the_scope_is_not_refused_by_the_scope() {
+        let config = GitHubProxyConfig {
+            base_url: "http://127.0.0.1:1".to_string(),
+            token: Some("operator-secret".to_string()),
+            policy: GitHubPolicy::default(),
+        };
+        let scope = vec!["link-assistant/hive-mind".to_string()];
+
+        let response = forward(
+            &reqwest::Client::new(),
+            &config,
+            crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+            &scope,
+            HttpRequest::builder()
+                .uri("/api/v3/repos/link-assistant/hive-mind/issues")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+        // Reaching the unroutable upstream is a gateway failure, which proves
+        // the scope let it through rather than blocking it.
+        assert_ne!(response.status(), StatusCode::FORBIDDEN);
+    }
+
+    /// A mounted `gh` login is an existing credential the deployment reuses,
+    /// rather than a second token to mint and rotate (issue #263).
+    #[test]
+    fn a_gh_configuration_yields_its_credential() {
+        let directory = tempfile::tempdir().expect("gh config dir");
+        std::fs::write(
+            directory.path().join("hosts.yml"),
+            "github.com:\n    oauth_token: gho_example\n    user: someone\n",
+        )
+        .expect("write hosts.yml");
+
+        assert_eq!(
+            token_from_gh_config(directory.path()),
+            Some("gho_example".to_string())
+        );
+    }
+
+    /// A quoted value and an absent file are both handled, so a config written
+    /// by any `gh` version either works or is reported as missing.
+    #[test]
+    fn a_quoted_or_absent_credential_is_handled() {
+        let directory = tempfile::tempdir().expect("gh config dir");
+        assert_eq!(token_from_gh_config(directory.path()), None, "absent file");
+
+        std::fs::write(
+            directory.path().join("hosts.yml"),
+            "github.com:\n    oauth_token: \"gho_quoted\"\n",
+        )
+        .expect("write hosts.yml");
+        assert_eq!(
+            token_from_gh_config(directory.path()),
+            Some("gho_quoted".to_string())
+        );
+
+        std::fs::write(
+            directory.path().join("hosts.yml"),
+            "github.com:\n    user: someone\n",
+        )
+        .expect("rewrite");
+        assert_eq!(token_from_gh_config(directory.path()), None, "no token key");
+    }
+
+    /// A stored credential round-trips and is written owner-only, like every
+    /// other secret this crate persists.
+    #[test]
+    fn a_stored_credential_round_trips_owner_only() {
+        let data_dir = tempfile::tempdir().expect("data dir");
+
+        assert_eq!(
+            stored_credential(data_dir.path()),
+            None,
+            "nothing stored yet"
+        );
+        store_credential(data_dir.path(), "  gho_stored\n").expect("store it");
+        assert_eq!(
+            stored_credential(data_dir.path()),
+            Some("gho_stored".to_string()),
+            "surrounding whitespace is not part of the credential"
+        );
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            let mode = std::fs::metadata(stored_credential_path(data_dir.path()))
+                .expect("stat")
+                .permissions()
+                .mode();
+            assert_eq!(mode & 0o777, 0o600, "mode was {:o}", mode & 0o777);
+        }
+    }
+
+    /// The git transport base is derived from the API base, so an enterprise
+    /// or test deployment stays consistent across both surfaces.
+    #[test]
+    fn the_git_base_follows_the_api_base() {
+        assert_eq!(
+            GitHubProxyConfig::with_credential("t", "https://api.github.com").git_base_url(),
+            "https://github.com"
+        );
+        assert_eq!(
+            GitHubProxyConfig::with_credential("t", "http://127.0.0.1:9000").git_base_url(),
+            "http://127.0.0.1:9000"
+        );
     }
 }

@@ -141,6 +141,18 @@ pub struct ResolvedProvider {
     pub api_key: Option<String>,
 }
 
+impl ResolvedProvider {
+    /// Whether this provider advertises `model` by name.
+    ///
+    /// A declared model is what lets a stored provider win a route in
+    /// automatic mode, instead of being reachable only by pinning the whole
+    /// deployment to it (issue #260).
+    #[must_use]
+    pub fn declares(&self, model: &str) -> bool {
+        self.models.iter().any(|id| id == model)
+    }
+}
+
 /// File-backed provider store.
 #[derive(Clone)]
 pub struct ProviderStore {

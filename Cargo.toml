@@ -69,6 +69,8 @@ portable-pty = "0.9"
 rust-embed = { version = "8.12.0", default-features = false }
 fs2 = "0.4"
 tempfile = "3"
+axum-server = { version = "0.8.0", features = ["tls-rustls"] }
+rcgen = "0.14.9"
 
 [dev-dependencies]
 proptest = "1"

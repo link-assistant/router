@@ -5,6 +5,7 @@ use tempfile::tempdir;
 
 fn sample_record(id: &str) -> TokenRecord {
     TokenRecord {
+        github_repos: Vec::new(),
         id: id.into(),
         label: "test \"label\"".into(),
         issued_at: 1_700_000_000,
@@ -233,6 +234,7 @@ fn dual_store_recovers_a_synced_transaction_journal() {
 #[test]
 fn lino_codec_handles_special_chars() {
     let rec = TokenRecord {
+        github_repos: Vec::new(),
         id: "id1".into(),
         label: "with \"quote\" and \\ backslash and\nnewline".into(),
         issued_at: 1,
@@ -354,5 +356,48 @@ fn an_exhausted_budget_rejects_even_a_zero_reservation() {
     assert_eq!(
         store.try_admit_request_reserving("spent", 0, 0).unwrap(),
         RequestAdmission::TokenLimitExceeded
+    );
+}
+
+/// A repository scope survives a store round-trip, so a scoped token does not
+/// quietly widen to the whole account across a restart (issue #262).
+#[test]
+fn a_repository_scope_survives_a_store_round_trip() {
+    let directory = tempfile::tempdir().expect("data dir");
+    let store = build_token_store(StoragePolicy::Text, directory.path()).expect("open the store");
+    let mut record = sample_record("scoped");
+    record.github_repos = vec!["acme/demo".to_string(), "acme/other".to_string()];
+    store.put(record).expect("persist");
+
+    let reopened =
+        build_token_store(StoragePolicy::Text, directory.path()).expect("reopen the store");
+    let loaded = reopened.get("scoped").expect("read").expect("present");
+
+    assert_eq!(
+        loaded.github_repos,
+        vec!["acme/demo".to_string(), "acme/other".to_string()]
+    );
+}
+
+/// A record written before the field existed loads as unrestricted, so an
+/// existing store keeps working and its tokens keep the access they had.
+#[test]
+fn a_record_without_the_field_loads_as_unrestricted() {
+    let directory = tempfile::tempdir().expect("data dir");
+    let store = build_token_store(StoragePolicy::Text, directory.path()).expect("open the store");
+    let record = sample_record("legacy");
+    assert!(record.github_repos.is_empty());
+    store.put(record).expect("persist");
+
+    let reopened =
+        build_token_store(StoragePolicy::Text, directory.path()).expect("reopen the store");
+
+    assert!(
+        reopened
+            .get("legacy")
+            .expect("read")
+            .expect("present")
+            .github_repos
+            .is_empty()
     );
 }

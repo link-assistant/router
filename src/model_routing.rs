@@ -317,16 +317,20 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
     }
 
     let models = match state.upstream_provider {
-        UpstreamProvider::Auto => model_catalog(
-            &healthy_providers(
-                &state.client,
-                &state.subscription_readers,
-                &state.subscription_cache,
-                chrono::Utc::now().timestamp_millis(),
-            )
-            .await,
-            &state.model_catalogs,
-        ),
+        UpstreamProvider::Auto => {
+            let mut catalog = model_catalog(
+                &healthy_providers(
+                    &state.client,
+                    &state.subscription_readers,
+                    &state.subscription_cache,
+                    chrono::Utc::now().timestamp_millis(),
+                )
+                .await,
+                &state.model_catalogs,
+            );
+            append_stored_provider_models(&state, &mut catalog);
+            catalog
+        }
         UpstreamProvider::Anthropic => {
             pinned_model_catalog(&state, SubscriptionProvider::Claude).await
         }
@@ -426,6 +430,116 @@ pub async fn route_provider(
 }
 
 /// Resolve an automatic state to the healthy subscription serving `model`.
+/// Add every stored provider's declared models to an automatic catalog.
+///
+/// One token should reach every model the router can serve, so a stored
+/// provider's declarations belong in the same listing as the discovered
+/// subscription catalogs (issue #260). Declared models are stated by the
+/// operator rather than discovered, so they are listed without disturbing the
+/// `degraded_providers` reporting, which describes credential discovery.
+fn append_stored_provider_models(state: &AppState, catalog: &mut Value) {
+    let Ok(providers) = state.provider_store.list() else {
+        return;
+    };
+    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
+        return;
+    };
+    for provider in providers.iter().filter(|record| record.enabled) {
+        for model in &provider.models {
+            if data
+                .iter()
+                .any(|entry| entry.get("id").and_then(Value::as_str) == Some(model.as_str()))
+            {
+                // The id is already listed by a subscription, so name this one
+                // in its qualified form: both remain reachable, and the
+                // unqualified id stays ambiguous rather than silently bound.
+                data.push(json!({
+                    "id": format!("{}/{}", provider.name, model),
+                    "object": "model",
+                    "owned_by": provider.name,
+                }));
+                continue;
+            }
+            data.push(json!({
+                "id": model,
+                "object": "model",
+                "owned_by": provider.name,
+            }));
+        }
+    }
+}
+
+/// The stored provider that declares `model`, when exactly one does.
+///
+/// Stored providers were reachable only by pinning `UPSTREAM_PROVIDER`, which
+/// pins the *whole deployment* — so one router could serve vendor
+/// subscriptions or a local OpenAI-compatible endpoint, never both (issue
+/// #260). A provider that declares its models can now win a route in automatic
+/// mode on the strength of that declaration.
+///
+/// `<provider>/<model>` names one explicitly, which is how an operator resolves
+/// a collision that automatic routing refuses to guess at.
+fn stored_provider_for_model(
+    state: &AppState,
+    model: &str,
+) -> Result<Option<crate::providers::ResolvedProvider>, ModelRouteError> {
+    if let Some((name, bare)) = model.split_once('/') {
+        // An explicitly qualified name addresses one provider and must not
+        // silently fall through to a subscription of the same model id.
+        return match state.provider_store.resolve(name) {
+            Ok(Some(provider)) if provider.declares(bare) => Ok(Some(provider)),
+            Ok(Some(_)) => Err(ModelRouteError::NotFound(format!(
+                "provider '{name}' does not advertise model '{bare}'"
+            ))),
+            _ => Ok(None),
+        };
+    }
+    let Ok(providers) = state.provider_store.list() else {
+        return Ok(None);
+    };
+    let mut declaring = providers
+        .into_iter()
+        .filter(|record| record.enabled && record.models.iter().any(|id| id == model))
+        .map(|record| record.name);
+    let Some(first) = declaring.next() else {
+        return Ok(None);
+    };
+    if let Some(second) = declaring.next() {
+        // The same rule subscriptions already follow: an ambiguous unqualified
+        // name is refused rather than resolved by declaration order.
+        return Err(ModelRouteError::Ambiguous(format!(
+            "model '{model}' is declared by multiple stored providers ({first}, {second}); name \
+             one as '<provider>/{model}' to disambiguate"
+        )));
+    }
+    Ok(state.provider_store.resolve(&first).ok().flatten())
+}
+
+/// Point `state` at a stored provider for this request only.
+fn route_stored_provider(
+    state: &AppState,
+    provider: &crate::providers::ResolvedProvider,
+    model: &str,
+) -> AppState {
+    let mut routed = state.clone();
+    routed.upstream_provider = UpstreamProvider::OpenAICompatible;
+    routed
+        .openai_compatible
+        .provider_name
+        .clone_from(&provider.name);
+    // A qualified name addressed the provider; the upstream only knows the
+    // bare id, so forward what it will recognise.
+    routed.bridge_model = Some(bare_model_id(model).to_string());
+    routed
+}
+
+/// The model id an upstream will recognise, with any `<provider>/` prefix
+/// removed.
+#[must_use]
+pub fn bare_model_id(model: &str) -> &str {
+    model.split_once('/').map_or(model, |(_, bare)| bare)
+}
+
 pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         return Ok(state.clone());
@@ -435,6 +549,11 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
         .ok_or(ModelRouteError::ModelRequired)?;
+    // Stored providers are consulted first: a declared model is an explicit
+    // operator statement, while a subscription catalog is discovered.
+    if let Some(stored) = stored_provider_for_model(state, model)? {
+        return Ok(route_stored_provider(state, &stored, model));
+    }
     let provider = available_provider_for_model(
         model,
         &healthy_providers(

@@ -190,6 +190,9 @@ fn admin_credential_claims(token: &str) -> crate::token::TokenClaims {
         exp: i64::MAX,
         label: "admin credential".to_string(),
         scope: crate::token::ADMIN_SCOPE.to_string(),
+        // An administrative credential is the operator themselves, so it is
+        // never narrowed to a repository subset.
+        github_repos: Vec::new(),
     }
 }
 

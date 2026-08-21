@@ -38,8 +38,11 @@ use tower_http::trace::TraceLayer;
 type SharedState = (Arc<dyn TokenStore>, Option<AccountRouter>);
 type AnyError = Box<dyn std::error::Error>;
 
-#[tokio::main]
-async fn main() -> ExitCode {
+fn main() -> ExitCode {
+    link_assistant_router::entrypoint::run_on_a_deep_stack(run)
+}
+
+async fn run() -> ExitCode {
     let arguments =
         link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
     let cli = <Cli as lino_arguments::Parser>::parse_from(arguments);
@@ -104,6 +107,7 @@ async fn main() -> ExitCode {
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
+        Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
     }
 }
@@ -380,10 +384,26 @@ async fn run_server(
 
     let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
 
-    let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // `gh` will not talk plaintext to a custom host, so a router that cannot
+    // serve HTTPS cannot mediate GitHub traffic at all without a separate
+    // terminator in front of it (issue #263).
+    match link_assistant_router::tls::from_env(std::path::Path::new(&config.data_dir)) {
+        Ok(link_assistant_router::tls::TlsSetup::Enabled { cert, key }) => {
+            // Boxed so the HTTPS serve future is heap-allocated: it is large,
+            // and embedding it here would put it in every subcommand's frame.
+            let serve = link_assistant_router::tls::serve_https(config.listen_addr, app, cert, key);
+            Box::pin(serve)
+                .await
+                .map_err(|error| -> AnyError { error.to_string().into() })?;
+        }
+        Ok(link_assistant_router::tls::TlsSetup::Disabled) => {
+            let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
+            axum::serve(listener, app)
+                .with_graceful_shutdown(shutdown_signal())
+                .await?;
+        }
+        Err(error) => return Err(error.into()),
+    }
     if let Some(handle) = admin_server {
         handle.abort();
     }
@@ -465,6 +485,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             max_tokens,
             rate_limit_per_minute,
             admin,
+            github_repo,
         } => {
             let request = IssueRequest {
                 ttl_hours: *ttl_hours,
@@ -474,6 +495,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 max_tokens: *max_tokens,
                 rate_limit_per_minute: *rate_limit_per_minute,
                 scope: if *admin { ADMIN_SCOPE } else { "" },
+                github_repos: github_repo.clone(),
             };
             // Shared with the HTTP and chat surfaces (issue #194).
             if let Err(message) = request.validate() {
