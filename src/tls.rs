@@ -178,6 +178,37 @@ pub fn read_generated_certificate(data_dir: &Path) -> Result<String, String> {
     })
 }
 
+/// Serve the application over HTTPS from a certificate pair.
+///
+/// Lives in the library so the large `axum_server` serve future is never part
+/// of the binary's `main` state machine: on Windows that overflowed the 1 MB
+/// main-thread stack for subcommands that never serve at all.
+///
+/// # Errors
+///
+/// Returns a message when the certificate cannot be loaded or the listener
+/// cannot be bound.
+pub async fn serve_https(
+    address: std::net::SocketAddr,
+    app: axum::Router,
+    cert: std::path::PathBuf,
+    key: std::path::PathBuf,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    tracing::info!("Serving HTTPS with certificate {}", cert.display());
+    let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
+        .await
+        .map_err(|error| {
+            format!(
+                "could not load the TLS certificate {}: {error}",
+                cert.display()
+            )
+        })?;
+    axum_server::bind_rustls(address, tls)
+        .serve(app.into_make_service())
+        .await?;
+    Ok(())
+}
+
 #[cfg(test)]
 #[path = "tls_tests.rs"]
 mod tests;
