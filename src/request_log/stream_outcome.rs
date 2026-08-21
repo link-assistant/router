@@ -187,8 +187,9 @@ pub fn is_streaming_media_type(content_type: Option<&str>) -> bool {
 /// Whether `frame` carries the terminating event of a streaming dialect.
 ///
 /// Anthropic ends a turn with `message_stop`; the `OpenAI` surfaces end with
-/// `[DONE]`, and the Responses shape with `response.completed`. A stream that
-/// stops without one of these was cut mid-flight (issue #230).
+/// `[DONE]`, the Responses shape with `response.completed`, and Gemini with a
+/// final chunk carrying `finishReason`. A stream that stops without one of
+/// these was cut mid-flight (issue #230).
 #[must_use]
 pub fn frame_terminates_stream(frame: &[u8]) -> bool {
     let Ok(text) = std::str::from_utf8(frame) else {
@@ -196,5 +197,21 @@ pub fn frame_terminates_stream(frame: &[u8]) -> bool {
         // then unknowable rather than false, and the caller says so.
         return false;
     };
-    text.contains("message_stop") || text.contains("[DONE]") || text.contains("response.completed")
+    text_terminates_stream(text)
+}
+
+/// Whether decoded stream text carries a dialect's terminating event.
+///
+/// Split from [`frame_terminates_stream`] so the log analyser can settle a
+/// stream from the body it already recorded, rather than reporting the ending
+/// as unknown whenever the relay wrote no terminal record (issue #258). One
+/// list, so the two cannot drift into disagreeing about what "finished" means.
+#[must_use]
+pub fn text_terminates_stream(text: &str) -> bool {
+    text.contains("message_stop")
+        || text.contains("[DONE]")
+        || text.contains("response.completed")
+        // Gemini names no terminating event; the last chunk of a finished turn
+        // carries `finishReason` instead.
+        || text.contains("finishReason")
 }

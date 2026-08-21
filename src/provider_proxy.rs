@@ -231,15 +231,63 @@ pub async fn forward_openai_compatible(
         let mut usage = status
             .is_success()
             .then(|| reservation.take().into_tracker());
-        let stream = upstream_resp.bytes_stream().map(move |chunk| {
-            if let Ok(bytes) = &chunk {
-                response_log.record_upstream_body(&correlation_id, bytes);
-                if let Some(tracker) = &mut usage {
-                    tracker.feed(bytes);
+        // Settle the stream the way the Anthropic relay does. Without this the
+        // turn reached the log with no terminal record at all, so how it ended
+        // could only be guessed at — and every such exchange was reported as
+        // ending in an unknown state (issue #258).
+        let started = std::time::Instant::now();
+        let outcome =
+            std::sync::Arc::new(std::sync::Mutex::new(crate::request_log::StreamOutcome {
+                streamed: true,
+                terminated: false,
+                inspectable: crate::request_log::body_is_inspectable(upstream_resp.headers()),
+                detail: None,
+                frames: 0,
+                bytes: 0,
+                duration_ms: 0,
+            }));
+        let end_outcome = std::sync::Arc::clone(&outcome);
+        let end_log = std::sync::Arc::clone(&response_log);
+        let end_id = correlation_id.clone();
+        let logger = state.logger.clone();
+        let stream = upstream_resp
+            .bytes_stream()
+            .map(move |chunk| {
+                let mut settled = outcome.lock().expect("stream outcome lock");
+                match &chunk {
+                    Ok(bytes) => {
+                        response_log.record_upstream_body(&correlation_id, bytes);
+                        settled.frames += 1;
+                        settled.bytes += bytes.len() as u64;
+                        if crate::request_log::frame_terminates_stream(bytes) {
+                            settled.terminated = true;
+                        }
+                        if let Some(tracker) = &mut usage {
+                            tracker.feed(bytes);
+                        }
+                    }
+                    Err(error) => settled.detail = Some(error.to_string()),
                 }
-            }
-            chunk.map_err(std::io::Error::other)
-        });
+                drop(settled);
+                chunk.map_err(std::io::Error::other)
+            })
+            .chain(futures_util::stream::once(async move {
+                crate::request_log::settle_stream(
+                    &end_log,
+                    &end_id,
+                    &end_outcome,
+                    started.elapsed().as_millis(),
+                    &logger,
+                );
+                Err(std::io::Error::other(
+                    crate::request_log::STREAM_END_MARKER,
+                ))
+            }))
+            .take_while(|item| {
+                futures_util::future::ready(
+                    !matches!(item, Err(error) if error.to_string() == crate::request_log::STREAM_END_MARKER),
+                )
+            });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         response.headers_mut().insert("content-type", content_type);

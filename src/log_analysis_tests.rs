@@ -572,3 +572,181 @@ fn an_uncompressed_truncated_stream_is_still_reported() {
         "a real truncation must still be named"
     );
 }
+
+/// Build a complete uncompressed SSE exchange with no `stream_end` record.
+///
+/// The relay writes that terminal record only on the Anthropic path, so an
+/// `OpenAI` or Gemini stream reaches the log without one (issue #258).
+fn stream_without_a_terminal_record(id: &str, uri: &str, body: &str) -> Vec<Value> {
+    vec![
+        json!({"correlation_id": id, "phase": "client_request", "uri": uri}),
+        json!({
+            "correlation_id": id,
+            "phase": "client_response",
+            "status": 200,
+            "headers": {"content-type": "text/event-stream"}
+        }),
+        json!({"correlation_id": id, "phase": "upstream_response_body", "body": body}),
+    ]
+}
+
+/// The bug in issue #258: a stream whose terminator is right there in the
+/// recorded body was reported as ending in an unknown state.
+///
+/// 239 of 251 uncompressed streams carried a valid terminator, so the class was
+/// ~95% healthy traffic — and the 12 that deserved attention were buried in it.
+#[test]
+fn a_terminator_in_the_recorded_body_settles_the_ending() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    let mut records = Vec::new();
+    // One per dialect, which is what the issue asks to pin at once.
+    records.extend(stream_without_a_terminal_record(
+        "openai",
+        "/v1/chat/completions",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\ndata: [DONE]\n\n",
+    ));
+    records.extend(stream_without_a_terminal_record(
+        "gemini",
+        "/api/gemini/v1beta/models/gemini-2.0:streamGenerateContent",
+        "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hi\"}]},\
+         \"finishReason\":\"STOP\",\"index\":0}]}\n\n",
+    ));
+    records.extend(stream_without_a_terminal_record(
+        "anthropic",
+        "/v1/messages",
+        "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+    ));
+    records.extend(stream_without_a_terminal_record(
+        "responses",
+        "/v1/responses",
+        "event: response.completed\ndata: {\"type\":\"response.completed\"}\n\n",
+    ));
+    write_log(root.path(), "tokenhash", &records);
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(summary.streamed, 4, "{summary:?}");
+    assert_eq!(
+        summary.unterminated_streams, 0,
+        "every one of these carries its own dialect's terminator: {summary:?}"
+    );
+    let found = anomalies(&exchanges);
+    assert!(
+        !found
+            .iter()
+            .any(|anomaly| anomaly.kind == "no_terminal_record"),
+        "a completed stream must not be reported as unknown: {found:?}"
+    );
+}
+
+/// A readable stream with no terminator anywhere is still a genuine anomaly —
+/// the 12 empty-bodied exchanges the issue says are worth alerting on.
+#[test]
+fn a_stream_with_no_terminator_is_still_reported() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &stream_without_a_terminal_record("empty", "/v1/chat/completions", ""),
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(
+        summary.unterminated_streams, 1,
+        "an empty body settles nothing: {summary:?}"
+    );
+    assert!(
+        anomalies(&exchanges)
+            .iter()
+            .any(|anomaly| anomaly.kind == "no_terminal_record"),
+        "the genuinely unaccounted-for stream must still be named"
+    );
+}
+
+/// A `stream_end` record still outranks the body scan when one is present.
+///
+/// The relay watched the frames go past; the analyser is reading what was
+/// captured afterwards. Where they disagree, the relay's verdict wins.
+#[test]
+fn a_terminal_record_outranks_the_recorded_body() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    let mut records = stream_without_a_terminal_record(
+        "cut",
+        "/v1/chat/completions",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+    );
+    records.push(json!({
+        "correlation_id": "cut",
+        "phase": "stream_end",
+        "outcome": "ended_without_terminator",
+        "streamed": true,
+        "inspectable": true,
+        "complete": false,
+        "frames": 12
+    }));
+    write_log(root.path(), "tokenhash", &records);
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(
+        summary.incomplete_streams, 1,
+        "the relay saw the stream stop early: {summary:?}"
+    );
+    assert_eq!(summary.unterminated_streams, 0, "{summary:?}");
+}
+
+/// The terminator may be recorded on the client side rather than upstream, so
+/// both body phases settle the question.
+#[test]
+fn a_client_side_body_can_settle_the_ending() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &[
+            json!({"correlation_id": "c", "phase": "client_request", "uri": "/v1/chat/completions"}),
+            json!({
+                "correlation_id": "c",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {"content-type": "text/event-stream"}
+            }),
+            json!({"correlation_id": "c", "phase": "client_response_body", "body": "data: [DONE]\n\n"}),
+        ],
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+
+    assert_eq!(summarise(&exchanges, unparsable, 0).unterminated_streams, 0);
+}
+
+/// A compressed stream stays unverifiable rather than being settled by a
+/// terminator that happens to appear in its base64 text (issue #255).
+#[test]
+fn a_compressed_body_is_not_settled_by_its_encoded_text() {
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &[
+            json!({"correlation_id": "gz", "phase": "client_request", "uri": "/v1/messages"}),
+            json!({
+                "correlation_id": "gz",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {"content-type": "text/event-stream", "content-encoding": "gzip"}
+            }),
+            json!({"correlation_id": "gz", "phase": "upstream_response_body", "body": {"base64": "bWVzc2FnZV9zdG9w"}}),
+        ],
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+
+    assert_eq!(summary.unverifiable_streams, 1, "{summary:?}");
+    assert_eq!(summary.unterminated_streams, 0, "{summary:?}");
+}
