@@ -666,7 +666,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Extract Docker metadata
         id: docker-meta
@@ -795,11 +795,20 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Download runtime digests
-        # v8 emits Node DEP0005 through its bundled unzip dependency (upstream #484).
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        # v8's bundled unzip chain (unzip-stream -> binary/buffers) still calls the
+        # deprecated `Buffer()` constructor, so Node 24 prints DEP0005 on every
+        # download (upstream actions/download-artifact#484, still open). The
+        # artifacts here are zips, so the extraction path cannot be avoided with
+        # `skip-decompress`; silencing the deprecation notice for this one step
+        # keeps the log clean without pinning away from v8's stricter defaults --
+        # a digest mismatch now fails the run instead of warning, which is exactly
+        # what should stop a release.
+        env:
+          NODE_OPTIONS: --no-deprecation
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: runtime-*
           path: /tmp/digests/runtime
@@ -1100,7 +1109,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       # The guard resolves the release tag and its parent locally: the tag is created
       # after this run started, so a plain checkout does not have it yet.

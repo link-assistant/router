@@ -27,15 +27,34 @@ fn image_attestation_can_persist_artifact_metadata_without_warnings() {
     assert!(image_job.contains("artifact-metadata: write"));
 }
 
+/// Every artifact download must silence the deprecation notice v8 emits.
+///
+/// v8's bundled unzip chain still calls the deprecated `Buffer()` constructor,
+/// so Node 24 prints DEP0005 on each download (upstream
+/// actions/download-artifact#484, still open). This was previously handled by
+/// pinning v7 and refusing v8 by commit, which also gave up v8's stricter
+/// defaults -- a digest mismatch now fails the run rather than warning, which is
+/// what should stop a release. Suppressing the notice per step keeps both.
+///
+/// The artifacts are zips, so `skip-decompress` cannot avoid the extraction
+/// path; the env var is the lever that remains.
 #[test]
 fn artifact_download_avoids_the_known_node_buffer_warning() {
     let workflow = read_lf(".github/workflows/release.yml");
+
+    for (index, _) in workflow.match_indices("actions/download-artifact@") {
+        let step = workflow[..index]
+            .rfind("      - name:")
+            .map_or(&workflow[..index], |start| &workflow[start..index]);
+        assert!(
+            step.contains("NODE_OPTIONS: --no-deprecation"),
+            "an artifact download must silence DEP0005; step was:\n{step}"
+        );
+    }
     assert!(
-        workflow.contains(
-            "actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0"
-        )
+        workflow.contains("actions/download-artifact@"),
+        "the release workflow should still download artifacts"
     );
-    assert!(!workflow.contains("actions/download-artifact@3e5f45b2"));
 }
 
 #[test]

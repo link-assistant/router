@@ -25,7 +25,7 @@ fn main() {
         "cargo cyclonedx --format json --all-features --all --spec-version 1.5",
         "--override-filename link-assistant-router.cdx",
         "artifact-metadata: write",
-        "actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131",
+        "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
         "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
         "npm run build 2>&1 | tee /tmp/admin-ui-build.log",
         "git diff --exit-code -- ui/dist",
