@@ -327,19 +327,41 @@ fn contains_zero_after_oid(value: &Value) -> bool {
 }
 
 pub async fn proxy(State(state): State<AppState>, request: Request) -> Response {
+    // The route layer has already authenticated this caller, but it discards
+    // the claims. Re-reading them here is what lets a token carry a repository
+    // scope (issue #262); an admin credential yields unrestricted claims.
+    let scope = crate::proxy::authenticate_client_error(&state, request.headers())
+        .map(|claims| claims.github_repos)
+        .unwrap_or_default();
     forward(
         &state.client,
         &state.github,
         state.max_proxy_request_bytes,
+        &scope,
         request,
     )
     .await
+}
+
+/// The `owner/repo` a GitHub REST path acts on, when it names one.
+///
+/// Only paths that clearly identify a repository can be scoped; anything else
+/// (`/user`, `/graphql`, search) is left to the policy rules, since guessing a
+/// repository out of an unfamiliar shape would either leak or block wrongly.
+#[must_use]
+pub fn repository_in_path(path: &str) -> Option<String> {
+    let rest = path.strip_prefix("/repos/")?;
+    let mut parts = rest.split('/');
+    let owner = parts.next().filter(|part| !part.is_empty())?;
+    let repo = parts.next().filter(|part| !part.is_empty())?;
+    Some(format!("{owner}/{repo}"))
 }
 
 async fn forward(
     client: &reqwest::Client,
     github: &GitHubProxyConfig,
     max_request_bytes: usize,
+    allowed_repositories: &[String],
     request: Request,
 ) -> Response {
     let Some(token) = github.token.as_deref() else {
@@ -359,6 +381,25 @@ async fn forward(
         }
     };
     let upstream_path = normalize_path(parts.uri.path());
+    // A token's repository scope is evaluated ahead of the shared rules, so a
+    // scoped credential cannot reach outside its repositories even where the
+    // global policy would allow the call (issue #262).
+    if !allowed_repositories.is_empty()
+        && !repository_in_path(&upstream_path).is_some_and(|repository| {
+            allowed_repositories
+                .iter()
+                .any(|allowed| allowed.eq_ignore_ascii_case(&repository))
+        })
+    {
+        let mut response = github_error(
+            StatusCode::FORBIDDEN,
+            "Blocked by Link.Assistant.Router GitHub policy: outside this token's repositories",
+        );
+        response
+            .headers_mut()
+            .insert(POLICY_HEADER, HeaderValue::from_static("blocked"));
+        return response;
+    }
     if github
         .policy
         .decision(parts.method.as_str(), &upstream_path, &body)
@@ -600,6 +641,7 @@ mod tests {
             &reqwest::Client::new(),
             &config,
             crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+            &[],
             request,
         )
         .await;
@@ -609,5 +651,124 @@ mod tests {
         assert!(!response.headers().contains_key("set-cookie"));
         assert!(forwarded.contains("authorization: bearer operator-secret"));
         assert!(!forwarded.contains("caller-placeholder"));
+    }
+
+    /// A scoped token reaches only its own repositories.
+    ///
+    /// Without this, every token that could reach the proxy acted as the
+    /// operator across their whole account, so one task going wrong had the
+    /// account as its blast radius rather than the one repository it was
+    /// given (issue #262).
+    #[test]
+    fn a_scoped_token_names_only_its_own_repositories() {
+        assert_eq!(
+            repository_in_path("/repos/link-assistant/hive-mind/issues"),
+            Some("link-assistant/hive-mind".to_string())
+        );
+        assert_eq!(
+            repository_in_path("/repos/acme/demo"),
+            Some("acme/demo".to_string())
+        );
+        // Not repository-shaped: left to the policy rules rather than guessed at.
+        assert_eq!(repository_in_path("/user"), None);
+        assert_eq!(repository_in_path("/graphql"), None);
+        assert_eq!(repository_in_path("/repos/onlyowner"), None);
+        assert_eq!(repository_in_path("/orgs/acme/repos"), None);
+    }
+
+    /// An unrestricted token keeps reaching everything the operator credential
+    /// reaches, which is the default and the pre-existing behaviour.
+    #[tokio::test]
+    async fn an_unrestricted_token_is_not_narrowed() {
+        let claims = crate::token::TokenClaims {
+            sub: "t".into(),
+            iat: 0,
+            exp: i64::MAX,
+            label: String::new(),
+            scope: String::new(),
+            github_repos: Vec::new(),
+        };
+
+        assert!(claims.may_reach_repository("acme/anything"));
+        assert!(claims.may_reach_repository("other/repo"));
+    }
+
+    /// A scope is matched case-insensitively, as GitHub treats these names —
+    /// otherwise a differently-cased request would evade the restriction.
+    #[tokio::test]
+    async fn a_scope_is_case_insensitive_and_exclusive() {
+        let claims = crate::token::TokenClaims {
+            sub: "t".into(),
+            iat: 0,
+            exp: i64::MAX,
+            label: String::new(),
+            scope: String::new(),
+            github_repos: vec!["link-assistant/hive-mind".to_string()],
+        };
+
+        assert!(claims.may_reach_repository("link-assistant/hive-mind"));
+        assert!(claims.may_reach_repository("Link-Assistant/Hive-Mind"));
+        assert!(!claims.may_reach_repository("link-assistant/router"));
+        assert!(!claims.may_reach_repository("someone-else/hive-mind"));
+    }
+
+    /// The scope is enforced by the proxy, not merely representable.
+    ///
+    /// A request outside the token's repositories must be refused before the
+    /// operator credential is attached — the whole point being that the caller
+    /// never acts as the operator outside its scope (issue #262).
+    #[tokio::test]
+    async fn a_request_outside_the_scope_never_reaches_github() {
+        let config = GitHubProxyConfig {
+            base_url: "http://127.0.0.1:1".to_string(),
+            token: Some("operator-secret".to_string()),
+            policy: GitHubPolicy::default(),
+        };
+        let scope = vec!["link-assistant/hive-mind".to_string()];
+
+        let refused = forward(
+            &reqwest::Client::new(),
+            &config,
+            crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+            &scope,
+            HttpRequest::builder()
+                .uri("/api/v3/repos/someone-else/private/issues")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(refused.status(), StatusCode::FORBIDDEN);
+        assert_eq!(refused.headers()[POLICY_HEADER], "blocked");
+        // The upstream is an unroutable port: had the request been forwarded,
+        // this would be a transport error rather than a policy refusal.
+    }
+
+    /// A request inside the scope is not refused by the scope check, so the
+    /// restriction narrows access without breaking the repository it names.
+    #[tokio::test]
+    async fn a_request_inside_the_scope_is_not_refused_by_the_scope() {
+        let config = GitHubProxyConfig {
+            base_url: "http://127.0.0.1:1".to_string(),
+            token: Some("operator-secret".to_string()),
+            policy: GitHubPolicy::default(),
+        };
+        let scope = vec!["link-assistant/hive-mind".to_string()];
+
+        let response = forward(
+            &reqwest::Client::new(),
+            &config,
+            crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+            &scope,
+            HttpRequest::builder()
+                .uri("/api/v3/repos/link-assistant/hive-mind/issues")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+        // Reaching the unroutable upstream is a gateway failure, which proves
+        // the scope let it through rather than blocking it.
+        assert_ne!(response.status(), StatusCode::FORBIDDEN);
     }
 }

@@ -5,6 +5,7 @@ use tempfile::tempdir;
 
 fn sample_record(id: &str) -> TokenRecord {
     TokenRecord {
+        github_repos: Vec::new(),
         id: id.into(),
         label: "test \"label\"".into(),
         issued_at: 1_700_000_000,
@@ -233,6 +234,7 @@ fn dual_store_recovers_a_synced_transaction_journal() {
 #[test]
 fn lino_codec_handles_special_chars() {
     let rec = TokenRecord {
+        github_repos: Vec::new(),
         id: "id1".into(),
         label: "with \"quote\" and \\ backslash and\nnewline".into(),
         issued_at: 1,

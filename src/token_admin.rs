@@ -52,6 +52,7 @@ pub async fn issue_token(
         max_tokens: req.max_tokens,
         rate_limit_per_minute: req.rate_limit_per_minute,
         scope: &scope,
+        github_repos: req.github_repos.clone().unwrap_or_default(),
     };
     // One shared rule set across HTTP, CLI and chat (issue #194), so the same
     // request cannot be accepted on one surface and refused on another.
@@ -312,6 +313,11 @@ pub struct IssueTokenRequest {
     /// Privilege scope. Omit (or empty) for an ordinary client token; pass
     /// `"admin"` to mint a credential that also unlocks the admin endpoints.
     pub scope: Option<String>,
+    /// Repositories this token may reach through the GitHub proxy, as
+    /// `owner/repo`. Omit for unrestricted access, which is the default and
+    /// what every existing token keeps (issue #262).
+    #[serde(default)]
+    pub github_repos: Option<Vec<String>>,
 }
 
 /// Request body for the admin rotation endpoint. All fields are optional.

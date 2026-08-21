@@ -6,6 +6,7 @@ use tempfile::tempdir;
 
 fn sample_record() -> TokenRecord {
     TokenRecord {
+        github_repos: Vec::new(),
         id: "6fdf2800-72c6-47dc-9050-67bc66fa72fc".into(),
         label: "official codec compatibility".into(),
         issued_at: 1_700_000_000,

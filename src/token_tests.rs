@@ -474,6 +474,7 @@ fn ordinary_token_rotation_preserves_its_controls_and_revokes_the_old_token() {
             max_tokens: Some(1_000),
             rate_limit_per_minute: Some(3),
             scope: "",
+            github_repos: Vec::new(),
         })
         .unwrap();
     let old_claims = mgr.validate_token(&old).unwrap();

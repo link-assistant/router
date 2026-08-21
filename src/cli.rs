@@ -681,6 +681,11 @@ pub enum TokenOp {
         /// admin endpoints instead of only the inference proxy.
         #[arg(long)]
         admin: bool,
+        /// Restrict this token's GitHub proxy access to `owner/repo`. Repeat
+        /// for several repositories; omit for unrestricted access, which is
+        /// the default and what every existing token keeps.
+        #[arg(long = "github-repo", value_name = "OWNER/REPO")]
+        github_repo: Vec<String>,
     },
     /// Replace a token, preserving its controls, and revoke the old token.
     #[command(override_usage = "link-assistant-router tokens rotate [OPTIONS] <ID>")]

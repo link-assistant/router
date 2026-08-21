@@ -42,9 +42,35 @@ pub struct TokenClaims {
     /// marks an administrative credential.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub scope: String,
+    /// Repositories this token may reach through the GitHub proxy.
+    ///
+    /// Empty means unrestricted, which is the default and the behaviour every
+    /// existing token keeps: the proxy already replaces a direct credential
+    /// with a mediated one, and narrowing beyond that is an opt-in an operator
+    /// states per token (issue #262). Entries are `owner/repo`, matched
+    /// case-insensitively as GitHub itself does.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub github_repos: Vec<String>,
 }
 
 impl TokenClaims {
+    /// Whether this token may act on `owner/repo` through the GitHub proxy.
+    ///
+    /// An unrestricted token reaches whatever the operator credential reaches,
+    /// which is the default: the proxy's purpose is to keep the credential out
+    /// of the caller's hands, and narrowing further is an opt-in (issue #262).
+    /// Comparison is case-insensitive because GitHub treats owner and repo
+    /// names that way, so a scope written in one casing must not be evaded by
+    /// requesting another.
+    #[must_use]
+    pub fn may_reach_repository(&self, repository: &str) -> bool {
+        self.github_repos.is_empty()
+            || self
+                .github_repos
+                .iter()
+                .any(|allowed| allowed.eq_ignore_ascii_case(repository))
+    }
+
     /// Whether these claims carry the administrative scope.
     #[must_use]
     pub fn is_admin(&self) -> bool {
@@ -73,6 +99,9 @@ pub struct IssueRequest<'a> {
     pub rate_limit_per_minute: Option<u64>,
     /// Privilege scope; empty for an ordinary client token.
     pub scope: &'a str,
+    /// Repositories this token may reach through the GitHub proxy; empty is
+    /// unrestricted (issue #262).
+    pub github_repos: Vec<String>,
 }
 
 /// Constraint changes to apply while rotating a token.
@@ -137,6 +166,25 @@ impl IssueRequest<'_> {
             return Err(format!(
                 "scope must be empty (client) or \"{ADMIN_SCOPE}\"."
             ));
+        }
+        for repository in &self.github_repos {
+            // `owner/repo` exactly: a bare owner would read as "the whole
+            // account", and a path with more segments would silently match
+            // nothing, which is the wrong failure for a security control.
+            let mut parts = repository.split('/');
+            let valid = matches!(
+                (parts.next(), parts.next(), parts.next()),
+                (Some(owner), Some(repo), None)
+                    if !owner.is_empty()
+                        && !repo.is_empty()
+                        && !owner.contains(char::is_whitespace)
+                        && !repo.contains(char::is_whitespace)
+            );
+            if !valid {
+                return Err(format!(
+                    "github repository scope must be \"owner/repo\"; got \"{repository}\"."
+                ));
+            }
         }
         Ok(())
     }
@@ -213,6 +261,7 @@ impl TokenManager {
             max_tokens: None,
             rate_limit_per_minute: None,
             scope: "",
+            github_repos: Vec::new(),
         })
     }
 
@@ -235,6 +284,7 @@ impl TokenManager {
             max_tokens: None,
             rate_limit_per_minute: None,
             scope: ADMIN_SCOPE,
+            github_repos: Vec::new(),
         })
     }
 
@@ -264,6 +314,7 @@ impl TokenManager {
             exp: exp.timestamp(),
             label: label.to_string(),
             scope: request.scope.to_string(),
+            github_repos: request.github_repos.clone(),
         };
         let jwt = encode(
             &Header::default(),
@@ -288,6 +339,7 @@ impl TokenManager {
             rate_window_started_at: 0,
             rate_window_requests: 0,
             scope: claims.scope,
+            github_repos: claims.github_repos,
         };
         let id = record.id.clone();
         if let Err(e) = self.store.put(record) {
@@ -505,6 +557,10 @@ impl TokenManager {
                 .rate_limit_per_minute
                 .or(record.rate_limit_per_minute),
             scope: &record.scope,
+            // Rotation preserves the blast radius: a rotated credential that
+            // silently widened to the whole account would defeat the scope
+            // (issue #262).
+            github_repos: record.github_repos.clone(),
         };
         request.validate().map_err(TokenError::Invalid)?;
         let replacement = self

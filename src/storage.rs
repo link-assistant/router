@@ -100,6 +100,13 @@ pub struct TokenRecord {
     /// [`crate::token::ADMIN_SCOPE`].
     #[serde(default)]
     pub scope: String,
+    /// Repositories this token may reach through the GitHub proxy; empty is
+    /// unrestricted (issue #262).
+    ///
+    /// `serde(default)` so a store written before this field keeps loading,
+    /// and an existing token keeps the access it was issued with.
+    #[serde(default)]
+    pub github_repos: Vec<String>,
 }
 
 /// Errors a [`TokenStore`] can return.

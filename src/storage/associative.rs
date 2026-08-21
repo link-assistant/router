@@ -130,6 +130,12 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                     LinoValue::String(record.rate_window_requests.to_string()),
                 ),
                 ("scope", LinoValue::String(record.scope.clone())),
+                (
+                    // Joined rather than nested: the record shape is flat
+                    // scalars, and a repository name cannot contain a comma.
+                    "github_repos",
+                    LinoValue::String(record.github_repos.join(",")),
+                ),
             ]),
         ),
     ])
@@ -168,6 +174,13 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         rate_window_requests: optional_u64_field(fields, "rate_window_requests", "record value")?
             .unwrap_or(0),
         scope: expect_string_field(fields, "scope", "record value")?.to_string(),
+        github_repos: split_repository_list(
+            // Absent in every record written before this field existed, so a
+            // missing key is "unrestricted" rather than a malformed store.
+            &optional_string_field(fields, "github_repos", "record value")
+                .unwrap_or_default()
+                .unwrap_or_default(),
+        ),
     })
 }
 
@@ -214,6 +227,19 @@ fn expect_u64_field(value: &LinoValue, key: &str, context: &str) -> Result<u64, 
     expect_string_field(value, key, context)?
         .parse()
         .map_err(|error| format!("{context}.{key} is invalid: {error}"))
+}
+
+/// Split a stored repository allow-list back into its entries.
+///
+/// Empty means unrestricted, which is what every record written before this
+/// field carried, so an older store keeps working unchanged (issue #262).
+fn split_repository_list(joined: &str) -> Vec<String> {
+    joined
+        .split(',')
+        .map(str::trim)
+        .filter(|entry| !entry.is_empty())
+        .map(str::to_string)
+        .collect()
 }
 
 fn optional_string_field(
@@ -545,6 +571,12 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         &record.rate_window_requests.to_string(),
     );
     add_field(&mut links, &value, "scope", &record.scope);
+    add_field(
+        &mut links,
+        &value,
+        "github_repos",
+        &record.github_repos.join(","),
+    );
     links
 }
 
@@ -634,6 +666,7 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
             .unwrap_or(0),
         rate_window_requests: optional_parsed_field(&fields, "rate_window_requests")?.unwrap_or(0),
         scope: required_field(&fields, "scope")?.to_string(),
+        github_repos: split_repository_list(fields.get("github_repos").map_or("", String::as_str)),
     })
 }
 
@@ -729,6 +762,7 @@ mod tests {
 
     fn sample_record() -> TokenRecord {
         TokenRecord {
+            github_repos: Vec::new(),
             id: "id/with spaces".into(),
             label: "label with \"quotes\" and a newline\n".into(),
             issued_at: i64::MIN,

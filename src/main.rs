@@ -465,6 +465,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             max_tokens,
             rate_limit_per_minute,
             admin,
+            github_repo,
         } => {
             let request = IssueRequest {
                 ttl_hours: *ttl_hours,
@@ -474,6 +475,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 max_tokens: *max_tokens,
                 rate_limit_per_minute: *rate_limit_per_minute,
                 scope: if *admin { ADMIN_SCOPE } else { "" },
+                github_repos: github_repo.clone(),
             };
             // Shared with the HTTP and chat surfaces (issue #194).
             if let Err(message) = request.validate() {
