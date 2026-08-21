@@ -110,16 +110,14 @@ fn run_gh(
             eprintln!("error: no gh configuration directory; pass --from-gh-config <DIR>");
             return ExitCode::from(1);
         };
-        match github_proxy::token_from_gh_config(&directory) {
-            Some(token) => token,
-            None => {
-                eprintln!(
-                    "error: no GitHub credential in {}; run `gh auth login` there first",
-                    directory.display()
-                );
-                return ExitCode::from(1);
-            }
-        }
+        let Some(token) = github_proxy::token_from_gh_config(&directory) else {
+            eprintln!(
+                "error: no GitHub credential in {}; run `gh auth login` there first",
+                directory.display()
+            );
+            return ExitCode::from(1);
+        };
+        token
     };
 
     match github_proxy::store_credential(std::path::Path::new(&config.data_dir), &token) {

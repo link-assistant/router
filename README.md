@@ -462,7 +462,7 @@ in a browser *or* in a chat. See
 |---|---|---|
 | `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages, forwarded to the selected OpenAI-compatible provider, or delivered as a Crater ForgeFed task |
 | `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
-| `/v1/models` | GET | OpenAI-shaped union of models from healthy subscriptions in automatic mode |
+| `/v1/models` | GET | OpenAI-shaped union of models from healthy subscriptions and stored providers in automatic mode |
 | `/api/openai/v1/*` | GET/POST | Namespaced aliases for models, Chat Completions, and Responses |
 | `/api/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
 | `/api/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
@@ -485,10 +485,13 @@ gap from source. When a credential is revoked its last known catalog stays
 visible to administrators but stops being advertised or routed.
 
 Requested model names pass through unchanged. In automatic mode, routing uses
-only subscription catalogs: vendor-shaped IDs prefer their matching vendor if
-catalogs overlap, and an unqualified name advertised by multiple healthy
-subscriptions is rejected until `UPSTREAM_PROVIDER` is pinned. A model no
-catalog advertises returns `404 not_found_error` instead of silently selecting a
+subscription catalogs **and** the models a stored provider declares, so one
+deployment can serve vendor subscriptions and a local OpenAI-compatible
+endpoint at once. Vendor-shaped IDs prefer their matching vendor if catalogs
+overlap, and an unqualified name advertised by multiple healthy subscriptions —
+or declared by multiple stored providers — is rejected until `UPSTREAM_PROVIDER`
+is pinned or the name is qualified as `<provider>/<model>`. A model nothing
+advertises returns `404 not_found_error` instead of silently selecting a
 default. Successful Anthropic-backed responses report the model that actually
 served the request.
 
@@ -663,8 +666,8 @@ The opt-in GitHub proxy lets an agent authenticate with its router-issued task
 token while the real GitHub credential remains inside the router. It supports
 bare REST paths, GitHub CLI's custom-host `/api/v3/*` rewrite, and GraphQL at
 `/api/graphql` and `/graphql`. The `/github/*` namespace exposes arbitrary REST
-paths without colliding with inference/admin routes. Plain git over SSH/HTTPS
-is outside this proxy.
+paths without colliding with inference/admin routes. Git over HTTPS is mediated
+too, at `/git/{owner}/{repo}.git` — see **Git transport** below.
 
 ```env
 GITHUB_PROXY_TOKEN_FILE=/run/secrets/github-token
@@ -696,12 +699,46 @@ file can override a narrow operation without weakening the remaining defaults:
 The first matching configured rule wins, then the built-in destructive policy
 applies. `*` matches one path segment and `/**` matches the remainder. A blocked
 call returns `403` with a GitHub-shaped `message` and
-`x-link-assistant-policy: blocked`. This protects API-mediated ref deletion and
-forced ref updates; branch protection remains necessary because a force-push
-over the git transport never reaches these routes.
+`x-link-assistant-policy: blocked`. This protects ref deletion and forced ref
+updates over both the API and the git transport.
 
-For GitHub CLI, terminate trusted HTTPS at the router host and set the
-router-issued token as the custom-host credential:
+#### Git transport
+
+Point a client at the router and its pushes answer to the same policy:
+
+```bash
+git config --global url."https://router.example.internal/git/".insteadOf "https://github.com/"
+```
+
+Ref deletions and forced updates to existing branches are **refused by
+default**; creates and fast-forwards pass through, and a refusal is recorded in
+the per-token `requests.jsonl` alongside the API calls. The caller never holds a
+GitHub credential — the router presents its own upstream. To permit one ref
+deliberately, add an allow rule naming it, which is a change only an operator
+with access to the router can make:
+
+```json
+{"rules": [{"effect": "allow", "path": "/git/acme/demo/refs/heads/scratch"}]}
+```
+
+#### Scoping a token to repositories
+
+A token may be restricted to named repositories, evaluated ahead of the rules
+above:
+
+```bash
+router tokens issue --label agent-task --github-repo acme/demo
+```
+
+Omit `--github-repo` for unrestricted access, which is the default: the proxy
+already keeps the operator credential out of the caller's hands, and narrowing
+further is an opt-in. Rotation preserves the scope.
+
+#### GitHub CLI
+
+`gh` builds a custom host's REST base as `https://<host>/api/v3/` and will not
+talk plaintext, so the router must serve HTTPS — either behind a terminator or
+with its own listener (see **TLS**). Then:
 
 ```bash
 export GH_HOST=router.example.internal
@@ -709,6 +746,38 @@ export GH_ENTERPRISE_TOKEN="$LINK_ASSISTANT_TOKEN"
 gh api rate_limit
 gh issue list -R acme/demo
 ```
+
+The credential the proxy presents upstream can be taken from an existing `gh`
+login instead of a separately minted token:
+
+```bash
+router auth gh --from-gh-config ~/.config/gh   # or --token-stdin
+router auth gh --status
+```
+
+### TLS
+
+The router serves plain HTTP by default. Set a certificate pair to serve HTTPS
+instead:
+
+```env
+TLS_CERT_FILE=/data/router/tls/cert.pem
+TLS_KEY_FILE=/data/router/tls/key.pem
+```
+
+For a private deployment with no public hostname — an internal-only sidecar —
+the router can generate its own certificate, including the network alias
+clients actually reach it by:
+
+```env
+TLS_SELF_SIGNED=1
+TLS_SELF_SIGNED_DNS=hive-mind-router
+```
+
+`router tls ca` prints the certificate so clients can trust it, and
+`router tls generate --dns <names>` creates the pair without starting the
+server. The generated pair is reused across restarts, so clients that trust it
+keep working.
 
 ### Gonka provider
 

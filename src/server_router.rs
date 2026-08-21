@@ -147,6 +147,9 @@ pub fn router(state: AppState, config: &Config) -> Router {
             .route("/notifications/{*path}", any(crate::github_proxy::proxy))
             .route("/gists", any(crate::github_proxy::proxy))
             .route("/gists/{*path}", any(crate::github_proxy::proxy));
+        // Git smart-HTTP, so a `git push --force` reaches the same policy
+        // engine the REST surface already answers to (issue #261).
+        client_routes = client_routes.route("/git/{*path}", any(crate::git_proxy::proxy));
     }
 
     if config.enable_metrics {

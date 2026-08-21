@@ -104,30 +104,8 @@ async fn main() -> ExitCode {
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor) => run_doctor(&config).await,
-        Some(Command::Tls { op }) => run_tls(&config, op),
+        Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
-    }
-}
-
-/// Manage the self-signed certificate a private deployment serves.
-fn run_tls(config: &Config, op: &link_assistant_router::cli::TlsOp) -> ExitCode {
-    use link_assistant_router::cli::TlsOp;
-    let data_dir = std::path::Path::new(&config.data_dir);
-    let result = match op {
-        TlsOp::Ca => link_assistant_router::tls::read_generated_certificate(data_dir)
-            .map(|pem| print!("{pem}")),
-        TlsOp::Generate { dns } => link_assistant_router::tls::ensure_generated(
-            data_dir,
-            &link_assistant_router::tls::generated_subject_names(dns),
-        )
-        .map(|(cert, _)| println!("{}", cert.display())),
-    };
-    match result {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(message) => {
-            eprintln!("error: {message}");
-            ExitCode::from(1)
-        }
     }
 }
 

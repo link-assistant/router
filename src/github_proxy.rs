@@ -13,7 +13,7 @@ use serde_json::json;
 
 use crate::app_state::AppState;
 
-const POLICY_HEADER: &str = "x-link-assistant-policy";
+pub(crate) const POLICY_HEADER: &str = "x-link-assistant-policy";
 
 #[derive(Clone, Debug)]
 pub struct GitHubProxyConfig {
@@ -97,6 +97,30 @@ impl GitHubProxyConfig {
         self.token.is_some()
     }
 
+    /// The operator credential this proxy presents upstream.
+    #[must_use]
+    pub fn credential(&self) -> Option<&str> {
+        self.token.as_deref()
+    }
+
+    /// The ordered rules this deployment enforces.
+    #[must_use]
+    pub const fn policy_rules(&self) -> &GitHubPolicy {
+        &self.policy
+    }
+
+    /// The git transport base for the configured GitHub host.
+    ///
+    /// Derived from the API base so an enterprise or test deployment stays
+    /// consistent across both surfaces rather than needing a second setting.
+    #[must_use]
+    pub fn git_base_url(&self) -> String {
+        if let Some(host) = self.base_url.strip_prefix("https://api.github.com") {
+            return format!("https://github.com{host}");
+        }
+        self.base_url.clone()
+    }
+
     #[cfg(test)]
     fn with_token(token: &str, base_url: &str) -> Self {
         Self {
@@ -122,6 +146,25 @@ impl GitHubPolicy {
             .map_err(|error| format!("could not read GitHub policy {}: {error}", path.display()))?;
         serde_json::from_slice(&bytes)
             .map_err(|error| format!("invalid GitHub policy {}: {error}", path.display()))
+    }
+
+    /// Whether an operator has explicitly permitted a destructive update to
+    /// one ref of one repository.
+    ///
+    /// Expressed as an ordinary allow rule whose path is the git ref, so the
+    /// same ordered file governs both surfaces and a permission names exactly
+    /// the ref it applies to (issue #261).
+    #[must_use]
+    pub fn allows_git_ref(&self, repository: &str, git_ref: &str) -> bool {
+        let path = format!("/git/{repository}/{git_ref}");
+        self.rules.iter().any(|rule| {
+            matches!(rule.effect, PolicyEffect::Allow)
+                && rule
+                    .method
+                    .as_deref()
+                    .is_none_or(|method| method.eq_ignore_ascii_case("GIT"))
+                && glob_matches(&rule.path, &path)
+        })
     }
 
     #[must_use]
