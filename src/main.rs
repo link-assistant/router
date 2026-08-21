@@ -109,6 +109,28 @@ async fn main() -> ExitCode {
     }
 }
 
+/// Serve the application over HTTPS from a certificate pair.
+async fn serve_https(
+    address: std::net::SocketAddr,
+    app: axum::Router,
+    cert: std::path::PathBuf,
+    key: std::path::PathBuf,
+) -> Result<(), Box<dyn std::error::Error>> {
+    tracing::info!("Serving HTTPS with certificate {}", cert.display());
+    let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
+        .await
+        .map_err(|error| {
+            format!(
+                "could not load the TLS certificate {}: {error}",
+                cert.display()
+            )
+        })?;
+    axum_server::bind_rustls(address, tls)
+        .serve(app.into_make_service())
+        .await?;
+    Ok(())
+}
+
 /// Construct the persistent token store and the optional multi-account router
 /// for the given [`Config`]. Both are needed by both the server and the CLI
 /// subcommands.
@@ -386,18 +408,10 @@ async fn run_server(
     // terminator in front of it (issue #263).
     match link_assistant_router::tls::from_env(std::path::Path::new(&config.data_dir)) {
         Ok(link_assistant_router::tls::TlsSetup::Enabled { cert, key }) => {
-            tracing::info!("Serving HTTPS with certificate {}", cert.display());
-            let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
-                .await
-                .map_err(|error| {
-                    format!(
-                        "could not load the TLS certificate {}: {error}",
-                        cert.display()
-                    )
-                })?;
-            axum_server::bind_rustls(config.listen_addr, tls)
-                .serve(app.into_make_service())
-                .await?;
+            // Boxed so the HTTPS serve future is heap-allocated: it is large,
+            // and embedding it in this function's state machine made every
+            // subcommand -- including ones that never serve -- carry it.
+            Box::pin(serve_https(config.listen_addr, app, cert, key)).await?;
         }
         Ok(link_assistant_router::tls::TlsSetup::Disabled) => {
             let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
