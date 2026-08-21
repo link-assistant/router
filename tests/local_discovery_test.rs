@@ -109,11 +109,36 @@ impl Router {
     }
 }
 
+/// A directory holding a `docker` that reports no published ports.
+///
+/// Discovery asks Docker which ports are published, so on a developer machine
+/// running any container the answer is whatever happens to be up. A test about
+/// "nothing is listening" has to say what the machine is, rather than assume a
+/// quiet one — the same fragility that made the `auth` tests depend on the
+/// developer's own router.
+fn docker_reporting_nothing() -> tempfile::TempDir {
+    let bin = tempfile::tempdir().expect("stub bin directory");
+    let docker = bin.path().join("docker");
+    std::fs::write(&docker, "#!/bin/sh\nexit 0\n").expect("write docker stub");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        std::fs::set_permissions(&docker, std::fs::Permissions::from_mode(0o755))
+            .expect("make the stub executable");
+    }
+    bin
+}
+
 /// Run `router` with nothing selected, pointing discovery at `port`.
-fn status_with_candidate(port: u16) -> String {
+///
+/// `isolated` replaces `docker` with a stub reporting no containers, for the
+/// cases that assert nothing is discoverable.
+fn status_with_candidate_isolated(port: u16, isolated: bool) -> String {
     let config = tempfile::tempdir().expect("config home");
     let home = tempfile::tempdir().expect("home");
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+    let stub = isolated.then(docker_reporting_nothing);
+    let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
+    command
         .args(["server", "status"])
         .env("XDG_CONFIG_HOME", config.path())
         .env("HOME", home.path())
@@ -122,10 +147,17 @@ fn status_with_candidate(port: u16) -> String {
         // on a non-default port is found.
         .env("ROUTER_PORT", port.to_string())
         .env_remove("ROUTER_URL")
-        .env_remove("LINK_ASSISTANT_ROUTER_URL")
-        .output()
-        .expect("run server status");
+        .env_remove("LINK_ASSISTANT_ROUTER_URL");
+    if let Some(stub) = stub.as_ref() {
+        command.env("PATH", stub.path());
+    }
+    let output = command.output().expect("run server status");
     String::from_utf8_lossy(&output.stdout).to_string()
+}
+
+/// Run `router` with nothing selected, pointing discovery at `port`.
+fn status_with_candidate(port: u16) -> String {
+    status_with_candidate_isolated(port, false)
 }
 
 /// The headline of #250: a router already listening is used, and named, rather
@@ -153,7 +185,7 @@ fn without_a_running_router_the_managed_container_still_answers() {
     // A port nothing is bound to: taken and released, so it is free.
     let port = free_port();
 
-    let status = status_with_candidate(port);
+    let status = status_with_candidate_isolated(port, true);
 
     assert!(
         status.contains("managed local container"),
@@ -179,7 +211,7 @@ fn a_non_router_listener_is_not_adopted() {
         }
     });
 
-    let status = status_with_candidate(port);
+    let status = status_with_candidate_isolated(port, true);
 
     assert!(
         status.contains("managed local container"),

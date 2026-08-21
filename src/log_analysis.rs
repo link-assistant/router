@@ -26,7 +26,19 @@ pub struct Exchange {
     pub status: Option<u64>,
     pub upstream_status: Option<u64>,
     pub uri: Option<String>,
+    /// Whether the response was actually streamed, decided from evidence.
+    ///
+    /// Every response is relayed through the same byte-stream machinery, so the
+    /// presence of body records says nothing about whether the exchange was a
+    /// stream. Deciding by default counted 85% of healthy non-streamed traffic
+    /// as streams with an unknown ending (issue #252).
     pub streamed: bool,
+    /// Whether anything in the log actually settled the question either way.
+    pub stream_evidence: bool,
+    /// The response media type, when one was recorded.
+    pub response_media_type: Option<String>,
+    /// Whether the request asked for a stream, as a corroborating signal.
+    pub stream_requested: bool,
     /// From the terminal `stream_end` record, when one is present (issue #230).
     pub stream_outcome: Option<String>,
     pub stream_complete: Option<bool>,
@@ -59,6 +71,9 @@ pub struct Summary {
     pub bytes: u64,
     pub statuses: BTreeMap<u64, usize>,
     pub streamed: usize,
+    /// Exchanges established as ordinary single-shot replies, reported so the
+    /// totals are readable at a glance rather than inferred by subtraction.
+    pub non_streamed: usize,
     pub incomplete_streams: usize,
     pub unterminated_streams: usize,
     /// Records the analyser could not parse, stated rather than skipped.
@@ -74,6 +89,7 @@ impl Summary {
             "records": self.records,
             "bytes": self.bytes,
             "streamed": self.streamed,
+            "non_streamed": self.non_streamed,
             "incomplete_streams": self.incomplete_streams,
             "unterminated_streams": self.unterminated_streams,
             "unparsable_records": self.unparsable_records,
@@ -97,8 +113,8 @@ impl Summary {
         );
         let _ = writeln!(
             out,
-            "streamed {}  incomplete {}  no terminal record {}",
-            self.streamed, self.incomplete_streams, self.unterminated_streams
+            "streamed {}  non-streamed {}  incomplete {}  no terminal record {}",
+            self.streamed, self.non_streamed, self.incomplete_streams, self.unterminated_streams
         );
         if self.statuses.is_empty() {
             out.push_str("statuses: none recorded\n");
@@ -152,7 +168,14 @@ pub fn read_exchanges(
             absorb(&mut by_id, &record);
         }
     }
-    Ok((by_id.into_values().collect(), unparsable, bytes))
+    let exchanges = by_id
+        .into_values()
+        .map(|mut exchange| {
+            resolve_stream_classification(&mut exchange);
+            exchange
+        })
+        .collect();
+    Ok((exchanges, unparsable, bytes))
 }
 
 fn log_files(root: &Path, token: Option<&str>) -> std::io::Result<Vec<PathBuf>> {
@@ -205,15 +228,19 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
             {
                 exchange.undecodable_bodies += 1;
             }
+            if request_asks_for_a_stream(record) {
+                exchange.stream_requested = true;
+            }
         }
         "client_response" => {
             exchange.status = record.get("status").and_then(Value::as_u64);
+            note_response_content_type(exchange, record);
         }
         "upstream_response" => {
             exchange.upstream_status = record.get("status").and_then(Value::as_u64);
+            note_response_content_type(exchange, record);
         }
         "upstream_response_body" => {
-            exchange.streamed = true;
             exchange.frames += 1;
             if record
                 .get("body")
@@ -223,7 +250,13 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
             }
         }
         "stream_end" => {
-            exchange.streamed = true;
+            // Not evidence of streaming on its own: the relay emits this record
+            // for every response, streamed or not, so believing it is what made
+            // a single-shot JSON reply look like a stream that never ended
+            // (issue #252). A recorded media type outranks it.
+            if !exchange.stream_evidence {
+                exchange.streamed = true;
+            }
             exchange.stream_outcome = record
                 .get("outcome")
                 .and_then(Value::as_str)
@@ -234,6 +267,67 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
             }
         }
         _ => {}
+    }
+}
+
+/// Note what a response's `content-type` says about whether it was streamed.
+///
+/// The response media type is the reliable marker: `text/event-stream` is a
+/// stream by definition, and any other concrete type — `application/json` for
+/// a single-shot reply — is not. Both the upstream and client response records
+/// carry it, and they agree in the ordinary case; either one is enough.
+///
+/// `Content-Encoding: gzip` is deliberately not consulted here. A compressed
+/// body arrives in several transfer chunks, and mistaking those for SSE frames
+/// is what produced a truncated-stream verdict — and a WARN — for every
+/// successful compressed reply (issue #252).
+fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
+    let Some(content_type) = record
+        .get("headers")
+        .and_then(|headers| headers.get("content-type"))
+        .and_then(Value::as_str)
+    else {
+        return;
+    };
+    let media_type = content_type
+        .split(';')
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_ascii_lowercase();
+    if media_type.is_empty() {
+        return;
+    }
+    exchange.response_media_type = Some(media_type.clone());
+    // Evidence either way is conclusive, so it overrides the request's
+    // `stream: true` hint: what the response actually was beats what was asked
+    // for, and a request may ask for a stream that the upstream answers whole.
+    exchange.streamed = media_type == "text/event-stream";
+    exchange.stream_evidence = true;
+}
+
+/// Whether a request body asks for a streamed reply.
+///
+/// The Anthropic and `OpenAI` chat dialects both spell this `"stream": true`.
+/// This corroborates rather than decides: it is used only when no response
+/// media type was recorded, since a request can ask for a stream and receive a
+/// single-shot answer.
+fn request_asks_for_a_stream(record: &Value) -> bool {
+    record
+        .get("body")
+        .and_then(|body| body.get("json"))
+        .and_then(|body| body.get("stream"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
+/// Settle the streamed question for exchanges the response never answered.
+///
+/// Called once the whole exchange is assembled, since the request record is
+/// read before the response that outranks it.
+const fn resolve_stream_classification(exchange: &mut Exchange) {
+    if !exchange.stream_evidence && exchange.stream_requested {
+        exchange.streamed = true;
     }
 }
 
@@ -260,6 +354,8 @@ pub fn summarise(exchanges: &[Exchange], unparsable: u64, bytes: u64) -> Summary
             if exchange.is_unterminated() {
                 summary.unterminated_streams += 1;
             }
+        } else {
+            summary.non_streamed += 1;
         }
     }
     summary
