@@ -203,3 +203,56 @@ fn a_single_token_can_be_analysed_alone() {
     assert_eq!(parsed["exchanges"], 1, "only the requested token is read");
     assert_eq!(parsed["incomplete_streams"], 1);
 }
+
+/// A complete non-streamed exchange must produce no anomalies at the CLI, and
+/// must not be counted as a stream.
+///
+/// This is issue #252's reproduction: 85% of a real log's "streamed" exchanges
+/// were ordinary JSON replies reported as streams with an unknown ending, so an
+/// operator hunting a real truncation had to wade through ~1000 false entries.
+/// Exercised through the binary because the exit code is what gates a health
+/// check.
+#[test]
+fn a_complete_non_streamed_exchange_is_healthy() {
+    let data = tempfile::tempdir().expect("data dir");
+    write_log(
+        data.path(),
+        "tokenhash",
+        &[
+            json!({"correlation_id": "plain", "phase": "client_request", "uri": "/v1/messages"}),
+            json!({"correlation_id": "plain", "phase": "upstream_request"}),
+            json!({
+                "correlation_id": "plain",
+                "phase": "upstream_response",
+                "status": 200,
+                "headers": {"content-type": "application/json"}
+            }),
+            json!({"correlation_id": "plain", "phase": "upstream_response_body", "body": "{}"}),
+            json!({
+                "correlation_id": "plain",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {"content-type": "application/json"}
+            }),
+            json!({"correlation_id": "plain", "phase": "client_response_body", "body": "{}"}),
+        ],
+    );
+
+    let found = router(data.path(), &["logs", "anomalies"]);
+    assert!(
+        found.status.success(),
+        "a complete non-streamed exchange must exit zero: {}",
+        String::from_utf8_lossy(&found.stdout)
+    );
+    let reported = String::from_utf8_lossy(&found.stdout);
+    assert!(
+        !reported.contains("no_terminal_record"),
+        "a JSON reply has no terminal record by construction: {reported}"
+    );
+
+    let summary = router(data.path(), &["logs", "summary", "--json"]);
+    let parsed: Value = serde_json::from_slice(&summary.stdout).expect("valid JSON");
+    assert_eq!(parsed["streamed"], 0, "{parsed}");
+    assert_eq!(parsed["non_streamed"], 1, "{parsed}");
+    assert_eq!(parsed["unterminated_streams"], 0, "{parsed}");
+}

@@ -282,6 +282,7 @@ fn text_and_json_bodies_are_unchanged() {
 #[test]
 fn a_stream_without_its_terminator_is_marked_incomplete() {
     let cut = StreamOutcome {
+        streamed: true,
         terminated: false,
         detail: None,
         frames: 444,
@@ -304,6 +305,7 @@ fn a_stream_without_its_terminator_is_marked_incomplete() {
 #[test]
 fn an_upstream_failure_is_named_separately() {
     let failed = StreamOutcome {
+        streamed: true,
         terminated: false,
         detail: Some("connection reset".to_string()),
         frames: 12,
@@ -356,6 +358,7 @@ fn the_terminal_record_carries_counts_and_duration() {
     log.record_stream_end(
         "corr-1",
         &StreamOutcome {
+            streamed: true,
             terminated: false,
             detail: None,
             frames: 444,
@@ -375,4 +378,72 @@ fn the_terminal_record_carries_counts_and_duration() {
     assert_eq!(record["complete"], false);
     assert_eq!(record["frames"], 444);
     assert_eq!(record["duration_ms"], 74_000);
+}
+
+/// A non-streamed reply has no terminator to miss, so it must settle as
+/// complete rather than as a stream that was cut.
+///
+/// This is the WARN from issue #252: a gzip-compressed JSON answer arrives in
+/// a few transfer chunks, and treating those as stream frames warned once per
+/// successful request — burying real truncations in noise.
+#[test]
+fn a_non_streamed_reply_settles_as_complete() {
+    let json_reply = StreamOutcome {
+        streamed: false,
+        terminated: false,
+        detail: None,
+        frames: 2,
+        bytes: 900,
+        duration_ms: 129,
+    };
+
+    assert!(
+        json_reply.is_complete(),
+        "a single-shot reply is complete without a dialect terminator"
+    );
+    assert_eq!(json_reply.label(), "completed_not_streamed");
+}
+
+/// A transport failure still fails a non-streamed reply: the client got a
+/// truncated document, which is a real problem whatever the framing.
+#[test]
+fn a_failed_non_streamed_reply_is_still_a_failure() {
+    let failed = StreamOutcome {
+        streamed: false,
+        terminated: false,
+        detail: Some("connection reset".to_string()),
+        frames: 1,
+        bytes: 10,
+        duration_ms: 5,
+    };
+
+    assert!(!failed.is_complete());
+    assert_eq!(failed.label(), "upstream_error");
+}
+
+/// SSE is the streamed media type; a JSON answer is not, however it is framed
+/// or compressed on the wire.
+#[test]
+fn only_event_stream_is_treated_as_streaming() {
+    assert!(is_streaming_media_type(Some("text/event-stream")));
+    assert!(is_streaming_media_type(Some(
+        "text/event-stream; charset=utf-8"
+    )));
+    assert!(
+        is_streaming_media_type(Some("TEXT/EVENT-STREAM")),
+        "media types are case-insensitive"
+    );
+
+    assert!(!is_streaming_media_type(Some("application/json")));
+    assert!(!is_streaming_media_type(Some(
+        "application/json; charset=utf-8"
+    )));
+    assert!(!is_streaming_media_type(Some("text/plain")));
+}
+
+/// An upstream that declares nothing keeps the truncation detection from issue
+/// #230: silence must not be read as "this cannot have been cut".
+#[test]
+fn an_undeclared_media_type_stays_eligible_for_truncation_detection() {
+    assert!(is_streaming_media_type(None));
 }

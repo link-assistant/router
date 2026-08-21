@@ -13,6 +13,10 @@
 // later, and removing `async` would force a uniform sync signature here.
 #![allow(clippy::unused_async)]
 
+mod upstream_path;
+
+pub use upstream_path::resolve_upstream_path;
+
 use axum::body::Body;
 use axum::extract::rejection::JsonRejection;
 use axum::extract::{Query, Request, State};
@@ -559,7 +563,11 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     // decided by the response headers, so it cannot report a turn that is cut
     // mid-flight (issue #230).
     let started = std::time::Instant::now();
+    // A single-shot JSON reply has no terminator to miss, so settling it as a
+    // cut stream warned once per successful request and filled `logs anomalies`
+    // with healthy traffic (issue #252).
     let outcome = std::sync::Arc::new(std::sync::Mutex::new(crate::request_log::StreamOutcome {
+        streamed: crate::request_log::response_is_streamed(upstream_resp.headers()),
         terminated: false,
         detail: None,
         frames: 0,
@@ -616,30 +624,6 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     *response.headers_mut() = response_headers;
 
     response
-}
-
-/// Resolve the upstream path from the incoming request path.
-///
-/// Maps all supported API format paths to the correct upstream path:
-/// - `/v1/messages` -> `/v1/messages` (Anthropic Messages)
-/// - `/v1/messages/count_tokens` -> `/v1/messages/count_tokens` (Anthropic Messages)
-/// - `/invoke` -> `/invoke` (Bedrock)
-/// - `/invoke-with-response-stream` -> `/invoke-with-response-stream` (Bedrock)
-/// - Paths ending in `:rawPredict` or `:streamRawPredict` -> pass through (Vertex)
-/// - `/api/latest/anthropic/*` -> `/*` (legacy)
-#[must_use]
-pub fn resolve_upstream_path(path: &str) -> String {
-    if let Some(rest) = path.strip_prefix("/api/anthropic") {
-        return rest.to_string();
-    }
-    // Legacy prefix: strip and forward
-    if let Some(rest) = path.strip_prefix("/api/latest/anthropic") {
-        return rest.to_string();
-    }
-
-    // All other paths (Anthropic /v1/*, Bedrock /invoke*, Vertex *:rawPredict)
-    // are forwarded as-is to the upstream
-    path.to_string()
 }
 
 /// Build the upstream request headers.

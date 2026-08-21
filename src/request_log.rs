@@ -281,6 +281,7 @@ impl RequestLog {
             "stream_end",
             json!({
                 "outcome": outcome.label(),
+                "streamed": outcome.streamed,
                 "complete": outcome.is_complete(),
                 "frames": outcome.frames,
                 "bytes": outcome.bytes,
@@ -294,6 +295,14 @@ impl RequestLog {
 /// How a streamed relay finished, for the terminal log record.
 #[derive(Debug, Clone)]
 pub struct StreamOutcome {
+    /// Whether the response was actually streamed.
+    ///
+    /// Every response is relayed through the same byte-stream machinery, so a
+    /// single-shot JSON reply — gzip-compressed, arriving in a few transfer
+    /// chunks — used to be settled as a stream that ended without its
+    /// terminator, warning once per successful request (issue #252). A reply
+    /// that is not a stream has no terminator to miss.
+    pub streamed: bool,
     /// Whether the dialect's own terminator was seen.
     pub terminated: bool,
     /// Set when the upstream or the transport failed mid-stream.
@@ -306,6 +315,11 @@ pub struct StreamOutcome {
 impl StreamOutcome {
     #[must_use]
     pub const fn is_complete(&self) -> bool {
+        // A non-streamed reply is complete when nothing failed: there is no
+        // dialect terminator to look for in a single JSON document.
+        if !self.streamed {
+            return self.detail.is_none();
+        }
         self.terminated && self.detail.is_none()
     }
 
@@ -314,6 +328,8 @@ impl StreamOutcome {
     pub const fn label(&self) -> &'static str {
         if self.detail.is_some() {
             "upstream_error"
+        } else if !self.streamed {
+            "completed_not_streamed"
         } else if self.terminated {
             "completed"
         } else {
@@ -358,6 +374,35 @@ pub fn settle_stream(
         });
     }
     log.record_stream_end(correlation_id, &outcome);
+}
+
+/// Whether a relayed response is a stream, from its own headers.
+#[must_use]
+pub fn response_is_streamed(headers: &reqwest::header::HeaderMap) -> bool {
+    is_streaming_media_type(
+        headers
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok()),
+    )
+}
+
+/// Whether a response `content-type` denotes a streamed body.
+///
+/// `text/event-stream` is a stream by definition; anything else — most often
+/// `application/json` — is a single document, however many transfer chunks it
+/// arrives in. An absent or unreadable header is treated as streaming, so the
+/// truncation detection from issue #230 keeps its reach when the upstream
+/// declares nothing.
+#[must_use]
+pub fn is_streaming_media_type(content_type: Option<&str>) -> bool {
+    content_type.is_none_or(|value| {
+        value
+            .split(';')
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .eq_ignore_ascii_case("text/event-stream")
+    })
 }
 
 /// Whether `frame` carries the terminating event of a streaming dialect.
