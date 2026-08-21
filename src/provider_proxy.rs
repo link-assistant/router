@@ -331,7 +331,7 @@ fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
 /// Relay an upstream stream, recording each frame and settling it at the end.
 ///
 /// Split out so the settlement can be exercised directly: this is the code path
-/// whose absence left every OpenAI and Gemini stream without a terminal record
+/// whose absence left every `OpenAI` and Gemini stream without a terminal record
 /// (issue #258), and a defect here is invisible until a log is read days later.
 fn settled_relay_stream(
     upstream: reqwest::Response,
