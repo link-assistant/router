@@ -212,3 +212,73 @@ fn self_signed_generation_produces_a_servable_pair() {
             .contains("BEGIN CERTIFICATE")
     );
 }
+
+/// The router actually serves HTTPS from a generated certificate.
+///
+/// This is the property issue #263 needs: a client that refuses plaintext to a
+/// custom host must be able to complete a TLS handshake against the router
+/// itself, with no terminator in front of it.
+#[tokio::test]
+async fn the_router_serves_https_from_a_generated_certificate() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let (cert, key) = ensure_generated(data_dir.path(), &generated_subject_names("localhost"))
+        .expect("generate a certificate");
+    let address: std::net::SocketAddr = ([127, 0, 0, 1], 0).into();
+    let bound = std::net::TcpListener::bind(address).expect("reserve a port");
+    let port = bound.local_addr().expect("address").port();
+    drop(bound);
+
+    let app = axum::Router::new().route("/health", axum::routing::get(|| async { "ok" }));
+    let serving = tokio::spawn(serve_https(
+        ([127, 0, 0, 1], port).into(),
+        app,
+        cert.clone(),
+        key,
+    ));
+
+    // A client that trusts the generated certificate completes the handshake.
+    let pem = std::fs::read(&cert).expect("read the certificate");
+    let client = reqwest::Client::builder()
+        .add_root_certificate(reqwest::Certificate::from_pem(&pem).expect("parse the certificate"))
+        .build()
+        .expect("build a client");
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    let mut answered = None;
+    while std::time::Instant::now() < deadline && answered.is_none() {
+        if let Ok(response) = client
+            .get(format!("https://localhost:{port}/health"))
+            .send()
+            .await
+        {
+            answered = Some(response.status());
+        } else {
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+    }
+    serving.abort();
+
+    assert_eq!(
+        answered,
+        Some(reqwest::StatusCode::OK),
+        "the router must serve HTTPS from its own certificate"
+    );
+}
+
+/// A certificate that cannot be loaded is an error naming the file, rather
+/// than a listener that silently never serves.
+#[tokio::test]
+async fn an_unloadable_certificate_names_the_file() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let missing = data_dir.path().join("absent.pem");
+
+    let error = serve_https(
+        ([127, 0, 0, 1], 0).into(),
+        axum::Router::new(),
+        missing.clone(),
+        missing,
+    )
+    .await
+    .expect_err("an absent certificate cannot serve");
+
+    assert!(error.to_string().contains("absent.pem"), "{error}");
+}

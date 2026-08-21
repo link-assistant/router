@@ -446,4 +446,62 @@ mod forwarding {
             axum::http::StatusCode::SERVICE_UNAVAILABLE
         );
     }
+
+    /// An unreachable upstream is a gateway failure naming the cause, not a
+    /// silent success that would look like an accepted push.
+    #[tokio::test]
+    async fn an_unreachable_upstream_is_a_gateway_failure() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let mut state = crate::app_state::AppState::for_tests(data_dir.path());
+        state.github = crate::github_proxy::GitHubProxyConfig::with_credential(
+            "operator-secret",
+            "http://127.0.0.1:1",
+        );
+
+        let response = forward(
+            &state,
+            &[],
+            push_request(
+                "acme/demo",
+                &format!("{OLD} {NEW} refs/heads/feature\0report-status"),
+            ),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::BAD_GATEWAY);
+    }
+
+    /// The handler reads the caller's scope from its own credential, so the
+    /// restriction cannot be bypassed by reaching the route directly.
+    #[tokio::test]
+    async fn the_handler_applies_the_callers_scope() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let mut state = crate::app_state::AppState::for_tests(data_dir.path());
+        state.github = crate::github_proxy::GitHubProxyConfig::with_credential(
+            "operator-secret",
+            "http://127.0.0.1:1",
+        );
+        let token = state
+            .token_manager
+            .issue(&crate::token::IssueRequest {
+                ttl_hours: 1,
+                label: "agent",
+                github_repos: vec!["acme/demo".to_string()],
+                ..crate::token::IssueRequest::default()
+            })
+            .expect("issue a scoped token");
+
+        let mut request = push_request(
+            "someone-else/private",
+            &format!("{OLD} {NEW} refs/heads/feature\0report-status"),
+        );
+        request.headers_mut().insert(
+            axum::http::header::AUTHORIZATION,
+            axum::http::HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+        );
+
+        let response = proxy(axum::extract::State(state), request).await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::FORBIDDEN);
+    }
 }
