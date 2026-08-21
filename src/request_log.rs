@@ -5,6 +5,7 @@ mod stream_outcome;
 pub use stream_outcome::{
     STREAM_END_MARKER, StreamOutcome, body_is_inspectable, frame_terminates_stream,
     is_streaming_media_type, response_is_streamed, settle_stream, stream_warrants_a_warning,
+    text_terminates_stream,
 };
 
 use std::collections::{BTreeMap, HashMap};

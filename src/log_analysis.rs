@@ -45,6 +45,13 @@ pub struct Exchange {
     pub response_media_type: Option<String>,
     /// Whether the request asked for a stream, as a corroborating signal.
     pub stream_requested: bool,
+    /// Whether a recorded body carried this dialect's terminating event.
+    ///
+    /// The relay writes a `stream_end` record only on the Anthropic path, so an
+    /// `OpenAI` or Gemini stream reaches the log without one and used to be
+    /// reported as ending in an unknown state — although the terminator was
+    /// sitting in the body the log had already captured (issue #258).
+    pub body_terminated: bool,
     /// Whether the recorded frames could be read at all.
     ///
     /// A compressed stream is relayed and logged as the encoded bytes it was,
@@ -83,7 +90,7 @@ impl Exchange {
     /// restarted mid-turn, or the relay never settled.
     #[must_use]
     pub const fn is_unterminated(&self) -> bool {
-        self.streamed && self.inspectable && self.stream_outcome.is_none()
+        self.streamed && self.inspectable && self.stream_outcome.is_none() && !self.body_terminated
     }
 }
 
@@ -276,13 +283,21 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
             exchange.upstream_status = record.get("status").and_then(Value::as_u64);
             note_response_content_type(exchange, record);
         }
-        "upstream_response_body" => {
-            exchange.frames += 1;
+        "upstream_response_body" | "client_response_body" => {
+            if phase == "upstream_response_body" {
+                exchange.frames += 1;
+            }
             if record
                 .get("body")
                 .is_some_and(|body| body.get("base64").is_some())
             {
-                exchange.undecodable_bodies += 1;
+                if phase == "upstream_response_body" {
+                    exchange.undecodable_bodies += 1;
+                }
+            } else if let Some(body) = record.get("body")
+                && body_carries_a_terminator(body)
+            {
+                exchange.body_terminated = true;
             }
         }
         "stream_end" => {
@@ -355,6 +370,22 @@ fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
     // for, and a request may ask for a stream that the upstream answers whole.
     exchange.streamed = media_type == "text/event-stream";
     exchange.stream_evidence = true;
+}
+
+/// Whether a recorded body carries a dialect's terminating event.
+///
+/// A body is stored as a JSON string when it decoded as UTF-8 and as a JSON
+/// document when it parsed as one; both are searched as text, since the marker
+/// is a substring either way. A base64 body is compressed or binary and is
+/// handled by `inspectable` instead (issue #255).
+fn body_carries_a_terminator(body: &Value) -> bool {
+    match body {
+        Value::String(text) => crate::request_log::text_terminates_stream(text),
+        Value::Null => false,
+        // A parsed document: search its rendered form, so a terminator that
+        // arrived as structured JSON is found too.
+        other => crate::request_log::text_terminates_stream(&other.to_string()),
+    }
 }
 
 /// Whether a request body asks for a streamed reply.
