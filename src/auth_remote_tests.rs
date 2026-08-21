@@ -282,3 +282,120 @@ async fn an_explicit_mode_is_forwarded_to_the_router() {
     let seen = handle.await.unwrap();
     assert!(seen[0].contains("setup-token"), "{}", seen[0]);
 }
+
+/// A non-401 failure must report the status and the router's own words, so an
+/// operator sees what the router actually said rather than a generic message.
+#[tokio::test]
+async fn a_server_error_reports_the_status_and_the_reply() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move {
+        if let Ok(Ok((mut socket, _))) =
+            tokio::time::timeout(std::time::Duration::from_secs(5), listener.accept()).await
+        {
+            let mut request = [0; 2048];
+            let _ = socket.read(&mut request).await;
+            let _ = socket
+                .write_all(
+                    b"HTTP/1.1 503 Service Unavailable\r\ncontent-length: 13\r\nconnection: close\r\n\r\nstill booting",
+                )
+                .await;
+        }
+    });
+    let server = ResolvedServer::at(&origin, Some("admin".into()), "test");
+
+    let client = reqwest::Client::new();
+    let error =
+        send::<serde_json::Value>(&client, &server, reqwest::Method::GET, "/v1/accounts", None)
+            .await
+            .expect_err("a 503 must be an error");
+
+    assert!(error.contains("503"), "{error}");
+    assert!(error.contains("still booting"), "{error}");
+}
+
+/// A success whose body is not the expected shape must fail rather than be
+/// read as an empty result.
+#[tokio::test]
+async fn an_unreadable_reply_is_an_error() {
+    let (origin, _requests, _handle) = serve(vec!["not json"]).await;
+    let server = ResolvedServer::at(origin, Some("admin".into()), "test");
+
+    let client = reqwest::Client::new();
+    let error =
+        send::<serde_json::Value>(&client, &server, reqwest::Method::GET, "/v1/accounts", None)
+            .await
+            .expect_err("an unreadable reply must be an error");
+
+    assert!(error.contains("could not read the reply"), "{error}");
+}
+
+/// `--managed` must keep `auth` on the local path even when a router is
+/// listening: that is the opt-out issue #250 asks for.
+#[tokio::test]
+async fn forcing_managed_selects_no_remote_server() {
+    let selected = selected_server(true).await.expect("no error");
+
+    assert!(
+        selected.is_none(),
+        "--managed must not adopt a running router"
+    );
+}
+
+/// `--local` keeps `auth` on this machine's credential directory even when a
+/// server is selected — the explicit escape hatch from issue #246.
+#[tokio::test]
+async fn local_selects_no_remote_server() {
+    let target = target_for(true, false, None).await.expect("no error");
+
+    assert!(target.is_none(), "--local must stay local");
+}
+
+/// `--managed` keeps the local path too, so a clean-room run is unaffected by
+/// whatever is listening (issue #250).
+#[tokio::test]
+async fn managed_selects_no_remote_server() {
+    let target = target_for(false, true, None).await.expect("no error");
+
+    assert!(target.is_none(), "--managed must stay off a running router");
+}
+
+/// `--local` wins even when a server is also named: the flags are mutually
+/// exclusive at the parser, and the resolver must not contact anything.
+#[tokio::test]
+async fn local_beats_a_named_server() {
+    let target = target_for(true, false, Some("http://127.0.0.1:1"))
+        .await
+        .expect("no error");
+
+    assert!(target.is_none(), "--local must not reach for a server");
+}
+
+/// A named server that cannot be reached is an error naming that server, not a
+/// silent fall back to a local directory.
+#[tokio::test]
+async fn an_unreachable_named_server_is_an_error() {
+    // Matched rather than `expect_err`: `ResolvedServer` holds a token and so
+    // deliberately does not implement `Debug`.
+    let Err(error) = target_for(false, false, Some("http://127.0.0.1:1")).await else {
+        panic!("an unreachable server must be an error");
+    };
+
+    assert!(error.contains("127.0.0.1:1"), "{error}");
+    assert!(error.contains("not usable"), "{error}");
+}
+
+/// A named server that is reachable is used, and reported as coming from the
+/// flag rather than from a selection or a container.
+#[tokio::test]
+async fn a_named_server_is_used() {
+    let (origin, _requests, _handle) = serve(vec![r#"{"status":"ok"}"#]).await;
+
+    let target = target_for(false, false, Some(&origin))
+        .await
+        .expect("a reachable server is usable")
+        .expect("a server was named");
+
+    assert_eq!(target.source, "flag");
+    assert!(target.base_url.contains("127.0.0.1"), "{}", target.base_url);
+}

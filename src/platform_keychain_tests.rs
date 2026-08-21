@@ -55,3 +55,26 @@ fn each_origin_names_itself_distinctly() {
     assert_eq!(Origin::Keychain.label(), "keychain");
     assert_ne!(Origin::File.label(), Origin::Keychain.label());
 }
+
+/// A service with no entry must yield `None`, not an error or a panic.
+///
+/// This drives the real lookup — the `security` subprocess on macOS, the empty
+/// stub elsewhere — against a name that cannot exist, so the absent-entry
+/// branch is exercised without reading anybody's actual credential.
+#[test]
+fn an_absent_entry_reads_as_no_credential() {
+    let absent = read_generic_password("link-assistant-router-nonexistent-service-a8f3c1");
+
+    assert!(
+        absent.is_none(),
+        "a service with no entry must not produce a credential"
+    );
+}
+
+/// The whole lookup, including the store probe, must be safe to call for a
+/// provider that has no store: this is what every non-macOS platform does on
+/// every credential read.
+#[test]
+fn looking_up_a_storeless_provider_touches_no_store() {
+    assert!(lookup(SubscriptionProvider::Codex).is_none());
+}

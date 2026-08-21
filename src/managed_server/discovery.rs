@@ -68,23 +68,41 @@ fn published_container_ports() -> Vec<u16> {
     if !output.status.success() {
         return Vec::new();
     }
+    parse_published_ports(&String::from_utf8_lossy(&output.stdout))
+}
+
+/// Host ports reachable from this machine, parsed from `docker ps` port output.
+///
+/// Split out so the parsing is testable without a Docker daemon: the formats
+/// below are what decides whether an SSH-tunnelled or operator-published router
+/// is found at all, and they are easy to get subtly wrong.
+fn parse_published_ports(listing: &str) -> Vec<u16> {
     let mut ports = Vec::new();
-    for mapping in String::from_utf8_lossy(&output.stdout)
-        .split(',')
+    for mapping in listing
+        .split([',', '\n'])
         .map(str::trim)
+        .filter(|mapping| !mapping.is_empty())
     {
         // Entries look like `127.0.0.1:18878->8080/tcp`; the host port is what
-        // a local caller can reach.
+        // a local caller can reach. An entry with no `->` publishes nothing to
+        // the host, so there is no local port to try.
         let Some((host, _)) = mapping.split_once("->") else {
             continue;
         };
         let Some((address, port)) = host.rsplit_once(':') else {
             continue;
         };
-        if !address.is_empty() && !address.contains("127.0.0.1") && !address.contains("0.0.0.0") {
+        // Only bindings a loopback caller can actually reach. A container
+        // published to one specific external address is not reachable here.
+        if !address.is_empty()
+            && !address.contains("127.0.0.1")
+            && !address.contains("0.0.0.0")
+            && !address.contains("[::]")
+        {
             continue;
         }
         if let Ok(port) = port.trim().parse::<u16>()
+            && port != 0
             && !ports.contains(&port)
         {
             ports.push(port);

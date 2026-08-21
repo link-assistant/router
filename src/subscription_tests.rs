@@ -503,3 +503,96 @@ fn a_pooled_home_never_consults_the_machine_store() {
         "a pooled reader must not read the machine-wide store"
     );
 }
+
+/// The store holds the same JSON shape the file does, so the vendor's own
+/// entry must parse without a second parser.
+#[test]
+fn a_store_entry_parses_like_the_file() {
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, "/nonexistent");
+
+    let token = reader
+        .parse_store_credential(
+            r#"{"claudeAiOauth":{"accessToken":"kc-access","refreshToken":"kc-refresh","expiresAt":123}}"#,
+        )
+        .expect("the vendor entry must parse");
+
+    assert_eq!(token.access_token, "kc-access");
+    assert_eq!(token.refresh_token.as_deref(), Some("kc-refresh"));
+    assert_eq!(token.expires_at_ms, Some(123));
+}
+
+/// An entry this crate cannot read must leave the file as the source rather
+/// than failing the command — the pre-#249 behaviour on every platform.
+#[test]
+fn an_unreadable_store_entry_yields_no_credential() {
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, "/nonexistent");
+
+    assert!(reader.parse_store_credential("not json at all").is_none());
+    assert!(reader.parse_store_credential("{}").is_none());
+    assert!(
+        reader
+            .parse_store_credential(r#"{"claudeAiOauth":{}}"#)
+            .is_none(),
+        "an entry with no token must not be adopted"
+    );
+}
+
+/// Every provider names an upstream, so a missing default cannot silently
+/// route a subscription at the wrong vendor.
+#[test]
+fn every_provider_has_a_default_upstream() {
+    for provider in SubscriptionProvider::ALL {
+        let base = provider.default_base_url();
+        assert!(
+            base.starts_with("https://"),
+            "{provider} must default to an HTTPS upstream, got {base}"
+        );
+    }
+}
+
+/// Each error variant renders its own message, so an operator sees what went
+/// wrong rather than the variant's name.
+#[test]
+fn every_error_renders_its_message() {
+    let errors = [
+        SubscriptionError::NoCredentials("no credentials".into()),
+        SubscriptionError::ReadError("read failed".into()),
+        SubscriptionError::ParseError("parse failed".into()),
+        SubscriptionError::NoToken("no token".into()),
+    ];
+
+    for error in errors {
+        let rendered = error.to_string();
+        assert!(!rendered.is_empty());
+        assert!(
+            !rendered.contains("SubscriptionError"),
+            "the variant name leaked into the message: {rendered}"
+        );
+    }
+}
+
+/// Qwen returns a bare host, so the scheme and the OpenAI-compatible suffix are
+/// added; a base that already carries them is left alone.
+#[test]
+fn a_qwen_resource_url_is_completed_only_where_it_is_incomplete() {
+    let bare = SubscriptionToken {
+        access_token: "a".into(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: None,
+        resource_url: Some("dashscope.example".into()),
+    };
+    let completed = bare.base_url(SubscriptionProvider::Qwen);
+    assert!(completed.starts_with("https://"), "{completed}");
+    assert!(completed.ends_with("/compatible-mode/v1"), "{completed}");
+
+    let already_complete = SubscriptionToken {
+        resource_url: Some("https://dashscope.example/compatible-mode/v1".into()),
+        ..bare
+    };
+    assert_eq!(
+        already_complete.base_url(SubscriptionProvider::Qwen),
+        "https://dashscope.example/compatible-mode/v1",
+        "a complete resource URL must not be rewritten"
+    );
+}

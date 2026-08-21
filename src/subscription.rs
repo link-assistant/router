@@ -329,9 +329,17 @@ impl SubscriptionReader {
             return None;
         }
         let raw = crate::platform_keychain::lookup(self.provider)?;
-        // The stored value is the same JSON shape the file holds, so the file
-        // parser is reused rather than duplicated for the store.
-        let parsed: RawCredentials = serde_json::from_str(&raw)
+        self.parse_store_credential(&raw)
+    }
+
+    /// Normalize a credential held by the platform store.
+    ///
+    /// The stored value is the same JSON shape the file holds, so the file
+    /// parser is reused rather than duplicated. An entry this crate cannot read
+    /// yields `None` and leaves the file as the source, which is the behaviour
+    /// every platform had before the store was consulted at all.
+    fn parse_store_credential(&self, raw: &str) -> Option<SubscriptionToken> {
+        let parsed: RawCredentials = serde_json::from_str(raw)
             .map_err(|error| {
                 tracing::debug!(
                     "keychain entry for {} is not usable JSON: {error}",
