@@ -1,5 +1,12 @@
 //! Redacted, size-bounded HTTP exchange logging.
 
+mod stream_outcome;
+
+pub use stream_outcome::{
+    STREAM_END_MARKER, StreamOutcome, body_is_inspectable, frame_terminates_stream,
+    is_streaming_media_type, response_is_streamed, settle_stream, stream_warrants_a_warning,
+};
+
 use std::collections::{BTreeMap, HashMap};
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
@@ -282,6 +289,7 @@ impl RequestLog {
             json!({
                 "outcome": outcome.label(),
                 "streamed": outcome.streamed,
+                "inspectable": outcome.inspectable,
                 "complete": outcome.is_complete(),
                 "frames": outcome.frames,
                 "bytes": outcome.bytes,
@@ -290,134 +298,6 @@ impl RequestLog {
             }),
         );
     }
-}
-
-/// How a streamed relay finished, for the terminal log record.
-#[derive(Debug, Clone)]
-pub struct StreamOutcome {
-    /// Whether the response was actually streamed.
-    ///
-    /// Every response is relayed through the same byte-stream machinery, so a
-    /// single-shot JSON reply — gzip-compressed, arriving in a few transfer
-    /// chunks — used to be settled as a stream that ended without its
-    /// terminator, warning once per successful request (issue #252). A reply
-    /// that is not a stream has no terminator to miss.
-    pub streamed: bool,
-    /// Whether the dialect's own terminator was seen.
-    pub terminated: bool,
-    /// Set when the upstream or the transport failed mid-stream.
-    pub detail: Option<String>,
-    pub frames: u64,
-    pub bytes: u64,
-    pub duration_ms: u128,
-}
-
-impl StreamOutcome {
-    #[must_use]
-    pub const fn is_complete(&self) -> bool {
-        // A non-streamed reply is complete when nothing failed: there is no
-        // dialect terminator to look for in a single JSON document.
-        if !self.streamed {
-            return self.detail.is_none();
-        }
-        self.terminated && self.detail.is_none()
-    }
-
-    /// A short, greppable name for the outcome.
-    #[must_use]
-    pub const fn label(&self) -> &'static str {
-        if self.detail.is_some() {
-            "upstream_error"
-        } else if !self.streamed {
-            "completed_not_streamed"
-        } else if self.terminated {
-            "completed"
-        } else {
-            "ended_without_terminator"
-        }
-    }
-}
-
-/// Sentinel that ends the relayed stream after its outcome has been recorded.
-///
-/// The terminal record is emitted by a final stream item, which is then filtered
-/// out so the client sees only the real body.
-pub const STREAM_END_MARKER: &str = "stream-end marker";
-
-/// Record how a relayed stream finished, warning when it was cut short.
-///
-/// Silence is what made the defect invisible: an operator reading the log saw
-/// only `status=200` while the user's answer was truncated (issue #230).
-pub fn settle_stream(
-    log: &RequestLog,
-    correlation_id: &str,
-    outcome: &std::sync::Mutex<StreamOutcome>,
-    duration_ms: u128,
-    logger: &log_lazy::LogLazy,
-) {
-    let outcome = {
-        let mut outcome = outcome.lock().expect("stream outcome lock");
-        outcome.duration_ms = duration_ms;
-        outcome.clone()
-    };
-    if !outcome.is_complete() {
-        logger.warn(|| {
-            format!(
-                "stream {correlation_id} ended without its terminator after {} frames in {}ms{}",
-                outcome.frames,
-                outcome.duration_ms,
-                outcome
-                    .detail
-                    .as_ref()
-                    .map_or_else(String::new, |detail| format!(": {detail}"))
-            )
-        });
-    }
-    log.record_stream_end(correlation_id, &outcome);
-}
-
-/// Whether a relayed response is a stream, from its own headers.
-#[must_use]
-pub fn response_is_streamed(headers: &reqwest::header::HeaderMap) -> bool {
-    is_streaming_media_type(
-        headers
-            .get(reqwest::header::CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok()),
-    )
-}
-
-/// Whether a response `content-type` denotes a streamed body.
-///
-/// `text/event-stream` is a stream by definition; anything else — most often
-/// `application/json` — is a single document, however many transfer chunks it
-/// arrives in. An absent or unreadable header is treated as streaming, so the
-/// truncation detection from issue #230 keeps its reach when the upstream
-/// declares nothing.
-#[must_use]
-pub fn is_streaming_media_type(content_type: Option<&str>) -> bool {
-    content_type.is_none_or(|value| {
-        value
-            .split(';')
-            .next()
-            .unwrap_or_default()
-            .trim()
-            .eq_ignore_ascii_case("text/event-stream")
-    })
-}
-
-/// Whether `frame` carries the terminating event of a streaming dialect.
-///
-/// Anthropic ends a turn with `message_stop`; the `OpenAI` surfaces end with
-/// `[DONE]`, and the Responses shape with `response.completed`. A stream that
-/// stops without one of these was cut mid-flight (issue #230).
-#[must_use]
-pub fn frame_terminates_stream(frame: &[u8]) -> bool {
-    let Ok(text) = std::str::from_utf8(frame) else {
-        // A compressed frame cannot be inspected; absence of a terminator is
-        // then unknowable rather than false, and the caller says so.
-        return false;
-    };
-    text.contains("message_stop") || text.contains("[DONE]") || text.contains("response.completed")
 }
 
 fn ensure_owner_only_dir(path: &Path) -> std::io::Result<()> {
