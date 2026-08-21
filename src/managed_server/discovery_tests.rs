@@ -111,3 +111,28 @@ fn candidate_ports_are_not_repeated() {
 fn port_zero_is_never_a_candidate() {
     assert!(!local_candidate_ports().contains(&0));
 }
+
+/// Recorded managed state must stop discovery entirely.
+///
+/// The managed path already adopts a running container and starts a stopped
+/// one, and it performs its own health check. An earlier revision probed the
+/// managed port here as well, which consumed one of the container's health
+/// responses and left the managed path's own check to hit a server that had
+/// already answered its last request -- turning "reuse the container" into
+/// "router is unreachable". Standing aside is what keeps the two from racing.
+///
+/// Asserted against the real state directory rather than a fabricated one:
+/// `XDG_CONFIG_HOME` is process-global and this crate forbids `unsafe`, so the
+/// honest check is that discovery agrees with whatever `load_managed` reports.
+#[tokio::test]
+async fn discovery_stands_down_exactly_when_managed_state_exists() {
+    let has_managed_state = matches!(load_managed(), Ok(Some(_)));
+    let discovered = discover_local_router(false).await;
+
+    if has_managed_state {
+        assert!(
+            discovered.is_none(),
+            "a machine committed to a managed container must not adopt another listener"
+        );
+    }
+}

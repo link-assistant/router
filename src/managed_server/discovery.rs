@@ -106,6 +106,16 @@ pub(super) async fn discover_local_router(force_managed: bool) -> Option<String>
     if force_managed {
         return None;
     }
+    // A machine that has already recorded managed state has an answer to
+    // "which router should this be" that predates any probe: that container.
+    // The managed path below already adopts a running one and starts a stopped
+    // one, so discovery must stand aside entirely rather than race it --
+    // adopting some other listener would silently redirect a workflow already
+    // committed to the managed instance, and probing the managed port here
+    // would duplicate the health check that path performs.
+    if matches!(load_managed(), Ok(Some(_))) {
+        return None;
+    }
     for port in local_candidate_ports() {
         if !port_accepts(port) {
             continue;
