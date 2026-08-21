@@ -254,7 +254,104 @@ impl SubscriptionReader {
     }
 
     /// Read and normalize the subscription token.
+    ///
+    /// Consults the platform secret store as well as the credential file and
+    /// returns whichever holds the newer credential; see [`read_token_from`](Self::read_token_from).
     pub fn read_token(&self) -> Result<SubscriptionToken, SubscriptionError> {
+        self.read_token_from().map(|(token, _)| token)
+    }
+
+    /// Read the subscription token and say which store it came from.
+    ///
+    /// On macOS the Claude Code credential file is a snapshot that nothing
+    /// rotates while the live credential sits in the login Keychain, so reading
+    /// only the file saw a token that had been dead for hours while the vendor
+    /// client kept working (issue #249). Both stores are read and the newer
+    /// credential wins, which keeps every other platform on exactly the file it
+    /// used before — there, the keychain lookup simply finds nothing.
+    ///
+    /// "Newer" is decided by expiry: the two stores hold independent
+    /// credentials rather than two copies of one, so the one that stays valid
+    /// longer is the live chain. A credential with no expiry loses to one that
+    /// has a usable expiry, since an unknown expiry cannot be shown to be
+    /// newer.
+    ///
+    /// # Errors
+    ///
+    /// Returns the file's error when neither store yields a token, so a machine
+    /// with no keychain entry reports exactly what it reported before.
+    pub fn read_token_from(
+        &self,
+    ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
+        self.select_store(self.read_token_from_keychain())
+    }
+
+    /// Choose between the credential file and an already-read store credential.
+    ///
+    /// Split from [`read_token_from`](Self::read_token_from) so the preference
+    /// rule can be tested without a real login Keychain — which no test may
+    /// depend on, and none may write to.
+    fn select_store(
+        &self,
+        from_keychain: Option<SubscriptionToken>,
+    ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
+        let from_file = self.read_token_from_file();
+        match (from_file, from_keychain) {
+            (Ok(file), Some(keychain)) => {
+                // Only a strictly later expiry displaces the file, so a store
+                // that merely mirrors it changes nothing an operator sees.
+                if keychain.expires_at_ms > file.expires_at_ms {
+                    Ok((keychain, crate::platform_keychain::Origin::Keychain))
+                } else {
+                    Ok((file, crate::platform_keychain::Origin::File))
+                }
+            }
+            (Err(_), Some(keychain)) => Ok((keychain, crate::platform_keychain::Origin::Keychain)),
+            (file, None) => file.map(|token| (token, crate::platform_keychain::Origin::File)),
+        }
+    }
+
+    /// Whether this reader describes the home the vendor client itself uses.
+    ///
+    /// The platform store is a single global entry, so it speaks only for the
+    /// default home. A reader pointed somewhere else — a pooled account, a
+    /// per-account directory, a mounted credential in a container — must keep
+    /// reading exactly the file it was given: letting one machine-wide keychain
+    /// entry answer for every account would collapse a pool onto one
+    /// subscription.
+    fn is_vendor_default_home(&self) -> bool {
+        std::env::var("HOME").is_ok_and(|home| self.provider.resolve_home(&home) == self.home)
+    }
+
+    /// The credential the platform secret store holds, when there is one.
+    fn read_token_from_keychain(&self) -> Option<SubscriptionToken> {
+        if !self.is_vendor_default_home() {
+            return None;
+        }
+        let raw = crate::platform_keychain::lookup(self.provider)?;
+        self.parse_store_credential(&raw)
+    }
+
+    /// Normalize a credential held by the platform store.
+    ///
+    /// The stored value is the same JSON shape the file holds, so the file
+    /// parser is reused rather than duplicated. An entry this crate cannot read
+    /// yields `None` and leaves the file as the source, which is the behaviour
+    /// every platform had before the store was consulted at all.
+    fn parse_store_credential(&self, raw: &str) -> Option<SubscriptionToken> {
+        let parsed: RawCredentials = serde_json::from_str(raw)
+            .map_err(|error| {
+                tracing::debug!(
+                    "keychain entry for {} is not usable JSON: {error}",
+                    self.provider
+                );
+            })
+            .ok()?;
+        parsed.into_token(self.provider)
+    }
+
+    /// Read and normalize the subscription token from the credential file.
+    fn read_token_from_file(&self) -> Result<SubscriptionToken, SubscriptionError> {
         let mut last_err: Option<SubscriptionError> = None;
         for path in self.credential_paths() {
             if !path.exists() {
@@ -583,359 +680,5 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-
-    /// `auth status` prints a padded provider column. A `Display` built on
-    /// `write_str` silently discards the requested width, so the format string
-    /// looks correct and only the rendered output disagrees — invisible to the
-    /// compiler, which is why this needs a test (issue #212).
-    #[test]
-    fn provider_display_honours_the_requested_width() {
-        assert_eq!(
-            format!("[{:<8}]", SubscriptionProvider::Codex),
-            "[codex   ]"
-        );
-        assert_eq!(
-            format!("[{:>8}]", SubscriptionProvider::Claude),
-            "[  claude]"
-        );
-        // Padding must never truncate or alter a value that already fills the
-        // column.
-        assert_eq!(format!("[{:<3}]", SubscriptionProvider::Gemini), "[gemini]");
-        // The unpadded rendering is unchanged.
-        assert_eq!(SubscriptionProvider::Qwen.to_string(), "qwen");
-    }
-
-    fn tempdir() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("router-sub-{}", uuid::Uuid::new_v4()));
-        fs::create_dir_all(&dir).unwrap();
-        dir
-    }
-
-    #[test]
-    fn provider_roundtrip_strings() {
-        for p in SubscriptionProvider::ALL {
-            assert_eq!(SubscriptionProvider::from_str_opt(p.as_str()), Some(p));
-        }
-        assert_eq!(
-            SubscriptionProvider::from_str_opt("ChatGPT"),
-            Some(SubscriptionProvider::Codex)
-        );
-        assert_eq!(
-            SubscriptionProvider::from_str_opt("dashscope"),
-            Some(SubscriptionProvider::Qwen)
-        );
-        assert!(SubscriptionProvider::from_str_opt("unknown").is_none());
-    }
-
-    #[test]
-    fn reads_codex_auth_json() {
-        let dir = tempdir();
-        fs::write(
-            dir.join("auth.json"),
-            r#"{"tokens":{"id_token":"x","access_token":"codex-access","refresh_token":"codex-refresh","account_id":"acct_123"},"last_refresh":"2026-06-01T00:00:00Z"}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
-        let token = reader.read_token().expect("codex token");
-        assert_eq!(token.access_token, "codex-access");
-        assert_eq!(token.refresh_token.as_deref(), Some("codex-refresh"));
-        assert_eq!(token.account_id.as_deref(), Some("acct_123"));
-        assert_eq!(
-            token.base_url(SubscriptionProvider::Codex),
-            "https://chatgpt.com/backend-api/codex"
-        );
-    }
-
-    #[test]
-    fn reads_codex_account_id_from_id_token() {
-        use base64::Engine as _;
-        // header.payload.signature with payload carrying the nested account id.
-        let payload = serde_json::json!({
-            "https://api.openai.com/auth": { "chatgpt_account_id": "acct_from_jwt" }
-        });
-        let payload_b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(serde_json::to_vec(&payload).unwrap());
-        let id_token = format!("aGVhZGVy.{payload_b64}.sig");
-        let dir = tempdir();
-        fs::write(
-            dir.join("auth.json"),
-            format!(r#"{{"tokens":{{"id_token":"{id_token}","access_token":"a"}}}}"#),
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
-        let token = reader.read_token().expect("codex token");
-        assert_eq!(token.account_id.as_deref(), Some("acct_from_jwt"));
-    }
-
-    #[test]
-    fn reads_codex_expiry_from_access_token() {
-        use base64::Engine as _;
-        let dir = tempdir();
-        let payload =
-            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(br#"{"exp":1770000000}"#);
-        let access = format!("header.{payload}.signature");
-        fs::write(
-            dir.join("auth.json"),
-            format!(r#"{{"tokens":{{"access_token":"{access}"}}}}"#),
-        )
-        .unwrap();
-        let token = SubscriptionReader::new(SubscriptionProvider::Codex, &dir)
-            .read_token()
-            .unwrap();
-        assert_eq!(token.expires_at_ms, Some(1_770_000_000_000));
-    }
-
-    #[test]
-    fn reads_gemini_oauth_creds() {
-        let dir = tempdir();
-        fs::write(
-            dir.join("oauth_creds.json"),
-            r#"{"access_token":"gem-access","refresh_token":"gem-refresh","expiry_date":9999999999999,"token_type":"Bearer","scope":"https://www.googleapis.com/auth/cloud-platform"}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Gemini, &dir);
-        let token = reader.read_token().expect("gemini token");
-        assert_eq!(token.access_token, "gem-access");
-        assert_eq!(token.refresh_token.as_deref(), Some("gem-refresh"));
-        assert_eq!(token.expires_at_ms, Some(9_999_999_999_999));
-        assert_eq!(
-            token.base_url(SubscriptionProvider::Gemini),
-            "https://cloudcode-pa.googleapis.com"
-        );
-    }
-
-    #[test]
-    fn reads_qwen_oauth_creds_with_resource_url() {
-        let dir = tempdir();
-        fs::write(
-            dir.join("oauth_creds.json"),
-            r#"{"access_token":"qwen-access","refresh_token":"qwen-refresh","token_type":"Bearer","resource_url":"portal.qwen.ai","expiry_date":9999999999999}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, &dir);
-        let token = reader.read_token().expect("qwen token");
-        assert_eq!(token.access_token, "qwen-access");
-        assert_eq!(token.resource_url.as_deref(), Some("portal.qwen.ai"));
-        // resource_url overrides the default DashScope base and gets the
-        // OpenAI-compatible suffix + scheme added.
-        assert_eq!(
-            token.base_url(SubscriptionProvider::Qwen),
-            "https://portal.qwen.ai/compatible-mode/v1"
-        );
-    }
-
-    #[test]
-    fn qwen_without_resource_url_uses_default_base() {
-        let dir = tempdir();
-        fs::write(
-            dir.join("oauth_creds.json"),
-            r#"{"access_token":"qwen-access"}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, &dir);
-        let token = reader.read_token().expect("qwen token");
-        assert_eq!(
-            token.base_url(SubscriptionProvider::Qwen),
-            "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        );
-    }
-
-    #[test]
-    fn reads_claude_nested_credentials() {
-        let dir = tempdir();
-        fs::write(
-            dir.join(".credentials.json"),
-            r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-nested","refreshToken":"sk-ant-ort-x","expiresAt":9999999999999}}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Claude, &dir);
-        let token = reader.read_token().expect("claude token");
-        assert_eq!(token.access_token, "sk-ant-oat-nested");
-        assert_eq!(token.refresh_token.as_deref(), Some("sk-ant-ort-x"));
-        assert_eq!(token.expires_at_ms, Some(9_999_999_999_999));
-    }
-
-    #[test]
-    fn claude_pool_reader_preserves_legacy_credential_candidates() {
-        let dir = tempdir();
-        fs::write(dir.join("oauth.json"), r#"{"accessToken":"legacy"}"#).unwrap();
-        let token = SubscriptionReader::new(SubscriptionProvider::Claude, &dir)
-            .read_token()
-            .unwrap();
-
-        assert_eq!(token.access_token, "legacy");
-    }
-
-    #[test]
-    fn missing_credentials_errors() {
-        let reader = SubscriptionReader::new(
-            SubscriptionProvider::Gemini,
-            "/tmp/router-nonexistent-sub-dir",
-        );
-        let err = reader.read_token().unwrap_err();
-        assert!(matches!(err, SubscriptionError::NoCredentials(_)));
-    }
-
-    #[test]
-    fn expiry_detection() {
-        let token = SubscriptionToken {
-            access_token: "a".into(),
-            refresh_token: None,
-            expires_at_ms: Some(1000),
-            account_id: None,
-            resource_url: None,
-        };
-        assert!(token.is_expired(2000));
-        assert!(!token.is_expired(500));
-    }
-
-    #[test]
-    fn discover_credential_path_finds_existing() {
-        let dir = tempdir();
-        fs::write(dir.join("oauth_creds.json"), r#"{"access_token":"x"}"#).unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, &dir);
-        assert_eq!(
-            reader.discover_credential_path(),
-            Some(dir.join("oauth_creds.json"))
-        );
-    }
-
-    #[test]
-    fn resolve_home_uses_subdir() {
-        // Without the override env var set, falls back to <home>/<subdir>.
-        let home = SubscriptionProvider::Codex.resolve_home("/home/alice");
-        assert!(home.ends_with(".codex"));
-    }
-
-    /// A rotated refresh token must reach disk, or the next process start
-    /// replays a token the vendor has already spent (issue #205).
-    #[test]
-    fn write_token_persists_a_rotated_refresh_token_for_codex() {
-        let dir = tempdir();
-        // The real Codex layout, including fields this crate does not model.
-        fs::write(
-            dir.join("auth.json"),
-            r#"{"auth_mode":"chatgpt","tokens":{"id_token":"id-1","access_token":"old-access","refresh_token":"old-refresh","account_id":"acct_1"},"last_refresh":"2026-08-11T11:31:03Z"}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
-
-        reader
-            .write_token(&SubscriptionToken {
-                access_token: "new-access".into(),
-                refresh_token: Some("new-refresh".into()),
-                expires_at_ms: Some(9_000),
-                account_id: Some("acct_1".into()),
-                resource_url: None,
-            })
-            .expect("the rotated token should be written");
-
-        let written: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string(dir.join("auth.json")).unwrap()).unwrap();
-        assert_eq!(written["tokens"]["access_token"], "new-access");
-        assert_eq!(written["tokens"]["refresh_token"], "new-refresh");
-        // Fields the vendor CLI relies on must survive the merge.
-        assert_eq!(written["tokens"]["id_token"], "id-1");
-        assert_eq!(written["auth_mode"], "chatgpt");
-        assert_eq!(written["tokens"]["account_id"], "acct_1");
-        // The refresh is stamped so the vendor CLI sees it happened.
-        assert_ne!(written["last_refresh"], "2026-08-11T11:31:03Z");
-
-        // And the round trip reads back what was written.
-        let reread = reader.read_token().expect("re-read");
-        assert_eq!(reread.access_token, "new-access");
-        assert_eq!(reread.refresh_token.as_deref(), Some("new-refresh"));
-    }
-
-    #[test]
-    fn write_token_preserves_the_claude_nested_layout() {
-        let dir = tempdir();
-        fs::write(
-            dir.join(".credentials.json"),
-            r#"{"claudeAiOauth":{"accessToken":"old","refreshToken":"old-r","expiresAt":1,"scopes":["user:inference"],"subscriptionType":"max"}}"#,
-        )
-        .unwrap();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Claude, &dir);
-
-        reader
-            .write_token(&SubscriptionToken {
-                access_token: "fresh".into(),
-                refresh_token: Some("fresh-r".into()),
-                expires_at_ms: Some(4_242),
-                account_id: None,
-                resource_url: None,
-            })
-            .expect("write");
-
-        let written: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string(dir.join(".credentials.json")).unwrap())
-                .unwrap();
-        let block = &written["claudeAiOauth"];
-        assert_eq!(block["accessToken"], "fresh");
-        assert_eq!(block["refreshToken"], "fresh-r");
-        assert_eq!(block["expiresAt"], 4_242);
-        // Vendor-only fields are untouched.
-        assert_eq!(block["subscriptionType"], "max");
-        assert_eq!(block["scopes"][0], "user:inference");
-    }
-
-    #[test]
-    fn write_token_updates_the_flat_gemini_and_qwen_layout() {
-        for (provider, extra) in [
-            (SubscriptionProvider::Gemini, "\"scope\":\"cloud-platform\""),
-            (
-                SubscriptionProvider::Qwen,
-                "\"resource_url\":\"portal.qwen.ai\"",
-            ),
-        ] {
-            let dir = tempdir();
-            fs::write(
-                dir.join("oauth_creds.json"),
-                format!(
-                    r#"{{"access_token":"old","refresh_token":"old-r","expiry_date":1,"token_type":"Bearer",{extra}}}"#
-                ),
-            )
-            .unwrap();
-            let reader = SubscriptionReader::new(provider, &dir);
-
-            reader
-                .write_token(&SubscriptionToken {
-                    access_token: "fresh".into(),
-                    refresh_token: Some("fresh-r".into()),
-                    expires_at_ms: Some(7_000),
-                    account_id: None,
-                    resource_url: None,
-                })
-                .expect("write");
-
-            let written: serde_json::Value =
-                serde_json::from_str(&fs::read_to_string(dir.join("oauth_creds.json")).unwrap())
-                    .unwrap();
-            assert_eq!(written["access_token"], "fresh", "{provider}");
-            assert_eq!(written["refresh_token"], "fresh-r", "{provider}");
-            assert_eq!(written["expiry_date"], 7_000, "{provider}");
-            assert_eq!(written["token_type"], "Bearer", "{provider}");
-        }
-    }
-
-    /// Writing to a credential directory with no file is refused rather than
-    /// creating one the vendor CLI did not write.
-    #[test]
-    fn write_token_requires_an_existing_credential_file() {
-        let dir = tempdir();
-        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &dir);
-        assert!(matches!(
-            reader.write_token(&SubscriptionToken {
-                access_token: "x".into(),
-                refresh_token: None,
-                expires_at_ms: None,
-                account_id: None,
-                resource_url: None,
-            }),
-            Err(SubscriptionError::NoCredentials(_))
-        ));
-    }
-}
+#[path = "subscription_tests.rs"]
+mod tests;

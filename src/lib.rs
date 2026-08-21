@@ -57,6 +57,7 @@ pub mod oauth;
 pub mod on_demand_cli;
 pub mod openai;
 pub mod output_limit;
+pub mod platform_keychain;
 pub mod provider_proxy;
 pub mod providers;
 pub mod proxy;

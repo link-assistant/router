@@ -41,14 +41,47 @@ const POLL_INTERVAL: Duration = Duration::from_millis(20);
 /// `None` means "no selection" — the caller keeps its local behaviour. An
 /// unreachable *selected* server is an error rather than a silent fallback:
 /// falling back to a local directory is exactly the surprise this fixes.
-pub async fn selected_server() -> Result<Option<ResolvedServer>, String> {
-    if !has_selection() {
+pub async fn selected_server(force_managed: bool) -> Result<Option<ResolvedServer>, String> {
+    if force_managed {
+        // `--managed` asks for a disposable container, which is what the local
+        // path already provides for `auth`.
         return Ok(None);
     }
-    crate::managed_server::resolve(None, None, None)
+    if !has_selection() {
+        // Nothing was selected, but a router already listening here is a
+        // better target than this machine's credential directory: authorizing
+        // locally when a live router is one port away lands the subscription
+        // somewhere the router in use cannot see (issue #250).
+        return Ok(crate::managed_server::discovered_local_router().await);
+    }
+    crate::managed_server::resolve(None, None, None, false)
         .await
         .map(Some)
         .map_err(|error| format!("the selected server is not usable: {error}"))
+}
+
+/// The router an `auth` invocation acts on, given its explicit target flags.
+///
+/// `None` means "act locally". The precedence is the same one `with` follows,
+/// stated in one place so `auth` cannot drift from it again (issues #246,
+/// #250): an explicit `--local` or `--managed` keeps the local path, `--server`
+/// names one router for a single command, and otherwise the selection — or a
+/// router already listening here — is used.
+pub async fn target_for(
+    local: bool,
+    managed: bool,
+    server: Option<&str>,
+) -> Result<Option<ResolvedServer>, String> {
+    if local || managed {
+        return Ok(None);
+    }
+    if let Some(server) = server {
+        return crate::managed_server::resolve(Some(server), None, None, false)
+            .await
+            .map(Some)
+            .map_err(|error| format!("{server} is not usable: {error}"));
+    }
+    selected_server(managed).await
 }
 
 /// Whether the operator has selected a server, without contacting it.

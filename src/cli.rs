@@ -650,6 +650,10 @@ pub struct AuthTarget {
     /// Authorize this router instead of the selected one.
     #[arg(long, value_name = "URL", conflicts_with = "local")]
     pub server: Option<String>,
+    /// Start a disposable managed container even if a router is already
+    /// listening locally (issue #250).
+    #[arg(long, conflicts_with_all = ["local", "server"])]
+    pub managed: bool,
 }
 
 #[derive(Debug, Subcommand)]

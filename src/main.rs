@@ -52,7 +52,7 @@ async fn main() -> ExitCode {
             return link_assistant_router::with_command::run(args).await;
         }
         Some(Command::Server { op }) => {
-            return link_assistant_router::server_command::run(op);
+            return link_assistant_router::server_command::run(op).await;
         }
         _ => {}
     }

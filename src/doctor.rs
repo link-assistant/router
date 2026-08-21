@@ -61,6 +61,46 @@ fn resolve_in_path(command: &str) -> Option<std::path::PathBuf> {
     })
 }
 
+/// The operator-facing verdict for one credential.
+///
+/// `expiresAt` is a hint rather than an authority, so an expired-looking token
+/// is still probed: the catalog endpoint is what actually knows whether a
+/// credential works. That is why "expired" and "rejected" are separate
+/// dimensions here, and why a token can be expired on disk yet accepted
+/// upstream.
+const fn credential_status(was_expired: bool, still_expired: bool, rejected: bool) -> &'static str {
+    match (was_expired, still_expired, rejected) {
+        (_, true, true) => "found, token EXPIRED and REJECTED",
+        (_, true, false) => "found, token EXPIRED on disk but ACCEPTED upstream",
+        (true, false, true) => "found, token REJECTED after refresh",
+        (false, _, true) => "found, token REJECTED",
+        (true, false, false) => "found, token OK (refreshed in memory)",
+        (false, false, false) => "found, token OK",
+    }
+}
+
+/// Where a credential was read from, for the operator-facing line.
+///
+/// An operator looking at a valid-looking file while the router reports
+/// `rejected` has no way to see that the two are reading different places, so
+/// the store is named rather than implied (issue #249). A keychain credential
+/// is described by its entry, since it has no path to print.
+fn credential_location(
+    provider: SubscriptionProvider,
+    origin: crate::platform_keychain::Origin,
+    path: &std::path::Path,
+) -> String {
+    match origin {
+        crate::platform_keychain::Origin::Keychain => {
+            crate::platform_keychain::service_name(provider).map_or_else(
+                || String::from("platform keychain"),
+                |service| format!("keychain {service:?}"),
+            )
+        }
+        crate::platform_keychain::Origin::File => path.display().to_string(),
+    }
+}
+
 /// Report credential and live-catalog health for every provider.
 ///
 /// Expired credentials are refreshed in memory before their catalogs are
@@ -86,12 +126,19 @@ pub async fn subscription_catalog_diagnostics(
     for reader in readers {
         let provider = reader.provider();
         let label = format!("{provider} subscription");
-        let Some(path) = reader.discover_credential_path() else {
-            println!("{label:<23}: {} (MISSING)", reader.home().display());
-            continue;
+        // A credential may exist with no file at all: on macOS a recent Claude
+        // Code login writes only the Keychain (issue #249). Reporting MISSING
+        // on the strength of an absent file would hide a working subscription.
+        let path = match reader.discover_credential_path() {
+            Some(path) => path,
+            None if reader.read_token().is_ok() => reader.home().to_path_buf(),
+            None => {
+                println!("{label:<23}: {} (MISSING)", reader.home().display());
+                continue;
+            }
         };
-        let disk_token = match reader.read_token() {
-            Ok(token) => token,
+        let (disk_token, origin) = match reader.read_token_from() {
+            Ok(found) => found,
             Err(error) => {
                 println!("{label:<23}: {} (found, NO TOKEN: {error})", path.display());
                 println!(
@@ -113,15 +160,12 @@ pub async fn subscription_catalog_diagnostics(
         let rejected = catalog
             .as_ref()
             .is_err_and(|error| is_credential_rejection(error));
-        let status = match (was_expired, still_expired, rejected) {
-            (_, true, true) => "found, token EXPIRED and REJECTED",
-            (_, true, false) => "found, token EXPIRED on disk but ACCEPTED upstream",
-            (true, false, true) => "found, token REJECTED after refresh",
-            (false, _, true) => "found, token REJECTED",
-            (true, false, false) => "found, token OK (refreshed in memory)",
-            (false, false, false) => "found, token OK",
-        };
-        println!("{label:<23}: {} ({status})", path.display());
+        let status = credential_status(was_expired, still_expired, rejected);
+        let location = credential_location(provider, origin, &path);
+        println!(
+            "{label:<23}: {location} ({status}, store: {})",
+            origin.label()
+        );
         if let Some(error) = token_cache.last_refresh_error(provider) {
             println!("{:<23}: {error}", format!("{provider} refresh"));
         }
@@ -210,5 +254,97 @@ mod tests {
             "sh should be resolvable"
         );
         assert!(resolve_in_path("definitely-not-on-path-98765").is_none());
+    }
+
+    /// A keychain credential is described by its entry, not by a file path it
+    /// does not have -- naming the store is the diagnosability fix in #249.
+    #[test]
+    fn a_keychain_credential_is_described_by_its_entry() {
+        let location = credential_location(
+            SubscriptionProvider::Claude,
+            crate::platform_keychain::Origin::Keychain,
+            std::path::Path::new("/Users/someone/.claude/.credentials.json"),
+        );
+
+        if cfg!(target_os = "macos") {
+            assert_eq!(location, "keychain \"Claude Code-credentials\"");
+        } else {
+            assert_eq!(location, "platform keychain");
+        }
+        assert!(
+            !location.contains(".credentials.json"),
+            "a keychain credential must not be reported as a file: {location}"
+        );
+    }
+
+    /// A provider with no named store still reports a store rather than a path
+    /// it did not read, so the line never claims the wrong origin.
+    #[test]
+    fn a_storeless_provider_reports_a_generic_store() {
+        let location = credential_location(
+            SubscriptionProvider::Gemini,
+            crate::platform_keychain::Origin::Keychain,
+            std::path::Path::new("/home/someone/.gemini/oauth_creds.json"),
+        );
+
+        assert_eq!(location, "platform keychain");
+    }
+
+    /// A file credential keeps reporting its path, which is what every
+    /// non-macOS platform and every other provider sees.
+    #[test]
+    fn a_file_credential_is_described_by_its_path() {
+        let location = credential_location(
+            SubscriptionProvider::Codex,
+            crate::platform_keychain::Origin::File,
+            std::path::Path::new("/home/someone/.codex/auth.json"),
+        );
+
+        assert_eq!(location, "/home/someone/.codex/auth.json");
+    }
+
+    /// A credential that refreshed successfully must say so, rather than being
+    /// reported by the expiry that sent it to be refreshed.
+    #[test]
+    fn a_refreshed_credential_reads_as_ok() {
+        assert_eq!(
+            credential_status(true, false, false),
+            "found, token OK (refreshed in memory)"
+        );
+        assert_eq!(credential_status(false, false, false), "found, token OK");
+    }
+
+    /// The case from issue #249: expired on disk and refused upstream.
+    #[test]
+    fn an_expired_and_refused_credential_says_both() {
+        let status = credential_status(true, true, true);
+
+        assert!(status.contains("EXPIRED"), "{status}");
+        assert!(status.contains("REJECTED"), "{status}");
+    }
+
+    /// An expiry is a hint, so a token the upstream still accepts must not be
+    /// reported as dead -- this is what stops `doctor` condemning a credential
+    /// the vendor client is happily using.
+    #[test]
+    fn an_expired_but_accepted_credential_is_not_condemned() {
+        let status = credential_status(true, true, false);
+
+        assert!(status.contains("ACCEPTED upstream"), "{status}");
+        assert!(!status.contains("REJECTED"), "{status}");
+    }
+
+    /// A refusal after a successful refresh is distinct from one before it:
+    /// the first means the chain is dead, the second that it never worked.
+    #[test]
+    fn a_refusal_names_whether_a_refresh_preceded_it() {
+        assert_eq!(
+            credential_status(true, false, true),
+            "found, token REJECTED after refresh"
+        );
+        assert_eq!(
+            credential_status(false, false, true),
+            "found, token REJECTED"
+        );
     }
 }

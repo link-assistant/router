@@ -14,9 +14,12 @@ fn router(args: &[&str]) -> Output {
 fn claude_code_without_a_pending_login_does_not_start_a_new_login() {
     let home = tempfile::tempdir().expect("temp home");
     let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        // `--managed` pins the local flow under test: without a selection
+        // `auth` now adopts a router already listening here (issue #250).
         .args([
             "auth",
             "claude",
+            "--managed",
             "--flow",
             "code",
             "--code",
@@ -48,7 +51,16 @@ fn claude_code_without_a_pending_login_does_not_start_a_new_login() {
 fn claude_code_is_rejected_for_the_cli_fallback_without_starting_it() {
     let home = tempfile::tempdir().expect("temp home");
     let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["auth", "claude", "--flow", "cli", "--code", "copied-code"])
+        // `--managed` pins the local flow under test (see issue #250).
+        .args([
+            "auth",
+            "claude",
+            "--managed",
+            "--flow",
+            "cli",
+            "--code",
+            "copied-code",
+        ])
         .env("HOME", home.path())
         .env("CLAUDE_CODE_HOME", home.path().join(".claude"))
         .env("TOKEN_SECRET", "auth-cli-test-secret")
@@ -190,8 +202,12 @@ fn without_a_selection_auth_stays_local() {
     let config = tempfile::tempdir().expect("config home");
     let home = tempfile::tempdir().expect("temp home");
 
+    // `--managed` pins the local path. Without a selection `auth` now adopts a
+    // router already listening on this machine (issue #250), so a bare
+    // `auth status` would describe whatever the developer happens to be
+    // running rather than the behaviour under test.
     let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["auth", "status"])
+        .args(["auth", "status", "--managed"])
         .env("XDG_CONFIG_HOME", config.path())
         .env("HOME", home.path())
         .env("TOKEN_SECRET", "auth-cli-test-secret")

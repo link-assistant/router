@@ -71,16 +71,12 @@ async fn remote_target(
         | AuthOp::Codex { target, .. }
         | AuthOp::Status { target } => target,
     };
-    if target.local {
-        return Ok(None);
-    }
-    if let Some(server) = target.server.as_deref() {
-        return link_assistant_router::managed_server::resolve(Some(server), None, None)
-            .await
-            .map(Some)
-            .map_err(|error| format!("{server} is not usable: {error}"));
-    }
-    link_assistant_router::auth_remote::selected_server().await
+    link_assistant_router::auth_remote::target_for(
+        target.local,
+        target.managed,
+        target.server.as_deref(),
+    )
+    .await
 }
 
 async fn run_remote(
