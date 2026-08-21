@@ -97,7 +97,7 @@ fn read_generic_password(service: &str) -> Option<String> {
 
 /// Every other platform: no known vendor keychain, so the file stands alone.
 #[cfg(not(target_os = "macos"))]
-fn read_generic_password(_service: &str) -> Option<String> {
+const fn read_generic_password(_service: &str) -> Option<String> {
     None
 }
 
