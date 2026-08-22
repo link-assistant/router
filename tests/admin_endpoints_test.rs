@@ -33,6 +33,9 @@ impl Drop for Router {
     }
 }
 
+/// How many times to re-roll the port before declaring a real failure.
+const ATTEMPTS: usize = 5;
+
 fn free_port() -> u16 {
     TcpListener::bind("127.0.0.1:0")
         .expect("should bind an ephemeral port")
@@ -42,9 +45,32 @@ fn free_port() -> u16 {
 }
 
 impl Router {
+    /// Start a router, retrying if the port was taken between reservation and
+    /// use.
+    ///
+    /// `free_port` closes its listener before returning the number, so any
+    /// other test in the same parallel run can claim that port in the interval
+    /// before the child binds it. The child does not retry — `serve` propagates
+    /// the bind error and exits — so the loser of that race waited the full
+    /// health timeout and failed, which is how a green PR run turned red on
+    /// main and held up a release (the run for #266). Retrying on a fresh port
+    /// makes the race recoverable instead of fatal.
     fn start(extra_env: &[(&str, &str)]) -> Self {
+        let mut last_port = 0;
+        for _ in 0..ATTEMPTS {
+            if let Some(router) = Self::try_start(extra_env, &mut last_port) {
+                return router;
+            }
+        }
+        panic!("router never became healthy after {ATTEMPTS} attempts (last port {last_port})");
+    }
+
+    /// One start attempt: `None` if the child died or never answered, which
+    /// the caller retries on a different port.
+    fn try_start(extra_env: &[(&str, &str)], last_port: &mut u16) -> Option<Self> {
         let data_dir = tempfile::tempdir().expect("temp data dir");
         let port = free_port();
+        *last_port = port;
         let mut cmd = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
         cmd.arg("serve")
             .env("TOKEN_SECRET", "admin-endpoint-test-secret")
@@ -80,7 +106,9 @@ impl Router {
             bootstrap_token: None,
             _data_dir: data_dir,
         };
-        router.await_health();
+        if !router.await_health() {
+            return None;
+        }
         // The banner is printed before the listener binds, so by the time
         // `/health` answers everything we care about has been captured.
         router.bootstrap_token = lines
@@ -89,18 +117,25 @@ impl Router {
             .iter()
             .find_map(|line| line.split("store it now): ").nth(1))
             .map(|token| token.trim().to_string());
-        router
+        Some(router)
     }
 
-    fn await_health(&self) {
+    /// Wait for `/health`, giving up early if the child has already exited.
+    ///
+    /// A router that lost the port race dies within milliseconds, so polling
+    /// the full timeout would turn each retry into a 30-second stall.
+    fn await_health(&mut self) -> bool {
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
             if ureq_get(&self.url("/health"), None).is_some() {
-                return;
+                return true;
+            }
+            if matches!(self.child.try_wait(), Ok(Some(_))) {
+                return false;
             }
             std::thread::sleep(Duration::from_millis(100));
         }
-        panic!("router never became healthy on port {}", self.port);
+        false
     }
 
     fn url(&self, path: &str) -> String {
