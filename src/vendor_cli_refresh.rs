@@ -39,10 +39,72 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 /// The cheapest thing that still forces a refresh: one word to the smallest
 /// model. Overridable because the vendor's command surface changes between
 /// releases and an operator should not need a router release to follow it.
+///
+/// ## Why not `claude auth status`
+///
+/// Newer clients expose `claude auth status`, which looks strictly better —
+/// it bills no inference and does not depend on a model name staying valid.
+/// It was measured against a credential expired by ~42 hours (issue #275):
+///
+/// | probe | result | credential file |
+/// | --- | --- | --- |
+/// | `claude auth status` | `{"loggedIn": true, …}`, exit 0 | unchanged |
+/// | `-p ok --model claude-haiku-4-5` | `OAuth session expired and could not be refreshed` | removed |
+///
+/// `auth status` reported a 42-hour-dead credential as logged in, and the
+/// account-derived fields (`email`, `orgId`, `subscriptionType`) all came back
+/// `null` — it answers from local state without reaching the account. It
+/// therefore cannot force a refresh, and adopting it would have disabled this
+/// rung while appearing to make it cheaper.
+///
+/// Measured on claude 2.1.239. Re-measure before changing it, the same way:
+/// point the client at a *copy* of an expired credential and compare the file
+/// before and after.
 const CLAUDE_PROBE: &[&str] = &["-p", "ok", "--model", "claude-haiku-4-5"];
 
+/// Probe that makes the Codex CLI exercise its credential.
+///
+/// `codex exec` is the non-interactive form, and one word is the same bargain
+/// the Claude probe strikes. `codex login status` was not chosen for the reason
+/// recorded above: a status command that answers from local state cannot force
+/// the rotation this rung exists to trigger.
+///
+/// Measured on codex-cli 0.148.0 against a credential with ~92h remaining: the
+/// probe reached the account (it came back with a usage-limit answer, which
+/// only a server that authenticated the request can give) and left the
+/// unexpired credential alone, which is the correct behaviour for a chain that
+/// is not due to rotate. `--skip-git-repo-check` matters because the router
+/// runs this from wherever it happens to live, which need not be a repository.
+const CODEX_PROBE: &[&str] = &["exec", "--skip-git-repo-check", "ok"];
+
 /// Environment variable overriding the probe arguments, whitespace separated.
+///
+/// Applies to every provider. A deployment running two vendor clients can
+/// override them independently with the per-provider form below, which is
+/// checked first.
 pub const PROBE_ARGS_ENV: &str = "ROUTER_VENDOR_REFRESH_ARGS";
+
+/// The per-provider override, e.g. `ROUTER_VENDOR_REFRESH_ARGS_CODEX`.
+///
+/// The global form cannot express "one probe for Claude, another for Codex",
+/// and a deployment with both would otherwise have to accept one client
+/// running the other's command line.
+#[must_use]
+pub fn probe_args_env_for(provider: SubscriptionProvider) -> String {
+    format!("{PROBE_ARGS_ENV}_{}", provider.as_str().to_uppercase())
+}
+
+/// The probe that exercises a provider's credential, when one is known.
+#[must_use]
+pub const fn probe_for(provider: SubscriptionProvider) -> Option<&'static [&'static str]> {
+    match provider {
+        SubscriptionProvider::Claude => Some(CLAUDE_PROBE),
+        SubscriptionProvider::Codex => Some(CODEX_PROBE),
+        // Gemini and Qwen have no vendor rung yet; a stored GitHub token does
+        // not rotate on a chain at all, so it has nothing to recover here.
+        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => None,
+    }
+}
 
 /// A configured vendor client that can rotate a credential the router cannot.
 #[derive(Debug, Clone)]
@@ -62,11 +124,45 @@ impl VendorCli {
     /// A Claude client rooted at `home`.
     #[must_use]
     pub fn claude(binary: impl Into<PathBuf>, home: impl Into<PathBuf>) -> Self {
+        Self::new(SubscriptionProvider::Claude, binary, home)
+    }
+
+    /// A Codex client rooted at `home`.
+    ///
+    /// The recovery argument is the same one that justified the Claude rung: a
+    /// Codex credential is an OAuth chain with the same single-use rotation,
+    /// held by a vendor client that carries attestation the router can only
+    /// imitate (issue #275).
+    #[must_use]
+    pub fn codex(binary: impl Into<PathBuf>, home: impl Into<PathBuf>) -> Self {
+        Self::new(SubscriptionProvider::Codex, binary, home)
+    }
+
+    /// A client for `provider`, when one is known for it.
+    ///
+    /// Returns `None` for a provider with no probe here, rather than guessing
+    /// at a command line: running the wrong arguments against a vendor binary
+    /// is a side effect, not a failed lookup.
+    #[must_use]
+    pub fn for_provider(
+        provider: SubscriptionProvider,
+        binary: impl Into<PathBuf>,
+        home: impl Into<PathBuf>,
+    ) -> Option<Self> {
+        probe_for(provider)?;
+        Some(Self::new(provider, binary, home))
+    }
+
+    fn new(
+        provider: SubscriptionProvider,
+        binary: impl Into<PathBuf>,
+        home: impl Into<PathBuf>,
+    ) -> Self {
         Self {
-            provider: SubscriptionProvider::Claude,
+            provider,
             binary: binary.into(),
             home: home.into(),
-            probe: CLAUDE_PROBE,
+            probe: probe_for(provider).unwrap_or(CLAUDE_PROBE),
             timeout: DEFAULT_TIMEOUT,
         }
     }
@@ -85,8 +181,11 @@ impl VendorCli {
     }
 
     fn probe_args(&self) -> Vec<String> {
-        std::env::var(PROBE_ARGS_ENV)
+        // Most specific first: a per-provider override beats the global one,
+        // which beats the built-in probe.
+        std::env::var(probe_args_env_for(self.provider))
             .ok()
+            .or_else(|| std::env::var(PROBE_ARGS_ENV).ok())
             .filter(|value| !value.trim().is_empty())
             .map_or_else(
                 || self.probe.iter().map(|arg| (*arg).to_string()).collect(),
@@ -111,20 +210,25 @@ impl VendorCli {
         let args = self.probe_args();
         let provider = self.provider;
         tracing::info!(
-            "{provider} credential recovery: asking the vendor client to rotate the chain — {} \
-             --debug-file {} {}",
+            "{provider} credential recovery: asking the vendor client to rotate the chain — {} {}",
             self.binary.display(),
-            debug_log.display(),
             args.join(" ")
         );
 
         let mut command = tokio::process::Command::new(&self.binary);
+        if provider == SubscriptionProvider::Claude {
+            // Claude Code reads its home from either name depending on version;
+            // scoped to Claude so a Codex run is not handed a Claude variable.
+            command.env("CLAUDE_CONFIG_DIR", &self.home);
+            // `--debug-file` is Claude Code's flag. `codex` rejects it outright
+            // with "unexpected argument", which would make the probe fail
+            // before it ever reached the credential — so it is passed only to
+            // the client that has it.
+            command.arg("--debug-file").arg(&debug_log);
+        }
         command
-            .arg("--debug-file")
-            .arg(&debug_log)
             .args(&args)
             .env(provider.home_env(), &self.home)
-            .env("CLAUDE_CONFIG_DIR", &self.home)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());

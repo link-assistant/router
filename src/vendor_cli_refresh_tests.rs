@@ -10,7 +10,7 @@ use std::path::Path;
 #[cfg(unix)]
 use std::path::PathBuf;
 
-use super::{VendorCli, link_digest};
+use super::{PROBE_ARGS_ENV, VendorCli, link_digest, probe_args_env_for, probe_for};
 #[cfg(unix)]
 use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
@@ -207,4 +207,61 @@ fn the_fallback_record_reproduces_the_request_without_its_secrets() {
         );
     }
     assert!(shape.contains("values omitted"), "{shape}");
+}
+
+/// The rung knows a probe for each provider that has one, and refuses to guess
+/// for those that do not.
+///
+/// Running the wrong command line against a vendor binary is a side effect, not
+/// a failed lookup, so a provider without a probe yields no client at all
+/// rather than one carrying another vendor's arguments (issue #275).
+#[test]
+fn a_client_exists_only_for_a_provider_with_a_known_probe() {
+    assert!(probe_for(SubscriptionProvider::Claude).is_some());
+    assert!(probe_for(SubscriptionProvider::Codex).is_some());
+    assert!(probe_for(SubscriptionProvider::Gemini).is_none());
+    assert!(probe_for(SubscriptionProvider::Qwen).is_none());
+
+    assert!(VendorCli::for_provider(SubscriptionProvider::Codex, "/bin/true", "/tmp").is_some());
+    assert!(
+        VendorCli::for_provider(SubscriptionProvider::Gemini, "/bin/true", "/tmp").is_none(),
+        "a provider with no probe must not yield a client"
+    );
+}
+
+/// Each provider's probe is its own vendor's command line.
+///
+/// `claude -p ok` against `codex` is not a cheaper probe, it is an error: the
+/// two clients share no argument grammar.
+#[test]
+fn each_provider_gets_its_own_vendors_command_line() {
+    let claude = probe_for(SubscriptionProvider::Claude).expect("claude has a probe");
+    let codex = probe_for(SubscriptionProvider::Codex).expect("codex has a probe");
+    assert_ne!(claude, codex);
+    assert!(claude.contains(&"-p"), "{claude:?}");
+    assert!(codex.contains(&"exec"), "{codex:?}");
+    // `codex exec` refuses to run outside a repository without this.
+    assert!(codex.contains(&"--skip-git-repo-check"), "{codex:?}");
+}
+
+/// The per-provider override names the provider, so a deployment running two
+/// clients can set them independently.
+///
+/// The global form cannot express "one probe for Claude, another for Codex",
+/// and a deployment with both would otherwise have to accept one client
+/// running the other's command line.
+#[test]
+fn the_probe_override_can_name_one_provider() {
+    assert_eq!(
+        probe_args_env_for(SubscriptionProvider::Claude),
+        "ROUTER_VENDOR_REFRESH_ARGS_CLAUDE"
+    );
+    assert_eq!(
+        probe_args_env_for(SubscriptionProvider::Codex),
+        "ROUTER_VENDOR_REFRESH_ARGS_CODEX"
+    );
+    assert!(
+        probe_args_env_for(SubscriptionProvider::Claude).starts_with(PROBE_ARGS_ENV),
+        "the per-provider form must extend the global one"
+    );
 }

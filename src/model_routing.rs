@@ -582,3 +582,7 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
 #[cfg(test)]
 #[path = "model_routing_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "model_routing_recovery_tests.rs"]
+mod recovery_tests;

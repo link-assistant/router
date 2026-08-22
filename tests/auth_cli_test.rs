@@ -379,3 +379,171 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
         "--clear with --code must be rejected"
     );
 }
+
+/// An existing vendor login can be adopted, and the report says what was
+/// adopted rather than only that something was.
+///
+/// Storing a credential was the easy half. `auth gh` could already reuse an
+/// existing login; Claude and Codex offered only interactive OAuth, so
+/// provisioning a headless deployment meant knowing each provider's path and
+/// copying files by hand (issue #274).
+#[test]
+fn an_existing_claude_login_can_be_adopted() {
+    let home = tempfile::tempdir().expect("temp home");
+    let source = home.path().join("source");
+    let destination = home.path().join("router-claude");
+    std::fs::create_dir_all(&source).expect("source home");
+    let expires_at = 99_999_999_999_999_i64;
+    std::fs::write(
+        source.join(".credentials.json"),
+        format!(
+            r#"{{"claudeAiOauth":{{"accessToken":"synthetic","refreshToken":"synthetic-refresh","expiresAt":{expires_at}}}}}"#
+        ),
+    )
+    .expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "claude",
+            "--from-claude-home",
+            source.to_str().expect("utf-8 path"),
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &destination)
+        .output()
+        .expect("router CLI should run");
+    assert!(output.status.success(), "{output:?}");
+
+    // It must land where a fresh login would put it, not under the first
+    // *search* candidate — Claude Code writes `.credentials.json`.
+    assert!(
+        destination.join(".credentials.json").is_file(),
+        "the credential must be installed where the vendor client writes it"
+    );
+
+    let seen = String::from_utf8_lossy(&output.stdout);
+    assert!(seen.contains("imported"), "{seen}");
+    assert!(
+        seen.contains("refresh token present"),
+        "an operator must learn whether it can be renewed: {seen}"
+    );
+    assert!(
+        seen.contains("share one rotating chain"),
+        "adopting a credential does not mint one: {seen}"
+    );
+}
+
+/// A Codex import keeps the fields the router does not model.
+///
+/// `SubscriptionToken` carries no `id_token`, and Codex derives its account id
+/// from that token on every read — so re-serializing a parsed token would drop
+/// the field the next read depends on. The document is copied instead.
+#[test]
+fn adopting_a_codex_login_keeps_the_fields_the_router_does_not_model() {
+    let home = tempfile::tempdir().expect("temp home");
+    let source = home.path().join("source");
+    let destination = home.path().join("router-codex");
+    std::fs::create_dir_all(&source).expect("source home");
+    std::fs::write(
+        source.join("auth.json"),
+        r#"{"auth_mode":"chatgpt","tokens":{"id_token":"synthetic-id","access_token":"a","refresh_token":"r"}}"#,
+    )
+    .expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "codex",
+            "--from-codex-home",
+            source.to_str().expect("utf-8 path"),
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CODEX_HOME", &destination)
+        .output()
+        .expect("router CLI should run");
+    assert!(output.status.success(), "{output:?}");
+
+    let installed = std::fs::read_to_string(destination.join("auth.json"))
+        .expect("the credential is installed");
+    assert!(
+        installed.contains("synthetic-id"),
+        "id_token must survive the import: {installed}"
+    );
+    assert!(
+        installed.contains("chatgpt"),
+        "auth_mode must survive the import: {installed}"
+    );
+}
+
+/// Importing a home onto itself is refused rather than silently rewriting the
+/// credential with itself.
+#[test]
+fn importing_a_home_onto_itself_is_refused() {
+    let home = tempfile::tempdir().expect("temp home");
+    let claude = home.path().join("claude");
+    std::fs::create_dir_all(&claude).expect("claude home");
+    std::fs::write(
+        claude.join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"synthetic","expiresAt":99999999999999}}"#,
+    )
+    .expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "claude",
+            "--from-claude-home",
+            claude.to_str().expect("utf-8 path"),
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &claude)
+        .output()
+        .expect("router CLI should run");
+
+    assert!(!output.status.success(), "self-import must be refused");
+    let seen = String::from_utf8_lossy(&output.stderr);
+    assert!(seen.contains("already read from"), "{seen}");
+}
+
+/// An absent source names the fix rather than failing opaquely.
+#[test]
+fn importing_from_a_home_without_a_credential_says_so() {
+    let home = tempfile::tempdir().expect("temp home");
+    let source = home.path().join("empty");
+    std::fs::create_dir_all(&source).expect("source home");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "claude",
+            "--from-claude-home",
+            source.to_str().expect("utf-8 path"),
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", home.path().join("router-claude"))
+        .output()
+        .expect("router CLI should run");
+
+    assert!(!output.status.success(), "an absent credential must fail");
+    let seen = String::from_utf8_lossy(&output.stderr);
+    assert!(seen.contains("no claude credential to import"), "{seen}");
+}
+
+/// Import and withdrawal are opposites and cannot be asked for at once.
+#[test]
+fn import_cannot_be_combined_with_clear() {
+    let output = router(&["auth", "claude", "--from-claude-home", "/tmp/x", "--clear"]);
+    assert!(
+        !output.status.success(),
+        "--from-claude-home with --clear must be rejected"
+    );
+}

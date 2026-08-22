@@ -204,6 +204,9 @@ pub struct Config {
     pub data_dir: PathBuf,
     /// Optional path to the local `claude` CLI binary used by the CLI backend.
     pub claude_cli_bin: Option<PathBuf>,
+    /// Optional path to the local `codex` CLI binary used by credential
+    /// recovery (issue #275).
+    pub codex_cli_bin: Option<PathBuf>,
     /// Selected upstream inference provider.
     pub upstream_provider: UpstreamProvider,
     /// Gonka private key used for upstream request signing. Never log this.
@@ -321,6 +324,7 @@ impl Config {
             .unwrap_or_default();
         let data_dir = env::var("DATA_DIR").map_or_else(|_| default_data_dir(), PathBuf::from);
         let claude_cli_bin = env::var("CLAUDE_CLI_BIN").ok().map(PathBuf::from);
+        let codex_cli_bin = env::var("CODEX_CLI_BIN").ok().map(PathBuf::from);
         let upstream_provider = env::var("UPSTREAM_PROVIDER")
             .ok()
             .and_then(|s| UpstreamProvider::from_str_opt(&s))
@@ -454,6 +458,7 @@ impl Config {
             storage_policy,
             data_dir,
             claude_cli_bin,
+            codex_cli_bin,
             upstream_provider,
             gonka_private_key,
             gonka_source_url,
@@ -523,6 +528,7 @@ impl Config {
             storage_policy: args.storage_policy,
             data_dir: args.data_dir,
             claude_cli_bin: args.claude_cli_bin,
+            codex_cli_bin: args.codex_cli_bin,
             upstream_provider: args.upstream_provider,
             gonka_private_key: args.gonka_private_key.filter(|s| !s.is_empty()),
             gonka_source_url: args.gonka_source_url.trim_end_matches('/').to_string(),
@@ -581,6 +587,7 @@ pub struct BuildArgs<'a> {
     pub storage_policy: StoragePolicy,
     pub data_dir: PathBuf,
     pub claude_cli_bin: Option<PathBuf>,
+    pub codex_cli_bin: Option<PathBuf>,
     pub upstream_provider: UpstreamProvider,
     pub gonka_private_key: Option<String>,
     pub gonka_source_url: String,

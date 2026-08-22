@@ -25,6 +25,18 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 
+/// How long the fixture waits for the stand-in CLI's PTY handshake.
+///
+/// Not a property under test: every one of these is the budget for exchanging
+/// screens with `examples/fake-login-cli.sh`, which does blocking reads while
+/// the router writes replies and reads repaints. Twenty seconds was ample when
+/// the file ran alone and marginal when the whole suite competes for CPU, which
+/// showed up as two different tests here failing intermittently on full runs
+/// and passing 5/5 in isolation. Raised rather than tuned, because a slow
+/// machine is not a bug and this bound exists only to stop a hung child from
+/// hanging the suite.
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(120);
+
 fn fake_cli() -> String {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("examples/fake-login-cli.sh")
@@ -43,8 +55,8 @@ fn manager_with(home: &Path) -> LoginManager {
         command: fake_cli(),
         args: vec![],
         claude_code_home: home.to_path_buf(),
-        url_timeout: Duration::from_secs(20),
-        code_timeout: Duration::from_secs(20),
+        url_timeout: HANDSHAKE_TIMEOUT,
+        code_timeout: HANDSHAKE_TIMEOUT,
         ..LoginConfig::default()
     })
 }
@@ -54,8 +66,8 @@ fn setup_token_manager_with(home: &Path) -> LoginManager {
         command: fake_cli(),
         args: vec!["setup-token".to_string()],
         claude_code_home: home.to_path_buf(),
-        url_timeout: Duration::from_secs(20),
-        code_timeout: Duration::from_secs(20),
+        url_timeout: HANDSHAKE_TIMEOUT,
+        code_timeout: HANDSHAKE_TIMEOUT,
         ..LoginConfig::default()
     })
 }
@@ -318,7 +330,7 @@ async fn a_rejected_code_fails_the_session_without_writing_a_credential() {
         args: vec![],
         claude_code_home: home.clone(),
         idle_settle: Duration::from_millis(50),
-        url_timeout: Duration::from_secs(20),
+        url_timeout: HANDSHAKE_TIMEOUT,
         code_timeout: timeout,
         ..LoginConfig::default()
     });
@@ -401,7 +413,7 @@ async fn an_expired_session_reports_expired_and_stops_accepting_codes() {
         args: vec![],
         claude_code_home: home.clone(),
         session_ttl: Duration::from_millis(1),
-        url_timeout: Duration::from_secs(20),
+        url_timeout: HANDSHAKE_TIMEOUT,
         ..LoginConfig::default()
     });
 
@@ -429,7 +441,7 @@ async fn pending_sessions_are_capped() {
         args: vec![],
         claude_code_home: home.clone(),
         max_sessions: 1,
-        url_timeout: Duration::from_secs(20),
+        url_timeout: HANDSHAKE_TIMEOUT,
         ..LoginConfig::default()
     });
 
