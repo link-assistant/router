@@ -18,6 +18,15 @@ pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
+    run_with(&store, op)
+}
+
+/// The same command against an already-open store.
+///
+/// Split from [`run`] so the operations can be exercised without constructing
+/// a whole configuration around them.
+#[must_use]
+pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
     match op {
         ProviderOp::List => match store.list_redacted() {
             Ok(records) => {
@@ -120,3 +129,7 @@ pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
         },
     }
 }
+
+#[cfg(test)]
+#[path = "providers_cli_tests.rs"]
+mod tests;
