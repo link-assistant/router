@@ -28,6 +28,13 @@ pub fn relax_token_secret_for_auth(
 }
 
 pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
+    // Withdrawal is local by construction: it removes files this machine holds,
+    // and there is no remote verb for it. Handled before the server dispatch so
+    // `auth claude --clear` with a server selected cannot fall through to a
+    // remote *authorize*, which is the opposite of what was asked (issue #268).
+    if let Some(exit) = run_clear(config, op) {
+        return exit;
+    }
     // `auth` follows the selected server the way `with` does. Writing a local
     // credential while a server is selected made the obvious `server use` →
     // `auth` → `with` sequence silently authorize the wrong router (#246).
@@ -62,6 +69,7 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
             from_gh_config,
             token_stdin,
             status,
+            ..
         } => run_gh(config, from_gh_config.as_deref(), *token_stdin, *status),
         AuthOp::Status { .. } => status(config).await,
     }
@@ -132,6 +140,119 @@ fn run_gh(
     }
 }
 
+/// Withdraw stored credentials, when this invocation asked to.
+///
+/// `None` means no `--clear` was requested and the ordinary path should run.
+///
+/// Each provider reports what was removed and what remains, because a
+/// withdrawal that quietly left a credential readable somewhere else is worse
+/// than one that never ran: the operator believes the deployment holds no
+/// identity when it still does.
+fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Option<ExitCode> {
+    let providers: &[SubscriptionProvider] = match op {
+        AuthOp::Claude { clear: true, .. } => &[SubscriptionProvider::Claude],
+        AuthOp::Codex { clear: true, .. } => &[SubscriptionProvider::Codex],
+        AuthOp::Gh { clear: true, .. } => &[],
+        AuthOp::Status {
+            clear_all: true, ..
+        } => &SubscriptionProvider::ALL,
+        _ => return None,
+    };
+    let clears_github = matches!(
+        op,
+        AuthOp::Gh { clear: true, .. }
+            | AuthOp::Status {
+                clear_all: true,
+                ..
+            }
+    );
+
+    let mut failed = false;
+    for provider in providers {
+        if let Err(error) = clear_provider(config, *provider) {
+            eprintln!("error: {error}");
+            failed = true;
+        }
+    }
+    if clears_github && let Err(error) = clear_github(config) {
+        eprintln!("error: {error}");
+        failed = true;
+    }
+    // Deleting a local file does not revoke anything upstream, and an operator
+    // who believes it did has a false sense of cleanup.
+    println!(
+        "note: this removes local credentials only; a token minted for this \
+         deployment is still valid upstream and should be revoked there."
+    );
+    Some(if failed {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    })
+}
+
+/// Remove one provider's credential files, reporting what went and what stayed.
+fn clear_provider(
+    config: &link_assistant_router::config::Config,
+    provider: SubscriptionProvider,
+) -> Result<(), String> {
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let home = match provider {
+        SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
+        SubscriptionProvider::Codex => config.login.codex_home.clone(),
+        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
+            provider.resolve_home(&user_home)
+        }
+    };
+    let reader = SubscriptionReader::new(provider, home);
+    let removed = reader.clear_credentials()?;
+    if removed.is_empty() {
+        println!("{provider:<8} absent");
+    } else {
+        for path in removed {
+            println!("{provider:<8} removed {}", path.display());
+        }
+    }
+    // The vendor CLI's own store is not the router's to delete: removing it
+    // would log the user out of a client the router does not own. Naming it is
+    // the honest middle, since the router will still read a credential from
+    // there and report the provider as usable.
+    if let Some(service) = link_assistant_router::platform_keychain::service_name(provider)
+        && link_assistant_router::platform_keychain::lookup(provider).is_some()
+    {
+        println!(
+            "{provider:<8} note: the {service:?} keychain entry still holds a credential; \
+             it belongs to the vendor CLI, so remove it there (or with `security \
+             delete-generic-password -s {service:?}`) if this deployment should hold none"
+        );
+    }
+    Ok(())
+}
+
+/// Remove the stored GitHub credential, naming any that remains configured.
+fn clear_github(config: &link_assistant_router::config::Config) -> Result<(), String> {
+    use link_assistant_router::github_proxy;
+
+    let data_dir = std::path::Path::new(&config.data_dir);
+    let path = github_proxy::stored_credential_path(data_dir);
+    if github_proxy::clear_credential(data_dir)? {
+        println!("github   removed {}", path.display());
+    } else {
+        println!("github   absent");
+    }
+    // The proxy resolves a credential from several places, and only one of them
+    // is the router's. Saying so prevents "I cleared it and the routes are
+    // still mounted" from looking like a bug.
+    if github_proxy::GitHubProxyConfig::from_env().is_ok_and(|github| github.enabled()) {
+        println!(
+            "github   note: a credential is still configured from the environment or a \
+             mounted gh config, so the GitHub routes stay enabled"
+        );
+    }
+    println!("github   note: the GitHub routes are mounted at startup; restart to withdraw them");
+    Ok(())
+}
+
 /// The router this `auth` invocation acts on, or `None` for the local one.
 async fn remote_target(
     op: &AuthOp,
@@ -139,7 +260,7 @@ async fn remote_target(
     let target = match op {
         AuthOp::Claude { target, .. }
         | AuthOp::Codex { target, .. }
-        | AuthOp::Status { target } => target,
+        | AuthOp::Status { target, .. } => target,
         // `auth gh` configures the credential this router presents upstream,
         // so it always acts on the local deployment.
         AuthOp::Gh { .. } => return Ok(None),

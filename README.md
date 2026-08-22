@@ -782,7 +782,7 @@ keep working.
 ### Trusting the certificate
 
 How a client is told to trust a self-signed certificate differs per client, and
-one of them cannot be told at all.
+for `gh` it differs per platform as well.
 
 **`curl`** takes the certificate directly:
 
@@ -797,14 +797,34 @@ curl --cacert /tmp/router-ca.pem https://router.internal:8080/health
 git config --global http.https://router.internal.sslCAInfo /tmp/router-ca.pem
 ```
 
-**`gh` cannot.** As of 2.82 it reads no CA variable, has no `--cacert` flag, and
-ignores `SSL_CERT_FILE` on macOS, so a self-signed certificate leaves it with an
-`x509: certificate signed by unknown authority` error and nowhere to put the
-PEM. Two routes work, in order of how little they ask:
+**`gh` depends on the platform,** because it is a Go program and Go resolves
+roots differently per OS. On Linux (and the BSDs and Solaris) `crypto/x509`
+reads `SSL_CERT_FILE` in `root_unix.go`, so the variable is all `gh` needs. On
+macOS `root_darwin.go` goes to the Security framework instead and ignores it,
+and `gh` has no `--cacert` flag, so the PEM cannot be handed to it at all:
+
+```bash
+router tls ca > /tmp/router-ca.pem
+export SSL_CERT_FILE=/tmp/router-ca.pem   # Linux/BSD; ignored on macOS
+gh api user
+```
+
+Every client that must trust the certificate, and the setting that does it:
+
+| Client | Setting | Platform |
+| --- | --- | --- |
+| `curl` | `--cacert /tmp/router-ca.pem` | all |
+| `git` | `http.<url>.sslCAInfo`, or `GIT_SSL_CAINFO` | all |
+| `gh`, `codex` | `SSL_CERT_FILE` | Linux/BSD only |
+| Claude Code and other Node clients | `NODE_EXTRA_CA_CERTS` | all |
+
+On macOS, or wherever you would rather not distribute a CA at all, two routes
+work, in order of how little they ask:
 
 1. **A unix socket** — `gh` honours `http_unix_socket`, and over a socket it
    speaks plain HTTP, so no certificate is involved at all. This is the
-   recommended path for a local or sidecar deployment:
+   recommended path for a local or sidecar deployment, and the only one that
+   works for `gh` on macOS:
 
    ```env
    LISTEN_UNIX_SOCKET=/run/router/router.sock
@@ -817,8 +837,20 @@ PEM. Two routes work, in order of how little they ask:
    gh api user
    ```
 
-   The socket is created owner-only, so it bounds access at least as tightly as
-   the loopback port it replaces. The router keeps serving its TCP port as well.
+   The socket is owner-only by default, so it bounds access at least as tightly
+   as the loopback port it replaces. When the client runs as another uid — a
+   router sidecar serving task containers — widen it deliberately rather than
+   with `chmod 0666`:
+
+   ```env
+   LISTEN_UNIX_SOCKET=/run/router/router.sock
+   LISTEN_UNIX_SOCKET_MODE=0660
+   LISTEN_UNIX_SOCKET_GROUP=1000          # name or numeric gid
+   ```
+
+   Access is then bounded by that one gid rather than by every account on the
+   host. Modes wider than `0666` are refused. The router keeps serving its TCP
+   port as well.
 
 2. **A real certificate** via `TLS_CERT_FILE`/`TLS_KEY_FILE`, which is the right
    answer for a shared or multi-user host: nothing has to be trusted specially,

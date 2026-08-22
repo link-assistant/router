@@ -247,6 +247,39 @@ impl SubscriptionReader {
             .collect()
     }
 
+    /// Remove every credential file this provider is read from.
+    ///
+    /// All candidate names are removed, not just the one a login happens to
+    /// write. Claude alone is read from five (`credentials.json`,
+    /// `.credentials.json`, `auth.json`, `oauth.json`, `config.json`), so
+    /// clearing only the written name would leave the reader finding another
+    /// and reporting the credential as still present — a withdrawal that
+    /// silently did not happen.
+    ///
+    /// Returns the paths actually removed. A platform secret store is *not*
+    /// touched: that entry belongs to the vendor CLI, and deleting it would
+    /// log the user out of a client the router does not own. Callers that can
+    /// surface it should report it instead — see
+    /// [`crate::platform_keychain::service_name`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an operator-readable message when a file exists but cannot be
+    /// removed.
+    pub fn clear_credentials(&self) -> Result<Vec<PathBuf>, String> {
+        let mut removed = Vec::new();
+        for path in self.credential_paths() {
+            match std::fs::remove_file(&path) {
+                Ok(()) => removed.push(path),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => {
+                    return Err(format!("could not remove {}: {error}", path.display()));
+                }
+            }
+        }
+        Ok(removed)
+    }
+
     /// First existing credential file, if any (for diagnostics).
     #[must_use]
     pub fn discover_credential_path(&self) -> Option<PathBuf> {

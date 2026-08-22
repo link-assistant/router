@@ -240,3 +240,142 @@ fn local_and_server_cannot_be_combined() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+/// Withdrawing a credential removes every file the provider is *read* from,
+/// not merely the one a login writes.
+///
+/// Claude is read from five candidate names. Clearing only the written one
+/// left the reader finding another and reporting the credential as present —
+/// a withdrawal that silently did not happen (issue #268).
+#[test]
+fn clearing_claude_removes_every_name_it_is_read_from() {
+    let home = tempfile::tempdir().expect("temp home");
+    let claude = home.path().join("claude");
+    std::fs::create_dir_all(&claude).expect("claude home");
+    for name in ["credentials.json", ".credentials.json", "oauth.json"] {
+        std::fs::write(
+            claude.join(name),
+            r#"{"access_token":"synthetic","expiresAt":9999999999999}"#,
+        )
+        .expect("plant a credential");
+    }
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "claude", "--clear", "--local"])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &claude)
+        .output()
+        .expect("router CLI should run");
+    assert!(output.status.success(), "{output:?}");
+
+    for name in ["credentials.json", ".credentials.json", "oauth.json"] {
+        assert!(
+            !claude.join(name).exists(),
+            "{name} survived the withdrawal"
+        );
+    }
+
+    // The acceptance test from the issue: status must now say `absent`.
+    let status = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "status", "--local"])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &claude)
+        .output()
+        .expect("router CLI should run");
+    let seen = String::from_utf8_lossy(&status.stdout);
+    assert!(
+        seen.lines()
+            .any(|line| line.starts_with("claude") && line.contains("absent")),
+        "status should report claude absent: {seen}"
+    );
+}
+
+/// Withdrawal names the upstream it cannot reach.
+///
+/// Deleting a local file does not revoke the token at GitHub or Anthropic, and
+/// an operator who believes it did has a false sense of cleanup.
+#[test]
+fn withdrawal_says_the_credential_is_still_valid_upstream() {
+    let home = tempfile::tempdir().expect("temp home");
+    let data = home.path().join("data");
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(data.join("github-credential"), "gho_synthetic").expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "gh", "--clear"])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("DATA_DIR", &data)
+        .output()
+        .expect("router CLI should run");
+    assert!(output.status.success(), "{output:?}");
+    assert!(
+        !data.join("github-credential").exists(),
+        "the credential must be gone"
+    );
+
+    let seen = String::from_utf8_lossy(&output.stdout);
+    assert!(seen.contains("removed"), "{seen}");
+    assert!(
+        seen.contains("still valid upstream"),
+        "the operator must be told the token lives on upstream: {seen}"
+    );
+    assert!(
+        seen.contains("restart"),
+        "the routes outlive the credential until a restart: {seen}"
+    );
+}
+
+/// One `--clear-all` withdraws every identity, so decommissioning a test
+/// deployment does not mean remembering three separate paths.
+#[test]
+fn clear_all_withdraws_every_identity_at_once() {
+    let home = tempfile::tempdir().expect("temp home");
+    let claude = home.path().join("claude");
+    let codex = home.path().join("codex");
+    let data = home.path().join("data");
+    for directory in [&claude, &codex, &data] {
+        std::fs::create_dir_all(directory).expect("directory");
+    }
+    std::fs::write(
+        claude.join(".credentials.json"),
+        r#"{"access_token":"synthetic","expiresAt":9999999999999}"#,
+    )
+    .expect("plant claude");
+    std::fs::write(
+        codex.join("auth.json"),
+        r#"{"tokens":{"access_token":"s"}}"#,
+    )
+    .expect("plant codex");
+    std::fs::write(data.join("github-credential"), "gho_synthetic").expect("plant github");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "status", "--clear-all", "--local"])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &claude)
+        .env("CODEX_HOME", &codex)
+        .env("DATA_DIR", &data)
+        .output()
+        .expect("router CLI should run");
+    assert!(output.status.success(), "{output:?}");
+
+    assert!(
+        !claude.join(".credentials.json").exists(),
+        "claude survived"
+    );
+    assert!(!codex.join("auth.json").exists(), "codex survived");
+    assert!(!data.join("github-credential").exists(), "github survived");
+}
+
+/// `--clear` is not a way to spell an authorization.
+#[test]
+fn clear_cannot_be_combined_with_authorizing_flags() {
+    let output = router(&["auth", "claude", "--clear", "--code", "abc"]);
+    assert!(
+        !output.status.success(),
+        "--clear with --code must be rejected"
+    );
+}

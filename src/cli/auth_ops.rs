@@ -23,6 +23,9 @@ pub enum AuthOp {
         /// `LOGIN_CLI_ARGS` selects, then `full`.
         #[arg(long)]
         mode: Option<String>,
+        /// Remove the stored credential instead of authorizing.
+        #[arg(long, conflicts_with_all = ["code", "mode"])]
+        clear: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -34,6 +37,9 @@ pub enum AuthOp {
         /// Local callback port registered for the Codex OAuth client.
         #[arg(long, default_value_t = 1455)]
         port: u16,
+        /// Remove the stored credential instead of authorizing.
+        #[arg(long)]
+        clear: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -54,9 +60,19 @@ pub enum AuthOp {
         /// Report what is currently stored without changing it.
         #[arg(long, conflicts_with_all = ["from_gh_config", "token_stdin"])]
         status: bool,
+        /// Remove the stored credential instead of storing one.
+        #[arg(long, conflicts_with_all = ["from_gh_config", "token_stdin", "status"])]
+        clear: bool,
     },
     /// Report whether each provider credential is usable, expired, or absent.
     Status {
+        /// Remove every stored credential, for decommissioning a deployment.
+        ///
+        /// Withdraws each provider's credential and the GitHub one in a single
+        /// step, so an operator tearing down a test deployment does not have to
+        /// know three separate paths (issue #268).
+        #[arg(long = "clear-all")]
+        clear_all: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
