@@ -384,6 +384,26 @@ async fn run_server(
 
     let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
 
+    // A unix socket is the one plaintext route `gh` accepts, so it reaches the
+    // proxy without a certificate it has no way to trust (issue #265).
+    let socket_server = match link_assistant_router::unix_listener::from_env() {
+        link_assistant_router::unix_listener::SocketSetup::Enabled(path) => {
+            let listener = link_assistant_router::unix_listener::bind(&path).await?;
+            tracing::info!("Listening on unix socket {}", path.display());
+            tracing::info!(
+                "Point gh at it:\n{}",
+                link_assistant_router::unix_listener::gh_configuration_hint(&path)
+            );
+            let socket_app = app.clone();
+            Some(tokio::spawn(async move {
+                if let Err(error) = axum::serve(listener, socket_app).await {
+                    tracing::error!("unix socket listener failed: {error}");
+                }
+            }))
+        }
+        link_assistant_router::unix_listener::SocketSetup::Disabled => None,
+    };
+
     // `gh` will not talk plaintext to a custom host, so a router that cannot
     // serve HTTPS cannot mediate GitHub traffic at all without a separate
     // terminator in front of it (issue #263).
@@ -403,6 +423,9 @@ async fn run_server(
                 .await?;
         }
         Err(error) => return Err(error.into()),
+    }
+    if let Some(handle) = socket_server {
+        handle.abort();
     }
     if let Some(handle) = admin_server {
         handle.abort();
