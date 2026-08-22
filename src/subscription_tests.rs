@@ -596,3 +596,67 @@ fn a_qwen_resource_url_is_completed_only_where_it_is_incomplete() {
         "a complete resource URL must not be rewritten"
     );
 }
+
+/// An adopted credential lands where the provider's own client writes, which
+/// is not the same as the first name it is searched under.
+///
+/// Claude is *read* from `credentials.json` first for legacy-pool parity but
+/// Claude Code *writes* `.credentials.json`, so installing under the
+/// search-first name would leave the vendor client with a file it does not
+/// recognise (issue #274).
+#[test]
+fn an_installed_document_lands_where_the_vendor_client_writes() {
+    let dir = tempfile::tempdir().expect("home");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
+    let document = r#"{"claudeAiOauth":{"accessToken":"a","refreshToken":"r","expiresAt":1}}"#;
+
+    let installed = reader.install_document(document).expect("install");
+
+    assert_eq!(installed, dir.path().join(".credentials.json"));
+    assert_eq!(
+        std::fs::read_to_string(&installed).expect("read back"),
+        document
+    );
+    assert_eq!(
+        SubscriptionProvider::Claude.canonical_credential_filename(),
+        ".credentials.json"
+    );
+    assert_eq!(
+        SubscriptionProvider::Codex.canonical_credential_filename(),
+        "auth.json"
+    );
+}
+
+/// The document is handed back verbatim, so fields the router does not model
+/// survive an import.
+///
+/// `SubscriptionToken` carries no `id_token`, and Codex derives its account id
+/// from that field on every read — re-serializing a parsed token would drop
+/// exactly what the next read depends on.
+#[test]
+fn the_import_source_keeps_fields_the_token_does_not_model() {
+    let dir = tempfile::tempdir().expect("home");
+    let document = r#"{"auth_mode":"chatgpt","tokens":{"id_token":"i","access_token":"a","refresh_token":"r"}}"#;
+    std::fs::write(dir.path().join("auth.json"), document).expect("plant");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, dir.path());
+
+    let (read_back, origin) = reader.read_document_for_import().expect("read for import");
+
+    assert_eq!(read_back, document, "the document must survive verbatim");
+    assert_eq!(origin, crate::platform_keychain::Origin::File);
+    assert!(read_back.contains("id_token"));
+    assert!(read_back.contains("auth_mode"));
+}
+
+/// A home with no credential is an error naming the home, not an empty import.
+#[test]
+fn importing_from_an_empty_home_is_an_error() {
+    let dir = tempfile::tempdir().expect("home");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, dir.path());
+
+    let error = reader
+        .read_document_for_import()
+        .expect_err("an absent credential must not import as empty");
+
+    assert!(format!("{error}").contains("codex"), "{error}");
+}

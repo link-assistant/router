@@ -275,8 +275,8 @@ impl SubscriptionReader {
     /// The platform store is consulted the same way the reader consults it, so
     /// an import on macOS adopts the credential the vendor client is actually
     /// using rather than the stale file sitting next to it (issue #249). It is
-    /// preferred only when it is genuinely newer, by the rule in
-    /// [`select_store`](Self::select_store).
+    /// preferred only when it is genuinely newer, by the same rule
+    /// [`read_token_from`](Self::read_token_from) applies.
     ///
     /// # Errors
     ///

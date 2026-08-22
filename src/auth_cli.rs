@@ -760,6 +760,61 @@ async fn status(config: &Config) -> ExitCode {
 mod tests {
     use super::*;
 
+    /// A duration an operator reads at a glance, at each boundary.
+    ///
+    /// Truncating to whole hours reported 119 minutes as "1 hours", which
+    /// understates a credential enough to matter when the question is whether
+    /// to re-authenticate now.
+    #[test]
+    fn a_remaining_lifetime_reads_in_the_largest_useful_unit() {
+        assert_eq!(humanize_minutes(0), "0 minutes");
+        assert_eq!(humanize_minutes(45), "45 minutes");
+        // Below the hour threshold minutes stay minutes, so a credential with
+        // an hour left is not rounded into sounding like a day.
+        assert_eq!(humanize_minutes(89), "89 minutes");
+        assert_eq!(humanize_minutes(90), "1 hours");
+        assert_eq!(humanize_minutes(60 * 47), "47 hours");
+        assert_eq!(humanize_minutes(60 * 48), "2 days");
+        assert_eq!(humanize_minutes(60 * 24 * 30), "30 days");
+    }
+
+    /// The import report says the two things that decide what to do next: how
+    /// long the credential lasts, and whether it can be renewed at all.
+    #[test]
+    fn an_imported_credential_describes_its_lifetime_and_renewability() {
+        let now = chrono::Utc::now().timestamp_millis();
+        let renewable = link_assistant_router::subscription::SubscriptionToken {
+            access_token: "a".into(),
+            refresh_token: Some("r".into()),
+            expires_at_ms: Some(now + 6 * 3_600_000),
+            account_id: None,
+            resource_url: None,
+        };
+        let described = describe_credential(&renewable);
+        assert!(described.contains("expires in"), "{described}");
+        assert!(described.contains("refresh token present"), "{described}");
+
+        // Without a refresh token the credential dies at expiry and no recovery
+        // rung can save it, which is worth saying rather than implying.
+        let terminal = link_assistant_router::subscription::SubscriptionToken {
+            refresh_token: None,
+            expires_at_ms: Some(now - 3_600_000),
+            ..renewable.clone()
+        };
+        let described = describe_credential(&terminal);
+        assert!(described.contains("EXPIRED"), "{described}");
+        assert!(described.contains("cannot be renewed"), "{described}");
+
+        let undated = link_assistant_router::subscription::SubscriptionToken {
+            expires_at_ms: None,
+            ..renewable
+        };
+        assert!(
+            describe_credential(&undated).contains("no recorded expiry"),
+            "an unknown expiry must not be reported as an expired one"
+        );
+    }
+
     #[test]
     fn provider_flow_support_matrix_matches_the_oauth_implementations() {
         let cases = [
