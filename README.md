@@ -1568,6 +1568,37 @@ This demonstrates token issuance, validation, and revocation programmatically.
 └── README.md                 # This file
 ```
 
+### Build cache
+
+A debug build links 38 integration-test binaries plus three `[[bin]]` targets
+and evicts nothing, so `target/` grows without bound — it reached 61 GB across
+512,539 files before this was addressed. Two things keep it in check, and both
+are automatic:
+
+- `.cargo/config.toml` disables the incremental cache (42 GB of that 61 GB) and
+  drops debug info to line tables. Backtraces still resolve; stepping through
+  variables in a debugger does not.
+- A `post-commit` hook runs `scripts/sweep-build-artifacts.sh`, which prunes
+  artifacts the commit's build did not touch. It needs `cargo-sweep`:
+
+  ```bash
+  cargo install cargo-sweep
+  pre-commit install --hook-type post-commit
+  ```
+
+  Without it the hook prints a note and does nothing — it never fails a commit.
+
+To reclaim space by hand, `cargo sweep --maxsize 10GB` caps the directory and
+`rm -rf target/debug/incremental` is always safe. Prefer either to
+`cargo clean`, which forces a full cold rebuild of all 41 binaries.
+
+CI compiles through [sccache](https://github.com/mozilla/sccache) with the
+GitHub Actions backend. The artifact cache is keyed on `Cargo.lock`, so one
+dependency bump misses everything; sccache keys on each compilation unit and
+still hits. Caches are readable from the current branch and the default branch
+only — sibling branches cannot share, which is deliberate isolation — so
+keeping `main` building regularly is what keeps the shared cache warm.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding guidelines, and the pull request process.

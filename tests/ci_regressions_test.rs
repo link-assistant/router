@@ -96,3 +96,57 @@ fn archived_development_evidence_is_not_treated_as_product_source() {
     assert!(read_lf("scripts/check-file-size.rs").contains(r#""dev/log""#));
     assert!(read_lf("Cargo.toml").contains(r#"exclude = ["dev/log/**"]"#));
 }
+
+/// Local builds must not accumulate an unbounded incremental cache.
+///
+/// A debug build here links 38 integration-test binaries plus three `[[bin]]`
+/// targets and evicts nothing, so `target/` reached 512,539 files and 61 GB —
+/// 42 GB of it the incremental cache alone. CI already sets
+/// `CARGO_INCREMENTAL=0`; this keeps local builds matched to it.
+#[test]
+fn local_builds_disable_the_unbounded_incremental_cache() {
+    let config = read_lf(".cargo/config.toml");
+
+    assert!(
+        config.contains("incremental = false"),
+        "the incremental cache is the largest single contributor to target/ growth"
+    );
+    assert!(
+        config.contains("debug = 1"),
+        "full debug info across 41 linked binaries is what makes each one large"
+    );
+}
+
+/// Every commit prunes what its build superseded, so the cache cannot grow
+/// without bound between manual cleanups.
+#[test]
+fn each_commit_prunes_superseded_build_artifacts() {
+    let hooks = read_lf(".pre-commit-config.yaml");
+
+    assert!(hooks.contains("cargo-sweep"), "{hooks}");
+    assert!(
+        hooks.contains("stages: [post-commit]"),
+        "the sweep must run after the hooks that build, or it prunes their output"
+    );
+    assert!(
+        read_lf(".gitignore").contains("sweep.timestamp"),
+        "the sweep marker is local state, not a tracked file"
+    );
+}
+
+/// CI compiles through sccache, which still hits when a dependency moves and
+/// the `Cargo.lock`-keyed artifact cache misses entirely.
+#[test]
+fn ci_compiles_through_a_compilation_level_cache() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    assert!(workflow.contains("RUSTC_WRAPPER: sccache"), "{workflow}");
+    assert!(workflow.contains("SCCACHE_GHA_ENABLED"), "{workflow}");
+    // Every build job needs it; one left out silently compiles uncached.
+    let wrappers = workflow.matches("sccache-action@").count();
+    let caches = workflow.matches("name: Cache cargo registry").count();
+    assert_eq!(
+        wrappers, caches,
+        "every job that caches artifacts should also cache compilations"
+    );
+}
