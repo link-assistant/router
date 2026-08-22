@@ -140,13 +140,47 @@ fn each_commit_prunes_superseded_build_artifacts() {
 fn ci_compiles_through_a_compilation_level_cache() {
     let workflow = read_lf(".github/workflows/release.yml");
 
-    assert!(workflow.contains("RUSTC_WRAPPER: sccache"), "{workflow}");
+    assert!(workflow.contains("RUSTC_WRAPPER=sccache"), "{workflow}");
     assert!(workflow.contains("SCCACHE_GHA_ENABLED"), "{workflow}");
-    // Every build job needs it; one left out silently compiles uncached.
+    // Every job that caches artifacts should also cache compilations; one left
+    // out silently compiles uncached.
     let wrappers = workflow.matches("sccache-action@").count();
     let caches = workflow.matches("name: Cache cargo registry").count();
     assert_eq!(
         wrappers, caches,
         "every job that caches artifacts should also cache compilations"
     );
+}
+
+/// `RUSTC_WRAPPER` must never be set where the binary is not installed.
+///
+/// Setting it workflow-wide made every cargo invocation in jobs without the
+/// install step fail outright with "could not execute process `sccache`" —
+/// three jobs died in under 20 seconds. The wrapper and the step that provides
+/// it have to travel together.
+#[test]
+fn the_compiler_wrapper_is_never_set_without_its_binary() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    // A workflow-level `env:` block applies to every job, including those that
+    // never install sccache.
+    let header = workflow.split("\njobs:").next().unwrap_or_default();
+    assert!(
+        !header.contains("RUSTC_WRAPPER"),
+        "the wrapper must be scoped to jobs that install it, not the workflow"
+    );
+
+    // Within each job, the install step and the export must both be present or
+    // both absent.
+    for job in workflow
+        .split("\n  ")
+        .filter(|block| block.contains("steps:"))
+    {
+        let installs = job.contains("sccache-action@");
+        let exports = job.contains("RUSTC_WRAPPER=sccache");
+        assert_eq!(
+            installs, exports,
+            "a job sets the wrapper without installing it, or the reverse:\n{job}"
+        );
+    }
 }

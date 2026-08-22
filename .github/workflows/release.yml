@@ -46,13 +46,6 @@ env:
   GIT_CONFIG_KEY_0: init.defaultBranch
   GIT_CONFIG_VALUE_0: main
   RUSTFLAGS: -Dwarnings
-  # Route rustc through sccache, storing in the Actions cache. Unlike the
-  # `Cargo.lock`-keyed artifact cache, this still hits when a dependency moves,
-  # which matters across the three platforms and 38 test binaries this builds.
-  # If sccache hits its service rate limit the build continues uncached rather
-  # than failing (upstream documents this), so it can never block a release.
-  SCCACHE_GHA_ENABLED: 'true'
-  RUSTC_WRAPPER: sccache
   # Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (for backwards compatibility)
   CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
   DOCKERHUB_IMAGE: konard/link-assistant-router
@@ -213,6 +206,14 @@ jobs:
       - name: Set up sccache
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
 
+      # Scoped to this job rather than the workflow: a job without the step
+      # above has no `sccache` binary, and `RUSTC_WRAPPER` pointing at a missing
+      # executable fails every cargo invocation outright.
+      - name: Route compilation through sccache
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+          echo "RUSTC_WRAPPER=sccache" >> "$GITHUB_ENV"
+
       - name: Cache cargo registry
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -312,6 +313,14 @@ jobs:
       - name: Set up sccache
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
 
+      # Scoped to this job rather than the workflow: a job without the step
+      # above has no `sccache` binary, and `RUSTC_WRAPPER` pointing at a missing
+      # executable fails every cargo invocation outright.
+      - name: Route compilation through sccache
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+          echo "RUSTC_WRAPPER=sccache" >> "$GITHUB_ENV"
+
       - name: Cache cargo registry
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -366,6 +375,14 @@ jobs:
       # so no extra infrastructure is involved.
       - name: Set up sccache
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+
+      # Scoped to this job rather than the workflow: a job without the step
+      # above has no `sccache` binary, and `RUSTC_WRAPPER` pointing at a missing
+      # executable fails every cargo invocation outright.
+      - name: Route compilation through sccache
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+          echo "RUSTC_WRAPPER=sccache" >> "$GITHUB_ENV"
 
       - name: Cache cargo registry
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -499,6 +516,14 @@ jobs:
       # so no extra infrastructure is involved.
       - name: Set up sccache
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+
+      # Scoped to this job rather than the workflow: a job without the step
+      # above has no `sccache` binary, and `RUSTC_WRAPPER` pointing at a missing
+      # executable fails every cargo invocation outright.
+      - name: Route compilation through sccache
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+          echo "RUSTC_WRAPPER=sccache" >> "$GITHUB_ENV"
 
       - name: Cache cargo registry
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
