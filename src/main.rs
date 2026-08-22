@@ -21,13 +21,13 @@ mod logs_cli;
 
 use axum::middleware::from_fn_with_state;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
-use link_assistant_router::cli::{AccountOp, Cli, Command, ProviderOp, TokenOp};
+use link_assistant_router::cli::{AccountOp, Cli, Command, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
 use link_assistant_router::login::LoginManager;
 use link_assistant_router::metrics::Metrics;
 use link_assistant_router::oauth::OAuthProvider;
-use link_assistant_router::providers::{ProviderStore, ProviderUpsert};
+use link_assistant_router::providers::ProviderStore;
 use link_assistant_router::proxy::AppState;
 use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::subscription::SubscriptionReader;
@@ -100,7 +100,7 @@ async fn run() -> ExitCode {
         },
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
-        Some(Command::Providers { op }) => run_providers(&config, op),
+        Some(Command::Providers { op }) => link_assistant_router::providers_cli::run(&config, op),
         Some(Command::Clients { home, op }) => {
             link_assistant_router::client_command::run(&config, home.as_deref(), op).await
         }
@@ -386,7 +386,12 @@ async fn run_server(
 
     // A unix socket is the one plaintext route `gh` accepts, so it reaches the
     // proxy without a certificate it has no way to trust (issue #265).
+    // Unix domain sockets do not exist on Windows, so the listener is compiled
+    // only where it can be served.
+    #[cfg(unix)]
     let socket_server = link_assistant_router::unix_listener::serve_configured(app.clone()).await?;
+    #[cfg(not(unix))]
+    let socket_server: Option<tokio::task::JoinHandle<()>> = None;
 
     // `gh` will not talk plaintext to a custom host, so a router that cannot
     // serve HTTPS cannot mediate GitHub traffic at all without a separate
@@ -661,117 +666,6 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
     let refreshes = link_assistant_router::refresh::TokenCache::new();
     refreshes.persist_rejections_in(&config.data_dir);
     accounts_cli::run(&router, Some(&refreshes), op)
-}
-
-fn run_providers(config: &Config, op: &ProviderOp) -> ExitCode {
-    let store = match ProviderStore::open(&config.data_dir, &config.token_secret) {
-        Ok(store) => store,
-        Err(e) => {
-            eprintln!("error: {e}");
-            return ExitCode::from(1);
-        }
-    };
-    match op {
-        ProviderOp::List => match store.list_redacted() {
-            Ok(records) => {
-                println!(
-                    "{:<20}  {:<18}  {:<32}  {:<10}  default_model",
-                    "name", "kind", "base_url", "enabled"
-                );
-                for record in records {
-                    println!(
-                        "{:<20}  {:<18}  {:<32}  {:<10}  {}",
-                        record.name,
-                        record.kind.as_str(),
-                        record.base_url,
-                        record.enabled,
-                        record.default_model.unwrap_or_default()
-                    );
-                }
-                ExitCode::SUCCESS
-            }
-            Err(e) => {
-                eprintln!("error: {e}");
-                ExitCode::from(1)
-            }
-        },
-        ProviderOp::Add {
-            name,
-            kind,
-            base_url,
-            model,
-            models,
-            api_key,
-            api_key_env,
-            enabled,
-        } => {
-            let input = ProviderUpsert {
-                name: name.clone(),
-                kind: Some(kind.clone()),
-                base_url: base_url.clone(),
-                default_model: model.clone(),
-                models: Some(models.clone()),
-                api_key: api_key.clone(),
-                api_key_env: api_key_env.clone(),
-                encrypted_api_key: None,
-                enabled: Some(*enabled),
-            };
-            match store.upsert(input) {
-                Ok(record) => {
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&record.redacted()).unwrap_or_default()
-                    );
-                    ExitCode::SUCCESS
-                }
-                Err(e) => {
-                    eprintln!("error: {e}");
-                    ExitCode::from(1)
-                }
-            }
-        }
-        ProviderOp::Show { name } => match store.get(name) {
-            Ok(Some(record)) => {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&record.redacted()).unwrap_or_default()
-                );
-                ExitCode::SUCCESS
-            }
-            Ok(None) => {
-                eprintln!("not found: {name}");
-                ExitCode::from(2)
-            }
-            Err(e) => {
-                eprintln!("error: {e}");
-                ExitCode::from(1)
-            }
-        },
-        ProviderOp::Remove { name } => match store.delete(name) {
-            Ok(true) => {
-                println!("removed {name}");
-                ExitCode::SUCCESS
-            }
-            Ok(false) => {
-                eprintln!("not found: {name}");
-                ExitCode::from(2)
-            }
-            Err(e) => {
-                eprintln!("error: {e}");
-                ExitCode::from(1)
-            }
-        },
-        ProviderOp::Import { path } => match store.import_file(path) {
-            Ok(count) => {
-                println!("imported {count} provider(s)");
-                ExitCode::SUCCESS
-            }
-            Err(e) => {
-                eprintln!("error: {e}");
-                ExitCode::from(1)
-            }
-        },
-    }
 }
 
 async fn run_doctor(config: &Config) -> ExitCode {

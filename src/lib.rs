@@ -62,6 +62,7 @@ pub mod output_limit;
 pub mod platform_keychain;
 pub mod provider_proxy;
 pub mod providers;
+pub mod providers_cli;
 pub mod proxy;
 pub mod refresh;
 pub mod refresh_rejections;
@@ -82,6 +83,9 @@ pub mod token;
 pub mod token_admin;
 mod token_http;
 pub mod token_reservation;
+// Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
+// is gated accordingly.
+#[cfg(unix)]
 pub mod unix_listener;
 pub mod upstream_client;
 pub mod usage;
