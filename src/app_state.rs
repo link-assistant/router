@@ -98,29 +98,35 @@ impl AppState {
     /// poller does. A rotation that only ever lives in memory is lost at
     /// restart and leaves a spent refresh token on disk (issue #239).
     ///
-    /// `vendor_cli` is the operator-configured vendor binary
-    /// (`--claude-cli-bin` / `CLAUDE_CLI_BIN`). Without it the last rung of the
-    /// recovery ladder stays inert: running a vendor client is a side effect
-    /// nobody should get without asking for it.
-    pub fn register_credential_recovery(&self, vendor_cli: Option<&std::path::Path>) {
+    /// `vendor_clis` names the operator-configured vendor binaries
+    /// (`--claude-cli-bin` / `CLAUDE_CLI_BIN`, `--codex-cli-bin` /
+    /// `CODEX_CLI_BIN`). Without one the last rung of the recovery ladder stays
+    /// inert for that provider: running a vendor client is a side effect nobody
+    /// should get without asking for it.
+    ///
+    /// Registered per provider rather than for Claude alone. A Codex credential
+    /// is an OAuth chain with the same single-use rotation, so a deployment
+    /// that could recover a Claude subscription automatically but needed an
+    /// operator for Codex was drawing a line the credentials do not (#275).
+    pub fn register_credential_recovery(&self, vendor_clis: &VendorClis<'_>) {
         self.subscription_cache
             .register_readers("primary", &self.subscription_readers);
         if let Some(router) = &self.account_router {
             router.register_credential_stores(&self.subscription_cache);
         }
-        let Some(binary) = vendor_cli else {
-            return;
-        };
         for reader in &self.subscription_readers {
-            if reader.provider() == crate::subscription::SubscriptionProvider::Claude {
-                self.subscription_cache.register_vendor_cli(
-                    "primary",
-                    Arc::new(crate::vendor_cli_refresh::VendorCli::claude(
-                        binary,
-                        reader.home(),
-                    )),
-                );
-            }
+            let Some(binary) = vendor_clis.binary_for(reader.provider()) else {
+                continue;
+            };
+            let Some(cli) = crate::vendor_cli_refresh::VendorCli::for_provider(
+                reader.provider(),
+                binary,
+                reader.home(),
+            ) else {
+                continue;
+            };
+            self.subscription_cache
+                .register_vendor_cli("primary", Arc::new(cli));
         }
     }
 }
@@ -174,6 +180,32 @@ impl AppState {
             login_manager: crate::login::LoginManager::new(crate::login::LoginConfig::default()),
             github: crate::github_proxy::GitHubProxyConfig::default(),
             max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+        }
+    }
+}
+
+/// The vendor client binaries an operator configured, per provider.
+///
+/// A struct rather than more parameters so adding a third provider does not
+/// change every call site again.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct VendorClis<'a> {
+    pub claude: Option<&'a std::path::Path>,
+    pub codex: Option<&'a std::path::Path>,
+}
+
+impl<'a> VendorClis<'a> {
+    /// The binary configured for `provider`, if any.
+    #[must_use]
+    pub const fn binary_for(
+        &self,
+        provider: crate::subscription::SubscriptionProvider,
+    ) -> Option<&'a std::path::Path> {
+        match provider {
+            crate::subscription::SubscriptionProvider::Claude => self.claude,
+            crate::subscription::SubscriptionProvider::Codex => self.codex,
+            crate::subscription::SubscriptionProvider::Gemini
+            | crate::subscription::SubscriptionProvider::Qwen => None,
         }
     }
 }

@@ -357,6 +357,7 @@ mod config_verbose_tests {
             storage_policy: StoragePolicy::Memory,
             data_dir: PathBuf::from("/tmp/test-data"),
             claude_cli_bin: None,
+            codex_cli_bin: None,
             upstream_provider: UpstreamProvider::Anthropic,
             gonka_private_key: None,
             gonka_source_url: default_gonka_source_url(),

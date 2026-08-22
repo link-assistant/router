@@ -79,6 +79,22 @@ impl SubscriptionProvider {
         }
     }
 
+    /// The filename this provider's own client writes.
+    ///
+    /// Distinct from the first search candidate: Claude is *read* from
+    /// `credentials.json` first for legacy-pool parity, but Claude Code
+    /// *writes* `.credentials.json`. Installing an adopted credential under the
+    /// search-first name would leave the vendor client with a file it does not
+    /// recognise, so an import lands where a fresh login would put it.
+    #[must_use]
+    pub const fn canonical_credential_filename(self) -> &'static str {
+        match self {
+            Self::Claude => ".credentials.json",
+            Self::Codex => "auth.json",
+            Self::Gemini | Self::Qwen => "oauth_creds.json",
+        }
+    }
+
     /// Candidate credential filenames within the home directory, most specific
     /// first.
     #[must_use]
@@ -245,6 +261,93 @@ impl SubscriptionReader {
             .iter()
             .map(|name| self.home.join(name))
             .collect()
+    }
+
+    /// The credential document to adopt from this home, and where it came from.
+    ///
+    /// Import needs the *document*, not a [`SubscriptionToken`]: this type does
+    /// not model `id_token`, `auth_mode`, `scope`, or `token_type`, and Codex's
+    /// `account_id` is derived from `id_token` on every read. Re-serializing a
+    /// token would therefore silently drop the field the next read depends on,
+    /// which is the same reason [`write_token`](Self::write_token) merges into
+    /// the existing document rather than replacing it.
+    ///
+    /// The platform store is consulted the same way the reader consults it, so
+    /// an import on macOS adopts the credential the vendor client is actually
+    /// using rather than the stale file sitting next to it (issue #249). It is
+    /// preferred only when it is genuinely newer, by the rule in
+    /// [`select_store`](Self::select_store).
+    ///
+    /// # Errors
+    ///
+    /// Returns the file's error when neither store holds a usable credential.
+    pub fn read_document_for_import(
+        &self,
+    ) -> Result<(String, crate::platform_keychain::Origin), SubscriptionError> {
+        let from_keychain = self.import_source_keychain();
+        // Decide with the same rule the reader uses, so import and serving
+        // never disagree about which store is live.
+        let (_, origin) = self.select_store(
+            from_keychain
+                .as_deref()
+                .and_then(|raw| self.parse_store_credential(raw)),
+        )?;
+        match origin {
+            crate::platform_keychain::Origin::Keychain => from_keychain.ok_or_else(|| {
+                SubscriptionError::NoCredentials(format!(
+                    "No {} credential in the platform store",
+                    self.provider
+                ))
+            }),
+            crate::platform_keychain::Origin::File => {
+                let path = self.discover_credential_path().ok_or_else(|| {
+                    SubscriptionError::NoCredentials(format!(
+                        "No {} credential file in {}",
+                        self.provider,
+                        self.home.display()
+                    ))
+                })?;
+                std::fs::read_to_string(&path).map_err(|error| {
+                    SubscriptionError::ReadError(format!(
+                        "Failed to read {}: {error}",
+                        path.display()
+                    ))
+                })
+            }
+        }
+        .map(|document| (document, origin))
+    }
+
+    /// The raw platform-store entry to consider when importing from this home.
+    ///
+    /// Unlike the serving path this does not require the home to be the
+    /// vendor's default: an operator naming a source directory explicitly is
+    /// telling us where to look, and on macOS the live Claude credential is in
+    /// the store rather than in that directory. The pool-collapse risk that
+    /// motivates the stricter rule while serving does not apply here, because
+    /// nothing is served from this reader — it is read once, on demand, for a
+    /// directory the operator typed.
+    fn import_source_keychain(&self) -> Option<String> {
+        crate::platform_keychain::lookup(self.provider)
+    }
+
+    /// Install a credential document as this provider's credential.
+    ///
+    /// Written owner-only through the durable path, so a half-written file is
+    /// never left behind and the credential is not world-readable.
+    ///
+    /// # Errors
+    ///
+    /// Returns an operator-readable message when the write cannot land.
+    pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
+        // Where the provider's own client writes, so an adopted credential
+        // lands exactly where a fresh login would put it.
+        let path = self
+            .home
+            .join(self.provider.canonical_credential_filename());
+        crate::durable_file::atomic_write_owner_only(&path, document.as_bytes())
+            .map_err(|error| crate::durable_file::describe_write_failure(&path, &error))?;
+        Ok(path)
     }
 
     /// Remove every credential file this provider is read from.

@@ -755,6 +755,30 @@ router auth gh --from-gh-config ~/.config/gh   # or --token-stdin
 router auth gh --status
 ```
 
+Claude and Codex can be adopted the same way, which is how a headless
+deployment is provisioned from a workstation that is already logged in without
+a browser round-trip:
+
+```bash
+router auth claude --from-claude-home          # $CLAUDE_CODE_HOME, else ~/.claude
+router auth codex  --from-codex-home ~/.codex  # or name the directory
+```
+
+The import reports what it adopted — where it came from, when it expires, and
+whether it carries a refresh token — so an already-expired credential is caught
+at import time rather than as a `401` later. On macOS the live Claude
+credential is in the login Keychain rather than the file beside it, and the
+import prefers whichever is actually newer, the same rule the serving path
+uses.
+
+Adopting a credential does not mint one: both holders then rotate the same
+chain, and revoking it at the vendor ends both. To withdraw one:
+
+```bash
+router auth claude --clear     # or codex / gh
+router auth status --clear-all # every identity, for decommissioning
+```
+
 ### TLS
 
 The router serves plain HTTP by default. Set a certificate pair to serve HTTPS
@@ -983,6 +1007,9 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--storage-policy` / `STORAGE_POLICY` | `both` | Persistent token store: `memory`, `text` (Lino), `binary`, or `both` |
 | `--data-dir` / `DATA_DIR` | platform-specific | Where `tokens.lino` / `tokens.bin` live |
 | `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend, and by the last rung of credential recovery |
+| `--codex-cli-bin` / `CODEX_CLI_BIN` | (unset) | Local Codex CLI binary used by the last rung of credential recovery |
+| `ROUTER_VENDOR_REFRESH_ARGS` | per provider | Override the recovery probe for every provider, whitespace separated |
+| `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `_CODEX` | per provider | Override the recovery probe for one provider; wins over the global form |
 | `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential homes for the active subscription provider |
 | `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
 | `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins |
@@ -1155,7 +1182,9 @@ Rotation makes the credential file shared mutable state: the vendor CLI, a secon
 1. **Refresh before expiry.** A token within five minutes of expiring is renewed before it is used, so the rejected-token path is entered far less often.
 2. **Re-read the credential.** The whole read → refresh → write cycle is held under an advisory lock on a sidecar lock file, and the file is rewritten atomically, so two holders serialise instead of racing and an interrupted write leaves the previous credential intact.
 3. **Retry once with a newer link.** If the store has moved forward while the exchange was in flight, the router adopts what is on disk and retries once — the common case stops being a mandatory re-login.
-4. **Ask the vendor client.** Only when `--claude-cli-bin` is configured: the vendor's own client is run once, and if it rotates the chain the router adopts the credential it wrote. The invocation, the client's own (self-redacting) debug log, and the exchange the router itself sent — header names with values, body field *names* without them — are journalled, so the undocumented protocol can be reproduced from the log alone. Token values are never logged.
+4. **Ask the vendor client.** Only when that provider's binary is configured — `--claude-cli-bin` for Claude, `--codex-cli-bin` for Codex: the vendor's own client is run once, and if it rotates the chain the router adopts the credential it wrote. The invocation, the client's own (self-redacting) debug log, and the exchange the router itself sent — header names with values, body field *names* without them — are journalled, so the undocumented protocol can be reproduced from the log alone. Token values are never logged.
+
+   **This rung bills inference.** The probe is a real request to the vendor — one word to the smallest model (`claude -p ok --model claude-haiku-4-5`, `codex exec ok`) — because that is what forces a refresh. A status command does not: measured against a credential expired by 42 hours, `claude auth status` reported `loggedIn: true` and left the credential untouched, while the model probe took the refresh path (issue #275). Override the command with `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `ROUTER_VENDOR_REFRESH_ARGS_CODEX` if a future client version offers something cheaper that still rotates the chain — and measure it the same way before trusting it. Leaving the binary unset keeps the rung inert and costs nothing.
 5. **Report precisely.** Only then is the subscription reported as rejected, and the message distinguishes a revoked credential from a lost rotation race, names the credential file that was checked, and gives the re-authentication command. A request for a model whose subscription is in that state says so, instead of only reporting that the model is `not advertised by any subscription`.
 
 ### Logging in from inside a container

@@ -23,8 +23,16 @@ pub enum AuthOp {
         /// `LOGIN_CLI_ARGS` selects, then `full`.
         #[arg(long)]
         mode: Option<String>,
+        /// Adopt an existing Claude login instead of authorizing.
+        ///
+        /// Reads the credential a vendor client already holds — the file, or on
+        /// macOS the login Keychain entry, whichever is live — and installs it
+        /// as this deployment's (issue #274). Default: `$CLAUDE_CODE_HOME`,
+        /// else `~/.claude`.
+        #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
+        from_claude_home: Option<String>,
         /// Remove the stored credential instead of authorizing.
-        #[arg(long, conflicts_with_all = ["code", "mode"])]
+        #[arg(long, conflicts_with_all = ["code", "mode", "from_claude_home"])]
         clear: bool,
         #[command(flatten)]
         target: AuthTarget,
@@ -37,8 +45,13 @@ pub enum AuthOp {
         /// Local callback port registered for the Codex OAuth client.
         #[arg(long, default_value_t = 1455)]
         port: u16,
+        /// Adopt an existing Codex login instead of authorizing.
+        ///
+        /// Default: `$CODEX_HOME`, else `~/.codex` (issue #274).
+        #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
+        from_codex_home: Option<String>,
         /// Remove the stored credential instead of authorizing.
-        #[arg(long)]
+        #[arg(long, conflicts_with = "from_codex_home")]
         clear: bool,
         #[command(flatten)]
         target: AuthTarget,

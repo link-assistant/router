@@ -35,6 +35,13 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     if let Some(exit) = run_clear(config, op) {
         return exit;
     }
+    // Import is local for the same reason withdrawal is: it reads a directory
+    // on this machine and writes this deployment's credential home. Dispatched
+    // before the server selection so `--from-claude-home` with a server
+    // selected cannot fall through to a remote *authorize* (issue #274).
+    if let Some(exit) = run_import(config, op).await {
+        return exit;
+    }
     // `auth` follows the selected server the way `with` does. Writing a local
     // credential while a server is selected made the obvious `server use` →
     // `auth` → `with` sequence silently authorize the wrong router (#246).
@@ -140,6 +147,188 @@ fn run_gh(
     }
 }
 
+/// Adopt an existing vendor login, when this invocation asked to.
+///
+/// `None` means no import was requested and the ordinary path should run.
+async fn run_import(
+    config: &link_assistant_router::config::Config,
+    op: &AuthOp,
+) -> Option<ExitCode> {
+    let (provider, source) = match op {
+        AuthOp::Claude {
+            from_claude_home: Some(source),
+            ..
+        } => (SubscriptionProvider::Claude, source.clone()),
+        AuthOp::Codex {
+            from_codex_home: Some(source),
+            ..
+        } => (SubscriptionProvider::Codex, source.clone()),
+        _ => return None,
+    };
+    Some(match import_provider(config, provider, &source).await {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::from(1)
+        }
+    })
+}
+
+/// Copy a vendor credential into this deployment's home, and say what it is.
+///
+/// The document is copied rather than re-serialized from a parsed token: that
+/// type does not model `id_token`, `auth_mode`, or `scope`, and Codex derives
+/// its account id from `id_token` on every read, so a round-trip would drop the
+/// field the next read depends on.
+async fn import_provider(
+    config: &link_assistant_router::config::Config,
+    provider: SubscriptionProvider,
+    source: &str,
+) -> Result<(), String> {
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    // An empty value means the flag was given with no directory, which asks for
+    // the vendor's own default.
+    let source_home = if source.trim().is_empty() {
+        provider.resolve_home(&user_home)
+    } else {
+        std::path::PathBuf::from(source)
+    };
+    let destination_home = provider_home(config, provider, &user_home);
+    if source_home == destination_home {
+        return Err(format!(
+            "{provider} is already read from {}; naming it as the source would import it \
+             onto itself",
+            destination_home.display()
+        ));
+    }
+
+    let from = SubscriptionReader::new(provider, &source_home);
+    let (document, origin) = from
+        .read_document_for_import()
+        .map_err(|error| format!("no {provider} credential to import: {error}"))?;
+
+    // Report before installing, so an operator learns here that a credential is
+    // already expired rather than from a 401 later.
+    let token = from
+        .read_token()
+        .map_err(|error| format!("the {provider} credential could not be read: {error}"))?;
+    let where_from = match origin {
+        link_assistant_router::platform_keychain::Origin::Keychain => {
+            link_assistant_router::platform_keychain::service_name(provider).map_or_else(
+                || String::from("the platform keychain"),
+                |service| format!("keychain {service:?}"),
+            )
+        }
+        link_assistant_router::platform_keychain::Origin::File => {
+            from.discover_credential_path().map_or_else(
+                || source_home.display().to_string(),
+                |path| path.display().to_string(),
+            )
+        }
+    };
+
+    // Probe before installing. The stored expiry is a hint; only the vendor
+    // knows whether the credential still works, and an operator should learn
+    // that here rather than from a 401 on the first served request.
+    let verdict = probe_credential(provider, &token).await;
+
+    let installed =
+        SubscriptionReader::new(provider, &destination_home).install_document(&document)?;
+    println!(
+        "{provider:<8} imported {} from {where_from}",
+        installed.display()
+    );
+    println!("{provider:<8} {}, {verdict}", describe_credential(&token));
+    // Adopting a credential does not mint one: both holders now rotate the same
+    // chain, and revoking it at the vendor revokes it for both.
+    println!(
+        "{provider:<8} note: the source keeps working; the two now share one rotating \
+         chain, and a revocation at the vendor ends both"
+    );
+    Ok(())
+}
+
+/// What an operator needs to know about a credential at import time.
+fn describe_credential(token: &link_assistant_router::subscription::SubscriptionToken) -> String {
+    let now = chrono::Utc::now().timestamp_millis();
+    let expiry = token.expires_at_ms.map_or_else(
+        || String::from("no recorded expiry"),
+        |expires_at| {
+            let minutes = (expires_at - now) / 60_000;
+            if expires_at <= now {
+                format!("EXPIRED {} ago", humanize_minutes(-minutes))
+            } else {
+                format!("expires in {}", humanize_minutes(minutes))
+            }
+        },
+    );
+    // Without a refresh token the credential cannot be rotated, so it stops
+    // working at expiry and no recovery rung can save it. Worth saying plainly.
+    let refresh = if token.refresh_token.is_some() {
+        "refresh token present"
+    } else {
+        "NO refresh token, so it cannot be renewed"
+    };
+    format!("{expiry}, {refresh}")
+}
+
+/// Ask the vendor whether a credential still works.
+///
+/// The same three-valued verdict `auth status` uses: a network failure must not
+/// be reported as a bad credential, because refusing an import on an
+/// unreachable network would be worse than the problem it guards against. A
+/// rejected credential is still installed — the operator asked for it, may know
+/// something the probe does not, and the honest move is to say so rather than
+/// to overrule them.
+async fn probe_credential(
+    provider: SubscriptionProvider,
+    token: &link_assistant_router::subscription::SubscriptionToken,
+) -> &'static str {
+    let client = reqwest::Client::new();
+    match link_assistant_router::model_catalog::fetch_provider_catalog(
+        &client, provider, token, None,
+    )
+    .await
+    {
+        Ok(_) => "accepted by the vendor",
+        Err(error) if link_assistant_router::model_catalog::is_credential_rejection(&error) => {
+            "REJECTED by the vendor — importing it anyway, but it will not serve"
+        }
+        Err(_) => "not verified (the vendor could not be reached)",
+    }
+}
+
+/// A duration an operator reads at a glance.
+///
+/// Truncating to whole hours reported a credential with 119 minutes left as
+/// "1 hours", which understates it enough to matter when the question being
+/// asked is whether to re-authenticate now.
+fn humanize_minutes(minutes: i64) -> String {
+    if minutes < 90 {
+        return format!("{minutes} minutes");
+    }
+    let hours = minutes / 60;
+    if hours < 48 {
+        return format!("{hours} hours");
+    }
+    format!("{} days", hours / 24)
+}
+
+/// The credential home this deployment reads `provider` from.
+fn provider_home(
+    config: &link_assistant_router::config::Config,
+    provider: SubscriptionProvider,
+    user_home: &str,
+) -> std::path::PathBuf {
+    match provider {
+        SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
+        SubscriptionProvider::Codex => config.login.codex_home.clone(),
+        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
+            provider.resolve_home(user_home)
+        }
+    }
+}
+
 /// Withdraw stored credentials, when this invocation asked to.
 ///
 /// `None` means no `--clear` was requested and the ordinary path should run.
@@ -197,14 +386,7 @@ fn clear_provider(
     provider: SubscriptionProvider,
 ) -> Result<(), String> {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let home = match provider {
-        SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
-        SubscriptionProvider::Codex => config.login.codex_home.clone(),
-        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
-            provider.resolve_home(&user_home)
-        }
-    };
-    let reader = SubscriptionReader::new(provider, home);
+    let reader = SubscriptionReader::new(provider, provider_home(config, provider, &user_home));
     let removed = reader.clear_credentials()?;
     if removed.is_empty() {
         println!("{provider:<8} absent");
@@ -538,14 +720,7 @@ async fn status(config: &Config) -> ExitCode {
     let token_cache = link_assistant_router::refresh::TokenCache::new();
 
     for provider in SubscriptionProvider::ALL {
-        let home = match provider {
-            SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
-            SubscriptionProvider::Codex => config.login.codex_home.clone(),
-            SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
-                provider.resolve_home(&user_home)
-            }
-        };
-        let reader = SubscriptionReader::new(provider, home);
+        let reader = SubscriptionReader::new(provider, provider_home(config, provider, &user_home));
         let value = match reader.read_token() {
             Ok(disk_token) => {
                 // Refresh first when the stored expiry says to, exactly as the

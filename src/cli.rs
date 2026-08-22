@@ -117,6 +117,9 @@ pub struct Cli {
     /// Path to the local Claude CLI binary used by the CLI backend.
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
+    /// Path to the local Codex CLI binary used by credential recovery.
+    #[arg(long, env = "CODEX_CLI_BIN", global = true)]
+    pub codex_cli_bin: Option<PathBuf>,
 
     /// Upstream provider: auto, anthropic, codex, gemini, qwen, gonka, crater,
     /// or openai-compatible.
@@ -857,6 +860,7 @@ impl Cli {
             storage_policy,
             data_dir,
             claude_cli_bin: self.claude_cli_bin.clone(),
+            codex_cli_bin: self.codex_cli_bin.clone(),
             upstream_provider,
             gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
             gonka_source_url: self.gonka_source_url.clone(),
