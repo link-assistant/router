@@ -60,6 +60,11 @@ pub enum RefRefusal {
     Delete(String),
     /// The client asked to overwrite a ref with unrelated history.
     NonFastForward(String),
+    /// The router could not establish that the update is a fast-forward.
+    ///
+    /// Held separately from `NonFastForward` so the operator can tell a proven
+    /// rewrite from an unanswerable question; both are refused.
+    Unverifiable(String, String),
 }
 
 impl RefRefusal {
@@ -74,6 +79,10 @@ impl RefRefusal {
             Self::NonFastForward(name) => format!(
                 "Blocked by Link.Assistant.Router git policy: force-updating {name} is refused; \
                  allow it in GITHUB_PROXY_POLICY to permit this ref"
+            ),
+            Self::Unverifiable(name, reason) => format!(
+                "Blocked by Link.Assistant.Router git policy: could not confirm {name} is a \
+                 fast-forward ({reason}); allow it in GITHUB_PROXY_POLICY to permit this ref"
             ),
         }
     }
@@ -161,7 +170,14 @@ pub fn refuse_destructive_updates(
     None
 }
 
-/// Whether a receive-pack body announces the `force` capability.
+/// Whether a receive-pack body announces a server-side force capability.
+///
+/// Kept because a client that *does* announce one is unambiguously asking for
+/// a rewrite, but it is not a force-push detector and must never be used as
+/// one: `git send-pack` announces only the report-status/side-band/
+/// object-format family, so a genuine `git push --force` sets none of these
+/// (issue #272). A rewrite is expressed by the command line itself — an `old`
+/// that is not an ancestor of `new` — which only the object graph can settle.
 #[must_use]
 pub fn body_requests_force(body: &[u8]) -> bool {
     // Capabilities follow a NUL on the first command line.
@@ -171,6 +187,73 @@ pub fn body_requests_force(body: &[u8]) -> bool {
     };
     let tail = String::from_utf8_lossy(&window[start..]);
     tail.contains("force-ref-updates") || tail.contains("push-force")
+}
+
+/// An update whose fast-forwardness the router could not settle locally.
+///
+/// The router terminates the smart-HTTP exchange without holding the object
+/// graph, so "does `old` reach `new`?" cannot be answered from the request.
+/// These are the updates that must be checked against the upstream before the
+/// packfile is forwarded.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AncestryQuery {
+    pub name: String,
+    pub old: String,
+    pub new: String,
+}
+
+/// How an upstream comparison came out.
+///
+/// `Diverged` covers both an unrelated history and a rewrite that drops
+/// commits; GitHub answers `behind`/`diverged` for those and `ahead` (or
+/// `identical`) only for a genuine fast-forward.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Ancestry {
+    /// `new` contains `old`: an ordinary push.
+    FastForward,
+    /// `new` does not contain `old`: history would be rewritten.
+    Diverged,
+    /// The question could not be answered, so it must not be treated as safe.
+    Unknown,
+}
+
+/// Read GitHub's comparison verdict for two commits.
+///
+/// `status` is `ahead` when the head contains the base, which is exactly the
+/// fast-forward condition. Anything else — `behind`, `diverged`, or a shape
+/// we do not recognise — is not a fast-forward.
+#[must_use]
+pub fn ancestry_from_compare(payload: &serde_json::Value) -> Ancestry {
+    match payload.get("status").and_then(serde_json::Value::as_str) {
+        Some("ahead" | "identical") => Ancestry::FastForward,
+        Some("behind" | "diverged") => Ancestry::Diverged,
+        _ => Ancestry::Unknown,
+    }
+}
+
+/// The updates that need an upstream ancestry check before forwarding.
+///
+/// Creates carry no history to lose and deletes are already refused outright,
+/// so only an update to an existing ref can be a rewrite. A ref the policy
+/// explicitly allows is skipped: that is the operator's deliberate escape
+/// hatch, and spending an API call to confirm what is already permitted would
+/// only add a failure mode.
+#[must_use]
+pub fn updates_needing_ancestry(
+    updates: &[RefUpdate],
+    policy: &crate::github_proxy::GitHubPolicy,
+    repository: &str,
+) -> Vec<AncestryQuery> {
+    updates
+        .iter()
+        .filter(|update| !update.is_create() && !update.is_delete())
+        .filter(|update| !policy.allows_git_ref(repository, &update.name))
+        .map(|update| AncestryQuery {
+            name: update.name.clone(),
+            old: update.old.clone(),
+            new: update.new.clone(),
+        })
+        .collect()
 }
 
 /// `owner/repo` from a `/git/{owner}/{repo}.git/...` path.
@@ -264,8 +347,15 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
 
     // Only a push carries ref updates; a fetch is read-only and needs no
     // ref decision.
-    if let Some(refusal) =
-        refusal_for_request(&path, &body, state.github.policy_rules(), &repository)
+    let mut decision = refusal_for_request(&path, &body, state.github.policy_rules(), &repository);
+    // A rewrite is not visible in the request: the client announces no force
+    // capability, and the router holds no object graph, so `old`-reaches-`new`
+    // can only be settled upstream (issue #272). This runs before the packfile
+    // is forwarded, so a refused rewrite never reaches GitHub.
+    if decision.is_none() && path.ends_with("/git-receive-pack") {
+        decision = refuse_rewrites_upstream(state, token, &repository, &body).await;
+    }
+    if let Some(refusal) = decision
     {
         // Recorded like every other mediated call, so a refused push appears
         // in the same audit trail as an API refusal.
@@ -311,6 +401,73 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
     *relayed.status_mut() = status;
     *relayed.headers_mut() = headers;
     relayed
+}
+
+/// Refuse any update whose fast-forwardness the upstream will not confirm.
+///
+/// Fails closed. A network error, a rate limit, a revoked credential, or an
+/// answer we do not recognise all yield a refusal rather than a forward: this
+/// is a control an autonomous agent is not supposed to be able to talk past,
+/// so an unanswered question must not resolve in the agent's favour. The
+/// operator's escape hatch stays `GITHUB_PROXY_POLICY`, which is checked
+/// before the call is made.
+async fn refuse_rewrites_upstream(
+    state: &AppState,
+    token: &str,
+    repository: &str,
+    body: &[u8],
+) -> Option<RefRefusal> {
+    let updates = parse_ref_updates(body);
+    let queries = updates_needing_ancestry(&updates, state.github.policy_rules(), repository);
+    for query in queries {
+        // `{base}...{head}` is "how does head stand relative to base", so the
+        // ref's current tip is the base and the proposed tip is the head.
+        let url = format!(
+            "{}/repos/{repository}/compare/{}...{}",
+            state.github.base_url.trim_end_matches('/'),
+            query.old,
+            query.new
+        );
+        let response = state
+            .client
+            .get(&url)
+            .basic_auth("x-access-token", Some(token))
+            .header("accept", "application/vnd.github+json")
+            .header("user-agent", "link-assistant-router")
+            .send()
+            .await;
+        let ancestry = match response {
+            Ok(response) if response.status().is_success() => response
+                .json::<serde_json::Value>()
+                .await
+                .map_or(Ancestry::Unknown, |payload| {
+                    ancestry_from_compare(&payload)
+                }),
+            Ok(response) => {
+                return Some(RefRefusal::Unverifiable(
+                    query.name,
+                    format!("upstream answered {}", response.status()),
+                ));
+            }
+            Err(error) => {
+                return Some(RefRefusal::Unverifiable(
+                    query.name,
+                    format!("upstream request failed: {error}"),
+                ));
+            }
+        };
+        match ancestry {
+            Ancestry::FastForward => {}
+            Ancestry::Diverged => return Some(RefRefusal::NonFastForward(query.name)),
+            Ancestry::Unknown => {
+                return Some(RefRefusal::Unverifiable(
+                    query.name,
+                    "upstream gave no comparable status".into(),
+                ));
+            }
+        }
+    }
+    None
 }
 
 /// A policy refusal, marked so an operator can find it in a log.

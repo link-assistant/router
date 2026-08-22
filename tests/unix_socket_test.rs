@@ -1,10 +1,12 @@
 //! The router answers on a unix socket, so `gh` can reach it without TLS.
 //!
-//! `gh` builds a custom host's REST base as `https://<host>/api/v3/` and, as of
-//! 2.82, has no way to trust a certificate — no CA variable, no `--cacert`, and
-//! `SSL_CERT_FILE` ignored on macOS. It does honour `http_unix_socket`, and
-//! over a socket it speaks plain HTTP, so a socket sidesteps the certificate
-//! problem entirely (issue #265).
+//! `gh` builds a custom host's REST base as `https://<host>/api/v3/`. On Linux
+//! it can be pointed at a self-signed certificate with `SSL_CERT_FILE`, which
+//! Go's `crypto/x509` reads in `root_unix.go`; on macOS `root_darwin.go` uses
+//! the Security framework and ignores it, and `gh` has no `--cacert` flag, so
+//! there the certificate cannot be handed over at all (issue #270). It does
+//! honour `http_unix_socket` everywhere, and over a socket it speaks plain
+//! HTTP, so a socket sidesteps the certificate problem on both (issue #265).
 
 #![cfg(unix)]
 

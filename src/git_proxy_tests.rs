@@ -295,7 +295,23 @@ mod forwarding {
     use axum::http::Request as HttpRequest;
 
     /// An upstream that echoes the credential it was presented.
+    ///
+    /// A `/compare/` request is answered as a fast-forward instead, because
+    /// every push to an existing ref now asks the upstream whether it is one
+    /// (issue #272). Tests that want the refusal drive it with
+    /// [`diverged_upstream`].
     async fn echo_upstream() -> u16 {
+        upstream_reporting("ahead").await
+    }
+
+    /// An upstream that reports every comparison as a rewrite.
+    async fn diverged_upstream() -> u16 {
+        upstream_reporting("diverged").await
+    }
+
+    /// An upstream that echoes credentials but answers `/compare/` with a
+    /// fixed comparison verdict.
+    async fn upstream_reporting(status: &'static str) -> u16 {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
         tokio::spawn(async move {
@@ -304,16 +320,20 @@ mod forwarding {
                 let mut scratch = [0; 8192];
                 let read = socket.read(&mut scratch).await.unwrap_or(0);
                 let request = String::from_utf8_lossy(&scratch[..read]).to_string();
-                let credential = request
-                    .lines()
-                    .find(|line| line.to_ascii_lowercase().starts_with("authorization:"))
-                    .unwrap_or("authorization: (none)")
-                    .to_string();
+                let body = if request.contains("/compare/") {
+                    format!("{{\"status\":\"{status}\"}}")
+                } else {
+                    request
+                        .lines()
+                        .find(|line| line.to_ascii_lowercase().starts_with("authorization:"))
+                        .unwrap_or("authorization: (none)")
+                        .to_string()
+                };
                 let _ = socket
                     .write_all(
                         format!(
-                            "HTTP/1.1 200 OK\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{credential}",
-                            credential.len()
+                            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                            body.len()
                         )
                         .as_bytes(),
                     )
@@ -449,6 +469,9 @@ mod forwarding {
 
     /// An unreachable upstream is a gateway failure naming the cause, not a
     /// silent success that would look like an accepted push.
+    ///
+    /// Driven with a branch *creation*, which needs no ancestry check, so this
+    /// still pins the forwarding path rather than the check added for #272.
     #[tokio::test]
     async fn an_unreachable_upstream_is_a_gateway_failure() {
         let data_dir = tempfile::tempdir().unwrap();
@@ -463,12 +486,72 @@ mod forwarding {
             &[],
             push_request(
                 "acme/demo",
-                &format!("{OLD} {NEW} refs/heads/feature\0report-status"),
+                &format!("{ZERO_OID} {NEW} refs/heads/feature\0report-status"),
             ),
         )
         .await;
 
         assert_eq!(response.status(), axum::http::StatusCode::BAD_GATEWAY);
+    }
+
+    /// A rewrite the upstream confirms is refused before the packfile moves.
+    ///
+    /// This is issue #272 end to end: the body carries no force capability, so
+    /// the local rule sees nothing, and only the upstream comparison stops it.
+    #[tokio::test]
+    async fn a_rewrite_the_upstream_reports_is_refused() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = state_for(diverged_upstream().await, data_dir.path());
+
+        let response = forward(
+            &state,
+            &[],
+            push_request(
+                "acme/demo",
+                &format!(
+                    "{OLD} {NEW} refs/heads/main\0report-status-v2 side-band-64k quiet \
+                     object-format=sha1 agent=git/2.43.0"
+                ),
+            ),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::FORBIDDEN);
+        assert_eq!(
+            response.headers()[crate::github_proxy::POLICY_HEADER],
+            "blocked"
+        );
+    }
+
+    /// An upstream that cannot answer must not resolve in the pusher's favour.
+    ///
+    /// The credential could be revoked, the API rate-limited, or the network
+    /// down. Each leaves the router unable to prove the push is safe, and a
+    /// control an agent is not supposed to talk past has to fail closed.
+    #[tokio::test]
+    async fn an_unanswerable_comparison_refuses_the_push() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let mut state = crate::app_state::AppState::for_tests(data_dir.path());
+        state.github = crate::github_proxy::GitHubProxyConfig::with_credential(
+            "operator-secret",
+            "http://127.0.0.1:1",
+        );
+
+        let response = forward(
+            &state,
+            &[],
+            push_request(
+                "acme/demo",
+                &format!("{OLD} {NEW} refs/heads/main\0report-status"),
+            ),
+        )
+        .await;
+
+        assert_eq!(
+            response.status(),
+            axum::http::StatusCode::FORBIDDEN,
+            "an unreachable upstream must not let a possible rewrite through"
+        );
     }
 
     /// The handler reads the caller's scope from its own credential, so the
@@ -553,4 +636,130 @@ mod forwarding {
 
         assert_eq!(response.status(), axum::http::StatusCode::OK);
     }
+}
+
+/// A real `git push --force` announces no force capability, so the capability
+/// scan cannot be what decides a rewrite.
+///
+/// This is the defect behind issue #272 stated as a test: the exact capability
+/// list `git send-pack` 2.43 sends on a forced push, asserted to contain none
+/// of the strings the old detector looked for. While `refuse_destructive_
+/// updates` was the only gate, this body was forwarded to GitHub and the
+/// rewrite applied.
+#[test]
+fn a_forced_push_announces_no_force_capability() {
+    let body = [
+        pkt(&format!(
+            "{OLD} {NEW} refs/heads/main\0report-status-v2 side-band-64k quiet \
+             object-format=sha1 agent=git/2.43.0"
+        )),
+        b"0000".to_vec(),
+    ]
+    .concat();
+
+    assert!(
+        !body_requests_force(&body),
+        "git announces no force capability, so this must not be the force signal"
+    );
+    // The local rule alone therefore sees nothing wrong, which is why the
+    // upstream check has to exist.
+    assert!(
+        refuse_destructive_updates(
+            &parse_ref_updates(&body),
+            body_requests_force(&body),
+            &crate::github_proxy::GitHubPolicy::default(),
+            "acme/demo",
+        )
+        .is_none(),
+        "the local rule cannot see a rewrite; only the object graph can"
+    );
+}
+
+/// An update to an existing ref is exactly what needs settling upstream.
+#[test]
+fn an_update_to_an_existing_ref_needs_an_ancestry_check() {
+    let body = [
+        pkt(&format!("{OLD} {NEW} refs/heads/main")),
+        b"0000".to_vec(),
+    ]
+    .concat();
+
+    let queries = updates_needing_ancestry(
+        &parse_ref_updates(&body),
+        &crate::github_proxy::GitHubPolicy::default(),
+        "acme/demo",
+    );
+    assert_eq!(queries.len(), 1, "{queries:?}");
+    assert_eq!(queries[0].old, OLD);
+    assert_eq!(queries[0].new, NEW);
+    assert_eq!(queries[0].name, "refs/heads/main");
+}
+
+/// Creating a branch loses no history, so it must not cost an API call.
+#[test]
+fn creating_a_branch_needs_no_ancestry_check() {
+    let body = [
+        pkt(&format!("{ZERO_OID} {NEW} refs/heads/feature")),
+        b"0000".to_vec(),
+    ]
+    .concat();
+
+    assert!(
+        updates_needing_ancestry(
+            &parse_ref_updates(&body),
+            &crate::github_proxy::GitHubPolicy::default(),
+            "acme/demo",
+        )
+        .is_empty()
+    );
+}
+
+/// A ref the operator allowed is the deliberate escape hatch, and must not be
+/// gated on an API call that could fail closed against them.
+#[test]
+fn an_allowed_ref_skips_the_ancestry_check() {
+    let policy: crate::github_proxy::GitHubPolicy = serde_json::from_str(
+        r#"{"rules":[{"effect":"allow","path":"/git/acme/demo/refs/heads/scratch"}]}"#,
+    )
+    .expect("parse the policy");
+    let body = [
+        pkt(&format!("{OLD} {NEW} refs/heads/scratch")),
+        b"0000".to_vec(),
+    ]
+    .concat();
+
+    assert!(
+        updates_needing_ancestry(&parse_ref_updates(&body), &policy, "acme/demo").is_empty(),
+        "an explicitly allowed ref is the operator's escape hatch"
+    );
+}
+
+/// GitHub's comparison vocabulary, mapped to the only question that matters.
+#[test]
+fn compare_status_decides_fast_forwardness() {
+    let ahead = serde_json::json!({"status": "ahead"});
+    let identical = serde_json::json!({"status": "identical"});
+    let diverged = serde_json::json!({"status": "diverged"});
+    let behind = serde_json::json!({"status": "behind"});
+    let unknown = serde_json::json!({"total_commits": 3});
+
+    assert_eq!(ancestry_from_compare(&ahead), Ancestry::FastForward);
+    assert_eq!(ancestry_from_compare(&identical), Ancestry::FastForward);
+    assert_eq!(ancestry_from_compare(&diverged), Ancestry::Diverged);
+    assert_eq!(ancestry_from_compare(&behind), Ancestry::Diverged);
+    // An answer we cannot read must never be optimistic.
+    assert_eq!(ancestry_from_compare(&unknown), Ancestry::Unknown);
+}
+
+/// The refusal names the ref and the reason, so an operator can act on it.
+#[test]
+fn an_unverifiable_update_explains_itself() {
+    let message = RefRefusal::Unverifiable(
+        "refs/heads/main".into(),
+        "upstream answered 403 Forbidden".into(),
+    )
+    .message();
+    assert!(message.contains("refs/heads/main"), "{message}");
+    assert!(message.contains("403 Forbidden"), "{message}");
+    assert!(message.contains("GITHUB_PROXY_POLICY"), "{message}");
 }
