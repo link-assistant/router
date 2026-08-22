@@ -60,20 +60,11 @@ impl GitHubProxyConfig {
                 .and_then(|name| std::env::var(name).ok())
                 .filter(|token| !token.is_empty())
         });
-        // A credential stored by `router auth gh`, then a mounted `gh`
-        // configuration: both are existing logins the deployment can reuse
-        // rather than a second credential to mint and rotate (issue #263).
-        // Consulted last, so every explicit environment setting still wins.
         token = token.or_else(|| {
-            std::env::var("DATA_DIR")
-                .ok()
-                .filter(|dir| !dir.is_empty())
-                .and_then(|dir| stored_credential(Path::new(&dir)))
-        });
-        token = token.or_else(|| {
-            gh_config_directory()
-                .as_deref()
-                .and_then(token_from_gh_config)
+            reusable_credential(
+                std::env::var("DATA_DIR").ok().as_deref(),
+                gh_config_directory().as_deref(),
+            )
         });
         let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
             .unwrap_or_else(|_| "https://api.github.com".into())
@@ -400,6 +391,19 @@ pub async fn proxy(State(state): State<AppState>, request: Request) -> Response 
         request,
     )
     .await
+}
+
+/// A credential the deployment can reuse rather than mint.
+///
+/// A credential stored by `router auth gh` first, then a mounted `gh`
+/// configuration: both are existing logins (issue #263). Consulted only after
+/// every explicit environment setting, so this never overrides one.
+#[must_use]
+pub fn reusable_credential(data_dir: Option<&str>, gh_config: Option<&Path>) -> Option<String> {
+    data_dir
+        .filter(|dir| !dir.is_empty())
+        .and_then(|dir| stored_credential(Path::new(dir)))
+        .or_else(|| gh_config.and_then(token_from_gh_config))
 }
 
 /// Where a credential stored by `router auth gh` lives.
@@ -981,6 +985,52 @@ mod tests {
         assert_eq!(
             GitHubProxyConfig::with_credential("t", "http://127.0.0.1:9000").git_base_url(),
             "http://127.0.0.1:9000"
+        );
+    }
+
+    /// A stored credential is preferred over a mounted `gh` login, and either
+    /// is used only when no explicit setting supplied one (issue #263).
+    #[test]
+    fn a_reusable_credential_prefers_what_the_operator_stored() {
+        let data_dir = tempfile::tempdir().expect("data dir");
+        let gh_config = tempfile::tempdir().expect("gh config dir");
+        std::fs::write(
+            gh_config.path().join("hosts.yml"),
+            "github.com:\n    oauth_token: gho_from_gh\n",
+        )
+        .expect("write hosts.yml");
+
+        // Only the gh login exists.
+        assert_eq!(
+            reusable_credential(
+                Some(&data_dir.path().to_string_lossy()),
+                Some(gh_config.path())
+            ),
+            Some("gho_from_gh".to_string())
+        );
+
+        // Once stored, the operator's own choice wins.
+        store_credential(data_dir.path(), "gho_stored").expect("store one");
+        assert_eq!(
+            reusable_credential(
+                Some(&data_dir.path().to_string_lossy()),
+                Some(gh_config.path())
+            ),
+            Some("gho_stored".to_string())
+        );
+    }
+
+    /// With neither source there is nothing to reuse, so the proxy stays
+    /// disabled rather than starting without a credential.
+    #[test]
+    fn without_either_source_there_is_nothing_to_reuse() {
+        let empty = tempfile::tempdir().expect("empty dir");
+
+        assert_eq!(reusable_credential(None, None), None);
+        assert_eq!(reusable_credential(Some(""), None), None);
+        assert_eq!(
+            reusable_credential(Some(&empty.path().to_string_lossy()), Some(empty.path())),
+            None
         );
     }
 }

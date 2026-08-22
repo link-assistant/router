@@ -94,3 +94,87 @@ fn the_hint_names_the_gh_setting() {
     assert!(hint.contains("/run/router/router.sock"), "{hint}");
     assert!(hint.contains("GH_ENTERPRISE_TOKEN"), "{hint}");
 }
+
+/// An unset or empty setting means TCP only, exactly as the router always
+/// listened; a configured path is served alongside it.
+#[test]
+fn the_setting_decides_whether_a_socket_is_served() {
+    assert_eq!(resolve(None), SocketSetup::Disabled);
+    assert_eq!(resolve(Some("")), SocketSetup::Disabled);
+    assert_eq!(
+        resolve(Some("   ")),
+        SocketSetup::Disabled,
+        "blank is unset"
+    );
+    assert_eq!(
+        resolve(Some("/run/router/router.sock")),
+        SocketSetup::Enabled(PathBuf::from("/run/router/router.sock"))
+    );
+    assert_eq!(
+        resolve(Some("  /run/router.sock  ")),
+        SocketSetup::Enabled(PathBuf::from("/run/router.sock")),
+        "surrounding whitespace is not part of the path"
+    );
+}
+
+/// A path that cannot be bound is an error naming it, rather than a router
+/// that silently never serves the socket it was told to.
+#[tokio::test]
+async fn an_unbindable_path_names_itself() {
+    // A socket path has a hard length limit (~104 bytes) that no platform
+    // stretches, so this cannot be bound anywhere.
+    let directory = tempfile::tempdir().expect("socket directory");
+    let far_too_long = directory.path().join("x".repeat(300));
+
+    let error = bind(&far_too_long)
+        .await
+        .expect_err("an unbindable path must be an error");
+
+    assert!(error.contains("could not"), "{error}");
+}
+
+/// The router really answers over the socket, in plain HTTP.
+///
+/// That is the property `gh` needs: no TLS, so no certificate it has no way to
+/// trust (issue #265).
+#[tokio::test]
+async fn a_served_socket_answers_plain_http() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let directory = tempfile::tempdir().expect("socket directory");
+    let path = directory.path().join("router.sock");
+    let app = axum::Router::new().route("/health", axum::routing::get(|| async { "ok" }));
+
+    let serving = serve_on(app, &path).await.expect("serve the socket");
+
+    let mut stream = tokio::net::UnixStream::connect(&path)
+        .await
+        .expect("connect over the socket");
+    stream
+        .write_all(b"GET /health HTTP/1.1\r\nHost: router.internal\r\nConnection: close\r\n\r\n")
+        .await
+        .expect("send a plaintext request");
+    let mut response = String::new();
+    stream
+        .read_to_string(&mut response)
+        .await
+        .expect("read the reply");
+    serving.abort();
+
+    assert!(response.contains(" 200 "), "{response}");
+    assert!(response.contains("ok"), "{response}");
+}
+
+/// Nothing configured serves no socket, so a deployment that never asked for
+/// one is unaffected.
+#[tokio::test]
+async fn no_configuration_serves_no_socket() {
+    // `serve_configured` reads the environment; with the variable unset in this
+    // process it must decline rather than invent a path.
+    if std::env::var_os("LISTEN_UNIX_SOCKET").is_none() {
+        let served = serve_configured(axum::Router::new())
+            .await
+            .expect("no error");
+        assert!(served.is_none());
+    }
+}

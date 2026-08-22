@@ -37,8 +37,18 @@ impl SocketSetup {
 /// Resolve the socket setup from `LISTEN_UNIX_SOCKET`.
 #[must_use]
 pub fn from_env() -> SocketSetup {
-    std::env::var("LISTEN_UNIX_SOCKET")
-        .ok()
+    resolve(std::env::var("LISTEN_UNIX_SOCKET").ok().as_deref())
+}
+
+/// Decide the setup from an already-read setting.
+///
+/// Split from [`from_env`] so both branches are reachable in a test: this crate
+/// forbids `unsafe`, and mutating the process environment is the only other way
+/// to drive them.
+#[must_use]
+pub fn resolve(configured: Option<&str>) -> SocketSetup {
+    configured
+        .map(str::trim)
         .filter(|path| !path.is_empty())
         .map_or(SocketSetup::Disabled, |path| {
             SocketSetup::Enabled(PathBuf::from(path))
@@ -58,6 +68,49 @@ pub fn gh_configuration_hint(path: &Path) -> String {
          export GH_ENTERPRISE_TOKEN=<router token>",
         path.display()
     )
+}
+
+/// Serve `app` on the configured socket, if one is configured.
+///
+/// Returns the task serving it so the caller can stop it on shutdown; `None`
+/// means no socket was configured and the router listens on TCP only.
+///
+/// # Errors
+///
+/// Returns a message when the configured path cannot be bound, since a router
+/// that silently skipped the socket it was told to serve would leave `gh` with
+/// the certificate problem this exists to avoid.
+pub async fn serve_configured(
+    app: axum::Router,
+) -> Result<Option<tokio::task::JoinHandle<()>>, String> {
+    let SocketSetup::Enabled(path) = from_env() else {
+        return Ok(None);
+    };
+    let listener = bind(&path).await?;
+    tracing::info!("Listening on unix socket {}", path.display());
+    tracing::info!("Point gh at it:\n{}", gh_configuration_hint(&path));
+    Ok(Some(tokio::spawn(async move {
+        if let Err(error) = axum::serve(listener, app).await {
+            tracing::error!("unix socket listener failed: {error}");
+        }
+    })))
+}
+
+/// Serve `app` on `path`, for a caller that already knows where.
+///
+/// # Errors
+///
+/// Returns a message when the path cannot be bound.
+pub async fn serve_on(
+    app: axum::Router,
+    path: &Path,
+) -> Result<tokio::task::JoinHandle<()>, String> {
+    let listener = bind(path).await?;
+    Ok(tokio::spawn(async move {
+        if let Err(error) = axum::serve(listener, app).await {
+            tracing::error!("unix socket listener failed: {error}");
+        }
+    }))
 }
 
 /// Bind a unix socket, replacing a stale one left by an earlier run.

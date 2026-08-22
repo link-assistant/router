@@ -386,23 +386,7 @@ async fn run_server(
 
     // A unix socket is the one plaintext route `gh` accepts, so it reaches the
     // proxy without a certificate it has no way to trust (issue #265).
-    let socket_server = match link_assistant_router::unix_listener::from_env() {
-        link_assistant_router::unix_listener::SocketSetup::Enabled(path) => {
-            let listener = link_assistant_router::unix_listener::bind(&path).await?;
-            tracing::info!("Listening on unix socket {}", path.display());
-            tracing::info!(
-                "Point gh at it:\n{}",
-                link_assistant_router::unix_listener::gh_configuration_hint(&path)
-            );
-            let socket_app = app.clone();
-            Some(tokio::spawn(async move {
-                if let Err(error) = axum::serve(listener, socket_app).await {
-                    tracing::error!("unix socket listener failed: {error}");
-                }
-            }))
-        }
-        link_assistant_router::unix_listener::SocketSetup::Disabled => None,
-    };
+    let socket_server = link_assistant_router::unix_listener::serve_configured(app.clone()).await?;
 
     // `gh` will not talk plaintext to a custom host, so a router that cannot
     // serve HTTPS cannot mediate GitHub traffic at all without a separate

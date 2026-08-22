@@ -504,4 +504,53 @@ mod forwarding {
 
         assert_eq!(response.status(), axum::http::StatusCode::FORBIDDEN);
     }
+
+    /// A push larger than the proxy limit is refused rather than buffered
+    /// without bound — the body is read into memory to inspect its refs.
+    #[tokio::test]
+    async fn an_oversized_push_is_refused() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let mut state = crate::app_state::AppState::for_tests(data_dir.path());
+        state.github = crate::github_proxy::GitHubProxyConfig::with_credential(
+            "operator-secret",
+            "http://127.0.0.1:1",
+        );
+        state.max_proxy_request_bytes = 16;
+
+        let response = forward(
+            &state,
+            &[],
+            push_request(
+                "acme/demo",
+                &format!("{OLD} {NEW} refs/heads/feature\0report-status"),
+            ),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::PAYLOAD_TOO_LARGE);
+    }
+
+    /// A fetch is relayed rather than refused, so cloning through the router
+    /// keeps working: only pushes carry ref decisions.
+    #[tokio::test]
+    async fn a_fetch_is_relayed() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let mut state = crate::app_state::AppState::for_tests(data_dir.path());
+        state.github = crate::github_proxy::GitHubProxyConfig::with_credential(
+            "operator-secret",
+            &format!("http://127.0.0.1:{}", echo_upstream().await),
+        );
+
+        let response = forward(
+            &state,
+            &[],
+            HttpRequest::builder()
+                .uri("/git/acme/demo.git/info/refs?service=git-upload-pack")
+                .body(axum::body::Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(response.status(), axum::http::StatusCode::OK);
+    }
 }
