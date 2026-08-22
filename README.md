@@ -779,6 +779,55 @@ TLS_SELF_SIGNED_DNS=hive-mind-router
 server. The generated pair is reused across restarts, so clients that trust it
 keep working.
 
+### Trusting the certificate
+
+How a client is told to trust a self-signed certificate differs per client, and
+one of them cannot be told at all.
+
+**`curl`** takes the certificate directly:
+
+```bash
+router tls ca > /tmp/router-ca.pem
+curl --cacert /tmp/router-ca.pem https://router.internal:8080/health
+```
+
+**`git`** takes it through its own configuration:
+
+```bash
+git config --global http.https://router.internal.sslCAInfo /tmp/router-ca.pem
+```
+
+**`gh` cannot.** As of 2.82 it reads no CA variable, has no `--cacert` flag, and
+ignores `SSL_CERT_FILE` on macOS, so a self-signed certificate leaves it with an
+`x509: certificate signed by unknown authority` error and nowhere to put the
+PEM. Two routes work, in order of how little they ask:
+
+1. **A unix socket** — `gh` honours `http_unix_socket`, and over a socket it
+   speaks plain HTTP, so no certificate is involved at all. This is the
+   recommended path for a local or sidecar deployment:
+
+   ```env
+   LISTEN_UNIX_SOCKET=/run/router/router.sock
+   ```
+
+   ```bash
+   gh config set http_unix_socket /run/router/router.sock
+   export GH_HOST=router.internal          # any name; the socket decides the route
+   export GH_ENTERPRISE_TOKEN="$LINK_ASSISTANT_TOKEN"
+   gh api user
+   ```
+
+   The socket is created owner-only, so it bounds access at least as tightly as
+   the loopback port it replaces. The router keeps serving its TCP port as well.
+
+2. **A real certificate** via `TLS_CERT_FILE`/`TLS_KEY_FILE`, which is the right
+   answer for a shared or multi-user host: nothing has to be trusted specially,
+   because the certificate already chains to a public root.
+
+Installing the generated certificate into the OS trust store also works, but it
+is a machine-wide change that an operator may not be permitted to make on a
+shared host — so it is a last resort rather than the documented path.
+
 ### Gonka provider
 
 Gonka support is optional. Set `UPSTREAM_PROVIDER=gonka` to pin the deployment
