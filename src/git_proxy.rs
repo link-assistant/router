@@ -355,8 +355,7 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
     if decision.is_none() && path.ends_with("/git-receive-pack") {
         decision = refuse_rewrites_upstream(state, token, &repository, &body).await;
     }
-    if let Some(refusal) = decision
-    {
+    if let Some(refusal) = decision {
         // Recorded like every other mediated call, so a refused push appears
         // in the same audit trail as an API refusal.
         state.request_log.record(
@@ -440,9 +439,7 @@ async fn refuse_rewrites_upstream(
             Ok(response) if response.status().is_success() => response
                 .json::<serde_json::Value>()
                 .await
-                .map_or(Ancestry::Unknown, |payload| {
-                    ancestry_from_compare(&payload)
-                }),
+                .map_or(Ancestry::Unknown, |payload| ancestry_from_compare(&payload)),
             Ok(response) => {
                 return Some(RefRefusal::Unverifiable(
                     query.name,

@@ -20,14 +20,37 @@ fn free_port() -> u16 {
 
 /// An upstream that accepts every push, so a refusal can only come from the
 /// router rather than from GitHub.
+///
+/// A `/compare/` request is answered as a fast-forward, because every push to
+/// an existing ref now asks the upstream whether it is one (issue #272); an
+/// upstream that could not answer would refuse the push and these tests would
+/// be measuring the wrong refusal.
 fn permissive_git_upstream() -> u16 {
+    upstream_comparing("ahead")
+}
+
+/// A permissive upstream that reports a fixed comparison verdict.
+fn upstream_comparing(status: &'static str) -> u16 {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind upstream");
     let port = listener.local_addr().expect("address").port();
     std::thread::spawn(move || {
         for stream in listener.incoming() {
             let Ok(mut stream) = stream else { continue };
             let mut scratch = [0; 8192];
-            let _ = stream.read(&mut scratch);
+            let read = stream.read(&mut scratch).unwrap_or(0);
+            let request = String::from_utf8_lossy(&scratch[..read]).to_string();
+            if request.contains("/compare/") {
+                let body = format!("{{\"status\":\"{status}\"}}");
+                let _ = stream.write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\
+                         content-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                );
+                continue;
+            }
             let body = "0031\x01000eunpack ok\n0019ok refs/heads/main\n00000000";
             let _ = stream.write_all(
                 format!(
@@ -138,6 +161,59 @@ impl Router {
 const OLD: &str = "1111111111111111111111111111111111111111";
 const NEW: &str = "2222222222222222222222222222222222222222";
 const ZERO: &str = "0000000000000000000000000000000000000000";
+
+/// A real `git push --force` is refused, using the capabilities git actually
+/// sends.
+///
+/// The test below this one passes `force-ref-updates`, which git never sends —
+/// it is a JGit/Gerrit *server* capability. That made the guard look effective
+/// while a genuine rewrite, announcing only the report-status/side-band family,
+/// was forwarded to GitHub and applied (issue #272). This is that exact body,
+/// captured from `GIT_TRACE_PACKET` on git 2.43.
+#[test]
+fn a_real_force_push_is_refused_over_the_git_transport() {
+    // The upstream reports the comparison as diverged, which is what GitHub
+    // answers for a rewrite that drops commits or an unrelated history.
+    let router = Router::start(upstream_comparing("diverged"));
+    let token = router.token(&[]);
+
+    let response = router.push(
+        &token,
+        "acme/demo",
+        &format!(
+            "{OLD} {NEW} refs/heads/main\0report-status-v2 side-band-64k quiet \
+             object-format=sha1 agent=git/2.43.0"
+        ),
+    );
+
+    assert!(response.contains(" 403 "), "{response}");
+    assert!(
+        response.contains("x-link-assistant-policy: blocked"),
+        "{response}"
+    );
+}
+
+/// An upstream that cannot answer the comparison refuses the push.
+///
+/// The credential could be revoked or the API rate-limited. A control an agent
+/// is not supposed to talk past must not open when the check cannot run.
+#[test]
+fn a_push_is_refused_when_the_comparison_cannot_be_made() {
+    // Port 1 answers nothing, standing in for an unreachable API.
+    let router = Router::start(1);
+    let token = router.token(&[]);
+
+    let response = router.push(
+        &token,
+        "acme/demo",
+        &format!("{OLD} {NEW} refs/heads/main\0report-status"),
+    );
+
+    assert!(
+        response.contains(" 403 "),
+        "an unanswerable comparison must not let a possible rewrite through: {response}"
+    );
+}
 
 /// The destructive sequence issue #261 defends against: a force-push over the
 /// git transport, which never reached the API policy at all.

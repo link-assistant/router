@@ -94,10 +94,10 @@ impl SocketAccess {
     /// How the applied access reads in a log line.
     #[must_use]
     pub fn describe(&self) -> String {
-        match &self.group {
-            Some(group) => format!("mode {:04o}, group {group}", self.mode),
-            None => format!("mode {:04o}", self.mode),
-        }
+        self.group.as_ref().map_or_else(
+            || format!("mode {:04o}", self.mode),
+            |group| format!("mode {:04o}, group {group}", self.mode),
+        )
     }
 }
 
@@ -107,10 +107,7 @@ pub enum SocketSetup {
     /// No socket; the router listens on TCP only, as it always has.
     Disabled,
     /// Serve on this path as well, with this access.
-    Enabled {
-        path: PathBuf,
-        access: SocketAccess,
-    },
+    Enabled { path: PathBuf, access: SocketAccess },
 }
 
 impl SocketSetup {
@@ -125,7 +122,7 @@ impl SocketSetup {
 
     /// The access this setup applies, if it serves at all.
     #[must_use]
-    pub fn access(&self) -> Option<&SocketAccess> {
+    pub const fn access(&self) -> Option<&SocketAccess> {
         match self {
             Self::Disabled => None,
             Self::Enabled { access, .. } => Some(access),

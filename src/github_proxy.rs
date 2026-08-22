@@ -430,6 +430,32 @@ pub fn store_credential(data_dir: &Path, token: &str) -> Result<PathBuf, String>
     Ok(path)
 }
 
+/// Remove the credential stored by `router auth gh`.
+///
+/// Reports whether a file was actually removed, so the caller can tell "there
+/// was one and it is gone" from "there was nothing here" rather than printing
+/// a reassuring message either way.
+///
+/// This clears only what the router itself stored. A credential supplied
+/// through `GITHUB_PROXY_TOKEN`, `GITHUB_PROXY_TOKEN_FILE`,
+/// `GITHUB_PROXY_TOKEN_ENV`, or a mounted `gh` configuration is not the
+/// router's to delete, and the proxy stays enabled from it; the caller is
+/// expected to say so.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the file exists but cannot be
+/// removed, since a silent failure here would report a withdrawal that did
+/// not happen.
+pub fn clear_credential(data_dir: &Path) -> Result<bool, String> {
+    let path = stored_credential_path(data_dir);
+    match std::fs::remove_file(&path) {
+        Ok(()) => Ok(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(format!("could not remove {}: {error}", path.display())),
+    }
+}
+
 /// The credential stored by `router auth gh`, when one exists.
 #[must_use]
 pub fn stored_credential(data_dir: &Path) -> Option<String> {

@@ -28,7 +28,9 @@ async fn a_bound_socket_is_owner_only() {
     let directory = tempfile::tempdir().expect("socket directory");
     let path = directory.path().join("router.sock");
 
-    let listener = bind(&path, &SocketAccess::default()).await.expect("bind the socket");
+    let listener = bind(&path, &SocketAccess::default())
+        .await
+        .expect("bind the socket");
 
     assert!(path.exists());
     #[cfg(unix)]
@@ -50,7 +52,9 @@ async fn a_bound_socket_is_owner_only() {
 async fn a_stale_socket_is_replaced() {
     let directory = tempfile::tempdir().expect("socket directory");
     let path = directory.path().join("router.sock");
-    let first = bind(&path, &SocketAccess::default()).await.expect("bind once");
+    let first = bind(&path, &SocketAccess::default())
+        .await
+        .expect("bind once");
     drop(first);
     assert!(path.exists(), "the file outlives the listener");
 
@@ -65,7 +69,9 @@ async fn a_stale_socket_is_replaced() {
 async fn a_live_socket_is_not_stolen() {
     let directory = tempfile::tempdir().expect("socket directory");
     let path = directory.path().join("router.sock");
-    let holder = bind(&path, &SocketAccess::default()).await.expect("bind once");
+    let holder = bind(&path, &SocketAccess::default())
+        .await
+        .expect("bind once");
 
     let error = bind(&path, &SocketAccess::default())
         .await
@@ -82,7 +88,9 @@ async fn a_missing_parent_directory_is_created() {
     let directory = tempfile::tempdir().expect("socket directory");
     let path = directory.path().join("nested/deeper/router.sock");
 
-    let listener = bind(&path, &SocketAccess::default()).await.expect("bind under a fresh directory");
+    let listener = bind(&path, &SocketAccess::default())
+        .await
+        .expect("bind under a fresh directory");
 
     assert!(path.exists());
     drop(listener);
@@ -152,7 +160,9 @@ async fn a_served_socket_answers_plain_http() {
     let path = directory.path().join("router.sock");
     let app = axum::Router::new().route("/health", axum::routing::get(|| async { "ok" }));
 
-    let serving = serve_on(app, &path, &SocketAccess::default()).await.expect("serve the socket");
+    let serving = serve_on(app, &path, &SocketAccess::default())
+        .await
+        .expect("serve the socket");
 
     let mut stream = tokio::net::UnixStream::connect(&path)
         .await
