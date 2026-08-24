@@ -141,6 +141,35 @@ pub enum AuthOp {
     },
 }
 
+/// What `auth gh` may do when a router other than this machine is selected.
+///
+/// A GitHub credential is read from the router's own data directory at startup
+/// and no endpoint accepts one over HTTP, so there is nothing to store
+/// remotely. Acting locally under a success message is what left a workstation
+/// holding a token it never needed while the targeted deployment had none
+/// (issue #283), so storing refuses and only the read-only query answers.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum RemoteGh {
+    /// Report this machine's credential, saying whose it is.
+    DescribeLocal,
+    /// Refuse: the credential cannot reach the selected router from here.
+    Refuse,
+}
+
+impl AuthOp {
+    /// What this `auth gh` invocation may do against a selected router.
+    ///
+    /// `None` for anything that is not `auth gh`.
+    #[must_use]
+    pub const fn remote_gh(&self) -> Option<RemoteGh> {
+        match self {
+            Self::Gh { status: true, .. } => Some(RemoteGh::DescribeLocal),
+            Self::Gh { .. } => Some(RemoteGh::Refuse),
+            _ => None,
+        }
+    }
+}
+
 /// Which router an `auth` command acts on.
 ///
 /// `auth` used to always write a local credential even when a server was

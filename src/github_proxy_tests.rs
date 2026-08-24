@@ -430,3 +430,20 @@ fn without_either_source_there_is_nothing_to_reuse() {
         None
     );
 }
+
+/// `from_env` still resolves the data directory from `DATA_DIR`.
+///
+/// The parsed-configuration spelling is what production uses (issue #282), but
+/// this one remains for callers with no config to hand, and it must keep
+/// finding what it always found.
+#[test]
+fn from_env_still_reads_the_environment_spelling() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    store_credential(data_dir.path(), "gho_from_environment").expect("store one");
+
+    assert_eq!(
+        reusable_credential(Some(data_dir.path()), None),
+        Some("gho_from_environment".to_string()),
+        "the same lookup from_env delegates to must still find it"
+    );
+}

@@ -224,3 +224,81 @@ fn cli_invalid_routing_mode_rejected() {
     let r = cli.into_config();
     assert!(matches!(r, Err(ConfigError::InvalidRoutingMode)));
 }
+
+/// The auth op a command line parses to, for the `auth gh` targeting tests.
+fn auth_op_of(args: &[&str]) -> AuthOp {
+    let cli = Cli::try_parse_from(args).expect("the command line must parse");
+    match cli.command {
+        Some(Command::Auth { op, .. }) => op,
+        other => panic!("expected an auth command, got {other:?}"),
+    }
+}
+
+/// `auth gh` takes the same target flags every other `auth` subcommand does.
+///
+/// It was the only one of the five that accepted none, so `--server` was
+/// rejected outright and there was no way to say which deployment a GitHub
+/// credential was meant for (issue #283).
+#[test]
+fn auth_gh_accepts_a_target_like_its_siblings() {
+    let op = auth_op_of(&[
+        "link-assistant-router",
+        "auth",
+        "gh",
+        "--server",
+        "http://router.example:8080",
+        "--status",
+    ]);
+
+    let AuthOp::Gh { target, .. } = &op else {
+        panic!("expected auth gh, got {op:?}");
+    };
+    assert_eq!(target.server.as_deref(), Some("http://router.example:8080"));
+    assert!(!target.local);
+}
+
+/// Storing against a selected router refuses; only the read-only query answers.
+///
+/// A router reads its GitHub credential from its own data directory at startup
+/// and exposes no endpoint that accepts one, so there is nothing to store
+/// remotely. Acting locally under a success message left a workstation holding
+/// a token it never needed while the targeted deployment had none — the failure
+/// that costs an operator a leaked token, which a plain error does not.
+#[test]
+fn only_a_read_only_gh_query_answers_for_a_selected_router() {
+    let describes = ["--status"];
+    let refuses: [&[&str]; 3] = [
+        &["--token-stdin"],
+        &["--from-gh-config", "/tmp/gh"],
+        &["--clear"],
+    ];
+
+    let op = auth_op_of(&[&["link-assistant-router", "auth", "gh"][..], &describes[..]].concat());
+    assert_eq!(op.remote_gh(), Some(RemoteGh::DescribeLocal));
+
+    for extra in refuses {
+        let op = auth_op_of(&[&["link-assistant-router", "auth", "gh"][..], extra].concat());
+        assert_eq!(
+            op.remote_gh(),
+            Some(RemoteGh::Refuse),
+            "a credential must never be stored locally under another target: {extra:?}"
+        );
+    }
+}
+
+/// The rule is about `auth gh` alone; the other subcommands route remotely.
+#[test]
+fn only_gh_carries_the_remote_restriction() {
+    for args in [
+        &["link-assistant-router", "auth", "status"][..],
+        &["link-assistant-router", "auth", "claude"][..],
+        &["link-assistant-router", "auth", "codex"][..],
+        &["link-assistant-router", "auth", "import", "claude"][..],
+    ] {
+        assert_eq!(
+            auth_op_of(args).remote_gh(),
+            None,
+            "{args:?} must keep its ordinary remote path"
+        );
+    }
+}

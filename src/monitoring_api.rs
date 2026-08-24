@@ -122,3 +122,66 @@ fn single_account_view(state: &AppState) -> serde_json::Value {
         "note": "single-account mode (no AccountRouter configured)",
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::subscription::{SubscriptionProvider, SubscriptionReader};
+
+    /// A single-account deployment names its credentials, not an empty pool.
+    ///
+    /// `accounts: []` alone could only be read as "nothing is configured", the
+    /// same answer given for a deployment holding no credential at all — so a
+    /// router serving live traffic was reported as unauthorized (issue #281).
+    #[test]
+    fn a_single_account_view_reports_each_provider() {
+        let dir = tempfile::tempdir().expect("data dir");
+        let home = tempfile::tempdir().expect("home");
+        std::fs::write(
+            home.path().join(".credentials.json"),
+            serde_json::json!({
+                "claudeAiOauth": {
+                    "accessToken": "live-access",
+                    "refreshToken": "live-refresh",
+                    // Far enough out that the verdict cannot be a clock artefact.
+                    "expiresAt": 4_102_444_800_000_i64,
+                }
+            })
+            .to_string(),
+        )
+        .expect("plant a live credential");
+
+        let mut state = AppState::for_tests(dir.path());
+        state.subscription_readers = vec![
+            SubscriptionReader::new(SubscriptionProvider::Claude, home.path()),
+            SubscriptionReader::new(SubscriptionProvider::Codex, dir.path()),
+        ];
+
+        let view = single_account_view(&state);
+
+        assert_eq!(
+            view["accounts"].as_array().map(Vec::len),
+            Some(0),
+            "the pool is genuinely empty and keeps its meaning"
+        );
+        assert!(
+            view["note"]
+                .as_str()
+                .is_some_and(|n| n.contains("single-account")),
+            "the server keeps explaining why: {view}"
+        );
+        let credentials = view["credentials"].as_array().expect("credentials");
+        assert_eq!(credentials.len(), 2, "{view}");
+        assert_eq!(credentials[0]["name"], "claude");
+        assert_eq!(
+            credentials[0]["credential"], "ok",
+            "a live credential must not read as missing: {view}"
+        );
+        assert_eq!(credentials[0]["healthy"], true);
+        assert_eq!(
+            credentials[1]["credential"], "missing",
+            "and an absent one must still say so: {view}"
+        );
+        assert_eq!(credentials[1]["healthy"], false);
+    }
+}

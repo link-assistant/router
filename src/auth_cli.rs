@@ -315,34 +315,31 @@ async fn run_remote(
             link_assistant_router::auth_remote::authorize(server, "codex", None, None).await
         }
         AuthOp::Status { .. } => link_assistant_router::auth_remote::status(server).await,
-        // A read-only query has nothing to store in the wrong place, so it
-        // answers — but it names whose credential it is describing, which is
-        // exactly what a bare path failed to convey (issue #283).
-        AuthOp::Gh { status: true, .. } => {
-            println!(
-                "note: describing this machine's credential; {} keeps its own, which \
-                 `auth gh` cannot read from here",
-                server.base_url
-            );
-            run_gh(config, None, false, true)
-        }
-        // A GitHub credential can only be stored where the router will read it
-        // from, and the router reads it from its own data directory at startup
-        // — there is no endpoint that accepts one over HTTP. Acting locally
-        // here would store the token on this workstation while reporting
-        // success, leaving the deployment that needs one without it and this
-        // machine holding a GitHub token it never needed (issue #283). Saying
-        // so is the honest answer; `--local` asks for the local store
-        // explicitly.
+        // What `auth gh` may do remotely is decided by `AuthOp::remote_gh`,
+        // beside the flags it reads, so the rule is unit-testable rather than
+        // reachable only by spawning the binary (issue #283).
         AuthOp::Gh { .. } => {
-            eprintln!(
-                "error: a GitHub credential is read from the router's own data directory at \
-                 startup, so it cannot be stored on {} from here.\n\
-                 note: run `router auth gh` on that deployment (or set GITHUB_PROXY_TOKEN there), \
-                 then restart it. Pass --local to act on this machine's data directory instead.",
-                server.base_url
-            );
-            ExitCode::from(1)
+            if matches!(
+                op.remote_gh(),
+                Some(link_assistant_router::cli::RemoteGh::DescribeLocal)
+            ) {
+                println!(
+                    "note: describing this machine's credential; {} keeps its own, which \
+                     `auth gh` cannot read from here",
+                    server.base_url
+                );
+                run_gh(config, None, false, true)
+            } else {
+                eprintln!(
+                    "error: a GitHub credential is read from the router's own data directory \
+                     at startup, so it cannot be stored on {} from here.\n\
+                     note: run `router auth gh` on that deployment (or set GITHUB_PROXY_TOKEN \
+                     there), then restart it. Pass --local to act on this machine's data \
+                     directory instead.",
+                    server.base_url
+                );
+                ExitCode::from(1)
+            }
         }
         // Never reached: `remote_target` keeps import on the local path.
         AuthOp::Import { .. } => ExitCode::from(1),
