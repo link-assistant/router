@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/issue-285-explicit-import-source-v2
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
