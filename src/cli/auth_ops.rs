@@ -7,9 +7,57 @@ use clap::Subcommand;
 
 use super::{AuthFlow, CLAUDE_AUTH_FLOWS, CODEX_AUTH_FLOWS, auth_flow_parser};
 
+/// A login this machine already holds that the router can adopt.
+///
+/// Not `SubscriptionProvider`: that enum is about subscriptions the proxy
+/// serves models from, and GitHub is a credential the router presents upstream
+/// rather than a subscription. Import spans both, so it needs a name for the
+/// union (issue #278).
+#[derive(Clone, Copy, Debug, Eq, PartialEq, clap::ValueEnum)]
+pub enum ImportProvider {
+    #[value(name = "claude", alias = "anthropic")]
+    Claude,
+    #[value(name = "codex", alias = "chatgpt")]
+    Codex,
+    #[value(name = "gemini", alias = "google")]
+    Gemini,
+    #[value(name = "qwen", alias = "qwen-code")]
+    Qwen,
+    #[value(name = "gh", alias = "github")]
+    Gh,
+}
+
 /// Provider authorization operations.
 #[derive(Debug, Subcommand)]
 pub enum AuthOp {
+    /// Adopt a login this machine already has, without a browser.
+    ///
+    /// Authorizing means "go get a new credential, interactively"; importing
+    /// means "adopt one that already exists". They differ in prerequisites, in
+    /// side effects, and in whether a human has to be present — which decides
+    /// whether a headless deployment can be provisioned at all (issue #278).
+    ///
+    /// The per-provider flags on the authorize commands keep working.
+    #[command(override_usage = "link-assistant-router auth import [OPTIONS] [PROVIDER] [DIR]")]
+    Import {
+        /// Which login to adopt. Omit with `--all`.
+        #[arg(value_enum, required_unless_present = "all")]
+        provider: Option<ImportProvider>,
+        /// Where to read it from. Defaults to the vendor's own home:
+        /// `$CLAUDE_CODE_HOME`, `$CODEX_HOME`, `$GH_CONFIG_DIR`, and so on —
+        /// or, on macOS for Claude, the login Keychain when it holds the newer
+        /// credential.
+        dir: Option<String>,
+        /// Adopt every login this machine has.
+        ///
+        /// The case that motivates a verb: provisioning a deployment from a
+        /// workstation already logged in to several providers, without knowing
+        /// each flag name and default path.
+        #[arg(long, conflicts_with = "provider")]
+        all: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Authorize an Anthropic Claude subscription.
     Claude {
         /// Supply the copied code without prompting on stdin.

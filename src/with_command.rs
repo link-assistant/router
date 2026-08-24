@@ -122,7 +122,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         &credential.token,
         Some(model),
         credential.models(),
-        args.extend_global_config,
+        args.isolated_config,
     ) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -157,6 +157,41 @@ struct TemporaryClient {
     command: Command,
 }
 
+/// Whether this run layers the router's settings onto the user's own
+/// configuration, rather than giving the client a directory of its own.
+///
+/// Extending is the default: `with` changes how the client reaches the model,
+/// and discarding the user's theme, permissions, MCP servers and prior sessions
+/// is a far larger side effect than that implies (issue #277).
+///
+/// A client the router can only point at the model by writing a file is
+/// isolated whatever was asked for, because the file is reachable only through
+/// the directory isolation provides. That is a fallback rather than an error:
+/// the user did not ask for isolation here, they asked to run a client, and
+/// this is the only way it can be run.
+///
+/// Two separate reasons a client cannot be extended, and both must be checked:
+/// it may set no connection variables at all, or it may set them and *still*
+/// need a router-written settings file — Gemini CLI does exactly that, so
+/// having both variables is not on its own enough to layer onto.
+const fn extends_user_configuration(client: ClientKind, isolated_config: bool) -> bool {
+    if isolated_config || needs_a_written_configuration(client) {
+        return false;
+    }
+    let integration = client.integration();
+    integration.token_env.is_some() && integration.base_url_env.is_some()
+}
+
+/// Whether routing this client depends on a file the router writes.
+///
+/// Gemini CLI is pointed at the router by a `settings.json` selecting the
+/// API-key flow, which it resolves from `HOME`; without isolation that file is
+/// written where the client never looks, and the run silently keeps whatever
+/// the user's own settings said (issue #227).
+const fn needs_a_written_configuration(client: ClientKind) -> bool {
+    matches!(client, ClientKind::GeminiCli)
+}
+
 impl TemporaryClient {
     fn prepare(
         client: ClientKind,
@@ -164,7 +199,7 @@ impl TemporaryClient {
         token: &str,
         model_override: Option<&str>,
         models: &[RouterModel],
-        extend_global_config: bool,
+        isolated_config: bool,
     ) -> Result<Self, AnyError> {
         sweep_stale_directories();
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
@@ -185,22 +220,13 @@ impl TemporaryClient {
         }
         let integration = client.integration();
         let mut command = Command::new(integration.command);
-        if extend_global_config {
+        if extends_user_configuration(client, isolated_config) {
             // Layer the router's connection settings on top of the user's own
             // configuration rather than replacing it, so sessions and settings
             // stay visible and a conversation started outside the router can be
             // resumed through it (issue #233). For these clients the router's
             // whole contribution is the two variables set below, so isolation
             // was never needed for routing — only for isolation itself.
-            if integration.token_env.is_none() || integration.base_url_env.is_none() {
-                return Err(format!(
-                    "--extend-global-config is not available for {}: it is configured through a \
-                     file rather than environment variables, so its settings cannot be layered \
-                     without rewriting that file",
-                    integration.name
-                )
-                .into());
-            }
         } else {
             configure_isolation(&mut command, &manager, directory.path(), client)?;
         }
@@ -555,6 +581,7 @@ mod tests {
             non_interactive: false,
             interactive: false,
             extend_global_config: false,
+            isolated_config: false,
             server: None,
             token: None,
             token_stdin: false,
@@ -613,11 +640,12 @@ mod tests {
     /// End to end: after preparing the client, the file Gemini CLI actually
     /// reads must exist and select the API-key flow. The router previously
     /// wrote a correct file the CLI never opened (issue #227).
-    /// With `--extend-global-config` the client keeps its own configuration
-    /// directory, so sessions started outside the router remain visible and a
-    /// conversation can be resumed through it (issue #233).
+    /// By default the client keeps its own configuration directory, so sessions
+    /// started outside the router remain visible and a conversation can be
+    /// resumed through it (issue #233), and an interactive user does not land in
+    /// first-run onboarding (issue #277).
     #[test]
-    fn extending_the_global_config_does_not_repoint_the_client() {
+    fn the_users_configuration_is_kept_by_default() {
         let models = [RouterModel {
             id: "test-model".to_string(),
             owned_by: "test".to_string(),
@@ -628,9 +656,9 @@ mod tests {
             "task-token",
             None,
             &models,
-            true,
+            false,
         )
-        .expect("prepare with extended config");
+        .expect("prepare with the default configuration handling");
         let names: Vec<String> = extended
             .command
             .get_envs()
@@ -648,14 +676,14 @@ mod tests {
             );
         }
 
-        // The default is unchanged: isolation still repoints the directory.
+        // Asking for isolation still repoints the directory.
         let isolated = TemporaryClient::prepare(
             ClientKind::ClaudeCode,
             "http://router.test",
             "task-token",
             None,
             &models,
-            false,
+            true,
         )
         .expect("prepare isolated");
         assert!(
@@ -663,31 +691,68 @@ mod tests {
                 .command
                 .get_envs()
                 .any(|(name, _)| name == "CLAUDE_CONFIG_DIR"),
-            "isolation must remain the default"
+            "--isolated-config must still give the client its own directory"
         );
     }
 
-    /// A file-configured client cannot have its settings layered by setting
-    /// variables, so the flag reports that rather than silently isolating.
+    /// A client configured through a file is isolated even though extending is
+    /// the default, because there is nothing to layer short of rewriting that
+    /// file.
+    ///
+    /// A fallback rather than an error: the user did not ask for isolation, they
+    /// asked to run a client, and this is the only way it can be run. Refusing
+    /// was right while extending was opt-in — the flag could not be honoured —
+    /// but as a default it would make `with opencode` fail outright (issue
+    /// #277).
     #[test]
-    fn extending_is_refused_where_it_cannot_be_honoured() {
+    fn a_file_configured_client_is_isolated_even_by_default() {
         let models = [RouterModel {
             id: "test-model".to_string(),
             owned_by: "test".to_string(),
         }];
-        let Err(error) = TemporaryClient::prepare(
+        assert!(
+            !extends_user_configuration(ClientKind::Opencode, false),
+            "opencode sets no base-url variable, so there is nothing to layer"
+        );
+        assert!(
+            extends_user_configuration(ClientKind::ClaudeCode, false),
+            "claude code sets both variables, so the default extends"
+        );
+        assert!(
+            !extends_user_configuration(ClientKind::ClaudeCode, true),
+            "--isolated-config wins over the default"
+        );
+
+        // And it still prepares rather than failing.
+        TemporaryClient::prepare(
             ClientKind::Opencode,
             "http://router.test",
             "task-token",
             None,
             &models,
-            true,
-        ) else {
-            panic!("opencode is configured through a file and cannot be extended");
-        };
-        let message = error.to_string();
-        assert!(message.contains("--extend-global-config"), "{message}");
-        assert!(message.contains("file"), "{message}");
+            false,
+        )
+        .expect("a file-configured client must still run");
+    }
+
+    /// Gemini CLI sets both connection variables and still cannot be extended.
+    ///
+    /// It is pointed at the router by a `settings.json` it resolves from `HOME`,
+    /// so extending — which leaves `HOME` alone — would write that file where
+    /// the client never looks and let the user's own settings decide the run
+    /// (issue #227). Having both variables is therefore not enough to layer
+    /// onto, and the default must not assume it is.
+    #[test]
+    fn a_client_needing_a_written_file_is_isolated_despite_its_variables() {
+        let integration = ClientKind::GeminiCli.integration();
+        assert!(
+            integration.token_env.is_some() && integration.base_url_env.is_some(),
+            "the variables alone would otherwise qualify it for extending"
+        );
+        assert!(
+            !extends_user_configuration(ClientKind::GeminiCli, false),
+            "routing depends on a file only isolation makes reachable"
+        );
     }
 
     #[test]
