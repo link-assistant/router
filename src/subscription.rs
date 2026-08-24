@@ -326,8 +326,6 @@ impl SubscriptionReader {
         &self,
         from_keychain: Option<&str>,
     ) -> Result<ImportSource, SubscriptionError> {
-        // Decide with the same rule the reader uses, so import and serving
-        // never disagree about which store is live.
         let (token, origin) =
             self.select_store(from_keychain.and_then(|raw| self.parse_store_credential(raw)))?;
         let document = match origin {
@@ -372,20 +370,15 @@ impl SubscriptionReader {
     /// nothing is served from this reader — it is read once, on demand, for a
     /// directory the operator typed.
     fn import_source_keychain(&self) -> Option<String> {
+        if !self.is_vendor_default_home() {
+            return None;
+        }
         crate::platform_keychain::lookup(self.provider)
     }
 
     /// Install a credential document as this provider's credential.
-    ///
-    /// Written owner-only through the durable path, so a half-written file is
-    /// never left behind and the credential is not world-readable.
-    ///
-    /// # Errors
-    ///
-    /// Returns an operator-readable message when the write cannot land.
+    #[must_use]
     pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
-        // Where the provider's own client writes, so an adopted credential
-        // lands exactly where a fresh login would put it.
         let path = self
             .home
             .join(self.provider.canonical_credential_filename());
@@ -395,24 +388,6 @@ impl SubscriptionReader {
     }
 
     /// Remove every credential file this provider is read from.
-    ///
-    /// All candidate names are removed, not just the one a login happens to
-    /// write. Claude alone is read from five (`credentials.json`,
-    /// `.credentials.json`, `auth.json`, `oauth.json`, `config.json`), so
-    /// clearing only the written name would leave the reader finding another
-    /// and reporting the credential as still present — a withdrawal that
-    /// silently did not happen.
-    ///
-    /// Returns the paths actually removed. A platform secret store is *not*
-    /// touched: that entry belongs to the vendor CLI, and deleting it would
-    /// log the user out of a client the router does not own. Callers that can
-    /// surface it should report it instead — see
-    /// [`crate::platform_keychain::service_name`].
-    ///
-    /// # Errors
-    ///
-    /// Returns an operator-readable message when a file exists but cannot be
-    /// removed.
     pub fn clear_credentials(&self) -> Result<Vec<PathBuf>, String> {
         let mut removed = Vec::new();
         for path in self.credential_paths() {
@@ -427,50 +402,21 @@ impl SubscriptionReader {
         Ok(removed)
     }
 
-    /// First existing credential file, if any (for diagnostics).
     #[must_use]
     pub fn discover_credential_path(&self) -> Option<PathBuf> {
         self.credential_paths().into_iter().find(|p| p.exists())
     }
 
-    /// Read and normalize the subscription token.
-    ///
-    /// Consults the platform secret store as well as the credential file and
-    /// returns whichever holds the newer credential; see [`read_token_from`](Self::read_token_from).
     pub fn read_token(&self) -> Result<SubscriptionToken, SubscriptionError> {
         self.read_token_from().map(|(token, _)| token)
     }
 
-    /// Read the subscription token and say which store it came from.
-    ///
-    /// On macOS the Claude Code credential file is a snapshot that nothing
-    /// rotates while the live credential sits in the login Keychain, so reading
-    /// only the file saw a token that had been dead for hours while the vendor
-    /// client kept working (issue #249). Both stores are read and the newer
-    /// credential wins, which keeps every other platform on exactly the file it
-    /// used before — there, the keychain lookup simply finds nothing.
-    ///
-    /// "Newer" is decided by expiry: the two stores hold independent
-    /// credentials rather than two copies of one, so the one that stays valid
-    /// longer is the live chain. A credential with no expiry loses to one that
-    /// has a usable expiry, since an unknown expiry cannot be shown to be
-    /// newer.
-    ///
-    /// # Errors
-    ///
-    /// Returns the file's error when neither store yields a token, so a machine
-    /// with no keychain entry reports exactly what it reported before.
     pub fn read_token_from(
         &self,
     ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
         self.select_store(self.read_token_from_keychain())
     }
 
-    /// Choose between the credential file and an already-read store credential.
-    ///
-    /// Split from [`read_token_from`](Self::read_token_from) so the preference
-    /// rule can be tested without a real login Keychain — which no test may
-    /// depend on, and none may write to.
     fn select_store(
         &self,
         from_keychain: Option<SubscriptionToken>,
@@ -478,8 +424,6 @@ impl SubscriptionReader {
         let from_file = self.read_token_from_file();
         match (from_file, from_keychain) {
             (Ok(file), Some(keychain)) => {
-                // Only a strictly later expiry displaces the file, so a store
-                // that merely mirrors it changes nothing an operator sees.
                 if keychain.expires_at_ms > file.expires_at_ms {
                     Ok((keychain, crate::platform_keychain::Origin::Keychain))
                 } else {
@@ -491,19 +435,10 @@ impl SubscriptionReader {
         }
     }
 
-    /// Whether this reader describes the home the vendor client itself uses.
-    ///
-    /// The platform store is a single global entry, so it speaks only for the
-    /// default home. A reader pointed somewhere else — a pooled account, a
-    /// per-account directory, a mounted credential in a container — must keep
-    /// reading exactly the file it was given: letting one machine-wide keychain
-    /// entry answer for every account would collapse a pool onto one
-    /// subscription.
     fn is_vendor_default_home(&self) -> bool {
         std::env::var("HOME").is_ok_and(|home| self.provider.resolve_home(&home) == self.home)
     }
 
-    /// The credential the platform secret store holds, when there is one.
     fn read_token_from_keychain(&self) -> Option<SubscriptionToken> {
         if !self.is_vendor_default_home() {
             return None;
@@ -512,12 +447,6 @@ impl SubscriptionReader {
         self.parse_store_credential(&raw)
     }
 
-    /// Normalize a credential held by the platform store.
-    ///
-    /// The stored value is the same JSON shape the file holds, so the file
-    /// parser is reused rather than duplicated. An entry this crate cannot read
-    /// yields `None` and leaves the file as the source, which is the behaviour
-    /// every platform had before the store was consulted at all.
     fn parse_store_credential(&self, raw: &str) -> Option<SubscriptionToken> {
         let parsed: RawCredentials = serde_json::from_str(raw)
             .map_err(|error| {
@@ -530,7 +459,6 @@ impl SubscriptionReader {
         parsed.into_token(self.provider)
     }
 
-    /// Read and normalize the subscription token from the credential file.
     fn read_token_from_file(&self) -> Result<SubscriptionToken, SubscriptionError> {
         let mut last_err: Option<SubscriptionError> = None;
         for path in self.credential_paths() {
@@ -563,24 +491,6 @@ impl SubscriptionReader {
         }))
     }
 
-    /// Write a refreshed token back into the existing credential file.
-    ///
-    /// Vendors rotate refresh tokens: the response to a refresh often carries a
-    /// *new* `refresh_token` that supersedes the stored one. Keeping that only
-    /// in memory means the next process start replays a spent token, turning a
-    /// recoverable state into a mandatory re-login (issue #205).
-    ///
-    /// The refreshed values are merged into the document that is already there,
-    /// rather than serialized from [`SubscriptionToken`], because the vendor
-    /// CLIs rely on fields this crate does not model (`id_token`, `auth_mode`,
-    /// `scope`, `token_type`). Only the file that was actually read is updated.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`SubscriptionError::ReadError`] when no credential file exists,
-    /// or when the file cannot be parsed or replaced — including a read-only
-    /// mount, which is reported in terms of the mount rather than as a bare
-    /// `errno`.
     pub fn write_token(&self, token: &SubscriptionToken) -> Result<(), SubscriptionError> {
         let path = self.discover_credential_path().ok_or_else(|| {
             SubscriptionError::NoCredentials(format!(
@@ -595,9 +505,7 @@ impl SubscriptionReader {
         let mut document: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
             SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
         })?;
-
         merge_refreshed_token(&mut document, self.provider, token);
-
         let serialized = serde_json::to_vec_pretty(&document).map_err(|e| {
             SubscriptionError::ParseError(format!("Failed to serialize {}: {e}", path.display()))
         })?;
@@ -608,10 +516,6 @@ impl SubscriptionReader {
 }
 
 /// Update the token fields of an existing credential document in place.
-///
-/// Each vendor stores the same three values under a different shape, and only
-/// the keys already present are rewritten, so a file written by the vendor CLI
-/// keeps its own layout and every field this crate does not model.
 fn merge_refreshed_token(
     document: &mut serde_json::Value,
     provider: SubscriptionProvider,
@@ -625,16 +529,12 @@ fn merge_refreshed_token(
 
     match provider {
         SubscriptionProvider::Claude => {
-            // Real Claude Code files nest the values; hand-written ones are flat.
             let nested = document.get("claudeAiOauth").is_some();
             let target = if nested {
                 &mut document["claudeAiOauth"]
             } else {
                 &mut *document
             };
-            // Resolve every key before mutating: a file may use either the
-            // camelCase or the snake_case spelling, and whichever it already
-            // uses is the one kept.
             let key = |camel: &'static str, snake: &'static str| {
                 if target.get(snake).is_some() && target.get(camel).is_none() {
                     snake
@@ -654,7 +554,6 @@ fn merge_refreshed_token(
             }
         }
         SubscriptionProvider::Codex => {
-            // Codex keeps its tokens under `tokens` and stamps `last_refresh`.
             let target = &mut document["tokens"];
             set(target, "access_token", Some(token.access_token.clone()));
             set(target, "refresh_token", token.refresh_token.clone());
@@ -670,7 +569,6 @@ fn merge_refreshed_token(
     }
 }
 
-/// Construct readers for every vendor, honoring the configured Claude home.
 #[must_use]
 pub fn all_subscription_readers(claude_home: &str, user_home: &str) -> Vec<SubscriptionReader> {
     SubscriptionProvider::ALL
@@ -685,7 +583,6 @@ pub fn all_subscription_readers(claude_home: &str, user_home: &str) -> Vec<Subsc
         .collect()
 }
 
-/// Reader used by an explicitly pinned non-Claude subscription provider.
 #[must_use]
 pub fn active_subscription_reader(
     upstream: crate::config::UpstreamProvider,
@@ -702,29 +599,21 @@ pub fn active_subscription_reader(
         })
 }
 
-/// Superset of every vendor credential layout. Each provider reads only the
-/// fields it uses; serde `alias` covers `camelCase`/`snake_case` variants.
 #[derive(Debug, Default, Deserialize)]
 struct RawCredentials {
-    // Flat layout (Gemini / Qwen / hand-written): top-level token fields.
     #[serde(alias = "accessToken")]
     access_token: Option<String>,
     #[serde(alias = "oauthToken", alias = "oauth_token")]
     token: Option<String>,
     #[serde(alias = "refreshToken")]
     refresh_token: Option<String>,
-    /// Gemini/Qwen store expiry as `expiry_date` (ms); others use `expiresAt`.
     #[serde(alias = "expiryDate", alias = "expiresAt", alias = "expires_at")]
     expiry_date: Option<i64>,
-    /// Qwen per-token base URL override.
     #[serde(alias = "resourceUrl")]
     resource_url: Option<String>,
-    /// `ChatGPT` account id when stored at the top level.
     #[serde(alias = "accountId", alias = "chatgpt_account_id")]
     account_id: Option<String>,
-    // Codex nested layout: `{ "tokens": { ... }, "last_refresh": ... }`.
     tokens: Option<CodexTokens>,
-    // Claude nested layout: `{ "claudeAiOauth": { ... } }`.
     #[serde(alias = "claudeAiOauth")]
     claude_ai_oauth: Option<ClaudeBlock>,
 }
@@ -758,19 +647,15 @@ fn non_empty(s: Option<String>) -> Option<String> {
 }
 
 impl RawCredentials {
-    /// Resolve the provider-specific access token and routing metadata.
     fn into_token(self, provider: SubscriptionProvider) -> Option<SubscriptionToken> {
         match provider {
             SubscriptionProvider::Claude => self.claude_token(),
             SubscriptionProvider::Codex => self.codex_token(),
-            // Gemini and Qwen both use the flat layout; Qwen adds resource_url.
             SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => self.flat_token(),
         }
     }
 
     fn claude_token(self) -> Option<SubscriptionToken> {
-        // Prefer the nested `claudeAiOauth` block (real Claude Code layout),
-        // then fall back to flat fields.
         if let Some(block) = self.claude_ai_oauth
             && let Some(access) = non_empty(block.access_token).or_else(|| non_empty(block.token))
         {
@@ -825,8 +710,6 @@ impl RawCredentials {
     }
 }
 
-/// Read a JWT `exp` claim without verifying the signature. This is only a
-/// local expiry hint; the token endpoint and upstream remain authoritative.
 fn jwt_expiry_ms(token: &str) -> Option<i64> {
     use base64::Engine as _;
     let payload = token.split('.').nth(1)?;
@@ -837,11 +720,6 @@ fn jwt_expiry_ms(token: &str) -> Option<i64> {
     claims.get("exp")?.as_i64()?.checked_mul(1000)
 }
 
-/// Extract the `ChatGPT` account id from a Codex `id_token` JWT.
-///
-/// Codex stores the account id directly, but older/edge auth files only carry
-/// the `id_token`; its payload nests the id under
-/// `https://api.openai.com/auth.chatgpt_account_id` (or `chatgpt_account_id`).
 fn account_id_from_id_token(id_token: &str) -> Option<String> {
     use base64::Engine as _;
     let payload_b64 = id_token.split('.').nth(1)?;
@@ -862,3 +740,7 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
 #[cfg(test)]
 #[path = "subscription_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "subscription_issue_285_tests.rs"]
+mod issue_285_tests;
