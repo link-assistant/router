@@ -1,6 +1,10 @@
 name: issue-285-apply
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
   push:
     branches:
       - fix/issue-285-explicit-source-clean
@@ -30,14 +34,14 @@ jobs:
           text = prod.read_text()
           old = """    fn import_source_keychain(&self) -> Option<String> {\n        crate::platform_keychain::lookup(self.provider)\n    }"""
           new = """    fn import_source_keychain(&self) -> Option<String> {\n        if !self.is_vendor_default_home() {\n            return None;\n        }\n        crate::platform_keychain::lookup(self.provider)\n    }"""
-          if old not in text:
-              raise SystemExit("production target not found")
-          prod.write_text(text.replace(old, new, 1))
+          if old in text:
+              prod.write_text(text.replace(old, new, 1))
 
           tests = Path("src/subscription_tests.rs")
           text = tests.read_text()
           marker = "/// A home with no credential is an error naming the home, not an empty import."
-          if "explicit_import_home_does_not_adopt_a_newer_keychain_credential" not in text:
+          name = "explicit_import_home_does_not_adopt_a_newer_keychain_credential"
+          if name not in text:
               test = r'''
 
           /// An explicitly named source directory remains authoritative even
@@ -46,13 +50,23 @@ jobs:
           fn explicit_import_home_does_not_adopt_a_newer_keychain_credential() {
               let dir = tempfile::tempdir().unwrap();
               let reader = claude_home_expiring_at(dir.path(), 1_000);
+              let store = serde_json::json!({
+                  "claudeAiOauth": {
+                      "accessToken": "keychain-access",
+                      "refreshToken": "keychain-refresh",
+                      "expiresAt": 9_999_999_i64,
+                  }
+              })
+              .to_string();
+
               let source = reader
-                  .read_document_for_import()
-                  .expect("the explicitly named credential should be importable");
+                  .import_from_store(Some(&store))
+                  .expect("a credential is available");
 
               assert_eq!(source.origin, crate::platform_keychain::Origin::File);
               assert_eq!(source.token.access_token, "file-access");
               assert!(source.document.contains("file-access"));
+              assert!(!source.document.contains("keychain-access"));
               assert!(!reader.is_vendor_default_home());
               assert!(reader.read_token_from_keychain().is_none());
           }
