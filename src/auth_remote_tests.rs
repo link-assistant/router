@@ -399,3 +399,92 @@ async fn a_named_server_is_used() {
     assert_eq!(target.source, "flag");
     assert!(target.base_url.contains("127.0.0.1"), "{}", target.base_url);
 }
+
+/// A serving single-account deployment is not reported as unconfigured
+/// (issue #281).
+///
+/// `accounts: []` means *no account pool*, the ordinary state of a
+/// single-subscription router. Reading it as "no credential" made `auth status`
+/// describe a router serving live traffic as unauthorized, and the natural next
+/// step from that output is to re-authenticate something already working.
+#[test]
+fn a_single_account_deployment_reports_its_credentials() {
+    let body = serde_json::json!({
+        "accounts": [],
+        "credentials": [
+            {"name": "claude", "home": "/srv/router-claude", "credential": "ok", "healthy": true},
+            {"name": "codex", "home": "/srv/router-codex", "credential": "expired", "healthy": false},
+        ],
+        "note": "single-account mode (no AccountRouter configured)",
+    });
+
+    let lines = credential_report(&body);
+
+    assert_eq!(lines.len(), 2, "each provider is named: {lines:?}");
+    assert!(
+        lines[0].contains("claude") && lines[0].contains("ok"),
+        "{lines:?}"
+    );
+    assert!(
+        lines[1].contains("codex") && lines[1].contains("expired"),
+        "{lines:?}"
+    );
+    assert!(
+        !lines
+            .iter()
+            .any(|line| line.contains("no accounts are configured")),
+        "a deployment holding a usable credential must not read as unconfigured: {lines:?}"
+    );
+}
+
+/// An older router sends only the note; that note is the answer.
+///
+/// The server already distinguishes "single-account mode" from "nothing here",
+/// and dropping the explanation is what left the misleading sentence as the
+/// only output.
+#[test]
+fn the_servers_explanation_is_printed_rather_than_discarded() {
+    let body = serde_json::json!({
+        "accounts": [],
+        "note": "single-account mode (no AccountRouter configured)",
+    });
+
+    let lines = credential_report(&body);
+
+    assert_eq!(
+        lines,
+        vec!["single-account mode (no AccountRouter configured)"]
+    );
+}
+
+/// With a pool configured, the pool is what gets reported, unchanged.
+#[test]
+fn a_configured_pool_is_reported_as_before() {
+    let body = serde_json::json!({
+        "accounts": [
+            {"name": "team-a", "home": "/srv/a", "credential": "ok"},
+            {"name": "team-b", "home": "/srv/b", "credential": "rejected"},
+        ],
+    });
+
+    let lines = credential_report(&body);
+
+    assert_eq!(lines.len(), 2);
+    assert!(
+        lines[0].contains("team-a") && lines[0].contains("ok"),
+        "{lines:?}"
+    );
+    assert!(
+        lines[1].contains("team-b") && lines[1].contains("rejected"),
+        "{lines:?}"
+    );
+}
+
+/// A router that says nothing at all still gets the original sentence: with no
+/// accounts, no credentials and no note, "nothing is configured" is true.
+#[test]
+fn a_silent_router_still_reports_nothing_configured() {
+    let lines = credential_report(&serde_json::json!({"accounts": []}));
+
+    assert_eq!(lines, vec!["no accounts are configured on this router"]);
+}

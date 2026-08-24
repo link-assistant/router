@@ -381,22 +381,40 @@ fn a_reusable_credential_prefers_what_the_operator_stored() {
 
     // Only the gh login exists.
     assert_eq!(
-        reusable_credential(
-            Some(&data_dir.path().to_string_lossy()),
-            Some(gh_config.path())
-        ),
+        reusable_credential(Some(data_dir.path()), Some(gh_config.path())),
         Some("gho_from_gh".to_string())
     );
 
     // Once stored, the operator's own choice wins.
     store_credential(data_dir.path(), "gho_stored").expect("store one");
     assert_eq!(
-        reusable_credential(
-            Some(&data_dir.path().to_string_lossy()),
-            Some(gh_config.path())
-        ),
+        reusable_credential(Some(data_dir.path()), Some(gh_config.path())),
         Some("gho_stored".to_string())
     );
+}
+
+/// A credential stored through `--data-dir` is found at startup (issue #282).
+///
+/// `--data-dir` and `DATA_DIR` name one setting and clap merges them, but the
+/// proxy re-read `DATA_DIR` itself and so saw only the environment spelling.
+/// The flag form left the entire GitHub surface unmounted while `auth gh
+/// --status` — which reads the parsed value — reported the credential present.
+///
+/// `DATA_DIR` is deliberately absent from this test's environment: with it set,
+/// the old code passes for the wrong reason.
+#[test]
+fn a_credential_stored_under_a_flag_data_dir_is_found() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    store_credential(data_dir.path(), "gho_stored_by_flag").expect("store one");
+
+    let github = GitHubProxyConfig::from_env_with_data_dir(Some(data_dir.path()))
+        .expect("a stored credential loads");
+
+    assert!(
+        github.enabled(),
+        "a credential stored through --data-dir must mount the GitHub surface"
+    );
+    assert_eq!(github.credential(), Some("gho_stored_by_flag"));
 }
 
 /// With neither source there is nothing to reuse, so the proxy stays
@@ -406,9 +424,9 @@ fn without_either_source_there_is_nothing_to_reuse() {
     let empty = tempfile::tempdir().expect("empty dir");
 
     assert_eq!(reusable_credential(None, None), None);
-    assert_eq!(reusable_credential(Some(""), None), None);
+    assert_eq!(reusable_credential(Some(Path::new("")), None), None);
     assert_eq!(
-        reusable_credential(Some(&empty.path().to_string_lossy()), Some(empty.path())),
+        reusable_credential(Some(empty.path()), Some(empty.path())),
         None
     );
 }

@@ -124,6 +124,8 @@ pub enum AuthOp {
         /// Remove the stored credential instead of storing one.
         #[arg(long, conflicts_with_all = ["from_gh_config", "token_stdin", "status"])]
         clear: bool,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// Report whether each provider credential is usable, expired, or absent.
     Status {

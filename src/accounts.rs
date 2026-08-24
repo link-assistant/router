@@ -134,29 +134,7 @@ impl AccountState {
         now_ms: i64,
         refreshes: Option<&crate::refresh::TokenCache>,
     ) -> CredentialState {
-        match self.reader.read_token() {
-            Ok(token) if !token.is_expired(now_ms) => CredentialState::Usable,
-            // `expiresAt` is a hint, not a verdict: an expired access token
-            // that still holds a refresh token is recovered by the refresh
-            // ladder on the next request, exactly as `doctor` reports it. Only
-            // an expired token with nothing left to refresh with is terminal.
-            Ok(token) => {
-                if token.refresh_token.as_deref().is_none_or(str::is_empty) {
-                    return CredentialState::Expired;
-                }
-                // The refusal is keyed to this exact credential, so a chain
-                // another holder has rotated forward stops matching and the
-                // account reports recoverable again (issue #239).
-                if refreshes.is_some_and(|cache| {
-                    cache.refresh_was_refused(self.reader.provider(), &self.name, &token)
-                }) {
-                    CredentialState::Rejected
-                } else {
-                    CredentialState::Refreshable
-                }
-            }
-            Err(error) => CredentialState::Unusable(error.to_string()),
-        }
+        credential_state_of(&self.reader, &self.name, now_ms, refreshes)
     }
 
     fn is_available(&self) -> bool {
@@ -585,6 +563,49 @@ impl AccountRouter {
         if guard.is_none_or(|current| current < proposed) {
             *guard = Some(proposed);
         }
+    }
+}
+
+/// What the credential a reader points at says about itself, right now.
+///
+/// A free function over the reader rather than a method on an account, so a
+/// deployment with no account pool can be reported with the same verdict the
+/// pooled surfaces use. Reporting single-account mode as simply having nothing
+/// configured described a router that was serving traffic as unauthorized
+/// (issue #281).
+///
+/// Read on demand rather than cached: the vendor CLI, a login, or a token
+/// refresh can replace the file underneath a long-lived process, and a stale
+/// verdict is the failure this signal exists to prevent.
+#[must_use]
+pub fn credential_state_of(
+    reader: &crate::subscription::SubscriptionReader,
+    account: &str,
+    now_ms: i64,
+    refreshes: Option<&crate::refresh::TokenCache>,
+) -> CredentialState {
+    match reader.read_token() {
+        Ok(token) if !token.is_expired(now_ms) => CredentialState::Usable,
+        // `expiresAt` is a hint, not a verdict: an expired access token
+        // that still holds a refresh token is recovered by the refresh
+        // ladder on the next request, exactly as `doctor` reports it. Only
+        // an expired token with nothing left to refresh with is terminal.
+        Ok(token) => {
+            if token.refresh_token.as_deref().is_none_or(str::is_empty) {
+                return CredentialState::Expired;
+            }
+            // The refusal is keyed to this exact credential, so a chain
+            // another holder has rotated forward stops matching and the
+            // account reports recoverable again (issue #239).
+            if refreshes
+                .is_some_and(|cache| cache.refresh_was_refused(reader.provider(), account, &token))
+            {
+                CredentialState::Rejected
+            } else {
+                CredentialState::Refreshable
+            }
+        }
+        Err(error) => CredentialState::Unusable(error.to_string()),
     }
 }
 

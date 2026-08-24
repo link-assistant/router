@@ -324,8 +324,13 @@ async fn run_server(
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
         mpp: config.mpp.clone(),
         login_manager: LoginManager::new(config.login.clone()),
-        github: link_assistant_router::github_proxy::GitHubProxyConfig::from_env()
-            .map_err(std::io::Error::other)?,
+        // The resolved directory, not `DATA_DIR`: clap merged the flag and the
+        // environment into `config.data_dir`, and only that value knows which
+        // one the operator used (issue #282).
+        github: link_assistant_router::github_proxy::GitHubProxyConfig::from_env_with_data_dir(
+            Some(config.data_dir.as_path()),
+        )
+        .map_err(std::io::Error::other)?,
     };
 
     state.register_credential_recovery(&link_assistant_router::app_state::VendorClis {

@@ -640,12 +640,93 @@ fn the_import_source_keeps_fields_the_token_does_not_model() {
     std::fs::write(dir.path().join("auth.json"), document).expect("plant");
     let reader = SubscriptionReader::new(SubscriptionProvider::Codex, dir.path());
 
-    let (read_back, origin) = reader.read_document_for_import().expect("read for import");
+    let source = reader.read_document_for_import().expect("read for import");
 
-    assert_eq!(read_back, document, "the document must survive verbatim");
-    assert_eq!(origin, crate::platform_keychain::Origin::File);
-    assert!(read_back.contains("id_token"));
-    assert!(read_back.contains("auth_mode"));
+    assert_eq!(
+        source.document, document,
+        "the document must survive verbatim"
+    );
+    assert_eq!(source.origin, crate::platform_keychain::Origin::File);
+    assert!(source.document.contains("id_token"));
+    assert!(source.document.contains("auth_mode"));
+}
+
+/// The reported credential is the installed one (issue #280).
+///
+/// Import read the source twice through two methods that select the platform
+/// store by different rules: the document consulted the store for any home,
+/// while the token describing it consulted the store only for the vendor's
+/// default home. An import always names a source that differs from the
+/// destination — otherwise there is nothing to adopt — so on macOS the two
+/// disagreed on every run, and a live Keychain credential was installed under
+/// the stale file's verdict: `EXPIRED 3 days ago ... REJECTED by the vendor`
+/// for a credential that served traffic seconds later.
+///
+/// The direction that matters: the verdict must follow the bytes, whichever
+/// store won.
+#[test]
+fn the_described_credential_is_the_installed_one() {
+    let dir = tempfile::tempdir().unwrap();
+    // The #280 shape: a file that expired long ago beside a live store entry.
+    let reader = claude_home_expiring_at(dir.path(), 1_000);
+    let store = serde_json::json!({
+        "claudeAiOauth": {
+            "accessToken": "keychain-access",
+            "refreshToken": "keychain-refresh",
+            "expiresAt": 9_999_999_i64,
+        }
+    })
+    .to_string();
+
+    let source = reader
+        .import_from_store(Some(&store))
+        .expect("a credential is available");
+
+    assert_eq!(
+        source.origin,
+        crate::platform_keychain::Origin::Keychain,
+        "the live store credential is the one to adopt"
+    );
+    assert_eq!(
+        source.document, store,
+        "the store credential is what gets installed"
+    );
+    assert_eq!(
+        source.token.access_token, "keychain-access",
+        "the described token must be the installed document's, not the file's"
+    );
+    assert_eq!(
+        source.token.expires_at_ms,
+        Some(9_999_999),
+        "reporting the file's expiry is what declared a working credential dead"
+    );
+}
+
+/// The same invariant with the file winning: the verdict follows the bytes.
+///
+/// Guards the inverse failure the issue names — a stale credential installed
+/// under a fresh verdict — so the fix cannot be read as "always prefer the
+/// store".
+#[test]
+fn a_file_newer_than_the_store_is_described_as_installed_too() {
+    let dir = tempfile::tempdir().unwrap();
+    let reader = claude_home_expiring_at(dir.path(), 9_999_999);
+    let store = serde_json::json!({
+        "claudeAiOauth": {
+            "accessToken": "keychain-access",
+            "refreshToken": "keychain-refresh",
+            "expiresAt": 1_000_i64,
+        }
+    })
+    .to_string();
+
+    let source = reader
+        .import_from_store(Some(&store))
+        .expect("a credential is available");
+
+    assert_eq!(source.origin, crate::platform_keychain::Origin::File);
+    assert_eq!(source.token.access_token, "file-access");
+    assert!(source.document.contains("file-access"));
 }
 
 /// A home with no credential is an error naming the home, not an empty import.

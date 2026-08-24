@@ -46,7 +46,7 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     // credential while a server is selected made the obvious `server use` →
     // `auth` → `with` sequence silently authorize the wrong router (#246).
     match remote_target(op).await {
-        Ok(Some(server)) => return run_remote(&server, op).await,
+        Ok(Some(server)) => return run_remote(config, &server, op).await,
         Ok(None) => {}
         Err(error) => {
             eprintln!("error: {error}");
@@ -106,7 +106,7 @@ fn run_gh(
     if status {
         let source = if stored.is_file() {
             format!("stored at {}", stored.display())
-        } else if github_proxy::GitHubProxyConfig::from_env().is_ok_and(|github| github.enabled()) {
+        } else if configured_github_credential(config) {
             "configured from the environment".to_string()
         } else {
             "absent".to_string()
@@ -238,6 +238,18 @@ fn clear_provider(
     Ok(())
 }
 
+/// Whether a GitHub credential is configured for *this* deployment.
+///
+/// Resolved against `config.data_dir` rather than `DATA_DIR`, so a credential
+/// stored through `--data-dir` is seen here exactly as the server sees it at
+/// startup (issue #282).
+fn configured_github_credential(config: &link_assistant_router::config::Config) -> bool {
+    link_assistant_router::github_proxy::GitHubProxyConfig::from_env_with_data_dir(Some(
+        config.data_dir.as_path(),
+    ))
+    .is_ok_and(|github| github.enabled())
+}
+
 /// Remove the stored GitHub credential, naming any that remains configured.
 fn clear_github(config: &link_assistant_router::config::Config) -> Result<(), String> {
     use link_assistant_router::github_proxy;
@@ -252,7 +264,7 @@ fn clear_github(config: &link_assistant_router::config::Config) -> Result<(), St
     // The proxy resolves a credential from several places, and only one of them
     // is the router's. Saying so prevents "I cleared it and the routes are
     // still mounted" from looking like a bug.
-    if github_proxy::GitHubProxyConfig::from_env().is_ok_and(|github| github.enabled()) {
+    if configured_github_credential(config) {
         println!(
             "github   note: a credential is still configured from the environment or a \
              mounted gh config, so the GitHub routes stay enabled"
@@ -269,13 +281,12 @@ async fn remote_target(
     let target = match op {
         AuthOp::Claude { target, .. }
         | AuthOp::Codex { target, .. }
+        | AuthOp::Gh { target, .. }
         | AuthOp::Status { target, .. } => target,
-        // `auth gh` configures the credential this router presents upstream,
-        // so it always acts on the local deployment. `auth import` reads a
-        // directory on this machine and writes this deployment's credential
-        // home, so it is local for the same reason — and `run_import` has
-        // already returned before this is reached.
-        AuthOp::Gh { .. } | AuthOp::Import { .. } => return Ok(None),
+        // `auth import` reads a directory on this machine and writes this
+        // deployment's credential home, so it is local by construction — and
+        // `run_import` has already returned before this is reached.
+        AuthOp::Import { .. } => return Ok(None),
     };
     link_assistant_router::auth_remote::target_for(
         target.local,
@@ -286,6 +297,7 @@ async fn remote_target(
 }
 
 async fn run_remote(
+    config: &Config,
     server: &link_assistant_router::managed_server::ResolvedServer,
     op: &AuthOp,
 ) -> ExitCode {
@@ -303,8 +315,37 @@ async fn run_remote(
             link_assistant_router::auth_remote::authorize(server, "codex", None, None).await
         }
         AuthOp::Status { .. } => link_assistant_router::auth_remote::status(server).await,
-        // Never reached: `remote_target` keeps both on the local path.
-        AuthOp::Gh { .. } | AuthOp::Import { .. } => ExitCode::from(1),
+        // A read-only query has nothing to store in the wrong place, so it
+        // answers — but it names whose credential it is describing, which is
+        // exactly what a bare path failed to convey (issue #283).
+        AuthOp::Gh { status: true, .. } => {
+            println!(
+                "note: describing this machine's credential; {} keeps its own, which \
+                 `auth gh` cannot read from here",
+                server.base_url
+            );
+            run_gh(config, None, false, true)
+        }
+        // A GitHub credential can only be stored where the router will read it
+        // from, and the router reads it from its own data directory at startup
+        // — there is no endpoint that accepts one over HTTP. Acting locally
+        // here would store the token on this workstation while reporting
+        // success, leaving the deployment that needs one without it and this
+        // machine holding a GitHub token it never needed (issue #283). Saying
+        // so is the honest answer; `--local` asks for the local store
+        // explicitly.
+        AuthOp::Gh { .. } => {
+            eprintln!(
+                "error: a GitHub credential is read from the router's own data directory at \
+                 startup, so it cannot be stored on {} from here.\n\
+                 note: run `router auth gh` on that deployment (or set GITHUB_PROXY_TOKEN there), \
+                 then restart it. Pass --local to act on this machine's data directory instead.",
+                server.base_url
+            );
+            ExitCode::from(1)
+        }
+        // Never reached: `remote_target` keeps import on the local path.
+        AuthOp::Import { .. } => ExitCode::from(1),
     }
 }
 
