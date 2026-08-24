@@ -2,6 +2,7 @@ name: issue-285-fix-v2
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - main
   push:
