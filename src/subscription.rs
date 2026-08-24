@@ -372,6 +372,9 @@ impl SubscriptionReader {
     /// nothing is served from this reader — it is read once, on demand, for a
     /// directory the operator typed.
     fn import_source_keychain(&self) -> Option<String> {
+        if !self.is_vendor_default_home() {
+            return None;
+        }
         crate::platform_keychain::lookup(self.provider)
     }
 
