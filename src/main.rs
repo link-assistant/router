@@ -16,6 +16,7 @@ use std::time::Duration;
 #[path = "accounts_cli.rs"]
 mod accounts_cli;
 mod auth_cli;
+mod auth_import;
 #[path = "logs_cli.rs"]
 mod logs_cli;
 

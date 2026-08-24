@@ -547,3 +547,144 @@ fn import_cannot_be_combined_with_clear() {
         "--from-claude-home with --clear must be rejected"
     );
 }
+
+/// Importing is reachable as a verb, not only as a flag on each provider's
+/// authorize command.
+///
+/// Spelled as a flag it was undiscoverable: `auth --help` listed three
+/// "Authorize" entries and a "status", and a user had to open each provider's
+/// own help to learn the capability existed — then learn a different flag name
+/// for each one (issue #278).
+#[test]
+fn import_is_a_verb_listed_in_the_auth_command_list() {
+    let output = router(&["auth", "--help"]);
+    assert!(output.status.success(), "{output:?}");
+    let seen = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        seen.contains("import"),
+        "auth --help must list import: {seen}"
+    );
+
+    // And it names every source it can adopt from, on one page.
+    let help = router(&["auth", "import", "--help"]);
+    assert!(help.status.success(), "{help:?}");
+    let seen = String::from_utf8_lossy(&help.stdout);
+    for provider in ["claude", "codex", "gemini", "qwen", "gh"] {
+        assert!(seen.contains(provider), "{provider} missing: {seen}");
+    }
+}
+
+/// The subcommand adopts a login, with the same report the flag produces.
+#[test]
+fn the_import_subcommand_adopts_a_login() {
+    let home = tempfile::tempdir().expect("temp home");
+    let source = home.path().join("source");
+    let destination = home.path().join("router-claude");
+    std::fs::create_dir_all(&source).expect("source home");
+    std::fs::write(
+        source.join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"synthetic","refreshToken":"r","expiresAt":99999999999999}}"#,
+    )
+    .expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "claude",
+            source.to_str().expect("utf-8 path"),
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &destination)
+        .output()
+        .expect("router CLI should run");
+
+    assert!(output.status.success(), "{output:?}");
+    assert!(destination.join(".credentials.json").is_file());
+    let seen = String::from_utf8_lossy(&output.stdout);
+    assert!(seen.contains("imported"), "{seen}");
+    // The #274 report is kept verbatim, which the issue asked for.
+    assert!(seen.contains("share one rotating chain"), "{seen}");
+}
+
+/// An unqualified import reads the *vendor's* home, not the router's.
+///
+/// `resolve_home` honours `CLAUDE_CODE_HOME`, which in a deployment names the
+/// destination — resolving the source that way made every unqualified import
+/// refuse itself as a self-import (issue #278).
+#[test]
+fn an_unqualified_import_reads_the_vendors_own_home() {
+    let home = tempfile::tempdir().expect("temp home");
+    let vendor = home.path().join(".claude");
+    let destination = home.path().join("router-claude");
+    std::fs::create_dir_all(&vendor).expect("vendor home");
+    std::fs::write(
+        vendor.join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"synthetic","refreshToken":"r","expiresAt":99999999999999}}"#,
+    )
+    .expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "import", "claude", "--local"])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &destination)
+        .output()
+        .expect("router CLI should run");
+
+    assert!(
+        output.status.success(),
+        "an unqualified import must read ~/.claude: {output:?}"
+    );
+    assert!(
+        destination.join(".credentials.json").is_file(),
+        "the credential must reach the router's home"
+    );
+}
+
+/// `--all` adopts what is there and reports what is not.
+///
+/// A workstation logged in to two of five providers is the ordinary case, not
+/// an error, so one absent login must not abort the rest.
+#[test]
+fn importing_everything_adopts_what_exists_and_reports_what_does_not() {
+    let home = tempfile::tempdir().expect("temp home");
+    let vendor = home.path().join(".claude");
+    let destination = home.path().join("router-claude");
+    std::fs::create_dir_all(&vendor).expect("vendor home");
+    std::fs::write(
+        vendor.join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"synthetic","refreshToken":"r","expiresAt":99999999999999}}"#,
+    )
+    .expect("plant a credential");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "import", "--all", "--local"])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        .env("CLAUDE_CODE_HOME", &destination)
+        .env("CODEX_HOME", home.path().join("router-codex"))
+        .env("DATA_DIR", home.path().join("data"))
+        .output()
+        .expect("router CLI should run");
+
+    assert!(
+        output.status.success(),
+        "a missing login must not fail the sweep: {output:?}"
+    );
+    assert!(
+        destination.join(".credentials.json").is_file(),
+        "the login that exists must be adopted"
+    );
+    let seen = String::from_utf8_lossy(&output.stdout);
+    assert!(seen.contains("nothing to adopt"), "{seen}");
+}
+
+/// Naming a provider and asking for everything are contradictory.
+#[test]
+fn import_all_cannot_also_name_one_provider() {
+    let output = router(&["auth", "import", "claude", "--all"]);
+    assert!(!output.status.success(), "{output:?}");
+}

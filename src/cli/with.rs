@@ -167,14 +167,29 @@ pub struct WithArgs {
     #[arg(long, conflicts_with = "non_interactive")]
     pub interactive: bool,
     /// Keep the user's own configuration and add only the router's connection
-    /// settings, so sessions and settings stay visible.
+    /// settings.
     ///
-    /// The default gives the client a configuration directory of its own, which
-    /// is right for CI and one-off runs but makes a session started outside the
-    /// router impossible to resume: `/resume` lists nothing, because the user's
-    /// `projects/` and `settings.json` are not on the path (issue #233).
+    /// This is the default. Kept as an accepted flag so existing scripts and
+    /// documentation continue to work; passing it changes nothing.
     #[arg(long)]
     pub extend_global_config: bool,
+    /// Give the client a configuration directory of its own.
+    ///
+    /// `with` changes how the client reaches the model and nothing else, so the
+    /// user's theme, permissions, MCP servers, `settings.json` and `projects/`
+    /// are left in place by default — starting a configured client in first-run
+    /// onboarding, with `/resume` listing nothing, is a much larger side effect
+    /// than choosing a connection route implies (issue #277).
+    ///
+    /// Extending adds only the two connection variables to the environment of
+    /// the one process being launched; nothing the user owns is written or
+    /// modified. A client configured through a file rather than environment
+    /// variables cannot be extended, and is given its own directory regardless.
+    ///
+    /// Isolation remains right for CI and clean-room reproductions, where
+    /// passing a flag is normal and cheap.
+    #[arg(long, conflicts_with = "extend_global_config")]
+    pub isolated_config: bool,
     /// Start a disposable managed container even if a router is already
     /// listening locally.
     ///

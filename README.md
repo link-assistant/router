@@ -398,6 +398,16 @@ instead, and `--server <url>` targets one router for a single command. A
 selected server that cannot be reached is an error rather than a silent
 fallback to a local directory.
 
+`with` changes how the client reaches the model and nothing else: the user's
+theme, permissions, MCP servers, `settings.json` and `projects/` are left in
+place, so `/resume` still lists prior sessions and a configured client does not
+restart in first-run onboarding. Only the two connection variables are added,
+to the one process being launched; nothing the user owns is written. Pass
+`--isolated-config` for CI and clean-room reproductions, where a fresh
+directory is the point. A client configured through a file rather than
+environment variables — Gemini CLI, whose routing depends on a settings file
+the router writes — is given its own directory regardless.
+
 When nothing is selected at all, `with` and `auth` use a router that is already
 listening on this machine — including one reached over an SSH tunnel — and only
 start a managed container when none answers. The rule, in one sentence: if a
@@ -755,14 +765,22 @@ router auth gh --from-gh-config ~/.config/gh   # or --token-stdin
 router auth gh --status
 ```
 
-Claude and Codex can be adopted the same way, which is how a headless
-deployment is provisioned from a workstation that is already logged in without
-a browser round-trip:
+Every provider can be adopted the same way, which is how a headless deployment
+is provisioned from a workstation that is already logged in without a browser
+round-trip:
 
 ```bash
-router auth claude --from-claude-home          # $CLAUDE_CODE_HOME, else ~/.claude
-router auth codex  --from-codex-home ~/.codex  # or name the directory
+router auth import claude        # from ~/.claude, or the Keychain if it is newer
+router auth import codex         # from ~/.codex
+router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
+router auth import claude /path  # or name the source
+router auth import --all         # every login this machine has, in one step
 ```
+
+Importing is a different operation from authorizing, not a variation of it:
+authorizing goes and gets a new credential interactively, importing adopts one
+that already exists. The per-provider flags (`--from-claude-home`,
+`--from-codex-home`, `--from-gh-config`) keep working.
 
 The import reports what it adopted — where it came from, when it expires, and
 whether it carries a refresh token — so an already-expired credential is caught
