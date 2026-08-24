@@ -218,6 +218,26 @@ impl std::fmt::Display for SubscriptionError {
 
 impl std::error::Error for SubscriptionError {}
 
+/// One credential selected for adoption: the bytes, and what they say.
+///
+/// A single selection produces all three, so a report about the credential and
+/// the credential that gets installed cannot describe different things. They
+/// did before, because the document and the token were read through two
+/// methods that select the platform store by different rules (issue #280).
+#[derive(Debug, Clone)]
+pub struct ImportSource {
+    /// The credential exactly as stored, to be installed verbatim.
+    ///
+    /// Not re-serialized from `token`: that type models no `id_token`,
+    /// `auth_mode`, or `scope`, and Codex derives its account id from
+    /// `id_token` on every read.
+    pub document: String,
+    /// What `document` parses to, for reporting expiry and probing the vendor.
+    pub token: SubscriptionToken,
+    /// Which store `document` came from, for naming it in the report.
+    pub origin: crate::platform_keychain::Origin,
+}
+
 /// Reads and normalizes a single provider's subscription credentials.
 #[derive(Debug, Clone)]
 pub struct SubscriptionReader {
@@ -278,27 +298,47 @@ impl SubscriptionReader {
     /// preferred only when it is genuinely newer, by the same rule
     /// [`read_token_from`](Self::read_token_from) applies.
     ///
+    /// The token is returned with the document because it *is* the document's
+    /// token: reading the source a second time to describe it let the two
+    /// diverge, since [`read_token`](Self::read_token) consults the platform
+    /// store only for the vendor's default home while import consults it for
+    /// any home. An import always names a source home that differs from the
+    /// destination — otherwise there is nothing to adopt — so that condition
+    /// held on every macOS import, and the report described the file while the
+    /// Keychain credential was the one installed (issue #280). Returning both
+    /// from one selection makes them agree by construction.
+    ///
     /// # Errors
     ///
     /// Returns the file's error when neither store holds a usable credential.
-    pub fn read_document_for_import(
+    pub fn read_document_for_import(&self) -> Result<ImportSource, SubscriptionError> {
+        self.import_from_store(self.import_source_keychain().as_deref())
+    }
+
+    /// [`read_document_for_import`](Self::read_document_for_import) against an
+    /// already-read store entry.
+    ///
+    /// Split out for the same reason [`select_store`](Self::select_store) is:
+    /// no test may read the real login Keychain, and none may write to it, so
+    /// the store-versus-file half of import is otherwise unreachable from a
+    /// test on any platform.
+    fn import_from_store(
         &self,
-    ) -> Result<(String, crate::platform_keychain::Origin), SubscriptionError> {
-        let from_keychain = self.import_source_keychain();
+        from_keychain: Option<&str>,
+    ) -> Result<ImportSource, SubscriptionError> {
         // Decide with the same rule the reader uses, so import and serving
         // never disagree about which store is live.
-        let (_, origin) = self.select_store(
-            from_keychain
-                .as_deref()
-                .and_then(|raw| self.parse_store_credential(raw)),
-        )?;
-        match origin {
-            crate::platform_keychain::Origin::Keychain => from_keychain.ok_or_else(|| {
-                SubscriptionError::NoCredentials(format!(
-                    "No {} credential in the platform store",
-                    self.provider
-                ))
-            }),
+        let (token, origin) =
+            self.select_store(from_keychain.and_then(|raw| self.parse_store_credential(raw)))?;
+        let document = match origin {
+            crate::platform_keychain::Origin::Keychain => {
+                from_keychain.map(str::to_owned).ok_or_else(|| {
+                    SubscriptionError::NoCredentials(format!(
+                        "No {} credential in the platform store",
+                        self.provider
+                    ))
+                })
+            }
             crate::platform_keychain::Origin::File => {
                 let path = self.discover_credential_path().ok_or_else(|| {
                     SubscriptionError::NoCredentials(format!(
@@ -314,8 +354,12 @@ impl SubscriptionReader {
                     ))
                 })
             }
-        }
-        .map(|document| (document, origin))
+        }?;
+        Ok(ImportSource {
+            document,
+            token,
+            origin,
+        })
     }
 
     /// The raw platform-store entry to consider when importing from this home.

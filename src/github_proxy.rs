@@ -35,10 +35,37 @@ impl Default for GitHubProxyConfig {
 impl GitHubProxyConfig {
     /// Load the opt-in proxy from environment configuration.
     ///
-    /// `GITHUB_PROXY_TOKEN` contains the operator credential,
-    /// `GITHUB_PROXY_BASE_URL` overrides GitHub for tests/enterprise, and
-    /// `GITHUB_PROXY_POLICY` points at an ordered JSON rule file.
+    /// The data directory is read from `DATA_DIR`, which is only correct when
+    /// the operator spelled it that way. Prefer
+    /// [`from_env_with_data_dir`](Self::from_env_with_data_dir), which takes
+    /// the directory clap already resolved from flag *and* environment; this
+    /// spelling remains for callers that have no parsed configuration to hand.
+    ///
+    /// # Errors
+    ///
+    /// Returns an operator-readable message when a named credential file or
+    /// policy file cannot be read.
     pub fn from_env() -> Result<Self, String> {
+        Self::from_env_with_data_dir(std::env::var_os("DATA_DIR").as_deref().map(Path::new))
+    }
+
+    /// Load the proxy, reading a stored credential from `data_dir`.
+    ///
+    /// `--data-dir` and `DATA_DIR` name one setting, and clap merges them into
+    /// `config.data_dir` before anything else looks. Re-reading the environment
+    /// here saw only the environment spelling, so a credential stored by
+    /// `router auth gh --data-dir DIR` was never found at startup and the whole
+    /// GitHub surface stayed unmounted — while `auth gh --status`, which does
+    /// read the parsed value, reported the credential as present (issue #282).
+    ///
+    /// The `GITHUB_PROXY_TOKEN*` sources stay environment-only: those are
+    /// genuinely environment settings with no parsed counterpart.
+    ///
+    /// # Errors
+    ///
+    /// Returns an operator-readable message when a named credential file or
+    /// policy file cannot be read.
+    pub fn from_env_with_data_dir(data_dir: Option<&Path>) -> Result<Self, String> {
         let mut token = std::env::var("GITHUB_PROXY_TOKEN")
             .ok()
             .filter(|token| !token.is_empty());
@@ -60,12 +87,7 @@ impl GitHubProxyConfig {
                 .and_then(|name| std::env::var(name).ok())
                 .filter(|token| !token.is_empty())
         });
-        token = token.or_else(|| {
-            reusable_credential(
-                std::env::var("DATA_DIR").ok().as_deref(),
-                gh_config_directory().as_deref(),
-            )
-        });
+        token = token.or_else(|| reusable_credential(data_dir, gh_config_directory().as_deref()));
         let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
             .unwrap_or_else(|_| "https://api.github.com".into())
             .trim_end_matches('/')
@@ -399,10 +421,10 @@ pub async fn proxy(State(state): State<AppState>, request: Request) -> Response 
 /// configuration: both are existing logins (issue #263). Consulted only after
 /// every explicit environment setting, so this never overrides one.
 #[must_use]
-pub fn reusable_credential(data_dir: Option<&str>, gh_config: Option<&Path>) -> Option<String> {
+pub fn reusable_credential(data_dir: Option<&Path>, gh_config: Option<&Path>) -> Option<String> {
     data_dir
-        .filter(|dir| !dir.is_empty())
-        .and_then(|dir| stored_credential(Path::new(dir)))
+        .filter(|dir| !dir.as_os_str().is_empty())
+        .and_then(stored_credential)
         .or_else(|| gh_config.and_then(token_from_gh_config))
 }
 

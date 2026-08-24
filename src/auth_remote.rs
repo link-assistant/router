@@ -256,32 +256,7 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
     {
         Ok(body) => {
             println!("server: {} ({})", server.base_url, server.source);
-            let accounts = body
-                .get("accounts")
-                .and_then(serde_json::Value::as_array)
-                .cloned()
-                .unwrap_or_default();
-            if accounts.is_empty() {
-                println!("no accounts are configured on this router");
-                return ExitCode::SUCCESS;
-            }
-            for account in accounts {
-                println!(
-                    "{:<16} {:<10} {}",
-                    account
-                        .get("name")
-                        .and_then(serde_json::Value::as_str)
-                        .unwrap_or("-"),
-                    account
-                        .get("credential")
-                        .and_then(serde_json::Value::as_str)
-                        .unwrap_or("-"),
-                    account
-                        .get("home")
-                        .and_then(serde_json::Value::as_str)
-                        .unwrap_or("-"),
-                );
-            }
+            report_credentials(&body);
             ExitCode::SUCCESS
         }
         Err(error) => {
@@ -351,3 +326,64 @@ async fn read_code() -> Result<String, String> {
 #[cfg(test)]
 #[path = "auth_remote_tests.rs"]
 mod tests;
+
+/// Print what the router said about its credentials.
+///
+/// An empty `accounts` array means *no account pool*, which is the ordinary
+/// state of a single-subscription deployment rather than a missing credential.
+/// Printing "no accounts are configured on this router" for it described a
+/// router serving live traffic as unauthorized, and pointed the operator at a
+/// re-authentication it did not need (issue #281).
+///
+/// So the pool is reported when there is one, the per-provider credentials when
+/// the router sends them, and the server's own `note` when it explains an empty
+/// array — in that order. The last two are what an older router does not send,
+/// and falling through to the original sentence keeps this readable against one.
+fn report_credentials(body: &serde_json::Value) {
+    for line in credential_report(body) {
+        println!("{line}");
+    }
+}
+
+/// [`report_credentials`] as lines, so what it prints can be asserted.
+fn credential_report(body: &serde_json::Value) -> Vec<String> {
+    let rows = |key: &str| {
+        body.get(key)
+            .and_then(serde_json::Value::as_array)
+            .map(Vec::as_slice)
+            .unwrap_or_default()
+    };
+    let accounts = rows("accounts");
+    // `credentials` is the single-account answer; it is absent when a pool is
+    // configured, and on a router predating it.
+    let entries = if accounts.is_empty() {
+        rows("credentials")
+    } else {
+        accounts
+    };
+    if !entries.is_empty() {
+        return entries
+            .iter()
+            .map(|entry| {
+                let field = |key: &str| {
+                    entry
+                        .get(key)
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("-")
+                };
+                format!(
+                    "{:<16} {:<12} {}",
+                    field("name"),
+                    field("credential"),
+                    field("home")
+                )
+            })
+            .collect();
+    }
+    // The server explains an empty array when it can; that explanation is the
+    // answer, and discarding it is what produced the misleading sentence.
+    if let Some(note) = body.get("note").and_then(serde_json::Value::as_str) {
+        return vec![note.to_string()];
+    }
+    vec!["no accounts are configured on this router".to_string()]
+}

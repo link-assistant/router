@@ -12,7 +12,7 @@
 use std::process::ExitCode;
 
 use link_assistant_router::cli::{AuthOp, ImportProvider};
-use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
+use link_assistant_router::subscription::{ImportSource, SubscriptionProvider, SubscriptionReader};
 
 /// Adopt an existing vendor login, when this invocation asked to.
 ///
@@ -171,15 +171,17 @@ async fn import_provider(
     }
 
     let from = SubscriptionReader::new(provider, &source_home);
-    let (document, origin) = from
+    // One selection yields the bytes, their verdict, and their origin. Reading
+    // the source a second time to describe it is what let the report and the
+    // installed credential name different things (issue #280).
+    let source_credential = from
         .read_document_for_import()
         .map_err(|error| format!("no {provider} credential to import: {error}"))?;
-
-    // Report before installing, so an operator learns here that a credential is
-    // already expired rather than from a 401 later.
-    let token = from
-        .read_token()
-        .map_err(|error| format!("the {provider} credential could not be read: {error}"))?;
+    let ImportSource {
+        document,
+        token,
+        origin,
+    } = &source_credential;
     let where_from = match origin {
         link_assistant_router::platform_keychain::Origin::Keychain => {
             link_assistant_router::platform_keychain::service_name(provider).map_or_else(
@@ -198,15 +200,15 @@ async fn import_provider(
     // Probe before installing. The stored expiry is a hint; only the vendor
     // knows whether the credential still works, and an operator should learn
     // that here rather than from a 401 on the first served request.
-    let verdict = probe_credential(provider, &token).await;
+    let verdict = probe_credential(provider, token).await;
 
     let installed =
-        SubscriptionReader::new(provider, &destination_home).install_document(&document)?;
+        SubscriptionReader::new(provider, &destination_home).install_document(document)?;
     println!(
         "{provider:<8} imported {} from {where_from}",
         installed.display()
     );
-    println!("{provider:<8} {}, {verdict}", describe_credential(&token));
+    println!("{provider:<8} {}, {verdict}", describe_credential(token));
     // Adopting a credential does not mint one: both holders now rotate the same
     // chain, and revoking it at the vendor revokes it for both.
     println!(
