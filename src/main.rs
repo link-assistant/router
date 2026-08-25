@@ -20,7 +20,7 @@ mod logs_cli;
 
 use axum::middleware::from_fn_with_state;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
-use link_assistant_router::cli::{AccountOp, Cli, Command, TokenOp};
+use link_assistant_router::cli::{AccountOp, Command, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
 use link_assistant_router::login::LoginManager;
@@ -44,7 +44,7 @@ fn main() -> ExitCode {
 async fn run() -> ExitCode {
     let arguments =
         link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
-    let cli = <Cli as lino_arguments::Parser>::parse_from(arguments);
+    let cli = link_assistant_router::cli::parse_arguments(arguments);
 
     // The wrapper and managed-server commands do not start a router and must
     // not require server-only configuration or pollute client stdout with

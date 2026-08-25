@@ -45,6 +45,54 @@ pub use self::configure::ConfigureArgs;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
+/// Parse the CLI, hiding options that cannot affect the subcommand shown.
+///
+/// `with` and `configure` return before the server configuration is built, so
+/// none of the binary's ~28 global options — `--host`, `--port`,
+/// `--storage-policy`, `--upstream-base-url` and the rest — reaches them.
+/// Clap lists a global under every subcommand, so `with --help` advertised
+/// them as options of `with`: `--verbose` was accepted and produced no
+/// logging, and `--port` written after the client name went to the client
+/// (issue #312). Listing options that cannot work is worse than omitting them.
+///
+/// Only the *help* changes. A global still parses wherever it always did, so
+/// no existing invocation breaks.
+#[must_use]
+pub fn parse_arguments(arguments: Vec<std::ffi::OsString>) -> Cli {
+    use clap::{CommandFactory as _, FromArgMatches as _};
+
+    let mut command = Cli::command();
+    // Globals are declared on the root and propagated into every subcommand
+    // when the parser is built, so they can only be hidden before that — and
+    // only for the invocations they cannot affect. `router tokens list --help`
+    // still lists them, because there they work.
+    if names_a_client_launcher(&arguments) {
+        command = command.mut_args(|argument| {
+            if argument.is_global_set() {
+                argument.hide(true)
+            } else {
+                argument
+            }
+        });
+    }
+    let matches = command.get_matches_from(arguments);
+    Cli::from_arg_matches(&matches).unwrap_or_else(|error| error.exit())
+}
+
+/// Whether this invocation is one that returns before the server config exists.
+///
+/// Read off argv rather than the parsed command, because the decision has to be
+/// made before parsing. Only the first bare word is consulted, so a *value*
+/// that happens to be `with` cannot flip it.
+fn names_a_client_launcher(arguments: &[std::ffi::OsString]) -> bool {
+    arguments
+        .iter()
+        .skip(1)
+        .map(|argument| argument.to_string_lossy().into_owned())
+        .find(|argument| !argument.starts_with('-'))
+        .is_some_and(|argument| argument == "with" || argument == "configure")
+}
+
 /// Parse a boolean switch that may also arrive from the environment.
 ///
 /// Clap's plain `bool` accepts only `true`/`false` from an env var, which makes

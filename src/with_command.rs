@@ -317,6 +317,18 @@ impl TemporaryClient {
         // directory thrown away after every run made every launch a first
         // launch (issue #298).
         let keeps_a_profile = !isolated_config && !extends_user_configuration(client, false);
+        if isolated_config && !extends_user_configuration(client, false) {
+            // The flag changed nothing for this client: it is routed through a
+            // file the router writes and never uses the user's own directory.
+            // Accepting it silently left a script's author believing it had
+            // done something (issue #312).
+            eprintln!(
+                "note: {} is configured through a file the router writes, so it never uses your \
+                 own configuration directory; --isolated-config only makes its profile \
+                 disposable",
+                client.display_name()
+            );
+        }
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
         let disposable = tempfile::Builder::new().prefix(&prefix).tempdir()?;
         set_directory_owner_only(disposable.path())?;

@@ -156,11 +156,12 @@ pub struct WithArgs {
     /// Force the client's interactive mode.
     #[arg(long, conflicts_with = "non_interactive")]
     pub interactive: bool,
-    /// Keep the user's own configuration and add only the router's connection
-    /// settings.
+    /// (deprecated, no-op) Keep the user's own configuration.
     ///
-    /// This is the default. Kept as an accepted flag so existing scripts and
-    /// documentation continue to work; passing it changes nothing.
+    /// This is the default, and has been since issue #277. Kept as an accepted
+    /// flag so existing scripts keep working; passing it changes nothing. The
+    /// marker is in the first line because a reader scanning flag names could
+    /// not otherwise tell the live options from the retired one (issue #312).
     #[arg(long)]
     pub extend_global_config: bool,
     /// Give the client a configuration directory of its own.
@@ -178,6 +179,13 @@ pub struct WithArgs {
     ///
     /// Isolation remains right for CI and clean-room reproductions, where
     /// passing a flag is normal and cheap.
+    ///
+    /// It is a no-op for `codex`, `gemini`, `opencode` and `agent`: those are
+    /// routed through a file the router writes, so they never use the user's
+    /// own directory with or without it. The run says so rather than accepting
+    /// the flag silently (issue #312). What they get instead is a profile of
+    /// their own that persists between runs, so sessions stay resumable
+    /// (issue #298); `--isolated-config` makes that profile disposable.
     #[arg(long, conflicts_with = "extend_global_config")]
     pub isolated_config: bool,
     /// Start a disposable managed container even if a router is already
