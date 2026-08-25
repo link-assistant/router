@@ -24,6 +24,12 @@ use crate::clients::ClientKind;
 /// decided.
 pub struct Launch {
     pub arguments: Vec<OsString>,
+    /// Whether the client was told to answer once and exit.
+    ///
+    /// Carried out of here because the answer also decides whether the router
+    /// may answer the client's own prompts on the user's behalf: a batch run
+    /// cannot answer one, a person at a terminal can (issue #310).
+    pub one_shot: bool,
     /// A mode that was inferred rather than stated, reported at the moment it
     /// is chosen. A wrong guess is otherwise invisible until it surfaces
     /// several lines into an error written by the client about itself.
@@ -117,36 +123,68 @@ pub fn plan(args: &WithArgs, resolved_model: Option<&str>, attached_to_a_termina
         && non_interactive
         && let Some(mode) = mode
     {
+        // `--skip-git-repo-check` is deliberately not added. Codex refuses to
+        // run outside a git repository because that check is what stops an
+        // agent editing a directory with nothing to diff and nothing to
+        // revert; the router turned it off for every run it supplied `exec`
+        // for, and left it on when the user typed `exec` themselves — the same
+        // tool and task with two safety postures (issue #310).
         result.push(mode.into());
-        if args.client == ClientKind::Codex {
-            result.push("--skip-git-repo-check".into());
-        }
     }
     if let Some(model) = model {
         result.extend(model);
     }
+    let mut note = note;
     if !command_mode
         && non_interactive
         && !has_mode
         && let Some(mode) = mode
     {
-        result.push(mode.into());
+        // For four clients the mode argument takes the prompt as its value, and
+        // it was inserted immediately before whatever the user passed. With a
+        // flag there, that flag landed where the prompt belongs: Claude Code
+        // fails loudly, these four risk having the next argument read as the
+        // prompt text — a silent change of meaning (issue #297).
+        if integration.non_interactive_arg_takes_a_value && !carries_a_prompt(&forwarded) {
+            note = Some(
+                "note: this client's one-shot mode takes the prompt as an argument and none was \
+                 given, so it is launched as an ordinary session",
+            );
+        } else {
+            result.push(mode.into());
+        }
     }
     result.extend(forwarded);
     Launch {
         arguments: result,
+        one_shot: non_interactive,
         note,
     }
 }
 
+/// Whether the user already asked for the client's one-shot mode themselves.
+///
+/// Every spelling the client accepts counts. Comparing against one exact
+/// string meant Claude Code's own `-p` was not recognised as the `--print` it
+/// is, so both ended up on the command line (issue #297).
 fn contains_native_mode(client: ClientKind, arguments: &[OsString]) -> bool {
-    let Some(mode) = client.integration().non_interactive_arg else {
+    let integration = client.integration();
+    let Some(mode) = integration.non_interactive_arg else {
         return false;
     };
+    let spellings = |argument: &OsString| {
+        argument == mode
+            || integration
+                .non_interactive_aliases
+                .iter()
+                .any(|alias| argument == alias)
+    };
+    // Codex and OpenCode spell the mode as a subcommand, which is only the mode
+    // in first position — elsewhere it is an ordinary word of the prompt.
     if matches!(client, ClientKind::Codex | ClientKind::Opencode) {
-        arguments.first().is_some_and(|argument| argument == mode)
+        arguments.first().is_some_and(spellings)
     } else {
-        arguments.iter().any(|argument| argument == mode)
+        arguments.iter().any(spellings)
     }
 }
 

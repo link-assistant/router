@@ -189,10 +189,18 @@ pub async fn resolve(
             _lease: Some(lease),
         });
     };
+    // Matched by *origin*, not by how the origin was supplied. The condition
+    // used to be on the source, so writing down the address of the very router
+    // that was already selected threw away the token stored for it — and the
+    // advice in the resulting error was to run the command the user had
+    // already run. A router found by discovery got no credential at all, for
+    // the same reason, though it is the same listener at the same address
+    // (issue #311). Explicit `--token` and the environment still win.
     let token = explicit_token.or(environment_token).or_else(|| {
-        (source == "persisted configuration")
-            .then(|| persisted.as_ref().and_then(|config| config.token.clone()))
-            .flatten()
+        persisted
+            .as_ref()
+            .filter(|config| same_origin(&config.server, &base_url))
+            .and_then(|config| config.token.clone())
     });
     let budget = run_max_requests.or_else(|| {
         persisted
@@ -222,9 +230,20 @@ pub async fn prepare_run_credential(
                 server.base_url
             )
         } else {
+            // Naming which origin has a stored token, rather than
+            // recommending the command the user already ran: that difference
+            // is the whole content of the error (issue #311).
+            let stored = load_persisted()
+                .ok()
+                .flatten()
+                .filter(|persisted| persisted.token.is_some())
+                .map(|persisted| persisted.server);
+            let held = stored.map_or_else(String::new, |origin| {
+                format!(" A token is stored for {origin}, which is a different origin.")
+            });
             format!(
-                "{} selected from {}, but no token is available; pass --token, use --token-stdin, set LINK_ASSISTANT_ROUTER_TOKEN, or run `link-assistant-router server use <URL> --token-stdin`",
-                server.base_url, server.source
+                "{} selected from {}, but no token is available.{held} Pass --token, use --token-stdin, set LINK_ASSISTANT_ROUTER_TOKEN, or run `link-assistant-router server use {} --token-stdin`",
+                server.base_url, server.source, server.base_url
             )
         }
     })?;
@@ -872,6 +891,20 @@ fn process_alive(pid: u32) -> bool {
                     && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
             })
     }
+}
+
+/// Whether two spellings name the same router.
+///
+/// Compared after normalisation and without a trailing slash, so `--server`
+/// written by hand matches what `server use` stored.
+fn same_origin(one: &str, other: &str) -> bool {
+    let canonical = |value: &str| {
+        normalize_server(value)
+            .unwrap_or_else(|_| value.to_string())
+            .trim_end_matches('/')
+            .to_ascii_lowercase()
+    };
+    canonical(one) == canonical(other)
 }
 
 fn normalize_server(server: &str) -> Result<String, AnyError> {

@@ -16,6 +16,7 @@ fn args(client: ClientKind, client_args: &[&str]) -> WithArgs {
         token: None,
         token_stdin: false,
         model: None,
+        label: None,
         run_ttl_hours: 1,
         run_max_requests: None,
         client,
@@ -235,4 +236,86 @@ fn command_mode_word_inside_prompt_is_not_treated_as_the_subcommand() {
     let rendered = argv(ClientKind::Opencode, &["explain", "run"]);
     assert_eq!(rendered.first().map(String::as_str), Some("run"));
     assert!(rendered.ends_with(&["explain".to_string(), "run".to_string()]));
+}
+
+/// The defect in the issue #297 follow-up: for four clients the injected mode
+/// argument takes the prompt as its *value*, and it was inserted immediately
+/// before whatever the user passed. With a flag there, that flag landed where
+/// the prompt belongs — Claude Code fails loudly, these four risk the next
+/// argument being read as prompt text.
+#[test]
+fn a_mode_argument_that_takes_a_prompt_is_not_placed_before_a_flag() {
+    for client in [
+        ClientKind::GeminiCli,
+        ClientKind::GrokCli,
+        ClientKind::QwenCode,
+        ClientKind::Agent,
+    ] {
+        assert!(
+            client.integration().non_interactive_arg_takes_a_value,
+            "{client} spells its mode as a flag taking the prompt"
+        );
+        let mut one_shot = args(client, &["--yolo"]);
+        one_shot.non_interactive = true;
+        let launch = plan(&one_shot, None, true);
+        let rendered = rendered(&launch);
+        let mode = client
+            .integration()
+            .non_interactive_arg
+            .expect("these clients have one");
+        assert!(
+            !rendered
+                .windows(2)
+                .any(|pair| pair[0] == mode && pair[1] == "--yolo"),
+            "{client}: the user's flag was placed where the prompt value belongs: {rendered:?}"
+        );
+        assert!(
+            launch.note.is_some(),
+            "{client}: a mode that could not be applied must say so"
+        );
+    }
+}
+
+/// With a prompt present the mode is applied as before, and the prompt follows
+/// it immediately — which is what makes the value placement correct.
+#[test]
+fn a_prompt_still_gets_the_mode_argument() {
+    let launch = plan(&args(ClientKind::GeminiCli, &["fix the tests"]), None, true);
+    let rendered = rendered(&launch);
+    assert!(
+        rendered
+            .windows(2)
+            .any(|pair| pair == ["-p", "fix the tests"]),
+        "{rendered:?}"
+    );
+}
+
+/// A mode the user already asked for is not asked for again. The comparison
+/// was exact against one string, so Claude Code's own `-p` was not recognised
+/// as the `--print` it is and both ended up on the command line (issue #297).
+#[test]
+fn a_mode_the_user_already_spelled_is_not_repeated() {
+    let rendered = argv(ClientKind::ClaudeCode, &["-p", "hi"]);
+    assert!(
+        !rendered.iter().any(|value| value == "--print"),
+        "the mode was added on top of the user's own spelling: {rendered:?}"
+    );
+    assert_eq!(rendered, ["-p", "hi"], "{rendered:?}");
+}
+
+/// Codex refuses to run outside a git repository because that check is what
+/// stops an agent editing a directory with nothing to diff and nothing to
+/// revert. The router turned it off for every run it supplied `exec` for, and
+/// left it on when the user typed `exec` themselves (issue #310).
+#[test]
+fn the_clients_own_git_guard_is_left_alone() {
+    for forwarded in [&["fix the tests"][..], &["exec", "fix the tests"]] {
+        let rendered = argv(ClientKind::Codex, forwarded);
+        assert!(
+            !rendered
+                .iter()
+                .any(|value| value == "--skip-git-repo-check"),
+            "{forwarded:?}: {rendered:?}"
+        );
+    }
 }

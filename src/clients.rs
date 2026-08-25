@@ -102,6 +102,19 @@ pub struct ClientIntegration {
     pub default_reasoning_effort: &'static str,
     pub model_arg: Option<&'static str>,
     pub non_interactive_arg: Option<&'static str>,
+    /// Other spellings of the same mode the client already accepts.
+    ///
+    /// The comparison used to be exact against one string, so Claude Code's
+    /// own `-p` was not recognised as the `--print` it is and both ended up on
+    /// the command line (issue #297).
+    pub non_interactive_aliases: &'static [&'static str],
+    /// Whether the mode argument takes the prompt as its value.
+    ///
+    /// `-p` for gemini, grok and qwen and `--prompt` for agent do; `--print`
+    /// and the `exec`/`run` subcommands do not. Injecting one immediately
+    /// before a user's *flag* put that flag where the prompt value belongs,
+    /// which is a silent change of meaning rather than an error (issue #297).
+    pub non_interactive_arg_takes_a_value: bool,
     pub isolation: ClientIsolation,
     pub setup_limitation: Option<&'static str>,
 }
@@ -151,6 +164,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("exec"),
+        non_interactive_aliases: &[],
+        non_interactive_arg_takes_a_value: false,
         isolation: ClientIsolation::Home,
         setup_limitation: None,
     },
@@ -167,6 +182,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--print"),
+        non_interactive_aliases: &["-p"],
+        non_interactive_arg_takes_a_value: false,
         isolation: ClientIsolation::ClaudeConfig,
         setup_limitation: None,
     },
@@ -183,6 +200,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: "",
         model_arg: None,
         non_interactive_arg: None,
+        non_interactive_aliases: &[],
+        non_interactive_arg_takes_a_value: false,
         isolation: ClientIsolation::Unsupported,
         setup_limitation: Some(
             "Cursor CLI accepts CURSOR_API_ENDPOINT, but speaks Connect-RPC over an unversioned private agent.v1/aiserver.v1 protocol rather than a supported vendor API; native Cursor routing is not implemented. See docs/use-cases/cli-cursor.md for the support tier, the scoped adapter work, and the opt-in TLS-proxy route",
@@ -201,6 +220,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
+        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg_takes_a_value: true,
         isolation: ClientIsolation::GeminiHome,
         setup_limitation: Some(
             "Gemini CLI permanent setup is unavailable because its individual Code Assist flow aborts with IneligibleTierError; use `link-assistant-router with gemini` for isolated API-key mode",
@@ -219,6 +240,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
+        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg_takes_a_value: true,
         isolation: ClientIsolation::Home,
         setup_limitation: None,
     },
@@ -235,6 +258,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("run"),
+        non_interactive_aliases: &[],
+        non_interactive_arg_takes_a_value: false,
         isolation: ClientIsolation::ConfigFile,
         setup_limitation: None,
     },
@@ -251,6 +276,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
+        non_interactive_aliases: &["--prompt"],
+        non_interactive_arg_takes_a_value: true,
         isolation: ClientIsolation::Home,
         setup_limitation: None,
     },
@@ -267,6 +294,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--prompt"),
+        non_interactive_aliases: &["-p"],
+        non_interactive_arg_takes_a_value: true,
         isolation: ClientIsolation::ConfigFile,
         setup_limitation: None,
     },

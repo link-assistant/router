@@ -25,6 +25,7 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         "--server",
         "--token",
         "--model",
+        "--label",
         "--run-ttl-hours",
         "--run-max-requests",
     ];
@@ -232,6 +233,16 @@ pub struct WithArgs {
     /// the client's own configuration decides.
     #[arg(long, conflicts_with = "model")]
     pub pick_model: bool,
+    /// Label recorded on the router for this run's token.
+    ///
+    /// Each run mints a token on the target and the label is stored there. It
+    /// defaults to the client name and a short suffix; it used to be the name
+    /// of the directory the run was launched from, so a deployment
+    /// accumulated a list of the projects its users work in (issue #316).
+    /// Anything sent to a router someone else operates should be something you
+    /// chose to send.
+    #[arg(long)]
+    pub label: Option<String>,
     /// Lifetime of an automatically minted per-run token.
     #[arg(long, default_value_t = 1)]
     pub run_ttl_hours: i64,

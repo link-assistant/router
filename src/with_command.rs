@@ -58,14 +58,16 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         args.managed,
     )
     .await?;
-    let working_directory = std::env::current_dir()
-        .ok()
-        .and_then(|path| {
-            path.file_name()
-                .map(|name| name.to_string_lossy().into_owned())
-        })
-        .unwrap_or_else(|| "unknown-workdir".to_string());
-    let label = format!("with-{}-{working_directory}", args.client);
+    // The label travels to the router and is stored there. It used to be the
+    // name of the directory the run was launched from, so a deployment — which
+    // may be someone else's machine, or a team's, or a provider's —
+    // accumulated a list of the projects its users work in. Directory names are
+    // usually project names (issue #316). The token id already identifies a
+    // run, so the label needs to carry nothing else.
+    let label = args
+        .label
+        .clone()
+        .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
     let credential = prepare_run_credential(&server, &label, args.run_ttl_hours).await?;
     // Which model the client uses, and how hard it thinks, are the user's own
     // settings. `with` chooses a route to a model, so both are left alone
@@ -85,20 +87,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         cleanup_after_setup_failure(credential).await;
         return Err(error);
     }
-    let temporary = match TemporaryClient::prepare(
-        args.client,
-        &server.base_url,
-        &credential.token,
-        selected.as_deref(),
-        credential.models(),
-        args.isolated_config,
-    ) {
-        Ok(temporary) => temporary,
-        Err(error) => {
-            cleanup_after_setup_failure(credential).await;
-            return Err(error);
-        }
-    };
+    // Decided before the client is prepared: whether the run is a session or
+    // a task also decides whether the router may answer the client's own
+    // prompts on the user's behalf (issue #310).
     let plan = crate::client_launch::plan(
         args,
         selected.as_deref(),
@@ -107,6 +98,21 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if let Some(note) = plan.note {
         eprintln!("{note}");
     }
+    let temporary = match TemporaryClient::prepare(
+        args.client,
+        &server.base_url,
+        &credential.token,
+        selected.as_deref(),
+        credential.models(),
+        args.isolated_config,
+        plan.one_shot,
+    ) {
+        Ok(temporary) => temporary,
+        Err(error) => {
+            cleanup_after_setup_failure(credential).await;
+            return Err(error);
+        }
+    };
     let arguments = plan.arguments;
     let launch = temporary.launch(&arguments).await;
     if launch.as_ref().is_ok_and(|status| !status.success())
@@ -121,6 +127,14 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
     }
     Ok(exit_code(status))
+}
+
+/// A short, non-identifying suffix distinguishing concurrent runs.
+///
+/// Derived from the process id, which the router already knows it is talking
+/// to and which says nothing about what the user is working on.
+fn run_suffix() -> String {
+    format!("{:04x}", std::process::id() & 0xffff)
 }
 
 async fn cleanup_after_setup_failure(credential: crate::managed_server::RunCredential) {
@@ -218,11 +232,14 @@ impl TemporaryClient {
         model_override: Option<&str>,
         models: &[RouterModel],
         isolated_config: bool,
+        one_shot: bool,
     ) -> Result<Self, AnyError> {
-        sweep_stale_directories();
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
         let directory = tempfile::Builder::new().prefix(&prefix).tempdir()?;
         set_directory_owner_only(directory.path())?;
+        // Swept after this run's own directory exists, so it can serve as the
+        // reference for "owned by me" without a privileged call (issue #313).
+        sweep_stale_directories(directory.path());
         let manager = ClientManager::isolated(directory.path());
         match client {
             ClientKind::GeminiCli => write_gemini_settings(&manager.config_path(client))?,
@@ -246,7 +263,7 @@ impl TemporaryClient {
             // whole contribution is the two variables set below, so isolation
             // was never needed for routing — only for isolation itself.
         } else {
-            configure_isolation(&mut command, &manager, directory.path(), client)?;
+            configure_isolation(&mut command, &manager, directory.path(), client, one_shot)?;
         }
         if let Some(token_env) = integration.token_env {
             command.env(token_env, token);
@@ -268,9 +285,13 @@ impl TemporaryClient {
                 command.env("ANTHROPIC_API_KEY", "");
             }
             ClientKind::GeminiCli => {
-                command
-                    .env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key")
-                    .env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+                // `GEMINI_CLI_TRUST_WORKSPACE` is deliberately not set here.
+                // That prompt is the client's protection against being pointed
+                // at an unfamiliar checkout with file access, and answering it
+                // for a user who is sitting right there and could answer is
+                // not the router's call (issue #310). The non-interactive path
+                // sets it, because a batch run cannot answer a prompt.
+                command.env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key");
             }
             ClientKind::QwenCode => {
                 command
@@ -347,6 +368,7 @@ fn configure_isolation(
     manager: &ClientManager,
     root: &Path,
     client: ClientKind,
+    one_shot: bool,
 ) -> Result<(), AnyError> {
     match client.integration().isolation {
         ClientIsolation::Home => {
@@ -370,12 +392,19 @@ fn configure_isolation(
             //
             // Both variables therefore name the *root*, and `HOME` is overridden
             // as well so nothing else the CLI stores escapes into the real home.
-            command
-                .env("HOME", root)
-                .env("GEMINI_CLI_HOME", root)
-                // With auth fixed the next wall is the trusted-directory
-                // prompt, which a `--non-interactive` run cannot answer.
-                .env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+            command.env("HOME", root).env("GEMINI_CLI_HOME", root);
+            // With auth fixed the next wall is the trusted-directory prompt,
+            // which a one-shot run cannot answer. That is the whole reason for
+            // pre-answering it — and the condition was never written into the
+            // code, so an interactive user, who is sitting right there and
+            // could answer, was answered for (issue #310).
+            if one_shot {
+                eprintln!(
+                    "note: answering Gemini CLI's workspace-trust prompt for this one-shot run; \
+                     an interactive run asks you instead"
+                );
+                command.env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+            }
         }
         ClientIsolation::ConfigFile => {
             let path = manager.config_path(client);
@@ -425,8 +454,23 @@ fn write_gemini_settings(path: &Path) -> Result<(), AnyError> {
     Ok(())
 }
 
-fn sweep_stale_directories() {
+/// Remove leftovers from runs of *this user* that are no longer alive.
+///
+/// A pid is not a liveness token across a trust boundary. On a shared `TMPDIR`
+/// — the usual `/tmp`, any multi-user host, a build agent running jobs as
+/// different users — `kill(pid, 0)` on another user's live process fails with
+/// `EPERM`, and treating any failure as "dead" deleted that run's working
+/// directory, client configuration and credential while it was in use (issue
+/// #313). So ownership is checked first, and a process that exists but is not
+/// ours counts as alive.
+///
+/// `ours` is a directory this run just created, used as the reference for
+/// "mine": comparing owners needs no privileged call and no `unsafe`.
+fn sweep_stale_directories(ours: &Path) {
     const PREFIX: &str = "link-assistant-router-with-";
+    let Some(uid) = owner_of(ours) else {
+        return;
+    };
     let Ok(entries) = fs::read_dir(std::env::temp_dir()) else {
         return;
     };
@@ -439,24 +483,69 @@ fn sweep_stale_directories() {
         let Some(pid) = rest.split('-').next().and_then(|value| value.parse().ok()) else {
             continue;
         };
-        if !process_alive(pid) {
-            let _ = fs::remove_dir_all(entry.path());
+        if entry.path() == ours || owner_of(&entry.path()) != Some(uid) || process_alive(pid) {
+            continue;
+        }
+        if fs::remove_dir_all(entry.path()).is_ok() {
+            eprintln!("note: removed a leftover run directory from process {pid}");
         }
     }
 }
 
+/// The numeric owner of a path, where the platform has one.
+///
+/// `None` on non-unix, where every directory compares equal and the liveness
+/// check decides alone — there is no shared `TMPDIR` in the same sense.
+fn owner_of(path: &Path) -> Option<u32> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt as _;
+
+        fs::metadata(path).ok().map(|metadata| metadata.uid())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+        Some(0)
+    }
+}
+
+/// Whether the process might still be running.
+///
+/// "Might" is the contract: a check that cannot tell "gone" from "not yours"
+/// must answer alive, because the cost of being wrong is deleting a live run's
+/// files, and the cost of being right late is one directory swept next time.
 fn process_alive(pid: u32) -> bool {
     if pid == std::process::id() {
         return true;
     }
     #[cfg(unix)]
     {
-        std::process::Command::new("kill")
+        let signalled = std::process::Command::new("kill")
             .args(["-0", &pid.to_string()])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .is_ok_and(|status| status.success())
+            .is_ok_and(|status| status.success());
+        if signalled {
+            return true;
+        }
+        // `kill -0` fails both for "no such process" and for a live process
+        // owned by somebody else. `ps` answers the question that was actually
+        // asked — does this pid exist — for any owner, so `EPERM` can no
+        // longer read as "dead" (issue #313).
+        std::process::Command::new("ps")
+            .args(["-p", &pid.to_string()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .output()
+            .is_ok_and(|output| {
+                String::from_utf8_lossy(&output.stdout)
+                    .lines()
+                    .filter(|line| !line.trim().is_empty())
+                    .count()
+                    > 1
+            })
     }
     #[cfg(windows)]
     {
@@ -513,8 +602,14 @@ mod tests {
         let root = tempfile::tempdir().expect("isolated root");
         let manager = ClientManager::isolated(root.path());
         let mut command = Command::new("gemini");
-        configure_isolation(&mut command, &manager, root.path(), ClientKind::GeminiCli)
-            .expect("configure gemini isolation");
+        configure_isolation(
+            &mut command,
+            &manager,
+            root.path(),
+            ClientKind::GeminiCli,
+            true,
+        )
+        .expect("configure gemini isolation");
 
         let environment: std::collections::HashMap<_, _> = command
             .get_envs()
@@ -563,6 +658,7 @@ mod tests {
             None,
             &models,
             false,
+            true,
         )
         .expect("prepare with the default configuration handling");
         let names: Vec<String> = extended
@@ -589,6 +685,7 @@ mod tests {
             "task-token",
             None,
             &models,
+            true,
             true,
         )
         .expect("prepare isolated");
@@ -637,6 +734,7 @@ mod tests {
             None,
             &models,
             false,
+            true,
         )
         .expect("a file-configured client must still run");
     }
@@ -674,6 +772,7 @@ mod tests {
             None,
             &models,
             false,
+            true,
         )
         .expect("prepare gemini");
         let root = temporary.directory.path();
@@ -750,6 +849,7 @@ mod tests {
                         None,
                         &models,
                         false,
+                        true,
                     )
                     .is_err()
                 );
@@ -762,6 +862,7 @@ mod tests {
                 None,
                 &models,
                 false,
+                true,
             )
             .unwrap_or_else(|error| panic!("{client} failed temporary setup: {error}"));
             let root = temporary.directory.path().to_path_buf();
@@ -804,3 +905,7 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "with_command_sweep_tests.rs"]
+mod sweep_tests;
