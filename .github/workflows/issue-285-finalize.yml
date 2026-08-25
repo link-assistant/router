@@ -1,0 +1,111 @@
+name: issue-285-finalize
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Apply production fix
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          prod = Path("src/subscription.rs")
+          text = prod.read_text()
+          old = '''    fn import_source_keychain(&self) -> Option<String> {
+          crate::platform_keychain::lookup(self.provider)
+      }'''
+          new = '''    fn import_source_keychain(&self) -> Option<String> {
+          select_import_keychain(
+              self.is_vendor_default_home(),
+              crate::platform_keychain::lookup(self.provider),
+          )
+      }'''
+          assert text.count(old) == 1, "import_source_keychain target must match exactly once"
+          text = text.replace(old, new, 1)
+
+          marker = '''/// Install a credential document as this provider's credential.'''
+          helper = '''/// Select the platform-store credential for import only when the reader
+/// represents the vendor's own default home.
+fn select_import_keychain(
+    is_default_home: bool,
+    from_keychain: Option<String>,
+) -> Option<String> {
+    is_default_home.then_some(from_keychain).flatten()
+}
+
+'''
+          assert text.count(marker) == 1
+          text = text.replace(marker, helper + marker, 1)
+
+          old_must_use = '''    #[must_use]
+    pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {'''
+          new_must_use = '''    #[must_use = "use the installed credential path or handle the installation error"]
+    pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {'''
+          assert text.count(old_must_use) == 1
+          prod.write_text(text.replace(old_must_use, new_must_use, 1))
+
+          tests = Path("src/subscription_tests.rs")
+          text = tests.read_text()
+          marker = '''#[test]
+fn a_pooled_home_never_consults_the_machine_store() {'''
+          regression = '''#[test]
+fn explicit_import_home_does_not_select_platform_store() {
+    let dir = tempfile::tempdir().unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
+    let store = Some("simulated-keychain-credential".to_string());
+
+    assert!(!reader.is_vendor_default_home());
+    assert!(select_import_keychain(reader.is_vendor_default_home(), store).is_none());
+}
+
+'''
+          assert text.count(marker) == 1
+          tests.write_text(text.replace(marker, regression + marker, 1))
+          PY
+
+      - name: Add changelog fragment
+        run: |
+          cat > changelog.d/20260825_070600_auth-import-explicit-source.md <<'EOF'
+          ---
+          bump: patch
+          ---
+
+          ### Fixed
+          - Explicit `auth import <provider> <dir>` sources no longer get overridden by a newer machine-wide platform credential when the directory is not the vendor's default home.
+          EOF
+
+      - name: Format, lint, and test
+        run: |
+          cargo fmt --all
+          cargo clippy --locked --all-targets --all-features -- -D warnings
+          cargo test --locked --all-targets
+
+      - name: Remove temporary workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/issue-285-finalize.yml
+          git add src/subscription.rs src/subscription_tests.rs changelog.d/20260825_070600_auth-import-explicit-source.md .github/workflows/issue-285-finalize.yml
+          git commit -m "fix: honor explicit auth import source directories"
+          git push origin HEAD:fix/issue-285-explicit-import-source-v2
