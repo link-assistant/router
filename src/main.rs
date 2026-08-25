@@ -75,6 +75,10 @@ async fn run() -> ExitCode {
     }
 
     let cli = auth_cli::relax_token_secret_for_auth(cli);
+    // A command that will act on another deployment neither issues nor
+    // validates tokens here, so the local signing secret is not its to hold
+    // (issue #294).
+    let cli = link_assistant_router::remote_command::relax_token_secret_for_remote(cli);
 
     let config = match cli.into_config() {
         Ok(c) => c,
@@ -83,6 +87,26 @@ async fn run() -> ExitCode {
             return ExitCode::from(2);
         }
     };
+
+    // One targeting rule for every command that reads or changes router state:
+    // act on the router this machine is pointed at (issue #294).
+    if let Some(command) = cli.command.as_ref()
+        && link_assistant_router::remote_command::may_be_remote(command)
+        && let Some(target) = link_assistant_router::remote_command::target_of(command)
+        // `--data-dir` and `--claude-code-home` name this machine's state, so
+        // a discovered router must not answer for them; an explicit `--server`
+        // still wins.
+        && (target.server.is_some()
+            || !link_assistant_router::remote_command::names_local_state(&cli))
+    {
+        match link_assistant_router::remote_command::resolve(target).await {
+            Ok(link_assistant_router::remote_command::Target::Remote(server)) => {
+                return run_remote_command(&server, command).await;
+            }
+            Ok(link_assistant_router::remote_command::Target::Local) => {}
+            Err(code) => return code,
+        }
+    }
 
     match cli.command.as_ref() {
         None | Some(Command::Serve) => match run_server(
@@ -107,7 +131,7 @@ async fn run() -> ExitCode {
         }
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
-        Some(Command::Doctor) => run_doctor(&config).await,
+        Some(Command::Doctor { .. }) => run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
     }
@@ -488,6 +512,50 @@ fn spawn_chat_channels(
     handles
 }
 
+/// Run a state-touching command against the *selected* router.
+///
+/// Where the deployment already answers the operation over its admin API, it
+/// is honoured. Where it does not, the command says so and names the target,
+/// which is the shape issue #284 gave `auth gh` — an error naming the real
+/// target is honest, where one describing local state as though it were the
+/// target is not (issue #294).
+async fn run_remote_command(
+    server: &link_assistant_router::managed_server::ResolvedServer,
+    command: &Command,
+) -> ExitCode {
+    use link_assistant_router::remote_command::{no_remote_form, refuse};
+
+    match command {
+        // The routes exist and are admin-gated; only the wiring was missing.
+        Command::Tokens { op } => link_assistant_router::tokens_remote::run(server, op).await,
+        Command::Accounts { .. } => link_assistant_router::auth_remote::accounts(server).await,
+        Command::Providers { op } => {
+            link_assistant_router::providers_cli::run_remote(server, op).await
+        }
+        // The request log is written to the deployment's own disk and no
+        // endpoint serves it back, so there is nothing to ask for. Saying that
+        // beats answering from this machine's log, which is a different
+        // deployment's traffic.
+        Command::Logs { .. } => refuse(no_remote_form(
+            "logs",
+            server,
+            "the request log lives on that deployment's disk and no endpoint serves it; \
+             run `router logs` there",
+        )),
+        // `doctor` reports on the machine it runs on — its files, config and
+        // credentials. `auth status` already answers the credential half for a
+        // remote deployment.
+        Command::Doctor { .. } => refuse(no_remote_form(
+            "doctor",
+            server,
+            "run `router doctor` on that deployment; `router auth status` reports its \
+             credentials from here",
+        )),
+        // Never reached: `target_of` returns `None` for every other command.
+        _ => ExitCode::from(1),
+    }
+}
+
 fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
     let (store, _account_router) = match build_shared_state(config) {
         Ok(v) => v,
@@ -507,6 +575,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             rate_limit_per_minute,
             admin,
             github_repo,
+            ..
         } => {
             let request = IssueRequest {
                 ttl_hours: *ttl_hours,
@@ -542,6 +611,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             max_tokens,
             rate_limit_per_minute,
             account,
+            ..
         } => match mgr.rotate_token_with(
             id,
             &link_assistant_router::token::RotateOverrides {
@@ -563,50 +633,16 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::List => match mgr.list_tokens() {
+        TokenOp::List { .. } => match mgr.list_tokens() {
             Ok(records) => {
-                println!(
-                    "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {:<6}  label",
-                    "id",
-                    "issued_at",
-                    "expires_at",
-                    "revoked",
-                    "requests",
-                    "tokens",
-                    "reserved",
-                    "rpm",
-                    "scope"
-                );
-                for r in records {
-                    let requests = r.max_requests.map_or_else(
-                        || format!("{}/-", r.used_requests),
-                        |max| format!("{}/{max}", r.used_requests),
-                    );
-                    let scope = if r.scope.is_empty() {
-                        "client"
-                    } else {
-                        r.scope.as_str()
-                    };
-                    let tokens = r.max_tokens.map_or_else(
-                        || format!("{}/-", r.used_tokens),
-                        |max| format!("{}/{max}", r.used_tokens),
-                    );
-                    let rpm = r
-                        .rate_limit_per_minute
-                        .map_or_else(|| "-".to_string(), |limit| limit.to_string());
-                    println!(
-                        "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {scope:<6}  {}",
-                        r.id,
-                        r.issued_at,
-                        r.expires_at,
-                        r.revoked,
-                        requests,
-                        tokens,
-                        r.reserved_tokens,
-                        rpm,
-                        r.label
-                    );
-                }
+                // Rendered by the shared printer, so the local and remote
+                // tables cannot drift: an operator reading one has no way to
+                // tell which machine answered (issue #293).
+                let rows: Vec<serde_json::Value> = records
+                    .into_iter()
+                    .map(|record| serde_json::to_value(record).unwrap_or_default())
+                    .collect();
+                link_assistant_router::token_report::print_table(&rows);
                 ExitCode::SUCCESS
             }
             Err(e) => {
@@ -614,7 +650,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::Revoke { id } | TokenOp::Expire { id } => match mgr.revoke_token(id) {
+        TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => match mgr.revoke_token(id) {
             Ok(()) => {
                 println!("revoked {id}");
                 ExitCode::SUCCESS
@@ -624,7 +660,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::Show { id } => match mgr.list_tokens() {
+        TokenOp::Show { id, .. } => match mgr.list_tokens() {
             Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
                 || {
                     eprintln!("not found: {id}");

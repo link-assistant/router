@@ -34,9 +34,10 @@ use crate::config::{
 };
 
 mod auth_ops;
+mod targets;
 mod with;
 
-pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, RemoteGh, TlsOp};
+pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
 /// Parse a boolean switch that may also arrive from the environment.
@@ -497,16 +498,24 @@ pub enum Command {
     /// Start the HTTP server (default if no subcommand given).
     Serve,
     /// Token-management subcommands.
+    ///
+    /// Acts on the selected server when there is one: the deployment answers
+    /// these over its admin API, so managing a remote router's tokens no
+    /// longer means `ssh` or a hand-written `curl` (issues #293, #294).
     Tokens {
         #[command(subcommand)]
         op: TokenOp,
     },
     /// Account-management subcommands.
+    ///
+    /// Acts on the selected server when there is one (issue #294).
     Accounts {
         #[command(subcommand)]
         op: AccountOp,
     },
     /// Provider-management subcommands.
+    ///
+    /// Acts on the selected server when there is one (issue #294).
     Providers {
         #[command(subcommand)]
         op: ProviderOp,
@@ -533,7 +542,15 @@ pub enum Command {
         op: AuthOp,
     },
     /// Print environment + config diagnostics.
-    Doctor,
+    ///
+    /// Reports on the machine it runs on, so it stays local: the files, config
+    /// and credentials it inspects are this machine's. With another router
+    /// selected it says so and names it rather than describing local state as
+    /// though it were the target (issue #294).
+    Doctor {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// TLS certificate management for a self-signed deployment.
     Tls {
         #[command(subcommand)]
@@ -561,6 +578,8 @@ pub enum LogsOp {
         /// Emit JSON, for a monitoring check rather than a human.
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// Anomalies worth a name, with the correlation ids to inspect.
     ///
@@ -570,12 +589,16 @@ pub enum LogsOp {
         token: Option<String>,
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// One exchange, decoded and in order.
     Show {
         correlation_id: String,
         #[arg(long)]
         token: Option<String>,
+        #[command(flatten)]
+        target: AuthTarget,
     },
 }
 
@@ -638,6 +661,8 @@ pub enum TokenOp {
         /// the default and what every existing token keeps.
         #[arg(long = "github-repo", value_name = "OWNER/REPO")]
         github_repo: Vec<String>,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// Replace a token, preserving its controls, and revoke the old token.
     #[command(override_usage = "link-assistant-router tokens rotate [OPTIONS] <ID>")]
@@ -660,30 +685,53 @@ pub enum TokenOp {
         /// Replacement account pin; omitted keeps the existing one.
         #[arg(long)]
         account: Option<String>,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// List all known tokens.
-    List,
+    List {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Revoke a token by id.
     #[command(override_usage = "link-assistant-router tokens revoke [OPTIONS] <ID>")]
-    Revoke { id: String },
+    Revoke {
+        id: String,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Mark a token as expired immediately (revoke alias).
     #[command(override_usage = "link-assistant-router tokens expire [OPTIONS] <ID>")]
-    Expire { id: String },
+    Expire {
+        id: String,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Show metadata for one token.
     #[command(override_usage = "link-assistant-router tokens show [OPTIONS] <ID>")]
-    Show { id: String },
+    Show {
+        id: String,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
 }
 
 #[derive(Debug, Subcommand)]
 pub enum AccountOp {
     /// List configured accounts and their health.
-    List,
+    List {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
 }
 
 #[derive(Debug, Subcommand)]
 pub enum ProviderOp {
     /// List configured upstream providers.
-    List,
+    List {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Add or replace an OpenAI-compatible provider.
     #[command(
         override_usage = "link-assistant-router providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>"
@@ -710,16 +758,30 @@ pub enum ProviderOp {
             default_missing_value = "true"
         )]
         enabled: bool,
+        #[command(flatten)]
+        target: AuthTarget,
     },
     /// Show one provider with secret material redacted.
     #[command(override_usage = "link-assistant-router providers show [OPTIONS] <NAME>")]
-    Show { name: String },
+    Show {
+        name: String,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Remove one provider.
     #[command(override_usage = "link-assistant-router providers remove [OPTIONS] <NAME>")]
-    Remove { name: String },
+    Remove {
+        name: String,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
     #[command(override_usage = "link-assistant-router providers import [OPTIONS] <PATH>")]
-    Import { path: PathBuf },
+    Import {
+        path: PathBuf,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
 }
 
 #[derive(Debug, Subcommand)]

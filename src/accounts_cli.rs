@@ -20,7 +20,7 @@ pub fn run(
     op: &AccountOp,
 ) -> ExitCode {
     match op {
-        AccountOp::List => {
+        AccountOp::List { .. } => {
             println!(
                 "{:<16}  {:<8}  {:<12}  {:<6}  {:<9}  {:<9}  home",
                 "name", "healthy", "credential", "used", "limit", "remaining"

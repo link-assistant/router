@@ -66,6 +66,7 @@ pub mod providers_cli;
 pub mod proxy;
 pub mod refresh;
 pub mod refresh_rejections;
+pub mod remote_command;
 pub mod request_log;
 mod request_routing;
 pub mod responses;
@@ -82,7 +83,9 @@ pub mod tls_cli;
 pub mod token;
 pub mod token_admin;
 mod token_http;
+pub mod token_report;
 pub mod token_reservation;
+pub mod tokens_remote;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.
 #[cfg(unix)]

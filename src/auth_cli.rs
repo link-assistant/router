@@ -35,10 +35,12 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     if let Some(exit) = run_clear(config, op) {
         return exit;
     }
-    // Import is local for the same reason withdrawal is: it reads a directory
-    // on this machine and writes this deployment's credential home. Dispatched
-    // before the server selection so `--from-claude-home` with a server
-    // selected cannot fall through to a remote *authorize* (issue #274).
+    // Import acts on the machine running it: it reads a directory here and
+    // writes this deployment's credential home. Dispatched before the server
+    // selection so `--from-claude-home` with a server selected cannot fall
+    // through to a remote *authorize* (issue #274) — and `run_import` refuses
+    // outright when a different router is the target, rather than answering
+    // about the local home as though it were the one asked about (#291).
     if let Some(exit) = crate::auth_import::run_import(config, op).await {
         return exit;
     }
@@ -283,9 +285,8 @@ async fn remote_target(
         | AuthOp::Codex { target, .. }
         | AuthOp::Gh { target, .. }
         | AuthOp::Status { target, .. } => target,
-        // `auth import` reads a directory on this machine and writes this
-        // deployment's credential home, so it is local by construction — and
-        // `run_import` has already returned before this is reached.
+        // Never reached: `run_import` returns for every `Import`, either having
+        // performed a local import or having refused a remote one (#291).
         AuthOp::Import { .. } => return Ok(None),
     };
     link_assistant_router::auth_remote::target_for(

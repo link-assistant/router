@@ -488,3 +488,190 @@ fn a_silent_router_still_reports_nothing_configured() {
 
     assert_eq!(lines, vec!["no accounts are configured on this router"]);
 }
+
+/// The refusal names the directory the selected router reads from (#291).
+///
+/// "Not from here" alone leaves the operator to guess the next step; the path
+/// is the instruction. Single-account deployments report it under
+/// `credentials`, pooled ones under `accounts`.
+#[test]
+fn a_reported_credential_home_is_found_in_either_shape() {
+    let single = serde_json::json!({
+        "accounts": [],
+        "credentials": [
+            {"name": "claude", "home": "/srv/deployment-claude", "credential": "ok"},
+            {"name": "codex", "home": "/srv/deployment-codex", "credential": "missing"},
+        ],
+    });
+    assert_eq!(
+        home_in_accounts(&single, "claude").as_deref(),
+        Some("/srv/deployment-claude")
+    );
+    assert_eq!(
+        home_in_accounts(&single, "codex").as_deref(),
+        Some("/srv/deployment-codex")
+    );
+
+    let pooled = serde_json::json!({
+        "accounts": [{"name": "claude", "home": "/pool/a", "credential": "ok"}],
+    });
+    assert_eq!(
+        home_in_accounts(&pooled, "claude").as_deref(),
+        Some("/pool/a")
+    );
+}
+
+/// A router that reports no home simply omits the line.
+///
+/// The refusal is correct without it, so a missing or older `/v1/accounts`
+/// must never turn into a failure of its own.
+#[test]
+fn an_unreported_home_yields_nothing_rather_than_failing() {
+    assert_eq!(home_in_accounts(&serde_json::json!({}), "claude"), None);
+    assert_eq!(
+        home_in_accounts(&serde_json::json!({"accounts": []}), "claude"),
+        None
+    );
+    // A provider this deployment does not report.
+    let body = serde_json::json!({"credentials": [{"name": "codex", "home": "/srv/c"}]});
+    assert_eq!(home_in_accounts(&body, "claude"), None);
+    // An entry with no home at all.
+    let body = serde_json::json!({"credentials": [{"name": "claude"}]});
+    assert_eq!(home_in_accounts(&body, "claude"), None);
+}
+
+/// The refusal says what cannot be done, where it would have to go, and how to
+/// ask for the local action instead (issue #291).
+#[test]
+fn the_refusal_names_the_target_and_the_local_alternative() {
+    let lines = remote_import_refusal("http://router.example:8080", Some("/srv/deployment-claude"));
+
+    let all = lines.join("\n");
+    assert!(
+        all.contains("http://router.example:8080"),
+        "the target must be named, since answering about the local home is the bug: {all}"
+    );
+    assert!(
+        all.contains("/srv/deployment-claude"),
+        "the directory the credential would have to land in is the instruction: {all}"
+    );
+    assert!(
+        all.contains("--local"),
+        "the local action must stay reachable: {all}"
+    );
+    assert!(
+        all.starts_with("error:"),
+        "this is a refusal, not a note: {all}"
+    );
+}
+
+/// A router that reports no home still gets a complete, actionable refusal.
+#[test]
+fn the_refusal_omits_an_unreported_home_rather_than_guessing() {
+    let lines = remote_import_refusal("http://router.example:8080", None);
+
+    assert!(
+        !lines
+            .iter()
+            .any(|line| line.contains("reads its credential from")),
+        "an unreported home must be omitted, not invented: {lines:?}"
+    );
+    let all = lines.join("\n");
+    assert!(all.contains("http://router.example:8080"), "{all}");
+    assert!(all.contains("--local"), "{all}");
+}
+
+/// The shared helpers reach the route they are given, with the admin credential.
+///
+/// Every remote command routes through these, so a missing bearer or a mangled
+/// path would break `tokens`, `accounts` and `providers` at once (issue #294).
+#[tokio::test]
+async fn the_shared_helpers_carry_the_admin_credential() {
+    let (origin, request_count, handle) =
+        serve(vec![r#"{"ok":true}"#, r#"{"ok":true}"#, r#"{"ok":true}"#]).await;
+    let server = ResolvedServer::at(origin, Some("admin-token".to_string()), "test");
+
+    get(&server, "/api/tokens/list").await.expect("a GET");
+    post(&server, "/api/tokens", serde_json::json!({"label": "ci"}))
+        .await
+        .expect("a POST");
+    delete(&server, "/api/providers/demo")
+        .await
+        .expect("a DELETE");
+
+    assert_eq!(request_count.load(Ordering::SeqCst), 3);
+    let seen = handle.await.expect("the server task");
+    assert!(seen[0].starts_with("GET /api/tokens/list"), "{}", seen[0]);
+    assert!(seen[1].starts_with("POST /api/tokens"), "{}", seen[1]);
+    assert!(
+        seen[2].starts_with("DELETE /api/providers/demo"),
+        "{}",
+        seen[2]
+    );
+    for request in &seen {
+        assert!(
+            request.contains("authorization: Bearer admin-token"),
+            "every call must authenticate: {request}"
+        );
+    }
+    assert!(
+        seen[1].contains(r#""label":"ci""#),
+        "the body must reach the deployment: {}",
+        seen[1]
+    );
+}
+
+/// `accounts list` reads the proxy-port route, not the admin-port spelling.
+///
+/// `/api/admin/accounts` is the same handler on the admin listener and 404s on
+/// the port `ResolvedServer` names, so the wrong spelling makes the command
+/// fail against every ordinary deployment.
+#[tokio::test]
+async fn accounts_reads_the_route_the_selected_port_serves() {
+    let body =
+        r#"{"accounts":[],"credentials":[{"name":"claude","home":"/srv/c","credential":"ok"}]}"#;
+    let (origin, request_count, handle) = serve(vec![body]).await;
+    let server = ResolvedServer::at(origin, Some("admin-token".to_string()), "test");
+
+    let code = accounts(&server).await;
+
+    assert_eq!(
+        format!("{code:?}"),
+        format!("{:?}", std::process::ExitCode::SUCCESS)
+    );
+    assert_eq!(request_count.load(Ordering::SeqCst), 1);
+    let seen = handle.await.expect("the server task");
+    assert!(
+        seen[0].starts_with("GET /v1/accounts"),
+        "the admin-port spelling 404s on this listener: {}",
+        seen[0]
+    );
+}
+
+/// A router that refuses the credential says how to re-select it.
+#[tokio::test]
+async fn a_refused_credential_names_the_fix() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move {
+        if let Ok((mut socket, _)) = listener.accept().await {
+            let mut buffer = [0; 1024];
+            let _ = socket.read(&mut buffer).await;
+            let _ = socket
+                .write_all(
+                    b"HTTP/1.1 401 Unauthorized\r\ncontent-length: 0\r\nconnection: close\r\n\r\n",
+                )
+                .await;
+        }
+    });
+    let server = ResolvedServer::at(origin, Some("stale".to_string()), "test");
+
+    let error = get(&server, "/api/tokens/list")
+        .await
+        .expect_err("a 401 is an error");
+
+    assert!(
+        error.contains("server use"),
+        "the operator needs the command that fixes it: {error}"
+    );
+}

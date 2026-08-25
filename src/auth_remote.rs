@@ -266,6 +266,151 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
     }
 }
 
+/// Where the selected router reads `provider`'s credential from.
+///
+/// `auth status` already asks the same endpoint for exactly this, so a command
+/// that cannot act on the remote deployment can still name the directory the
+/// credential would have to land in. An error that says only "not from here"
+/// leaves the operator to guess the next step; one that names the path is the
+/// instruction (issue #291).
+///
+/// `None` when the router cannot be reached or does not report homes — the
+/// refusal is still correct without it, so this never turns into a hard
+/// failure of its own.
+pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<String> {
+    let client = reqwest::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .ok()?;
+    let body: serde_json::Value = send(&client, server, reqwest::Method::GET, "/v1/accounts", None)
+        .await
+        .ok()?;
+    home_in_accounts(&body, provider)
+}
+
+/// `accounts list` against the selected router (issue #294).
+///
+/// The endpoint reports a superset of what the local table prints, so this
+/// renders the same columns from the same field names rather than growing a
+/// second format an operator would have to reconcile.
+pub async fn accounts(server: &ResolvedServer) -> ExitCode {
+    // `/v1/accounts` on the proxy listener, which is the port `ResolvedServer`
+    // names. `/api/admin/accounts` is the admin listener's spelling of the same
+    // handler and 404s here.
+    match get(server, "/v1/accounts").await {
+        Ok(body) => {
+            println!("server: {} ({})", server.base_url, server.source);
+            report_credentials(&body);
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::from(1)
+        }
+    }
+}
+
+/// `GET path` on the selected router, returning its JSON answer.
+///
+/// The admin credential is attached and the failure messages are shared with
+/// every other remote command, so a refused credential reads the same however
+/// the operator arrived at it.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the call cannot be made or the
+/// router answers with a failure.
+pub async fn get(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
+    let client = http_client()?;
+    send(&client, server, reqwest::Method::GET, path, None).await
+}
+
+/// `POST path` with `body` on the selected router.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the call cannot be made or the
+/// router answers with a failure.
+pub async fn post(
+    server: &ResolvedServer,
+    path: &str,
+    body: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let client = http_client()?;
+    send(&client, server, reqwest::Method::POST, path, Some(body)).await
+}
+
+/// `DELETE path` on the selected router.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the call cannot be made or the
+/// router answers with a failure.
+pub async fn delete(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
+    let client = http_client()?;
+    send(&client, server, reqwest::Method::DELETE, path, None).await
+}
+
+fn http_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .map_err(|error| format!("could not build an HTTP client: {error}"))
+}
+
+/// Why an import cannot act on a router other than the machine running it.
+///
+/// The lines an operator reads, built here rather than at the call site so the
+/// wording is asserted directly. Import installs into the credential home of
+/// the executing machine, and no endpoint accepts a credential document —
+/// `/api/login` begins an interactive OAuth flow and `submit_code` takes a
+/// short-lived code, neither of which adopts a credential that already exists.
+///
+/// `home` names the directory that router reads from, when it reports one:
+/// "not from here" alone leaves the operator to guess the next step, and the
+/// path is the instruction. It is omitted rather than guessed when the router
+/// does not say (issue #291).
+#[must_use]
+pub fn remote_import_refusal(base_url: &str, home: Option<&str>) -> Vec<String> {
+    let mut lines = vec![format!(
+        "error: import installs a credential into the credential home of the machine running \
+         it, so it cannot provision {base_url} from here."
+    )];
+    if let Some(home) = home {
+        lines.push(format!("note: {base_url} reads its credential from {home}"));
+    }
+    lines.push(String::from(
+        "note: that deployment accepts no credential over HTTP, so run `router auth import` \
+         there, or authorize it from here with `router auth claude` / `router auth codex`, \
+         which do act on the selected server.",
+    ));
+    lines.push(String::from(
+        "note: pass --local to import into this machine's credential home.",
+    ));
+    lines
+}
+
+/// The home a `/v1/accounts` body reports for `provider`, if it names one.
+///
+/// Split from the request so the shape-handling can be asserted without a
+/// server: single-account deployments report under `credentials` and pooled
+/// ones under `accounts`, and a router predating either simply omits both.
+#[must_use]
+pub fn home_in_accounts(body: &serde_json::Value, provider: &str) -> Option<String> {
+    ["credentials", "accounts"]
+        .into_iter()
+        .filter_map(|key| body.get(key).and_then(serde_json::Value::as_array))
+        .flatten()
+        .find(|entry| {
+            entry
+                .get("name")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|name| name.eq_ignore_ascii_case(provider))
+        })
+        .and_then(|entry| entry.get("home").and_then(serde_json::Value::as_str))
+        .map(str::to_owned)
+}
+
 async fn send<T: serde::de::DeserializeOwned>(
     client: &reqwest::Client,
     server: &ResolvedServer,
