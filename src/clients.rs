@@ -7,7 +7,6 @@
 use std::fmt::{self, Write as _};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 use clap::ValueEnum;
 use serde::Serialize;
