@@ -8,8 +8,8 @@
 use std::fs;
 use std::path::PathBuf;
 
-use super::{AnyError, PersistedServer, SERVER_CONFIG, normalize_server};
 use super::state::{state_directory, write_private_json};
+use super::{AnyError, PersistedServer, SERVER_CONFIG, normalize_server};
 
 /// The router this machine has explicitly been pointed at, if any.
 ///

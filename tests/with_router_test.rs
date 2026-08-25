@@ -754,10 +754,9 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     let (server, requests) = mock_router();
 
     let inherited_path = std::env::var_os("PATH").unwrap_or_default();
-    let path = std::env::join_paths(
-        std::iter::once(bin).chain(std::env::split_paths(&inherited_path)),
-    )
-    .expect("compose PATH");
+    let path =
+        std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
+            .expect("compose PATH");
 
     let pty = native_pty_system()
         .openpty(PtySize::default())

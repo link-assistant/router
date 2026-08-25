@@ -210,9 +210,7 @@ fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Opt
             "error: this removes {affected} credentials from this machine and an OAuth login \
              cannot be restored without a browser."
         );
-        eprintln!(
-            "note: pass --yes to proceed, or name one provider: `router auth clear claude`."
-        );
+        eprintln!("note: pass --yes to proceed, or name one provider: `router auth clear claude`.");
         return Some(ExitCode::from(1));
     }
 

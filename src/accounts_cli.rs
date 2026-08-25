@@ -78,9 +78,8 @@ pub fn header() -> String {
 /// One rendered row, in the columns [`header`] names.
 #[must_use]
 pub fn row(account: &AccountRow<'_>) -> String {
-    let optional = |value: Option<u64>| {
-        value.map_or_else(|| "-".to_string(), |value| value.to_string())
-    };
+    let optional =
+        |value: Option<u64>| value.map_or_else(|| "-".to_string(), |value| value.to_string());
     format!(
         "{:<16}  {:<8}  {:<12}  {:<6}  {:<9}  {:<9}  {}",
         account.name,

@@ -874,7 +874,13 @@ fn withdrawal_refuses_a_named_server_instead_of_clearing_this_machine() {
     std::fs::write(&credential, "{}").expect("seed a local credential");
 
     for arguments in [
-        &["auth", "claude", "--clear", "--server", "http://127.0.0.1:1"][..],
+        &[
+            "auth",
+            "claude",
+            "--clear",
+            "--server",
+            "http://127.0.0.1:1",
+        ][..],
         &["auth", "clear", "claude", "--server", "http://127.0.0.1:1"],
         &[
             "auth",
@@ -884,7 +890,14 @@ fn withdrawal_refuses_a_named_server_instead_of_clearing_this_machine() {
             "--server",
             "http://127.0.0.1:1",
         ],
-        &["auth", "clear", "--all", "--yes", "--server", "http://127.0.0.1:1"],
+        &[
+            "auth",
+            "clear",
+            "--all",
+            "--yes",
+            "--server",
+            "http://127.0.0.1:1",
+        ],
     ] {
         let output = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .args(arguments)
@@ -929,7 +942,10 @@ fn clearing_every_credential_at_once_asks_first() {
         String::from_utf8_lossy(&refused.stderr).contains("--yes"),
         "the refusal must name the way to proceed"
     );
-    assert!(credential.exists(), "nothing may be removed without consent");
+    assert!(
+        credential.exists(),
+        "nothing may be removed without consent"
+    );
 
     // Naming one provider is unambiguous and needs no confirmation.
     let single = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))

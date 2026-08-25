@@ -81,9 +81,7 @@ pub(super) fn doctor_model(
     client: ClientKind,
     catalog: &[RouterModel],
 ) -> Result<&str, ClientError> {
-    select_model(client, catalog).ok_or_else(|| {
-        ClientError::message(unavailable(client, catalog))
-    })
+    select_model(client, catalog).ok_or_else(|| ClientError::message(unavailable(client, catalog)))
 }
 
 /// The model that suits `client` best, from what the router advertises.
@@ -98,7 +96,7 @@ pub(super) fn doctor_model(
 /// owner is used, so nothing here can point at a withdrawn or unentitled
 /// vendor id (issue #192).
 #[must_use]
-pub fn select_model<'a>(client: ClientKind, catalog: &'a [RouterModel]) -> Option<&'a str> {
+pub fn select_model(client: ClientKind, catalog: &[RouterModel]) -> Option<&str> {
     let integration = client.integration();
     for owner in integration.model_owners {
         if let Some(model) = catalog.iter().find(|model| &model.owned_by == owner) {

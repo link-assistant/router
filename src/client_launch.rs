@@ -81,11 +81,7 @@ pub fn attached_to_a_terminal() -> bool {
 /// `resolved_model` is `None` unless the user asked for a model or the client
 /// cannot start without one; the router no longer picks one by catalog order
 /// on the user's behalf (issue #295).
-pub fn plan(
-    args: &WithArgs,
-    resolved_model: Option<&str>,
-    attached_to_a_terminal: bool,
-) -> Launch {
+pub fn plan(args: &WithArgs, resolved_model: Option<&str>, attached_to_a_terminal: bool) -> Launch {
     let integration = args.client.integration();
     let mut forwarded = args.client_args.clone();
     if forwarded.first().is_some_and(|value| value == "--") {
@@ -106,9 +102,12 @@ pub fn plan(
     let model = resolved_model
         .filter(|_| !contains_model_argument(&forwarded))
         .and_then(|model| {
-            integration
-                .model_arg
-                .map(|flag| [OsString::from(flag), model_selector(args.client, model).into()])
+            integration.model_arg.map(|flag| {
+                [
+                    OsString::from(flag),
+                    model_selector(args.client, model).into(),
+                ]
+            })
         });
     let command_mode = matches!(args.client, ClientKind::Codex | ClientKind::Opencode);
     let mut result = Vec::new();

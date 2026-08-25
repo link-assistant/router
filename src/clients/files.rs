@@ -119,9 +119,7 @@ pub(super) fn write_claude_marker(
 /// A marker written before issue #302 has no `previous_anthropic_base_url`,
 /// which reads as `None` — the same answer as "there was nothing there", and
 /// the same removal behaviour those markers already had.
-pub(super) fn claude_marker(
-    path: &Path,
-) -> Result<Option<(String, Option<String>)>, ClientError> {
+pub(super) fn claude_marker(path: &Path) -> Result<Option<(String, Option<String>)>, ClientError> {
     let source = read_or_empty(path)?;
     if source.trim().is_empty() {
         return Ok(None);

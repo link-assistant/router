@@ -17,7 +17,9 @@ use std::time::Duration;
 /// it keeps the test from having to mint a signed JWT.
 fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
-    listener.set_nonblocking(true).expect("nonblocking listener");
+    listener
+        .set_nonblocking(true)
+        .expect("nonblocking listener");
     let port = listener.local_addr().expect("mock address").port();
     let handle = thread::spawn(move || {
         // Deadline-bounded rather than counted: the exact number of probes is
@@ -133,8 +135,8 @@ fn configure_writes_the_selected_router_and_stores_its_credential() {
         String::from_utf8_lossy(&configured.stderr)
     );
 
-    let settings = std::fs::read_to_string(home.join(".claude/settings.json"))
-        .expect("read Claude settings");
+    let settings =
+        std::fs::read_to_string(home.join(".claude/settings.json")).expect("read Claude settings");
     assert!(
         settings.contains(&server),
         "the selected router must be the address written: {settings}"
@@ -183,8 +185,8 @@ fn with_global_is_the_same_command_under_an_older_name() {
         String::from_utf8_lossy(&configured.stdout),
         String::from_utf8_lossy(&configured.stderr)
     );
-    let settings = std::fs::read_to_string(home.join(".claude/settings.json"))
-        .expect("read Claude settings");
+    let settings =
+        std::fs::read_to_string(home.join(".claude/settings.json")).expect("read Claude settings");
     assert!(settings.contains(&server), "{settings}");
     assert!(
         home.join(".config/link-assistant-router/clients/claude.env")
@@ -254,7 +256,10 @@ fn clients_setup_refuses_rather_than_writing_the_wrong_address() {
         .expect("router CLI runs");
     assert!(!attempted.status.success());
     let stderr = String::from_utf8_lossy(&attempted.stderr);
-    assert!(stderr.contains(&server), "the target must be named: {stderr}");
+    assert!(
+        stderr.contains(&server),
+        "the target must be named: {stderr}"
+    );
     assert!(
         stderr.contains("router configure claude"),
         "the refusal must name what can do it: {stderr}"

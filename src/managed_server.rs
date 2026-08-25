@@ -101,37 +101,6 @@ impl RunCredential {
         &self.available_models
     }
 
-    /// Choose a model for `client` from the router's live catalog.
-    ///
-    /// The router ships no default model names, so the concrete id is resolved
-    /// here, at execution time, from what the authenticated account actually
-    /// advertises (issue #192). `owner` narrows the choice to models a
-    /// dialect-specific client can use; an empty owner accepts any.
-    pub(crate) fn select_model(&self, owner: &str) -> Option<&str> {
-        if owner.is_empty() {
-            // No dialect constraint: any advertised model will do.
-            return self.available_models.first().map(|model| model.id.as_str());
-        }
-        if let Some(model) = self
-            .available_models
-            .iter()
-            .find(|model| model.owned_by == owner)
-        {
-            return Some(model.id.as_str());
-        }
-        // Falling back is defensible only when the catalog does not say who owns
-        // its models: then the router cannot tell, and a usable model beats
-        // refusing. When every entry names a *different* owner it does know, and
-        // substituting one launched Claude Code against an `OpenAI` model — so the
-        // client blamed its own model name rather than the lapsed subscription
-        // (issue #225).
-        self.available_models
-            .iter()
-            .all(|model| model.owned_by.is_empty())
-            .then(|| self.available_models.first().map(|m| m.id.as_str()))
-            .flatten()
-    }
-
     /// The record id this credential was issued under, when it has one.
     ///
     /// A credential that outlives the command that minted it has to stay
@@ -139,19 +108,6 @@ impl RunCredential {
     #[must_use]
     pub fn id(&self) -> Option<String> {
         token_subject(&self.token).ok()
-    }
-
-    /// The distinct owners the catalog names, for reporting why nothing fit.
-    pub(crate) fn advertised_owners(&self) -> Vec<&str> {
-        let mut owners: Vec<&str> = self
-            .available_models
-            .iter()
-            .map(|model| model.owned_by.as_str())
-            .filter(|owner| !owner.is_empty())
-            .collect();
-        owners.sort_unstable();
-        owners.dedup();
-        owners
     }
 }
 
@@ -377,7 +333,12 @@ pub async fn cleanup_run_credential(credential: RunCredential) -> Result<(), Any
     let Some(revocation) = credential.revocation else {
         return Ok(());
     };
-    revoke(&revocation.base_url, &revocation.admin_token, &revocation.id).await
+    revoke(
+        &revocation.base_url,
+        &revocation.admin_token,
+        &revocation.id,
+    )
+    .await
 }
 
 /// Revoke one token record on a router, by the id it was issued under.
@@ -451,7 +412,6 @@ fn token_subject(token: &str) -> Result<String, AnyError> {
         .map(str::to_string)
         .ok_or_else(|| "router run token has no subject to revoke".into())
 }
-
 
 pub fn managed_status() -> Result<String, AnyError> {
     let lock = lock_state()?;

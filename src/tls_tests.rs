@@ -120,7 +120,12 @@ fn the_cli_generates_and_prints_the_certificate() {
     );
     assert_eq!(generated, std::process::ExitCode::SUCCESS);
 
-    let printed = crate::tls_cli::run_in(data_dir.path(), &crate::cli::TlsOp::Ca { target: crate::cli::AuthTarget::default() });
+    let printed = crate::tls_cli::run_in(
+        data_dir.path(),
+        &crate::cli::TlsOp::Ca {
+            target: crate::cli::AuthTarget::default(),
+        },
+    );
     assert_eq!(printed, std::process::ExitCode::SUCCESS);
     assert!(
         read_generated_certificate(data_dir.path())
@@ -135,7 +140,12 @@ fn the_cli_generates_and_prints_the_certificate() {
 fn the_cli_reports_an_absent_certificate() {
     let data_dir = tempfile::tempdir().expect("data dir");
     assert_ne!(
-        crate::tls_cli::run_in(data_dir.path(), &crate::cli::TlsOp::Ca { target: crate::cli::AuthTarget::default() }),
+        crate::tls_cli::run_in(
+            data_dir.path(),
+            &crate::cli::TlsOp::Ca {
+                target: crate::cli::AuthTarget::default()
+            }
+        ),
         std::process::ExitCode::SUCCESS
     );
 }

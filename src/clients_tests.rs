@@ -184,11 +184,7 @@ fn a_strict_client_refuses_another_vendors_model() {
     );
     // The generic OpenAI-dialect gateways take whatever the router serves —
     // the rule `clients doctor` already used, now the only one.
-    for client in [
-        ClientKind::Opencode,
-        ClientKind::Agent,
-        ClientKind::GrokCli,
-    ] {
+    for client in [ClientKind::Opencode, ClientKind::Agent, ClientKind::GrokCli] {
         assert_eq!(
             crate::clients::select_model(client, &openai),
             Some("gpt-test"),

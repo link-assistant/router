@@ -84,9 +84,9 @@ pub struct ClientIntegration {
     /// the client accepts any advertised model.
     ///
     /// A single owner used to be declared per client, and two of the eight
-    /// named the wrong vendor: Gemini CLI and Qwen Code were declared OpenAI
-    /// clients, so a Google model could never be selected for the Gemini CLI
-    /// and a Qwen model never for Qwen Code. On a deployment serving only a
+    /// named the wrong vendor: Gemini CLI and Qwen Code were declared
+    /// `OpenAI` clients, so a Google model could never be selected for the Gemini
+    /// CLI and a Qwen model never for Qwen Code. On a deployment serving only a
     /// Gemini subscription the run aborted with a message reading as though
     /// the router were short of models (issue #301).
     pub model_owners: &'static [&'static str],

@@ -167,11 +167,7 @@ async fn configure_one(
     if !environment_only(client) {
         let models = crate::clients::usable_models(client, credential.models());
         let path = crate::client_global::apply(client, &server.base_url, &models)?;
-        println!(
-            "configured {} in {}",
-            client.display_name(),
-            path.display()
-        );
+        println!("configured {} in {}", client.display_name(), path.display());
     }
     let environment = manager.write_environment(client, &server.base_url, &credential.token)?;
     manager.write_credential_metadata(client, &record)?;
@@ -209,7 +205,10 @@ async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> Result<ExitCode,
         // first leaves a live credential nobody can name any more, which is
         // the regression from issue #190 — and `configure` mints for a year,
         // so the window is not a short one.
-        if let Some(record) = record.as_ref().filter(|record| record.revocable_by_default()) {
+        if let Some(record) = record
+            .as_ref()
+            .filter(|record| record.revocable_by_default())
+        {
             report_revocation(args, record).await;
         }
         let environment = manager.environment_path(client);
@@ -227,7 +226,10 @@ async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> Result<ExitCode,
                 restored += 1;
             }
             None if had_credential => {
-                println!("removed the stored credential for {}", client.display_name());
+                println!(
+                    "removed the stored credential for {}",
+                    client.display_name()
+                );
                 restored += 1;
             }
             None if !args.all => {

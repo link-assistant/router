@@ -32,8 +32,8 @@ pub mod client_global;
 mod client_launch;
 pub mod clients;
 pub mod config;
-pub mod configure;
 pub mod config_defaults;
+pub mod configure;
 pub mod crater;
 pub mod credential_store;
 pub mod doctor;
@@ -87,8 +87,8 @@ pub mod token;
 pub mod token_admin;
 mod token_http;
 pub mod token_report;
-pub mod token_secret;
 pub mod token_reservation;
+pub mod token_secret;
 pub mod tokens_remote;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.

@@ -205,7 +205,10 @@ fn a_model_the_client_was_given_wins() {
         1,
         "{rendered:?}"
     );
-    assert!(rendered.iter().any(|value| value == "theirs"), "{rendered:?}");
+    assert!(
+        rendered.iter().any(|value| value == "theirs"),
+        "{rendered:?}"
+    );
 }
 
 #[test]
