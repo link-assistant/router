@@ -24,6 +24,9 @@ use crate::cli::{AuthTarget, Command};
 use crate::managed_server::ResolvedServer;
 
 /// Which router a command acts on.
+///
+/// Deliberately not `Debug`: [`ResolvedServer`] holds the admin credential,
+/// and a derived formatter is the easiest way for one to reach a log.
 pub enum Target {
     /// No selection, or one declined with `--local` / `--managed`.
     Local,

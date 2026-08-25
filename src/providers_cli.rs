@@ -41,44 +41,46 @@ pub async fn run_remote(
     }
 }
 
-async fn remote_result(
-    server: &crate::managed_server::ResolvedServer,
-    op: &ProviderOp,
-) -> Result<ExitCode, String> {
-    match op {
-        ProviderOp::List { .. } => {
-            let body = crate::auth_remote::get(server, "/api/providers").await?;
-            let records = body
-                .get("data")
-                .and_then(serde_json::Value::as_array)
-                .cloned()
-                .unwrap_or_default();
-            print_remote_table(&records);
-            Ok(ExitCode::SUCCESS)
-        }
-        ProviderOp::Show { name, .. } => {
-            match crate::auth_remote::get(server, &format!("/api/providers/{name}")).await {
-                Ok(record) => {
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&record).unwrap_or_default()
-                    );
-                    Ok(ExitCode::SUCCESS)
-                }
-                // The local path exits 2 for an unknown provider; matching it
-                // keeps a script's meaning the same against either target.
-                Err(error) if error.contains("404") => {
-                    eprintln!("not found: {name}");
-                    Ok(ExitCode::from(2))
-                }
-                Err(error) => Err(error),
-            }
-        }
-        ProviderOp::Remove { name, .. } => {
-            crate::auth_remote::delete(server, &format!("/api/providers/{name}")).await?;
-            println!("removed {name}");
-            Ok(ExitCode::SUCCESS)
-        }
+/// The call one provider operation makes against the selected router.
+///
+/// Separated from sending it so the request can be asserted without a server:
+/// a wrong path or a body missing a declared model is the kind of mistake an
+/// operator only sees as a provider that never wins a route.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Call {
+    /// `GET`, `POST` or `DELETE`, as the endpoint expects.
+    pub method: &'static str,
+    /// The admin route this operation uses.
+    pub path: String,
+    /// The JSON body, for a `POST`.
+    pub body: Option<serde_json::Value>,
+}
+
+/// The call `op` makes, for everything but `import`.
+///
+/// `import` reads a manifest on this machine and then makes one `add` call per
+/// provider it declares, so it has no single call of its own.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the provider cannot be encoded.
+pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
+    Ok(match op {
+        ProviderOp::List { .. } => Some(Call {
+            method: "GET",
+            path: "/api/providers".to_string(),
+            body: None,
+        }),
+        ProviderOp::Show { name, .. } => Some(Call {
+            method: "GET",
+            path: format!("/api/providers/{name}"),
+            body: None,
+        }),
+        ProviderOp::Remove { name, .. } => Some(Call {
+            method: "DELETE",
+            path: format!("/api/providers/{name}"),
+            body: None,
+        }),
         ProviderOp::Add {
             name,
             kind,
@@ -89,10 +91,10 @@ async fn remote_result(
             api_key_env,
             enabled,
             ..
-        } => {
-            // The endpoint's own request type, so the remote and local paths
-            // cannot describe a provider differently.
-            let upsert = ProviderUpsert {
+        } => Some(Call {
+            method: "POST",
+            path: "/api/providers".to_string(),
+            body: Some(upsert_body(&ProviderUpsert {
                 name: name.clone(),
                 kind: Some(kind.clone()),
                 base_url: base_url.clone(),
@@ -102,29 +104,96 @@ async fn remote_result(
                 api_key_env: api_key_env.clone(),
                 encrypted_api_key: None,
                 enabled: Some(*enabled),
-            };
-            let body = serde_json::to_value(&upsert).map_err(|error| error.to_string())?;
-            crate::auth_remote::post(server, "/api/providers", body).await?;
+            })?),
+        }),
+        ProviderOp::Import { .. } => None,
+    })
+}
+
+/// One provider as the endpoint's own request type encodes it.
+///
+/// Built from [`ProviderUpsert`] rather than a hand-written JSON object, so the
+/// remote and local paths cannot describe a provider differently.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the record cannot be encoded.
+pub fn upsert_body(upsert: &ProviderUpsert) -> Result<serde_json::Value, String> {
+    serde_json::to_value(upsert).map_err(|error| error.to_string())
+}
+
+/// The provider records inside a `/api/providers` answer.
+#[must_use]
+pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
+    answer
+        .get("data")
+        .and_then(serde_json::Value::as_array)
+        .cloned()
+        .unwrap_or_default()
+}
+
+async fn remote_result(
+    server: &crate::managed_server::ResolvedServer,
+    op: &ProviderOp,
+) -> Result<ExitCode, String> {
+    if let ProviderOp::Import { path, .. } = op {
+        // The manifest is this machine's file; the providers it declares are
+        // the deployment's. Reading here and declaring there is what "import
+        // into that router" means.
+        let text = std::fs::read_to_string(path)
+            .map_err(|error| format!("could not read {}: {error}", path.display()))?;
+        let imported = crate::providers::parse_provider_import(&text)
+            .map_err(|error| format!("could not parse {}: {error}", path.display()))?;
+        let count = imported.len();
+        for record in &imported {
+            crate::auth_remote::post(server, "/api/providers", upsert_body(record)?).await?;
+        }
+        println!("imported {count} providers into {}", server.base_url);
+        return Ok(ExitCode::SUCCESS);
+    }
+
+    let Some(call) = call_for(op)? else {
+        return Ok(ExitCode::from(1));
+    };
+    let answer = match (call.method, call.body) {
+        ("POST", Some(body)) => crate::auth_remote::post(server, &call.path, body).await,
+        ("DELETE", _) => crate::auth_remote::delete(server, &call.path).await,
+        _ => crate::auth_remote::get(server, &call.path).await,
+    };
+
+    match op {
+        ProviderOp::List { .. } => {
+            print_remote_table(&records_in(&answer?));
+            Ok(ExitCode::SUCCESS)
+        }
+        ProviderOp::Show { name, .. } => match answer {
+            Ok(record) => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&record).unwrap_or_default()
+                );
+                Ok(ExitCode::SUCCESS)
+            }
+            // The local path exits 2 for an unknown provider; matching it keeps
+            // a script's meaning the same against either target.
+            Err(error) if error.contains("404") => {
+                eprintln!("not found: {name}");
+                Ok(ExitCode::from(2))
+            }
+            Err(error) => Err(error),
+        },
+        ProviderOp::Remove { name, .. } => {
+            answer?;
+            println!("removed {name}");
+            Ok(ExitCode::SUCCESS)
+        }
+        ProviderOp::Add { name, .. } => {
+            answer?;
             println!("saved {name}");
             Ok(ExitCode::SUCCESS)
         }
-        ProviderOp::Import { path, .. } => {
-            // The manifest is this machine's file; the providers it declares
-            // are the deployment's. Reading here and declaring there is what
-            // "import into that router" means.
-            let text = std::fs::read_to_string(path)
-                .map_err(|error| format!("could not read {}: {error}", path.display()))?;
-            let imported = crate::providers::parse_provider_import(&text)
-                .map_err(|error| format!("could not parse {}: {error}", path.display()))?;
-            let mut saved = 0;
-            for record in imported {
-                let body = serde_json::to_value(&record).map_err(|error| error.to_string())?;
-                crate::auth_remote::post(server, "/api/providers", body).await?;
-                saved += 1;
-            }
-            println!("imported {saved} providers into {}", server.base_url);
-            Ok(ExitCode::SUCCESS)
-        }
+        // Returned above.
+        ProviderOp::Import { .. } => Ok(ExitCode::from(1)),
     }
 }
 

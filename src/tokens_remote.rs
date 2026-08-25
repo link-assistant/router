@@ -28,7 +28,27 @@ pub async fn run(server: &ResolvedServer, op: &TokenOp) -> ExitCode {
     }
 }
 
-async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, String> {
+/// The call one token operation makes: method, path, and body.
+///
+/// Separated from sending it so the request an operation builds can be
+/// asserted without a server. What goes on the wire is the part that can be
+/// wrong in a way an operator notices — a rotate aimed at
+/// `/api/tokens/rotate` would rotate the caller's *own* admin credential
+/// rather than the named token — and it is exactly the part a live-server test
+/// covers worst.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Call {
+    /// `GET` or `POST`, as the endpoint expects.
+    pub method: &'static str,
+    /// The admin route this operation uses.
+    pub path: &'static str,
+    /// The JSON body, for a `POST`.
+    pub body: Option<serde_json::Value>,
+}
+
+/// The call `op` makes against the selected router.
+#[must_use]
+pub fn call_for(op: &TokenOp) -> Call {
     match op {
         TokenOp::Issue {
             ttl_hours,
@@ -40,21 +60,20 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
             admin,
             github_repo,
             ..
-        } => {
-            let body = serde_json::json!({
+        } => Call {
+            method: "POST",
+            path: "/api/tokens",
+            body: Some(serde_json::json!({
                 "ttl_hours": ttl_hours,
                 "label": label,
                 "account": account,
                 "max_requests": max_requests,
                 "max_tokens": max_tokens,
                 "rate_limit_per_minute": rate_limit_per_minute,
-                "scope": if *admin { Some(crate::token::ADMIN_SCOPE) } else { None },
+                "scope": admin.then_some(crate::token::ADMIN_SCOPE),
                 "github_repos": (!github_repo.is_empty()).then(|| github_repo.clone()),
-            });
-            let answer = crate::auth_remote::post(server, "/api/tokens", body).await?;
-            print_issued(&answer);
-            Ok(ExitCode::SUCCESS)
-        }
+            })),
+        },
         TokenOp::Rotate {
             id,
             ttl_hours,
@@ -64,11 +83,13 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
             rate_limit_per_minute,
             account,
             ..
-        } => {
-            // `rotate-client` replaces a named token; `/api/tokens/rotate`
+        } => Call {
+            method: "POST",
+            // `rotate-client` replaces a named token. `/api/tokens/rotate`
             // rotates the *caller's own* admin credential, which is a
             // different operation and not what `tokens rotate <ID>` means.
-            let body = serde_json::json!({
+            path: "/api/tokens/rotate-client",
+            body: Some(serde_json::json!({
                 "id": id,
                 "ttl_hours": ttl_hours,
                 "label": (!label.is_empty()).then(|| label.clone()),
@@ -76,9 +97,37 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
                 "max_tokens": max_tokens,
                 "rate_limit_per_minute": rate_limit_per_minute,
                 "account": account,
-            });
-            let answer =
-                crate::auth_remote::post(server, "/api/tokens/rotate-client", body).await?;
+            })),
+        },
+        // `show` has no route of its own: no `GET /api/tokens/{id}` exists, and
+        // the local command is itself a filter over the list, so this stays a
+        // filter rather than growing server surface for something already
+        // answerable.
+        TokenOp::List { .. } | TokenOp::Show { .. } => Call {
+            method: "GET",
+            path: "/api/tokens/list",
+            body: None,
+        },
+        TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => Call {
+            method: "POST",
+            path: "/api/tokens/revoke",
+            body: Some(serde_json::json!({ "id": id })),
+        },
+    }
+}
+
+async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, String> {
+    let call = call_for(op);
+    let answer = match call.body {
+        Some(body) => crate::auth_remote::post(server, call.path, body).await?,
+        None => crate::auth_remote::get(server, call.path).await?,
+    };
+    match op {
+        TokenOp::Issue { .. } => {
+            print_issued(&answer);
+            Ok(ExitCode::SUCCESS)
+        }
+        TokenOp::Rotate { .. } => {
             print_issued(&answer);
             if let Some(revoked) = answer.get("revoked").and_then(serde_json::Value::as_str) {
                 eprintln!("revoked {revoked}");
@@ -86,51 +135,49 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
             Ok(ExitCode::SUCCESS)
         }
         TokenOp::List { .. } => {
-            let records = list(server).await?;
-            crate::token_report::print_table(&records);
+            crate::token_report::print_table(&records_in(&answer));
             Ok(ExitCode::SUCCESS)
         }
         TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => {
-            let body = serde_json::json!({ "id": id });
-            crate::auth_remote::post(server, "/api/tokens/revoke", body).await?;
             println!("revoked {id}");
             Ok(ExitCode::SUCCESS)
         }
-        TokenOp::Show { id, .. } => {
-            // No `GET /api/tokens/{id}` exists, and the local command is itself
-            // a filter over the list, so this stays a filter rather than
-            // growing a server route for something already answerable.
-            let records = list(server).await?;
-            records
-                .iter()
-                .find(|record| {
-                    record.get("id").and_then(serde_json::Value::as_str) == Some(id.as_str())
-                })
-                .map_or_else(
-                    || {
-                        eprintln!("not found: {id}");
-                        Ok(ExitCode::from(2))
-                    },
-                    |record| {
-                        println!(
-                            "{}",
-                            serde_json::to_string_pretty(record).unwrap_or_default()
-                        );
-                        Ok(ExitCode::SUCCESS)
-                    },
-                )
-        }
+        TokenOp::Show { id, .. } => Ok(show_one(&records_in(&answer), id)),
     }
 }
 
-/// The token records the selected router holds.
-async fn list(server: &ResolvedServer) -> Result<Vec<serde_json::Value>, String> {
-    let answer = crate::auth_remote::get(server, "/api/tokens/list").await?;
-    Ok(answer
+/// Print one token record, or say it is not there.
+///
+/// Exits 2 for an unknown id, as the local path does, so a script's meaning is
+/// the same against either target.
+#[must_use]
+pub fn show_one(records: &[serde_json::Value], id: &str) -> ExitCode {
+    records
+        .iter()
+        .find(|record| record.get("id").and_then(serde_json::Value::as_str) == Some(id))
+        .map_or_else(
+            || {
+                eprintln!("not found: {id}");
+                ExitCode::from(2)
+            },
+            |record| {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(record).unwrap_or_default()
+                );
+                ExitCode::SUCCESS
+            },
+        )
+}
+
+/// The token records inside a `/api/tokens/list` answer.
+#[must_use]
+pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
+    answer
         .get("data")
         .and_then(serde_json::Value::as_array)
         .cloned()
-        .unwrap_or_default())
+        .unwrap_or_default()
 }
 
 /// Print a freshly issued or rotated token exactly as the local path does.
@@ -142,3 +189,7 @@ fn print_issued(answer: &serde_json::Value) {
         println!("{token}");
     }
 }
+
+#[cfg(test)]
+#[path = "tokens_remote_tests.rs"]
+mod tests;

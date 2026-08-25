@@ -373,3 +373,7 @@ pub fn provider_home(
         }
     }
 }
+
+#[cfg(test)]
+#[path = "auth_import_tests.rs"]
+mod tests;

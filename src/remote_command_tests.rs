@@ -154,3 +154,99 @@ fn a_refusal_names_the_target_and_an_alternative() {
     );
     assert!(all.starts_with("error:"), "{all}");
 }
+
+/// `--local` resolves to the local path without contacting anything.
+#[tokio::test]
+async fn an_explicit_local_target_resolves_without_a_server() {
+    let target = AuthTarget {
+        local: true,
+        server: None,
+        managed: false,
+    };
+
+    // `Target` holds the admin credential and is deliberately not `Debug`, so
+    // this matches rather than unwrapping.
+    match resolve(&target).await {
+        Ok(Target::Local) => {}
+        Ok(Target::Remote(_)) => panic!("--local must not contact a server"),
+        Err(code) => panic!("--local must always resolve, got {code:?}"),
+    }
+}
+
+/// An unreachable named target is an error, not a quiet fall back to local.
+///
+/// Falling back is the surprise the whole targeting rule exists to remove: a
+/// command that cannot reach the router it was told to use must say so.
+#[tokio::test]
+async fn an_unreachable_named_target_is_an_error() {
+    let target = AuthTarget {
+        local: false,
+        server: Some("http://127.0.0.1:1".to_string()),
+        managed: false,
+    };
+
+    // Matched rather than unwrapped: `Target` holds the admin credential and
+    // is deliberately not `Debug`.
+    match resolve(&target).await {
+        Ok(_) => panic!("an unreachable target must not resolve to the local path"),
+        Err(code) => assert_eq!(format!("{code:?}"), format!("{:?}", ExitCode::from(1))),
+    }
+}
+
+/// A refusal exits non-zero after printing its reason.
+#[test]
+fn a_refusal_exits_non_zero() {
+    let code = refuse(vec!["error: nope".to_string()]);
+
+    assert_eq!(format!("{code:?}"), format!("{:?}", ExitCode::from(1)));
+}
+
+/// Every subcommand in a family answers the target question (issue #294).
+///
+/// The accessors are what make one rule possible: a variant that forgot to
+/// report its target would silently fall back to the local path, which is the
+/// failure the rule exists to remove.
+#[test]
+fn every_subcommand_in_every_family_reports_its_target() {
+    for args in [
+        // tokens: all six verbs
+        &["router", "tokens", "issue"][..],
+        &["router", "tokens", "rotate", "tok-1"][..],
+        &["router", "tokens", "list"][..],
+        &["router", "tokens", "revoke", "tok-1"][..],
+        &["router", "tokens", "expire", "tok-1"][..],
+        &["router", "tokens", "show", "tok-1"][..],
+        // accounts
+        &["router", "accounts", "list"][..],
+        // providers: all five
+        &["router", "providers", "list"][..],
+        &[
+            "router",
+            "providers",
+            "add",
+            "--name",
+            "d",
+            "--base-url",
+            "https://d/v1",
+        ][..],
+        &["router", "providers", "show", "d"][..],
+        &["router", "providers", "remove", "d"][..],
+        &["router", "providers", "import", "/tmp/m.lenv"][..],
+        // logs: all three
+        &["router", "logs", "summary"][..],
+        &["router", "logs", "anomalies"][..],
+        &["router", "logs", "show", "cid-1"][..],
+    ] {
+        let command = command_of(args);
+        assert!(
+            target_of(&command).is_some(),
+            "{args:?} must report a target, or it silently stays local"
+        );
+        // And each honours `--local`, which is how the local path is asked for.
+        let local = [args, &["--local"]].concat();
+        assert!(
+            !may_be_remote(&command_of(&local)),
+            "{args:?} must honour --local"
+        );
+    }
+}
