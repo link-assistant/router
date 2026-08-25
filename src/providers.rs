@@ -111,7 +111,11 @@ pub struct RedactedProviderRecord {
 }
 
 /// API / CLI input for creating or replacing a provider.
-#[derive(Debug, Clone, Deserialize)]
+///
+/// `Serialize` as well as `Deserialize` so a remote `providers add` sends
+/// exactly the shape the endpoint parses, rather than a hand-built JSON object
+/// that could drift from it (issue #294).
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct ProviderUpsert {
     pub name: String,
     #[serde(default)]
@@ -517,7 +521,17 @@ fn decode_provider_lenv(input: &str) -> Result<Vec<ProviderRecord>, ProviderErro
     Ok(records)
 }
 
-fn parse_provider_import(input: &str) -> Result<Vec<ProviderUpsert>, ProviderError> {
+/// Parse a provider manifest without a store to write it into.
+///
+/// Public so a remote `providers import` can read the manifest on *this*
+/// machine and declare each provider on the selected deployment, which is what
+/// importing into another router means (issue #294).
+///
+/// # Errors
+///
+/// Returns the parse error when the manifest is not readable as provider
+/// declarations.
+pub fn parse_provider_import(input: &str) -> Result<Vec<ProviderUpsert>, ProviderError> {
     let trimmed = input.trim_start();
     if trimmed.starts_with('{') {
         let doc: serde_json::Value = serde_json::from_str(input)?;

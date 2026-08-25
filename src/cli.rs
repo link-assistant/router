@@ -34,6 +34,7 @@ use crate::config::{
 };
 
 mod auth_ops;
+mod targets;
 mod with;
 
 pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
@@ -566,20 +567,6 @@ pub enum Command {
     },
 }
 
-impl ProviderOp {
-    /// Which router this provider operation acts on.
-    #[must_use]
-    pub const fn target(&self) -> &AuthTarget {
-        match self {
-            Self::List { target }
-            | Self::Add { target, .. }
-            | Self::Show { target, .. }
-            | Self::Remove { target, .. }
-            | Self::Import { target, .. } => target,
-        }
-    }
-}
-
 /// What to ask of the request log.
 #[derive(Debug, Subcommand)]
 pub enum LogsOp {
@@ -613,18 +600,6 @@ pub enum LogsOp {
         #[command(flatten)]
         target: AuthTarget,
     },
-}
-
-impl LogsOp {
-    /// Which router this log query acts on.
-    #[must_use]
-    pub const fn target(&self) -> &AuthTarget {
-        match self {
-            Self::Summary { target, .. }
-            | Self::Anomalies { target, .. }
-            | Self::Show { target, .. } => target,
-        }
-    }
 }
 
 /// Authorization-flow override. `auto` selects the provider's supported flow.
@@ -741,21 +716,6 @@ pub enum TokenOp {
     },
 }
 
-impl TokenOp {
-    /// Which router this token operation acts on.
-    #[must_use]
-    pub const fn target(&self) -> &AuthTarget {
-        match self {
-            Self::Issue { target, .. }
-            | Self::Rotate { target, .. }
-            | Self::List { target }
-            | Self::Revoke { target, .. }
-            | Self::Expire { target, .. }
-            | Self::Show { target, .. } => target,
-        }
-    }
-}
-
 #[derive(Debug, Subcommand)]
 pub enum AccountOp {
     /// List configured accounts and their health.
@@ -763,16 +723,6 @@ pub enum AccountOp {
         #[command(flatten)]
         target: AuthTarget,
     },
-}
-
-impl AccountOp {
-    /// Which router this account operation acts on.
-    #[must_use]
-    pub const fn target(&self) -> &AuthTarget {
-        match self {
-            Self::List { target } => target,
-        }
-    }
 }
 
 #[derive(Debug, Subcommand)]

@@ -66,7 +66,11 @@ fn boolean_environment_variables_accept_documented_spellings() {
     for name in BOOLEAN_ENV {
         for value in ["1", "true", "yes", "on", "0", "false", "no", "off"] {
             let result = output(
-                router(&["doctor"])
+                // `--local` because this asserts environment parsing, not
+                // targeting: without it a router listening on this machine is
+                // adopted and `doctor` refuses, which is correct behaviour for
+                // a different question (issue #294).
+                router(&["doctor", "--local"])
                     .env("TOKEN_SECRET", "boolean-test-secret")
                     .env("HOME", home.path())
                     .env_remove("CLAUDE_CODE_HOME")

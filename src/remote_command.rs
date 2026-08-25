@@ -81,6 +81,24 @@ pub const fn may_be_remote(command: &Command) -> bool {
     }
 }
 
+/// Whether this invocation named the local state it wants acted on.
+///
+/// Without a selection, `auth` adopts a router already listening here, because
+/// authorizing locally while a live router is one port away lands the
+/// credential where that router cannot see it (issue #250). That reasoning
+/// does not carry to a command handed `--data-dir` or `--claude-code-home`:
+/// those name *this machine's* state explicitly, and redirecting them to a
+/// discovered router would answer about a different deployment than the one
+/// the operator pointed at — the same wrong-target failure this work exists to
+/// remove.
+///
+/// An explicit `--server` still wins, so naming a router remains the way to
+/// ask for one.
+#[must_use]
+pub const fn names_local_state(cli: &crate::cli::Cli) -> bool {
+    cli.data_dir.is_some() || cli.claude_code_home.is_some()
+}
+
 /// Let a command that will act on a remote router run without `TOKEN_SECRET`.
 ///
 /// The secret signs this machine's tokens. A command aimed at another
@@ -89,14 +107,11 @@ pub const fn may_be_remote(command: &Command) -> bool {
 /// only blocks the workstation case, and blocks it with "won't start" rather
 /// than "wrong target" (issue #294).
 ///
-/// Mirrors [`crate::auth_cli::relax_token_secret_for_auth`], including its
-/// rule that a secret the operator did supply is never overwritten.
+/// Mirrors the `auth` command's own `relax_token_secret_for_auth`, including
+/// its rule that a secret the operator did supply is never overwritten.
 #[must_use]
 pub fn relax_token_secret_for_remote(mut cli: crate::cli::Cli) -> crate::cli::Cli {
-    if cli
-        .command
-        .as_ref()
-        .is_some_and(|command| may_be_remote(command))
+    if cli.command.as_ref().is_some_and(may_be_remote)
         && cli.token_secret.as_deref().is_none_or(str::is_empty)
     {
         cli.token_secret = Some("unused-by-remote-command".to_string());

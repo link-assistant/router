@@ -288,6 +288,76 @@ pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<
     home_in_accounts(&body, provider)
 }
 
+/// `accounts list` against the selected router (issue #294).
+///
+/// The endpoint reports a superset of what the local table prints, so this
+/// renders the same columns from the same field names rather than growing a
+/// second format an operator would have to reconcile.
+pub async fn accounts(server: &ResolvedServer) -> ExitCode {
+    // `/v1/accounts` on the proxy listener, which is the port `ResolvedServer`
+    // names. `/api/admin/accounts` is the admin listener's spelling of the same
+    // handler and 404s here.
+    match get(server, "/v1/accounts").await {
+        Ok(body) => {
+            println!("server: {} ({})", server.base_url, server.source);
+            report_credentials(&body);
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::from(1)
+        }
+    }
+}
+
+/// `GET path` on the selected router, returning its JSON answer.
+///
+/// The admin credential is attached and the failure messages are shared with
+/// every other remote command, so a refused credential reads the same however
+/// the operator arrived at it.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the call cannot be made or the
+/// router answers with a failure.
+pub async fn get(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
+    let client = http_client()?;
+    send(&client, server, reqwest::Method::GET, path, None).await
+}
+
+/// `POST path` with `body` on the selected router.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the call cannot be made or the
+/// router answers with a failure.
+pub async fn post(
+    server: &ResolvedServer,
+    path: &str,
+    body: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let client = http_client()?;
+    send(&client, server, reqwest::Method::POST, path, Some(body)).await
+}
+
+/// `DELETE path` on the selected router.
+///
+/// # Errors
+///
+/// Returns an operator-readable message when the call cannot be made or the
+/// router answers with a failure.
+pub async fn delete(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
+    let client = http_client()?;
+    send(&client, server, reqwest::Method::DELETE, path, None).await
+}
+
+fn http_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .map_err(|error| format!("could not build an HTTP client: {error}"))
+}
+
 /// Why an import cannot act on a router other than the machine running it.
 ///
 /// The lines an operator reads, built here rather than at the call site so the
