@@ -266,6 +266,41 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
     }
 }
 
+/// Where the selected router reads `provider`'s credential from.
+///
+/// `auth status` already asks the same endpoint for exactly this, so a command
+/// that cannot act on the remote deployment can still name the directory the
+/// credential would have to land in. An error that says only "not from here"
+/// leaves the operator to guess the next step; one that names the path is the
+/// instruction (issue #291).
+///
+/// `None` when the router cannot be reached or does not report homes — the
+/// refusal is still correct without it, so this never turns into a hard
+/// failure of its own.
+pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<String> {
+    let client = reqwest::Client::builder()
+        .timeout(REQUEST_TIMEOUT)
+        .build()
+        .ok()?;
+    let body: serde_json::Value = send(&client, server, reqwest::Method::GET, "/v1/accounts", None)
+        .await
+        .ok()?;
+    // Single-account deployments report under `credentials`, pooled ones under
+    // `accounts`; both carry `name` and `home`.
+    ["credentials", "accounts"]
+        .into_iter()
+        .filter_map(|key| body.get(key).and_then(serde_json::Value::as_array))
+        .flatten()
+        .find(|entry| {
+            entry
+                .get("name")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|name| name.eq_ignore_ascii_case(provider))
+        })
+        .and_then(|entry| entry.get("home").and_then(serde_json::Value::as_str))
+        .map(str::to_owned)
+}
+
 async fn send<T: serde::de::DeserializeOwned>(
     client: &reqwest::Client,
     server: &ResolvedServer,

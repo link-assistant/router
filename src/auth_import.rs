@@ -21,6 +21,13 @@ pub async fn run_import(
     config: &link_assistant_router::config::Config,
     op: &AuthOp,
 ) -> Option<ExitCode> {
+    // Import writes this machine's credential home. When another router is the
+    // target, doing that anyway produced an error naming the *local* home as
+    // though it were the one asked about — a wrong-target action wearing an
+    // answer that looks coherent (issue #291). Refuse before any local work.
+    if let Some(exit) = refuse_a_remote_import(op).await {
+        return Some(exit);
+    }
     let requested: Vec<(ImportProvider, String)> = match op {
         AuthOp::Claude {
             from_claude_home: Some(source),
@@ -76,6 +83,75 @@ pub async fn run_import(
     } else {
         ExitCode::SUCCESS
     })
+}
+
+/// Refuse an import aimed at a router other than this machine.
+///
+/// A credential can only be installed where the process running the import can
+/// write, and a router reads its subscription credentials from its own home at
+/// startup. Nothing accepts a credential document over HTTP — `/api/login`
+/// begins an interactive OAuth flow and `submit_code` takes a short-lived
+/// code, neither of which adopts a credential that already exists. So there is
+/// no remote import to perform, and the honest move is to say so.
+///
+/// The alternative is what shipped: `--server` parsed and was discarded, and
+/// the command answered about the local home. `error: claude is already read
+/// from /Users/me/.claude` reads as a coherent reply to a question about the
+/// selected server, which is worse than a plain refusal — the operator cannot
+/// tell the target was never consulted (issue #291).
+///
+/// `--local` is the way to ask for this machine, and `--managed` is a local
+/// disposable container, so both keep the ordinary path.
+async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
+    let AuthOp::Import { target, .. } = op else {
+        // The per-provider `--from-*-home` flags carry no target of their own;
+        // they are the older spelling and stay local, as they always were.
+        return None;
+    };
+    let server = match link_assistant_router::auth_remote::target_for(
+        target.local,
+        target.managed,
+        target.server.as_deref(),
+    )
+    .await
+    {
+        Ok(Some(server)) => server,
+        Ok(None) => return None,
+        Err(error) => {
+            // An unreachable *named* target is an error in its own right;
+            // falling back to a local import is the surprise being fixed.
+            eprintln!("error: {error}");
+            return Some(ExitCode::from(1));
+        }
+    };
+    // Name the directory the credential would have to land in, when the router
+    // will say. "Not from here" alone leaves the operator to guess the next
+    // step; the path is the instruction.
+    let destination = match op {
+        AuthOp::Import {
+            provider: Some(provider),
+            ..
+        } => {
+            link_assistant_router::auth_remote::credential_home(&server, provider_label(*provider))
+                .await
+        }
+        _ => None,
+    };
+    eprintln!(
+        "error: import installs a credential into the credential home of the machine running \
+         it, so it cannot provision {} from here.",
+        server.base_url
+    );
+    if let Some(home) = destination {
+        eprintln!("note: {} reads its credential from {home}", server.base_url);
+    }
+    eprintln!(
+        "note: that deployment accepts no credential over HTTP, so run `router auth import` \
+         there, or authorize it from here with `router auth claude` / `router auth codex`, \
+         which do act on the selected server.\n\
+         note: pass --local to import into this machine's credential home."
+    );
+    Some(ExitCode::from(1))
 }
 
 /// The subscription an import target names, when it names one.

@@ -766,8 +766,8 @@ router auth gh --status
 ```
 
 Every provider can be adopted the same way, which is how a headless deployment
-is provisioned from a workstation that is already logged in without a browser
-round-trip:
+is provisioned without a browser round-trip — run on the deployment itself,
+where a login already exists or has been mounted:
 
 ```bash
 router auth import claude        # from ~/.claude, or the Keychain if it is newer
@@ -781,6 +781,13 @@ Importing is a different operation from authorizing, not a variation of it:
 authorizing goes and gets a new credential interactively, importing adopts one
 that already exists. The per-provider flags (`--from-claude-home`,
 `--from-codex-home`, `--from-gh-config`) keep working.
+
+Import installs into the credential home of the machine running it, and no
+router accepts a credential over HTTP, so it cannot provision a *different*
+deployment. With another router selected it refuses and names that router and
+the directory it reads from, rather than quietly acting here (issue #291). To
+authorize a remote deployment from this machine, use `router auth claude` or
+`router auth codex`, which do follow the selection.
 
 The import reports what it adopted — where it came from, when it expires, and
 whether it carries a refresh token — so an already-expired credential is caught

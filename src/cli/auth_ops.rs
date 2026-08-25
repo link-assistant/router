@@ -37,6 +37,12 @@ pub enum AuthOp {
     /// side effects, and in whether a human has to be present — which decides
     /// whether a headless deployment can be provisioned at all (issue #278).
     ///
+    /// Runs on the deployment being provisioned: it installs into the
+    /// credential home of the machine executing it, and no router accepts a
+    /// credential over HTTP. With another router selected this refuses and
+    /// names it, rather than answering about the local home (issue #291); use
+    /// `auth claude` or `auth codex` to authorize a remote deployment.
+    ///
     /// The per-provider flags on the authorize commands keep working.
     #[command(override_usage = "link-assistant-router auth import [OPTIONS] [PROVIDER] [DIR]")]
     Import {
@@ -54,8 +60,9 @@ pub enum AuthOp {
         /// Adopt every login this machine has.
         ///
         /// The case that motivates a verb: provisioning a deployment from a
-        /// workstation already logged in to several providers, without knowing
-        /// each flag name and default path.
+        /// machine already logged in to several providers, without knowing each
+        /// flag name and default path. Run it on that deployment — import
+        /// writes the executing machine's credential home (issue #291).
         #[arg(long, conflicts_with = "provider")]
         all: bool,
         #[command(flatten)]
