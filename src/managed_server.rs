@@ -4,7 +4,6 @@ use std::ffi::OsStr;
 use std::fs::{self};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
-use std::path::PathBuf;
 use std::process::{Child, Command, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -18,9 +17,13 @@ use crate::clients::RouterModel;
 mod bootstrap;
 mod catalog;
 mod discovery;
+mod selection;
 
 use discovery::discover_local_router;
 pub use discovery::{discovered_local_router, effective_source};
+pub use selection::{
+    clear_persisted, configured_source, load_persisted, save_persisted, selected_server,
+};
 
 /// The default port a router binds when nothing else is specified.
 const DEFAULT_LOCAL_PORT: u16 = 8080;
@@ -127,6 +130,15 @@ impl RunCredential {
             .all(|model| model.owned_by.is_empty())
             .then(|| self.available_models.first().map(|m| m.id.as_str()))
             .flatten()
+    }
+
+    /// The record id this credential was issued under, when it has one.
+    ///
+    /// A credential that outlives the command that minted it has to stay
+    /// nameable, or it cannot be revoked later (issue #190).
+    #[must_use]
+    pub fn id(&self) -> Option<String> {
+        token_subject(&self.token).ok()
     }
 
     /// The distinct owners the catalog names, for reporting why nothing fit.
@@ -365,22 +377,29 @@ pub async fn cleanup_run_credential(credential: RunCredential) -> Result<(), Any
     let Some(revocation) = credential.revocation else {
         return Ok(());
     };
-    let url = format!("{}/api/tokens/revoke", revocation.base_url);
+    revoke(&revocation.base_url, &revocation.admin_token, &revocation.id).await
+}
+
+/// Revoke one token record on a router, by the id it was issued under.
+///
+/// Named separately from the per-run cleanup because a credential that outlives
+/// its command still has to be revocable: `configure` deliberately keeps its
+/// token, so `configure --undo` is the thing that must be able to take it back
+/// — deleting the file that holds a live credential and leaving nobody able to
+/// name it is the regression issue #190 exists to prevent.
+pub async fn revoke(base_url: &str, admin_token: &str, id: &str) -> Result<(), AnyError> {
+    let url = format!("{base_url}/api/tokens/revoke");
     let response = http_client()?
         .post(&url)
-        .bearer_auth(&revocation.admin_token)
-        .json(&serde_json::json!({"id": revocation.id}))
+        .bearer_auth(admin_token)
+        .json(&serde_json::json!({"id": id}))
         .send()
         .await
-        .map_err(|error| format!("could not revoke the per-run token at {url}: {error}"))?;
+        .map_err(|error| format!("could not revoke the token at {url}: {error}"))?;
     if response.status().is_success() {
         Ok(())
     } else {
-        Err(format!(
-            "per-run token revocation failed at {url} ({})",
-            response.status()
-        )
-        .into())
+        Err(format!("token revocation failed at {url} ({})", response.status()).into())
     }
 }
 
@@ -433,63 +452,6 @@ fn token_subject(token: &str) -> Result<String, AnyError> {
         .ok_or_else(|| "router run token has no subject to revoke".into())
 }
 
-pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
-    if config.server.is_empty() {
-        return Err("server URL must not be empty".into());
-    }
-    let mut config = config.clone();
-    config.server = normalize_server(&config.server)?;
-    let path = state_directory()?.join(SERVER_CONFIG);
-    write_private_json(&path, &config)?;
-    Ok(path)
-}
-
-pub fn clear_persisted() -> Result<PathBuf, AnyError> {
-    let path = state_directory()?.join(SERVER_CONFIG);
-    match fs::remove_file(&path) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => return Err(error.into()),
-    }
-    Ok(path)
-}
-
-pub fn load_persisted() -> Result<Option<PersistedServer>, AnyError> {
-    let path = state_directory()?.join(SERVER_CONFIG);
-    match fs::read_to_string(&path) {
-        Ok(source) => Ok(Some(crate::lino_json::decode(&source).map_err(
-            |error| {
-                format!(
-                    "invalid persisted server configuration {}: {error}",
-                    path.display()
-                )
-            },
-        )?)),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(error.into()),
-    }
-}
-
-pub fn configured_source() -> Result<String, AnyError> {
-    if let Ok(value) = std::env::var("LINK_ASSISTANT_ROUTER_URL") {
-        return Ok(format!("environment: {}", normalize_server(&value)?));
-    }
-    if let Ok(value) = std::env::var("ROUTER_URL") {
-        return Ok(format!("environment: {}", normalize_server(&value)?));
-    }
-    if let Some(config) = load_persisted()? {
-        return Ok(format!(
-            "persisted: {} (token {})",
-            config.server,
-            if config.token.is_some() {
-                "set"
-            } else {
-                "unset"
-            }
-        ));
-    }
-    Ok("managed local container".to_string())
-}
 
 pub fn managed_status() -> Result<String, AnyError> {
     let lock = lock_state()?;
@@ -974,7 +936,7 @@ fn compact(value: &str) -> String {
 #[path = "managed_server_state.rs"]
 mod state;
 
-use state::{load_managed, lock_state, save_managed, state_directory, write_private_json};
+use state::{load_managed, lock_state, save_managed, state_directory};
 
 #[cfg(test)]
 #[path = "managed_server_tests.rs"]

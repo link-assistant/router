@@ -404,10 +404,18 @@ fn global_undo_restores_exact_config_and_permissions() {
     let original = b"# user formatting stays exact\nmodel_provider='personal'\n";
     fs::write(&config, original).expect("seed config");
     fs::set_permissions(&config, fs::Permissions::from_mode(0o640)).expect("set original mode");
-    let (server, health) = mock_health_router();
+    let (server, health) = mock_router();
 
     let configured = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["with", "--server", &server, "--global", "codex"])
+        .args([
+            "with",
+            "--server",
+            &server,
+            "--token",
+            "la_sk_ordinary",
+            "--global",
+            "codex",
+        ])
         .env("HOME", &home)
         .env_remove("CODEX_HOME")
         .output()
@@ -418,7 +426,7 @@ fn global_undo_restores_exact_config_and_permissions() {
         String::from_utf8_lossy(&configured.stdout),
         String::from_utf8_lossy(&configured.stderr)
     );
-    health.join().expect("health server thread");
+    health.join().expect("mock router thread");
     assert_ne!(fs::read(&config).expect("configured config"), original);
 
     let undone = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
@@ -456,15 +464,22 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
     let config = home.join(".codex/config.toml");
     fs::create_dir_all(config.parent().expect("config parent")).expect("create Codex home");
     fs::write(&config, "model_provider = 'personal'\n").expect("seed config");
-    let (server, health) = mock_health_router();
+    let (server, health) = mock_router();
     let configured = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args(["--server", &server, "--global", "codex"])
+        .args([
+            "--server",
+            &server,
+            "--token",
+            "la_sk_ordinary",
+            "--global",
+            "codex",
+        ])
         .env("HOME", &home)
         .env_remove("CODEX_HOME")
         .output()
         .expect("configure globally");
     assert!(configured.status.success());
-    health.join().expect("health server thread");
+    health.join().expect("mock router thread");
     let mut edited = OpenOptions::new()
         .append(true)
         .open(&config)
@@ -480,7 +495,7 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
         .output()
         .expect("attempt undo");
     assert!(!undone.status.success());
-    assert!(String::from_utf8_lossy(&undone.stderr).contains("changed after `with --global`"));
+    assert!(String::from_utf8_lossy(&undone.stderr).contains("changed after it was configured"));
     assert!(
         fs::read_to_string(config)
             .expect("read edited config")
@@ -494,16 +509,24 @@ fn global_undo_removes_a_config_that_did_not_exist_before_setup() {
     let home = directory.path().join("home");
     fs::create_dir_all(&home).expect("create home");
     let config = home.join(".codex/config.toml");
-    let (server, health) = mock_health_router();
+    let (server, health) = mock_router();
 
     let configured = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["with", "--server", &server, "--global", "codex"])
+        .args([
+            "with",
+            "--server",
+            &server,
+            "--token",
+            "la_sk_ordinary",
+            "--global",
+            "codex",
+        ])
         .env("HOME", &home)
         .env_remove("CODEX_HOME")
         .output()
         .expect("configure absent config globally");
     assert!(configured.status.success());
-    health.join().expect("health server thread");
+    health.join().expect("mock router thread");
     assert!(config.exists());
 
     let undone = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
@@ -531,7 +554,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         .expect("run launcher without token");
     assert!(!missing_token.status.success());
     assert!(String::from_utf8_lossy(&missing_token.stderr).contains("no token is available"));
-    health.join().expect("health server thread");
+    health.join().expect("mock router thread");
 
     for (message, diagnostic) in [
         ("Token has expired", "supplied token as expired"),
@@ -687,5 +710,112 @@ fn persisted_remote_token_is_private_and_never_echoed() {
             .mode()
             & 0o777,
         0o600
+    );
+}
+
+fn fake_claude(bin_dir: &std::path::Path) {
+    fs::create_dir_all(bin_dir).expect("create fake bin directory");
+    let path = bin_dir.join("claude");
+    fs::write(
+        &path,
+        r#"#!/bin/sh
+printf '%s\n' "$@" > "$CAPTURE_ARGS"
+printf 'MAX_THINKING_TOKENS=%s\n' "$MAX_THINKING_TOKENS" > "$CAPTURE_ENV"
+exit 0
+"#,
+    )
+    .expect("write fake Claude");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o755))
+        .expect("make fake Claude executable");
+}
+
+/// End to end, through a terminal, for the exact command issue #297 reported.
+///
+/// `router with claude --resume <id>` used to reach the client as
+/// `--model <catalog-first> --print --resume <id>`: a session told to answer
+/// once and exit, with no prompt to answer, on a model the user never chose.
+/// The client's own error was correct for that request and named neither
+/// `--print` nor the router, so nothing in it led back to the cause.
+///
+/// A pty is required because the mode also depends on whether anyone is there
+/// to hold a session; piping the launcher's output would answer that question
+/// before the interesting one is reached.
+#[test]
+fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
+    use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&home).expect("create home");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_claude(&bin);
+    let (server, requests) = mock_router();
+
+    let inherited_path = std::env::var_os("PATH").unwrap_or_default();
+    let path = std::env::join_paths(
+        std::iter::once(bin).chain(std::env::split_paths(&inherited_path)),
+    )
+    .expect("compose PATH");
+
+    let pty = native_pty_system()
+        .openpty(PtySize::default())
+        .expect("allocate a pty");
+    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    command.args([
+        "--server",
+        &server,
+        "--token",
+        "la_sk_ordinary",
+        "claude",
+        "--resume",
+        "2a42a73e-19de-459a-8c24-c5e75abf9a65",
+    ]);
+    command.env("HOME", &home);
+    command.env("PATH", path);
+    command.env("CAPTURE_ARGS", capture.join("args"));
+    command.env("CAPTURE_ENV", capture.join("env"));
+    command.env_remove("MAX_THINKING_TOKENS");
+    let mut child = pty.slave.spawn_command(command).expect("spawn launcher");
+    drop(pty.slave);
+    // The wrapper's own output would otherwise fill the pty buffer and block it.
+    let mut reader = pty.master.try_clone_reader().expect("clone pty reader");
+    let drain = thread::spawn(move || {
+        let mut sink = Vec::new();
+        let _ = reader.read_to_end(&mut sink);
+        String::from_utf8_lossy(&sink).into_owned()
+    });
+    let status = child.wait().expect("await launcher");
+    drop(pty.master);
+    let transcript = drain.join().expect("pty reader thread");
+    assert!(
+        status.success(),
+        "launcher failed; transcript: {transcript}"
+    );
+
+    let args = fs::read_to_string(capture.join("args")).expect("captured argv");
+    let args: Vec<&str> = args.lines().collect();
+    assert!(
+        !args.contains(&"--print"),
+        "a session was turned into a one-shot run: {args:?}"
+    );
+    assert!(
+        !args.contains(&"--model"),
+        "a model nobody asked for was forced: {args:?}"
+    );
+    assert_eq!(
+        args,
+        ["--resume", "2a42a73e-19de-459a-8c24-c5e75abf9a65"],
+        "the client's own arguments must reach it unchanged"
+    );
+    assert_eq!(
+        fs::read_to_string(capture.join("env")).expect("captured env"),
+        "MAX_THINKING_TOKENS=\n",
+        "the thinking budget is the user's setting, not the router's"
+    );
+    assert_eq!(
+        requests.join().expect("mock router thread").join(","),
+        "/health,/api/tokens/list,/v1/models"
     );
 }

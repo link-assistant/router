@@ -27,17 +27,20 @@ use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Subcommand, ValueEnum};
 use lino_arguments::Parser as LinoParser;
 
-use crate::clients::ClientKind;
 use crate::config::{
     ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
     default_activitypub_public_key_pem, default_data_dir,
 };
 
 mod auth_ops;
+mod client_ops;
+mod configure;
 mod targets;
 mod with;
 
 pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
+pub use self::client_ops::ClientOp;
+pub use self::configure::ConfigureArgs;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
 /// Parse a boolean switch that may also arrive from the environment.
@@ -531,6 +534,14 @@ pub enum Command {
     },
     /// Launch an agentic CLI with an isolated router configuration.
     With(WithArgs),
+    /// Point a client at the router permanently.
+    ///
+    /// One name, one targeting rule and one reversal for what used to be two
+    /// commands that disagreed on the address, the credential, the undo
+    /// mechanism and the client list (issue #296). `clients setup` and
+    /// `with --global` still work.
+    #[command(override_usage = "router configure [OPTIONS] <CLIENT>")]
+    Configure(ConfigureArgs),
     /// Select and manage the server used by `with`.
     Server {
         #[command(subcommand)]
@@ -781,59 +792,6 @@ pub enum ProviderOp {
         path: PathBuf,
         #[command(flatten)]
         target: AuthTarget,
-    },
-}
-
-#[derive(Debug, Subcommand)]
-pub enum ClientOp {
-    /// List supported clients and their local installation/configuration state.
-    List,
-    /// Merge this router into a client's user configuration.
-    #[command(override_usage = "link-assistant-router clients setup [OPTIONS] <CLIENT>")]
-    Setup {
-        #[arg(value_enum)]
-        client: ClientKind,
-        /// Existing router token. Prefer `--token-stdin` or
-        /// `LINK_ASSISTANT_ROUTER_TOKEN` over argv, which is visible in shell
-        /// history and process listings.
-        #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
-        token: Option<String>,
-        /// Read an existing router token as one line from standard input.
-        #[arg(long, conflicts_with = "token")]
-        token_stdin: bool,
-        /// Router URL reachable from the client (defaults to this CLI's host/port).
-        #[arg(long)]
-        base_url: Option<String>,
-        /// Lifetime of an automatically minted token.
-        #[arg(long, default_value_t = 24)]
-        ttl_hours: i64,
-    },
-    /// Show the effective client integration with secrets redacted.
-    #[command(override_usage = "link-assistant-router clients show [OPTIONS] <CLIENT>")]
-    Show {
-        #[arg(value_enum)]
-        client: ClientKind,
-    },
-    /// Remove only settings managed by this router.
-    #[command(override_usage = "link-assistant-router clients remove [OPTIONS] <CLIENT>")]
-    Remove {
-        #[arg(value_enum)]
-        client: ClientKind,
-        /// Also revoke a token that was supplied by the operator instead of
-        /// minted by `clients setup`. Off by default because the same token
-        /// is often shared with other machines.
-        #[arg(long)]
-        revoke_supplied: bool,
-        /// Delete the local settings even when the managed token could not be
-        /// revoked. The credential stays usable until it expires.
-        #[arg(long)]
-        force: bool,
-    },
-    /// Make a real request using the client's configured URL and token variable.
-    #[command(override_usage = "link-assistant-router clients doctor [OPTIONS] <CLIENT>")]
-    Doctor {
-        #[arg(value_enum)]
-        client: ClientKind,
     },
 }
 

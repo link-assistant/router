@@ -238,10 +238,10 @@ impl AuthOp {
 /// choice explicit when the default is not what is wanted.
 #[derive(Debug, Clone, Default, clap::Args)]
 pub struct AuthTarget {
-    /// Authorize the local credential directory even when a server is selected.
+    /// Act on this machine even when a server is selected.
     #[arg(long, conflicts_with = "server")]
     pub local: bool,
-    /// Authorize this router instead of the selected one.
+    /// Act on this router instead of the selected one.
     #[arg(long, value_name = "URL", conflicts_with = "local")]
     pub server: Option<String>,
     /// Start a disposable managed container even if a router is already

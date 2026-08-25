@@ -51,19 +51,33 @@ router with codex -- --server client-owned-value
 ```
 
 The explicit `--` is optional, but useful to make the boundary visible in
-scripts. With client arguments, the wrapper selects the client's native
-one-shot mode; use `--interactive` to suppress that behavior, or
-`--non-interactive` to request it explicitly. `--model` overrides the registry
-default. OpenAI-family clients default to `gpt-5.6-sol` with `xhigh` reasoning;
-Claude Code defaults to `claude-opus-5` (`opus-5`) with a `high` thinking
-effort. On adaptive-thinking Claude models this is sent as
-`thinking.type=adaptive` plus `output_config.effort=high`; on legacy fixed-
-budget models `high` maps to 16,384 thinking tokens and the router reserves
-8,192 additional output tokens. Caller-supplied token limits and reasoning
-settings take precedence. Before execution,
-the wrapper fetches `/v1/models` with the run token
-and refuses an unavailable model, listing the models the selected server
-advertises.
+scripts.
+
+**Session or task.** A bare positional is a prompt and selects the client's
+native one-shot mode; a flag is an option passed to a session and does not.
+Streams that are not a terminal are one-shot, so CI and pipelines need no flag.
+`--interactive` and `--non-interactive` override the rule in either direction,
+and when the mode is inferred from flags alone the wrapper says so on stderr.
+
+```bash
+router with claude "fix the tests"     # one-shot: a prompt was given
+router with claude --resume <id>       # a session: --resume is an option
+echo "hi" | router with claude         # one-shot: no terminal
+```
+
+**Model and effort.** `with` changes how the client reaches the model. Which
+model that is, and how hard it thinks, are the user's own settings and are left
+alone: no `--model`, no `MAX_THINKING_TOKENS`, no `model_reasoning_effort` and
+no `OPENAI_REASONING_EFFORT` is passed unless asked for. The client's own
+configuration decides, and the user's own environment variables reach it as
+they would without the router.
+
+`--model <id>` names one explicitly. `--pick-model` asks the router to choose
+from the target's live catalog and reports what it picked and why. `opencode`,
+`qwen` and `agent` are always given an id because their configuration embeds
+the catalog and they cannot start without one. When a model is named, the
+wrapper fetches `/v1/models` with the run token before execution and refuses an
+unavailable one, listing what the selected server advertises.
 
 ## Selecting a server and token
 
@@ -139,19 +153,27 @@ docker exec link-assistant-router-managed router tokens issue \
 
 ## Permanent configuration and exact undo
 
-Permanent changes are opt-in:
+Permanent changes are opt-in, and have their own name:
 
 ```bash
-router with --server https://router.example.internal --global codex
-router with --global --undo codex
+router configure codex --server https://router.example.internal
+router configure --undo codex
 ```
 
-The first command saves the original bytes, ownership marker, and permissions.
-Undo restores them exactly and removes wrapper-owned backups. If the user edits
-the managed config after setup, undo refuses to overwrite those newer edits.
-Tokens are not persisted in client configuration. Gemini, Grok, and Cursor
-report their client-side permanent-configuration limitation and direct users
-to the temporary or manual path.
+`with --global codex` and `with --global --undo codex` are the same command
+under an older name and keep working — they map onto `configure` rather than
+carrying a second implementation that can disagree with it.
+
+The first command saves the original bytes, ownership marker, and permissions,
+mints a credential from the target and stores it outside the client config at
+mode 0600. Undo restores the file exactly, revokes that credential, and removes
+wrapper-owned backups. If the user edits the managed config after setup, undo
+refuses to overwrite those newer edits. Tokens are never persisted in client
+configuration. Cursor and Gemini report their client-side limitation; Grok has
+no persistent base-URL setting, so `configure grok` writes the credential file
+that is its whole configuration and says to source it.
+
+See [configure-clients.md](configure-clients.md) for the full surface.
 
 ## Quick verification
 

@@ -26,22 +26,22 @@ struct BackupState {
     setup_backup: Option<PathBuf>,
 }
 
-pub(crate) fn configure(
+/// Write the router into the client's own configuration, reversibly.
+///
+/// Returns the path that was written. Nothing is printed here: the caller
+/// knows whether a credential was stored alongside it, and reporting half the
+/// outcome from inside was how `with --global` came to announce success while
+/// telling the user to go set an environment variable themselves (issue #296).
+pub(crate) fn apply(
     client: ClientKind,
     base_url: &str,
     models: &[RouterModel],
-) -> Result<(), AnyError> {
+) -> Result<PathBuf, AnyError> {
     if matches!(client, ClientKind::Cursor | ClientKind::GeminiCli) {
         return Err(client
             .setup_limitation()
             .unwrap_or("client cannot be configured globally")
             .into());
-    }
-    if client == ClientKind::GrokCli {
-        return Err(
-            "Grok CLI has no persistent base-URL setting; use temporary `with` or persist GROK_BASE_URL and GROK_API_KEY in your shell profile"
-                .into(),
-        );
     }
     let manager = ClientManager::from_env()?;
     let config_path = manager.config_path(client);
@@ -111,37 +111,29 @@ pub(crate) fn configure(
         remove_if_present(&paths.marker)?;
         return Err(format!("could not save global undo state: {error}").into());
     }
-    println!(
-        "configured {} globally in {}",
-        client.display_name(),
-        config_path.display()
-    );
-    println!("undo: link-assistant-router with --global --undo {client}");
-    if let Some(token_env) = client.token_env() {
-        println!(
-            "No credential was stored; set {token_env} before launching {}.",
-            client.display_name()
-        );
-    }
-    Ok(())
+    Ok(config_path)
 }
 
-pub fn undo(client: ClientKind) -> Result<(), AnyError> {
+/// Restore the exact configuration a previous [`apply`] replaced.
+///
+/// Returns the restored path, or `None` when this client never had a
+/// configuration file to save — `configure grok` stores only a credential.
+pub fn undo(client: ClientKind) -> Result<Option<PathBuf>, AnyError> {
     let manager = ClientManager::from_env()?;
     let config_path = manager.config_path(client);
     let paths = backup_paths(&config_path);
-    let source = fs::read(&paths.state).map_err(|error| {
-        if error.kind() == std::io::ErrorKind::NotFound {
-            format!("no global backup exists for {client}; nothing was restored")
-        } else {
-            format!("could not read {}: {error}", paths.state.display())
+    let source = match fs::read(&paths.state) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(format!("could not read {}: {error}", paths.state.display()).into());
         }
-    })?;
+    };
     let state: BackupState = serde_json::from_slice(&source)?;
     let current = fs::read(&config_path).unwrap_or_default();
     if digest(&current) != state.config_hash_after_setup {
         return Err(format!(
-            "refusing to overwrite {} because it changed after `with --global`; preserve your edits or restore the managed version before retrying",
+            "refusing to overwrite {} because it changed after it was configured; preserve your edits or restore the managed version before retrying",
             config_path.display()
         )
         .into());
@@ -151,7 +143,7 @@ pub fn undo(client: ClientKind) -> Result<(), AnyError> {
             let current = fs::read(marker_path).unwrap_or_default();
             if digest(&current) != expected {
                 return Err(format!(
-                    "refusing to overwrite {} because it changed after `with --global`",
+                    "refusing to overwrite {} because it changed after it was configured",
                     marker_path.display()
                 )
                 .into());
@@ -174,8 +166,7 @@ pub fn undo(client: ClientKind) -> Result<(), AnyError> {
     remove_if_present(&paths.config)?;
     remove_if_present(&paths.marker)?;
     remove_if_present(&paths.state)?;
-    println!("restored {} exactly", config_path.display());
-    Ok(())
+    Ok(Some(config_path))
 }
 
 struct BackupPaths {

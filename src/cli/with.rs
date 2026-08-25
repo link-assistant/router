@@ -42,6 +42,7 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         "--interactive",
         "--token-stdin",
         "--extend-global-config",
+        "--pick-model",
     ];
     let mut position = start;
     while position < arguments.len() {
@@ -161,6 +162,12 @@ pub struct WithArgs {
     #[arg(long, requires = "global")]
     pub undo: bool,
     /// Force the client's non-interactive/one-shot mode.
+    ///
+    /// By default a bare positional is read as a prompt and starts a one-shot
+    /// run, a flag is read as an option passed to a session, and streams that
+    /// are not a terminal are one-shot. Reading *any* forwarded argument as a
+    /// task turned `--resume`, `--continue` and `--verbose` into batch runs
+    /// (issue #297).
     #[arg(long, conflicts_with = "interactive")]
     pub non_interactive: bool,
     /// Force the client's interactive mode.
@@ -206,9 +213,25 @@ pub struct WithArgs {
     /// Read the router token as one line from standard input.
     #[arg(long, conflicts_with = "token")]
     pub token_stdin: bool,
-    /// Model passed to the client instead of the integration default.
+    /// Model the client is launched with.
+    ///
+    /// Without this the client keeps the model its own configuration selects,
+    /// and `with` changes only how that model is reached — the same rule
+    /// `--global` follows. A router that picked one by catalog order replaced
+    /// the user's choice silently, and the client's status line then presented
+    /// the substitution as though the user had made it (issue #295).
+    ///
+    /// A client whose configuration embeds the router's catalog — `opencode`,
+    /// `qwen`, `agent` — is always given an id, because it cannot start
+    /// without one.
     #[arg(long)]
     pub model: Option<String>,
+    /// Let the router choose a model from the target's live catalog.
+    ///
+    /// It reports what it picked and why. Without this no model is named and
+    /// the client's own configuration decides.
+    #[arg(long, conflicts_with = "model")]
+    pub pick_model: bool,
     /// Lifetime of an automatically minted per-run token.
     #[arg(long, default_value_t = 1)]
     pub run_ttl_hours: i64,
@@ -455,5 +478,29 @@ mod collision_tests {
                 .any(|p| p == ["--model", "B"]),
             "{split:?}"
         );
+    }
+}
+
+impl WithArgs {
+    /// The permanent-setup request `--global` / `--undo` really is.
+    ///
+    /// `with --global` predates `configure` and stays as an accepted spelling,
+    /// so it maps onto the same arguments rather than keeping a second
+    /// implementation that can disagree with it (issue #296).
+    #[must_use]
+    pub fn as_configure(&self) -> crate::cli::ConfigureArgs {
+        crate::cli::ConfigureArgs {
+            client: Some(self.client),
+            all: false,
+            undo: self.undo,
+            target: crate::cli::AuthTarget {
+                local: false,
+                server: self.server.clone(),
+                managed: self.managed,
+            },
+            token: self.token.clone(),
+            token_stdin: self.token_stdin,
+            ttl_hours: 8760,
+        }
     }
 }

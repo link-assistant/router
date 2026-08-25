@@ -58,6 +58,13 @@ async fn run() -> ExitCode {
         Some(Command::Server { op }) => {
             return link_assistant_router::server_command::run(op).await;
         }
+        // Permanent client setup mints its credential from the router it is
+        // pointing the client at, over that router's admin API. It never signs
+        // a token here, so the local signing secret is not its to hold — the
+        // same reasoning as the remote commands in issue #294.
+        Some(Command::Configure(args)) => {
+            return link_assistant_router::configure::run(args).await;
+        }
         _ => {}
     }
 
@@ -79,6 +86,8 @@ async fn run() -> ExitCode {
     // validates tokens here, so the local signing secret is not its to hold
     // (issue #294).
     let cli = link_assistant_router::remote_command::relax_token_secret_for_remote(cli);
+    // A read-only client listing signs nothing either (issue #296).
+    let cli = link_assistant_router::client_command::relax_token_secret_for_clients(cli);
 
     let config = match cli.into_config() {
         Ok(c) => c,
@@ -129,7 +138,9 @@ async fn run() -> ExitCode {
         Some(Command::Clients { home, op }) => {
             link_assistant_router::client_command::run(&config, home.as_deref(), op).await
         }
-        Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
+        Some(Command::With(_) | Command::Server { .. } | Command::Configure(_)) => {
+            unreachable!("handled before config")
+        }
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
         Some(Command::Doctor { .. }) => run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),

@@ -1124,14 +1124,13 @@ router providers add --name litellm --base-url http://litellm:4000/v1 --model cl
 router providers import providers.lenv
 router providers list
 
-# Safely configure local agentic CLIs against this router:
+# Point a local agentic CLI at this router permanently:
+router configure claude
+router configure --all
+router configure --undo claude
+
+# Inspect and manage what is configured (read-only commands need no secret):
 router clients list
-router clients setup codex
-router clients setup claude --token la_sk_...
-router clients setup opencode
-router clients setup qwen
-router clients setup agent
-router clients setup grok
 router clients show codex
 router clients doctor codex
 router clients remove codex

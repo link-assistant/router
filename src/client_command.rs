@@ -14,6 +14,40 @@ pub const CLIENT_TOKEN_ENV: &str = "LINK_ASSISTANT_ROUTER_TOKEN";
 /// Compatibility alias shared with the client integrations themselves.
 pub const CLIENT_TOKEN_ENV_ALIAS: &str = "LINK_ASSISTANT_TOKEN";
 
+/// Let a client command that only reads local files run without `TOKEN_SECRET`.
+///
+/// The secret signs this machine's tokens. `list`, `show` and `doctor` neither
+/// issue nor validate one — they read files this machine already holds — so
+/// demanding it refused to *start* a read-only listing. The check was never
+/// protecting anything either: any value satisfied it, so it only taught
+/// operators to keep a signing secret in their shell (issue #296).
+#[must_use]
+pub fn relax_token_secret_for_clients(mut cli: crate::cli::Cli) -> crate::cli::Cli {
+    if signs_nothing(cli.command.as_ref()) && cli.token_secret.as_deref().is_none_or(str::is_empty)
+    {
+        cli.token_secret = Some("unused-by-this-client-command".to_string());
+    }
+    cli
+}
+
+/// Whether this client command will issue or validate a token here.
+fn signs_nothing(command: Option<&crate::cli::Command>) -> bool {
+    let Some(crate::cli::Command::Clients { op, .. }) = command else {
+        return false;
+    };
+    match op {
+        ClientOp::List | ClientOp::Show { .. } | ClientOp::Doctor { .. } => true,
+        // `setup` would sign — but not when another router is selected, where
+        // it refuses instead. Demanding the secret first replaced that honest
+        // refusal with "won't start", which says nothing about the target
+        // being wrong (issue #296).
+        ClientOp::Setup { base_url: None, .. } => {
+            crate::managed_server::selected_server().is_some()
+        }
+        _ => false,
+    }
+}
+
 /// Run one local client-management operation.
 pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCode {
     let manager = match home {
@@ -116,7 +150,30 @@ async fn setup(
         );
         return ExitCode::from(2);
     }
-    let base_url = base_url.map_or_else(|| local_client_base_url(config), str::to_string);
+    // `setup` mints from *this* deployment's token store, so the credential it
+    // writes is only valid here. Defaulting the address to this CLI's own
+    // `--host`/`--port` while another router was selected produced a client
+    // pointed at a deployment that may not even be running, with no error
+    // (issue #296). It cannot follow the selection either — a locally signed
+    // token would be rejected there — so it says which command can.
+    let base_url = match base_url {
+        Some(base_url) => base_url.to_string(),
+        None => match crate::managed_server::selected_server() {
+            Some(selected) => {
+                eprintln!(
+                    "error: `clients setup` configures the router it can mint a token for, which \
+                     is this machine, but {selected} is selected."
+                );
+                eprintln!(
+                    "note: run `router configure {client}` to point {} at the selected router, or \
+                     pass --base-url to name an address for this one.",
+                    client.display_name()
+                );
+                return ExitCode::from(1);
+            }
+            None => local_client_base_url(config),
+        },
+    };
     if let Some(limitation) = client.setup_limitation() {
         return failed(limitation);
     }
@@ -137,6 +194,7 @@ async fn setup(
                 token_id: local_token_id(config, token),
                 label: None,
                 issued_at: None,
+                router: Some(base_url.clone()),
             },
         ),
         None => match issue_client_token(config, client, ttl_hours) {
@@ -148,6 +206,7 @@ async fn setup(
                     token_id: Some(id),
                     label: Some(format!("client-{client}")),
                     issued_at: Some(chrono::Utc::now().timestamp()),
+                    router: Some(base_url.clone()),
                 },
             ),
             Err(error) => return failed(error),

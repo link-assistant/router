@@ -31,9 +31,13 @@ pub async fn run(args: &WithArgs) -> ExitCode {
 }
 
 async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
-    if args.undo {
-        crate::client_global::undo(args.client)?;
-        return Ok(ExitCode::SUCCESS);
+    // `--global` and `--undo` are permanent client setup, which now has its
+    // own name. Delegating rather than reimplementing is what keeps the two
+    // spellings from drifting apart again — the address, the credential, the
+    // reversal and the client list were four separate disagreements between
+    // them (issue #296).
+    if args.global || args.undo {
+        return Ok(crate::configure::run(&args.as_configure()).await);
     }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
@@ -54,18 +58,6 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         args.managed,
     )
     .await?;
-    if args.global {
-        if server.source == "managed local container" {
-            crate::managed_server::start_managed()?;
-        }
-        if !matches!(
-            args.client,
-            ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
-        ) {
-            crate::client_global::configure(args.client, &server.base_url, &[])?;
-            return Ok(ExitCode::SUCCESS);
-        }
-    }
     let working_directory = std::env::current_dir()
         .ok()
         .and_then(|path| {
@@ -75,44 +67,21 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .unwrap_or_else(|| "unknown-workdir".to_string());
     let label = format!("with-{}-{working_directory}", args.client);
     let credential = prepare_run_credential(&server, &label, args.run_ttl_hours).await?;
-    if args.global {
-        let configured =
-            crate::client_global::configure(args.client, &server.base_url, credential.models());
-        let cleanup = cleanup_run_credential(credential).await;
-        configured?;
-        if let Err(error) = cleanup {
-            eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
+    // Which model the client uses, and how hard it thinks, are the user's own
+    // settings. `with` chooses a route to a model, so both are left alone
+    // unless the user asked — the rule `--global` already followed (issue
+    // #295). A model is still resolved from the live catalog rather than a
+    // name compiled into the router (issue #192) when one is genuinely needed.
+    let selected = match resolve_model(args, &credential) {
+        Ok(selected) => selected,
+        Err(error) => {
+            cleanup_after_setup_failure(credential).await;
+            return Err(error);
         }
-        return Ok(ExitCode::SUCCESS);
-    }
-    // Resolve the concrete model from the live catalog rather than a name
-    // compiled into the router (issue #192).
-    let owner = args.client.integration().model_owner;
-    let selected = if let Some(model) = args.model.clone() {
-        model
-    } else if let Some(model) = credential.select_model(owner) {
-        model.to_string()
-    } else {
-        // Name what the catalog *does* hold: "only openai models" is a much
-        // shorter path to the real cause — a lapsed subscription — than the
-        // unrecognised-model error the client would otherwise report about
-        // itself (issue #225).
-        let advertised = credential.advertised_owners();
-        let holdings = if advertised.is_empty() {
-            "the catalog is empty".to_string()
-        } else {
-            format!("it advertises only {} models", advertised.join(", "))
-        };
-        cleanup_after_setup_failure(credential).await;
-        return Err(format!(
-            "the router advertises no model for {} ({owner} models): {holdings}. Authorize a \
-             matching subscription on the router host, or pass --model explicitly",
-            args.client.integration().name
-        )
-        .into());
     };
-    let model = selected.as_str();
-    if let Err(error) = ensure_model_available(&credential, model) {
+    if let Some(model) = selected.as_deref()
+        && let Err(error) = ensure_model_available(&credential, model)
+    {
         cleanup_after_setup_failure(credential).await;
         return Err(error);
     }
@@ -120,7 +89,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         args.client,
         &server.base_url,
         &credential.token,
-        Some(model),
+        selected.as_deref(),
         credential.models(),
         args.isolated_config,
     ) {
@@ -130,7 +99,15 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             return Err(error);
         }
     };
-    let arguments = client_arguments(args, model);
+    let plan = crate::client_launch::plan(
+        args,
+        selected.as_deref(),
+        crate::client_launch::attached_to_a_terminal(),
+    );
+    if let Some(note) = plan.note {
+        eprintln!("{note}");
+    }
+    let arguments = plan.arguments;
     let launch = temporary.launch(&arguments).await;
     if launch.as_ref().is_ok_and(|status| !status.success())
         && server.source == "managed local container"
@@ -150,6 +127,56 @@ async fn cleanup_after_setup_failure(credential: crate::managed_server::RunCrede
     if let Err(error) = cleanup_run_credential(credential).await {
         eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
     }
+}
+
+/// The model this run names, if it names one at all.
+///
+/// `None` is the ordinary answer: the client keeps whatever model its own
+/// configuration selects. A model is resolved only when the user asked for one
+/// with `--model`, asked the router to choose with `--pick-model`, or is
+/// launching a client whose configuration embeds the catalog and so cannot
+/// start without an id (issue #295).
+fn resolve_model(
+    args: &WithArgs,
+    credential: &crate::managed_server::RunCredential,
+) -> Result<Option<String>, AnyError> {
+    if let Some(model) = args.model.clone() {
+        return Ok(Some(model));
+    }
+    if !args.pick_model && !crate::client_launch::requires_a_model(args.client) {
+        return Ok(None);
+    }
+    let owner = args.client.integration().model_owner;
+    if let Some(model) = credential.select_model(owner) {
+        if args.pick_model {
+            // Report the choice and the reason for it. Choosing silently by
+            // catalog order is what made the substitution invisible: the
+            // client's own status line then presents the router's pick as
+            // though the user had made it (issue #295).
+            eprintln!(
+                "note: --pick-model chose `{model}`, the first {} model the router advertises; \
+                 pass --model to choose another",
+                if owner.is_empty() { "advertised" } else { owner }
+            );
+        }
+        return Ok(Some(model.to_string()));
+    }
+    // Name what the catalog *does* hold: "only openai models" is a much
+    // shorter path to the real cause — a lapsed subscription — than the
+    // unrecognised-model error the client would otherwise report about
+    // itself (issue #225).
+    let advertised = credential.advertised_owners();
+    let holdings = if advertised.is_empty() {
+        "the catalog is empty".to_string()
+    } else {
+        format!("it advertises only {} models", advertised.join(", "))
+    };
+    Err(format!(
+        "the router advertises no model for {} ({owner} models): {holdings}. Authorize a \
+         matching subscription on the router host, or pass --model explicitly",
+        args.client.integration().name
+    )
+    .into())
 }
 
 struct TemporaryClient {
@@ -236,12 +263,18 @@ impl TemporaryClient {
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
         }
-        let model = model_override.unwrap_or("");
+        // How hard the client thinks is the user's setting, not the router's.
+        // A compile-time `xhigh` / `16384` applied to a user who never asked
+        // is not a neutral default — it is the most expensive one, chosen for
+        // someone who may be paying per token (issue #295). Setting nothing
+        // here leaves the client's own configuration in charge, and lets the
+        // user's `MAX_THINKING_TOKENS` or `OPENAI_REASONING_EFFORT` reach it
+        // through the inherited environment as it would without the router.
         match client {
             ClientKind::ClaudeCode => {
-                command
-                    .env("ANTHROPIC_API_KEY", "")
-                    .env("MAX_THINKING_TOKENS", "16384");
+                // Emptied rather than left alone: an inherited API key
+                // outranks the auth token, so the run would leave the router.
+                command.env("ANTHROPIC_API_KEY", "");
             }
             ClientKind::GeminiCli => {
                 command
@@ -251,20 +284,18 @@ impl TemporaryClient {
             ClientKind::QwenCode => {
                 command
                     .env("OPENAI_API_KEY", token)
-                    .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"))
-                    .env("OPENAI_MODEL", model)
-                    .env(
-                        "OPENAI_REASONING_EFFORT",
-                        integration.default_reasoning_effort,
-                    );
+                    .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"));
+                // Qwen Code reads its model from the environment and cannot
+                // start without one, so this is the client's requirement.
+                if let Some(model) = model_override {
+                    command.env("OPENAI_MODEL", model);
+                }
             }
-            ClientKind::Codex | ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent => {
-                command.env(
-                    "OPENAI_REASONING_EFFORT",
-                    integration.default_reasoning_effort,
-                );
-            }
-            ClientKind::Cursor => {}
+            ClientKind::Codex
+            | ClientKind::GrokCli
+            | ClientKind::Opencode
+            | ClientKind::Agent
+            | ClientKind::Cursor => {}
         }
         Ok(Self { directory, command })
     }
@@ -374,98 +405,6 @@ fn configure_isolation(
     Ok(())
 }
 
-/// Build the wrapped client's argv.
-///
-/// `resolved_model` is the id chosen from the live catalog by the caller; it is
-/// passed in rather than read from `args` because auto-selection leaves
-/// `args.model` empty (issue #192).
-fn client_arguments(args: &WithArgs, resolved_model: &str) -> Vec<OsString> {
-    let integration = args.client.integration();
-    let mut forwarded = args.client_args.clone();
-    if forwarded.first().is_some_and(|value| value == "--") {
-        forwarded.remove(0);
-    }
-    let non_interactive = args.non_interactive || (!args.interactive && !forwarded.is_empty());
-    let mode = integration.non_interactive_arg;
-    let has_mode = contains_native_mode(args.client, &forwarded);
-    let model = (!contains_model_argument(&forwarded))
-        .then_some(integration.model_arg)
-        .flatten()
-        .map(|flag| {
-            let model = resolved_model;
-            [
-                OsString::from(flag),
-                model_selector(args.client, model).into(),
-            ]
-        });
-    let command_mode = matches!(args.client, ClientKind::Codex | ClientKind::Opencode);
-    let mut result = Vec::new();
-    if command_mode && has_mode {
-        result.push(forwarded.remove(0));
-    } else if command_mode
-        && non_interactive
-        && let Some(mode) = mode
-    {
-        result.push(mode.into());
-        if args.client == ClientKind::Codex {
-            result.push("--skip-git-repo-check".into());
-        }
-    }
-    if let Some(model) = model {
-        result.extend(model);
-    }
-    if args.client == ClientKind::Codex
-        && !forwarded.iter().any(|argument| {
-            argument
-                .to_string_lossy()
-                .contains("model_reasoning_effort")
-        })
-    {
-        result.extend([
-            OsString::from("-c"),
-            OsString::from(format!(
-                "model_reasoning_effort=\"{}\"",
-                integration.default_reasoning_effort
-            )),
-        ]);
-    }
-    if !command_mode
-        && non_interactive
-        && !has_mode
-        && let Some(mode) = mode
-    {
-        result.push(mode.into());
-    }
-    result.extend(forwarded);
-    result
-}
-
-fn contains_native_mode(client: ClientKind, arguments: &[OsString]) -> bool {
-    let Some(mode) = client.integration().non_interactive_arg else {
-        return false;
-    };
-    if matches!(client, ClientKind::Codex | ClientKind::Opencode) {
-        arguments.first().is_some_and(|argument| argument == mode)
-    } else {
-        arguments.iter().any(|argument| argument == mode)
-    }
-}
-
-fn contains_model_argument(arguments: &[OsString]) -> bool {
-    arguments.iter().any(|argument| {
-        let argument = argument.to_string_lossy();
-        matches!(argument.as_ref(), "-m" | "--model") || argument.starts_with("--model=")
-    })
-}
-
-fn model_selector(client: ClientKind, model: &str) -> String {
-    if matches!(client, ClientKind::Opencode | ClientKind::Agent) && !model.contains('/') {
-        format!("link-assistant/{model}")
-    } else {
-        model.to_string()
-    }
-}
-
 fn endpoint(base_url: &str, suffix: &str) -> String {
     format!("{}{}", base_url.trim_end_matches('/'), suffix)
 }
@@ -572,30 +511,6 @@ fn exit_code(status: std::process::ExitStatus) -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn arguments(client: ClientKind, client_args: &[&str]) -> Vec<String> {
-        let args = WithArgs {
-            managed: false,
-            global: false,
-            undo: false,
-            non_interactive: false,
-            interactive: false,
-            extend_global_config: false,
-            isolated_config: false,
-            server: None,
-            token: None,
-            token_stdin: false,
-            model: None,
-            run_ttl_hours: 1,
-            run_max_requests: None,
-            client,
-            client_args: client_args.iter().map(OsString::from).collect(),
-        };
-        client_arguments(&args, "")
-            .iter()
-            .map(|value| value.to_string_lossy().into_owned())
-            .collect()
-    }
 
     /// Gemini CLI resolves settings as `<home>/.gemini/settings.json`, where
     /// `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise. Pointing
@@ -826,27 +741,6 @@ mod tests {
             written["security"]["auth"]["selectedType"],
             "gemini-api-key"
         );
-    }
-
-    #[test]
-    fn colliding_wrapper_flags_after_client_are_forwarded() {
-        let args = arguments(ClientKind::Codex, &["--global", "hi"]);
-        assert!(args.ends_with(&["--global".to_string(), "hi".to_string()]));
-        assert_eq!(args.first().map(String::as_str), Some("exec"));
-    }
-
-    #[test]
-    fn explicit_separator_is_not_forwarded() {
-        let args = arguments(ClientKind::Opencode, &["--", "run", "hi"]);
-        assert_eq!(args.first().map(String::as_str), Some("run"));
-        assert_eq!(args.iter().filter(|arg| arg.as_str() == "run").count(), 1);
-    }
-
-    #[test]
-    fn command_mode_word_inside_prompt_is_not_treated_as_the_subcommand() {
-        let args = arguments(ClientKind::Opencode, &["explain", "run"]);
-        assert_eq!(args.first().map(String::as_str), Some("run"));
-        assert!(args.ends_with(&["explain".to_string(), "run".to_string()]));
     }
 
     #[test]

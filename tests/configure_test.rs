@@ -1,0 +1,292 @@
+//! Permanent client setup: one name, one target, one reversal (issue #296).
+
+#![cfg(unix)]
+
+use std::io::{Read, Write};
+use std::net::TcpListener;
+use std::os::unix::fs::PermissionsExt as _;
+use std::process::{Command, Output};
+use std::thread;
+use std::time::Duration;
+
+/// A router that answers the three probes permanent setup makes: is it there,
+/// is this credential an admin one, and what does it serve?
+///
+/// `/api/tokens/list` answers 401 so the supplied token is treated as an
+/// ordinary one and used as-is — the same shape as a real ordinary token, and
+/// it keeps the test from having to mint a signed JWT.
+fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
+    listener.set_nonblocking(true).expect("nonblocking listener");
+    let port = listener.local_addr().expect("mock address").port();
+    let handle = thread::spawn(move || {
+        // Deadline-bounded rather than counted: the exact number of probes is
+        // an implementation detail, and a test that blocks on one that never
+        // comes reports a hang instead of the assertion that matters.
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let mut paths = Vec::new();
+        while paths.len() < requests {
+            let mut stream = match listener.accept() {
+                Ok((stream, _)) => stream,
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    if std::time::Instant::now() >= deadline {
+                        return paths;
+                    }
+                    thread::sleep(Duration::from_millis(10));
+                    continue;
+                }
+                Err(error) => panic!("accept mock router request: {error}"),
+            };
+            stream.set_nonblocking(false).expect("blocking connection");
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .expect("set read timeout");
+            let mut bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let count = stream.read(&mut buffer).expect("read request");
+                if count == 0 {
+                    break;
+                }
+                bytes.extend_from_slice(&buffer[..count]);
+                if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let request = String::from_utf8_lossy(&bytes).into_owned();
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("")
+                .to_string();
+            let (status, body) = match path.as_str() {
+                "/health" => ("200 OK", r#"{"status":"ok","version":"0.115.0"}"#),
+                "/api/tokens/list" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
+                "/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol","owned_by":"openai"}]}"#,
+                ),
+                _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
+            };
+            paths.push(path);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write mock response");
+        }
+        paths
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn router(home: &std::path::Path, args: &[&str]) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
+    command
+        .args(args)
+        .env("HOME", home)
+        .env_remove("CODEX_HOME")
+        .env_remove("CLAUDE_CONFIG_DIR")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("LINK_ASSISTANT_ROUTER_URL")
+        .env_remove("ROUTER_URL")
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .env_remove("LINK_ASSISTANT_TOKEN")
+        .env_remove("TOKEN_SECRET")
+        .env("DATA_DIR", home.join("router-data"))
+        .env("STORAGE_POLICY", "text");
+    command.output().expect("router CLI runs")
+}
+
+fn select(home: &std::path::Path, server: &str) {
+    let selected = router(
+        home,
+        &["server", "use", server, "--token", "la_sk_selected"],
+    );
+    assert!(
+        selected.status.success(),
+        "server use failed: {}{}",
+        String::from_utf8_lossy(&selected.stdout),
+        String::from_utf8_lossy(&selected.stderr)
+    );
+}
+
+/// The defect at the centre of issue #296: permanent setup wrote this CLI's
+/// own `--host`/`--port` default into the client while a different router was
+/// selected, with no error. The operator was left with a client pointed at a
+/// deployment that may not even be running.
+#[test]
+fn configure_writes_the_selected_router_and_stores_its_credential() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    std::fs::create_dir_all(home.join(".claude")).expect("create home");
+    let (server, requests) = mock_router(3);
+    select(&home, &server);
+
+    let configured = router(&home, &["configure", "claude"]);
+    assert!(
+        configured.status.success(),
+        "configure failed: {}{}",
+        String::from_utf8_lossy(&configured.stdout),
+        String::from_utf8_lossy(&configured.stderr)
+    );
+
+    let settings = std::fs::read_to_string(home.join(".claude/settings.json"))
+        .expect("read Claude settings");
+    assert!(
+        settings.contains(&server),
+        "the selected router must be the address written: {settings}"
+    );
+    assert!(
+        !settings.contains(":8080"),
+        "this CLI's own listen address must not be written: {settings}"
+    );
+    assert!(
+        !settings.contains("la_sk_"),
+        "the token must not land in the client's config: {settings}"
+    );
+
+    // The command did the whole job: address *and* credential. `with --global`
+    // stored none and told the user to go set a variable themselves.
+    let environment = home.join(".config/link-assistant-router/clients/claude.env");
+    let stored = std::fs::read_to_string(&environment).expect("read stored credential");
+    assert!(stored.contains("la_sk_selected"), "{stored}");
+    assert!(stored.contains(&server), "{stored}");
+    assert_eq!(
+        std::fs::metadata(&environment)
+            .expect("credential metadata")
+            .permissions()
+            .mode()
+            & 0o777,
+        0o600,
+        "a stored credential must be owner-only"
+    );
+    requests.join().expect("mock router thread");
+}
+
+/// `with --global` is the same command under an older name, so it cannot
+/// disagree with it — four separate disagreements is what issue #296 reported.
+#[test]
+fn with_global_is_the_same_command_under_an_older_name() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    std::fs::create_dir_all(home.join(".claude")).expect("create home");
+    let (server, requests) = mock_router(3);
+    select(&home, &server);
+
+    let configured = router(&home, &["with", "--global", "claude"]);
+    assert!(
+        configured.status.success(),
+        "with --global failed: {}{}",
+        String::from_utf8_lossy(&configured.stdout),
+        String::from_utf8_lossy(&configured.stderr)
+    );
+    let settings = std::fs::read_to_string(home.join(".claude/settings.json"))
+        .expect("read Claude settings");
+    assert!(settings.contains(&server), "{settings}");
+    assert!(
+        home.join(".config/link-assistant-router/clients/claude.env")
+            .exists(),
+        "the older spelling must store a credential too"
+    );
+    requests.join().expect("mock router thread");
+}
+
+/// Reversal by the same name, and the credential goes with the configuration
+/// rather than outliving it.
+#[test]
+fn undo_restores_the_configuration_and_removes_the_credential() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    std::fs::create_dir_all(home.join(".claude")).expect("create home");
+    let original = "{\n  \"theme\": \"dark\"\n}\n";
+    std::fs::write(home.join(".claude/settings.json"), original).expect("seed settings");
+    let (server, requests) = mock_router(3);
+    select(&home, &server);
+
+    assert!(router(&home, &["configure", "claude"]).status.success());
+    let environment = home.join(".config/link-assistant-router/clients/claude.env");
+    assert!(environment.exists());
+
+    let undone = router(&home, &["configure", "--undo", "claude"]);
+    assert!(
+        undone.status.success(),
+        "undo failed: {}{}",
+        String::from_utf8_lossy(&undone.stdout),
+        String::from_utf8_lossy(&undone.stderr)
+    );
+    assert_eq!(
+        std::fs::read_to_string(home.join(".claude/settings.json")).expect("restored settings"),
+        original,
+        "the user's own file must come back byte for byte"
+    );
+    assert!(
+        !environment.exists(),
+        "a credential must not outlive the configuration that used it"
+    );
+    requests.join().expect("mock router thread");
+}
+
+/// `clients setup` mints from *this* deployment's token store, so it cannot
+/// follow a remote selection — a locally signed token would be rejected there.
+/// It used to write its own listen address anyway, silently. Refusing and
+/// naming the command that can do it is the shape settled in issue #294.
+#[test]
+fn clients_setup_refuses_rather_than_writing_the_wrong_address() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    std::fs::create_dir_all(home.join(".claude")).expect("create home");
+    let (server, requests) = mock_router(0);
+    select(&home, &server);
+
+    let attempted = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["clients", "setup", "claude"])
+        .env("HOME", &home)
+        .env_remove("CODEX_HOME")
+        .env_remove("CLAUDE_CONFIG_DIR")
+        .env_remove("XDG_CONFIG_HOME")
+        .env("TOKEN_SECRET", "configure-test-secret")
+        .env("DATA_DIR", home.join("router-data"))
+        .env("STORAGE_POLICY", "text")
+        .output()
+        .expect("router CLI runs");
+    assert!(!attempted.status.success());
+    let stderr = String::from_utf8_lossy(&attempted.stderr);
+    assert!(stderr.contains(&server), "the target must be named: {stderr}");
+    assert!(
+        stderr.contains("router configure claude"),
+        "the refusal must name what can do it: {stderr}"
+    );
+    assert!(
+        !home.join(".claude/settings.json").exists()
+            || !std::fs::read_to_string(home.join(".claude/settings.json"))
+                .expect("read settings")
+                .contains(":8080"),
+        "the wrong address must not be written"
+    );
+    drop(requests);
+}
+
+/// A read-only listing signs nothing, so it has no reason to demand the
+/// deployment's signing secret — and the check was satisfied by any value,
+/// so it only taught operators to keep one in their shell.
+#[test]
+fn listing_clients_does_not_demand_a_signing_secret() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    std::fs::create_dir_all(&home).expect("create home");
+
+    let listed = router(&home, &["clients", "list"]);
+    assert!(
+        listed.status.success(),
+        "clients list failed: {}{}",
+        String::from_utf8_lossy(&listed.stdout),
+        String::from_utf8_lossy(&listed.stderr)
+    );
+    assert!(
+        String::from_utf8_lossy(&listed.stdout).contains("claude"),
+        "the table must still be printed"
+    );
+}
