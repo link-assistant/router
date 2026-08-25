@@ -310,11 +310,20 @@ fn assert_temporary_launch(standalone: bool) {
         fs::read_to_string(capture.join("token")).expect("captured token"),
         "la_sk_ordinary\n"
     );
-    let isolated_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
-    assert_ne!(isolated_home.trim(), home.to_string_lossy());
+    let router_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
+    let router_home = router_home.trim();
+    assert_ne!(router_home, home.to_string_lossy());
+    // Codex is routed through a file the router writes, so it cannot be
+    // extended and lives in a profile of its own. That profile is kept: a
+    // directory thrown away after every run made every launch a first launch,
+    // with no session history and nothing to resume (issue #298).
     assert!(
-        !std::path::Path::new(isolated_home.trim()).exists(),
-        "temporary home must be removed after client failure"
+        std::path::Path::new(router_home).is_dir(),
+        "a client that cannot be extended must keep its profile"
+    );
+    assert!(
+        std::path::Path::new(router_home).starts_with(home.join(".config")),
+        "the profile belongs under the router's own directory, not TMPDIR: {router_home}"
     );
     assert!(!stale.exists(), "a later run must sweep crash leftovers");
     assert_eq!(
@@ -386,8 +395,10 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
             panic!("wrapper did not clean up after Ctrl-C");
         });
     assert_eq!(status.code(), Some(42));
-    let isolated_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
-    assert!(!std::path::Path::new(isolated_home.trim()).exists());
+    let router_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
+    // The profile survives an interrupted run too — that is the point of
+    // keeping it (issue #298). What must not survive is a disposable root.
+    assert!(std::path::Path::new(router_home.trim()).is_dir());
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
         "/health,/api/tokens/list,/v1/models"

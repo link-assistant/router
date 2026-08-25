@@ -3,7 +3,7 @@
 use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::process::Stdio;
 use std::process::{Command, ExitCode};
@@ -108,15 +108,16 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if let Some(note) = plan.note {
         eprintln!("{note}");
     }
-    let temporary = match TemporaryClient::prepare(
-        args.client,
-        &server.base_url,
-        &credential.token,
-        selected.as_deref(),
-        credential.models(),
-        args.isolated_config,
-        plan.one_shot,
-    ) {
+    let temporary = match TemporaryClient::prepare(&Preparation {
+        client: args.client,
+        base_url: &server.base_url,
+        token: &credential.token,
+        model_override: selected.as_deref(),
+        models: credential.models(),
+        isolated_config: args.isolated_config,
+        one_shot: plan.one_shot,
+        profile_root: None,
+    }) {
         Ok(temporary) => temporary,
         Err(error) => {
             cleanup_after_setup_failure(credential).await;
@@ -195,8 +196,57 @@ fn resolve_model(
 }
 
 struct TemporaryClient {
-    directory: tempfile::TempDir,
+    directory: RunDirectory,
     command: Command,
+}
+
+/// Where a run that cannot layer onto the user's configuration keeps its files.
+///
+/// Issue #277 established that `with` should not hand the client a directory of
+/// its own, because doing so drops the user into first-run onboarding with an
+/// empty `/resume`. For the clients that *cannot* be extended — they are routed
+/// through a file the router writes — the fallback directory was thrown away
+/// after every run, so every launch was a first launch: no session history,
+/// nothing to resume, onboarding and trust prompts answered again from scratch
+/// (issue #298). Those clients now keep one profile of their own, under the
+/// router's directory rather than in a shared `TMPDIR`.
+///
+/// Disposable is still right where it was asked for: `--isolated-config`, and
+/// the scratch directory an extending run never actually reads.
+enum RunDirectory {
+    Disposable(tempfile::TempDir),
+    Persistent(PathBuf),
+}
+
+impl RunDirectory {
+    fn path(&self) -> &Path {
+        match self {
+            Self::Disposable(directory) => directory.path(),
+            Self::Persistent(path) => path,
+        }
+    }
+}
+
+/// The profile directory kept for a client that cannot be extended.
+///
+/// Under the router's own per-user directory, so it is neither the user's own
+/// client configuration — nothing about the #277 boundary changes — nor a
+/// shared `TMPDIR`, which removes the cross-user question issue #313 is about.
+fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
+    let root = match root {
+        Some(root) => root.to_path_buf(),
+        None => std::env::var_os("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
+            .ok_or("HOME and XDG_CONFIG_HOME are unset; cannot keep a client profile")?,
+    };
+    let path = root
+        .join("link-assistant-router/clients")
+        .join(client.canonical_name())
+        .join("home");
+    fs::create_dir_all(&path)?;
+    set_directory_owner_only(&path)?;
+    Ok(path)
 }
 
 /// Whether this run layers the router's settings onto the user's own
@@ -234,22 +284,50 @@ const fn needs_a_written_configuration(client: ClientKind) -> bool {
     matches!(client, ClientKind::GeminiCli)
 }
 
+/// Everything one launch needs to be set up.
+///
+/// A struct rather than eight positional arguments: four of them are booleans
+/// and optional paths, and a caller swapping two would still compile.
+struct Preparation<'a> {
+    client: ClientKind,
+    base_url: &'a str,
+    token: &'a str,
+    model_override: Option<&'a str>,
+    models: &'a [RouterModel],
+    isolated_config: bool,
+    one_shot: bool,
+    profile_root: Option<&'a Path>,
+}
+
 impl TemporaryClient {
-    fn prepare(
-        client: ClientKind,
-        base_url: &str,
-        token: &str,
-        model_override: Option<&str>,
-        models: &[RouterModel],
-        isolated_config: bool,
-        one_shot: bool,
-    ) -> Result<Self, AnyError> {
+    fn prepare(request: &Preparation<'_>) -> Result<Self, AnyError> {
+        let &Preparation {
+            client,
+            base_url,
+            token,
+            model_override,
+            models,
+            isolated_config,
+            one_shot,
+            profile_root,
+        } = request;
+        // A client that can be extended never reads this directory — the
+        // router's whole contribution is two environment variables — so it is
+        // scratch and goes away. One that cannot is *living* here, and a
+        // directory thrown away after every run made every launch a first
+        // launch (issue #298).
+        let keeps_a_profile = !isolated_config && !extends_user_configuration(client, false);
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
-        let directory = tempfile::Builder::new().prefix(&prefix).tempdir()?;
-        set_directory_owner_only(directory.path())?;
+        let disposable = tempfile::Builder::new().prefix(&prefix).tempdir()?;
+        set_directory_owner_only(disposable.path())?;
         // Swept after this run's own directory exists, so it can serve as the
         // reference for "owned by me" without a privileged call (issue #313).
-        sweep_stale_directories(directory.path());
+        sweep_stale_directories(disposable.path());
+        let directory = if keeps_a_profile {
+            RunDirectory::Persistent(persistent_profile(client, profile_root)?)
+        } else {
+            RunDirectory::Disposable(disposable)
+        };
         let manager = ClientManager::isolated(directory.path());
         match client {
             ClientKind::GeminiCli => write_gemini_settings(&manager.config_path(client))?,
@@ -599,322 +677,8 @@ fn exit_code(status: std::process::ExitStatus) -> ExitCode {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Gemini CLI resolves settings as `<home>/.gemini/settings.json`, where
-    /// `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise. Pointing
-    /// `GEMINI_CLI_HOME` at the `.gemini` directory made it look one level too
-    /// deep, fall back to the user's personal settings, and refuse the run
-    /// (issue #227). Both variables must therefore name the root.
-    #[test]
-    fn the_gemini_client_is_pointed_at_the_isolated_home() {
-        let root = tempfile::tempdir().expect("isolated root");
-        let manager = ClientManager::isolated(root.path());
-        let mut command = Command::new("gemini");
-        configure_isolation(
-            &mut command,
-            &manager,
-            root.path(),
-            ClientKind::GeminiCli,
-            true,
-        )
-        .expect("configure gemini isolation");
-
-        let environment: std::collections::HashMap<_, _> = command
-            .get_envs()
-            .filter_map(|(key, value)| Some((key.to_string_lossy().into_owned(), value?)))
-            .collect();
-
-        for name in ["HOME", "GEMINI_CLI_HOME"] {
-            assert_eq!(
-                environment.get(name).map(|value| value.to_string_lossy()),
-                Some(root.path().to_string_lossy()),
-                "{name} must name the isolated root, not the .gemini directory \
-                 inside it — the CLI appends `.gemini` itself"
-            );
-        }
-        // The file the CLI actually reads lives under that home.
-        assert_eq!(
-            manager.config_path(ClientKind::GeminiCli),
-            root.path().join(".gemini/settings.json")
-        );
-        // The trusted-directory prompt cannot be answered non-interactively.
-        assert_eq!(
-            environment
-                .get("GEMINI_CLI_TRUST_WORKSPACE")
-                .map(|value| value.to_string_lossy()),
-            Some(std::borrow::Cow::Borrowed("true"))
-        );
-    }
-
-    /// End to end: after preparing the client, the file Gemini CLI actually
-    /// reads must exist and select the API-key flow. The router previously
-    /// wrote a correct file the CLI never opened (issue #227).
-    /// By default the client keeps its own configuration directory, so sessions
-    /// started outside the router remain visible and a conversation can be
-    /// resumed through it (issue #233), and an interactive user does not land in
-    /// first-run onboarding (issue #277).
-    #[test]
-    fn the_users_configuration_is_kept_by_default() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        let extended = TemporaryClient::prepare(
-            ClientKind::ClaudeCode,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            false,
-            true,
-        )
-        .expect("prepare with the default configuration handling");
-        let names: Vec<String> = extended
-            .command
-            .get_envs()
-            .map(|(name, _)| name.to_string_lossy().into_owned())
-            .collect();
-        assert!(
-            !names.iter().any(|name| name == "CLAUDE_CONFIG_DIR"),
-            "the user's configuration directory must not be repointed: {names:?}"
-        );
-        // The router's actual contribution is still applied.
-        for required in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"] {
-            assert!(
-                names.iter().any(|name| name == required),
-                "{required} missing: {names:?}"
-            );
-        }
-
-        // Asking for isolation still repoints the directory.
-        let isolated = TemporaryClient::prepare(
-            ClientKind::ClaudeCode,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            true,
-            true,
-        )
-        .expect("prepare isolated");
-        assert!(
-            isolated
-                .command
-                .get_envs()
-                .any(|(name, _)| name == "CLAUDE_CONFIG_DIR"),
-            "--isolated-config must still give the client its own directory"
-        );
-    }
-
-    /// A client configured through a file is isolated even though extending is
-    /// the default, because there is nothing to layer short of rewriting that
-    /// file.
-    ///
-    /// A fallback rather than an error: the user did not ask for isolation, they
-    /// asked to run a client, and this is the only way it can be run. Refusing
-    /// was right while extending was opt-in — the flag could not be honoured —
-    /// but as a default it would make `with opencode` fail outright (issue
-    /// #277).
-    #[test]
-    fn a_file_configured_client_is_isolated_even_by_default() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        assert!(
-            !extends_user_configuration(ClientKind::Opencode, false),
-            "opencode sets no base-url variable, so there is nothing to layer"
-        );
-        assert!(
-            extends_user_configuration(ClientKind::ClaudeCode, false),
-            "claude code sets both variables, so the default extends"
-        );
-        assert!(
-            !extends_user_configuration(ClientKind::ClaudeCode, true),
-            "--isolated-config wins over the default"
-        );
-
-        // And it still prepares rather than failing.
-        TemporaryClient::prepare(
-            ClientKind::Opencode,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            false,
-            true,
-        )
-        .expect("a file-configured client must still run");
-    }
-
-    /// Gemini CLI sets both connection variables and still cannot be extended.
-    ///
-    /// It is pointed at the router by a `settings.json` it resolves from `HOME`,
-    /// so extending — which leaves `HOME` alone — would write that file where
-    /// the client never looks and let the user's own settings decide the run
-    /// (issue #227). Having both variables is therefore not enough to layer
-    /// onto, and the default must not assume it is.
-    #[test]
-    fn a_client_needing_a_written_file_is_isolated_despite_its_variables() {
-        let integration = ClientKind::GeminiCli.integration();
-        assert!(
-            integration.token_env.is_some() && integration.base_url_env.is_some(),
-            "the variables alone would otherwise qualify it for extending"
-        );
-        assert!(
-            !extends_user_configuration(ClientKind::GeminiCli, false),
-            "routing depends on a file only isolation makes reachable"
-        );
-    }
-
-    #[test]
-    fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        let temporary = TemporaryClient::prepare(
-            ClientKind::GeminiCli,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            false,
-            true,
-        )
-        .expect("prepare gemini");
-        let root = temporary.directory.path();
-        let home = temporary
-            .command
-            .get_envs()
-            .find_map(|(name, value)| (name == "HOME").then_some(value?))
-            .expect("gemini run sets HOME");
-        // The CLI resolves its settings from HOME; the file must be there.
-        let settings = Path::new(home).join(".gemini/settings.json");
-        assert!(
-            settings.is_file(),
-            "no settings at {}, which is where the CLI looks",
-            settings.display()
-        );
-        let written = fs::read_to_string(&settings).expect("read settings");
-        assert!(written.contains("gemini-api-key"), "{written}");
-        assert!(Path::new(home).starts_with(root), "HOME escaped the root");
-    }
-
-    /// An isolated run must be governed by the settings the router wrote. The
-    /// previous `create_new` silently deferred to whatever was already there,
-    /// which with the `HOME` fix would let an inherited `oauth-personal`
-    /// survive and fail the run.
-    #[test]
-    fn written_gemini_settings_replace_an_existing_file() {
-        let root = tempfile::tempdir().expect("isolated root");
-        let path = root.path().join(".gemini/settings.json");
-        fs::create_dir_all(path.parent().expect("parent")).expect("create directory");
-        fs::write(
-            &path,
-            r#"{"security":{"auth":{"selectedType":"oauth-personal"}}}"#,
-        )
-        .expect("seed a conflicting file");
-
-        write_gemini_settings(&path).expect("write settings");
-
-        let written = fs::read_to_string(&path).expect("read settings");
-        assert!(written.contains("gemini-api-key"), "{written}");
-        assert!(
-            !written.contains("oauth-personal"),
-            "the inherited value survived: {written}"
-        );
-    }
-
-    /// The value itself is the one the CLI accepts; a wrong spelling is what
-    /// produced the original error, so it is pinned rather than assumed.
-    #[test]
-    fn gemini_settings_select_the_api_key_flow() {
-        let root = tempfile::tempdir().expect("isolated root");
-        let path = root.path().join(".gemini/settings.json");
-        write_gemini_settings(&path).expect("write settings");
-        let written: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string(&path).expect("read")).expect("valid JSON");
-        assert_eq!(
-            written["security"]["auth"]["selectedType"],
-            "gemini-api-key"
-        );
-    }
-
-    #[test]
-    fn every_supported_client_prepares_below_a_disposable_root() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        for client in ClientKind::ALL {
-            if client == ClientKind::Cursor {
-                assert!(
-                    TemporaryClient::prepare(
-                        client,
-                        "http://router.test",
-                        "task-token",
-                        None,
-                        &models,
-                        false,
-                        true,
-                    )
-                    .is_err()
-                );
-                continue;
-            }
-            let temporary = TemporaryClient::prepare(
-                client,
-                "http://router.test",
-                "task-token",
-                None,
-                &models,
-                false,
-                true,
-            )
-            .unwrap_or_else(|error| panic!("{client} failed temporary setup: {error}"));
-            let root = temporary.directory.path().to_path_buf();
-            assert_eq!(temporary.command.get_program(), client.command());
-            let environment = temporary
-                .command
-                .get_envs()
-                .filter_map(|(name, value)| value.map(|value| (name, value)))
-                .collect::<std::collections::HashMap<_, _>>();
-            if let Some(token_env) = client.token_env() {
-                assert_eq!(
-                    environment.get(std::ffi::OsStr::new(token_env)).copied(),
-                    Some(std::ffi::OsStr::new("task-token")),
-                    "{client} did not receive its token environment"
-                );
-            }
-            for name in [
-                "HOME",
-                "CLAUDE_CONFIG_DIR",
-                "GEMINI_CLI_HOME",
-                "OPENCODE_CONFIG",
-                "OPENCODE_CONFIG_DIR",
-            ] {
-                if let Some(value) = environment.get(std::ffi::OsStr::new(name)) {
-                    assert!(
-                        Path::new(value).starts_with(&root),
-                        "{client} {name} escaped the temporary root"
-                    );
-                }
-            }
-            drop(temporary);
-            assert!(!root.exists(), "{client} temporary root survived drop");
-        }
-    }
-
-    #[test]
-    fn registry_order_matches_client_discriminants() {
-        for client in ClientKind::ALL {
-            assert_eq!(client.integration().kind, client);
-        }
-    }
-}
+#[path = "with_command_tests.rs"]
+mod tests;
 
 #[cfg(test)]
 #[path = "with_command_sweep_tests.rs"]
