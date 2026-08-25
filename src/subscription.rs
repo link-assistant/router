@@ -364,18 +364,41 @@ impl SubscriptionReader {
 
     /// The raw platform-store entry to consider when importing from this home.
     ///
-    /// Unlike the serving path this does not require the home to be the
-    /// vendor's default: an operator naming a source directory explicitly is
-    /// telling us where to look, and on macOS the live Claude credential is in
-    /// the store rather than in that directory. The pool-collapse risk that
-    /// motivates the stricter rule while serving does not apply here, because
-    /// nothing is served from this reader — it is read once, on demand, for a
-    /// directory the operator typed.
+    /// Gated on the home being the vendor's default, exactly as the serving
+    /// path is. The store is a single machine-wide entry, so consulting it for
+    /// *any* home let it answer for a directory it does not describe: on macOS
+    /// it usually holds the newest credential, so it beat every explicitly
+    /// named source and no spelling of `auth import <provider> <dir>` could
+    /// reach the file the operator pointed at (issue #285).
+    ///
+    /// This was written unguarded on purpose, reasoning that an operator naming
+    /// a directory is telling us where to look and that the pool-collapse risk
+    /// does not apply because nothing is served from this reader. The first
+    /// half is right and is what the guard now honours; the second half was
+    /// wrong. Import *writes the credential a deployment then serves*, so
+    /// collapsing a pool of per-account directories onto one machine-wide
+    /// entry is exactly as damaging here as on the serving path — see
+    /// [`is_vendor_default_home`](Self::is_vendor_default_home).
+    ///
+    /// An unqualified import still resolves to the vendor's own home, so the
+    /// case this was built for — a live Keychain credential beside a stale file
+    /// in the vendor's home (issue #249) — keeps working.
     fn import_source_keychain(&self) -> Option<String> {
-        if !self.is_vendor_default_home() {
+        if !self.consults_platform_store_for_import() {
             return None;
         }
         crate::platform_keychain::lookup(self.provider)
+    }
+
+    /// Whether an import from this home may consult the platform store.
+    ///
+    /// Split from the lookup so the *decision* can be asserted on every
+    /// platform. The lookup itself finds nothing off macOS and depends on the
+    /// developer's own login on it, so a test that went through it would pass
+    /// vacuously on CI and read a real credential locally — which no test may
+    /// do.
+    fn consults_platform_store_for_import(&self) -> bool {
+        self.is_vendor_default_home()
     }
 
     /// Install a credential document as this provider's credential.
@@ -386,7 +409,6 @@ impl SubscriptionReader {
     /// # Errors
     ///
     /// Returns an operator-readable message when the write cannot land.
-    #[must_use = "use the installed credential path or handle the installation error"]
     pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
         // Where the provider's own client writes, so an adopted credential
         // lands exactly where a fresh login would put it.
