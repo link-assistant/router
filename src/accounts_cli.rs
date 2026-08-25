@@ -23,6 +23,28 @@ pub fn run(
     op: &AccountOp,
 ) -> ExitCode {
     match op {
+        AccountOp::List { json, .. } if *json => {
+            let rows: Vec<serde_json::Value> = router
+                .health_snapshot_with(refreshes)
+                .into_iter()
+                .map(|health| {
+                    serde_json::json!({
+                        "name": health.name,
+                        "healthy": health.healthy,
+                        "credential": health.credential.label(),
+                        "used": health.used,
+                        "request_limit": health.request_limit,
+                        "remaining_requests": health.remaining_requests,
+                        "home": health.home.display().to_string(),
+                    })
+                })
+                .collect();
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&rows).unwrap_or_else(|_| "[]".to_string())
+            );
+            ExitCode::SUCCESS
+        }
         AccountOp::List { .. } => {
             println!("{}", header());
             for health in router.health_snapshot_with(refreshes) {

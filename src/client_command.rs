@@ -24,7 +24,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
         },
     };
     match op {
-        ClientOp::List => list(&manager),
+        ClientOp::List { json } => list(&manager, *json),
         ClientOp::Setup {
             client,
             token,
@@ -86,11 +86,14 @@ fn resolve_supplied_token(
 /// A listing never ends early. Stopping at the first damaged file hid every
 /// client after it, and named a *different* client than the one missing, so a
 /// reader had no reason to suspect the table was incomplete (issue #304).
-fn list(manager: &ClientManager) -> ExitCode {
-    println!(
-        "{:<12}  {:<9}  {:<11}  {:<19}  config",
-        "client", "installed", "configured", "dialect"
-    );
+fn list(manager: &ClientManager, json: bool) -> ExitCode {
+    let mut rows = Vec::new();
+    if !json {
+        println!(
+            "{:<12}  {:<9}  {:<11}  {:<19}  config",
+            "client", "installed", "configured", "dialect"
+        );
+    }
     let mut unreadable = Vec::new();
     let mut failures = Vec::new();
     for client in ClientKind::ALL {
@@ -101,23 +104,35 @@ fn list(manager: &ClientManager) -> ExitCode {
                 } else {
                     status.configured.to_string()
                 };
-                println!(
-                    "{:<12}  {:<9}  {:<11}  {:<19}  {}",
-                    status.client,
-                    status.installed,
-                    configured,
-                    status.dialect,
-                    status.config_path.display()
-                );
+                if json {
+                    rows.push(status.clone());
+                } else {
+                    println!(
+                        "{:<12}  {:<9}  {:<11}  {:<19}  {}",
+                        status.client,
+                        status.installed,
+                        configured,
+                        status.dialect,
+                        status.config_path.display()
+                    );
+                }
                 if let Some(reason) = status.unreadable {
                     unreadable.push((client, reason));
                 }
             }
             Err(error) => {
-                println!("{client:<12}  {:<9}  {:<11}  {:<19}  -", "?", "error", "?");
+                if !json {
+                    println!("{client:<12}  {:<9}  {:<11}  {:<19}  -", "?", "error", "?");
+                }
                 failures.push((client, error.to_string()));
             }
         }
+    }
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&rows).unwrap_or_else(|_| "[]".to_string())
+        );
     }
     for (client, reason) in unreadable.iter().chain(&failures) {
         eprintln!("error: could not read {client}: {reason}");

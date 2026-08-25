@@ -10,9 +10,21 @@ use crate::clients::ClientKind;
 #[derive(Debug, Subcommand)]
 pub enum ClientOp {
     /// List supported clients and their local installation/configuration state.
-    List,
+    List {
+        /// Emit JSON instead of the table (issue #314).
+        #[arg(long)]
+        json: bool,
+    },
     /// Merge this router into a client's user configuration.
-    #[command(override_usage = "link-assistant-router clients setup [OPTIONS] <CLIENT>")]
+    ///
+    /// `router configure <client>` is the name for this, and the one that
+    /// follows the server selection. `create` and `add` are accepted here too
+    /// (issues #296, #314).
+    #[command(
+        alias = "create",
+        alias = "add",
+        override_usage = "router clients setup [OPTIONS] <CLIENT>"
+    )]
     Setup {
         #[arg(value_enum)]
         client: ClientKind,
@@ -24,21 +36,32 @@ pub enum ClientOp {
         /// Read an existing router token as one line from standard input.
         #[arg(long, conflicts_with = "token")]
         token_stdin: bool,
-        /// Router URL reachable from the client (defaults to this CLI's host/port).
-        #[arg(long)]
+        /// Router URL reachable from the client.
+        ///
+        /// Spelled `--server` like everywhere else the router's own URL is
+        /// named; `--base-url` means the *upstream's* URL in `providers add`,
+        /// so one flag referred to two different machines depending on the
+        /// family (issue #314). The old spelling is still accepted.
+        #[arg(long = "server", alias = "base-url", value_name = "URL")]
         base_url: Option<String>,
         /// Lifetime of an automatically minted token.
         #[arg(long, default_value_t = 24)]
         ttl_hours: i64,
     },
     /// Show the effective client integration with secrets redacted.
-    #[command(override_usage = "link-assistant-router clients show [OPTIONS] <CLIENT>")]
+    #[command(override_usage = "router clients show [OPTIONS] <CLIENT>")]
     Show {
         #[arg(value_enum)]
         client: ClientKind,
     },
     /// Remove only settings managed by this router.
-    #[command(override_usage = "link-assistant-router clients remove [OPTIONS] <CLIENT>")]
+    ///
+    /// `delete` and `revoke` are accepted too (issue #314).
+    #[command(
+        alias = "delete",
+        alias = "revoke",
+        override_usage = "router clients remove [OPTIONS] <CLIENT>"
+    )]
     Remove {
         #[arg(value_enum)]
         client: ClientKind,
@@ -58,7 +81,7 @@ pub enum ClientOp {
     /// budget, reasoning at the lowest tier, and a two-word prompt. It still
     /// costs a request against the subscription, because proving the route
     /// works means using it (issues #275, #309).
-    #[command(override_usage = "link-assistant-router clients doctor [OPTIONS] <CLIENT>")]
+    #[command(override_usage = "router clients doctor [OPTIONS] <CLIENT>")]
     Doctor {
         #[arg(value_enum)]
         client: ClientKind,

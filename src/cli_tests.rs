@@ -74,6 +74,7 @@ fn sensitive_environment_values_are_hidden_from_help() {
 fn cli_defaults_round_trip_to_config() {
     let cli = Cli {
         command: None,
+        home: None,
         host: "127.0.0.1".into(),
         port: 9090,
         verbose: false,
@@ -156,6 +157,7 @@ fn cli_defaults_round_trip_to_config() {
 fn cli_invalid_routing_mode_rejected() {
     let cli = Cli {
         command: None,
+        home: None,
         host: "0.0.0.0".into(),
         port: 8080,
         verbose: false,

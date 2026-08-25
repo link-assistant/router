@@ -118,6 +118,16 @@ pub struct Cli {
     #[arg(long, env = "DATA_DIR", global = true)]
     pub data_dir: Option<PathBuf>,
 
+    /// Treat this directory as the home for every client configuration root,
+    /// instead of `$HOME` and the clients' own override variables.
+    ///
+    /// Global, like `--data-dir`. Declared on the `clients` subcommand it had
+    /// to precede it — `clients list --home /tmp` was an error while
+    /// `clients --home /tmp list` worked, for one flag and not its neighbour
+    /// (issue #314).
+    #[arg(long, value_name = "DIR", global = true)]
+    pub home: Option<PathBuf>,
+
     /// Path to the local Claude CLI binary used by the CLI backend.
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
     pub claude_cli_bin: Option<PathBuf>,
@@ -523,16 +533,22 @@ pub enum Command {
         #[command(subcommand)]
         op: ProviderOp,
     },
-    /// Configure local agentic CLIs to use this router.
+    /// Inspect and manage local agentic CLI configuration.
+    ///
+    /// `router configure <client>` is the command for pointing a client at the
+    /// router; these read and remove what is there (issue #296).
     Clients {
-        /// Treat this directory as the home for every client configuration
-        /// root, instead of `$HOME` and the clients' own override variables.
-        #[arg(long, value_name = "DIR")]
-        home: Option<PathBuf>,
         #[command(subcommand)]
         op: ClientOp,
     },
-    /// Launch an agentic CLI with an isolated router configuration.
+    /// Launch an agentic CLI against this router, keeping its own configuration.
+    ///
+    /// Isolation stopped being the default in issue #277, and this line went on
+    /// saying the opposite twelve lines above the flag that says so — the
+    /// document contradicted itself before the options began (issue #312).
+    ///
+    /// Everything after the client name is passed to the client verbatim;
+    /// router options go before it (issue #299).
     With(WithArgs),
     /// Point a client at the router permanently.
     ///
@@ -583,8 +599,13 @@ pub enum Command {
 pub enum LogsOp {
     /// Shape of the log: exchanges, records, statuses, time span, size.
     Summary {
-        /// Restrict to one token's directory, by its hashed name.
-        #[arg(long)]
+        /// Restrict to one token's log directory, by its hashed name.
+        ///
+        /// Named `--token-id` because `--token` means a credential in `with`,
+        /// `server use` and `clients setup`, and one flag name meaning two
+        /// things is what makes a CLI unusable from memory (issue #314). The
+        /// old spelling is still accepted.
+        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
         token: Option<String>,
         /// Emit JSON, for a monitoring check rather than a human.
         #[arg(long)]
@@ -596,8 +617,10 @@ pub enum LogsOp {
     ///
     /// Exits non-zero when any are found, so it works as a health gate.
     Anomalies {
-        #[arg(long)]
+        /// Restrict to one token's log directory, by its hashed name.
+        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
         token: Option<String>,
+        /// Emit JSON, for a monitoring check rather than a human.
         #[arg(long)]
         json: bool,
         #[command(flatten)]
@@ -606,7 +629,8 @@ pub enum LogsOp {
     /// One exchange, decoded and in order.
     Show {
         correlation_id: String,
-        #[arg(long)]
+        /// Restrict to one token's log directory, by its hashed name.
+        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
         token: Option<String>,
         #[command(flatten)]
         target: AuthTarget,
@@ -645,6 +669,11 @@ fn auth_flow_parser(flows: &'static [AuthFlow]) -> impl TypedValueParser<Value =
 #[derive(Debug, Subcommand)]
 pub enum TokenOp {
     /// Issue a new token and print it to stdout.
+    ///
+    /// `create` and `add` are accepted too: creating something was `tokens
+    /// issue`, `providers add` and `clients setup` — three verbs for one idea
+    /// (issue #314).
+    #[command(alias = "create", alias = "add")]
     Issue {
         #[arg(long, default_value_t = 24)]
         ttl_hours: i64,
@@ -676,7 +705,7 @@ pub enum TokenOp {
         target: AuthTarget,
     },
     /// Replace a token, preserving its controls, and revoke the old token.
-    #[command(override_usage = "link-assistant-router tokens rotate [OPTIONS] <ID>")]
+    #[command(override_usage = "router tokens rotate [OPTIONS] <ID>")]
     Rotate {
         /// Subject id (`sub`) of the token being replaced.
         id: String,
@@ -701,25 +730,44 @@ pub enum TokenOp {
     },
     /// List all known tokens.
     List {
+        /// Emit JSON instead of the table.
+        ///
+        /// Every `list` printed a table unconditionally and every `show`
+        /// printed JSON unconditionally, so neither could be asked for the
+        /// other form — and `--json` existed on two subcommands only
+        /// (issue #314).
+        #[arg(long)]
+        json: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
     /// Revoke a token by id.
-    #[command(override_usage = "link-assistant-router tokens revoke [OPTIONS] <ID>")]
+    ///
+    /// `remove` and `delete` are accepted too: destroying something was
+    /// `providers remove`, `clients remove`, `server remove`, `tokens revoke`
+    /// and `tokens expire` (issue #314).
+    #[command(
+        alias = "remove",
+        alias = "delete",
+        override_usage = "router tokens revoke [OPTIONS] <ID>"
+    )]
     Revoke {
         id: String,
         #[command(flatten)]
         target: AuthTarget,
     },
-    /// Mark a token as expired immediately (revoke alias).
-    #[command(override_usage = "link-assistant-router tokens expire [OPTIONS] <ID>")]
+    /// Revoke a token by id — an alias of `revoke`, kept for scripts.
+    ///
+    /// Both arms have always collapsed into the same call and printed
+    /// `revoked <ID>`, while the help promised a distinct operation
+    /// (issue #314). It is documented as the alias it is.
     Expire {
         id: String,
         #[command(flatten)]
         target: AuthTarget,
     },
     /// Show metadata for one token.
-    #[command(override_usage = "link-assistant-router tokens show [OPTIONS] <ID>")]
+    #[command(override_usage = "router tokens show [OPTIONS] <ID>")]
     Show {
         id: String,
         #[command(flatten)]
@@ -731,6 +779,9 @@ pub enum TokenOp {
 pub enum AccountOp {
     /// List configured accounts and their health.
     List {
+        /// Emit JSON instead of the table (issue #314).
+        #[arg(long)]
+        json: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -740,28 +791,58 @@ pub enum AccountOp {
 pub enum ProviderOp {
     /// List configured upstream providers.
     List {
+        /// Emit JSON instead of the table (issue #314).
+        #[arg(long)]
+        json: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
     /// Add or replace an OpenAI-compatible provider.
+    ///
+    /// `create` and `issue` are accepted too (issue #314).
     #[command(
-        override_usage = "link-assistant-router providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>"
+        alias = "create",
+        alias = "issue",
+        override_usage = "router providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>"
     )]
     Add {
+        /// Name this provider is referred to by, in routing and in `providers
+        /// show`. Adding an existing name replaces that record.
         #[arg(long)]
         name: String,
+        /// Wire protocol the upstream speaks.
         #[arg(long, default_value = "openai-compatible")]
         kind: String,
+        /// The upstream's own base URL — not the router's. `--server` names
+        /// the router; this names the machine it forwards to (issue #314).
         #[arg(long)]
         base_url: String,
+        /// Single model this provider serves, for an upstream that serves one.
         #[arg(long)]
         model: Option<String>,
+        /// Comma-separated models this provider serves.
         #[arg(long, value_delimiter = ',')]
         models: Vec<String>,
-        #[arg(long)]
+        /// Vendor API key, stored encrypted under the deployment's
+        /// `TOKEN_SECRET`.
+        ///
+        /// Prefer `--api-key-stdin`: a key given here is visible in shell
+        /// history and in `ps` (issue #314).
+        #[arg(long, hide_env_values = true, conflicts_with = "api_key_stdin")]
         api_key: Option<String>,
+        /// Read the vendor API key as one line from standard input.
+        ///
+        /// The one secret in this tool that could travel only through argv,
+        /// while every other has had a stdin form and `clients setup --help`
+        /// warns against argv for exactly this reason (issue #314).
+        #[arg(long, conflicts_with = "api_key")]
+        api_key_stdin: bool,
+        /// Environment variable the *router process* reads the key from at
+        /// request time, instead of storing one.
         #[arg(long)]
         api_key_env: Option<String>,
+        /// Whether this provider takes part in routing. Disabled records are
+        /// kept and ignored, so one can be parked without deleting it.
         #[arg(
             long,
             default_value_t = true,
@@ -773,21 +854,27 @@ pub enum ProviderOp {
         target: AuthTarget,
     },
     /// Show one provider with secret material redacted.
-    #[command(override_usage = "link-assistant-router providers show [OPTIONS] <NAME>")]
+    #[command(override_usage = "router providers show [OPTIONS] <NAME>")]
     Show {
         name: String,
         #[command(flatten)]
         target: AuthTarget,
     },
     /// Remove one provider.
-    #[command(override_usage = "link-assistant-router providers remove [OPTIONS] <NAME>")]
+    ///
+    /// `revoke` and `delete` are accepted too (issue #314).
+    #[command(
+        alias = "revoke",
+        alias = "delete",
+        override_usage = "router providers remove [OPTIONS] <NAME>"
+    )]
     Remove {
         name: String,
         #[command(flatten)]
         target: AuthTarget,
     },
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
-    #[command(override_usage = "link-assistant-router providers import [OPTIONS] <PATH>")]
+    #[command(override_usage = "router providers import [OPTIONS] <PATH>")]
     Import {
         path: PathBuf,
         #[command(flatten)]

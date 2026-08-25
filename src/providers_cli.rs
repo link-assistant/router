@@ -88,6 +88,7 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
             model,
             models,
             api_key,
+            api_key_stdin,
             api_key_env,
             enabled,
             ..
@@ -100,7 +101,8 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
                 base_url: base_url.clone(),
                 default_model: model.clone(),
                 models: Some(models.clone()),
-                api_key: api_key.clone(),
+                api_key: supplied_api_key(api_key.as_ref(), *api_key_stdin)
+                    .map_err(|error| error.to_string())?,
                 api_key_env: api_key_env.clone(),
                 encrypted_api_key: None,
                 enabled: Some(*enabled),
@@ -108,6 +110,21 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
         }),
         ProviderOp::Import { .. } => None,
     })
+}
+
+/// The vendor API key this invocation supplies, from argv or standard input.
+///
+/// `--api-key-stdin` exists because this was the one secret in the tool that
+/// could travel only through argv, where shell history and `ps` expose it —
+/// while every other secret already had a stdin form (issue #314).
+fn supplied_api_key(
+    api_key: Option<&String>,
+    api_key_stdin: bool,
+) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
+    if api_key_stdin {
+        return crate::server_command::read_token().map(Some);
+    }
+    Ok(api_key.cloned())
 }
 
 /// One provider as the endpoint's own request type encodes it.
@@ -162,8 +179,16 @@ async fn remote_result(
     };
 
     match op {
-        ProviderOp::List { .. } => {
-            print_remote_table(&records_in(&answer?));
+        ProviderOp::List { json, .. } => {
+            let records = records_in(&answer?);
+            if *json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&records).unwrap_or_else(|_| "[]".to_string())
+                );
+            } else {
+                print_remote_table(&records);
+            }
             Ok(ExitCode::SUCCESS)
         }
         ProviderOp::Show { name, .. } => match answer {
@@ -242,7 +267,14 @@ fn print_remote_table(records: &[serde_json::Value]) {
 #[must_use]
 pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
     match op {
-        ProviderOp::List { .. } => match store.list_redacted() {
+        ProviderOp::List { json, .. } => match store.list_redacted() {
+            Ok(records) if *json => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&records).unwrap_or_else(|_| "[]".to_string())
+                );
+                ExitCode::SUCCESS
+            }
             Ok(records) => {
                 println!(
                     "{:<20}  {:<18}  {:<32}  {:<10}  default_model",
@@ -272,17 +304,25 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
             model,
             models,
             api_key,
+            api_key_stdin,
             api_key_env,
             enabled,
             ..
         } => {
+            let api_key = match supplied_api_key(api_key.as_ref(), *api_key_stdin) {
+                Ok(api_key) => api_key,
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    return ExitCode::from(2);
+                }
+            };
             let input = ProviderUpsert {
                 name: name.clone(),
                 kind: Some(kind.clone()),
                 base_url: base_url.clone(),
                 default_model: model.clone(),
                 models: Some(models.clone()),
-                api_key: api_key.clone(),
+                api_key,
                 api_key_env: api_key_env.clone(),
                 encrypted_api_key: None,
                 enabled: Some(*enabled),

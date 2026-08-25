@@ -85,6 +85,36 @@ pub const fn may_be_remote(command: &Command) -> bool {
     }
 }
 
+/// Refuse `--managed` where nothing can start a container.
+///
+/// The flag says "start a disposable managed container". Only `with` and
+/// `configure` do — they launch or point a client at a router, and starting one
+/// is part of that. Everywhere else it started nothing and quietly meant
+/// `--local`: a second, undocumented synonym whose own description promised
+/// something it never did (issue #315). Saying so beats a silent second
+/// meaning, and `--local` is the flag that was wanted.
+#[must_use]
+pub fn refuse_managed(command: &Command) -> Option<ExitCode> {
+    let name = match command {
+        Command::Tokens { .. } => "tokens",
+        Command::Accounts { .. } => "accounts",
+        Command::Providers { .. } => "providers",
+        Command::Logs { .. } => "logs",
+        Command::Doctor { .. } => "doctor",
+        Command::Tls { .. } => "tls",
+        _ => return None,
+    };
+    if !target_of(command).is_some_and(|target| target.managed) {
+        return None;
+    }
+    eprintln!(
+        "error: `--managed` starts a disposable managed container, which only `with` and \
+         `configure` do; `{name}` cannot use one."
+    );
+    eprintln!("note: pass --local to act on this machine, or --server <URL> to name a router.");
+    Some(ExitCode::from(2))
+}
+
 /// Whether this invocation named the local state it wants acted on.
 ///
 /// Without a selection, `auth` adopts a router already listening here, because

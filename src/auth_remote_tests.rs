@@ -351,8 +351,10 @@ async fn local_selects_no_remote_server() {
     assert!(target.is_none(), "--local must stay local");
 }
 
-/// `--managed` keeps the local path too, so a clean-room run is unaffected by
-/// whatever is listening (issue #250).
+/// `--managed` keeps the local path for `auth`, so a clean-room run is
+/// unaffected by whatever is listening (issue #250). The families that cannot
+/// start a container refuse the flag instead of taking this branch silently
+/// (issue #315).
 #[tokio::test]
 async fn managed_selects_no_remote_server() {
     let target = target_for(false, true, None).await.expect("no error");

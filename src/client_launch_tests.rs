@@ -13,6 +13,7 @@ fn args(client: ClientKind, client_args: &[&str]) -> WithArgs {
         isolated_config: false,
         pick_model: false,
         server: None,
+        local: false,
         token: None,
         token_stdin: false,
         model: None,

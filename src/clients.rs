@@ -424,7 +424,7 @@ impl From<serde_json::Error> for ClientError {
 }
 
 /// Secret-free state returned by `clients list` and `clients show`.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ClientStatus {
     pub client: String,
     pub installed: bool,

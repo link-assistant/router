@@ -14,7 +14,7 @@ impl TokenOp {
         match self {
             Self::Issue { target, .. }
             | Self::Rotate { target, .. }
-            | Self::List { target }
+            | Self::List { target, .. }
             | Self::Revoke { target, .. }
             | Self::Expire { target, .. }
             | Self::Show { target, .. } => target,
@@ -27,7 +27,7 @@ impl AccountOp {
     #[must_use]
     pub const fn target(&self) -> &AuthTarget {
         match self {
-            Self::List { target } => target,
+            Self::List { target, .. } => target,
         }
     }
 }
@@ -37,7 +37,7 @@ impl ProviderOp {
     #[must_use]
     pub const fn target(&self) -> &AuthTarget {
         match self {
-            Self::List { target }
+            Self::List { target, .. }
             | Self::Add { target, .. }
             | Self::Show { target, .. }
             | Self::Remove { target, .. }

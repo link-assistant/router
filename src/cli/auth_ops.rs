@@ -44,7 +44,7 @@ pub enum AuthOp {
     /// `auth claude` or `auth codex` to authorize a remote deployment.
     ///
     /// The per-provider flags on the authorize commands keep working.
-    #[command(override_usage = "link-assistant-router auth import [OPTIONS] [PROVIDER] [DIR]")]
+    #[command(override_usage = "router auth import [OPTIONS] [PROVIDER] [DIR]")]
     Import {
         /// Which login to adopt. Omit with `--all`.
         #[arg(value_enum, required_unless_present = "all")]
@@ -285,6 +285,11 @@ pub struct AuthTarget {
     pub server: Option<String>,
     /// Start a disposable managed container even if a router is already
     /// listening locally (issue #250).
+    ///
+    /// Accepted by the commands that can use one — `with`, `configure` and
+    /// `auth`. The families that only read or change router state refuse it
+    /// and name `--local`, because there it started nothing and quietly meant
+    /// `--local` anyway (issue #315).
     #[arg(long, conflicts_with_all = ["local", "server"])]
     pub managed: bool,
 }

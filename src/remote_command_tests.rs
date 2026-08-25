@@ -59,9 +59,35 @@ fn only_an_explicit_local_target_skips_resolution() {
             let explicit = [args, &[flag]].concat();
             assert!(
                 !may_be_remote(&command_of(&explicit)),
-                "{args:?} {flag} asks for this machine and must not contact a server"
+                "{args:?} {flag} must not contact a server"
             );
         }
+    }
+}
+
+/// `--managed` says it starts a disposable container. On every family but
+/// `with` and `configure` it started nothing and quietly meant `--local`,
+/// which is a second, undocumented synonym whose own description promised
+/// something else (issue #315). It is refused there, naming what was wanted.
+#[test]
+fn managed_is_refused_where_no_container_can_be_started() {
+    for args in [
+        &["router", "tokens", "list"][..],
+        &["router", "accounts", "list"],
+        &["router", "providers", "list"],
+        &["router", "logs", "anomalies"],
+        &["router", "doctor"],
+        &["router", "tls", "ca"],
+    ] {
+        let managed = [args, &["--managed"]].concat();
+        assert!(
+            refuse_managed(&command_of(&managed)).is_some(),
+            "{args:?} --managed must be refused rather than silently meaning --local"
+        );
+        assert!(
+            refuse_managed(&command_of(args)).is_none(),
+            "{args:?} without the flag is unaffected"
+        );
     }
 }
 

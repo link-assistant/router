@@ -51,13 +51,23 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         args.token.clone()
     };
-    let server = resolve(
-        args.server.as_deref(),
-        explicit_token,
-        args.run_max_requests,
-        args.managed,
-    )
-    .await?;
+    let server = if args.local {
+        let mut server = crate::managed_server::discovered_local_router()
+            .await
+            .ok_or("no router is listening on this machine; start one with `router serve`, or drop --local to use the selected server")?;
+        if let Some(token) = explicit_token {
+            server.token = Some(token);
+        }
+        server
+    } else {
+        resolve(
+            args.server.as_deref(),
+            explicit_token,
+            args.run_max_requests,
+            args.managed,
+        )
+        .await?
+    };
     // The label travels to the router and is stored there. It used to be the
     // name of the directory the run was launched from, so a deployment — which
     // may be someone else's machine, or a team's, or a provider's —

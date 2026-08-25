@@ -91,6 +91,11 @@ async fn run() -> ExitCode {
         }
     };
 
+    if let Some(command) = cli.command.as_ref()
+        && let Some(code) = link_assistant_router::remote_command::refuse_managed(command)
+    {
+        return code;
+    }
     // One targeting rule for every command that reads or changes router state:
     // act on the router this machine is pointed at (issue #294).
     if let Some(command) = cli.command.as_ref()
@@ -129,8 +134,8 @@ async fn run() -> ExitCode {
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
         Some(Command::Providers { op }) => link_assistant_router::providers_cli::run(&config, op),
-        Some(Command::Clients { home, op }) => {
-            link_assistant_router::client_command::run(&config, home.as_deref(), op).await
+        Some(Command::Clients { op }) => {
+            link_assistant_router::client_command::run(&config, cli.home.as_deref(), op).await
         }
         Some(Command::With(_) | Command::Server { .. } | Command::Configure(_)) => {
             unreachable!("handled before config")
@@ -651,7 +656,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::List { .. } => match mgr.list_tokens() {
+        TokenOp::List { json, .. } => match mgr.list_tokens() {
             Ok(records) => {
                 // Rendered by the shared printer, so the local and remote
                 // tables cannot drift: an operator reading one has no way to
@@ -660,7 +665,14 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                     .into_iter()
                     .map(|record| serde_json::to_value(record).unwrap_or_default())
                     .collect();
-                link_assistant_router::token_report::print_table(&rows);
+                if *json {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&rows).unwrap_or_else(|_| "[]".to_string())
+                    );
+                } else {
+                    link_assistant_router::token_report::print_table(&rows);
+                }
                 ExitCode::SUCCESS
             }
             Err(e) => {
