@@ -773,7 +773,7 @@ round-trip:
 router auth import claude        # from ~/.claude, or the Keychain if it is newer
 router auth import codex         # from ~/.codex
 router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
-router auth import claude /path  # or name the source
+router auth import claude /path  # or name the source, read exactly as given
 router auth import --all         # every login this machine has, in one step
 ```
 
@@ -784,10 +784,15 @@ that already exists. The per-provider flags (`--from-claude-home`,
 
 The import reports what it adopted — where it came from, when it expires, and
 whether it carries a refresh token — so an already-expired credential is caught
-at import time rather than as a `401` later. On macOS the live Claude
-credential is in the login Keychain rather than the file beside it, and the
-import prefers whichever is actually newer, the same rule the serving path
-uses.
+at import time rather than as a `401` later.
+
+On macOS the live Claude credential is in the login Keychain rather than the
+file beside it, so an import from the vendor's own home consults both and takes
+whichever is newer — the same rule the serving path uses. Naming a source
+directory means *this* credential from *there*, so the machine-wide store is
+left out of it and the named directory is read exactly as given. Without that
+distinction a pool of per-account directories collapses onto whichever account
+happens to be logged in interactively.
 
 Adopting a credential does not mint one: both holders then rotate the same
 chain, and revoking it at the vendor ends both. To withdraw one:

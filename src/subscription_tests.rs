@@ -729,6 +729,66 @@ fn a_file_newer_than_the_store_is_described_as_installed_too() {
     assert!(source.document.contains("file-access"));
 }
 
+/// An explicitly named source is read as given, whatever the store holds
+/// (issue #285).
+///
+/// The platform store is a single machine-wide entry, so consulting it for any
+/// home let it answer for a directory it does not describe. On macOS it usually
+/// holds the newest credential, so it beat every named source and no spelling
+/// of `auth import <provider> <dir>` could reach the file the operator pointed
+/// at — a pool of per-account directories collapsed onto the one interactive
+/// login.
+///
+/// Asserted through `import_source_keychain`, which is the function the guard
+/// lives in: `import_from_store` takes the store entry as a parameter, so a
+/// test that called it directly would bypass the guard and pass either way.
+/// This also keeps the test honest on every platform — the real Keychain is
+/// never read, which no test may do.
+#[test]
+fn a_named_source_does_not_consult_the_platform_store() {
+    let dir = tempfile::tempdir().unwrap();
+    let reader = claude_home_expiring_at(dir.path(), 1_000);
+
+    assert!(
+        !reader.is_vendor_default_home(),
+        "a temp directory is not the vendor's home, which is what makes this the #285 case"
+    );
+    assert!(
+        !reader.consults_platform_store_for_import(),
+        "an explicitly named source must not reach for the machine-wide store"
+    );
+    // And the lookup itself yields nothing, which is what the caller sees.
+    assert!(reader.import_source_keychain().is_none());
+}
+
+/// The unqualified case still consults the store, so issue #249 keeps working.
+///
+/// `auth import claude` with no directory resolves to the vendor's own home,
+/// where a live Keychain credential sits beside a file nothing rotates. Gating
+/// the store on the *default* home is what separates "adopt the login this
+/// machine has" from "adopt this credential, from there" — the distinction
+/// issue #285 asked for. Without this the fix would silently undo #249.
+///
+/// `HOME` is read rather than set: this process never mutates the environment
+/// (the crate denies `unsafe_code`, and a shared variable is not a test's to
+/// change), so the reader is built against whatever home this run really has.
+#[test]
+fn the_vendor_default_home_still_consults_the_platform_store() {
+    let Ok(home) = std::env::var("HOME") else {
+        // Nothing to assert about a default home that cannot be resolved.
+        return;
+    };
+    let reader = SubscriptionReader::new(
+        SubscriptionProvider::Claude,
+        SubscriptionProvider::Claude.resolve_home(&home),
+    );
+
+    assert!(
+        reader.consults_platform_store_for_import(),
+        "the vendor's own home must still consult the store, or the #249 recovery is lost"
+    );
+}
+
 /// A home with no credential is an error naming the home, not an empty import.
 #[test]
 fn importing_from_an_empty_home_is_an_error() {

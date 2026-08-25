@@ -43,10 +43,13 @@ pub enum AuthOp {
         /// Which login to adopt. Omit with `--all`.
         #[arg(value_enum, required_unless_present = "all")]
         provider: Option<ImportProvider>,
-        /// Where to read it from. Defaults to the vendor's own home:
-        /// `$CLAUDE_CODE_HOME`, `$CODEX_HOME`, `$GH_CONFIG_DIR`, and so on —
-        /// or, on macOS for Claude, the login Keychain when it holds the newer
-        /// credential.
+        /// Where to read it from. A named directory is read exactly as given.
+        ///
+        /// Omitted, it defaults to the vendor's own home — `$CLAUDE_CODE_HOME`,
+        /// `$CODEX_HOME`, `$GH_CONFIG_DIR`, and so on — and there, on macOS for
+        /// Claude, the login Keychain is consulted too and wins when it holds
+        /// the newer credential. Naming a directory says *this* credential from
+        /// *there*, so the machine-wide store is left out of it (issue #285).
         dir: Option<String>,
         /// Adopt every login this machine has.
         ///
@@ -73,10 +76,11 @@ pub enum AuthOp {
         mode: Option<String>,
         /// Adopt an existing Claude login instead of authorizing.
         ///
-        /// Reads the credential a vendor client already holds — the file, or on
-        /// macOS the login Keychain entry, whichever is live — and installs it
-        /// as this deployment's (issue #274). Default: `$CLAUDE_CODE_HOME`,
-        /// else `~/.claude`.
+        /// Reads the credential a vendor client already holds and installs it as
+        /// this deployment's (issue #274). Default: `$CLAUDE_CODE_HOME`, else
+        /// `~/.claude`, where on macOS the login Keychain is consulted as well
+        /// and wins when it is the live one. A directory named explicitly is
+        /// read as given (issue #285).
         #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
         from_claude_home: Option<String>,
         /// Remove the stored credential instead of authorizing.
