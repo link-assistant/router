@@ -30,7 +30,7 @@ pub fn run(
         std::path::Path::to_path_buf,
     );
     match op {
-        LogsOp::Summary { token, json } => {
+        LogsOp::Summary { token, json, .. } => {
             let Ok((exchanges, unparsable, bytes)) =
                 log_analysis::read_exchanges(&root, token.as_deref())
             else {
@@ -48,7 +48,7 @@ pub fn run(
             }
             ExitCode::SUCCESS
         }
-        LogsOp::Anomalies { token, json } => {
+        LogsOp::Anomalies { token, json, .. } => {
             let Ok((exchanges, _, _)) = log_analysis::read_exchanges(&root, token.as_deref())
             else {
                 eprintln!("could not read the request log at {}", root.display());
@@ -103,6 +103,7 @@ pub fn run(
         LogsOp::Show {
             correlation_id,
             token,
+            ..
         } => match log_analysis::show(&root, token.as_deref(), correlation_id) {
             Ok(rendered) => {
                 print!("{rendered}");

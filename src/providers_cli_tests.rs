@@ -6,6 +6,7 @@
 //! reads back.
 
 use super::*;
+use crate::cli::AuthTarget;
 
 fn store(directory: &std::path::Path) -> ProviderStore {
     ProviderStore::open(directory, "providers-cli-test-secret").expect("open a provider store")
@@ -21,6 +22,7 @@ fn add(name: &str, models: &[&str]) -> ProviderOp {
         api_key: Some("provider-key".to_string()),
         api_key_env: None,
         enabled: true,
+        target: AuthTarget::default(),
     }
 }
 
@@ -55,12 +57,21 @@ fn listing_and_showing_a_provider_succeed() {
         ExitCode::SUCCESS
     );
 
-    assert_eq!(run_with(&store, &ProviderOp::List), ExitCode::SUCCESS);
+    assert_eq!(
+        run_with(
+            &store,
+            &ProviderOp::List {
+                target: AuthTarget::default()
+            }
+        ),
+        ExitCode::SUCCESS
+    );
     assert_eq!(
         run_with(
             &store,
             &ProviderOp::Show {
-                name: "formal-ai".to_string()
+                name: "formal-ai".to_string(),
+                target: AuthTarget::default(),
             }
         ),
         ExitCode::SUCCESS
@@ -83,7 +94,8 @@ fn an_unknown_provider_is_not_reported_as_removed() {
         run_with(
             &store,
             &ProviderOp::Show {
-                name: "absent".to_string()
+                name: "absent".to_string(),
+                target: AuthTarget::default(),
             }
         ),
         ExitCode::SUCCESS
@@ -92,7 +104,8 @@ fn an_unknown_provider_is_not_reported_as_removed() {
         run_with(
             &store,
             &ProviderOp::Remove {
-                name: "absent".to_string()
+                name: "absent".to_string(),
+                target: AuthTarget::default(),
             }
         ),
         ExitCode::SUCCESS
@@ -114,7 +127,8 @@ fn removing_a_provider_takes_its_models_with_it() {
         run_with(
             &store,
             &ProviderOp::Remove {
-                name: "formal-ai".to_string()
+                name: "formal-ai".to_string(),
+                target: AuthTarget::default(),
             }
         ),
         ExitCode::SUCCESS
@@ -139,7 +153,8 @@ fn importing_a_missing_file_fails() {
         run_with(
             &store,
             &ProviderOp::Import {
-                path: directory.path().join("absent.lenv")
+                path: directory.path().join("absent.lenv"),
+                target: AuthTarget::default(),
             }
         ),
         ExitCode::SUCCESS

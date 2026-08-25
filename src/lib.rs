@@ -66,6 +66,7 @@ pub mod providers_cli;
 pub mod proxy;
 pub mod refresh;
 pub mod refresh_rejections;
+pub mod remote_command;
 pub mod request_log;
 mod request_routing;
 pub mod responses;

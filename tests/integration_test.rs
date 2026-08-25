@@ -638,7 +638,7 @@ mod cli_parser_tests {
     #[test]
     fn cli_parses_doctor_subcommand() {
         let cli = Cli::try_parse_from(["bin", "doctor"]).expect("parses doctor");
-        assert!(matches!(cli.command, Some(Command::Doctor)));
+        assert!(matches!(cli.command, Some(Command::Doctor { .. })));
     }
 
     #[test]

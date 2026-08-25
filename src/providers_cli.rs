@@ -28,7 +28,7 @@ pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
 #[must_use]
 pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
     match op {
-        ProviderOp::List => match store.list_redacted() {
+        ProviderOp::List { .. } => match store.list_redacted() {
             Ok(records) => {
                 println!(
                     "{:<20}  {:<18}  {:<32}  {:<10}  default_model",
@@ -60,6 +60,7 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
             api_key,
             api_key_env,
             enabled,
+            ..
         } => {
             let input = ProviderUpsert {
                 name: name.clone(),
@@ -86,7 +87,7 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 }
             }
         }
-        ProviderOp::Show { name } => match store.get(name) {
+        ProviderOp::Show { name, .. } => match store.get(name) {
             Ok(Some(record)) => {
                 println!(
                     "{}",
@@ -103,7 +104,7 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        ProviderOp::Remove { name } => match store.delete(name) {
+        ProviderOp::Remove { name, .. } => match store.delete(name) {
             Ok(true) => {
                 println!("removed {name}");
                 ExitCode::SUCCESS
@@ -117,7 +118,7 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        ProviderOp::Import { path } => match store.import_file(path) {
+        ProviderOp::Import { path, .. } => match store.import_file(path) {
             Ok(count) => {
                 println!("imported {count} provider(s)");
                 ExitCode::SUCCESS

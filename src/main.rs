@@ -107,7 +107,7 @@ async fn run() -> ExitCode {
         }
         Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
         Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
-        Some(Command::Doctor) => run_doctor(&config).await,
+        Some(Command::Doctor { .. }) => run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
     }
@@ -507,6 +507,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             rate_limit_per_minute,
             admin,
             github_repo,
+            ..
         } => {
             let request = IssueRequest {
                 ttl_hours: *ttl_hours,
@@ -542,6 +543,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             max_tokens,
             rate_limit_per_minute,
             account,
+            ..
         } => match mgr.rotate_token_with(
             id,
             &link_assistant_router::token::RotateOverrides {
@@ -563,7 +565,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::List => match mgr.list_tokens() {
+        TokenOp::List { .. } => match mgr.list_tokens() {
             Ok(records) => {
                 println!(
                     "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {:<6}  label",
@@ -614,7 +616,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::Revoke { id } | TokenOp::Expire { id } => match mgr.revoke_token(id) {
+        TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => match mgr.revoke_token(id) {
             Ok(()) => {
                 println!("revoked {id}");
                 ExitCode::SUCCESS
@@ -624,7 +626,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::Show { id } => match mgr.list_tokens() {
+        TokenOp::Show { id, .. } => match mgr.list_tokens() {
             Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
                 || {
                     eprintln!("not found: {id}");
