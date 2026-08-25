@@ -17,20 +17,28 @@ later invocation sweeps directories left behind by a wrapper killed with
 
 ## Clients and configuration surfaces
 
-| Tool | Dialect and router base | Temporary isolation | Permanent target |
+A temporary run either **extends** the client's own configuration — adding the
+router's two connection variables to one process and nothing else — or gives
+the client a **router profile**, when routing it depends on a file the router
+writes. A profile is kept between runs under
+`$XDG_CONFIG_HOME/link-assistant-router/clients/<client>/home`, so sessions
+stay resumable and onboarding is answered once; `--isolated-config` makes it
+disposable instead (issues #277, #298).
+
+| Tool | Dialect and router base | Temporary run | Permanent target |
 | --- | --- | --- | --- |
-| `codex` | Responses, `URL/v1` | isolated `HOME` | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
-| `claude` (`claude-code`) | Anthropic Messages, `URL` | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
-| `gemini` (`gemini-cli`) | Gemini native, `URL/api/gemini` | `GEMINI_CLI_HOME` | temporary only; API-key endpoint override is environmental |
-| `grok` (`grok-cli`) | Chat Completions, `URL/v1` | isolated `HOME` plus environment | owner-only managed environment file |
-| `opencode` | Chat Completions, `URL/v1` | `OPENCODE_CONFIG` | `$XDG_CONFIG_HOME/opencode/opencode.json` |
-| `qwen` (`qwen-code`) | Chat Completions, `URL/v1` | isolated `HOME` | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
-| `agent` | Chat Completions, `URL/v1` | temporary config content | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
+| `codex` | Responses, `URL/v1` | router profile | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
+| `claude` (`claude-code`) | Anthropic Messages, `URL` | extends your own | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
+| `gemini` (`gemini-cli`) | Gemini native, `URL/api/gemini` | router profile | temporary only; API-key endpoint override is environmental |
+| `grok` (`grok-cli`) | Chat Completions, `URL/v1` | extends your own | owner-only managed environment file |
+| `opencode` | Chat Completions, `URL/v1` | router profile | `$XDG_CONFIG_HOME/opencode/opencode.json` |
+| `qwen` (`qwen-code`) | Chat Completions, `URL/v1` | extends your own | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
+| `agent` | Chat Completions, `URL/v1` | router profile | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
 | `cursor-agent` (`cursor`) | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | not implemented: router RPC adapter does not exist | none |
 
 Each name is the command the client installs as, which is what your shell
 already has; the descriptive form in parentheses is kept as an alias, so
-`with claude-code` and `clients setup qwen-code` continue to work.
+`with claude-code` and `configure qwen-code` continue to work.
 
 Each client-specific document keeps a binary-free manual path with the exact
 environment variables or config fields. Cursor deliberately fails before

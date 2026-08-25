@@ -37,7 +37,7 @@ containment controls local to the operator.
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
 - **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
-- **First-class CLI** — `serve`, token/provider/account management, `clients list|setup|show|remove|doctor`, and deployment diagnostics
+- **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
 
@@ -654,7 +654,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
-| `--token-secret` / `TOKEN_SECRET` | — | Yes | Secret key for signing/validating JWT tokens |
+| `--token-secret` / `TOKEN_SECRET` | — | To serve, sign or encrypt | Secret key for signing/validating JWT tokens and encrypting stored provider keys. A command that only reads local files or acts on another deployment does not need one |
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
@@ -1104,13 +1104,16 @@ working; the two are the same program and either may be used.
 # Default: starts the HTTP server (same as `serve`).
 router
 
-# Issue / list / revoke / show tokens locally (no HTTP needed):
+# Issue / list / revoke / show tokens. These act on the router this machine is
+# pointed at: local by default, or a selected deployment over its admin API.
+# `--local` acts here, `--server <URL>` names one.
 router tokens issue --ttl-hours 168 --label alice
 # ...optionally cap how many upstream requests the token may make:
 router tokens issue --ttl-hours 168 --label alice --max-requests 500
 # ...cap actual input + output tokens and bursts as well:
 router tokens issue --label alice --max-tokens 100000 --rate-limit-per-minute 10
 router tokens list
+router tokens list --json
 router tokens revoke <id>
 router tokens expire <id>
 router tokens rotate <id> --ttl-hours 168
@@ -1121,6 +1124,8 @@ router accounts list
 
 # Manage OpenAI-compatible upstream providers:
 router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
+# ...the vendor key never has to travel through argv:
+pass show litellm/key | router providers add --name litellm --base-url http://litellm:4000/v1 --api-key-stdin
 router providers import providers.lenv
 router providers list
 
@@ -1135,8 +1140,9 @@ router clients show codex
 router clients doctor codex
 router clients remove codex
 
-# Print resolved configuration + credential / store probes:
-router doctor
+# Print resolved configuration + credential / store probes. Reports on the
+# machine it runs on, so with another router selected it says so and names it.
+router doctor --local
 ```
 
 ### Logging
