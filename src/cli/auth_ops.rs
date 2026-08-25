@@ -181,6 +181,54 @@ impl AuthOp {
     }
 }
 
+/// Whether an `auth import` invocation may act on the machine running it.
+///
+/// Import installs into the credential home of the executing machine, and no
+/// router accepts a credential document over HTTP, so an import aimed at a
+/// different deployment has nothing it can do. Deciding that here — beside the
+/// flags it reads — keeps the rule unit-testable rather than reachable only by
+/// spawning the binary against a live server (issue #291).
+///
+/// `None` for anything that is not an `import`: the per-provider
+/// `--from-*-home` flags carry no target of their own.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum ImportTarget {
+    /// Act here: `--local`, `--managed`, or no selection at all.
+    Local,
+    /// A different router was named or selected; resolve it and refuse.
+    Remote,
+}
+
+impl AuthOp {
+    /// Whether this `auth import` may install into the local credential home.
+    ///
+    /// Answers from the flags alone. A bare invocation is [`Self::may_be_remote`]
+    /// because a *persisted* selection also counts as naming a target, which
+    /// only resolution can determine.
+    #[must_use]
+    pub const fn import_target(&self) -> Option<ImportTarget> {
+        match self {
+            Self::Import { target, .. } => {
+                if target.local || target.managed {
+                    Some(ImportTarget::Local)
+                } else {
+                    Some(ImportTarget::Remote)
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Whether this invocation must resolve a target before importing.
+    ///
+    /// `false` short-circuits resolution entirely, so `--local` never contacts
+    /// a server and never fails because one is unreachable.
+    #[must_use]
+    pub const fn may_be_remote(&self) -> bool {
+        matches!(self.import_target(), Some(ImportTarget::Remote))
+    }
+}
+
 /// Which router an `auth` command acts on.
 ///
 /// `auth` used to always write a local credential even when a server was

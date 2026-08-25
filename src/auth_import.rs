@@ -103,9 +103,14 @@ pub async fn run_import(
 /// `--local` is the way to ask for this machine, and `--managed` is a local
 /// disposable container, so both keep the ordinary path.
 async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
+    // Decided from the flags alone, so `--local` never contacts a server and
+    // never fails because one is unreachable. The per-provider
+    // `--from-*-home` flags carry no target and stay local, as they always
+    // were.
+    if !op.may_be_remote() {
+        return None;
+    }
     let AuthOp::Import { target, .. } = op else {
-        // The per-provider `--from-*-home` flags carry no target of their own;
-        // they are the older spelling and stay local, as they always were.
         return None;
     };
     let server = match link_assistant_router::auth_remote::target_for(
@@ -137,20 +142,12 @@ async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
         }
         _ => None,
     };
-    eprintln!(
-        "error: import installs a credential into the credential home of the machine running \
-         it, so it cannot provision {} from here.",
-        server.base_url
-    );
-    if let Some(home) = destination {
-        eprintln!("note: {} reads its credential from {home}", server.base_url);
+    for line in link_assistant_router::auth_remote::remote_import_refusal(
+        &server.base_url,
+        destination.as_deref(),
+    ) {
+        eprintln!("{line}");
     }
-    eprintln!(
-        "note: that deployment accepts no credential over HTTP, so run `router auth import` \
-         there, or authorize it from here with `router auth claude` / `router auth codex`, \
-         which do act on the selected server.\n\
-         note: pass --local to import into this machine's credential home."
-    );
     Some(ExitCode::from(1))
 }
 

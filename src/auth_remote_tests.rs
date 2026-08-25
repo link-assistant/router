@@ -488,3 +488,95 @@ fn a_silent_router_still_reports_nothing_configured() {
 
     assert_eq!(lines, vec!["no accounts are configured on this router"]);
 }
+
+/// The refusal names the directory the selected router reads from (#291).
+///
+/// "Not from here" alone leaves the operator to guess the next step; the path
+/// is the instruction. Single-account deployments report it under
+/// `credentials`, pooled ones under `accounts`.
+#[test]
+fn a_reported_credential_home_is_found_in_either_shape() {
+    let single = serde_json::json!({
+        "accounts": [],
+        "credentials": [
+            {"name": "claude", "home": "/srv/deployment-claude", "credential": "ok"},
+            {"name": "codex", "home": "/srv/deployment-codex", "credential": "missing"},
+        ],
+    });
+    assert_eq!(
+        home_in_accounts(&single, "claude").as_deref(),
+        Some("/srv/deployment-claude")
+    );
+    assert_eq!(
+        home_in_accounts(&single, "codex").as_deref(),
+        Some("/srv/deployment-codex")
+    );
+
+    let pooled = serde_json::json!({
+        "accounts": [{"name": "claude", "home": "/pool/a", "credential": "ok"}],
+    });
+    assert_eq!(
+        home_in_accounts(&pooled, "claude").as_deref(),
+        Some("/pool/a")
+    );
+}
+
+/// A router that reports no home simply omits the line.
+///
+/// The refusal is correct without it, so a missing or older `/v1/accounts`
+/// must never turn into a failure of its own.
+#[test]
+fn an_unreported_home_yields_nothing_rather_than_failing() {
+    assert_eq!(home_in_accounts(&serde_json::json!({}), "claude"), None);
+    assert_eq!(
+        home_in_accounts(&serde_json::json!({"accounts": []}), "claude"),
+        None
+    );
+    // A provider this deployment does not report.
+    let body = serde_json::json!({"credentials": [{"name": "codex", "home": "/srv/c"}]});
+    assert_eq!(home_in_accounts(&body, "claude"), None);
+    // An entry with no home at all.
+    let body = serde_json::json!({"credentials": [{"name": "claude"}]});
+    assert_eq!(home_in_accounts(&body, "claude"), None);
+}
+
+/// The refusal says what cannot be done, where it would have to go, and how to
+/// ask for the local action instead (issue #291).
+#[test]
+fn the_refusal_names_the_target_and_the_local_alternative() {
+    let lines = remote_import_refusal("http://router.example:8080", Some("/srv/deployment-claude"));
+
+    let all = lines.join("\n");
+    assert!(
+        all.contains("http://router.example:8080"),
+        "the target must be named, since answering about the local home is the bug: {all}"
+    );
+    assert!(
+        all.contains("/srv/deployment-claude"),
+        "the directory the credential would have to land in is the instruction: {all}"
+    );
+    assert!(
+        all.contains("--local"),
+        "the local action must stay reachable: {all}"
+    );
+    assert!(
+        all.starts_with("error:"),
+        "this is a refusal, not a note: {all}"
+    );
+}
+
+/// A router that reports no home still gets a complete, actionable refusal.
+#[test]
+fn the_refusal_omits_an_unreported_home_rather_than_guessing() {
+    let lines = remote_import_refusal("http://router.example:8080", None);
+
+    assert!(
+        !lines
+            .iter()
+            .any(|line| line.contains("reads its credential from")),
+        "an unreported home must be omitted, not invented: {lines:?}"
+    );
+    let all = lines.join("\n");
+    assert!(all.contains("http://router.example:8080"), "{all}");
+    assert!(all.contains("--local"), "{all}");
+}

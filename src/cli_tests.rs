@@ -302,3 +302,80 @@ fn only_gh_carries_the_remote_restriction() {
         );
     }
 }
+
+/// `auth import` acts locally only when asked to (issue #291).
+///
+/// `--server` parsed and was then discarded, so a selection, an explicit
+/// `--server`, and `--local` all produced one behaviour — the flags claimed a
+/// support that did not exist. Only `--local` and `--managed` may act here; a
+/// bare invocation may still be remote, because a *persisted* selection counts
+/// as naming a target and only resolution can tell.
+#[test]
+fn only_an_explicitly_local_import_skips_target_resolution() {
+    let local: [&[&str]; 2] = [&["--local"], &["--managed"]];
+    for extra in local {
+        let op = auth_op_of(
+            &[
+                &["link-assistant-router", "auth", "import", "claude"][..],
+                extra,
+            ]
+            .concat(),
+        );
+        assert_eq!(
+            op.import_target(),
+            Some(ImportTarget::Local),
+            "{extra:?} asks for this machine explicitly"
+        );
+        assert!(!op.may_be_remote(), "{extra:?} must not resolve a server");
+    }
+
+    let remote: [&[&str]; 2] = [&[], &["--server", "http://router.example:8080"]];
+    for extra in remote {
+        let op = auth_op_of(
+            &[
+                &["link-assistant-router", "auth", "import", "claude"][..],
+                extra,
+            ]
+            .concat(),
+        );
+        assert_eq!(
+            op.import_target(),
+            Some(ImportTarget::Remote),
+            "{extra:?} may name another deployment"
+        );
+        assert!(
+            op.may_be_remote(),
+            "{extra:?} must resolve before importing"
+        );
+    }
+}
+
+/// `--all` follows the same rule: it is unqualified by construction.
+#[test]
+fn importing_everything_also_honours_the_target() {
+    let op = auth_op_of(&["link-assistant-router", "auth", "import", "--all"]);
+    assert!(op.may_be_remote());
+
+    let op = auth_op_of(&[
+        "link-assistant-router",
+        "auth",
+        "import",
+        "--all",
+        "--local",
+    ]);
+    assert!(!op.may_be_remote());
+}
+
+/// The per-provider spelling carries no target and stays local.
+#[test]
+fn the_per_provider_import_flags_carry_no_target() {
+    let op = auth_op_of(&[
+        "link-assistant-router",
+        "auth",
+        "claude",
+        "--from-claude-home",
+        "/tmp/src",
+    ]);
+    assert_eq!(op.import_target(), None);
+    assert!(!op.may_be_remote());
+}

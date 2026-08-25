@@ -36,7 +36,7 @@ use crate::config::{
 mod auth_ops;
 mod with;
 
-pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, RemoteGh, TlsOp};
+pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
 /// Parse a boolean switch that may also arrive from the environment.

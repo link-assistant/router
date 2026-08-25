@@ -285,8 +285,48 @@ pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<
     let body: serde_json::Value = send(&client, server, reqwest::Method::GET, "/v1/accounts", None)
         .await
         .ok()?;
-    // Single-account deployments report under `credentials`, pooled ones under
-    // `accounts`; both carry `name` and `home`.
+    home_in_accounts(&body, provider)
+}
+
+/// Why an import cannot act on a router other than the machine running it.
+///
+/// The lines an operator reads, built here rather than at the call site so the
+/// wording is asserted directly. Import installs into the credential home of
+/// the executing machine, and no endpoint accepts a credential document —
+/// `/api/login` begins an interactive OAuth flow and `submit_code` takes a
+/// short-lived code, neither of which adopts a credential that already exists.
+///
+/// `home` names the directory that router reads from, when it reports one:
+/// "not from here" alone leaves the operator to guess the next step, and the
+/// path is the instruction. It is omitted rather than guessed when the router
+/// does not say (issue #291).
+#[must_use]
+pub fn remote_import_refusal(base_url: &str, home: Option<&str>) -> Vec<String> {
+    let mut lines = vec![format!(
+        "error: import installs a credential into the credential home of the machine running \
+         it, so it cannot provision {base_url} from here."
+    )];
+    if let Some(home) = home {
+        lines.push(format!("note: {base_url} reads its credential from {home}"));
+    }
+    lines.push(String::from(
+        "note: that deployment accepts no credential over HTTP, so run `router auth import` \
+         there, or authorize it from here with `router auth claude` / `router auth codex`, \
+         which do act on the selected server.",
+    ));
+    lines.push(String::from(
+        "note: pass --local to import into this machine's credential home.",
+    ));
+    lines
+}
+
+/// The home a `/v1/accounts` body reports for `provider`, if it names one.
+///
+/// Split from the request so the shape-handling can be asserted without a
+/// server: single-account deployments report under `credentials` and pooled
+/// ones under `accounts`, and a router predating either simply omits both.
+#[must_use]
+pub fn home_in_accounts(body: &serde_json::Value, provider: &str) -> Option<String> {
     ["credentials", "accounts"]
         .into_iter()
         .filter_map(|key| body.get(key).and_then(serde_json::Value::as_array))
