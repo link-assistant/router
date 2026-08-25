@@ -21,9 +21,10 @@ mod json_config;
 
 pub(crate) use catalog::RouterModel;
 use catalog::doctor_model;
+pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
 use files::{
-    atomic_write, read_claude_marker, read_codex_marker, read_environment_value, read_or_empty,
+    atomic_write, claude_marker, read_codex_marker, read_environment_value, read_or_empty,
     unchanged, write_claude_marker, write_codex_marker, write_if_changed,
 };
 use json_config::{read_json_provider_base_url, read_qwen_base_url};
@@ -42,7 +43,17 @@ const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
 pub const OPENAI_MODEL_OWNER: &str = "openai";
 /// Catalog owner whose models suit an Anthropic-dialect client.
 pub const ANTHROPIC_MODEL_OWNER: &str = "anthropic";
+/// Catalog owner the server labels a Gemini subscription with.
+pub const GOOGLE_MODEL_OWNER: &str = "google";
+/// Catalog owner the server labels a Qwen subscription with.
+pub const QWEN_MODEL_OWNER: &str = "qwen";
 pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
+/// Output budget for the `clients doctor` reachability probe.
+///
+/// "Reply OK" needs a handful of tokens, and a 200 with any body proves what
+/// `doctor` is asking. The floor is the right setting for a connectivity check
+/// (issue #309).
+const DOCTOR_MAX_TOKENS: u32 = 64;
 pub const DEFAULT_ANTHROPIC_REASONING_EFFORT: &str = "high";
 
 /// How a client can be isolated from its normal user configuration.
@@ -66,12 +77,28 @@ pub struct ClientIntegration {
     pub token_env: Option<&'static str>,
     pub base_url_env: Option<&'static str>,
     pub endpoint_suffix: &'static str,
-    /// Catalog owner whose models this client can use.
+    /// Catalog owners whose models suit this client, best first.
     ///
     /// The router holds no default model *name*: the concrete id is chosen from
-    /// the account's live catalog at execution time (issue #192). An empty
-    /// owner means the client accepts any advertised model.
-    pub model_owner: &'static str,
+    /// the account's live catalog at execution time (issue #192). Empty means
+    /// the client accepts any advertised model.
+    ///
+    /// A single owner used to be declared per client, and two of the eight
+    /// named the wrong vendor: Gemini CLI and Qwen Code were declared OpenAI
+    /// clients, so a Google model could never be selected for the Gemini CLI
+    /// and a Qwen model never for Qwen Code. On a deployment serving only a
+    /// Gemini subscription the run aborted with a message reading as though
+    /// the router were short of models (issue #301).
+    pub model_owners: &'static [&'static str],
+    /// Whether a model of another owner is refused rather than substituted.
+    ///
+    /// True where substituting is known to mislead: launching Claude Code on
+    /// an `OpenAI` model made the client blame its own model name rather than
+    /// the lapsed subscription (issue #225). False for the generic
+    /// `OpenAI`-dialect gateways, which the router routes for whatever it
+    /// serves — that is the rule `clients doctor` already used, and it is now
+    /// the only one.
+    pub strict_owner: bool,
     pub default_reasoning_effort: &'static str,
     pub model_arg: Option<&'static str>,
     pub non_interactive_arg: Option<&'static str>,
@@ -119,7 +146,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        model_owner: OPENAI_MODEL_OWNER,
+        model_owners: &[OPENAI_MODEL_OWNER],
+        strict_owner: true,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("exec"),
@@ -134,7 +162,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
         endpoint_suffix: "",
-        model_owner: ANTHROPIC_MODEL_OWNER,
+        model_owners: &[ANTHROPIC_MODEL_OWNER],
+        strict_owner: true,
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--print"),
@@ -149,7 +178,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: None,
         base_url_env: None,
         endpoint_suffix: "",
-        model_owner: "",
+        model_owners: &[],
+        strict_owner: false,
         default_reasoning_effort: "",
         model_arg: None,
         non_interactive_arg: None,
@@ -166,7 +196,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some("GEMINI_API_KEY"),
         base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
         endpoint_suffix: "/api/gemini",
-        model_owner: OPENAI_MODEL_OWNER,
+        model_owners: &[GOOGLE_MODEL_OWNER],
+        strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
@@ -183,7 +214,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(GROK_TOKEN_ENV),
         base_url_env: Some(GROK_BASE_ENV),
         endpoint_suffix: "/v1",
-        model_owner: OPENAI_MODEL_OWNER,
+        model_owners: &[],
+        strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
@@ -198,7 +230,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        model_owner: OPENAI_MODEL_OWNER,
+        model_owners: &[],
+        strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("run"),
@@ -213,7 +246,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: Some("OPENAI_BASE_URL"),
         endpoint_suffix: "/v1",
-        model_owner: OPENAI_MODEL_OWNER,
+        model_owners: &[QWEN_MODEL_OWNER],
+        strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("-p"),
@@ -228,7 +262,8 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        model_owner: OPENAI_MODEL_OWNER,
+        model_owners: &[],
+        strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
         non_interactive_arg: Some("--prompt"),
@@ -370,6 +405,20 @@ pub struct ClientStatus {
     pub base_url: Option<String>,
     pub token_env: Option<&'static str>,
     pub token_env_set: bool,
+    /// Why this client's configuration could not be read, if it could not.
+    ///
+    /// A damaged file is a property of one row, not of the listing: propagating
+    /// it ended the table at that client and silently hid every client after
+    /// it, while the error named a *different* client than the one missing
+    /// (issue #304).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unreadable: Option<String>,
+    /// Why the router cannot manage this client at all, if it cannot.
+    ///
+    /// `configured: false` is indistinguishable from a real answer for a
+    /// client whose reader is a hardcoded `None` (issue #303).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unsupported: Option<&'static str>,
 }
 
 /// Result of a successful setup operation.
@@ -529,19 +578,38 @@ impl ClientManager {
         }
     }
 
+    /// What this machine holds for `client`, whatever shape its files are in.
+    ///
+    /// Never fails on a damaged configuration: the reason is carried in the
+    /// row instead, so one hand-edited file cannot take the rest of the
+    /// listing away from the reader (issue #304).
     pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
         let path = self.config_path(client);
-        let base_url = match client {
-            ClientKind::Codex => read_codex_base_url(&path)?,
-            ClientKind::ClaudeCode => read_claude_base_url(&path)?,
-            ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path)?,
-            ClientKind::QwenCode => read_qwen_base_url(&path)?,
-            ClientKind::GrokCli => self.environment_var(GROK_BASE_ENV).or_else(|| {
-                read_environment_value(&self.environment_path(client), GROK_BASE_ENV)
-                    .ok()
-                    .flatten()
-            }),
-            ClientKind::Cursor | ClientKind::GeminiCli => None,
+        let read = match client {
+            ClientKind::Codex => read_codex_base_url(&path),
+            ClientKind::ClaudeCode => read_claude_base_url(&path),
+            ClientKind::Opencode | ClientKind::Agent => read_json_provider_base_url(&path),
+            // Gemini and Grok are configured by the environment rather than a
+            // file the router owns. Grok has always had a reader for it; a
+            // hardcoded `None` for Gemini reported "not configured" whether it
+            // was or not, which is why `clients doctor gemini` could not pass
+            // after a successful run (issue #303).
+            ClientKind::QwenCode => read_qwen_base_url(&path),
+            ClientKind::GeminiCli | ClientKind::GrokCli => {
+                let name = client
+                    .base_url_env()
+                    .expect("environment-configured clients name their variable");
+                Ok(self.environment_var(name).or_else(|| {
+                    read_environment_value(&self.environment_path(client), name)
+                        .ok()
+                        .flatten()
+                }))
+            }
+            ClientKind::Cursor => Ok(None),
+        };
+        let (base_url, unreadable) = match read {
+            Ok(base_url) => (base_url, None),
+            Err(error) => (None, Some(error.to_string())),
         };
         let token_env = client.token_env();
         Ok(ClientStatus {
@@ -559,6 +627,8 @@ impl ClientManager {
                         .flatten()
                         .is_some()
             }),
+            unreadable,
+            unsupported: client.setup_limitation(),
         })
     }
 
@@ -675,22 +745,27 @@ impl ClientManager {
             })?;
         let catalog = self.catalog(&base_url, &token).await?;
         let model = doctor_model(client, &catalog)?;
+        // A connectivity check is answered by a 200 with any body. Probing at
+        // the ceiling — 24576 output tokens, adaptive thinking at `high`, or
+        // `xhigh` reasoning — bought the deepest reasoning the account can
+        // produce to find out whether a URL answers, on a command whose name,
+        // help and output all say "reachability" (issue #309). #173 removed the
+        // hardcoded model *name* and left the price; this is the price.
         let (url, body) = match client {
             ClientKind::Codex => (
                 format!("{}/responses", base_url.trim_end_matches('/')),
                 json!({
                     "model": model,
                     "input": "Reply OK",
-                    "reasoning": {"effort": client.integration().default_reasoning_effort}
+                    "max_output_tokens": DOCTOR_MAX_TOKENS,
+                    "reasoning": {"effort": "low"}
                 }),
             ),
             ClientKind::ClaudeCode => (
                 format!("{}/v1/messages", base_url.trim_end_matches('/')),
                 json!({
                     "model":model,
-                    "max_tokens":24_576,
-                    "thinking":{"type":"adaptive"},
-                    "output_config":{"effort":"high"},
+                    "max_tokens":DOCTOR_MAX_TOKENS,
                     "messages":[{"role":"user", "content":"Reply OK"}]
                 }),
             ),
@@ -701,7 +776,8 @@ impl ClientManager {
                 format!("{}/chat/completions", base_url.trim_end_matches('/')),
                 json!({
                     "model":model,
-                    "reasoning_effort": client.integration().default_reasoning_effort,
+                    "max_tokens": DOCTOR_MAX_TOKENS,
+                    "reasoning_effort": "low",
                     "messages":[{"role":"user", "content":"Reply OK"}]
                 }),
             ),
@@ -808,10 +884,30 @@ impl ClientManager {
         let env = env.as_object_mut().ok_or_else(|| {
             ClientError::message(format!("{}.env must be a JSON object", path.display()))
         })?;
+        // Recorded before it is replaced, so removal can put it back — the
+        // mechanism `setup_codex` already uses for `model_provider` (#302).
+        let previous = env
+            .get(CLAUDE_BASE_ENV)
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .filter(|previous| previous != base_url);
+        if let Some(previous) = previous.as_deref() {
+            println!(
+                "note: replacing {CLAUDE_BASE_ENV}={previous}; `clients remove claude` will \
+                 restore it"
+            );
+        }
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
-        write_claude_marker(&self.claude_home.join(OWNERSHIP_MARKER), base_url)?;
+        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
+        // A marker already present names the value the *first* takeover
+        // replaced; a second configure must not overwrite it with its own URL.
+        let previous = match claude_marker(&marker_path)? {
+            Some((_, recorded)) => recorded,
+            None => previous,
+        };
+        write_claude_marker(&marker_path, base_url, previous.as_deref())?;
         Ok(result)
     }
 
@@ -856,8 +952,7 @@ impl ClientManager {
             return Ok(unchanged(path));
         }
         let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
-        let managed_url = read_claude_marker(&marker_path)?;
-        let Some(managed_url) = managed_url else {
+        let Some((managed_url, previous_url)) = claude_marker(&marker_path)? else {
             return Ok(unchanged(path));
         };
         let mut document: Value = serde_json::from_str(&source).map_err(|error| {
@@ -872,7 +967,17 @@ impl ClientManager {
             return Ok(unchanged(path));
         }
         if let Some(env) = document.get_mut("env").and_then(Value::as_object_mut) {
-            env.remove(CLAUDE_BASE_ENV);
+            match previous_url.as_deref() {
+                // Restore what the takeover replaced rather than deleting the
+                // key: the value was the user's, not the router's (#302).
+                Some(previous) => {
+                    env.insert(CLAUDE_BASE_ENV.into(), Value::String(previous.into()));
+                    println!("restored {CLAUDE_BASE_ENV}={previous}");
+                }
+                None => {
+                    env.remove(CLAUDE_BASE_ENV);
+                }
+            }
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;

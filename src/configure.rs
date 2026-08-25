@@ -165,7 +165,8 @@ async fn configure_one(
         router: Some(server.base_url.clone()),
     };
     if !environment_only(client) {
-        let path = crate::client_global::apply(client, &server.base_url, credential.models())?;
+        let models = crate::clients::usable_models(client, credential.models());
+        let path = crate::client_global::apply(client, &server.base_url, &models)?;
         println!(
             "configured {} in {}",
             client.display_name(),
@@ -189,6 +190,15 @@ async fn configure_one(
 async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> Result<ExitCode, AnyError> {
     let mut restored = 0_usize;
     for client in args.clients() {
+        // The same check `configure` itself makes. Reversal used to report
+        // success for a client whose configuration the router can never have
+        // written (issue #303).
+        if let Some(reason) = unconfigurable(client) {
+            if args.all {
+                continue;
+            }
+            return Err(reason.into());
+        }
         let record = manager.credential_metadata(client).ok().flatten();
         // The configuration comes back first. A hash-verified restore can
         // refuse — an edit made after `configure` is preserved rather than

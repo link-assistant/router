@@ -146,37 +146,28 @@ fn resolve_model(
     if !args.pick_model && !crate::client_launch::requires_a_model(args.client) {
         return Ok(None);
     }
-    let owner = args.client.integration().model_owner;
-    if let Some(model) = credential.select_model(owner) {
+    // One rule for which models suit a client, shared with `clients setup`
+    // and `clients doctor` (issue #301).
+    if let Some(model) = crate::clients::select_model(args.client, credential.models()) {
         if args.pick_model {
             // Report the choice and the reason for it. Choosing silently by
             // catalog order is what made the substitution invisible: the
             // client's own status line then presents the router's pick as
             // though the user had made it (issue #295).
+            let owners = args.client.integration().model_owners;
             eprintln!(
                 "note: --pick-model chose `{model}`, the first {} model the router advertises; \
                  pass --model to choose another",
-                if owner.is_empty() { "advertised" } else { owner }
+                if owners.is_empty() {
+                    "advertised".to_string()
+                } else {
+                    owners.join(" or ")
+                }
             );
         }
         return Ok(Some(model.to_string()));
     }
-    // Name what the catalog *does* hold: "only openai models" is a much
-    // shorter path to the real cause — a lapsed subscription — than the
-    // unrecognised-model error the client would otherwise report about
-    // itself (issue #225).
-    let advertised = credential.advertised_owners();
-    let holdings = if advertised.is_empty() {
-        "the catalog is empty".to_string()
-    } else {
-        format!("it advertises only {} models", advertised.join(", "))
-    };
-    Err(format!(
-        "the router advertises no model for {} ({owner} models): {holdings}. Authorize a \
-         matching subscription on the router host, or pass --model explicitly",
-        args.client.integration().name
-    )
-    .into())
+    Err(crate::clients::model_unavailable(args.client, credential.models()).into())
 }
 
 struct TemporaryClient {

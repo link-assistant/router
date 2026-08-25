@@ -12,7 +12,7 @@
 //! deliberately or arrived at by accident. And every place that actually uses
 //! the secret — signing, validating, encrypting — refuses it, so the sentinel
 //! is inert rather than merely unlikely: reaching a signer with it produces
-//! the ordinary "TOKEN_SECRET is required" error, before anything is written.
+//! the ordinary `TOKEN_SECRET is required` error, before anything is written.
 
 /// Marks a secret that exists only to satisfy a type, and must never be used.
 ///

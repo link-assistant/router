@@ -81,25 +81,52 @@ fn resolve_supplied_token(
         .filter(|token| !token.is_empty()))
 }
 
+/// Print one row per client, then say what could not be read.
+///
+/// A listing never ends early. Stopping at the first damaged file hid every
+/// client after it, and named a *different* client than the one missing, so a
+/// reader had no reason to suspect the table was incomplete (issue #304).
 fn list(manager: &ClientManager) -> ExitCode {
     println!(
         "{:<12}  {:<9}  {:<11}  {:<19}  config",
         "client", "installed", "configured", "dialect"
     );
+    let mut unreadable = Vec::new();
+    let mut failures = Vec::new();
     for client in ClientKind::ALL {
         match manager.status(client) {
-            Ok(status) => println!(
-                "{:<12}  {:<9}  {:<11}  {:<19}  {}",
-                status.client,
-                status.installed,
-                status.configured,
-                status.dialect,
-                status.config_path.display()
-            ),
-            Err(error) => return failed(format!("could not read {client}: {error}")),
+            Ok(status) => {
+                let configured = if status.unreadable.is_some() {
+                    "unreadable".to_string()
+                } else {
+                    status.configured.to_string()
+                };
+                println!(
+                    "{:<12}  {:<9}  {:<11}  {:<19}  {}",
+                    status.client,
+                    status.installed,
+                    configured,
+                    status.dialect,
+                    status.config_path.display()
+                );
+                if let Some(reason) = status.unreadable {
+                    unreadable.push((client, reason));
+                }
+            }
+            Err(error) => {
+                println!("{client:<12}  {:<9}  {:<11}  {:<19}  -", "?", "error", "?");
+                failures.push((client, error.to_string()));
+            }
         }
     }
-    ExitCode::SUCCESS
+    for (client, reason) in unreadable.iter().chain(&failures) {
+        eprintln!("error: could not read {client}: {reason}");
+    }
+    if unreadable.is_empty() && failures.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 async fn setup(
@@ -183,7 +210,10 @@ async fn setup(
         ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
     ) {
         match manager.catalog(&base_url, &token).await {
-            Ok(models) => models,
+            // Filtered by the same rule `with` and `doctor` use, so a client
+            // config cannot embed a model the launcher would refuse to start
+            // it on (issue #301).
+            Ok(models) => crate::clients::usable_models(client, &models),
             Err(error) => return failed(error),
         }
     } else {
@@ -203,8 +233,11 @@ async fn setup(
         return failed(error);
     }
     if client == ClientKind::GrokCli {
+        // A token was minted and two files written, so the operation did
+        // change this machine — `SetupResult` describes the client's *own*
+        // config, which is a different question (issue #303).
         println!(
-            "{} uses shell environment; no client config was changed",
+            "configured {} through its environment; its own config file was not changed",
             client.display_name()
         );
     } else if result.changed {
@@ -257,6 +290,11 @@ fn remove(
     revoke_supplied: bool,
     force: bool,
 ) -> ExitCode {
+    // `setup` and `doctor` check this; `remove` did not, so it reported
+    // success on a file the router can never write (issue #303).
+    if let Some(limitation) = client.setup_limitation() {
+        return failed(limitation);
+    }
     let credential = match manager.credential_metadata(client) {
         Ok(credential) => credential,
         Err(error) if force => {

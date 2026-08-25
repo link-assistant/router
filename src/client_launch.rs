@@ -22,7 +22,7 @@ use crate::clients::ClientKind;
 
 /// The client's argv, plus anything worth telling the user about how it was
 /// decided.
-pub(crate) struct Launch {
+pub struct Launch {
     pub arguments: Vec<OsString>,
     /// A mode that was inferred rather than stated, reported at the moment it
     /// is chosen. A wrong guess is otherwise invisible until it surfaces
@@ -37,7 +37,7 @@ pub(crate) struct Launch {
 /// That is the client's requirement rather than a preference being overridden,
 /// which is why it survives the rule in issue #295.
 #[must_use]
-pub(crate) const fn requires_a_model(client: ClientKind) -> bool {
+pub const fn requires_a_model(client: ClientKind) -> bool {
     matches!(
         client,
         ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
@@ -70,7 +70,7 @@ fn carries_a_prompt(forwarded: &[OsString]) -> bool {
 ///
 /// Piped or redirected means nobody is there to hold a session, so the run is
 /// one-shot with no flag — which is how `with` is used from CI and scripts.
-pub(crate) fn attached_to_a_terminal() -> bool {
+pub fn attached_to_a_terminal() -> bool {
     use std::io::IsTerminal as _;
 
     std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
@@ -81,7 +81,7 @@ pub(crate) fn attached_to_a_terminal() -> bool {
 /// `resolved_model` is `None` unless the user asked for a model or the client
 /// cannot start without one; the router no longer picks one by catalog order
 /// on the user's behalf (issue #295).
-pub(crate) fn plan(
+pub fn plan(
     args: &WithArgs,
     resolved_model: Option<&str>,
     attached_to_a_terminal: bool,

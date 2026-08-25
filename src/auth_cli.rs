@@ -312,7 +312,7 @@ fn clear_github(config: &link_assistant_router::config::Config) -> Result<(), St
 
 /// The router this `auth` invocation acts on, or `None` for the local one.
 /// The target a withdrawal names, whichever spelling asked for it.
-fn clear_target(op: &AuthOp) -> &link_assistant_router::cli::AuthTarget {
+const fn clear_target(op: &AuthOp) -> &link_assistant_router::cli::AuthTarget {
     match op {
         AuthOp::Claude { target, .. }
         | AuthOp::Codex { target, .. }
@@ -371,8 +371,6 @@ async fn run_remote(
             link_assistant_router::auth_remote::authorize(server, "codex", None, None).await
         }
         AuthOp::Status { .. } => link_assistant_router::auth_remote::status(server).await,
-        // Unreachable: `run_clear` refuses a named server before dispatch.
-        AuthOp::Clear { .. } => ExitCode::from(1),
         // What `auth gh` may do remotely is decided by `AuthOp::remote_gh`,
         // beside the flags it reads, so the rule is unit-testable rather than
         // reachable only by spawning the binary (issue #283).
@@ -400,7 +398,8 @@ async fn run_remote(
             }
         }
         // Never reached: `remote_target` keeps import on the local path.
-        AuthOp::Import { .. } => ExitCode::from(1),
+        // Unreachable: `run_clear` and `run_import` return before dispatch.
+        AuthOp::Clear { .. } | AuthOp::Import { .. } => ExitCode::from(1),
     }
 }
 

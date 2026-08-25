@@ -51,11 +51,17 @@ pub enum AuthOp {
         provider: Option<ImportProvider>,
         /// Where to read it from. A named directory is read exactly as given.
         ///
-        /// Omitted, it defaults to the vendor's own home — `$CLAUDE_CODE_HOME`,
-        /// `$CODEX_HOME`, `$GH_CONFIG_DIR`, and so on — and there, on macOS for
+        /// Omitted, it defaults to the vendor client's conventional directory —
+        /// `~/.claude`, `~/.codex`, `~/.config/gh` — and there, on macOS for
         /// Claude, the login Keychain is consulted too and wins when it holds
         /// the newer credential. Naming a directory says *this* credential from
         /// *there*, so the machine-wide store is left out of it (issue #285).
+        ///
+        /// `$CLAUDE_CODE_HOME` and `$CODEX_HOME` are deliberately *not* the
+        /// source: in a deployment they name this router's own credential
+        /// directory — the destination — so reading the source through them
+        /// would make every unqualified import refuse itself (issue #307). Pass
+        /// the directory to read from another location.
         dir: Option<String>,
         /// Adopt every login this machine has.
         ///
@@ -110,10 +116,9 @@ pub enum AuthOp {
         /// Adopt an existing Claude login instead of authorizing.
         ///
         /// Reads the credential a vendor client already holds and installs it as
-        /// this deployment's (issue #274). Default: `$CLAUDE_CODE_HOME`, else
-        /// `~/.claude`, where on macOS the login Keychain is consulted as well
-        /// and wins when it is the live one. A directory named explicitly is
-        /// read as given (issue #285).
+        /// this deployment's (issue #274). Default: `~/.claude`, where on macOS
+        /// the login Keychain is consulted as well and wins when it is the live
+        /// one. A directory named explicitly is read as given (issue #285).
         #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
         from_claude_home: Option<String>,
         /// Remove the stored credential instead of authorizing.
@@ -132,7 +137,7 @@ pub enum AuthOp {
         port: u16,
         /// Adopt an existing Codex login instead of authorizing.
         ///
-        /// Default: `$CODEX_HOME`, else `~/.codex` (issue #274).
+        /// Default: `~/.codex` (issue #274).
         #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
         from_codex_home: Option<String>,
         /// Remove the stored credential instead of authorizing.

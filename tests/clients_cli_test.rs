@@ -421,9 +421,11 @@ fn codex_doctor_requires_an_openai_owned_catalog_model() {
         &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
     );
     assert!(!doctor.status.success());
-    assert!(
-        String::from_utf8_lossy(&doctor.stderr).contains("no model for the openai subscription")
-    );
+    let stderr = String::from_utf8_lossy(&doctor.stderr);
+    assert!(stderr.contains("no model for Codex CLI (openai models)"), "{stderr}");
+    // The refusal points at the way out rather than leaving the reader to
+    // guess that an explicit model is still allowed (issue #301).
+    assert!(stderr.contains("--model"), "{stderr}");
     assert_eq!(server.join().expect("catalog server").len(), 1);
 }
 

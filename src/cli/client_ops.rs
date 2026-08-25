@@ -53,6 +53,11 @@ pub enum ClientOp {
         force: bool,
     },
     /// Make a real request using the client's configured URL and token variable.
+    ///
+    /// The probe is deliberately the cheapest the dialect accepts: a 64-token
+    /// budget, reasoning at the lowest tier, and a two-word prompt. It still
+    /// costs a request against the subscription, because proving the route
+    /// works means using it (issues #275, #309).
     #[command(override_usage = "link-assistant-router clients doctor [OPTIONS] <CLIENT>")]
     Doctor {
         #[arg(value_enum)]

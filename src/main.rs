@@ -13,8 +13,6 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
-#[path = "accounts_cli.rs"]
-mod accounts_cli;
 mod auth_cli;
 mod auth_import;
 #[path = "logs_cli.rs"]
@@ -730,7 +728,7 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
     // router recorded rather than guessing from the file alone (issue #245).
     let refreshes = link_assistant_router::refresh::TokenCache::new();
     refreshes.persist_rejections_in(&config.data_dir);
-    accounts_cli::run(&router, Some(&refreshes), op)
+    link_assistant_router::accounts_cli::run(&router, Some(&refreshes), op)
 }
 
 async fn run_doctor(config: &Config) -> ExitCode {
