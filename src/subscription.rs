@@ -372,6 +372,9 @@ impl SubscriptionReader {
     /// nothing is served from this reader — it is read once, on demand, for a
     /// directory the operator typed.
     fn import_source_keychain(&self) -> Option<String> {
+        if !self.is_vendor_default_home() {
+            return None;
+        }
         crate::platform_keychain::lookup(self.provider)
     }
 
@@ -383,6 +386,7 @@ impl SubscriptionReader {
     /// # Errors
     ///
     /// Returns an operator-readable message when the write cannot land.
+    #[must_use = "use the installed credential path or handle the installation error"]
     pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
         // Where the provider's own client writes, so an adopted credential
         // lands exactly where a fresh login would put it.
