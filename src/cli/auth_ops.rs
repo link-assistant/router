@@ -68,6 +68,32 @@ pub enum AuthOp {
         #[command(flatten)]
         target: AuthTarget,
     },
+    /// Remove a stored login from this deployment.
+    ///
+    /// Withdrawal is the most destructive thing this tool does and had no
+    /// name: it was four flags, the widest of them attached to a command
+    /// called `status`, so `auth --help` said nothing about it at all. The
+    /// per-command `--clear` flags keep working (issue #305).
+    ///
+    /// Removes credentials on the machine it runs on. No router accepts a
+    /// withdrawal over HTTP, so with another router selected this refuses and
+    /// names it — silently rewriting "there" as "here" is unrecoverable for an
+    /// OAuth credential, which then needs a fresh browser login on a machine
+    /// that may not have a browser.
+    #[command(override_usage = "router auth clear [OPTIONS] [PROVIDER]")]
+    Clear {
+        /// Which login to remove. Omit with `--all`.
+        #[arg(value_enum, required_unless_present = "all")]
+        provider: Option<ImportProvider>,
+        /// Remove every login this deployment holds.
+        #[arg(long, conflicts_with = "provider")]
+        all: bool,
+        /// Confirm removing more than one credential without a prompt.
+        #[arg(long)]
+        yes: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Authorize an Anthropic Claude subscription.
     Claude {
         /// Supply the copied code without prompting on stdin.
@@ -145,8 +171,16 @@ pub enum AuthOp {
         /// Withdraws each provider's credential and the GitHub one in a single
         /// step, so an operator tearing down a test deployment does not have to
         /// know three separate paths (issue #268).
+        /// `router auth clear --all` is the same operation with a name.
         #[arg(long = "clear-all")]
         clear_all: bool,
+        /// Confirm removing more than one credential without a prompt.
+        ///
+        /// An OAuth login cannot be put back without a browser, and this is
+        /// the widest blast radius in the tool — five credentials in one call,
+        /// on a command called `status` (issue #305).
+        #[arg(long, requires = "clear_all")]
+        yes: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -251,6 +285,12 @@ pub struct AuthTarget {
 }
 
 /// TLS subcommands.
+///
+/// The artefact `ca` prints is a trust anchor, so answering for the wrong
+/// machine does not produce a wrong report — it produces trust in the wrong
+/// key. `tls` therefore takes the same target flags as every other
+/// state-touching family, and says so when it cannot answer for the target
+/// (issue #308).
 #[derive(Debug, Subcommand)]
 pub enum TlsOp {
     /// Print the generated certificate in PEM form.
@@ -258,12 +298,27 @@ pub enum TlsOp {
     /// A client that must trust a self-signed router reads it from here, so a
     /// private-network deployment can distribute trust without a CA (issue
     /// #263).
-    Ca,
+    Ca {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Generate the self-signed certificate without starting the server.
     Generate {
         /// Names the certificate is valid for, comma-separated. A sidecar is
         /// reached by its network alias, so that name must be present.
         #[arg(long, value_name = "NAMES", default_value = "localhost")]
         dns: String,
+        #[command(flatten)]
+        target: AuthTarget,
     },
+}
+
+impl TlsOp {
+    /// Which router this certificate operation acts on.
+    #[must_use]
+    pub const fn target(&self) -> &AuthTarget {
+        match self {
+            Self::Ca { target } | Self::Generate { target, .. } => target,
+        }
+    }
 }

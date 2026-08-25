@@ -456,6 +456,10 @@ fn normalize_name(name: &str) -> Result<String, ProviderError> {
 }
 
 fn cipher(token_secret: &str) -> Result<Aes256Gcm, ProviderError> {
+    // The key is `SHA256(token_secret)`, so a stand-in secret wraps a vendor
+    // API key in a value published in the source — `has_encrypted_api_key:
+    // true` while the key is effectively in the clear (issue #300).
+    crate::token_secret::ensure_real(token_secret).map_err(ProviderError::Invalid)?;
     let key = Sha256::digest(token_secret.as_bytes());
     Aes256Gcm::new_from_slice(&key)
         .map_err(|e| ProviderError::Crypto(format!("invalid AES key: {e}")))

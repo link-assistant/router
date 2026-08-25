@@ -81,13 +81,9 @@ async fn run() -> ExitCode {
         tracing::info!("Verbose logging enabled");
     }
 
-    let cli = auth_cli::relax_token_secret_for_auth(cli);
-    // A command that will act on another deployment neither issues nor
-    // validates tokens here, so the local signing secret is not its to hold
-    // (issue #294).
-    let cli = link_assistant_router::remote_command::relax_token_secret_for_remote(cli);
-    // A read-only client listing signs nothing either (issue #296).
-    let cli = link_assistant_router::client_command::relax_token_secret_for_clients(cli);
+    // `TOKEN_SECRET` is required where signing happens, not per command family
+    // (issues #300, #308).
+    let cli = link_assistant_router::remote_command::relax_token_secret_for_cli(cli);
 
     let config = match cli.into_config() {
         Ok(c) => c,
@@ -562,6 +558,15 @@ async fn run_remote_command(
             "run `router doctor` on that deployment; `router auth status` reports its \
              credentials from here",
         )),
+        // The certificate and its key live on the deployment's own disk, and
+        // no endpoint serves either. Printing this machine's PEM instead would
+        // not be a wrong report — it would be trust in the wrong key, which is
+        // why silence was the one unacceptable answer here (issue #308).
+        Command::Tls { .. } => refuse(no_remote_form(
+            "tls",
+            server,
+            "the certificate is generated on the deployment that serves it; run `router tls`              there and distribute the PEM it prints",
+        )),
         // Never reached: `target_of` returns `None` for every other command.
         _ => ExitCode::from(1),
     }
@@ -575,6 +580,10 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
+    if let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret) {
+        eprintln!("error: {error}");
+        return ExitCode::from(2);
+    }
     let mgr = TokenManager::with_store(&config.token_secret, store);
     match op {
         TokenOp::Issue {

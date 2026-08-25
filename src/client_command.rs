@@ -14,40 +14,6 @@ pub const CLIENT_TOKEN_ENV: &str = "LINK_ASSISTANT_ROUTER_TOKEN";
 /// Compatibility alias shared with the client integrations themselves.
 pub const CLIENT_TOKEN_ENV_ALIAS: &str = "LINK_ASSISTANT_TOKEN";
 
-/// Let a client command that only reads local files run without `TOKEN_SECRET`.
-///
-/// The secret signs this machine's tokens. `list`, `show` and `doctor` neither
-/// issue nor validate one — they read files this machine already holds — so
-/// demanding it refused to *start* a read-only listing. The check was never
-/// protecting anything either: any value satisfied it, so it only taught
-/// operators to keep a signing secret in their shell (issue #296).
-#[must_use]
-pub fn relax_token_secret_for_clients(mut cli: crate::cli::Cli) -> crate::cli::Cli {
-    if signs_nothing(cli.command.as_ref()) && cli.token_secret.as_deref().is_none_or(str::is_empty)
-    {
-        cli.token_secret = Some("unused-by-this-client-command".to_string());
-    }
-    cli
-}
-
-/// Whether this client command will issue or validate a token here.
-fn signs_nothing(command: Option<&crate::cli::Command>) -> bool {
-    let Some(crate::cli::Command::Clients { op, .. }) = command else {
-        return false;
-    };
-    match op {
-        ClientOp::List | ClientOp::Show { .. } | ClientOp::Doctor { .. } => true,
-        // `setup` would sign — but not when another router is selected, where
-        // it refuses instead. Demanding the secret first replaced that honest
-        // refusal with "won't start", which says nothing about the target
-        // being wrong (issue #296).
-        ClientOp::Setup { base_url: None, .. } => {
-            crate::managed_server::selected_server().is_some()
-        }
-        _ => false,
-    }
-}
-
 /// Run one local client-management operation.
 pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCode {
     let manager = match home {
@@ -377,6 +343,7 @@ fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Er
         std::fs::create_dir_all(&config.data_dir)?;
     }
     let store = build_token_store(config.storage_policy, &config.data_dir)?;
+    crate::token_secret::ensure_real(&config.token_secret)?;
     Ok(TokenManager::with_store(&config.token_secret, store))
 }
 

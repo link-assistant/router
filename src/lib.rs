@@ -86,6 +86,7 @@ pub mod token;
 pub mod token_admin;
 mod token_http;
 pub mod token_report;
+pub mod token_secret;
 pub mod token_reservation;
 pub mod tokens_remote;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`

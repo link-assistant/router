@@ -352,7 +352,7 @@ fn clear_all_withdraws_every_identity_at_once() {
     std::fs::write(data.join("github-credential"), "gho_synthetic").expect("plant github");
 
     let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["auth", "status", "--clear-all", "--local"])
+        .args(["auth", "status", "--clear-all", "--yes", "--local"])
         .env("TOKEN_SECRET", "auth-cli-test-secret")
         .env("HOME", home.path())
         .env("CLAUDE_CODE_HOME", &claude)
@@ -859,4 +859,91 @@ fn a_persisted_selection_also_refuses_a_local_import() {
         destination.path().join(".credentials.json").exists(),
         "--local must actually install the credential"
     );
+}
+
+/// The defect in issue #305: every spelling of "take this login away" was
+/// handled before the target was resolved, so `--server` was parsed, accepted
+/// and thrown away. The credentials deleted were the ones on the machine that
+/// ran the command, and the report read exactly as it would have if the named
+/// deployment had been cleared.
+#[test]
+fn withdrawal_refuses_a_named_server_instead_of_clearing_this_machine() {
+    let home = tempfile::tempdir().expect("temporary home");
+    let credential = home.path().join(".claude/.credentials.json");
+    std::fs::create_dir_all(credential.parent().expect("parent")).expect("create claude home");
+    std::fs::write(&credential, "{}").expect("seed a local credential");
+
+    for arguments in [
+        &["auth", "claude", "--clear", "--server", "http://127.0.0.1:1"][..],
+        &["auth", "clear", "claude", "--server", "http://127.0.0.1:1"],
+        &[
+            "auth",
+            "status",
+            "--clear-all",
+            "--yes",
+            "--server",
+            "http://127.0.0.1:1",
+        ],
+        &["auth", "clear", "--all", "--yes", "--server", "http://127.0.0.1:1"],
+    ] {
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+            .args(arguments)
+            .arg("--data-dir")
+            .arg(home.path().join("data"))
+            .env("HOME", home.path())
+            .env_remove("TOKEN_SECRET")
+            .output()
+            .expect("router CLI runs");
+        assert!(!output.status.success(), "{arguments:?} must refuse");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("http://127.0.0.1:1"),
+            "{arguments:?} must name the target it cannot clear: {stderr}"
+        );
+        assert!(
+            credential.exists(),
+            "{arguments:?} deleted this machine's credential anyway"
+        );
+    }
+}
+
+/// An OAuth login cannot be put back without a browser, so the widest
+/// withdrawal in the tool asks first.
+#[test]
+fn clearing_every_credential_at_once_asks_first() {
+    let home = tempfile::tempdir().expect("temporary home");
+    let credential = home.path().join(".claude/.credentials.json");
+    std::fs::create_dir_all(credential.parent().expect("parent")).expect("create claude home");
+    std::fs::write(&credential, "{}").expect("seed a local credential");
+
+    let refused = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "clear", "--all", "--local"])
+        .arg("--data-dir")
+        .arg(home.path().join("data"))
+        .env("HOME", home.path())
+        .env_remove("TOKEN_SECRET")
+        .output()
+        .expect("router CLI runs");
+    assert!(!refused.status.success());
+    assert!(
+        String::from_utf8_lossy(&refused.stderr).contains("--yes"),
+        "the refusal must name the way to proceed"
+    );
+    assert!(credential.exists(), "nothing may be removed without consent");
+
+    // Naming one provider is unambiguous and needs no confirmation.
+    let single = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "clear", "claude", "--local"])
+        .arg("--data-dir")
+        .arg(home.path().join("data"))
+        .env("HOME", home.path())
+        .env_remove("TOKEN_SECRET")
+        .output()
+        .expect("router CLI runs");
+    assert!(
+        single.status.success(),
+        "{}",
+        String::from_utf8_lossy(&single.stderr)
+    );
+    assert!(!credential.exists(), "the named credential must be removed");
 }

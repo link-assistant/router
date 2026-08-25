@@ -302,6 +302,13 @@ impl TokenManager {
         &self,
         request: &IssueRequest<'_>,
     ) -> Result<(String, String), jsonwebtoken::errors::Error> {
+        // A command that will never sign installs a stand-in secret so it need
+        // not carry this machine's. Signing with one produced a normal-looking
+        // `la_sk_` token anybody holding the source could forge (issue #300),
+        // so it is refused here — at the moment something would be signed.
+        if crate::token_secret::is_placeholder(&self.secret) {
+            return Err(jsonwebtoken::errors::ErrorKind::InvalidKeyFormat.into());
+        }
         let ttl_hours = request.ttl_hours;
         let label = request.label;
         let account = request.account;
@@ -423,6 +430,9 @@ impl TokenManager {
     /// Strips the `la_sk_` prefix, decodes the JWT, checks expiration and
     /// revocation status, and returns the claims if valid.
     pub fn validate_token(&self, token: &str) -> Result<TokenClaims, TokenError> {
+        if crate::token_secret::is_placeholder(&self.secret) {
+            return Err(TokenError::Invalid(crate::token_secret::refusal()));
+        }
         let jwt = token
             .strip_prefix(TOKEN_PREFIX)
             .ok_or(TokenError::InvalidPrefix)?;

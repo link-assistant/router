@@ -19,8 +19,10 @@ pub fn run(config: &Config, op: &crate::cli::TlsOp) -> ExitCode {
 pub fn run_in(data_dir: &std::path::Path, op: &crate::cli::TlsOp) -> ExitCode {
     use crate::cli::TlsOp;
     let result = match op {
-        TlsOp::Ca => crate::tls::read_generated_certificate(data_dir).map(|pem| print!("{pem}")),
-        TlsOp::Generate { dns } => {
+        TlsOp::Ca { .. } => {
+            crate::tls::read_generated_certificate(data_dir).map(|pem| print!("{pem}"))
+        }
+        TlsOp::Generate { dns, .. } => {
             crate::tls::ensure_generated(data_dir, &crate::tls::generated_subject_names(dns))
                 .map(|(cert, _)| println!("{}", cert.display()))
         }
