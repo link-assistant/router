@@ -320,4 +320,27 @@ mod tests {
         assert_eq!(snap.openai_responses, 1);
         assert_eq!(snap.errors_total, 0);
     }
+
+    /// A deployment with no subscription configured adds no series at all,
+    /// rather than an empty `# TYPE` header a scraper has to skip.
+    #[test]
+    fn no_configured_subscription_renders_nothing() {
+        assert!(render_subscription_health(&[]).is_empty());
+    }
+
+    /// One gauge per subscription, in a stable order, carrying the vendor name
+    /// and nothing else (issue #318).
+    #[test]
+    fn the_gauge_is_typed_sorted_and_carries_only_the_vendor_name() {
+        let rendered = render_subscription_health(&[("codex", true), ("claude", false)]);
+        assert!(rendered.contains("# TYPE link_assistant_subscription_healthy gauge"));
+        assert!(rendered.contains("# HELP link_assistant_subscription_healthy"));
+        let claude = rendered
+            .find("link_assistant_subscription_healthy{provider=\"claude\"} 0")
+            .expect("a revoked subscription reads 0");
+        let codex = rendered
+            .find("link_assistant_subscription_healthy{provider=\"codex\"} 1")
+            .expect("a working subscription reads 1");
+        assert!(claude < codex, "series are sorted, so scrapes diff cleanly");
+    }
 }

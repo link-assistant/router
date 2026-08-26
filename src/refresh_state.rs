@@ -251,3 +251,73 @@ mod tests {
         drop(state);
     }
 }
+
+#[cfg(test)]
+mod rotation_tests {
+    use super::*;
+
+    fn token(access: &str, refresh: &str) -> SubscriptionToken {
+        SubscriptionToken {
+            access_token: access.into(),
+            refresh_token: Some(refresh.into()),
+            expires_at_ms: Some(0),
+            account_id: None,
+            resource_url: None,
+        }
+    }
+
+    /// The guard is a window, not a latch: it reports the age while it holds
+    /// and nothing once it lapses (issue #319).
+    #[test]
+    fn the_rotation_window_reports_an_age_and_then_lapses() {
+        let mut attempt = RefreshAttempt {
+            credential: credential_fingerprint(&token("a", "r1")),
+            failure: None,
+            rotated_at_ms: None,
+            rotated_to: None,
+        };
+        assert_eq!(attempt.rotated_within(1_000, ROTATION_GRACE_MS), None);
+
+        attempt.record_rotation(1_000, &token("b", "r2"));
+        assert_eq!(attempt.rotated_within(1_000, ROTATION_GRACE_MS), Some(0));
+        assert_eq!(
+            attempt.rotated_within(61_000, ROTATION_GRACE_MS),
+            Some(60_000),
+            "still inside the five-minute window"
+        );
+        assert_eq!(
+            attempt.rotated_within(1_000 + ROTATION_GRACE_MS, ROTATION_GRACE_MS),
+            None,
+            "the window is half-open, so it lapses exactly on the boundary"
+        );
+    }
+
+    /// The credential this process minted, arriving back through the file the
+    /// ladder wrote it to, is not a re-authentication.
+    #[test]
+    fn a_self_minted_credential_is_not_read_as_a_re_authentication() {
+        let original = token("a", "r1");
+        let rotated = token("b", "r2");
+        let mut attempt = RefreshAttempt {
+            credential: credential_fingerprint(&original),
+            failure: None,
+            rotated_at_ms: None,
+            rotated_to: None,
+        };
+        attempt.record_rotation(1_000, &rotated);
+
+        assert!(
+            !attempt.reset_if_changed(&rotated),
+            "the router's own rotation must not clear its own guard"
+        );
+        assert_eq!(
+            attempt.rotated_within(2_000, ROTATION_GRACE_MS),
+            Some(1_000),
+            "the guard still holds"
+        );
+
+        // A credential nobody here minted *is* a re-authentication.
+        assert!(attempt.reset_if_changed(&token("c", "r3")));
+        assert_eq!(attempt.rotated_within(2_000, ROTATION_GRACE_MS), None);
+    }
+}
