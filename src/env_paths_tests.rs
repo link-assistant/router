@@ -35,10 +35,20 @@ fn an_empty_variable_reads_as_unset() {
 /// into the process working directory.
 #[test]
 fn a_relative_root_is_refused_rather_than_written_to() {
-    let absolute = require_absolute(PathBuf::from("/var/lib/router"), "the state directory")
-        .expect("an absolute root is usable");
-    assert_eq!(absolute, PathBuf::from("/var/lib/router"));
+    // What counts as absolute is platform-specific: a leading slash is enough
+    // on unix, while Windows wants a drive or a UNC prefix.
+    let rooted = if cfg!(windows) {
+        r"C:\ProgramData\router"
+    } else {
+        "/var/lib/router"
+    };
+    let absolute =
+        require_absolute(PathBuf::from(rooted), "the state directory").expect("a rooted path");
+    assert_eq!(absolute, PathBuf::from(rooted));
 
+    // Relative under either set of rules. `/var/lib/router` is deliberately
+    // absent: it is absolute on unix and relative on Windows, so it belongs to
+    // neither list.
     for relative in ["", "link-assistant-router", ".config", "./state", "../up"] {
         let refused = require_absolute(PathBuf::from(relative), "the state directory")
             .expect_err("a relative root must be refused");
