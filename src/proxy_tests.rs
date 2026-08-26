@@ -158,6 +158,44 @@ fn upstream_headers_describe_the_deployment_not_the_caller() {
     assert!(upstream.get("anthropic-version").is_some());
 }
 
+/// The router negotiates its own hop, so the log can read its own traffic.
+///
+/// The client's `accept-encoding` was relayed untouched, so the caller's
+/// compression preference decided whether the proxy could inspect what it
+/// relayed. Without it the upstream answers uncompressed and every stream is
+/// inspectable for a terminator, instead of the log being blind on the
+/// majority of exchanges (issues #328, #332).
+#[test]
+fn the_clients_compression_preference_does_not_reach_the_upstream() {
+    let mut incoming = HeaderMap::new();
+    incoming.insert(
+        "accept-encoding",
+        HeaderValue::from_static("gzip, deflate, br, zstd"),
+    );
+    incoming.insert("accept", HeaderValue::from_static("text/event-stream"));
+
+    let upstream =
+        build_upstream_headers(&incoming, "oauth-token", &LogLazy::with_level(levels::NONE));
+
+    assert!(
+        upstream.get("accept-encoding").is_none(),
+        "the client's compression preference must not decide what the log can read"
+    );
+    // `accept` is a protocol header and still travels: a stream is requested
+    // by the caller and must stay requested upstream.
+    assert_eq!(
+        upstream.get("accept").and_then(|value| value.to_str().ok()),
+        Some("text/event-stream")
+    );
+
+    // An upstream response with no `content-encoding` is inspectable, which is
+    // what makes the terminator findable at relay time.
+    assert!(
+        crate::request_log::body_is_inspectable(&reqwest::header::HeaderMap::new()),
+        "an unencoded upstream body must be readable by the relay"
+    );
+}
+
 /// Two different clients behind one deployment look alike upstream.
 ///
 /// The property the issue asks for stated directly: if any client-supplied

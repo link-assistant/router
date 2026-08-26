@@ -258,6 +258,15 @@ impl RequestLog {
         let Some(max_total) = self.max_total_bytes else {
             return;
         };
+        // The store cannot have crossed the bound while every directory in it
+        // is under its own share of it, so the common case skips the scan
+        // rather than walking every token directory on every record written.
+        if let Ok(count) = fs::read_dir(&self.root).map(Iterator::count)
+            && let Ok(metadata) = fs::metadata(self.log_path(active))
+            && metadata.len() < max_total / (count.max(1) as u64)
+        {
+            return;
+        }
         let Ok(entries) = fs::read_dir(&self.root) else {
             return;
         };

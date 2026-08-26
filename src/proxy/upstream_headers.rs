@@ -32,6 +32,20 @@ const ROUTER_USER_AGENT: &str = concat!("link-assistant-router/", env!("CARGO_PK
 /// An allowlist rather than a denylist, matching the git and GitHub proxies:
 /// a header nobody considered is then dropped rather than disclosed, so a new
 /// client SDK cannot widen this by inventing a header.
+/// `accept-encoding` is deliberately absent.
+///
+/// The client's compression preference was relayed untouched, so it silently
+/// decided whether the proxy could read its own traffic — and on real traffic
+/// the answer was no. Relaying a request must not cost the router its own
+/// observability, so the deployment's hop is negotiated separately from the
+/// client's: without the header the upstream answers uncompressed, which makes
+/// every stream inspectable for a terminator instead of leaving 1163 of ~1600
+/// exchanges unknowable (issues #328, #332).
+///
+/// The cost is bandwidth on the upstream hop. Restoring compression means
+/// enabling reqwest's own `gzip` feature, so the router negotiates and decodes
+/// for itself, and never re-forwarding this header — which would recreate the
+/// byte-for-byte compressed relay and the blind log with it.
 const FORWARDED_CLIENT_HEADERS: &[&str] = &[
     "accept",
     "anthropic-beta",

@@ -184,3 +184,76 @@ fn a_zero_total_bound_leaves_the_store_uncapped() {
         );
     }
 }
+
+/// The total cap costs nothing on a store that is inside it.
+///
+/// The check runs on every record, so it must not turn each append into a
+/// directory scan on a deployment that is nowhere near its bound.
+#[test]
+fn a_store_inside_its_bound_is_not_rescanned_into_slowness() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let log =
+        RequestLog::new(dir.path().join("requests"), 1_000_000).with_total_limit(1_000_000_000);
+    // The deployment this was reported from had 84 token directories, which is
+    // what the per-record check has to walk.
+    for token in 0..84 {
+        let correlation = format!("seed-{token}");
+        log.route_request(
+            &correlation,
+            identity(&format!("seed-{token:03}"), "id", "label"),
+        );
+        log.record(&correlation, "test", json!({"seed": token}));
+    }
+    log.route_request("c", identity("hash", "id", "label"));
+    let started = std::time::Instant::now();
+    for sequence in 0..2_000 {
+        log.record("c", "test", json!({"sequence": sequence}));
+    }
+    let elapsed = started.elapsed();
+    assert!(
+        elapsed < std::time::Duration::from_secs(10),
+        "2000 records took {elapsed:?}; the total-cap check must not dominate an append"
+    );
+}
+
+/// The fast path cannot hide an overflow.
+///
+/// The per-record check skips the directory scan when the active token is
+/// under its own share of the total, which is only sound if the store cannot
+/// then be over it. Many directories each just under their share is the case
+/// that would break that reasoning, so it is the case tested.
+#[test]
+fn many_small_directories_still_trip_the_total_bound() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let root = dir.path().join("requests");
+    // Twenty tokens, a generous per-token bound, and a total that a handful of
+    // them together already exceeds.
+    let log = RequestLog::new(root.clone(), 100_000).with_total_limit(6_000);
+    for token in 0..20 {
+        let correlation = format!("correlation-{token:02}");
+        log.route_request(
+            &correlation,
+            identity(&format!("hash-{token:02}"), "id", "label"),
+        );
+        for sequence in 0..6 {
+            log.record(
+                &correlation,
+                "test",
+                json!({"sequence": sequence, "body": "x".repeat(64)}),
+            );
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+
+    let total: u64 = fs::read_dir(&root)
+        .expect("store")
+        .flatten()
+        .filter_map(|entry| fs::metadata(entry.path().join("requests.jsonl")).ok())
+        .map(|metadata| metadata.len())
+        .sum();
+    assert!(
+        total <= 6_000,
+        "no directory was ever near the total alone, and the store must still be bounded: \
+         found {total} bytes"
+    );
+}

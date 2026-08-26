@@ -93,6 +93,9 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         .collect();
     let mut relayed = HeaderMap::new();
     for (name, value) in headers {
+        // `HeaderMap` normalises names on parse, so this is already lowercase;
+        // named for what it holds rather than left to read as a value that had
+        // been lowered and had not.
         let name_lower = name.as_str();
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
