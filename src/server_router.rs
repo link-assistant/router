@@ -21,7 +21,10 @@ pub fn router(state: AppState, config: &Config) -> Router {
         .route("/health", get(proxy::health))
         // Subscription health is a separate answer from liveness: see
         // `proxy::health` for why they must not be the same endpoint (#318).
-        .route("/health/subscriptions", get(proxy::subscription_health))
+        .route(
+            "/health/subscriptions",
+            get(crate::subscription_health::subscription_health),
+        )
         .route("/actor/code", get(activitypub::actor))
         .route("/inbox/code", post(activitypub::inbox))
         .route("/outbox/code", get(activitypub::outbox))

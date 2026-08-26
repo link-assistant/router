@@ -79,6 +79,7 @@ pub mod server_router;
 pub mod stop_sequences;
 pub mod storage;
 pub mod subscription;
+pub mod subscription_health;
 pub mod subscription_proxy;
 pub mod telegram;
 pub mod tls;

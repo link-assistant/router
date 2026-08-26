@@ -35,7 +35,7 @@ containment controls local to the operator.
 - **Multi-account routing** — pool any number of Claude, Codex, Gemini, or Qwen subscriptions; session affinity, strict token pins, round-robin / fill-first / least-used selection, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
-- **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
+- **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`, subscription health at `/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
 - **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
@@ -348,7 +348,8 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/health` | GET | Health check, returns `ok` |
+| `/health` | GET | Liveness check, returns `ok` — independent of subscription health, because it drives both Kubernetes probes |
+| `/health/subscriptions` | GET | Whether every configured subscription can serve: `200` when it can, `503` naming each degraded provider and why |
 | `/api/tokens` | POST | (admin) Issue a new custom token |
 | `/api/tokens/list` | GET | (admin) List every persisted token |
 | `/api/tokens/revoke` | POST | (admin) Revoke a token by id |
@@ -562,12 +563,15 @@ method-specific verifier is configured.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/metrics` | GET | Public Prometheus text-exposition aggregate counters |
+| `/metrics` | GET | Public Prometheus text-exposition aggregate counters, plus a `link_assistant_subscription_healthy{provider="…"}` gauge per configured subscription |
 | `/v1/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
 | `/v1/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 
 `/metrics` deliberately contains no token ids, labels, or account names because
-it is available without authentication. Administrators can inspect per-token
+it is available without authentication. The `link_assistant_subscription_healthy`
+gauge is labelled by vendor name only, never by account, and answers `0` for a
+subscription that is configured but cannot serve — the signal that turns a
+silent multi-hour outage into an alert. Administrators can inspect per-token
 usage in the `/v1/usage` `token_calls` JSON map. Set `--audit-log` for a durable
 JSONL trail of the same events. See
 [docs/use-cases/audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md).
