@@ -122,7 +122,16 @@ const MAX_PENDING_FRAGMENTS: usize = 40;
 fn check_pending_fragments() {
     let directory = std::path::Path::new("changelog.d");
     let Ok(entries) = std::fs::read_dir(directory) else {
-        return;
+        // A guard that quietly finds nothing is not a guard. The directory is
+        // committed, so its absence means this ran from somewhere unexpected
+        // and the count below would have been vacuously fine.
+        eprintln!(
+            "changelog.d/ is not readable from {}; the fragment count cannot be checked.",
+            std::env::current_dir()
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| String::from("the working directory"))
+        );
+        exit(1);
     };
     let pending = entries
         .filter_map(Result::ok)
