@@ -31,6 +31,49 @@ fn get_arg(name: &str) -> Option<String> {
     env::var(&env_name).ok().filter(|s| !s.is_empty())
 }
 
+/// The largest release body the GitHub API accepts.
+///
+/// Undocumented in the REST reference and enforced as a plain HTTP 422 with no
+/// explanatory message, which is how a release for a large changelog failed
+/// with nothing on the line to say why.
+const MAX_RELEASE_BODY: usize = 125_000;
+
+/// Keep a release body inside what the API will accept, saying what was cut.
+///
+/// A truncated body that names the full changelog is a release page; a 422 is
+/// no release page at all. The marker matters as much as the cut: without it a
+/// reader cannot tell a short changelog from a shortened one.
+fn fit_release_body(body: String, tag: &str, repository: &str) -> String {
+    if body.len() <= MAX_RELEASE_BODY {
+        return body;
+    }
+    let notice = format!(
+        "\n\n---\n\n*This release note was truncated to fit GitHub's {MAX_RELEASE_BODY}-character \
+         limit. The complete entry is in [CHANGELOG.md](https://github.com/{repository}/blob/{tag}/CHANGELOG.md).*\n"
+    );
+    // Cut on a line boundary so the body never ends mid-sentence, and never
+    // inside a multi-byte character.
+    let budget = MAX_RELEASE_BODY.saturating_sub(notice.len());
+    let mut end = 0;
+    for (index, byte) in body.bytes().enumerate() {
+        if index >= budget {
+            break;
+        }
+        if byte == b'\n' {
+            end = index + 1;
+        }
+    }
+    if end == 0 {
+        end = body
+            .char_indices()
+            .map(|(index, _)| index)
+            .take_while(|index| *index <= budget)
+            .last()
+            .unwrap_or(0);
+    }
+    format!("{}{}", &body[..end], notice)
+}
+
 fn get_changelog_for_version(version: &str) -> String {
     let changelog_path = "CHANGELOG.md";
 
@@ -159,7 +202,7 @@ fn main() {
     let payload = ReleasePayload {
         tag_name: tag.clone(),
         name: format!("{}{}", tag_prefix, version),
-        body: release_notes,
+        body: fit_release_body(release_notes, &tag, &repository),
     };
 
     let payload_json = serde_json::to_string(&payload).expect("Failed to serialize payload");
@@ -199,5 +242,61 @@ fn main() {
             eprintln!("Error creating release: {}", stderr);
             exit(1);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A body inside the limit is published exactly as written.
+    #[test]
+    fn an_ordinary_release_note_is_left_alone() {
+        let body = "## [1.2.3]\n\n- one fix\n".to_string();
+        assert_eq!(
+            fit_release_body(body.clone(), "v1.2.3", "owner/repo"),
+            body
+        );
+    }
+
+    /// A changelog larger than the limit produced an HTTP 422 with no message,
+    /// so a release that was built, tested and tagged had no release page.
+    /// Truncating publishes it and says where the rest is.
+    #[test]
+    fn an_oversized_release_note_is_published_truncated_and_says_so() {
+        let body = "- a changelog entry that repeats\n".repeat(8_000);
+        assert!(body.len() > MAX_RELEASE_BODY, "the fixture must overflow");
+
+        let fitted = fit_release_body(body, "v0.116.0", "owner/repo");
+
+        assert!(
+            fitted.len() <= MAX_RELEASE_BODY,
+            "the API rejects anything larger: {} bytes",
+            fitted.len()
+        );
+        assert!(
+            fitted.contains("truncated"),
+            "a shortened body must not read as a complete one"
+        );
+        assert!(
+            fitted.contains("owner/repo/blob/v0.116.0/CHANGELOG.md"),
+            "and must name where the rest is: {}",
+            &fitted[fitted.len() - 300..]
+        );
+        // Cut on a line boundary, so the body never ends mid-entry.
+        let kept = fitted.split("\n\n---\n\n").next().expect("body");
+        assert!(kept.ends_with('\n'), "the cut lands between entries");
+    }
+
+    /// The cut must never land inside a multi-byte character, which would
+    /// panic on the slice and lose the release entirely.
+    #[test]
+    fn a_body_of_multibyte_characters_is_cut_safely() {
+        // No newlines at all, so the line-boundary search finds nothing and
+        // the character-boundary fallback has to carry it.
+        let body = "é".repeat(MAX_RELEASE_BODY);
+        let fitted = fit_release_body(body, "v1.0.0", "owner/repo");
+        assert!(fitted.len() <= MAX_RELEASE_BODY);
+        assert!(fitted.contains("truncated"));
     }
 }
