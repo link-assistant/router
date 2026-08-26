@@ -171,3 +171,175 @@ async fn concurrent_rejections_share_one_refresh() {
         "every concurrent caller should receive the refreshed token"
     );
 }
+
+/// A token endpoint that records whether it was contacted at all.
+///
+/// The guard of issue #319 is about an exchange that must never be *attempted*;
+/// its return value is indistinguishable from a failed attempt, so the request
+/// count is the only thing that separates the fixed router from the broken one.
+async fn recording_token_endpoint(
+    status: u16,
+    body: &'static str,
+) -> (
+    String,
+    std::sync::Arc<std::sync::Mutex<usize>>,
+    tokio::task::JoinHandle<()>,
+) {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}/v1/oauth/token", listener.local_addr().unwrap());
+    let calls = std::sync::Arc::new(std::sync::Mutex::new(0usize));
+    let recorder = std::sync::Arc::clone(&calls);
+    let handle = tokio::spawn(async move {
+        while let Ok((mut socket, _)) = listener.accept().await {
+            *recorder.lock().unwrap() += 1;
+            let mut buf = [0u8; 4096];
+            let _ = socket.read(&mut buf).await;
+            let _ = socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 {status} X\r\ncontent-type: application/json\r\ncontent-length: \
+                         {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await;
+        }
+    });
+    (url, calls, handle)
+}
+
+/// The incident of issue #319, end to end: a rotation succeeds, the very next
+/// call is refused on permission grounds, and the router must **not** spend the
+/// token it just minted.
+///
+/// The stub endpoint is scripted with exactly one answer. If the guard fails,
+/// the second refresh contends for an answer that is not there and the token
+/// that was known-good seconds earlier is spent for nothing.
+#[tokio::test]
+async fn a_token_this_process_just_rotated_into_is_not_spent_again() {
+    let (url, server) = stub_token_endpoint(
+        r#"{"access_token":"rotated-access","refresh_token":"rotated-refresh","expires_in":3600}"#,
+    )
+    .await;
+    let cache = TokenCache::new();
+    let rejected = token(Some("original-refresh"), Some(10_000 + 86_400_000));
+
+    // 17:39:49 — recovery works and the rotated token is adopted.
+    let rotated = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            rejected,
+            10_000,
+        )
+        .await
+        .expect("the first rejection must be recovered from");
+    assert_eq!(rotated.access_token, "rotated-access");
+    server.await.unwrap();
+
+    // 17:44:49 — the freshly rotated token is itself rejected. Before this
+    // guard the router refreshed again here, spending the only good link of a
+    // single-use chain and landing on a terminal invalid_grant.
+    //
+    // The endpoint is scripted to answer that fatal `invalid_grant`, so the
+    // distinction the test turns on is whether the exchange is *attempted*: a
+    // guarded router never contacts it, an unguarded one does and kills the
+    // subscription. Counting the requests is what separates the two — the
+    // return value is `None` either way.
+    let (url, received, server) = recording_token_endpoint(
+        400,
+        r#"{"error":"invalid_grant","error_description":"refresh token revoked"}"#,
+    )
+    .await;
+
+    let outcome = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            rotated.clone(),
+            10_000 + 4 * 60_000,
+        )
+        .await;
+
+    assert!(
+        outcome.is_none(),
+        "a credential rotated into moments ago must not be refreshed again"
+    );
+    assert_eq!(
+        *received.lock().unwrap(),
+        0,
+        "the token endpoint must not be contacted at all: reaching it spends the \
+         freshly minted link and is exactly how the subscription died"
+    );
+    assert_ne!(
+        cache.evidence(SubscriptionProvider::Codex),
+        Some(CredentialEvidence::Rejected),
+        "a guarded refusal must not mark the credential dead"
+    );
+    server.abort();
+    // The credential is untouched and still available for the next tick.
+    assert_eq!(
+        cache
+            .get_fresh_for_at(
+                &reqwest::Client::new(),
+                "http://must-not-be-called.invalid",
+                SubscriptionProvider::Codex,
+                "primary",
+                rotated.clone(),
+                10_000 + 4 * 60_000,
+            )
+            .await
+            .access_token,
+        "rotated-access",
+        "the rotated credential survives and is retried"
+    );
+}
+
+/// The guard is a grace period, not a permanent veto: once it lapses, a
+/// rejected credential is refreshed as before.
+#[tokio::test]
+async fn the_rotation_guard_lapses_and_refresh_resumes() {
+    let (url, server) = stub_token_endpoint(
+        r#"{"access_token":"first","refresh_token":"second","expires_in":3600}"#,
+    )
+    .await;
+    let cache = TokenCache::new();
+    let rotated = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            token(Some("original"), Some(10_000 + 86_400_000)),
+            10_000,
+        )
+        .await
+        .expect("first rotation");
+    server.await.unwrap();
+
+    let (url, server) = stub_token_endpoint(
+        r#"{"access_token":"third","refresh_token":"fourth","expires_in":3600}"#,
+    )
+    .await;
+    // Well past the grace period: a genuine later rejection is still recovered.
+    let outcome = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            rotated,
+            10_000 + 6 * 60_000,
+        )
+        .await
+        .expect("after the grace period a rejection is refreshed again");
+    assert_eq!(outcome.access_token, "third");
+    server.await.unwrap();
+}

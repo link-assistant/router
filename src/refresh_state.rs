@@ -17,10 +17,24 @@ pub(super) struct RefreshAttempts {
     inner: Mutex<HashMap<SubscriptionKey, AttemptLock>>,
 }
 
+/// How long a refresh token this process just adopted is protected from being
+/// spent again.
+///
+/// A refresh chain is single-use: spending a link yields the next one and
+/// invalidates the one spent. When a rotation succeeds and the very next call
+/// fails for a reason that is not about the credential, refreshing again
+/// destroys a token that was known-good seconds earlier and gains nothing,
+/// because no new information about the credential has arrived (issue #319).
+pub(super) const ROTATION_GRACE_MS: i64 = 5 * 60 * 1_000;
+
 #[derive(Debug)]
 pub(super) struct RefreshAttempt {
     credential: [u8; 32],
     failure: Option<CachedFailure>,
+    /// When this process last obtained this credential by refreshing, if it
+    /// did. `None` means the credential was read from disk rather than minted
+    /// here, so nothing is known about how recently it was rotated.
+    rotated_at_ms: Option<i64>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -48,6 +62,7 @@ impl RefreshAttempts {
                     Arc::new(tokio::sync::Mutex::new(RefreshAttempt {
                         credential: fingerprint,
                         failure: None,
+                        rotated_at_ms: None,
                     }))
                 }),
         )
@@ -63,7 +78,26 @@ impl RefreshAttempt {
         }
         self.credential = fingerprint;
         self.failure = None;
+        // A different credential is on disk: whatever this process rotated to
+        // is no longer what is being used, so the grace period does not carry
+        // over to it.
+        self.rotated_at_ms = None;
         true
+    }
+
+    /// Record that this process minted the current credential by refreshing.
+    pub(super) const fn record_rotation(&mut self, now_ms: i64) {
+        self.rotated_at_ms = Some(now_ms);
+    }
+
+    /// How long ago this process rotated into the current credential.
+    pub(super) const fn rotated_within(&self, now_ms: i64, window_ms: i64) -> Option<i64> {
+        match self.rotated_at_ms {
+            Some(rotated_at_ms) if now_ms.saturating_sub(rotated_at_ms) < window_ms => {
+                Some(now_ms.saturating_sub(rotated_at_ms))
+            }
+            _ => None,
+        }
     }
 
     pub(super) const fn suppresses_attempt(&self, now_ms: i64) -> bool {

@@ -246,17 +246,86 @@ pub async fn refresh_catalogs(
                 } else {
                     error
                 };
-                tracing::warn!("failed to refresh {provider} model catalog: {error}");
+                if is_permission_refusal(&error) {
+                    // Say why nothing was refreshed. Without this the operator
+                    // sees a 403 and a token that never rotates, and has no way
+                    // to tell a deliberate refusal from a missed one (#319).
+                    tracing::warn!(
+                        "{provider} refused the catalog request on permission grounds, not \
+                         credential grounds; the stored token is unchanged and will be retried \
+                         on the next tick: {error}"
+                    );
+                } else {
+                    tracing::warn!("failed to refresh {provider} model catalog: {error}");
+                }
                 cache.record_failure(provider, &error, rejected);
             }
         }
     }
 }
 
+/// Error codes a provider returns on a **permission** failure: the credential
+/// is fine and this organization is not permitted to use it right now.
+///
+/// A 403 carrying one of these is not evidence about the token, so refreshing
+/// against it can only spend a link of a single-use chain for no obtainable
+/// gain — which is exactly how a healthy subscription was destroyed five
+/// minutes after recovery succeeded (issue #319).
+const PERMISSION_ERROR_CODES: [&str; 1] = ["oauth_not_allowed_for_organization"];
+
+/// The provider's own error code for a failed resource call, when it gave one.
+///
+/// Anthropic nests it two levels down, under `error.details.error_code`;
+/// [`crate::refresh::oauth_error_code`] reads the token endpoint's shallower
+/// shapes and stops at `error.type`, which for a permission failure is the
+/// uninformative `permission_error` (issue #319).
+fn resource_error_code(body: &str) -> Option<String> {
+    let value: Value = serde_json::from_str(body).ok()?;
+    let error = value.get("error")?;
+    [
+        &["details", "error_code"][..],
+        &["error_code"][..],
+        &["code"][..],
+    ]
+    .into_iter()
+    .find_map(|path| {
+        path.iter()
+            .try_fold(error, |node, key| node.get(key))?
+            .as_str()
+            .map(str::to_string)
+    })
+}
+
+/// Whether a catalog failure is a permission verdict rather than a credential
+/// one — the organization is not allowed to use OAuth right now.
+///
+/// The existing token stays on disk and is retried on the next tick. Nothing
+/// is refreshed, because a new token cannot change an answer that was never
+/// about the token (issue #319).
+#[must_use]
+pub fn is_permission_refusal(error: &str) -> bool {
+    let Some(body) = error.strip_prefix("HTTP ") else {
+        return false;
+    };
+    let Some((status, body)) = body.split_once(": ") else {
+        return false;
+    };
+    if !status.starts_with("403") {
+        return false;
+    }
+    resource_error_code(body).is_some_and(|code| PERMISSION_ERROR_CODES.contains(&code.as_str()))
+}
+
 /// Whether a catalog response proves that the supplied credential is unusable.
+///
+/// A 403 that names a permission error is excluded: it says the token is fine
+/// and the organization is not currently permitted, so treating it as a
+/// credential verdict both refreshes a healthy chain and hides the provider
+/// for a reason that is not the credential's (issue #319).
 #[must_use]
 pub fn is_credential_rejection(error: &str) -> bool {
-    error.starts_with("HTTP 401") || error.starts_with("HTTP 403")
+    (error.starts_with("HTTP 401") || error.starts_with("HTTP 403"))
+        && !is_permission_refusal(error)
 }
 
 /// Continuously refresh live catalogs, beginning immediately at startup.
@@ -586,6 +655,98 @@ mod tests {
             token_cache.evidence(SubscriptionProvider::Qwen),
             Some(crate::refresh::CredentialEvidence::Rejected)
         );
+    }
+
+    /// A 403 that names a permission failure is not a verdict about the
+    /// credential: nothing is refreshed, the credential keeps its evidence, and
+    /// the token on disk is untouched and retried on the next tick (issue #319).
+    #[tokio::test]
+    async fn a_permission_refusal_does_not_reject_or_refresh_the_credential() {
+        async fn handler() -> (axum::http::StatusCode, &'static str) {
+            (
+                axum::http::StatusCode::FORBIDDEN,
+                r#"{"type":"error","error":{"type":"permission_error","message":"OAuth authentication is currently not allowed for this organization.","details":{"error_code":"oauth_not_allowed_for_organization"}}}"#,
+            )
+        }
+
+        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let home = tempdir().unwrap();
+        let credential = home.path().join("oauth_creds.json");
+        let original =
+            format!(r#"{{"access_token":"still-good","resource_url":"http://{address}"}}"#);
+        fs::write(&credential, &original).unwrap();
+        let readers = vec![SubscriptionReader::new(
+            SubscriptionProvider::Qwen,
+            home.path(),
+        )];
+        let token_cache = crate::refresh::TokenCache::new();
+        let cache = ModelCatalogCache::new();
+        // A subscription that was serving happily until the refusal arrived:
+        // this is the state the incident started from (issue #319).
+        cache.record_success(SubscriptionProvider::Qwen, vec!["qwen-live".to_string()]);
+
+        refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &cache).await;
+
+        assert_eq!(
+            token_cache.evidence(SubscriptionProvider::Qwen),
+            None,
+            "a permission refusal says nothing about the credential"
+        );
+        assert_eq!(
+            fs::read_to_string(&credential).unwrap(),
+            original,
+            "the stored token must be left for the next tick to retry"
+        );
+        let status = cache.status(SubscriptionProvider::Qwen);
+        assert!(
+            status.credential_healthy,
+            "a permission refusal must not mark a working credential unhealthy"
+        );
+        assert_eq!(
+            status.routable_models(),
+            ["qwen-live"],
+            "the subscription keeps serving; the refusal was not about it"
+        );
+        assert!(status.last_error.is_some(), "the refusal is still reported");
+    }
+
+    /// The same status code with a body that is *not* a permission error stays
+    /// a credential rejection: the narrowing must not swallow a real 403.
+    #[test]
+    fn an_unexplained_403_is_still_a_credential_rejection() {
+        assert!(is_credential_rejection("HTTP 403 Forbidden: token revoked"));
+        assert!(!is_permission_refusal("HTTP 403 Forbidden: token revoked"));
+        assert!(is_credential_rejection("HTTP 401 Unauthorized: revoked"));
+        // A 401 is about the credential whatever its body says.
+        assert!(!is_permission_refusal(
+            r#"HTTP 401 Unauthorized: {"error":{"details":{"error_code":"oauth_not_allowed_for_organization"}}}"#
+        ));
+        // A different 403 error code is not in the permission set.
+        assert!(is_credential_rejection(
+            r#"HTTP 403 Forbidden: {"error":{"details":{"error_code":"some_other_code"}}}"#
+        ));
+    }
+
+    #[test]
+    fn the_permission_error_code_is_read_from_where_the_vendor_nests_it() {
+        assert_eq!(
+            resource_error_code(
+                r#"{"error":{"type":"permission_error","details":{"error_code":"oauth_not_allowed_for_organization"}}}"#
+            )
+            .as_deref(),
+            Some("oauth_not_allowed_for_organization"),
+            "the code lives under error.details.error_code, not error.type"
+        );
+        assert_eq!(
+            resource_error_code(r#"{"error":{"error_code":"flat"}}"#).as_deref(),
+            Some("flat")
+        );
+        assert_eq!(resource_error_code("not json").as_deref(), None);
+        assert_eq!(resource_error_code(r#"{"error":"bare"}"#).as_deref(), None);
     }
 
     #[test]

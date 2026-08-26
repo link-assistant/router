@@ -38,7 +38,7 @@ mod refresh_recovery;
 mod refresh_registry;
 pub use refresh_journal::direct_exchange_shape;
 use refresh_journal::{journal_request, journal_response};
-use refresh_recovery::{Exchange, RecoveryMode, exchange_with_recovery};
+use refresh_recovery::{Exchange, RecoveryMode, Rejected, exchange_with_recovery};
 
 use std::sync::Arc;
 
@@ -111,6 +111,14 @@ pub const CLAUDE_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
 /// usable life and removes a whole class of mid-flight expiries; five minutes
 /// matches what the vendor clients themselves use (issue #239).
 const REFRESH_SKEW_MS: i64 = 5 * 60_000;
+
+/// How recently this process must have rotated a credential for a terminal
+/// rejection of it to be attributed here rather than to another holder.
+///
+/// Wider than the grace period: the grace period decides whether to spend a
+/// token, while this only decides how the death is explained, and an
+/// explanation that is a few minutes stale is still the right one (issue #319).
+const ROTATION_ATTRIBUTION_MS: i64 = 60 * 60_000;
 
 /// Refresh parameters for a provider. Every subscription provider now has a
 /// public OAuth client, so this is total.
@@ -633,6 +641,19 @@ impl TokenCache {
         {
             return Some(cached);
         }
+        // A credential this process rotated into moments ago is not evidence
+        // of anything yet. Refreshing it spends the only good link of a
+        // single-use chain against a verdict that was never about the token
+        // (issue #319).
+        if let Some(age_ms) = attempt.rotated_within(now_ms, refresh_state::ROTATION_GRACE_MS) {
+            tracing::warn!(
+                "not refreshing the {provider} credential: this process rotated into it \
+                 {}s ago and a refresh chain is single-use, so spending it again would \
+                 destroy a token that was known good; retrying the existing one",
+                age_ms / 1_000
+            );
+            return None;
+        }
         let base =
             self.unsuppressed_base(&mut attempt, provider, account, rejected.clone(), now_ms)?;
         let exchange = Exchange {
@@ -644,16 +665,34 @@ impl TokenCache {
         };
         match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
-                self.accept(&mut attempt, provider, account, &fresh);
+                self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
                 // A refresh that returned the same access token has not
                 // recovered anything; replaying would just repeat the 401.
                 (fresh.access_token != rejected.access_token).then_some(fresh)
             }
             Err(rejection) => {
-                tracing::warn!(
-                    "refresh after a rejected {provider} token failed: {}",
-                    rejection.message
-                );
+                // When this process performed the previous rotation, say so.
+                // "revoked or already spent elsewhere" sends the operator
+                // looking for an external holder that may not exist, while the
+                // fatal spend is recorded right here (issue #319).
+                let message = attempt
+                    .rotated_within(now_ms, ROTATION_ATTRIBUTION_MS)
+                    .map_or_else(
+                        || rejection.message.clone(),
+                        |age_ms| {
+                            format!(
+                                "{} — note: this process rotated into that refresh token {}s ago, \
+                             so it was spent here rather than by another holder",
+                                rejection.message,
+                                age_ms / 1_000
+                            )
+                        },
+                    );
+                tracing::warn!("refresh after a rejected {provider} token failed: {message}");
+                let rejection = Rejected {
+                    message,
+                    ..rejection
+                };
                 self.record_refresh_error(provider, &rejection.message);
                 if rejection.error.is_invalid_grant() {
                     attempt.record_terminal_failure();
@@ -709,7 +748,7 @@ impl TokenCache {
         if !base.is_expired(now_ms.saturating_add(REFRESH_SKEW_MS)) {
             // The store was already ahead of the token we were handed; there is
             // nothing to exchange.
-            self.accept(&mut attempt, provider, account, &base);
+            self.accept(&mut attempt, provider, account, &base, None);
             return base;
         }
         let exchange = Exchange {
@@ -721,7 +760,7 @@ impl TokenCache {
         };
         match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
-                self.accept(&mut attempt, provider, account, &fresh);
+                self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
                 fresh
             }
             Err(rejection) => {
@@ -818,7 +857,17 @@ impl TokenCache {
         provider: SubscriptionProvider,
         account: &str,
         token: &SubscriptionToken,
+        rotated_at_ms: Option<i64>,
     ) {
+        // Remember that *this* process minted the credential, and when. A
+        // single-use chain must not be spent again moments later on evidence
+        // that is not about the credential, and a chain that does die deserves
+        // to be reported as spent here rather than blamed on another holder
+        // (issue #319). `None` means the credential was adopted rather than
+        // exchanged, so no link was spent and no grace period is owed.
+        if let Some(now_ms) = rotated_at_ms {
+            attempt.record_rotation(now_ms);
+        }
         self.store_for(provider, account, token.clone());
         // The attempt fingerprint tracks the *stored* credential, not the
         // access token we just minted from it: overwriting it here would make
