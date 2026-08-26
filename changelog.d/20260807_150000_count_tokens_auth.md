@@ -1,1 +1,0 @@
-- Require a valid router token for `POST /v1/messages/count_tokens` when the request is served locally by the Anthropic bridge; expired or revoked tokens no longer receive an estimate (the per-token request budget is still not consumed, since nothing is spent upstream).

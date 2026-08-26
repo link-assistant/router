@@ -107,8 +107,57 @@ fn is_changelog_fragment(file_path: &str) -> bool {
         && !file_path.ends_with("README.md")
 }
 
+/// How many fragments can be pending before something is wrong.
+///
+/// A release collects every pending fragment into one section, so a directory
+/// that keeps growing is a release that never cleaned up after itself. That
+/// went unnoticed for eight months and roughly 150 releases, because nothing
+/// counted: `changelog.d/` reached 154 fragments and a single version's notes
+/// reached 145 KB, every release republishing the whole archive (issue #337).
+///
+/// Generous on purpose. This catches a broken pipeline, not a busy week.
+const MAX_PENDING_FRAGMENTS: usize = 40;
+
+/// Fail when fragments have accumulated past what one release should hold.
+fn check_pending_fragments() {
+    let directory = std::path::Path::new("changelog.d");
+    let Ok(entries) = std::fs::read_dir(directory) else {
+        // A guard that quietly finds nothing is not a guard. The directory is
+        // committed, so its absence means this ran from somewhere unexpected
+        // and the count below would have been vacuously fine.
+        eprintln!(
+            "changelog.d/ is not readable from {}; the fragment count cannot be checked.",
+            std::env::current_dir()
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| String::from("the working directory"))
+        );
+        exit(1);
+    };
+    let pending = entries
+        .filter_map(Result::ok)
+        .filter(|entry| {
+            let path = entry.path();
+            path.extension().is_some_and(|extension| extension == "md")
+                && path.file_name().is_some_and(|name| name != "README.md")
+        })
+        .count();
+    if pending > MAX_PENDING_FRAGMENTS {
+        eprintln!(
+            "changelog.d/ holds {pending} fragments, more than the {MAX_PENDING_FRAGMENTS} a \
+             release should ever collect at once."
+        );
+        eprintln!(
+            "A release collects every pending fragment into one section, so this means a \
+             release is not removing them and every version is republishing the archive."
+        );
+        exit(1);
+    }
+    println!("Pending changelog fragments: {pending}");
+}
+
 fn main() {
     println!("Checking for changelog fragment in PR diff...\n");
+    check_pending_fragments();
 
     let changed_files = get_changed_files();
 
