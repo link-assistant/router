@@ -69,18 +69,12 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         }
         let explicit = forwarded.first().is_some_and(|argument| argument == "--");
         let forwarded = if explicit { &forwarded[1..] } else { forwarded };
-        for argument in forwarded {
-            let argument = argument.to_string_lossy();
-            let name = argument
-                .split_once('=')
-                .map_or_else(|| argument.as_ref(), |(name, _)| name);
-            if !explicit && options.iter().any(|(option, _)| option == name) {
-                eprintln!(
-                    "note: `{name}` after the client name is passed to {value}; router options \
-                     go before the client name"
-                );
-            }
-        }
+        // The forward itself is silent. Narrating a rule that behaved exactly
+        // as documented turned a settled design decision (issue #299) into a
+        // recurring interruption printed into the client's own terminal, once
+        // per matching flag, with no way for a reader to say "yes, I know".
+        // `with --help` documents the boundary, and `--` states it explicitly
+        // for anyone who wants it stated (issue #330).
         normalized.push("--".into());
         normalized.extend(forwarded.iter().cloned());
         return normalized;

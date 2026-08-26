@@ -66,6 +66,20 @@ pub struct Exchange {
     /// Bodies that could not be decoded, so nothing is inferred from them.
     pub undecodable_bodies: u64,
     pub records: u64,
+    /// Whether the decoded frames carry an SSE `error` event.
+    ///
+    /// A turn that failed mid-stream returns 200 at the transport layer, so
+    /// without reading the frames it is indistinguishable from one that
+    /// succeeded (issue #328).
+    pub stream_error: bool,
+    /// The encoded response frames, in the order they were recorded.
+    ///
+    /// Only their concatenation is a valid compressed stream, so they are kept
+    /// until the whole exchange has been read and decoded together (issue
+    /// #328).
+    encoded_frames: Vec<u8>,
+    /// The `content-encoding` the response declared, if it declared one.
+    content_encoding: Option<String>,
 }
 
 impl Exchange {
@@ -75,6 +89,12 @@ impl Exchange {
     #[must_use]
     pub fn is_incomplete_stream(&self) -> bool {
         self.streamed && self.inspectable && self.stream_complete == Some(false)
+    }
+
+    /// A turn that failed inside a stream the transport called successful.
+    #[must_use]
+    pub const fn carried_an_error(&self) -> bool {
+        self.stream_error
     }
 
     /// A stream whose frames were encoded, so the log cannot say how it ended.
@@ -211,6 +231,10 @@ pub fn read_exchanges(
     let exchanges = by_id
         .into_values()
         .map(|mut exchange| {
+            // Decode before classifying: the terminator the classification
+            // looks for is inside the bytes, and searching them encoded is
+            // what made every compressed stream unverifiable (issue #328).
+            settle_encoded_frames(&mut exchange);
             resolve_stream_classification(&mut exchange);
             exchange
         })
@@ -277,22 +301,33 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
         }
         "client_response" => {
             exchange.status = record.get("status").and_then(Value::as_u64);
+            note_response_encoding(exchange, record);
             note_response_content_type(exchange, record);
         }
         "upstream_response" => {
             exchange.upstream_status = record.get("status").and_then(Value::as_u64);
+            note_response_encoding(exchange, record);
             note_response_content_type(exchange, record);
         }
         "upstream_response_body" | "client_response_body" => {
             if phase == "upstream_response_body" {
                 exchange.frames += 1;
             }
-            if record
+            if let Some(encoded) = record
                 .get("body")
-                .is_some_and(|body| body.get("base64").is_some())
+                .and_then(|body| body.get("base64"))
+                .and_then(Value::as_str)
             {
                 if phase == "upstream_response_body" {
                     exchange.undecodable_bodies += 1;
+                    // Kept rather than counted and discarded: the bytes are
+                    // ordinary gzip or brotli, and only their concatenation
+                    // decodes (issue #328).
+                    if let Ok(bytes) =
+                        base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
+                    {
+                        exchange.encoded_frames.extend_from_slice(&bytes);
+                    }
                 }
             } else if let Some(body) = record.get("body")
                 && body_carries_a_terminator(body)
@@ -355,21 +390,164 @@ fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
         return;
     }
     exchange.response_media_type = Some(media_type.clone());
-    if let Some(encoding) = record
-        .get("headers")
-        .and_then(|headers| headers.get("content-encoding"))
-        .and_then(Value::as_str)
-        && !encoding
-            .split(',')
-            .all(|part| part.trim().is_empty() || part.trim().eq_ignore_ascii_case("identity"))
-    {
-        exchange.inspectable = false;
-    }
     // Evidence either way is conclusive, so it overrides the request's
     // `stream: true` hint: what the response actually was beats what was asked
     // for, and a request may ask for a stream that the upstream answers whole.
     exchange.streamed = media_type == "text/event-stream";
     exchange.stream_evidence = true;
+}
+
+/// Whether decoded SSE carries an error event.
+///
+/// The transport says 200 and the stream carries the failure, so the status
+/// line cannot answer whether the turn succeeded — only the frames can.
+fn carries_a_stream_error(decoded: &str) -> bool {
+    decoded.lines().any(|line| {
+        let line = line.trim();
+        line.eq_ignore_ascii_case("event: error")
+            || line
+                .strip_prefix("data:")
+                .and_then(|data| serde_json::from_str::<Value>(data.trim()).ok())
+                .and_then(|value| {
+                    value
+                        .get("type")
+                        .and_then(Value::as_str)
+                        .map(|kind| kind == "error")
+                })
+                .unwrap_or(false)
+    })
+}
+
+/// Decode the response frames of one exchange as the single stream they are.
+///
+/// An operator reading a single exchange got base64 for every body — on one
+/// deployment, 11,208 of them, with no plain-text body in the file at all — so
+/// grepping the log for an error message, a model name or a prompt found
+/// nothing, not because the data was absent but because none of it was
+/// readable as stored (issue #328).
+///
+/// The frames must be joined first: only the first carries the codec's header,
+/// so decoding them one at a time reads the opening frame and leaves the rest
+/// as base64 — which is most of the stream.
+fn decode_response_stream(
+    records: &[Value],
+    encoding: Option<crate::log_decode::Encoding>,
+) -> Option<String> {
+    let encoding = encoding?;
+    if encoding.is_identity() {
+        return None;
+    }
+    let mut joined = Vec::new();
+    for record in records {
+        if let Some(encoded) = stored_bytes(record)
+            && let Ok(bytes) =
+                base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
+        {
+            joined.extend_from_slice(&bytes);
+        }
+    }
+    crate::log_decode::decode(&joined, encoding)
+}
+
+/// The base64 a record stores in place of a body, if it stores one.
+fn stored_bytes(record: &Value) -> Option<&str> {
+    record
+        .get("body")
+        .and_then(|body| body.get(crate::request_log::BINARY_BODY_KEY))
+        .and_then(Value::as_str)
+}
+
+/// Render the decoded stream against the first frame that carried it.
+///
+/// The decoded text belongs to the exchange rather than to any one frame, so
+/// it is shown once, where a reader looks for it, and the remaining frames say
+/// where it went instead of repeating an unreadable blob.
+fn render_decoded_body(
+    record: &mut Value,
+    index: usize,
+    first_body: usize,
+    decoded: Option<&String>,
+) {
+    let Some(decoded) = decoded else {
+        return;
+    };
+    if stored_bytes(record).is_none() {
+        return;
+    }
+    let rendered = if index == first_body {
+        Value::String(decoded.clone())
+    } else {
+        Value::String(String::from(
+            "[decoded with the first frame: only the whole stream decodes]",
+        ))
+    };
+    if let Some(body) = record.get_mut("body") {
+        *body = rendered;
+    }
+}
+
+/// Record the response's declared content encoding.
+///
+/// Kept separate from the media type because a record may carry one without
+/// the other, and the encoding is what decides whether the frames can be read.
+fn note_response_encoding(exchange: &mut Exchange, record: &Value) {
+    if let Some(encoding) = record
+        .get("headers")
+        .and_then(|headers| headers.get("content-encoding"))
+        .and_then(Value::as_str)
+    {
+        exchange.content_encoding = Some(encoding.to_string());
+    }
+}
+
+/// Decide what the recorded frames say, decoding them when they are encoded.
+///
+/// `stream_not_verifiable` was a refusal to decompress, not a limit: the
+/// stored bytes are ordinary gzip or brotli and decode to readable SSE, yet
+/// 1163 of ~1600 exchanges were declared unknowable, every streamed one among
+/// them. Only an encoding the router genuinely cannot decode is unverifiable
+/// now (issue #328).
+fn settle_encoded_frames(exchange: &mut Exchange) {
+    let encoding = exchange
+        .content_encoding
+        .as_deref()
+        .map_or(Some(crate::log_decode::Encoding::Identity), |declared| {
+            crate::log_decode::Encoding::parse(declared)
+        });
+    let Some(encoding) = encoding else {
+        // An encoding with no decoder: "not knowable from the log" is then the
+        // honest answer rather than an unattempted one.
+        exchange.inspectable = false;
+        return;
+    };
+    if encoding.is_identity() || exchange.encoded_frames.is_empty() {
+        return;
+    }
+    let Some(decoded) = crate::log_decode::decode(&exchange.encoded_frames, encoding) else {
+        // The bytes did not match what the header claimed. Nothing was read,
+        // so nothing is asserted about how the stream ended.
+        exchange.inspectable = false;
+        return;
+    };
+    exchange.inspectable = true;
+    exchange.undecodable_bodies = 0;
+    // An `error` event inside a 200 was invisible for the same reason the
+    // terminator was: it sits in a body nothing decoded. A failed turn was
+    // therefore indistinguishable from a successful one (issue #328).
+    if carries_a_stream_error(&decoded) {
+        exchange.stream_error = true;
+    }
+    if crate::request_log::text_terminates_stream(&decoded) {
+        exchange.body_terminated = true;
+        // The relay stamped `complete: false` because it declined to look, not
+        // because the stream was cut. A boolean meaning "unchecked" under the
+        // name "incomplete" is what produced the false negatives issue #234
+        // was filed about; the bytes now say otherwise, so they win.
+        if exchange.stream_complete == Some(false) {
+            exchange.stream_complete = Some(true);
+            exchange.stream_outcome = Some(String::from("completed"));
+        }
+    }
 }
 
 /// Whether a recorded body carries a dialect's terminating event.
@@ -482,12 +660,23 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
     // Reported so the figure is visible, but worded as the absence of evidence
     // it is: calling a healthy compressed stream truncated is what made the
     // signal unusable (issue #255).
+    let errored = collect(&Exchange::carried_an_error);
+    if !errored.is_empty() {
+        found.push(Anomaly {
+            kind: "stream_carried_an_error",
+            detail: "a streamed turn carried an error event while the status line said 200, \
+                     so the transport reported success for a turn that failed"
+                .to_string(),
+            correlation_ids: errored,
+        });
+    }
     let unverifiable = collect(&Exchange::is_unverifiable_stream);
     if !unverifiable.is_empty() {
         found.push(Anomaly {
             kind: "stream_not_verifiable",
-            detail: "a streamed exchange was relayed compressed, so its frames cannot be \
-                     inspected for a terminator; how it ended is not knowable from the log"
+            detail: "a streamed exchange was relayed under an encoding this router cannot \
+                     decode, so its frames cannot be inspected for a terminator; how it \
+                     ended is not knowable from the log"
                 .to_string(),
             correlation_ids: unverifiable,
         });
@@ -533,13 +722,37 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
 pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::Result<String> {
     let mut out = String::new();
     for path in log_files(root, token)? {
-        for line in std::fs::read_to_string(&path)?.lines() {
-            let Ok(record) = serde_json::from_str::<Value>(line) else {
-                continue;
-            };
-            if record.get("correlation_id").and_then(Value::as_str) != Some(correlation_id) {
-                continue;
-            }
+        // The encoding is declared on the response record, which may arrive
+        // after the bodies it describes, so the whole exchange is read before
+        // anything is rendered.
+        let contents = std::fs::read_to_string(&path)?;
+        let records = contents
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .filter(|record| {
+                record.get("correlation_id").and_then(Value::as_str) == Some(correlation_id)
+            })
+            .collect::<Vec<_>>();
+        let encoding = records
+            .iter()
+            .find_map(|record| {
+                record
+                    .get("headers")
+                    .and_then(|headers| headers.get("content-encoding"))
+                    .and_then(Value::as_str)
+            })
+            .map_or(Some(crate::log_decode::Encoding::Identity), |declared| {
+                crate::log_decode::Encoding::parse(declared)
+            });
+        let decoded = decode_response_stream(&records, encoding);
+        // The decoded text belongs to the whole stream, so it is rendered
+        // against the first frame that carried any of it.
+        let first_body = records
+            .iter()
+            .position(|record| stored_bytes(record).is_some())
+            .unwrap_or_default();
+        for (index, mut record) in records.into_iter().enumerate() {
+            render_decoded_body(&mut record, index, first_body, decoded.as_ref());
             out.push_str(&serde_json::to_string_pretty(&record).unwrap_or_default());
             out.push('\n');
         }
@@ -554,3 +767,7 @@ pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::
 #[cfg(test)]
 #[path = "log_analysis_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "log_analysis_decode_tests.rs"]
+mod decode_tests;

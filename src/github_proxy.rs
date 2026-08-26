@@ -200,11 +200,96 @@ impl GitHubPolicy {
         {
             return PolicyDecision::Deny;
         }
+        if destroys_by_effect(method, path, body) {
+            return PolicyDecision::Deny;
+        }
         if path == "/graphql" && destructive_graphql(body) {
             return PolicyDecision::Deny;
         }
         PolicyDecision::Allow
     }
+}
+
+/// Destructive operations that do not spell their intent in the method.
+///
+/// "Destructive" was inferred from the HTTP verb, and GitHub's API does not
+/// respect that correspondence: `DELETE .../branches/{b}/protection` was
+/// denied while the `PUT` beside it replaces the whole protection object and
+/// reaches the same end state. `POST .../transfer` moves the repository to
+/// another owner — strictly worse for the org than the denied `DELETE` of it —
+/// and `PATCH` with `visibility` publishes a private repository, which is a
+/// data-exfiltration primitive that needs no exfiltration path (issue #329).
+///
+/// Branch protection matters most of the four: it is the control this
+/// project's own reasoning leans on as the one an agent cannot talk past, so a
+/// routed token that can rewrite it puts the backstop inside the blast radius
+/// of the thing it backstops.
+///
+/// Kept small and explicit rather than heuristic, and configured rules are
+/// still evaluated first, so an operator who wants one of these writes an
+/// allow rule for that one path — the same escape hatch `allows_git_ref` uses.
+fn destroys_by_effect(method: &str, path: &str, body: &[u8]) -> bool {
+    // `glob_matches` compares whole segments and its `/**` suffix strips a
+    // literal prefix, so a pattern that needs both wildcards and a tail is
+    // spelled here rather than as a glob.
+    let segments = path.split('/').collect::<Vec<_>>();
+    // A branch name may contain slashes -- `feature/x` is ordinary -- so the
+    // branch is however many segments sit between `branches` and `protection`
+    // rather than exactly one. Matching it as one segment let a `PUT` to
+    // `feature/x`'s protection through, on the control the rest of this policy
+    // leans on. Sub-resources (`.../protection/required_signatures` and its
+    // siblings) each relax one part of the same object, so the subtree counts.
+    let protection = matches!(segments.as_slice(), ["", "repos", _, _, "branches", ..])
+        && segments
+            .iter()
+            .skip(5)
+            .any(|segment| *segment == "protection");
+    // Rulesets govern the same thing one level up, and an organisation's
+    // rulesets are what a repository's protection inherits. Creating one can
+    // shadow an existing rule, so the create verb is covered beside the
+    // update -- the same verb asymmetry this whole function exists to close.
+    let ruleset = matches!(
+        segments.as_slice(),
+        ["", "repos", _, _, "rulesets", ..] | ["", "orgs", _, "rulesets", ..]
+    );
+    if (method.eq_ignore_ascii_case("PUT")
+        || method.eq_ignore_ascii_case("POST")
+        || method.eq_ignore_ascii_case("PATCH"))
+        && (protection || ruleset)
+    {
+        return true;
+    }
+    if method.eq_ignore_ascii_case("POST") && glob_matches("/repos/*/*/transfer", path) {
+        return true;
+    }
+    // Keyed on the body rather than the path, the same way the forced-ref rule
+    // is: an ordinary `PATCH` setting `description` or `homepage` stays
+    // allowed, because naming a field is what makes this one destructive.
+    // A trailing slash is tolerated by GitHub, and a field name is a field
+    // name whatever case it arrives in; neither should decide whether a
+    // repository can be published.
+    let repository = matches!(
+        path.trim_end_matches('/')
+            .split('/')
+            .collect::<Vec<_>>()
+            .as_slice(),
+        ["", "repos", _, _]
+    );
+    method.eq_ignore_ascii_case("PATCH")
+        && repository
+        && serde_json::from_slice::<Value>(body)
+            .ok()
+            .and_then(|value| {
+                value.as_object().map(|fields| {
+                    fields.keys().any(|field| {
+                        matches!(
+                            field.to_ascii_lowercase().as_str(),
+                            "archived" | "private" | "visibility" | "default_branch"
+                        )
+                    })
+                })
+            })
+            .unwrap_or(false)
 }
 
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -298,7 +383,26 @@ fn destructive_graphql(body: &[u8]) -> bool {
     let deletes_ref = names.iter().any(|name| name == "updaterefs")
         && (contains_inline_zero_after_oid(&compact)
             || value.get("variables").is_some_and(contains_zero_after_oid));
-    has_delete || forced_ref || deletes_ref
+    // The REST and GraphQL halves must not disagree about what is
+    // destructive, or the deny list is a routing question rather than a
+    // policy (issue #329).
+    let destroys_by_effect = names.iter().any(|name| {
+        matches!(
+            name.as_str(),
+            "transferrepository"
+                | "updaterepositoryruleset"
+                | "createrepositoryruleset"
+                // An organisation's rulesets are what a repository's own
+                // protection inherits, so the REST and GraphQL halves cover
+                // the same level.
+                | "updateorganizationruleset"
+                | "createorganizationruleset"
+                | "updatebranchprotectionrule"
+                | "createbranchprotectionrule"
+        )
+    }) || (names.iter().any(|name| name == "updaterepository")
+        && (compact.contains("visibility:") || compact.contains("\"visibility\"")));
+    has_delete || forced_ref || deletes_ref || destroys_by_effect
 }
 
 /// GraphQL names outside comments and quoted values. Destructive operations

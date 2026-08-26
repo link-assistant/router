@@ -1,5 +1,7 @@
 //! Redacted, size-bounded HTTP exchange logging.
 
+mod owner_only;
+mod redaction;
 mod stream_outcome;
 
 pub use stream_outcome::{
@@ -9,8 +11,7 @@ pub use stream_outcome::{
 };
 
 use std::collections::{BTreeMap, HashMap};
-use std::fs::{self, OpenOptions};
-use std::io::Write as _;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -25,9 +26,25 @@ use serde_json::{Map, Value, json};
 use sha2::{Digest as _, Sha256};
 
 use crate::app_state::AppState;
+use owner_only::{append_owner_only, ensure_owner_only_dir, write_owner_only};
+pub use redaction::BINARY_BODY_KEY;
+#[cfg(test)]
+use redaction::partially_redact;
+use redaction::{redact_value, redacted_uri};
+pub use redaction::{redacted_body, redacted_headers};
 
-/// Default maximum size of `requests.jsonl` (100 MiB).
+/// Default maximum size of one token's `requests.jsonl` (100 MiB).
 pub const DEFAULT_MAX_BYTES: u64 = 100 * 1024 * 1024;
+/// Default maximum size of the whole request store across every token (4 GiB).
+///
+/// The per-token bound is deliberately per-token: it keeps a noisy caller from
+/// evicting a quiet one's history. What it is not is a bound on the store, and
+/// it was documented as "Maximum size of the request log" — so a deployment
+/// that set 500 MB and had issued 84 tokens had a 42 GB ceiling, and no
+/// setting to cap the total. Directory count only ever grows, because every
+/// `with` run mints a token (issue #316), so it is not self-limiting either
+/// (issue #331).
+pub const DEFAULT_MAX_TOTAL_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const MAX_BUFFERED_REQUEST_BYTES: usize = 10 * 1024 * 1024;
 const REDACTED: &str = "[REDACTED]";
 const UNAUTHENTICATED: &str = "unauthenticated";
@@ -58,6 +75,8 @@ impl LogIdentity {
 pub struct RequestLog {
     root: PathBuf,
     max_bytes: u64,
+    /// Bound across every token directory, or `None` when uncapped.
+    max_total_bytes: Option<u64>,
     write_lock: Mutex<()>,
     routes: Mutex<HashMap<String, LogIdentity>>,
 }
@@ -78,7 +97,21 @@ impl RequestLog {
             .and_then(|value| value.parse().ok())
             .filter(|value| *value > 0)
             .unwrap_or(DEFAULT_MAX_BYTES);
-        Self::new(path, max_bytes)
+        let max_total_bytes = std::env::var("REQUEST_LOG_MAX_TOTAL_BYTES")
+            .ok()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or(DEFAULT_MAX_TOTAL_BYTES);
+        Self::new(path, max_bytes).with_total_limit(max_total_bytes)
+    }
+
+    /// Bound the whole store, not just each token within it.
+    ///
+    /// `0` disables the total cap, for an operator who has budgeted the
+    /// partition themselves.
+    #[must_use]
+    pub fn with_total_limit(mut self, max_total_bytes: u64) -> Self {
+        self.max_total_bytes = (max_total_bytes > 0).then_some(max_total_bytes);
+        self
     }
 
     /// Build a logger at `path` with an exact byte limit.
@@ -87,6 +120,7 @@ impl RequestLog {
         Self {
             root,
             max_bytes: max_bytes.max(1),
+            max_total_bytes: None,
             write_lock: Mutex::new(()),
             routes: Mutex::new(HashMap::new()),
         }
@@ -210,6 +244,74 @@ impl RequestLog {
         let result = append_owner_only(&path, line);
         if let Err(error) = result {
             tracing::warn!("request log write failed ({}): {error}", path.display());
+        }
+        self.enforce_total_limit(token_hash);
+    }
+
+    /// Keep the whole store inside its total bound.
+    ///
+    /// The per-token bound stays exactly as it was — a noisy token still
+    /// cannot evict a quiet one's records — so this evicts whole directories
+    /// rather than trimming within them, oldest-written first, and never the
+    /// one being written. That makes the unit of loss a token nobody has used
+    /// recently instead of the beginning of an active session (issue #331).
+    fn enforce_total_limit(&self, active: &str) {
+        let Some(max_total) = self.max_total_bytes else {
+            return;
+        };
+        // The store cannot have crossed the bound while every directory in it
+        // is under its own share of it, so the common case skips the scan
+        // rather than walking every token directory on every record written.
+        if let Ok(count) = fs::read_dir(&self.root).map(Iterator::count)
+            && let Ok(metadata) = fs::metadata(self.log_path(active))
+            && metadata.len() < max_total / (count.max(1) as u64)
+        {
+            return;
+        }
+        let Ok(entries) = fs::read_dir(&self.root) else {
+            return;
+        };
+        let mut directories: Vec<(std::time::SystemTime, u64, PathBuf, String)> = entries
+            .flatten()
+            .filter(|entry| entry.path().is_dir())
+            .filter_map(|entry| {
+                let name = entry.file_name().to_string_lossy().into_owned();
+                let metadata = fs::metadata(entry.path().join("requests.jsonl")).ok()?;
+                Some((
+                    metadata.modified().ok()?,
+                    metadata.len(),
+                    entry.path(),
+                    name,
+                ))
+            })
+            .collect();
+        let mut total: u64 = directories.iter().map(|(_, size, _, _)| *size).sum();
+        if total <= max_total {
+            return;
+        }
+        directories.sort_by_key(|(modified, _, _, _)| *modified);
+        for (_, size, path, name) in directories {
+            if total <= max_total {
+                break;
+            }
+            // Never the directory just written: evicting it would lose the
+            // record that prompted the eviction, and a caller with traffic
+            // would see its own history vanish mid-session.
+            if name == active {
+                continue;
+            }
+            if let Err(error) = fs::remove_dir_all(&path) {
+                tracing::warn!("request log eviction failed ({}): {error}", path.display());
+                continue;
+            }
+            total = total.saturating_sub(size);
+            // Dropping data under a bound is defensible; dropping it invisibly
+            // is what turns a bounded log into an unreliable one (issue #322).
+            tracing::info!(
+                token_hash = %name,
+                bytes = size,
+                "request log evicted a token directory to stay within the total limit"
+            );
         }
     }
 
@@ -338,61 +440,6 @@ impl RequestLog {
     }
 }
 
-fn ensure_owner_only_dir(path: &Path) -> std::io::Result<()> {
-    fs::create_dir_all(path)?;
-    set_dir_owner_only(path)
-}
-
-#[cfg(unix)]
-fn set_dir_owner_only(path: &Path) -> std::io::Result<()> {
-    use std::os::unix::fs::PermissionsExt as _;
-
-    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
-}
-
-#[cfg(not(unix))]
-fn set_dir_owner_only(_path: &Path) -> std::io::Result<()> {
-    Ok(())
-}
-
-fn append_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
-    let mut options = OpenOptions::new();
-    options.create(true).append(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt as _;
-        options.mode(0o600);
-    }
-    let mut file = options.open(path)?;
-    set_owner_only(&file)?;
-    file.write_all(contents)
-}
-
-fn write_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
-    let mut options = OpenOptions::new();
-    options.create(true).write(true).truncate(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::OpenOptionsExt as _;
-        options.mode(0o600);
-    }
-    let mut file = options.open(path)?;
-    set_owner_only(&file)?;
-    file.write_all(contents)
-}
-
-#[cfg(unix)]
-fn set_owner_only(file: &fs::File) -> std::io::Result<()> {
-    use std::os::unix::fs::PermissionsExt as _;
-
-    file.set_permissions(fs::Permissions::from_mode(0o600))
-}
-
-#[cfg(not(unix))]
-fn set_owner_only(_file: &fs::File) -> std::io::Result<()> {
-    Ok(())
-}
-
 /// Correlation id injected by [`log_http_exchange`]. Direct handler tests that
 /// bypass middleware receive a fresh id instead of sharing an ambiguous value.
 #[must_use]
@@ -411,275 +458,6 @@ pub fn token_log_key(token: &str) -> String {
     digest[..TOKEN_HASH_HEX_LENGTH].to_string()
 }
 
-fn partially_redact(value: &str) -> String {
-    let length = value.chars().count();
-    if length < MIN_PARTIAL_REDACTION_LENGTH {
-        return REDACTED.to_string();
-    }
-    let prefix = value
-        .chars()
-        .take(REDACTED_PREFIX_LENGTH)
-        .collect::<String>();
-    let suffix = value
-        .chars()
-        .skip(length - REDACTED_SUFFIX_LENGTH)
-        .collect::<String>();
-    let mask = "*".repeat(length - REDACTED_PREFIX_LENGTH - REDACTED_SUFFIX_LENGTH);
-    format!("{prefix}{mask}{suffix}")
-}
-
-fn redact_secret(value: &str) -> String {
-    let trimmed = value.trim();
-    if trimmed
-        .get(..7)
-        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
-    {
-        return format!("{}{}", &trimmed[..7], partially_redact(&trimmed[7..]));
-    }
-    partially_redact(trimmed)
-}
-
-/// Mask credentials while retaining header names for diagnostics.
-#[must_use]
-pub fn redacted_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
-    headers
-        .iter()
-        .map(|(name, value)| {
-            let name = name.as_str().to_string();
-            let value = if is_secret_name(&name) {
-                value
-                    .to_str()
-                    .map_or_else(|_| REDACTED.to_string(), redact_secret)
-            } else {
-                value.to_str().map_or_else(
-                    |_| "[NON-UTF8]".to_string(),
-                    |value| {
-                        if is_secret_value(value) {
-                            redact_secret(value)
-                        } else {
-                            value.to_string()
-                        }
-                    },
-                )
-            };
-            (name, value)
-        })
-        .collect()
-}
-
-/// How a body that is not valid UTF-8 is represented in the log.
-///
-/// `String::from_utf8_lossy` replaces every invalid byte with U+FFFD, which for
-/// a compressed body destroys it: the record is then neither readable nor
-/// decodable after the fact (issue #231). Such a body is base64-encoded instead,
-/// under a marker that says what the reader is looking at.
-const BINARY_BODY_KEY: &str = "base64";
-
-/// Encode a body for the log without losing it.
-///
-/// A body is stored as JSON when it parses as JSON, as text when it is valid
-/// UTF-8, and otherwise as base64 — which is what a `gzip`, `br` or `zstd`
-/// response looks like here, because the router does not decompress upstream
-/// bodies and a single frame of a compressed *stream* cannot be decoded on its
-/// own anyway.
-#[must_use]
-pub fn redacted_body(body: &[u8]) -> Value {
-    if let Ok(value) = serde_json::from_slice::<Value>(body) {
-        return redact_value(value);
-    }
-    std::str::from_utf8(body).map_or_else(
-        |_| {
-            json!({
-                BINARY_BODY_KEY: base64::Engine::encode(
-                    &base64::engine::general_purpose::STANDARD,
-                    body,
-                ),
-                "bytes": body.len(),
-            })
-        },
-        |text| Value::String(text.to_string()),
-    )
-}
-
-fn redact_value(mut value: Value) -> Value {
-    match &mut value {
-        Value::Object(object) => {
-            for (key, child) in object {
-                if is_secret_name(key) {
-                    *child = child.as_str().map_or_else(
-                        || Value::String(REDACTED.to_string()),
-                        |secret| Value::String(redact_secret(secret)),
-                    );
-                } else if key.eq_ignore_ascii_case("uri")
-                    && let Value::String(uri) = child
-                {
-                    *uri = redacted_uri(uri);
-                } else {
-                    *child = redact_value(child.take());
-                }
-            }
-        }
-        Value::Array(array) => {
-            for child in array {
-                *child = redact_value(child.take());
-            }
-        }
-        Value::String(text) if is_secret_value(text) => {
-            *text = redact_secret(text);
-        }
-        _ => {}
-    }
-    value
-}
-
-fn is_secret_name(name: &str) -> bool {
-    let normalized = normalize_name(name);
-    matches!(
-        normalized.as_str(),
-        "authorization"
-            | "proxy_authorization"
-            | "x_api_key"
-            | "api_key"
-            | "key"
-            | "cookie"
-            | "set_cookie"
-            | "access_token"
-            | "refresh_token"
-            | "oauth_token"
-            | "auth_token"
-            | "security_token"
-            | "x_auth_token"
-            | "x_goog_api_key"
-            | "x_amz_security_token"
-            | "token"
-            | "password"
-            | "secret"
-            | "client_secret"
-            | "private_key"
-    ) || normalized.ends_with("_password")
-        || normalized.ends_with("_secret")
-        || normalized.ends_with("_token")
-        || normalized.ends_with("_api_key")
-}
-
-fn normalize_name(name: &str) -> String {
-    let mut normalized = String::with_capacity(name.len());
-    let mut previous_was_lowercase_or_digit = false;
-    for character in name.chars() {
-        if character.is_ascii_uppercase() {
-            if previous_was_lowercase_or_digit && !normalized.ends_with('_') {
-                normalized.push('_');
-            }
-            normalized.push(character.to_ascii_lowercase());
-            previous_was_lowercase_or_digit = false;
-        } else if character.is_ascii_alphanumeric() {
-            normalized.push(character.to_ascii_lowercase());
-            previous_was_lowercase_or_digit =
-                character.is_ascii_lowercase() || character.is_ascii_digit();
-        } else {
-            if !normalized.ends_with('_') {
-                normalized.push('_');
-            }
-            previous_was_lowercase_or_digit = false;
-        }
-    }
-    normalized.trim_matches('_').to_string()
-}
-
-fn is_secret_value(value: &str) -> bool {
-    let value = value.trim();
-    value
-        .get(..7)
-        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("bearer "))
-        || [
-            "sk-ant-",
-            crate::token::TOKEN_PREFIX,
-            crate::admin::ADMIN_TOKEN_PREFIX,
-        ]
-        .iter()
-        .any(|prefix| value.contains(prefix))
-        || is_jwt(
-            value
-                .strip_prefix(crate::token::TOKEN_PREFIX)
-                .unwrap_or(value),
-        )
-}
-
-fn is_jwt(value: &str) -> bool {
-    let mut segments = value.split('.');
-    let Some(header) = segments.next() else {
-        return false;
-    };
-    let Some(payload) = segments.next() else {
-        return false;
-    };
-    let Some(signature) = segments.next() else {
-        return false;
-    };
-    segments.next().is_none()
-        && header.starts_with("eyJ")
-        && [header, payload, signature].iter().all(|segment| {
-            segment.len() >= 8
-                && segment.chars().all(|character| {
-                    character.is_ascii_alphanumeric() || matches!(character, '-' | '_')
-                })
-        })
-}
-
-fn redacted_uri(uri: &str) -> String {
-    let Some((path, query)) = uri.split_once('?') else {
-        return uri.to_string();
-    };
-    let query = query
-        .split('&')
-        .map(|parameter| {
-            let (name, value) = parameter.split_once('=').unwrap_or((parameter, ""));
-            let decoded_name = percent_decode(name);
-            let decoded_value = percent_decode(value);
-            if is_secret_name(&decoded_name) || is_secret_value(&decoded_value) {
-                format!("{name}={}", redact_secret(&decoded_value))
-            } else {
-                parameter.to_string()
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("&");
-    format!("{path}?{query}")
-}
-
-fn percent_decode(value: &str) -> String {
-    let bytes = value.as_bytes();
-    let mut decoded = Vec::with_capacity(bytes.len());
-    let mut index = 0;
-    while index < bytes.len() {
-        match bytes[index] {
-            b'%' if index + 2 < bytes.len() => {
-                if let (Some(high), Some(low)) =
-                    (hex_digit(bytes[index + 1]), hex_digit(bytes[index + 2]))
-                {
-                    decoded.push(high * 16 + low);
-                    index += 3;
-                    continue;
-                }
-                decoded.push(bytes[index]);
-            }
-            b'+' => decoded.push(b' '),
-            byte => decoded.push(byte),
-        }
-        index += 1;
-    }
-    String::from_utf8_lossy(&decoded).into_owned()
-}
-
-const fn hex_digit(byte: u8) -> Option<u8> {
-    match byte {
-        b'0'..=b'9' => Some(byte - b'0'),
-        b'a'..=b'f' => Some(byte - b'a' + 10),
-        b'A'..=b'F' => Some(byte - b'A' + 10),
-        _ => None,
-    }
-}
-
 struct ClientRequestCapture {
     logger: Arc<RequestLog>,
     correlation_id: String,
@@ -690,6 +468,14 @@ struct ClientRequestCapture {
     body: Vec<u8>,
     omitted: bool,
     recorded: bool,
+    /// The model named in the body, shared with the middleware.
+    ///
+    /// This middleware runs outside the router, so the body it forwards is the
+    /// only place it can learn the model; the handler that parses the body is
+    /// downstream of it. Filled once the body has been seen in full, which is
+    /// before the response exists and therefore before the line is written
+    /// (issue #320).
+    model: Arc<Mutex<Option<String>>>,
 }
 
 impl ClientRequestCapture {
@@ -721,6 +507,22 @@ impl ClientRequestCapture {
         } else {
             self.body.extend_from_slice(bytes);
         }
+    }
+
+    /// The `model` a JSON body names, if it names one.
+    ///
+    /// A body that is absent, oversized, not JSON, or carries no `model` has
+    /// no model to report, and the log says `-` rather than guessing.
+    fn extract_model(&self) -> Option<String> {
+        if self.omitted || self.body.is_empty() {
+            return None;
+        }
+        serde_json::from_slice::<Value>(&self.body)
+            .ok()?
+            .get("model")?
+            .as_str()
+            .filter(|model| !model.is_empty())
+            .map(str::to_string)
     }
 
     fn record(&mut self) {
@@ -816,6 +618,7 @@ pub async fn log_http_exchange(
         HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
     );
     let logged_uri = redacted_uri(&parts.uri.to_string());
+    let requested_model = Arc::new(Mutex::new(None));
     let capture = ClientRequestCapture {
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
@@ -826,6 +629,7 @@ pub async fn log_http_exchange(
         body: Vec::new(),
         omitted: false,
         recorded: false,
+        model: Arc::clone(&requested_model),
     };
     let stream = futures_util::stream::unfold(
         (body.into_data_stream(), capture),
@@ -840,24 +644,35 @@ pub async fn log_http_exchange(
                     Some((Err(error), (stream, capture)))
                 }
                 None => {
+                    if let Ok(mut model) = capture.model.lock() {
+                        *model = capture.extract_model();
+                    }
                     capture.record();
                     None
                 }
             }
         },
     );
-    tracing::info!(
-        request_id = %correlation_id,
-        method = %parts.method,
-        uri = %logged_uri,
-        token_label = %token_label,
-        "request"
-    );
-
+    let method = parts.method.clone();
     let started = Instant::now();
     let mut response = next
         .run(Request::from_parts(parts, Body::from_stream(stream)))
         .await;
+    // Written after the handler has run, because that is when the body has
+    // streamed through the capture above and the model is known. Emitting it
+    // on arrival is what left the field unfillable: the middleware sits
+    // outside the router and sees the body only as it passes (issue #320).
+    // The pair still reads in order, since the response line follows below.
+    let requested_model = requested_model.lock().ok().and_then(|model| model.clone());
+    let logged_model = requested_model.as_deref().unwrap_or("-");
+    tracing::info!(
+        request_id = %correlation_id,
+        method = %method,
+        uri = %logged_uri,
+        model = %logged_model,
+        token_label = %token_label,
+        "request"
+    );
     response.headers_mut().insert(
         "x-request-id",
         HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
@@ -871,15 +686,26 @@ pub async fn log_http_exchange(
             "latency_ms": started.elapsed().as_millis(),
         }),
     );
-    // The model the request was actually served by, which the router resolved
-    // and already reports in this header. `/v1/messages?beta=true` is the same
+    // The model this request concerned. `/v1/messages?beta=true` is the same
     // URI for every Claude model, so without this the log cannot answer the
     // first question anyone asks of it (issue #320).
-    let served_model = response
-        .headers()
-        .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-        .and_then(|value| value.to_str().ok())
-        .unwrap_or("-");
+    //
+    // The model the caller asked for is what identifies the request, and it is
+    // the only one that exists when the request is refused before an upstream
+    // is ever reached. The served-model header is the fallback for the case it
+    // was built for -- the upstream substituting a different model -- but it
+    // exists only in that case, so relying on it alone left `model=-` on every
+    // ordinary line, success and failure alike.
+    let served_model = requested_model
+        .clone()
+        .or_else(|| {
+            response
+                .headers()
+                .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
+                .and_then(|value| value.to_str().ok())
+                .map(str::to_string)
+        })
+        .unwrap_or_else(|| "-".to_string());
     // A rate limit is one of the few conditions an operator must act on
     // quickly, and it was logged as three digits.
     let retry_after = response

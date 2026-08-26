@@ -71,6 +71,9 @@ fs2 = "0.4"
 tempfile = "3"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 rcgen = "0.14.9"
+flate2 = "1.1.9"
+brotli = "8.0.4"
+zstd = "0.13.3"
 
 [dev-dependencies]
 proptest = "1"

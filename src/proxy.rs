@@ -13,6 +13,13 @@
 // later, and removing `async` would force a uniform sync signature here.
 #![allow(clippy::unused_async)]
 
+mod upstream_headers;
+pub use upstream_headers::MAX_PROXY_REQUEST_BYTES;
+pub(crate) use upstream_headers::build_upstream_headers;
+pub use upstream_headers::{
+    DEFAULT_ANTHROPIC_VERSION, OAUTH_BETA_FLAG, forwarded_client_headers, merge_oauth_beta,
+    router_user_agent,
+};
 mod upstream_path;
 
 pub use upstream_path::resolve_upstream_path;
@@ -23,7 +30,6 @@ use axum::extract::{Query, Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
-use log_lazy::LogLazy;
 use std::collections::{BTreeMap, HashSet};
 
 use crate::accounts::RoutingContext;
@@ -42,38 +48,13 @@ use crate::subscription::SubscriptionProvider;
 pub const API_PREFIX: &str = "/api/latest/anthropic/";
 
 /// Headers that Claude Code LLM Gateway spec requires to be forwarded.
-pub const REQUIRED_FORWARD_HEADERS: &[&str] = &[
-    "anthropic-beta",
-    "anthropic-version",
-    "x-claude-code-session-id",
-];
-
-/// Default Anthropic API version injected when a client omits the
-/// `anthropic-version` header (the Messages API requires it).
-pub const DEFAULT_ANTHROPIC_VERSION: &str = "2023-06-01";
-
-/// Anthropic `anthropic-beta` flag for Claude MAX OAuth access tokens.
 ///
-/// Claude MAX OAuth access tokens are only accepted for inference on the
-/// Messages API when this beta flag is present. Standard Anthropic SDK
-/// clients do not send it, so the proxy injects it when substituting the
-/// OAuth credential — otherwise upstream rejects the request.
-pub const OAUTH_BETA_FLAG: &str = "oauth-2025-04-20";
-
-/// Deliberate proxy request-body ceiling, independent of the smaller amount
-/// retained by the diagnostic request log.
-pub const MAX_PROXY_REQUEST_BYTES: usize = crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES;
-
-/// Merge [`OAUTH_BETA_FLAG`] into an optional existing `anthropic-beta` header
-/// value without creating duplicates.
-#[must_use]
-pub fn merge_oauth_beta(existing: Option<&str>) -> String {
-    match existing {
-        Some(v) if v.split(',').map(str::trim).any(|f| f == OAUTH_BETA_FLAG) => v.to_string(),
-        Some(v) if !v.trim().is_empty() => format!("{v},{OAUTH_BETA_FLAG}"),
-        _ => OAUTH_BETA_FLAG.to_string(),
-    }
-}
+/// `x-claude-code-session-id` is deliberately absent. It is a stable
+/// identifier minted on the caller's machine that correlates requests into
+/// sessions no matter which token carried them, so relaying it undid the
+/// separation per-token issuance exists to provide (issue #332). The router
+/// still reads it for its own routing; it just does not pass it on.
+pub const REQUIRED_FORWARD_HEADERS: &[&str] = &["anthropic-beta", "anthropic-version"];
 
 /// Hop-by-hop headers that must not be forwarded.
 const HOP_BY_HOP_HEADERS: &[&str] = &[
@@ -115,6 +96,9 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         .collect();
     let mut relayed = HeaderMap::new();
     for (name, value) in headers {
+        // `HeaderMap` normalises names on parse, so this is already lowercase;
+        // named for what it holds rather than left to read as a value that had
+        // been lowered and had not.
         let name_lower = name.as_str();
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
@@ -639,72 +623,6 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     *response.headers_mut() = response_headers;
 
     response
-}
-
-/// Build the upstream request headers.
-///
-/// Copies all headers except hop-by-hop and authorization, then sets the
-/// real OAuth authorization. Ensures required LLM Gateway headers
-/// (`anthropic-beta`, `anthropic-version`, `x-claude-code-session-id`)
-/// are always forwarded.
-pub(crate) fn build_upstream_headers(
-    incoming: &HeaderMap,
-    oauth_token: &str,
-    logger: &LogLazy,
-) -> HeaderMap {
-    let mut headers = HeaderMap::new();
-
-    for (name, value) in incoming {
-        let name_lower = name.as_str().to_lowercase();
-        // Every header that may carry the *router's* client token is dropped:
-        // it authenticates the caller to us and must never travel to a vendor.
-        // `content-length` is dropped on purpose too: the forwarded body may
-        // differ in length from the client's (the Claude Code identity block is
-        // prepended for OAuth upstreams), and the HTTP client recomputes it.
-        if matches!(name_lower.as_str(), "authorization" | "content-length")
-            || ACCEPTED_CREDENTIAL_CARRIERS.contains(&name_lower.as_str())
-            || HOP_BY_HOP_HEADERS.contains(&name_lower.as_str())
-        {
-            continue;
-        }
-        headers.insert(name.clone(), value.clone());
-    }
-
-    // Set the real OAuth authorization
-    if let Ok(auth_val) = HeaderValue::from_str(&format!("Bearer {oauth_token}")) {
-        headers.insert("authorization", auth_val);
-    }
-
-    // Ensure the headers Claude MAX OAuth requires are present even when the
-    // client (e.g. a plain Anthropic SDK) omits them. This is what makes the
-    // proxy transparent against an OAuth-backed upstream.
-    if !headers.contains_key("anthropic-version") {
-        headers.insert(
-            "anthropic-version",
-            HeaderValue::from_static(DEFAULT_ANTHROPIC_VERSION),
-        );
-    }
-    let existing_beta = headers
-        .get("anthropic-beta")
-        .and_then(|v| v.to_str().ok())
-        .map(String::from);
-    if let Ok(beta_val) = HeaderValue::from_str(&merge_oauth_beta(existing_beta.as_deref())) {
-        headers.insert("anthropic-beta", beta_val);
-    }
-
-    // Log required headers for observability
-    for &header_name in REQUIRED_FORWARD_HEADERS {
-        if let Some(val) = headers.get(header_name) {
-            logger.trace(|| {
-                format!(
-                    "Forwarding {header_name}: {}",
-                    val.to_str().unwrap_or("<non-utf8>")
-                )
-            });
-        }
-    }
-
-    headers
 }
 
 /// Resolve the OAuth token and the name of the account that produced it.

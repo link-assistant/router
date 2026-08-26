@@ -2,7 +2,7 @@
 
 use super::*;
 
-fn write_log(root: &Path, token: &str, records: &[Value]) {
+pub(super) fn write_log(root: &Path, token: &str, records: &[Value]) {
     let directory = root.join(token);
     std::fs::create_dir_all(&directory).expect("create token directory");
     let contents = records
