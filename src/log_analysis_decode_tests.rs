@@ -340,3 +340,69 @@ fn each_encoding_is_decoded_end_to_end() {
         );
     }
 }
+
+/// A stream stored across several frames is shown whole.
+///
+/// Only the first frame carries the codec's header, so decoding records one at
+/// a time reads the opening frame and leaves the rest as base64 — which is
+/// most of the stream, and most of what an operator is looking for
+/// (issue #328).
+#[test]
+fn a_multi_frame_stream_is_shown_as_one_body() {
+    use std::io::Write as _;
+
+    // Flushed per frame, which is what a relayed stream looks like on the
+    // wire and how the store records it.
+    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    let mut frames = Vec::new();
+    let mut previous = 0;
+    for text in [
+        "event: message_start\ndata: {\"model\":\"claude-opus-5\"}\n\n",
+        "event: content_block_delta\ndata: {\"delta\":\"hello\"}\n\n",
+        "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n",
+    ] {
+        encoder.write_all(text.as_bytes()).expect("gzip");
+        encoder.flush().expect("flush");
+        let so_far = encoder.get_ref().len();
+        frames.push(previous..so_far);
+        previous = so_far;
+    }
+    let complete = encoder.finish().expect("gzip");
+
+    let mut records = vec![json!({
+        "correlation_id": "m",
+        "phase": "client_response",
+        "status": 200,
+        "headers": {"content-type": "text/event-stream", "content-encoding": "gzip"}
+    })];
+    for (index, range) in frames.iter().enumerate() {
+        // The last frame carries the encoder's trailer as well.
+        let bytes = if index + 1 == frames.len() {
+            &complete[range.start..]
+        } else {
+            &complete[range.clone()]
+        };
+        records.push(json!({
+            "correlation_id": "m",
+            "phase": "upstream_response_body",
+            "body": {"base64": base64::Engine::encode(
+                &base64::engine::general_purpose::STANDARD, bytes)}
+        }));
+    }
+
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(root.path(), "tokenhash", &records);
+
+    let shown = show(root.path(), None, "m").expect("show the exchange");
+    // Every frame's content, not just the one that carried the header.
+    for expected in ["claude-opus-5", "content_block_delta", "message_stop"] {
+        assert!(
+            shown.contains(expected),
+            "the whole stream must be readable, missing {expected}: {shown}"
+        );
+    }
+    assert!(
+        !shown.contains("H4sI"),
+        "no frame may still be rendered as base64: {shown}"
+    );
+}

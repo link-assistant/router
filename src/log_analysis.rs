@@ -418,35 +418,71 @@ fn carries_a_stream_error(decoded: &str) -> bool {
     })
 }
 
-/// Replace one record's stored bytes with the text they decode to.
+/// Decode the response frames of one exchange as the single stream they are.
 ///
 /// An operator reading a single exchange got base64 for every body — on one
 /// deployment, 11,208 of them, with no plain-text body in the file at all — so
 /// grepping the log for an error message, a model name or a prompt found
 /// nothing, not because the data was absent but because none of it was
 /// readable as stored (issue #328).
-fn decode_record_body(record: &mut Value, encoding: Option<crate::log_decode::Encoding>) {
-    let Some(encoding) = encoding else {
-        return;
-    };
-    let Some(encoded) = record
+///
+/// The frames must be joined first: only the first carries the codec's header,
+/// so decoding them one at a time reads the opening frame and leaves the rest
+/// as base64 — which is most of the stream.
+fn decode_response_stream(
+    records: &[Value],
+    encoding: Option<crate::log_decode::Encoding>,
+) -> Option<String> {
+    let encoding = encoding?;
+    if encoding.is_identity() {
+        return None;
+    }
+    let mut joined = Vec::new();
+    for record in records {
+        if let Some(encoded) = stored_bytes(record)
+            && let Ok(bytes) =
+                base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
+        {
+            joined.extend_from_slice(&bytes);
+        }
+    }
+    crate::log_decode::decode(&joined, encoding)
+}
+
+/// The base64 a record stores in place of a body, if it stores one.
+fn stored_bytes(record: &Value) -> Option<&str> {
+    record
         .get("body")
         .and_then(|body| body.get(crate::request_log::BINARY_BODY_KEY))
         .and_then(Value::as_str)
-    else {
+}
+
+/// Render the decoded stream against the first frame that carried it.
+///
+/// The decoded text belongs to the exchange rather than to any one frame, so
+/// it is shown once, where a reader looks for it, and the remaining frames say
+/// where it went instead of repeating an unreadable blob.
+fn render_decoded_body(
+    record: &mut Value,
+    index: usize,
+    first_body: usize,
+    decoded: Option<&String>,
+) {
+    let Some(decoded) = decoded else {
         return;
     };
-    let Ok(bytes) = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
-    else {
+    if stored_bytes(record).is_none() {
         return;
+    }
+    let rendered = if index == first_body {
+        Value::String(decoded.clone())
+    } else {
+        Value::String(String::from(
+            "[decoded with the first frame: only the whole stream decodes]",
+        ))
     };
-    // One frame of a compressed stream rarely decodes alone, so a failure here
-    // leaves the stored bytes exactly as they were rather than claiming a
-    // decode that did not happen.
-    if let Some(text) = crate::log_decode::decode(&bytes, encoding)
-        && let Some(body) = record.get_mut("body")
-    {
-        *body = Value::String(text);
+    if let Some(body) = record.get_mut("body") {
+        *body = rendered;
     }
 }
 
@@ -708,8 +744,15 @@ pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::
             .map_or(Some(crate::log_decode::Encoding::Identity), |declared| {
                 crate::log_decode::Encoding::parse(declared)
             });
-        for mut record in records {
-            decode_record_body(&mut record, encoding);
+        let decoded = decode_response_stream(&records, encoding);
+        // The decoded text belongs to the whole stream, so it is rendered
+        // against the first frame that carried any of it.
+        let first_body = records
+            .iter()
+            .position(|record| stored_bytes(record).is_some())
+            .unwrap_or_default();
+        for (index, mut record) in records.into_iter().enumerate() {
+            render_decoded_body(&mut record, index, first_body, decoded.as_ref());
             out.push_str(&serde_json::to_string_pretty(&record).unwrap_or_default());
             out.push('\n');
         }
