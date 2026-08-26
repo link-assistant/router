@@ -248,8 +248,11 @@ fn write_pending(home: &Path, pending: &PendingLogin) -> Result<(), String> {
         .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
     let path = home.join(PENDING_LOGIN_FILE);
     let temporary = home.join(format!("{PENDING_LOGIN_FILE}.{}.tmp", uuid::Uuid::new_v4()));
-    let bytes = serde_json::to_vec(pending)
-        .map_err(|error| format!("could not encode pending Claude authorization: {error}"))?;
+    // Links notation, readable, with the file name unchanged so an existing
+    // installation keeps its path and migrates on the next write (issue #336).
+    let bytes = crate::lino_json::encode(pending)
+        .map_err(|error| format!("could not encode pending Claude authorization: {error}"))?
+        .into_bytes();
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -280,7 +283,9 @@ fn take_pending(home: &Path) -> Result<PendingLogin, String> {
     let result = std::fs::read(&claimed)
         .map_err(|error| format!("could not read {}: {error}", claimed.display()))
         .and_then(|bytes| {
-            serde_json::from_slice(&bytes)
+            // Either encoding: a file written by an earlier release is JSON.
+            let text = String::from_utf8_lossy(&bytes);
+            crate::lino_json::decode(&text)
                 .map_err(|error| format!("invalid pending Claude authorization: {error}"))
         });
     let _ = std::fs::remove_file(&claimed);

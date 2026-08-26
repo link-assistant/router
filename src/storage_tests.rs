@@ -401,3 +401,29 @@ fn a_record_without_the_field_loads_as_unrestricted() {
             .is_empty()
     );
 }
+
+/// A journal written in links notation recovers the same way.
+///
+/// `dual_store_recovers_a_synced_transaction_journal` pins the JSON an earlier
+/// release wrote; this pins the format written from now on, so the migration
+/// is covered in both directions (issue #336).
+#[test]
+fn dual_store_recovers_a_links_notation_journal() {
+    let dir = tempdir().unwrap();
+    let mut record = sample_record("recovered");
+    record.revoked = true;
+    let encoded = crate::lino_json::encode(&vec![record]).unwrap();
+    assert!(
+        encoded.trim_start().starts_with('('),
+        "the journal is links notation now: {encoded}"
+    );
+    crate::durable_file::atomic_write_owner_only(
+        &dir.path().join("tokens.transaction.json"),
+        encoded.as_bytes(),
+    )
+    .unwrap();
+
+    let recovered = build_token_store(StoragePolicy::Both, dir.path()).unwrap();
+    assert!(recovered.get("recovered").unwrap().unwrap().revoked);
+    assert!(!dir.path().join("tokens.transaction.json").exists());
+}

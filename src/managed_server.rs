@@ -217,7 +217,26 @@ pub async fn resolve(
             .as_ref()
             .and_then(|config| config.run_max_requests)
     });
-    verify_health(&base_url).await?;
+    // A selected server that is not answering is an error rather than a
+    // silent fallback -- using a different router than the one the operator
+    // chose is its own surprise. But the message has to say which server,
+    // and what to do about it: the report that prompted this got docker's
+    // words about an internal container it had never heard of (issue #333).
+    verify_health(&base_url)
+        .await
+        .map_err(|error| -> AnyError {
+            match source {
+            "flag" => error,
+            _ => format!(
+                "{error}\nnote: {base_url} is the router selected by {source}.\nnote: {}",
+                concat!(
+                    "pass --local to use a router on this machine, --managed to start a ",
+                    "disposable one, or run `router server use <URL>` to select a different one."
+                )
+            )
+            .into(),
+        }
+        })?;
     Ok(ResolvedServer {
         base_url,
         token,
@@ -756,7 +775,15 @@ fn docker_container_state() -> Result<String, AnyError> {
     };
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        if stderr.contains("No such object") || stderr.contains("No such container") {
+        // Case-insensitively: Docker spells this `No such object` and Docker
+        // Desktop `no such object`, and matching only the capitalised form
+        // read "this container does not exist yet" as a hard inspect failure.
+        // The container that should then have been created never was, so
+        // `with` failed in exactly the situation the managed path exists to
+        // handle, naming an internal container the user has never heard of
+        // (issue #333).
+        let lowered = stderr.to_ascii_lowercase();
+        if lowered.contains("no such object") || lowered.contains("no such container") {
             return Ok("absent".into());
         }
         return Err(format!("could not inspect {CONTAINER}: {}", compact(&stderr)).into());

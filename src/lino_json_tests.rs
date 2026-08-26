@@ -79,3 +79,75 @@ fn a_control_character_is_carried_without_base64ing_everything() {
     let decoded = lino_objects_codec::decode(&encoded).expect("decode");
     assert_eq!(from_lino(&decoded), value);
 }
+
+/// A links-notation document is never misread as JSON.
+///
+/// The sniff decides the format before parsing, because the links decoder
+/// accepts JSON too but yields a different structure — so getting the
+/// direction wrong misreads every file rather than falling back (issue #336).
+#[test]
+fn a_links_document_is_not_misread_as_json() {
+    let encoded = encode(&sample()).expect("encode");
+    assert!(
+        encoded.trim_start().starts_with('('),
+        "links notation opens with a paren: {encoded}"
+    );
+    let decoded: Sample = decode(&encoded).expect("links notation decodes");
+    assert_eq!(decoded, sample());
+}
+
+/// An empty collection round-trips in both encodings.
+///
+/// The token transaction journal is a list, and a deployment that has just
+/// started has none — the shape most likely to be written before anything
+/// else and read back at the worst moment (issue #336).
+#[test]
+fn an_empty_collection_survives_both_encodings() {
+    let empty: Vec<Sample> = Vec::new();
+    let encoded = encode(&empty).expect("encode");
+    let decoded: Vec<Sample> = decode(&encoded).expect("decode");
+    assert!(decoded.is_empty(), "an empty list stays empty: {encoded}");
+
+    // And the JSON an earlier release wrote for the same value still loads.
+    let decoded: Vec<Sample> = decode("[]").expect("decode JSON");
+    assert!(decoded.is_empty());
+}
+
+/// The decoder never turns a vendor's JSON into something else.
+///
+/// `.credentials.json` is Anthropic's, `auth.json` is Codex's, and the client
+/// `settings.json` files belong to the clients that read them: the rule is
+/// that router-owned state is links notation and vendor-owned state stays
+/// whatever the vendor writes. This pins the half that could break silently —
+/// a vendor document read through this module must come back unchanged, so a
+/// future sweep that routed one through here cannot corrupt it (issue #336).
+#[test]
+fn a_vendor_document_survives_this_module_unchanged() {
+    // The real shape of an Anthropic credential file.
+    let credential = serde_json::json!({
+        "claudeAiOauth": {
+            "accessToken": "sk-ant-oat01-example",
+            "refreshToken": "sk-ant-ort01-example",
+            "expiresAt": 4_102_444_800_000_i64,
+            "scopes": ["user:inference", "user:profile"],
+        }
+    });
+    let written = serde_json::to_string_pretty(&credential).expect("serialize");
+
+    // Read back through the sniffing decoder: JSON is recognised as JSON.
+    let read: serde_json::Value = decode(&written).expect("a vendor file still decodes");
+    assert_eq!(read, credential, "a vendor document must not be reshaped");
+
+    // And a Codex `auth.json`, which carries fields this crate does not model.
+    let codex = serde_json::json!({
+        "OPENAI_API_KEY": null,
+        "tokens": {"id_token": "header.payload.signature", "account_id": "acct_1"},
+        "last_refresh": "2026-08-26T00:00:00Z",
+    });
+    let round_tripped: serde_json::Value =
+        decode(&serde_json::to_string(&codex).expect("serialize")).expect("decode");
+    assert_eq!(
+        round_tripped, codex,
+        "fields this crate does not model must survive untouched"
+    );
+}

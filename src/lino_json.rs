@@ -58,6 +58,22 @@ pub fn from_lino(value: &LinoValue) -> Value {
 }
 
 /// Encode any serialisable state as readable links notation.
+///
+/// # Which files this is for
+///
+/// **Router-owned state** — anything this project both writes and reads:
+/// the managed-server state, the server selection, the admin claim, the
+/// refresh rejections, the pending Claude login, the token transaction
+/// journal and the `with` rollback state. These are links notation.
+///
+/// **Vendor-owned state** stays whatever the vendor writes:
+/// `.credentials.json` is Anthropic's, `auth.json` is Codex's, and the client
+/// `settings.json` files belong to the clients that read them. Rewriting one
+/// in this project's format would break a tool this project does not own, and
+/// the vendor files carry fields this crate deliberately does not model.
+///
+/// The rule was real but implicit, inferable only from which module a write
+/// lived in (issue #336).
 pub fn encode<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Error> {
     let json = serde_json::to_value(value)?;
     Ok(lino_objects_codec::encode(&to_lino(&json)))

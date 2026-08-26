@@ -245,6 +245,7 @@ async fn the_router_serves_https_from_a_generated_certificate() {
         app,
         cert.clone(),
         key,
+        std::future::pending(),
     ));
 
     // A client that trusts the generated certificate completes the handshake.
@@ -287,6 +288,7 @@ async fn an_unloadable_certificate_names_the_file() {
         axum::Router::new(),
         missing.clone(),
         missing,
+        std::future::pending(),
     )
     .await
     .expect_err("an absent certificate cannot serve");

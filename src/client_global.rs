@@ -94,7 +94,9 @@ pub(crate) fn apply(
         marker_path,
         setup_backup: setup.backup,
     };
-    if let Err(error) = write_private(&paths.state, &serde_json::to_vec_pretty(&state)?) {
+    // Links notation, readable, with the file name unchanged so a run in
+    // progress under an earlier release still rolls back (issue #336).
+    if let Err(error) = write_private(&paths.state, crate::lino_json::encode(&state)?.as_bytes()) {
         rollback(
             &paths,
             &config_path,
@@ -129,7 +131,8 @@ pub fn undo(client: ClientKind) -> Result<Option<PathBuf>, AnyError> {
             return Err(format!("could not read {}: {error}", paths.state.display()).into());
         }
     };
-    let state: BackupState = serde_json::from_slice(&source)?;
+    // Either encoding: state written by an earlier release is JSON.
+    let state: BackupState = crate::lino_json::decode(&String::from_utf8_lossy(&source))?;
     let current = fs::read(&config_path).unwrap_or_default();
     if digest(&current) != state.config_hash_after_setup {
         return Err(format!(
