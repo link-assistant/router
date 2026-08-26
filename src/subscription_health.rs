@@ -32,7 +32,7 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         .map(|health| {
             serde_json::json!({
                 "provider": health.provider.as_str(),
-                "reason": health.reason,
+                "reason": health.summary,
             })
         })
         .collect::<Vec<_>>();

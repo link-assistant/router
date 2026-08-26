@@ -303,7 +303,12 @@ pub struct ProviderHealth {
     /// Whether it can serve a request now.
     pub healthy: bool,
     /// Operator-facing reason, when it cannot.
+    ///
+    /// May name a credential path or an upstream body, so it belongs in a log
+    /// or behind an admin credential — never on an unauthenticated endpoint.
     pub reason: Option<String>,
+    /// The same verdict, safe to hand an unauthenticated caller.
+    pub summary: Option<&'static str>,
 }
 
 /// Health for every subscription that is actually configured on this
@@ -344,6 +349,19 @@ pub fn configured_provider_health(
             ProviderHealth {
                 provider,
                 healthy: reason.is_none(),
+                // A credential path, an account id or an endpoint body can all
+                // reach `reason` through `last_refresh_error`. That is right
+                // for an operator reading a log or an admin-gated listing, and
+                // wrong for an endpoint a monitor polls without a credential,
+                // so the public summary is derived rather than passed through
+                // (issues #318, and the disclosure rule #300 set).
+                summary: reason.as_ref().map(|_| {
+                    if rejected {
+                        "the credential was rejected upstream and needs re-authentication"
+                    } else {
+                        "no live catalog has been discovered for this subscription"
+                    }
+                }),
                 reason,
             }
         })
@@ -431,8 +449,10 @@ fn merge_configured_degradation(state: &AppState, catalog: &mut Value) {
         if !degraded.contains(&name) {
             degraded.push(name);
         }
-        if let Some(reason) = health.reason.clone() {
-            reasons.insert(health.provider.as_str().to_string(), Value::from(reason));
+        // The summary, not the reason: `/v1/models` answers any client token,
+        // and a credential path is not a client's business.
+        if let Some(summary) = health.summary {
+            reasons.insert(health.provider.as_str().to_string(), Value::from(summary));
         }
     }
     if let Some(object) = catalog.as_object_mut() {

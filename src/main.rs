@@ -140,7 +140,14 @@ async fn run() -> ExitCode {
         Some(Command::With(_) | Command::Server { .. } | Command::Configure(_)) => {
             unreachable!("handled before config")
         }
-        Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
+        Some(Command::Auth { op }) => {
+            auth_cli::run(
+                &config,
+                op,
+                link_assistant_router::remote_command::names_local_state(&cli),
+            )
+            .await
+        }
         Some(Command::Doctor { .. }) => run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
@@ -583,7 +590,15 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    if let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret) {
+    // Required where signing happens, not per family. `list`, `show` and
+    // `revoke` read and edit the store; none of them mints or validates a
+    // token, and refusing to *start* without a secret they never use only
+    // taught operators to keep a deployment's signing secret exported in their
+    // shell (issue #308). Issuing and rotating still sign, so they still need
+    // it — and `TokenManager` refuses the stand-in at the point of use anyway.
+    if matches!(op, TokenOp::Issue { .. } | TokenOp::Rotate { .. })
+        && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
+    {
         eprintln!("error: {error}");
         return ExitCode::from(2);
     }

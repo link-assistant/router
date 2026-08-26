@@ -217,11 +217,37 @@ fn usage_reflects_the_invoked_name() {
             "Usage: link-assistant-router",
         ),
     ] {
-        let out = Command::new(binary)
-            .arg("--help")
-            .output()
-            .unwrap_or_else(|error| panic!("{binary} --help: {error}"));
-        let text = String::from_utf8_lossy(&out.stdout);
-        assert!(text.contains(expected), "{binary} usage:\n{text}");
+        // Every page, not only the top level. Fourteen subcommands hardcoded
+        // `router` in an `override_usage` string, so the name in the usage
+        // line depended on which page you were reading — under the other
+        // installed name it named a command the reader does not have
+        // (issue #315).
+        for page in [
+            vec!["--help"],
+            vec!["configure", "--help"],
+            vec!["clients", "setup", "--help"],
+            vec!["clients", "show", "--help"],
+            vec!["clients", "remove", "--help"],
+            vec!["clients", "doctor", "--help"],
+            vec!["tokens", "rotate", "--help"],
+            vec!["tokens", "revoke", "--help"],
+            vec!["tokens", "show", "--help"],
+            vec!["providers", "add", "--help"],
+            vec!["providers", "show", "--help"],
+            vec!["providers", "remove", "--help"],
+            vec!["providers", "import", "--help"],
+            vec!["auth", "import", "--help"],
+            vec!["auth", "clear", "--help"],
+        ] {
+            let out = Command::new(binary)
+                .args(&page)
+                .output()
+                .unwrap_or_else(|error| panic!("{binary} {page:?}: {error}"));
+            let text = String::from_utf8_lossy(&out.stdout);
+            assert!(
+                text.contains(expected),
+                "{binary} {page:?} must name the invoked binary:\n{text}"
+            );
+        }
     }
 }

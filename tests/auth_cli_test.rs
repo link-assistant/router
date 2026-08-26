@@ -963,3 +963,50 @@ fn clearing_every_credential_at_once_asks_first() {
     );
     assert!(!credential.exists(), "the named credential must be removed");
 }
+
+/// `--claude-code-home` names this machine's credential home, so `auth status`
+/// must report about it rather than about a router that merely happens to be
+/// listening here (issue #294).
+///
+/// The exemption stops at the verbs that *store*: letting a local-state flag
+/// suppress the selected-server refusal would leave a workstation holding a
+/// token aimed at a deployment, and `DATA_DIR` is set in the environment of
+/// every deployment — nobody would have to pass a flag to trigger it.
+#[test]
+fn a_local_state_flag_never_suppresses_the_refusal_for_a_verb_that_stores() {
+    use std::io::Write as _;
+
+    let home = tempfile::tempdir().expect("temp home");
+    let data = home.path().join("data");
+    std::fs::create_dir_all(&data).expect("data dir");
+
+    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "gh", "--token-stdin"])
+        .env("ROUTER_URL", "http://127.0.0.1:1")
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", home.path())
+        // Both local-state names at once, the way a deployment sets them.
+        .env("DATA_DIR", &data)
+        .env("CLAUDE_CODE_HOME", home.path().join("claude"))
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .expect("router CLI should run");
+    child
+        .stdin
+        .take()
+        .expect("stdin")
+        .write_all(b"gho_must_not_be_stored_here\n")
+        .expect("write the token");
+    let output = child.wait_with_output().expect("wait");
+
+    assert!(
+        !output.status.success(),
+        "a local-state flag must not turn a refusal into a local write"
+    );
+    assert!(
+        !data.join("github-credential").exists(),
+        "the token must not be stored on the machine that ran the command"
+    );
+}

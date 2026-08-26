@@ -20,11 +20,7 @@ pub enum ClientOp {
     /// `router configure <client>` is the name for this, and the one that
     /// follows the server selection. `create` and `add` are accepted here too
     /// (issues #296, #314).
-    #[command(
-        alias = "create",
-        alias = "add",
-        override_usage = "router clients setup [OPTIONS] <CLIENT>"
-    )]
+    #[command(alias = "create", alias = "add")]
     Setup {
         #[arg(value_enum)]
         client: ClientKind,
@@ -49,7 +45,6 @@ pub enum ClientOp {
         ttl_hours: i64,
     },
     /// Show the effective client integration with secrets redacted.
-    #[command(override_usage = "router clients show [OPTIONS] <CLIENT>")]
     Show {
         #[arg(value_enum)]
         client: ClientKind,
@@ -57,11 +52,7 @@ pub enum ClientOp {
     /// Remove only settings managed by this router.
     ///
     /// `delete` and `revoke` are accepted too (issue #314).
-    #[command(
-        alias = "delete",
-        alias = "revoke",
-        override_usage = "router clients remove [OPTIONS] <CLIENT>"
-    )]
+    #[command(alias = "delete", alias = "revoke")]
     Remove {
         #[arg(value_enum)]
         client: ClientKind,
@@ -81,7 +72,6 @@ pub enum ClientOp {
     /// budget, reasoning at the lowest tier, and a two-word prompt. It still
     /// costs a request against the subscription, because proving the route
     /// works means using it (issues #275, #309).
-    #[command(override_usage = "router clients doctor [OPTIONS] <CLIENT>")]
     Doctor {
         #[arg(value_enum)]
         client: ClientKind,

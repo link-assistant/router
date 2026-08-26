@@ -7,7 +7,7 @@ use link_assistant_router::config::Config;
 use link_assistant_router::login::{LoginManager, LoginStatus};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 
-pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
+pub async fn run(config: &Config, op: &AuthOp, names_local_state: bool) -> ExitCode {
     // Withdrawal is local by construction: it removes files this machine holds,
     // and there is no remote verb for it. Handled before the server dispatch so
     // `auth claude --clear` with a server selected cannot fall through to a
@@ -27,7 +27,7 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     // `auth` follows the selected server the way `with` does. Writing a local
     // credential while a server is selected made the obvious `server use` →
     // `auth` → `with` sequence silently authorize the wrong router (#246).
-    match remote_target(op).await {
+    match remote_target(op, names_local_state).await {
         Ok(Some(server)) => return run_remote(config, &server, op).await,
         Ok(None) => {}
         Err(error) => {
@@ -345,6 +345,7 @@ const fn clear_confirmed(op: &AuthOp) -> bool {
 
 async fn remote_target(
     op: &AuthOp,
+    names_local_state: bool,
 ) -> Result<Option<link_assistant_router::managed_server::ResolvedServer>, String> {
     let target = match op {
         AuthOp::Claude { target, .. }
@@ -356,6 +357,19 @@ async fn remote_target(
         // performed a local import or having refused a remote one (#291).
         AuthOp::Import { .. } => return Ok(None),
     };
+    // `--claude-code-home` and `--data-dir` name *this machine's* state, so a
+    // router *discovered* here must not answer for them: that reports about a
+    // different deployment than the one the operator pointed at (issue #294).
+    //
+    // Only for the verb that reports. `auth claude`/`codex`/`gh` *store* a
+    // credential, and letting a local-state flag suppress the refusal would
+    // leave the workstation holding a token aimed at a deployment — the leak
+    // issue #268 exists to prevent, and one an environment-set `DATA_DIR`
+    // would trigger without anybody passing a flag.
+    let reports_rather_than_stores = matches!(op, AuthOp::Status { .. });
+    if names_local_state && reports_rather_than_stores && target.server.is_none() {
+        return Ok(None);
+    }
     link_assistant_router::auth_remote::target_for(
         target.local,
         target.managed,

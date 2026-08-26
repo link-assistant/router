@@ -44,7 +44,6 @@ pub enum AuthOp {
     /// `auth claude` or `auth codex` to authorize a remote deployment.
     ///
     /// The per-provider flags on the authorize commands keep working.
-    #[command(override_usage = "router auth import [OPTIONS] [PROVIDER] [DIR]")]
     Import {
         /// Which login to adopt. Omit with `--all`.
         #[arg(value_enum, required_unless_present = "all")]
@@ -86,7 +85,6 @@ pub enum AuthOp {
     /// names it — silently rewriting "there" as "here" is unrecoverable for an
     /// OAuth credential, which then needs a fresh browser login on a machine
     /// that may not have a browser.
-    #[command(override_usage = "router auth clear [OPTIONS] [PROVIDER]")]
     Clear {
         /// Which login to remove. Omit with `--all`.
         #[arg(value_enum, required_unless_present = "all")]

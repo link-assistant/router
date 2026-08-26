@@ -102,6 +102,12 @@ pub fn refuse_managed(command: &Command) -> Option<ExitCode> {
         Command::Logs { .. } => "logs",
         Command::Doctor { .. } => "doctor",
         Command::Tls { .. } => "tls",
+        // `auth` was exempt and did exactly what #315 condemned: nothing on
+        // the auth path ever starts a container, so `--managed` silently meant
+        // `--local` while its own help listed `auth` as a command that uses
+        // one. The same silent second meaning, in the one flag this work
+        // declared fixed.
+        Command::Auth { .. } => "auth",
         _ => return None,
     };
     if !target_of(command).is_some_and(|target| target.managed) {

@@ -155,8 +155,18 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
         catalog["degraded_reasons"]["claude"]
             .as_str()
             .unwrap_or_default()
-            .contains("claude"),
+            .contains("rejected upstream"),
         "a degraded provider must say why: {}",
+        catalog["degraded_reasons"]
+    );
+    // The provider is the key, so the value carries the verdict and nothing
+    // that identifies a credential: `/v1/models` answers any client token.
+    assert!(
+        !catalog["degraded_reasons"]["claude"]
+            .as_str()
+            .unwrap_or_default()
+            .contains('/'),
+        "a client must not be told where the credential lives: {}",
         catalog["degraded_reasons"]
     );
     assert!(

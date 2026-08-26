@@ -48,7 +48,6 @@ pub enum TokenOp {
         target: AuthTarget,
     },
     /// Replace a token, preserving its controls, and revoke the old token.
-    #[command(override_usage = "router tokens rotate [OPTIONS] <ID>")]
     Rotate {
         /// Subject id (`sub`) of the token being replaced.
         id: String,
@@ -89,11 +88,7 @@ pub enum TokenOp {
     /// `remove` and `delete` are accepted too: destroying something was
     /// `providers remove`, `clients remove`, `server remove`, `tokens revoke`
     /// and `tokens expire` (issue #314).
-    #[command(
-        alias = "remove",
-        alias = "delete",
-        override_usage = "router tokens revoke [OPTIONS] <ID>"
-    )]
+    #[command(alias = "remove", alias = "delete")]
     Revoke {
         id: String,
         #[command(flatten)]
@@ -110,7 +105,6 @@ pub enum TokenOp {
         target: AuthTarget,
     },
     /// Show metadata for one token.
-    #[command(override_usage = "router tokens show [OPTIONS] <ID>")]
     Show {
         id: String,
         #[command(flatten)]
@@ -143,11 +137,7 @@ pub enum ProviderOp {
     /// Add or replace an OpenAI-compatible provider.
     ///
     /// `create` and `issue` are accepted too (issue #314).
-    #[command(
-        alias = "create",
-        alias = "issue",
-        override_usage = "router providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>"
-    )]
+    #[command(alias = "create", alias = "issue")]
     Add {
         /// Name this provider is referred to by, in routing and in `providers
         /// show`. Adding an existing name replaces that record.
@@ -197,7 +187,6 @@ pub enum ProviderOp {
         target: AuthTarget,
     },
     /// Show one provider with secret material redacted.
-    #[command(override_usage = "router providers show [OPTIONS] <NAME>")]
     Show {
         name: String,
         #[command(flatten)]
@@ -206,18 +195,13 @@ pub enum ProviderOp {
     /// Remove one provider.
     ///
     /// `revoke` and `delete` are accepted too (issue #314).
-    #[command(
-        alias = "revoke",
-        alias = "delete",
-        override_usage = "router providers remove [OPTIONS] <NAME>"
-    )]
+    #[command(alias = "revoke", alias = "delete")]
     Remove {
         name: String,
         #[command(flatten)]
         target: AuthTarget,
     },
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
-    #[command(override_usage = "router providers import [OPTIONS] <PATH>")]
     Import {
         path: PathBuf,
         #[command(flatten)]

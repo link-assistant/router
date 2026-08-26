@@ -75,8 +75,74 @@ pub fn parse_arguments(arguments: Vec<std::ffi::OsString>) -> Cli {
             }
         });
     }
+    // The usage strings that hide the globals are written with a `{name}`
+    // placeholder, because clap does not interpolate one there. Substituting
+    // the invoked name here keeps both properties at once: the error usage
+    // line still omits globals that are not required (issue #312), and it
+    // names the binary the reader actually ran rather than hardcoding `router`
+    // under both installed names (issue #315).
+    let invoked = arguments
+        .first()
+        .map(std::path::Path::new)
+        .and_then(std::path::Path::file_stem)
+        .map_or_else(
+            || "router".to_string(),
+            |name| name.to_string_lossy().into_owned(),
+        );
+    command = substitute_usage_name(command, &invoked);
     let matches = command.get_matches_from(arguments);
     Cli::from_arg_matches(&matches).unwrap_or_else(|error| error.exit())
+}
+
+/// The subcommands whose usage line is written out, and what follows the name.
+///
+/// Written out because clap's generated *error* usage lists every configured
+/// global as required (issue #312); the leading binary name is substituted at
+/// parse time rather than hardcoded, so it is the one the reader invoked
+/// (issue #315). One table, so the two rules cannot drift apart.
+const OVERRIDDEN_USAGE: [(&[&str], &str); 14] = [
+    (&["configure"], "configure [OPTIONS] <CLIENT>"),
+    (&["clients", "setup"], "clients setup [OPTIONS] <CLIENT>"),
+    (&["clients", "show"], "clients show [OPTIONS] <CLIENT>"),
+    (&["clients", "remove"], "clients remove [OPTIONS] <CLIENT>"),
+    (&["clients", "doctor"], "clients doctor [OPTIONS] <CLIENT>"),
+    (&["tokens", "rotate"], "tokens rotate [OPTIONS] <ID>"),
+    (&["tokens", "revoke"], "tokens revoke [OPTIONS] <ID>"),
+    (&["tokens", "show"], "tokens show [OPTIONS] <ID>"),
+    (
+        &["providers", "add"],
+        "providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>",
+    ),
+    (&["providers", "show"], "providers show [OPTIONS] <NAME>"),
+    (
+        &["providers", "remove"],
+        "providers remove [OPTIONS] <NAME>",
+    ),
+    (
+        &["providers", "import"],
+        "providers import [OPTIONS] <PATH>",
+    ),
+    (
+        &["auth", "import"],
+        "auth import [OPTIONS] [PROVIDER] [DIR]",
+    ),
+    (&["auth", "clear"], "auth clear [OPTIONS] [PROVIDER]"),
+];
+
+/// Write each overridden usage line with the name that was actually invoked.
+fn substitute_usage_name(mut command: clap::Command, invoked: &str) -> clap::Command {
+    for (path, usage) in OVERRIDDEN_USAGE {
+        command = with_subcommand(command, path, &format!("{invoked} {usage}"));
+    }
+    command
+}
+
+/// Apply `usage` to the subcommand reached by `path`.
+fn with_subcommand(command: clap::Command, path: &[&str], usage: &str) -> clap::Command {
+    let Some((head, rest)) = path.split_first() else {
+        return command.override_usage(usage.to_string());
+    };
+    command.mut_subcommand(head, |subcommand| with_subcommand(subcommand, rest, usage))
 }
 
 /// Whether this invocation is one that returns before the server config exists.
@@ -455,7 +521,7 @@ pub struct Cli {
         num_args = 0..=1,
         default_value_t = false,
         default_missing_value = "true",
-        value_parser = parse_truthy,
+        value_parser = parse_truthy
     )]
     pub allow_anonymous_admin: bool,
 
@@ -606,7 +672,6 @@ pub enum Command {
     /// commands that disagreed on the address, the credential, the undo
     /// mechanism and the client list (issue #296). `clients setup` and
     /// `with --global` still work.
-    #[command(override_usage = "router configure [OPTIONS] <CLIENT>")]
     Configure(ConfigureArgs),
     /// Select and manage the server used by `with`.
     Server {

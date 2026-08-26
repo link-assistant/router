@@ -76,22 +76,42 @@ fn a_remote_command_starts_without_the_local_signing_secret() {
     );
 }
 
-/// The local path still requires the secret, because it signs with it.
+/// The local path still requires the secret where it signs — and only there.
+///
+/// `tokens issue` mints a credential and cannot work without it. `tokens list`
+/// reads the store and never touches the secret, so demanding it there only
+/// taught operators to keep a deployment's signing secret exported in their
+/// shell (issue #308).
 #[test]
-fn the_local_path_still_requires_its_secret() {
+fn the_local_path_requires_its_secret_exactly_where_it_signs() {
     let home = tempfile::tempdir().expect("home");
     let config = tempfile::tempdir().expect("config home");
+    let data = tempfile::tempdir().expect("data");
 
-    let result = output(
+    let signing = output(
+        router(&["tokens", "issue", "--local"])
+            .env_remove("TOKEN_SECRET")
+            .env("HOME", home.path())
+            .env("DATA_DIR", data.path())
+            .env("XDG_CONFIG_HOME", config.path()),
+    );
+    assert!(
+        String::from_utf8_lossy(&signing.stderr).contains("TOKEN_SECRET"),
+        "issuing signs, so the secret is genuinely required: {}",
+        String::from_utf8_lossy(&signing.stderr)
+    );
+
+    let reading = output(
         router(&["tokens", "list", "--local"])
             .env_remove("TOKEN_SECRET")
             .env("HOME", home.path())
+            .env("DATA_DIR", data.path())
             .env("XDG_CONFIG_HOME", config.path()),
     );
-
     assert!(
-        String::from_utf8_lossy(&result.stderr).contains("TOKEN_SECRET"),
-        "signing happens here, so the secret is genuinely required"
+        !String::from_utf8_lossy(&reading.stderr).contains("TOKEN_SECRET"),
+        "listing signs nothing and must not demand a signing secret: {}",
+        String::from_utf8_lossy(&reading.stderr)
     );
 }
 
