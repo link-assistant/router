@@ -66,6 +66,12 @@ pub struct Exchange {
     /// Bodies that could not be decoded, so nothing is inferred from them.
     pub undecodable_bodies: u64,
     pub records: u64,
+    /// Whether the decoded frames carry an SSE `error` event.
+    ///
+    /// A turn that failed mid-stream returns 200 at the transport layer, so
+    /// without reading the frames it is indistinguishable from one that
+    /// succeeded (issue #328).
+    pub stream_error: bool,
     /// The encoded response frames, in the order they were recorded.
     ///
     /// Only their concatenation is a valid compressed stream, so they are kept
@@ -83,6 +89,12 @@ impl Exchange {
     #[must_use]
     pub fn is_incomplete_stream(&self) -> bool {
         self.streamed && self.inspectable && self.stream_complete == Some(false)
+    }
+
+    /// A turn that failed inside a stream the transport called successful.
+    #[must_use]
+    pub const fn carried_an_error(&self) -> bool {
+        self.stream_error
     }
 
     /// A stream whose frames were encoded, so the log cannot say how it ended.
@@ -385,6 +397,59 @@ fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
     exchange.stream_evidence = true;
 }
 
+/// Whether decoded SSE carries an error event.
+///
+/// The transport says 200 and the stream carries the failure, so the status
+/// line cannot answer whether the turn succeeded — only the frames can.
+fn carries_a_stream_error(decoded: &str) -> bool {
+    decoded.lines().any(|line| {
+        let line = line.trim();
+        line.eq_ignore_ascii_case("event: error")
+            || line
+                .strip_prefix("data:")
+                .and_then(|data| serde_json::from_str::<Value>(data.trim()).ok())
+                .and_then(|value| {
+                    value
+                        .get("type")
+                        .and_then(Value::as_str)
+                        .map(|kind| kind == "error")
+                })
+                .unwrap_or(false)
+    })
+}
+
+/// Replace one record's stored bytes with the text they decode to.
+///
+/// An operator reading a single exchange got base64 for every body — on one
+/// deployment, 11,208 of them, with no plain-text body in the file at all — so
+/// grepping the log for an error message, a model name or a prompt found
+/// nothing, not because the data was absent but because none of it was
+/// readable as stored (issue #328).
+fn decode_record_body(record: &mut Value, encoding: Option<crate::log_decode::Encoding>) {
+    let Some(encoding) = encoding else {
+        return;
+    };
+    let Some(encoded) = record
+        .get("body")
+        .and_then(|body| body.get(crate::request_log::BINARY_BODY_KEY))
+        .and_then(Value::as_str)
+    else {
+        return;
+    };
+    let Ok(bytes) = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
+    else {
+        return;
+    };
+    // One frame of a compressed stream rarely decodes alone, so a failure here
+    // leaves the stored bytes exactly as they were rather than claiming a
+    // decode that did not happen.
+    if let Some(text) = crate::log_decode::decode(&bytes, encoding)
+        && let Some(body) = record.get_mut("body")
+    {
+        *body = Value::String(text);
+    }
+}
+
 /// Record the response's declared content encoding.
 ///
 /// Kept separate from the media type because a record may carry one without
@@ -430,6 +495,12 @@ fn settle_encoded_frames(exchange: &mut Exchange) {
     };
     exchange.inspectable = true;
     exchange.undecodable_bodies = 0;
+    // An `error` event inside a 200 was invisible for the same reason the
+    // terminator was: it sits in a body nothing decoded. A failed turn was
+    // therefore indistinguishable from a successful one (issue #328).
+    if carries_a_stream_error(&decoded) {
+        exchange.stream_error = true;
+    }
     if crate::request_log::text_terminates_stream(&decoded) {
         exchange.body_terminated = true;
         // The relay stamped `complete: false` because it declined to look, not
@@ -553,6 +624,16 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
     // Reported so the figure is visible, but worded as the absence of evidence
     // it is: calling a healthy compressed stream truncated is what made the
     // signal unusable (issue #255).
+    let errored = collect(&Exchange::carried_an_error);
+    if !errored.is_empty() {
+        found.push(Anomaly {
+            kind: "stream_carried_an_error",
+            detail: "a streamed turn carried an error event while the status line said 200, \
+                     so the transport reported success for a turn that failed"
+                .to_string(),
+            correlation_ids: errored,
+        });
+    }
     let unverifiable = collect(&Exchange::is_unverifiable_stream);
     if !unverifiable.is_empty() {
         found.push(Anomaly {
@@ -605,13 +686,30 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
 pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::Result<String> {
     let mut out = String::new();
     for path in log_files(root, token)? {
-        for line in std::fs::read_to_string(&path)?.lines() {
-            let Ok(record) = serde_json::from_str::<Value>(line) else {
-                continue;
-            };
-            if record.get("correlation_id").and_then(Value::as_str) != Some(correlation_id) {
-                continue;
-            }
+        // The encoding is declared on the response record, which may arrive
+        // after the bodies it describes, so the whole exchange is read before
+        // anything is rendered.
+        let contents = std::fs::read_to_string(&path)?;
+        let records = contents
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .filter(|record| {
+                record.get("correlation_id").and_then(Value::as_str) == Some(correlation_id)
+            })
+            .collect::<Vec<_>>();
+        let encoding = records
+            .iter()
+            .find_map(|record| {
+                record
+                    .get("headers")
+                    .and_then(|headers| headers.get("content-encoding"))
+                    .and_then(Value::as_str)
+            })
+            .map_or(Some(crate::log_decode::Encoding::Identity), |declared| {
+                crate::log_decode::Encoding::parse(declared)
+            });
+        for mut record in records {
+            decode_record_body(&mut record, encoding);
             out.push_str(&serde_json::to_string_pretty(&record).unwrap_or_default());
             out.push('\n');
         }
@@ -626,3 +724,7 @@ pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::
 #[cfg(test)]
 #[path = "log_analysis_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "log_analysis_decode_tests.rs"]
+mod decode_tests;

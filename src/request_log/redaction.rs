@@ -78,7 +78,7 @@ pub fn redacted_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
 /// a compressed body destroys it: the record is then neither readable nor
 /// decodable after the fact (issue #231). Such a body is base64-encoded instead,
 /// under a marker that says what the reader is looking at.
-const BINARY_BODY_KEY: &str = "base64";
+pub const BINARY_BODY_KEY: &str = "base64";
 
 /// Encode a body for the log without losing it.
 ///

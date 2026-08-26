@@ -27,6 +27,7 @@ use sha2::{Digest as _, Sha256};
 
 use crate::app_state::AppState;
 use owner_only::{append_owner_only, ensure_owner_only_dir, write_owner_only};
+pub use redaction::BINARY_BODY_KEY;
 #[cfg(test)]
 use redaction::partially_redact;
 use redaction::{redact_value, redacted_uri};
