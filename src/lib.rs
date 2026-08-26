@@ -39,6 +39,7 @@ pub mod credential_store;
 pub mod doctor;
 pub mod durable_file;
 pub mod entrypoint;
+pub mod env_paths;
 pub mod gemini;
 pub mod gemini_bridge;
 pub mod git_proxy;

@@ -235,10 +235,13 @@ impl RunDirectory {
 fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
     let root = match root {
         Some(root) => root.to_path_buf(),
-        None => std::env::var_os("XDG_CONFIG_HOME")
-            .map(PathBuf::from)
-            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
-            .ok_or("HOME and XDG_CONFIG_HOME are unset; cannot keep a client profile")?,
+        // An empty variable is unset, not configured (issue #340).
+        None => crate::env_paths::require_absolute(
+            crate::env_paths::directory("XDG_CONFIG_HOME")
+                .or_else(|| crate::env_paths::directory("HOME").map(|home| home.join(".config")))
+                .ok_or("HOME and XDG_CONFIG_HOME are unset; cannot keep a client profile")?,
+            "the client profile directory",
+        )?,
     };
     let path = root
         .join("link-assistant-router/clients")

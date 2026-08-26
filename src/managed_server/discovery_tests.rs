@@ -234,6 +234,9 @@ async fn a_router_on_a_candidate_port_is_adopted_and_named() {
 /// going to start.
 #[tokio::test]
 async fn the_effective_source_describes_what_the_next_command_will_use() {
+    // Against a state root this test owns (issue #343).
+    let directory = tempfile::tempdir().expect("temporary state root");
+    let _guard = super::super::state::claim_state_root(directory.path().to_path_buf());
     let reported = effective_source().await.expect("a source is always known");
 
     // Whichever branch this machine is in, the answer must name something, and

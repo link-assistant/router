@@ -479,19 +479,20 @@ pub struct ClientManager {
 impl ClientManager {
     /// Resolve client directories, respecting the clients' own override vars.
     pub fn from_env() -> Result<Self, ClientError> {
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
+        // An empty variable is unset, not configured: `Some("")` made every
+        // path below relative to the working directory (issue #340). The
+        // clients' own override variables get the same treatment, since a
+        // harness that empties one means "do not use it".
+        let directory = crate::env_paths::directory;
+        let home = directory("HOME")
             .ok_or_else(|| ClientError::message("HOME is unset; cannot locate client configs"))?;
-        let codex_home =
-            std::env::var_os("CODEX_HOME").map_or_else(|| home.join(".codex"), PathBuf::from);
-        let claude_home = std::env::var_os("CLAUDE_CONFIG_DIR")
-            .map_or_else(|| home.join(".claude"), PathBuf::from);
-        let config_home =
-            std::env::var_os("XDG_CONFIG_HOME").map_or_else(|| home.join(".config"), PathBuf::from);
-        let qwen_home =
-            std::env::var_os("QWEN_HOME").map_or_else(|| home.join(".qwen"), PathBuf::from);
-        let gemini_home =
-            std::env::var_os("GEMINI_CLI_HOME").map_or_else(|| home.join(".gemini"), PathBuf::from);
+        let home = crate::env_paths::require_absolute(home, "the client home")
+            .map_err(ClientError::message)?;
+        let codex_home = directory("CODEX_HOME").unwrap_or_else(|| home.join(".codex"));
+        let claude_home = directory("CLAUDE_CONFIG_DIR").unwrap_or_else(|| home.join(".claude"));
+        let config_home = directory("XDG_CONFIG_HOME").unwrap_or_else(|| home.join(".config"));
+        let qwen_home = directory("QWEN_HOME").unwrap_or_else(|| home.join(".qwen"));
+        let gemini_home = directory("GEMINI_CLI_HOME").unwrap_or_else(|| home.join(".gemini"));
         let cursor_home = std::env::var_os("CURSOR_CONFIG_DIR")
             .map_or_else(|| home.join(".cursor"), PathBuf::from);
         Ok(Self {

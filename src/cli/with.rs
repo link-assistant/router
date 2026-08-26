@@ -237,7 +237,14 @@ pub struct WithArgs {
     ///
     /// `--ttl-hours` is accepted too, so the name matches `tokens issue`,
     /// `tokens rotate` and `configure` (issue #314).
-    #[arg(long, alias = "ttl-hours", default_value_t = 1)]
+    ///
+    /// Defaults to a day because this token is revoked when the client exits:
+    /// the run already bounds its life, and the clock was a second bound that
+    /// could only fire early. At one hour it routinely did — an interactive
+    /// session that outlived the hour died mid-work with `401 Token has
+    /// expired`, and the client answered with its own `/login` advice about
+    /// an unrelated credential (issue #341).
+    #[arg(long, alias = "ttl-hours", default_value_t = 24)]
     pub run_ttl_hours: i64,
     /// Optional request budget for an automatically minted per-run token.
     #[arg(long)]

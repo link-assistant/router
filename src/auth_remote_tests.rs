@@ -391,6 +391,11 @@ async fn an_unreachable_named_server_is_an_error() {
 /// flag rather than from a selection or a container.
 #[tokio::test]
 async fn a_named_server_is_used() {
+    // Against a state root this test owns: resolution reads the persisted
+    // selection, and a test must not depend on -- or disturb -- whatever the
+    // developer has configured (issue #343).
+    let directory = tempfile::tempdir().expect("temporary state root");
+    let _guard = crate::managed_server::claim_state_root(directory.path().to_path_buf());
     let (origin, _requests, _handle) = serve(vec![r#"{"status":"ok"}"#]).await;
 
     let target = target_for(false, false, Some(&origin))

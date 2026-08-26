@@ -330,3 +330,35 @@ fn the_clients_own_git_guard_is_left_alone() {
         );
     }
 }
+
+/// The per-run token outlives the session it was minted for.
+///
+/// `with` launches an interactive client and stays attached for as long as the
+/// user works, so a one-hour token was guaranteed to expire in use — the only
+/// question was how far in. The token is revoked when the client exits, so the
+/// run already bounds its life and the clock was a second bound that could
+/// only ever fire early (issue #341).
+#[test]
+fn the_per_run_token_outlives_an_ordinary_session() {
+    use clap::Parser as _;
+
+    let parsed = crate::cli::Cli::try_parse_from(["router", "with", "claude"])
+        .expect("a bare launch parses");
+    let Some(crate::cli::Command::With(args)) = parsed.command else {
+        panic!("with is the command");
+    };
+    assert!(
+        args.run_ttl_hours >= 12,
+        "a coding session routinely runs for hours; {} is short enough to expire in use",
+        args.run_ttl_hours
+    );
+
+    // And the flag still overrides it, for a caller who wants a tighter bound.
+    let parsed =
+        crate::cli::Cli::try_parse_from(["router", "with", "--run-ttl-hours", "2", "claude"])
+            .expect("the flag parses");
+    let Some(crate::cli::Command::With(args)) = parsed.command else {
+        panic!("with is the command");
+    };
+    assert_eq!(args.run_ttl_hours, 2, "an explicit lifetime is honoured");
+}
