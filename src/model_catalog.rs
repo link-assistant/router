@@ -241,12 +241,17 @@ pub async fn refresh_catalogs(
                 if rejected {
                     token_cache.record_credential_rejected(provider);
                 }
+                // Classified before the suffix goes on: the body is JSON, and
+                // appending prose to it makes it unparseable, so the
+                // permission-specific message this exists to produce could
+                // never be reached for a stamped-expired credential (#319).
+                let permission_refusal = is_permission_refusal(&error);
                 let error = if stamped_expired {
                     format!("{error} (credential is stamped expired; last known catalog retained)")
                 } else {
                     error
                 };
-                if is_permission_refusal(&error) {
+                if permission_refusal {
                     // Say why nothing was refreshed. Without this the operator
                     // sees a 403 and a token that never rotates, and has no way
                     // to tell a deliberate refusal from a missed one (#319).

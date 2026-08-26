@@ -715,3 +715,79 @@ async fn a_family_that_is_revoked_wholesale_says_the_newer_link_was_tried_too() 
         "{reported}"
     );
 }
+
+/// The rotation guard of issue #319 must survive the way the router actually
+/// runs: the ladder persists a rotated token to the same file `read_token`
+/// reads, so the next inbound request hands `get_fresh_for` a credential that
+/// differs from the one the attempt was keyed on.
+///
+/// If that difference is read as "the operator re-authenticated", the guard is
+/// cleared seconds after it is armed and the freshly minted link is spent on
+/// the next rejection — which is the incident, unchanged.
+#[tokio::test]
+async fn a_self_rotation_persisted_to_disk_does_not_clear_the_guard() {
+    let home = tempfile::tempdir().expect("temp home");
+    seed_credential(home.path(), "access-1", "refresh-1", NOW_MS - 1);
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+    let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
+
+    // T+0 — a rejection is recovered from, and the rotation is written to disk.
+    let (url, _received, server) = scripted_endpoint(
+        vec![Answer::new(
+            200,
+            r#"{"access_token":"access-2","refresh_token":"refresh-2","expires_in":3600}"#,
+        )],
+        |_| {},
+    )
+    .await;
+    let rotated = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            "primary",
+            token("access-1", "refresh-1", NOW_MS - 1),
+            NOW_MS,
+        )
+        .await
+        .expect("the rejection must be recovered from");
+    drain(server).await;
+    assert_eq!(rotated.access_token, "access-2");
+
+    // T+5s — an ordinary inbound request. The credential on disk is now the
+    // rotated one, which is *not* a re-authentication by the operator.
+    let disk_token = reader.read_token().expect("read the rotated credential");
+    let _ = cache
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            "http://must-not-be-called.invalid",
+            SubscriptionProvider::Claude,
+            "primary",
+            disk_token.clone(),
+            NOW_MS + 5_000,
+        )
+        .await;
+
+    // T+10s — the 403 arrives. The guard must still hold: no exchange at all.
+    let (url, received, server) =
+        scripted_endpoint(vec![Answer::new(400, INVALID_GRANT)], |_| {}).await;
+    let outcome = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            "primary",
+            disk_token,
+            NOW_MS + 10_000,
+        )
+        .await;
+
+    assert!(outcome.is_none(), "nothing fresher can be obtained");
+    assert!(
+        received.lock().unwrap().is_empty(),
+        "the token endpoint must not be contacted: spending the link the router \
+         itself minted seconds earlier is the whole of issue #319"
+    );
+    server.abort();
+}

@@ -90,3 +90,46 @@ pub fn configured_source() -> Result<String, AnyError> {
     }
     Ok("managed local container".to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A selection must be a URL the CLI can actually reach. `save_persisted`
+    /// rejects the two ways it cannot be — empty, and without a scheme —
+    /// rather than writing a value every later command has to re-validate.
+    #[test]
+    fn a_selection_must_be_an_absolute_http_url() {
+        let empty = PersistedServer {
+            server: String::new(),
+            token: None,
+            run_max_requests: None,
+        };
+        assert!(
+            save_persisted(&empty).is_err(),
+            "an empty selection is not a router"
+        );
+
+        let schemeless = PersistedServer {
+            server: "router.example:8080".into(),
+            token: None,
+            run_max_requests: None,
+        };
+        let error = save_persisted(&schemeless)
+            .expect_err("a schemeless URL must be refused")
+            .to_string();
+        assert!(
+            error.contains("http://") && error.contains("https://"),
+            "the refusal must name what is acceptable: {error}"
+        );
+    }
+
+    /// Clearing a selection that was never made is not an error: `server use
+    /// --clear` runs on machines that never selected anything.
+    #[test]
+    fn clearing_an_absent_selection_succeeds() {
+        let first = clear_persisted().expect("clearing is idempotent");
+        let second = clear_persisted().expect("and stays idempotent");
+        assert_eq!(first, second, "both name the same path");
+    }
+}

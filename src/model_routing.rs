@@ -286,13 +286,21 @@ pub fn configured_provider_health(
         .map(|provider| {
             let rejected = token_cache.evidence(provider)
                 == Some(crate::refresh::CredentialEvidence::Rejected);
+            let status = catalogs.status(provider);
             let reason =
                 if rejected {
                     Some(token_cache.last_refresh_error(provider).unwrap_or_else(|| {
                         format!("the {provider} credential was rejected upstream")
                     }))
-                } else {
+                } else if status.discovered && !status.credential_healthy {
                     credential_state(provider, catalogs)
+                } else {
+                    // A provider that has not yet completed its first live
+                    // discovery is *starting*, not dead. Reporting it degraded
+                    // would fire a page on every cold start and on any transient
+                    // catalog-endpoint failure — an alert that cries wolf is the
+                    // same failure as one that never fires (issue #318).
+                    None
                 };
             ProviderHealth {
                 provider,

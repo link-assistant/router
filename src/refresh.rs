@@ -866,14 +866,13 @@ impl TokenCache {
         // (issue #319). `None` means the credential was adopted rather than
         // exchanged, so no link was spent and no grace period is owed.
         if let Some(now_ms) = rotated_at_ms {
-            attempt.record_rotation(now_ms);
+            // The fingerprint moves to the token we just minted, because the
+            // ladder has already written it to the file the next caller reads.
+            // Leaving it behind is what let a rotation this process performed
+            // look like a re-authentication (issue #319).
+            attempt.record_rotation(now_ms, token);
         }
         self.store_for(provider, account, token.clone());
-        // The attempt fingerprint tracks the *stored* credential, not the
-        // access token we just minted from it: overwriting it here would make
-        // the next caller — handed the same credential from disk — believe the
-        // subscription had been re-authenticated and drop the cache it just
-        // filled.
         attempt.record_success();
         self.record_credential_working(provider);
         if let Ok(mut guard) = self.refresh_errors.lock() {

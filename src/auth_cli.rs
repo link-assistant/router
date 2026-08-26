@@ -188,7 +188,21 @@ fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Opt
     // deployment had been cleared (issue #305). The #283/#291 refusal shape
     // sat on the path this short-circuits past, so it could never fire.
     let target = clear_target(op);
-    if let Some(server) = target.server.as_deref() {
+    // The selection counts, not only the flag. Every other command on this
+    // path resolves the router this machine is pointed at; checking `--server`
+    // alone meant `server use https://prod` then `auth clear --all` withdrew
+    // five local credentials while the operator, the persisted selection and
+    // this command's own help all said `prod` (issue #305). `--local` is the
+    // way to say "this machine" out loud, so it opts out.
+    let selected = if target.local {
+        None
+    } else {
+        target
+            .server
+            .clone()
+            .or_else(link_assistant_router::managed_server::selected_server)
+    };
+    if let Some(server) = selected.as_deref() {
         eprintln!(
             "error: clearing a credential removes files on the machine it runs on, so it cannot \
              clear {server} from here."

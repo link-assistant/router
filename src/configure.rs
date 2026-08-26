@@ -154,7 +154,14 @@ async fn configure_one(
         // Minted only when this command actually issued one: a token the
         // operator supplied is often shared with other machines, so `--undo`
         // must not take it away from them.
-        source: if credential.id().is_some() && args.token.is_none() && !args.token_stdin {
+        //
+        // Asked of the credential rather than of the arguments. `--token
+        // <admin>` still *mints* a year-long run token, which the argument
+        // test recorded as supplied and leaked; and a non-admin token reaching
+        // the resolver from the environment or a persisted selection is reused
+        // verbatim, which the same test recorded as minted and would have
+        // revoked out from under every other machine sharing it.
+        source: if credential.was_minted() {
             TokenSource::Minted
         } else {
             TokenSource::Supplied
@@ -185,6 +192,7 @@ async fn configure_one(
 
 async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> Result<ExitCode, AnyError> {
     let mut restored = 0_usize;
+    let mut failed = Vec::new();
     for client in args.clients() {
         // The same check `configure` itself makes. Reversal used to report
         // success for a client whose configuration the router can never have
@@ -195,56 +203,80 @@ async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> Result<ExitCode,
             }
             return Err(reason.into());
         }
-        let record = manager.credential_metadata(client).ok().flatten();
-        // The configuration comes back first. A hash-verified restore can
-        // refuse — an edit made after `configure` is preserved rather than
-        // overwritten — and revoking there would strip the credential from a
-        // setup that is still in place and still working.
-        let config = crate::client_global::undo(client)?;
-        // Then the token, before the file that holds it is deleted. Deleting
-        // first leaves a live credential nobody can name any more, which is
-        // the regression from issue #190 — and `configure` mints for a year,
-        // so the window is not a short one.
-        if let Some(record) = record
-            .as_ref()
-            .filter(|record| record.revocable_by_default())
-        {
-            report_revocation(args, record).await;
+        match undo_one(args, manager, client).await {
+            Ok(true) => restored += 1,
+            Ok(false) => {}
+            // `--all` reverses every client rather than stopping at the first
+            // that refuses. A hash-verified restore declining one hand-edited
+            // config is an expected outcome, and letting it abort the loop left
+            // every later client still pointed at the router with its
+            // credential in place, and said nothing about which.
+            Err(error) if args.all => failed.push((client, error.to_string())),
+            Err(error) => return Err(error),
         }
-        let environment = manager.environment_path(client);
-        let had_credential = environment.exists();
-        if had_credential {
-            std::fs::remove_file(&environment)?;
-        }
-        let metadata = manager.credential_metadata_path(client);
-        if metadata.exists() {
-            std::fs::remove_file(&metadata)?;
-        }
-        match config {
-            Some(path) => {
-                println!("restored {} exactly", path.display());
-                restored += 1;
-            }
-            None if had_credential => {
-                println!(
-                    "removed the stored credential for {}",
-                    client.display_name()
-                );
-                restored += 1;
-            }
-            None if !args.all => {
-                return Err(format!(
-                    "no configuration saved by `configure` exists for {client}; nothing was restored"
-                )
-                .into());
-            }
-            None => {}
-        }
+    }
+    for (client, error) in &failed {
+        eprintln!("error: {}: {error}", client.display_name());
     }
     if args.all {
         println!("restored {restored} client(s)");
     }
-    Ok(ExitCode::SUCCESS)
+    Ok(if failed.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    })
+}
+
+/// Reverse one client, reporting whether anything was actually restored.
+async fn undo_one(
+    args: &ConfigureArgs,
+    manager: &ClientManager,
+    client: ClientKind,
+) -> Result<bool, AnyError> {
+    let record = manager.credential_metadata(client).ok().flatten();
+    // The configuration comes back first. A hash-verified restore can
+    // refuse — an edit made after `configure` is preserved rather than
+    // overwritten — and revoking there would strip the credential from a
+    // setup that is still in place and still working.
+    let config = crate::client_global::undo(client)?;
+    // Then the token, before the file that holds it is deleted. Deleting
+    // first leaves a live credential nobody can name any more, which is
+    // the regression from issue #190 — and `configure` mints for a year,
+    // so the window is not a short one.
+    if let Some(record) = record
+        .as_ref()
+        .filter(|record| record.revocable_by_default())
+    {
+        report_revocation(args, record).await;
+    }
+    let environment = manager.environment_path(client);
+    let had_credential = environment.exists();
+    if had_credential {
+        std::fs::remove_file(&environment)?;
+    }
+    let metadata = manager.credential_metadata_path(client);
+    if metadata.exists() {
+        std::fs::remove_file(&metadata)?;
+    }
+    match config {
+        Some(path) => {
+            println!("restored {} exactly", path.display());
+            Ok(true)
+        }
+        None if had_credential => {
+            println!(
+                "removed the stored credential for {}",
+                client.display_name()
+            );
+            Ok(true)
+        }
+        None if !args.all => Err(format!(
+            "no configuration saved by `configure` exists for {client}; nothing was restored"
+        )
+        .into()),
+        None => Ok(false),
+    }
 }
 
 /// Revoke the credential this client was configured with, or say why not.

@@ -197,3 +197,142 @@ async fn metrics_exposes_a_gauge_per_configured_subscription() {
     // The existing counters are untouched.
     assert!(body.contains("link_assistant_requests_total"));
 }
+
+/// A subscription whose first catalog discovery has not finished yet is
+/// starting, not dead. Paging on that would fire on every cold start and on
+/// any transient catalog-endpoint failure (issue #318).
+#[tokio::test]
+async fn a_cold_start_is_not_reported_as_degraded() {
+    let data = tempdir().unwrap();
+    let claude = tempdir().unwrap();
+    fs::write(
+        claude.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"working"}}"#,
+    )
+    .unwrap();
+    let state = auto_state(
+        vec![SubscriptionReader::new(
+            SubscriptionProvider::Claude,
+            claude.path(),
+        )],
+        data.path(),
+    );
+    // Nothing recorded yet: this is the window between boot and the first tick.
+    let app = axum::Router::new()
+        .route(
+            "/health/subscriptions",
+            get(crate::subscription_health::subscription_health),
+        )
+        .with_state(state.clone());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/health/subscriptions")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        response.status(),
+        StatusCode::OK,
+        "a router that has not finished starting must not page anyone"
+    );
+
+    // A transient catalog failure is not a credential verdict either.
+    state
+        .model_catalogs
+        .record_failure(SubscriptionProvider::Claude, "vendor unavailable", false);
+    let app = axum::Router::new()
+        .route(
+            "/health/subscriptions",
+            get(crate::subscription_health::subscription_health),
+        )
+        .with_state(state);
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/health/subscriptions")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        response.status(),
+        StatusCode::OK,
+        "a transient failure must not be reported as a dead subscription"
+    );
+}
+
+/// A provider must never be reported healthy and degraded at once: a monitor
+/// reading both lists would get contradictory answers from one response.
+#[tokio::test]
+async fn no_provider_is_both_healthy_and_degraded() {
+    let data = tempdir().unwrap();
+    let claude = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    fs::write(
+        claude.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"revoked"}}"#,
+    )
+    .unwrap();
+    fs::write(
+        codex.path().join("auth.json"),
+        r#"{"tokens":{"access_token":"healthy"}}"#,
+    )
+    .unwrap();
+    let state = auto_state(
+        vec![
+            SubscriptionReader::new(SubscriptionProvider::Claude, claude.path()),
+            SubscriptionReader::new(SubscriptionProvider::Codex, codex.path()),
+        ],
+        data.path(),
+    );
+    state
+        .model_catalogs
+        .record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
+    state
+        .model_catalogs
+        .record_success(SubscriptionProvider::Codex, vec!["gpt-live".into()]);
+    state
+        .subscription_cache
+        .record_credential_rejected(SubscriptionProvider::Claude);
+
+    let client_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+    let app = axum::Router::new()
+        .route("/v1/models", get(models))
+        .with_state(state);
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/v1/models")
+                .header("authorization", format!("Bearer {client_token}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let catalog: Value = serde_json::from_slice(&body).unwrap();
+
+    let healthy: Vec<&str> = catalog["healthy_providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap())
+        .collect();
+    let degraded: Vec<&str> = catalog["degraded_providers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap())
+        .collect();
+    for provider in &degraded {
+        assert!(
+            !healthy.contains(provider),
+            "{provider} is reported both healthy and degraded: {healthy:?} / {degraded:?}"
+        );
+    }
+    assert!(degraded.contains(&"claude"), "the revoked one is named");
+}

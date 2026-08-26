@@ -351,7 +351,9 @@ mod tests {
             std::fs::read(&destination).expect("read"),
             b"{\"original\":true}"
         );
-        // `file_mode` reports the raw `st_mode`, type bits included.
+        // `file_mode` reports the raw `st_mode`, type bits included, and
+        // answers `None` on platforms with no mode to report.
+        #[cfg(unix)]
         assert_eq!(
             file_mode(&destination).map(|mode| mode & 0o777),
             Some(0o600)

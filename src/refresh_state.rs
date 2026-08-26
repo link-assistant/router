@@ -35,6 +35,15 @@ pub(super) struct RefreshAttempt {
     /// did. `None` means the credential was read from disk rather than minted
     /// here, so nothing is known about how recently it was rotated.
     rotated_at_ms: Option<i64>,
+    /// Fingerprint of the credential this process minted, when it did.
+    ///
+    /// Kept beside `credential` rather than replacing it. `credential` must go
+    /// on tracking the *stored* credential, or a second concurrent caller
+    /// holding the same disk token would read the rotation as a change and
+    /// refresh again — but the ladder writes the rotation to the very file the
+    /// next request reads, so without this the router's own work is
+    /// indistinguishable from a re-authentication (issue #319).
+    rotated_to: Option<[u8; 32]>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -63,6 +72,7 @@ impl RefreshAttempts {
                         credential: fingerprint,
                         failure: None,
                         rotated_at_ms: None,
+                        rotated_to: None,
                     }))
                 }),
         )
@@ -76,17 +86,33 @@ impl RefreshAttempt {
         if self.credential == fingerprint {
             return false;
         }
+        // The credential this process just minted, arriving back through the
+        // file the ladder wrote it to. That is not a re-authentication, and
+        // reading it as one cleared the guard seconds after it was armed and
+        // dropped a cache that had just been filled (issue #319).
+        if self.rotated_to == Some(fingerprint) {
+            self.credential = fingerprint;
+            return false;
+        }
         self.credential = fingerprint;
         self.failure = None;
-        // A different credential is on disk: whatever this process rotated to
-        // is no longer what is being used, so the grace period does not carry
-        // over to it.
+        // A credential nobody here minted: whatever this process rotated to is
+        // no longer what is being used, so the grace period does not carry over.
         self.rotated_at_ms = None;
+        self.rotated_to = None;
         true
     }
 
-    /// Record that this process minted the current credential by refreshing.
-    pub(super) const fn record_rotation(&mut self, now_ms: i64) {
+    /// Record that this process minted `credential` by refreshing.
+    ///
+    /// The fingerprint moves with it. The recovery ladder writes a rotation
+    /// back to the very file `read_token` reads, so without this the next
+    /// inbound request hands `get_fresh_for` a credential that differs from the
+    /// one this attempt was keyed on, [`Self::reset_if_changed`] reads the
+    /// router's own rotation as a re-authentication, and the guard is cleared
+    /// seconds after it is armed (issue #319).
+    pub(super) fn record_rotation(&mut self, now_ms: i64, credential: &SubscriptionToken) {
+        self.rotated_to = Some(credential_fingerprint(credential));
         self.rotated_at_ms = Some(now_ms);
     }
 
