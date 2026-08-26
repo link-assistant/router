@@ -4,6 +4,30 @@
 //! 1000-line limit.
 
 use super::*;
+
+/// The `sequence` values a log file holds, read through the decoder.
+///
+/// Assertions are about which records survived, not how they are punctuated,
+/// so they must not depend on the encoding (issue #336).
+fn sequences(text: &str) -> Vec<i64> {
+    text.lines()
+        .filter_map(crate::lino_json::decode_line)
+        .filter_map(|record| record.get("sequence").and_then(Value::as_i64))
+        .collect()
+}
+
+/// The `phase` values a log file holds.
+fn phases(text: &str) -> Vec<String> {
+    text.lines()
+        .filter_map(crate::lino_json::decode_line)
+        .filter_map(|record| {
+            record
+                .get("phase")
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        })
+        .collect()
+}
 use proptest::prelude::*;
 
 #[test]
@@ -173,10 +197,11 @@ fn log_never_exceeds_limit_and_keeps_newest_complete_record() {
     let text = String::from_utf8(bytes).expect("UTF-8 JSONL");
     assert!(
         text.lines()
-            .all(|line| serde_json::from_str::<Value>(line).is_ok())
+            .all(|line| crate::lino_json::decode_line(line).is_some())
     );
-    assert!(text.contains("\"sequence\":29"));
-    assert!(!text.contains("\"sequence\":0,"));
+    let kept = sequences(&text);
+    assert!(kept.contains(&29), "the newest record survives: {kept:?}");
+    assert!(!kept.contains(&0), "the oldest was discarded: {kept:?}");
 
     let tiny_root = dir.path().join("tiny");
     let tiny_path = tiny_root.join("unauthenticated/requests.jsonl");
@@ -376,7 +401,7 @@ fn the_terminal_record_carries_counts_and_duration() {
         .lines()
         .find(|line| line.contains("stream_end"))
         .expect("a stream_end record was written");
-    let record: Value = serde_json::from_str(record).expect("valid JSON");
+    let record = crate::lino_json::decode_line(record).expect("a readable record");
     assert_eq!(record["outcome"], "ended_without_terminator");
     assert_eq!(record["complete"], false);
     assert_eq!(record["frames"], 444);
@@ -626,7 +651,7 @@ fn settling_a_stream_writes_its_terminal_record() {
         .expect("read log");
     let record: serde_json::Value = written
         .lines()
-        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .filter_map(crate::lino_json::decode_line)
         .find(|record| record.get("phase").and_then(|p| p.as_str()) == Some("stream_end"))
         .expect("a terminal record must be written");
 
@@ -667,7 +692,7 @@ fn a_cut_stream_records_its_outcome_and_duration() {
         .expect("read log");
     let record: serde_json::Value = written
         .lines()
-        .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+        .filter_map(crate::lino_json::decode_line)
         .find(|record| record.get("phase").and_then(|p| p.as_str()) == Some("stream_end"))
         .expect("a terminal record must be written");
 
@@ -695,7 +720,7 @@ fn compaction_leaves_a_marker_saying_records_were_discarded() {
 
     let text = fs::read_to_string(&path).expect("request log");
     assert!(
-        text.contains("\"phase\":\"log_compaction\""),
+        phases(&text).iter().any(|phase| phase == "log_compaction"),
         "the marker record must be present: {text}"
     );
     assert!(
@@ -705,13 +730,14 @@ fn compaction_leaves_a_marker_saying_records_were_discarded() {
     // Still one well-formed JSONL stream, and still inside the bound.
     assert!(
         text.lines()
-            .all(|line| serde_json::from_str::<Value>(line).is_ok()),
+            .all(|line| crate::lino_json::decode_line(line).is_some()),
         "the marker must not break the stream"
     );
     assert!(fs::metadata(&path).expect("log").len() <= 4_096);
     // The newest records survive; the oldest are what went.
-    assert!(text.contains("\"sequence\":79"));
-    assert!(!text.contains("\"sequence\":0,"));
+    let kept = sequences(&text);
+    assert!(kept.contains(&79), "the newest record survives: {kept:?}");
+    assert!(!kept.contains(&0), "the oldest was discarded: {kept:?}");
 }
 
 /// A limit too small to hold the marker keeps the plain tail: the bound is the

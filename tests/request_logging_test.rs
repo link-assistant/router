@@ -159,7 +159,8 @@ fn a_rejected_request_does_not_claim_an_empty_body() {
     );
 
     let record = router.await_client_request("issue-210-rejected");
-    let record: serde_json::Value = serde_json::from_str(&record).expect("record is JSON");
+    let record =
+        link_assistant_router::lino_json::decode_line(&record).expect("record is readable");
     let body = record["body"].as_str().expect("body field is a string");
     assert_ne!(
         body, "",
@@ -181,7 +182,8 @@ fn a_bodiless_request_is_still_logged_as_empty() {
         .expect("bodiless request");
 
     let record = router.await_client_request("issue-210-bodiless");
-    let record: serde_json::Value = serde_json::from_str(&record).expect("record is JSON");
+    let record =
+        link_assistant_router::lino_json::decode_line(&record).expect("record is readable");
     assert_eq!(
         record["body"], "",
         "a request that declared no body is genuinely empty: {record}"
@@ -202,7 +204,8 @@ fn a_declared_content_length_implies_a_non_empty_logged_body() {
         .expect("rejected request");
 
     let record = router.await_client_request("issue-210-consistent");
-    let record: serde_json::Value = serde_json::from_str(&record).expect("record is JSON");
+    let record =
+        link_assistant_router::lino_json::decode_line(&record).expect("record is readable");
     let declared: u64 = record["headers"]["content-length"]
         .as_str()
         .expect("content-length is logged")
@@ -230,7 +233,8 @@ fn a_zero_length_body_is_not_reported_as_unread() {
         .expect("zero-length request");
 
     let record = router.await_client_request("issue-210-zero-length");
-    let record: serde_json::Value = serde_json::from_str(&record).expect("record is JSON");
+    let record =
+        link_assistant_router::lino_json::decode_line(&record).expect("record is readable");
     let body = record["body"].as_str().unwrap_or_default();
     assert!(
         !body.contains("NOT READ"),

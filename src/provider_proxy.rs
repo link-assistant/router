@@ -646,7 +646,7 @@ mod tests {
                 .expect("read the log");
         let settled: serde_json::Value = written
             .lines()
-            .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+            .filter_map(crate::lino_json::decode_line)
             .find(|record| record.get("phase").and_then(|p| p.as_str()) == Some("stream_end"))
             .expect("the relay must settle the stream it forwarded");
 

@@ -163,13 +163,18 @@ impl RequestLog {
         if let Value::Object(fields) = redact_value(fields) {
             event.extend(fields);
         }
-        let Ok(mut line) = serde_json::to_vec(&event) else {
+        // Links notation, one readable record per line, so the store is in
+        // the format the rest of router state uses without the log ceasing to
+        // be greppable (issues #235, #336). The reader accepts either, so the
+        // existing file keeps reading and migrates as records are appended.
+        let Ok(rendered) = crate::lino_json::encode_line(&Value::Object(event)) else {
             return;
         };
+        let mut line = rendered.into_bytes();
         line.push(b'\n');
         if line.len() as u64 > self.max_bytes {
             let omitted = line.len();
-            line = serde_json::to_vec(&json!({
+            line = crate::lino_json::encode_line(&json!({
                 "time": chrono::Utc::now().to_rfc3339(),
                 "correlation_id": correlation_id,
                 "phase": phase,
@@ -178,7 +183,8 @@ impl RequestLog {
                 "token_label": identity.label,
                 "body": format!("[OMITTED: {omitted} byte record exceeds log limit]")
             }))
-            .unwrap_or_default();
+            .unwrap_or_default()
+            .into_bytes();
             line.push(b'\n');
         }
         self.append_bounded(&identity.hash, &line);
@@ -756,7 +762,7 @@ mod isolation_tests;
 /// request and response bodies exist, and an auditor reading it asks about the
 /// beginning of a session — the end compaction removes first (issue #322).
 fn discard_marker(discarded_bytes: u64, retained_bytes: Option<usize>) -> Vec<u8> {
-    let mut line = serde_json::to_vec(&json!({
+    let mut line = crate::lino_json::encode_line(&json!({
         "time": chrono::Utc::now().to_rfc3339(),
         "phase": "log_compaction",
         "body": retained_bytes.map_or_else(
@@ -770,7 +776,8 @@ fn discard_marker(discarded_bytes: u64, retained_bytes: Option<usize>) -> Vec<u8
             ),
         ),
     }))
-    .unwrap_or_default();
+    .unwrap_or_default()
+    .into_bytes();
     line.push(b'\n');
     line
 }
