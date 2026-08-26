@@ -276,6 +276,7 @@ jobs:
           rust-script --test scripts/detect-code-changes.rs
           rust-script --test scripts/check-changelog-fragment.rs
           rust-script --test scripts/check-release-provenance.rs
+          rust-script --test scripts/create-github-release.rs
           rust-script scripts/check-release-workflow.rs
 
   # === DEPENDENCY AUDIT ===
