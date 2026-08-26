@@ -127,6 +127,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.122.0] - 2026-08-26
+
+### Fixed
+- `serve` stops when it is asked to. Only `ctrl_c` was awaited, so `SIGTERM` — what `docker stop`, Kubernetes and systemd all send — reached no handler; as PID 1 in a container the kernel applies no default action either, so the signal was discarded and every stop waited out the full grace period before a `SIGKILL`. An idle deployment took 30 seconds to stop, and any in-flight stream was severed at the timeout rather than allowed to finish. Both signals now stop the listener, in-flight requests drain, and the process exits 0 (issue #334).
+- The HTTPS listener and the unix socket can be stopped at all. The graceful path existed for plain HTTP and the admin UI but the TLS path had no shutdown hook, and the socket could only be aborted mid-request; one notice now reaches all four (issue #334).
+- An absent managed container is recognised however Docker spells it. The sentinel matched `No such object` case-sensitively while Docker Desktop writes `no such object`, so a container that simply did not exist yet was read as a hard inspect failure — the container that should then have been created never was, and `with` failed naming an internal container the user has never heard of (issue #333).
+- An unreachable selected server says which server, and what to do about it. A refusal is still the answer — silently using a router other than the one selected is its own surprise — but the message now names the deployment, how it came to be selected, and the three ways out: `--local`, `--managed`, or `router server use <URL>` (issue #333).
+
+### Changed
+- The pending Claude login, the token transaction journal and the `with` rollback state are stored in links notation, joining the state converted in #235. Each keeps its existing file name and reads either encoding, so an installation migrates on its next write rather than losing what it had (issue #336).
+- The request log stays JSON Lines for now, deliberately. Links notation is a multi-line format, and the log is appended one record per line and compacted by scanning for a newline — so converting it needs either a single-line emitter or a new framing plus a rewritten compaction cut-point, and the codec's existing single-line form base64-encodes every string, which would undo the readability just delivered for #328. It is the bulk of the bytes and deserves its own change rather than riding along with three small stores (issue #336).
+- `lino_json` states the boundary it enforces: router-owned state is links notation, and vendor-owned state — Anthropic's `.credentials.json`, Codex's `auth.json`, the client `settings.json` files — stays whatever the vendor writes. The rule was real but inferable only from which module a write lived in (issue #336).
+
+### Fixed
+- A release removes the fragments it collected. Two collectors existed and only one deleted: `collect-changelog.rs` cleaned up but is wired to the manual dispatch job, while the automatic release on merge runs `version-and-commit.rs`, which collected and never removed. Every release therefore re-collected every fragment ever written and republished the whole archive as its own release notes — 154 pending fragments and a 145 KB section for a single version by v0.120.0, which is why release bodies were being truncated to fit GitHub's limit (issue #337).
+- The 153 fragments that had accumulated are removed. Their content is already in `CHANGELOG.md`, many times over, so nothing is lost — and leaving them would have had the next release repeat the whole thing.
+- `check-changelog-fragment.rs` fails when `changelog.d/` holds more fragments than one release should ever collect. This went unnoticed for eight months and roughly 150 releases because nothing counted (issue #337).
+
+### Security
+- An empty `XDG_CONFIG_HOME`, `HOME` or `APPDATA` is treated as unset rather than as a configured value. `var_os` returns `Some("")` for a set-but-empty variable, so the fallback chain never ran, the config root became the empty string, and the router wrote `server.json` — holding a live `la_sk_` token — into whatever directory the command happened to run from. A resolved root that is not absolute is now refused outright rather than used, and the same treatment covers the client home and the clients' own override variables (issue #340).
+
+### Fixed
+- `cargo test` no longer touches the developer's own router state. `clearing_an_absent_selection_succeeds` called `clear_persisted()` with nothing overriding `HOME`, so running the suite deleted the real `~/.config/link-assistant-router/server.json` — a file holding a live token. The test passed either way, which is why it read as harmless. State resolution now takes a test-only root that each test claims for itself, and a test that resolves the real directory without claiming one fails loudly rather than silently operating on whoever ran it. That guard immediately caught two further unisolated tests (issue #343).
+
+### Changed
+- The per-run token `with` mints defaults to 24 hours rather than 1. The token is revoked when the client exits, so the run already bounds its life; the clock was a second bound that could only fire early, and at one hour it routinely did — an interactive session that outlived the hour died mid-work. `--run-ttl-hours` still overrides it (issue #341).
+
+### Fixed
+- An expired router token says whose token it was. A bare `401 Token has expired` let the client render its own `Please run /login` advice, which points at the model provider's credential — a different thing entirely, which re-authenticating does not change. The message now names the router and `--run-ttl-hours` (issue #341).
+
+### Changed
+- The request log is written in links notation, so all router-owned state is one format (issues #235, #336). It is the last store to convert and the largest — 1.7 GB against 93 KB on a real deployment — and it needed a form neither existing encoder provided: the readable one spans a line per field, which breaks a log that is appended and compacted one record per line, and the single-line one base64-encodes every string, which is the unreadability issue #328 had just removed from this same file. `lino_json::encode_line` is that form: one record, one line, strings kept as strings. An operator grepping for a model name still finds it.
+- Existing logs keep reading. `decode_line` accepts either encoding, so the JSON Lines an earlier release wrote stay readable and a file migrates record by record as new ones are appended — verified against a file holding both encodings at once.
+
 ## [0.121.0] - 2026-08-26
 
 ### Fixed
