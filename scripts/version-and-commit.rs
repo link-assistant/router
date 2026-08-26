@@ -278,7 +278,25 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
         fs::write(changelog_file, content).expect("Failed to write changelog");
     }
 
-    println!("Collected {} changelog fragment(s)", files.len());
+    // Removed once collected, or the next release collects them again. This
+    // was the whole defect: only `collect-changelog.rs` deleted, and that is
+    // the manual dispatch path, so the automatic release on merge to main
+    // re-collected every fragment ever written. Each release therefore
+    // republished the entire archive as though it were new -- 154 fragments
+    // and a 145 KB section for one version by v0.120.0 (issue #337).
+    for file in &files {
+        if let Err(error) = fs::remove_file(file) {
+            // Failing the release over a leftover file would be worse than
+            // the duplication; the next release collects it again and the
+            // guard below is what makes that visible.
+            eprintln!(
+                "warning: could not remove collected fragment {}: {error}",
+                file.display()
+            );
+        }
+    }
+
+    println!("Collected and removed {} changelog fragment(s)", files.len());
 }
 
 fn main() {
@@ -424,7 +442,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::update_cargo_lock;
+    use super::{collect_changelog, update_cargo_lock};
     use std::fs;
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -507,5 +525,70 @@ version = "1.2.3"
         .expect_err("a missing root package must fail closed");
         assert!(error.contains("Could not find [[package]] entry"));
         fs::remove_file(lock).expect("temporary fixture should be removable");
+    }
+
+    /// A collected fragment is removed, so the next release does not collect
+    /// it again.
+    ///
+    /// Only `collect-changelog.rs` deleted, and that is the manual dispatch
+    /// path; the automatic release on merge ran this script, which collected
+    /// and never removed. Every release therefore republished every fragment
+    /// ever written -- 154 of them, and a 145 KB section for one version, by
+    /// v0.120.0 (issue #337).
+    #[test]
+    fn collected_fragments_are_removed() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("changelog-collect-{nonce}"));
+        let fragments = root.join("changelog.d");
+        fs::create_dir_all(&fragments).expect("create the fragment directory");
+        let changelog = root.join("CHANGELOG.md");
+        fs::write(&changelog, "# Changelog\n\n## [0.1.0] - 2020-01-01\n\nold\n")
+            .expect("seed the changelog");
+        fs::write(
+            fragments.join("20260101_000000_first.md"),
+            "---\nbump: minor\n---\n\n### Added\n- a first thing\n",
+        )
+        .expect("write a fragment");
+        // README.md is documentation, not a fragment, and must survive.
+        fs::write(fragments.join("README.md"), "how to write a fragment\n")
+            .expect("write the readme");
+
+        collect_changelog(
+            fragments.to_str().expect("path"),
+            changelog.to_str().expect("path"),
+            "0.2.0",
+        );
+
+        let collected = fs::read_to_string(&changelog).expect("read the changelog");
+        assert!(
+            collected.contains("a first thing"),
+            "the fragment must reach the changelog: {collected}"
+        );
+        assert!(
+            !fragments.join("20260101_000000_first.md").exists(),
+            "a collected fragment must not be collected again by the next release"
+        );
+        assert!(
+            fragments.join("README.md").exists(),
+            "the directory's documentation is not a fragment"
+        );
+
+        // And a second release over the same directory adds nothing.
+        collect_changelog(
+            fragments.to_str().expect("path"),
+            changelog.to_str().expect("path"),
+            "0.3.0",
+        );
+        let after = fs::read_to_string(&changelog).expect("read the changelog");
+        assert_eq!(
+            after.matches("a first thing").count(),
+            1,
+            "an entry belongs to one release, not every release after it: {after}"
+        );
+
+        fs::remove_dir_all(&root).expect("clean up");
     }
 }
