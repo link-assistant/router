@@ -336,3 +336,54 @@ async fn no_provider_is_both_healthy_and_degraded() {
     }
     assert!(degraded.contains(&"claude"), "the revoked one is named");
 }
+
+/// A wrong model id with healthy credentials used to get a bare sentence: the
+/// router refused, and withheld the catalog it was holding at that moment
+/// (issue #323).
+#[test]
+fn an_unadvertised_model_is_refused_by_naming_what_is_advertised() {
+    let catalogs = ModelCatalogCache::new();
+    catalogs.record_success(
+        SubscriptionProvider::Claude,
+        vec!["claude-opus-5".into(), "claude-haiku-4-5-20251001".into()],
+    );
+    let error = available_provider_for_model("opus", &[SubscriptionProvider::Claude], &catalogs)
+        .expect_err("a tier name is not an advertised id");
+    let message = error.to_string();
+
+    assert!(message.contains("'opus' is not advertised"), "{message}");
+    assert!(
+        message.contains("claude-opus-5") && message.contains("claude-haiku-4-5-20251001"),
+        "the refusal must name the ids that would have worked: {message}"
+    );
+}
+
+/// A credential problem still reports the credential, because that is the
+/// cause and the catalog is empty for a reason (issue #239 stays fixed).
+#[test]
+fn a_credential_failure_is_still_named_ahead_of_the_catalog() {
+    let catalogs = ModelCatalogCache::new();
+    catalogs.record_success(SubscriptionProvider::Claude, vec!["claude-opus-5".into()]);
+    catalogs.record_failure(SubscriptionProvider::Claude, "HTTP 401", true);
+    let error =
+        available_provider_for_model("claude-opus-5", &[SubscriptionProvider::Claude], &catalogs)
+            .expect_err("a rejected credential advertises nothing");
+
+    assert!(
+        error.to_string().contains("not usable"),
+        "the credential cause wins: {error}"
+    );
+}
+
+/// A deployment serving nothing adds no list, rather than a dangling colon.
+#[test]
+fn a_router_with_no_catalog_yet_adds_no_list() {
+    let catalogs = ModelCatalogCache::new();
+    let error = available_provider_for_model("anything", &[], &catalogs)
+        .expect_err("nothing is advertised");
+    let message = error.to_string();
+    assert!(
+        message.ends_with("subscription"),
+        "no dangling detail: {message}"
+    );
+}

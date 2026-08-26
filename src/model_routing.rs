@@ -152,6 +152,40 @@ fn credential_states(model: &str, catalogs: &ModelCatalogCache) -> Vec<String> {
 }
 
 /// Resolve a model only when the owning subscription is available.
+/// How many model ids a refusal names before it summarises instead.
+///
+/// Long enough to be the whole catalog on an ordinary deployment, short enough
+/// that the message stays readable in a log line.
+const ADVERTISED_IN_ERRORS: usize = 24;
+
+/// The ids this deployment would have accepted, for a refusal to name.
+///
+/// Invents nothing and consults no table: this is the live catalog the router
+/// already fetched, which is what keeps it inside the rule issue #192 set when
+/// it deleted the bundled model list (issue #323).
+fn advertised_detail(available: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> String {
+    let mut ids = available
+        .iter()
+        .flat_map(|provider| catalogs.models(*provider))
+        .collect::<Vec<_>>();
+    ids.sort_unstable();
+    ids.dedup();
+    if ids.is_empty() {
+        return String::new();
+    }
+    if ids.len() > ADVERTISED_IN_ERRORS {
+        let shown = ids
+            .iter()
+            .take(ADVERTISED_IN_ERRORS)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(", ");
+        let rest = ids.len() - ADVERTISED_IN_ERRORS;
+        return format!("; this deployment advertises {shown} and {rest} more");
+    }
+    format!("; this deployment advertises: {}", ids.join(", "))
+}
+
 pub fn available_provider_for_model(
     model: &str,
     available: &[SubscriptionProvider],
@@ -160,8 +194,13 @@ pub fn available_provider_for_model(
     let advertised = providers_for_model(model, catalogs);
     if advertised.is_empty() {
         let causes = credential_states(model, catalogs);
+        // Credential causes when there are any (issue #239), and otherwise the
+        // catalog itself. With healthy credentials and a wrong id, `causes` is
+        // empty and the bare sentence withheld the one fact that resolves the
+        // error — held, at that moment, by the component refusing the request
+        // (issue #323).
         let detail = if causes.is_empty() {
-            String::new()
+            advertised_detail(available, catalogs)
         } else {
             format!(": {}", causes.join("; "))
         };

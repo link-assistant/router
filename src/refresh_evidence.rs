@@ -7,6 +7,45 @@
 use super::{CredentialEvidence, SubscriptionProvider, SubscriptionToken, TokenCache};
 
 impl TokenCache {
+    /// Announce a terminal credential failure once, at `ERROR`.
+    ///
+    /// A router that cannot serve a configured subscription, and cannot fix it
+    /// without a human in a browser, is in an error state by any definition.
+    /// Logged at `WARN` it sat below every ordinary `level>=ERROR` pipeline,
+    /// so a twelve-hour outage produced a log with zero errors in it, and the
+    /// one meaningful line was buried under 146 repetitions of its consequence
+    /// (issue #321).
+    ///
+    /// Repeats are suppressed until the provider recovers, because the
+    /// condition is already known and restating it hides new events.
+    pub(super) fn log_terminal_once(&self, provider: SubscriptionProvider, message: &str) {
+        if self.take_terminal_announcement(provider) {
+            tracing::error!(
+                "{provider} subscription is unusable and cannot recover on its own: {message}"
+            );
+        } else {
+            tracing::debug!("{provider} subscription is still unusable: {message}");
+        }
+    }
+
+    /// Claim the right to announce this provider's terminal failure.
+    ///
+    /// True exactly once per outage, so the transition is reported and its
+    /// restatements are not.
+    pub(super) fn take_terminal_announcement(&self, provider: SubscriptionProvider) -> bool {
+        self.announced_terminal
+            .lock()
+            .is_ok_and(|mut guard| guard.insert(provider))
+    }
+
+    /// Forget that a provider's terminal failure was announced, so a later one
+    /// is reported again.
+    pub(super) fn clear_terminal_announcement(&self, provider: SubscriptionProvider) {
+        if let Ok(mut guard) = self.announced_terminal.lock() {
+            guard.remove(&provider);
+        }
+    }
+
     /// Record what an upstream status code says about `provider`'s credential.
     ///
     /// This is the evidence [`crate::model_routing::healthy_providers`] trusts

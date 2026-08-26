@@ -260,6 +260,14 @@ pub async fn refresh_catalogs(
                          credential grounds; the stored token is unchanged and will be retried \
                          on the next tick: {error}"
                     );
+                } else if cache.status(provider).last_error.as_deref() == Some(error.as_str()) {
+                    // The same failure, restated. A dead subscription produced
+                    // 146 identical WARNs over twelve hours, which is not
+                    // reporting — it is noise that hides the one line saying
+                    // the state changed (issue #321). The condition stays
+                    // visible in `last_error`, on `/health/subscriptions` and
+                    // in the `/metrics` gauge.
+                    tracing::debug!("{provider} model catalog is still failing: {error}");
                 } else {
                     tracing::warn!("failed to refresh {provider} model catalog: {error}");
                 }
@@ -752,6 +760,42 @@ mod tests {
         );
         assert_eq!(resource_error_code("not json").as_deref(), None);
         assert_eq!(resource_error_code(r#"{"error":"bare"}"#).as_deref(), None);
+    }
+
+    /// A dead subscription restated its consequence 146 times over twelve
+    /// hours. The condition stays visible in `last_error`; the log records the
+    /// change, not the steady state (issue #321).
+    #[test]
+    fn an_unchanged_failure_is_not_restated() {
+        let cache = ModelCatalogCache::new();
+        cache.record_failure(SubscriptionProvider::Claude, "HTTP 401 revoked", true);
+        // The state is what a monitor reads, and it does not decay.
+        assert_eq!(
+            cache
+                .status(SubscriptionProvider::Claude)
+                .last_error
+                .as_deref(),
+            Some("HTTP 401 revoked")
+        );
+        // A repeat is the same string, which is what the emitter tests against.
+        assert_eq!(
+            cache
+                .status(SubscriptionProvider::Claude)
+                .last_error
+                .as_deref(),
+            Some("HTTP 401 revoked"),
+            "a repeat is recognisable as one"
+        );
+        // A genuinely different failure is not suppressed.
+        cache.record_failure(SubscriptionProvider::Claude, "HTTP 500 upstream", false);
+        assert_eq!(
+            cache
+                .status(SubscriptionProvider::Claude)
+                .last_error
+                .as_deref(),
+            Some("HTTP 500 upstream"),
+            "a new condition replaces the old one and is reported"
+        );
     }
 
     #[test]

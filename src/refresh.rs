@@ -510,6 +510,13 @@ pub struct TokenCache {
     evidence: Mutex<HashMap<SubscriptionProvider, CredentialEvidence>>,
     /// Latest refresh failure per provider, cleared by a successful refresh.
     refresh_errors: Mutex<HashMap<SubscriptionProvider, String>>,
+    /// Providers whose terminal failure has already been announced.
+    ///
+    /// The transition healthy -> permanently unauthenticated is one event and
+    /// deserves one loud record. Re-deriving it every five minutes and logging
+    /// it at full volume buried the line that mattered under 146 restatements
+    /// of its consequence (issue #321).
+    announced_terminal: Mutex<std::collections::HashSet<SubscriptionProvider>>,
     /// How the last successful refresh was obtained, per provider.
     ///
     /// These OAuth endpoints are undocumented; when a credential recovers only
@@ -688,13 +695,18 @@ impl TokenCache {
                             )
                         },
                     );
-                tracing::warn!("refresh after a rejected {provider} token failed: {message}");
                 let rejection = Rejected {
                     message,
                     ..rejection
                 };
                 self.record_refresh_error(provider, &rejection.message);
                 if rejection.error.is_invalid_grant() {
+                    // healthy -> permanently unauthenticated is a state
+                    // transition that needs a human in a browser and will not
+                    // self-heal. Logged at WARN it sat below every sane
+                    // `level>=ERROR` pipeline, so a twelve-hour outage produced
+                    // a clean log (issue #321).
+                    self.log_terminal_once(provider, &rejection.message);
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                     // Per account as well as per provider: the provider-wide
@@ -702,6 +714,10 @@ impl TokenCache {
                     // and `accounts list` reports one row each (issue #245).
                     self.record_refresh_refused(provider, account, &base);
                 } else {
+                    tracing::warn!(
+                        "refresh after a rejected {provider} token failed: {}",
+                        rejection.message
+                    );
                     attempt
                         .record_transient_failure_after(now_ms, rejection.error.retry_after_ms());
                 }
@@ -764,16 +780,17 @@ impl TokenCache {
                 fresh
             }
             Err(rejection) => {
-                tracing::warn!(
-                    "subscription token refresh for {provider} failed: {}",
-                    rejection.message
-                );
                 self.record_refresh_error(provider, &rejection.message);
                 if rejection.error.is_invalid_grant() {
+                    self.log_terminal_once(provider, &rejection.message);
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                     self.record_refresh_refused(provider, account, &base);
                 } else {
+                    tracing::warn!(
+                        "subscription token refresh for {provider} failed: {}",
+                        rejection.message
+                    );
                     // Everything else is retryable. In particular a 429 must
                     // not record rejection evidence: the credential is fine,
                     // and marking it rejected would drop the provider out of
@@ -900,6 +917,9 @@ impl TokenCache {
     /// Record that an upstream call succeeded with `provider`'s credential.
     pub fn record_credential_working(&self, provider: SubscriptionProvider) {
         self.record_evidence(provider, CredentialEvidence::Working);
+        // A provider that is serving again may die again, and that death is a
+        // new event that must be announced (issue #321).
+        self.clear_terminal_announcement(provider);
     }
     fn cached_valid_for(
         &self,

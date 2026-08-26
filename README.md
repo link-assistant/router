@@ -1040,7 +1040,7 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--routing-mode` / `ROUTING_MODE` | `direct` | `direct` (OAuth substitution), `cli` (Claude CLI subprocess), or `hybrid` |
 | `--storage-policy` / `STORAGE_POLICY` | `both` | Persistent token store: `memory`, `text` (Lino), `binary`, or `both` |
 | `--data-dir` / `DATA_DIR` | platform-specific | Where `tokens.lino` / `tokens.bin` live |
-| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend, and by the last rung of credential recovery |
+| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | (unset) | Local Claude CLI binary used by the `cli` backend, and by the last rung of credential recovery. Unset leaves that rung inert, so the router never spends the subscription on its own behalf |
 | `--codex-cli-bin` / `CODEX_CLI_BIN` | (unset) | Local Codex CLI binary used by the last rung of credential recovery |
 | `ROUTER_VENDOR_REFRESH_ARGS` | per provider | Override the recovery probe for every provider, whitespace separated |
 | `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `_CODEX` | per provider | Override the recovery probe for one provider; wins over the global form |

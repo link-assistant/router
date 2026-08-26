@@ -394,3 +394,29 @@ async fn the_rotation_guard_does_not_block_a_proactive_pre_expiry_refresh() {
     );
     server.await.unwrap();
 }
+
+/// A terminal failure is announced once and then held, so a later recovery and
+/// a second death are both reported (issue #321).
+#[test]
+fn a_terminal_failure_is_announced_once_per_outage() {
+    let cache = TokenCache::new();
+
+    assert!(
+        cache.take_terminal_announcement(SubscriptionProvider::Claude),
+        "the transition is announced"
+    );
+    assert!(
+        !cache.take_terminal_announcement(SubscriptionProvider::Claude),
+        "restating a known condition hides the line that mattered"
+    );
+    // A different provider is a different outage.
+    assert!(cache.take_terminal_announcement(SubscriptionProvider::Codex));
+
+    // Recovery re-arms it: a provider that serves again may die again, and
+    // that death is a new event.
+    cache.record_credential_working(SubscriptionProvider::Claude);
+    assert!(
+        cache.take_terminal_announcement(SubscriptionProvider::Claude),
+        "a second outage after a recovery must be reported"
+    );
+}
