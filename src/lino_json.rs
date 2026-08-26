@@ -105,6 +105,10 @@ fn write_line(out: &mut String, value: &Value) {
         Value::Bool(flag) => out.push_str(if *flag { "true" } else { "false" }),
         Value::Number(number) => out.push_str(&number.to_string()),
         Value::String(text) => write_quoted(out, text),
+        // `()` is null and `(-)` is the empty array, so the two survive a
+        // round trip. A log record carries both and they mean different
+        // things: no value, versus a list with nothing in it.
+        Value::Array(items) if items.is_empty() => out.push_str("(-)"),
         Value::Array(items) => {
             out.push('(');
             for (index, item) in items.iter().enumerate() {
@@ -182,6 +186,11 @@ fn read_value(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Opti
 /// Read a parenthesised group, which is either an object or an array.
 fn read_group(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
     characters.next();
+    read_group_body(characters)
+}
+
+/// Read a group whose opening paren has already been consumed.
+fn read_group_body(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
     let mut pairs: Vec<(String, Value)> = Vec::new();
     let mut items: Vec<Value> = Vec::new();
     let mut keyed = true;
@@ -194,13 +203,25 @@ fn read_group(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Opti
                 break;
             }
             Some('(') => {
-                // A pair is `("name" value)`; anything else is an array item.
+                // A pair is `("name" value)`; any other group is an array
+                // item -- an array of objects, say, which is what a
+                // `messages` or `tools` field holds.
                 match read_pair(characters)? {
                     Group::Pair(name, value) => pairs.push((name, value)),
-                    // A record is written as pairs throughout, so a group that
-                    // is not one means the line is not one this wrote.
-                    Group::NotAPair => return None,
+                    Group::NotAPair(value) => {
+                        keyed = false;
+                        items.push(value);
+                    }
                 }
+            }
+            Some('-') => {
+                // The empty-array marker, and only when it stands alone.
+                characters.next();
+                skip_spaces(characters);
+                if characters.next() != Some(')') {
+                    return None;
+                }
+                return Some(Value::Array(Vec::new()));
             }
             Some(_) => {
                 keyed = false;
@@ -222,16 +243,26 @@ fn read_group(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Opti
 enum Group {
     /// `("name" value)` — a field of the enclosing object.
     Pair(String, Value),
-    /// Anything else, so the enclosing group is an array rather than an object.
-    NotAPair,
+    /// Any other group, so the enclosing one is an array of these.
+    NotAPair(Value),
 }
 
-/// Read `("name" value)`, reporting a group that is not a pair.
+/// Read `("name" value)`, or the group that turned out not to be one.
+///
+/// A group opening with anything but a quoted name is an array element rather
+/// than a field — an array of objects is what a `messages` or `tools` field
+/// holds, and reading it as a malformed pair rejected every request body that
+/// carried one.
 fn read_pair(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Group> {
+    // Consume the opening paren, then decide from what follows. Cloning the
+    // remaining input to look ahead would be O(n) per group and quadratic
+    // over a record, and a log line carries thousands of them.
     characters.next();
     skip_spaces(characters);
     if characters.peek() != Some(&'"') {
-        return Some(Group::NotAPair);
+        // Not a pair, so this group is an array element. It has already lost
+        // its opening paren, so its contents are read here directly.
+        return read_group_body(characters).map(Group::NotAPair);
     }
     let name = read_quoted(characters)?;
     let value = read_value(characters)?;

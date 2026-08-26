@@ -222,3 +222,29 @@ fn a_json_line_from_an_earlier_release_still_reads() {
     assert_eq!(decode_line("   "), None);
     assert_eq!(decode_line("(unterminated"), None);
 }
+
+/// An array of objects round-trips.
+///
+/// `messages` and `tools` in a request body are arrays of objects, and reading
+/// the inner group as a malformed pair rejected every record that carried one —
+/// which is most real traffic (issue #336).
+#[test]
+fn an_array_of_objects_round_trips() {
+    let record = serde_json::json!({
+        "body": {
+            "model": "gpt-5",
+            "messages": [{"role": "user", "content": "hi"}, {"role": "assistant", "content": "yo"}],
+            "tools": [{"type": "function", "function": {"name": "lookup"}}],
+        },
+        "mixed": [1, "two", true, null],
+        "empty": [],
+    });
+
+    let line = encode_line(&record).expect("encode");
+    assert_eq!(line.lines().count(), 1, "one line: {line}");
+    assert_eq!(
+        decode_line(&line).expect("decode"),
+        record,
+        "an array of objects survives the round trip"
+    );
+}
