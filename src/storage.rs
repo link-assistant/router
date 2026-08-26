@@ -801,7 +801,9 @@ impl DurableDualTokenStore {
         if !self.journal_path.exists() {
             return Ok(());
         }
-        let records: Vec<TokenRecord> = serde_json::from_slice(&fs::read(&self.journal_path)?)
+        // Either encoding: a journal written by an earlier release is JSON.
+        let source = fs::read_to_string(&self.journal_path)?;
+        let records: Vec<TokenRecord> = crate::lino_json::decode(&source)
             .map_err(|error| StorageError::Codec(format!("transaction journal: {error}")))?;
         self.install(&records)
     }
@@ -821,8 +823,12 @@ impl DurableDualTokenStore {
     fn commit(&self, records: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
         let mut records = records.values().cloned().collect::<Vec<_>>();
         records.sort_by(|left, right| left.id.cmp(&right.id));
-        let journal = serde_json::to_vec(&records)
-            .map_err(|error| StorageError::Codec(format!("transaction journal: {error}")))?;
+        // Links notation, readable, with the file name unchanged so an
+        // existing deployment keeps its path and migrates on the next write
+        // (issue #336). Its sibling `tokens.lino` already reads this way.
+        let journal = crate::lino_json::encode(&records)
+            .map_err(|error| StorageError::Codec(format!("transaction journal: {error}")))?
+            .into_bytes();
         crate::durable_file::atomic_write_owner_only(&self.journal_path, &journal)?;
         self.install(&records)
     }

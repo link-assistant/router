@@ -189,7 +189,7 @@ async fn no_configuration_serves_no_socket() {
     // `serve_configured` reads the environment; with the variable unset in this
     // process it must decline rather than invent a path.
     if std::env::var_os("LISTEN_UNIX_SOCKET").is_none() {
-        let served = serve_configured(axum::Router::new())
+        let served = serve_configured(axum::Router::new(), std::future::pending())
             .await
             .expect("no error");
         assert!(served.is_none());

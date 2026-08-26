@@ -193,6 +193,7 @@ pub async fn serve_https(
     app: axum::Router,
     cert: std::path::PathBuf,
     key: std::path::PathBuf,
+    shutdown: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing::info!("Serving HTTPS with certificate {}", cert.display());
     let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
@@ -203,7 +204,20 @@ pub async fn serve_https(
                 cert.display()
             )
         })?;
+    // `axum_server` stops through a handle rather than a future, so the
+    // notice is translated into one. Without this the HTTPS path had no
+    // shutdown hook at all and could only ever be killed (issue #334).
+    let handle = axum_server::Handle::new();
+    let shutdown_handle = handle.clone();
+    tokio::spawn(async move {
+        shutdown.await;
+        // `None` is an unbounded grace period: the deployment's own stop
+        // timeout is the bound, and cutting a stream short here would be the
+        // very failure this exists to prevent.
+        shutdown_handle.graceful_shutdown(None);
+    });
     axum_server::bind_rustls(address, tls)
+        .handle(handle)
         .serve(app.into_make_service())
         .await?;
     Ok(())

@@ -193,6 +193,7 @@ pub fn gh_configuration_hint(path: &Path) -> String {
 /// the certificate problem this exists to avoid.
 pub async fn serve_configured(
     app: axum::Router,
+    shutdown: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> Result<Option<tokio::task::JoinHandle<()>>, String> {
     let SocketSetup::Enabled { path, access } = from_env()? else {
         return Ok(None);
@@ -208,7 +209,13 @@ pub async fn serve_configured(
     );
     tracing::info!("Point gh at it:\n{}", gh_configuration_hint(&path));
     Ok(Some(tokio::spawn(async move {
-        if let Err(error) = axum::serve(listener, app).await {
+        // Drained rather than aborted: this socket carries `gh` traffic, and
+        // cutting a request that is already upstream is what an orderly stop
+        // exists to avoid (issue #334).
+        if let Err(error) = axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown)
+            .await
+        {
             tracing::error!("unix socket listener failed: {error}");
         }
     })))

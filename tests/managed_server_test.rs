@@ -129,6 +129,7 @@ fi
 if [ "$1" = inspect ]; then
   case "$FAKE_DOCKER_STATE" in
     absent) echo 'Error: No such object' >&2; exit 1 ;;
+    absent-lowercase) echo 'error: no such object: link-assistant-router-managed' >&2; exit 1 ;;
     stopped) echo 'stopped 1'; exit 0 ;;
     unowned) echo 'running 0'; exit 0 ;;
     inspect-error) echo 'inspect exploded' >&2; exit 1 ;;
@@ -750,6 +751,101 @@ fn remove_never_deletes_an_unowned_container() {
             .expect("read Docker log")
             .contains("rm -f")
     );
+}
+
+/// An unreachable selected server says which one, and what to do.
+///
+/// The report that prompted this got docker's words about an internal
+/// container it had never heard of. A refusal is the right answer -- silently
+/// using a router other than the one selected is its own surprise -- but it
+/// has to name the server and the way out (issue #333).
+#[test]
+fn an_unreachable_selection_names_itself_and_the_way_out() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let log = directory.path().join("docker.log");
+    let selection = home.join(".config/link-assistant-router");
+    fs::create_dir_all(&selection).expect("create the selection directory");
+    fs::write(&log, "").expect("create Docker log");
+    fake_docker(&bin);
+    // Port 1 is not listening, so the selection is unreachable.
+    fs::write(
+        selection.join("server.json"),
+        r#"{"server":"http://127.0.0.1:1"}"#,
+    )
+    .expect("write the selection");
+
+    let inherited_path = std::env::var_os("PATH").unwrap_or_default();
+    let path =
+        std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
+            .expect("compose fake Docker PATH");
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["with", "claude"])
+        .env("HOME", &home)
+        .env("PATH", path)
+        .env("DOCKER_LOG", &log)
+        .env("FAKE_DOCKER_STATE", "absent")
+        .env("TOKEN_SECRET", "managed-selection-test")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("APPDATA")
+        .env_remove("LINK_ASSISTANT_ROUTER_URL")
+        .env_remove("ROUTER_URL")
+        .output()
+        .expect("run with");
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "an unreachable selection fails");
+    assert!(
+        stderr.contains("127.0.0.1:1"),
+        "the message must name the server that is not answering: {stderr}"
+    );
+    assert!(
+        stderr.contains("--local") && stderr.contains("--managed"),
+        "the message must name the ways out: {stderr}"
+    );
+    assert!(
+        stderr.contains("router server use"),
+        "the message must name the command that changes the selection: {stderr}"
+    );
+    // The internal container name is not the user's problem.
+    assert!(
+        !stderr.contains("link-assistant-router-managed"),
+        "an internal container name must not appear: {stderr}"
+    );
+}
+
+/// An absent container is recognised however Docker spells it.
+///
+/// The sentinel was matched case-sensitively, and Docker Desktop writes
+/// `error: no such object: …` in lower case. A container that simply did not
+/// exist yet was therefore read as a hard inspect failure, so the one that
+/// should have been created never was and `with` failed naming an internal
+/// container the user has never heard of (issue #333).
+#[test]
+fn an_absent_container_is_recognised_in_either_spelling() {
+    for state in ["absent", "absent-lowercase"] {
+        let directory = tempfile::tempdir().expect("temporary test directory");
+        let home = directory.path().join("home");
+        let bin = directory.path().join("bin");
+        let log = directory.path().join("docker.log");
+        fs::create_dir_all(&home).expect("create home");
+        fs::write(&log, "").expect("create Docker log");
+        fake_docker(&bin);
+
+        let output = server_command(&home, &bin, &log, state, &["start"]);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            !stderr.contains("could not inspect"),
+            "{state}: an absent container is not an inspect failure: {stderr}"
+        );
+        // The absent case proceeds to create one, which is the whole point.
+        let commands = fs::read_to_string(&log).expect("docker log");
+        assert!(
+            commands.lines().any(|line| line.starts_with("run ")),
+            "{state}: the container that was absent must be created: {commands}"
+        );
+    }
 }
 
 #[test]
