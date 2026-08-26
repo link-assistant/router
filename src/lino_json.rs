@@ -105,10 +105,12 @@ fn write_line(out: &mut String, value: &Value) {
         Value::Bool(flag) => out.push_str(if *flag { "true" } else { "false" }),
         Value::Number(number) => out.push_str(&number.to_string()),
         Value::String(text) => write_quoted(out, text),
-        // `()` is null and `(-)` is the empty array, so the two survive a
-        // round trip. A log record carries both and they mean different
-        // things: no value, versus a list with nothing in it.
-        Value::Array(items) if items.is_empty() => out.push_str("(-)"),
+        // `()` is null; `(#a)` and `(#o)` are the empty array and the empty
+        // object. All three arrive in one record and mean different things,
+        // and a `#` cannot begin any value this writes, so the markers cannot
+        // collide with one -- a bare `-` did, since `(-1)` is the array
+        // holding minus one.
+        Value::Array(items) if items.is_empty() => out.push_str("(#a)"),
         Value::Array(items) => {
             out.push('(');
             for (index, item) in items.iter().enumerate() {
@@ -119,13 +121,19 @@ fn write_line(out: &mut String, value: &Value) {
             }
             out.push(')');
         }
+        // As with the empty array: `()` is null, so an empty object needs a
+        // form of its own or the two cannot be told apart on the way back.
+        Value::Object(fields) if fields.is_empty() => out.push_str("(#o)"),
         Value::Object(fields) => {
             out.push('(');
             for (index, (name, field)) in fields.iter().enumerate() {
                 if index > 0 {
                     out.push(' ');
                 }
-                out.push('(');
+                // `:` marks a field, so a pair can never be mistaken for an
+                // array whose first element is a string -- `(("") )` is
+                // otherwise both the pair named "" and the array holding "".
+                out.push_str("(:");
                 write_quoted(out, name);
                 out.push(' ');
                 write_line(out, field);
@@ -214,14 +222,18 @@ fn read_group_body(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) ->
                     }
                 }
             }
-            Some('-') => {
-                // The empty-array marker, and only when it stands alone.
+            Some('#') => {
                 characters.next();
+                let marker = characters.next()?;
                 skip_spaces(characters);
                 if characters.next() != Some(')') {
                     return None;
                 }
-                return Some(Value::Array(Vec::new()));
+                return match marker {
+                    'a' => Some(Value::Array(Vec::new())),
+                    'o' => Some(Value::Object(serde_json::Map::new())),
+                    _ => None,
+                };
             }
             Some(_) => {
                 keyed = false;
@@ -258,12 +270,12 @@ fn read_pair(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Optio
     // remaining input to look ahead would be O(n) per group and quadratic
     // over a record, and a log line carries thousands of them.
     characters.next();
-    skip_spaces(characters);
-    if characters.peek() != Some(&'"') {
-        // Not a pair, so this group is an array element. It has already lost
+    if characters.peek() != Some(&':') {
+        // Not a field, so this group is an array element. It has already lost
         // its opening paren, so its contents are read here directly.
         return read_group_body(characters).map(Group::NotAPair);
     }
+    characters.next();
     let name = read_quoted(characters)?;
     let value = read_value(characters)?;
     skip_spaces(characters);

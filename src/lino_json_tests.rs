@@ -248,3 +248,43 @@ fn an_array_of_objects_round_trips() {
         "an array of objects survives the round trip"
     );
 }
+
+/// Any record shape round-trips, including ones nobody thought to write.
+///
+/// The array-of-objects case reached CI because the hand-written tests only
+/// covered shapes I imagined, and `messages`/`tools` -- which is most real
+/// traffic -- was not among them. Generating the shapes instead is what makes
+/// that class of gap visible here rather than on a deployment (issue #336).
+fn arbitrary_json() -> impl proptest::strategy::Strategy<Value = serde_json::Value> {
+    use proptest::prelude::*;
+
+    let leaf = prop_oneof![
+        Just(serde_json::Value::Null),
+        any::<bool>().prop_map(serde_json::Value::Bool),
+        any::<i64>().prop_map(|number| serde_json::json!(number)),
+        // Strings that exercise the escapes: quotes, backslashes, newlines.
+        "[a-zA-Z0-9 ..\"\\\\\n\r/:_-]{0,24}".prop_map(serde_json::Value::String),
+    ];
+    leaf.prop_recursive(4, 24, 4, |inner| {
+        prop_oneof![
+            proptest::collection::vec(inner.clone(), 0..4).prop_map(serde_json::Value::Array),
+            proptest::collection::hash_map("[a-z_]{1,8}", inner, 0..4)
+                .prop_map(|fields| serde_json::Value::Object(fields.into_iter().collect())),
+        ]
+    })
+}
+
+proptest::proptest! {
+    #[test]
+    fn any_record_survives_the_line_round_trip(record in arbitrary_json()) {
+        let line = encode_line(&record).expect("encode");
+        proptest::prop_assert_eq!(
+            line.lines().count(),
+            1,
+            "every record is one line: {}",
+            line
+        );
+        let decoded = decode_line(&line).expect("decode");
+        proptest::prop_assert_eq!(decoded, record);
+    }
+}
