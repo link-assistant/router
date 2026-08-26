@@ -156,6 +156,15 @@ struct ReleasePayload {
     tag_name: String,
     name: String,
     body: String,
+    /// Whether this release becomes the one GitHub marks "Latest".
+    ///
+    /// GitHub derives that marker from publication time, so a release page
+    /// created late for an *older* version takes it from the newest one — and
+    /// every tool that asks for "the latest release" then gets the wrong
+    /// version. A backfill sends `"false"`; a current release omits the field
+    /// and keeps GitHub's default.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    make_latest: Option<String>,
 }
 
 
@@ -231,6 +240,7 @@ fn publish_release(
     tag_prefix: &str,
     crates_io_url: Option<&str>,
     docker_hub_url: Option<&str>,
+    backfill: bool,
 ) -> Result<(), String> {
     let tag = format!("{}{}", tag_prefix, version);
     println!("Creating GitHub release for {}...", tag);
@@ -254,6 +264,7 @@ fn publish_release(
         tag_name: tag.clone(),
         name: format!("{}{}", tag_prefix, version),
         body: fit_release_body(release_notes, &tag, repository),
+        make_latest: backfill.then(|| "false".to_string()),
     };
 
     let payload_json = serde_json::to_string(&payload).expect("Failed to serialize payload");
@@ -324,6 +335,7 @@ fn main() {
         &tag_prefix,
         crates_io_url.as_deref(),
         docker_hub_url.as_deref(),
+        false,
     ) {
         eprintln!("{error}");
         exit(1);
@@ -350,6 +362,7 @@ fn main() {
                 &tag_prefix,
                 crates_io_url.as_deref(),
                 docker_hub_url.as_deref(),
+                true,
             )
             .map_err(|error| eprintln!("{error}"))
             .is_err()
@@ -463,5 +476,41 @@ mod tests {
         let releases = "v0.116.0\n";
 
         assert!(missing_release_versions(tags, releases, "v").is_empty());
+    }
+
+    /// A backfilled release must never take the "Latest" marker. GitHub
+    /// derives it from publication time, so a page created late for an older
+    /// version becomes "Latest" and every tool asking for the newest release
+    /// gets the wrong one — which is exactly what v0.116.0 did to v0.118.0.
+    #[test]
+    fn a_backfilled_release_never_becomes_latest() {
+        let backfill = ReleasePayload {
+            tag_name: "v0.116.0".into(),
+            name: "v0.116.0".into(),
+            body: "notes".into(),
+            make_latest: true.then(|| "false".to_string()),
+        };
+        let json = serde_json::to_string(&backfill).expect("serialize");
+        assert!(
+            json.contains("\"make_latest\":\"false\""),
+            "a backfill must say so explicitly: {json}"
+        );
+    }
+
+    /// A release published on time keeps GitHub's own default, so the field is
+    /// omitted rather than guessed at.
+    #[test]
+    fn a_current_release_leaves_the_marker_to_github() {
+        let current = ReleasePayload {
+            tag_name: "v0.118.0".into(),
+            name: "v0.118.0".into(),
+            body: "notes".into(),
+            make_latest: false.then(|| "false".to_string()),
+        };
+        let json = serde_json::to_string(&current).expect("serialize");
+        assert!(
+            !json.contains("make_latest"),
+            "the field must be absent, not false: {json}"
+        );
     }
 }
