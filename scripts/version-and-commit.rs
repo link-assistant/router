@@ -378,8 +378,15 @@ fn main() {
     // Collect changelog fragments
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
-    // Stage the manifest, synchronized lockfile, and changelog together.
-    let mut release_files = vec!["add", &cargo_toml, &changelog_file];
+    // Stage the manifest, synchronized lockfile, changelog, and the fragment
+    // directory together.
+    //
+    // `changelog.d` matters as much as the rest: `collect_changelog` removes
+    // the fragments it consumed, but a commit that does not stage those
+    // deletions leaves them in the tree, so the next release collects them
+    // again -- the very accumulation issue #337 was about. Staging the
+    // directory records the removals with the release that consumed them.
+    let mut release_files = vec!["add", &cargo_toml, &changelog_file, &changelog_dir];
     if lock_updated {
         release_files.push(&cargo_lock);
     }
@@ -587,6 +594,88 @@ version = "1.2.3"
             after.matches("a first thing").count(),
             1,
             "an entry belongs to one release, not every release after it: {after}"
+        );
+
+        fs::remove_dir_all(&root).expect("clean up");
+    }
+
+    /// The release commit records the fragment removals.
+    ///
+    /// `collect_changelog` deletes the fragments it consumed, but a commit
+    /// that does not stage those deletions leaves them in the tree, so the
+    /// next release collects them again -- the accumulation issue #337 was
+    /// about, reintroduced one layer down. The unit tests could not see it
+    /// because staging is a property of the commit, not of the collector, so
+    /// this drives a real repository.
+    #[test]
+    fn a_release_commit_stages_the_fragments_it_consumed() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("release-staging-{nonce}"));
+        let fragments = root.join("changelog.d");
+        fs::create_dir_all(&fragments).expect("create the fragment directory");
+        fs::write(
+            fragments.join("20260101_000000_first.md"),
+            "---\nbump: minor\n---\n\n### Added\n- a first thing\n",
+        )
+        .expect("write a fragment");
+        fs::write(fragments.join("README.md"), "how to write a fragment\n")
+            .expect("write the readme");
+        fs::write(
+            root.join("CHANGELOG.md"),
+            "# Changelog\n\n<!-- changelog-insert-here -->\n\n## [0.1.0] - 2020-01-01\n- start\n",
+        )
+        .expect("seed the changelog");
+        fs::write(
+            root.join("Cargo.toml"),
+            "[package]\nname = \"sim\"\nversion = \"0.1.0\"\n",
+        )
+        .expect("seed the manifest");
+
+        let git = |arguments: &[&str]| {
+            std::process::Command::new("git")
+                .args(arguments)
+                .current_dir(&root)
+                .output()
+                .expect("run git")
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "test@example.com"]);
+        git(&["config", "user.name", "test"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "initial"]);
+
+        // This file's own path: `CARGO_MANIFEST_DIR` points at rust-script's
+        // cache rather than the repository when it runs a script.
+        let script = std::path::Path::new(file!())
+            .canonicalize()
+            .expect("this script's path");
+        let released = std::process::Command::new("rust-script")
+            .args([
+                script.to_str().expect("a printable path"),
+                "--bump-type",
+                "minor",
+            ])
+            .current_dir(&root)
+            .output()
+            .expect("run the release script");
+        assert!(
+            String::from_utf8_lossy(&released.stdout).contains("Committed version"),
+            "the release must commit: {}",
+            String::from_utf8_lossy(&released.stderr)
+        );
+
+        let tracked = git(&["ls-tree", "HEAD", "--name-only", "changelog.d/"]);
+        let tracked = String::from_utf8_lossy(&tracked.stdout);
+        assert!(
+            !tracked.contains("20260101_000000_first.md"),
+            "a collected fragment must not survive in the committed tree: {tracked}"
+        );
+        assert!(
+            tracked.contains("README.md"),
+            "the directory's documentation is not a fragment: {tracked}"
         );
 
         fs::remove_dir_all(&root).expect("clean up");
