@@ -24,7 +24,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
         },
     };
     match op {
-        ClientOp::List => list(&manager),
+        ClientOp::List { json } => list(&manager, *json),
         ClientOp::Setup {
             client,
             token,
@@ -46,7 +46,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             )
             .await
         }
-        ClientOp::Show { client } => show(&manager, *client),
+        ClientOp::Show { client, .. } => show(&manager, *client),
         ClientOp::Remove {
             client,
             revoke_supplied,
@@ -81,25 +81,67 @@ fn resolve_supplied_token(
         .filter(|token| !token.is_empty()))
 }
 
-fn list(manager: &ClientManager) -> ExitCode {
-    println!(
-        "{:<12}  {:<9}  {:<11}  {:<19}  config",
-        "client", "installed", "configured", "dialect"
-    );
+/// Print one row per client, then say what could not be read.
+///
+/// A listing never ends early. Stopping at the first damaged file hid every
+/// client after it, and named a *different* client than the one missing, so a
+/// reader had no reason to suspect the table was incomplete (issue #304).
+fn list(manager: &ClientManager, json: bool) -> ExitCode {
+    let mut rows = Vec::new();
+    if !json {
+        println!(
+            "{:<12}  {:<9}  {:<11}  {:<19}  config",
+            "client", "installed", "configured", "dialect"
+        );
+    }
+    let mut unreadable = Vec::new();
+    let mut failures = Vec::new();
     for client in ClientKind::ALL {
         match manager.status(client) {
-            Ok(status) => println!(
-                "{:<12}  {:<9}  {:<11}  {:<19}  {}",
-                status.client,
-                status.installed,
-                status.configured,
-                status.dialect,
-                status.config_path.display()
-            ),
-            Err(error) => return failed(format!("could not read {client}: {error}")),
+            Ok(status) => {
+                let configured = if status.unreadable.is_some() {
+                    "unreadable".to_string()
+                } else {
+                    status.configured.to_string()
+                };
+                if json {
+                    rows.push(status.clone());
+                } else {
+                    println!(
+                        "{:<12}  {:<9}  {:<11}  {:<19}  {}",
+                        status.client,
+                        status.installed,
+                        configured,
+                        status.dialect,
+                        status.config_path.display()
+                    );
+                }
+                if let Some(reason) = status.unreadable {
+                    unreadable.push((client, reason));
+                }
+            }
+            Err(error) => {
+                if !json {
+                    println!("{client:<12}  {:<9}  {:<11}  {:<19}  -", "?", "error", "?");
+                }
+                failures.push((client, error.to_string()));
+            }
         }
     }
-    ExitCode::SUCCESS
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&rows).unwrap_or_else(|_| "[]".to_string())
+        );
+    }
+    for (client, reason) in unreadable.iter().chain(&failures) {
+        eprintln!("error: could not read {client}: {reason}");
+    }
+    if unreadable.is_empty() && failures.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 async fn setup(
@@ -116,7 +158,30 @@ async fn setup(
         );
         return ExitCode::from(2);
     }
-    let base_url = base_url.map_or_else(|| local_client_base_url(config), str::to_string);
+    // `setup` mints from *this* deployment's token store, so the credential it
+    // writes is only valid here. Defaulting the address to this CLI's own
+    // `--host`/`--port` while another router was selected produced a client
+    // pointed at a deployment that may not even be running, with no error
+    // (issue #296). It cannot follow the selection either — a locally signed
+    // token would be rejected there — so it says which command can.
+    let base_url = match base_url {
+        Some(base_url) => base_url.to_string(),
+        None => match crate::managed_server::selected_server() {
+            Some(selected) => {
+                eprintln!(
+                    "error: `clients setup` configures the router it can mint a token for, which \
+                     is this machine, but {selected} is selected."
+                );
+                eprintln!(
+                    "note: run `router configure {client}` to point {} at the selected router, or \
+                     pass --base-url to name an address for this one.",
+                    client.display_name()
+                );
+                return ExitCode::from(1);
+            }
+            None => local_client_base_url(config),
+        },
+    };
     if let Some(limitation) = client.setup_limitation() {
         return failed(limitation);
     }
@@ -137,6 +202,7 @@ async fn setup(
                 token_id: local_token_id(config, token),
                 label: None,
                 issued_at: None,
+                router: Some(base_url.clone()),
             },
         ),
         None => match issue_client_token(config, client, ttl_hours) {
@@ -148,6 +214,7 @@ async fn setup(
                     token_id: Some(id),
                     label: Some(format!("client-{client}")),
                     issued_at: Some(chrono::Utc::now().timestamp()),
+                    router: Some(base_url.clone()),
                 },
             ),
             Err(error) => return failed(error),
@@ -158,7 +225,10 @@ async fn setup(
         ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
     ) {
         match manager.catalog(&base_url, &token).await {
-            Ok(models) => models,
+            // Filtered by the same rule `with` and `doctor` use, so a client
+            // config cannot embed a model the launcher would refuse to start
+            // it on (issue #301).
+            Ok(models) => crate::clients::usable_models(client, &models),
             Err(error) => return failed(error),
         }
     } else {
@@ -178,8 +248,11 @@ async fn setup(
         return failed(error);
     }
     if client == ClientKind::GrokCli {
+        // A token was minted and two files written, so the operation did
+        // change this machine — `SetupResult` describes the client's *own*
+        // config, which is a different question (issue #303).
         println!(
-            "{} uses shell environment; no client config was changed",
+            "configured {} through its environment; its own config file was not changed",
             client.display_name()
         );
     } else if result.changed {
@@ -232,6 +305,11 @@ fn remove(
     revoke_supplied: bool,
     force: bool,
 ) -> ExitCode {
+    // `setup` and `doctor` check this; `remove` did not, so it reported
+    // success on a file the router can never write (issue #303).
+    if let Some(limitation) = client.setup_limitation() {
+        return failed(limitation);
+    }
     let credential = match manager.credential_metadata(client) {
         Ok(credential) => credential,
         Err(error) if force => {
@@ -318,6 +396,7 @@ fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Er
         std::fs::create_dir_all(&config.data_dir)?;
     }
     let store = build_token_store(config.storage_policy, &config.data_dir)?;
+    crate::token_secret::ensure_real(&config.token_secret)?;
     Ok(TokenManager::with_store(&config.token_secret, store))
 }
 

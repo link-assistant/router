@@ -36,8 +36,9 @@ The current settings schema can store `apiKey` in
 from `GROK_BASE_URL`. The router therefore writes both exports to a protected
 mode-`0600` environment file instead of the client settings or terminal output.
 
-`router clients setup grok` prints the command that sources
-that file. Chat token limits sent by Grok are dropped only when forwarding to a
+`router configure grok` prints the command that sources
+that file; Grok has no persistent base-URL setting, so that file is the whole
+configuration. Chat token limits sent by Grok are dropped only when forwarding to a
 Codex subscription, whose backend cannot accept them.
 
 ## Which subscription answers

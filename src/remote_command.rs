@@ -68,6 +68,7 @@ pub const fn target_of(command: &Command) -> Option<&AuthTarget> {
         Command::Providers { op } => Some(op.target()),
         Command::Logs { op } => Some(op.target()),
         Command::Doctor { target } => Some(target),
+        Command::Tls { op } => Some(op.target()),
         _ => None,
     }
 }
@@ -82,6 +83,42 @@ pub const fn may_be_remote(command: &Command) -> bool {
         Some(target) => !target.local && !target.managed,
         None => false,
     }
+}
+
+/// Refuse `--managed` where nothing can start a container.
+///
+/// The flag says "start a disposable managed container". Only `with` and
+/// `configure` do — they launch or point a client at a router, and starting one
+/// is part of that. Everywhere else it started nothing and quietly meant
+/// `--local`: a second, undocumented synonym whose own description promised
+/// something it never did (issue #315). Saying so beats a silent second
+/// meaning, and `--local` is the flag that was wanted.
+#[must_use]
+pub fn refuse_managed(command: &Command) -> Option<ExitCode> {
+    let name = match command {
+        Command::Tokens { .. } => "tokens",
+        Command::Accounts { .. } => "accounts",
+        Command::Providers { .. } => "providers",
+        Command::Logs { .. } => "logs",
+        Command::Doctor { .. } => "doctor",
+        Command::Tls { .. } => "tls",
+        // `auth` was exempt and did exactly what #315 condemned: nothing on
+        // the auth path ever starts a container, so `--managed` silently meant
+        // `--local` while its own help listed `auth` as a command that uses
+        // one. The same silent second meaning, in the one flag this work
+        // declared fixed.
+        Command::Auth { .. } => "auth",
+        _ => return None,
+    };
+    if !target_of(command).is_some_and(|target| target.managed) {
+        return None;
+    }
+    eprintln!(
+        "error: `--managed` starts a disposable managed container, which only `with` and \
+         `configure` do; `{name}` cannot use one."
+    );
+    eprintln!("note: pass --local to act on this machine, or --server <URL> to name a router.");
+    Some(ExitCode::from(2))
 }
 
 /// Whether this invocation named the local state it wants acted on.
@@ -102,22 +139,28 @@ pub const fn names_local_state(cli: &crate::cli::Cli) -> bool {
     cli.data_dir.is_some() || cli.claude_code_home.is_some()
 }
 
-/// Let a command that will act on a remote router run without `TOKEN_SECRET`.
+/// Let every command that does not serve start without `TOKEN_SECRET`.
 ///
-/// The secret signs this machine's tokens. A command aimed at another
-/// deployment neither issues nor validates them here — the admin credential
-/// authenticates the call and the deployment signs its own — so demanding it
-/// only blocks the workstation case, and blocks it with "won't start" rather
-/// than "wrong target" (issue #294).
+/// The secret signs this machine's tokens and encrypts its provider keys.
+/// Requiring it per *command family* refused to start for commands that sign
+/// nothing — a read-only listing, a certificate, a diagnostic — and the check
+/// was satisfied by any value, so it only taught operators to keep a
+/// deployment's signing secret exported in their shell (issue #308). Worse,
+/// the relaxation was attached to "might be remote", so `--local` — the only
+/// way to state "this machine" out loud — was the spelling that broke.
 ///
-/// Mirrors the `auth` command's own `relax_token_secret_for_auth`, including
-/// its rule that a secret the operator did supply is never overwritten.
+/// The requirement now lives where the secret is used: signing, validating and
+/// encrypting all refuse a stand-in and give the ordinary error (issue #300).
+/// That is what makes relaxing here safe rather than merely convenient — the
+/// stand-in cannot be mistaken for a key, so a command that needs one still
+/// fails, and one that does not simply runs.
+///
+/// A secret the operator did supply is never overwritten.
 #[must_use]
-pub fn relax_token_secret_for_remote(mut cli: crate::cli::Cli) -> crate::cli::Cli {
-    if cli.command.as_ref().is_some_and(may_be_remote)
-        && cli.token_secret.as_deref().is_none_or(str::is_empty)
-    {
-        cli.token_secret = Some("unused-by-remote-command".to_string());
+pub fn relax_token_secret_for_cli(mut cli: crate::cli::Cli) -> crate::cli::Cli {
+    let serves = matches!(cli.command, None | Some(Command::Serve));
+    if !serves && cli.token_secret.as_deref().is_none_or(str::is_empty) {
+        cli.token_secret = Some(crate::token_secret::placeholder("cli-command"));
     }
     cli
 }

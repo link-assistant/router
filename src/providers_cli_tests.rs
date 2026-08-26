@@ -14,6 +14,7 @@ fn store(directory: &std::path::Path) -> ProviderStore {
 
 fn add(name: &str, models: &[&str]) -> ProviderOp {
     ProviderOp::Add {
+        api_key_stdin: false,
         name: name.to_string(),
         kind: "openai-compatible".to_string(),
         base_url: "https://provider.example/v1".to_string(),
@@ -61,6 +62,7 @@ fn listing_and_showing_a_provider_succeed() {
         run_with(
             &store,
             &ProviderOp::List {
+                json: false,
                 target: AuthTarget::default()
             }
         ),
@@ -71,6 +73,7 @@ fn listing_and_showing_a_provider_succeed() {
             &store,
             &ProviderOp::Show {
                 name: "formal-ai".to_string(),
+                json: false,
                 target: AuthTarget::default(),
             }
         ),
@@ -95,6 +98,7 @@ fn an_unknown_provider_is_not_reported_as_removed() {
             &store,
             &ProviderOp::Show {
                 name: "absent".to_string(),
+                json: false,
                 target: AuthTarget::default(),
             }
         ),
@@ -172,6 +176,7 @@ fn each_provider_operation_names_its_own_route() {
     let call = |op: ProviderOp| call_for(&op).expect("encodable").expect("a call");
 
     let list = call(ProviderOp::List {
+        json: false,
         target: AuthTarget::default(),
     });
     assert_eq!(list.method, "GET");
@@ -180,6 +185,7 @@ fn each_provider_operation_names_its_own_route() {
 
     let show = call(ProviderOp::Show {
         name: "demo".into(),
+        json: false,
         target: AuthTarget::default(),
     });
     assert_eq!(show.method, "GET");
@@ -205,6 +211,7 @@ fn adding_a_provider_sends_what_routing_reads() {
     use crate::cli::AuthTarget;
 
     let call = call_for(&ProviderOp::Add {
+        api_key_stdin: false,
         name: "formal-ai".into(),
         kind: "openai-compatible".into(),
         base_url: "https://provider.example/v1".into(),
@@ -300,6 +307,7 @@ async fn a_remote_add_declares_the_provider_on_the_deployment() {
             model: Some("m1".into()),
             models: vec!["m1".into()],
             api_key: None,
+            api_key_stdin: false,
             api_key_env: None,
             enabled: true,
             target: AuthTarget::default(),
@@ -328,6 +336,7 @@ async fn showing_an_unknown_provider_exits_two_remotely() {
         &server,
         &ProviderOp::Show {
             name: "absent".into(),
+            json: false,
             target: AuthTarget::default(),
         },
     )
@@ -348,6 +357,7 @@ async fn a_remote_list_reads_the_providers_route() {
     let code = run_remote(
         &server,
         &ProviderOp::List {
+            json: false,
             target: AuthTarget::default(),
         },
     )

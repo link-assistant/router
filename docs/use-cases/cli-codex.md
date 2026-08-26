@@ -28,9 +28,13 @@ every later token verbatim. See
 Automatic setup (merges this provider and backs up an existing config):
 
 ```bash
-router clients setup codex
-# Run the `source …/codex.env` command printed by setup.
+router configure codex
+# Run the `source …/codex.env` command printed above.
 ```
+
+`configure` acts on the router this machine is pointed at and stores the
+credential it minted there. `clients setup codex` configures the deployment
+this CLI itself runs, and refuses when another router is selected.
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
 For a machine without the router binary, use the following client-only

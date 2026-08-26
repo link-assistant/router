@@ -37,6 +37,13 @@ pub struct ManagedCredential {
     pub label: Option<String>,
     #[serde(default)]
     pub issued_at: Option<i64>,
+    /// The router this credential was minted by, when it is known.
+    ///
+    /// Recorded so a credential can still be named — and therefore revoked —
+    /// after the command that minted it has gone, which a local-only token id
+    /// cannot do once the target is another deployment.
+    #[serde(default)]
+    pub router: Option<String>,
 }
 
 impl ManagedCredential {
@@ -105,6 +112,7 @@ mod tests {
             token_id: Some("id".into()),
             label: None,
             issued_at: None,
+            router: None,
         };
         assert!(minted.revocable_by_default());
         let supplied = ManagedCredential {
@@ -124,6 +132,7 @@ mod tests {
             token_id: Some("token-id".into()),
             label: Some("client-codex".into()),
             issued_at: Some(7),
+            router: Some("http://router.test".into()),
         };
         write(&path, &credential).expect("write metadata");
         let contents = fs::read_to_string(&path).expect("read metadata");

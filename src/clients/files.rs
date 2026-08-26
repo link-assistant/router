@@ -85,11 +85,23 @@ pub(super) fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ClientErr
     crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
 }
 
-pub(super) fn write_claude_marker(path: &Path, base_url: &str) -> Result<(), ClientError> {
+/// Record what the router wrote, and what it replaced.
+///
+/// `previous_anthropic_base_url` is what makes removal reversible. Without it
+/// `clients remove claude` deleted the key rather than restoring it, so a user
+/// already pointing Claude Code at a proxy of their own lost that setting
+/// permanently — while the neighbouring Codex integration, which does record
+/// its predecessor, put it back (issue #302).
+pub(super) fn write_claude_marker(
+    path: &Path,
+    base_url: &str,
+    previous: Option<&str>,
+) -> Result<(), ClientError> {
     let rendered = format!(
         "{}\n",
         serde_json::to_string_pretty(&json!({
-            "anthropic_base_url": base_url
+            "anthropic_base_url": base_url,
+            "previous_anthropic_base_url": previous,
         }))?
     );
     if read_or_empty(path)? != rendered {
@@ -102,16 +114,29 @@ pub(super) fn write_claude_marker(path: &Path, base_url: &str) -> Result<(), Cli
     Ok(())
 }
 
-pub(super) fn read_claude_marker(path: &Path) -> Result<Option<String>, ClientError> {
+/// The URL the router wrote, and the one it replaced.
+///
+/// A marker written before issue #302 has no `previous_anthropic_base_url`,
+/// which reads as `None` — the same answer as "there was nothing there", and
+/// the same removal behaviour those markers already had.
+pub(super) fn claude_marker(path: &Path) -> Result<Option<(String, Option<String>)>, ClientError> {
     let source = read_or_empty(path)?;
     if source.trim().is_empty() {
         return Ok(None);
     }
     let marker: Value = serde_json::from_str(&source)?;
-    Ok(marker
+    let Some(managed) = marker
         .get("anthropic_base_url")
         .and_then(Value::as_str)
-        .map(str::to_string))
+        .map(str::to_string)
+    else {
+        return Ok(None);
+    };
+    let previous = marker
+        .get("previous_anthropic_base_url")
+        .and_then(Value::as_str)
+        .map(str::to_string);
+    Ok(Some((managed, previous)))
 }
 
 pub(super) fn write_codex_marker(

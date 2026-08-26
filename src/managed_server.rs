@@ -4,7 +4,6 @@ use std::ffi::OsStr;
 use std::fs::{self};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
-use std::path::PathBuf;
 use std::process::{Child, Command, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -18,9 +17,13 @@ use crate::clients::RouterModel;
 mod bootstrap;
 mod catalog;
 mod discovery;
+mod selection;
 
 use discovery::discover_local_router;
 pub use discovery::{discovered_local_router, effective_source};
+pub use selection::{
+    clear_persisted, configured_source, load_persisted, save_persisted, selected_server,
+};
 
 /// The default port a router binds when nothing else is specified.
 const DEFAULT_LOCAL_PORT: u16 = 8080;
@@ -98,48 +101,23 @@ impl RunCredential {
         &self.available_models
     }
 
-    /// Choose a model for `client` from the router's live catalog.
+    /// The record id this credential was issued under, when it has one.
     ///
-    /// The router ships no default model names, so the concrete id is resolved
-    /// here, at execution time, from what the authenticated account actually
-    /// advertises (issue #192). `owner` narrows the choice to models a
-    /// dialect-specific client can use; an empty owner accepts any.
-    pub(crate) fn select_model(&self, owner: &str) -> Option<&str> {
-        if owner.is_empty() {
-            // No dialect constraint: any advertised model will do.
-            return self.available_models.first().map(|model| model.id.as_str());
-        }
-        if let Some(model) = self
-            .available_models
-            .iter()
-            .find(|model| model.owned_by == owner)
-        {
-            return Some(model.id.as_str());
-        }
-        // Falling back is defensible only when the catalog does not say who owns
-        // its models: then the router cannot tell, and a usable model beats
-        // refusing. When every entry names a *different* owner it does know, and
-        // substituting one launched Claude Code against an `OpenAI` model — so the
-        // client blamed its own model name rather than the lapsed subscription
-        // (issue #225).
-        self.available_models
-            .iter()
-            .all(|model| model.owned_by.is_empty())
-            .then(|| self.available_models.first().map(|m| m.id.as_str()))
-            .flatten()
+    /// A credential that outlives the command that minted it has to stay
+    /// nameable, or it cannot be revoked later (issue #190).
+    #[must_use]
+    pub fn id(&self) -> Option<String> {
+        token_subject(&self.token).ok()
     }
 
-    /// The distinct owners the catalog names, for reporting why nothing fit.
-    pub(crate) fn advertised_owners(&self) -> Vec<&str> {
-        let mut owners: Vec<&str> = self
-            .available_models
-            .iter()
-            .map(|model| model.owned_by.as_str())
-            .filter(|owner| !owner.is_empty())
-            .collect();
-        owners.sort_unstable();
-        owners.dedup();
-        owners
+    /// Whether this command minted the credential, rather than being handed one.
+    ///
+    /// The only sound basis for revoking it later: a token the operator
+    /// supplied is often shared with other machines, and `id()` answers for
+    /// whichever token is in hand — minted or not (issue #296).
+    #[must_use]
+    pub const fn was_minted(&self) -> bool {
+        self.revocation.is_some()
     }
 }
 
@@ -221,10 +199,18 @@ pub async fn resolve(
             _lease: Some(lease),
         });
     };
+    // Matched by *origin*, not by how the origin was supplied. The condition
+    // used to be on the source, so writing down the address of the very router
+    // that was already selected threw away the token stored for it — and the
+    // advice in the resulting error was to run the command the user had
+    // already run. A router found by discovery got no credential at all, for
+    // the same reason, though it is the same listener at the same address
+    // (issue #311). Explicit `--token` and the environment still win.
     let token = explicit_token.or(environment_token).or_else(|| {
-        (source == "persisted configuration")
-            .then(|| persisted.as_ref().and_then(|config| config.token.clone()))
-            .flatten()
+        persisted
+            .as_ref()
+            .filter(|config| same_origin(&config.server, &base_url))
+            .and_then(|config| config.token.clone())
     });
     let budget = run_max_requests.or_else(|| {
         persisted
@@ -254,9 +240,20 @@ pub async fn prepare_run_credential(
                 server.base_url
             )
         } else {
+            // Naming which origin has a stored token, rather than
+            // recommending the command the user already ran: that difference
+            // is the whole content of the error (issue #311).
+            let stored = load_persisted()
+                .ok()
+                .flatten()
+                .filter(|persisted| persisted.token.is_some())
+                .map(|persisted| persisted.server);
+            let held = stored.map_or_else(String::new, |origin| {
+                format!(" A token is stored for {origin}, which is a different origin.")
+            });
             format!(
-                "{} selected from {}, but no token is available; pass --token, use --token-stdin, set LINK_ASSISTANT_ROUTER_TOKEN, or run `link-assistant-router server use <URL> --token-stdin`",
-                server.base_url, server.source
+                "{} selected from {}, but no token is available.{held} Pass --token, use --token-stdin, set LINK_ASSISTANT_ROUTER_TOKEN, or run `link-assistant-router server use {} --token-stdin`",
+                server.base_url, server.source, server.base_url
             )
         }
     })?;
@@ -365,22 +362,34 @@ pub async fn cleanup_run_credential(credential: RunCredential) -> Result<(), Any
     let Some(revocation) = credential.revocation else {
         return Ok(());
     };
-    let url = format!("{}/api/tokens/revoke", revocation.base_url);
+    revoke(
+        &revocation.base_url,
+        &revocation.admin_token,
+        &revocation.id,
+    )
+    .await
+}
+
+/// Revoke one token record on a router, by the id it was issued under.
+///
+/// Named separately from the per-run cleanup because a credential that outlives
+/// its command still has to be revocable: `configure` deliberately keeps its
+/// token, so `configure --undo` is the thing that must be able to take it back
+/// — deleting the file that holds a live credential and leaving nobody able to
+/// name it is the regression issue #190 exists to prevent.
+pub async fn revoke(base_url: &str, admin_token: &str, id: &str) -> Result<(), AnyError> {
+    let url = format!("{base_url}/api/tokens/revoke");
     let response = http_client()?
         .post(&url)
-        .bearer_auth(&revocation.admin_token)
-        .json(&serde_json::json!({"id": revocation.id}))
+        .bearer_auth(admin_token)
+        .json(&serde_json::json!({"id": id}))
         .send()
         .await
-        .map_err(|error| format!("could not revoke the per-run token at {url}: {error}"))?;
+        .map_err(|error| format!("could not revoke the token at {url}: {error}"))?;
     if response.status().is_success() {
         Ok(())
     } else {
-        Err(format!(
-            "per-run token revocation failed at {url} ({})",
-            response.status()
-        )
-        .into())
+        Err(format!("token revocation failed at {url} ({})", response.status()).into())
     }
 }
 
@@ -431,64 +440,6 @@ fn token_subject(token: &str) -> Result<String, AnyError> {
         .and_then(Value::as_str)
         .map(str::to_string)
         .ok_or_else(|| "router run token has no subject to revoke".into())
-}
-
-pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
-    if config.server.is_empty() {
-        return Err("server URL must not be empty".into());
-    }
-    let mut config = config.clone();
-    config.server = normalize_server(&config.server)?;
-    let path = state_directory()?.join(SERVER_CONFIG);
-    write_private_json(&path, &config)?;
-    Ok(path)
-}
-
-pub fn clear_persisted() -> Result<PathBuf, AnyError> {
-    let path = state_directory()?.join(SERVER_CONFIG);
-    match fs::remove_file(&path) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => return Err(error.into()),
-    }
-    Ok(path)
-}
-
-pub fn load_persisted() -> Result<Option<PersistedServer>, AnyError> {
-    let path = state_directory()?.join(SERVER_CONFIG);
-    match fs::read_to_string(&path) {
-        Ok(source) => Ok(Some(crate::lino_json::decode(&source).map_err(
-            |error| {
-                format!(
-                    "invalid persisted server configuration {}: {error}",
-                    path.display()
-                )
-            },
-        )?)),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(error.into()),
-    }
-}
-
-pub fn configured_source() -> Result<String, AnyError> {
-    if let Ok(value) = std::env::var("LINK_ASSISTANT_ROUTER_URL") {
-        return Ok(format!("environment: {}", normalize_server(&value)?));
-    }
-    if let Ok(value) = std::env::var("ROUTER_URL") {
-        return Ok(format!("environment: {}", normalize_server(&value)?));
-    }
-    if let Some(config) = load_persisted()? {
-        return Ok(format!(
-            "persisted: {} (token {})",
-            config.server,
-            if config.token.is_some() {
-                "set"
-            } else {
-                "unset"
-            }
-        ));
-    }
-    Ok("managed local container".to_string())
 }
 
 pub fn managed_status() -> Result<String, AnyError> {
@@ -952,6 +903,20 @@ fn process_alive(pid: u32) -> bool {
     }
 }
 
+/// Whether two spellings name the same router.
+///
+/// Compared after normalisation and without a trailing slash, so `--server`
+/// written by hand matches what `server use` stored.
+fn same_origin(one: &str, other: &str) -> bool {
+    let canonical = |value: &str| {
+        normalize_server(value)
+            .unwrap_or_else(|_| value.to_string())
+            .trim_end_matches('/')
+            .to_ascii_lowercase()
+    };
+    canonical(one) == canonical(other)
+}
+
 fn normalize_server(server: &str) -> Result<String, AnyError> {
     let server = server.trim().trim_end_matches('/');
     if server.starts_with("http://") || server.starts_with("https://") {
@@ -974,7 +939,7 @@ fn compact(value: &str) -> String {
 #[path = "managed_server_state.rs"]
 mod state;
 
-use state::{load_managed, lock_state, save_managed, state_directory, write_private_json};
+use state::{load_managed, lock_state, save_managed, state_directory};
 
 #[cfg(test)]
 #[path = "managed_server_tests.rs"]

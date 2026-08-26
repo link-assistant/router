@@ -456,6 +456,10 @@ fn normalize_name(name: &str) -> Result<String, ProviderError> {
 }
 
 fn cipher(token_secret: &str) -> Result<Aes256Gcm, ProviderError> {
+    // The key is `SHA256(token_secret)`, so a stand-in secret wraps a vendor
+    // API key in a value published in the source — `has_encrypted_api_key:
+    // true` while the key is effectively in the clear (issue #300).
+    crate::token_secret::ensure_real(token_secret).map_err(ProviderError::Invalid)?;
     let key = Sha256::digest(token_secret.as_bytes());
     Aes256Gcm::new_from_slice(&key)
         .map_err(|e| ProviderError::Crypto(format!("invalid AES key: {e}")))
@@ -473,6 +477,16 @@ fn encrypt_api_key(api_key: &str, token_secret: &str) -> Result<String, Provider
     Ok(format!("aes256gcm:{}", STANDARD.encode(packed)))
 }
 
+/// The key a published stand-in would have produced, for recognition only.
+///
+/// Never used to encrypt: `cipher` refuses every placeholder, which is the
+/// whole of issue #300. This exists so a record the old build wrote can be
+/// named as disclosed instead of failing opaquely.
+fn legacy_cipher(placeholder: &str) -> Option<Aes256Gcm> {
+    let key = Sha256::digest(placeholder.as_bytes());
+    Aes256Gcm::new_from_slice(&key).ok()
+}
+
 fn decrypt_api_key(encrypted: &str, token_secret: &str) -> Result<String, ProviderError> {
     let encoded = encrypted
         .strip_prefix("aes256gcm:")
@@ -486,9 +500,32 @@ fn decrypt_api_key(encrypted: &str, token_secret: &str) -> Result<String, Provid
     let (nonce_bytes, ciphertext) = packed.split_at(12);
     let mut nonce = Nonce::default();
     nonce.copy_from_slice(nonce_bytes);
-    let plaintext = cipher(token_secret)?
-        .decrypt(&nonce, ciphertext)
-        .map_err(|e| ProviderError::Crypto(format!("decrypt failed: {e}")))?;
+    let plaintext = match cipher(token_secret)?.decrypt(&nonce, ciphertext) {
+        Ok(plaintext) => plaintext,
+        Err(error) => {
+            // A record that decrypts under a published stand-in was encrypted
+            // under a key anyone can read out of the source. That key must be
+            // considered disclosed, and the operator told so plainly rather
+            // than left with an opaque failure to interpret (issue #300).
+            for placeholder in crate::token_secret::LEGACY_PLACEHOLDERS {
+                // Built directly rather than through `cipher`, which now
+                // refuses a stand-in: the point here is to recognise a record
+                // the old build wrote, so the detection must be able to derive
+                // the very key that must never be used to write another.
+                if legacy_cipher(placeholder)
+                    .is_some_and(|legacy| legacy.decrypt(&nonce, ciphertext).is_ok())
+                {
+                    return Err(ProviderError::Crypto(format!(
+                        "this provider's API key was encrypted under the placeholder secret \
+                         `{placeholder}`, which is published in the router's own source: treat \
+                         the key as disclosed, rotate it at the vendor, and re-enter it with \
+                         `providers add --api-key-stdin` under a real TOKEN_SECRET"
+                    )));
+                }
+            }
+            return Err(ProviderError::Crypto(format!("decrypt failed: {error}")));
+        }
+    };
     String::from_utf8(plaintext)
         .map_err(|e| ProviderError::Crypto(format!("secret is not UTF-8: {e}")))
 }
@@ -771,6 +808,51 @@ litellm
                 .api_key
                 .as_deref(),
             Some("sk-test")
+        );
+    }
+
+    /// A record encrypted under a published stand-in is named as disclosed,
+    /// not surfaced as an opaque decryption failure: that key can be read out
+    /// of the router's own source, so it has to be rotated (issue #300).
+    #[test]
+    fn a_key_encrypted_under_a_placeholder_is_reported_as_disclosed() {
+        use aes_gcm::aead::Aead as _;
+
+        let placeholder = crate::token_secret::LEGACY_PLACEHOLDERS[0];
+        // What the old build wrote: encryption under a key published in the
+        // source. `cipher` refuses to produce this now, which is the fix; the
+        // record it already wrote still has to be recognised.
+        let legacy = legacy_cipher(placeholder).expect("legacy key");
+        let nonce = Nonce::default();
+        let ciphertext = legacy
+            .encrypt(&nonce, b"sk-real-vendor-key".as_ref())
+            .expect("encrypt under the placeholder");
+        let mut packed = nonce.to_vec();
+        packed.extend_from_slice(&ciphertext);
+        let encrypted = format!("aes256gcm:{}", STANDARD.encode(&packed));
+
+        let error = decrypt_api_key(&encrypted, "a-real-signing-secret")
+            .expect_err("a real secret cannot decrypt it");
+        let message = error.to_string();
+
+        assert!(
+            message.contains("disclosed"),
+            "the operator must be told the key is compromised: {message}"
+        );
+        assert!(
+            message.contains(placeholder),
+            "and which stand-in it was encrypted under: {message}"
+        );
+        assert!(
+            message.contains("rotate"),
+            "and what to do about it: {message}"
+        );
+        // A genuinely wrong secret still fails plainly, without crying wolf.
+        let sound = encrypt_api_key("sk-real-vendor-key", "the-right-secret").expect("encrypt");
+        let error = decrypt_api_key(&sound, "the-wrong-secret").expect_err("wrong key");
+        assert!(
+            !error.to_string().contains("disclosed"),
+            "an ordinary mismatch is not a disclosure: {error}"
         );
     }
 }

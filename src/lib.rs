@@ -5,6 +5,7 @@
 //! access via custom-issued tokens.
 
 pub mod accounts;
+pub mod accounts_cli;
 pub mod activitypub;
 pub mod admin;
 pub mod admin_api;
@@ -28,9 +29,11 @@ pub mod claude_identity;
 pub mod cli;
 pub mod client_command;
 pub mod client_global;
+mod client_launch;
 pub mod clients;
 pub mod config;
 pub mod config_defaults;
+pub mod configure;
 pub mod crater;
 pub mod credential_store;
 pub mod doctor;
@@ -76,6 +79,7 @@ pub mod server_router;
 pub mod stop_sequences;
 pub mod storage;
 pub mod subscription;
+pub mod subscription_health;
 pub mod subscription_proxy;
 pub mod telegram;
 pub mod tls;
@@ -85,6 +89,7 @@ pub mod token_admin;
 mod token_http;
 pub mod token_report;
 pub mod token_reservation;
+pub mod token_secret;
 pub mod tokens_remote;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.

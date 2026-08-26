@@ -21,9 +21,13 @@ forwards every later token verbatim. See
 Automatic setup (merges the router URL and backs up an existing settings file):
 
 ```bash
-router clients setup claude
-# Run the `source …/claude.env` command printed by setup.
+router configure claude
+# Run the `source …/claude.env` command printed above.
 ```
+
+`configure` acts on the router this machine is pointed at and stores the
+credential it minted there. `clients setup claude` configures the deployment
+this CLI itself runs, and refuses when another router is selected.
 
 See [configure-clients.md](configure-clients.md) for show, remove, and doctor.
 Without the router binary, export the variables directly using the remote

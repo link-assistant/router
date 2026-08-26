@@ -116,3 +116,113 @@ fn compact_diagnostics_do_not_echo_unbounded_upstream_bodies() {
     assert!(compact.ends_with('…'));
     assert!(compact.chars().count() <= 241);
 }
+
+/// The defect in issue #301: two of the eight integrations named the wrong
+/// vendor, so the Gemini CLI could never be selected a Google model and Qwen
+/// Code never a Qwen one. On a deployment serving only a Gemini subscription
+/// the run aborted with a message reading as though the router were short of
+/// models.
+#[test]
+fn each_client_can_select_its_own_vendors_models() {
+    // A catalog serving several vendors at once, which is where declaring the
+    // wrong owner stops being invisible: the fallback picks the first entry,
+    // so a single-vendor deployment hid the defect entirely.
+    let catalog: Vec<RouterModel> = ["openai", "anthropic", "google", "qwen"]
+        .iter()
+        .map(|owner| RouterModel {
+            id: format!("{owner}-flagship"),
+            owned_by: (*owner).to_string(),
+        })
+        .collect();
+    for (client, owner) in [
+        (ClientKind::ClaudeCode, "anthropic"),
+        (ClientKind::Codex, "openai"),
+        (ClientKind::GeminiCli, "google"),
+        (ClientKind::QwenCode, "qwen"),
+    ] {
+        assert_eq!(
+            crate::clients::select_model(client, &catalog),
+            Some(format!("{owner}-flagship").as_str()),
+            "{client} was given another vendor's model"
+        );
+    }
+}
+
+/// The same, on a deployment serving only that one vendor — where declaring
+/// the wrong owner did not substitute quietly but aborted the run outright,
+/// with a message reading as though the router were short of models.
+#[test]
+fn a_single_vendor_deployment_serves_its_own_client() {
+    let google = vec![RouterModel {
+        id: "gemini-flagship".to_string(),
+        owned_by: "google".to_string(),
+    }];
+    assert_eq!(
+        crate::clients::select_model(ClientKind::GeminiCli, &google),
+        Some("gemini-flagship")
+    );
+    assert!(
+        crate::clients::usable_models(ClientKind::GeminiCli, &google)
+            .iter()
+            .any(|model| model.owned_by == "google"),
+        "the Gemini CLI must be able to use a Google model"
+    );
+}
+
+/// Claude Code is still refused a model of another vendor rather than launched
+/// on one: substituting made the client blame its own model name instead of
+/// the lapsed subscription (issue #225).
+#[test]
+fn a_strict_client_refuses_another_vendors_model() {
+    let openai = vec![RouterModel {
+        id: "gpt-test".to_string(),
+        owned_by: "openai".to_string(),
+    }];
+    assert_eq!(
+        crate::clients::select_model(ClientKind::ClaudeCode, &openai),
+        None
+    );
+    // The generic OpenAI-dialect gateways take whatever the router serves —
+    // the rule `clients doctor` already used, now the only one.
+    for client in [ClientKind::Opencode, ClientKind::Agent, ClientKind::GrokCli] {
+        assert_eq!(
+            crate::clients::select_model(client, &openai),
+            Some("gpt-test"),
+            "{client} routes for whatever the router serves"
+        );
+    }
+}
+
+/// What a client config embeds is what `with` would launch it on. The three
+/// paths used to answer this differently, so `clients setup opencode` could
+/// write a model the launcher would then refuse (issue #301).
+#[test]
+fn the_written_catalog_agrees_with_the_launcher() {
+    let mixed = vec![
+        RouterModel {
+            id: "claude-x".to_string(),
+            owned_by: "anthropic".to_string(),
+        },
+        RouterModel {
+            id: "qwen-x".to_string(),
+            owned_by: "qwen".to_string(),
+        },
+    ];
+    for client in ClientKind::ALL {
+        if client == ClientKind::Cursor {
+            continue;
+        }
+        let written = crate::clients::usable_models(client, &mixed);
+        match crate::clients::select_model(client, &mixed) {
+            Some(launched) => assert!(
+                written.iter().any(|model| model.id == launched),
+                "{client} would launch on `{launched}`, which its config does not list: \
+                 {written:?}"
+            ),
+            None => assert!(
+                written.is_empty(),
+                "{client} refuses every model but its config lists {written:?}"
+            ),
+        }
+    }
+}

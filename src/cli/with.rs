@@ -6,11 +6,27 @@ use clap::{Args, Subcommand};
 
 use crate::clients::ClientKind;
 
-/// Normalize wrapper-owned flags that appear after the client positional.
+/// Insert the client-argument boundary, and say when a name changed hands.
 ///
-/// Before an explicit `--`, a flag owned by the wrapper is accepted in either
-/// position. Everything else is protected behind a clap argument boundary and
-/// reaches the client verbatim.
+/// One rule, holdable in the head: **everything after the client name belongs
+/// to the client, verbatim.** Router options go before it.
+///
+/// What this replaces was a list of twelve names claimed back from the client
+/// wherever they appeared, and the list was neither complete nor derivable
+/// from anything a user could see: `--port`, `--host`, `--data-dir` and
+/// `--managed` are router options and reached the client, while `--model`,
+/// `--token`, `--server` and `--interactive` are router options and did not.
+/// Both directions failed silently — `claude --model opus[1m]` was intercepted
+/// and validated against the router's catalog, and `with claude --managed`
+/// started nothing (issue #299).
+///
+/// The boundary is the first bare word that names a client, found by skipping
+/// options and, for options that take one, their values — taken from the
+/// parser itself rather than a hand-kept list, so a value that happens to
+/// equal a client name (`--data-dir agent`) no longer shifts the split.
+///
+/// `--` is still accepted and still consumed, for anyone who prefers to write
+/// the boundary out.
 #[must_use]
 pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<OsString> {
     let start = if nested {
@@ -21,133 +37,101 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
     } else {
         1
     };
-    let value_options = [
-        "--server",
-        "--token",
-        "--model",
-        "--run-ttl-hours",
-        "--run-max-requests",
-    ];
-    // Derived from the client table rather than hand-listed: a name missing
-    // here silently stops protecting that client's arguments, which is what a
-    // hardcoded copy invites every time a name changes (issue #220).
-    let clients: Vec<&str> = crate::clients::ClientKind::ALL
+    let options = wrapper_options();
+    let clients: Vec<&str> = ClientKind::ALL
         .iter()
         .flat_map(|kind| [kind.canonical_name(), kind.legacy_name()])
         .collect();
-    let boolean_options = [
-        "--global",
-        "--undo",
-        "--non-interactive",
-        "--interactive",
-        "--token-stdin",
-        "--extend-global-config",
-    ];
     let mut position = start;
     while position < arguments.len() {
-        let value = arguments[position].to_string_lossy();
-        if value_options.contains(&value.as_ref()) {
-            position += 2;
-            continue;
-        }
-        if value_options
-            .iter()
-            .any(|option| value.starts_with(&format!("{option}=")))
-        {
+        let value = arguments[position].to_string_lossy().into_owned();
+        if value == "--" {
+            // An explicit boundary the user wrote: the client name follows it.
             position += 1;
             continue;
         }
-        if clients.contains(&value.as_ref()) {
-            let client = arguments[position].clone();
-            let prefix = arguments[..position].to_vec();
-            // Router options already given *before* the client name are the
-            // router's. A second occurrence after the client belongs to the
-            // client: `--model` is defined by five of the seven clients, so
-            // routing to one model while telling the client another was
-            // otherwise inexpressible, and the parser reported a duplicate
-            // router option instead (issue #236).
-            // A router option may be given once. The first occurrence is the
-            // router's — whether it came before the client name or after it —
-            // and any repeat belongs to the client: `--model` is defined by
-            // five of the seven clients, so routing to one model while telling
-            // the client another was otherwise inexpressible, and the parser
-            // reported a duplicate router option instead (issue #236).
-            let mut consumed: Vec<String> = prefix
-                .iter()
-                .map(|item| {
-                    let item = item.to_string_lossy();
-                    item.split_once('=')
-                        .map_or_else(|| item.to_string(), |(name, _)| name.to_string())
-                })
-                .collect();
-            let mut wrapper = Vec::new();
-            let mut forwarded = Vec::new();
-            let mut cursor = position + 1;
-            let mut explicit_boundary = false;
-            while cursor < arguments.len() {
-                let item = arguments[cursor].to_string_lossy();
-                if explicit_boundary {
-                    forwarded.push(arguments[cursor].clone());
-                    cursor += 1;
-                    continue;
-                }
-                if item == "--" {
-                    explicit_boundary = true;
-                    cursor += 1;
-                    continue;
-                }
-                if boolean_options.contains(&item.as_ref()) {
-                    if consumed.iter().any(|seen| seen == item.as_ref()) {
-                        forwarded.push(arguments[cursor].clone());
-                    } else {
-                        consumed.push(item.to_string());
-                        wrapper.push(arguments[cursor].clone());
-                    }
-                    cursor += 1;
-                    continue;
-                }
-                if value_options.contains(&item.as_ref()) {
-                    let repeated = consumed.iter().any(|seen| seen == item.as_ref());
-                    if !repeated {
-                        consumed.push(item.to_string());
-                    }
-                    let target = if repeated {
-                        &mut forwarded
-                    } else {
-                        &mut wrapper
-                    };
-                    target.push(arguments[cursor].clone());
-                    if let Some(value) = arguments.get(cursor + 1) {
-                        target.push(value.clone());
-                        cursor += 2;
-                    } else {
-                        cursor += 1;
-                    }
-                    continue;
-                }
-                if value_options
-                    .iter()
-                    .any(|option| item.starts_with(&format!("{option}=")))
-                {
-                    wrapper.push(arguments[cursor].clone());
-                    cursor += 1;
-                    continue;
-                }
-                forwarded.push(arguments[cursor].clone());
-                cursor += 1;
-            }
-            let mut normalized = prefix;
-            normalized.extend(wrapper);
-            normalized.push(client);
-            if !forwarded.is_empty() {
-                normalized.push("--".into());
-                normalized.extend(forwarded);
-            }
+        if value.starts_with('-') {
+            let name = value
+                .split_once('=')
+                .map_or(value.as_str(), |(name, _)| name);
+            let takes_a_value = !value.contains('=') && options.contains(&(name.to_string(), true));
+            position += if takes_a_value { 2 } else { 1 };
+            continue;
+        }
+        if !clients.contains(&value.as_str()) {
+            position += 1;
+            continue;
+        }
+        let mut normalized = arguments[..=position].to_vec();
+        let forwarded = &arguments[position + 1..];
+        if forwarded.is_empty() {
             return normalized;
         }
-        position += 1;
+        let explicit = forwarded.first().is_some_and(|argument| argument == "--");
+        let forwarded = if explicit { &forwarded[1..] } else { forwarded };
+        for argument in forwarded {
+            let argument = argument.to_string_lossy();
+            let name = argument
+                .split_once('=')
+                .map_or_else(|| argument.as_ref(), |(name, _)| name);
+            if !explicit && options.iter().any(|(option, _)| option == name) {
+                eprintln!(
+                    "note: `{name}` after the client name is passed to {value}; router options \
+                     go before the client name"
+                );
+            }
+        }
+        normalized.push("--".into());
+        normalized.extend(forwarded.iter().cloned());
+        return normalized;
     }
     arguments
+}
+
+/// Every option `with` itself accepts, and whether it takes a value.
+///
+/// Read off the parser rather than written down beside it: a hand-kept copy is
+/// what made the split undiscoverable and incomplete, and it drifts every time
+/// an option is added (issue #299).
+fn wrapper_options() -> std::collections::HashSet<(String, bool)> {
+    use clap::CommandFactory as _;
+
+    let mut options = std::collections::HashSet::new();
+    let mut collect = |command: &clap::Command| {
+        for argument in command.get_arguments() {
+            // A flag declares zero values; anything else takes one. Clap
+            // leaves `num_args` unset for both, so the switch is identified by
+            // its `ArgAction`, which is what actually decides.
+            let takes_a_value = argument.get_num_args().map_or_else(
+                || {
+                    !matches!(
+                        argument.get_action(),
+                        clap::ArgAction::SetTrue
+                            | clap::ArgAction::SetFalse
+                            | clap::ArgAction::Count
+                            | clap::ArgAction::Help
+                            | clap::ArgAction::Version
+                    )
+                },
+                |range| range.takes_values(),
+            );
+            if let Some(long) = argument.get_long() {
+                options.insert((format!("--{long}"), takes_a_value));
+            }
+            for alias in argument.get_all_aliases().unwrap_or_default() {
+                options.insert((format!("--{alias}"), takes_a_value));
+            }
+            if let Some(short) = argument.get_short() {
+                options.insert((format!("-{short}"), takes_a_value));
+            }
+        }
+    };
+    let root = crate::cli::Cli::command();
+    collect(&root);
+    if let Some(with) = root.find_subcommand("with") {
+        collect(with);
+    }
+    options
 }
 
 /// Options shared by `router with` and the standalone `with-router` binary.
@@ -161,16 +145,23 @@ pub struct WithArgs {
     #[arg(long, requires = "global")]
     pub undo: bool,
     /// Force the client's non-interactive/one-shot mode.
+    ///
+    /// By default a bare positional is read as a prompt and starts a one-shot
+    /// run, a flag is read as an option passed to a session, and streams that
+    /// are not a terminal are one-shot. Reading *any* forwarded argument as a
+    /// task turned `--resume`, `--continue` and `--verbose` into batch runs
+    /// (issue #297).
     #[arg(long, conflicts_with = "interactive")]
     pub non_interactive: bool,
     /// Force the client's interactive mode.
     #[arg(long, conflicts_with = "non_interactive")]
     pub interactive: bool,
-    /// Keep the user's own configuration and add only the router's connection
-    /// settings.
+    /// (deprecated, no-op) Keep the user's own configuration.
     ///
-    /// This is the default. Kept as an accepted flag so existing scripts and
-    /// documentation continue to work; passing it changes nothing.
+    /// This is the default, and has been since issue #277. Kept as an accepted
+    /// flag so existing scripts keep working; passing it changes nothing. The
+    /// marker is in the first line because a reader scanning flag names could
+    /// not otherwise tell the live options from the retired one (issue #312).
     #[arg(long)]
     pub extend_global_config: bool,
     /// Give the client a configuration directory of its own.
@@ -188,6 +179,13 @@ pub struct WithArgs {
     ///
     /// Isolation remains right for CI and clean-room reproductions, where
     /// passing a flag is normal and cheap.
+    ///
+    /// It is a no-op for `codex`, `gemini`, `opencode` and `agent`: those are
+    /// routed through a file the router writes, so they never use the user's
+    /// own directory with or without it. The run says so rather than accepting
+    /// the flag silently (issue #312). What they get instead is a profile of
+    /// their own that persists between runs, so sessions stay resumable
+    /// (issue #298); `--isolated-config` makes that profile disposable.
     #[arg(long, conflicts_with = "extend_global_config")]
     pub isolated_config: bool,
     /// Start a disposable managed container even if a router is already
@@ -200,17 +198,52 @@ pub struct WithArgs {
     /// Router origin. No local server is started when this is supplied.
     #[arg(long)]
     pub server: Option<String>,
+    /// Use the router running on this machine, not the selected one.
+    ///
+    /// `with` had `--server` and `--managed` but not `--local`, so it carried
+    /// half the target vocabulary every other family has (issue #314).
+    #[arg(long, conflicts_with_all = ["server", "managed"])]
+    pub local: bool,
     /// Router token. Prefer the environment or `--token-stdin` to shell history.
     #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
     pub token: Option<String>,
     /// Read the router token as one line from standard input.
     #[arg(long, conflicts_with = "token")]
     pub token_stdin: bool,
-    /// Model passed to the client instead of the integration default.
+    /// Model the client is launched with.
+    ///
+    /// Without this the client keeps the model its own configuration selects,
+    /// and `with` changes only how that model is reached — the same rule
+    /// `--global` follows. A router that picked one by catalog order replaced
+    /// the user's choice silently, and the client's status line then presented
+    /// the substitution as though the user had made it (issue #295).
+    ///
+    /// A client whose configuration embeds the router's catalog — `opencode`,
+    /// `qwen`, `agent` — is always given an id, because it cannot start
+    /// without one.
     #[arg(long)]
     pub model: Option<String>,
-    /// Lifetime of an automatically minted per-run token.
-    #[arg(long, default_value_t = 1)]
+    /// Let the router choose a model from the target's live catalog.
+    ///
+    /// It reports what it picked and why. Without this no model is named and
+    /// the client's own configuration decides.
+    #[arg(long, conflicts_with = "model")]
+    pub pick_model: bool,
+    /// Label recorded on the router for this run's token.
+    ///
+    /// Each run mints a token on the target and the label is stored there. It
+    /// defaults to the client name and a short suffix; it used to be the name
+    /// of the directory the run was launched from, so a deployment
+    /// accumulated a list of the projects its users work in (issue #316).
+    /// Anything sent to a router someone else operates should be something you
+    /// chose to send.
+    #[arg(long)]
+    pub label: Option<String>,
+    /// Lifetime of an automatically minted per-run token, in hours.
+    ///
+    /// `--ttl-hours` is accepted too, so the name matches `tokens issue`,
+    /// `tokens rotate` and `configure` (issue #314).
+    #[arg(long, alias = "ttl-hours", default_value_t = 1)]
     pub run_ttl_hours: i64,
     /// Optional request budget for an automatically minted per-run token.
     #[arg(long)]
@@ -262,198 +295,134 @@ pub enum ServerOp {
     Reap { pid: u32 },
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn wrapper_flags_after_client_are_protected() {
-        for option in [
-            "--global",
-            "--undo",
-            "--non-interactive",
-            "--interactive",
-            "--token-stdin",
-        ] {
-            let arguments = ["router", "with", "codex", option, "prompt"]
-                .into_iter()
-                .map(OsString::from)
-                .collect();
-            assert_eq!(
-                protect_client_arguments(arguments, true),
-                ["router", "with", option, "codex", "--", "prompt"].map(OsString::from),
-                "{option} after the client must remain wrapper-owned"
-            );
+impl WithArgs {
+    /// The permanent-setup request `--global` / `--undo` really is.
+    ///
+    /// `with --global` predates `configure` and stays as an accepted spelling,
+    /// so it maps onto the same arguments rather than keeping a second
+    /// implementation that can disagree with it (issue #296).
+    #[must_use]
+    pub fn as_configure(&self) -> crate::cli::ConfigureArgs {
+        crate::cli::ConfigureArgs {
+            client: Some(self.client),
+            all: false,
+            undo: self.undo,
+            target: crate::cli::AuthTarget {
+                local: self.local,
+                server: self.server.clone(),
+                managed: self.managed,
+            },
+            token: self.token.clone(),
+            token_stdin: self.token_stdin,
+            ttl_hours: 8760,
         }
-    }
-
-    #[test]
-    fn value_wrapper_flags_after_client_are_accepted() {
-        for (option, value) in [
-            ("--server", "https://router.test"),
-            ("--token", "test-token"),
-            ("--model", "gpt-test"),
-            ("--run-ttl-hours", "2"),
-            ("--run-max-requests", "3"),
-        ] {
-            let arguments = ["with-router", "codex", option, value, "hi"]
-                .into_iter()
-                .map(OsString::from)
-                .collect();
-            assert_eq!(
-                protect_client_arguments(arguments, false),
-                ["with-router", option, value, "codex", "--", "hi"].map(OsString::from),
-                "{option} VALUE after the client must remain wrapper-owned"
-            );
-
-            let equals = format!("{option}={value}");
-            let arguments = ["with-router", "codex", &equals, "hi"]
-                .into_iter()
-                .map(OsString::from)
-                .collect();
-            assert_eq!(
-                protect_client_arguments(arguments, false),
-                [
-                    OsString::from("with-router"),
-                    OsString::from(&equals),
-                    OsString::from("codex"),
-                    OsString::from("--"),
-                    OsString::from("hi"),
-                ],
-                "{option}=VALUE after the client must remain wrapper-owned"
-            );
-        }
-    }
-
-    #[test]
-    fn explicit_boundary_forwards_every_colliding_wrapper_flag_verbatim() {
-        for option in [
-            "--global",
-            "--undo",
-            "--non-interactive",
-            "--interactive",
-            "--token-stdin",
-            "--server",
-            "--token",
-            "--model",
-            "--run-ttl-hours",
-            "--run-max-requests",
-        ] {
-            let arguments = ["with-router", "codex", "--", option, "client-value"]
-                .into_iter()
-                .map(OsString::from)
-                .collect::<Vec<_>>();
-            assert_eq!(
-                protect_client_arguments(arguments.clone(), false),
-                arguments,
-                "{option} after -- must be forwarded to the client"
-            );
-        }
-    }
-
-    #[test]
-    fn option_values_that_match_clients_are_not_boundaries() {
-        let arguments = ["with-router", "--model", "codex", "qwen", "hello"]
-            .into_iter()
-            .map(OsString::from)
-            .collect();
-        assert_eq!(
-            protect_client_arguments(arguments, false),
-            ["with-router", "--model", "codex", "qwen", "--", "hello"].map(OsString::from)
-        );
     }
 }
 
 #[cfg(test)]
-mod collision_tests {
-    use super::protect_client_arguments;
-    use std::ffi::OsString;
+mod tests {
+    use super::*;
 
-    fn split(arguments: &[&str]) -> Vec<String> {
-        protect_client_arguments(arguments.iter().map(OsString::from).collect(), false)
+    fn split(arguments: &[&str], nested: bool) -> Vec<String> {
+        protect_client_arguments(arguments.iter().map(OsString::from).collect(), nested)
             .iter()
             .map(|value| value.to_string_lossy().into_owned())
             .collect()
     }
 
-    /// A router option may be given once; a repeat belongs to the client.
-    /// `--model` is defined by five of the seven clients, so routing to one
-    /// model while telling the client another was inexpressible — the parser
-    /// rejected the second occurrence as a duplicate router option (#236).
+    /// One rule: everything after the client name is the client's.
+    ///
+    /// What this replaces claimed twelve names back from the client wherever
+    /// they appeared, by no principle a user could state — `--port` reached
+    /// the client, `--model` was eaten and validated against the router's
+    /// catalog (issue #299).
     #[test]
-    fn a_repeated_router_option_is_forwarded_to_the_client() {
-        let split = split(&["with-router", "qwen", "--model", "A", "--model", "B"]);
-        let separator = split
-            .iter()
-            .position(|value| value == "--")
-            .expect("an explicit boundary is inserted");
-        let router = &split[..separator];
-        let client = &split[separator + 1..];
-        assert!(
-            router.windows(2).any(|pair| pair == ["--model", "A"]),
-            "the router keeps the first occurrence: {router:?}"
-        );
-        assert!(
-            client.windows(2).any(|pair| pair == ["--model", "B"]),
-            "the client receives the repeat: {client:?}"
-        );
-    }
-
-    /// The same holds for a boolean router option.
-    #[test]
-    fn a_repeated_boolean_option_is_forwarded() {
-        let split = split(&[
-            "with-router",
-            "qwen",
+    fn everything_after_the_client_name_reaches_the_client() {
+        for option in [
+            "--global",
+            "--undo",
             "--non-interactive",
-            "--non-interactive",
-        ]);
-        let separator = split.iter().position(|value| value == "--").expect("--");
-        assert_eq!(
-            split[..separator]
-                .iter()
-                .filter(|value| *value == "--non-interactive")
-                .count(),
-            1,
-            "the router consumes exactly one"
+            "--interactive",
+            "--token-stdin",
+            "--model",
+            "--server",
+            "--managed",
+            "--isolated-config",
+            "--port",
+        ] {
+            let split = split(&["router", "with", "codex", option, "value"], true);
+            assert_eq!(
+                split,
+                ["router", "with", "codex", "--", option, "value"],
+                "{option} after the client name must reach the client"
+            );
+        }
+    }
+
+    /// The model the client understands can be named without a boundary. The
+    /// router intercepted it, validated `opus[1m]` against its own catalog and
+    /// aborted a run the client would have accepted (issues #236, #299).
+    #[test]
+    fn a_client_model_reaches_the_client_and_a_router_model_does_not() {
+        let split = split(
+            &["with-router", "--model", "A", "qwen", "--model", "B"],
+            false,
         );
-        assert_eq!(
-            split[separator + 1..]
-                .iter()
-                .filter(|value| *value == "--non-interactive")
-                .count(),
-            1,
-            "the repeat is forwarded"
+        let boundary = split.iter().position(|value| value == "--").expect("--");
+        assert!(split[..boundary].windows(2).any(|p| p == ["--model", "A"]));
+        assert!(
+            split[boundary + 1..]
+                .windows(2)
+                .any(|p| p == ["--model", "B"])
         );
     }
 
-    /// A single occurrence still belongs to the router, so this is not a
-    /// behaviour change for ordinary use.
+    /// A router option's value is skipped when looking for the boundary, so a
+    /// value that happens to name a client no longer shifts the split.
     #[test]
-    fn a_single_router_option_is_still_consumed_by_the_router() {
-        let split = split(&["with-router", "qwen", "--model", "A", "--prompt", "hi"]);
-        let separator = split.iter().position(|value| value == "--").expect("--");
-        assert!(split[..separator].windows(2).any(|p| p == ["--model", "A"]));
-        assert!(
-            split[separator + 1..]
-                .windows(2)
-                .any(|p| p == ["--prompt", "hi"]),
-            "client options still forward: {split:?}"
+    fn an_option_value_that_names_a_client_is_not_the_boundary() {
+        for option in ["--model", "--data-dir", "--upstream-provider"] {
+            let split = split(&["with-router", option, "codex", "qwen", "hello"], false);
+            assert_eq!(
+                split,
+                ["with-router", option, "codex", "qwen", "--", "hello"],
+                "{option}'s value must not be read as the client name"
+            );
+        }
+    }
+
+    /// An explicit boundary is accepted and consumed exactly once.
+    #[test]
+    fn an_explicit_boundary_is_not_doubled() {
+        let split = split(&["with-router", "codex", "--", "--global", "hi"], false);
+        assert_eq!(split, ["with-router", "codex", "--", "--global", "hi"]);
+        assert_eq!(split.iter().filter(|value| *value == "--").count(), 1);
+    }
+
+    /// A client launched with nothing after it needs no boundary at all.
+    #[test]
+    fn a_bare_client_is_left_alone() {
+        assert_eq!(
+            split(&["with-router", "codex"], false),
+            ["with-router", "codex"]
         );
     }
 
-    /// Options before the client name are the router's, and a matching name
-    /// after it then goes to the client.
+    /// The option table comes from the parser, so it cannot drift from it.
     #[test]
-    fn an_option_before_the_client_claims_the_router_slot() {
-        let split = split(&["with-router", "--model", "A", "qwen", "--model", "B"]);
-        let separator = split.iter().position(|value| value == "--").expect("--");
-        assert!(split[..separator].windows(2).any(|p| p == ["--model", "A"]));
+    fn the_option_table_is_read_from_the_parser() {
+        let options = wrapper_options();
         assert!(
-            split[separator + 1..]
-                .windows(2)
-                .any(|p| p == ["--model", "B"]),
-            "{split:?}"
+            options.contains(&("--model".to_string(), true)),
+            "--model takes a value"
+        );
+        assert!(
+            options.contains(&("--global".to_string(), false)),
+            "--global does not"
+        );
+        assert!(
+            options.iter().any(|(name, _)| name == "--isolated-config"),
+            "an option missing from a hand-kept list is the defect this prevents"
         );
     }
 }

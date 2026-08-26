@@ -11,9 +11,37 @@ with-router claude "hi"
 See [with-router.md](with-router.md) for the integration registry, server
 selection, token mint/revoke behavior, Docker lifecycle, and argument boundary.
 
-The older `clients` command and `with --global` are permanent, opt-in paths.
-They configure every local client that exposes a supported router URL without
-replacing unrelated user settings:
+## Permanent setup
+
+`router configure <client>` points a client at the router permanently. It acts
+on the router this machine is pointed at — the same targeting rule every
+state-touching command follows — mints a credential from that router and stores
+it outside the client's configuration at mode 0600, so the client works when
+the command returns:
+
+```bash
+router configure claude
+router configure --all               # every client this machine has
+router configure --undo claude       # hash-verified restore
+router configure claude --server https://router.example  # a named deployment
+router configure claude --local      # the router running here
+```
+
+`--undo` restores the client's own file byte for byte and revokes the token it
+minted, when a credential able to revoke is to hand; when one is not, it names
+the token and the router so the revocation can be finished by hand. A file
+edited after `configure` is preserved rather than overwritten, and the command
+says so instead of restoring.
+
+`with --global <client>` is the same command under an older name and keeps
+working. `router configure --all` skips clients whose vendor gates prevent
+file-based configuration — `cursor-agent` and `gemini` — and names them in the
+summary rather than failing the run.
+
+The older `clients` command configures **this** deployment, because it mints
+from this machine's own token store. With another router selected it refuses
+and names `router configure`, rather than writing this CLI's `--host`/`--port`
+default into a client pointed somewhere else:
 
 ```bash
 router clients list
@@ -102,7 +130,8 @@ URL only from `GROK_BASE_URL`. To avoid writing an ignored setting,
 `clients setup grok` puts both required exports in the protected environment
 file and leaves `user-settings.json` untouched.
 
-`clients setup cursor-agent` and `clients setup gemini` return the verified
+`configure cursor-agent` and `configure gemini` — like the `clients setup`
+spellings — return the verified
 client-side limitation before minting a token or writing a file. Their matching
 `doctor` commands report the same reason directly; they do not misdiagnose a
 request that never reached the router.

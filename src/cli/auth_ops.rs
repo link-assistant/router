@@ -44,18 +44,23 @@ pub enum AuthOp {
     /// `auth claude` or `auth codex` to authorize a remote deployment.
     ///
     /// The per-provider flags on the authorize commands keep working.
-    #[command(override_usage = "link-assistant-router auth import [OPTIONS] [PROVIDER] [DIR]")]
     Import {
         /// Which login to adopt. Omit with `--all`.
         #[arg(value_enum, required_unless_present = "all")]
         provider: Option<ImportProvider>,
         /// Where to read it from. A named directory is read exactly as given.
         ///
-        /// Omitted, it defaults to the vendor's own home — `$CLAUDE_CODE_HOME`,
-        /// `$CODEX_HOME`, `$GH_CONFIG_DIR`, and so on — and there, on macOS for
+        /// Omitted, it defaults to the vendor client's conventional directory —
+        /// `~/.claude`, `~/.codex`, `~/.config/gh` — and there, on macOS for
         /// Claude, the login Keychain is consulted too and wins when it holds
         /// the newer credential. Naming a directory says *this* credential from
         /// *there*, so the machine-wide store is left out of it (issue #285).
+        ///
+        /// `$CLAUDE_CODE_HOME` and `$CODEX_HOME` are deliberately *not* the
+        /// source: in a deployment they name this router's own credential
+        /// directory — the destination — so reading the source through them
+        /// would make every unqualified import refuse itself (issue #307). Pass
+        /// the directory to read from another location.
         dir: Option<String>,
         /// Adopt every login this machine has.
         ///
@@ -65,6 +70,31 @@ pub enum AuthOp {
         /// writes the executing machine's credential home (issue #291).
         #[arg(long, conflicts_with = "provider")]
         all: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
+    /// Remove a stored login from this deployment.
+    ///
+    /// Withdrawal is the most destructive thing this tool does and had no
+    /// name: it was four flags, the widest of them attached to a command
+    /// called `status`, so `auth --help` said nothing about it at all. The
+    /// per-command `--clear` flags keep working (issue #305).
+    ///
+    /// Removes credentials on the machine it runs on. No router accepts a
+    /// withdrawal over HTTP, so with another router selected this refuses and
+    /// names it — silently rewriting "there" as "here" is unrecoverable for an
+    /// OAuth credential, which then needs a fresh browser login on a machine
+    /// that may not have a browser.
+    Clear {
+        /// Which login to remove. Omit with `--all`.
+        #[arg(value_enum, required_unless_present = "all")]
+        provider: Option<ImportProvider>,
+        /// Remove every login this deployment holds.
+        #[arg(long, conflicts_with = "provider")]
+        all: bool,
+        /// Confirm removing more than one credential without a prompt.
+        #[arg(long)]
+        yes: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -84,10 +114,9 @@ pub enum AuthOp {
         /// Adopt an existing Claude login instead of authorizing.
         ///
         /// Reads the credential a vendor client already holds and installs it as
-        /// this deployment's (issue #274). Default: `$CLAUDE_CODE_HOME`, else
-        /// `~/.claude`, where on macOS the login Keychain is consulted as well
-        /// and wins when it is the live one. A directory named explicitly is
-        /// read as given (issue #285).
+        /// this deployment's (issue #274). Default: `~/.claude`, where on macOS
+        /// the login Keychain is consulted as well and wins when it is the live
+        /// one. A directory named explicitly is read as given (issue #285).
         #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
         from_claude_home: Option<String>,
         /// Remove the stored credential instead of authorizing.
@@ -106,7 +135,7 @@ pub enum AuthOp {
         port: u16,
         /// Adopt an existing Codex login instead of authorizing.
         ///
-        /// Default: `$CODEX_HOME`, else `~/.codex` (issue #274).
+        /// Default: `~/.codex` (issue #274).
         #[arg(long, value_name = "DIR", num_args = 0..=1, default_missing_value = "")]
         from_codex_home: Option<String>,
         /// Remove the stored credential instead of authorizing.
@@ -145,8 +174,16 @@ pub enum AuthOp {
         /// Withdraws each provider's credential and the GitHub one in a single
         /// step, so an operator tearing down a test deployment does not have to
         /// know three separate paths (issue #268).
+        /// `router auth clear --all` is the same operation with a name.
         #[arg(long = "clear-all")]
         clear_all: bool,
+        /// Confirm removing more than one credential without a prompt.
+        ///
+        /// An OAuth login cannot be put back without a browser, and this is
+        /// the widest blast radius in the tool — five credentials in one call,
+        /// on a command called `status` (issue #305).
+        #[arg(long, requires = "clear_all")]
+        yes: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -238,19 +275,30 @@ impl AuthOp {
 /// choice explicit when the default is not what is wanted.
 #[derive(Debug, Clone, Default, clap::Args)]
 pub struct AuthTarget {
-    /// Authorize the local credential directory even when a server is selected.
+    /// Act on this machine even when a server is selected.
     #[arg(long, conflicts_with = "server")]
     pub local: bool,
-    /// Authorize this router instead of the selected one.
+    /// Act on this router instead of the selected one.
     #[arg(long, value_name = "URL", conflicts_with = "local")]
     pub server: Option<String>,
     /// Start a disposable managed container even if a router is already
     /// listening locally (issue #250).
+    ///
+    /// Accepted by the commands that can use one — `with`, `configure` and
+    /// `auth`. The families that only read or change router state refuse it
+    /// and name `--local`, because there it started nothing and quietly meant
+    /// `--local` anyway (issue #315).
     #[arg(long, conflicts_with_all = ["local", "server"])]
     pub managed: bool,
 }
 
 /// TLS subcommands.
+///
+/// The artefact `ca` prints is a trust anchor, so answering for the wrong
+/// machine does not produce a wrong report — it produces trust in the wrong
+/// key. `tls` therefore takes the same target flags as every other
+/// state-touching family, and says so when it cannot answer for the target
+/// (issue #308).
 #[derive(Debug, Subcommand)]
 pub enum TlsOp {
     /// Print the generated certificate in PEM form.
@@ -258,12 +306,27 @@ pub enum TlsOp {
     /// A client that must trust a self-signed router reads it from here, so a
     /// private-network deployment can distribute trust without a CA (issue
     /// #263).
-    Ca,
+    Ca {
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Generate the self-signed certificate without starting the server.
     Generate {
         /// Names the certificate is valid for, comma-separated. A sidecar is
         /// reached by its network alias, so that name must be present.
         #[arg(long, value_name = "NAMES", default_value = "localhost")]
         dns: String,
+        #[command(flatten)]
+        target: AuthTarget,
     },
+}
+
+impl TlsOp {
+    /// Which router this certificate operation acts on.
+    #[must_use]
+    pub const fn target(&self) -> &AuthTarget {
+        match self {
+            Self::Ca { target } | Self::Generate { target, .. } => target,
+        }
+    }
 }

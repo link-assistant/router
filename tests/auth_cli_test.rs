@@ -352,7 +352,7 @@ fn clear_all_withdraws_every_identity_at_once() {
     std::fs::write(data.join("github-credential"), "gho_synthetic").expect("plant github");
 
     let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["auth", "status", "--clear-all", "--local"])
+        .args(["auth", "status", "--clear-all", "--yes", "--local"])
         .env("TOKEN_SECRET", "auth-cli-test-secret")
         .env("HOME", home.path())
         .env("CLAUDE_CODE_HOME", &claude)

@@ -131,11 +131,29 @@ impl SubscriptionProvider {
     /// env var, then falling back to `<home>/<home_subdir>`.
     #[must_use]
     pub fn resolve_home(self, home: &str) -> PathBuf {
-        if let Ok(dir) = std::env::var(self.home_env())
-            && !dir.is_empty()
-        {
-            return PathBuf::from(dir);
-        }
+        self.named_home()
+            .unwrap_or_else(|| PathBuf::from(home).join(self.home_subdir()))
+    }
+
+    /// The directory this provider's own home variable names, if it names one.
+    #[must_use]
+    pub fn named_home(self) -> Option<PathBuf> {
+        std::env::var(self.home_env())
+            .ok()
+            .filter(|dir| !dir.is_empty())
+            .map(PathBuf::from)
+    }
+
+    /// The directory the *vendor's own client* keeps its login in.
+    ///
+    /// Deliberately not `resolve_home`. In a deployment `CLAUDE_CODE_HOME` and
+    /// friends name the router's own credential directory — its destination —
+    /// so resolving "where does this vendor keep its login" that way makes
+    /// every unqualified `auth import` refuse itself as a self-import (issue
+    /// #278), and makes the vendor's conventional directory stop counting as
+    /// the vendor's home for the platform-store guard (issue #307).
+    #[must_use]
+    pub fn conventional_home(self, home: &str) -> PathBuf {
         PathBuf::from(home).join(self.home_subdir())
     }
 }
@@ -525,8 +543,22 @@ impl SubscriptionReader {
     /// reading exactly the file it was given: letting one machine-wide keychain
     /// entry answer for every account would collapse a pool onto one
     /// subscription.
+    /// Whether this reader is pointed at a home the vendor's own client uses.
+    ///
+    /// Both spellings count: the conventional `~/.claude`, and whatever the
+    /// provider's home variable names. Asking only the second meant that
+    /// setting `CLAUDE_CODE_HOME` — which a deployment does, to name its
+    /// *destination* — stopped `~/.claude` counting as the vendor's home, so
+    /// the platform store went unconsulted and a stale file won over the live
+    /// Keychain entry: the situation issue #249 was about, reachable through
+    /// the variable named in issue #307.
+    ///
+    /// A directory named explicitly on the command line is neither, which is
+    /// what keeps "this credential from *there*" meaning exactly that (#285).
     fn is_vendor_default_home(&self) -> bool {
-        std::env::var("HOME").is_ok_and(|home| self.provider.resolve_home(&home) == self.home)
+        let conventional = std::env::var("HOME")
+            .is_ok_and(|home| self.provider.conventional_home(&home) == self.home);
+        conventional || self.provider.named_home() == Some(self.home.clone())
     }
 
     /// The credential the platform secret store holds, when there is one.

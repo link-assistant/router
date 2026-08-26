@@ -17,6 +17,46 @@ when it authorises a request.
 | JSON snapshot | `GET /v1/usage` (admin only) | in-memory, resets on restart | per-token inspection, scripts |
 | Audit trail | `--audit-log <file>` (JSONL) | durable, append-only | forensics, compliance |
 | Persisted budgets | `tokens list` | durable token store | quota enforcement |
+| Subscription health | `GET /health/subscriptions` (public) | live | uptime checks, paging |
+
+## Is the router serving what it advertises?
+
+`/health` answers whether the *process* is up. It is wired to both the liveness
+and readiness probes in `deploy/k8s/router.yaml`, so it deliberately stays `ok`
+when a subscription dies: restarting the container cannot mint a new OAuth
+token, and failing the probe would crash-loop a deployment that is still serving
+its other providers.
+
+Subscription health is a separate question with a separate answer:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/health/subscriptions
+```
+
+`200` means every configured subscription can serve. `503` names each one that
+cannot, and why:
+
+```json
+{
+  "status": "degraded",
+  "healthy_providers": ["codex"],
+  "degraded_providers": [
+    { "provider": "claude", "reason": "refresh token is no longer valid (invalid_grant): …" }
+  ]
+}
+```
+
+Only subscriptions this deployment is actually configured for are reported, so
+"claude was never set up here" and "claude died twelve hours ago" cannot render
+identically. The same state is scrapeable:
+
+```
+link_assistant_subscription_healthy{provider="claude"} 0
+link_assistant_subscription_healthy{provider="codex"} 1
+```
+
+A revoked credential needs a human to re-authenticate — `router auth claude` —
+so this is the signal worth paging on.
 
 ## Live per-token counters
 

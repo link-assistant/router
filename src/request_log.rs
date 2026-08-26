@@ -186,7 +186,16 @@ impl RequestLog {
             return;
         }
         if line.len() as u64 > self.max_bytes {
-            if let Err(error) = write_owner_only(&path, &[]) {
+            let discarded = fs::metadata(&path).map_or(0, |metadata| metadata.len());
+            // The bound wins: a marker that does not fit is not written, since
+            // exceeding the limit to explain the limit helps nobody.
+            let marker = discard_marker(discarded, None);
+            let marker = if marker.len() as u64 <= self.max_bytes && discarded > 0 {
+                marker
+            } else {
+                Vec::new()
+            };
+            if let Err(error) = write_owner_only(&path, &marker) {
                 tracing::warn!(
                     "request log truncation failed ({}): {error}",
                     path.display()
@@ -208,15 +217,43 @@ impl RequestLog {
         let Ok(existing) = fs::read(path) else {
             return;
         };
-        let capacity = usize::try_from(self.max_bytes)
+        // The marker is part of the file, so it comes out of the same budget.
+        // Sized before the split, because it names the very number the split
+        // produces; a marker for the largest plausible discard is the same
+        // length to within a few digits, and reserving that keeps the bound a
+        // bound (issue #322).
+        let reserved = discard_marker(existing.len() as u64, Some(existing.len())).len();
+        let budget = usize::try_from(self.max_bytes)
             .unwrap_or(usize::MAX)
             .saturating_sub(incoming_len);
+        // A limit too small to hold the marker keeps the plain tail: the bound
+        // is the hard constraint, and exceeding it to explain it helps nobody.
+        let marked = reserved < budget;
+        let capacity = if marked {
+            budget.saturating_sub(reserved)
+        } else {
+            budget
+        };
         let start_floor = existing.len().saturating_sub(capacity);
         let start = existing[start_floor..]
             .iter()
             .position(|byte| *byte == b'\n')
             .map_or(existing.len(), |offset| start_floor + offset + 1);
-        if let Err(error) = write_owner_only(path, &existing[start..]) {
+        // A marker, not a gap. The discarded records are gone either way, but a
+        // reader holding the result could not tell a compacted log from a
+        // complete one — and this log is the audit artefact, read hours later,
+        // about the beginning of a session, which is exactly the end that goes
+        // first (issue #322). The `[OMITTED: …]` convention is already used in
+        // this module for an oversized record; this is the same honesty on the
+        // compaction path.
+        let retained = existing.len() - start;
+        let mut rewritten = if marked && start > 0 {
+            discard_marker(start as u64, Some(retained))
+        } else {
+            Vec::new()
+        };
+        rewritten.extend_from_slice(&existing[start..]);
+        if let Err(error) = write_owner_only(path, &rewritten) {
             tracing::warn!(
                 "request log compaction failed ({}): {error}",
                 path.display()
@@ -764,6 +801,11 @@ pub async fn log_http_exchange(
                 })
         })
         .unwrap_or_else(LogIdentity::unauthenticated);
+    // Kept before `identity` is moved. The label is operator-supplied, already
+    // stored in the clear in the request store, and is what turns an anonymous
+    // 404 into an attributable one — the log had it in hand and put none of it
+    // on the line (issue #320). The token value itself never appears.
+    let token_label = identity.label.clone().unwrap_or_else(|| "-".to_string());
     state.request_log.route_request(&correlation_id, identity);
     let route_guard = RequestRouteGuard {
         logger: Arc::clone(&state.request_log),
@@ -804,7 +846,13 @@ pub async fn log_http_exchange(
             }
         },
     );
-    tracing::info!(request_id = %correlation_id, method = %parts.method, uri = %logged_uri, "request");
+    tracing::info!(
+        request_id = %correlation_id,
+        method = %parts.method,
+        uri = %logged_uri,
+        token_label = %token_label,
+        "request"
+    );
 
     let started = Instant::now();
     let mut response = next
@@ -823,7 +871,31 @@ pub async fn log_http_exchange(
             "latency_ms": started.elapsed().as_millis(),
         }),
     );
-    tracing::info!(request_id = %correlation_id, status = response.status().as_u16(), latency_ms = started.elapsed().as_millis(), "response");
+    // The model the request was actually served by, which the router resolved
+    // and already reports in this header. `/v1/messages?beta=true` is the same
+    // URI for every Claude model, so without this the log cannot answer the
+    // first question anyone asks of it (issue #320).
+    let served_model = response
+        .headers()
+        .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("-");
+    // A rate limit is one of the few conditions an operator must act on
+    // quickly, and it was logged as three digits.
+    let retry_after = response
+        .headers()
+        .get("retry-after")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("-");
+    tracing::info!(
+        request_id = %correlation_id,
+        status = response.status().as_u16(),
+        latency_ms = started.elapsed().as_millis(),
+        model = %served_model,
+        token_label = %token_label,
+        retry_after = %retry_after,
+        "response"
+    );
 
     let (parts, body) = response.into_parts();
     let logger = std::sync::Arc::clone(&state.request_log);
@@ -849,3 +921,30 @@ mod tests;
 #[cfg(test)]
 #[path = "request_log_isolation_tests.rs"]
 mod isolation_tests;
+
+/// One JSONL record saying that older records were discarded to stay inside
+/// `REQUEST_LOG_MAX_BYTES`.
+///
+/// Dropping data under a bound is defensible; dropping it invisibly is what
+/// turns a bounded log into an unreliable one. This log is the only place the
+/// request and response bodies exist, and an auditor reading it asks about the
+/// beginning of a session — the end compaction removes first (issue #322).
+fn discard_marker(discarded_bytes: u64, retained_bytes: Option<usize>) -> Vec<u8> {
+    let mut line = serde_json::to_vec(&json!({
+        "time": chrono::Utc::now().to_rfc3339(),
+        "phase": "log_compaction",
+        "body": retained_bytes.map_or_else(
+            || format!(
+                "[OMITTED: {discarded_bytes} bytes of older records discarded; the incoming \
+                 record alone exceeds the request log limit]"
+            ),
+            |retained| format!(
+                "[OMITTED: {discarded_bytes} bytes of older records discarded to stay within \
+                 the request log limit; {retained} bytes retained]"
+            ),
+        ),
+    }))
+    .unwrap_or_default();
+    line.push(b'\n');
+    line
+}

@@ -351,8 +351,10 @@ async fn local_selects_no_remote_server() {
     assert!(target.is_none(), "--local must stay local");
 }
 
-/// `--managed` keeps the local path too, so a clean-room run is unaffected by
-/// whatever is listening (issue #250).
+/// `--managed` keeps the local path for `auth`, so a clean-room run is
+/// unaffected by whatever is listening (issue #250). The families that cannot
+/// start a container refuse the flag instead of taking this branch silently
+/// (issue #315).
 #[tokio::test]
 async fn managed_selects_no_remote_server() {
     let target = target_for(false, true, None).await.expect("no error");
@@ -420,14 +422,19 @@ fn a_single_account_deployment_reports_its_credentials() {
 
     let lines = credential_report(&body);
 
-    assert_eq!(lines.len(), 2, "each provider is named: {lines:?}");
+    assert_eq!(
+        lines.len(),
+        3,
+        "a header and each provider is named: {lines:?}"
+    );
+    assert_eq!(lines[0], crate::accounts_cli::header());
     assert!(
-        lines[0].contains("claude") && lines[0].contains("ok"),
+        lines[1].contains("claude") && lines[1].contains("ok") && lines[1].contains("true"),
         "{lines:?}"
     );
     assert!(
-        lines[1].contains("codex") && lines[1].contains("expired"),
-        "{lines:?}"
+        lines[2].contains("codex") && lines[2].contains("expired") && lines[2].contains("false"),
+        "the health verdict is the column the command exists to answer: {lines:?}"
     );
     assert!(
         !lines
@@ -469,13 +476,14 @@ fn a_configured_pool_is_reported_as_before() {
 
     let lines = credential_report(&body);
 
-    assert_eq!(lines.len(), 2);
+    assert_eq!(lines.len(), 3);
+    assert_eq!(lines[0], crate::accounts_cli::header());
     assert!(
-        lines[0].contains("team-a") && lines[0].contains("ok"),
+        lines[1].contains("team-a") && lines[1].contains("ok"),
         "{lines:?}"
     );
     assert!(
-        lines[1].contains("team-b") && lines[1].contains("rejected"),
+        lines[2].contains("team-b") && lines[2].contains("rejected"),
         "{lines:?}"
     );
 }
@@ -674,4 +682,40 @@ async fn a_refused_credential_names_the_fix() {
         error.contains("server use"),
         "the operator needs the command that fixes it: {error}"
     );
+}
+
+/// The defect in issue #306: the remote form printed three of eight columns,
+/// dropping `healthy` — the one the command exists to answer — so a dead
+/// subscription rendered identically to a live one. Its own comment claimed
+/// parity; nothing checked it.
+#[test]
+fn both_modes_print_the_same_columns() {
+    let body = serde_json::json!({
+        "accounts": [{
+            "name": "team-a",
+            "home": "/srv/a",
+            "credential": "ok",
+            "healthy": false,
+            "used": 12,
+            "request_limit": 100,
+            "remaining_requests": 88,
+        }],
+    });
+
+    let lines = credential_report(&body);
+
+    assert_eq!(lines[0], crate::accounts_cli::header());
+    for column in ["healthy", "used", "limit", "remaining"] {
+        assert!(lines[0].contains(column), "{column} missing: {}", lines[0]);
+    }
+    // Numbers are read as numbers. `as_str()` on a JSON number yields the same
+    // placeholder as a field the server never sent, so the remote table could
+    // not show a figure at all.
+    for value in ["false", "12", "100", "88"] {
+        assert!(
+            lines[1].split_whitespace().any(|field| field == value),
+            "{value} missing from {}",
+            lines[1]
+        );
+    }
 }

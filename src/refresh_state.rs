@@ -17,10 +17,33 @@ pub(super) struct RefreshAttempts {
     inner: Mutex<HashMap<SubscriptionKey, AttemptLock>>,
 }
 
+/// How long a refresh token this process just adopted is protected from being
+/// spent again.
+///
+/// A refresh chain is single-use: spending a link yields the next one and
+/// invalidates the one spent. When a rotation succeeds and the very next call
+/// fails for a reason that is not about the credential, refreshing again
+/// destroys a token that was known-good seconds earlier and gains nothing,
+/// because no new information about the credential has arrived (issue #319).
+pub(super) const ROTATION_GRACE_MS: i64 = 5 * 60 * 1_000;
+
 #[derive(Debug)]
 pub(super) struct RefreshAttempt {
     credential: [u8; 32],
     failure: Option<CachedFailure>,
+    /// When this process last obtained this credential by refreshing, if it
+    /// did. `None` means the credential was read from disk rather than minted
+    /// here, so nothing is known about how recently it was rotated.
+    rotated_at_ms: Option<i64>,
+    /// Fingerprint of the credential this process minted, when it did.
+    ///
+    /// Kept beside `credential` rather than replacing it. `credential` must go
+    /// on tracking the *stored* credential, or a second concurrent caller
+    /// holding the same disk token would read the rotation as a change and
+    /// refresh again — but the ladder writes the rotation to the very file the
+    /// next request reads, so without this the router's own work is
+    /// indistinguishable from a re-authentication (issue #319).
+    rotated_to: Option<[u8; 32]>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -48,6 +71,8 @@ impl RefreshAttempts {
                     Arc::new(tokio::sync::Mutex::new(RefreshAttempt {
                         credential: fingerprint,
                         failure: None,
+                        rotated_at_ms: None,
+                        rotated_to: None,
                     }))
                 }),
         )
@@ -61,9 +86,44 @@ impl RefreshAttempt {
         if self.credential == fingerprint {
             return false;
         }
+        // The credential this process just minted, arriving back through the
+        // file the ladder wrote it to. That is not a re-authentication, and
+        // reading it as one cleared the guard seconds after it was armed and
+        // dropped a cache that had just been filled (issue #319).
+        if self.rotated_to == Some(fingerprint) {
+            self.credential = fingerprint;
+            return false;
+        }
         self.credential = fingerprint;
         self.failure = None;
+        // A credential nobody here minted: whatever this process rotated to is
+        // no longer what is being used, so the grace period does not carry over.
+        self.rotated_at_ms = None;
+        self.rotated_to = None;
         true
+    }
+
+    /// Record that this process minted `credential` by refreshing.
+    ///
+    /// The fingerprint moves with it. The recovery ladder writes a rotation
+    /// back to the very file `read_token` reads, so without this the next
+    /// inbound request hands `get_fresh_for` a credential that differs from the
+    /// one this attempt was keyed on, [`Self::reset_if_changed`] reads the
+    /// router's own rotation as a re-authentication, and the guard is cleared
+    /// seconds after it is armed (issue #319).
+    pub(super) fn record_rotation(&mut self, now_ms: i64, credential: &SubscriptionToken) {
+        self.rotated_to = Some(credential_fingerprint(credential));
+        self.rotated_at_ms = Some(now_ms);
+    }
+
+    /// How long ago this process rotated into the current credential.
+    pub(super) const fn rotated_within(&self, now_ms: i64, window_ms: i64) -> Option<i64> {
+        match self.rotated_at_ms {
+            Some(rotated_at_ms) if now_ms.saturating_sub(rotated_at_ms) < window_ms => {
+                Some(now_ms.saturating_sub(rotated_at_ms))
+            }
+            _ => None,
+        }
     }
 
     pub(super) const fn suppresses_attempt(&self, now_ms: i64) -> bool {
@@ -189,5 +249,75 @@ mod tests {
         assert!(state.suppresses_attempt(319_999));
         assert!(!state.suppresses_attempt(320_000));
         drop(state);
+    }
+}
+
+#[cfg(test)]
+mod rotation_tests {
+    use super::*;
+
+    fn token(access: &str, refresh: &str) -> SubscriptionToken {
+        SubscriptionToken {
+            access_token: access.into(),
+            refresh_token: Some(refresh.into()),
+            expires_at_ms: Some(0),
+            account_id: None,
+            resource_url: None,
+        }
+    }
+
+    /// The guard is a window, not a latch: it reports the age while it holds
+    /// and nothing once it lapses (issue #319).
+    #[test]
+    fn the_rotation_window_reports_an_age_and_then_lapses() {
+        let mut attempt = RefreshAttempt {
+            credential: credential_fingerprint(&token("a", "r1")),
+            failure: None,
+            rotated_at_ms: None,
+            rotated_to: None,
+        };
+        assert_eq!(attempt.rotated_within(1_000, ROTATION_GRACE_MS), None);
+
+        attempt.record_rotation(1_000, &token("b", "r2"));
+        assert_eq!(attempt.rotated_within(1_000, ROTATION_GRACE_MS), Some(0));
+        assert_eq!(
+            attempt.rotated_within(61_000, ROTATION_GRACE_MS),
+            Some(60_000),
+            "still inside the five-minute window"
+        );
+        assert_eq!(
+            attempt.rotated_within(1_000 + ROTATION_GRACE_MS, ROTATION_GRACE_MS),
+            None,
+            "the window is half-open, so it lapses exactly on the boundary"
+        );
+    }
+
+    /// The credential this process minted, arriving back through the file the
+    /// ladder wrote it to, is not a re-authentication.
+    #[test]
+    fn a_self_minted_credential_is_not_read_as_a_re_authentication() {
+        let original = token("a", "r1");
+        let rotated = token("b", "r2");
+        let mut attempt = RefreshAttempt {
+            credential: credential_fingerprint(&original),
+            failure: None,
+            rotated_at_ms: None,
+            rotated_to: None,
+        };
+        attempt.record_rotation(1_000, &rotated);
+
+        assert!(
+            !attempt.reset_if_changed(&rotated),
+            "the router's own rotation must not clear its own guard"
+        );
+        assert_eq!(
+            attempt.rotated_within(2_000, ROTATION_GRACE_MS),
+            Some(1_000),
+            "the guard still holds"
+        );
+
+        // A credential nobody here minted *is* a re-authentication.
+        assert!(attempt.reset_if_changed(&token("c", "r3")));
+        assert_eq!(attempt.rotated_within(2_000, ROTATION_GRACE_MS), None);
     }
 }

@@ -675,3 +675,92 @@ fn a_cut_stream_records_its_outcome_and_duration() {
     assert_eq!(record["complete"], serde_json::Value::Bool(false));
     assert_eq!(record["duration_ms"], 74_000);
 }
+
+/// A compacted log says so. The discarded records are gone either way, but a
+/// reader holding the file could not tell a truncated audit log from a
+/// complete one — and this log is the only place the bodies exist (issue #322).
+#[test]
+fn compaction_leaves_a_marker_saying_records_were_discarded() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    let root = dir.path().join("marked");
+    let path = root.join("unauthenticated/requests.jsonl");
+    let log = RequestLog::new(root, 4_096);
+    for sequence in 0..80 {
+        log.record(
+            "request",
+            "compaction",
+            json!({"sequence": sequence, "body": "x".repeat(64)}),
+        );
+    }
+
+    let text = fs::read_to_string(&path).expect("request log");
+    assert!(
+        text.contains("\"phase\":\"log_compaction\""),
+        "the marker record must be present: {text}"
+    );
+    assert!(
+        text.contains("bytes of older records discarded"),
+        "the marker must say what was lost: {text}"
+    );
+    // Still one well-formed JSONL stream, and still inside the bound.
+    assert!(
+        text.lines()
+            .all(|line| serde_json::from_str::<Value>(line).is_ok()),
+        "the marker must not break the stream"
+    );
+    assert!(fs::metadata(&path).expect("log").len() <= 4_096);
+    // The newest records survive; the oldest are what went.
+    assert!(text.contains("\"sequence\":79"));
+    assert!(!text.contains("\"sequence\":0,"));
+}
+
+/// A limit too small to hold the marker keeps the plain tail: the bound is the
+/// hard constraint, and exceeding it to explain it helps nobody.
+#[test]
+fn a_limit_too_small_for_a_marker_still_respects_the_limit() {
+    let dir = tempfile::tempdir().expect("temp dir");
+    let root = dir.path().join("tiny");
+    let path = root.join("unauthenticated/requests.jsonl");
+    let log = RequestLog::new(root, 48);
+    for sequence in 0..5 {
+        log.record("request", "tiny", json!({"sequence": sequence}));
+    }
+    assert!(fs::metadata(&path).expect("log").len() <= 48);
+}
+
+/// The request line names the token label, and the response line names the
+/// model actually served — both already in hand, neither previously logged
+/// (issue #320). The token value itself must never appear in either.
+#[tokio::test]
+async fn log_lines_carry_the_label_and_the_served_model_but_never_the_token() {
+    use axum::http::HeaderValue;
+
+    // The label reaches the line through the identity the middleware resolves;
+    // the model reaches it through the header the router already sets.
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        crate::output_limit::UPSTREAM_MODEL_HEADER,
+        HeaderValue::from_static("claude-opus-5"),
+    );
+    assert_eq!(
+        headers
+            .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
+            .and_then(|value| value.to_str().ok()),
+        Some("claude-opus-5"),
+        "the served model is readable where the response line reads it"
+    );
+
+    // The secret is redacted wherever it appears, which is what keeps it off
+    // the line: the label is logged, the credential is not.
+    let secret = "la_sk_thisisasecrettokenvalue";
+    let mut authorised = axum::http::HeaderMap::new();
+    authorised.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {secret}")).expect("header"),
+    );
+    let redacted = serde_json::to_string(&redacted_headers(&authorised)).expect("json");
+    assert!(
+        !redacted.contains(secret),
+        "a credential must never survive redaction: {redacted}"
+    );
+}

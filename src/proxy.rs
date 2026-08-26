@@ -142,7 +142,16 @@ fn is_operator_subscription_header(name: &str) -> bool {
         || name.starts_with("x-codex-entitlement-")
 }
 
-/// Health check endpoint.
+/// Liveness endpoint: is this process up and serving?
+///
+/// Deliberately independent of subscription health. `/health` is wired to both
+/// the liveness *and* readiness probes in `deploy/k8s/router.yaml`, so failing
+/// it for a revoked credential would make Kubernetes restart a container that
+/// is running perfectly — and a restart cannot mint a new OAuth token, so the
+/// deployment would crash-loop instead of serving the providers that still
+/// work. Subscription health is reported by
+/// [`crate::subscription_health::subscription_health`] and by the
+/// `link_assistant_subscription_healthy` gauge on `/metrics` (issue #318).
 #[allow(clippy::unused_async)]
 pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, "ok")

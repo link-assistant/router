@@ -228,7 +228,7 @@ async fn import_provider(
     // itself as a self-import (issue #278). The vendor's conventional home is
     // the thing an operator means by "the login this machine already has".
     let source_home = if source.trim().is_empty() {
-        std::path::PathBuf::from(&user_home).join(provider.home_subdir())
+        provider.conventional_home(&user_home)
     } else {
         std::path::PathBuf::from(source)
     };

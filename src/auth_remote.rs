@@ -507,23 +507,26 @@ fn credential_report(body: &serde_json::Value) -> Vec<String> {
         accounts
     };
     if !entries.is_empty() {
-        return entries
-            .iter()
-            .map(|entry| {
-                let field = |key: &str| {
-                    entry
-                        .get(key)
-                        .and_then(serde_json::Value::as_str)
-                        .unwrap_or("-")
-                };
-                format!(
-                    "{:<16} {:<12} {}",
-                    field("name"),
-                    field("credential"),
-                    field("home")
-                )
+        let mut lines = vec![crate::accounts_cli::header()];
+        lines.extend(entries.iter().map(|entry| {
+            let text = |key: &str| {
+                entry
+                    .get(key)
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("-")
+            };
+            let number = |key: &str| entry.get(key).and_then(serde_json::Value::as_u64);
+            crate::accounts_cli::row(&crate::accounts_cli::AccountRow {
+                name: text("name"),
+                healthy: entry.get("healthy").and_then(serde_json::Value::as_bool),
+                credential: text("credential"),
+                used: number("used"),
+                limit: number("request_limit"),
+                remaining: number("remaining_requests"),
+                home: text("home").to_string(),
             })
-            .collect();
+        }));
+        return lines;
     }
     // The server explains an empty array when it can; that explanation is the
     // answer, and discarding it is what produced the misleading sentence.

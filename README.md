@@ -35,9 +35,9 @@ containment controls local to the operator.
 - **Multi-account routing** — pool any number of Claude, Codex, Gemini, or Qwen subscriptions; session affinity, strict token pins, round-robin / fill-first / least-used selection, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
-- **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`
+- **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`, subscription health at `/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
-- **First-class CLI** — `serve`, token/provider/account management, `clients list|setup|show|remove|doctor`, and deployment diagnostics
+- **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
 
@@ -348,7 +348,8 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/health` | GET | Health check, returns `ok` |
+| `/health` | GET | Liveness check, returns `ok` — independent of subscription health, because it drives both Kubernetes probes |
+| `/health/subscriptions` | GET | Whether every configured subscription can serve: `200` when it can, `503` naming each degraded provider and why |
 | `/api/tokens` | POST | (admin) Issue a new custom token |
 | `/api/tokens/list` | GET | (admin) List every persisted token |
 | `/api/tokens/revoke` | POST | (admin) Revoke a token by id |
@@ -562,12 +563,15 @@ method-specific verifier is configured.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/metrics` | GET | Public Prometheus text-exposition aggregate counters |
+| `/metrics` | GET | Public Prometheus text-exposition aggregate counters, plus a `link_assistant_subscription_healthy{provider="…"}` gauge per configured subscription |
 | `/v1/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
 | `/v1/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 
 `/metrics` deliberately contains no token ids, labels, or account names because
-it is available without authentication. Administrators can inspect per-token
+it is available without authentication. The `link_assistant_subscription_healthy`
+gauge is labelled by vendor name only, never by account, and answers `0` for a
+subscription that is configured but cannot serve — the signal that turns a
+silent multi-hour outage into an alert. Administrators can inspect per-token
 usage in the `/v1/usage` `token_calls` JSON map. Set `--audit-log` for a durable
 JSONL trail of the same events. See
 [docs/use-cases/audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md).
@@ -654,7 +658,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
-| `--token-secret` / `TOKEN_SECRET` | — | Yes | Secret key for signing/validating JWT tokens |
+| `--token-secret` / `TOKEN_SECRET` | — | To serve, sign or encrypt | Secret key for signing/validating JWT tokens and encrypting stored provider keys. A command that only reads local files or acts on another deployment does not need one |
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
@@ -1036,7 +1040,7 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 | `--routing-mode` / `ROUTING_MODE` | `direct` | `direct` (OAuth substitution), `cli` (Claude CLI subprocess), or `hybrid` |
 | `--storage-policy` / `STORAGE_POLICY` | `both` | Persistent token store: `memory`, `text` (Lino), `binary`, or `both` |
 | `--data-dir` / `DATA_DIR` | platform-specific | Where `tokens.lino` / `tokens.bin` live |
-| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | `claude` | Local Claude CLI binary used by the `cli` backend, and by the last rung of credential recovery |
+| `--claude-cli-bin` / `CLAUDE_CLI_BIN` | (unset) | Local Claude CLI binary used by the `cli` backend, and by the last rung of credential recovery. Unset leaves that rung inert, so the router never spends the subscription on its own behalf |
 | `--codex-cli-bin` / `CODEX_CLI_BIN` | (unset) | Local Codex CLI binary used by the last rung of credential recovery |
 | `ROUTER_VENDOR_REFRESH_ARGS` | per provider | Override the recovery probe for every provider, whitespace separated |
 | `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `_CODEX` | per provider | Override the recovery probe for one provider; wins over the global form |
@@ -1104,13 +1108,16 @@ working; the two are the same program and either may be used.
 # Default: starts the HTTP server (same as `serve`).
 router
 
-# Issue / list / revoke / show tokens locally (no HTTP needed):
+# Issue / list / revoke / show tokens. These act on the router this machine is
+# pointed at: local by default, or a selected deployment over its admin API.
+# `--local` acts here, `--server <URL>` names one.
 router tokens issue --ttl-hours 168 --label alice
 # ...optionally cap how many upstream requests the token may make:
 router tokens issue --ttl-hours 168 --label alice --max-requests 500
 # ...cap actual input + output tokens and bursts as well:
 router tokens issue --label alice --max-tokens 100000 --rate-limit-per-minute 10
 router tokens list
+router tokens list --json
 router tokens revoke <id>
 router tokens expire <id>
 router tokens rotate <id> --ttl-hours 168
@@ -1121,23 +1128,25 @@ router accounts list
 
 # Manage OpenAI-compatible upstream providers:
 router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
+# ...the vendor key never has to travel through argv:
+pass show litellm/key | router providers add --name litellm --base-url http://litellm:4000/v1 --api-key-stdin
 router providers import providers.lenv
 router providers list
 
-# Safely configure local agentic CLIs against this router:
+# Point a local agentic CLI at this router permanently:
+router configure claude
+router configure --all
+router configure --undo claude
+
+# Inspect and manage what is configured (read-only commands need no secret):
 router clients list
-router clients setup codex
-router clients setup claude --token la_sk_...
-router clients setup opencode
-router clients setup qwen
-router clients setup agent
-router clients setup grok
 router clients show codex
 router clients doctor codex
 router clients remove codex
 
-# Print resolved configuration + credential / store probes:
-router doctor
+# Print resolved configuration + credential / store probes. Reports on the
+# machine it runs on, so with another router selected it says so and names it.
+router doctor --local
 ```
 
 ### Logging

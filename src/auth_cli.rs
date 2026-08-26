@@ -7,27 +7,7 @@ use link_assistant_router::config::Config;
 use link_assistant_router::login::{LoginManager, LoginStatus};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 
-/// Let `auth` run without `TOKEN_SECRET`.
-///
-/// The auth commands neither issue nor validate client tokens, so demanding an
-/// unrelated secret only obstructs the operator recovering a subscription — the
-/// moment the router is least usable (issue #205). Every other command still
-/// requires a real secret, so this substitutes a placeholder for `auth` alone.
-#[must_use]
-pub fn relax_token_secret_for_auth(
-    mut cli: link_assistant_router::cli::Cli,
-) -> link_assistant_router::cli::Cli {
-    if matches!(
-        cli.command.as_ref(),
-        Some(link_assistant_router::cli::Command::Auth { .. })
-    ) && cli.token_secret.as_deref().is_none_or(str::is_empty)
-    {
-        cli.token_secret = Some("unused-by-auth".to_string());
-    }
-    cli
-}
-
-pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
+pub async fn run(config: &Config, op: &AuthOp, names_local_state: bool) -> ExitCode {
     // Withdrawal is local by construction: it removes files this machine holds,
     // and there is no remote verb for it. Handled before the server dispatch so
     // `auth claude --clear` with a server selected cannot fall through to a
@@ -47,7 +27,7 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
     // `auth` follows the selected server the way `with` does. Writing a local
     // credential while a server is selected made the obvious `server use` →
     // `auth` → `with` sequence silently authorize the wrong router (#246).
-    match remote_target(op).await {
+    match remote_target(op, names_local_state).await {
         Ok(Some(server)) => return run_remote(config, &server, op).await,
         Ok(None) => {}
         Err(error) => {
@@ -81,8 +61,13 @@ pub async fn run(config: &Config, op: &AuthOp) -> ExitCode {
             ..
         } => run_gh(config, from_gh_config.as_deref(), *token_stdin, *status),
         AuthOp::Status { .. } => status(config).await,
-        // `run_import` above returns for every `Import`, so reaching here means
-        // clap accepted a shape that dispatch does not know about.
+        // `run_clear` and `run_import` above return for every `Clear` and
+        // `Import`, so reaching here means clap accepted a shape that dispatch
+        // does not know about.
+        AuthOp::Clear { .. } => {
+            eprintln!("error: nothing to clear; name a provider or pass --all");
+            ExitCode::from(2)
+        }
         AuthOp::Import { .. } => {
             eprintln!("error: nothing to import; name a provider or pass --all");
             ExitCode::from(2)
@@ -164,23 +149,84 @@ fn run_gh(
 /// than one that never ran: the operator believes the deployment holds no
 /// identity when it still does.
 fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Option<ExitCode> {
-    let providers: &[SubscriptionProvider] = match op {
-        AuthOp::Claude { clear: true, .. } => &[SubscriptionProvider::Claude],
-        AuthOp::Codex { clear: true, .. } => &[SubscriptionProvider::Codex],
-        AuthOp::Gh { clear: true, .. } => &[],
+    use link_assistant_router::cli::ImportProvider;
+
+    let (providers, clears_github): (&[SubscriptionProvider], bool) = match op {
+        AuthOp::Claude { clear: true, .. }
+        | AuthOp::Clear {
+            provider: Some(ImportProvider::Claude),
+            ..
+        } => (&[SubscriptionProvider::Claude], false),
+        AuthOp::Codex { clear: true, .. }
+        | AuthOp::Clear {
+            provider: Some(ImportProvider::Codex),
+            ..
+        } => (&[SubscriptionProvider::Codex], false),
+        AuthOp::Clear {
+            provider: Some(ImportProvider::Gemini),
+            ..
+        } => (&[SubscriptionProvider::Gemini], false),
+        AuthOp::Clear {
+            provider: Some(ImportProvider::Qwen),
+            ..
+        } => (&[SubscriptionProvider::Qwen], false),
+        AuthOp::Gh { clear: true, .. }
+        | AuthOp::Clear {
+            provider: Some(ImportProvider::Gh),
+            ..
+        } => (&[], true),
         AuthOp::Status {
             clear_all: true, ..
-        } => &SubscriptionProvider::ALL,
+        }
+        | AuthOp::Clear { all: true, .. } => (&SubscriptionProvider::ALL, true),
         _ => return None,
     };
-    let clears_github = matches!(
-        op,
-        AuthOp::Gh { clear: true, .. }
-            | AuthOp::Status {
-                clear_all: true,
-                ..
-            }
-    );
+
+    // Withdrawal removes files on the machine it runs on, and no router
+    // accepts one over HTTP. Naming a server was parsed, accepted and thrown
+    // away, so the report read exactly as it would have if the named
+    // deployment had been cleared (issue #305). The #283/#291 refusal shape
+    // sat on the path this short-circuits past, so it could never fire.
+    let target = clear_target(op);
+    // The selection counts, not only the flag. Every other command on this
+    // path resolves the router this machine is pointed at; checking `--server`
+    // alone meant `server use https://prod` then `auth clear --all` withdrew
+    // five local credentials while the operator, the persisted selection and
+    // this command's own help all said `prod` (issue #305). `--local` is the
+    // way to say "this machine" out loud, so it opts out.
+    let selected = if target.local {
+        None
+    } else {
+        target
+            .server
+            .clone()
+            .or_else(link_assistant_router::managed_server::selected_server)
+    };
+    if let Some(server) = selected.as_deref() {
+        eprintln!(
+            "error: clearing a credential removes files on the machine it runs on, so it cannot \
+             clear {server} from here."
+        );
+        eprintln!(
+            "note: run the same command on that deployment; `router auth status --server {server}` \
+             reports its credentials from here."
+        );
+        eprintln!("note: pass --local to clear this machine instead.");
+        return Some(ExitCode::from(1));
+    }
+
+    // More than one credential in one call, and an OAuth login cannot be put
+    // back without a browser. `--clear-all` made that the widest blast radius
+    // in the tool and asked nothing.
+    let affected = providers.len() + usize::from(clears_github);
+    if affected > 1 && !clear_confirmed(op) {
+        eprintln!(
+            "error: this removes {affected} credentials from this machine and an OAuth login \
+             cannot be restored without a browser."
+        );
+        eprintln!("note: pass --yes to proceed, or name one provider: `router auth clear claude`.");
+        return Some(ExitCode::from(1));
+    }
 
     let mut failed = false;
     for provider in providers {
@@ -277,18 +323,53 @@ fn clear_github(config: &link_assistant_router::config::Config) -> Result<(), St
 }
 
 /// The router this `auth` invocation acts on, or `None` for the local one.
+/// The target a withdrawal names, whichever spelling asked for it.
+const fn clear_target(op: &AuthOp) -> &link_assistant_router::cli::AuthTarget {
+    match op {
+        AuthOp::Claude { target, .. }
+        | AuthOp::Codex { target, .. }
+        | AuthOp::Gh { target, .. }
+        | AuthOp::Status { target, .. }
+        | AuthOp::Clear { target, .. }
+        | AuthOp::Import { target, .. } => target,
+    }
+}
+
+/// Whether the operator confirmed a multi-credential removal.
+const fn clear_confirmed(op: &AuthOp) -> bool {
+    match op {
+        AuthOp::Clear { yes, .. } | AuthOp::Status { yes, .. } => *yes,
+        _ => false,
+    }
+}
+
 async fn remote_target(
     op: &AuthOp,
+    names_local_state: bool,
 ) -> Result<Option<link_assistant_router::managed_server::ResolvedServer>, String> {
     let target = match op {
         AuthOp::Claude { target, .. }
         | AuthOp::Codex { target, .. }
         | AuthOp::Gh { target, .. }
+        | AuthOp::Clear { target, .. }
         | AuthOp::Status { target, .. } => target,
         // Never reached: `run_import` returns for every `Import`, either having
         // performed a local import or having refused a remote one (#291).
         AuthOp::Import { .. } => return Ok(None),
     };
+    // `--claude-code-home` and `--data-dir` name *this machine's* state, so a
+    // router *discovered* here must not answer for them: that reports about a
+    // different deployment than the one the operator pointed at (issue #294).
+    //
+    // Only for the verb that reports. `auth claude`/`codex`/`gh` *store* a
+    // credential, and letting a local-state flag suppress the refusal would
+    // leave the workstation holding a token aimed at a deployment — the leak
+    // issue #268 exists to prevent, and one an environment-set `DATA_DIR`
+    // would trigger without anybody passing a flag.
+    let reports_rather_than_stores = matches!(op, AuthOp::Status { .. });
+    if names_local_state && reports_rather_than_stores && target.server.is_none() {
+        return Ok(None);
+    }
     link_assistant_router::auth_remote::target_for(
         target.local,
         target.managed,
@@ -343,7 +424,8 @@ async fn run_remote(
             }
         }
         // Never reached: `remote_target` keeps import on the local path.
-        AuthOp::Import { .. } => ExitCode::from(1),
+        // Unreachable: `run_clear` and `run_import` return before dispatch.
+        AuthOp::Clear { .. } | AuthOp::Import { .. } => ExitCode::from(1),
     }
 }
 
@@ -707,13 +789,14 @@ mod tests {
     }
 
     /// Recovering a subscription must not require an unrelated secret
-    /// (issue #205); every other command still does.
+    /// (issue #205). The rule is now stated once, for every command that does
+    /// not serve (issues #300, #308), so this pins `auth` against it.
     #[test]
     fn auth_runs_without_a_token_secret_but_other_commands_still_need_one() {
         use link_assistant_router::cli::Cli;
         use lino_arguments::Parser as _;
 
-        let relaxed = relax_token_secret_for_auth(
+        let relaxed = link_assistant_router::remote_command::relax_token_secret_for_cli(
             Cli::try_parse_from(["bin", "auth", "status"]).expect("parses auth"),
         );
         assert!(
@@ -722,14 +805,14 @@ mod tests {
         );
 
         // A secret the operator did supply is never overwritten.
-        let supplied = relax_token_secret_for_auth(
+        let supplied = link_assistant_router::remote_command::relax_token_secret_for_cli(
             Cli::try_parse_from(["bin", "--token-secret", "real-secret", "auth", "status"])
                 .expect("parses auth"),
         );
         assert_eq!(supplied.token_secret.as_deref(), Some("real-secret"));
 
         // Serving still requires a real secret.
-        let serving = relax_token_secret_for_auth(
+        let serving = link_assistant_router::remote_command::relax_token_secret_for_cli(
             Cli::try_parse_from(["bin", "serve"]).expect("parses serve"),
         );
         assert!(

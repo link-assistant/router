@@ -217,11 +217,101 @@ fn usage_reflects_the_invoked_name() {
             "Usage: link-assistant-router",
         ),
     ] {
-        let out = Command::new(binary)
-            .arg("--help")
-            .output()
-            .unwrap_or_else(|error| panic!("{binary} --help: {error}"));
-        let text = String::from_utf8_lossy(&out.stdout);
-        assert!(text.contains(expected), "{binary} usage:\n{text}");
+        // Every page, not only the top level. Fourteen subcommands hardcoded
+        // `router` in an `override_usage` string, so the name in the usage
+        // line depended on which page you were reading — under the other
+        // installed name it named a command the reader does not have
+        // (issue #315).
+        for page in [
+            vec!["--help"],
+            vec!["configure", "--help"],
+            vec!["clients", "setup", "--help"],
+            vec!["clients", "show", "--help"],
+            vec!["clients", "remove", "--help"],
+            vec!["clients", "doctor", "--help"],
+            vec!["tokens", "rotate", "--help"],
+            vec!["tokens", "revoke", "--help"],
+            vec!["tokens", "show", "--help"],
+            vec!["providers", "add", "--help"],
+            vec!["providers", "show", "--help"],
+            vec!["providers", "remove", "--help"],
+            vec!["providers", "import", "--help"],
+            vec!["auth", "import", "--help"],
+            vec!["auth", "clear", "--help"],
+        ] {
+            let out = Command::new(binary)
+                .args(&page)
+                .output()
+                .unwrap_or_else(|error| panic!("{binary} {page:?}: {error}"));
+            let text = String::from_utf8_lossy(&out.stdout);
+            assert!(
+                text.contains(expected),
+                "{binary} {page:?} must name the invoked binary:\n{text}"
+            );
+        }
     }
+}
+
+/// One verb per operation, with the other spellings kept as aliases, and
+/// `--json` accepted by every listing and every `show` (issue #314).
+///
+/// Asserted against the parser rather than a doc, because the defect was that
+/// each family had drifted into its own vocabulary and nothing noticed.
+#[test]
+fn the_cli_vocabulary_is_uniform_across_families() {
+    for spelling in [
+        &["tokens", "issue"][..],
+        &["tokens", "create"][..],
+        &["tokens", "add"][..],
+        &["tokens", "revoke"][..],
+        &["tokens", "remove"][..],
+        &["tokens", "delete"][..],
+        &["providers", "add"][..],
+        &["providers", "create"][..],
+        &["providers", "remove"][..],
+        &["providers", "delete"][..],
+        &["clients", "setup"][..],
+        &["clients", "create"][..],
+        &["clients", "remove"][..],
+        &["clients", "delete"][..],
+    ] {
+        let mut args = spelling.to_vec();
+        args.push("--help");
+        let result = output(&mut router(&args));
+        assert!(
+            result.status.success(),
+            "`{}` must be accepted: {}",
+            spelling.join(" "),
+            String::from_utf8_lossy(&result.stderr)
+        );
+    }
+
+    // `--json` on every listing and every `show`, so a script never has to
+    // know which verb of a family takes it.
+    for family in [
+        &["tokens", "list"][..],
+        &["tokens", "show"][..],
+        &["accounts", "list"][..],
+        &["providers", "list"][..],
+        &["providers", "show"][..],
+        &["clients", "list"][..],
+        &["clients", "show"][..],
+    ] {
+        let mut args = family.to_vec();
+        args.push("--help");
+        let text = String::from_utf8_lossy(&output(&mut router(&args)).stdout).into_owned();
+        assert!(
+            text.contains("--json"),
+            "`{}` must accept --json:\n{text}",
+            family.join(" ")
+        );
+    }
+
+    // `--token` means a credential; the log-directory selector is `--token-id`.
+    let logs = String::from_utf8_lossy(&output(&mut router(&["logs", "show", "--help"])).stdout)
+        .into_owned();
+    assert!(
+        logs.contains("--token-id"),
+        "the log selector must not be spelled --token:\n{logs}"
+    );
 }

@@ -208,6 +208,34 @@ pub fn render_prometheus(m: &Metrics) -> String {
     out
 }
 
+/// Render the per-subscription health gauge in Prometheus exposition format.
+///
+/// This is the signal a monitor actually wants and the one that did not exist:
+/// a revoked subscription produced no counter, no status change and no alert,
+/// leaving a container log as the only witness (issue #318). Provider names are
+/// vendor names, never account identifiers, so this carries nothing the rest of
+/// `/metrics` does not already expose.
+#[must_use]
+pub fn render_subscription_health(providers: &[(&str, bool)]) -> String {
+    if providers.is_empty() {
+        return String::new();
+    }
+    let mut out = String::from(
+        "# HELP link_assistant_subscription_healthy Whether a configured subscription can serve \
+         requests (1) or not (0).\n# TYPE link_assistant_subscription_healthy gauge\n",
+    );
+    let mut sorted = providers.to_vec();
+    sorted.sort_unstable_by_key(|(name, _)| *name);
+    for (provider, healthy) in sorted {
+        let _ = writeln!(
+            out,
+            "link_assistant_subscription_healthy{{provider=\"{provider}\"}} {}",
+            u8::from(healthy)
+        );
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -291,5 +319,28 @@ mod tests {
         assert_eq!(snap.requests_total, 1);
         assert_eq!(snap.openai_responses, 1);
         assert_eq!(snap.errors_total, 0);
+    }
+
+    /// A deployment with no subscription configured adds no series at all,
+    /// rather than an empty `# TYPE` header a scraper has to skip.
+    #[test]
+    fn no_configured_subscription_renders_nothing() {
+        assert!(render_subscription_health(&[]).is_empty());
+    }
+
+    /// One gauge per subscription, in a stable order, carrying the vendor name
+    /// and nothing else (issue #318).
+    #[test]
+    fn the_gauge_is_typed_sorted_and_carries_only_the_vendor_name() {
+        let rendered = render_subscription_health(&[("codex", true), ("claude", false)]);
+        assert!(rendered.contains("# TYPE link_assistant_subscription_healthy gauge"));
+        assert!(rendered.contains("# HELP link_assistant_subscription_healthy"));
+        let claude = rendered
+            .find("link_assistant_subscription_healthy{provider=\"claude\"} 0")
+            .expect("a revoked subscription reads 0");
+        let codex = rendered
+            .find("link_assistant_subscription_healthy{provider=\"codex\"} 1")
+            .expect("a working subscription reads 1");
+        assert!(claude < codex, "series are sorted, so scrapes diff cleanly");
     }
 }

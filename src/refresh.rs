@@ -38,7 +38,7 @@ mod refresh_recovery;
 mod refresh_registry;
 pub use refresh_journal::direct_exchange_shape;
 use refresh_journal::{journal_request, journal_response};
-use refresh_recovery::{Exchange, RecoveryMode, exchange_with_recovery};
+use refresh_recovery::{Exchange, RecoveryMode, Rejected, exchange_with_recovery};
 
 use std::sync::Arc;
 
@@ -111,6 +111,14 @@ pub const CLAUDE_TOKEN_URL: &str = "https://platform.claude.com/v1/oauth/token";
 /// usable life and removes a whole class of mid-flight expiries; five minutes
 /// matches what the vendor clients themselves use (issue #239).
 const REFRESH_SKEW_MS: i64 = 5 * 60_000;
+
+/// How recently this process must have rotated a credential for a terminal
+/// rejection of it to be attributed here rather than to another holder.
+///
+/// Wider than the grace period: the grace period decides whether to spend a
+/// token, while this only decides how the death is explained, and an
+/// explanation that is a few minutes stale is still the right one (issue #319).
+const ROTATION_ATTRIBUTION_MS: i64 = 60 * 60_000;
 
 /// Refresh parameters for a provider. Every subscription provider now has a
 /// public OAuth client, so this is total.
@@ -502,6 +510,13 @@ pub struct TokenCache {
     evidence: Mutex<HashMap<SubscriptionProvider, CredentialEvidence>>,
     /// Latest refresh failure per provider, cleared by a successful refresh.
     refresh_errors: Mutex<HashMap<SubscriptionProvider, String>>,
+    /// Providers whose terminal failure has already been announced.
+    ///
+    /// The transition healthy -> permanently unauthenticated is one event and
+    /// deserves one loud record. Re-deriving it every five minutes and logging
+    /// it at full volume buried the line that mattered under 146 restatements
+    /// of its consequence (issue #321).
+    announced_terminal: Mutex<std::collections::HashSet<SubscriptionProvider>>,
     /// How the last successful refresh was obtained, per provider.
     ///
     /// These OAuth endpoints are undocumented; when a credential recovers only
@@ -633,6 +648,19 @@ impl TokenCache {
         {
             return Some(cached);
         }
+        // A credential this process rotated into moments ago is not evidence
+        // of anything yet. Refreshing it spends the only good link of a
+        // single-use chain against a verdict that was never about the token
+        // (issue #319).
+        if let Some(age_ms) = attempt.rotated_within(now_ms, refresh_state::ROTATION_GRACE_MS) {
+            tracing::warn!(
+                "not refreshing the {provider} credential: this process rotated into it \
+                 {}s ago and a refresh chain is single-use, so spending it again would \
+                 destroy a token that was known good; retrying the existing one",
+                age_ms / 1_000
+            );
+            return None;
+        }
         let base =
             self.unsuppressed_base(&mut attempt, provider, account, rejected.clone(), now_ms)?;
         let exchange = Exchange {
@@ -644,18 +672,41 @@ impl TokenCache {
         };
         match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
-                self.accept(&mut attempt, provider, account, &fresh);
+                self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
                 // A refresh that returned the same access token has not
                 // recovered anything; replaying would just repeat the 401.
                 (fresh.access_token != rejected.access_token).then_some(fresh)
             }
             Err(rejection) => {
-                tracing::warn!(
-                    "refresh after a rejected {provider} token failed: {}",
-                    rejection.message
-                );
+                // When this process performed the previous rotation, say so.
+                // "revoked or already spent elsewhere" sends the operator
+                // looking for an external holder that may not exist, while the
+                // fatal spend is recorded right here (issue #319).
+                let message = attempt
+                    .rotated_within(now_ms, ROTATION_ATTRIBUTION_MS)
+                    .map_or_else(
+                        || rejection.message.clone(),
+                        |age_ms| {
+                            format!(
+                                "{} — note: this process rotated into that refresh token {}s ago, \
+                             so it was spent here rather than by another holder",
+                                rejection.message,
+                                age_ms / 1_000
+                            )
+                        },
+                    );
+                let rejection = Rejected {
+                    message,
+                    ..rejection
+                };
                 self.record_refresh_error(provider, &rejection.message);
                 if rejection.error.is_invalid_grant() {
+                    // healthy -> permanently unauthenticated is a state
+                    // transition that needs a human in a browser and will not
+                    // self-heal. Logged at WARN it sat below every sane
+                    // `level>=ERROR` pipeline, so a twelve-hour outage produced
+                    // a clean log (issue #321).
+                    self.log_terminal_once(provider, &rejection.message);
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                     // Per account as well as per provider: the provider-wide
@@ -663,6 +714,10 @@ impl TokenCache {
                     // and `accounts list` reports one row each (issue #245).
                     self.record_refresh_refused(provider, account, &base);
                 } else {
+                    tracing::warn!(
+                        "refresh after a rejected {provider} token failed: {}",
+                        rejection.message
+                    );
                     attempt
                         .record_transient_failure_after(now_ms, rejection.error.retry_after_ms());
                 }
@@ -709,7 +764,7 @@ impl TokenCache {
         if !base.is_expired(now_ms.saturating_add(REFRESH_SKEW_MS)) {
             // The store was already ahead of the token we were handed; there is
             // nothing to exchange.
-            self.accept(&mut attempt, provider, account, &base);
+            self.accept(&mut attempt, provider, account, &base, None);
             return base;
         }
         let exchange = Exchange {
@@ -721,20 +776,21 @@ impl TokenCache {
         };
         match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
-                self.accept(&mut attempt, provider, account, &fresh);
+                self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
                 fresh
             }
             Err(rejection) => {
-                tracing::warn!(
-                    "subscription token refresh for {provider} failed: {}",
-                    rejection.message
-                );
                 self.record_refresh_error(provider, &rejection.message);
                 if rejection.error.is_invalid_grant() {
+                    self.log_terminal_once(provider, &rejection.message);
                     attempt.record_terminal_failure();
                     self.record_credential_rejected(provider);
                     self.record_refresh_refused(provider, account, &base);
                 } else {
+                    tracing::warn!(
+                        "subscription token refresh for {provider} failed: {}",
+                        rejection.message
+                    );
                     // Everything else is retryable. In particular a 429 must
                     // not record rejection evidence: the credential is fine,
                     // and marking it rejected would drop the provider out of
@@ -818,13 +874,22 @@ impl TokenCache {
         provider: SubscriptionProvider,
         account: &str,
         token: &SubscriptionToken,
+        rotated_at_ms: Option<i64>,
     ) {
+        // Remember that *this* process minted the credential, and when. A
+        // single-use chain must not be spent again moments later on evidence
+        // that is not about the credential, and a chain that does die deserves
+        // to be reported as spent here rather than blamed on another holder
+        // (issue #319). `None` means the credential was adopted rather than
+        // exchanged, so no link was spent and no grace period is owed.
+        if let Some(now_ms) = rotated_at_ms {
+            // The fingerprint moves to the token we just minted, because the
+            // ladder has already written it to the file the next caller reads.
+            // Leaving it behind is what let a rotation this process performed
+            // look like a re-authentication (issue #319).
+            attempt.record_rotation(now_ms, token);
+        }
         self.store_for(provider, account, token.clone());
-        // The attempt fingerprint tracks the *stored* credential, not the
-        // access token we just minted from it: overwriting it here would make
-        // the next caller — handed the same credential from disk — believe the
-        // subscription had been re-authenticated and drop the cache it just
-        // filled.
         attempt.record_success();
         self.record_credential_working(provider);
         if let Ok(mut guard) = self.refresh_errors.lock() {
@@ -852,107 +917,10 @@ impl TokenCache {
     /// Record that an upstream call succeeded with `provider`'s credential.
     pub fn record_credential_working(&self, provider: SubscriptionProvider) {
         self.record_evidence(provider, CredentialEvidence::Working);
+        // A provider that is serving again may die again, and that death is a
+        // new event that must be announced (issue #321).
+        self.clear_terminal_announcement(provider);
     }
-
-    /// Record what an upstream status code says about `provider`'s credential.
-    ///
-    /// This is the evidence [`crate::model_routing::healthy_providers`] trusts
-    /// over `expiresAt`: a served request proves the credential works even when
-    /// its timestamp says otherwise, and only a 401/403 proves it does not.
-    /// Every other status describes the request, not the credential.
-    pub fn record_status(&self, provider: SubscriptionProvider, status: u16) {
-        if status == 401 || status == 403 {
-            self.record_credential_rejected(provider);
-        } else if (200..300).contains(&status) {
-            self.record_credential_working(provider);
-        }
-    }
-
-    /// Record that an upstream rejected `provider`'s credential (401/403).
-    pub fn record_credential_rejected(&self, provider: SubscriptionProvider) {
-        self.record_evidence(provider, CredentialEvidence::Rejected);
-    }
-
-    /// Record that a refresh for `account` was refused for `credential` itself.
-    ///
-    /// The evidence recorded alongside this is per *provider*, which is right
-    /// for routing a vendor away but wrong for reporting one account of a pool:
-    /// several accounts share a provider, and one revoked chain must not make
-    /// its healthy neighbours look revoked too (issue #245).
-    pub fn record_refresh_refused(
-        &self,
-        provider: SubscriptionProvider,
-        account: &str,
-        credential: &SubscriptionToken,
-    ) {
-        self.rejections.record(provider, account, credential);
-    }
-
-    /// Persist refusals in `data_dir`, so a later process can read them.
-    pub fn persist_rejections_in(&self, data_dir: &std::path::Path) {
-        self.rejections.persist_in(data_dir);
-    }
-
-    /// Whether a refresh has already been refused for exactly this credential.
-    ///
-    /// `false` once the file on disk differs from the one that was refused: a
-    /// rejection is a fact about one chain link, not about the account, so a
-    /// credential rotated forward by another holder is reported as recoverable
-    /// again with no restart (issue #239).
-    #[must_use]
-    pub fn refresh_was_refused(
-        &self,
-        provider: SubscriptionProvider,
-        account: &str,
-        credential: &SubscriptionToken,
-    ) -> bool {
-        self.rejections.was_refused(provider, account, credential)
-    }
-
-    /// The most recent upstream verdict for `provider`, if any call was made.
-    #[must_use]
-    pub fn evidence(&self, provider: SubscriptionProvider) -> Option<CredentialEvidence> {
-        self.evidence
-            .lock()
-            .ok()
-            .and_then(|guard| guard.get(&provider).copied())
-    }
-
-    /// The most recent refresh failure for `provider`, if the last attempt failed.
-    #[must_use]
-    pub fn last_refresh_error(&self, provider: SubscriptionProvider) -> Option<String> {
-        self.refresh_errors
-            .lock()
-            .ok()
-            .and_then(|guard| guard.get(&provider).cloned())
-    }
-
-    fn record_evidence(&self, provider: SubscriptionProvider, evidence: CredentialEvidence) {
-        if let Ok(mut guard) = self.evidence.lock() {
-            guard.insert(provider, evidence);
-        }
-    }
-
-    fn record_refresh_error(&self, provider: SubscriptionProvider, error: &str) {
-        if let Ok(mut guard) = self.refresh_errors.lock() {
-            guard.insert(provider, error.to_string());
-        }
-    }
-
-    /// Seed the cache with an already-refreshed token for `provider`/`account`.
-    ///
-    /// Used by callers that obtained a token outside [`Self::get_fresh_for`]
-    /// (and by tests) so a subsequent lookup reuses it instead of exchanging
-    /// the refresh token again.
-    pub fn store_refreshed(
-        &self,
-        provider: SubscriptionProvider,
-        account: &str,
-        token: SubscriptionToken,
-    ) {
-        self.store_for(provider, account, token);
-    }
-
     fn cached_valid_for(
         &self,
         provider: SubscriptionProvider,
@@ -981,6 +949,9 @@ impl TokenCache {
 pub(crate) fn credential_fingerprint(credential: &SubscriptionToken) -> [u8; 32] {
     refresh_state::credential_fingerprint(credential)
 }
+
+#[path = "refresh_evidence.rs"]
+mod refresh_evidence;
 
 #[cfg(test)]
 #[path = "refresh_tests.rs"]

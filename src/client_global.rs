@@ -26,22 +26,22 @@ struct BackupState {
     setup_backup: Option<PathBuf>,
 }
 
-pub(crate) fn configure(
+/// Write the router into the client's own configuration, reversibly.
+///
+/// Returns the path that was written. Nothing is printed here: the caller
+/// knows whether a credential was stored alongside it, and reporting half the
+/// outcome from inside was how `with --global` came to announce success while
+/// telling the user to go set an environment variable themselves (issue #296).
+pub(crate) fn apply(
     client: ClientKind,
     base_url: &str,
     models: &[RouterModel],
-) -> Result<(), AnyError> {
+) -> Result<PathBuf, AnyError> {
     if matches!(client, ClientKind::Cursor | ClientKind::GeminiCli) {
         return Err(client
             .setup_limitation()
             .unwrap_or("client cannot be configured globally")
             .into());
-    }
-    if client == ClientKind::GrokCli {
-        return Err(
-            "Grok CLI has no persistent base-URL setting; use temporary `with` or persist GROK_BASE_URL and GROK_API_KEY in your shell profile"
-                .into(),
-        );
     }
     let manager = ClientManager::from_env()?;
     let config_path = manager.config_path(client);
@@ -111,37 +111,29 @@ pub(crate) fn configure(
         remove_if_present(&paths.marker)?;
         return Err(format!("could not save global undo state: {error}").into());
     }
-    println!(
-        "configured {} globally in {}",
-        client.display_name(),
-        config_path.display()
-    );
-    println!("undo: link-assistant-router with --global --undo {client}");
-    if let Some(token_env) = client.token_env() {
-        println!(
-            "No credential was stored; set {token_env} before launching {}.",
-            client.display_name()
-        );
-    }
-    Ok(())
+    Ok(config_path)
 }
 
-pub fn undo(client: ClientKind) -> Result<(), AnyError> {
+/// Restore the exact configuration a previous `apply` replaced.
+///
+/// Returns the restored path, or `None` when this client never had a
+/// configuration file to save — `configure grok` stores only a credential.
+pub fn undo(client: ClientKind) -> Result<Option<PathBuf>, AnyError> {
     let manager = ClientManager::from_env()?;
     let config_path = manager.config_path(client);
     let paths = backup_paths(&config_path);
-    let source = fs::read(&paths.state).map_err(|error| {
-        if error.kind() == std::io::ErrorKind::NotFound {
-            format!("no global backup exists for {client}; nothing was restored")
-        } else {
-            format!("could not read {}: {error}", paths.state.display())
+    let source = match fs::read(&paths.state) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(format!("could not read {}: {error}", paths.state.display()).into());
         }
-    })?;
+    };
     let state: BackupState = serde_json::from_slice(&source)?;
     let current = fs::read(&config_path).unwrap_or_default();
     if digest(&current) != state.config_hash_after_setup {
         return Err(format!(
-            "refusing to overwrite {} because it changed after `with --global`; preserve your edits or restore the managed version before retrying",
+            "refusing to overwrite {} because it changed after it was configured; preserve your edits or restore the managed version before retrying",
             config_path.display()
         )
         .into());
@@ -151,7 +143,7 @@ pub fn undo(client: ClientKind) -> Result<(), AnyError> {
             let current = fs::read(marker_path).unwrap_or_default();
             if digest(&current) != expected {
                 return Err(format!(
-                    "refusing to overwrite {} because it changed after `with --global`",
+                    "refusing to overwrite {} because it changed after it was configured",
                     marker_path.display()
                 )
                 .into());
@@ -174,8 +166,7 @@ pub fn undo(client: ClientKind) -> Result<(), AnyError> {
     remove_if_present(&paths.config)?;
     remove_if_present(&paths.marker)?;
     remove_if_present(&paths.state)?;
-    println!("restored {} exactly", config_path.display());
-    Ok(())
+    Ok(Some(config_path))
 }
 
 struct BackupPaths {
@@ -342,5 +333,133 @@ mod tests {
         let path = dir.path().join("secret.json");
         write_private(&path, b"{}").expect("write");
         assert_eq!(std::fs::read(&path).expect("read"), b"{}");
+    }
+
+    /// A restore puts back the exact bytes *and* the exact permissions. Losing
+    /// the mode would silently widen access to a file that held a credential.
+    #[test]
+    fn a_restore_returns_the_bytes_and_the_mode() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let backup = dir.path().join("config.json.bak");
+        let destination = dir.path().join("config.json");
+        std::fs::write(&backup, b"{\"original\":true}").expect("seed backup");
+        std::fs::write(&destination, b"{\"replaced\":true}").expect("seed destination");
+
+        restore(&backup, &destination, Some(0o600)).expect("restore");
+
+        assert_eq!(
+            std::fs::read(&destination).expect("read"),
+            b"{\"original\":true}"
+        );
+        // `file_mode` reports the raw `st_mode`, type bits included, and
+        // answers `None` on platforms with no mode to report.
+        #[cfg(unix)]
+        assert_eq!(
+            file_mode(&destination).map(|mode| mode & 0o777),
+            Some(0o600)
+        );
+    }
+
+    /// Undo of a client that had no configuration before `configure` ran must
+    /// leave nothing behind, not an empty file the client would then read.
+    #[test]
+    fn a_rollback_removes_what_did_not_exist_before() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let config = dir.path().join("config.json");
+        std::fs::write(&config, b"written by configure").expect("seed");
+        let paths = backup_paths(&config);
+
+        rollback(&paths, &config, false, None, None, false, None).expect("rollback");
+
+        assert!(
+            !config.exists(),
+            "a config that did not exist must not remain"
+        );
+    }
+
+    /// The other half: a configuration that *did* exist comes back byte for
+    /// byte, and a marker file is rolled back alongside it.
+    #[test]
+    fn a_rollback_restores_what_existed_before() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let config = dir.path().join("config.json");
+        let marker = dir.path().join("marker");
+        let paths = backup_paths(&config);
+        std::fs::write(&paths.config, b"the user's own config").expect("seed backup");
+        std::fs::write(&paths.marker, b"the user's own marker").expect("seed marker backup");
+        std::fs::write(&config, b"written by configure").expect("seed config");
+        std::fs::write(&marker, b"written by configure").expect("seed marker");
+
+        rollback(
+            &paths,
+            &config,
+            true,
+            Some(0o600),
+            Some(&marker),
+            true,
+            Some(0o600),
+        )
+        .expect("rollback");
+
+        assert_eq!(
+            std::fs::read(&config).expect("read config"),
+            b"the user's own config"
+        );
+        assert_eq!(
+            std::fs::read(&marker).expect("read marker"),
+            b"the user's own marker"
+        );
+    }
+
+    /// A marker that did not exist before is removed rather than restored.
+    #[test]
+    fn a_rollback_removes_a_marker_that_did_not_exist_before() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let config = dir.path().join("config.json");
+        let marker = dir.path().join("marker");
+        let paths = backup_paths(&config);
+        std::fs::write(&marker, b"written by configure").expect("seed marker");
+
+        rollback(&paths, &config, false, None, Some(&marker), false, None).expect("rollback");
+
+        assert!(!marker.exists());
+    }
+
+    /// Copying a configuration aside must not widen its permissions on the way.
+    #[test]
+    fn a_private_copy_keeps_the_contents_and_stays_private() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let source = dir.path().join("source.json");
+        let destination = dir.path().join("nested/destination.json");
+        std::fs::write(&source, b"{\"k\":1}").expect("seed");
+
+        copy_private(&source, &destination).expect("copy");
+
+        assert_eq!(std::fs::read(&destination).expect("read"), b"{\"k\":1}");
+        #[cfg(unix)]
+        assert_eq!(
+            file_mode(&destination).map(|mode| mode & 0o777),
+            Some(0o600),
+            "a copy must not be world-readable"
+        );
+    }
+
+    /// `file_mode` answers `None` for a path that is not there, which is what
+    /// lets `apply` tell "no configuration yet" from "unreadable".
+    #[test]
+    fn the_mode_of_an_absent_file_is_unknown() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        assert_eq!(file_mode(&dir.path().join("absent")), None);
+    }
+
+    /// Setting no mode is a no-op rather than an error: not every platform has
+    /// one to set.
+    #[test]
+    fn setting_no_mode_leaves_the_file_alone() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let path = dir.path().join("f");
+        std::fs::write(&path, b"x").expect("seed");
+        set_file_mode(&path, None).expect("no mode is fine");
+        assert_eq!(std::fs::read(&path).expect("read"), b"x");
     }
 }

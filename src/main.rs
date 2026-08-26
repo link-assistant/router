@@ -1,10 +1,13 @@
 //! Link.Assistant.Router binary entry point.
 //!
-//! Parses the [`Cli`] (lino-arguments + clap), then either:
+//! Parses the [`Cli`](link_assistant_router::cli::Cli) (lino-arguments + clap), then either:
 //!
 //! 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
-//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `clients`, `doctor`) that runs
-//!    locally and exits without binding a port.
+//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `providers`, `clients`,
+//!    `auth`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
+//!    binding a port. Those that read or change router state act on the router
+//!    this machine is pointed at, which may be a remote deployment (issue
+//!    #294); `configure`, `clients` and `auth --local` act here.
 //!
 //! Shared services are constructed together so the CLI subcommands operate on the
 //! exact same backing state the HTTP server would.
@@ -13,8 +16,6 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 
-#[path = "accounts_cli.rs"]
-mod accounts_cli;
 mod auth_cli;
 mod auth_import;
 #[path = "logs_cli.rs"]
@@ -22,7 +23,7 @@ mod logs_cli;
 
 use axum::middleware::from_fn_with_state;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
-use link_assistant_router::cli::{AccountOp, Cli, Command, TokenOp};
+use link_assistant_router::cli::{AccountOp, Command, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode, StoragePolicy};
 use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
 use link_assistant_router::login::LoginManager;
@@ -46,7 +47,7 @@ fn main() -> ExitCode {
 async fn run() -> ExitCode {
     let arguments =
         link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
-    let cli = <Cli as lino_arguments::Parser>::parse_from(arguments);
+    let cli = link_assistant_router::cli::parse_arguments(arguments);
 
     // The wrapper and managed-server commands do not start a router and must
     // not require server-only configuration or pollute client stdout with
@@ -57,6 +58,13 @@ async fn run() -> ExitCode {
         }
         Some(Command::Server { op }) => {
             return link_assistant_router::server_command::run(op).await;
+        }
+        // Permanent client setup mints its credential from the router it is
+        // pointing the client at, over that router's admin API. It never signs
+        // a token here, so the local signing secret is not its to hold — the
+        // same reasoning as the remote commands in issue #294.
+        Some(Command::Configure(args)) => {
+            return link_assistant_router::configure::run(args).await;
         }
         _ => {}
     }
@@ -74,11 +82,9 @@ async fn run() -> ExitCode {
         tracing::info!("Verbose logging enabled");
     }
 
-    let cli = auth_cli::relax_token_secret_for_auth(cli);
-    // A command that will act on another deployment neither issues nor
-    // validates tokens here, so the local signing secret is not its to hold
-    // (issue #294).
-    let cli = link_assistant_router::remote_command::relax_token_secret_for_remote(cli);
+    // `TOKEN_SECRET` is required where signing happens, not per command family
+    // (issues #300, #308).
+    let cli = link_assistant_router::remote_command::relax_token_secret_for_cli(cli);
 
     let config = match cli.into_config() {
         Ok(c) => c,
@@ -88,6 +94,11 @@ async fn run() -> ExitCode {
         }
     };
 
+    if let Some(command) = cli.command.as_ref()
+        && let Some(code) = link_assistant_router::remote_command::refuse_managed(command)
+    {
+        return code;
+    }
     // One targeting rule for every command that reads or changes router state:
     // act on the router this machine is pointed at (issue #294).
     if let Some(command) = cli.command.as_ref()
@@ -126,11 +137,20 @@ async fn run() -> ExitCode {
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
         Some(Command::Providers { op }) => link_assistant_router::providers_cli::run(&config, op),
-        Some(Command::Clients { home, op }) => {
-            link_assistant_router::client_command::run(&config, home.as_deref(), op).await
+        Some(Command::Clients { op }) => {
+            link_assistant_router::client_command::run(&config, cli.home.as_deref(), op).await
         }
-        Some(Command::With(_) | Command::Server { .. }) => unreachable!("handled before config"),
-        Some(Command::Auth { op }) => auth_cli::run(&config, op).await,
+        Some(Command::With(_) | Command::Server { .. } | Command::Configure(_)) => {
+            unreachable!("handled before config")
+        }
+        Some(Command::Auth { op }) => {
+            auth_cli::run(
+                &config,
+                op,
+                link_assistant_router::remote_command::names_local_state(&cli),
+            )
+            .await
+        }
         Some(Command::Doctor { .. }) => run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
@@ -551,6 +571,15 @@ async fn run_remote_command(
             "run `router doctor` on that deployment; `router auth status` reports its \
              credentials from here",
         )),
+        // The certificate and its key live on the deployment's own disk, and
+        // no endpoint serves either. Printing this machine's PEM instead would
+        // not be a wrong report — it would be trust in the wrong key, which is
+        // why silence was the one unacceptable answer here (issue #308).
+        Command::Tls { .. } => refuse(no_remote_form(
+            "tls",
+            server,
+            "the certificate is generated on the deployment that serves it; run `router tls`              there and distribute the PEM it prints",
+        )),
         // Never reached: `target_of` returns `None` for every other command.
         _ => ExitCode::from(1),
     }
@@ -564,6 +593,18 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
+    // Required where signing happens, not per family. `list`, `show` and
+    // `revoke` read and edit the store; none of them mints or validates a
+    // token, and refusing to *start* without a secret they never use only
+    // taught operators to keep a deployment's signing secret exported in their
+    // shell (issue #308). Issuing and rotating still sign, so they still need
+    // it — and `TokenManager` refuses the stand-in at the point of use anyway.
+    if matches!(op, TokenOp::Issue { .. } | TokenOp::Rotate { .. })
+        && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
+    {
+        eprintln!("error: {error}");
+        return ExitCode::from(2);
+    }
     let mgr = TokenManager::with_store(&config.token_secret, store);
     match op {
         TokenOp::Issue {
@@ -633,7 +674,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        TokenOp::List { .. } => match mgr.list_tokens() {
+        TokenOp::List { json, .. } => match mgr.list_tokens() {
             Ok(records) => {
                 // Rendered by the shared printer, so the local and remote
                 // tables cannot drift: an operator reading one has no way to
@@ -642,7 +683,14 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                     .into_iter()
                     .map(|record| serde_json::to_value(record).unwrap_or_default())
                     .collect();
-                link_assistant_router::token_report::print_table(&rows);
+                if *json {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&rows).unwrap_or_else(|_| "[]".to_string())
+                    );
+                } else {
+                    link_assistant_router::token_report::print_table(&rows);
+                }
                 ExitCode::SUCCESS
             }
             Err(e) => {
@@ -710,7 +758,7 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
     // router recorded rather than guessing from the file alone (issue #245).
     let refreshes = link_assistant_router::refresh::TokenCache::new();
     refreshes.persist_rejections_in(&config.data_dir);
-    accounts_cli::run(&router, Some(&refreshes), op)
+    link_assistant_router::accounts_cli::run(&router, Some(&refreshes), op)
 }
 
 async fn run_doctor(config: &Config) -> ExitCode {

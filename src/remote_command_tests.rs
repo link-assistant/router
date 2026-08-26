@@ -59,9 +59,35 @@ fn only_an_explicit_local_target_skips_resolution() {
             let explicit = [args, &[flag]].concat();
             assert!(
                 !may_be_remote(&command_of(&explicit)),
-                "{args:?} {flag} asks for this machine and must not contact a server"
+                "{args:?} {flag} must not contact a server"
             );
         }
+    }
+}
+
+/// `--managed` says it starts a disposable container. On every family but
+/// `with` and `configure` it started nothing and quietly meant `--local`,
+/// which is a second, undocumented synonym whose own description promised
+/// something else (issue #315). It is refused there, naming what was wanted.
+#[test]
+fn managed_is_refused_where_no_container_can_be_started() {
+    for args in [
+        &["router", "tokens", "list"][..],
+        &["router", "accounts", "list"],
+        &["router", "providers", "list"],
+        &["router", "logs", "anomalies"],
+        &["router", "doctor"],
+        &["router", "tls", "ca"],
+    ] {
+        let managed = [args, &["--managed"]].concat();
+        assert!(
+            refuse_managed(&command_of(&managed)).is_some(),
+            "{args:?} --managed must be refused rather than silently meaning --local"
+        );
+        assert!(
+            refuse_managed(&command_of(args)).is_none(),
+            "{args:?} without the flag is unaffected"
+        );
     }
 }
 
@@ -85,23 +111,35 @@ fn commands_without_a_target_are_left_alone() {
 /// deployment neither issues nor validates them here. Requiring it refused to
 /// start rather than acting on the wrong target, and pushed operators toward
 /// copying the deployment's signing secret onto a workstation.
+/// A command that signs nothing starts without the deployment's signing
+/// secret. Requiring it per family refused to *start* for read-only work, and
+/// the check was satisfied by any value, so it only taught operators to keep a
+/// signing secret exported in their shell (issue #308).
 #[test]
-fn a_remote_command_does_not_need_the_local_signing_secret() {
-    let cli = Cli::try_parse_from(["router", "tokens", "list"]).expect("parses");
-    assert!(
-        cli.token_secret.as_deref().is_none_or(str::is_empty),
-        "the fixture must start without a secret"
-    );
-
-    let relaxed = relax_token_secret_for_remote(cli);
-
-    assert!(
-        relaxed
-            .token_secret
-            .as_deref()
-            .is_some_and(|secret| !secret.is_empty()),
-        "a remote command must be able to start without one"
-    );
+fn a_command_that_signs_nothing_does_not_need_the_signing_secret() {
+    for argv in [
+        &["router", "tokens", "list"][..],
+        // The flag that states "this machine" out loud used to be the one that
+        // broke the command, because the relaxation hung off "might be remote".
+        &["router", "doctor", "--local"],
+        &["router", "logs", "summary", "--local"],
+        &["router", "tls", "ca"],
+        &["router", "clients", "list"],
+    ] {
+        let cli = Cli::try_parse_from(argv).expect("parses");
+        assert!(
+            cli.token_secret.as_deref().is_none_or(str::is_empty),
+            "the fixture must start without a secret"
+        );
+        let relaxed = relax_token_secret_for_cli(cli);
+        assert!(
+            relaxed
+                .token_secret
+                .as_deref()
+                .is_some_and(|secret| !secret.is_empty()),
+            "{argv:?} must be able to start without a signing secret"
+        );
+    }
 }
 
 /// A secret the operator supplied is never replaced.
@@ -110,21 +148,38 @@ fn a_supplied_secret_survives_the_relaxation() {
     let cli = Cli::try_parse_from(["router", "tokens", "list", "--token-secret", "real-secret"])
         .expect("parses");
 
-    let relaxed = relax_token_secret_for_remote(cli);
+    let relaxed = relax_token_secret_for_cli(cli);
 
     assert_eq!(relaxed.token_secret.as_deref(), Some("real-secret"));
 }
 
-/// The local path still demands a real secret, because it signs with it.
+/// The stand-in is inert. It used to be an ordinary string, so a command that
+/// resolved to local execution signed real tokens and encrypted real vendor
+/// API keys with a value published in the source (issue #300).
 #[test]
-fn an_explicitly_local_command_still_needs_its_secret() {
-    let cli = Cli::try_parse_from(["router", "tokens", "list", "--local"]).expect("parses");
+fn the_stand_in_secret_cannot_sign_or_encrypt() {
+    let cli = Cli::try_parse_from(["router", "tokens", "issue"]).expect("parses");
+    let secret = relax_token_secret_for_cli(cli)
+        .token_secret
+        .expect("a stand-in is installed");
 
-    let relaxed = relax_token_secret_for_remote(cli);
+    assert!(crate::token_secret::is_placeholder(&secret));
+    assert!(
+        crate::token::TokenManager::new(&secret)
+            .issue_token(1, "")
+            .is_err(),
+        "a stand-in must not be able to sign a token"
+    );
+}
 
+/// The server still refuses to start without a real one.
+#[test]
+fn serving_still_demands_a_real_secret() {
+    let cli = Cli::try_parse_from(["router", "serve"]).expect("parses");
+    let relaxed = relax_token_secret_for_cli(cli);
     assert!(
         relaxed.token_secret.as_deref().is_none_or(str::is_empty),
-        "signing happens here, so the secret is genuinely required"
+        "the router signs every token it issues"
     );
 }
 

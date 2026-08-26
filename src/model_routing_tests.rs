@@ -94,7 +94,7 @@ fn catalog_unions_only_live_discovered_models() {
 }
 
 #[tokio::test]
-async fn models_omits_a_rejected_provider_and_names_only_healthy_ones() {
+async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it() {
     let data = tempdir().unwrap();
     let claude = tempdir().unwrap();
     let codex = tempdir().unwrap();
@@ -145,7 +145,38 @@ async fn models_omits_a_rejected_provider_and_names_only_healthy_ones() {
     assert_eq!(catalog["healthy_providers"], json!(["codex"]));
     // Codex has discovered nothing in this test, so it is reported as
     // degraded and contributes no models -- there is no fallback to show.
-    assert_eq!(catalog["degraded_providers"], json!(["codex"]));
+    //
+    // Claude is degraded too, and that is the point of issue #318: a revoked
+    // subscription used to vanish from `data` with `degraded_providers` left
+    // empty, so a monitor could not tell it from a provider that was never
+    // configured on this deployment. It is now named, with a reason.
+    assert_eq!(catalog["degraded_providers"], json!(["codex", "claude"]));
+    assert!(
+        catalog["degraded_reasons"]["claude"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("rejected upstream"),
+        "a degraded provider must say why: {}",
+        catalog["degraded_reasons"]
+    );
+    // The provider is the key, so the value carries the verdict and nothing
+    // that identifies a credential: `/v1/models` answers any client token.
+    assert!(
+        !catalog["degraded_reasons"]["claude"]
+            .as_str()
+            .unwrap_or_default()
+            .contains('/'),
+        "a client must not be told where the credential lives: {}",
+        catalog["degraded_reasons"]
+    );
+    assert!(
+        catalog["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|model| model["id"] != "aurora-2-base"),
+        "a revoked subscription still contributes no models"
+    );
     assert!(
         catalog["data"]
             .as_array()

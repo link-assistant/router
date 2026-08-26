@@ -27,18 +27,137 @@ use clap::builder::{PossibleValuesParser, TypedValueParser};
 use clap::{Subcommand, ValueEnum};
 use lino_arguments::Parser as LinoParser;
 
-use crate::clients::ClientKind;
 use crate::config::{
     ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
     default_activitypub_public_key_pem, default_data_dir,
 };
 
 mod auth_ops;
+mod client_ops;
+mod configure;
+mod store_ops;
 mod targets;
 mod with;
 
 pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
+pub use self::client_ops::ClientOp;
+pub use self::configure::ConfigureArgs;
+pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
+
+/// Parse the CLI, hiding options that cannot affect the subcommand shown.
+///
+/// `with` and `configure` return before the server configuration is built, so
+/// none of the binary's ~28 global options — `--host`, `--port`,
+/// `--storage-policy`, `--upstream-base-url` and the rest — reaches them.
+/// Clap lists a global under every subcommand, so `with --help` advertised
+/// them as options of `with`: `--verbose` was accepted and produced no
+/// logging, and `--port` written after the client name went to the client
+/// (issue #312). Listing options that cannot work is worse than omitting them.
+///
+/// Only the *help* changes. A global still parses wherever it always did, so
+/// no existing invocation breaks.
+#[must_use]
+pub fn parse_arguments(arguments: Vec<std::ffi::OsString>) -> Cli {
+    use clap::{CommandFactory as _, FromArgMatches as _};
+
+    let mut command = Cli::command();
+    // Globals are declared on the root and propagated into every subcommand
+    // when the parser is built, so they can only be hidden before that — and
+    // only for the invocations they cannot affect. `router tokens list --help`
+    // still lists them, because there they work.
+    if names_a_client_launcher(&arguments) {
+        command = command.mut_args(|argument| {
+            if argument.is_global_set() {
+                argument.hide(true)
+            } else {
+                argument
+            }
+        });
+    }
+    // The usage strings that hide the globals are written with a `{name}`
+    // placeholder, because clap does not interpolate one there. Substituting
+    // the invoked name here keeps both properties at once: the error usage
+    // line still omits globals that are not required (issue #312), and it
+    // names the binary the reader actually ran rather than hardcoding `router`
+    // under both installed names (issue #315).
+    let invoked = arguments
+        .first()
+        .map(std::path::Path::new)
+        .and_then(std::path::Path::file_stem)
+        .map_or_else(
+            || "router".to_string(),
+            |name| name.to_string_lossy().into_owned(),
+        );
+    command = substitute_usage_name(command, &invoked);
+    let matches = command.get_matches_from(arguments);
+    Cli::from_arg_matches(&matches).unwrap_or_else(|error| error.exit())
+}
+
+/// The subcommands whose usage line is written out, and what follows the name.
+///
+/// Written out because clap's generated *error* usage lists every configured
+/// global as required (issue #312); the leading binary name is substituted at
+/// parse time rather than hardcoded, so it is the one the reader invoked
+/// (issue #315). One table, so the two rules cannot drift apart.
+const OVERRIDDEN_USAGE: [(&[&str], &str); 14] = [
+    (&["configure"], "configure [OPTIONS] <CLIENT>"),
+    (&["clients", "setup"], "clients setup [OPTIONS] <CLIENT>"),
+    (&["clients", "show"], "clients show [OPTIONS] <CLIENT>"),
+    (&["clients", "remove"], "clients remove [OPTIONS] <CLIENT>"),
+    (&["clients", "doctor"], "clients doctor [OPTIONS] <CLIENT>"),
+    (&["tokens", "rotate"], "tokens rotate [OPTIONS] <ID>"),
+    (&["tokens", "revoke"], "tokens revoke [OPTIONS] <ID>"),
+    (&["tokens", "show"], "tokens show [OPTIONS] <ID>"),
+    (
+        &["providers", "add"],
+        "providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>",
+    ),
+    (&["providers", "show"], "providers show [OPTIONS] <NAME>"),
+    (
+        &["providers", "remove"],
+        "providers remove [OPTIONS] <NAME>",
+    ),
+    (
+        &["providers", "import"],
+        "providers import [OPTIONS] <PATH>",
+    ),
+    (
+        &["auth", "import"],
+        "auth import [OPTIONS] [PROVIDER] [DIR]",
+    ),
+    (&["auth", "clear"], "auth clear [OPTIONS] [PROVIDER]"),
+];
+
+/// Write each overridden usage line with the name that was actually invoked.
+fn substitute_usage_name(mut command: clap::Command, invoked: &str) -> clap::Command {
+    for (path, usage) in OVERRIDDEN_USAGE {
+        command = with_subcommand(command, path, &format!("{invoked} {usage}"));
+    }
+    command
+}
+
+/// Apply `usage` to the subcommand reached by `path`.
+fn with_subcommand(command: clap::Command, path: &[&str], usage: &str) -> clap::Command {
+    let Some((head, rest)) = path.split_first() else {
+        return command.override_usage(usage.to_string());
+    };
+    command.mut_subcommand(head, |subcommand| with_subcommand(subcommand, rest, usage))
+}
+
+/// Whether this invocation is one that returns before the server config exists.
+///
+/// Read off argv rather than the parsed command, because the decision has to be
+/// made before parsing. Only the first bare word is consulted, so a *value*
+/// that happens to be `with` cannot flip it.
+fn names_a_client_launcher(arguments: &[std::ffi::OsString]) -> bool {
+    arguments
+        .iter()
+        .skip(1)
+        .map(|argument| argument.to_string_lossy().into_owned())
+        .find(|argument| !argument.starts_with('-'))
+        .is_some_and(|argument| argument == "with" || argument == "configure")
+}
 
 /// Parse a boolean switch that may also arrive from the environment.
 ///
@@ -114,6 +233,16 @@ pub struct Cli {
     /// Data directory for the persistent token store.
     #[arg(long, env = "DATA_DIR", global = true)]
     pub data_dir: Option<PathBuf>,
+
+    /// Treat this directory as the home for every client configuration root,
+    /// instead of `$HOME` and the clients' own override variables.
+    ///
+    /// Global, like `--data-dir`. Declared on the `clients` subcommand it had
+    /// to precede it — `clients list --home /tmp` was an error while
+    /// `clients --home /tmp list` worked, for one flag and not its neighbour
+    /// (issue #314).
+    #[arg(long, value_name = "DIR", global = true)]
+    pub home: Option<PathBuf>,
 
     /// Path to the local Claude CLI binary used by the CLI backend.
     #[arg(long, env = "CLAUDE_CLI_BIN", global = true)]
@@ -392,7 +521,7 @@ pub struct Cli {
         num_args = 0..=1,
         default_value_t = false,
         default_missing_value = "true",
-        value_parser = parse_truthy,
+        value_parser = parse_truthy
     )]
     pub allow_anonymous_admin: bool,
 
@@ -520,17 +649,30 @@ pub enum Command {
         #[command(subcommand)]
         op: ProviderOp,
     },
-    /// Configure local agentic CLIs to use this router.
+    /// Inspect and manage local agentic CLI configuration.
+    ///
+    /// `router configure <client>` is the command for pointing a client at the
+    /// router; these read and remove what is there (issue #296).
     Clients {
-        /// Treat this directory as the home for every client configuration
-        /// root, instead of `$HOME` and the clients' own override variables.
-        #[arg(long, value_name = "DIR")]
-        home: Option<PathBuf>,
         #[command(subcommand)]
         op: ClientOp,
     },
-    /// Launch an agentic CLI with an isolated router configuration.
+    /// Launch an agentic CLI against this router, keeping its own configuration.
+    ///
+    /// Isolation stopped being the default in issue #277, and this line went on
+    /// saying the opposite twelve lines above the flag that says so — the
+    /// document contradicted itself before the options began (issue #312).
+    ///
+    /// Everything after the client name is passed to the client verbatim;
+    /// router options go before it (issue #299).
     With(WithArgs),
+    /// Point a client at the router permanently.
+    ///
+    /// One name, one targeting rule and one reversal for what used to be two
+    /// commands that disagreed on the address, the credential, the undo
+    /// mechanism and the client list (issue #296). `clients setup` and
+    /// `with --global` still work.
+    Configure(ConfigureArgs),
     /// Select and manage the server used by `with`.
     Server {
         #[command(subcommand)]
@@ -572,8 +714,13 @@ pub enum Command {
 pub enum LogsOp {
     /// Shape of the log: exchanges, records, statuses, time span, size.
     Summary {
-        /// Restrict to one token's directory, by its hashed name.
-        #[arg(long)]
+        /// Restrict to one token's log directory, by its hashed name.
+        ///
+        /// Named `--token-id` because `--token` means a credential in `with`,
+        /// `server use` and `clients setup`, and one flag name meaning two
+        /// things is what makes a CLI unusable from memory (issue #314). The
+        /// old spelling is still accepted.
+        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
         token: Option<String>,
         /// Emit JSON, for a monitoring check rather than a human.
         #[arg(long)]
@@ -585,8 +732,10 @@ pub enum LogsOp {
     ///
     /// Exits non-zero when any are found, so it works as a health gate.
     Anomalies {
-        #[arg(long)]
+        /// Restrict to one token's log directory, by its hashed name.
+        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
         token: Option<String>,
+        /// Emit JSON, for a monitoring check rather than a human.
         #[arg(long)]
         json: bool,
         #[command(flatten)]
@@ -595,7 +744,8 @@ pub enum LogsOp {
     /// One exchange, decoded and in order.
     Show {
         correlation_id: String,
-        #[arg(long)]
+        /// Restrict to one token's log directory, by its hashed name.
+        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
         token: Option<String>,
         #[command(flatten)]
         target: AuthTarget,
@@ -629,212 +779,6 @@ fn auth_flow_parser(flows: &'static [AuthFlow]) -> impl TypedValueParser<Value =
         AuthFlow::from_str(&value, false)
             .unwrap_or_else(|_| unreachable!("possible-values parser returned an unknown flow"))
     })
-}
-
-#[derive(Debug, Subcommand)]
-pub enum TokenOp {
-    /// Issue a new token and print it to stdout.
-    Issue {
-        #[arg(long, default_value_t = 24)]
-        ttl_hours: i64,
-        #[arg(long, default_value = "")]
-        label: String,
-        #[arg(long)]
-        account: Option<String>,
-        /// Cap on the number of upstream requests this token may make.
-        /// Omit for an unlimited token.
-        #[arg(long)]
-        max_requests: Option<u64>,
-        /// Cap on actual input plus output tokens reported by upstreams.
-        /// Omit for unlimited spend.
-        #[arg(long)]
-        max_tokens: Option<u64>,
-        /// Maximum requests admitted per one-minute window.
-        #[arg(long)]
-        rate_limit_per_minute: Option<u64>,
-        /// Issue an administrative token (`scope: admin`) that unlocks the
-        /// admin endpoints instead of only the inference proxy.
-        #[arg(long)]
-        admin: bool,
-        /// Restrict this token's GitHub proxy access to `owner/repo`. Repeat
-        /// for several repositories; omit for unrestricted access, which is
-        /// the default and what every existing token keeps.
-        #[arg(long = "github-repo", value_name = "OWNER/REPO")]
-        github_repo: Vec<String>,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Replace a token, preserving its controls, and revoke the old token.
-    #[command(override_usage = "link-assistant-router tokens rotate [OPTIONS] <ID>")]
-    Rotate {
-        /// Subject id (`sub`) of the token being replaced.
-        id: String,
-        #[arg(long, default_value_t = 24)]
-        ttl_hours: i64,
-        #[arg(long, default_value = "")]
-        label: String,
-        /// Replacement request cap; omitted keeps the existing one.
-        #[arg(long)]
-        max_requests: Option<u64>,
-        /// Replacement token spend cap; omitted keeps the existing one.
-        #[arg(long)]
-        max_tokens: Option<u64>,
-        /// Replacement per-minute request rate; omitted keeps the existing one.
-        #[arg(long)]
-        rate_limit_per_minute: Option<u64>,
-        /// Replacement account pin; omitted keeps the existing one.
-        #[arg(long)]
-        account: Option<String>,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// List all known tokens.
-    List {
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Revoke a token by id.
-    #[command(override_usage = "link-assistant-router tokens revoke [OPTIONS] <ID>")]
-    Revoke {
-        id: String,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Mark a token as expired immediately (revoke alias).
-    #[command(override_usage = "link-assistant-router tokens expire [OPTIONS] <ID>")]
-    Expire {
-        id: String,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Show metadata for one token.
-    #[command(override_usage = "link-assistant-router tokens show [OPTIONS] <ID>")]
-    Show {
-        id: String,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-}
-
-#[derive(Debug, Subcommand)]
-pub enum AccountOp {
-    /// List configured accounts and their health.
-    List {
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-}
-
-#[derive(Debug, Subcommand)]
-pub enum ProviderOp {
-    /// List configured upstream providers.
-    List {
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Add or replace an OpenAI-compatible provider.
-    #[command(
-        override_usage = "link-assistant-router providers add [OPTIONS] --name <NAME> --base-url <BASE_URL>"
-    )]
-    Add {
-        #[arg(long)]
-        name: String,
-        #[arg(long, default_value = "openai-compatible")]
-        kind: String,
-        #[arg(long)]
-        base_url: String,
-        #[arg(long)]
-        model: Option<String>,
-        #[arg(long, value_delimiter = ',')]
-        models: Vec<String>,
-        #[arg(long)]
-        api_key: Option<String>,
-        #[arg(long)]
-        api_key_env: Option<String>,
-        #[arg(
-            long,
-            default_value_t = true,
-            num_args = 0..=1,
-            default_missing_value = "true"
-        )]
-        enabled: bool,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Show one provider with secret material redacted.
-    #[command(override_usage = "link-assistant-router providers show [OPTIONS] <NAME>")]
-    Show {
-        name: String,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Remove one provider.
-    #[command(override_usage = "link-assistant-router providers remove [OPTIONS] <NAME>")]
-    Remove {
-        name: String,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Import providers from JSON, `.lenv`, or indented Links-style config.
-    #[command(override_usage = "link-assistant-router providers import [OPTIONS] <PATH>")]
-    Import {
-        path: PathBuf,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-}
-
-#[derive(Debug, Subcommand)]
-pub enum ClientOp {
-    /// List supported clients and their local installation/configuration state.
-    List,
-    /// Merge this router into a client's user configuration.
-    #[command(override_usage = "link-assistant-router clients setup [OPTIONS] <CLIENT>")]
-    Setup {
-        #[arg(value_enum)]
-        client: ClientKind,
-        /// Existing router token. Prefer `--token-stdin` or
-        /// `LINK_ASSISTANT_ROUTER_TOKEN` over argv, which is visible in shell
-        /// history and process listings.
-        #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
-        token: Option<String>,
-        /// Read an existing router token as one line from standard input.
-        #[arg(long, conflicts_with = "token")]
-        token_stdin: bool,
-        /// Router URL reachable from the client (defaults to this CLI's host/port).
-        #[arg(long)]
-        base_url: Option<String>,
-        /// Lifetime of an automatically minted token.
-        #[arg(long, default_value_t = 24)]
-        ttl_hours: i64,
-    },
-    /// Show the effective client integration with secrets redacted.
-    #[command(override_usage = "link-assistant-router clients show [OPTIONS] <CLIENT>")]
-    Show {
-        #[arg(value_enum)]
-        client: ClientKind,
-    },
-    /// Remove only settings managed by this router.
-    #[command(override_usage = "link-assistant-router clients remove [OPTIONS] <CLIENT>")]
-    Remove {
-        #[arg(value_enum)]
-        client: ClientKind,
-        /// Also revoke a token that was supplied by the operator instead of
-        /// minted by `clients setup`. Off by default because the same token
-        /// is often shared with other machines.
-        #[arg(long)]
-        revoke_supplied: bool,
-        /// Delete the local settings even when the managed token could not be
-        /// revoked. The credential stays usable until it expires.
-        #[arg(long)]
-        force: bool,
-    },
-    /// Make a real request using the client's configured URL and token variable.
-    #[command(override_usage = "link-assistant-router clients doctor [OPTIONS] <CLIENT>")]
-    Doctor {
-        #[arg(value_enum)]
-        client: ClientKind,
-    },
 }
 
 impl Cli {

@@ -20,7 +20,20 @@ fn admin_required() -> Response {
 /// Deliberately left open: it carries aggregate counters only, and scrapers
 /// (Prometheus, container health checks) are typically unauthenticated.
 pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoResponse {
-    let body = crate::metrics::render_prometheus(&state.metrics);
+    let mut body = crate::metrics::render_prometheus(&state.metrics);
+    // A dead subscription had no counter of its own, so no scrape could see it
+    // (issue #318). Rendered here rather than in `metrics.rs` so the counter
+    // registry stays free of subscription types.
+    let health = crate::model_routing::configured_provider_health(
+        &state.subscription_readers,
+        &state.subscription_cache,
+        &state.model_catalogs,
+    );
+    let gauges = health
+        .iter()
+        .map(|entry| (entry.provider.as_str(), entry.healthy))
+        .collect::<Vec<_>>();
+    body.push_str(&crate::metrics::render_subscription_health(&gauges));
     (
         StatusCode::OK,
         [("content-type", "text/plain; version=0.0.4")],

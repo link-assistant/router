@@ -3,7 +3,7 @@
 use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::process::Stdio;
 use std::process::{Command, ExitCode};
@@ -31,9 +31,13 @@ pub async fn run(args: &WithArgs) -> ExitCode {
 }
 
 async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
-    if args.undo {
-        crate::client_global::undo(args.client)?;
-        return Ok(ExitCode::SUCCESS);
+    // `--global` and `--undo` are permanent client setup, which now has its
+    // own name. Delegating rather than reimplementing is what keeps the two
+    // spellings from drifting apart again — the address, the credential, the
+    // reversal and the client list were four separate disagreements between
+    // them (issue #296).
+    if args.global || args.undo {
+        return Ok(crate::configure::run(&args.as_configure()).await);
     }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
@@ -47,90 +51,80 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         args.token.clone()
     };
-    let server = resolve(
-        args.server.as_deref(),
-        explicit_token,
-        args.run_max_requests,
-        args.managed,
-    )
-    .await?;
-    if args.global {
-        if server.source == "managed local container" {
-            crate::managed_server::start_managed()?;
+    let server = if args.local {
+        let mut server = crate::managed_server::discovered_local_router()
+            .await
+            .ok_or("no router is listening on this machine; start one with `router serve`, or drop --local to use the selected server")?;
+        if let Some(token) = explicit_token {
+            server.token = Some(token);
         }
-        if !matches!(
-            args.client,
-            ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
-        ) {
-            crate::client_global::configure(args.client, &server.base_url, &[])?;
-            return Ok(ExitCode::SUCCESS);
-        }
-    }
-    let working_directory = std::env::current_dir()
-        .ok()
-        .and_then(|path| {
-            path.file_name()
-                .map(|name| name.to_string_lossy().into_owned())
-        })
-        .unwrap_or_else(|| "unknown-workdir".to_string());
-    let label = format!("with-{}-{working_directory}", args.client);
-    let credential = prepare_run_credential(&server, &label, args.run_ttl_hours).await?;
-    if args.global {
-        let configured =
-            crate::client_global::configure(args.client, &server.base_url, credential.models());
-        let cleanup = cleanup_run_credential(credential).await;
-        configured?;
-        if let Err(error) = cleanup {
-            eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
-        }
-        return Ok(ExitCode::SUCCESS);
-    }
-    // Resolve the concrete model from the live catalog rather than a name
-    // compiled into the router (issue #192).
-    let owner = args.client.integration().model_owner;
-    let selected = if let Some(model) = args.model.clone() {
-        model
-    } else if let Some(model) = credential.select_model(owner) {
-        model.to_string()
+        server
     } else {
-        // Name what the catalog *does* hold: "only openai models" is a much
-        // shorter path to the real cause — a lapsed subscription — than the
-        // unrecognised-model error the client would otherwise report about
-        // itself (issue #225).
-        let advertised = credential.advertised_owners();
-        let holdings = if advertised.is_empty() {
-            "the catalog is empty".to_string()
-        } else {
-            format!("it advertises only {} models", advertised.join(", "))
-        };
-        cleanup_after_setup_failure(credential).await;
-        return Err(format!(
-            "the router advertises no model for {} ({owner} models): {holdings}. Authorize a \
-             matching subscription on the router host, or pass --model explicitly",
-            args.client.integration().name
+        resolve(
+            args.server.as_deref(),
+            explicit_token,
+            args.run_max_requests,
+            args.managed,
         )
-        .into());
+        .await?
     };
-    let model = selected.as_str();
-    if let Err(error) = ensure_model_available(&credential, model) {
+    // The label travels to the router and is stored there. It used to be the
+    // name of the directory the run was launched from, so a deployment — which
+    // may be someone else's machine, or a team's, or a provider's —
+    // accumulated a list of the projects its users work in. Directory names are
+    // usually project names (issue #316). The token id already identifies a
+    // run, so the label needs to carry nothing else.
+    let label = args
+        .label
+        .clone()
+        .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
+    let credential = prepare_run_credential(&server, &label, args.run_ttl_hours).await?;
+    // Which model the client uses, and how hard it thinks, are the user's own
+    // settings. `with` chooses a route to a model, so both are left alone
+    // unless the user asked — the rule `--global` already followed (issue
+    // #295). A model is still resolved from the live catalog rather than a
+    // name compiled into the router (issue #192) when one is genuinely needed.
+    let selected = match resolve_model(args, &credential) {
+        Ok(selected) => selected,
+        Err(error) => {
+            cleanup_after_setup_failure(credential).await;
+            return Err(error);
+        }
+    };
+    if let Some(model) = selected.as_deref()
+        && let Err(error) = ensure_model_available(&credential, model)
+    {
         cleanup_after_setup_failure(credential).await;
         return Err(error);
     }
-    let temporary = match TemporaryClient::prepare(
-        args.client,
-        &server.base_url,
-        &credential.token,
-        Some(model),
-        credential.models(),
-        args.isolated_config,
-    ) {
+    // Decided before the client is prepared: whether the run is a session or
+    // a task also decides whether the router may answer the client's own
+    // prompts on the user's behalf (issue #310).
+    let plan = crate::client_launch::plan(
+        args,
+        selected.as_deref(),
+        crate::client_launch::attached_to_a_terminal(),
+    );
+    if let Some(note) = plan.note {
+        eprintln!("{note}");
+    }
+    let temporary = match TemporaryClient::prepare(&Preparation {
+        client: args.client,
+        base_url: &server.base_url,
+        token: &credential.token,
+        model_override: selected.as_deref(),
+        models: credential.models(),
+        isolated_config: args.isolated_config,
+        one_shot: plan.one_shot,
+        profile_root: None,
+    }) {
         Ok(temporary) => temporary,
         Err(error) => {
             cleanup_after_setup_failure(credential).await;
             return Err(error);
         }
     };
-    let arguments = client_arguments(args, model);
+    let arguments = plan.arguments;
     let launch = temporary.launch(&arguments).await;
     if launch.as_ref().is_ok_and(|status| !status.success())
         && server.source == "managed local container"
@@ -146,15 +140,113 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     Ok(exit_code(status))
 }
 
+/// A short, non-identifying suffix distinguishing concurrent runs.
+///
+/// Derived from the process id, which the router already knows it is talking
+/// to and which says nothing about what the user is working on.
+fn run_suffix() -> String {
+    format!("{:04x}", std::process::id() & 0xffff)
+}
+
 async fn cleanup_after_setup_failure(credential: crate::managed_server::RunCredential) {
     if let Err(error) = cleanup_run_credential(credential).await {
         eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
     }
 }
 
+/// The model this run names, if it names one at all.
+///
+/// `None` is the ordinary answer: the client keeps whatever model its own
+/// configuration selects. A model is resolved only when the user asked for one
+/// with `--model`, asked the router to choose with `--pick-model`, or is
+/// launching a client whose configuration embeds the catalog and so cannot
+/// start without an id (issue #295).
+fn resolve_model(
+    args: &WithArgs,
+    credential: &crate::managed_server::RunCredential,
+) -> Result<Option<String>, AnyError> {
+    if let Some(model) = args.model.clone() {
+        return Ok(Some(model));
+    }
+    if !args.pick_model && !crate::client_launch::requires_a_model(args.client) {
+        return Ok(None);
+    }
+    // One rule for which models suit a client, shared with `clients setup`
+    // and `clients doctor` (issue #301).
+    if let Some(model) = crate::clients::select_model(args.client, credential.models()) {
+        if args.pick_model {
+            // Report the choice and the reason for it. Choosing silently by
+            // catalog order is what made the substitution invisible: the
+            // client's own status line then presents the router's pick as
+            // though the user had made it (issue #295).
+            let owners = args.client.integration().model_owners;
+            eprintln!(
+                "note: --pick-model chose `{model}`, the first {} model the router advertises; \
+                 pass --model to choose another",
+                if owners.is_empty() {
+                    "advertised".to_string()
+                } else {
+                    owners.join(" or ")
+                }
+            );
+        }
+        return Ok(Some(model.to_string()));
+    }
+    Err(crate::clients::model_unavailable(args.client, credential.models()).into())
+}
+
 struct TemporaryClient {
-    directory: tempfile::TempDir,
+    directory: RunDirectory,
     command: Command,
+}
+
+/// Where a run that cannot layer onto the user's configuration keeps its files.
+///
+/// Issue #277 established that `with` should not hand the client a directory of
+/// its own, because doing so drops the user into first-run onboarding with an
+/// empty `/resume`. For the clients that *cannot* be extended — they are routed
+/// through a file the router writes — the fallback directory was thrown away
+/// after every run, so every launch was a first launch: no session history,
+/// nothing to resume, onboarding and trust prompts answered again from scratch
+/// (issue #298). Those clients now keep one profile of their own, under the
+/// router's directory rather than in a shared `TMPDIR`.
+///
+/// Disposable is still right where it was asked for: `--isolated-config`, and
+/// the scratch directory an extending run never actually reads.
+enum RunDirectory {
+    Disposable(tempfile::TempDir),
+    Persistent(PathBuf),
+}
+
+impl RunDirectory {
+    fn path(&self) -> &Path {
+        match self {
+            Self::Disposable(directory) => directory.path(),
+            Self::Persistent(path) => path,
+        }
+    }
+}
+
+/// The profile directory kept for a client that cannot be extended.
+///
+/// Under the router's own per-user directory, so it is neither the user's own
+/// client configuration — nothing about the #277 boundary changes — nor a
+/// shared `TMPDIR`, which removes the cross-user question issue #313 is about.
+fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
+    let root = match root {
+        Some(root) => root.to_path_buf(),
+        None => std::env::var_os("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
+            .ok_or("HOME and XDG_CONFIG_HOME are unset; cannot keep a client profile")?,
+    };
+    let path = root
+        .join("link-assistant-router/clients")
+        .join(client.canonical_name())
+        .join("home");
+    fs::create_dir_all(&path)?;
+    set_directory_owner_only(&path)?;
+    Ok(path)
 }
 
 /// Whether this run layers the router's settings onto the user's own
@@ -192,19 +284,62 @@ const fn needs_a_written_configuration(client: ClientKind) -> bool {
     matches!(client, ClientKind::GeminiCli)
 }
 
+/// Everything one launch needs to be set up.
+///
+/// A struct rather than eight positional arguments: four of them are booleans
+/// and optional paths, and a caller swapping two would still compile.
+struct Preparation<'a> {
+    client: ClientKind,
+    base_url: &'a str,
+    token: &'a str,
+    model_override: Option<&'a str>,
+    models: &'a [RouterModel],
+    isolated_config: bool,
+    one_shot: bool,
+    profile_root: Option<&'a Path>,
+}
+
 impl TemporaryClient {
-    fn prepare(
-        client: ClientKind,
-        base_url: &str,
-        token: &str,
-        model_override: Option<&str>,
-        models: &[RouterModel],
-        isolated_config: bool,
-    ) -> Result<Self, AnyError> {
-        sweep_stale_directories();
+    fn prepare(request: &Preparation<'_>) -> Result<Self, AnyError> {
+        let &Preparation {
+            client,
+            base_url,
+            token,
+            model_override,
+            models,
+            isolated_config,
+            one_shot,
+            profile_root,
+        } = request;
+        // A client that can be extended never reads this directory — the
+        // router's whole contribution is two environment variables — so it is
+        // scratch and goes away. One that cannot is *living* here, and a
+        // directory thrown away after every run made every launch a first
+        // launch (issue #298).
+        let keeps_a_profile = !isolated_config && !extends_user_configuration(client, false);
+        if isolated_config && !extends_user_configuration(client, false) {
+            // The flag changed nothing for this client: it is routed through a
+            // file the router writes and never uses the user's own directory.
+            // Accepting it silently left a script's author believing it had
+            // done something (issue #312).
+            eprintln!(
+                "note: {} is configured through a file the router writes, so it never uses your \
+                 own configuration directory; --isolated-config only makes its profile \
+                 disposable",
+                client.display_name()
+            );
+        }
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
-        let directory = tempfile::Builder::new().prefix(&prefix).tempdir()?;
-        set_directory_owner_only(directory.path())?;
+        let disposable = tempfile::Builder::new().prefix(&prefix).tempdir()?;
+        set_directory_owner_only(disposable.path())?;
+        // Swept after this run's own directory exists, so it can serve as the
+        // reference for "owned by me" without a privileged call (issue #313).
+        sweep_stale_directories(disposable.path());
+        let directory = if keeps_a_profile {
+            RunDirectory::Persistent(persistent_profile(client, profile_root)?)
+        } else {
+            RunDirectory::Disposable(disposable)
+        };
         let manager = ClientManager::isolated(directory.path());
         match client {
             ClientKind::GeminiCli => write_gemini_settings(&manager.config_path(client))?,
@@ -228,7 +363,7 @@ impl TemporaryClient {
             // whole contribution is the two variables set below, so isolation
             // was never needed for routing — only for isolation itself.
         } else {
-            configure_isolation(&mut command, &manager, directory.path(), client)?;
+            configure_isolation(&mut command, &manager, directory.path(), client, one_shot)?;
         }
         if let Some(token_env) = integration.token_env {
             command.env(token_env, token);
@@ -236,35 +371,43 @@ impl TemporaryClient {
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
         }
-        let model = model_override.unwrap_or("");
+        // How hard the client thinks is the user's setting, not the router's.
+        // A compile-time `xhigh` / `16384` applied to a user who never asked
+        // is not a neutral default — it is the most expensive one, chosen for
+        // someone who may be paying per token (issue #295). Setting nothing
+        // here leaves the client's own configuration in charge, and lets the
+        // user's `MAX_THINKING_TOKENS` or `OPENAI_REASONING_EFFORT` reach it
+        // through the inherited environment as it would without the router.
         match client {
             ClientKind::ClaudeCode => {
-                command
-                    .env("ANTHROPIC_API_KEY", "")
-                    .env("MAX_THINKING_TOKENS", "16384");
+                // Emptied rather than left alone: an inherited API key
+                // outranks the auth token, so the run would leave the router.
+                command.env("ANTHROPIC_API_KEY", "");
             }
             ClientKind::GeminiCli => {
-                command
-                    .env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key")
-                    .env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+                // `GEMINI_CLI_TRUST_WORKSPACE` is deliberately not set here.
+                // That prompt is the client's protection against being pointed
+                // at an unfamiliar checkout with file access, and answering it
+                // for a user who is sitting right there and could answer is
+                // not the router's call (issue #310). The non-interactive path
+                // sets it, because a batch run cannot answer a prompt.
+                command.env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key");
             }
             ClientKind::QwenCode => {
                 command
                     .env("OPENAI_API_KEY", token)
-                    .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"))
-                    .env("OPENAI_MODEL", model)
-                    .env(
-                        "OPENAI_REASONING_EFFORT",
-                        integration.default_reasoning_effort,
-                    );
+                    .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"));
+                // Qwen Code reads its model from the environment and cannot
+                // start without one, so this is the client's requirement.
+                if let Some(model) = model_override {
+                    command.env("OPENAI_MODEL", model);
+                }
             }
-            ClientKind::Codex | ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent => {
-                command.env(
-                    "OPENAI_REASONING_EFFORT",
-                    integration.default_reasoning_effort,
-                );
-            }
-            ClientKind::Cursor => {}
+            ClientKind::Codex
+            | ClientKind::GrokCli
+            | ClientKind::Opencode
+            | ClientKind::Agent
+            | ClientKind::Cursor => {}
         }
         Ok(Self { directory, command })
     }
@@ -325,6 +468,7 @@ fn configure_isolation(
     manager: &ClientManager,
     root: &Path,
     client: ClientKind,
+    one_shot: bool,
 ) -> Result<(), AnyError> {
     match client.integration().isolation {
         ClientIsolation::Home => {
@@ -348,12 +492,19 @@ fn configure_isolation(
             //
             // Both variables therefore name the *root*, and `HOME` is overridden
             // as well so nothing else the CLI stores escapes into the real home.
-            command
-                .env("HOME", root)
-                .env("GEMINI_CLI_HOME", root)
-                // With auth fixed the next wall is the trusted-directory
-                // prompt, which a `--non-interactive` run cannot answer.
-                .env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+            command.env("HOME", root).env("GEMINI_CLI_HOME", root);
+            // With auth fixed the next wall is the trusted-directory prompt,
+            // which a one-shot run cannot answer. That is the whole reason for
+            // pre-answering it — and the condition was never written into the
+            // code, so an interactive user, who is sitting right there and
+            // could answer, was answered for (issue #310).
+            if one_shot {
+                eprintln!(
+                    "note: answering Gemini CLI's workspace-trust prompt for this one-shot run; \
+                     an interactive run asks you instead"
+                );
+                command.env("GEMINI_CLI_TRUST_WORKSPACE", "true");
+            }
         }
         ClientIsolation::ConfigFile => {
             let path = manager.config_path(client);
@@ -372,98 +523,6 @@ fn configure_isolation(
         ClientIsolation::Unsupported => return Err("unsupported client isolation".into()),
     }
     Ok(())
-}
-
-/// Build the wrapped client's argv.
-///
-/// `resolved_model` is the id chosen from the live catalog by the caller; it is
-/// passed in rather than read from `args` because auto-selection leaves
-/// `args.model` empty (issue #192).
-fn client_arguments(args: &WithArgs, resolved_model: &str) -> Vec<OsString> {
-    let integration = args.client.integration();
-    let mut forwarded = args.client_args.clone();
-    if forwarded.first().is_some_and(|value| value == "--") {
-        forwarded.remove(0);
-    }
-    let non_interactive = args.non_interactive || (!args.interactive && !forwarded.is_empty());
-    let mode = integration.non_interactive_arg;
-    let has_mode = contains_native_mode(args.client, &forwarded);
-    let model = (!contains_model_argument(&forwarded))
-        .then_some(integration.model_arg)
-        .flatten()
-        .map(|flag| {
-            let model = resolved_model;
-            [
-                OsString::from(flag),
-                model_selector(args.client, model).into(),
-            ]
-        });
-    let command_mode = matches!(args.client, ClientKind::Codex | ClientKind::Opencode);
-    let mut result = Vec::new();
-    if command_mode && has_mode {
-        result.push(forwarded.remove(0));
-    } else if command_mode
-        && non_interactive
-        && let Some(mode) = mode
-    {
-        result.push(mode.into());
-        if args.client == ClientKind::Codex {
-            result.push("--skip-git-repo-check".into());
-        }
-    }
-    if let Some(model) = model {
-        result.extend(model);
-    }
-    if args.client == ClientKind::Codex
-        && !forwarded.iter().any(|argument| {
-            argument
-                .to_string_lossy()
-                .contains("model_reasoning_effort")
-        })
-    {
-        result.extend([
-            OsString::from("-c"),
-            OsString::from(format!(
-                "model_reasoning_effort=\"{}\"",
-                integration.default_reasoning_effort
-            )),
-        ]);
-    }
-    if !command_mode
-        && non_interactive
-        && !has_mode
-        && let Some(mode) = mode
-    {
-        result.push(mode.into());
-    }
-    result.extend(forwarded);
-    result
-}
-
-fn contains_native_mode(client: ClientKind, arguments: &[OsString]) -> bool {
-    let Some(mode) = client.integration().non_interactive_arg else {
-        return false;
-    };
-    if matches!(client, ClientKind::Codex | ClientKind::Opencode) {
-        arguments.first().is_some_and(|argument| argument == mode)
-    } else {
-        arguments.iter().any(|argument| argument == mode)
-    }
-}
-
-fn contains_model_argument(arguments: &[OsString]) -> bool {
-    arguments.iter().any(|argument| {
-        let argument = argument.to_string_lossy();
-        matches!(argument.as_ref(), "-m" | "--model") || argument.starts_with("--model=")
-    })
-}
-
-fn model_selector(client: ClientKind, model: &str) -> String {
-    if matches!(client, ClientKind::Opencode | ClientKind::Agent) && !model.contains('/') {
-        format!("link-assistant/{model}")
-    } else {
-        model.to_string()
-    }
 }
 
 fn endpoint(base_url: &str, suffix: &str) -> String {
@@ -495,8 +554,23 @@ fn write_gemini_settings(path: &Path) -> Result<(), AnyError> {
     Ok(())
 }
 
-fn sweep_stale_directories() {
+/// Remove leftovers from runs of *this user* that are no longer alive.
+///
+/// A pid is not a liveness token across a trust boundary. On a shared `TMPDIR`
+/// — the usual `/tmp`, any multi-user host, a build agent running jobs as
+/// different users — `kill(pid, 0)` on another user's live process fails with
+/// `EPERM`, and treating any failure as "dead" deleted that run's working
+/// directory, client configuration and credential while it was in use (issue
+/// #313). So ownership is checked first, and a process that exists but is not
+/// ours counts as alive.
+///
+/// `ours` is a directory this run just created, used as the reference for
+/// "mine": comparing owners needs no privileged call and no `unsafe`.
+fn sweep_stale_directories(ours: &Path) {
     const PREFIX: &str = "link-assistant-router-with-";
+    let Some(uid) = owner_of(ours) else {
+        return;
+    };
     let Ok(entries) = fs::read_dir(std::env::temp_dir()) else {
         return;
     };
@@ -509,24 +583,69 @@ fn sweep_stale_directories() {
         let Some(pid) = rest.split('-').next().and_then(|value| value.parse().ok()) else {
             continue;
         };
-        if !process_alive(pid) {
-            let _ = fs::remove_dir_all(entry.path());
+        if entry.path() == ours || owner_of(&entry.path()) != Some(uid) || process_alive(pid) {
+            continue;
+        }
+        if fs::remove_dir_all(entry.path()).is_ok() {
+            eprintln!("note: removed a leftover run directory from process {pid}");
         }
     }
 }
 
+/// The numeric owner of a path, where the platform has one.
+///
+/// `None` on non-unix, where every directory compares equal and the liveness
+/// check decides alone — there is no shared `TMPDIR` in the same sense.
+fn owner_of(path: &Path) -> Option<u32> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt as _;
+
+        fs::metadata(path).ok().map(|metadata| metadata.uid())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+        Some(0)
+    }
+}
+
+/// Whether the process might still be running.
+///
+/// "Might" is the contract: a check that cannot tell "gone" from "not yours"
+/// must answer alive, because the cost of being wrong is deleting a live run's
+/// files, and the cost of being right late is one directory swept next time.
 fn process_alive(pid: u32) -> bool {
     if pid == std::process::id() {
         return true;
     }
     #[cfg(unix)]
     {
-        std::process::Command::new("kill")
+        let signalled = std::process::Command::new("kill")
             .args(["-0", &pid.to_string()])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .is_ok_and(|status| status.success())
+            .is_ok_and(|status| status.success());
+        if signalled {
+            return true;
+        }
+        // `kill -0` fails both for "no such process" and for a live process
+        // owned by somebody else. `ps` answers the question that was actually
+        // asked — does this pid exist — for any owner, so `EPERM` can no
+        // longer read as "dead" (issue #313).
+        std::process::Command::new("ps")
+            .args(["-p", &pid.to_string()])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .output()
+            .is_ok_and(|output| {
+                String::from_utf8_lossy(&output.stdout)
+                    .lines()
+                    .filter(|line| !line.trim().is_empty())
+                    .count()
+                    > 1
+            })
     }
     #[cfg(windows)]
     {
@@ -570,352 +689,9 @@ fn exit_code(status: std::process::ExitStatus) -> ExitCode {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
+#[path = "with_command_tests.rs"]
+mod tests;
 
-    fn arguments(client: ClientKind, client_args: &[&str]) -> Vec<String> {
-        let args = WithArgs {
-            managed: false,
-            global: false,
-            undo: false,
-            non_interactive: false,
-            interactive: false,
-            extend_global_config: false,
-            isolated_config: false,
-            server: None,
-            token: None,
-            token_stdin: false,
-            model: None,
-            run_ttl_hours: 1,
-            run_max_requests: None,
-            client,
-            client_args: client_args.iter().map(OsString::from).collect(),
-        };
-        client_arguments(&args, "")
-            .iter()
-            .map(|value| value.to_string_lossy().into_owned())
-            .collect()
-    }
-
-    /// Gemini CLI resolves settings as `<home>/.gemini/settings.json`, where
-    /// `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise. Pointing
-    /// `GEMINI_CLI_HOME` at the `.gemini` directory made it look one level too
-    /// deep, fall back to the user's personal settings, and refuse the run
-    /// (issue #227). Both variables must therefore name the root.
-    #[test]
-    fn the_gemini_client_is_pointed_at_the_isolated_home() {
-        let root = tempfile::tempdir().expect("isolated root");
-        let manager = ClientManager::isolated(root.path());
-        let mut command = Command::new("gemini");
-        configure_isolation(&mut command, &manager, root.path(), ClientKind::GeminiCli)
-            .expect("configure gemini isolation");
-
-        let environment: std::collections::HashMap<_, _> = command
-            .get_envs()
-            .filter_map(|(key, value)| Some((key.to_string_lossy().into_owned(), value?)))
-            .collect();
-
-        for name in ["HOME", "GEMINI_CLI_HOME"] {
-            assert_eq!(
-                environment.get(name).map(|value| value.to_string_lossy()),
-                Some(root.path().to_string_lossy()),
-                "{name} must name the isolated root, not the .gemini directory \
-                 inside it — the CLI appends `.gemini` itself"
-            );
-        }
-        // The file the CLI actually reads lives under that home.
-        assert_eq!(
-            manager.config_path(ClientKind::GeminiCli),
-            root.path().join(".gemini/settings.json")
-        );
-        // The trusted-directory prompt cannot be answered non-interactively.
-        assert_eq!(
-            environment
-                .get("GEMINI_CLI_TRUST_WORKSPACE")
-                .map(|value| value.to_string_lossy()),
-            Some(std::borrow::Cow::Borrowed("true"))
-        );
-    }
-
-    /// End to end: after preparing the client, the file Gemini CLI actually
-    /// reads must exist and select the API-key flow. The router previously
-    /// wrote a correct file the CLI never opened (issue #227).
-    /// By default the client keeps its own configuration directory, so sessions
-    /// started outside the router remain visible and a conversation can be
-    /// resumed through it (issue #233), and an interactive user does not land in
-    /// first-run onboarding (issue #277).
-    #[test]
-    fn the_users_configuration_is_kept_by_default() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        let extended = TemporaryClient::prepare(
-            ClientKind::ClaudeCode,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            false,
-        )
-        .expect("prepare with the default configuration handling");
-        let names: Vec<String> = extended
-            .command
-            .get_envs()
-            .map(|(name, _)| name.to_string_lossy().into_owned())
-            .collect();
-        assert!(
-            !names.iter().any(|name| name == "CLAUDE_CONFIG_DIR"),
-            "the user's configuration directory must not be repointed: {names:?}"
-        );
-        // The router's actual contribution is still applied.
-        for required in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"] {
-            assert!(
-                names.iter().any(|name| name == required),
-                "{required} missing: {names:?}"
-            );
-        }
-
-        // Asking for isolation still repoints the directory.
-        let isolated = TemporaryClient::prepare(
-            ClientKind::ClaudeCode,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            true,
-        )
-        .expect("prepare isolated");
-        assert!(
-            isolated
-                .command
-                .get_envs()
-                .any(|(name, _)| name == "CLAUDE_CONFIG_DIR"),
-            "--isolated-config must still give the client its own directory"
-        );
-    }
-
-    /// A client configured through a file is isolated even though extending is
-    /// the default, because there is nothing to layer short of rewriting that
-    /// file.
-    ///
-    /// A fallback rather than an error: the user did not ask for isolation, they
-    /// asked to run a client, and this is the only way it can be run. Refusing
-    /// was right while extending was opt-in — the flag could not be honoured —
-    /// but as a default it would make `with opencode` fail outright (issue
-    /// #277).
-    #[test]
-    fn a_file_configured_client_is_isolated_even_by_default() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        assert!(
-            !extends_user_configuration(ClientKind::Opencode, false),
-            "opencode sets no base-url variable, so there is nothing to layer"
-        );
-        assert!(
-            extends_user_configuration(ClientKind::ClaudeCode, false),
-            "claude code sets both variables, so the default extends"
-        );
-        assert!(
-            !extends_user_configuration(ClientKind::ClaudeCode, true),
-            "--isolated-config wins over the default"
-        );
-
-        // And it still prepares rather than failing.
-        TemporaryClient::prepare(
-            ClientKind::Opencode,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            false,
-        )
-        .expect("a file-configured client must still run");
-    }
-
-    /// Gemini CLI sets both connection variables and still cannot be extended.
-    ///
-    /// It is pointed at the router by a `settings.json` it resolves from `HOME`,
-    /// so extending — which leaves `HOME` alone — would write that file where
-    /// the client never looks and let the user's own settings decide the run
-    /// (issue #227). Having both variables is therefore not enough to layer
-    /// onto, and the default must not assume it is.
-    #[test]
-    fn a_client_needing_a_written_file_is_isolated_despite_its_variables() {
-        let integration = ClientKind::GeminiCli.integration();
-        assert!(
-            integration.token_env.is_some() && integration.base_url_env.is_some(),
-            "the variables alone would otherwise qualify it for extending"
-        );
-        assert!(
-            !extends_user_configuration(ClientKind::GeminiCli, false),
-            "routing depends on a file only isolation makes reachable"
-        );
-    }
-
-    #[test]
-    fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        let temporary = TemporaryClient::prepare(
-            ClientKind::GeminiCli,
-            "http://router.test",
-            "task-token",
-            None,
-            &models,
-            false,
-        )
-        .expect("prepare gemini");
-        let root = temporary.directory.path();
-        let home = temporary
-            .command
-            .get_envs()
-            .find_map(|(name, value)| (name == "HOME").then_some(value?))
-            .expect("gemini run sets HOME");
-        // The CLI resolves its settings from HOME; the file must be there.
-        let settings = Path::new(home).join(".gemini/settings.json");
-        assert!(
-            settings.is_file(),
-            "no settings at {}, which is where the CLI looks",
-            settings.display()
-        );
-        let written = fs::read_to_string(&settings).expect("read settings");
-        assert!(written.contains("gemini-api-key"), "{written}");
-        assert!(Path::new(home).starts_with(root), "HOME escaped the root");
-    }
-
-    /// An isolated run must be governed by the settings the router wrote. The
-    /// previous `create_new` silently deferred to whatever was already there,
-    /// which with the `HOME` fix would let an inherited `oauth-personal`
-    /// survive and fail the run.
-    #[test]
-    fn written_gemini_settings_replace_an_existing_file() {
-        let root = tempfile::tempdir().expect("isolated root");
-        let path = root.path().join(".gemini/settings.json");
-        fs::create_dir_all(path.parent().expect("parent")).expect("create directory");
-        fs::write(
-            &path,
-            r#"{"security":{"auth":{"selectedType":"oauth-personal"}}}"#,
-        )
-        .expect("seed a conflicting file");
-
-        write_gemini_settings(&path).expect("write settings");
-
-        let written = fs::read_to_string(&path).expect("read settings");
-        assert!(written.contains("gemini-api-key"), "{written}");
-        assert!(
-            !written.contains("oauth-personal"),
-            "the inherited value survived: {written}"
-        );
-    }
-
-    /// The value itself is the one the CLI accepts; a wrong spelling is what
-    /// produced the original error, so it is pinned rather than assumed.
-    #[test]
-    fn gemini_settings_select_the_api_key_flow() {
-        let root = tempfile::tempdir().expect("isolated root");
-        let path = root.path().join(".gemini/settings.json");
-        write_gemini_settings(&path).expect("write settings");
-        let written: serde_json::Value =
-            serde_json::from_str(&fs::read_to_string(&path).expect("read")).expect("valid JSON");
-        assert_eq!(
-            written["security"]["auth"]["selectedType"],
-            "gemini-api-key"
-        );
-    }
-
-    #[test]
-    fn colliding_wrapper_flags_after_client_are_forwarded() {
-        let args = arguments(ClientKind::Codex, &["--global", "hi"]);
-        assert!(args.ends_with(&["--global".to_string(), "hi".to_string()]));
-        assert_eq!(args.first().map(String::as_str), Some("exec"));
-    }
-
-    #[test]
-    fn explicit_separator_is_not_forwarded() {
-        let args = arguments(ClientKind::Opencode, &["--", "run", "hi"]);
-        assert_eq!(args.first().map(String::as_str), Some("run"));
-        assert_eq!(args.iter().filter(|arg| arg.as_str() == "run").count(), 1);
-    }
-
-    #[test]
-    fn command_mode_word_inside_prompt_is_not_treated_as_the_subcommand() {
-        let args = arguments(ClientKind::Opencode, &["explain", "run"]);
-        assert_eq!(args.first().map(String::as_str), Some("run"));
-        assert!(args.ends_with(&["explain".to_string(), "run".to_string()]));
-    }
-
-    #[test]
-    fn every_supported_client_prepares_below_a_disposable_root() {
-        let models = [RouterModel {
-            id: "test-model".to_string(),
-            owned_by: "test".to_string(),
-        }];
-        for client in ClientKind::ALL {
-            if client == ClientKind::Cursor {
-                assert!(
-                    TemporaryClient::prepare(
-                        client,
-                        "http://router.test",
-                        "task-token",
-                        None,
-                        &models,
-                        false,
-                    )
-                    .is_err()
-                );
-                continue;
-            }
-            let temporary = TemporaryClient::prepare(
-                client,
-                "http://router.test",
-                "task-token",
-                None,
-                &models,
-                false,
-            )
-            .unwrap_or_else(|error| panic!("{client} failed temporary setup: {error}"));
-            let root = temporary.directory.path().to_path_buf();
-            assert_eq!(temporary.command.get_program(), client.command());
-            let environment = temporary
-                .command
-                .get_envs()
-                .filter_map(|(name, value)| value.map(|value| (name, value)))
-                .collect::<std::collections::HashMap<_, _>>();
-            if let Some(token_env) = client.token_env() {
-                assert_eq!(
-                    environment.get(std::ffi::OsStr::new(token_env)).copied(),
-                    Some(std::ffi::OsStr::new("task-token")),
-                    "{client} did not receive its token environment"
-                );
-            }
-            for name in [
-                "HOME",
-                "CLAUDE_CONFIG_DIR",
-                "GEMINI_CLI_HOME",
-                "OPENCODE_CONFIG",
-                "OPENCODE_CONFIG_DIR",
-            ] {
-                if let Some(value) = environment.get(std::ffi::OsStr::new(name)) {
-                    assert!(
-                        Path::new(value).starts_with(&root),
-                        "{client} {name} escaped the temporary root"
-                    );
-                }
-            }
-            drop(temporary);
-            assert!(!root.exists(), "{client} temporary root survived drop");
-        }
-    }
-
-    #[test]
-    fn registry_order_matches_client_discriminants() {
-        for client in ClientKind::ALL {
-            assert_eq!(client.integration().kind, client);
-        }
-    }
-}
+#[cfg(test)]
+#[path = "with_command_sweep_tests.rs"]
+mod sweep_tests;

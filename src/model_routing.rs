@@ -44,9 +44,19 @@ pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
     crate::proxy::error_response(status, error_type, &error.to_string())
 }
 
-pub(crate) fn model_not_found_response(model: &str) -> Response {
+/// Refuse a model the catalog does not hold, naming the ids that it does.
+///
+/// The same rule as [`available_provider_for_model`]: the component refusing
+/// the request is holding the answer, and saying nothing turns a typo into a
+/// dead end (issue #323).
+pub(crate) fn model_not_found_response(model: &str, catalog: &[String]) -> Response {
+    let detail = if catalog.is_empty() {
+        String::new()
+    } else {
+        format!("; this deployment advertises: {}", advertised_list(catalog))
+    };
     model_route_error_response(&ModelRouteError::NotFound(format!(
-        "model '{model}' is not available"
+        "model '{model}' is not available{detail}"
     )))
 }
 
@@ -152,6 +162,40 @@ fn credential_states(model: &str, catalogs: &ModelCatalogCache) -> Vec<String> {
 }
 
 /// Resolve a model only when the owning subscription is available.
+/// How many model ids a refusal names before it summarises instead.
+///
+/// Long enough to be the whole catalog on an ordinary deployment, short enough
+/// that the message stays readable in a log line.
+const ADVERTISED_IN_ERRORS: usize = 24;
+
+/// The ids this deployment would have accepted, for a refusal to name.
+///
+/// Invents nothing and consults no table: this is the live catalog the router
+/// already fetched, which is what keeps it inside the rule issue #192 set when
+/// it deleted the bundled model list (issue #323).
+fn advertised_detail(available: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> String {
+    let mut ids = available
+        .iter()
+        .flat_map(|provider| catalogs.models(*provider))
+        .collect::<Vec<_>>();
+    ids.sort_unstable();
+    ids.dedup();
+    if ids.is_empty() {
+        return String::new();
+    }
+    format!("; this deployment advertises: {}", advertised_list(&ids))
+}
+
+/// The ids, capped so one wrong name cannot produce an unbounded log line.
+fn advertised_list(ids: &[String]) -> String {
+    if ids.len() > ADVERTISED_IN_ERRORS {
+        let shown = ids[..ADVERTISED_IN_ERRORS].join(", ");
+        let rest = ids.len() - ADVERTISED_IN_ERRORS;
+        return format!("{shown} and {rest} more");
+    }
+    ids.join(", ")
+}
+
 pub fn available_provider_for_model(
     model: &str,
     available: &[SubscriptionProvider],
@@ -160,8 +204,13 @@ pub fn available_provider_for_model(
     let advertised = providers_for_model(model, catalogs);
     if advertised.is_empty() {
         let causes = credential_states(model, catalogs);
+        // Credential causes when there are any (issue #239), and otherwise the
+        // catalog itself. With healthy credentials and a wrong id, `causes` is
+        // empty and the bare sentence withheld the one fact that resolves the
+        // error — held, at that moment, by the component refusing the request
+        // (issue #323).
         let detail = if causes.is_empty() {
-            String::new()
+            advertised_detail(available, catalogs)
         } else {
             format!(": {}", causes.join("; "))
         };
@@ -251,6 +300,84 @@ pub async fn healthy_providers(
         .collect()
 }
 
+/// Whether a configured subscription can serve requests right now, and why not.
+///
+/// One answer, computed once, for every surface that reports health: `/health`,
+/// `/v1/models` and `/metrics` disagreed about a revoked subscription because
+/// each derived its own view, and the only one that was truthful was an error
+/// message a client saw after a request had already failed (issue #318).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderHealth {
+    /// The subscription this describes.
+    pub provider: SubscriptionProvider,
+    /// Whether it can serve a request now.
+    pub healthy: bool,
+    /// Operator-facing reason, when it cannot.
+    ///
+    /// May name a credential path or an upstream body, so it belongs in a log
+    /// or behind an admin credential — never on an unauthenticated endpoint.
+    pub reason: Option<String>,
+    /// The same verdict, safe to hand an unauthenticated caller.
+    pub summary: Option<&'static str>,
+}
+
+/// Health for every subscription that is actually configured on this
+/// deployment.
+///
+/// A provider with no credential reader is not reported at all: "claude was
+/// never configured here" and "claude died twelve hours ago" must not render
+/// identically, which is precisely the ambiguity that let a dead subscription
+/// hide behind an absence (issue #318).
+#[must_use]
+pub fn configured_provider_health(
+    readers: &[SubscriptionReader],
+    token_cache: &crate::refresh::TokenCache,
+    catalogs: &ModelCatalogCache,
+) -> Vec<ProviderHealth> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| readers.iter().any(|reader| reader.provider() == *provider))
+        .map(|provider| {
+            let rejected = token_cache.evidence(provider)
+                == Some(crate::refresh::CredentialEvidence::Rejected);
+            let status = catalogs.status(provider);
+            let reason =
+                if rejected {
+                    Some(token_cache.last_refresh_error(provider).unwrap_or_else(|| {
+                        format!("the {provider} credential was rejected upstream")
+                    }))
+                } else if status.discovered && !status.credential_healthy {
+                    credential_state(provider, catalogs)
+                } else {
+                    // A provider that has not yet completed its first live
+                    // discovery is *starting*, not dead. Reporting it degraded
+                    // would fire a page on every cold start and on any transient
+                    // catalog-endpoint failure — an alert that cries wolf is the
+                    // same failure as one that never fires (issue #318).
+                    None
+                };
+            ProviderHealth {
+                provider,
+                healthy: reason.is_none(),
+                // A credential path, an account id or an endpoint body can all
+                // reach `reason` through `last_refresh_error`. That is right
+                // for an operator reading a log or an admin-gated listing, and
+                // wrong for an endpoint a monitor polls without a credential,
+                // so the public summary is derived rather than passed through
+                // (issues #318, and the disclosure rule #300 set).
+                summary: reason.as_ref().map(|_| {
+                    if rejected {
+                        "the credential was rejected upstream and needs re-authentication"
+                    } else {
+                        "no live catalog has been discovered for this subscription"
+                    }
+                }),
+                reason,
+            }
+        })
+        .collect()
+}
+
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
@@ -310,6 +437,40 @@ pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvid
     }
 }
 
+/// Add every configured-but-unusable subscription to `degraded_providers`.
+///
+/// Reported with a reason, so the list distinguishes "revoked, re-authenticate"
+/// from "has never discovered a catalog" without a container-log excavation
+/// (issue #318).
+fn merge_configured_degradation(state: &AppState, catalog: &mut Value) {
+    let unhealthy = configured_provider_health(
+        &state.subscription_readers,
+        &state.subscription_cache,
+        &state.model_catalogs,
+    );
+    let mut degraded = catalog
+        .get("degraded_providers")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let mut reasons = serde_json::Map::new();
+    for health in unhealthy.iter().filter(|health| !health.healthy) {
+        let name = Value::from(health.provider.as_str());
+        if !degraded.contains(&name) {
+            degraded.push(name);
+        }
+        // The summary, not the reason: `/v1/models` answers any client token,
+        // and a credential path is not a client's business.
+        if let Some(summary) = health.summary {
+            reasons.insert(health.provider.as_str().to_string(), Value::from(summary));
+        }
+    }
+    if let Some(object) = catalog.as_object_mut() {
+        object.insert("degraded_providers".into(), Value::Array(degraded));
+        object.insert("degraded_reasons".into(), Value::Object(reasons));
+    }
+}
+
 /// `GET /v1/models` across automatic or explicitly pinned providers.
 pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Response {
     if let Err(response) = crate::proxy::authenticate_client(&state, &headers) {
@@ -328,6 +489,12 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
                 .await,
                 &state.model_catalogs,
             );
+            // A revoked subscription is filtered out before `model_catalog`
+            // ever sees it, so it could never reach `degraded_providers` and
+            // simply vanished from `data`. Absence is not an alert: a monitor
+            // cannot tell it from a provider that was never configured here
+            // (issue #318).
+            merge_configured_degradation(&state, &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
             catalog
         }
@@ -566,8 +733,13 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
         &state.model_catalogs,
     )?;
     let mut routed = route_provider(state, provider).await.map_err(|_| {
+        // The same sentence as the sibling refusal 480 lines up, which appends
+        // the cause. One with a reason and one without, depending on which of
+        // two adjacent branches failed, is exactly the asymmetry #239 fixed.
+        let cause = credential_state(provider, &state.model_catalogs)
+            .unwrap_or_else(|| format!("no usable {provider} credential is available"));
         ModelRouteError::NotFound(format!(
-            "model '{model}' has no healthy {provider} credential"
+            "model '{model}' has no healthy {provider} credential: {cause}"
         ))
     })?;
     if provider != SubscriptionProvider::Claude {
@@ -582,6 +754,10 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
 #[cfg(test)]
 #[path = "model_routing_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "model_routing_health_tests.rs"]
+mod health_tests;
 
 #[cfg(test)]
 #[path = "model_routing_recovery_tests.rs"]
