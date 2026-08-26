@@ -68,12 +68,25 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
+      # By highest version, not by whichever release was published most
+      # recently. A release page created late for an older version carries the
+      # newest publication timestamp, so `gh release view` with no tag answered
+      # for that one — and it legitimately has no assets, because the artifact
+      # jobs ran for the version being released at the time. Asking for the
+      # newest *version* is what this job's name has always meant.
       - name: Resolve the latest published release
         id: latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          version="$(gh release view --repo "${{ github.repository }}" --json tagName --jq '.tagName' | sed 's/^v//')"
+          version="$(gh release list --repo "${{ github.repository }}" --limit 1000 \
+            --json tagName --jq '.[].tagName' \
+            | sed 's/^v//' | sort -V | tail -1)"
+          if [ -z "$version" ]; then
+            echo "::error::no published releases found"
+            exit 1
+          fi
+          echo "resolved v$version" >> "$GITHUB_STEP_SUMMARY"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Download the published release assets
