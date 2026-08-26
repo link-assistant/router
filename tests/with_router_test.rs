@@ -244,6 +244,7 @@ fn run_with(
             "hi",
         ])
         .env("HOME", home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env("PATH", path)
         .env("CAPTURE_ARGS", capture.join("args"))
         .env("CAPTURE_HOME", capture.join("home"))
@@ -366,6 +367,7 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
             "wait",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env("PATH", path)
         .env("FAKE_WAIT", "1")
         .env("CAPTURE_ARGS", capture.join("args"))
@@ -428,6 +430,7 @@ fn global_undo_restores_exact_config_and_permissions() {
             "codex",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
         .output()
         .expect("configure globally");
@@ -443,6 +446,7 @@ fn global_undo_restores_exact_config_and_permissions() {
     let undone = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .args(["with", "--global", "--undo", "codex"])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
         .output()
         .expect("undo global setup");
@@ -486,6 +490,7 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
             "codex",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
         .output()
         .expect("configure globally");
@@ -502,6 +507,7 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
     let undone = Command::new(env!("CARGO_BIN_EXE_with-router"))
         .args(["--global", "--undo", "codex"])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
         .output()
         .expect("attempt undo");
@@ -533,6 +539,7 @@ fn global_undo_removes_a_config_that_did_not_exist_before_setup() {
             "codex",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
         .output()
         .expect("configure absent config globally");
@@ -543,6 +550,7 @@ fn global_undo_removes_a_config_that_did_not_exist_before_setup() {
     let undone = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .args(["with", "--global", "--undo", "codex"])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
         .output()
         .expect("undo absent global config");
@@ -559,6 +567,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
     let missing_token = Command::new(env!("CARGO_BIN_EXE_with-router"))
         .args(["--server", &server, "codex"])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
         .env_remove("LINK_ASSISTANT_TOKEN")
         .output()
@@ -576,6 +585,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         let rejected = Command::new(env!("CARGO_BIN_EXE_with-router"))
             .args(["--server", &server, "--token", "rejected", "codex"])
             .env("HOME", &home)
+            .env("XDG_CONFIG_HOME", home.join(".config"))
             .output()
             .expect("run launcher with rejected token");
         assert!(!rejected.status.success());
@@ -599,6 +609,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
             "codex",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .output()
         .expect("run launcher with unavailable model");
     assert!(!unavailable.status.success());
@@ -635,6 +646,7 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
             "hello",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env("PATH", path)
         .env("FAKE_EXIT", "0")
         .env("CAPTURE_ARGS", capture.join("args"))
@@ -698,6 +710,7 @@ fn persisted_remote_token_is_private_and_never_echoed() {
             "9",
         ])
         .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("XDG_CONFIG_HOME")
         .env_remove("APPDATA")
         .output()
@@ -783,6 +796,7 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
         "2a42a73e-19de-459a-8c24-c5e75abf9a65",
     ]);
     command.env("HOME", &home);
+    command.env("XDG_CONFIG_HOME", home.join(".config"));
     command.env("PATH", path);
     command.env("CAPTURE_ARGS", capture.join("args"));
     command.env("CAPTURE_ENV", capture.join("env"));

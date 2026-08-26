@@ -1,6 +1,6 @@
 //! Link.Assistant.Router binary entry point.
 //!
-//! Parses the [`Cli`] (lino-arguments + clap), then either:
+//! Parses the [`Cli`](link_assistant_router::cli::Cli) (lino-arguments + clap), then either:
 //!
 //! 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
 //! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `clients`, `doctor`) that runs

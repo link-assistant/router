@@ -114,7 +114,7 @@ pub(crate) fn apply(
     Ok(config_path)
 }
 
-/// Restore the exact configuration a previous [`apply`] replaced.
+/// Restore the exact configuration a previous `apply` replaced.
 ///
 /// Returns the restored path, or `None` when this client never had a
 /// configuration file to save — `configure grok` stores only a credential.
