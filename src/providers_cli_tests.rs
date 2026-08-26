@@ -73,6 +73,7 @@ fn listing_and_showing_a_provider_succeed() {
             &store,
             &ProviderOp::Show {
                 name: "formal-ai".to_string(),
+                json: false,
                 target: AuthTarget::default(),
             }
         ),
@@ -97,6 +98,7 @@ fn an_unknown_provider_is_not_reported_as_removed() {
             &store,
             &ProviderOp::Show {
                 name: "absent".to_string(),
+                json: false,
                 target: AuthTarget::default(),
             }
         ),
@@ -183,6 +185,7 @@ fn each_provider_operation_names_its_own_route() {
 
     let show = call(ProviderOp::Show {
         name: "demo".into(),
+        json: false,
         target: AuthTarget::default(),
     });
     assert_eq!(show.method, "GET");
@@ -333,6 +336,7 @@ async fn showing_an_unknown_provider_exits_two_remotely() {
         &server,
         &ProviderOp::Show {
             name: "absent".into(),
+            json: false,
             target: AuthTarget::default(),
         },
     )

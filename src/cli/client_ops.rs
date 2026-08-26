@@ -48,6 +48,11 @@ pub enum ClientOp {
     Show {
         #[arg(value_enum)]
         client: ClientKind,
+        /// Accepted for symmetry with `list`: `show` already emits JSON, so
+        /// this changes nothing (issue #314). A script should not have to know
+        /// which verb of a family takes the flag.
+        #[arg(long)]
+        json: bool,
     },
     /// Remove only settings managed by this router.
     ///

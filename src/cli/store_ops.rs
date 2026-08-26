@@ -107,6 +107,11 @@ pub enum TokenOp {
     /// Show metadata for one token.
     Show {
         id: String,
+        /// Accepted for symmetry with `list`: `show` already emits JSON, so
+        /// this changes nothing (issue #314). A script should not have to know
+        /// which verb of a family takes the flag.
+        #[arg(long)]
+        json: bool,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -189,6 +194,11 @@ pub enum ProviderOp {
     /// Show one provider with secret material redacted.
     Show {
         name: String,
+        /// Accepted for symmetry with `list`: `show` already emits JSON, so
+        /// this changes nothing (issue #314). A script should not have to know
+        /// which verb of a family takes the flag.
+        #[arg(long)]
+        json: bool,
         #[command(flatten)]
         target: AuthTarget,
     },

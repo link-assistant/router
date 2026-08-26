@@ -55,12 +55,31 @@ impl TokenCache {
     pub fn record_status(&self, provider: SubscriptionProvider, status: u16) {
         if status == 401 || status == 403 {
             self.record_credential_rejected(provider);
+            // The third producer of the same state, and the one that was
+            // silent. A credential rejected while serving a request makes the
+            // provider unusable exactly as a rejected refresh does (#321).
+            self.announce_unusable(
+                provider,
+                &format!("an upstream request was refused with HTTP {status}"),
+            );
         } else if (200..300).contains(&status) {
             self.record_credential_working(provider);
         }
     }
 
     /// Record that an upstream rejected `provider`'s credential (401/403).
+    /// Announce that a provider became unusable, whichever path discovered it.
+    ///
+    /// `Rejected` is the single state that drives `/health/subscriptions` to
+    /// 503, the `/metrics` gauge to 0, and removal from routing. It was set
+    /// from three places at three severities — once at `ERROR`, once at
+    /// `WARN`, and once silently — so a subscription revoked between refresh
+    /// ticks produced a 503 with no error line anywhere, which is the outage
+    /// shape issue #321 exists to prevent.
+    pub(crate) fn announce_unusable(&self, provider: SubscriptionProvider, reason: &str) {
+        self.log_terminal_once(provider, reason);
+    }
+
     pub fn record_credential_rejected(&self, provider: SubscriptionProvider) {
         self.record_evidence(provider, CredentialEvidence::Rejected);
     }

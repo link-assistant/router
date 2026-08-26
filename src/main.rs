@@ -3,8 +3,11 @@
 //! Parses the [`Cli`](link_assistant_router::cli::Cli) (lino-arguments + clap), then either:
 //!
 //! 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
-//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `clients`, `doctor`) that runs
-//!    locally and exits without binding a port.
+//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `providers`, `clients`,
+//!    `auth`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
+//!    binding a port. Those that read or change router state act on the router
+//!    this machine is pointed at, which may be a remote deployment (issue
+//!    #294); `configure`, `clients` and `auth --local` act here.
 //!
 //! Shared services are constructed together so the CLI subcommands operate on the
 //! exact same backing state the HTTP server would.

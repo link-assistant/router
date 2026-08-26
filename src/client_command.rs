@@ -46,7 +46,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             )
             .await
         }
-        ClientOp::Show { client } => show(&manager, *client),
+        ClientOp::Show { client, .. } => show(&manager, *client),
         ClientOp::Remove {
             client,
             revoke_supplied,

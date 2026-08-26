@@ -251,3 +251,67 @@ fn usage_reflects_the_invoked_name() {
         }
     }
 }
+
+/// One verb per operation, with the other spellings kept as aliases, and
+/// `--json` accepted by every listing and every `show` (issue #314).
+///
+/// Asserted against the parser rather than a doc, because the defect was that
+/// each family had drifted into its own vocabulary and nothing noticed.
+#[test]
+fn the_cli_vocabulary_is_uniform_across_families() {
+    for spelling in [
+        &["tokens", "issue"][..],
+        &["tokens", "create"][..],
+        &["tokens", "add"][..],
+        &["tokens", "revoke"][..],
+        &["tokens", "remove"][..],
+        &["tokens", "delete"][..],
+        &["providers", "add"][..],
+        &["providers", "create"][..],
+        &["providers", "remove"][..],
+        &["providers", "delete"][..],
+        &["clients", "setup"][..],
+        &["clients", "create"][..],
+        &["clients", "remove"][..],
+        &["clients", "delete"][..],
+    ] {
+        let mut args = spelling.to_vec();
+        args.push("--help");
+        let result = output(&mut router(&args));
+        assert!(
+            result.status.success(),
+            "`{}` must be accepted: {}",
+            spelling.join(" "),
+            String::from_utf8_lossy(&result.stderr)
+        );
+    }
+
+    // `--json` on every listing and every `show`, so a script never has to
+    // know which verb of a family takes it.
+    for family in [
+        &["tokens", "list"][..],
+        &["tokens", "show"][..],
+        &["accounts", "list"][..],
+        &["providers", "list"][..],
+        &["providers", "show"][..],
+        &["clients", "list"][..],
+        &["clients", "show"][..],
+    ] {
+        let mut args = family.to_vec();
+        args.push("--help");
+        let text = String::from_utf8_lossy(&output(&mut router(&args)).stdout).into_owned();
+        assert!(
+            text.contains("--json"),
+            "`{}` must accept --json:\n{text}",
+            family.join(" ")
+        );
+    }
+
+    // `--token` means a credential; the log-directory selector is `--token-id`.
+    let logs = String::from_utf8_lossy(&output(&mut router(&["logs", "show", "--help"])).stdout)
+        .into_owned();
+    assert!(
+        logs.contains("--token-id"),
+        "the log selector must not be spelled --token:\n{logs}"
+    );
+}

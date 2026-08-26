@@ -153,7 +153,7 @@ pub async fn openai_chat_completions(
         .model_catalogs
         .models(crate::subscription::SubscriptionProvider::Claude);
     if openai::resolve_model_with(&req.model, &BTreeMap::new(), &catalog).is_none() {
-        return crate::model_routing::model_not_found_response(&req.model);
+        return crate::model_routing::model_not_found_response(&req.model, &catalog);
     }
     // A tool entry Anthropic cannot represent is dropped, not fatal. Codex CLI
     // sends `namespace`, `custom` and `tool_search` in its ordinary tool set, so
@@ -297,7 +297,7 @@ pub async fn openai_responses(
         .model_catalogs
         .models(crate::subscription::SubscriptionProvider::Claude);
     if openai::resolve_model_with(&req.model, &BTreeMap::new(), &catalog).is_none() {
-        return crate::model_routing::model_not_found_response(&req.model);
+        return crate::model_routing::model_not_found_response(&req.model, &catalog);
     }
     // A tool entry Anthropic cannot represent is dropped, not fatal. Codex CLI
     // sends `namespace`, `custom` and `tool_search` in its ordinary tool set, so

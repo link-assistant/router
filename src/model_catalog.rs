@@ -240,6 +240,11 @@ pub async fn refresh_catalogs(
                 let rejected = is_credential_rejection(&error);
                 if rejected {
                     token_cache.record_credential_rejected(provider);
+                    // The same state the refresh path announces at ERROR, so a
+                    // subscription revoked between refresh ticks — caught here
+                    // first — is not the one outage that produces no error line
+                    // (issue #321).
+                    token_cache.announce_unusable(provider, &error);
                 }
                 // Classified before the suffix goes on: the body is JSON, and
                 // appending prose to it makes it unparseable, so the

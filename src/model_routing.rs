@@ -44,9 +44,19 @@ pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
     crate::proxy::error_response(status, error_type, &error.to_string())
 }
 
-pub(crate) fn model_not_found_response(model: &str) -> Response {
+/// Refuse a model the catalog does not hold, naming the ids that it does.
+///
+/// The same rule as [`available_provider_for_model`]: the component refusing
+/// the request is holding the answer, and saying nothing turns a typo into a
+/// dead end (issue #323).
+pub(crate) fn model_not_found_response(model: &str, catalog: &[String]) -> Response {
+    let detail = if catalog.is_empty() {
+        String::new()
+    } else {
+        format!("; this deployment advertises: {}", advertised_list(catalog))
+    };
     model_route_error_response(&ModelRouteError::NotFound(format!(
-        "model '{model}' is not available"
+        "model '{model}' is not available{detail}"
     )))
 }
 
@@ -173,17 +183,17 @@ fn advertised_detail(available: &[SubscriptionProvider], catalogs: &ModelCatalog
     if ids.is_empty() {
         return String::new();
     }
+    format!("; this deployment advertises: {}", advertised_list(&ids))
+}
+
+/// The ids, capped so one wrong name cannot produce an unbounded log line.
+fn advertised_list(ids: &[String]) -> String {
     if ids.len() > ADVERTISED_IN_ERRORS {
-        let shown = ids
-            .iter()
-            .take(ADVERTISED_IN_ERRORS)
-            .cloned()
-            .collect::<Vec<_>>()
-            .join(", ");
+        let shown = ids[..ADVERTISED_IN_ERRORS].join(", ");
         let rest = ids.len() - ADVERTISED_IN_ERRORS;
-        return format!("; this deployment advertises {shown} and {rest} more");
+        return format!("{shown} and {rest} more");
     }
-    format!("; this deployment advertises: {}", ids.join(", "))
+    ids.join(", ")
 }
 
 pub fn available_provider_for_model(
@@ -723,8 +733,13 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
         &state.model_catalogs,
     )?;
     let mut routed = route_provider(state, provider).await.map_err(|_| {
+        // The same sentence as the sibling refusal 480 lines up, which appends
+        // the cause. One with a reason and one without, depending on which of
+        // two adjacent branches failed, is exactly the asymmetry #239 fixed.
+        let cause = credential_state(provider, &state.model_catalogs)
+            .unwrap_or_else(|| format!("no usable {provider} credential is available"));
         ModelRouteError::NotFound(format!(
-            "model '{model}' has no healthy {provider} credential"
+            "model '{model}' has no healthy {provider} credential: {cause}"
         ))
     })?;
     if provider != SubscriptionProvider::Claude {
