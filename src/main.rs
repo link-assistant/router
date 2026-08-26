@@ -72,6 +72,7 @@ async fn run() -> ExitCode {
     let verbose = cli.verbose;
     let request_log = cli.request_log.clone();
     let request_log_max_bytes = cli.request_log_max_bytes;
+    let request_log_max_total_bytes = cli.request_log_max_total_bytes;
 
     link_assistant_router::logging::init(verbose);
 
@@ -125,6 +126,7 @@ async fn run() -> ExitCode {
             logger,
             request_log.as_deref(),
             request_log_max_bytes,
+            request_log_max_total_bytes,
         )
         .await
         {
@@ -247,6 +249,7 @@ async fn run_server(
     logger: LogLazy,
     request_log: Option<&std::path::Path>,
     request_log_max_bytes: u64,
+    request_log_max_total_bytes: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Upstream: {}", config.upstream_base_url);
     tracing::info!("Upstream provider: {:?}", config.upstream_provider);
@@ -354,6 +357,7 @@ async fn run_server(
             &config.data_dir,
             request_log,
             request_log_max_bytes,
+            request_log_max_total_bytes,
         ),
         crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
@@ -578,7 +582,8 @@ async fn run_remote_command(
         Command::Tls { .. } => refuse(no_remote_form(
             "tls",
             server,
-            "the certificate is generated on the deployment that serves it; run `router tls`              there and distribute the PEM it prints",
+            "the certificate is generated on the deployment that serves it; run `router tls` \
+             there and distribute the PEM it prints",
         )),
         // Never reached: `target_of` returns `None` for every other command.
         _ => ExitCode::from(1),

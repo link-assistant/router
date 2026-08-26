@@ -613,7 +613,7 @@ rejected locally rather than forwarded. The proxy:
 
 - Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
 - Replaces it with the real OAuth token
-- Forwards all headers (except `host`, `authorization`, `x-api-key`, `connection`, `transfer-encoding`)
+- Forwards only the headers the upstream protocol needs (`accept`, `content-type`, `anthropic-version`, `anthropic-beta`), and reports the deployment's own `user-agent`. Client environment headers — `x-stainless-*`, the client `user-agent`, `accept-language`, `x-claude-code-session-id` — are not relayed, so the vendor sees one machine per deployment rather than each caller's ([issue #332](https://github.com/link-assistant/router/issues/332))
 - Passes through the request body unmodified
 - Streams back the response (SSE-compatible)
 - Preserves the upstream status code and response headers
@@ -670,7 +670,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--bridge-model-policy` / `BRIDGE_MODEL_POLICY` | `first-advertised` | No | How to pick that model from the catalog: `first-advertised` or `last-advertised`. When no compatible model exists the request fails with `model_selection_required` rather than falling back to a built-in name |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
-| `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first |
+| `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first. The store's total is this bound times the number of tokens with recorded traffic — cap that with the row below |
+| `--request-log-max-total-bytes` / `REQUEST_LOG_MAX_TOTAL_BYTES` | `4294967296` (4 GiB) | No | Bound across the whole request store; the least recently written token directories are removed first. `0` disables the total cap |
 | `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
@@ -698,7 +699,14 @@ Client `Authorization` is never forwarded; the router validates it as an
 request-id headers return to the client, while cookies and credentials do not.
 
 Deletion, forced REST ref updates, GraphQL mutations whose operation deletes an
-object, and forced GraphQL ref updates are denied by default. An ordered policy
+object, and forced GraphQL ref updates are denied by default. So are
+destructive operations that do not spell their intent in the HTTP method:
+`PUT` to branch protection or a repository ruleset, `POST` to repository
+transfer, and a `PATCH` on a repository carrying `archived`, `private`,
+`visibility` or `default_branch`. The principle is the effect, not the verb —
+`PUT .../branches/{branch}/protection` replaces the whole protection object and
+reaches the same end state as the `DELETE` beside it, and branch protection is
+the control the rest of this policy leans on. An ordered policy
 file can override a narrow operation without weakening the remaining defaults:
 
 ```json
@@ -1175,7 +1183,12 @@ with `[REDACTED]`. The same helper handles headers, URI query parameters, and
 JSON bodies, and no complete credential is logged. Request bodies larger than
 10 MiB continue to the handler but are omitted from the log. Directories and
 files use owner-only permissions on Unix. `REQUEST_LOG_MAX_BYTES` applies to
-each token independently, so one caller cannot evict another's history.
+each token independently, so one caller cannot evict another's history — which
+also means the store's total is that bound times the number of tokens that have
+recorded traffic. `REQUEST_LOG_MAX_TOTAL_BYTES` bounds the store as a whole,
+removing the least recently written token directories first, so a deployment
+that has issued many short-lived tokens cannot grow past what the operator
+budgeted for the partition.
 
 ## Docker Deployment
 

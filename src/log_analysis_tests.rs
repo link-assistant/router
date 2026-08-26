@@ -811,3 +811,163 @@ fn a_missing_root_yields_nothing() {
     assert_eq!(unparsable, 0);
     assert_eq!(bytes, 0);
 }
+
+/// A compressed stream that finished is reported as finished.
+///
+/// `stream_not_verifiable` was a refusal to decompress, not a limit: the bytes
+/// are ordinary gzip or brotli and decode to readable SSE, yet 1163 of ~1600
+/// exchanges on a real deployment were declared unknowable — every streamed
+/// one among them, so the log was blind to truncation on the majority of
+/// traffic (issue #328).
+#[test]
+fn a_compressed_stream_is_decoded_and_its_ending_reported() {
+    use std::io::Write as _;
+
+    let sse = "event: message_start\ndata: {\"type\":\"message_start\"}\n\n\
+               event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+    let gzip = |plain: &str| {
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        encoder.write_all(plain.as_bytes()).expect("gzip");
+        base64::Engine::encode(
+            &base64::engine::general_purpose::STANDARD,
+            encoder.finish().expect("gzip"),
+        )
+    };
+    let brotli = |plain: &str| {
+        let mut encoded = Vec::new();
+        let mut writer = brotli::CompressorWriter::new(&mut encoded, 4096, 5, 22);
+        writer.write_all(plain.as_bytes()).expect("brotli");
+        drop(writer);
+        base64::Engine::encode(&base64::engine::general_purpose::STANDARD, encoded)
+    };
+
+    // `br` is what the vendor actually returns on this traffic, so gzip alone
+    // would have left most exchanges unreadable.
+    for (encoding, body) in [("gzip", gzip(sse)), ("br", brotli(sse))] {
+        let root = tempfile::tempdir().expect("temporary log root");
+        write_log(
+            root.path(),
+            "tokenhash",
+            &[
+                json!({
+                    "correlation_id": "z",
+                    "phase": "client_request",
+                    "uri": "/v1/messages?beta=true",
+                    "body": {"json": {"stream": true}}
+                }),
+                json!({
+                    "correlation_id": "z",
+                    "phase": "client_response",
+                    "status": 200,
+                    "headers": {
+                        "content-type": "text/event-stream; charset=utf-8",
+                        "content-encoding": encoding
+                    }
+                }),
+                json!({
+                    "correlation_id": "z",
+                    "phase": "upstream_response_body",
+                    "body": {"base64": body}
+                }),
+                json!({
+                    "correlation_id": "z",
+                    "phase": "stream_end",
+                    "outcome": "encoded_not_verifiable",
+                    "streamed": true,
+                    "inspectable": false,
+                    "complete": false,
+                    "frames": 2
+                }),
+            ],
+        );
+
+        let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+        let summary = summarise(&exchanges, unparsable, 0);
+        assert_eq!(
+            summary.unverifiable_streams, 0,
+            "{encoding}: a stream the router can decode is not unknowable"
+        );
+        let found = anomalies(&exchanges);
+        assert!(
+            found
+                .iter()
+                .all(|anomaly| anomaly.kind != "stream_not_verifiable"),
+            "{encoding}: nothing is unverifiable once it has been read"
+        );
+        assert!(
+            found.is_empty(),
+            "{encoding}: a stream that finished normally is not an anomaly: {found:?}"
+        );
+    }
+}
+
+/// A compressed stream cut before its terminator is still reported truncated.
+///
+/// The point of decoding is not to declare everything healthy — it is to tell
+/// the two apart. `complete: false` on an unchecked stream produced exactly
+/// the false negatives issue #234 was filed about.
+#[test]
+fn a_compressed_stream_cut_short_is_reported_as_such() {
+    use std::io::Write as _;
+
+    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+    encoder
+        .write_all(b"event: message_start\ndata: {\"type\":\"message_start\"}\n\n")
+        .expect("gzip");
+    encoder.flush().expect("flush");
+    let complete = encoder.finish().expect("gzip");
+    // Drop the end-of-stream marker: what a capture cut mid-flight looks like.
+    let cut = &complete[..complete.len() - 8];
+
+    let root = tempfile::tempdir().expect("temporary log root");
+    write_log(
+        root.path(),
+        "tokenhash",
+        &[
+            json!({
+                "correlation_id": "z",
+                "phase": "client_request",
+                "uri": "/v1/messages?beta=true",
+                "body": {"json": {"stream": true}}
+            }),
+            json!({
+                "correlation_id": "z",
+                "phase": "client_response",
+                "status": 200,
+                "headers": {
+                    "content-type": "text/event-stream; charset=utf-8",
+                    "content-encoding": "gzip"
+                }
+            }),
+            json!({
+                "correlation_id": "z",
+                "phase": "upstream_response_body",
+                "body": {"base64": base64::Engine::encode(
+                    &base64::engine::general_purpose::STANDARD, cut)}
+            }),
+            json!({
+                "correlation_id": "z",
+                "phase": "stream_end",
+                "outcome": "encoded_not_verifiable",
+                "streamed": true,
+                "inspectable": false,
+                "complete": false,
+                "frames": 1
+            }),
+        ],
+    );
+
+    let (exchanges, unparsable, _) = read_exchanges(root.path(), None).expect("read the log");
+    let summary = summarise(&exchanges, unparsable, 0);
+    assert_eq!(
+        summary.unverifiable_streams, 0,
+        "the frames were read, so the ending is knowable either way"
+    );
+    let found = anomalies(&exchanges);
+    assert!(
+        found
+            .iter()
+            .any(|anomaly| anomaly.correlation_ids.iter().any(|id| id == "z")),
+        "a stream cut before its terminator must be reported: {found:?}"
+    );
+}

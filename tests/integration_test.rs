@@ -247,9 +247,16 @@ mod required_headers_tests {
         assert!(REQUIRED_FORWARD_HEADERS.contains(&"anthropic-version"));
     }
 
+    /// The client's session id is not forwarded.
+    ///
+    /// It is a stable identifier minted on the caller's machine that
+    /// correlates requests into sessions no matter which token carried them,
+    /// so relaying it undid the separation per-token issuance exists to
+    /// provide. The router still reads it for its own routing; it just does
+    /// not pass it on (issue #332).
     #[test]
-    fn test_required_headers_include_session_id() {
-        assert!(REQUIRED_FORWARD_HEADERS.contains(&"x-claude-code-session-id"));
+    fn test_required_headers_exclude_the_client_session_id() {
+        assert!(!REQUIRED_FORWARD_HEADERS.contains(&"x-claude-code-session-id"));
     }
 }
 

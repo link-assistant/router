@@ -66,6 +66,14 @@ pub struct Exchange {
     /// Bodies that could not be decoded, so nothing is inferred from them.
     pub undecodable_bodies: u64,
     pub records: u64,
+    /// The encoded response frames, in the order they were recorded.
+    ///
+    /// Only their concatenation is a valid compressed stream, so they are kept
+    /// until the whole exchange has been read and decoded together (issue
+    /// #328).
+    encoded_frames: Vec<u8>,
+    /// The `content-encoding` the response declared, if it declared one.
+    content_encoding: Option<String>,
 }
 
 impl Exchange {
@@ -211,6 +219,10 @@ pub fn read_exchanges(
     let exchanges = by_id
         .into_values()
         .map(|mut exchange| {
+            // Decode before classifying: the terminator the classification
+            // looks for is inside the bytes, and searching them encoded is
+            // what made every compressed stream unverifiable (issue #328).
+            settle_encoded_frames(&mut exchange);
             resolve_stream_classification(&mut exchange);
             exchange
         })
@@ -277,22 +289,33 @@ fn absorb(by_id: &mut BTreeMap<String, Exchange>, record: &Value) {
         }
         "client_response" => {
             exchange.status = record.get("status").and_then(Value::as_u64);
+            note_response_encoding(exchange, record);
             note_response_content_type(exchange, record);
         }
         "upstream_response" => {
             exchange.upstream_status = record.get("status").and_then(Value::as_u64);
+            note_response_encoding(exchange, record);
             note_response_content_type(exchange, record);
         }
         "upstream_response_body" | "client_response_body" => {
             if phase == "upstream_response_body" {
                 exchange.frames += 1;
             }
-            if record
+            if let Some(encoded) = record
                 .get("body")
-                .is_some_and(|body| body.get("base64").is_some())
+                .and_then(|body| body.get("base64"))
+                .and_then(Value::as_str)
             {
                 if phase == "upstream_response_body" {
                     exchange.undecodable_bodies += 1;
+                    // Kept rather than counted and discarded: the bytes are
+                    // ordinary gzip or brotli, and only their concatenation
+                    // decodes (issue #328).
+                    if let Ok(bytes) =
+                        base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)
+                    {
+                        exchange.encoded_frames.extend_from_slice(&bytes);
+                    }
                 }
             } else if let Some(body) = record.get("body")
                 && body_carries_a_terminator(body)
@@ -355,21 +378,69 @@ fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
         return;
     }
     exchange.response_media_type = Some(media_type.clone());
-    if let Some(encoding) = record
-        .get("headers")
-        .and_then(|headers| headers.get("content-encoding"))
-        .and_then(Value::as_str)
-        && !encoding
-            .split(',')
-            .all(|part| part.trim().is_empty() || part.trim().eq_ignore_ascii_case("identity"))
-    {
-        exchange.inspectable = false;
-    }
     // Evidence either way is conclusive, so it overrides the request's
     // `stream: true` hint: what the response actually was beats what was asked
     // for, and a request may ask for a stream that the upstream answers whole.
     exchange.streamed = media_type == "text/event-stream";
     exchange.stream_evidence = true;
+}
+
+/// Record the response's declared content encoding.
+///
+/// Kept separate from the media type because a record may carry one without
+/// the other, and the encoding is what decides whether the frames can be read.
+fn note_response_encoding(exchange: &mut Exchange, record: &Value) {
+    if let Some(encoding) = record
+        .get("headers")
+        .and_then(|headers| headers.get("content-encoding"))
+        .and_then(Value::as_str)
+    {
+        exchange.content_encoding = Some(encoding.to_string());
+    }
+}
+
+/// Decide what the recorded frames say, decoding them when they are encoded.
+///
+/// `stream_not_verifiable` was a refusal to decompress, not a limit: the
+/// stored bytes are ordinary gzip or brotli and decode to readable SSE, yet
+/// 1163 of ~1600 exchanges were declared unknowable, every streamed one among
+/// them. Only an encoding the router genuinely cannot decode is unverifiable
+/// now (issue #328).
+fn settle_encoded_frames(exchange: &mut Exchange) {
+    let encoding = exchange
+        .content_encoding
+        .as_deref()
+        .map_or(Some(crate::log_decode::Encoding::Identity), |declared| {
+            crate::log_decode::Encoding::parse(declared)
+        });
+    let Some(encoding) = encoding else {
+        // An encoding with no decoder: "not knowable from the log" is then the
+        // honest answer rather than an unattempted one.
+        exchange.inspectable = false;
+        return;
+    };
+    if encoding.is_identity() || exchange.encoded_frames.is_empty() {
+        return;
+    }
+    let Some(decoded) = crate::log_decode::decode(&exchange.encoded_frames, encoding) else {
+        // The bytes did not match what the header claimed. Nothing was read,
+        // so nothing is asserted about how the stream ended.
+        exchange.inspectable = false;
+        return;
+    };
+    exchange.inspectable = true;
+    exchange.undecodable_bodies = 0;
+    if crate::request_log::text_terminates_stream(&decoded) {
+        exchange.body_terminated = true;
+        // The relay stamped `complete: false` because it declined to look, not
+        // because the stream was cut. A boolean meaning "unchecked" under the
+        // name "incomplete" is what produced the false negatives issue #234
+        // was filed about; the bytes now say otherwise, so they win.
+        if exchange.stream_complete == Some(false) {
+            exchange.stream_complete = Some(true);
+            exchange.stream_outcome = Some(String::from("completed"));
+        }
+    }
 }
 
 /// Whether a recorded body carries a dialect's terminating event.
@@ -486,8 +557,9 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
     if !unverifiable.is_empty() {
         found.push(Anomaly {
             kind: "stream_not_verifiable",
-            detail: "a streamed exchange was relayed compressed, so its frames cannot be \
-                     inspected for a terminator; how it ended is not knowable from the log"
+            detail: "a streamed exchange was relayed under an encoding this router cannot \
+                     decode, so its frames cannot be inspected for a terminator; how it \
+                     ended is not knowable from the log"
                 .to_string(),
             correlation_ids: unverifiable,
         });

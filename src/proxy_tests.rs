@@ -76,6 +76,120 @@ fn build_upstream_headers_strips_client_auth_headers() {
     );
 }
 
+/// The vendor learns the deployment, never the caller's machine.
+///
+/// The proxy opened the upstream connection itself, so the egress IP was the
+/// deployment's — and then copied the caller's `x-stainless-os`, `-arch`,
+/// `-runtime`, `user-agent`, locale and session id through untouched. A
+/// deployment on Linux reported `MacOS`/`arm64` from a developer's laptop, so
+/// network-level and application-level identity disagreed and the vendor could
+/// read the difference (issue #332).
+#[test]
+fn upstream_headers_describe_the_deployment_not_the_caller() {
+    let mut incoming = HeaderMap::new();
+    for (name, value) in [
+        ("x-stainless-os", "MacOS"),
+        ("x-stainless-arch", "arm64"),
+        ("x-stainless-runtime", "node"),
+        ("x-stainless-runtime-version", "v26.3.0"),
+        ("x-stainless-package-version", "0.112.1"),
+        ("user-agent", "claude-cli/2.1.237 (external, sdk-cli)"),
+        ("accept-language", "en-GB"),
+        ("x-app", "cli"),
+        ("originator", "codex_cli_rs"),
+        // A stable identifier that correlates requests into sessions no matter
+        // which token carried them, defeating per-token separation.
+        (
+            "x-claude-code-session-id",
+            "d42315d0-0000-0000-0000-000000000000",
+        ),
+        // A client-side safety toggle must not be asserted on the operator's
+        // behalf, the same principle as issue #310.
+        ("anthropic-dangerous-direct-browser-access", "true"),
+        // Correct today and guarded here: the router never adds these, and it
+        // must not relay one a client sent either.
+        ("x-forwarded-for", "42.114.207.230"),
+        ("x-real-ip", "42.114.207.230"),
+        ("forwarded", "for=42.114.207.230"),
+    ] {
+        incoming.insert(name, HeaderValue::from_static(value));
+    }
+    incoming.insert("content-type", HeaderValue::from_static("application/json"));
+
+    let upstream =
+        build_upstream_headers(&incoming, "oauth-token", &LogLazy::with_level(levels::NONE));
+
+    for disclosed in [
+        "x-stainless-os",
+        "x-stainless-arch",
+        "x-stainless-runtime",
+        "x-stainless-runtime-version",
+        "x-stainless-package-version",
+        "accept-language",
+        "x-app",
+        "originator",
+        "x-claude-code-session-id",
+        "anthropic-dangerous-direct-browser-access",
+        "x-forwarded-for",
+        "x-real-ip",
+        "forwarded",
+    ] {
+        assert!(
+            upstream.get(disclosed).is_none(),
+            "{disclosed} describes the caller and must not reach the vendor"
+        );
+    }
+
+    // Normalised rather than dropped: the vendor expects a value, and one
+    // deployment should look like one machine, which is what it is.
+    let agent = upstream
+        .get("user-agent")
+        .and_then(|value| value.to_str().ok())
+        .expect("upstream requests carry a user-agent");
+    assert!(
+        agent.starts_with("link-assistant-router/"),
+        "the deployment names itself, not the client: {agent}"
+    );
+    // What the protocol actually needs still arrives.
+    assert_eq!(
+        upstream.get("content-type").and_then(|v| v.to_str().ok()),
+        Some("application/json")
+    );
+    assert!(upstream.get("anthropic-version").is_some());
+}
+
+/// Two different clients behind one deployment look alike upstream.
+///
+/// The property the issue asks for stated directly: if any client-supplied
+/// header still described its sender, this comparison would separate them.
+#[test]
+fn two_clients_are_indistinguishable_upstream() {
+    let client = |os: &'static str, agent: &'static str, session: &'static str| {
+        let mut incoming = HeaderMap::new();
+        incoming.insert("x-stainless-os", HeaderValue::from_static(os));
+        incoming.insert("user-agent", HeaderValue::from_static(agent));
+        incoming.insert(
+            "x-claude-code-session-id",
+            HeaderValue::from_static(session),
+        );
+        incoming.insert("content-type", HeaderValue::from_static("application/json"));
+        let upstream =
+            build_upstream_headers(&incoming, "oauth-token", &LogLazy::with_level(levels::NONE));
+        let mut rendered = upstream
+            .iter()
+            .map(|(name, value)| format!("{name}: {}", value.to_str().unwrap_or("<non-utf8>")))
+            .collect::<Vec<_>>();
+        rendered.sort();
+        rendered
+    };
+
+    assert_eq!(
+        client("MacOS", "claude-cli/2.1.237", "d42315d0"),
+        client("Linux", "node", "572a3cf1"),
+        "one deployment must present one identity upstream"
+    );
+}
+
 #[test]
 fn build_upstream_headers_injects_required_oauth_headers_when_missing() {
     // A plain Anthropic SDK client that does not send anthropic-version or the

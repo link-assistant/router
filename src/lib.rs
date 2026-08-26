@@ -46,6 +46,7 @@ pub mod github_proxy;
 pub mod gonka;
 pub mod lino_json;
 pub mod log_analysis;
+pub mod log_decode;
 pub mod logging;
 pub mod login;
 pub mod login_api;

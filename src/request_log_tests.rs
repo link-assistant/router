@@ -728,6 +728,82 @@ fn a_limit_too_small_for_a_marker_still_respects_the_limit() {
     assert!(fs::metadata(&path).expect("log").len() <= 48);
 }
 
+/// The model named in the request body reaches the log line.
+///
+/// `model` was in the format and never populated: it was read from a response
+/// header the router sets only when the upstream substitutes a different
+/// model, so every ordinary line — success and failure alike — said `model=-`
+/// while the body sat in the middleware's own buffer (issue #320).
+#[test]
+fn the_model_named_in_the_body_is_what_the_line_reports() {
+    let capture = |body: &[u8]| {
+        let mut capture = ClientRequestCapture {
+            logger: Arc::new(RequestLog::new(std::path::PathBuf::from("unused"), 0)),
+            correlation_id: String::from("test"),
+            method: String::from("POST"),
+            uri: String::from("/v1/messages"),
+            version: String::from("HTTP/1.1"),
+            headers: BTreeMap::new(),
+            body: Vec::new(),
+            omitted: false,
+            recorded: true,
+            model: Arc::new(Mutex::new(None)),
+        };
+        capture.push(body);
+        capture.extract_model()
+    };
+
+    assert_eq!(
+        capture(br#"{"model":"claude-haiku-4-5-20251001","max_tokens":10}"#),
+        Some("claude-haiku-4-5-20251001".to_string()),
+        "a body that names a model must put it on the line"
+    );
+    // The case the issue was filed about: a model the router does not
+    // advertise still identifies which request was refused.
+    assert_eq!(
+        capture(br#"{"model":"no-such-model-xyz"}"#),
+        Some("no-such-model-xyz".to_string()),
+        "a refused model is exactly the one an operator needs named"
+    );
+    // `-` stays reserved for requests that genuinely have no model.
+    for bodiless in [
+        &b""[..],
+        b"not json",
+        br#"{"max_tokens":10}"#,
+        br#"{"model":""}"#,
+    ] {
+        assert_eq!(
+            capture(bodiless),
+            None,
+            "nothing to report is reported as nothing, not guessed"
+        );
+    }
+}
+
+/// An oversized body is not held in memory to name its model.
+///
+/// The buffer is bounded, and a body past the bound is dropped rather than
+/// truncated — a truncated JSON body parses to nothing anyway, so the line
+/// must fall back to `-` instead of reporting half a body's worth of guess.
+#[test]
+fn an_unbuffered_body_names_no_model() {
+    let mut capture = ClientRequestCapture {
+        logger: Arc::new(RequestLog::new(std::path::PathBuf::from("unused"), 0)),
+        correlation_id: String::from("test"),
+        method: String::from("POST"),
+        uri: String::from("/v1/messages"),
+        version: String::from("HTTP/1.1"),
+        headers: BTreeMap::new(),
+        body: Vec::new(),
+        omitted: false,
+        recorded: true,
+        model: Arc::new(Mutex::new(None)),
+    };
+    capture.push(&vec![b'x'; MAX_BUFFERED_REQUEST_BYTES + 1]);
+    assert!(capture.omitted, "the bound must still be enforced");
+    assert_eq!(capture.extract_model(), None);
+}
+
 /// The request line names the token label, and the response line names the
 /// model actually served — both already in hand, neither previously logged
 /// (issue #320). The token value itself must never appear in either.

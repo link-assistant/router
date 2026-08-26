@@ -116,22 +116,32 @@ fn the_explicit_flags_win_over_the_rule() {
     );
 }
 
-/// A guess is reported at the moment it is made. Without this the only signal
-/// is an error the client writes about itself, several lines later.
+/// The launcher is silent when it does the obvious thing.
+///
+/// A flagged interactive launch is most launches for an interactive tool, and
+/// each one printed advice above the client's own banner about an option the
+/// user had not asked about. The bare invocation was the silent one, so advice
+/// arrived in inverse proportion to how much the user needed it (issue #330).
 #[test]
-fn an_inferred_session_says_so_and_an_unambiguous_one_stays_quiet() {
-    let guessed = plan(&args(ClientKind::ClaudeCode, &["--verbose"]), None, true);
-    let note = guessed.note.expect("an inferred mode is reported");
-    assert!(note.contains("--non-interactive"), "{note}");
-
-    for unambiguous in [&[][..], &["fix the tests"]] {
+fn an_ordinary_interactive_launch_says_nothing_of_its_own() {
+    for forwarded in [&["--verbose"][..], &["--model", "claude-opus-5"], &[]] {
+        let launch = plan(&args(ClientKind::ClaudeCode, forwarded), None, true);
         assert!(
-            plan(&args(ClientKind::ClaudeCode, unambiguous), None, true)
-                .note
-                .is_none(),
-            "{unambiguous:?} needed no guess"
+            launch.note.is_none(),
+            "{forwarded:?} went as typed and needs no announcement: {:?}",
+            launch.note
         );
     }
+    // A one-shot run with a prompt is equally unremarkable.
+    assert!(
+        plan(
+            &args(ClientKind::ClaudeCode, &["fix the tests"]),
+            None,
+            true
+        )
+        .note
+        .is_none()
+    );
 }
 
 /// The defect in issue #295: a bare launch replaced the model the user had

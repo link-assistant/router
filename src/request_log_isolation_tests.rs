@@ -109,3 +109,78 @@ fn oversized_record_placeholder_keeps_token_identity() {
     assert!(rendered.contains("\"token_id\":\"id-large\""));
     assert!(rendered.contains("\"token_label\":\"large\""));
 }
+
+/// The store has a ceiling, not just each token in it.
+///
+/// `--request-log-max-bytes` was documented as "Maximum size of the request
+/// log" and enforced per token directory, so a deployment configured for 500
+/// MB with 84 tokens had a 42 GB ceiling — an order of magnitude more disk
+/// than the operator budgeted, derivable from neither the setting nor the docs
+/// (issue #331).
+#[test]
+fn the_whole_store_stays_within_its_total_bound() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let root = dir.path().join("requests");
+    let log = RequestLog::new(root.clone(), 4_096).with_total_limit(8_192);
+
+    // Ten tokens, each writing enough to fill its own per-token budget. Under
+    // a per-token bound alone this store would be ten times the total cap.
+    for token in 0..10 {
+        let hash = format!("hash-{token:02}");
+        let correlation = format!("correlation-{token:02}");
+        log.route_request(&correlation, identity(&hash, "id", "label"));
+        for sequence in 0..40 {
+            log.record(
+                &correlation,
+                "test",
+                json!({"sequence": sequence, "body": "x".repeat(64)}),
+            );
+        }
+        // Distinct modification times, so "least recently written" is defined.
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+
+    let total: u64 = fs::read_dir(&root)
+        .expect("store")
+        .flatten()
+        .filter_map(|entry| fs::metadata(entry.path().join("requests.jsonl")).ok())
+        .map(|metadata| metadata.len())
+        .sum();
+    assert!(
+        total <= 8_192,
+        "the store must respect its total bound, found {total} bytes"
+    );
+
+    // Eviction is oldest-first and whole-directory, so the token still being
+    // written keeps every record the per-token bound retained for it. That is
+    // the isolation the per-token bound exists for, and it must survive.
+    let newest = fs::read_to_string(log.log_path("hash-09")).expect("newest token log");
+    assert!(
+        newest.contains("\"sequence\":39"),
+        "the active token keeps its newest records: {newest}"
+    );
+    assert!(
+        !root.join("hash-00").exists(),
+        "the least recently written token is the one evicted"
+    );
+}
+
+/// An operator who has budgeted the partition themselves can say so.
+#[test]
+fn a_zero_total_bound_leaves_the_store_uncapped() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let root = dir.path().join("requests");
+    let log = RequestLog::new(root.clone(), 512).with_total_limit(0);
+    for token in 0..4 {
+        let hash = format!("hash-{token}");
+        let correlation = format!("correlation-{token}");
+        log.route_request(&correlation, identity(&hash, "id", "label"));
+        log.record(&correlation, "test", json!({"body": "x".repeat(64)}));
+    }
+    for token in 0..4 {
+        assert!(
+            root.join(format!("hash-{token}")).exists(),
+            "no directory is evicted when the total cap is disabled"
+        );
+    }
+}

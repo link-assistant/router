@@ -98,6 +98,136 @@ fn default_policy_blocks_each_destructive_class() {
     );
 }
 
+/// Destructive operations that do not spell their intent in the method.
+///
+/// The policy keyed on the verb, so `DELETE .../protection` was denied while
+/// the `PUT` beside it — which replaces the whole protection object and
+/// reaches the same end state — was allowed. Branch protection is the control
+/// an agent is not supposed to talk past, so a routed token able to rewrite it
+/// put the backstop inside the blast radius of what it backstops (issue #329).
+#[test]
+fn destructive_effects_are_denied_whatever_verb_carries_them() {
+    let policy = GitHubPolicy::default();
+    for (method, path, body) in [
+        // Replaces the protection object wholesale; the body below reaches the
+        // same end state as the DELETE that is already refused.
+        (
+            "PUT",
+            "/repos/o/r/branches/main/protection",
+            &br#"{"allow_force_pushes":true,"allow_deletions":true,"enforce_admins":false}"#[..],
+        ),
+        (
+            "PUT",
+            "/repos/o/r/branches/main/protection/required_signatures",
+            b"",
+        ),
+        // Relaxes the ruleset the protection above depends on.
+        ("PUT", "/repos/o/r/rulesets/1", b"{}"),
+        // Moves the repository to another owner: strictly worse for the org
+        // than the denied DELETE of it.
+        ("POST", "/repos/o/r/transfer", br#"{"new_owner":"someone"}"#),
+        // Publishes a private repository — exfiltration with no exfiltration.
+        ("PATCH", "/repos/o/r", br#"{"visibility":"public"}"#),
+        ("PATCH", "/repos/o/r", br#"{"private":false}"#),
+        ("PATCH", "/repos/o/r", br#"{"archived":true}"#),
+        ("PATCH", "/repos/o/r", br#"{"default_branch":"other"}"#),
+    ] {
+        assert_eq!(
+            policy.decision(method, path, body),
+            PolicyDecision::Deny,
+            "{method} {path} must be blocked by default"
+        );
+    }
+
+    // Keyed on the effect, not the path: an ordinary edit stays allowed, or
+    // the deny list would stop being a policy and start being an outage.
+    for (method, path, body) in [
+        (
+            "PATCH",
+            "/repos/o/r",
+            &br#"{"description":"a library"}"#[..],
+        ),
+        (
+            "PATCH",
+            "/repos/o/r",
+            br#"{"homepage":"https://example.com"}"#,
+        ),
+        ("GET", "/repos/o/r/branches/main/protection", b""),
+        ("POST", "/repos/o/r/issues", br#"{"title":"bug"}"#),
+        // A different resource that merely shares the verb.
+        ("PUT", "/repos/o/r/contents/README.md", b"{}"),
+    ] {
+        assert_eq!(
+            policy.decision(method, path, body),
+            PolicyDecision::Allow,
+            "{method} {path} is not destructive and must not be blocked"
+        );
+    }
+}
+
+/// The escape hatch works for these exactly as it does for every other denial.
+///
+/// An operator who genuinely wants a task to flip a repository's visibility
+/// writes one allow rule for that one path, and the remaining defaults keep
+/// applying — the shape `allows_git_ref` already established.
+#[test]
+fn an_operator_can_permit_one_destructive_effect() {
+    let policy: GitHubPolicy = serde_json::from_value(json!({"rules": [{
+        "effect": "allow", "method": "POST", "path": "/repos/o/r/transfer"
+    }]}))
+    .unwrap();
+    assert_eq!(
+        policy.decision("POST", "/repos/o/r/transfer", b"{}"),
+        PolicyDecision::Allow
+    );
+    assert_eq!(
+        policy.decision("POST", "/repos/other/repo/transfer", b"{}"),
+        PolicyDecision::Deny,
+        "permitting one repository must not permit the rest"
+    );
+    assert_eq!(
+        policy.decision("PUT", "/repos/o/r/branches/main/protection", b"{}"),
+        PolicyDecision::Deny,
+        "one permission must not weaken the other defaults"
+    );
+}
+
+/// The REST and GraphQL halves agree about what is destructive.
+///
+/// They are two spellings of one API, so a denial that depends on which one a
+/// caller reached for is a routing question rather than a policy (issue #329).
+#[test]
+fn the_graphql_surface_denies_the_same_effects() {
+    let policy = GitHubPolicy::default();
+    for query in [
+        "mutation { transferRepository(input: {repositoryId: \"1\", newOwnerId: \"2\"}) { repository { name } } }",
+        "mutation { updateRepository(input: {repositoryId: \"1\", visibility: PUBLIC}) { repository { name } } }",
+        "mutation { updateBranchProtectionRule(input: {branchProtectionRuleId: \"1\", allowsForcePushes: true}) { clientMutationId } }",
+        "mutation { updateRepositoryRuleset(input: {rulesetId: \"1\"}) { clientMutationId } }",
+    ] {
+        assert_eq!(
+            policy.decision(
+                "POST",
+                "/graphql",
+                json!({"query": query}).to_string().as_bytes()
+            ),
+            PolicyDecision::Deny,
+            "the GraphQL spelling must be denied too: {query}"
+        );
+    }
+    // A read is still a read.
+    assert_eq!(
+        policy.decision(
+            "POST",
+            "/graphql",
+            json!({"query": "query { repository(owner: \"o\", name: \"r\") { name } }"})
+                .to_string()
+                .as_bytes()
+        ),
+        PolicyDecision::Allow
+    );
+}
+
 #[test]
 fn policy_rejects_misspelled_configuration_fields() {
     let error = serde_json::from_value::<GitHubPolicy>(json!({

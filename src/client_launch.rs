@@ -96,15 +96,15 @@ pub fn plan(args: &WithArgs, resolved_model: Option<&str>, attached_to_a_termina
     let non_interactive = is_one_shot(args, &forwarded, attached_to_a_terminal);
     let mode = integration.non_interactive_arg;
     let has_mode = contains_native_mode(args.client, &forwarded);
-    let note = (!non_interactive
-        && !args.interactive
-        && !forwarded.is_empty()
-        && !has_mode
-        && !carries_a_prompt(&forwarded))
-    .then_some(
-        "note: no prompt was given, so an interactive session is starting; \
-         pass --non-interactive for one-shot output",
-    );
+    // No note here on purpose. A user who passed no prompt and got an
+    // interactive session got the expected outcome of what they typed, and it
+    // was announced as though it were a surprise — above the client's own
+    // banner, in a terminal the router does not own. The inversion was the
+    // tell: a bare launch was silent while any client flag, which is what a
+    // user who already knows the tool passes, earned two lines of explanation.
+    // The rule is documented on `--non-interactive` and under `with --help`,
+    // which is where it is looked up (issue #330).
+    let note = None;
     let model = resolved_model
         .filter(|_| !contains_model_argument(&forwarded))
         .and_then(|model| {

@@ -107,11 +107,15 @@ Complete exchanges are grouped under
 `$DATA_DIR/requests/<sha256-of-token-truncated>/requests.jsonl`. Every phase
 includes `token_hash`, `token_id`, and `token_label`, so one task's client and
 upstream traffic can be audited without scanning another task's records. The
-configured request-log size limit applies independently to each token. Missing
+configured request-log size limit applies independently to each token, so the
+store's total is that limit times the number of tokens with recorded traffic;
+`REQUEST_LOG_MAX_TOTAL_BYTES` bounds the store as a whole and removes the least
+recently written token directories first. Missing
 or invalid credentials are written only to `requests/unauthenticated/`.
 
 Request-log directories are retained after expiry or revocation so retiring a
-credential does not erase its audit evidence. Operators may archive or remove
+credential does not erase its audit evidence, up to the total bound above —
+every `with` run mints a token, so directory count only grows. Operators may archive or remove
 those directories according to their own retention policy.
 
 For where the usage numbers surface, see

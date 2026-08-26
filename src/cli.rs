@@ -150,13 +150,18 @@ fn with_subcommand(command: clap::Command, path: &[&str], usage: &str) -> clap::
 /// Read off argv rather than the parsed command, because the decision has to be
 /// made before parsing. Only the first bare word is consulted, so a *value*
 /// that happens to be `with` cannot flip it.
+///
+/// `tls` joins them because it reads and writes one certificate directory and
+/// starts no server: `--port`, `--upstream-base-url` and `--routing-mode`
+/// cannot change what it does, and listing twenty such options above the three
+/// that matter is what issue #312 removed from `with` (issue #308).
 fn names_a_client_launcher(arguments: &[std::ffi::OsString]) -> bool {
     arguments
         .iter()
         .skip(1)
         .map(|argument| argument.to_string_lossy().into_owned())
         .find(|argument| !argument.starts_with('-'))
-        .is_some_and(|argument| argument == "with" || argument == "configure")
+        .is_some_and(|argument| argument == "with" || argument == "configure" || argument == "tls")
 }
 
 /// Parse a boolean switch that may also arrive from the environment.
@@ -298,7 +303,10 @@ pub struct Cli {
     #[arg(long, env = "REQUEST_LOG", global = true)]
     pub request_log: Option<PathBuf>,
 
-    /// Maximum size of the request log; oldest complete records are discarded.
+    /// Maximum size of each token's request log; oldest complete records are
+    /// discarded. Applies per token, so the store's total is this bound times
+    /// the number of tokens with recorded traffic — cap that with
+    /// `--request-log-max-total-bytes`.
     #[arg(
         long,
         env = "REQUEST_LOG_MAX_BYTES",
@@ -306,6 +314,17 @@ pub struct Cli {
         global = true
     )]
     pub request_log_max_bytes: u64,
+
+    /// Maximum size of the whole request log across every token; the least
+    /// recently written token directories are removed first. `0` disables the
+    /// total cap.
+    #[arg(
+        long,
+        env = "REQUEST_LOG_MAX_TOTAL_BYTES",
+        default_value_t = crate::request_log::DEFAULT_MAX_TOTAL_BYTES,
+        global = true
+    )]
+    pub request_log_max_total_bytes: u64,
 
     /// Maximum request body accepted by proxy surfaces. Independent of the
     /// request-log capture bound.
