@@ -334,4 +334,130 @@ mod tests {
         write_private(&path, b"{}").expect("write");
         assert_eq!(std::fs::read(&path).expect("read"), b"{}");
     }
+
+    /// A restore puts back the exact bytes *and* the exact permissions. Losing
+    /// the mode would silently widen access to a file that held a credential.
+    #[test]
+    fn a_restore_returns_the_bytes_and_the_mode() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let backup = dir.path().join("config.json.bak");
+        let destination = dir.path().join("config.json");
+        std::fs::write(&backup, b"{\"original\":true}").expect("seed backup");
+        std::fs::write(&destination, b"{\"replaced\":true}").expect("seed destination");
+
+        restore(&backup, &destination, Some(0o600)).expect("restore");
+
+        assert_eq!(
+            std::fs::read(&destination).expect("read"),
+            b"{\"original\":true}"
+        );
+        // `file_mode` reports the raw `st_mode`, type bits included.
+        assert_eq!(
+            file_mode(&destination).map(|mode| mode & 0o777),
+            Some(0o600)
+        );
+    }
+
+    /// Undo of a client that had no configuration before `configure` ran must
+    /// leave nothing behind, not an empty file the client would then read.
+    #[test]
+    fn a_rollback_removes_what_did_not_exist_before() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let config = dir.path().join("config.json");
+        std::fs::write(&config, b"written by configure").expect("seed");
+        let paths = backup_paths(&config);
+
+        rollback(&paths, &config, false, None, None, false, None).expect("rollback");
+
+        assert!(
+            !config.exists(),
+            "a config that did not exist must not remain"
+        );
+    }
+
+    /// The other half: a configuration that *did* exist comes back byte for
+    /// byte, and a marker file is rolled back alongside it.
+    #[test]
+    fn a_rollback_restores_what_existed_before() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let config = dir.path().join("config.json");
+        let marker = dir.path().join("marker");
+        let paths = backup_paths(&config);
+        std::fs::write(&paths.config, b"the user's own config").expect("seed backup");
+        std::fs::write(&paths.marker, b"the user's own marker").expect("seed marker backup");
+        std::fs::write(&config, b"written by configure").expect("seed config");
+        std::fs::write(&marker, b"written by configure").expect("seed marker");
+
+        rollback(
+            &paths,
+            &config,
+            true,
+            Some(0o600),
+            Some(&marker),
+            true,
+            Some(0o600),
+        )
+        .expect("rollback");
+
+        assert_eq!(
+            std::fs::read(&config).expect("read config"),
+            b"the user's own config"
+        );
+        assert_eq!(
+            std::fs::read(&marker).expect("read marker"),
+            b"the user's own marker"
+        );
+    }
+
+    /// A marker that did not exist before is removed rather than restored.
+    #[test]
+    fn a_rollback_removes_a_marker_that_did_not_exist_before() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let config = dir.path().join("config.json");
+        let marker = dir.path().join("marker");
+        let paths = backup_paths(&config);
+        std::fs::write(&marker, b"written by configure").expect("seed marker");
+
+        rollback(&paths, &config, false, None, Some(&marker), false, None).expect("rollback");
+
+        assert!(!marker.exists());
+    }
+
+    /// Copying a configuration aside must not widen its permissions on the way.
+    #[test]
+    fn a_private_copy_keeps_the_contents_and_stays_private() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let source = dir.path().join("source.json");
+        let destination = dir.path().join("nested/destination.json");
+        std::fs::write(&source, b"{\"k\":1}").expect("seed");
+
+        copy_private(&source, &destination).expect("copy");
+
+        assert_eq!(std::fs::read(&destination).expect("read"), b"{\"k\":1}");
+        #[cfg(unix)]
+        assert_eq!(
+            file_mode(&destination).map(|mode| mode & 0o777),
+            Some(0o600),
+            "a copy must not be world-readable"
+        );
+    }
+
+    /// `file_mode` answers `None` for a path that is not there, which is what
+    /// lets `apply` tell "no configuration yet" from "unreadable".
+    #[test]
+    fn the_mode_of_an_absent_file_is_unknown() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        assert_eq!(file_mode(&dir.path().join("absent")), None);
+    }
+
+    /// Setting no mode is a no-op rather than an error: not every platform has
+    /// one to set.
+    #[test]
+    fn setting_no_mode_leaves_the_file_alone() {
+        let dir = tempfile::tempdir().expect("temp dir");
+        let path = dir.path().join("f");
+        std::fs::write(&path, b"x").expect("seed");
+        set_file_mode(&path, None).expect("no mode is fine");
+        assert_eq!(std::fs::read(&path).expect("read"), b"x");
+    }
 }

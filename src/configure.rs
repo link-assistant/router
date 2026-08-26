@@ -294,3 +294,7 @@ fn admin_token_for(args: &ConfigureArgs, router: &str) -> Option<String> {
         .filter(|persisted| persisted.server.trim_end_matches('/') == router.trim_end_matches('/'))
         .and_then(|persisted| persisted.token)
 }
+
+#[cfg(test)]
+#[path = "configure_tests.rs"]
+mod tests;

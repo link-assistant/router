@@ -42,44 +42,7 @@ impl ClientManager {
             })?;
         let catalog = self.catalog(&base_url, &token).await?;
         let model = doctor_model(client, &catalog)?;
-        // A connectivity check is answered by a 200 with any body. Probing at
-        // the ceiling — 24576 output tokens, adaptive thinking at `high`, or
-        // `xhigh` reasoning — bought the deepest reasoning the account can
-        // produce to find out whether a URL answers, on a command whose name,
-        // help and output all say "reachability" (issue #309). #173 removed the
-        // hardcoded model *name* and left the price; this is the price.
-        let (url, body) = match client {
-            ClientKind::Codex => (
-                format!("{}/responses", base_url.trim_end_matches('/')),
-                json!({
-                    "model": model,
-                    "input": "Reply OK",
-                    "max_output_tokens": DOCTOR_MAX_TOKENS,
-                    "reasoning": {"effort": "low"}
-                }),
-            ),
-            ClientKind::ClaudeCode => (
-                format!("{}/v1/messages", base_url.trim_end_matches('/')),
-                json!({
-                    "model":model,
-                    "max_tokens":DOCTOR_MAX_TOKENS,
-                    "messages":[{"role":"user", "content":"Reply OK"}]
-                }),
-            ),
-            ClientKind::GrokCli
-            | ClientKind::Opencode
-            | ClientKind::QwenCode
-            | ClientKind::Agent => (
-                format!("{}/chat/completions", base_url.trim_end_matches('/')),
-                json!({
-                    "model":model,
-                    "max_tokens": DOCTOR_MAX_TOKENS,
-                    "reasoning_effort": "low",
-                    "messages":[{"role":"user", "content":"Reply OK"}]
-                }),
-            ),
-            ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
-        };
+        let (url, body) = probe_request(client, &base_url, model);
         let response = reqwest::Client::new()
             .post(&url)
             .bearer_auth(token)
@@ -119,5 +82,88 @@ impl ClientManager {
             "router request failed at {url} ({code}): {}",
             compact_body(&response_body)
         )))
+    }
+}
+
+/// The URL and body `doctor` probes with.
+///
+/// A connectivity check is answered by a 200 with any body. Probing at the
+/// ceiling — 24576 output tokens, adaptive thinking at `high`, or `xhigh`
+/// reasoning — bought the deepest reasoning the account can produce to find out
+/// whether a URL answers, on a command whose name, help and output all say
+/// "reachability" (issue #309). #173 removed the hardcoded model *name* and left
+/// the price; this is the price.
+///
+/// Pure, so the price is assertable without spending it.
+fn probe_request(client: ClientKind, base_url: &str, model: &str) -> (String, serde_json::Value) {
+    let base = base_url.trim_end_matches('/');
+    match client {
+        ClientKind::Codex => (
+            format!("{base}/responses"),
+            json!({
+                "model": model,
+                "input": "Reply OK",
+                "max_output_tokens": DOCTOR_MAX_TOKENS,
+                "reasoning": {"effort": "low"}
+            }),
+        ),
+        ClientKind::ClaudeCode => (
+            format!("{base}/v1/messages"),
+            json!({
+                "model": model,
+                "max_tokens": DOCTOR_MAX_TOKENS,
+                "messages": [{"role":"user", "content":"Reply OK"}]
+            }),
+        ),
+        ClientKind::GrokCli | ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent => (
+            format!("{base}/chat/completions"),
+            json!({
+                "model": model,
+                "max_tokens": DOCTOR_MAX_TOKENS,
+                "reasoning_effort": "low",
+                "messages": [{"role":"user", "content":"Reply OK"}]
+            }),
+        ),
+        ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DOCTOR_MAX_TOKENS, probe_request};
+    use crate::clients::ClientKind;
+
+    /// The probe asks for the cheapest answer that proves a URL responds, for
+    /// every client it can probe (issue #309).
+    #[test]
+    fn every_probe_asks_at_the_floor_not_the_ceiling() {
+        assert_eq!(DOCTOR_MAX_TOKENS, 64, "a reachability check is not a task");
+        for client in ClientKind::ALL {
+            if matches!(client, ClientKind::Cursor | ClientKind::GeminiCli) {
+                continue;
+            }
+            let (url, body) = probe_request(client, "https://router.example/", "a-model");
+            assert!(
+                !url.contains("//chat") && !url.contains("//v1") && !url.contains("//responses"),
+                "{client}: a trailing slash must not double: {url}"
+            );
+            assert_eq!(body["model"], "a-model", "{client} probes the given model");
+            let budget = body
+                .get("max_tokens")
+                .or_else(|| body.get("max_output_tokens"))
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or_else(|| panic!("{client} must bound its output"));
+            assert_eq!(
+                budget,
+                u64::from(DOCTOR_MAX_TOKENS),
+                "{client} must probe at the floor"
+            );
+            let effort = body
+                .get("reasoning_effort")
+                .or_else(|| body.pointer("/reasoning/effort"));
+            if let Some(effort) = effort {
+                assert_eq!(effort, "low", "{client} must not buy deep reasoning");
+            }
+        }
     }
 }
