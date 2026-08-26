@@ -251,6 +251,58 @@ pub async fn healthy_providers(
         .collect()
 }
 
+/// Whether a configured subscription can serve requests right now, and why not.
+///
+/// One answer, computed once, for every surface that reports health: `/health`,
+/// `/v1/models` and `/metrics` disagreed about a revoked subscription because
+/// each derived its own view, and the only one that was truthful was an error
+/// message a client saw after a request had already failed (issue #318).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderHealth {
+    /// The subscription this describes.
+    pub provider: SubscriptionProvider,
+    /// Whether it can serve a request now.
+    pub healthy: bool,
+    /// Operator-facing reason, when it cannot.
+    pub reason: Option<String>,
+}
+
+/// Health for every subscription that is actually configured on this
+/// deployment.
+///
+/// A provider with no credential reader is not reported at all: "claude was
+/// never configured here" and "claude died twelve hours ago" must not render
+/// identically, which is precisely the ambiguity that let a dead subscription
+/// hide behind an absence (issue #318).
+#[must_use]
+pub fn configured_provider_health(
+    readers: &[SubscriptionReader],
+    token_cache: &crate::refresh::TokenCache,
+    catalogs: &ModelCatalogCache,
+) -> Vec<ProviderHealth> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| readers.iter().any(|reader| reader.provider() == *provider))
+        .map(|provider| {
+            let rejected = token_cache.evidence(provider)
+                == Some(crate::refresh::CredentialEvidence::Rejected);
+            let reason =
+                if rejected {
+                    Some(token_cache.last_refresh_error(provider).unwrap_or_else(|| {
+                        format!("the {provider} credential was rejected upstream")
+                    }))
+                } else {
+                    credential_state(provider, catalogs)
+                };
+            ProviderHealth {
+                provider,
+                healthy: reason.is_none(),
+                reason,
+            }
+        })
+        .collect()
+}
+
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
@@ -310,6 +362,38 @@ pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvid
     }
 }
 
+/// Add every configured-but-unusable subscription to `degraded_providers`.
+///
+/// Reported with a reason, so the list distinguishes "revoked, re-authenticate"
+/// from "has never discovered a catalog" without a container-log excavation
+/// (issue #318).
+fn merge_configured_degradation(state: &AppState, catalog: &mut Value) {
+    let unhealthy = configured_provider_health(
+        &state.subscription_readers,
+        &state.subscription_cache,
+        &state.model_catalogs,
+    );
+    let mut degraded = catalog
+        .get("degraded_providers")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let mut reasons = serde_json::Map::new();
+    for health in unhealthy.iter().filter(|health| !health.healthy) {
+        let name = Value::from(health.provider.as_str());
+        if !degraded.contains(&name) {
+            degraded.push(name);
+        }
+        if let Some(reason) = health.reason.clone() {
+            reasons.insert(health.provider.as_str().to_string(), Value::from(reason));
+        }
+    }
+    if let Some(object) = catalog.as_object_mut() {
+        object.insert("degraded_providers".into(), Value::Array(degraded));
+        object.insert("degraded_reasons".into(), Value::Object(reasons));
+    }
+}
+
 /// `GET /v1/models` across automatic or explicitly pinned providers.
 pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Response {
     if let Err(response) = crate::proxy::authenticate_client(&state, &headers) {
@@ -328,6 +412,12 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
                 .await,
                 &state.model_catalogs,
             );
+            // A revoked subscription is filtered out before `model_catalog`
+            // ever sees it, so it could never reach `degraded_providers` and
+            // simply vanished from `data`. Absence is not an alert: a monitor
+            // cannot tell it from a provider that was never configured here
+            // (issue #318).
+            merge_configured_degradation(&state, &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
             catalog
         }

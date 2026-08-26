@@ -19,6 +19,9 @@ use crate::{gemini, login_api, provider_proxy, proxy, token_admin};
 pub fn router(state: AppState, config: &Config) -> Router {
     let mut app = Router::new()
         .route("/health", get(proxy::health))
+        // Subscription health is a separate answer from liveness: see
+        // `proxy::health` for why they must not be the same endpoint (#318).
+        .route("/health/subscriptions", get(proxy::subscription_health))
         .route("/actor/code", get(activitypub::actor))
         .route("/inbox/code", post(activitypub::inbox))
         .route("/outbox/code", get(activitypub::outbox))
