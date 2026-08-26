@@ -343,3 +343,54 @@ async fn the_rotation_guard_lapses_and_refresh_resumes() {
     assert_eq!(outcome.access_token, "third");
     server.await.unwrap();
 }
+
+/// The guard must not strand a short-lived credential. It blocks only the
+/// *reactive* path — refreshing against a rejection — while the proactive
+/// pre-expiry path is untouched, so a token whose real lifetime is shorter than
+/// the grace period still renews on schedule (issue #319).
+#[tokio::test]
+async fn the_rotation_guard_does_not_block_a_proactive_pre_expiry_refresh() {
+    let (url, server) = stub_token_endpoint(
+        r#"{"access_token":"first","refresh_token":"second","expires_in":3600}"#,
+    )
+    .await;
+    let cache = TokenCache::new();
+    // A rotation happens now, so the guard is armed for the next five minutes.
+    let rotated = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            token(Some("original"), Some(10_000 + 86_400_000)),
+            10_000,
+        )
+        .await
+        .expect("first rotation");
+    server.await.unwrap();
+    assert_eq!(rotated.access_token, "first");
+
+    // One minute later — well inside the grace period — the credential on disk
+    // is about to expire. This is renewal, not a response to a rejection, and
+    // must still happen or a short-lived token could never be renewed at all.
+    let (url, server) = stub_token_endpoint(
+        r#"{"access_token":"renewed","refresh_token":"fourth","expires_in":3600}"#,
+    )
+    .await;
+    let renewed = cache
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "short-lived",
+            token(Some("about-to-expire"), Some(10_000 + 60_000)),
+            10_000 + 60_000,
+        )
+        .await;
+
+    assert_eq!(
+        renewed.access_token, "renewed",
+        "a pre-expiry renewal must not be blocked by the reactive guard"
+    );
+    server.await.unwrap();
+}
