@@ -736,7 +736,16 @@ impl TokenError {
     pub const fn client_message(&self) -> &'static str {
         match self {
             Self::InvalidPrefix | Self::Invalid(_) => "invalid token",
-            Self::Expired => "Token has expired",
+            // Names the router and the flag, because the client renders its
+            // own advice otherwise: a Claude Code session whose per-run token
+            // expired mid-work was told `Please run /login`, which points at
+            // the Anthropic subscription -- a different credential entirely,
+            // and re-authenticating it changes nothing (issue #341).
+            Self::Expired => {
+                "Token has expired: this is the router's own token, not the model provider's. \
+                 A per-run token from `router with` lives for --run-ttl-hours; re-running the \
+                 command mints a new one."
+            }
             Self::Revoked => "Token has been revoked",
             Self::NotFound(_) => "token not found",
             Self::InsufficientScope => "insufficient token scope",

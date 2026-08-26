@@ -14,11 +14,14 @@ use serde::Serialize;
 use super::{AnyError, CONFIG_DIRECTORY, MANAGED_LOCK, MANAGED_STATE, ManagedState};
 
 pub(super) fn state_directory() -> Result<PathBuf, AnyError> {
-    let root = std::env::var_os("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
-        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))
+    // An empty variable is unset, not configured: taking `Some("")` as a root
+    // made every state path relative and wrote a live token into `$PWD`
+    // (issue #340).
+    let root = crate::env_paths::directory("XDG_CONFIG_HOME")
+        .or_else(|| crate::env_paths::directory("HOME").map(|home| home.join(".config")))
+        .or_else(|| crate::env_paths::directory("APPDATA"))
         .ok_or("HOME, XDG_CONFIG_HOME, and APPDATA are unset; cannot store server state")?;
+    let root = crate::env_paths::require_absolute(root, "the router's state directory")?;
     let path = root.join(CONFIG_DIRECTORY);
     fs::create_dir_all(&path)?;
     set_owner_only(&path)?;

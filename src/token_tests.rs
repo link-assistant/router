@@ -698,3 +698,33 @@ fn a_scope_survives_issuance_and_validation() {
     assert!(claims.may_reach_repository("acme/demo"));
     assert!(!claims.may_reach_repository("acme/other"));
 }
+
+/// An expired router token says whose token it was.
+///
+/// A per-run token that expired mid-session produced a bare `401 Token has
+/// expired`, and the client answered with its own `Please run /login` advice
+/// — which points at the model provider's credential, a different thing
+/// entirely, and re-authenticating it changes nothing. The message now names
+/// the router and the flag that governs the lifetime (issue #341).
+#[test]
+fn an_expired_token_names_the_router_rather_than_the_provider() {
+    let message = TokenError::Expired.client_message();
+    assert!(
+        message.contains("router"),
+        "the message must say whose token expired: {message}"
+    );
+    assert!(
+        message.contains("--run-ttl-hours"),
+        "and name what governs its lifetime: {message}"
+    );
+    assert!(
+        message.contains("expired"),
+        "while still saying what happened: {message}"
+    );
+    // The credential itself never appears in a message that crosses the
+    // client boundary.
+    assert!(
+        !message.contains("la_sk_"),
+        "no credential may appear: {message}"
+    );
+}
