@@ -652,18 +652,26 @@ pub async fn log_http_exchange(
             }
         },
     );
-    tracing::info!(
-        request_id = %correlation_id,
-        method = %parts.method,
-        uri = %logged_uri,
-        token_label = %token_label,
-        "request"
-    );
-
+    let method = parts.method.clone();
     let started = Instant::now();
     let mut response = next
         .run(Request::from_parts(parts, Body::from_stream(stream)))
         .await;
+    // Written after the handler has run, because that is when the body has
+    // streamed through the capture above and the model is known. Emitting it
+    // on arrival is what left the field unfillable: the middleware sits
+    // outside the router and sees the body only as it passes (issue #320).
+    // The pair still reads in order, since the response line follows below.
+    let requested_model = requested_model.lock().ok().and_then(|model| model.clone());
+    let logged_model = requested_model.as_deref().unwrap_or("-");
+    tracing::info!(
+        request_id = %correlation_id,
+        method = %method,
+        uri = %logged_uri,
+        model = %logged_model,
+        token_label = %token_label,
+        "request"
+    );
     response.headers_mut().insert(
         "x-request-id",
         HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
@@ -688,9 +696,7 @@ pub async fn log_http_exchange(
     // exists only in that case, so relying on it alone left `model=-` on every
     // ordinary line, success and failure alike.
     let served_model = requested_model
-        .lock()
-        .ok()
-        .and_then(|model| model.clone())
+        .clone()
         .or_else(|| {
             response
                 .headers()

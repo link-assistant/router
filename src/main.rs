@@ -891,6 +891,11 @@ async fn run_doctor(config: &Config) -> ExitCode {
     for line in link_assistant_router::doctor::login_mode_report(&config.login) {
         println!("{line}");
     }
+    // What this deployment discloses upstream, so the property can be checked
+    // without reading the source or the request store (issue #332).
+    for line in link_assistant_router::doctor::forwarded_header_report() {
+        println!("{line}");
+    }
     println!(
         "mpp_openai_charge      : {}",
         if config.mpp.is_configured() {

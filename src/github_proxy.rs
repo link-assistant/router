@@ -231,16 +231,31 @@ impl GitHubPolicy {
 fn destroys_by_effect(method: &str, path: &str, body: &[u8]) -> bool {
     // `glob_matches` compares whole segments and its `/**` suffix strips a
     // literal prefix, so a pattern that needs both wildcards and a tail is
-    // spelled here rather than as a glob. Protection sub-resources
-    // (`.../protection/required_signatures` and its siblings) each relax one
-    // part of the same object, so the whole subtree is covered.
+    // spelled here rather than as a glob.
     let segments = path.split('/').collect::<Vec<_>>();
-    let protection = matches!(
+    // A branch name may contain slashes -- `feature/x` is ordinary -- so the
+    // branch is however many segments sit between `branches` and `protection`
+    // rather than exactly one. Matching it as one segment let a `PUT` to
+    // `feature/x`'s protection through, on the control the rest of this policy
+    // leans on. Sub-resources (`.../protection/required_signatures` and its
+    // siblings) each relax one part of the same object, so the subtree counts.
+    let protection = matches!(segments.as_slice(), ["", "repos", _, _, "branches", ..])
+        && segments
+            .iter()
+            .skip(5)
+            .any(|segment| *segment == "protection");
+    // Rulesets govern the same thing one level up, and an organisation's
+    // rulesets are what a repository's protection inherits. Creating one can
+    // shadow an existing rule, so the create verb is covered beside the
+    // update -- the same verb asymmetry this whole function exists to close.
+    let ruleset = matches!(
         segments.as_slice(),
-        ["", "repos", _, _, "branches", _, "protection", ..]
+        ["", "repos", _, _, "rulesets", ..] | ["", "orgs", _, "rulesets", ..]
     );
-    if method.eq_ignore_ascii_case("PUT")
-        && (protection || glob_matches("/repos/*/*/rulesets/*", path))
+    if (method.eq_ignore_ascii_case("PUT")
+        || method.eq_ignore_ascii_case("POST")
+        || method.eq_ignore_ascii_case("PATCH"))
+        && (protection || ruleset)
     {
         return true;
     }
@@ -250,15 +265,28 @@ fn destroys_by_effect(method: &str, path: &str, body: &[u8]) -> bool {
     // Keyed on the body rather than the path, the same way the forced-ref rule
     // is: an ordinary `PATCH` setting `description` or `homepage` stays
     // allowed, because naming a field is what makes this one destructive.
+    // A trailing slash is tolerated by GitHub, and a field name is a field
+    // name whatever case it arrives in; neither should decide whether a
+    // repository can be published.
+    let repository = matches!(
+        path.trim_end_matches('/')
+            .split('/')
+            .collect::<Vec<_>>()
+            .as_slice(),
+        ["", "repos", _, _]
+    );
     method.eq_ignore_ascii_case("PATCH")
-        && glob_matches("/repos/*/*", path)
+        && repository
         && serde_json::from_slice::<Value>(body)
             .ok()
             .and_then(|value| {
                 value.as_object().map(|fields| {
-                    ["archived", "private", "visibility", "default_branch"]
-                        .iter()
-                        .any(|field| fields.contains_key(*field))
+                    fields.keys().any(|field| {
+                        matches!(
+                            field.to_ascii_lowercase().as_str(),
+                            "archived" | "private" | "visibility" | "default_branch"
+                        )
+                    })
                 })
             })
             .unwrap_or(false)
@@ -364,6 +392,11 @@ fn destructive_graphql(body: &[u8]) -> bool {
             "transferrepository"
                 | "updaterepositoryruleset"
                 | "createrepositoryruleset"
+                // An organisation's rulesets are what a repository's own
+                // protection inherits, so the REST and GraphQL halves cover
+                // the same level.
+                | "updateorganizationruleset"
+                | "createorganizationruleset"
                 | "updatebranchprotectionrule"
                 | "createbranchprotectionrule"
         )

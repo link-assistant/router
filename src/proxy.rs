@@ -16,7 +16,10 @@
 mod upstream_headers;
 pub use upstream_headers::MAX_PROXY_REQUEST_BYTES;
 pub(crate) use upstream_headers::build_upstream_headers;
-pub use upstream_headers::{DEFAULT_ANTHROPIC_VERSION, OAUTH_BETA_FLAG, merge_oauth_beta};
+pub use upstream_headers::{
+    DEFAULT_ANTHROPIC_VERSION, OAUTH_BETA_FLAG, forwarded_client_headers, merge_oauth_beta,
+    router_user_agent,
+};
 mod upstream_path;
 
 pub use upstream_path::resolve_upstream_path;

@@ -48,6 +48,37 @@ pub fn login_mode_report(login: &LoginConfig) -> Vec<String> {
     lines
 }
 
+/// Exactly which client headers this deployment relays to a vendor.
+///
+/// The proxy hides the caller's address, so an operator who checks the egress
+/// IP — the obvious check — concluded they were private, while the client's
+/// OS, architecture, runtime build and a stable session id travelled on. A
+/// privacy property nobody can check is one nobody can rely on, and verifying
+/// this one meant hand-parsing the request store (issue #332).
+#[must_use]
+pub fn forwarded_header_report() -> Vec<String> {
+    let mut report = vec![format!(
+        "{:<23}: {}",
+        "upstream_headers",
+        crate::proxy::forwarded_client_headers().join(", ")
+    )];
+    report.push(format!(
+        "{:<23}: {}",
+        "upstream_user_agent",
+        crate::proxy::router_user_agent()
+    ));
+    report.push(format!(
+        "{:<23}: {}",
+        "upstream_dropped",
+        concat!(
+            "every other client header, including x-stainless-*, ",
+            "the client user-agent, accept-language, ",
+            "x-claude-code-session-id and any x-forwarded-for"
+        )
+    ));
+    report
+}
+
 /// Locate an executable on `PATH`, as the process spawner would.
 fn resolve_in_path(command: &str) -> Option<std::path::PathBuf> {
     let candidate = std::path::Path::new(command);
@@ -346,5 +377,39 @@ mod tests {
             credential_status(false, false, true),
             "found, token REJECTED"
         );
+    }
+
+    /// The privacy property is checkable without reading the source.
+    ///
+    /// Verifying what reached the vendor previously meant hand-parsing
+    /// `requests.jsonl`, so an operator who checked the egress IP concluded
+    /// they were private while the client's machine identity travelled on
+    /// (issue #332).
+    #[test]
+    fn the_report_names_what_is_forwarded_and_what_is_not() {
+        let report = forwarded_header_report().join("\n");
+        // What travels.
+        for forwarded in crate::proxy::forwarded_client_headers() {
+            assert!(
+                report.contains(forwarded),
+                "the report must name {forwarded}: {report}"
+            );
+        }
+        assert!(
+            report.contains(crate::proxy::router_user_agent()),
+            "the report must name the identity sent upstream: {report}"
+        );
+        // And what does not, named explicitly rather than left to inference.
+        for dropped in [
+            "x-stainless",
+            "accept-language",
+            "x-claude-code-session-id",
+            "x-forwarded-for",
+        ] {
+            assert!(
+                report.contains(dropped),
+                "the report must say {dropped} is dropped: {report}"
+            );
+        }
     }
 }

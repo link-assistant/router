@@ -204,6 +204,7 @@ fn the_graphql_surface_denies_the_same_effects() {
         "mutation { updateRepository(input: {repositoryId: \"1\", visibility: PUBLIC}) { repository { name } } }",
         "mutation { updateBranchProtectionRule(input: {branchProtectionRuleId: \"1\", allowsForcePushes: true}) { clientMutationId } }",
         "mutation { updateRepositoryRuleset(input: {rulesetId: \"1\"}) { clientMutationId } }",
+        "mutation { updateOrganizationRuleset(input: {rulesetId: \"1\"}) { clientMutationId } }",
     ] {
         assert_eq!(
             policy.decision(
@@ -576,4 +577,79 @@ fn from_env_still_reads_the_environment_spelling() {
         Some("gho_from_environment".to_string()),
         "the same lookup from_env delegates to must still find it"
     );
+}
+
+/// A branch name containing a slash is still a branch name.
+///
+/// `feature/x` is ordinary and legal on GitHub, and matching the branch as one
+/// path segment let a `PUT` to its protection through — reopening the hole on
+/// the exact control the rest of this policy leans on (issue #329).
+#[test]
+fn a_slashed_branch_name_does_not_escape_the_protection_deny() {
+    let policy = GitHubPolicy::default();
+    for path in [
+        "/repos/o/r/branches/feature/x/protection",
+        "/repos/o/r/branches/release/2026/q1/protection",
+        "/repos/o/r/branches/feature/x/protection/required_signatures",
+    ] {
+        assert_eq!(
+            policy.decision("PUT", path, b"{}"),
+            PolicyDecision::Deny,
+            "PUT {path} must be blocked however many slashes the branch has"
+        );
+    }
+    // Still not a blanket deny on everything under /branches/.
+    assert_eq!(
+        policy.decision("GET", "/repos/o/r/branches/feature/x/protection", b""),
+        PolicyDecision::Allow
+    );
+}
+
+/// An organisation ruleset governs the repositories under it.
+///
+/// The same verb asymmetry one level up: `DELETE` was refused while the `PUT`
+/// that relaxes the rule to nothing was not, and an org ruleset is what a
+/// repository's own protection inherits (issue #329).
+#[test]
+fn organisation_rulesets_are_covered_like_repository_ones() {
+    let policy = GitHubPolicy::default();
+    for (method, path) in [
+        ("PUT", "/orgs/acme/rulesets/5"),
+        ("POST", "/orgs/acme/rulesets"),
+        // Creating a repository ruleset can shadow an existing one, so the
+        // create verb is covered alongside the update.
+        ("POST", "/repos/o/r/rulesets"),
+    ] {
+        assert_eq!(
+            policy.decision(method, path, b"{}"),
+            PolicyDecision::Deny,
+            "{method} {path} relaxes protection and must be blocked"
+        );
+    }
+    assert_eq!(
+        policy.decision("GET", "/orgs/acme/rulesets", b""),
+        PolicyDecision::Allow,
+        "reading the rules is not changing them"
+    );
+}
+
+/// The body check is not defeated by spelling.
+///
+/// GitHub tolerates a trailing slash, and a field name is a field name
+/// whatever case it arrives in; neither should decide whether a repository can
+/// be published (issue #329).
+#[test]
+fn the_repository_patch_check_is_not_escaped_by_spelling() {
+    let policy = GitHubPolicy::default();
+    for (path, body) in [
+        ("/repos/o/r/", &br#"{"visibility":"public"}"#[..]),
+        ("/repos/o/r", br#"{"VISIBILITY":"public"}"#),
+        ("/repos/o/r", br#"{"Private":false}"#),
+    ] {
+        assert_eq!(
+            policy.decision("PATCH", path, body),
+            PolicyDecision::Deny,
+            "PATCH {path} must be blocked whatever the spelling"
+        );
+    }
 }

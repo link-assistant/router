@@ -19,6 +19,21 @@ use super::REQUIRED_FORWARD_HEADERS;
 /// like one machine instead of describing each caller (issue #332).
 const ROUTER_USER_AGENT: &str = concat!("link-assistant-router/", env!("CARGO_PKG_VERSION"));
 
+/// The headers this deployment relays, for the report that makes it checkable.
+///
+/// Reading the source was the only way to verify what travelled upstream
+/// (issue #332).
+#[must_use]
+pub fn forwarded_client_headers() -> Vec<&'static str> {
+    FORWARDED_CLIENT_HEADERS.to_vec()
+}
+
+/// The `user-agent` this deployment reports upstream.
+#[must_use]
+pub const fn router_user_agent() -> &'static str {
+    ROUTER_USER_AGENT
+}
+
 /// Client headers the upstream protocol actually needs.
 ///
 /// The proxy opens the upstream connection itself, so the vendor sees the
