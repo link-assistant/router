@@ -621,8 +621,10 @@ impl ClientManager {
             // Gemini and Grok are configured by the environment rather than a
             // file the router owns. Grok has always had a reader for it; a
             // hardcoded `None` for Gemini reported "not configured" whether it
-            // was or not, which is why `clients doctor gemini` could not pass
-            // after a successful run (issue #303).
+            // was or not, so `clients list` and `clients show gemini` contradicted
+            // a setup that had just succeeded (issue #303). `clients doctor` still
+            // refuses Gemini earlier, on its `setup_limitation`: the probe has no
+            // shape for it.
             ClientKind::QwenCode => read_qwen_base_url(&path),
             ClientKind::GeminiCli | ClientKind::GrokCli => {
                 let name = client
