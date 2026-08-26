@@ -158,6 +158,143 @@ struct ReleasePayload {
     body: String,
 }
 
+
+/// Versions with a tag on the default branch but no release page.
+///
+/// The pipeline creates the release page last, so anything that refuses it
+/// leaves a version whose tag, crate and images all published with nothing to
+/// point a user at — and no later run revisited it, because each run only ever
+/// published its own version. That is how v0.116.0 shipped without a release.
+fn orphaned_versions(repository: &str, tag_prefix: &str) -> Vec<String> {
+    // The release job checks out the tag, not a branch, so `origin/main` may
+    // not be a ref here. Fall back to every release tag rather than to nothing:
+    // a tag that is not on the default branch simply has no changelog section,
+    // and `publish_release` reports that rather than inventing a release.
+    let tags = ["origin/main", "HEAD"]
+        .into_iter()
+        .find_map(|reference| {
+            let output = Command::new("git")
+                .args([
+                    "tag",
+                    "--merged",
+                    reference,
+                    "--sort=v:refname",
+                    "--list",
+                    &format!("{tag_prefix}*"),
+                ])
+                .output()
+                .ok()?;
+            output
+                .status
+                .success()
+                .then(|| String::from_utf8_lossy(&output.stdout).into_owned())
+        })
+        .unwrap_or_default();
+    if tags.trim().is_empty() {
+        return Vec::new();
+    }
+    let releases = match Command::new("gh")
+        .args([
+            "release", "list", "--repo", repository, "--limit", "1000", "--json", "tagName",
+            "--jq", ".[].tagName",
+        ])
+        .output()
+    {
+        Ok(output) if output.status.success() => {
+            String::from_utf8_lossy(&output.stdout).into_owned()
+        }
+        _ => return Vec::new(),
+    };
+    missing_release_versions(&tags, &releases, tag_prefix)
+}
+
+/// The versions in `tags` that no entry in `releases` covers.
+fn missing_release_versions(tags: &str, releases: &str, tag_prefix: &str) -> Vec<String> {
+    let published: Vec<&str> = releases
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect();
+    tags.lines()
+        .map(str::trim)
+        .filter(|tag| !tag.is_empty() && tag.starts_with(tag_prefix))
+        .filter(|tag| !published.contains(tag))
+        .filter_map(|tag| tag.strip_prefix(tag_prefix))
+        .map(str::to_string)
+        .collect()
+}
+
+/// Publish one version's release page, or report why it could not be.
+fn publish_release(
+    version: &str,
+    repository: &str,
+    tag_prefix: &str,
+    crates_io_url: Option<&str>,
+    docker_hub_url: Option<&str>,
+) -> Result<(), String> {
+    let tag = format!("{}{}", tag_prefix, version);
+    println!("Creating GitHub release for {}...", tag);
+
+    let mut release_notes = get_changelog_for_version(version);
+
+    // Add package/image badges so release pages visibly show registry status.
+    let mut badges = Vec::new();
+    if let Some(url) = crates_io_url {
+        badges.push(crates_io_badge(url, version));
+    }
+    if let Some(url) = docker_hub_url {
+        badges.push(docker_hub_badge(url, version));
+    }
+    if !badges.is_empty() {
+        release_notes = format!("{}\n\n{}", badges.join("\n"), release_notes);
+    }
+
+    // Create release using GitHub API with JSON input
+    let payload = ReleasePayload {
+        tag_name: tag.clone(),
+        name: format!("{}{}", tag_prefix, version),
+        body: fit_release_body(release_notes, &tag, repository),
+    };
+
+    let payload_json = serde_json::to_string(&payload).expect("Failed to serialize payload");
+
+    let mut child = Command::new("gh")
+        .args([
+            "api",
+            &format!("repos/{repository}/releases"),
+            "-X",
+            "POST",
+            "--input",
+            "-",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to execute gh command");
+
+    if let Some(ref mut stdin) = child.stdin {
+        stdin
+            .write_all(payload_json.as_bytes())
+            .expect("Failed to write to stdin");
+    }
+
+    let output = child
+        .wait_with_output()
+        .expect("Failed to wait on gh command");
+
+    if output.status.success() {
+        println!("Created GitHub release: {tag}");
+        return Ok(());
+    }
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if stderr.contains("already exists") {
+        println!("Release {tag} already exists, skipping");
+        return Ok(());
+    }
+    Err(format!("Error creating release {tag}: {stderr}"))
+}
+
 fn main() {
     let version = match get_arg("release-version") {
         Some(v) => v,
@@ -181,67 +318,49 @@ fn main() {
     let crates_io_url = get_arg("crates-io-url");
     let docker_hub_url = get_arg("docker-hub-url");
 
-    let tag = format!("{}{}", tag_prefix, version);
-    println!("Creating GitHub release for {}...", tag);
-
-    let mut release_notes = get_changelog_for_version(&version);
-
-    // Add package/image badges so release pages visibly show registry status.
-    let mut badges = Vec::new();
-    if let Some(url) = crates_io_url {
-        badges.push(crates_io_badge(&url, &version));
-    }
-    if let Some(url) = docker_hub_url {
-        badges.push(docker_hub_badge(&url, &version));
-    }
-    if !badges.is_empty() {
-        release_notes = format!("{}\n\n{}", badges.join("\n"), release_notes);
+    if let Err(error) = publish_release(
+        &version,
+        &repository,
+        &tag_prefix,
+        crates_io_url.as_deref(),
+        docker_hub_url.as_deref(),
+    ) {
+        eprintln!("{error}");
+        exit(1);
     }
 
-    // Create release using GitHub API with JSON input
-    let payload = ReleasePayload {
-        tag_name: tag.clone(),
-        name: format!("{}{}", tag_prefix, version),
-        body: fit_release_body(release_notes, &tag, &repository),
-    };
-
-    let payload_json = serde_json::to_string(&payload).expect("Failed to serialize payload");
-
-    let mut child = Command::new("gh")
-        .args([
-            "api",
-            &format!("repos/{}/releases", repository),
-            "-X",
-            "POST",
-            "--input",
-            "-",
-        ])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to execute gh command");
-
-    if let Some(ref mut stdin) = child.stdin {
-        stdin
-            .write_all(payload_json.as_bytes())
-            .expect("Failed to write to stdin");
+    // Then any version that shipped without a release page. Reporting an
+    // orphan was not enough: the report had nowhere to go but a human, and the
+    // scheduled audit that fails on it cannot create what is missing.
+    let orphans = orphaned_versions(&repository, &tag_prefix);
+    if orphans.is_empty() {
+        return;
     }
-
-    let output = child
-        .wait_with_output()
-        .expect("Failed to wait on gh command");
-
-    if output.status.success() {
-        println!("Created GitHub release: {}", tag);
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        if stderr.contains("already exists") {
-            println!("Release {} already exists, skipping", tag);
-        } else {
-            eprintln!("Error creating release: {}", stderr);
-            exit(1);
-        }
+    println!(
+        "Backfilling {} release page(s) that shipped without one: {}",
+        orphans.len(),
+        orphans.join(", ")
+    );
+    let failed: Vec<String> = orphans
+        .into_iter()
+        .filter(|orphan| {
+            publish_release(
+                orphan,
+                &repository,
+                &tag_prefix,
+                crates_io_url.as_deref(),
+                docker_hub_url.as_deref(),
+            )
+            .map_err(|error| eprintln!("{error}"))
+            .is_err()
+        })
+        .collect();
+    if !failed.is_empty() {
+        eprintln!(
+            "::error::could not backfill {}; the scheduled release audit will keep reporting them",
+            failed.join(", ")
+        );
+        exit(1);
     }
 }
 
@@ -298,5 +417,51 @@ mod tests {
         let fitted = fit_release_body(body, "v1.0.0", "owner/repo");
         assert!(fitted.len() <= MAX_RELEASE_BODY);
         assert!(fitted.contains("truncated"));
+    }
+
+    /// A tag with no release page is a version that shipped with nothing to
+    /// point a user at. The pipeline creates the page last, so anything that
+    /// refuses it strands the version — and nothing revisited it, because each
+    /// run only published its own.
+    #[test]
+    fn a_tag_without_a_release_is_reported_for_backfill() {
+        let tags = "v0.115.0\nv0.116.0\nv0.117.0\n";
+        let releases = "v0.117.0\nv0.115.0\n";
+
+        assert_eq!(
+            missing_release_versions(tags, releases, "v"),
+            vec!["0.116.0"],
+            "the version that shipped without a release page"
+        );
+    }
+
+    /// Nothing to do when every tag already has one, so an ordinary release
+    /// run does no extra work and says nothing extra.
+    #[test]
+    fn a_complete_release_set_needs_no_backfill() {
+        let tags = "v0.115.0\nv0.116.0\n";
+        let releases = "v0.116.0\nv0.115.0\n";
+
+        assert!(missing_release_versions(tags, releases, "v").is_empty());
+    }
+
+    /// Whitespace and blank lines from `git tag` / `gh release list` must not
+    /// invent an orphan: backfilling a version that does not exist would fail
+    /// the pipeline for nothing.
+    #[test]
+    fn ragged_command_output_does_not_invent_an_orphan() {
+        let tags = "\n v0.116.0 \n\n";
+        let releases = "\nv0.116.0\n \n";
+
+        assert!(missing_release_versions(tags, releases, "v").is_empty());
+    }
+
+    /// A tag that is not a release tag at all is left alone.
+    #[test]
+    fn only_release_tags_are_considered() {
+        let tags = "nightly-2026-08-26\nv0.116.0\n";
+        let releases = "v0.116.0\n";
+
+        assert!(missing_release_versions(tags, releases, "v").is_empty());
     }
 }
