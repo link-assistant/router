@@ -68,7 +68,7 @@ fn token_routes_have_complete_attribution_without_cross_contamination() {
     ] {
         let records = rendered
             .lines()
-            .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL"))
+            .map(|line| crate::lino_json::decode_line(line).expect("a readable record"))
             .collect::<Vec<_>>();
         assert_eq!(records.len(), 6);
         assert!(records.iter().all(|record| record["token_hash"] == hash));
@@ -91,7 +91,16 @@ fn each_token_has_an_independent_size_budget() {
     let quiet = fs::read_to_string(log.log_path("hash-quiet")).expect("quiet log");
     let noisy = fs::read_to_string(log.log_path("hash-noisy")).expect("noisy log");
     assert!(quiet.contains("quiet-survives"));
-    assert!(noisy.contains("\"sequence\":39"));
+    // Read through the decoder: the assertion is about which records
+    // survived, not about how they are punctuated (issue #336).
+    assert!(
+        noisy
+            .lines()
+            .filter_map(crate::lino_json::decode_line)
+            .filter_map(|record| record.get("sequence").and_then(serde_json::Value::as_i64))
+            .any(|sequence| sequence == 39),
+        "the newest record survives: {noisy}"
+    );
     assert!(quiet.len() <= 800);
     assert!(noisy.len() <= 800);
 }
@@ -105,9 +114,19 @@ fn oversized_record_placeholder_keeps_token_identity() {
 
     let rendered = fs::read_to_string(log.log_path("hash-large")).expect("large log");
     assert!(rendered.contains("[OMITTED:"));
-    assert!(rendered.contains("\"token_hash\":\"hash-large\""));
-    assert!(rendered.contains("\"token_id\":\"id-large\""));
-    assert!(rendered.contains("\"token_label\":\"large\""));
+    let placeholder = rendered
+        .lines()
+        .filter_map(crate::lino_json::decode_line)
+        .find(|record| {
+            record
+                .get("body")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|body| body.contains("[OMITTED:"))
+        })
+        .expect("the placeholder record is readable");
+    assert_eq!(placeholder["token_hash"], "hash-large");
+    assert_eq!(placeholder["token_id"], "id-large");
+    assert_eq!(placeholder["token_label"], "large");
 }
 
 /// The store has a ceiling, not just each token in it.
@@ -156,7 +175,11 @@ fn the_whole_store_stays_within_its_total_bound() {
     // the isolation the per-token bound exists for, and it must survive.
     let newest = fs::read_to_string(log.log_path("hash-09")).expect("newest token log");
     assert!(
-        newest.contains("\"sequence\":39"),
+        newest
+            .lines()
+            .filter_map(crate::lino_json::decode_line)
+            .filter_map(|record| record.get("sequence").and_then(serde_json::Value::as_i64))
+            .any(|sequence| sequence == 39),
         "the active token keeps its newest records: {newest}"
     );
     assert!(

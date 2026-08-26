@@ -58,7 +58,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
         std::fs::read_to_string(router.log_path_for(&router.token)).expect("request exchange log");
     let records = records
         .lines()
-        .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL record"))
+        .map(|line| link_assistant_router::lino_json::decode_line(line).expect("a readable record"))
         .collect::<Vec<_>>();
     let correlation_id = records
         .iter()
@@ -287,7 +287,8 @@ async fn auth_unknown_models_and_admin_isolation() {
         std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
             .expect("unauthenticated request log");
     assert!(unauthenticated.lines().all(|line| {
-        let record: Value = serde_json::from_str(line).expect("valid JSONL");
+        let record =
+            link_assistant_router::lino_json::decode_line(line).expect("a readable record");
         record["token_hash"] == "unauthenticated"
             && record["token_id"].is_null()
             && record["token_label"].is_null()
@@ -342,7 +343,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     let records = std::fs::read_to_string(codex.log_path_for(&codex.token))
         .expect("token request log")
         .lines()
-        .map(|line| serde_json::from_str::<Value>(line).expect("valid JSONL"))
+        .map(|line| link_assistant_router::lino_json::decode_line(line).expect("a readable record"))
         .collect::<Vec<_>>();
     let client_record = records
         .iter()

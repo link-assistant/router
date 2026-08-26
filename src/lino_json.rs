@@ -79,6 +79,216 @@ pub fn encode<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Erro
     Ok(lino_objects_codec::encode(&to_lino(&json)))
 }
 
+/// Encode one record as a single readable line.
+///
+/// The request log is JSON Lines: one record per line, appended, and compacted
+/// by scanning for the first newline after a byte floor. Neither encoder the
+/// codec offers fits that shape — the readable one spans a line per field, and
+/// the compact one is single-line but base64-encodes every string, which is
+/// exactly the unreadability issue #328 removed from this same file. So the
+/// log needed a form that is one line *and* readable, and this is it
+/// (issue #336).
+///
+/// Strings keep their own characters; only what would break the framing or the
+/// parse is escaped.
+pub fn encode_line<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Error> {
+    let json = serde_json::to_value(value)?;
+    let mut line = String::new();
+    write_line(&mut line, &json);
+    Ok(line)
+}
+
+/// Append `value` to `out` in the single-line form.
+fn write_line(out: &mut String, value: &Value) {
+    match value {
+        Value::Null => out.push_str("()"),
+        Value::Bool(flag) => out.push_str(if *flag { "true" } else { "false" }),
+        Value::Number(number) => out.push_str(&number.to_string()),
+        Value::String(text) => write_quoted(out, text),
+        Value::Array(items) => {
+            out.push('(');
+            for (index, item) in items.iter().enumerate() {
+                if index > 0 {
+                    out.push(' ');
+                }
+                write_line(out, item);
+            }
+            out.push(')');
+        }
+        Value::Object(fields) => {
+            out.push('(');
+            for (index, (name, field)) in fields.iter().enumerate() {
+                if index > 0 {
+                    out.push(' ');
+                }
+                out.push('(');
+                write_quoted(out, name);
+                out.push(' ');
+                write_line(out, field);
+                out.push(')');
+            }
+            out.push(')');
+        }
+    }
+}
+
+/// Write `text` as a quoted string that cannot break the line or the parse.
+///
+/// A newline inside a body would end the record early and split one exchange
+/// into two unparsable halves, so it is escaped rather than carried. Everything
+/// else stays as the operator wrote it, which is the point: `grep` has to find
+/// a model name in the file.
+fn write_quoted(out: &mut String, text: &str) {
+    out.push('"');
+    for character in text.chars() {
+        match character {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            other => out.push(other),
+        }
+    }
+    out.push('"');
+}
+
+/// Decode a line written by [`encode_line`].
+///
+/// Falls back to JSON, so the 1.7 GB of `requests.jsonl` an earlier release
+/// wrote keeps reading and the file migrates record by record as new ones are
+/// appended (issue #336).
+#[must_use]
+pub fn decode_line(text: &str) -> Option<Value> {
+    let text = text.trim();
+    if text.is_empty() {
+        return None;
+    }
+    if is_json(text) {
+        return serde_json::from_str(text).ok();
+    }
+    read_value(&mut text.chars().peekable())
+}
+
+/// Read one value from `characters`, or `None` when the text is malformed.
+fn read_value(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    skip_spaces(characters);
+    match characters.peek()? {
+        '"' => read_quoted(characters).map(Value::String),
+        '(' => read_group(characters),
+        _ => read_bare(characters),
+    }
+}
+
+/// Read a parenthesised group, which is either an object or an array.
+fn read_group(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    characters.next();
+    let mut pairs: Vec<(String, Value)> = Vec::new();
+    let mut items: Vec<Value> = Vec::new();
+    let mut keyed = true;
+    loop {
+        skip_spaces(characters);
+        match characters.peek() {
+            None => return None,
+            Some(')') => {
+                characters.next();
+                break;
+            }
+            Some('(') => {
+                // A pair is `("name" value)`; anything else is an array item.
+                match read_pair(characters)? {
+                    Group::Pair(name, value) => pairs.push((name, value)),
+                    // A record is written as pairs throughout, so a group that
+                    // is not one means the line is not one this wrote.
+                    Group::NotAPair => return None,
+                }
+            }
+            Some(_) => {
+                keyed = false;
+                items.push(read_value(characters)?);
+            }
+        }
+    }
+    if keyed && !pairs.is_empty() {
+        return Some(Value::Object(pairs.into_iter().collect()));
+    }
+    if pairs.is_empty() && items.is_empty() {
+        // `()` is how null is written.
+        return Some(Value::Null);
+    }
+    Some(Value::Array(items))
+}
+
+/// What a nested group turned out to be.
+enum Group {
+    /// `("name" value)` — a field of the enclosing object.
+    Pair(String, Value),
+    /// Anything else, so the enclosing group is an array rather than an object.
+    NotAPair,
+}
+
+/// Read `("name" value)`, reporting a group that is not a pair.
+fn read_pair(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Group> {
+    characters.next();
+    skip_spaces(characters);
+    if characters.peek() != Some(&'"') {
+        return Some(Group::NotAPair);
+    }
+    let name = read_quoted(characters)?;
+    let value = read_value(characters)?;
+    skip_spaces(characters);
+    if characters.next() != Some(')') {
+        return None;
+    }
+    Some(Group::Pair(name, value))
+}
+
+/// Read a quoted string, undoing the escapes [`write_quoted`] applied.
+fn read_quoted(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<String> {
+    if characters.next() != Some('"') {
+        return None;
+    }
+    let mut text = String::new();
+    loop {
+        match characters.next()? {
+            '"' => return Some(text),
+            '\\' => match characters.next()? {
+                'n' => text.push('\n'),
+                'r' => text.push('\r'),
+                other => text.push(other),
+            },
+            other => text.push(other),
+        }
+    }
+}
+
+/// Read a number, boolean or null written without quotes.
+fn read_bare(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    let mut text = String::new();
+    while let Some(character) = characters.peek() {
+        if character.is_whitespace() || *character == ')' || *character == '(' {
+            break;
+        }
+        text.push(*character);
+        characters.next();
+    }
+    match text.as_str() {
+        "" => None,
+        "true" => Some(Value::Bool(true)),
+        "false" => Some(Value::Bool(false)),
+        "null" => Some(Value::Null),
+        number => number.parse::<serde_json::Number>().ok().map(Value::Number),
+    }
+}
+
+fn skip_spaces(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) {
+    while characters
+        .peek()
+        .is_some_and(|character| character.is_whitespace())
+    {
+        characters.next();
+    }
+}
+
 /// Decode state written by [`encode`].
 ///
 /// Falls back to JSON when the text is not links notation, so a store written

@@ -151,3 +151,74 @@ fn a_vendor_document_survives_this_module_unchanged() {
         "fields this crate does not model must survive untouched"
     );
 }
+
+/// A record encodes to one readable line and comes back unchanged.
+///
+/// The request log is one record per line, appended and compacted by scanning
+/// for a newline, so a multi-line record breaks the framing. The codec's own
+/// single-line form base64s every string, which is the unreadability issue
+/// #328 removed from this same file — so the log needed a form that is both
+/// (issue #336).
+#[test]
+fn a_record_round_trips_on_a_single_readable_line() {
+    let record = serde_json::json!({
+        "phase": "client_request",
+        "uri": "/v1/messages?beta=true",
+        "model": "claude-opus-5",
+        "status": 200,
+        "streamed": true,
+        "detail": null,
+        "frames": [1, 2, 3],
+    });
+
+    let line = encode_line(&record).expect("encode");
+    assert_eq!(line.lines().count(), 1, "one record is one line: {line}");
+    // Readable: the point of not using the compact form.
+    assert!(line.contains("claude-opus-5"), "{line}");
+    assert!(line.contains("/v1/messages?beta=true"), "{line}");
+    assert!(!line.contains("base64"), "{line}");
+    // And nothing that would break a `grep` for a model name.
+    assert!(!line.contains("Y2xhdWRl"), "no base64 of 'claude': {line}");
+
+    let decoded = decode_line(&line).expect("decode");
+    assert_eq!(decoded, record, "the record survives the round trip");
+}
+
+/// A body containing newlines stays on one line.
+///
+/// An SSE body carries `\n` throughout; carrying it literally would end the
+/// record early and split one exchange into two unparsable halves.
+#[test]
+fn a_newline_in_a_body_does_not_break_the_record() {
+    let record = serde_json::json!({
+        "body": "event: message_start\ndata: {\"model\":\"claude-opus-5\"}\n\n",
+        "quote": "he said \"hello\"",
+        "backslash": "C:\\path",
+    });
+
+    let line = encode_line(&record).expect("encode");
+    assert_eq!(line.lines().count(), 1, "still one line: {line}");
+    // The model name is still findable, which is what the log is read for.
+    assert!(line.contains("claude-opus-5"), "{line}");
+
+    let decoded = decode_line(&line).expect("decode");
+    assert_eq!(decoded, record, "escapes are undone exactly");
+}
+
+/// A line written by an earlier release still reads.
+///
+/// There is 1.7 GB of `requests.jsonl` on a real deployment; it keeps reading
+/// and migrates record by record as new ones are appended.
+#[test]
+fn a_json_line_from_an_earlier_release_still_reads() {
+    let record = serde_json::json!({"phase": "client_request", "uri": "/v1/messages"});
+    let json = serde_json::to_string(&record).expect("serialize");
+    assert_eq!(
+        decode_line(&json).expect("JSON still decodes"),
+        record,
+        "a line an earlier release wrote must keep reading"
+    );
+    // And a blank or damaged line yields nothing rather than a wrong answer.
+    assert_eq!(decode_line("   "), None);
+    assert_eq!(decode_line("(unterminated"), None);
+}

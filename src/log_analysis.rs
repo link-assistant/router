@@ -221,7 +221,9 @@ pub fn read_exchanges(
         let contents = std::fs::read_to_string(&path)?;
         bytes += contents.len() as u64;
         for line in contents.lines().filter(|line| !line.trim().is_empty()) {
-            let Ok(record) = serde_json::from_str::<Value>(line) else {
+            // Either encoding: the 1.7 GB an earlier release wrote is JSON
+            // Lines, and new records are links notation (issue #336).
+            let Some(record) = crate::lino_json::decode_line(line) else {
                 unparsable += 1;
                 continue;
             };
@@ -728,7 +730,7 @@ pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::
         let contents = std::fs::read_to_string(&path)?;
         let records = contents
             .lines()
-            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .filter_map(crate::lino_json::decode_line)
             .filter(|record| {
                 record.get("correlation_id").and_then(Value::as_str) == Some(correlation_id)
             })

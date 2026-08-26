@@ -178,7 +178,7 @@ fn read_stream_end(root: &std::path::Path) -> Option<Value> {
             continue;
         };
         for line in contents.lines() {
-            let Ok(record) = serde_json::from_str::<Value>(line) else {
+            let Some(record) = link_assistant_router::lino_json::decode_line(line) else {
                 continue;
             };
             if record.get("phase").and_then(Value::as_str) == Some("stream_end") {
