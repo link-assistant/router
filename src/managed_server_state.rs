@@ -13,19 +13,84 @@ use serde::Serialize;
 
 use super::{AnyError, CONFIG_DIRECTORY, MANAGED_LOCK, MANAGED_STATE, ManagedState};
 
+// A state root a test has claimed for itself, in this thread only.
+//
+// `cargo test` deleted the developer's own `server.json` — a file holding a
+// live token — because `clearing_an_absent_selection_succeeds` called
+// `clear_persisted()` with nothing overriding `HOME`, so it removed the real
+// one. The test passed either way, which is why it read as harmless
+// (issue #343).
+//
+// A thread-local rather than an environment variable: `XDG_CONFIG_HOME` is
+// process-global and this crate forbids `unsafe`, so a test could not
+// override it without racing every other test in the binary.
+#[cfg(test)]
+thread_local! {
+    static TEST_STATE_ROOT: std::cell::RefCell<Option<PathBuf>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+/// Point state resolution at `root` until the guard is dropped.
+///
+/// Every test that reads or writes router state must hold one of these: the
+/// alternative is a test that operates on whoever ran it.
+#[cfg(test)]
+pub fn claim_state_root(root: PathBuf) -> StateRootGuard {
+    TEST_STATE_ROOT.with(|slot| *slot.borrow_mut() = Some(root));
+    StateRootGuard
+}
+
+/// Restores real state resolution when the test ends, panic or not.
+#[cfg(test)]
+pub struct StateRootGuard;
+
+#[cfg(test)]
+impl Drop for StateRootGuard {
+    fn drop(&mut self) {
+        TEST_STATE_ROOT.with(|slot| *slot.borrow_mut() = None);
+    }
+}
+
 pub(super) fn state_directory() -> Result<PathBuf, AnyError> {
-    // An empty variable is unset, not configured: taking `Some("")` as a root
-    // made every state path relative and wrote a live token into `$PWD`
-    // (issue #340).
-    let root = crate::env_paths::directory("XDG_CONFIG_HOME")
-        .or_else(|| crate::env_paths::directory("HOME").map(|home| home.join(".config")))
-        .or_else(|| crate::env_paths::directory("APPDATA"))
-        .ok_or("HOME, XDG_CONFIG_HOME, and APPDATA are unset; cannot store server state")?;
-    let root = crate::env_paths::require_absolute(root, "the router's state directory")?;
+    let root = resolved_root()?;
     let path = root.join(CONFIG_DIRECTORY);
     fs::create_dir_all(&path)?;
     set_owner_only(&path)?;
     Ok(path)
+}
+
+/// The directory router state lives under, outside tests.
+///
+/// An empty variable is unset, not configured: taking `Some("")` as a root
+/// made every state path relative and wrote a live token into `$PWD`
+/// (issue #340).
+#[cfg(not(test))]
+fn resolved_root() -> Result<PathBuf, AnyError> {
+    let root = crate::env_paths::directory("XDG_CONFIG_HOME")
+        .or_else(|| crate::env_paths::directory("HOME").map(|home| home.join(".config")))
+        .or_else(|| crate::env_paths::directory("APPDATA"))
+        .ok_or("HOME, XDG_CONFIG_HOME, and APPDATA are unset; cannot store server state")?;
+    Ok(crate::env_paths::require_absolute(
+        root,
+        "the router's state directory",
+    )?)
+}
+
+/// The root a test claimed, refusing to fall back to the developer's own.
+///
+/// No test may resolve real state. The failure mode is silent -- a test that
+/// deletes the developer's credential passes just the same -- and silence is
+/// what let it ship, so an unclaimed resolution fails loudly (issue #343).
+#[cfg(test)]
+fn resolved_root() -> Result<PathBuf, AnyError> {
+    TEST_STATE_ROOT
+        .with(|slot| slot.borrow().clone())
+        .ok_or_else(|| {
+            AnyError::from(
+                "a test resolved the real state directory without claiming one; wrap it in \
+                 `claim_state_root(tempfile::tempdir()?.path())`",
+            )
+        })
 }
 
 pub(super) fn lock_state() -> Result<File, AnyError> {

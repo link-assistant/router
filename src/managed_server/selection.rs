@@ -128,8 +128,46 @@ mod tests {
     /// --clear` runs on machines that never selected anything.
     #[test]
     fn clearing_an_absent_selection_succeeds() {
+        // Against a root this test owns. Without it `clear_persisted` resolved
+        // the developer's real `~/.config/link-assistant-router/server.json`
+        // and deleted it -- a file holding a live token -- and the test passed
+        // either way, which is why it read as harmless (issue #343).
+        let directory = tempfile::tempdir().expect("temporary state root");
+        let _guard = super::super::state::claim_state_root(directory.path().to_path_buf());
+
         let first = clear_persisted().expect("clearing is idempotent");
         let second = clear_persisted().expect("and stays idempotent");
         assert_eq!(first, second, "both name the same path");
+        assert!(
+            first.starts_with(directory.path()),
+            "the path cleared must be the one this test owns: {}",
+            first.display()
+        );
+    }
+
+    /// Clearing removes a selection that is present, and only that one.
+    ///
+    /// The old test was named for an absent selection but nothing made it
+    /// absent, so on a machine that had one it silently exercised the
+    /// deletion path against real state (issue #343).
+    #[test]
+    fn clearing_a_present_selection_removes_it() {
+        let directory = tempfile::tempdir().expect("temporary state root");
+        let _guard = super::super::state::claim_state_root(directory.path().to_path_buf());
+
+        save_persisted(&PersistedServer {
+            server: "http://127.0.0.1:18878".to_string(),
+            token: Some("la_sk_example".to_string()),
+            run_max_requests: None,
+        })
+        .expect("save a selection");
+        assert!(load_persisted().expect("load").is_some(), "it was saved");
+
+        let cleared = clear_persisted().expect("clear it");
+        assert!(cleared.starts_with(directory.path()));
+        assert!(
+            load_persisted().expect("load").is_none(),
+            "the selection is gone after clearing"
+        );
     }
 }

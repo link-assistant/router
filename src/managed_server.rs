@@ -965,6 +965,10 @@ fn compact(value: &str) -> String {
 
 #[path = "managed_server_state.rs"]
 mod state;
+/// The test-only state-root claim, so any test in the crate can isolate
+/// itself rather than operating on whoever ran it (issue #343).
+#[cfg(test)]
+pub(crate) use state::claim_state_root;
 
 use state::{load_managed, lock_state, save_managed, state_directory};
 
