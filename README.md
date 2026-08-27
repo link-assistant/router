@@ -1075,9 +1075,19 @@ Other files keep the format of the boundary they serve:
   `.credentials.json`, `auth.json`, `settings.json`, and `config.toml` are
   vendor-owned interoperability files. The router continues to read or update
   the vendor's expected shape.
-- Per-token `requests/<token-hash>/requests.jsonl` files and the optional audit
-  JSONL are append-only operational streams intended for log collectors and
-  standard text tooling, rather than mutable router domain state.
+- Per-token `requests/<token-hash>/requests.jsonl` files are router-owned and
+  are written in Links Notation, one record per line: `((:"phase"
+  "client_request") (:"model" "claude-opus-5") …)`. The file keeps its name and
+  its one-record-per-line framing, so log collectors and `grep` work exactly as
+  before, and strings are written as themselves rather than base64 — a model
+  name is still findable with `grep`. Records an earlier release wrote as JSON
+  are read unchanged, and a file migrates record by record as new ones are
+  appended, so no conversion step is required.
+- The optional audit JSONL stays JSON Lines. It is an interoperability
+  boundary, not router-owned state: it exists to be consumed by log collectors
+  and `jq`, and the documented recipes in
+  [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) pipe it
+  straight into `jq`.
 - `providers.lenv` is the router's existing portable provider configuration
   interchange. Moving additional router-owned state onto doublets can be done
   independently of the token migration.

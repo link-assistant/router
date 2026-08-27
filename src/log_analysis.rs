@@ -755,6 +755,10 @@ pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::
             .unwrap_or_default();
         for (index, mut record) in records.into_iter().enumerate() {
             render_decoded_body(&mut record, index, first_body, decoded.as_ref());
+            // Rendered as indented JSON on purpose. This is a display surface,
+            // not a store: the record is being read by a person, and the
+            // stored form is one line precisely so it is not shaped for that.
+            // The file itself is links notation either way (issue #346).
             out.push_str(&serde_json::to_string_pretty(&record).unwrap_or_default());
             out.push('\n');
         }
