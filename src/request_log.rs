@@ -70,7 +70,11 @@ impl LogIdentity {
     }
 }
 
-/// A JSONL request log which retains the newest complete records.
+/// A request log which retains the newest complete records.
+///
+/// One record per line in links notation, appended and compacted on a newline
+/// boundary. Records an earlier release wrote as JSON are still read
+/// (issues #336, #346).
 #[derive(Debug)]
 pub struct RequestLog {
     root: PathBuf,
@@ -754,7 +758,7 @@ mod tests;
 #[path = "request_log_isolation_tests.rs"]
 mod isolation_tests;
 
-/// One JSONL record saying that older records were discarded to stay inside
+/// One record saying that older records were discarded to stay inside
 /// `REQUEST_LOG_MAX_BYTES`.
 ///
 /// Dropping data under a bound is defensible; dropping it invisibly is what

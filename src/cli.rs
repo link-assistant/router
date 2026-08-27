@@ -298,8 +298,8 @@ pub struct Cli {
     #[arg(long, env = "AUDIT_LOG", global = true)]
     pub audit_log: Option<PathBuf>,
 
-    /// Redacted JSONL log containing complete client and upstream exchanges.
-    /// Defaults to `DATA_DIR/requests`.
+    /// Redacted log of complete client and upstream exchanges, one record
+    /// per line in links notation. Defaults to `DATA_DIR/requests`.
     #[arg(long, env = "REQUEST_LOG", global = true)]
     pub request_log: Option<PathBuf>,
 

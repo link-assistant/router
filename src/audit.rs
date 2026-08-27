@@ -10,6 +10,16 @@
 //! (`--audit-log` / `AUDIT_LOG`). It records the token *id* (the JWT `sub`)
 //! and its label — never the token string, never any upstream credential — so
 //! the file is safe to ship to a log collector.
+//!
+//! # Why this one is still JSON
+//!
+//! Router-owned state is links notation, and the per-token request log moved
+//! to it as well (issue #336). This file did not, deliberately: it is an
+//! outbound stream whose reader is somebody else's log collector, and the
+//! recipes this project publishes for it pipe it into `jq`. Changing its
+//! format would break those readers to make a file this project never parses
+//! look consistent. The decision is recorded here rather than left to be
+//! inferred from which module the write lives in (issue #346).
 
 use std::fs::OpenOptions;
 use std::io::Write as _;

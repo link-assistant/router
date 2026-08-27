@@ -64,13 +64,25 @@ pub fn from_lino(value: &LinoValue) -> Value {
 /// **Router-owned state** — anything this project both writes and reads:
 /// the managed-server state, the server selection, the admin claim, the
 /// refresh rejections, the pending Claude login, the token transaction
-/// journal and the `with` rollback state. These are links notation.
+/// journal and the `with` rollback state. These are links notation, written
+/// by [`encode`].
+///
+/// The per-token request log is router-owned too, and is links notation as
+/// well — but one record per line, written by [`encode_line`], because it is
+/// appended to and compacted on a newline boundary. It is the bulk of the
+/// bytes, so it is named here explicitly: leaving it to be inferred from which
+/// module its writes lived in is what made the split look accidental
+/// (issue #346).
 ///
 /// **Vendor-owned state** stays whatever the vendor writes:
 /// `.credentials.json` is Anthropic's, `auth.json` is Codex's, and the client
 /// `settings.json` files belong to the clients that read them. Rewriting one
 /// in this project's format would break a tool this project does not own, and
 /// the vendor files carry fields this crate deliberately does not model.
+///
+/// The optional audit JSONL is the third case and stays JSON Lines on
+/// purpose: it is an outbound interoperability stream whose documented use is
+/// piping into `jq`, so its consumer is not this project either.
 ///
 /// The rule was real but implicit, inferable only from which module a write
 /// lived in (issue #336).
