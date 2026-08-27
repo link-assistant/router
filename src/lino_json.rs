@@ -93,16 +93,36 @@ pub fn encode<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Erro
 
 /// Encode one record as a single readable line.
 ///
-/// The request log is JSON Lines: one record per line, appended, and compacted
-/// by scanning for the first newline after a byte floor. Neither encoder the
-/// codec offers fits that shape — the readable one spans a line per field, and
-/// the compact one is single-line but base64-encodes every string, which is
-/// exactly the unreadability issue #328 removed from this same file. So the
-/// log needed a form that is one line *and* readable, and this is it
-/// (issue #336).
+/// The request log is one record per line, appended, and compacted by scanning
+/// for the first newline after a byte floor. Neither encoder the codec offers
+/// fits that shape — the readable one spans a line per field, and the compact
+/// one base64-encodes every string, which is the unreadability issue #328
+/// removed from this same file (issue #336).
 ///
-/// Strings keep their own characters; only what would break the framing or the
-/// parse is escaped.
+/// # Why it looks the way it does
+///
+/// An earlier version of this function marked object fields with a `:`, which
+/// made the line a private dialect: `links_notation::parse_lino` rejected it
+/// outright, and `lino_objects_codec::decode` read each field as the array
+/// `[":", key, value]`, losing the object boundary. The round trip only worked
+/// because [`decode_line`] was its own private inverse (issue #350).
+///
+/// Two properties of the codec govern the form used instead:
+///
+/// * **A group is an object exactly when it has two elements and the first is
+///   a scalar.** So `("a" "b")` is `{"a": "b"}` *and* `["a", "b"]` — a real
+///   collision, not a theoretical one: a production log holds 779 of these,
+///   mostly `enum` arrays out of tool schemas. Containers are therefore
+///   self-describing, `(#a …)` and `(#o …)`, rather than inferred from arity.
+/// * **Neither library reads a backslash escape.** `"q\"q"` makes the codec
+///   fail with *unterminated quoted value*, and request bodies are full of
+///   embedded JSON. Strings are percent-escaped instead, which never puts a
+///   quote or a paren inside a quoted value and so cannot perturb tokenising.
+///   Fuzzing both candidates over 6,000 values: percent-escaping 0 failures,
+///   the codec-native doubled quote 241.
+///
+/// The result parses with `parse_lino`, decodes through the codec to the same
+/// structure this module reads, stays one line, and keeps strings greppable.
 pub fn encode_line<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Error> {
     let json = serde_json::to_value(value)?;
     let mut line = String::new();
@@ -110,42 +130,39 @@ pub fn encode_line<T: serde::Serialize>(value: &T) -> Result<String, serde_json:
     Ok(line)
 }
 
+/// The first element of an array, marking the group as one.
+const ARRAY_MARKER: &str = "#a";
+/// The first element of an object, marking the group as one.
+const OBJECT_MARKER: &str = "#o";
+/// Stands in for the empty string.
+///
+/// Two empty quoted strings nested inside one another desynchronise
+/// `parse_lino` — `(#o ("" (#o ("" 1))))` is refused where the same line with
+/// a non-empty key is accepted — so the empty string is never emitted as `""`.
+const EMPTY_STRING: &str = "%z";
+
 /// Append `value` to `out` in the single-line form.
 fn write_line(out: &mut String, value: &Value) {
     match value {
+        // A group is never empty, so null cannot collide with a container.
         Value::Null => out.push_str("()"),
         Value::Bool(flag) => out.push_str(if *flag { "true" } else { "false" }),
         Value::Number(number) => out.push_str(&number.to_string()),
         Value::String(text) => write_quoted(out, text),
-        // `()` is null; `(#a)` and `(#o)` are the empty array and the empty
-        // object. All three arrive in one record and mean different things,
-        // and a `#` cannot begin any value this writes, so the markers cannot
-        // collide with one -- a bare `-` did, since `(-1)` is the array
-        // holding minus one.
-        Value::Array(items) if items.is_empty() => out.push_str("(#a)"),
         Value::Array(items) => {
             out.push('(');
-            for (index, item) in items.iter().enumerate() {
-                if index > 0 {
-                    out.push(' ');
-                }
+            out.push_str(ARRAY_MARKER);
+            for item in items {
+                out.push(' ');
                 write_line(out, item);
             }
             out.push(')');
         }
-        // As with the empty array: `()` is null, so an empty object needs a
-        // form of its own or the two cannot be told apart on the way back.
-        Value::Object(fields) if fields.is_empty() => out.push_str("(#o)"),
         Value::Object(fields) => {
             out.push('(');
-            for (index, (name, field)) in fields.iter().enumerate() {
-                if index > 0 {
-                    out.push(' ');
-                }
-                // `:` marks a field, so a pair can never be mistaken for an
-                // array whose first element is a string -- `(("") )` is
-                // otherwise both the pair named "" and the array holding "".
-                out.push_str("(:");
+            out.push_str(OBJECT_MARKER);
+            for (name, field) in fields {
+                out.push_str(" (");
                 write_quoted(out, name);
                 out.push(' ');
                 write_line(out, field);
@@ -158,29 +175,83 @@ fn write_line(out: &mut String, value: &Value) {
 
 /// Write `text` as a quoted string that cannot break the line or the parse.
 ///
-/// A newline inside a body would end the record early and split one exchange
-/// into two unparsable halves, so it is escaped rather than carried. Everything
-/// else stays as the operator wrote it, which is the point: `grep` has to find
-/// a model name in the file.
+/// Percent-escaping rather than backslashes: neither `links-notation` nor
+/// `lino-objects-codec` reads a backslash escape, and a quote or a paren left
+/// raw inside a quoted value desynchronises both (issue #350). Everything else
+/// stays as it was written, which is the point — `grep` has to find a model
+/// name in this file.
 fn write_quoted(out: &mut String, text: &str) {
+    if text.is_empty() {
+        out.push('"');
+        out.push_str(EMPTY_STRING);
+        out.push('"');
+        return;
+    }
     out.push('"');
     for character in text.chars() {
         match character {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
+            // `%` first: it introduces every other escape.
+            '%' => out.push_str("%25"),
+            '"' => out.push_str("%22"),
+            // The reader still honours the backslash escapes the `:` dialect
+            // wrote, so a literal backslash left raw here would be eaten as
+            // the start of one.
+            '\\' => out.push_str("%5C"),
+            '(' => out.push_str("%28"),
+            ')' => out.push_str("%29"),
+            // A newline would end the record early and split one exchange into
+            // two unparsable halves.
+            '\n' => out.push_str("%0A"),
+            '\r' => out.push_str("%0D"),
+            '\t' => out.push_str("%09"),
             other => out.push(other),
         }
     }
     out.push('"');
 }
 
-/// Decode a line written by [`encode_line`].
+/// Undo [`write_quoted`].
+fn unescape(text: &str) -> String {
+    if text == EMPTY_STRING {
+        return String::new();
+    }
+    let mut out = String::with_capacity(text.len());
+    let mut characters = text.chars();
+    while let Some(character) = characters.next() {
+        if character != '%' {
+            out.push(character);
+            continue;
+        }
+        let mut digits = characters.clone();
+        let pair: String = digits.by_ref().take(2).collect();
+        match u8::from_str_radix(&pair, 16) {
+            Ok(byte) if pair.len() == 2 => {
+                out.push(char::from(byte));
+                characters = digits;
+            }
+            // A stray `%` this function did not write is left alone rather
+            // than swallowed.
+            _ => out.push('%'),
+        }
+    }
+    out
+}
+
+/// Decode a line written by [`encode_line`], in any generation.
 ///
-/// Falls back to JSON, so the 1.7 GB of `requests.jsonl` an earlier release
-/// wrote keeps reading and the file migrates record by record as new ones are
-/// appended (issue #336).
+/// A deployment's log holds every format the router has ever written to it,
+/// because a record is never rewritten — only appended. All three are read
+/// here, so an upgrade converts a file record by record instead of needing a
+/// migration pass:
+///
+/// | Written by | Looks like |
+/// | --- | --- |
+/// | up to v0.121.0 | `{"phase":"stream_end"}` — JSON Lines |
+/// | v0.122.0 – v0.123.3 | `((:"phase" "stream_end"))` — the `:` dialect |
+/// | since | `(#o ("phase" "stream_end"))` |
+///
+/// The middle generation is the one issue #350 removed, and it is still read:
+/// a file written by v0.123.2 keeps every record it had.
 #[must_use]
 pub fn decode_line(text: &str) -> Option<Value> {
     let text = text.trim();
@@ -190,10 +261,26 @@ pub fn decode_line(text: &str) -> Option<Value> {
     if is_json(text) {
         return serde_json::from_str(text).ok();
     }
-    read_value(&mut text.chars().peekable())
+    // A record is a group, and a marked group carries its own escaping. A
+    // bare value at the top level only comes from this module's own writer,
+    // so it is read the same way (issue #350).
+    let mut characters = text.chars().peekable();
+    if characters.peek() == Some(&'(') {
+        return read_value(&mut characters);
+    }
+    read_marked_value(&mut characters)
 }
 
 /// Read one value from `characters`, or `None` when the text is malformed.
+fn read_marked_value(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    skip_spaces(characters);
+    match characters.peek()? {
+        '"' => read_quoted_escaped(characters).map(Value::String),
+        '(' => read_group(characters),
+        _ => read_bare(characters),
+    }
+}
+
 fn read_value(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
     skip_spaces(characters);
     match characters.peek()? {
@@ -211,6 +298,71 @@ fn read_group(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Opti
 
 /// Read a group whose opening paren has already been consumed.
 fn read_group_body(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    skip_spaces(characters);
+    // A marked group says what it is, so nothing is inferred from its shape.
+    if characters.peek() == Some(&'#') {
+        characters.next();
+        let marker = characters.next()?;
+        return match marker {
+            'a' => read_marked_array(characters),
+            'o' => read_marked_object(characters),
+            _ => None,
+        };
+    }
+    read_unmarked_group_body(characters)
+}
+
+/// Read the rest of `(#a …)`.
+fn read_marked_array(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    let mut items = Vec::new();
+    loop {
+        skip_spaces(characters);
+        match characters.peek() {
+            None => return None,
+            Some(')') => {
+                characters.next();
+                return Some(Value::Array(items));
+            }
+            Some(_) => items.push(read_marked_value(characters)?),
+        }
+    }
+}
+
+/// Read the rest of `(#o …)`, whose every element is a `("name" value)` pair.
+fn read_marked_object(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<Value> {
+    let mut fields = serde_json::Map::new();
+    loop {
+        skip_spaces(characters);
+        match characters.peek() {
+            Some(')') => {
+                characters.next();
+                return Some(Value::Object(fields));
+            }
+            Some('(') => {
+                characters.next();
+                skip_spaces(characters);
+                let name = read_quoted_escaped(characters)?;
+                let value = read_marked_value(characters)?;
+                skip_spaces(characters);
+                if characters.next() != Some(')') {
+                    return None;
+                }
+                fields.insert(name, value);
+            }
+            // Anything else is not a field, and a marked object has only
+            // fields: the line is malformed rather than an older encoding.
+            _ => return None,
+        }
+    }
+}
+
+/// Read a group written before the markers existed.
+///
+/// This is the `:` dialect and its `(#a)` / `(#o)` empty forms, kept so that a
+/// log written by v0.122.0 through v0.123.3 still reads (issue #350).
+fn read_unmarked_group_body(
+    characters: &mut std::iter::Peekable<std::str::Chars<'_>>,
+) -> Option<Value> {
     let mut pairs: Vec<(String, Value)> = Vec::new();
     let mut items: Vec<Value> = Vec::new();
     let mut keyed = true;
@@ -233,19 +385,6 @@ fn read_group_body(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) ->
                         items.push(value);
                     }
                 }
-            }
-            Some('#') => {
-                characters.next();
-                let marker = characters.next()?;
-                skip_spaces(characters);
-                if characters.next() != Some(')') {
-                    return None;
-                }
-                return match marker {
-                    'a' => Some(Value::Array(Vec::new())),
-                    'o' => Some(Value::Object(serde_json::Map::new())),
-                    _ => None,
-                };
             }
             Some(_) => {
                 keyed = false;
@@ -299,6 +438,16 @@ fn read_pair(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Optio
 
 /// Read a quoted string, undoing the escapes [`write_quoted`] applied.
 fn read_quoted(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<String> {
+    read_quoted_raw(characters)
+}
+
+/// Read a quoted string, undoing the backslash escapes the `:` dialect wrote.
+///
+/// Percent sequences are *not* undone here. A log written before issue #350
+/// holds strings that contain `%XX` as their own text -- 23 of them in a
+/// 400-record sample, mostly `git log --format='%h %ad'` -- and unescaping
+/// those would corrupt records this change exists to preserve.
+fn read_quoted_raw(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<String> {
     if characters.next() != Some('"') {
         return None;
     }
@@ -314,6 +463,13 @@ fn read_quoted(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Opt
             other => text.push(other),
         }
     }
+}
+
+/// Read a quoted string written by [`write_quoted`], undoing its escapes.
+fn read_quoted_escaped(
+    characters: &mut std::iter::Peekable<std::str::Chars<'_>>,
+) -> Option<String> {
+    read_quoted_raw(characters).as_deref().map(unescape)
 }
 
 /// Read a number, boolean or null written without quotes.
