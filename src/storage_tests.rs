@@ -427,3 +427,151 @@ fn dual_store_recovers_a_links_notation_journal() {
     assert!(recovered.get("recovered").unwrap().unwrap().revoked);
     assert!(!dir.path().join("tokens.transaction.json").exists());
 }
+
+/// A listing does not write the store.
+///
+/// `list()` went through the same helper as `put()`, which commits
+/// unconditionally, so answering a read re-serialised and fsynced a 64 MB
+/// `tokens.bin` and a 171 KB `tokens.lino`. On a 290-token deployment that
+/// took 8-13 seconds and made `router with` fail at its 10-second budget
+/// (issue #351).
+///
+/// The mtime is the assertion because it is what identified the defect: `stat`
+/// before and after a single `GET /api/tokens/list` showed the file had moved.
+#[test]
+fn listing_tokens_does_not_rewrite_the_store() {
+    let directory = tempdir().expect("temporary directory");
+    let store = DurableDualTokenStore::open(directory.path()).expect("open the store");
+    for index in 0..8 {
+        store
+            .put(sample_record(&format!("id-{index}")))
+            .expect("put");
+    }
+
+    let modified = |name: &str| {
+        std::fs::metadata(directory.path().join(name))
+            .ok()
+            .and_then(|metadata| metadata.modified().ok())
+    };
+    let before: Vec<_> = ["tokens.bin", "tokens.lino"]
+        .iter()
+        .map(|n| modified(n))
+        .collect();
+    // Filesystem timestamps are coarse; a write inside the same tick would be
+    // invisible, so the reads happen in a later one.
+    std::thread::sleep(std::time::Duration::from_millis(1_100));
+
+    let listed = store.list().expect("list");
+    assert_eq!(listed.len(), 8, "the listing must still answer");
+    let fetched = store.get("id-3").expect("get");
+    assert_eq!(fetched.map(|record| record.id).as_deref(), Some("id-3"));
+
+    let after: Vec<_> = ["tokens.bin", "tokens.lino"]
+        .iter()
+        .map(|n| modified(n))
+        .collect();
+    assert_eq!(
+        before, after,
+        "a read must not write either store file: {before:?} -> {after:?}"
+    );
+}
+
+/// Concurrent listings do not serialise against each other.
+///
+/// The lock is shared with the request path, so a read that takes it
+/// exclusively queues live traffic behind itself. Under a shared lock the
+/// readers overlap.
+#[test]
+fn concurrent_listings_run_together() {
+    let directory = tempdir().expect("temporary directory");
+    let store = DurableDualTokenStore::open(directory.path()).expect("open the store");
+    for index in 0..8 {
+        store
+            .put(sample_record(&format!("id-{index}")))
+            .expect("put");
+    }
+
+    let store = std::sync::Arc::new(store);
+    let readers = 4;
+    let barrier = std::sync::Arc::new(Barrier::new(readers));
+    let handles: Vec<_> = (0..readers)
+        .map(|_| {
+            let store = std::sync::Arc::clone(&store);
+            let barrier = std::sync::Arc::clone(&barrier);
+            thread::spawn(move || {
+                barrier.wait();
+                store.list().expect("list").len()
+            })
+        })
+        .collect();
+    for handle in handles {
+        assert_eq!(handle.join().expect("reader thread"), 8);
+    }
+}
+
+/// A read still sees what a write left, and still recovers a journal.
+///
+/// Skipping the commit must not skip the recovery: a crashed writer leaves a
+/// transaction to replay, and a reader that ignored it would answer from a
+/// store missing the last change.
+#[test]
+fn a_read_sees_the_latest_write() {
+    let directory = tempdir().expect("temporary directory");
+    let store = DurableDualTokenStore::open(directory.path()).expect("open the store");
+    store.put(sample_record("first")).expect("put");
+    assert_eq!(store.list().expect("list").len(), 1);
+
+    let mut second = sample_record("second");
+    second.label = "written after a read".into();
+    store.put(second).expect("put");
+
+    let listed = store.list().expect("list");
+    assert_eq!(listed.len(), 2, "the read must see the later write");
+    assert_eq!(
+        store
+            .get("second")
+            .expect("get")
+            .map(|record| record.label)
+            .as_deref(),
+        Some("written after a read")
+    );
+
+    // And a reopened store agrees, so nothing was lost by not committing.
+    let reopened = DurableDualTokenStore::open(directory.path()).expect("reopen");
+    assert_eq!(reopened.list().expect("list").len(), 2);
+}
+
+/// A listing does not scale with the size of `tokens.bin`.
+///
+/// `tokens.bin` is preallocated -- 64 MB for 290 records on the deployment in
+/// issue #351 -- so a listing that re-serialised and fsynced it cost time
+/// proportional to the file rather than to the answer. At 290 tokens that was
+/// 8-13 seconds, past the 10-second budget `router with` allows.
+#[test]
+fn listing_stays_fast_at_deployment_scale() {
+    let directory = tempdir().expect("temporary directory");
+    let store = DurableDualTokenStore::open(directory.path()).expect("open the store");
+    // The deployment that reported this had 290. Seeded in one write: 290
+    // separate `put`s would spend minutes exercising the write path, which is
+    // not what this test is about.
+    let seed: Vec<_> = (0..290)
+        .map(|index| sample_record(&format!("id-{index:04}")))
+        .collect();
+    store.text.replace_all(&seed).expect("seed the text store");
+    store
+        .binary
+        .replace_all(&seed)
+        .expect("seed the binary store");
+
+    let started = std::time::Instant::now();
+    for _ in 0..10 {
+        assert_eq!(store.list().expect("list").len(), 290);
+    }
+    let elapsed = started.elapsed();
+    // Ten listings, generously bounded. Before the split a single one took
+    // seconds, so this fails by orders of magnitude rather than marginally.
+    assert!(
+        elapsed < std::time::Duration::from_secs(5),
+        "ten listings of 290 tokens took {elapsed:?}; a read must not pay for a write"
+    );
+}
