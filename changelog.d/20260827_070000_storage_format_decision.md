@@ -1,8 +1,0 @@
----
-bump: patch
----
-
-### Fixed
-- The documented storage format matches the shipped one. The request log was converted to links notation in #336, but three places still said otherwise: the README described the per-token log as an "append-only operational stream" excluded from the conversion, `lino_json`'s boundary comment listed only the small stores, and the CHANGELOG carried both "the request log stays JSON Lines for now, deliberately" and "the request log is written in links notation" inside the same release section. A decision that the record contradicts is indistinguishable from an oversight, which is what the issue was about rather than the bytes (issue #346).
-- The reasons are now recorded where a reader meets them, on both sides of the boundary: the per-token request log is router-owned and is links notation, one record per line, keeping its file name and framing so log collectors and `grep` are unaffected; the optional audit JSONL stays JSON because its reader is somebody else's `jq`, and the recipes this project publishes for it pipe it straight into one. Stale "JSONL" wording in `--request-log` help text and the `RequestLog` docs is corrected (issue #346).
-- Each of those decisions now has a test, so a format cannot change without changing a test that says why it was chosen: the log is readable links notation one record per line, a JSON log from an earlier release still reads and migrates record by record as new ones are appended, and a file holding both encodings reports no integrity damage. Verified against a real 1049-record production log — every legacy record reads, re-encodes losslessly, and stays on one line (issue #346).
