@@ -103,6 +103,44 @@ where
     }
 }
 
+/// Execute a read while holding a *shared* advisory lock on the same file.
+///
+/// A listing is a read, and a read that takes the exclusive lock serialises
+/// itself against the request path: `try_consume_request` runs per proxied
+/// request and wants the same lock, so one slow listing queues live traffic
+/// behind it (issue #351). A shared lock lets concurrent readers proceed
+/// together and still excludes writers.
+pub fn with_shared_lock<T, E>(path: &Path, operation: impl FnOnce() -> Result<T, E>) -> Result<T, E>
+where
+    E: From<io::Error>,
+{
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(E::from)?;
+    }
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).create(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let lock = options.open(path).map_err(E::from)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        lock.set_permissions(fs::Permissions::from_mode(0o600))
+            .map_err(E::from)?;
+    }
+    FileExt::lock_shared(&lock).map_err(E::from)?;
+    let result = operation();
+    let unlock = FileExt::unlock(&lock);
+    match (result, unlock) {
+        (Err(error), _) => Err(error),
+        (Ok(_), Err(error)) => Err(E::from(error)),
+        (Ok(value), Ok(())) => Ok(value),
+    }
+}
+
 /// An exclusive advisory lock held for as long as the guard lives.
 ///
 /// Returned by [`lock_exclusive_async`] so an `async` critical section — a

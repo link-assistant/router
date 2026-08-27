@@ -833,6 +833,13 @@ impl DurableDualTokenStore {
         self.install(&records)
     }
 
+    /// Run `operation` over the records and persist whatever it changed.
+    ///
+    /// For accessors that actually write. A read must use [`Self::read_records`]
+    /// instead: committing after a listing rewrote a 64 MB `tokens.bin` to
+    /// answer a question that changed nothing, which took 8-13 seconds on a
+    /// 290-token deployment and, because the lock is shared with the request
+    /// path, queued live traffic behind it (issue #351).
     fn with_records<T>(
         &self,
         operation: impl FnOnce(&mut HashMap<String, TokenRecord>) -> T,
@@ -844,6 +851,53 @@ impl DurableDualTokenStore {
             self.commit(&records)?;
             Ok(result)
         })
+    }
+
+    /// Run `operation` over the records without writing anything.
+    ///
+    /// A shared lock, so concurrent readers do not serialise against each
+    /// other, and no `commit()`, so the answer costs a read rather than a
+    /// full re-serialise and fsync of both stores (issue #351).
+    ///
+    /// `recover()` still runs: a crashed writer may have left a journal to
+    /// replay, and a reader that ignored it would answer from a store that is
+    /// missing the last transaction. It writes only when there is something to
+    /// recover, which is not the steady state.
+    fn read_records<T>(
+        &self,
+        operation: impl FnOnce(&HashMap<String, TokenRecord>) -> T,
+    ) -> Result<T, StorageError> {
+        crate::durable_file::with_shared_lock(&self.lock_path, || {
+            self.recover()?;
+            let records = self.readable_records()?;
+            Ok(operation(&records))
+        })
+    }
+
+    /// The records, read from the projection that can answer quickly.
+    ///
+    /// `merged_records` reads both stores, and `tokens.bin` is preallocated --
+    /// 64 MB for 290 records on the deployment in issue #351 -- so scanning it
+    /// took 1.6 s where the same records came out of `tokens.lino` in 6 ms.
+    /// Merging is for reconciling two writers; a read does not need it.
+    ///
+    /// Reading text alone is sound because `install` writes text first and
+    /// binary second, so the text projection is never the staler of the two.
+    /// A crash between the two writes leaves binary behind, and the next
+    /// `recover()` -- which still runs above -- replays the journal over both.
+    fn readable_records(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
+        let mut records = HashMap::new();
+        for record in self.text.list()? {
+            records.insert(record.id.clone(), record);
+        }
+        // An empty text projection is the one case where binary may hold more:
+        // a store written by a binary-only deployment, or a text file lost.
+        // Falling back keeps such a store readable rather than answering that
+        // it has no tokens.
+        if records.is_empty() {
+            return self.merged_records();
+        }
+        Ok(records)
     }
 }
 
@@ -862,11 +916,11 @@ fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
 
 impl TokenStore for DurableDualTokenStore {
     fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
-        self.with_records(|records| records.values().cloned().collect())
+        self.read_records(|records| records.values().cloned().collect())
     }
 
     fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError> {
-        self.with_records(|records| records.get(id).cloned())
+        self.read_records(|records| records.get(id).cloned())
     }
 
     fn put(&self, record: TokenRecord) -> Result<(), StorageError> {
