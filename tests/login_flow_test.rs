@@ -329,7 +329,13 @@ async fn a_rejected_code_fails_the_session_without_writing_a_credential() {
         command: fake_cli(),
         args: vec![],
         claude_code_home: home.clone(),
-        idle_settle: Duration::from_millis(50),
+        // Comfortably under `code_timeout`, which is what the elapsed-time
+        // assertion below is about, but not so tight that a loaded machine
+        // settles the PTY before the CLI has printed its rejection. At 50 ms
+        // this test failed roughly one run in six under parallel load, which
+        // reads as a real regression in rejection handling rather than as the
+        // scheduling artefact it is.
+        idle_settle: Duration::from_millis(250),
         url_timeout: HANDSHAKE_TIMEOUT,
         code_timeout: timeout,
         ..LoginConfig::default()
