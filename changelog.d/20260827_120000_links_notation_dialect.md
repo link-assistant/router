@@ -1,9 +1,0 @@
----
-bump: patch
----
-
-### Fixed
-- The request log is links notation the notation's own tools can read. The single-line form this project invented marked object fields with a `:` — `((:"phase" "stream_end"))` — which `links_notation::parse_lino` rejected outright and which `lino-objects-codec` decoded as the array `[":", key, value]`, losing the object boundary. The round trip only worked because the reader was the private inverse of the writer, so a file this project documents as links notation could not be read by anything else (issue #350).
-- Records are now written with self-describing containers, `(#o ("phase" "stream_end"))` for an object and `(#a …)` for an array. The codec reads a two-element group whose first element is a scalar as an *object*, so `["a","b"]` and `{"a":"b"}` would otherwise write identical text — a production log holds 779 of those, mostly `enum` arrays out of tool schemas. Marking each container removes the guess.
-- Strings are percent-escaped rather than backslash-escaped, because neither library reads a backslash escape: `"q\"q"` makes the codec fail with *unterminated quoted value*, and request bodies are full of embedded JSON. Fuzzing both candidates over 6,000 values: percent-escaping 0 failures, the codec-native doubled quote 241. Strings stay greppable — a model name is still findable with `grep`.
-- Every generation of the log still reads, exactly. A record is appended and never rewritten, so a deployment holds JSON Lines from v0.121.0 and earlier, the `:` dialect from v0.122.0 through v0.123.3, and the current form, often in one file. All three decode to the same values: verified against 400 real production records in each encoding, a 55-record corpus covering empty containers, empty keys, embedded newlines and the ambiguous arrays, 12,000 fuzzed values, and a live 39 MB log where the 1049 existing records stayed byte-identical while new ones appended (issue #350).
