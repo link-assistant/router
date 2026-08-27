@@ -734,7 +734,7 @@ git config --global url."https://router.example.internal/git/".insteadOf "https:
 
 Ref deletions and forced updates to existing branches are **refused by
 default**; creates and fast-forwards pass through, and a refusal is recorded in
-the per-token `requests.jsonl` alongside the API calls. The caller never holds a
+the per-token `requests.lino` alongside the API calls. The caller never holds a
 GitHub credential — the router presents its own upstream. To permit one ref
 deliberately, add an allow rule naming it, which is a change only an operator
 with access to the router can make:
@@ -1075,14 +1075,19 @@ Other files keep the format of the boundary they serve:
   `.credentials.json`, `auth.json`, `settings.json`, and `config.toml` are
   vendor-owned interoperability files. The router continues to read or update
   the vendor's expected shape.
-- Per-token `requests/<token-hash>/requests.jsonl` files are router-owned and
+- Per-token `requests/<token-hash>/requests.lino` files are router-owned and
   are written in Links Notation, one record per line: `((:"phase"
-  "client_request") (:"model" "claude-opus-5") …)`. The file keeps its name and
-  its one-record-per-line framing, so log collectors and `grep` work exactly as
-  before, and strings are written as themselves rather than base64 — a model
-  name is still findable with `grep`. Records an earlier release wrote as JSON
-  are read unchanged, and a file migrates record by record as new ones are
-  appended, so no conversion step is required.
+  "client_request") (:"model" "claude-opus-5") …)`. The one-record-per-line
+  framing is unchanged, so log collectors and `grep` work exactly as before,
+  and strings are written as themselves rather than base64 — a model name is
+  still findable with `grep`. Records an earlier release wrote as JSON are read
+  unchanged, so no conversion step is required.
+- The file was called `requests.jsonl` through v0.123.1, when it already held
+  Links Notation. It is now named for what it holds. An existing log is renamed
+  on its token's next write; a token that has not been written since keeps its
+  history under the old name and is still read. Nothing is rewritten and
+  nothing is discarded — if a collector tails these files by name, point it at
+  `requests.lino`.
 - The optional audit JSONL stays JSON Lines. It is an interoperability
   boundary, not router-owned state: it exists to be consumed by log collectors
   and `jq`, and the documented recipes in
@@ -1184,7 +1189,7 @@ RUST_LOG=trace ./target/release/link-assistant-router
 
 `RUST_LOG` overrides the default `info` level (or the `debug` fallback selected
 by `--verbose`). Every HTTP request also writes a structured exchange to
-`$DATA_DIR/requests/<token-hash>/requests.jsonl` by default. Client and upstream
+`$DATA_DIR/requests/<token-hash>/requests.lino` by default. Client and upstream
 phases share an `x-request-id`/`correlation_id` and carry the token hash, id,
 and label. Missing or invalid credentials use the explicit `unauthenticated`
 directory. Credentials longer than the safety threshold retain three leading

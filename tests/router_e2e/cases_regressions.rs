@@ -284,7 +284,7 @@ async fn auth_unknown_models_and_admin_isolation() {
     assert_eq!(admin.status(), StatusCode::UNAUTHORIZED);
 
     let unauthenticated =
-        std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
+        std::fs::read_to_string(router.log_root.join("unauthenticated/requests.lino"))
             .expect("unauthenticated request log");
     assert!(unauthenticated.lines().all(|line| {
         let record =

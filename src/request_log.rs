@@ -33,7 +33,17 @@ use redaction::partially_redact;
 use redaction::{redact_value, redacted_uri};
 pub use redaction::{redacted_body, redacted_headers};
 
-/// Default maximum size of one token's `requests.jsonl` (100 MiB).
+/// One token's log, named for what it holds: links notation (issue #346).
+const LOG_FILE: &str = "requests.lino";
+/// What the same file was called when it held JSON Lines.
+///
+/// Releases through v0.121.0 wrote JSON here, and v0.122.0 wrote links
+/// notation under this name. Either way an existing deployment has bytes in a
+/// file with this name, and they are not abandoned: the file is renamed on the
+/// next write to its token (issue #346).
+const LEGACY_LOG_FILE: &str = "requests.jsonl";
+
+/// Default maximum size of one token's log (100 MiB).
 pub const DEFAULT_MAX_BYTES: u64 = 100 * 1024 * 1024;
 /// Default maximum size of the whole request store across every token (4 GiB).
 ///
@@ -215,7 +225,38 @@ impl RequestLog {
     }
 
     fn log_path(&self, token_hash: &str) -> PathBuf {
-        self.root.join(token_hash).join("requests.jsonl")
+        self.root.join(token_hash).join(LOG_FILE)
+    }
+
+    /// Give a log written under the old name the name that describes it.
+    ///
+    /// The file holds links notation, so `requests.jsonl` said the wrong
+    /// thing. Renaming rather than reading both names forever means every
+    /// later reader, size check and eviction sees exactly one name; the
+    /// records inside are untouched and still read either encoding, so the
+    /// rename costs nothing and loses nothing (issue #346).
+    ///
+    /// Called with the write lock held, before the directory is read for its
+    /// size, so no reader can observe the file under neither name.
+    fn adopt_legacy_name(path: &Path) {
+        // `is_file`, not `exists`: something that is not a file sitting on the
+        // name -- a directory an operator made, a half-finished upgrade -- is
+        // not a log this can append to, and treating it as one would silently
+        // strand the records still under the old name.
+        if path.is_file() {
+            return;
+        }
+        // Always `Some`: the path is a token directory joined with a file
+        // name, so `with_file_name` is defined for it.
+        let legacy = path.with_file_name(LEGACY_LOG_FILE);
+        if !legacy.is_file() {
+            return;
+        }
+        if let Err(error) = fs::rename(&legacy, path) {
+            // Not fatal: the append below creates the new file, and the old
+            // one keeps whatever it held for an operator to collect.
+            tracing::warn!("could not rename the request log: {error}");
+        }
     }
 
     fn append_bounded(&self, token_hash: &str, line: &[u8]) {
@@ -229,6 +270,10 @@ impl RequestLog {
             tracing::warn!("request log directory creation failed: {error}");
             return;
         }
+        // Before anything measures or truncates this token's log, so every
+        // size decision below sees the whole file rather than treating a
+        // renamed one as empty (issue #346).
+        Self::adopt_legacy_name(&path);
         if line.len() as u64 > self.max_bytes {
             let discarded = fs::metadata(&path).map_or(0, |metadata| metadata.len());
             // The bound wins: a marker that does not fit is not written, since
@@ -258,6 +303,19 @@ impl RequestLog {
         self.enforce_total_limit(token_hash);
     }
 
+    /// Whether any token's log is still under the pre-rename name.
+    ///
+    /// Cheap next to the eviction scan it guards -- a file-name check per
+    /// directory, no metadata read -- and it stops being true for good once
+    /// every token has been written to since the upgrade.
+    fn holds_a_legacy_log(&self) -> bool {
+        fs::read_dir(&self.root).is_ok_and(|entries| {
+            entries
+                .flatten()
+                .any(|entry| entry.path().join(LEGACY_LOG_FILE).is_file())
+        })
+    }
+
     /// Keep the whole store inside its total bound.
     ///
     /// The per-token bound stays exactly as it was — a noisy token still
@@ -272,9 +330,17 @@ impl RequestLog {
         // The store cannot have crossed the bound while every directory in it
         // is under its own share of it, so the common case skips the scan
         // rather than walking every token directory on every record written.
+        //
+        // That reasoning holds only while every log was written under the
+        // bound now in force. A log left under the old name predates the
+        // rename, so it may have been written under a larger bound -- or
+        // under none -- and the active token being small says nothing about
+        // it. Until the store has no legacy logs left, the scan runs
+        // (issue #346).
         if let Ok(count) = fs::read_dir(&self.root).map(Iterator::count)
             && let Ok(metadata) = fs::metadata(self.log_path(active))
             && metadata.len() < max_total / (count.max(1) as u64)
+            && !self.holds_a_legacy_log()
         {
             return;
         }
@@ -286,7 +352,11 @@ impl RequestLog {
             .filter(|entry| entry.path().is_dir())
             .filter_map(|entry| {
                 let name = entry.file_name().to_string_lossy().into_owned();
-                let metadata = fs::metadata(entry.path().join("requests.jsonl")).ok()?;
+                // Either name: a token that has not been written since the
+                // rename still occupies the disk this bound is about.
+                let metadata = fs::metadata(entry.path().join(LOG_FILE))
+                    .or_else(|_| fs::metadata(entry.path().join(LEGACY_LOG_FILE)))
+                    .ok()?;
                 Some((
                     metadata.modified().ok()?,
                     metadata.len(),

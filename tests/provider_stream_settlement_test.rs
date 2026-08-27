@@ -173,7 +173,7 @@ fn an_openai_compatible_stream_is_settled_in_the_log() {
 /// The `stream_end` record from any token directory under `root`.
 fn read_stream_end(root: &std::path::Path) -> Option<Value> {
     for entry in std::fs::read_dir(root).ok()? {
-        let path = entry.ok()?.path().join("requests.jsonl");
+        let path = entry.ok()?.path().join("requests.lino");
         let Ok(contents) = std::fs::read_to_string(&path) else {
             continue;
         };

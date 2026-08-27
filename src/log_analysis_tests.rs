@@ -811,3 +811,52 @@ fn a_missing_root_yields_nothing() {
     assert_eq!(unparsable, 0);
     assert_eq!(bytes, 0);
 }
+
+/// Both names are read, and a store holding each is read as one.
+///
+/// The log is `requests.lino` now; a token idle since the rename still has its
+/// history under `requests.jsonl`. A reader that knew only one name would show
+/// an operator half their store and report no damage while doing it, which is
+/// the failure that looks like success (issue #346).
+#[test]
+fn a_store_holding_both_names_is_read_as_one() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let root = directory.path();
+
+    let renamed = root.join("hash-renamed");
+    std::fs::create_dir_all(&renamed).expect("create the renamed token directory");
+    let record = crate::lino_json::encode_line(&serde_json::json!({
+        "correlation_id": "renamed-correlation",
+        "phase": "client_request",
+        "method": "GET",
+        "uri": "/health",
+    }))
+    .expect("encode a record");
+    std::fs::write(renamed.join("requests.lino"), format!("{record}\n")).expect("write");
+
+    let idle = root.join("hash-idle");
+    std::fs::create_dir_all(&idle).expect("create the idle token directory");
+    let legacy = serde_json::json!({
+        "correlation_id": "idle-correlation",
+        "phase": "client_request",
+        "method": "GET",
+        "uri": "/health",
+    });
+    std::fs::write(idle.join("requests.jsonl"), format!("{legacy}\n")).expect("write");
+
+    let (exchanges, unparsable, bytes) = read_exchanges(root, None).expect("read the store");
+    assert_eq!(unparsable, 0, "every record must read under either name");
+    assert!(bytes > 0, "both files must have been read");
+    let correlations = exchanges
+        .iter()
+        .map(|exchange| exchange.correlation_id.clone())
+        .collect::<Vec<_>>();
+    assert!(
+        correlations.iter().any(|id| id == "renamed-correlation"),
+        "the renamed token's history must be read: {correlations:?}"
+    );
+    assert!(
+        correlations.iter().any(|id| id == "idle-correlation"),
+        "and the idle token's, still under the old name: {correlations:?}"
+    );
+}

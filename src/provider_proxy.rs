@@ -642,7 +642,7 @@ mod tests {
         );
 
         let written =
-            std::fs::read_to_string(directory.path().join("unauthenticated/requests.jsonl"))
+            std::fs::read_to_string(directory.path().join("unauthenticated/requests.lino"))
                 .expect("read the log");
         let settled: serde_json::Value = written
             .lines()
