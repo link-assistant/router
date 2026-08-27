@@ -18,7 +18,7 @@ async fn request_larger_than_logging_buffer_reaches_handler() {
         response.text().await.expect("large response body"),
         (10 * 1024 * 1024 + 1).to_string()
     );
-    let log = std::fs::read_to_string(router.log_root.join("unauthenticated/requests.jsonl"))
+    let log = std::fs::read_to_string(router.log_root.join("unauthenticated/requests.lino"))
         .expect("request log");
     assert!(log.contains("client_request"));
     assert!(log.contains("[OMITTED:"));

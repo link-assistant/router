@@ -206,7 +206,7 @@ pub struct Anomaly {
     pub correlation_ids: Vec<String>,
 }
 
-/// Read every `requests.jsonl` under `root`, optionally for one token.
+/// Read every request log under `root`, optionally for one token.
 ///
 /// Returns the exchanges plus counts of what could not be read, so a caller
 /// never has to infer absence from silence.
@@ -258,9 +258,16 @@ fn log_files(root: &Path, token: Option<&str>) -> std::io::Result<Vec<PathBuf>> 
         if token.is_some_and(|token| !name.starts_with(token)) {
             continue;
         }
-        let file = entry.path().join("requests.jsonl");
-        if file.is_file() {
-            files.push(file);
+        // Either name. The log is renamed to `requests.lino` on its token's
+        // next write, so a token that has been idle since the rename still
+        // has readable history under the old one (issue #346).
+        let current = entry.path().join("requests.lino");
+        let legacy = entry.path().join("requests.jsonl");
+        if current.is_file() {
+            files.push(current);
+        }
+        if legacy.is_file() {
+            files.push(legacy);
         }
     }
     files.sort();

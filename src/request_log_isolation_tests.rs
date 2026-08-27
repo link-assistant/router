@@ -162,7 +162,7 @@ fn the_whole_store_stays_within_its_total_bound() {
     let total: u64 = fs::read_dir(&root)
         .expect("store")
         .flatten()
-        .filter_map(|entry| fs::metadata(entry.path().join("requests.jsonl")).ok())
+        .filter_map(|entry| fs::metadata(entry.path().join("requests.lino")).ok())
         .map(|metadata| metadata.len())
         .sum();
     assert!(
@@ -271,7 +271,7 @@ fn many_small_directories_still_trip_the_total_bound() {
     let total: u64 = fs::read_dir(&root)
         .expect("store")
         .flatten()
-        .filter_map(|entry| fs::metadata(entry.path().join("requests.jsonl")).ok())
+        .filter_map(|entry| fs::metadata(entry.path().join("requests.lino")).ok())
         .map(|metadata| metadata.len())
         .sum();
     assert!(

@@ -213,7 +213,7 @@ impl TestRouter {
 
     fn log_path_for(&self, token: &str) -> std::path::PathBuf {
         let digest = hex::encode(Sha256::digest(token.as_bytes()));
-        self.log_root.join(&digest[..32]).join("requests.jsonl")
+        self.log_root.join(&digest[..32]).join("requests.lino")
     }
 }
 

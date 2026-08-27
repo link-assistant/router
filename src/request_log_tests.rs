@@ -132,7 +132,7 @@ fn credentials_are_redacted_from_uri_queries() {
     );
 
     let rendered =
-        fs::read_to_string(root.join("unauthenticated/requests.jsonl")).expect("request log");
+        fs::read_to_string(root.join("unauthenticated/requests.lino")).expect("request log");
     for secret in [
         "api-secret",
         "key-secret",
@@ -153,7 +153,7 @@ fn request_log_is_created_owner_only() {
 
     let dir = tempfile::tempdir().expect("temporary directory");
     let root = dir.path().join("requests");
-    let path = root.join("unauthenticated/requests.jsonl");
+    let path = root.join("unauthenticated/requests.lino");
     let log = RequestLog::new(root.clone(), 1024 * 1024);
     log.record("request", "test", json!({"visible": true}));
 
@@ -187,7 +187,7 @@ fn request_log_is_created_owner_only() {
 fn log_never_exceeds_limit_and_keeps_newest_complete_record() {
     let dir = tempfile::tempdir().expect("temporary directory");
     let root = dir.path().join("requests");
-    let path = root.join("unauthenticated/requests.jsonl");
+    let path = root.join("unauthenticated/requests.lino");
     let log = RequestLog::new(root, 600);
     for sequence in 0..30 {
         log.record("request", "test", json!({"sequence": sequence}));
@@ -204,7 +204,7 @@ fn log_never_exceeds_limit_and_keeps_newest_complete_record() {
     assert!(!kept.contains(&0), "the oldest was discarded: {kept:?}");
 
     let tiny_root = dir.path().join("tiny");
-    let tiny_path = tiny_root.join("unauthenticated/requests.jsonl");
+    let tiny_path = tiny_root.join("unauthenticated/requests.lino");
     let tiny = RequestLog::new(tiny_root, 32);
     tiny.record("request", "oversized", json!({"body": "far too large"}));
     assert!(fs::metadata(tiny_path).expect("tiny log").len() <= 32);
@@ -232,7 +232,7 @@ async fn transformed_upstream_exchange_is_logged_with_same_id() {
 
     let dir = tempfile::tempdir().expect("temporary directory");
     let root = dir.path().join("requests");
-    let path = root.join("unauthenticated/requests.jsonl");
+    let path = root.join("unauthenticated/requests.lino");
     let log = RequestLog::new(root, 1024 * 1024);
     let client = reqwest::Client::new();
     let request = client
@@ -395,7 +395,7 @@ fn the_terminal_record_carries_counts_and_duration() {
         },
     );
 
-    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.jsonl"))
+    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.lino"))
         .expect("read log");
     let record = written
         .lines()
@@ -647,7 +647,7 @@ fn settling_a_stream_writes_its_terminal_record() {
         &log_lazy::LogLazy::default(),
     );
 
-    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.jsonl"))
+    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.lino"))
         .expect("read log");
     let record: serde_json::Value = written
         .lines()
@@ -688,7 +688,7 @@ fn a_cut_stream_records_its_outcome_and_duration() {
         &log_lazy::LogLazy::default(),
     );
 
-    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.jsonl"))
+    let written = std::fs::read_to_string(directory.path().join("unauthenticated/requests.lino"))
         .expect("read log");
     let record: serde_json::Value = written
         .lines()
@@ -708,7 +708,7 @@ fn a_cut_stream_records_its_outcome_and_duration() {
 fn compaction_leaves_a_marker_saying_records_were_discarded() {
     let dir = tempfile::tempdir().expect("temp dir");
     let root = dir.path().join("marked");
-    let path = root.join("unauthenticated/requests.jsonl");
+    let path = root.join("unauthenticated/requests.lino");
     let log = RequestLog::new(root, 4_096);
     for sequence in 0..80 {
         log.record(
@@ -746,7 +746,7 @@ fn compaction_leaves_a_marker_saying_records_were_discarded() {
 fn a_limit_too_small_for_a_marker_still_respects_the_limit() {
     let dir = tempfile::tempdir().expect("temp dir");
     let root = dir.path().join("tiny");
-    let path = root.join("unauthenticated/requests.jsonl");
+    let path = root.join("unauthenticated/requests.lino");
     let log = RequestLog::new(root, 48);
     for sequence in 0..5 {
         log.record("request", "tiny", json!({"sequence": sequence}));

@@ -11,7 +11,13 @@
 //! Prose drifts. These tests are the executable half of that decision: each
 //! asserts the format of a file the router writes, so changing a format means
 //! changing a test that states why the format was chosen.
+//!
+//! The log is now named `requests.lino`, because that is what it holds. A log
+//! left under the old name is renamed on its token's next write rather than
+//! read under two names forever, and one that has not been written since is
+//! still found and still read.
 
+use std::fmt::Write as _;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
@@ -75,8 +81,7 @@ impl Router {
     }
 
     fn log_path(&self) -> PathBuf {
-        self.data_dir
-            .join("requests/unauthenticated/requests.jsonl")
+        self.data_dir.join("requests/unauthenticated/requests.lino")
     }
 
     /// The log, once a record containing `needle` has landed.
@@ -159,17 +164,18 @@ fn the_request_log_is_readable_links_notation_one_record_per_line() {
     );
 }
 
-/// A log an earlier release wrote as JSON keeps reading, and migrates in place.
+/// A log an earlier release wrote is renamed, kept, and appended to.
 ///
-/// This is what makes the conversion safe to ship without a migration step:
-/// the bytes already on disk are not rewritten, they are read as they are, and
-/// a file becomes links notation record by record as new ones are appended.
+/// Nothing is rewritten and nothing is lost: the file takes the name that
+/// describes it, every record already in it stays exactly as it was, and new
+/// records append in links notation.
 #[test]
 fn a_json_log_from_an_earlier_release_still_reads_and_migrates_in_place() {
     let directory = tempfile::tempdir().expect("temporary data directory");
     let token_directory = directory.path().join("requests/unauthenticated");
     std::fs::create_dir_all(&token_directory).expect("create the log directory");
-    let path = token_directory.join("requests.jsonl");
+    let legacy_path = token_directory.join("requests.jsonl");
+    let path = token_directory.join("requests.lino");
 
     // Exactly what an earlier release left behind: JSON, one object per line.
     let legacy = serde_json::json!({
@@ -178,7 +184,7 @@ fn a_json_log_from_an_earlier_release_still_reads_and_migrates_in_place() {
         "model": "claude-opus-4",
         "time": "2026-08-24T15:24:36.409091995+00:00",
     });
-    std::fs::write(&path, format!("{legacy}\n")).expect("write the legacy log");
+    std::fs::write(&legacy_path, format!("{legacy}\n")).expect("write the legacy log");
 
     let router = Router::start(directory.path(), &[]);
     router
@@ -187,10 +193,21 @@ fn a_json_log_from_an_earlier_release_still_reads_and_migrates_in_place() {
     let log = router.log_containing("issue-346-migration");
     drop(router);
 
+    // The file is renamed, not abandoned: `requests.jsonl` described JSON,
+    // and the bytes in it are links notation now (issue #346).
+    assert!(
+        path.is_file(),
+        "the log must have been renamed to requests.lino"
+    );
+    assert!(
+        !legacy_path.exists(),
+        "the old name must not be left behind holding the same records"
+    );
+
     let lines = records(&log);
     assert!(
         lines.len() > 1,
-        "the router must have appended to the existing log: {log}"
+        "the router must have kept the existing records and appended: {log}"
     );
     assert!(
         is_json(lines[0]) && lines[0].contains("claude-opus-4"),
@@ -270,5 +287,102 @@ fn a_mixed_format_log_reports_no_integrity_damage() {
     assert!(
         rendered.contains("0 unparsable record"),
         "a mixed-format log is whole, not damaged: {rendered}"
+    );
+}
+
+/// An idle token's history survives under the old name.
+///
+/// The rename happens on write. A token nobody has called since the upgrade
+/// has no write to trigger it, so its log stays `requests.jsonl` — and it must
+/// still be found and read, or upgrading would appear to erase the history of
+/// every quiet token (issue #346).
+#[test]
+fn a_log_never_written_since_the_rename_is_still_read() {
+    let directory = tempfile::tempdir().expect("temporary data directory");
+    let idle = directory.path().join("requests/aa11-idle-token");
+    std::fs::create_dir_all(&idle).expect("create the idle token directory");
+    let record = serde_json::json!({
+        "phase": "client_request",
+        "correlation_id": "idle-token-history",
+        "method": "GET",
+        "uri": "/health",
+        "time": "2026-08-24T15:24:36.409091995+00:00",
+    });
+    std::fs::write(idle.join("requests.jsonl"), format!("{record}\n")).expect("write");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "logs",
+            "summary",
+            "--data-dir",
+            directory.path().to_str().expect("a printable path"),
+        ])
+        .env("TOKEN_SECRET", "storage-format-boundaries-test-secret")
+        .output()
+        .expect("run router logs");
+    let rendered = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        rendered.contains("0 unparsable record"),
+        "an un-renamed log must read cleanly: {rendered}"
+    );
+    assert!(
+        !rendered.contains("records 0") && !rendered.contains("exchanges 0"),
+        "an idle token's history must still be counted: {rendered}"
+    );
+}
+
+/// The rename keeps every byte, and the bound still sees them.
+///
+/// Two ways this could go wrong and both lose data: the old file left orphaned
+/// beside a new empty one, or the size cap treating a renamed log as empty and
+/// letting the token exceed its budget (issue #346).
+#[test]
+fn the_rename_preserves_the_records_and_the_size_accounting() {
+    let directory = tempfile::tempdir().expect("temporary data directory");
+    let token_directory = directory.path().join("requests/unauthenticated");
+    std::fs::create_dir_all(&token_directory).expect("create the log directory");
+    let legacy_path = token_directory.join("requests.jsonl");
+
+    let mut seeded = String::new();
+    for sequence in 0..20 {
+        let record = serde_json::json!({
+            "phase": "client_request",
+            "correlation_id": format!("seeded-{sequence:02}"),
+            "time": "2026-08-24T15:24:36.409091995+00:00",
+        });
+        let _ = writeln!(seeded, "{record}");
+    }
+    std::fs::write(&legacy_path, &seeded).expect("write the legacy log");
+    let seeded_bytes = seeded.len();
+
+    let router = Router::start(directory.path(), &[]);
+    router
+        .get("x-test-marker: issue-346-preserved\r\n")
+        .expect("a successful request");
+    let log = router.log_containing("issue-346-preserved");
+    drop(router);
+
+    assert!(
+        !legacy_path.exists(),
+        "the old file must not be left orphaned beside the new one"
+    );
+    // Every seeded correlation is still there, and the file grew rather than
+    // being replaced.
+    for sequence in 0..20 {
+        let needle = format!("seeded-{sequence:02}");
+        assert!(
+            log.contains(&needle),
+            "the rename dropped record {needle}: {} bytes now",
+            log.len()
+        );
+    }
+    assert!(
+        log.len() > seeded_bytes,
+        "the log must have grown from {seeded_bytes} bytes, found {}",
+        log.len()
     );
 }

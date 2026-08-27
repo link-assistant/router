@@ -104,7 +104,7 @@ Usage and revocation live in the persistent token store, so both survive a
 router restart.
 
 Complete exchanges are grouped under
-`$DATA_DIR/requests/<sha256-of-token-truncated>/requests.jsonl`. Every phase
+`$DATA_DIR/requests/<sha256-of-token-truncated>/requests.lino`. Every phase
 includes `token_hash`, `token_id`, and `token_label`, so one task's client and
 upstream traffic can be audited without scanning another task's records. The
 configured request-log size limit applies independently to each token, so the
@@ -129,7 +129,7 @@ tokens routed to the same subscription can reach the same models, and the
 router does not create separate vendor context, history, or cache boundaries.
 The operator can read the default diagnostic request log, which records full
 prompts and completions under
-`$DATA_DIR/requests/<token-hash>/requests.jsonl`. Protect that directory as
+`$DATA_DIR/requests/<token-hash>/requests.lino`. Protect that directory as
 sensitive household or team data. The separate optional audit log contains
 metadata only and deliberately excludes prompt and completion content.
 
