@@ -246,20 +246,16 @@ impl RequestLog {
         if path.is_file() {
             return;
         }
-        let Some(legacy) = path.parent().map(|parent| parent.join(LEGACY_LOG_FILE)) else {
-            return;
-        };
+        // Always `Some`: the path is a token directory joined with a file
+        // name, so `with_file_name` is defined for it.
+        let legacy = path.with_file_name(LEGACY_LOG_FILE);
         if !legacy.is_file() {
             return;
         }
         if let Err(error) = fs::rename(&legacy, path) {
             // Not fatal: the append below creates the new file, and the old
             // one keeps whatever it held for an operator to collect.
-            tracing::warn!(
-                "could not rename {} to {}: {error}",
-                legacy.display(),
-                path.display()
-            );
+            tracing::warn!("could not rename the request log: {error}");
         }
     }
 
