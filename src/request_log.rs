@@ -239,7 +239,11 @@ impl RequestLog {
     /// Called with the write lock held, before the directory is read for its
     /// size, so no reader can observe the file under neither name.
     fn adopt_legacy_name(path: &Path) {
-        if path.exists() {
+        // `is_file`, not `exists`: something that is not a file sitting on the
+        // name -- a directory an operator made, a half-finished upgrade -- is
+        // not a log this can append to, and treating it as one would silently
+        // strand the records still under the old name.
+        if path.is_file() {
             return;
         }
         let Some(legacy) = path.parent().map(|parent| parent.join(LEGACY_LOG_FILE)) else {
@@ -303,6 +307,19 @@ impl RequestLog {
         self.enforce_total_limit(token_hash);
     }
 
+    /// Whether any token's log is still under the pre-rename name.
+    ///
+    /// Cheap next to the eviction scan it guards -- a file-name check per
+    /// directory, no metadata read -- and it stops being true for good once
+    /// every token has been written to since the upgrade.
+    fn holds_a_legacy_log(&self) -> bool {
+        fs::read_dir(&self.root).is_ok_and(|entries| {
+            entries
+                .flatten()
+                .any(|entry| entry.path().join(LEGACY_LOG_FILE).is_file())
+        })
+    }
+
     /// Keep the whole store inside its total bound.
     ///
     /// The per-token bound stays exactly as it was — a noisy token still
@@ -317,9 +334,17 @@ impl RequestLog {
         // The store cannot have crossed the bound while every directory in it
         // is under its own share of it, so the common case skips the scan
         // rather than walking every token directory on every record written.
+        //
+        // That reasoning holds only while every log was written under the
+        // bound now in force. A log left under the old name predates the
+        // rename, so it may have been written under a larger bound -- or
+        // under none -- and the active token being small says nothing about
+        // it. Until the store has no legacy logs left, the scan runs
+        // (issue #346).
         if let Ok(count) = fs::read_dir(&self.root).map(Iterator::count)
             && let Ok(metadata) = fs::metadata(self.log_path(active))
             && metadata.len() < max_total / (count.max(1) as u64)
+            && !self.holds_a_legacy_log()
         {
             return;
         }

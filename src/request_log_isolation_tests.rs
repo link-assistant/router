@@ -280,3 +280,135 @@ fn many_small_directories_still_trip_the_total_bound() {
          found {total} bytes"
     );
 }
+
+/// A log written under the old name is renamed, not orphaned.
+///
+/// The file has held links notation since v0.122.0 while still being called
+/// `requests.jsonl`. Renaming on the next write is what lets every later
+/// reader, size check and eviction deal with a single name — but only if the
+/// records survive it, so this drives the rename directly rather than through
+/// a spawned router (issue #346).
+#[test]
+fn a_log_under_the_old_name_is_renamed_and_keeps_its_records() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let root = dir.path().join("requests");
+    let token = root.join("hash-legacy");
+    fs::create_dir_all(&token).expect("create the token directory");
+    let legacy = token.join("requests.jsonl");
+    let renamed = token.join("requests.lino");
+
+    // Records an earlier release wrote, in the encoding it wrote them in.
+    let seeded = crate::lino_json::encode_line(&json!({"marker": "seeded-record"}))
+        .expect("encode a record");
+    fs::write(&legacy, format!("{seeded}\n")).expect("write the legacy log");
+
+    let log = RequestLog::new(root, 16 * 1024);
+    log.route_request("c", identity("hash-legacy", "id", "label"));
+    log.record("c", "test", json!({"marker": "appended-record"}));
+
+    assert!(
+        renamed.is_file(),
+        "the log must take the name for what it holds"
+    );
+    assert!(
+        !legacy.exists(),
+        "the old name must not be left behind holding the same records"
+    );
+    let rendered = fs::read_to_string(&renamed).expect("read the renamed log");
+    assert!(
+        rendered.contains("seeded-record"),
+        "the rename must keep what was already there: {rendered}"
+    );
+    assert!(
+        rendered.contains("appended-record"),
+        "and the new record must be appended to it: {rendered}"
+    );
+}
+
+/// A rename that cannot happen does not lose the record being written.
+///
+/// If something already occupies the new name -- a half-finished upgrade, an
+/// operator's own copy -- the rename fails. The append must still succeed,
+/// because dropping the record would turn a naming problem into data loss.
+#[test]
+fn a_blocked_rename_still_records_the_request() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let root = dir.path().join("requests");
+    let token = root.join("hash-blocked");
+    fs::create_dir_all(&token).expect("create the token directory");
+    // A directory under the target name: `rename` cannot replace it, so the
+    // failure branch runs.
+    fs::create_dir_all(token.join("requests.lino")).expect("occupy the new name");
+    let seeded = crate::lino_json::encode_line(&json!({
+        "marker": "legacy",
+        "correlation_id": "stranded-correlation",
+        "phase": "client_request",
+    }))
+    .expect("encode a record");
+    fs::write(token.join("requests.jsonl"), format!("{seeded}\n")).expect("write the legacy log");
+
+    let log = RequestLog::new(root.clone(), 16 * 1024);
+    log.route_request("c", identity("hash-blocked", "id", "label"));
+    // The point is that this does not panic and does not hang; the record has
+    // nowhere good to go, and the router keeps serving either way.
+    log.record("c", "test", json!({"marker": "appended-anyway"}));
+
+    assert!(
+        token.join("requests.jsonl").is_file(),
+        "a log that could not be renamed is left where an operator can find it"
+    );
+    let stranded = fs::read_to_string(token.join("requests.jsonl")).expect("read the legacy log");
+    assert!(
+        stranded.contains("legacy"),
+        "and it still holds every record it held: {stranded}"
+    );
+    // The reader finds it under either name, so the history is not lost even
+    // while the rename cannot happen.
+    let (exchanges, unparsable, _) =
+        crate::log_analysis::read_exchanges(&root, None).expect("read the store");
+    assert_eq!(unparsable, 0, "a stranded log must still read cleanly");
+    assert!(
+        !exchanges.is_empty(),
+        "and its records must still be reachable"
+    );
+}
+
+/// The whole-store bound counts a log that has not been renamed yet.
+///
+/// Eviction reads each directory's size. If it only knew the new name, a token
+/// idle since the upgrade would look empty and its bytes would escape the
+/// bound entirely (issue #346).
+#[test]
+fn the_total_bound_counts_logs_still_under_the_old_name() {
+    let dir = tempfile::tempdir().expect("temporary directory");
+    let root = dir.path().join("requests");
+    fs::create_dir_all(&root).expect("create the store");
+
+    // Ten idle tokens, all under the old name, together far over the bound.
+    for token in 0..10 {
+        let directory = root.join(format!("hash-{token:02}"));
+        fs::create_dir_all(&directory).expect("create a token directory");
+        fs::write(directory.join("requests.jsonl"), "x".repeat(2_000)).expect("write a legacy log");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+
+    let log = RequestLog::new(root.clone(), 4_096).with_total_limit(8_192);
+    log.route_request("c", identity("hash-active", "id", "label"));
+    log.record("c", "test", json!({"marker": "active"}));
+
+    let total: u64 = fs::read_dir(&root)
+        .expect("store")
+        .flatten()
+        .filter_map(|entry| {
+            let directory = entry.path();
+            fs::metadata(directory.join("requests.lino"))
+                .or_else(|_| fs::metadata(directory.join("requests.jsonl")))
+                .ok()
+        })
+        .map(|metadata| metadata.len())
+        .sum();
+    assert!(
+        total <= 8_192,
+        "un-renamed logs must count toward the bound, found {total} bytes"
+    );
+}
