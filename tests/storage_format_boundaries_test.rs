@@ -142,8 +142,19 @@ fn the_request_log_is_readable_links_notation_one_record_per_line() {
             "a record is still JSON, so the conversion regressed: {line}"
         );
         assert!(
-            line.starts_with("((:"),
-            "a record must be a links-notation object: {line}"
+            line.starts_with("(#o "),
+            "a record must be a marked links-notation object: {line}"
+        );
+        // The property that actually failed in issue #350: the notation's own
+        // parser has to accept a file this project calls links notation, and
+        // the codec has to decode it to the structure the record meant.
+        assert!(
+            links_notation::parse_lino(line).is_ok(),
+            "parse_lino must accept a line this project writes: {line}"
+        );
+        assert!(
+            lino_objects_codec::decode(line).is_ok(),
+            "the codec must decode a line this project writes: {line}"
         );
         assert!(
             link_assistant_router::lino_json::decode_line(line).is_some(),
