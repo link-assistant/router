@@ -286,9 +286,11 @@ mod tests {
             tracker.feed(b"data: {\"usage\":{\"output_tokens\":2}}\n\n");
         }
         assert_eq!(manager.store().get(&id).unwrap().unwrap().used_tokens, 5);
+        // The facts are now attached, so match the condition rather than the
+        // absence of them (issue #355).
         assert!(matches!(
             manager.enforce_request_budget(&id),
-            Err(crate::token::TokenError::TokenLimitExceeded)
+            Err(crate::token::TokenError::TokenLimitExceeded(..))
         ));
     }
 
