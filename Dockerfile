@@ -34,7 +34,7 @@ RUN touch src/lib.rs src/main.rs && \
 
 # Runtime base
 #
-FROM oven/bun:1@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS bun-runtime
+FROM oven/bun:1@sha256:5ff609364c049b54eb0ff560ec96319729a972078ef2c755d758f0c6ef89c2d6 AS bun-runtime
 
 # Deliberately contains no vendor CLI. Native OAuth creates and refreshes the
 # credential; bun is only a small runner for a disposable compatibility flow.
