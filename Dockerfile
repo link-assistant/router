@@ -38,7 +38,7 @@ FROM oven/bun:1@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d
 
 # Deliberately contains no vendor CLI. Native OAuth creates and refreshes the
 # credential; bun is only a small runner for a disposable compatibility flow.
-FROM debian:trixie-slim@sha256:3a39a0592364683e6bab97937b72cad5a8fa6dcbbee90edb3bb48c7f8e94f258 AS runtime-base
+FROM debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS runtime-base
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
