@@ -90,6 +90,13 @@ unsafe_code = "deny"
 all = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
 nursery = { level = "warn", priority = -1 }
+# These handlers return an axum `Response` as their error, which is the whole
+# point: a rejected request answers the caller directly rather than bubbling a
+# code the caller would have to translate. `Response` is large, so the lint
+# fires on every one of them; boxing it would add an allocation and a deref to
+# a path that is already returning by value. Raised to a warning by Rust
+# 1.98's clippy, which this branch is the first to run.
+result_large_err = "allow"
 
 # Allow some common patterns
 module_name_repetitions = "allow"
