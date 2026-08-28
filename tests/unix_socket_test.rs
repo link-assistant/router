@@ -29,6 +29,7 @@ struct Router {
     socket: std::path::PathBuf,
     _directory: tempfile::TempDir,
     data: tempfile::TempDir,
+    log: std::path::PathBuf,
 }
 
 impl Drop for Router {
@@ -43,6 +44,12 @@ impl Router {
         let directory = tempfile::tempdir().expect("socket directory");
         let data = tempfile::tempdir().expect("data dir");
         let socket = directory.path().join("router.sock");
+        // The router reports why it could not start on stderr, so it is kept
+        // rather than discarded: a startup failure here used to surface only
+        // as "never answered", with the reason thrown away, which left a CI
+        // failure with nothing to diagnose it by (issue #365).
+        let log = directory.path().join("router.log");
+        let stderr = std::fs::File::create(&log).expect("create the router log");
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
             .env("TOKEN_SECRET", "unix-socket-test-secret")
@@ -53,23 +60,46 @@ impl Router {
             .env("DISABLE_LOGIN_API", "true")
             .env("LISTEN_UNIX_SOCKET", &socket)
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stderr(Stdio::from(stderr))
             .spawn()
             .expect("start the router");
-        let router = Self {
+        let mut router = Self {
             child,
             socket,
             _directory: directory,
             data,
+            log,
         };
         let deadline = Instant::now() + Duration::from_secs(40);
         while Instant::now() < deadline {
             if router.request("GET /health HTTP/1.1").contains(" 200 ") {
                 return router;
             }
+            // A process that has already exited will never answer, so waiting
+            // out the full deadline only delays the report.
+            if let Ok(Some(status)) = router.child.try_wait() {
+                panic!(
+                    "the router exited with {status} before answering on {}\n{}",
+                    router.socket.display(),
+                    router.log()
+                );
+            }
             std::thread::sleep(Duration::from_millis(150));
         }
-        panic!("router never answered on {}", router.socket.display());
+        panic!(
+            "router never answered on {} within 40s\n{}",
+            router.socket.display(),
+            router.log()
+        );
+    }
+
+    /// What the router wrote to stderr, for a panic message that can be acted on.
+    fn log(&self) -> String {
+        match std::fs::read_to_string(&self.log) {
+            Ok(text) if text.trim().is_empty() => "router stderr: <empty>".to_string(),
+            Ok(text) => format!("router stderr:\n{text}"),
+            Err(error) => format!("router stderr unavailable: {error}"),
+        }
     }
 
     /// One plain-HTTP request over the socket — no TLS anywhere.
