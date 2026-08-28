@@ -479,6 +479,34 @@ pub struct BinaryTokenStore {
     path: PathBuf,
     lock_path: PathBuf,
     inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
+    /// What the file looked like when `inner` was last loaded from it.
+    ///
+    /// Re-reading the file on every mutation is what a second router process
+    /// requires -- its writes have to become visible here -- but it costs a
+    /// full parse of the doublets graph, 1.8 s for 306 records, on a path that
+    /// usually finds nothing changed. The fingerprint answers "has anyone else
+    /// written?" without paying for the answer (issues #356, #357).
+    loaded: Arc<RwLock<Option<FileFingerprint>>>,
+}
+
+/// Enough of a file's metadata to tell whether it was replaced.
+///
+/// The store is written by `rename` over a temporary, so a change always moves
+/// the modification time and usually the length; an unchanged file keeps both.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct FileFingerprint {
+    length: u64,
+    modified: Option<std::time::SystemTime>,
+}
+
+impl FileFingerprint {
+    fn read(path: &Path) -> Option<Self> {
+        let metadata = fs::metadata(path).ok()?;
+        Some(Self {
+            length: metadata.len(),
+            modified: metadata.modified().ok(),
+        })
+    }
 }
 
 impl BinaryTokenStore {
@@ -497,10 +525,12 @@ impl BinaryTokenStore {
             (Vec::new(), false)
         };
         let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
+        let fingerprint = FileFingerprint::read(&path);
         let store = Self {
             lock_path: path.with_extension("lock"),
             path,
             inner: Arc::new(RwLock::new(map)),
+            loaded: Arc::new(RwLock::new(fingerprint)),
         };
         if migrated {
             let guard = store.inner.read().map_err(|_| StorageError::LockPoisoned)?;
@@ -512,7 +542,37 @@ impl BinaryTokenStore {
     fn flush(&self, guard: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
         let mut sorted: Vec<&TokenRecord> = guard.values().collect();
         sorted.sort_by(|a, b| a.id.cmp(&b.id));
-        associative::write_binary(&self.path, sorted)
+        associative::write_binary(&self.path, sorted)?;
+        // Our own write is not somebody else's, so record it rather than
+        // re-reading the file to discover what we just put there.
+        self.remember_fingerprint();
+        Ok(())
+    }
+
+    fn remember_fingerprint(&self) {
+        if let Ok(mut slot) = self.loaded.write() {
+            *slot = FileFingerprint::read(&self.path);
+        }
+    }
+
+    /// Reload only when the file on disk is not the one we last read.
+    ///
+    /// The reload exists so a second router process's writes become visible;
+    /// skipping it when nothing changed keeps that guarantee and removes a
+    /// full parse of the graph from every write (issues #356, #357).
+    fn reload_if_changed(
+        &self,
+        guard: &mut HashMap<String, TokenRecord>,
+    ) -> Result<(), StorageError> {
+        let current = FileFingerprint::read(&self.path);
+        let known = self.loaded.read().map_err(|_| StorageError::LockPoisoned)?;
+        if current == *known {
+            return Ok(());
+        }
+        drop(known);
+        *guard = self.load_map()?;
+        self.remember_fingerprint();
+        Ok(())
     }
 
     fn load_map(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
@@ -544,7 +604,7 @@ impl BinaryTokenStore {
     ) -> Result<T, StorageError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-            *guard = self.load_map()?;
+            self.reload_if_changed(&mut guard)?;
             let before = guard.clone();
             let result = operation(&mut guard);
             if let Err(error) = self.flush(&guard) {

@@ -315,9 +315,25 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
             "action revision must be hexadecimal: {line}"
         );
     }
+    // The version itself is not the invariant -- every SHA-pinned toolchain
+    // action having an explicit numeric toolchain is. Read the version the
+    // workflow uses rather than hard-coding it, so a routine upgrade does not
+    // fail a test that is not about the upgrade.
+    let pinned_toolchain = release
+        .lines()
+        .find_map(|line| line.trim().strip_prefix("toolchain: "))
+        .expect("the release workflow pins a toolchain");
+    assert!(
+        pinned_toolchain
+            .split('.')
+            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit())),
+        "the toolchain must be an explicit version, found {pinned_toolchain}"
+    );
     assert_eq!(
         release.matches("dtolnay/rust-toolchain@").count(),
-        release.matches("toolchain: 1.97.1").count(),
+        release
+            .matches(&format!("toolchain: {pinned_toolchain}"))
+            .count(),
         "a SHA-pinned rust-toolchain action needs an explicit numeric toolchain"
     );
     assert!(!release.contains("cargo install rust-script\n"));
