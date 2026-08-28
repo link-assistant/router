@@ -868,9 +868,23 @@ impl DurableDualTokenStore {
         self.install(&records)
     }
 
+    /// Write both projections, then drop the journal that covered them.
+    ///
+    /// The order matters and is load-bearing: text first, because reads
+    /// consult it; binary second; the journal removed only once both are on
+    /// disk, so a crash at any point leaves a journal that `recover` replays.
+    ///
+    /// The binary projection is the expensive half. `write_binary` stores each
+    /// string as one link per byte -- a 36-character id is 36 `create_link`
+    /// calls -- so persisting 306 records rebuilds roughly 54,000 links, about
+    /// a second, to record a change to one of them (issues #356, #357).
     fn install(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
         self.text.replace_all(records)?;
         self.binary.replace_all(records)?;
+        self.drop_journal()
+    }
+
+    fn drop_journal(&self) -> Result<(), StorageError> {
         if self.journal_path.exists() {
             fs::remove_file(&self.journal_path)?;
             if let Some(parent) = self.journal_path.parent() {
