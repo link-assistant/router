@@ -579,38 +579,42 @@ fn listing_stays_fast_at_deployment_scale() {
 /// A write does not re-read a file nobody else has touched.
 ///
 /// `mutate` reloaded the whole store from disk before every change so that a
-/// second router process's writes became visible. That guarantee is real, but
-/// paying for it unconditionally cost a full parse of the doublets graph --
-/// 1.8 s for 306 records -- on a path that almost always finds nothing
-/// changed, which is most of why minting a token took seconds (issues #356,
-/// #357).
+/// second router process's writes became visible. That guarantee is real --
+/// `multiprocess_storage_test` depends on it -- but paying for it
+/// unconditionally cost a full parse of the doublets graph on a path that
+/// almost always finds nothing changed, which is most of why minting a token
+/// took seconds (issues #356, #357).
+///
+/// Counted rather than timed. Three earlier versions of this test asserted a
+/// duration and each proved nothing: an absolute bound failed on the Windows
+/// runner, where the same ten writes took 12.9 s against 5 s here, and a
+/// ratio against a local reload passed either way because the write itself
+/// dominates. The saving is a number of parses, so that is what is asserted.
 #[test]
 fn writing_does_not_reparse_an_unchanged_store() {
+    use std::sync::atomic::Ordering;
+
     let directory = tempdir().expect("temporary directory");
     let store = BinaryTokenStore::open(directory.path().join("tokens.bin")).expect("open");
-    let seed: Vec<_> = (0..120)
+    let seed: Vec<_> = (0..40)
         .map(|index| sample_record(&format!("id-{index:04}")))
         .collect();
     store.replace_all(&seed).expect("seed the store");
 
-    // Ten writes with nobody else touching the file. Before the fingerprint
-    // each of these re-parsed the whole graph first.
-    let started = std::time::Instant::now();
+    let before = store.parses.load(Ordering::Relaxed);
     for index in 0..10 {
         store
             .put(sample_record(&format!("added-{index}")))
             .expect("put");
     }
-    let elapsed = started.elapsed();
-    // Ten writes reloading a 120-record graph each took ~8.6 s when measured
-    // against the old behaviour; without the reload the same ten take ~5 s.
-    // The bound sits between them so the assertion fails on a regression
-    // rather than merely being generous.
-    assert!(
-        elapsed < std::time::Duration::from_secs(7),
-        "ten writes took {elapsed:?}; a write must not re-parse an unchanged store"
+    let parses = store.parses.load(Ordering::Relaxed) - before;
+
+    assert_eq!(
+        parses, 0,
+        "ten writes to a store nobody else touched parsed the file {parses} \
+         time(s); each parse rebuilds the whole graph"
     );
-    assert_eq!(store.list().expect("list").len(), 130);
+    assert_eq!(store.list().expect("list").len(), 50);
 }
 
 /// Another process's write is still picked up.

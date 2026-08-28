@@ -487,6 +487,14 @@ pub struct BinaryTokenStore {
     /// usually finds nothing changed. The fingerprint answers "has anyone else
     /// written?" without paying for the answer (issues #356, #357).
     loaded: Arc<RwLock<Option<FileFingerprint>>>,
+    /// How many times the file has been parsed, for tests to assert against.
+    ///
+    /// The saving this type exists for is "a write does not re-parse a store
+    /// nobody else touched", which is a count, not a duration -- timing it
+    /// cannot hold across runners, where the same ten writes took 5 s here
+    /// and 12.9 s on Windows (issues #356, #357).
+    #[cfg(test)]
+    parses: Arc<std::sync::atomic::AtomicUsize>,
 }
 
 /// Enough of a file's metadata to tell whether it was replaced.
@@ -531,6 +539,8 @@ impl BinaryTokenStore {
             path,
             inner: Arc::new(RwLock::new(map)),
             loaded: Arc::new(RwLock::new(fingerprint)),
+            #[cfg(test)]
+            parses: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
         };
         if migrated {
             let guard = store.inner.read().map_err(|_| StorageError::LockPoisoned)?;
@@ -576,6 +586,9 @@ impl BinaryTokenStore {
     }
 
     fn load_map(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
+        #[cfg(test)]
+        self.parses
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         if !self.path.exists() {
             return Ok(HashMap::new());
         }
