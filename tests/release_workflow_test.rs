@@ -863,21 +863,3 @@ fn read_lf(path: &str) -> String {
         .unwrap_or_else(|e| panic!("{path} should be readable: {e}"))
         .replace("\r\n", "\n")
 }
-
-/// Extract the instructions of the named Dockerfile stage.
-///
-/// Comments are dropped: the block documenting the *next* stage sits inside
-/// this stage's text and would otherwise be mistaken for its content.
-fn dockerfile_stage(dockerfile: &str, name: &str) -> Option<String> {
-    let marker = format!("AS {name}\n");
-    let start = dockerfile.find(&marker)? + marker.len();
-    let rest = &dockerfile[start..];
-    let end = rest.find("\nFROM ").unwrap_or(rest.len());
-    Some(
-        rest[..end]
-            .lines()
-            .filter(|line| !line.trim_start().starts_with('#'))
-            .collect::<Vec<_>>()
-            .join("\n"),
-    )
-}
