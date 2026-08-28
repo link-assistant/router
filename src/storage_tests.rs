@@ -11,6 +11,7 @@ fn sample_record(id: &str) -> TokenRecord {
         issued_at: 1_700_000_000,
         expires_at: 1_700_001_000,
         revoked: false,
+        sliding_window_seconds: None,
         account: Some("primary".into()),
         max_requests: None,
         used_requests: 0,
@@ -240,6 +241,7 @@ fn lino_codec_handles_special_chars() {
         issued_at: 1,
         expires_at: 2,
         revoked: true,
+        sliding_window_seconds: None,
         account: None,
         max_requests: Some(100),
         used_requests: 7,
@@ -647,4 +649,109 @@ fn writing_still_sees_another_writers_changes() {
         "a write must not lose another writer's record: {ids:?}"
     );
     assert!(ids.contains("from-first") && ids.contains("from-first-again"));
+}
+
+/// An active token's expiry moves ahead of the request that used it.
+///
+/// `router with` mints a token with a fixed lifetime and never touches it
+/// again, so an interactive session that outlived the clock died mid-work --
+/// at one hour routinely, and then against the 24-hour default while the user
+/// was typing into it. Serving the request is the evidence the run is still
+/// alive, and it was the evidence being discarded (issue #354).
+#[test]
+fn activity_extends_a_sliding_token_but_never_shortens_it() {
+    let window = 7 * 24 * 3_600;
+    let mut record = sample_record("sliding");
+    record.sliding_window_seconds = Some(window);
+    record.expires_at = 1_000;
+
+    // A request served at t=500 pushes the expiry a full window past it.
+    assert_eq!(
+        admit_request_reserving(Some(&mut record), 500, 0),
+        RequestAdmission::Admitted
+    );
+    assert_eq!(record.expires_at, 500 + window);
+
+    // A later request pushes it further.
+    assert_eq!(
+        admit_request_reserving(Some(&mut record), 900, 0),
+        RequestAdmission::Admitted
+    );
+    assert_eq!(record.expires_at, 900 + window);
+
+    // A shorter window never pulls the expiry back: lowering it must not
+    // revoke a token early.
+    record.sliding_window_seconds = Some(60);
+    assert_eq!(
+        admit_request_reserving(Some(&mut record), 1_000, 0),
+        RequestAdmission::Admitted
+    );
+    assert_eq!(
+        record.expires_at,
+        900 + window,
+        "a smaller window must leave a longer expiry alone"
+    );
+}
+
+/// A token without a window keeps the clock it was issued with.
+#[test]
+fn a_fixed_token_keeps_the_expiry_it_was_issued_with() {
+    let mut record = sample_record("fixed");
+    record.sliding_window_seconds = None;
+    record.expires_at = 1_000;
+    assert_eq!(
+        admit_request_reserving(Some(&mut record), 500, 0),
+        RequestAdmission::Admitted
+    );
+    assert_eq!(
+        record.expires_at, 1_000,
+        "without a window the expiry set at issue time is final"
+    );
+}
+
+/// A rejected request does not extend anything.
+///
+/// The extension rides on admission, so a token over its budget must not have
+/// its life prolonged by the requests it is refusing.
+#[test]
+fn a_refused_request_does_not_extend_the_expiry() {
+    let mut record = sample_record("spent");
+    record.sliding_window_seconds = Some(3_600);
+    record.expires_at = 1_000;
+    record.max_requests = Some(1);
+    record.used_requests = 1;
+    assert_eq!(
+        admit_request_reserving(Some(&mut record), 500, 0),
+        RequestAdmission::RequestLimitExceeded
+    );
+    assert_eq!(record.expires_at, 1_000);
+}
+
+/// A read does not re-parse a store nobody else has touched, either.
+///
+/// `refresh` reloaded unconditionally, and the dual store calls `list` on
+/// every write through `merged_records`, so a `put` paid a full parse of the
+/// graph before doing anything else -- 1.9 s of the 2.9 s a write took at 306
+/// records (issues #356, #357).
+#[test]
+fn reading_does_not_reparse_an_unchanged_store() {
+    use std::sync::atomic::Ordering;
+
+    let directory = tempdir().expect("temporary directory");
+    let store = BinaryTokenStore::open(directory.path().join("tokens.bin")).expect("open");
+    let seed: Vec<_> = (0..40)
+        .map(|index| sample_record(&format!("id-{index:04}")))
+        .collect();
+    store.replace_all(&seed).expect("seed the store");
+
+    let before = store.parses.load(Ordering::Relaxed);
+    for _ in 0..10 {
+        assert_eq!(store.list().expect("list").len(), 40);
+    }
+    let parses = store.parses.load(Ordering::Relaxed) - before;
+    assert_eq!(
+        parses, 0,
+        "ten listings of a store nobody else touched parsed the file {parses} \
+         time(s); each parse rebuilds the whole graph"
+    );
 }

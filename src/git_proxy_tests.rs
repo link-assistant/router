@@ -570,6 +570,7 @@ mod forwarding {
                 ttl_hours: 1,
                 label: "agent",
                 github_repos: vec!["acme/demo".to_string()],
+                sliding_window_seconds: None,
                 ..crate::token::IssueRequest::default()
             })
             .expect("issue a scoped token");

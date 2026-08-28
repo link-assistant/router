@@ -415,6 +415,7 @@ fn issue_client_token(
         rate_limit_per_minute: None,
         scope: "",
         github_repos: Vec::new(),
+        sliding_window_seconds: None,
     })?)
 }
 

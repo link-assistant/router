@@ -78,7 +78,8 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .label
         .clone()
         .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
-    let credential = prepare_run_credential(&server, &label, args.run_ttl_hours).await?;
+    let credential =
+        prepare_run_credential(&server, &label, args.run_ttl_hours, !args.fixed_run_ttl).await?;
     // Which model the client uses, and how hard it thinks, are the user's own
     // settings. `with` chooses a route to a model, so both are left alone
     // unless the user asked — the rule `--global` already followed (issue

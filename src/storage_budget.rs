@@ -61,7 +61,31 @@ pub(super) fn admit_request_reserving(
     }
     record.used_requests = record.used_requests.saturating_add(1);
     record.reserved_tokens = record.reserved_tokens.saturating_add(reserve);
+    slide_expiry(record, now);
     RequestAdmission::Admitted
+}
+
+/// Push an active token's expiry ahead of the request that just used it.
+///
+/// Only for a token issued with a window. The expiry a fixed-clock token was
+/// given at issue time is final, which is what every token did before.
+///
+/// Serving the request *is* the evidence that the run is still alive, and it
+/// is the evidence the old design threw away: `--run-ttl-hours` was raised
+/// from 1 to 24 because interactive sessions outlived an hour, and a session
+/// then died against the 24-hour wall while the user was typing into it. Any
+/// fixed clock can only fire early; the question was how often (issue #354).
+///
+/// Never shortens. A window smaller than the remaining life leaves the longer
+/// expiry alone, so lowering the window cannot revoke a token early.
+const fn slide_expiry(record: &mut TokenRecord, now: i64) {
+    let Some(window) = record.sliding_window_seconds else {
+        return;
+    };
+    let extended = now.saturating_add(window);
+    if extended > record.expires_at {
+        record.expires_at = extended;
+    }
 }
 
 pub(super) const fn add_token_usage(record: Option<&mut TokenRecord>, tokens: u64) {

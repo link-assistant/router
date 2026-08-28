@@ -12,6 +12,7 @@ fn sample_record() -> TokenRecord {
         issued_at: 1_700_000_000,
         expires_at: 1_700_001_000,
         revoked: false,
+        sliding_window_seconds: None,
         account: Some("primary".into()),
         max_requests: Some(100),
         used_requests: 7,

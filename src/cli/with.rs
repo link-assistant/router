@@ -244,8 +244,22 @@ pub struct WithArgs {
     /// session that outlived the hour died mid-work with `401 Token has
     /// expired`, and the client answered with its own `/login` advice about
     /// an unrelated credential (issue #341).
-    #[arg(long, alias = "ttl-hours", default_value_t = 24)]
+    #[arg(long, alias = "ttl-hours", default_value_t = 24 * 7)]
     pub run_ttl_hours: i64,
+    /// Keep a fixed expiry instead of extending it while the run is in use.
+    ///
+    /// By default the per-run token's expiry slides: every request served
+    /// with it pushes the expiry to `now + --run-ttl-hours`, so a session
+    /// that is still being used never hits the wall, and one abandoned for
+    /// longer than the window still expires. That is what the bound is for --
+    /// the run's own life already bounds the token, since it is revoked when
+    /// the client exits, and a fixed clock could only ever fire early
+    /// (issue #354).
+    ///
+    /// Pass this to keep the old behaviour: the expiry set at issue time is
+    /// final, whatever the session is doing.
+    #[arg(long)]
+    pub fixed_run_ttl: bool,
     /// Optional request budget for an automatically minted per-run token.
     #[arg(long)]
     pub run_max_requests: Option<u64>,

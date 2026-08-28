@@ -55,6 +55,17 @@ pub struct TokenRecord {
     pub issued_at: i64,
     pub expires_at: i64,
     pub revoked: bool,
+    /// How long, in seconds, an active token's expiry slides ahead of now.
+    ///
+    /// `None` is a fixed clock: the expiry set at issue time is final, which
+    /// is what every token did before. `Some(window)` means a request served
+    /// with this token pushes `expires_at` to `now + window`, so a session in
+    /// continuous use never expires while one abandoned for longer than the
+    /// window still does -- which is the behaviour the bound is for. A
+    /// day-long session died mid-work against the fixed 24-hour clock twice
+    /// (issue #354).
+    #[serde(default)]
+    pub sliding_window_seconds: Option<i64>,
     /// Optional account identifier the token is bound to (multi-account mode).
     #[serde(default)]
     pub account: Option<String>,
@@ -470,228 +481,16 @@ impl TokenStore for TextTokenStore {
     }
 }
 
-/// Native file-mapped doublets token store.
-///
-/// Existing `LARTOK01` length-prefixed JSON files are read once and
-/// atomically migrated to the doublets representation.
-#[derive(Clone)]
-pub struct BinaryTokenStore {
-    path: PathBuf,
-    lock_path: PathBuf,
-    inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
-    /// What the file looked like when `inner` was last loaded from it.
-    ///
-    /// Re-reading the file on every mutation is what a second router process
-    /// requires -- its writes have to become visible here -- but it costs a
-    /// full parse of the doublets graph, 1.8 s for 306 records, on a path that
-    /// usually finds nothing changed. The fingerprint answers "has anyone else
-    /// written?" without paying for the answer (issues #356, #357).
-    loaded: Arc<RwLock<Option<FileFingerprint>>>,
-    /// How many times the file has been parsed, for tests to assert against.
-    ///
-    /// The saving this type exists for is "a write does not re-parse a store
-    /// nobody else touched", which is a count, not a duration -- timing it
-    /// cannot hold across runners, where the same ten writes took 5 s here
-    /// and 12.9 s on Windows (issues #356, #357).
-    #[cfg(test)]
-    parses: Arc<std::sync::atomic::AtomicUsize>,
-}
-
-/// Enough of a file's metadata to tell whether it was replaced.
-///
-/// The store is written by `rename` over a temporary, so a change always moves
-/// the modification time and usually the length; an unchanged file keeps both.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct FileFingerprint {
-    length: u64,
-    modified: Option<std::time::SystemTime>,
-}
-
-impl FileFingerprint {
-    fn read(path: &Path) -> Option<Self> {
-        let metadata = fs::metadata(path).ok()?;
-        Some(Self {
-            length: metadata.len(),
-            modified: metadata.modified().ok(),
-        })
-    }
-}
-
-impl BinaryTokenStore {
-    pub fn open(path: impl Into<PathBuf>) -> Result<Self, StorageError> {
-        let path = path.into();
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        let (records, migrated) = if path.exists() {
-            if legacy::is_binary(&path)? {
-                (legacy::decode_binary(&path)?, true)
-            } else {
-                (associative::read_binary(&path)?, false)
-            }
-        } else {
-            (Vec::new(), false)
-        };
-        let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
-        let fingerprint = FileFingerprint::read(&path);
-        let store = Self {
-            lock_path: path.with_extension("lock"),
-            path,
-            inner: Arc::new(RwLock::new(map)),
-            loaded: Arc::new(RwLock::new(fingerprint)),
-            #[cfg(test)]
-            parses: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
-        };
-        if migrated {
-            let guard = store.inner.read().map_err(|_| StorageError::LockPoisoned)?;
-            store.flush(&guard)?;
-        }
-        Ok(store)
-    }
-
-    fn flush(&self, guard: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
-        let mut sorted: Vec<&TokenRecord> = guard.values().collect();
-        sorted.sort_by(|a, b| a.id.cmp(&b.id));
-        associative::write_binary(&self.path, sorted)?;
-        // Our own write is not somebody else's, so record it rather than
-        // re-reading the file to discover what we just put there.
-        self.remember_fingerprint();
-        Ok(())
-    }
-
-    fn remember_fingerprint(&self) {
-        if let Ok(mut slot) = self.loaded.write() {
-            *slot = FileFingerprint::read(&self.path);
-        }
-    }
-
-    /// Reload only when the file on disk is not the one we last read.
-    ///
-    /// The reload exists so a second router process's writes become visible;
-    /// skipping it when nothing changed keeps that guarantee and removes a
-    /// full parse of the graph from every write (issues #356, #357).
-    fn reload_if_changed(
-        &self,
-        guard: &mut HashMap<String, TokenRecord>,
-    ) -> Result<(), StorageError> {
-        let current = FileFingerprint::read(&self.path);
-        let known = self.loaded.read().map_err(|_| StorageError::LockPoisoned)?;
-        if current == *known {
-            return Ok(());
-        }
-        drop(known);
-        *guard = self.load_map()?;
-        self.remember_fingerprint();
-        Ok(())
-    }
-
-    fn load_map(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
-        #[cfg(test)]
-        self.parses
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        if !self.path.exists() {
-            return Ok(HashMap::new());
-        }
-        let records = if legacy::is_binary(&self.path)? {
-            legacy::decode_binary(&self.path)?
-        } else {
-            associative::read_binary(&self.path)?
-        };
-        Ok(records
-            .into_iter()
-            .map(|record| (record.id.clone(), record))
-            .collect())
-    }
-
-    fn refresh(&self) -> Result<(), StorageError> {
-        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
-            let map = self.load_map()?;
-            *self.inner.write().map_err(|_| StorageError::LockPoisoned)? = map;
-            Ok(())
-        })
-    }
-
-    fn mutate<T>(
-        &self,
-        operation: impl FnOnce(&mut HashMap<String, TokenRecord>) -> T,
-    ) -> Result<T, StorageError> {
-        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
-            let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-            self.reload_if_changed(&mut guard)?;
-            let before = guard.clone();
-            let result = operation(&mut guard);
-            if let Err(error) = self.flush(&guard) {
-                *guard = before;
-                return Err(error);
-            }
-            Ok(result)
-        })
-    }
-
-    fn replace_all(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
-        self.mutate(|current| {
-            current.clear();
-            current.extend(
-                records
-                    .iter()
-                    .cloned()
-                    .map(|record| (record.id.clone(), record)),
-            );
-        })
-    }
-}
-
-impl TokenStore for BinaryTokenStore {
-    fn list(&self) -> Result<Vec<TokenRecord>, StorageError> {
-        self.refresh()?;
-        let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
-        Ok(guard.values().cloned().collect())
-    }
-
-    fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError> {
-        self.refresh()?;
-        let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
-        Ok(guard.get(id).cloned())
-    }
-
-    fn put(&self, record: TokenRecord) -> Result<(), StorageError> {
-        self.mutate(|records| {
-            records.insert(record.id.clone(), record);
-        })
-    }
-
-    fn delete(&self, id: &str) -> Result<bool, StorageError> {
-        self.mutate(|records| records.remove(id).is_some())
-    }
-
-    fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
-        self.mutate(|records| consume_request(records.get_mut(id)))
-    }
-
-    fn try_admit_request_reserving(
-        &self,
-        id: &str,
-        now: i64,
-        reserve: u64,
-    ) -> Result<RequestAdmission, StorageError> {
-        self.mutate(|records| admit_request_reserving(records.get_mut(id), now, reserve))
-    }
-
-    fn record_token_usage(&self, id: &str, tokens: u64) -> Result<(), StorageError> {
-        self.mutate(|records| add_token_usage(records.get_mut(id), tokens))
-    }
-
-    fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
-        self.mutate(|records| settle_token_usage(records.get_mut(id), reserved, actual))
-    }
-}
-
 #[path = "storage_budget.rs"]
 mod budget;
 use budget::{
     add_token_usage, admit_request_reserving, consume_request, merge_safer_record,
     settle_token_usage,
 };
+
+#[path = "storage_binary.rs"]
+mod binary;
+pub use binary::BinaryTokenStore;
 
 /// Dual-write store: every mutation goes to *both* primary and secondary;
 /// reads consult the primary first, falling back to the secondary on miss.
@@ -824,7 +623,11 @@ impl DurableDualTokenStore {
     /// a second, to record a change to one of them (issues #356, #357).
     fn install(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
         self.text.replace_all(records)?;
-        self.binary.replace_all(records)?;
+        // Only when it actually differs. The text projection is what reads
+        // consult, and a mutation of one token leaves the other 305 records
+        // identical -- rebuilding the graph for them is the bulk of what a
+        // write costs (issues #356, #357).
+        self.binary.replace_all_if_changed(records)?;
         self.drop_journal()
     }
 
