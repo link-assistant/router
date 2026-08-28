@@ -135,6 +135,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.124.0] - 2026-08-28
+
+### Changed
+- A per-run token's expiry now slides while the session is in use. `router with` minted a token with a fixed lifetime and never touched it again, so an interactive session that outlived the clock died mid-work — at one hour routinely, which is why #341 raised the default to a day, and then against the 24-hour wall while the user was typing into it. Serving a request is the evidence that the run is still alive, and it was the evidence being discarded. Each request now pushes the expiry to `now + --run-ttl-hours`, so a session in continuous use never hits the wall and one abandoned for longer than the window still expires — which is what the bound is for, since the token is revoked when the client exits anyway (issue #354).
+- The default window is a week rather than a day. It is long enough that a multi-day session never sees the wall, and short enough that a token whose client never exited cleanly does not live indefinitely.
+- `router with --fixed-run-ttl` keeps the previous behaviour: the expiry set at issue time is final, whatever the session is doing. The same choice is reachable over the API as `"sliding_expiry": true` on `POST /api/tokens`, so the CLI and the endpoint do not diverge.
+- Extending never shortens. A window smaller than a token's remaining life leaves the longer expiry alone, so lowering it cannot revoke a token early, and a refused request extends nothing — a token over its budget is not kept alive by the requests it is rejecting.
+
+### Fixed
+- Minting a token is roughly three times faster. `BinaryTokenStore::refresh` reloaded the whole doublets graph from disk unconditionally, and the dual store calls `list` on every write through `merged_records` — so a write paid a full parse before doing anything else. At 306 records that was 1.9 s of the 2.9 s a `put` took, on the path `router with` uses to mint a per-run token. It now takes a shared lock and checks the file's fingerprint first, so a read that finds nothing changed costs a `stat` (issues #356, #357).
+- A write no longer rebuilds the binary projection when the records are identical to what is already there. Rebuilding is the expensive half — `write_binary` stores every string as one link per byte, so 306 records cost about 780,000 link creations — and the dual store performed it for both projections on every mutation.
+- Measured at 306 records: `merged_records` 1.93 s → 7.5 ms, `put()` 2.95 s → 1.02 s, `list()` unchanged at 7.6 ms. The remaining second is the single unavoidable rebuild of the changed record set, which is what issue #357 tracks.
+
 ## [0.123.6] - 2026-08-28
 
 ### Fixed
