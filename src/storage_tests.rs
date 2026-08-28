@@ -726,3 +726,32 @@ fn a_refused_request_does_not_extend_the_expiry() {
     );
     assert_eq!(record.expires_at, 1_000);
 }
+
+/// A read does not re-parse a store nobody else has touched, either.
+///
+/// `refresh` reloaded unconditionally, and the dual store calls `list` on
+/// every write through `merged_records`, so a `put` paid a full parse of the
+/// graph before doing anything else -- 1.9 s of the 2.9 s a write took at 306
+/// records (issues #356, #357).
+#[test]
+fn reading_does_not_reparse_an_unchanged_store() {
+    use std::sync::atomic::Ordering;
+
+    let directory = tempdir().expect("temporary directory");
+    let store = BinaryTokenStore::open(directory.path().join("tokens.bin")).expect("open");
+    let seed: Vec<_> = (0..40)
+        .map(|index| sample_record(&format!("id-{index:04}")))
+        .collect();
+    store.replace_all(&seed).expect("seed the store");
+
+    let before = store.parses.load(Ordering::Relaxed);
+    for _ in 0..10 {
+        assert_eq!(store.list().expect("list").len(), 40);
+    }
+    let parses = store.parses.load(Ordering::Relaxed) - before;
+    assert_eq!(
+        parses, 0,
+        "ten listings of a store nobody else touched parsed the file {parses} \
+         time(s); each parse rebuilds the whole graph"
+    );
+}

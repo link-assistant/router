@@ -614,10 +614,22 @@ impl BinaryTokenStore {
             .collect())
     }
 
+    /// Bring the in-memory map up to date with the file, if it moved.
+    ///
+    /// A shared lock and a fingerprint check, so a read that finds nothing
+    /// changed costs a `stat` rather than a full parse of the graph. This is
+    /// called by `list`, which the dual store calls on every write through
+    /// `merged_records` -- so an unguarded reload here cost 1.9 s of the 2.9 s
+    /// a `put` took at 306 records (issues #356, #357).
     fn refresh(&self) -> Result<(), StorageError> {
-        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+        crate::durable_file::with_shared_lock(&self.lock_path, || {
+            let current = FileFingerprint::read(&self.path);
+            if current == *self.loaded.read().map_err(|_| StorageError::LockPoisoned)? {
+                return Ok(());
+            }
             let map = self.load_map()?;
             *self.inner.write().map_err(|_| StorageError::LockPoisoned)? = map;
+            self.remember_fingerprint();
             Ok(())
         })
     }
@@ -649,6 +661,28 @@ impl BinaryTokenStore {
                     .map(|record| (record.id.clone(), record)),
             );
         })
+    }
+
+    /// Write the graph only when the records differ from what is on disk.
+    ///
+    /// Rebuilding is the expensive half of a write: `write_binary` stores each
+    /// string as one link per byte, and every field key is a per-record path,
+    /// so persisting 306 records costs about 780,000 `create_link` calls. The
+    /// dual store calls this for both projections on every mutation, including
+    /// mutations that leave the binary projection identical -- a `put` of one
+    /// token rebuilds the other 305 unchanged ones (issues #356, #357).
+    fn replace_all_if_changed(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
+        {
+            let guard = self.inner.read().map_err(|_| StorageError::LockPoisoned)?;
+            if guard.len() == records.len()
+                && records
+                    .iter()
+                    .all(|record| guard.get(&record.id).is_some_and(|held| held == record))
+            {
+                return Ok(());
+            }
+        }
+        self.replace_all(records)
     }
 }
 
@@ -835,7 +869,11 @@ impl DurableDualTokenStore {
     /// a second, to record a change to one of them (issues #356, #357).
     fn install(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
         self.text.replace_all(records)?;
-        self.binary.replace_all(records)?;
+        // Only when it actually differs. The text projection is what reads
+        // consult, and a mutation of one token leaves the other 305 records
+        // identical -- rebuilding the graph for them is the bulk of what a
+        // write costs (issues #356, #357).
+        self.binary.replace_all_if_changed(records)?;
         self.drop_journal()
     }
 
