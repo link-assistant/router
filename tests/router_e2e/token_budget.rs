@@ -30,12 +30,10 @@ async fn a_request_that_cannot_fit_the_spend_cap_is_rejected_before_dispatch() {
         .await
         .expect("capped response");
     assert_eq!(rejected.status(), StatusCode::TOO_MANY_REQUESTS);
+    let rendered = rejected.text().await.expect("limit error body");
     assert!(
-        rejected
-            .text()
-            .await
-            .expect("limit error body")
-            .contains("token limit")
+        rendered.contains("token limit"),
+        "the rejection must name the limit: {rendered}"
     );
     // Nothing reached the upstream: the cap was enforced before dispatch, which
     // is what keeps the spend bounded rather than merely reported.

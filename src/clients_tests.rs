@@ -3,8 +3,6 @@
 //! Split from `clients.rs` to keep that file within the repository's 1000-line
 //! limit.
 
-use clap::ValueEnum as _;
-
 /// The name every surface advertises must be the command the client
 /// actually installs as. Advertising `claude-code` while the user's shell
 /// has `claude` taught a name that does not exist (issue #220).

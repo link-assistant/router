@@ -575,3 +575,76 @@ fn listing_stays_fast_at_deployment_scale() {
         "ten listings of 290 tokens took {elapsed:?}; a read must not pay for a write"
     );
 }
+
+/// A write does not re-read a file nobody else has touched.
+///
+/// `mutate` reloaded the whole store from disk before every change so that a
+/// second router process's writes became visible. That guarantee is real --
+/// `multiprocess_storage_test` depends on it -- but paying for it
+/// unconditionally cost a full parse of the doublets graph on a path that
+/// almost always finds nothing changed, which is most of why minting a token
+/// took seconds (issues #356, #357).
+///
+/// Counted rather than timed. Three earlier versions of this test asserted a
+/// duration and each proved nothing: an absolute bound failed on the Windows
+/// runner, where the same ten writes took 12.9 s against 5 s here, and a
+/// ratio against a local reload passed either way because the write itself
+/// dominates. The saving is a number of parses, so that is what is asserted.
+#[test]
+fn writing_does_not_reparse_an_unchanged_store() {
+    use std::sync::atomic::Ordering;
+
+    let directory = tempdir().expect("temporary directory");
+    let store = BinaryTokenStore::open(directory.path().join("tokens.bin")).expect("open");
+    let seed: Vec<_> = (0..40)
+        .map(|index| sample_record(&format!("id-{index:04}")))
+        .collect();
+    store.replace_all(&seed).expect("seed the store");
+
+    let before = store.parses.load(Ordering::Relaxed);
+    for index in 0..10 {
+        store
+            .put(sample_record(&format!("added-{index}")))
+            .expect("put");
+    }
+    let parses = store.parses.load(Ordering::Relaxed) - before;
+
+    assert_eq!(
+        parses, 0,
+        "ten writes to a store nobody else touched parsed the file {parses} \
+         time(s); each parse rebuilds the whole graph"
+    );
+    assert_eq!(store.list().expect("list").len(), 50);
+}
+
+/// Another process's write is still picked up.
+///
+/// The fingerprint must not turn the reload into a cache that goes stale: the
+/// whole reason `mutate` re-read the file is that a second router process
+/// shares it, and that has to keep working.
+#[test]
+fn writing_still_sees_another_writers_changes() {
+    let directory = tempdir().expect("temporary directory");
+    let path = directory.path().join("tokens.bin");
+    let first = BinaryTokenStore::open(&path).expect("open");
+    first.put(sample_record("from-first")).expect("put");
+
+    // A second handle on the same file stands in for a second process.
+    let second = BinaryTokenStore::open(&path).expect("open again");
+    second.put(sample_record("from-second")).expect("put");
+
+    // The first handle must see it once it writes again, rather than
+    // overwriting it from a stale map.
+    first.put(sample_record("from-first-again")).expect("put");
+    let ids = first
+        .list()
+        .expect("list")
+        .into_iter()
+        .map(|record| record.id)
+        .collect::<std::collections::BTreeSet<_>>();
+    assert!(
+        ids.contains("from-second"),
+        "a write must not lose another writer's record: {ids:?}"
+    );
+    assert!(ids.contains("from-first") && ids.contains("from-first-again"));
+}

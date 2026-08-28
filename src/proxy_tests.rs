@@ -334,7 +334,7 @@ fn retry_after_http_date_is_used_for_account_cooldown() {
 #[tokio::test]
 async fn budget_errors_distinguish_limits_from_storage_failures() {
     let limited =
-        crate::token_http::budget_error_response(&crate::token::TokenError::LimitExceeded);
+        crate::token_http::budget_error_response(&crate::token::TokenError::LimitExceeded(None));
     assert_eq!(limited.status(), StatusCode::TOO_MANY_REQUESTS);
     let body = limited.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(
@@ -343,7 +343,7 @@ async fn budget_errors_distinguish_limits_from_storage_failures() {
     );
 
     for error in [
-        crate::token::TokenError::TokenLimitExceeded,
+        crate::token::TokenError::TokenLimitExceeded(None),
         crate::token::TokenError::RateLimitExceeded,
     ] {
         assert_eq!(

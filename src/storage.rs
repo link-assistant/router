@@ -479,6 +479,42 @@ pub struct BinaryTokenStore {
     path: PathBuf,
     lock_path: PathBuf,
     inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
+    /// What the file looked like when `inner` was last loaded from it.
+    ///
+    /// Re-reading the file on every mutation is what a second router process
+    /// requires -- its writes have to become visible here -- but it costs a
+    /// full parse of the doublets graph, 1.8 s for 306 records, on a path that
+    /// usually finds nothing changed. The fingerprint answers "has anyone else
+    /// written?" without paying for the answer (issues #356, #357).
+    loaded: Arc<RwLock<Option<FileFingerprint>>>,
+    /// How many times the file has been parsed, for tests to assert against.
+    ///
+    /// The saving this type exists for is "a write does not re-parse a store
+    /// nobody else touched", which is a count, not a duration -- timing it
+    /// cannot hold across runners, where the same ten writes took 5 s here
+    /// and 12.9 s on Windows (issues #356, #357).
+    #[cfg(test)]
+    parses: Arc<std::sync::atomic::AtomicUsize>,
+}
+
+/// Enough of a file's metadata to tell whether it was replaced.
+///
+/// The store is written by `rename` over a temporary, so a change always moves
+/// the modification time and usually the length; an unchanged file keeps both.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct FileFingerprint {
+    length: u64,
+    modified: Option<std::time::SystemTime>,
+}
+
+impl FileFingerprint {
+    fn read(path: &Path) -> Option<Self> {
+        let metadata = fs::metadata(path).ok()?;
+        Some(Self {
+            length: metadata.len(),
+            modified: metadata.modified().ok(),
+        })
+    }
 }
 
 impl BinaryTokenStore {
@@ -497,10 +533,14 @@ impl BinaryTokenStore {
             (Vec::new(), false)
         };
         let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
+        let fingerprint = FileFingerprint::read(&path);
         let store = Self {
             lock_path: path.with_extension("lock"),
             path,
             inner: Arc::new(RwLock::new(map)),
+            loaded: Arc::new(RwLock::new(fingerprint)),
+            #[cfg(test)]
+            parses: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
         };
         if migrated {
             let guard = store.inner.read().map_err(|_| StorageError::LockPoisoned)?;
@@ -512,10 +552,43 @@ impl BinaryTokenStore {
     fn flush(&self, guard: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
         let mut sorted: Vec<&TokenRecord> = guard.values().collect();
         sorted.sort_by(|a, b| a.id.cmp(&b.id));
-        associative::write_binary(&self.path, sorted)
+        associative::write_binary(&self.path, sorted)?;
+        // Our own write is not somebody else's, so record it rather than
+        // re-reading the file to discover what we just put there.
+        self.remember_fingerprint();
+        Ok(())
+    }
+
+    fn remember_fingerprint(&self) {
+        if let Ok(mut slot) = self.loaded.write() {
+            *slot = FileFingerprint::read(&self.path);
+        }
+    }
+
+    /// Reload only when the file on disk is not the one we last read.
+    ///
+    /// The reload exists so a second router process's writes become visible;
+    /// skipping it when nothing changed keeps that guarantee and removes a
+    /// full parse of the graph from every write (issues #356, #357).
+    fn reload_if_changed(
+        &self,
+        guard: &mut HashMap<String, TokenRecord>,
+    ) -> Result<(), StorageError> {
+        let current = FileFingerprint::read(&self.path);
+        let known = self.loaded.read().map_err(|_| StorageError::LockPoisoned)?;
+        if current == *known {
+            return Ok(());
+        }
+        drop(known);
+        *guard = self.load_map()?;
+        self.remember_fingerprint();
+        Ok(())
     }
 
     fn load_map(&self) -> Result<HashMap<String, TokenRecord>, StorageError> {
+        #[cfg(test)]
+        self.parses
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         if !self.path.exists() {
             return Ok(HashMap::new());
         }
@@ -544,7 +617,7 @@ impl BinaryTokenStore {
     ) -> Result<T, StorageError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
-            *guard = self.load_map()?;
+            self.reload_if_changed(&mut guard)?;
             let before = guard.clone();
             let result = operation(&mut guard);
             if let Err(error) = self.flush(&guard) {
@@ -613,81 +686,12 @@ impl TokenStore for BinaryTokenStore {
     }
 }
 
-fn consume_request(record: Option<&mut TokenRecord>) -> bool {
-    let Some(record) = record else {
-        return true;
-    };
-    if record
-        .max_requests
-        .is_some_and(|max| record.used_requests >= max)
-    {
-        return false;
-    }
-    record.used_requests = record.used_requests.saturating_add(1);
-    true
-}
-
-/// Apply every pre-request control, reserving `reserve` tokens against the spend cap.
-///
-/// The spend check compares `used + reserved + reserve` against `max_tokens`, so a
-/// request is only admitted when its own declared output budget still fits. Reserving
-/// inside the same locked read-modify-write as the counters is what makes concurrent
-/// admissions unable to overshoot together.
-fn admit_request_reserving(
-    record: Option<&mut TokenRecord>,
-    now: i64,
-    reserve: u64,
-) -> RequestAdmission {
-    let Some(record) = record else {
-        return RequestAdmission::Admitted;
-    };
-    if record
-        .max_requests
-        .is_some_and(|max| record.used_requests >= max)
-    {
-        return RequestAdmission::RequestLimitExceeded;
-    }
-    if let Some(max) = record.max_tokens {
-        let committed = record.used_tokens.saturating_add(record.reserved_tokens);
-        // `>= max` (not `>`) keeps an exhausted budget rejecting even when the
-        // request declares no output budget of its own.
-        if committed >= max || committed.saturating_add(reserve) > max {
-            return RequestAdmission::TokenLimitExceeded;
-        }
-    }
-    if let Some(max) = record.rate_limit_per_minute {
-        if now.saturating_sub(record.rate_window_started_at) >= 60 {
-            record.rate_window_started_at = now;
-            record.rate_window_requests = 0;
-        }
-        if record.rate_window_requests >= max {
-            return RequestAdmission::RateLimitExceeded;
-        }
-        record.rate_window_requests = record.rate_window_requests.saturating_add(1);
-    }
-    record.used_requests = record.used_requests.saturating_add(1);
-    record.reserved_tokens = record.reserved_tokens.saturating_add(reserve);
-    RequestAdmission::Admitted
-}
-
-const fn add_token_usage(record: Option<&mut TokenRecord>, tokens: u64) {
-    if let Some(record) = record {
-        record.used_tokens = record.used_tokens.saturating_add(tokens);
-    }
-}
-
-/// Replace a request's reservation with the usage the upstream actually reported.
-///
-/// `reserved` is released whether or not the request produced usage, so cancelled
-/// requests, upstream errors, and responses with no usage block all free their budget.
-/// `actual` is recorded in full even when it exceeds the reservation: the persisted
-/// total must stay truthful about what was really spent.
-const fn settle_token_usage(record: Option<&mut TokenRecord>, reserved: u64, actual: u64) {
-    if let Some(record) = record {
-        record.reserved_tokens = record.reserved_tokens.saturating_sub(reserved);
-        record.used_tokens = record.used_tokens.saturating_add(actual);
-    }
-}
+#[path = "storage_budget.rs"]
+mod budget;
+use budget::{
+    add_token_usage, admit_request_reserving, consume_request, merge_safer_record,
+    settle_token_usage,
+};
 
 /// Dual-write store: every mutation goes to *both* primary and secondary;
 /// reads consult the primary first, falling back to the secondary on miss.
@@ -808,9 +812,23 @@ impl DurableDualTokenStore {
         self.install(&records)
     }
 
+    /// Write both projections, then drop the journal that covered them.
+    ///
+    /// The order matters and is load-bearing: text first, because reads
+    /// consult it; binary second; the journal removed only once both are on
+    /// disk, so a crash at any point leaves a journal that `recover` replays.
+    ///
+    /// The binary projection is the expensive half. `write_binary` stores each
+    /// string as one link per byte -- a 36-character id is 36 `create_link`
+    /// calls -- so persisting 306 records rebuilds roughly 54,000 links, about
+    /// a second, to record a change to one of them (issues #356, #357).
     fn install(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
         self.text.replace_all(records)?;
         self.binary.replace_all(records)?;
+        self.drop_journal()
+    }
+
+    fn drop_journal(&self) -> Result<(), StorageError> {
         if self.journal_path.exists() {
             fs::remove_file(&self.journal_path)?;
             if let Some(parent) = self.journal_path.parent() {
@@ -898,19 +916,6 @@ impl DurableDualTokenStore {
             return self.merged_records();
         }
         Ok(records)
-    }
-}
-
-fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
-    current.revoked |= other.revoked;
-    current.used_requests = current.used_requests.max(other.used_requests);
-    current.used_tokens = current.used_tokens.max(other.used_tokens);
-    current.reserved_tokens = current.reserved_tokens.max(other.reserved_tokens);
-    if other.rate_window_started_at > current.rate_window_started_at {
-        current.rate_window_started_at = other.rate_window_started_at;
-        current.rate_window_requests = other.rate_window_requests;
-    } else if other.rate_window_started_at == current.rate_window_started_at {
-        current.rate_window_requests = current.rate_window_requests.max(other.rate_window_requests);
     }
 }
 

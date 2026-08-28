@@ -27,7 +27,7 @@ pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
         "outbox": format!("{base}/outbox/code"),
         "followers": format!("{base}/actors/code/followers"),
         "aliases": [
-            format!("urn:link-assistant:router:code"),
+            "urn:link-assistant:router:code".to_string(),
             format!("{base}/actor/code")
         ],
         "publicKey": {

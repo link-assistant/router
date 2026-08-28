@@ -66,7 +66,7 @@ fn test_expired_token() {
     // This might or might not be expired depending on clock resolution,
     // so we just verify it doesn't panic
     match result {
-        Ok(_) | Err(TokenError::Expired) => {} // both acceptable
+        Ok(_) | Err(TokenError::Expired(..)) => {} // both acceptable
         Err(e) => panic!("Unexpected error: {e}"),
     }
 }
@@ -122,7 +122,7 @@ fn test_request_budget_enforced() {
 
     // The fourth exceeds the budget.
     let r = mgr.enforce_request_budget(&claims.sub);
-    assert!(matches!(r, Err(TokenError::LimitExceeded)));
+    assert!(matches!(r, Err(TokenError::LimitExceeded(..))));
 
     // Usage is persisted on the record.
     let rec = mgr
@@ -155,7 +155,7 @@ fn actual_token_spend_stops_only_the_exhausted_token() {
 
     assert!(matches!(
         mgr.enforce_request_budget(&capped_id),
-        Err(TokenError::TokenLimitExceeded)
+        Err(TokenError::TokenLimitExceeded(..))
     ));
     mgr.enforce_request_budget(&other_id)
         .expect("one token's spend must not affect another token");
@@ -200,7 +200,7 @@ fn a_reservation_larger_than_the_remaining_budget_is_rejected() {
     // A request declaring more than the whole budget never dispatches.
     assert!(matches!(
         mgr.enforce_request_budget_reserving(&id, 101),
-        Err(TokenError::TokenLimitExceeded)
+        Err(TokenError::TokenLimitExceeded(..))
     ));
     // ... and nothing was consumed by the rejected attempt.
     let record = mgr.store().get(&id).unwrap().unwrap();
@@ -224,7 +224,7 @@ fn reservations_accumulate_and_block_the_request_that_would_overshoot() {
     // 60 is already reserved, so a second 60-token request cannot fit.
     assert!(matches!(
         mgr.enforce_request_budget_reserving(&id, 60),
-        Err(TokenError::TokenLimitExceeded)
+        Err(TokenError::TokenLimitExceeded(..))
     ));
     // A smaller one still fits in the remaining 40.
     mgr.enforce_request_budget_reserving(&id, 40).unwrap();
@@ -277,7 +277,7 @@ fn settling_records_usage_that_exceeded_its_reservation() {
     // An exhausted budget rejects the next request outright.
     assert!(matches!(
         mgr.enforce_request_budget_reserving(&id, 1),
-        Err(TokenError::TokenLimitExceeded)
+        Err(TokenError::TokenLimitExceeded(..))
     ));
 }
 
@@ -318,7 +318,7 @@ fn stale_reservations_are_released_at_startup() {
     mgr.enforce_request_budget_reserving(&id, 100).unwrap();
     assert!(matches!(
         mgr.enforce_request_budget_reserving(&id, 1),
-        Err(TokenError::TokenLimitExceeded)
+        Err(TokenError::TokenLimitExceeded(..))
     ));
 
     assert_eq!(mgr.release_stale_reservations().unwrap(), 1);
@@ -708,7 +708,7 @@ fn a_scope_survives_issuance_and_validation() {
 /// the router and the flag that governs the lifetime (issue #341).
 #[test]
 fn an_expired_token_names_the_router_rather_than_the_provider() {
-    let message = TokenError::Expired.client_message();
+    let message = TokenError::Expired(None).client_message();
     assert!(
         message.contains("router"),
         "the message must say whose token expired: {message}"
@@ -726,5 +726,81 @@ fn an_expired_token_names_the_router_rather_than_the_provider() {
     assert!(
         !message.contains("la_sk_"),
         "no credential may appear: {message}"
+    );
+}
+
+/// A rejection states the facts behind it.
+///
+/// `client_message` was a `const fn` returning `&'static str`, so the type
+/// itself made every message factless: a user whose day-long session died was
+/// told what kind of thing went wrong and never a single number about their
+/// own token. Expiry, a spent request budget and a spent token budget all
+/// printed one fixed sentence (issue #355).
+#[test]
+fn a_rejection_carries_the_numbers_behind_it() {
+    let expired = TokenError::Expired(Some(crate::token::ExpiryFacts {
+        issued_at: 1_700_000_000,
+        expires_at: 1_700_086_400,
+        ago_seconds: 3 * 86_400,
+    }));
+    let message = expired.client_message();
+    assert!(
+        message.contains("2023-11-14") && message.contains("2023-11-15"),
+        "the message must say when it was issued and when it lapsed: {message}"
+    );
+    assert!(
+        message.contains("24h"),
+        "and how long it was good for: {message}"
+    );
+    assert!(
+        message.contains("3d ago"),
+        "and how long ago that was: {message}"
+    );
+    // Still names the router, which is what issue #341 added.
+    assert!(message.contains("router"), "{message}");
+
+    let requests = TokenError::LimitExceeded(Some(crate::token::BudgetFacts {
+        used: 120,
+        limit: 100,
+    }));
+    let message = requests.client_message();
+    assert!(
+        message.contains("120") && message.contains("100"),
+        "a spent request budget must say used and limit: {message}"
+    );
+    assert!(
+        message.contains("--max-requests"),
+        "and what to do about it: {message}"
+    );
+
+    let tokens = TokenError::TokenLimitExceeded(Some(crate::token::BudgetFacts {
+        used: 9_001,
+        limit: 9_000,
+    }));
+    let message = tokens.client_message();
+    assert!(
+        message.contains("9001") && message.contains("9000"),
+        "a spent token budget must say used and limit: {message}"
+    );
+}
+
+/// Without the facts, the message is still the sentence it always was.
+///
+/// The store may be unreadable at the moment of a rejection, and a rejection
+/// must still be returned rather than replaced by a storage failure.
+#[test]
+fn a_rejection_without_facts_keeps_its_original_wording() {
+    let message = TokenError::Expired(None).client_message();
+    assert!(message.contains("Token has expired"), "{message}");
+    assert!(message.contains("router"), "{message}");
+    assert!(
+        TokenError::LimitExceeded(None)
+            .client_message()
+            .contains("request limit")
+    );
+    assert!(
+        TokenError::TokenLimitExceeded(None)
+            .client_message()
+            .contains("token limit")
     );
 }

@@ -29,7 +29,7 @@ fn main() {
         "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
         "npm run build 2>&1 | tee /tmp/admin-ui-build.log",
         "git diff --exit-code -- ui/dist",
-        "toolchain: 1.97.1",
+        "toolchain: ",
         "docker/login-action@",
         "docker/setup-buildx-action@",
         "docker/metadata-action@",
@@ -117,8 +117,27 @@ fn main() {
 
     let toolchain_actions = count_occurrences(&workflow, "dtolnay/rust-toolchain@")
         + count_occurrences(&reconciliation, "dtolnay/rust-toolchain@");
-    let pinned_toolchains = count_occurrences(&workflow, "toolchain: 1.97.1")
-        + count_occurrences(&reconciliation, "toolchain: 1.97.1");
+    // The version is not the invariant -- every SHA-pinned toolchain action
+    // selecting an explicit numeric toolchain is. Read the one the workflow
+    // pins rather than hard-coding it, so a routine upgrade does not fail a
+    // check that is not about the upgrade.
+    let selected = workflow
+        .lines()
+        .find_map(|line| line.trim().strip_prefix("toolchain: "))
+        .unwrap_or_default()
+        .to_string();
+    if selected.is_empty()
+        || !selected
+            .split('.')
+            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
+    {
+        failures.push(format!(
+            "the release workflow must pin an explicit numeric toolchain, found {selected:?}"
+        ));
+    }
+    let needle = format!("toolchain: {selected}");
+    let pinned_toolchains =
+        count_occurrences(&workflow, &needle) + count_occurrences(&reconciliation, &needle);
     if toolchain_actions != pinned_toolchains {
         failures.push("every Rust action must select the reviewed numeric toolchain".to_string());
     }
