@@ -19,6 +19,7 @@ fn args(client: ClientKind, client_args: &[&str]) -> WithArgs {
         model: None,
         label: None,
         run_ttl_hours: 1,
+        fixed_run_ttl: false,
         run_max_requests: None,
         client,
         client_args: client_args.iter().map(OsString::from).collect(),

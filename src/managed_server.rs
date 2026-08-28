@@ -251,6 +251,7 @@ pub async fn prepare_run_credential(
     server: &ResolvedServer,
     label: &str,
     ttl_hours: i64,
+    sliding: bool,
 ) -> Result<RunCredential, AnyError> {
     let token = server.token.as_deref().ok_or_else(|| {
         if server.source == "managed local container" {
@@ -289,6 +290,11 @@ pub async fn prepare_run_credential(
                     "ttl_hours": ttl_hours,
                     "label": label,
                     "max_requests": server.run_max_requests,
+                    // The run is revoked when the client exits, so the clock
+                    // is a backstop for a client that never got to exit --
+                    // not a limit on how long a live session may run
+                    // (issue #354).
+                    "sliding_expiry": sliding,
                 }))
                 .send()
                 .await

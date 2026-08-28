@@ -53,6 +53,10 @@ pub async fn issue_token(
         rate_limit_per_minute: req.rate_limit_per_minute,
         scope: &scope,
         github_repos: req.github_repos.clone().unwrap_or_default(),
+        sliding_window_seconds: req
+            .sliding_expiry
+            .unwrap_or(false)
+            .then(|| ttl.saturating_mul(3_600)),
     };
     // One shared rule set across HTTP, CLI and chat (issue #194), so the same
     // request cannot be accepted on one surface and refused on another.
@@ -299,6 +303,9 @@ pub struct RotateClientTokenRequest {
 pub struct IssueTokenRequest {
     /// Time-to-live in hours (default: 24).
     pub ttl_hours: Option<i64>,
+    /// Extend the expiry to `now + ttl_hours` on each request served with
+    /// this token, rather than fixing it at issue time (issue #354).
+    pub sliding_expiry: Option<bool>,
     /// Optional label for the token.
     pub label: Option<String>,
     /// Optional account binding (multi-account mode).

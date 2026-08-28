@@ -90,6 +90,14 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                         .map_or(LinoValue::Null, |value| LinoValue::String(value.clone())),
                 ),
                 (
+                    "sliding_window_seconds",
+                    record
+                        .sliding_window_seconds
+                        .map_or(LinoValue::Null, |value| {
+                            LinoValue::String(value.to_string())
+                        }),
+                ),
+                (
                     "max_requests",
                     record.max_requests.map_or(LinoValue::Null, |value| {
                         LinoValue::String(value.to_string())
@@ -158,6 +166,12 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         expires_at: expect_i64_field(fields, "expires_at", "record value")?,
         revoked: expect_bool_field(fields, "revoked", "record value")?,
         account: optional_string_field(fields, "account", "record value")?,
+        sliding_window_seconds: optional_u64_field(
+            fields,
+            "sliding_window_seconds",
+            "record value",
+        )?
+        .and_then(|value| i64::try_from(value).ok()),
         max_requests: optional_u64_field(fields, "max_requests", "record value")?,
         used_requests: expect_u64_field(fields, "used_requests", "record value")?,
         max_tokens: optional_u64_field(fields, "max_tokens", "record value")?,
@@ -521,6 +535,14 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
     if let Some(account) = &record.account {
         add_field(&mut links, &value, "account", account);
     }
+    if let Some(window) = record.sliding_window_seconds {
+        add_field(
+            &mut links,
+            &value,
+            "sliding_window_seconds",
+            &window.to_string(),
+        );
+    }
     if let Some(max_requests) = record.max_requests {
         add_field(
             &mut links,
@@ -651,6 +673,9 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
     }
     Ok(TokenRecord {
         id,
+        sliding_window_seconds: fields
+            .get("sliding_window_seconds")
+            .and_then(|value| value.parse().ok()),
         label: required_field(&fields, "label")?.to_string(),
         issued_at: parse_field(&fields, "issued_at")?,
         expires_at: parse_field(&fields, "expires_at")?,
@@ -768,6 +793,7 @@ mod tests {
             issued_at: i64::MIN,
             expires_at: i64::MAX,
             revoked: true,
+            sliding_window_seconds: None,
             account: Some(String::new()),
             max_requests: Some(u64::MAX),
             used_requests: u64::MAX,

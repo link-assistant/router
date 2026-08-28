@@ -102,6 +102,12 @@ pub struct IssueRequest<'a> {
     /// Repositories this token may reach through the GitHub proxy; empty is
     /// unrestricted (issue #262).
     pub github_repos: Vec<String>,
+    /// How long the expiry slides ahead of activity, in seconds.
+    ///
+    /// `None` keeps the fixed clock every token had before: the expiry set
+    /// here is final. `Some(window)` extends it on use, so a session that is
+    /// still being typed into does not die mid-work (issue #354).
+    pub sliding_window_seconds: Option<i64>,
 }
 
 /// Constraint changes to apply while rotating a token.
@@ -262,6 +268,7 @@ impl TokenManager {
             rate_limit_per_minute: None,
             scope: "",
             github_repos: Vec::new(),
+            sliding_window_seconds: None,
         })
     }
 
@@ -285,6 +292,7 @@ impl TokenManager {
             rate_limit_per_minute: None,
             scope: ADMIN_SCOPE,
             github_repos: Vec::new(),
+            sliding_window_seconds: None,
         })
     }
 
@@ -336,6 +344,7 @@ impl TokenManager {
             issued_at: claims.iat,
             expires_at: claims.exp,
             revoked: false,
+            sliding_window_seconds: request.sliding_window_seconds,
             account: account.map(String::from),
             max_requests,
             used_requests: 0,
@@ -459,13 +468,22 @@ impl TokenManager {
             &DecodingKey::from_secret(self.secret.as_bytes()),
             &Validation::default(),
         )
-        .map_err(|e| match e.kind() {
-            // The decoder knows only that the signature is stale; the record
-            // knows when it was issued and when it lapsed (issue #355).
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
-                TokenError::Expired(self.expiry_facts(jwt))
-            }
-            _ => TokenError::Invalid(e.to_string()),
+        .or_else(|e| match e.kind() {
+            // The decoder enforces the `exp` the token was signed with, which
+            // a sliding token outgrows: the store holds the extended expiry,
+            // and the signature says nothing about it. So a stale signature
+            // is re-checked against the record before it is a rejection
+            // (issue #354).
+            jsonwebtoken::errors::ErrorKind::ExpiredSignature => self
+                .decode_ignoring_expiry(jwt)
+                .filter(|data| self.expiry_slid_past(&data.claims.sub))
+                .ok_or_else(|| {
+                    // The decoder knows only that the signature is stale; the
+                    // record knows when it was issued and when it lapsed
+                    // (issue #355).
+                    TokenError::Expired(self.expiry_facts(jwt))
+                }),
+            _ => Err(TokenError::Invalid(e.to_string())),
         })?;
 
         let revoked = self
@@ -496,6 +514,47 @@ impl TokenManager {
             .flatten()
             .as_ref()
             .and_then(pick)
+    }
+
+    /// Test-only access to [`Self::decode_ignoring_expiry`].
+    #[cfg(test)]
+    pub(crate) fn decode_ignoring_expiry_for_test(&self, token: &str) -> Option<TokenClaims> {
+        let jwt = token.strip_prefix(TOKEN_PREFIX)?;
+        self.decode_ignoring_expiry(jwt).map(|data| data.claims)
+    }
+
+    /// Decode a token whose signature is valid but whose `exp` has passed.
+    ///
+    /// The signature is still verified, so a forged token cannot reach this.
+    fn decode_ignoring_expiry(&self, jwt: &str) -> Option<jsonwebtoken::TokenData<TokenClaims>> {
+        let validation = Validation {
+            validate_exp: false,
+            ..Validation::default()
+        };
+        decode::<TokenClaims>(
+            jwt,
+            &DecodingKey::from_secret(self.secret.as_bytes()),
+            &validation,
+        )
+        .ok()
+    }
+
+    /// Whether the store says this token is still live past its signed `exp`.
+    ///
+    /// True only for a sliding token whose record has been pushed ahead of now
+    /// by activity. A fixed-clock token, a revoked one, or one whose window
+    /// has genuinely lapsed is not live, so this cannot resurrect anything the
+    /// old behaviour would have refused (issue #354).
+    fn expiry_slid_past(&self, token_id: &str) -> bool {
+        self.store
+            .get(token_id)
+            .ok()
+            .flatten()
+            .is_some_and(|record| {
+                record.sliding_window_seconds.is_some()
+                    && !record.revoked
+                    && record.expires_at > Utc::now().timestamp()
+            })
     }
 
     /// The facts behind an expiry, read from the token that just failed.
@@ -642,6 +701,7 @@ impl TokenManager {
             // silently widened to the whole account would defeat the scope
             // (issue #262).
             github_repos: record.github_repos.clone(),
+            sliding_window_seconds: None,
         };
         request.validate().map_err(TokenError::Invalid)?;
         let replacement = self

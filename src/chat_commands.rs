@@ -302,6 +302,7 @@ fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
         rate_limit_per_minute: options.rate_limit_per_minute,
         scope: "",
         github_repos: Vec::new(),
+        sliding_window_seconds: None,
     };
     // Same bounds as the CLI and HTTP surfaces, rather than chat-only rules.
     if let Err(message) = request.validate() {

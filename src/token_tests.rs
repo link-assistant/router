@@ -475,6 +475,7 @@ fn ordinary_token_rotation_preserves_its_controls_and_revokes_the_old_token() {
             rate_limit_per_minute: Some(3),
             scope: "",
             github_repos: Vec::new(),
+            sliding_window_seconds: None,
         })
         .unwrap();
     let old_claims = mgr.validate_token(&old).unwrap();
@@ -802,5 +803,87 @@ fn a_rejection_without_facts_keeps_its_original_wording() {
         TokenError::TokenLimitExceeded(None)
             .client_message()
             .contains("token limit")
+    );
+}
+
+/// A sliding token outlives the `exp` it was signed with.
+///
+/// The JWT carries a signed `exp` that a sliding token grows past, so the
+/// decoder rejects it while the store says it is still live. Without honouring
+/// the record, extending it would change nothing a client can observe
+/// (issue #354).
+#[test]
+fn a_slid_token_is_accepted_after_its_signed_expiry() {
+    let manager = test_manager();
+    // Issued for an hour, with a window, then aged past the signed `exp`.
+    let token = manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "sliding",
+            account: None,
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: Some(7 * 24 * 3_600),
+        })
+        .expect("issue");
+    let id = manager.validate_token(&token).expect("valid now").sub;
+
+    // The record is pushed a week out, as activity would.
+    let mut record = manager.store().get(&id).expect("get").expect("record");
+    record.expires_at = chrono::Utc::now().timestamp() + 7 * 24 * 3_600;
+    manager.store().put(record).expect("put");
+
+    // Now make the signed `exp` stale by issuing one that is already past.
+    // A token whose signature says expired but whose record says live must be
+    // accepted, because the record is what activity updates.
+    let aged = manager
+        .issue(&IssueRequest {
+            ttl_hours: -1,
+            label: "aged",
+            account: None,
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: Some(7 * 24 * 3_600),
+        })
+        .expect("issue an already-expired token");
+    let aged_id = manager
+        .decode_ignoring_expiry_for_test(&aged)
+        .expect("decode")
+        .sub;
+    let mut record = manager.store().get(&aged_id).expect("get").expect("record");
+    record.expires_at = chrono::Utc::now().timestamp() + 3_600;
+    manager.store().put(record).expect("put");
+    assert!(
+        manager.validate_token(&aged).is_ok(),
+        "a token the store says is live must be accepted past its signed exp"
+    );
+}
+
+/// A fixed token is still refused once its signed expiry passes.
+#[test]
+fn a_fixed_token_is_still_refused_when_it_expires() {
+    let manager = test_manager();
+    let aged = manager
+        .issue(&IssueRequest {
+            ttl_hours: -1,
+            label: "fixed",
+            account: None,
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+        })
+        .expect("issue");
+    assert!(
+        matches!(manager.validate_token(&aged), Err(TokenError::Expired(..))),
+        "without a window an expired token stays expired"
     );
 }

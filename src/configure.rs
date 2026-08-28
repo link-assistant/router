@@ -147,8 +147,13 @@ async fn configure_one(
     // stored outside the client's configuration at 0600. `with --global`
     // stopped short of this and told the user to set a variable themselves,
     // which means the command did half its job (issue #296).
-    let credential =
-        prepare_run_credential(server, &format!("configure-{client}"), args.ttl_hours).await?;
+    let credential = prepare_run_credential(
+        server,
+        &format!("configure-{client}"),
+        args.ttl_hours,
+        false,
+    )
+    .await?;
     let record = ManagedCredential {
         client: client.to_string(),
         // Minted only when this command actually issued one: a token the

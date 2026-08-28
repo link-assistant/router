@@ -80,6 +80,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
     let mut record = TokenRecord {
         id,
         github_repos: Vec::new(),
+        sliding_window_seconds: None,
         label: String::new(),
         issued_at: 0,
         expires_at: 0,

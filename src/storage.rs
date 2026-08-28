@@ -55,6 +55,17 @@ pub struct TokenRecord {
     pub issued_at: i64,
     pub expires_at: i64,
     pub revoked: bool,
+    /// How long, in seconds, an active token's expiry slides ahead of now.
+    ///
+    /// `None` is a fixed clock: the expiry set at issue time is final, which
+    /// is what every token did before. `Some(window)` means a request served
+    /// with this token pushes `expires_at` to `now + window`, so a session in
+    /// continuous use never expires while one abandoned for longer than the
+    /// window still does -- which is the behaviour the bound is for. A
+    /// day-long session died mid-work against the fixed 24-hour clock twice
+    /// (issue #354).
+    #[serde(default)]
+    pub sliding_window_seconds: Option<i64>,
     /// Optional account identifier the token is bound to (multi-account mode).
     #[serde(default)]
     pub account: Option<String>,

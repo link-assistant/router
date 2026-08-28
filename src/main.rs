@@ -645,6 +645,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 rate_limit_per_minute: *rate_limit_per_minute,
                 scope: if *admin { ADMIN_SCOPE } else { "" },
                 github_repos: github_repo.clone(),
+                sliding_window_seconds: None,
             };
             // Shared with the HTTP and chat surfaces (issue #194).
             if let Err(message) = request.validate() {
