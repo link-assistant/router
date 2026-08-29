@@ -9,7 +9,7 @@ keywords = ["proxy", "anthropic", "claude", "gateway", "oauth"]
 categories = ["web-programming::http-server"]
 repository = "https://github.com/link-assistant/router"
 documentation = "https://github.com/link-assistant/router"
-rust-version = "1.88"
+rust-version = "1.89"
 exclude = ["dev/log/**"]
 
 [lib]
@@ -67,7 +67,6 @@ hex = "0.4"
 aes-gcm = "0.11"
 portable-pty = "0.9"
 rust-embed = { version = "8.12.0", default-features = false }
-fs2 = "0.4"
 tempfile = "3"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 rcgen = "0.14.9"

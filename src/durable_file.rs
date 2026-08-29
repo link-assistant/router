@@ -1,10 +1,8 @@
 //! Owner-only, crash-durable file replacement and inter-process locking.
 
-use std::fs::{self, OpenOptions};
+use std::fs::{self, OpenOptions, TryLockError};
 use std::io::{self, Write};
 use std::path::Path;
-
-use fs2::FileExt;
 
 /// Describe a credential-write failure in terms an operator can act on.
 ///
@@ -93,9 +91,9 @@ where
         lock.set_permissions(fs::Permissions::from_mode(0o600))
             .map_err(E::from)?;
     }
-    lock.lock_exclusive().map_err(E::from)?;
+    lock.lock().map_err(E::from)?;
     let result = operation();
-    let unlock = FileExt::unlock(&lock);
+    let unlock = lock.unlock();
     match (result, unlock) {
         (Err(error), _) => Err(error),
         (Ok(_), Err(error)) => Err(E::from(error)),
@@ -131,9 +129,9 @@ where
         lock.set_permissions(fs::Permissions::from_mode(0o600))
             .map_err(E::from)?;
     }
-    FileExt::lock_shared(&lock).map_err(E::from)?;
+    lock.lock_shared().map_err(E::from)?;
     let result = operation();
-    let unlock = FileExt::unlock(&lock);
+    let unlock = lock.unlock();
     match (result, unlock) {
         (Err(error), _) => Err(error),
         (Ok(_), Err(error)) => Err(E::from(error)),
@@ -163,35 +161,27 @@ impl FileLockGuard {
 impl Drop for FileLockGuard {
     fn drop(&mut self) {
         // Best effort: the lock is released by closing the descriptor anyway.
-        let _ = FileExt::unlock(&self.file);
+        let _ = self.file.unlock();
     }
 }
 
 /// How often a contended lock is re-tried while waiting.
 const LOCK_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(20);
 
-/// Whether a failed lock attempt means "somebody else holds it" rather than
-/// "this lock cannot work here".
-///
-/// `fs2` reports contention with the platform's own error and only unix spells
-/// it in a way `io::ErrorKind` recognises: `EWOULDBLOCK` maps to
-/// [`io::ErrorKind::WouldBlock`], while Windows answers `ERROR_LOCK_VIOLATION`,
-/// which maps to nothing in particular. Comparing against the error `fs2`
-/// itself documents keeps the two apart on every platform — mistaking
-/// contention for a broken lock silently drops the serialisation that keeps two
-/// holders of one credential from spending the same refresh token twice.
-fn is_contended(error: &io::Error) -> bool {
-    error.kind() == io::ErrorKind::WouldBlock
-        || (error.raw_os_error().is_some()
-            && error.raw_os_error() == fs2::lock_contended_error().raw_os_error())
-}
-
 /// Acquire an exclusive advisory lock on `path`, waiting up to `timeout`.
 ///
 /// `flock` has no async form, so the lock is polled rather than waited on: a
-/// blocking `lock_exclusive` inside an `async fn` would park a runtime worker
-/// for as long as another process holds it, which for a credential refresh can
-/// be a full network round trip.
+/// blocking [`std::fs::File::lock`] inside an `async fn` would park a runtime
+/// worker for as long as another process holds it, which for a credential
+/// refresh can be a full network round trip.
+///
+/// Contention is [`TryLockError::WouldBlock`], a variant of its own rather than
+/// a platform errno to classify: `EWOULDBLOCK` maps to
+/// [`io::ErrorKind::WouldBlock`] on unix, but Windows answers
+/// `ERROR_LOCK_VIOLATION`, which maps to nothing in particular. Reading
+/// contention as a broken lock would make the waiter proceed *unlocked*, and
+/// two holders of one credential would then spend the same refresh token twice
+/// (issue #239).
 ///
 /// # Errors
 ///
@@ -214,14 +204,14 @@ pub async fn lock_exclusive_async(
     let file = options.open(path)?;
     let mut waited = std::time::Duration::ZERO;
     loop {
-        match FileExt::try_lock_exclusive(&file) {
+        match file.try_lock() {
             Ok(()) => {
                 return Ok(FileLockGuard {
                     file,
                     path: path.to_path_buf(),
                 });
             }
-            Err(error) if is_contended(&error) => {
+            Err(TryLockError::WouldBlock) => {
                 if waited >= timeout {
                     return Err(io::Error::new(
                         io::ErrorKind::WouldBlock,
@@ -231,7 +221,7 @@ pub async fn lock_exclusive_async(
                 tokio::time::sleep(LOCK_POLL_INTERVAL).await;
                 waited = waited.saturating_add(LOCK_POLL_INTERVAL);
             }
-            Err(error) => return Err(error),
+            Err(TryLockError::Error(error)) => return Err(error),
         }
     }
 }
@@ -278,18 +268,49 @@ mod tests {
     /// which `io::ErrorKind` does not classify; reading that as a broken lock
     /// makes the waiter proceed *unlocked*, and two holders of one credential
     /// then spend the same refresh token twice — exactly the race the lock
-    /// exists to prevent (issue #239).
-    #[test]
-    fn contention_is_told_apart_from_a_lock_that_cannot_work() {
+    /// exists to prevent (issue #239). The standard library answers with
+    /// [`TryLockError::WouldBlock`] on every platform, so this asserts the
+    /// variant rather than an errno.
+    ///
+    /// Advisory locks belong to the *open file description*, so two separate
+    /// handles inside one process contend exactly as two processes do — which
+    /// is what lets this run without spawning one.
+    #[tokio::test]
+    async fn contention_is_told_apart_from_a_lock_that_cannot_work() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("credential.lock");
+
+        let holder = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&path)
+            .unwrap();
+        holder.lock().unwrap();
+
+        let waiter = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&path)
+            .unwrap();
         assert!(
-            is_contended(&fs2::lock_contended_error()),
-            "the error fs2 documents for a contended lock must be recognised"
+            matches!(waiter.try_lock(), Err(TryLockError::WouldBlock)),
+            "a contended lock must report WouldBlock, not a platform errno"
         );
-        assert!(is_contended(&io::Error::from(io::ErrorKind::WouldBlock)));
-        assert!(!is_contended(&io::Error::from(
-            io::ErrorKind::PermissionDenied
-        )));
-        assert!(!is_contended(&io::Error::other("read-only file system")));
+
+        // And the polling waiter must read that as "held", not as "broken".
+        let refused = lock_exclusive_async(&path, std::time::Duration::from_millis(60)).await;
+        let error = refused.expect_err("the lock was held");
+        assert_eq!(error.kind(), io::ErrorKind::WouldBlock);
+
+        holder.unlock().unwrap();
+        assert!(
+            lock_exclusive_async(&path, std::time::Duration::from_millis(60))
+                .await
+                .is_ok(),
+            "the lock must be available once the holder releases it"
+        );
     }
 
     /// Two holders of one credential must serialise, and a holder that cannot

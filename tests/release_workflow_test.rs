@@ -11,7 +11,8 @@ fn dockerfile_builder_uses_supported_rust_toolchain() {
     );
     assert!(
         rust_builder_tag_tracks_supported_toolchain(builder_tag),
-        "Rust builder image `{builder_tag}` should use Rust 1.88+ or track the current Rust 1.x line"
+        "Rust builder image `{builder_tag}` should use Rust {}+ or track the current Rust 1.x line",
+        minimum_supported_rust_version()
     );
 }
 
@@ -767,18 +768,33 @@ fn dockerfile_apt_installs(section: &str, package: &str) -> bool {
         .any(|line| line == package || line.starts_with(&format!("{package} ")))
 }
 
+/// The crate's own `rust-version`, so the floor this test enforces cannot
+/// drift away from the one Cargo enforces.
+fn minimum_supported_rust_version() -> String {
+    let manifest = fs::read_to_string("Cargo.toml").expect("Cargo.toml should be readable");
+    manifest
+        .lines()
+        .find_map(|line| line.strip_prefix("rust-version = "))
+        .map(|value| value.trim().trim_matches('"').to_string())
+        .expect("Cargo.toml should declare rust-version")
+}
+
 fn rust_builder_tag_tracks_supported_toolchain(tag: &str) -> bool {
     let tag = tag.split('@').next().unwrap_or(tag);
     if tag == "1-slim-trixie" {
         true
     } else {
-        let version = tag.split('-').next().unwrap_or_default();
-        let mut parts = version.split('.');
-        let major = parts.next().and_then(|part| part.parse::<u64>().ok());
-        let minor = parts.next().and_then(|part| part.parse::<u64>().ok());
+        let parse = |version: &str| {
+            let mut parts = version.split('.');
+            let major = parts.next().and_then(|part| part.parse::<u64>().ok());
+            let minor = parts.next().and_then(|part| part.parse::<u64>().ok());
+            (major, minor)
+        };
+        let (floor_major, floor_minor) = parse(&minimum_supported_rust_version());
+        let (major, minor) = parse(tag.split('-').next().unwrap_or_default());
 
-        matches!((major, minor), (Some(1), Some(minor)) if minor >= 88)
-            || matches!(major, Some(major) if major > 1)
+        matches!((major, minor), (Some(major), Some(minor))
+            if (major, minor) >= (floor_major.unwrap_or(1), floor_minor.unwrap_or(0)))
     }
 }
 
