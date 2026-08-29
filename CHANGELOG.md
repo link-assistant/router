@@ -137,6 +137,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.124.2] - 2026-08-29
+
+### Fixed
+- The token store is opened once per process and held, rather than opened, mapped, built and torn down on every access. `BinaryTokenStore` now keeps one `PersistentStore` behind a reader-writer lock, so concurrent readers share it and a writer excludes them (issue #357).
+- Opening the store no longer parses the whole graph. Decoding every record walks one link per byte of every string, which at 306 records took about 1.9 s, and a process that only writes never needed the result — the parse is now deferred to the first read that actually wants it. Opening the dual store went from 1.91 s to 7.3 ms.
+- Recovery on open runs only when a transaction journal is present. It previously read both projections and committed them back on every open, paying a full parse and a full rebuild even when there was nothing to recover — which every `router with` invocation paid.
+- A store file too short to hold the legacy `LARTOK01` magic is no longer misread as a legacy file. This was invisible while a store only ever appeared fully built, and became reachable once a store can be observed while it is being filled: about half of eight concurrent `tokens issue` processes failed with `invalid legacy binary magic header`.
+
+### Fixed
+- Test suites no longer race each other for ephemeral ports. `free_port` bound port 0 and dropped the listener, releasing the port before the child router could bind it, so a concurrently running test binary could take it; the loser then sent its requests to the winner's router and got answers about tokens that router had never issued. On CI this surfaced as `a_scoped_token_cannot_push_to_another_repository` seeing HTTP 200 where it required 403, which reads like a broken authorization check and was not one (issue #368).
+- A router harness now confirms that the child process it started is the one answering. A sibling router replies `200` on `/health` just the same, so liveness of the child — which exits when it loses the port — is what distinguishes them, and losing the race retries instead of failing the test.
+
 ## [0.124.1] - 2026-08-28
 
 ### Fixed
