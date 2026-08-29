@@ -780,3 +780,39 @@ fn an_empty_store_file_is_not_mistaken_for_a_legacy_one() {
     let store = BinaryTokenStore::open(&path).expect("open over the empty file");
     assert!(store.list().expect("list").is_empty());
 }
+
+/// The store never holds two links with the same `(source, target)`.
+///
+/// `doublets` 0.4 lets `create_link` add a duplicate pair that its own
+/// `(source, target)` index cannot represent: `count()` sees every copy while
+/// `count_by([any, source, target])` sees one, and the sources/targets trees'
+/// size fields then disagree with the storage. Deleting anything afterwards
+/// underflows in `platform-trees`' `detach_core` -- a panic in debug, a silent
+/// wrap in release. C# forbids the duplicate outright
+/// (`LinkWithSameValueAlreadyExistsException`); the Rust port declares the
+/// matching `Error::AlreadyExists` but never raises it
+/// (linksplatform/doublets-rs#57).
+///
+/// The encoder is safe by construction -- pairs come from a `BTreeSet` and
+/// strings are interned through a cache -- and this pins that, because losing
+/// it would corrupt the store rather than fail.
+#[test]
+fn the_encoded_graph_contains_no_duplicate_pairs() {
+    let directory = tempdir().expect("temporary directory");
+    let path = directory.path().join("tokens.bin");
+    let records: Vec<_> = (0..12)
+        .map(|index| sample_record(&format!("id-{index:04}")))
+        .collect();
+    let store = BinaryTokenStore::open(&path).expect("open");
+    store.replace_all(&records).expect("write the graph");
+
+    let pairs = super::associative::encoded_pairs_for_test(&path).expect("read pairs");
+    let mut seen = std::collections::HashSet::new();
+    for (source, target) in &pairs {
+        assert!(
+            seen.insert((*source, *target)),
+            "duplicate pair ({source}, {target}) would corrupt the doublets index"
+        );
+    }
+    assert!(!pairs.is_empty(), "the fixture must produce links");
+}

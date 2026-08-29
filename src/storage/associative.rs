@@ -478,11 +478,13 @@ fn write_semantic_links<'a>(
     for link in links {
         let source = intern_string(store, string_nodes, &link.source)?;
         let target = intern_string(store, string_nodes, &link.target)?;
+        // Same reason as `intern_string`: a pair the store already holds must
+        // be reused, not created again (linksplatform/doublets-rs#57).
         let pair = store
-            .create_link(source, target)
+            .get_or_create(source, target)
             .map_err(|error| codec_error("create semantic pair", error))?;
         store
-            .create_link(EDGE_TAG, pair)
+            .get_or_create(EDGE_TAG, pair)
             .map_err(|error| codec_error("mark semantic pair", error))?;
     }
     Ok(())
@@ -510,14 +512,28 @@ fn intern_string(
     if let Some(node) = nodes.get(value) {
         return Ok(*node);
     }
+    // `get_or_create`, not `create_link`. Sequences are built right to left,
+    // so every string ending in the same byte would otherwise create its own
+    // `(byte, EMPTY_SEQUENCE)` link -- a second link with a `(source, target)`
+    // pair the store already holds. `doublets` 0.4 accepts that and cannot
+    // represent it: `count()` sees both copies while `count_by([any, source,
+    // target])` sees one, and the sources/targets trees' sizes then disagree
+    // with the storage, so any later deletion underflows in `platform-trees`
+    // (panic in debug, a silent wrap in release). C# forbids the duplicate
+    // outright with `LinkWithSameValueAlreadyExistsException`; the Rust port
+    // declares `Error::AlreadyExists` but never raises it
+    // (linksplatform/doublets-rs#57).
+    //
+    // Sharing the suffix is also simply correct: two strings ending in the
+    // same bytes describe the same tail, which is what the encoding means.
     let mut sequence = EMPTY_SEQUENCE;
     for byte in value.as_bytes().iter().rev() {
         sequence = store
-            .create_link(BYTE_NODE_START + usize::from(*byte), sequence)
+            .get_or_create(BYTE_NODE_START + usize::from(*byte), sequence)
             .map_err(|error| codec_error("encode string byte", error))?;
     }
     let node = store
-        .create_link(STRING_TAG, sequence)
+        .get_or_create(STRING_TAG, sequence)
         .map_err(|error| codec_error("encode string node", error))?;
     nodes.insert(value.to_string(), node);
     Ok(node)
@@ -860,6 +876,21 @@ where
 
 fn codec_error(context: &str, error: impl std::fmt::Debug) -> StorageError {
     StorageError::Codec(format!("{context}: {error:?}"))
+}
+
+/// Every `(source, target)` pair physically present in the store.
+///
+/// For the duplicate-pair invariant test; see
+/// `the_encoded_graph_contains_no_duplicate_pairs`.
+#[cfg(test)]
+pub(super) fn encoded_pairs_for_test(path: &Path) -> Result<Vec<(usize, usize)>, StorageError> {
+    let store = PersistentStore::open(path)?;
+    let any = store.store.constants().any;
+    Ok(store
+        .store
+        .each_iter([any, any, any])
+        .map(|link| (link.source, link.target))
+        .collect())
 }
 
 #[cfg(test)]
