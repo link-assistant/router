@@ -1,0 +1,14 @@
+# Standalone crate, deliberately outside the router's build: it answers a
+# question about the *standard library* before the router depends on it
+# (issue #372).
+[workspace]
+
+[package]
+name = "issue-372-std-locks"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "issue-372-std-locks"
+path = "main.rs"

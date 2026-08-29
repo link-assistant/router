@@ -110,7 +110,7 @@ changing identity.
 
 ### Prerequisites
 
-- [Rust 1.88+](https://www.rust-lang.org/tools/install) (for building from source)
+- [Rust 1.89+](https://www.rust-lang.org/tools/install) (for building from source)
 - [Docker](https://docs.docker.com/get-docker/) (for containerized deployment)
 - A Claude MAX subscription with an active Claude Code OAuth session
 

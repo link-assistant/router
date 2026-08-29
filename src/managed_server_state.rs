@@ -7,8 +7,6 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
 
-use fs2::FileExt as _;
-
 use serde::Serialize;
 
 use super::{AnyError, CONFIG_DIRECTORY, MANAGED_LOCK, MANAGED_STATE, ManagedState};
@@ -101,7 +99,7 @@ pub(super) fn lock_state() -> Result<File, AnyError> {
         .read(true)
         .write(true)
         .open(path)?;
-    file.lock_exclusive()?;
+    file.lock()?;
     Ok(file)
 }
 

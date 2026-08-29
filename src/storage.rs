@@ -12,7 +12,7 @@
 //! - [`TextTokenStore`] — persists records through `lino-objects-codec` at
 //!   `<data_dir>/tokens.lino`.
 //! - [`BinaryTokenStore`] — persists the same `Type → SubType → Value` links network
-//!   in a `doublets` store backed by `platform-mem` at
+//!   in a `doublets` store backed by `link-cli`'s `PersistentFileMapped` at
 //!   `<data_dir>/tokens.bin`.
 //! - [`DualTokenStore`] — fans writes out to two stores (typically text +
 //!   binary) and reads from the *first* store, falling back to the second
@@ -40,8 +40,6 @@ use serde::{Deserialize, Serialize};
 use crate::config::StoragePolicy;
 
 mod associative;
-#[allow(unsafe_code)]
-mod file_mapped;
 mod legacy;
 
 /// One persisted token record.
