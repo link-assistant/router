@@ -267,6 +267,12 @@ jobs:
       - name: Check file size limit
         run: rust-script scripts/check-file-size.rs
 
+      # This project's data structure is a links network, and the wording is
+      # load-bearing rather than stylistic -- see the terminology section of
+      # CONTRIBUTING.md. Rejected in identifiers and prose alike, any language.
+      - name: Check terminology
+        run: rust-script scripts/check-terminology.rs
+
       - name: Test release automation
         run: |
           rust-script --test scripts/version-and-commit.rs
@@ -276,6 +282,7 @@ jobs:
           rust-script --test scripts/detect-code-changes.rs
           rust-script --test scripts/check-changelog-fragment.rs
           rust-script --test scripts/check-release-provenance.rs
+          rust-script --test scripts/check-terminology.rs
           rust-script --test scripts/create-github-release.rs
           rust-script scripts/check-release-workflow.rs
 

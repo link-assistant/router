@@ -41,7 +41,7 @@ fn text_store_is_decodable_by_the_official_lino_codec() {
 }
 
 #[test]
-fn binary_store_is_a_reopenable_native_doublets_graph() {
+fn binary_store_is_a_reopenable_native_doublets_links_network() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("tokens.bin");
     let store = BinaryTokenStore::open(&path).unwrap();

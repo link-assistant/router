@@ -316,7 +316,7 @@ fn optional_i64_string_field(
 /// The store this crate is built on is a memory-mapped file, and it is meant to
 /// be opened once and kept. Reopening it per access cost a full open-map-build
 /// -teardown cycle every time, and on the write path a complete reconstruction
-/// of the semantic graph -- which is what made a read-only `list()` take
+/// of the semantic links network -- which is what made a read-only `list()` take
 /// seconds while the underlying disk write was a fraction of that (issue #357).
 ///
 /// Writing through the held mapping is also what makes holding it *safe*. The
@@ -384,7 +384,7 @@ impl PersistentStore {
 
     /// Replace the store's contents with `records`, keeping the same file.
     ///
-    /// The graph is rebuilt from empty, which means the old one has to go
+    /// The links network is rebuilt from empty, which means the old one has to go
     /// first. `Doublets::delete_all` is the obvious way to do that and is
     /// unusable in doublets 0.4: on a store holding real links it either
     /// panics with `attempt to subtract with overflow` inside
@@ -747,7 +747,9 @@ fn links_to_records(links: &BTreeSet<SemanticLink>) -> Result<Vec<TokenRecord>, 
         SemanticLink::new(SUBTYPE, VALUE),
     ] {
         if !links.contains(&edge) {
-            return Err("token doublets graph is missing Type -> SubType -> Value schema".into());
+            return Err(
+                "token doublets links network is missing Type -> SubType -> Value schema".into(),
+            );
         }
     }
     links
@@ -881,7 +883,7 @@ fn codec_error(context: &str, error: impl std::fmt::Debug) -> StorageError {
 /// Every `(source, target)` pair physically present in the store.
 ///
 /// For the duplicate-pair invariant test; see
-/// `the_encoded_graph_contains_no_duplicate_pairs`.
+/// `the_encoded_links_network_contains_no_duplicate_pairs`.
 #[cfg(test)]
 pub(super) fn encoded_pairs_for_test(path: &Path) -> Result<Vec<(usize, usize)>, StorageError> {
     let store = PersistentStore::open(path)?;
@@ -943,7 +945,7 @@ mod tests {
     }
 
     #[test]
-    fn native_doublets_graph_reopens_across_growth_boundary() {
+    fn native_doublets_links_network_reopens_across_growth_boundary() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("tokens.bin");
         let mut record = sample_record();
@@ -959,12 +961,12 @@ mod tests {
             .open(&path)
             .unwrap();
         let memory = LoadedFileMapped::new(file).unwrap();
-        let graph = unit::Store::<usize, _>::new(memory).unwrap();
+        let links_network = unit::Store::<usize, _>::new(memory).unwrap();
         assert!(
-            graph.count() > 8 * 1024,
+            links_network.count() > 8 * 1024,
             "fixture must cross the upstream bootstrap page boundary"
         );
-        drop(graph);
+        drop(links_network);
 
         // Reopened from scratch: what one process wrote in place is what the
         // next one reads, across the growth boundary.

@@ -1,7 +1,7 @@
 //! Token persistence backends.
 //!
 //! Issued-token state can be persisted as real Links Notation text, a native
-//! file-mapped doublets graph, or both.
+//! file-mapped doublets links network, or both.
 //!
 //! This module provides:
 //!
@@ -11,7 +11,7 @@
 //!   for [`StoragePolicy::Memory`].
 //! - [`TextTokenStore`] — persists records through `lino-objects-codec` at
 //!   `<data_dir>/tokens.lino`.
-//! - [`BinaryTokenStore`] — persists the same `Type → SubType → Value` graph
+//! - [`BinaryTokenStore`] — persists the same `Type → SubType → Value` links network
 //!   in a `doublets` store backed by `platform-mem` at
 //!   `<data_dir>/tokens.bin`.
 //! - [`DualTokenStore`] — fans writes out to two stores (typically text +
@@ -633,7 +633,7 @@ impl DurableDualTokenStore {
         self.text.replace_all(records)?;
         // Only when it actually differs. The text projection is what reads
         // consult, and a mutation of one token leaves the other 305 records
-        // identical -- rebuilding the graph for them is the bulk of what a
+        // identical -- rebuilding the links network for them is the bulk of what a
         // write costs (issues #356, #357).
         self.binary.replace_all_if_changed(records)?;
         self.drop_journal()

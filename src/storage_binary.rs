@@ -33,7 +33,7 @@ pub struct BinaryTokenStore {
     ///
     /// Re-reading the file on every mutation is what a second router process
     /// requires -- its writes have to become visible here -- but it costs a
-    /// full parse of the doublets graph, 1.8 s for 306 records, on a path that
+    /// full parse of the doublets links network, 1.8 s for 306 records, on a path
     /// usually finds nothing changed. The fingerprint answers "has anyone else
     /// written?" without paying for the answer (issues #356, #357).
     pub(super) loaded: Arc<RwLock<Option<FileFingerprint>>>,
@@ -86,7 +86,7 @@ impl BinaryTokenStore {
             fs::remove_file(&path)?;
         }
         let store = associative::PersistentStore::open(&path)?;
-        // Opening does not parse the graph. Decoding every record walks one
+        // Opening does not parse the links network. Decoding every record walks
         // link per byte of every string, which at 306 records is ~1.9 s -- and
         // a process that only writes never needs the result. `loaded` is left
         // unset so the first *read* fills it, and `refresh` treats "never
@@ -136,7 +136,7 @@ impl BinaryTokenStore {
     ///
     /// The reload exists so a second router process's writes become visible;
     /// skipping it when nothing changed keeps that guarantee and removes a
-    /// full parse of the graph from every write (issues #356, #357).
+    /// full parse of the links network from every write (issues #356, #357).
     fn reload_if_changed(
         &self,
         guard: &mut HashMap<String, TokenRecord>,
@@ -179,7 +179,7 @@ impl BinaryTokenStore {
     /// Bring the in-memory map up to date with the file, if it moved.
     ///
     /// A shared lock and a fingerprint check, so a read that finds nothing
-    /// changed costs a `stat` rather than a full parse of the graph. This is
+    /// changed costs a `stat` rather than a full parse of the links network. This
     /// called by `list`, which the dual store calls on every write through
     /// `merged_records` -- so an unguarded reload here cost 1.9 s of the 2.9 s
     /// a `put` took at 306 records (issues #356, #357).
@@ -225,7 +225,7 @@ impl BinaryTokenStore {
         })
     }
 
-    /// Write the graph only when the records differ from what is on disk.
+    /// Write the links network only when the records differ from disk.
     ///
     /// Rebuilding is the expensive half of a write: `write_binary` stores each
     /// string as one link per byte, and every field key is a per-record path,

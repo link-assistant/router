@@ -1063,7 +1063,7 @@ The HTTP API accepts the same shape at `POST /api/providers`:
 Router-owned token state uses the associative stack. `tokens.lino` is a
 portable Links Notation projection produced by `lino-objects-codec`, with each
 record represented as `Type → SubType → Value`. `tokens.bin` is the same
-semantic graph in a native `doublets` store backed by file-mapped
+semantic links network in a native `doublets` store backed by file-mapped
 `platform-mem`. The `text`, `binary`, and default `both` policies select those
 two projections; `memory` remains non-persistent. Hand-built `tokens.lino`
 files and `LARTOK01` JSON containers from earlier releases are loaded and

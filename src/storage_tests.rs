@@ -583,7 +583,7 @@ fn listing_stays_fast_at_deployment_scale() {
 /// `mutate` reloaded the whole store from disk before every change so that a
 /// second router process's writes became visible. That guarantee is real --
 /// `multiprocess_storage_test` depends on it -- but paying for it
-/// unconditionally cost a full parse of the doublets graph on a path that
+/// unconditionally cost a full parse of the doublets links network on a path
 /// almost always finds nothing changed, which is most of why minting a token
 /// took seconds (issues #356, #357).
 ///
@@ -614,7 +614,7 @@ fn writing_does_not_reparse_an_unchanged_store() {
     assert_eq!(
         parses, 0,
         "ten writes to a store nobody else touched parsed the file {parses} \
-         time(s); each parse rebuilds the whole graph"
+         time(s); each parse rebuilds the whole links network"
     );
     assert_eq!(store.list().expect("list").len(), 50);
 }
@@ -731,7 +731,7 @@ fn a_refused_request_does_not_extend_the_expiry() {
 ///
 /// `refresh` reloaded unconditionally, and the dual store calls `list` on
 /// every write through `merged_records`, so a `put` paid a full parse of the
-/// graph before doing anything else -- 1.9 s of the 2.9 s a write took at 306
+/// links network before doing anything else -- 1.9 s of the 2.9 s a write took at 306
 /// records (issues #356, #357).
 #[test]
 fn reading_does_not_reparse_an_unchanged_store() {
@@ -752,7 +752,7 @@ fn reading_does_not_reparse_an_unchanged_store() {
     assert_eq!(
         parses, 0,
         "ten listings of a store nobody else touched parsed the file {parses} \
-         time(s); each parse rebuilds the whole graph"
+         time(s); each parse rebuilds the whole links network"
     );
 }
 
@@ -797,14 +797,16 @@ fn an_empty_store_file_is_not_mistaken_for_a_legacy_one() {
 /// strings are interned through a cache -- and this pins that, because losing
 /// it would corrupt the store rather than fail.
 #[test]
-fn the_encoded_graph_contains_no_duplicate_pairs() {
+fn the_encoded_links_network_contains_no_duplicate_pairs() {
     let directory = tempdir().expect("temporary directory");
     let path = directory.path().join("tokens.bin");
     let records: Vec<_> = (0..12)
         .map(|index| sample_record(&format!("id-{index:04}")))
         .collect();
     let store = BinaryTokenStore::open(&path).expect("open");
-    store.replace_all(&records).expect("write the graph");
+    store
+        .replace_all(&records)
+        .expect("write the links network");
 
     let pairs = super::associative::encoded_pairs_for_test(&path).expect("read pairs");
     let mut seen = std::collections::HashSet::new();
