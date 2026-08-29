@@ -267,9 +267,9 @@ jobs:
       - name: Check file size limit
         run: rust-script scripts/check-file-size.rs
 
-      # This project's data structure is a links network, not a graph. The  # terminology-check: allow
-      # distinction is load-bearing -- see CONTRIBUTING.md -- so the wrong
-      # word is rejected in identifiers and prose alike, in any language.
+      # This project's data structure is a links network, and the wording is
+      # load-bearing rather than stylistic -- see the terminology section of
+      # CONTRIBUTING.md. Rejected in identifiers and prose alike, any language.
       - name: Check terminology
         run: rust-script scripts/check-terminology.rs
 

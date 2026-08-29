@@ -15,8 +15,9 @@
 //! "dependency graph", and words that merely contain the letters (paragraph,
 //! lexicographic, geographic).
 //!
-//! A line may opt out with a `terminology-check: allow` marker, for the few
-//! places that must name the forbidden word to explain or test the rule.
+//! The places whose job is to *state* the rule may name the word freely: the
+//! contributing guidelines, the changelog, and this script. Everywhere else it
+//! is rejected.
 //!
 //! Usage: rust-script scripts/check-terminology.rs
 //!
@@ -36,20 +37,31 @@ const SCANNED_EXTENSIONS: &[&str] = &[
     ".css", ".txt",
 ];
 
-/// Paths that are not ours to edit, or are a historical record.
+/// Paths where the word may appear, for one of two reasons.
 ///
-/// `dev/log` and `docs/case-studies/*/raw` hold captured third-party text and
-/// CI transcripts; `CHANGELOG.md` is an append-only record of what was said at
-/// the time. Rewriting either would falsify a record rather than fix wording.
+/// **Stating the rule.** A rule has to be expressible: `CONTRIBUTING.md`
+/// explains why the word is wrong, the changelog records that the wording
+/// changed, and this script defines the check. All three must quote what they
+/// forbid, so they are the places -- and the only places -- where it is
+/// allowed to name it.
+///
+/// **Records, not prose we own.** `dev/log` and `docs/case-studies/*/raw`
+/// hold captured third-party text and CI transcripts; `ui/dist` is a built
+/// bundle. Rewriting any of them would falsify a record or be undone by the
+/// next build.
 const EXCLUDED_PATHS: &[&str] = &[
+    // Where the rule is stated.
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "changelog.d/",
+    "scripts/check-terminology.rs",
+    // Records and generated output.
     "target",
     ".git/",
     "node_modules",
     "dev/log",
     "/raw/",
     "ui/dist",
-    "CHANGELOG.md",
-    "scripts/check-terminology.rs",
 ];
 
 /// Other people's names for their own things, which we have to spell correctly.
@@ -103,23 +115,12 @@ fn is_scanned(path: &Path) -> bool {
     })
 }
 
-/// Marker that exempts a single line, for text that has to name the word.
-///
-/// The rule has to be stateable: this file explains it, `CONTRIBUTING.md`
-/// documents it, and both must quote what they forbid. Scoping the exemption
-/// to a line keeps the rest of those files checked, which excluding them
-/// wholesale would not.
-const ALLOW_MARKER: &str = "terminology-check: allow";
-
 /// Every byte offset in `line` where a forbidden use of "graph" starts.
 ///
 /// A hit is forbidden unless it falls inside one of [`ALLOWED_PHRASES`]. The
 /// window is measured in bytes and clamped to character boundaries, so a line
 /// containing multi-byte text cannot panic the check.
 fn violations(line: &str) -> Vec<usize> {
-    if line.contains(ALLOW_MARKER) {
-        return Vec::new();
-    }
     let lowered = line.to_lowercase();
     let mut found = Vec::new();
     let mut search_from = 0;
@@ -202,7 +203,8 @@ fn main() {
     eprintln!(
         "\n{} occurrence(s). If a hit is somebody else's name for their own thing\n\
          (GraphQL, Git's object graph, a dependency graph), add it to\n\
-         ALLOWED_PHRASES in scripts/check-terminology.rs with a reason.",
+         ALLOWED_PHRASES in scripts/check-terminology.rs with a reason.\n\
+         Only CONTRIBUTING.md and the changelog may name it to explain it.",
         offences.len()
     );
     exit(1);
@@ -248,24 +250,30 @@ mod tests {
     }
 
     #[test]
-    fn a_line_can_opt_out_so_the_rule_stays_stateable() {
-        assert!(violations("write \"links network\", never \"graph\" // terminology-check: allow").is_empty());
-        // The marker exempts only the line that carries it.
-        assert_eq!(violations("rebuilding the graph").len(), 1);
-    }
-
-    #[test]
     fn multibyte_lines_do_not_panic() {
         assert!(violations("персистентная сеть связей — no offence here").is_empty());
         assert_eq!(violations("схема — the graph is rebuilt").len(), 1);
     }
 
+    /// The rule is stateable where it is stated, and nowhere else.
     #[test]
-    fn excluded_paths_cover_the_historical_record() {
+    fn only_the_places_that_state_the_rule_may_name_it() {
+        assert!(is_excluded(Path::new("./CONTRIBUTING.md")));
         assert!(is_excluded(Path::new("./CHANGELOG.md")));
+        assert!(is_excluded(Path::new("./changelog.d/20260829_x.md")));
+        assert!(is_excluded(Path::new("./scripts/check-terminology.rs")));
+        // Everywhere else stays checked, docs included.
+        assert!(!is_excluded(Path::new("./src/storage.rs")));
+        assert!(!is_excluded(Path::new("./README.md")));
+        assert!(!is_excluded(Path::new("./docs/ci-cd/troubleshooting.md")));
+        assert!(!is_excluded(Path::new("./.github/workflows/release.yml")));
+    }
+
+    #[test]
+    fn records_and_generated_output_are_excluded() {
         assert!(is_excluded(Path::new("./dev/log/issues/1/x.log")));
         assert!(is_excluded(Path::new("./docs/case-studies/issue-9/raw/x.md")));
-        assert!(!is_excluded(Path::new("./src/storage.rs")));
+        assert!(is_excluded(Path::new("./ui/dist/assets/react.js")));
     }
 
     #[test]

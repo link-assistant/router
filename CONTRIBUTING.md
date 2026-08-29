@@ -141,25 +141,25 @@ This project uses:
 - Keep files under 1000 lines
 - Use meaningful variable and function names
 
-### Terminology: it is a links network, never a graph <!-- terminology-check: allow -->
+### Terminology: it is a links network, never a graph
 
 The structure this project stores its tokens in is a **links network**: links
-whose sources and targets are themselves links. The word *graph* is not used <!-- terminology-check: allow -->
+whose sources and targets are themselves links. The word *graph* is not used
 for it, and CI rejects it.
 
-The distinction is load-bearing rather than stylistic. In a graph you have <!-- terminology-check: allow -->
+The distinction is load-bearing rather than stylistic. In a graph you have
 vertices joined by edges, and the edge is a relationship *between* two things
 that are not themselves edges. In a links network there is no separate kind of
 thing to be a vertex: every link is addressable, and a link can be the source
 or target of another link. A "point" is just a link whose source and target are
-itself. Calling it a graph invites reasoning that quietly does not hold — that <!-- terminology-check: allow -->
+itself. Calling it a graph invites reasoning that quietly does not hold — that
 edges are anonymous, that they cannot be referenced, that vertices are a
 distinct population to be counted separately.
 
 - **Write:** "links network", or plain **"network"** where the context already
   makes it clear ("the network is parsed once per process").
-- **Do not write:** "graph", "the doublets graph", "semantic graph", <!-- terminology-check: allow -->
-  `parse_graph()`, `let graph = ...`. <!-- terminology-check: allow -->
+- **Do not write:** "graph", "the doublets graph", "semantic graph",
+  `parse_graph()`, `let graph = ...`.
 
 This applies to **identifiers as well as prose** — variable, function, type and
 test names — and to documentation in **every human language**, not only
@@ -172,15 +172,21 @@ geographic). If you hit a genuine case the check does not know about, add it to
 `ALLOWED_PHRASES` in `scripts/check-terminology.rs` **with a reason** — the
 list is deliberately narrow.
 
+This file, `CHANGELOG.md` and `changelog.d/` may name the word freely, because
+their job is to state the rule and to record that the wording changed. They are
+the only places that may. Everywhere else — source, `README.md`, the rest of
+`docs/`, workflows — is checked, so do not reach for the changelog as a way to
+say it elsewhere.
+
 Run it locally the way CI does:
 
 ```bash
 rust-script scripts/check-terminology.rs
 ```
 
-`CHANGELOG.md`, `dev/log/` and captured third-party text under
-`docs/case-studies/*/raw/` are excluded: they are records of what was written
-at the time, and editing them would falsify the record rather than fix wording.
+`dev/log/` and captured third-party text under `docs/case-studies/*/raw/` are
+excluded as records rather than as wording to fix — editing them would falsify
+what was written at the time — and `ui/dist/` is a built bundle.
 
 ### Documentation Format
 
