@@ -311,16 +311,124 @@ fn optional_i64_string_field(
     }
 }
 
-pub(super) fn write_binary<'a>(
-    path: &Path,
-    records: impl IntoIterator<Item = &'a TokenRecord>,
-) -> Result<(), StorageError> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| std::io::Error::other("storage path has no parent directory"))?;
-    fs::create_dir_all(parent)?;
-    let tmp = temporary_path(path)?;
-    let result = (|| {
+/// A doublets store held open for the lifetime of the process.
+///
+/// The store this crate is built on is a memory-mapped file, and it is meant to
+/// be opened once and kept. Reopening it per access cost a full open-map-build
+/// -teardown cycle every time, and on the write path a complete reconstruction
+/// of the semantic graph -- which is what made a read-only `list()` take
+/// seconds while the underlying disk write was a fraction of that (issue #357).
+///
+/// Writing through the held mapping is also what makes holding it *safe*. The
+/// previous write path built a fresh file and `rename`d it over the old one,
+/// which replaces the inode: a process holding the store would have kept
+/// reading the replaced inode and never seen another process's writes. Mutating
+/// the mapping in place keeps every process pointed at the same inode, and the
+/// mapping is `MAP_SHARED`, so a write is visible to the others as soon as it
+/// lands. Durability is the kernel's: dirty pages are written back on its own
+/// schedule, and the mapping is synced when it is closed.
+pub(super) struct PersistentStore {
+    store: FileStore,
+    path: PathBuf,
+    /// The rebuild in progress, not yet in place of [`Self::path`].
+    pending: Option<PathBuf>,
+}
+
+impl PersistentStore {
+    /// Open the file once, creating it when it does not exist yet.
+    pub(super) fn open(path: &Path) -> Result<Self, StorageError> {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let mut options = OpenOptions::new();
+        options.read(true).write(true).create(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let file = options.open(path)?;
+        let mapped = LoadedFileMapped::new(file)?;
+        let store = unit::Store::<usize, _>::new(mapped)
+            .map_err(|error| codec_error("open doublets store", error))?;
+        Ok(Self {
+            store,
+            path: path.to_path_buf(),
+            pending: None,
+        })
+    }
+
+    /// Point this store at the file the path names now, if it moved.
+    ///
+    /// Another process rebuilds by renaming a replacement over the path, which
+    /// swaps the inode. Our mapping still refers to the old one, so it has to
+    /// be dropped and remade or this store answers from a file nobody writes
+    /// to any more (issue #357).
+    pub(super) fn remap(&mut self) -> Result<(), StorageError> {
+        let file = OpenOptions::new().read(true).write(true).open(&self.path)?;
+        let mapped = LoadedFileMapped::new(file)?;
+        self.store = unit::Store::<usize, _>::new(mapped)
+            .map_err(|error| codec_error("reopen doublets store", error))?;
+        Ok(())
+    }
+
+    /// Every record currently in the store.
+    pub(super) fn records(&self) -> Result<Vec<TokenRecord>, StorageError> {
+        // A store that has never been written has no schema to validate.
+        if self.store.count() == 0 {
+            return Ok(Vec::new());
+        }
+        let links = read_semantic_links(&self.store)?;
+        links_to_records(&links).map_err(StorageError::Codec)
+    }
+
+    /// Replace the store's contents with `records`, keeping the same file.
+    ///
+    /// The graph is rebuilt from empty, which means the old one has to go
+    /// first. `Doublets::delete_all` is the obvious way to do that and is
+    /// unusable in doublets 0.4: on a store holding real links it either
+    /// panics with `attempt to subtract with overflow` inside
+    /// `platform-trees`' `detach_core`, or fails to terminate. So the reset
+    /// truncates the file and maps it again.
+    ///
+    /// Truncating keeps the **inode**, which is the entire point. Writing a
+    /// temporary and renaming it over the path would replace the inode, and
+    /// every other process holding this store would go on reading the
+    /// replaced one -- silently missing every later write. `set_len` mutates
+    /// the file every holder already has open (issue #357).
+    pub(super) fn replace<'a>(
+        &mut self,
+        records: impl IntoIterator<Item = &'a TokenRecord>,
+    ) -> Result<(), StorageError> {
+        self.reset()?;
+        let mut strings = HashMap::new();
+        write_semantic_links(&mut self.store, &mut strings, records)?;
+        self.publish()
+    }
+
+    /// Empty the store by replacing the file, then remap the new one.
+    ///
+    /// Neither of the two ways to empty a mapped file in place is usable here:
+    ///
+    /// * `Doublets::delete_all` panics with `attempt to subtract with
+    ///   overflow` inside `platform-trees`' `detach_core`, or fails to
+    ///   terminate, on a store holding real links (doublets 0.4).
+    /// * `set_len(0)` unmaps the pages another process is still reading, and
+    ///   that process dies with **SIGBUS** the moment it touches one --
+    ///   observed as exit code 138 from a concurrent `tokens issue`.
+    ///
+    /// So the file is replaced and this store remaps the replacement. The cost
+    /// is that a *different* process's mapping now points at the old inode, so
+    /// it has to notice and reopen; `BinaryTokenStore` does that with the
+    /// fingerprint check before every read (issue #357).
+    fn reset(&mut self) -> Result<(), StorageError> {
+        let parent = self
+            .path
+            .parent()
+            .ok_or_else(|| std::io::Error::other("storage path has no parent directory"))?;
+        fs::create_dir_all(parent)?;
+        let temporary = self.path.with_extension("rebuild");
+        let _ = fs::remove_file(&temporary);
         let mut options = OpenOptions::new();
         options.read(true).write(true).create_new(true);
         #[cfg(unix)]
@@ -328,43 +436,33 @@ pub(super) fn write_binary<'a>(
             use std::os::unix::fs::OpenOptionsExt;
             options.mode(0o600);
         }
-        let file = options.open(&tmp)?;
+        let file = options.open(&temporary)?;
         let mapped = LoadedFileMapped::new(file)?;
-        let mut store = unit::Store::<usize, _>::new(mapped)
-            .map_err(|error| codec_error("initialize doublets store", error))?;
-        write_semantic_links(&mut store, records)?;
-        drop(store);
-        // Windows requires a writable handle for FlushFileBuffers, which is
-        // what File::sync_all uses after the memory map has been dropped.
-        OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&tmp)?
-            .sync_all()?;
-        if let Ok(metadata) = fs::metadata(path) {
-            fs::set_permissions(&tmp, metadata.permissions())?;
-        }
-        fs::rename(&tmp, path)?;
-        crate::durable_file::sync_directory(parent)?;
+        self.store = unit::Store::<usize, _>::new(mapped)
+            .map_err(|error| codec_error("reopen doublets store", error))?;
+        self.pending = Some(temporary);
         Ok(())
-    })();
-    if result.is_err() {
-        let _ = fs::remove_file(tmp);
     }
-    result
-}
 
-pub(super) fn read_binary(path: &Path) -> Result<Vec<TokenRecord>, StorageError> {
-    let file = OpenOptions::new().read(true).write(true).open(path)?;
-    let mapped = LoadedFileMapped::new(file)?;
-    let store = unit::Store::<usize, _>::new(mapped)
-        .map_err(|error| codec_error("open doublets store", error))?;
-    let links = read_semantic_links(&store)?;
-    links_to_records(&links).map_err(StorageError::Codec)
+    /// Put the rebuilt file in place of the old one.
+    fn publish(&mut self) -> Result<(), StorageError> {
+        let Some(temporary) = self.pending.take() else {
+            return Ok(());
+        };
+        if let Ok(metadata) = fs::metadata(&self.path) {
+            fs::set_permissions(&temporary, metadata.permissions())?;
+        }
+        fs::rename(&temporary, &self.path)?;
+        if let Some(parent) = self.path.parent() {
+            crate::durable_file::sync_directory(parent)?;
+        }
+        Ok(())
+    }
 }
 
 fn write_semantic_links<'a>(
     store: &mut FileStore,
+    string_nodes: &mut HashMap<String, usize>,
     records: impl IntoIterator<Item = &'a TokenRecord>,
 ) -> Result<(), StorageError> {
     initialize_schema(store)?;
@@ -377,10 +475,9 @@ fn write_semantic_links<'a>(
     for record in records {
         links.extend(record_to_links(record));
     }
-    let mut string_nodes = HashMap::new();
     for link in links {
-        let source = intern_string(store, &mut string_nodes, &link.source)?;
-        let target = intern_string(store, &mut string_nodes, &link.target)?;
+        let source = intern_string(store, string_nodes, &link.source)?;
+        let target = intern_string(store, string_nodes, &link.target)?;
         let pair = store
             .create_link(source, target)
             .map_err(|error| codec_error("create semantic pair", error))?;
@@ -761,21 +858,6 @@ where
         .transpose()
 }
 
-fn temporary_path(path: &Path) -> Result<PathBuf, StorageError> {
-    let parent = path
-        .parent()
-        .ok_or_else(|| std::io::Error::other("storage path has no parent directory"))?;
-    let name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .ok_or_else(|| std::io::Error::other("storage file name is not valid UTF-8"))?;
-    Ok(parent.join(format!(
-        ".{name}.{}.{}.tmp",
-        std::process::id(),
-        uuid::Uuid::new_v4()
-    )))
-}
-
 fn codec_error(context: &str, error: impl std::fmt::Debug) -> StorageError {
     StorageError::Codec(format!("{context}: {error:?}"))
 }
@@ -835,7 +917,10 @@ mod tests {
         let path = dir.path().join("tokens.bin");
         let mut record = sample_record();
         record.label = "large associative value".repeat(500);
-        write_binary(&path, std::iter::once(&record)).unwrap();
+        {
+            let mut store = PersistentStore::open(&path).unwrap();
+            store.replace(std::iter::once(&record)).unwrap();
+        }
 
         let file = OpenOptions::new()
             .read(true)
@@ -850,6 +935,9 @@ mod tests {
         );
         drop(graph);
 
-        assert_eq!(read_binary(&path).unwrap(), vec![record]);
+        // Reopened from scratch: what one process wrote in place is what the
+        // next one reads, across the growth boundary.
+        let reopened = PersistentStore::open(&path).unwrap();
+        assert_eq!(reopened.records().unwrap(), vec![record]);
     }
 }

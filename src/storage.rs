@@ -582,7 +582,15 @@ impl DurableDualTokenStore {
             lock_path: data_dir.join("tokens.transaction.lock"),
             journal_path: data_dir.join("tokens.transaction.json"),
         };
-        store.with_records(|_| ())?;
+        // Recovery, not a rewrite. `with_records` reads both projections and
+        // commits them back, which costs a full parse and a full rebuild on
+        // every open -- ~1.9 s at 306 records, paid by every `router with`
+        // invocation. A journal is only present when a writer crashed, so the
+        // work is done when there is something to recover and skipped when
+        // there is not (issue #357).
+        if store.journal_path.exists() {
+            store.with_records(|_| ())?;
+        }
         Ok(store)
     }
 

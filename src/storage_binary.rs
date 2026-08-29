@@ -22,6 +22,13 @@ pub struct BinaryTokenStore {
     path: PathBuf,
     lock_path: PathBuf,
     pub(super) inner: Arc<RwLock<HashMap<String, TokenRecord>>>,
+    /// The doublets store itself, opened once and held for the process.
+    ///
+    /// A reader-writer lock, so concurrent readers share it and a writer
+    /// excludes them: the store is a memory-mapped file whose mutations are
+    /// visible to every holder of the mapping, so the lock is what keeps a
+    /// rebuild from being observed half-finished (issue #357).
+    store: Arc<RwLock<associative::PersistentStore>>,
     /// What the file looked like when `inner` was last loaded from it.
     ///
     /// Re-reading the file on every mutation is what a second router process
@@ -66,21 +73,35 @@ impl BinaryTokenStore {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let (records, migrated) = if path.exists() {
-            if legacy::is_binary(&path)? {
-                (legacy::decode_binary(&path)?, true)
-            } else {
-                (associative::read_binary(&path)?, false)
-            }
+        // A legacy `LARTOK01` file is not a doublets store, so it is decoded
+        // and migrated before the store is opened over the path.
+        let legacy_records = if path.exists() && legacy::is_binary(&path)? {
+            Some(legacy::decode_binary(&path)?)
         } else {
-            (Vec::new(), false)
+            None
         };
-        let map: HashMap<_, _> = records.into_iter().map(|r| (r.id.clone(), r)).collect();
-        let fingerprint = FileFingerprint::read(&path);
+        let migrated = legacy_records.is_some();
+        if migrated {
+            // The doublets store must not be opened over the legacy bytes.
+            fs::remove_file(&path)?;
+        }
+        let store = associative::PersistentStore::open(&path)?;
+        // Opening does not parse the graph. Decoding every record walks one
+        // link per byte of every string, which at 306 records is ~1.9 s -- and
+        // a process that only writes never needs the result. `loaded` is left
+        // unset so the first *read* fills it, and `refresh` treats "never
+        // loaded" as "changed" (issue #357).
+        let map: HashMap<_, _> = legacy_records
+            .into_iter()
+            .flatten()
+            .map(|record| (record.id.clone(), record))
+            .collect();
+        let fingerprint = None;
         let store = Self {
             lock_path: path.with_extension("lock"),
             path,
             inner: Arc::new(RwLock::new(map)),
+            store: Arc::new(RwLock::new(store)),
             loaded: Arc::new(RwLock::new(fingerprint)),
             #[cfg(test)]
             parses: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
@@ -95,7 +116,10 @@ impl BinaryTokenStore {
     fn flush(&self, guard: &HashMap<String, TokenRecord>) -> Result<(), StorageError> {
         let mut sorted: Vec<&TokenRecord> = guard.values().collect();
         sorted.sort_by(|a, b| a.id.cmp(&b.id));
-        associative::write_binary(&self.path, sorted)?;
+        self.store
+            .write()
+            .map_err(|_| StorageError::LockPoisoned)?
+            .replace(sorted)?;
         // Our own write is not somebody else's, so record it rather than
         // re-reading the file to discover what we just put there.
         self.remember_fingerprint();
@@ -138,7 +162,13 @@ impl BinaryTokenStore {
         let records = if legacy::is_binary(&self.path)? {
             legacy::decode_binary(&self.path)?
         } else {
-            associative::read_binary(&self.path)?
+            {
+                // Reached only when the fingerprint says the file changed,
+                // which for a rebuild means the path names a new inode.
+                let mut store = self.store.write().map_err(|_| StorageError::LockPoisoned)?;
+                store.remap()?;
+                store.records()?
+            }
         };
         Ok(records
             .into_iter()
