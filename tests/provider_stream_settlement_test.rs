@@ -50,11 +50,31 @@ impl Drop for Router {
 }
 
 fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .expect("bind ephemeral")
-        .local_addr()
-        .expect("address")
-        .port()
+    // `bind(":0")` then drop releases the port before the child binds it, so
+    // another test binary running concurrently can take it in that window.
+    // The loser then sends its requests to the winner's router, which answers
+    // with its own tokens -- seen on CI as a scoped token appearing
+    // unrestricted, because the reply came from a router that had never heard
+    // of the scope (issue #368).
+    //
+    // The OS still picks the port, since only it knows what is already in use.
+    // What is added is that no port is handed out twice within this process,
+    // which removes the collisions between the suites of one binary; a caller
+    // that still loses to another binary retries (see `Router::start`).
+    use std::sync::{Mutex, OnceLock};
+    static HANDED_OUT: OnceLock<Mutex<std::collections::HashSet<u16>>> = OnceLock::new();
+    let seen = HANDED_OUT.get_or_init(|| Mutex::new(std::collections::HashSet::new()));
+    for _ in 0..4_000 {
+        let port = TcpListener::bind("127.0.0.1:0")
+            .expect("bind ephemeral")
+            .local_addr()
+            .expect("address")
+            .port();
+        if seen.lock().expect("port registry").insert(port) {
+            return port;
+        }
+    }
+    panic!("no unused ephemeral port")
 }
 
 /// Send one request, returning an empty string when nothing is listening yet.
@@ -71,7 +91,21 @@ fn http(port: u16, request: &str) -> String {
 }
 
 impl Router {
+    /// Start a router, retrying if a sibling test binary won the port.
+    ///
+    /// `free_port` releases the port before the child binds it, so a
+    /// concurrent test binary can take it. Losing is recoverable -- the next
+    /// port differs -- so it is retried (issue #368).
     fn start(upstream: u16, data: &std::path::Path, log: &std::path::Path) -> Self {
+        for _ in 0..10 {
+            if let Some(router) = Self::try_start(upstream, data, log) {
+                return router;
+            }
+        }
+        panic!("could not claim a port for the router in ten attempts");
+    }
+
+    fn try_start(upstream: u16, data: &std::path::Path, log: &std::path::Path) -> Option<Self> {
         let port = free_port();
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
@@ -93,16 +127,23 @@ impl Router {
             .stderr(Stdio::null())
             .spawn()
             .expect("start router");
-        let router = Self { child, port };
+        let mut router = Self { child, port };
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
+            // A reply here may come from a sibling binary that won the port;
+            // a child that lost exits, which is what tells them apart.
+            match router.child.try_wait() {
+                Ok(Some(_)) => return None,
+                Ok(None) => {}
+                Err(error) => panic!("cannot poll the router: {error}"),
+            }
             if http(
                 router.port,
                 "GET /health HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
             )
             .contains(" 200 ")
             {
-                return router;
+                return Some(router);
             }
             std::thread::sleep(Duration::from_millis(100));
         }
