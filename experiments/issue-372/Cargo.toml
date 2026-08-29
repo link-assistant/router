@@ -1,0 +1,18 @@
+# Standalone crate, deliberately outside the router's build: it exists to
+# answer questions about the *upstream* crates before the router depends on
+# them (issue #372).
+[workspace]
+
+[package]
+name = "issue-372-doublets-05"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+doublets = "0.5.0"
+link-cli = "0.2.10"
+
+[[bin]]
+name = "issue-372-doublets-05"
+path = "main.rs"
