@@ -7,8 +7,14 @@ use super::{StorageError, TokenRecord};
 pub(super) const BIN_MAGIC: &[u8; 8] = b"LARTOK01";
 
 pub(super) fn is_binary(path: &Path) -> Result<bool, StorageError> {
+    // Too short to carry the magic, so it is not a legacy file. It used to be
+    // reported as one, which was harmless while a store only ever appeared
+    // fully built -- the old writer renamed a finished temporary into place.
+    // A store that is created empty and filled in has a moment of being zero
+    // bytes, and a concurrent reader that saw it then decoded it as legacy and
+    // failed with "invalid legacy binary magic header" (issue #357).
     if fs::metadata(path)?.len() < BIN_MAGIC.len() as u64 {
-        return Ok(true);
+        return Ok(false);
     }
     let mut file = fs::File::open(path)?;
     let mut magic = [0u8; 8];

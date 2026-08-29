@@ -755,3 +755,28 @@ fn reading_does_not_reparse_an_unchanged_store() {
          time(s); each parse rebuilds the whole graph"
     );
 }
+
+/// A file too short to hold the legacy magic is not a legacy file.
+///
+/// It used to be reported as one, which was invisible while a store only
+/// appeared fully built: the old writer renamed a finished temporary into
+/// place, so a reader never saw a partial one. A store that is created empty
+/// and then filled has a moment of being zero bytes, and a concurrent reader
+/// that caught it there decoded it as legacy and failed the whole command with
+/// `invalid legacy binary magic header`. Eight concurrent `tokens issue`
+/// processes hit it about half the time (issue #357).
+#[test]
+fn an_empty_store_file_is_not_mistaken_for_a_legacy_one() {
+    let directory = tempdir().expect("temporary directory");
+    let path = directory.path().join("tokens.bin");
+    std::fs::write(&path, b"").expect("create an empty store file");
+
+    assert!(
+        !super::legacy::is_binary(&path).expect("classify the empty file"),
+        "an empty file cannot carry the legacy magic, so it is not legacy"
+    );
+
+    // And it opens as an empty store rather than failing to decode.
+    let store = BinaryTokenStore::open(&path).expect("open over the empty file");
+    assert!(store.list().expect("list").is_empty());
+}
