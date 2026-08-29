@@ -11,6 +11,16 @@
 //!    sizes; 0.5 fixed exactly that.
 //! 3. Does a plain store still accept a duplicate `(source, target)` pair, so
 //!    that interning through `get_or_create` is still required?
+//! 4. Is a store still usable after `delete_all` -- can it be refilled, and
+//!    does a reopen see the refill? That is the router's whole write path:
+//!    empty the links network, rebuild it from the records, keep the inode.
+//!
+//! 5. Does an in-place rebuild (`delete_all` + refill, no rename) shrink the
+//!    file, and does it move the file's length or modification time? The
+//!    router detects another process's writes by `stat`ing those two fields,
+//!    and a `MAP_SHARED` write only bumps `mtime` when a *clean* page is
+//!    dirtied -- so a second rebuild inside one writeback cycle may leave the
+//!    fingerprint untouched, and a shrink would `SIGBUS` another mapper.
 //!
 //! Run with: `cargo run --manifest-path experiments/issue-372/Cargo.toml`
 
@@ -56,6 +66,64 @@ fn main() {
         assert_eq!(store.count(), 0);
     }
     println!("2. delete_all terminated without a panic");
+
+    // 4. Refilling after `delete_all`, and reopening the refilled file.
+    let refilled = {
+        let mut store = open(&path);
+        let a = store.create_point().expect("create a point");
+        let b = store.create_point().expect("create a point");
+        store.get_or_create(a, b).expect("create a pair");
+        store.count()
+    };
+    let reopened = open(&path).count();
+    println!("4. refilled to {refilled} links, reopened {reopened}");
+    assert_eq!(refilled, reopened, "a refilled store must survive a reopen");
+
+    // 5. What an in-place rebuild does to the file's length and mtime.
+    {
+        let path = directory.join("in-place.bin");
+        let fingerprint = |label: &str| {
+            let metadata = std::fs::metadata(&path).expect("stat the file");
+            let modified = metadata.modified().expect("read the mtime");
+            println!("5. {label}: len={} mtime={modified:?}", metadata.len());
+            (metadata.len(), modified)
+        };
+        let rebuild = |count: usize| {
+            let mut store = open(&path);
+            store.delete_all().expect("delete every link");
+            for _ in 0..count {
+                store.create_point().expect("create a point");
+            }
+        };
+        rebuild(2_048);
+        let grown = fingerprint("after a large rebuild");
+        rebuild(4);
+        let shrunk = fingerprint("after a small rebuild");
+        println!(
+            "5. the file shrank: {}; the fingerprint moved: {}",
+            shrunk.0 < grown.0,
+            shrunk != grown
+        );
+
+        // The router does not reopen between writes: it holds one mapping for
+        // the life of the process. A rebuild through a mapping whose pages are
+        // already dirty is the case that may leave `mtime` alone.
+        let mut held = open(&path);
+        let mut rebuild_held = |count: usize| {
+            held.delete_all().expect("delete every link");
+            for _ in 0..count {
+                held.create_point().expect("create a point");
+            }
+        };
+        rebuild_held(64);
+        let first = fingerprint("after a held-mapping rebuild");
+        rebuild_held(65);
+        let second = fingerprint("after a second held-mapping rebuild");
+        println!(
+            "5. a second write through a held mapping moved the fingerprint: {}",
+            second != first
+        );
+    }
 
     // 3. Duplicate pairs on a plain store.
     {
