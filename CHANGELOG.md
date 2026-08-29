@@ -138,6 +138,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.124.3] - 2026-08-29
+
+### Fixed
+- The token store no longer writes duplicate links into its doublets graph. Byte sequences are built right to left, so every string ending in the same byte created its own copy of the same `(byte, empty)` link — a second link with a `(source, target)` pair the store already held. `doublets` 0.4 accepts that and cannot represent it: `count()` sees both copies while the `(source, target)` index sees one, and the sources/targets trees' sizes then disagree with the storage, so any later deletion underflows in `platform-trees` — a panic in debug and a silent wrap in release. Interning and the semantic pairs now use `get_or_create`, which reuses the existing link, matching what the C# implementation enforces with `LinkWithSameValueAlreadyExistsException` (reported as linksplatform/doublets-rs#57).
+- Writes are about twice as fast as a side effect. Sharing a suffix rather than recreating it is simply less work: ten writes at 306 records went from 11.4 s to 6.1 s.
+
 ## [0.124.2] - 2026-08-29
 
 ### Fixed
