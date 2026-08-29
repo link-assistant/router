@@ -4,10 +4,11 @@ use std::path::{Path, PathBuf};
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD_NO_PAD;
+use doublets::mem::unit::LinkPart;
 use doublets::{Doublets, DoubletsExt, Links, unit};
+use link_cli::storage::PersistentFileMapped;
 use lino_objects_codec::LinoValue;
 
-use super::file_mapped::LoadedFileMapped;
 use super::{StorageError, TokenRecord};
 
 const TYPE: &str = "Type";
@@ -24,7 +25,16 @@ const EMPTY_SEQUENCE: usize = 3;
 const BYTE_NODE_START: usize = 4;
 const SCHEMA_NODE_COUNT: usize = 259;
 
-type FileStore = unit::Store<usize, LoadedFileMapped>;
+/// The mapping the store is built on.
+///
+/// `link-cli`'s `PersistentFileMapped` is the maintained answer to the one
+/// thing the router used to keep an `unsafe` adapter of its own for: `doublets`
+/// grows its memory through `RawMem::grow_filled`, whose default fills the
+/// *whole* new region -- including the part already backed by bytes on disk --
+/// so reopening a file-mapped store zeroed it. `PersistentFileMapped` forwards
+/// to `grow_filled_exact`, which fills only the genuinely uninitialised tail
+/// (issue #372).
+type FileStore = unit::Store<usize, PersistentFileMapped<LinkPart<usize>>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct SemanticLink {
@@ -348,7 +358,7 @@ impl PersistentStore {
             options.mode(0o600);
         }
         let file = options.open(path)?;
-        let mapped = LoadedFileMapped::new(file)?;
+        let mapped = PersistentFileMapped::new(file)?;
         let store = unit::Store::<usize, _>::new(mapped)
             .map_err(|error| codec_error("open doublets store", error))?;
         Ok(Self {
@@ -366,7 +376,7 @@ impl PersistentStore {
     /// to any more (issue #357).
     pub(super) fn remap(&mut self) -> Result<(), StorageError> {
         let file = OpenOptions::new().read(true).write(true).open(&self.path)?;
-        let mapped = LoadedFileMapped::new(file)?;
+        let mapped = PersistentFileMapped::new(file)?;
         self.store = unit::Store::<usize, _>::new(mapped)
             .map_err(|error| codec_error("reopen doublets store", error))?;
         Ok(())
@@ -382,20 +392,11 @@ impl PersistentStore {
         links_to_records(&links).map_err(StorageError::Codec)
     }
 
-    /// Replace the store's contents with `records`, keeping the same file.
+    /// Replace the store's contents with `records`.
     ///
-    /// The links network is rebuilt from empty, which means the old one has to go
-    /// first. `Doublets::delete_all` is the obvious way to do that and is
-    /// unusable in doublets 0.4: on a store holding real links it either
-    /// panics with `attempt to subtract with overflow` inside
-    /// `platform-trees`' `detach_core`, or fails to terminate. So the reset
-    /// truncates the file and maps it again.
-    ///
-    /// Truncating keeps the **inode**, which is the entire point. Writing a
-    /// temporary and renaming it over the path would replace the inode, and
-    /// every other process holding this store would go on reading the
-    /// replaced one -- silently missing every later write. `set_len` mutates
-    /// the file every holder already has open (issue #357).
+    /// The links network is rebuilt from empty, so the old one has to go first;
+    /// see [`Self::reset`] for why it goes by being replaced rather than
+    /// emptied in place.
     pub(super) fn replace<'a>(
         &mut self,
         records: impl IntoIterator<Item = &'a TokenRecord>,
@@ -408,19 +409,30 @@ impl PersistentStore {
 
     /// Empty the store by replacing the file, then remap the new one.
     ///
-    /// Neither of the two ways to empty a mapped file in place is usable here:
+    /// doublets 0.5 fixed `Doublets::delete_all`, which on 0.4 either panicked
+    /// with `attempt to subtract with overflow` inside `platform-trees`'
+    /// `detach_core` or failed to terminate on a store holding real links.
+    /// Emptying in place is therefore possible now -- and still wrong here, for
+    /// a second reason the 0.4 defect used to hide.
     ///
-    /// * `Doublets::delete_all` panics with `attempt to subtract with
-    ///   overflow` inside `platform-trees`' `detach_core`, or fails to
-    ///   terminate, on a store holding real links (doublets 0.4).
-    /// * `set_len(0)` unmaps the pages another process is still reading, and
-    ///   that process dies with **SIGBUS** the moment it touches one --
-    ///   observed as exit code 138 from a concurrent `tokens issue`.
+    /// A second router process learns that this one wrote by `stat`ing the
+    /// file: `BinaryTokenStore` compares length and modification time before
+    /// every read, so it pays a full parse only when they moved (issue #357).
+    /// A write through a mapping this process *holds* moves neither. Linux
+    /// bumps `mtime` from `filemap_page_mkwrite`, when a **clean** page is
+    /// first dirtied; a rebuild that lands on pages already dirty from the
+    /// previous one bumps nothing, and the length does not change because the
+    /// mapping never shrinks. `experiments/issue-372` measures exactly that --
+    /// two consecutive rebuilds through one held mapping leave an identical
+    /// `(len, mtime)` -- so an in-place reset would make the other process miss
+    /// the write entirely.
     ///
-    /// So the file is replaced and this store remaps the replacement. The cost
-    /// is that a *different* process's mapping now points at the old inode, so
-    /// it has to notice and reopen; `BinaryTokenStore` does that with the
-    /// fingerprint check before every read (issue #357).
+    /// Replacing the file moves both. `set_len(0)` on the live file would move
+    /// them too, and is not an option either: it unmaps the pages another
+    /// process is still reading, and that process dies with **SIGBUS** the
+    /// moment it touches one -- observed as exit code 138 from a concurrent
+    /// `tokens issue`. So the rebuild goes to a temporary and [`Self::publish`]
+    /// renames it into place.
     fn reset(&mut self) -> Result<(), StorageError> {
         let parent = self
             .path
@@ -437,7 +449,7 @@ impl PersistentStore {
             options.mode(0o600);
         }
         let file = options.open(&temporary)?;
-        let mapped = LoadedFileMapped::new(file)?;
+        let mapped = PersistentFileMapped::new(file)?;
         self.store = unit::Store::<usize, _>::new(mapped)
             .map_err(|error| codec_error("reopen doublets store", error))?;
         self.pending = Some(temporary);
@@ -960,7 +972,7 @@ mod tests {
             .write(true)
             .open(&path)
             .unwrap();
-        let memory = LoadedFileMapped::new(file).unwrap();
+        let memory = PersistentFileMapped::new(file).unwrap();
         let links_network = unit::Store::<usize, _>::new(memory).unwrap();
         assert!(
             links_network.count() > 8 * 1024,

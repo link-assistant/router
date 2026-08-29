@@ -816,9 +816,9 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "doublets"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fec36305f729ca75677ebe6be2f45020a52894c32cac4842e18d4ad320f7a31f"
+checksum = "677be8ee593349204e8e7cbc2398d4b98fb95fd1386f3a7eaf286860a5788c8f"
 dependencies = [
  "cfg-if",
  "leak_slice",
@@ -1636,11 +1636,11 @@ dependencies = [
  "hyper",
  "hyper-util",
  "jsonwebtoken",
+ "link-cli",
  "links-notation",
  "lino-arguments",
  "lino-objects-codec",
  "log-lazy",
- "platform-mem",
  "portable-pty",
  "proptest",
  "rcgen",
@@ -1660,6 +1660,19 @@ dependencies = [
  "uuid",
  "wait-timeout",
  "zstd",
+]
+
+[[package]]
+name = "link-cli"
+version = "0.2.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22b8713bafccde8ab4298b27bd5188462ecdfbb52506559c3dc7aa762e33e92c"
+dependencies = [
+ "anyhow",
+ "doublets",
+ "links-notation",
+ "lino-arguments",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
