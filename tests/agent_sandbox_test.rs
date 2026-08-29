@@ -11,11 +11,31 @@ use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .expect("bind ephemeral")
-        .local_addr()
-        .expect("address")
-        .port()
+    // `bind(":0")` then drop releases the port before the child binds it, so
+    // another test binary running concurrently can take it in that window.
+    // The loser then sends its requests to the winner's router, which answers
+    // with its own tokens -- seen on CI as a scoped token appearing
+    // unrestricted, because the reply came from a router that had never heard
+    // of the scope (issue #368).
+    //
+    // The OS still picks the port, since only it knows what is already in use.
+    // What is added is that no port is handed out twice within this process,
+    // which removes the collisions between the suites of one binary; a caller
+    // that still loses to another binary retries (see `Router::start`).
+    use std::sync::{Mutex, OnceLock};
+    static HANDED_OUT: OnceLock<Mutex<std::collections::HashSet<u16>>> = OnceLock::new();
+    let seen = HANDED_OUT.get_or_init(|| Mutex::new(std::collections::HashSet::new()));
+    for _ in 0..4_000 {
+        let port = TcpListener::bind("127.0.0.1:0")
+            .expect("bind ephemeral")
+            .local_addr()
+            .expect("address")
+            .port();
+        if seen.lock().expect("port registry").insert(port) {
+            return port;
+        }
+    }
+    panic!("no unused ephemeral port")
 }
 
 /// An upstream that accepts every push, so a refusal can only come from the
@@ -79,7 +99,20 @@ impl Drop for Router {
 }
 
 impl Router {
+    /// Start a router, retrying if a sibling test binary won the port.
+    ///
+    /// Losing the race is recoverable -- the next port will be a different
+    /// one -- so it is retried rather than failing the test (issue #368).
     fn start(upstream: u16) -> Self {
+        for _ in 0..10 {
+            if let Some(router) = Self::try_start(upstream) {
+                return router;
+            }
+        }
+        panic!("could not claim a port for the router in ten attempts");
+    }
+
+    fn try_start(upstream: u16) -> Option<Self> {
         let data = tempfile::tempdir().expect("data dir");
         let port = free_port();
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
@@ -99,11 +132,25 @@ impl Router {
             .stderr(Stdio::null())
             .spawn()
             .expect("start the router");
-        let router = Self { child, port, data };
+        let mut router = Self { child, port, data };
         let deadline = Instant::now() + Duration::from_secs(40);
         while Instant::now() < deadline {
+            // A router answering here is not necessarily *this* router: if a
+            // sibling test binary took the port in the window between
+            // `free_port` releasing it and the child binding it, the reply
+            // comes from that one. Its health endpoint answers 200 just the
+            // same, and the mismatch only surfaces later as a token the other
+            // router never issued (issue #368). A child that lost the race
+            // exits, so its liveness is what distinguishes the two.
+            match router.child.try_wait() {
+                // Lost the race: the port went to somebody else and this child
+                // could not bind it. Recoverable -- the caller tries again.
+                Ok(Some(_)) => return None,
+                Ok(None) => {}
+                Err(error) => panic!("cannot poll the router: {error}"),
+            }
             if router.get("/health").contains(" 200 ") {
-                return router;
+                return Some(router);
             }
             std::thread::sleep(Duration::from_millis(150));
         }

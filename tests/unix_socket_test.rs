@@ -17,11 +17,31 @@ use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .expect("bind ephemeral")
-        .local_addr()
-        .expect("address")
-        .port()
+    // `bind(":0")` then drop releases the port before the child binds it, so
+    // another test binary running concurrently can take it in that window.
+    // The loser then sends its requests to the winner's router, which answers
+    // with its own tokens -- seen on CI as a scoped token appearing
+    // unrestricted, because the reply came from a router that had never heard
+    // of the scope (issue #368).
+    //
+    // The OS still picks the port, since only it knows what is already in use.
+    // What is added is that no port is handed out twice within this process,
+    // which removes the collisions between the suites of one binary; a caller
+    // that still loses to another binary retries (see `Router::start`).
+    use std::sync::{Mutex, OnceLock};
+    static HANDED_OUT: OnceLock<Mutex<std::collections::HashSet<u16>>> = OnceLock::new();
+    let seen = HANDED_OUT.get_or_init(|| Mutex::new(std::collections::HashSet::new()));
+    for _ in 0..4_000 {
+        let port = TcpListener::bind("127.0.0.1:0")
+            .expect("bind ephemeral")
+            .local_addr()
+            .expect("address")
+            .port();
+        if seen.lock().expect("port registry").insert(port) {
+            return port;
+        }
+    }
+    panic!("no unused ephemeral port")
 }
 
 struct Router {
