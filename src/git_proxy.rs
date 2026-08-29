@@ -191,8 +191,8 @@ pub fn body_requests_force(body: &[u8]) -> bool {
 
 /// An update whose fast-forwardness the router could not settle locally.
 ///
-/// The router terminates the smart-HTTP exchange without holding the object
-/// graph, so "does `old` reach `new`?" cannot be answered from the request.
+/// The router terminates the smart-HTTP exchange without holding Git's
+/// object graph, so "does `old` reach `new`?" cannot be answered here.
 /// These are the updates that must be checked against the upstream before the
 /// packfile is forwarded.
 #[derive(Debug, Clone, PartialEq, Eq)]

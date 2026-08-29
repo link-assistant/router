@@ -91,7 +91,7 @@ Acceptance:
 
 Goals:
 
-1. Replace the current `RotationStrategy::{RoundRobin, Priority, LeastUsed}` enum with a policy graph that supports a fallback chain across providers, not only across accounts of one provider.
+1. Replace the current `RotationStrategy::{RoundRobin, Priority, LeastUsed}` enum with a policy network that supports a fallback chain across providers, not only across accounts of one provider.
 2. Add a `FallbackChain` config object: ordered list of `{ provider, model_alias, max_tokens?, priority? }` nodes; the router walks the chain on cooldown / 429 / 5xx / circuit-open.
 3. Wire the four-tier shorthand: a single config flag `--fallback subscription,api,cheap,free` expands into a chain using the registered providers.
 
