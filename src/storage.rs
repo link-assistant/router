@@ -40,6 +40,7 @@ use serde::{Deserialize, Serialize};
 use crate::config::StoragePolicy;
 
 mod associative;
+mod file_mapped;
 mod legacy;
 
 /// One persisted token record.

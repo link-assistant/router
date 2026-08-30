@@ -4,11 +4,10 @@ use std::path::{Path, PathBuf};
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD_NO_PAD;
-use doublets::mem::unit::LinkPart;
 use doublets::{Doublets, DoubletsExt, Links, unit};
-use link_cli::storage::PersistentFileMapped;
 use lino_objects_codec::LinoValue;
 
+use super::file_mapped::LoadedFileMapped;
 use super::{StorageError, TokenRecord};
 
 const TYPE: &str = "Type";
@@ -34,7 +33,7 @@ const SCHEMA_NODE_COUNT: usize = 259;
 /// so reopening a file-mapped store zeroed it. `PersistentFileMapped` forwards
 /// to `grow_filled_exact`, which fills only the genuinely uninitialised tail
 /// (issue #372).
-type FileStore = unit::Store<usize, PersistentFileMapped<LinkPart<usize>>>;
+type FileStore = unit::Store<usize, LoadedFileMapped>;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct SemanticLink {
@@ -358,7 +357,7 @@ impl PersistentStore {
             options.mode(0o600);
         }
         let file = options.open(path)?;
-        let mapped = PersistentFileMapped::new(file)?;
+        let mapped = LoadedFileMapped::new(file)?;
         let store = unit::Store::<usize, _>::new(mapped)
             .map_err(|error| codec_error("open doublets store", error))?;
         Ok(Self {
@@ -376,7 +375,7 @@ impl PersistentStore {
     /// to any more (issue #357).
     pub(super) fn remap(&mut self) -> Result<(), StorageError> {
         let file = OpenOptions::new().read(true).write(true).open(&self.path)?;
-        let mapped = PersistentFileMapped::new(file)?;
+        let mapped = LoadedFileMapped::new(file)?;
         self.store = unit::Store::<usize, _>::new(mapped)
             .map_err(|error| codec_error("reopen doublets store", error))?;
         Ok(())
@@ -449,7 +448,7 @@ impl PersistentStore {
             options.mode(0o600);
         }
         let file = options.open(&temporary)?;
-        let mapped = PersistentFileMapped::new(file)?;
+        let mapped = LoadedFileMapped::new(file)?;
         self.store = unit::Store::<usize, _>::new(mapped)
             .map_err(|error| codec_error("reopen doublets store", error))?;
         self.pending = Some(temporary);
@@ -972,7 +971,7 @@ mod tests {
             .write(true)
             .open(&path)
             .unwrap();
-        let memory = PersistentFileMapped::new(file).unwrap();
+        let memory = LoadedFileMapped::new(file).unwrap();
         let links_network = unit::Store::<usize, _>::new(memory).unwrap();
         assert!(
             links_network.count() > 8 * 1024,
