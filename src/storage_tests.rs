@@ -818,3 +818,40 @@ fn the_encoded_links_network_contains_no_duplicate_pairs() {
     }
     assert!(!pairs.is_empty(), "the fixture must produce links");
 }
+
+/// A store carried over from a previous release still accepts writes.
+///
+/// `FileMapped` starts with a logical capacity of zero however much the file
+/// holds, so a reopened store reads truncated: 91 links from a 64 MB file that
+/// holds 524,766. Schema validation then failed at the first point past the
+/// truncation, and because the dual store answers reads from the text
+/// projection, the store looked healthy while every write failed (issue #374).
+///
+/// The fixture is written and reopened in separate `PersistentStore`
+/// instances, which is what makes it a reopen rather than a continuation.
+#[test]
+fn a_reopened_store_keeps_every_link_it_holds() {
+    let directory = tempdir().expect("temporary directory");
+    let path = directory.path().join("tokens.bin");
+    let records: Vec<_> = (0..40)
+        .map(|index| sample_record(&format!("id-{index:04}")))
+        .collect();
+    {
+        let store = BinaryTokenStore::open(&path).expect("open");
+        store.replace_all(&records).expect("seed");
+    }
+
+    // A second open is a different mapping of the same file.
+    let reopened = BinaryTokenStore::open(&path).expect("reopen");
+    assert_eq!(
+        reopened.list().expect("list").len(),
+        records.len(),
+        "a reopened store must see every record it holds"
+    );
+
+    // And it must still accept writes: this is what #374 reported failing.
+    let mut extended = records;
+    extended.push(sample_record("id-new0"));
+    reopened.replace_all(&extended).expect("write after reopen");
+    assert_eq!(reopened.list().expect("list").len(), extended.len());
+}
