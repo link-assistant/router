@@ -358,9 +358,14 @@ impl TokenManager {
             github_repos: claims.github_repos,
         };
         let id = record.id.clone();
-        if let Err(e) = self.store.put(record) {
-            tracing::warn!("token store put failed: {e}");
-        }
+        // A token that was handed out but never stored is worse than a
+        // refusal: the router cannot recognise it, and the holder only finds
+        // out when they try to use it. The failure has to reach the caller
+        // rather than a log line nothing reads (issue #374).
+        self.store.put(record).map_err(|error| {
+            tracing::error!("token store put failed, no token issued: {error}");
+            jsonwebtoken::errors::Error::from(jsonwebtoken::errors::ErrorKind::InvalidToken)
+        })?;
         Ok((format!("{TOKEN_PREFIX}{jwt}"), id))
     }
 

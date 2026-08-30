@@ -887,3 +887,73 @@ fn a_fixed_token_is_still_refused_when_it_expires() {
         "without a window an expired token stays expired"
     );
 }
+
+/// A store that refuses every write, like one the process cannot persist to.
+struct RefusingStore;
+
+impl crate::storage::TokenStore for RefusingStore {
+    fn list(&self) -> Result<Vec<TokenRecord>, crate::storage::StorageError> {
+        Ok(Vec::new())
+    }
+    fn get(&self, _: &str) -> Result<Option<TokenRecord>, crate::storage::StorageError> {
+        Ok(None)
+    }
+    fn put(&self, _: TokenRecord) -> Result<(), crate::storage::StorageError> {
+        Err(crate::storage::StorageError::Codec(
+            "doublets schema contains an invalid point".into(),
+        ))
+    }
+    fn delete(&self, _: &str) -> Result<bool, crate::storage::StorageError> {
+        Ok(false)
+    }
+    fn try_consume_request(&self, _: &str) -> Result<bool, crate::storage::StorageError> {
+        Ok(true)
+    }
+    fn try_admit_request_reserving(
+        &self,
+        _: &str,
+        _: i64,
+        _: u64,
+    ) -> Result<crate::storage::RequestAdmission, crate::storage::StorageError> {
+        Ok(crate::storage::RequestAdmission::Admitted)
+    }
+    fn record_token_usage(&self, _: &str, _: u64) -> Result<(), crate::storage::StorageError> {
+        Ok(())
+    }
+    fn settle_token_usage(
+        &self,
+        _: &str,
+        _: u64,
+        _: u64,
+    ) -> Result<(), crate::storage::StorageError> {
+        Ok(())
+    }
+}
+
+/// A token that could not be stored is never handed to the caller.
+///
+/// The failure used to be a `warn!` followed by `Ok(...)`, so an upgraded
+/// deployment whose store had stopped accepting writes went on minting
+/// credentials the router could not recognise. The holder found out when they
+/// tried to use one, against a token they were already carrying (issue #374).
+#[test]
+fn a_token_that_could_not_be_stored_is_not_returned() {
+    let manager = TokenManager::with_store("secret", std::sync::Arc::new(RefusingStore));
+
+    let result = manager.issue(&IssueRequest {
+        ttl_hours: 1,
+        label: "unstorable",
+        account: None,
+        max_requests: None,
+        max_tokens: None,
+        rate_limit_per_minute: None,
+        scope: "",
+        github_repos: Vec::new(),
+        sliding_window_seconds: None,
+    });
+
+    assert!(
+        result.is_err(),
+        "issuing must fail when the record cannot be persisted, got {result:?}"
+    );
+}
