@@ -40,6 +40,7 @@ use crate::config::UpstreamProvider;
 pub use crate::model_routing::models as openai_models;
 pub use crate::monitoring_api::{accounts_endpoint, metrics_endpoint, usage_endpoint};
 use crate::openai;
+use crate::request_routing::ResolvedUpstreamCredential;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
 use crate::responses;
 use crate::subscription::SubscriptionProvider;
@@ -320,6 +321,14 @@ pub(crate) fn authenticate_client(
 /// - Vertex rawPredict: paths ending in `:rawPredict`, `:streamRawPredict`
 /// - Legacy: `/api/latest/anthropic/*`
 pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Response {
+    proxy_handler_with_subscription(state, req, None).await
+}
+
+async fn proxy_handler_with_subscription(
+    state: AppState,
+    req: Request,
+    subscription: Option<crate::model_routing::ValidatedSubscription>,
+) -> Response {
     let path = req.uri().path().to_string();
     let method = req.method().clone();
     let incoming_headers = req.headers().clone();
@@ -328,11 +337,17 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             return *response;
         }
         let (routed, request) =
-            match crate::model_routing::route_anthropic_request(&state, req).await {
+            match crate::model_routing::route_anthropic_request_with_subscription(&state, req).await
+            {
                 Ok(routed) => routed,
                 Err(response) => return response,
             };
-        return Box::pin(proxy_handler(State(routed), request)).await;
+        return Box::pin(proxy_handler_with_subscription(
+            routed.state,
+            request,
+            routed.subscription,
+        ))
+        .await;
     }
     state.logger.verbose(|| format!("Incoming {method} {path}"));
     // Resolve the upstream path based on which API format the request matches
@@ -385,11 +400,12 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             Ok(body) => body,
             Err(error) => return malformed_json_response(&error.to_string()),
         };
-        return crate::anthropic_bridge::handle_anthropic_surface(
+        return crate::anthropic_bridge::handle_anthropic_surface_routed(
             &state,
             &incoming_headers,
             &path,
             body,
+            subscription.as_ref(),
         )
         .await;
     }
@@ -462,9 +478,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let routing_context = request_routing_context(&incoming_headers, &routing_body, pinned_account);
 
     // Get the real OAuth token (multi-account aware).
-    let (oauth_token, selected_account) =
-        match resolve_upstream_credentials(&state, &routing_context).await {
-            Ok(pair) => pair,
+    let resolved =
+        match resolve_upstream_credentials(&state, &routing_context, subscription.as_ref()).await {
+            Ok(resolved) => resolved,
             Err(e) => {
                 tracing::error!("Failed to resolve upstream credentials: {e}");
                 return error_response(
@@ -474,6 +490,9 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
                 );
             }
         };
+    let oauth_token = resolved.access_token;
+    let selected_account = resolved.account;
+    let evidence_token = resolved.evidence_token;
 
     // Same requirement as above: a client that is not Claude Code would be rejected
     // by the upstream with a misleading 429. Idempotent for Claude Code itself.
@@ -527,7 +546,13 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream_resp.headers());
-    crate::request_routing::record_claude_evidence(&state, status.as_u16());
+    crate::request_routing::record_claude_evidence(
+        &state,
+        selected_account.as_deref(),
+        evidence_token.as_ref(),
+        status.as_u16(),
+    )
+    .await;
     state
         .logger
         .verbose(|| format!("Upstream responded: {status}"));
@@ -625,40 +650,82 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
     response
 }
 
-/// Resolve the OAuth token and the name of the account that produced it.
-///
-/// When `state.account_router` is set we delegate to the multi-account
-/// router; otherwise we fall back to the single-account legacy provider.
-///
-/// Either way an expired access token is refreshed via
-/// `state.subscription_cache`, which persists a rotated refresh token back to
-/// the credential file so the rotation survives a restart (issue #239). The
-/// write is best effort, so a read-only `CLAUDE_CODE_HOME` mount still
-/// survives expiry from memory without a Claude CLI in the image.
+/// Resolve and refresh the selected OAuth credential, retaining the full token
+/// so inference evidence can be bound to the generation that produced it.
 async fn resolve_upstream_credentials(
     state: &AppState,
     context: &RoutingContext,
-) -> Result<(String, Option<String>), Box<dyn std::error::Error + Send + Sync>> {
+    validated: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Result<ResolvedUpstreamCredential, Box<dyn std::error::Error + Send + Sync>> {
+    if let Some(validated) = validated {
+        if validated.provider != SubscriptionProvider::Claude {
+            return Err("validated subscription does not match the Anthropic provider".into());
+        }
+        let selected = validated
+            .for_dispatch_with_context(state, context)
+            .await
+            .map_err(std::io::Error::other)?;
+        return Ok(ResolvedUpstreamCredential {
+            access_token: selected.token.access_token.clone(),
+            account: Some(selected.name),
+            evidence_token: Some(selected.token),
+        });
+    }
     if let Some(router) = state.account_router.as_ref() {
-        let sel = router.select_subscription(context)?;
+        let sel = router
+            .select_subscription_where_authoritative(context, &state.subscription_cache, |_| true)
+            .await?;
         let now_ms = chrono::Utc::now().timestamp_millis();
         let token = state
             .subscription_cache
-            .get_fresh_for(
+            .get_fresh_loaded(
                 &state.client,
                 router.provider(),
                 &sel.name,
                 sel.token,
                 now_ms,
             )
-            .await;
-        return Ok((token.access_token, Some(sel.name)));
+            .await
+            .map_err(std::io::Error::other)?;
+        return Ok(ResolvedUpstreamCredential {
+            access_token: token.access_token.clone(),
+            account: Some(sel.name),
+            evidence_token: Some(token),
+        });
+    }
+    if state
+        .subscription_cache
+        .store_for_subscription(
+            SubscriptionProvider::Claude,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        )
+        .is_some()
+    {
+        let token = state
+            .subscription_cache
+            .get_fresh_registered(
+                &state.client,
+                SubscriptionProvider::Claude,
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                chrono::Utc::now().timestamp_millis(),
+            )
+            .await
+            .map_err(std::io::Error::other)?;
+        return Ok(ResolvedUpstreamCredential {
+            access_token: token.access_token.clone(),
+            account: None,
+            evidence_token: Some(token),
+        });
     }
     let token = state
         .oauth_provider
         .get_fresh_token(&state.client, &state.subscription_cache)
         .await?;
-    Ok((token, None))
+    Ok(ResolvedUpstreamCredential {
+        access_token: token,
+        account: None,
+        evidence_token: None,
+    })
 }
 
 /// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
@@ -666,8 +733,9 @@ async fn resolve_upstream_credentials(
 /// Translates to Anthropic Messages, forwards via the same OAuth-substituting
 /// pipeline used by [`proxy_handler`], and converts the response back.
 #[path = "proxy_openai.rs"]
-mod openai_handlers;
+pub(crate) mod openai_handlers;
 
+pub(crate) use openai_handlers::openai_chat_completions_routed;
 pub use openai_handlers::{openai_chat_completions, openai_responses};
 
 #[derive(Clone, Copy)]
@@ -683,6 +751,7 @@ async fn forward_openai(
     routing_body: &serde_json::Value,
     surface: crate::metrics::Surface,
     stream_options: (bool, OpenAIShape, bool),
+    validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
     let (stream_requested, shape, include_usage) = stream_options;
     let served_model = body["model"].as_str().unwrap_or_default().to_string();
@@ -726,18 +795,20 @@ async fn forward_openai(
     let routing_context = request_routing_context(headers, routing_body, pinned_account);
 
     // Resolve OAuth credentials.
-    let (oauth_token, selected_account) =
-        match resolve_upstream_credentials(state, &routing_context).await {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!("openai: upstream credentials unavailable: {e}");
-                return error_response(
-                    StatusCode::BAD_GATEWAY,
-                    "api_error",
-                    "Upstream authentication unavailable",
-                );
-            }
-        };
+    let resolved = match resolve_upstream_credentials(state, &routing_context, validated).await {
+        Ok(resolved) => resolved,
+        Err(e) => {
+            tracing::error!("openai: upstream credentials unavailable: {e}");
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                "Upstream authentication unavailable",
+            );
+        }
+    };
+    let oauth_token = resolved.access_token;
+    let selected_account = resolved.account;
+    let evidence_token = resolved.evidence_token;
 
     let upstream_url = format!(
         "{}/v1/messages",
@@ -791,6 +862,13 @@ async fn forward_openai(
         }
     };
     let upstream_status = upstream_resp.status();
+    crate::request_routing::record_claude_evidence(
+        state,
+        selected_account.as_deref(),
+        evidence_token.as_ref(),
+        upstream_status.as_u16(),
+    )
+    .await;
     let retry_after = retry_after_duration(upstream_resp.headers());
     let response_headers = relay_response_headers(upstream_resp.headers());
     if stream_requested && upstream_status.is_success() {

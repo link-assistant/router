@@ -236,17 +236,49 @@ async fn the_disclosing_read_endpoints_require_admin_but_metrics_stays_scrapable
 #[tokio::test]
 async fn subscription_health_discloses_no_more_than_the_vendor_names() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let state = state_with(claim(dir.path()), dir.path());
+    let qwen = tempfile::tempdir().expect("qwen home");
+    let credential_body = "private-credential-body-marker";
+    std::fs::write(dir.path().join("auth.json"), credential_body).expect("malformed credential");
+    std::fs::write(
+        qwen.path().join("oauth_creds.json"),
+        r#"{"access_token":"qwen-live"}"#,
+    )
+    .expect("qwen credential");
+    let mut state = state_with(claim(dir.path()), dir.path());
+    state.subscription_readers = vec![
+        link_assistant_router::subscription::SubscriptionReader::new(
+            link_assistant_router::subscription::SubscriptionProvider::Codex,
+            dir.path(),
+        ),
+        link_assistant_router::subscription::SubscriptionReader::new(
+            link_assistant_router::subscription::SubscriptionProvider::Qwen,
+            qwen.path(),
+        ),
+    ];
+    state.model_catalogs.record_success(
+        link_assistant_router::subscription::SubscriptionProvider::Qwen,
+        vec!["qwen-live-model".into()],
+    );
+    state.subscription_cache.record_credential_rejected(
+        link_assistant_router::subscription::SubscriptionProvider::Qwen,
+    );
     let response = proxy_router(state)
         .oneshot(get_request("/health/subscriptions", None))
         .await
         .expect("health responds");
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
     let body = axum::body::to_bytes(response.into_body(), 64 * 1024)
         .await
         .expect("read body");
     let body = String::from_utf8_lossy(&body);
 
-    for secret in ["la_sk_", "Bearer", "refresh_token", "access_token"] {
+    for secret in [
+        "la_sk_",
+        "Bearer",
+        "refresh_token",
+        "access_token",
+        credential_body,
+    ] {
         assert!(
             !body.contains(secret),
             "an unauthenticated health answer must not contain {secret}: {body}"
@@ -255,6 +287,10 @@ async fn subscription_health_discloses_no_more_than_the_vendor_names() {
     assert!(
         !body.contains(&dir.path().to_string_lossy().to_string()),
         "it must not name a credential directory: {body}"
+    );
+    assert!(
+        !body.contains(&qwen.path().to_string_lossy().to_string()),
+        "it must not name another credential directory: {body}"
     );
 }
 

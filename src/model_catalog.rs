@@ -61,7 +61,7 @@ impl CatalogStatus {
 
 /// Thread-safe, immediately readable model catalogs shared by all handlers.
 pub struct ModelCatalogCache {
-    entries: RwLock<HashMap<SubscriptionProvider, CatalogStatus>>,
+    entries: RwLock<HashMap<(SubscriptionProvider, String), CatalogStatus>>,
 }
 
 impl Default for ModelCatalogCache {
@@ -86,18 +86,115 @@ impl ModelCatalogCache {
     /// Models that may be advertised and routed for `provider` right now.
     #[must_use]
     pub fn models(&self, provider: SubscriptionProvider) -> Vec<String> {
-        self.status(provider).routable_models().to_vec()
+        let mut models = {
+            let entries = self
+                .entries
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            entries
+                .iter()
+                .filter(|((entry_provider, _), _)| *entry_provider == provider)
+                .flat_map(|(_, status)| status.routable_models().iter().cloned())
+                .collect::<Vec<_>>()
+        };
+        models.sort();
+        models.dedup();
+        models
+    }
+
+    /// Routable models belonging to the supplied stable router accounts.
+    ///
+    /// Provider-wide listings use this after account health has been resolved,
+    /// so one rejected pool account cannot keep advertising models that no
+    /// remaining account can serve.
+    pub(crate) fn models_for_accounts(
+        &self,
+        provider: SubscriptionProvider,
+        accounts: &[String],
+    ) -> Vec<String> {
+        let mut models = accounts
+            .iter()
+            .flat_map(|account| {
+                self.status_for(provider, account)
+                    .routable_models()
+                    .to_vec()
+            })
+            .collect::<Vec<_>>();
+        models.sort();
+        models.dedup();
+        models
+    }
+
+    /// Whether every known account for `provider` lacks a usable catalog.
+    ///
+    /// A provider pool remains healthy when any selected account has completed
+    /// discovery; a failed primary must not hide a healthy secondary catalog.
+    #[must_use]
+    pub fn provider_is_degraded(&self, provider: SubscriptionProvider) -> bool {
+        let statuses = {
+            let entries = self
+                .entries
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            entries
+                .iter()
+                .filter(|((entry_provider, _), _)| *entry_provider == provider)
+                .map(|(_, status)| status.clone())
+                .collect::<Vec<_>>()
+        };
+        let mut matching = statuses.iter();
+        let Some(first) = matching.next() else {
+            return true;
+        };
+        first.is_degraded() && matching.all(CatalogStatus::is_degraded)
+    }
+
+    /// Whether any account has catalog or failure evidence for `provider`.
+    #[must_use]
+    pub fn provider_has_observation(&self, provider: SubscriptionProvider) -> bool {
+        self.entries
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .any(|((entry_provider, _), status)| {
+                *entry_provider == provider && (status.discovered || status.last_error.is_some())
+            })
     }
 
     /// Return diagnostic state for a provider.
     #[must_use]
     pub fn status(&self, provider: SubscriptionProvider) -> CatalogStatus {
-        self.entries
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(&provider)
-            .cloned()
-            .unwrap_or_default()
+        self.status_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+    }
+
+    /// Return diagnostic state for one stable router account.
+    #[must_use]
+    pub fn status_for(&self, provider: SubscriptionProvider, account: &str) -> CatalogStatus {
+        let status = {
+            let entries = self
+                .entries
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            entries
+                .get(&(provider, account.to_string()))
+                .cloned()
+                .or_else(|| {
+                    (account != crate::credential_recovery_store::PRIMARY_ACCOUNT)
+                        .then(|| {
+                            entries.get(&(
+                                provider,
+                                crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                            ))
+                        })
+                        .flatten()
+                        .filter(|primary| primary.account.is_none())
+                        .cloned()
+                })
+        };
+        // Legacy anonymous catalogs contain no identity that can differ
+        // between accounts. Preserve established anonymous Claude pools; any
+        // known selected identity still fails ownership before dispatch.
+        status.unwrap_or_default()
     }
 
     /// Diagnostic state for every provider the cache knows about.
@@ -108,7 +205,10 @@ impl ModelCatalogCache {
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .iter()
-            .map(|(provider, status)| (*provider, status.clone()))
+            .filter(|((_, account), _)| {
+                account == crate::credential_recovery_store::PRIMARY_ACCOUNT
+            })
+            .map(|((provider, _), status)| (*provider, status.clone()))
             .collect();
         entries.sort_by_key(|(provider, _)| provider.to_string());
         entries
@@ -126,6 +226,22 @@ impl ModelCatalogCache {
         &self,
         provider: SubscriptionProvider,
         account: Option<String>,
+        models: Vec<String>,
+    ) {
+        self.record_success_for_account(
+            provider,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            account,
+            models,
+        );
+    }
+
+    /// Record a successful discovery for one stable router account.
+    pub fn record_success_for_account(
+        &self,
+        provider: SubscriptionProvider,
+        router_account: &str,
+        account: Option<String>,
         mut models: Vec<String>,
     ) {
         models.sort();
@@ -135,7 +251,7 @@ impl ModelCatalogCache {
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         entries.insert(
-            provider,
+            (provider, router_account.to_string()),
             CatalogStatus {
                 models,
                 account,
@@ -149,9 +265,26 @@ impl ModelCatalogCache {
 
     /// Record a refresh failure, keeping any previously discovered catalog for
     /// diagnostics but marking the credential unhealthy so it stops being used.
+    #[cfg(test)]
     pub(crate) fn record_failure(
         &self,
         provider: SubscriptionProvider,
+        error: &str,
+        credential_rejected: bool,
+    ) {
+        self.record_failure_for_account(
+            provider,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            error,
+            credential_rejected,
+        );
+    }
+
+    /// Record one account's refresh failure without poisoning its neighbours.
+    pub(crate) fn record_failure_for_account(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
         error: &str,
         credential_rejected: bool,
     ) {
@@ -159,7 +292,7 @@ impl ModelCatalogCache {
             .entries
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let entry = entries.entry(provider).or_default();
+        let entry = entries.entry((provider, account.to_string())).or_default();
         entry.last_error = Some(error.to_string());
         if credential_rejected {
             entry.credential_healthy = false;
@@ -175,63 +308,85 @@ pub async fn refresh_catalogs(
     token_cache: &crate::refresh::TokenCache,
     cache: &ModelCatalogCache,
 ) {
+    let readers = readers
+        .iter()
+        .cloned()
+        .map(|reader| {
+            (
+                crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                reader,
+            )
+        })
+        .collect::<Vec<_>>();
+    refresh_catalogs_for_accounts(client, &readers, token_cache, cache).await;
+}
+
+/// Fetch every registered account catalog independently.
+pub async fn refresh_catalogs_for_accounts(
+    client: &reqwest::Client,
+    readers: &[(String, SubscriptionReader)],
+    token_cache: &crate::refresh::TokenCache,
+    cache: &ModelCatalogCache,
+) {
     let now_ms = chrono::Utc::now().timestamp_millis();
     // Tell the token cache where each credential lives before anything is
     // exchanged. Without a store it can only reason about the token it was
     // handed: it cannot notice that another holder rotated the chain forward,
     // and it cannot write its own rotation back (issue #239).
-    for reader in readers {
-        token_cache.register_reader("primary", reader);
+    // This is deliberately a raw, insert-if-absent fallback. Production has
+    // already installed data-directory-backed recoverable stores; a catalog
+    // tick must never replace those decorators with bare vendor readers.
+    for (account, reader) in readers {
+        token_cache.register_reader(account, reader);
     }
-    let refreshes = readers
-        .iter()
-        .filter_map(|reader| {
-            reader
-                .read_token()
-                .ok()
-                .map(|token| (reader.provider(), token))
-        })
-        .map(|(provider, disk_token)| async move {
-            let token = token_cache
-                .get_fresh(client, provider, disk_token, now_ms)
-                .await;
-            // A stamped-expired credential is still tried: `expiresAt` is a
-            // hint, and the catalog endpoint is the authority on whether this
-            // token works for *it*.
-            let stamped_expired = token.is_expired(now_ms);
-            // Bind the discovery to the account it was made for, so a catalog
-            // is never reused across accounts (issue #192).
-            let mut account = token.account_id.clone();
-            let mut result = fetch_provider_catalog(client, provider, &token, None).await;
+    let refreshes = readers.iter().map(|(router_account, reader)| async move {
+        let provider = reader.provider();
+        let token = match token_cache
+            .get_fresh_registered(client, provider, router_account, now_ms)
+            .await
+        {
+            Ok(token) => token,
+            Err(error) => return (provider, router_account, false, Err(error)),
+        };
+        // A stamped-expired credential is still tried: `expiresAt` is a
+        // hint, and the catalog endpoint is the authority on whether this
+        // token works for *it*.
+        let stamped_expired = token.is_expired(now_ms);
+        // Bind the discovery to the account it was made for, so a catalog
+        // is never reused across accounts (issue #192).
+        let mut account = token.account_id.clone();
+        let mut result = fetch_provider_catalog(client, provider, &token, None).await;
 
-            // A 401 here means the vendor rejected a token whose own `exp` may
-            // still be in the future. Refresh against that verdict rather than
-            // the timestamp, and re-probe once (issue #205).
-            if result
-                .as_ref()
-                .is_err_and(|error| is_credential_rejection(error))
-                && let Some(refreshed) = token_cache
-                    .refresh_rejected(client, provider, "primary", token, now_ms)
-                    .await
-            {
-                tracing::info!(
-                    "{provider} rejected an unexpired catalog token; re-probing once after refresh"
-                );
-                account = refreshed.account_id.clone();
-                result = fetch_provider_catalog(client, provider, &refreshed, None).await;
-            }
-            let result = result.map(|models| (account, models));
-            (provider, stamped_expired, result)
-        });
-    for (provider, stamped_expired, result) in futures_util::future::join_all(refreshes).await {
+        // A 401 here means the vendor rejected a token whose own `exp` may
+        // still be in the future. Refresh against that verdict rather than
+        // the timestamp, and re-probe once (issue #205).
+        if result
+            .as_ref()
+            .is_err_and(|error| is_credential_rejection(error))
+            && let Some(refreshed) = token_cache
+                .refresh_rejected(client, provider, router_account, token, now_ms)
+                .await
+        {
+            tracing::info!(
+                "{provider} rejected an unexpired catalog token; re-probing once after refresh"
+            );
+            account = refreshed.account_id.clone();
+            result = fetch_provider_catalog(client, provider, &refreshed, None).await;
+        }
+        let result = result.map(|models| (account, models));
+        (provider, router_account, stamped_expired, result)
+    });
+    for (provider, router_account, stamped_expired, result) in
+        futures_util::future::join_all(refreshes).await
+    {
         match result {
             Ok((account, models)) => {
                 tracing::info!(
                     "refreshed {provider} model catalog with {} model(s)",
                     models.len()
                 );
-                token_cache.record_credential_working(provider);
-                cache.record_success_for(provider, account, models);
+                token_cache.record_credential_working_for(provider, router_account);
+                cache.record_success_for_account(provider, router_account, account, models);
             }
             Err(error) => {
                 // Keep the last known models in the cache for transient
@@ -239,12 +394,12 @@ pub async fn refresh_catalogs(
                 // to advertise or route until a later probe succeeds.
                 let rejected = is_credential_rejection(&error);
                 if rejected {
-                    token_cache.record_credential_rejected(provider);
+                    token_cache.record_credential_rejected_for(provider, router_account);
                     // The same state the refresh path announces at ERROR, so a
                     // subscription revoked between refresh ticks — caught here
                     // first — is not the one outage that produces no error line
                     // (issue #321).
-                    token_cache.announce_unusable(provider, &error);
+                    token_cache.announce_unusable_for(provider, router_account, &error);
                 }
                 // Classified before the suffix goes on: the body is JSON, and
                 // appending prose to it makes it unparseable, so the
@@ -265,7 +420,12 @@ pub async fn refresh_catalogs(
                          credential grounds; the stored token is unchanged and will be retried \
                          on the next tick: {error}"
                     );
-                } else if cache.status(provider).last_error.as_deref() == Some(error.as_str()) {
+                } else if cache
+                    .status_for(provider, router_account)
+                    .last_error
+                    .as_deref()
+                    == Some(error.as_str())
+                {
                     // The same failure, restated. A dead subscription produced
                     // 146 identical WARNs over twelve hours, which is not
                     // reporting — it is noise that hides the one line saying
@@ -276,7 +436,7 @@ pub async fn refresh_catalogs(
                 } else {
                     tracing::warn!("failed to refresh {provider} model catalog: {error}");
                 }
-                cache.record_failure(provider, &error, rejected);
+                cache.record_failure_for_account(provider, router_account, &error, rejected);
             }
         }
     }
@@ -355,6 +515,19 @@ pub async fn refresh_catalogs_forever(
 ) {
     loop {
         refresh_catalogs(&client, &readers, &token_cache, &cache).await;
+        tokio::time::sleep(CATALOG_TTL).await;
+    }
+}
+
+/// Continuously refresh account-scoped live catalogs.
+pub async fn refresh_catalogs_for_accounts_forever(
+    client: reqwest::Client,
+    readers: Vec<(String, SubscriptionReader)>,
+    token_cache: std::sync::Arc<crate::refresh::TokenCache>,
+    cache: std::sync::Arc<ModelCatalogCache>,
+) {
+    loop {
+        refresh_catalogs_for_accounts(&client, &readers, &token_cache, &cache).await;
         tokio::time::sleep(CATALOG_TTL).await;
     }
 }
@@ -454,373 +627,5 @@ fn parse_catalog(provider: SubscriptionProvider, body: &Value) -> Result<Vec<Str
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::Router;
-    use axum::extract::State;
-    use axum::http::{HeaderMap, Uri};
-    use axum::routing::get;
-    use std::fs;
-    use std::sync::Arc;
-    use tempfile::tempdir;
-
-    #[test]
-    fn parses_each_vendor_response_shape() {
-        let cases = [
-            (
-                SubscriptionProvider::Claude,
-                serde_json::json!({"data":[{"id":"claude-live"}]}),
-                "claude-live",
-            ),
-            (
-                SubscriptionProvider::Codex,
-                serde_json::json!({"models":[{"slug":"gpt-live"}]}),
-                "gpt-live",
-            ),
-            (
-                SubscriptionProvider::Gemini,
-                serde_json::json!({"models":[{"name":"models/gemini-live"}]}),
-                "gemini-live",
-            ),
-            (
-                SubscriptionProvider::Qwen,
-                serde_json::json!({"data":[{"id":"qwen-live"}]}),
-                "qwen-live",
-            ),
-        ];
-        for (provider, body, expected) in cases {
-            assert_eq!(parse_catalog(provider, &body).unwrap(), [expected]);
-        }
-    }
-
-    #[tokio::test]
-    async fn codex_fetch_uses_live_response_and_required_auth_metadata() {
-        async fn handler(
-            State(seen): State<Arc<RwLock<bool>>>,
-            headers: HeaderMap,
-            uri: Uri,
-        ) -> axum::Json<Value> {
-            let valid = headers.get("authorization").and_then(|v| v.to_str().ok())
-                == Some("Bearer live-token")
-                && headers
-                    .get("chatgpt-account-id")
-                    .and_then(|v| v.to_str().ok())
-                    == Some("account-1")
-                && uri
-                    .query()
-                    .is_some_and(|query| query.contains("client_version="));
-            *seen.write().unwrap() = valid;
-            axum::Json(serde_json::json!({"models":[{"slug":"gpt-5.6-sol"}]}))
-        }
-
-        let seen = Arc::new(RwLock::new(false));
-        let app = Router::new()
-            .route("/models", get(handler))
-            .with_state(Arc::clone(&seen));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-        let token = SubscriptionToken {
-            access_token: "live-token".to_string(),
-            refresh_token: None,
-            expires_at_ms: None,
-            account_id: Some("account-1".to_string()),
-            resource_url: None,
-        };
-        let models = fetch_provider_catalog(
-            &reqwest::Client::new(),
-            SubscriptionProvider::Codex,
-            &token,
-            Some(&format!("http://{address}")),
-        )
-        .await
-        .unwrap();
-        assert_eq!(models, ["gpt-5.6-sol"]);
-        assert!(*seen.read().unwrap());
-    }
-
-    #[tokio::test]
-    async fn catalog_refresh_uses_an_in_memory_refreshed_token() {
-        async fn handler(headers: HeaderMap) -> axum::Json<Value> {
-            assert_eq!(
-                headers
-                    .get("authorization")
-                    .and_then(|value| value.to_str().ok()),
-                Some("Bearer fresh-token")
-            );
-            axum::Json(serde_json::json!({"data":[{"id":"qwen-live"}]}))
-        }
-
-        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-
-        let home = tempdir().unwrap();
-        fs::write(
-            home.path().join("oauth_creds.json"),
-            r#"{"access_token":"expired","refresh_token":"refresh","expiry_date":1000}"#,
-        )
-        .unwrap();
-        let readers = vec![SubscriptionReader::new(
-            SubscriptionProvider::Qwen,
-            home.path(),
-        )];
-        let token_cache = crate::refresh::TokenCache::new();
-        token_cache.store_refreshed(
-            SubscriptionProvider::Qwen,
-            "primary",
-            SubscriptionToken {
-                access_token: "fresh-token".into(),
-                refresh_token: Some("refresh".into()),
-                expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 60_000),
-                account_id: None,
-                resource_url: Some(format!("http://{address}")),
-            },
-        );
-        token_cache.record_credential_rejected(SubscriptionProvider::Qwen);
-        let catalogs = ModelCatalogCache::new();
-
-        refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &catalogs).await;
-
-        assert_eq!(catalogs.models(SubscriptionProvider::Qwen), ["qwen-live"]);
-        assert!(catalogs.status(SubscriptionProvider::Qwen).discovered);
-        assert_eq!(
-            token_cache.evidence(SubscriptionProvider::Qwen),
-            Some(crate::refresh::CredentialEvidence::Working)
-        );
-    }
-
-    /// A stamped-expired credential is still probed. Its last known catalog is
-    /// retained for diagnostics, while rejection evidence prevents it from
-    /// being advertised or routed.
-    #[tokio::test]
-    async fn expired_credential_is_still_probed_and_keeps_its_cached_catalog() {
-        async fn handler() -> (axum::http::StatusCode, &'static str) {
-            (axum::http::StatusCode::UNAUTHORIZED, "expired token")
-        }
-
-        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-
-        let home = tempdir().unwrap();
-        fs::write(
-            home.path().join("oauth_creds.json"),
-            format!(
-                r#"{{"access_token":"expired","expiry_date":1000,"resource_url":"http://{address}"}}"#
-            ),
-        )
-        .unwrap();
-        let readers = vec![SubscriptionReader::new(
-            SubscriptionProvider::Qwen,
-            home.path(),
-        )];
-        let catalogs = ModelCatalogCache::new();
-        catalogs.record_success(SubscriptionProvider::Qwen, vec!["qwen-known".to_string()]);
-        let token_cache = crate::refresh::TokenCache::new();
-
-        refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &catalogs).await;
-
-        let status = catalogs.status(SubscriptionProvider::Qwen);
-        // The fetch was actually attempted (the 401 proves the request went out)
-        // rather than short-circuited on `expiresAt`...
-        let error = status.last_error.expect("catalog fetch was attempted");
-        assert!(error.starts_with("HTTP 401"), "{error}");
-        assert!(error.contains("stamped expired"), "{error}");
-        // The last known catalog survives internally, but the shared rejection
-        // evidence removes it from routing and public catalog responses.
-        assert_eq!(status.models, ["qwen-known"]);
-        assert_eq!(
-            token_cache.evidence(SubscriptionProvider::Qwen),
-            Some(crate::refresh::CredentialEvidence::Rejected)
-        );
-    }
-
-    #[tokio::test]
-    async fn catalog_auth_rejection_is_recorded_as_credential_evidence() {
-        async fn handler() -> (axum::http::StatusCode, &'static str) {
-            (axum::http::StatusCode::UNAUTHORIZED, "revoked token")
-        }
-
-        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-
-        let home = tempdir().unwrap();
-        fs::write(
-            home.path().join("oauth_creds.json"),
-            format!(r#"{{"access_token":"revoked","resource_url":"http://{address}"}}"#),
-        )
-        .unwrap();
-        let readers = vec![SubscriptionReader::new(
-            SubscriptionProvider::Qwen,
-            home.path(),
-        )];
-        let token_cache = crate::refresh::TokenCache::new();
-
-        refresh_catalogs(
-            &reqwest::Client::new(),
-            &readers,
-            &token_cache,
-            &ModelCatalogCache::new(),
-        )
-        .await;
-
-        assert_eq!(
-            token_cache.evidence(SubscriptionProvider::Qwen),
-            Some(crate::refresh::CredentialEvidence::Rejected)
-        );
-    }
-
-    /// A 403 that names a permission failure is not a verdict about the
-    /// credential: nothing is refreshed, the credential keeps its evidence, and
-    /// the token on disk is untouched and retried on the next tick (issue #319).
-    #[tokio::test]
-    async fn a_permission_refusal_does_not_reject_or_refresh_the_credential() {
-        async fn handler() -> (axum::http::StatusCode, &'static str) {
-            (
-                axum::http::StatusCode::FORBIDDEN,
-                r#"{"type":"error","error":{"type":"permission_error","message":"OAuth authentication is currently not allowed for this organization.","details":{"error_code":"oauth_not_allowed_for_organization"}}}"#,
-            )
-        }
-
-        let app = Router::new().route("/compatible-mode/v1/models", get(handler));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let address = listener.local_addr().unwrap();
-        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-
-        let home = tempdir().unwrap();
-        let credential = home.path().join("oauth_creds.json");
-        let original =
-            format!(r#"{{"access_token":"still-good","resource_url":"http://{address}"}}"#);
-        fs::write(&credential, &original).unwrap();
-        let readers = vec![SubscriptionReader::new(
-            SubscriptionProvider::Qwen,
-            home.path(),
-        )];
-        let token_cache = crate::refresh::TokenCache::new();
-        let cache = ModelCatalogCache::new();
-        // A subscription that was serving happily until the refusal arrived:
-        // this is the state the incident started from (issue #319).
-        cache.record_success(SubscriptionProvider::Qwen, vec!["qwen-live".to_string()]);
-
-        refresh_catalogs(&reqwest::Client::new(), &readers, &token_cache, &cache).await;
-
-        assert_eq!(
-            token_cache.evidence(SubscriptionProvider::Qwen),
-            None,
-            "a permission refusal says nothing about the credential"
-        );
-        assert_eq!(
-            fs::read_to_string(&credential).unwrap(),
-            original,
-            "the stored token must be left for the next tick to retry"
-        );
-        let status = cache.status(SubscriptionProvider::Qwen);
-        assert!(
-            status.credential_healthy,
-            "a permission refusal must not mark a working credential unhealthy"
-        );
-        assert_eq!(
-            status.routable_models(),
-            ["qwen-live"],
-            "the subscription keeps serving; the refusal was not about it"
-        );
-        assert!(status.last_error.is_some(), "the refusal is still reported");
-    }
-
-    /// The same status code with a body that is *not* a permission error stays
-    /// a credential rejection: the narrowing must not swallow a real 403.
-    #[test]
-    fn an_unexplained_403_is_still_a_credential_rejection() {
-        assert!(is_credential_rejection("HTTP 403 Forbidden: token revoked"));
-        assert!(!is_permission_refusal("HTTP 403 Forbidden: token revoked"));
-        assert!(is_credential_rejection("HTTP 401 Unauthorized: revoked"));
-        // A 401 is about the credential whatever its body says.
-        assert!(!is_permission_refusal(
-            r#"HTTP 401 Unauthorized: {"error":{"details":{"error_code":"oauth_not_allowed_for_organization"}}}"#
-        ));
-        // A different 403 error code is not in the permission set.
-        assert!(is_credential_rejection(
-            r#"HTTP 403 Forbidden: {"error":{"details":{"error_code":"some_other_code"}}}"#
-        ));
-    }
-
-    #[test]
-    fn the_permission_error_code_is_read_from_where_the_vendor_nests_it() {
-        assert_eq!(
-            resource_error_code(
-                r#"{"error":{"type":"permission_error","details":{"error_code":"oauth_not_allowed_for_organization"}}}"#
-            )
-            .as_deref(),
-            Some("oauth_not_allowed_for_organization"),
-            "the code lives under error.details.error_code, not error.type"
-        );
-        assert_eq!(
-            resource_error_code(r#"{"error":{"error_code":"flat"}}"#).as_deref(),
-            Some("flat")
-        );
-        assert_eq!(resource_error_code("not json").as_deref(), None);
-        assert_eq!(resource_error_code(r#"{"error":"bare"}"#).as_deref(), None);
-    }
-
-    /// A dead subscription restated its consequence 146 times over twelve
-    /// hours. The condition stays visible in `last_error`; the log records the
-    /// change, not the steady state (issue #321).
-    #[test]
-    fn an_unchanged_failure_is_not_restated() {
-        let cache = ModelCatalogCache::new();
-        cache.record_failure(SubscriptionProvider::Claude, "HTTP 401 revoked", true);
-        // The state is what a monitor reads, and it does not decay.
-        assert_eq!(
-            cache
-                .status(SubscriptionProvider::Claude)
-                .last_error
-                .as_deref(),
-            Some("HTTP 401 revoked")
-        );
-        // A repeat is the same string, which is what the emitter tests against.
-        assert_eq!(
-            cache
-                .status(SubscriptionProvider::Claude)
-                .last_error
-                .as_deref(),
-            Some("HTTP 401 revoked"),
-            "a repeat is recognisable as one"
-        );
-        // A genuinely different failure is not suppressed.
-        cache.record_failure(SubscriptionProvider::Claude, "HTTP 500 upstream", false);
-        assert_eq!(
-            cache
-                .status(SubscriptionProvider::Claude)
-                .last_error
-                .as_deref(),
-            Some("HTTP 500 upstream"),
-            "a new condition replaces the old one and is reported"
-        );
-    }
-
-    #[test]
-    fn failed_refresh_preserves_last_known_models() {
-        let cache = ModelCatalogCache::new();
-        cache.record_success(SubscriptionProvider::Codex, vec!["gpt-live".to_string()]);
-        cache.record_failure(SubscriptionProvider::Codex, "vendor unavailable", false);
-        let status = cache.status(SubscriptionProvider::Codex);
-        // A transient failure keeps the catalog usable ...
-        assert_eq!(status.models, ["gpt-live"]);
-        assert_eq!(status.last_error.as_deref(), Some("vendor unavailable"));
-        assert!(status.discovered);
-        assert_eq!(status.routable_models(), ["gpt-live"]);
-
-        // ... but a credential rejection stops it being routed while keeping it
-        // visible to administrators (issue #192).
-        cache.record_failure(SubscriptionProvider::Codex, "HTTP 401", true);
-        let status = cache.status(SubscriptionProvider::Codex);
-        assert_eq!(status.models, ["gpt-live"], "retained for diagnostics");
-        assert!(status.routable_models().is_empty(), "not routable");
-        assert!(status.is_degraded());
-    }
-}
+#[path = "model_catalog_tests.rs"]
+mod tests;

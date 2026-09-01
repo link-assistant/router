@@ -22,6 +22,16 @@ pub enum ModelRouteError {
     Ambiguous(String),
 }
 
+#[path = "model_routing_snapshot.rs"]
+pub(crate) mod snapshot;
+pub(crate) use snapshot::{
+    RoutedState, ValidatedSubscription, route_pinned_subscription, route_subscription_model,
+};
+
+#[path = "model_routing_catalog_snapshot.rs"]
+mod catalog_snapshot;
+pub(crate) use catalog_snapshot::ConfiguredCatalogSnapshot;
+
 impl std::fmt::Display for ModelRouteError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -123,18 +133,16 @@ fn credential_state(
     provider: SubscriptionProvider,
     catalogs: &ModelCatalogCache,
 ) -> Option<String> {
-    let status = catalogs.status(provider);
-    if !status.is_degraded() {
+    if !catalogs.provider_is_degraded(provider) {
         return None;
     }
+    let status = catalogs.status(provider);
     Some(match (status.discovered, status.last_error) {
-        (true, error) => format!(
-            "the {provider} catalog is retained for diagnostics but its credential is not usable \
-             ({})",
-            error.unwrap_or_else(|| "the last refresh was rejected".to_string())
+        (true, _) => format!(
+            "the {provider} catalog is retained for diagnostics but its credential is not usable"
         ),
-        (false, Some(error)) => {
-            format!("{provider} has never completed a live catalog discovery ({error})")
+        (false, Some(_)) => {
+            format!("{provider} has never completed a live catalog discovery")
         }
         (false, None) => format!("no {provider} credential has been read yet"),
     })
@@ -150,10 +158,7 @@ fn credential_states(model: &str, catalogs: &ModelCatalogCache) -> Vec<String> {
         || {
             SubscriptionProvider::ALL
                 .into_iter()
-                .filter(|provider| {
-                    let status = catalogs.status(*provider);
-                    status.discovered || status.last_error.is_some()
-                })
+                .filter(|provider| catalogs.provider_has_observation(*provider))
                 .filter_map(|provider| credential_state(provider, catalogs))
                 .collect()
         },
@@ -269,16 +274,22 @@ pub async fn healthy_providers(
     token_cache: &crate::refresh::TokenCache,
     now_ms: i64,
 ) -> Vec<SubscriptionProvider> {
+    token_cache.register_readers(crate::credential_recovery_store::PRIMARY_ACCOUNT, readers);
     let checks = SubscriptionProvider::ALL
         .into_iter()
         .map(|provider| async move {
-            let reader = readers
+            readers
                 .iter()
                 .find(|reader| reader.provider() == provider)?;
-            let disk_token = reader.read_token().ok()?;
             let token = token_cache
-                .get_fresh(client, provider, disk_token, now_ms)
-                .await;
+                .get_fresh_registered(
+                    client,
+                    provider,
+                    crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                    now_ms,
+                )
+                .await
+                .ok()?;
             if token_cache.evidence(provider) == Some(crate::refresh::CredentialEvidence::Rejected)
             {
                 tracing::debug!("{provider} credential was rejected upstream; not routable");
@@ -298,6 +309,17 @@ pub async fn healthy_providers(
         .into_iter()
         .flatten()
         .collect()
+}
+
+/// The lifecycle state of a configured subscription credential.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProviderHealthState {
+    /// The credential is readable, but no live catalog has completed yet.
+    Starting,
+    /// Live discovery succeeded and the credential remains usable.
+    Healthy,
+    /// The credential cannot be read or current evidence says it cannot serve.
+    Degraded,
 }
 
 /// Whether a configured subscription can serve requests right now, and why not.
@@ -321,13 +343,35 @@ pub struct ProviderHealth {
     pub summary: Option<&'static str>,
 }
 
+/// Internal lifecycle report preserving explicit startup semantics without
+/// changing the patch-release public [`ProviderHealth`] construction API.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ProviderHealthReport {
+    pub provider: SubscriptionProvider,
+    pub state: ProviderHealthState,
+    pub reason: Option<String>,
+    pub summary: Option<&'static str>,
+}
+
+impl ProviderHealthReport {
+    #[must_use]
+    pub const fn is_degraded(&self) -> bool {
+        matches!(self.state, ProviderHealthState::Degraded)
+    }
+
+    #[must_use]
+    pub const fn is_serving(&self) -> bool {
+        !self.is_degraded()
+    }
+}
+
 /// Health for every subscription that is actually configured on this
 /// deployment.
 ///
-/// A provider with no credential reader is not reported at all: "claude was
-/// never configured here" and "claude died twelve hours ago" must not render
-/// identically, which is precisely the ambiguity that let a dead subscription
-/// hide behind an absence (issue #318).
+/// A provider whose reader finds no credential is not reported at all:
+/// "claude was never configured here" and "claude died twelve hours ago" must
+/// not render identically, which is precisely the ambiguity that let a dead
+/// subscription hide behind an absence (issue #318).
 #[must_use]
 pub fn configured_provider_health(
     readers: &[SubscriptionReader],
@@ -349,38 +393,219 @@ pub fn configured_provider_health(
                 } else if status.discovered && !status.credential_healthy {
                     credential_state(provider, catalogs)
                 } else {
-                    // A provider that has not yet completed its first live
-                    // discovery is *starting*, not dead. Reporting it degraded
-                    // would fire a page on every cold start and on any transient
-                    // catalog-endpoint failure — an alert that cries wolf is the
-                    // same failure as one that never fires (issue #318).
                     None
                 };
             ProviderHealth {
                 provider,
                 healthy: reason.is_none(),
-                // A credential path, an account id or an endpoint body can all
-                // reach `reason` through `last_refresh_error`. That is right
-                // for an operator reading a log or an admin-gated listing, and
-                // wrong for an endpoint a monitor polls without a credential,
-                // so the public summary is derived rather than passed through
-                // (issues #318, and the disclosure rule #300 set).
-                summary: reason.as_ref().map(|_| {
-                    if rejected {
-                        "the credential was rejected upstream and needs re-authentication"
-                    } else {
-                        "no live catalog has been discovered for this subscription"
-                    }
-                }),
                 reason,
+                summary: rejected
+                    .then_some("the credential was rejected upstream and needs re-authentication"),
             }
         })
         .collect()
 }
 
+fn account_health(
+    provider: SubscriptionProvider,
+    account: &str,
+    credential: Result<Option<crate::subscription::SubscriptionToken>, String>,
+    token_cache: &crate::refresh::TokenCache,
+    catalogs: &ModelCatalogCache,
+) -> Option<ProviderHealthReport> {
+    let token = match credential {
+        Ok(Some(token)) => token,
+        Ok(None) => return None,
+        Err(error) => {
+            return Some(ProviderHealthReport {
+                provider,
+                state: ProviderHealthState::Degraded,
+                reason: Some(error),
+                summary: Some("the configured credential could not be read"),
+            });
+        }
+    };
+    let rejected = token_cache.evidence_for(provider, account)
+        == Some(crate::refresh::CredentialEvidence::Rejected);
+    let status = catalogs.status_for(provider, account);
+    let account_matches = match (token.account_id.as_deref(), status.account.as_deref()) {
+        (Some(current), Some(discovered)) => current == discovered,
+        (None, None) => true,
+        _ => false,
+    };
+    let (state, reason, summary) = if rejected {
+        (
+            ProviderHealthState::Degraded,
+            Some(
+                token_cache
+                    .last_refresh_error_for(provider, account)
+                    .unwrap_or_else(|| format!("the {provider} credential was rejected upstream")),
+            ),
+            Some("the credential was rejected upstream and needs re-authentication"),
+        )
+    } else if !account_matches {
+        (ProviderHealthState::Starting, None, None)
+    } else if status.discovered && !status.credential_healthy {
+        (
+            ProviderHealthState::Degraded,
+            Some(format!("the {provider} catalog credential is not usable")),
+            Some("the credential was rejected upstream and needs re-authentication"),
+        )
+    } else if status.discovered {
+        (ProviderHealthState::Healthy, None, None)
+    } else {
+        (ProviderHealthState::Starting, None, None)
+    };
+    Some(ProviderHealthReport {
+        provider,
+        state,
+        reason,
+        summary,
+    })
+}
+
+/// Recovery-aware lifecycle health for every configured provider.
+async fn configured_account_health_report(state: &AppState) -> Vec<(String, ProviderHealthReport)> {
+    let checks = SubscriptionProvider::ALL
+        .into_iter()
+        .map(|provider| async move {
+            let accounts = state
+                .account_router
+                .as_ref()
+                .filter(|router| router.provider() == provider)
+                .map_or_else(
+                    || {
+                        state
+                            .subscription_readers
+                            .iter()
+                            .find(|reader| reader.provider() == provider)
+                            .map(|reader| {
+                                state.subscription_cache.register_reader(
+                                    crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                                    reader,
+                                );
+                                vec![crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()]
+                            })
+                            .unwrap_or_default()
+                    },
+                    |router| {
+                        router
+                            .subscription_readers()
+                            .into_iter()
+                            .map(|(account, _)| account)
+                            .collect()
+                    },
+                );
+            let mut reports = Vec::new();
+            for account in accounts {
+                let credential = state
+                    .subscription_cache
+                    .load_authoritative(provider, &account)
+                    .await;
+                if let Some(report) = account_health(
+                    provider,
+                    &account,
+                    credential,
+                    &state.subscription_cache,
+                    &state.model_catalogs,
+                ) {
+                    reports.push((account, report));
+                }
+            }
+            reports
+        });
+    futures_util::future::join_all(checks)
+        .await
+        .into_iter()
+        .flatten()
+        .collect()
+}
+
+fn aggregate_provider_health(
+    accounts: &[(String, ProviderHealthReport)],
+) -> Vec<ProviderHealthReport> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter_map(|provider| {
+            let reports = accounts
+                .iter()
+                .map(|(_, report)| report)
+                .filter(|report| report.provider == provider)
+                .collect::<Vec<_>>();
+            if reports.is_empty() {
+                return None;
+            }
+            let state = if reports
+                .iter()
+                .any(|report| report.state == ProviderHealthState::Healthy)
+            {
+                ProviderHealthState::Healthy
+            } else if reports
+                .iter()
+                .any(|report| report.state == ProviderHealthState::Starting)
+            {
+                ProviderHealthState::Starting
+            } else {
+                ProviderHealthState::Degraded
+            };
+            let degraded = reports
+                .iter()
+                .find(|report| report.state == ProviderHealthState::Degraded);
+            Some(ProviderHealthReport {
+                provider,
+                state,
+                reason: degraded.and_then(|report| report.reason.clone()),
+                summary: degraded.and_then(|report| report.summary),
+            })
+        })
+        .collect()
+}
+
+/// Recovery-aware lifecycle health for every configured provider.
+pub(crate) async fn configured_provider_health_report(
+    state: &AppState,
+) -> Vec<ProviderHealthReport> {
+    aggregate_provider_health(&configured_account_health_report(state).await)
+}
+
+/// Resolve health and the corresponding account-filtered model union once.
+pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredCatalogSnapshot {
+    let accounts = configured_account_health_report(state).await;
+    let models = SubscriptionProvider::ALL
+        .into_iter()
+        .map(|provider| {
+            let healthy_accounts = accounts
+                .iter()
+                .filter(|(_, report)| {
+                    report.provider == provider && report.state == ProviderHealthState::Healthy
+                })
+                .map(|(account, _)| account.clone())
+                .collect::<Vec<_>>();
+            (
+                provider,
+                state
+                    .model_catalogs
+                    .models_for_accounts(provider, &healthy_accounts),
+            )
+        })
+        .collect();
+    ConfiguredCatalogSnapshot {
+        health: aggregate_provider_health(&accounts),
+        models,
+    }
+}
+
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
+    model_catalog_with(providers, catalogs, |provider| catalogs.models(provider))
+}
+
+fn model_catalog_with(
+    providers: &[SubscriptionProvider],
+    catalogs: &ModelCatalogCache,
+    models: impl Fn(SubscriptionProvider) -> Vec<String>,
+) -> Value {
     let now = chrono::Utc::now().timestamp();
     // A provider is degraded when it has never discovered a live catalog or its
     // credential has stopped working. There is no bundled fallback to fall back
@@ -388,18 +613,19 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
     // stale coverage.
     let degraded = providers
         .iter()
-        .filter(|provider| catalogs.status(**provider).is_degraded())
+        .filter(|provider| catalogs.provider_is_degraded(**provider))
         .map(|provider| provider.as_str())
         .collect::<Vec<_>>();
     let healthy_providers = providers
         .iter()
+        .filter(|provider| !catalogs.provider_is_degraded(**provider))
         .map(|provider| provider.as_str())
         .collect::<Vec<_>>();
     let data = providers
         .iter()
         .flat_map(|provider| {
             let owner = provider_owner(*provider);
-            catalogs.models(*provider).into_iter().map(move |id| {
+            models(*provider).into_iter().map(move |id| {
                 json!({
                     "id": id,
                     "object": "model",
@@ -423,46 +649,47 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.
 #[must_use]
 pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) -> Value {
-    let healthy = healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
-    if healthy.contains(&provider) {
-        model_catalog(&[provider], &state.model_catalogs)
+    let snapshot = configured_catalog_snapshot(state).await;
+    let health = snapshot
+        .health()
+        .iter()
+        .filter(|entry| entry.provider == provider)
+        .cloned()
+        .collect::<Vec<_>>();
+    let mut catalog = if health
+        .first()
+        .is_some_and(|entry| entry.state == ProviderHealthState::Healthy)
+    {
+        model_catalog_with(&[provider], &state.model_catalogs, |provider| {
+            snapshot.models(provider)
+        })
     } else {
         model_catalog(&[], &state.model_catalogs)
-    }
+    };
+    merge_configured_degradation(&health, &mut catalog);
+    catalog
 }
 
 /// Add every configured-but-unusable subscription to `degraded_providers`.
 ///
-/// Reported with a reason, so the list distinguishes "revoked, re-authenticate"
-/// from "has never discovered a catalog" without a container-log excavation
-/// (issue #318).
-fn merge_configured_degradation(state: &AppState, catalog: &mut Value) {
-    let unhealthy = configured_provider_health(
-        &state.subscription_readers,
-        &state.subscription_cache,
-        &state.model_catalogs,
-    );
+/// Reported with a fixed public reason, so a client can distinguish degradation
+/// without receiving a credential path or upstream response body (issue #318).
+fn merge_configured_degradation(health: &[ProviderHealthReport], catalog: &mut Value) {
     let mut degraded = catalog
         .get("degraded_providers")
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default();
     let mut reasons = serde_json::Map::new();
-    for health in unhealthy.iter().filter(|health| !health.healthy) {
-        let name = Value::from(health.provider.as_str());
+    for entry in health.iter().filter(|entry| entry.is_degraded()) {
+        let name = Value::from(entry.provider.as_str());
         if !degraded.contains(&name) {
             degraded.push(name);
         }
         // The summary, not the reason: `/v1/models` answers any client token,
         // and a credential path is not a client's business.
-        if let Some(summary) = health.summary {
-            reasons.insert(health.provider.as_str().to_string(), Value::from(summary));
+        if let Some(summary) = entry.summary {
+            reasons.insert(entry.provider.as_str().to_string(), Value::from(summary));
         }
     }
     if let Some(object) = catalog.as_object_mut() {
@@ -479,22 +706,17 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
 
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => {
-            let mut catalog = model_catalog(
-                &healthy_providers(
-                    &state.client,
-                    &state.subscription_readers,
-                    &state.subscription_cache,
-                    chrono::Utc::now().timestamp_millis(),
-                )
-                .await,
-                &state.model_catalogs,
-            );
+            let snapshot = configured_catalog_snapshot(&state).await;
+            let healthy = snapshot.healthy_providers();
+            let mut catalog = model_catalog_with(&healthy, &state.model_catalogs, |provider| {
+                snapshot.models(provider)
+            });
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
             // simply vanished from `data`. Absence is not an alert: a monitor
             // cannot tell it from a provider that was never configured here
             // (issue #318).
-            merge_configured_degradation(&state, &mut catalog);
+            merge_configured_degradation(snapshot.health(), &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
             catalog
         }
@@ -523,6 +745,15 @@ pub async fn route_anthropic_request(
     state: &AppState,
     request: Request,
 ) -> Result<(AppState, Request), Response> {
+    route_anthropic_request_with_subscription(state, request)
+        .await
+        .map(|(routed, request)| (routed.state, request))
+}
+
+pub(crate) async fn route_anthropic_request_with_subscription(
+    state: &AppState,
+    request: Request,
+) -> Result<(RoutedState, Request), Response> {
     let path = request.uri().path().to_string();
     let (parts, body) = request.into_parts();
     let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
@@ -545,17 +776,17 @@ pub async fn route_anthropic_request(
         )
     })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        route_state(state, &routing_body)
+        route_state_with_subscription(state, &routing_body)
             .await
             .map_err(|error| model_route_error_response(&error))?
     } else {
-        route_provider(state, SubscriptionProvider::Claude)
+        route_pinned_subscription(state, SubscriptionProvider::Claude)
             .await
             .map_err(|error| {
                 crate::proxy::error_response(
                     StatusCode::BAD_REQUEST,
                     "invalid_request_error",
-                    &error,
+                    &error.to_string(),
                 )
             })?
     };
@@ -707,9 +938,15 @@ pub fn bare_model_id(model: &str) -> &str {
     model.split_once('/').map_or(model, |(_, bare)| bare)
 }
 
-pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
+pub(crate) async fn route_state_with_subscription(
+    state: &AppState,
+    body: &Value,
+) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
-        return Ok(state.clone());
+        return Ok(RoutedState {
+            state: state.clone(),
+            subscription: None,
+        });
     }
     let model = body
         .get("model")
@@ -719,36 +956,19 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
     // Stored providers are consulted first: a declared model is an explicit
     // operator statement, while a subscription catalog is discovered.
     if let Some(stored) = stored_provider_for_model(state, model)? {
-        return Ok(route_stored_provider(state, &stored, model));
+        return Ok(RoutedState {
+            state: route_stored_provider(state, &stored, model),
+            subscription: None,
+        });
     }
-    let provider = available_provider_for_model(
-        model,
-        &healthy_providers(
-            &state.client,
-            &state.subscription_readers,
-            &state.subscription_cache,
-            chrono::Utc::now().timestamp_millis(),
-        )
-        .await,
-        &state.model_catalogs,
-    )?;
-    let mut routed = route_provider(state, provider).await.map_err(|_| {
-        // The same sentence as the sibling refusal 480 lines up, which appends
-        // the cause. One with a reason and one without, depending on which of
-        // two adjacent branches failed, is exactly the asymmetry #239 fixed.
-        let cause = credential_state(provider, &state.model_catalogs)
-            .unwrap_or_else(|| format!("no usable {provider} credential is available"));
-        ModelRouteError::NotFound(format!(
-            "model '{model}' has no healthy {provider} credential: {cause}"
-        ))
-    })?;
-    if provider != SubscriptionProvider::Claude {
-        // The Anthropic bridge normally substitutes its provider default
-        // because pinned clients name Claude models. Auto mode selected this
-        // provider from the requested model itself, so preserve that exact id.
-        routed.bridge_model = Some(model.to_string());
-    }
-    Ok(routed)
+    route_subscription_model(state, model).await
+}
+
+/// Compatibility wrapper returning only the routed state.
+pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
+    route_state_with_subscription(state, body)
+        .await
+        .map(|routed| routed.state)
 }
 
 #[cfg(test)]
@@ -760,5 +980,17 @@ mod tests;
 mod health_tests;
 
 #[cfg(test)]
+#[path = "model_routing_snapshot_tests.rs"]
+mod snapshot_tests;
+
+#[cfg(test)]
+#[path = "model_routing_pool_tests.rs"]
+mod pool_tests;
+
+#[cfg(test)]
 #[path = "model_routing_recovery_tests.rs"]
 mod recovery_tests;
+
+#[cfg(test)]
+#[path = "model_routing_evidence_tests.rs"]
+mod evidence_tests;

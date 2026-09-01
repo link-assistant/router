@@ -81,7 +81,7 @@ to its owning subscription. Set a concrete value to pin a deployment to one
 provider. Clients still authenticate with their `la_sk_...` token; the router
 supplies the selected vendor OAuth token.
 
-| Provider | `UPSTREAM_PROVIDER` (aliases) | Credentials (read-only) | Upstream |
+| Provider | `UPSTREAM_PROVIDER` (aliases) | Credential home | Upstream |
 | --- | --- | --- | --- |
 | Claude | `anthropic` | `~/.claude/.credentials.json` | `api.anthropic.com` |
 | Codex / ChatGPT | `codex` (`chatgpt`, `openai-codex`) | `~/.codex/auth.json` | ChatGPT backend Responses API |
@@ -89,9 +89,16 @@ supplies the selected vendor OAuth token.
 | Qwen | `qwen` (`qwen-code`, `dashscope`) | `~/.qwen/oauth_creds.json` | DashScope OpenAI-compatible |
 
 The credential files are produced by each vendor's own CLI (run its `login`
-once); the router only reads them. Expired tokens are refreshed in memory using
-the vendor's public OAuth client — the files on disk are never modified and
-secrets are never logged. `/v1/chat/completions` and `/v1/responses` are
+once). The router refreshes expiring access tokens with the vendor's public
+OAuth client. When the vendor rotates the refresh token, the router preserves
+the vendor document's unrelated fields and atomically writes the new chain link
+before using it. If that home is read-only, an owner-only recovery record under
+`DATA_DIR/refresh-recovery` keeps the rotation durable and is reconciled later.
+Refresh, native login, and import share one provider/account transaction lock;
+if the lock or every durable destination is unavailable, the request fails
+closed instead of serving a token whose rotation could be lost. An access-token
+refresh that leaves the refresh link unchanged remains an in-memory cache entry,
+avoiding an unnecessary write. Secrets are never logged. `/v1/chat/completions` and `/v1/responses` are
 translated to each backend's dialect (Codex uses the OpenAI Responses API;
 Gemini uses the Code Assist envelope with synthesized SSE for streaming; Qwen is
 OpenAI-compatible). Run `router doctor` to verify each credential file is
@@ -787,6 +794,7 @@ router auth import codex         # from ~/.codex
 router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
 router auth import claude /path  # or name the source, read exactly as given
 router auth import --all         # every login this machine has, in one step
+router auth import codex --if-absent # install only while the destination is empty
 ```
 
 Importing is a different operation from authorizing, not a variation of it:
@@ -804,6 +812,14 @@ authorize a remote deployment from this machine, use `router auth claude` or
 The import reports what it adopted — where it came from, when it expires, and
 whether it carries a refresh token — so an already-expired credential is caught
 at import time rather than as a `401` later.
+
+Subscription imports use the same durable provider/account lock as refresh and
+native login. Ordinary import is an explicit replacement operation.
+`--if-absent` is the provisioning-safe form for Claude, Codex, Gemini, and Qwen:
+it rechecks the destination and recovery sidecar while holding that lock and
+never replaces a login that already exists or appeared while it waited. A
+vendor-rejected candidate is refused; add `--force` only when deliberately
+installing that candidate into a destination that is still empty.
 
 On macOS the live Claude credential is in the login Keychain rather than the
 file beside it, so an import from the vendor's own home consults both and takes
@@ -1232,13 +1248,13 @@ The single image intentionally contains no vendor CLI. It performs Claude OAuth 
 | Operation | Needs the Claude CLI in the image? | Mount mode |
 | --- | --- | --- |
 | Serve requests with a valid access token | No | `:ro` |
-| Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` (see below) |
+| Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` when `DATA_DIR` is writable (see below) |
 | **First-time login** (no credential file yet) | No — native OAuth | writable |
 | `POST /api/login` (remote login over HTTP) | No — native OAuth | writable |
 
 The router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and serves from the result, so serving continues across expiry. The same mechanism covers Codex, Gemini, and Qwen.
 
-One case needs write access. Vendors **rotate** refresh tokens: the refresh response often carries a replacement and spends the old one. When that happens the router writes the new token back to the credential file — on every refresh path, not only the catalog poll — so a restart does not replay a spent token. On a `:ro` mount the write is skipped with a logged warning — the router keeps working for the life of the process, but a restart may then require re-authorizing. Mount the credential directory writable if you want rotation to survive restarts.
+One case needs a durable writable destination. Vendors **rotate** refresh tokens: the refresh response often carries a replacement and spends the old one. When that happens the router writes the new token back to the credential file — on every refresh path, not only the catalog poll — so a restart does not replay a spent token. On a `:ro` credential mount, the router atomically writes an owner-only recovery sidecar below writable `DATA_DIR` and reconciles it into the vendor file later. If neither destination can accept the rotation, the refresh fails closed and the new access token is not served. Mount the credential directory writable to avoid relying on the recovery sidecar.
 
 Two things still require a real login: a directory with no credential file at all, and a `refreshToken` that has itself been revoked or expired.
 
@@ -1252,7 +1268,7 @@ Rotation makes the credential file shared mutable state: the vendor CLI, a secon
 4. **Ask the vendor client.** Only when that provider's binary is configured — `--claude-cli-bin` for Claude, `--codex-cli-bin` for Codex: the vendor's own client is run once, and if it rotates the chain the router adopts the credential it wrote. The invocation, the client's own (self-redacting) debug log, and the exchange the router itself sent — header names with values, body field *names* without them — are journalled, so the undocumented protocol can be reproduced from the log alone. Token values are never logged.
 
    **This rung bills inference.** The probe is a real request to the vendor — one word to the smallest model (`claude -p ok --model claude-haiku-4-5`, `codex exec ok`) — because that is what forces a refresh. A status command does not: measured against a credential expired by 42 hours, `claude auth status` reported `loggedIn: true` and left the credential untouched, while the model probe took the refresh path (issue #275). Override the command with `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `ROUTER_VENDOR_REFRESH_ARGS_CODEX` if a future client version offers something cheaper that still rotates the chain — and measure it the same way before trusting it. Leaving the binary unset keeps the rung inert and costs nothing.
-5. **Report precisely.** Only then is the subscription reported as rejected, and the message distinguishes a revoked credential from a lost rotation race, names the credential file that was checked, and gives the re-authentication command. A request for a model whose subscription is in that state says so, instead of only reporting that the model is `not advertised by any subscription`.
+5. **Report precisely.** Only then is the subscription reported as rejected, and operator logs distinguish a revoked credential from a lost rotation race and give the re-authentication command. Public health, model, and routing responses use fixed provider-only summaries; they never expose credential paths, account identities, or upstream response bodies.
 
 ### Logging in from inside a container
 
@@ -1296,8 +1312,8 @@ services:
       TOKEN_SECRET: ${TOKEN_SECRET}
       ROUTER_PORT: "8080"
     volumes:
-      # `:ro` is enough: token renewal happens in memory. Drop `:ro` (and use
-      # `:ro` can be dropped when authorizing from the container.
+      # `:ro` is supported while DATA_DIR stays writable for recovery sidecars.
+      # Drop `:ro` when authorizing from the container or to reconcile directly.
       - ${HOME}/.claude:/data/claude:ro
     restart: unless-stopped
 ```

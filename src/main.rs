@@ -372,7 +372,10 @@ async fn run_server(
         activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
         mpp: config.mpp.clone(),
-        login_manager: LoginManager::new(config.login.clone()),
+        login_manager: LoginManager::new_with_data_dir(
+            config.login.clone(),
+            config.data_dir.clone(),
+        ),
         // The resolved directory, not `DATA_DIR`: clap merged the flag and the
         // environment into `config.data_dir`, and only that value knows which
         // one the operator used (issue #282).
@@ -382,20 +385,43 @@ async fn run_server(
         .map_err(std::io::Error::other)?,
     };
 
-    state.register_credential_recovery(&link_assistant_router::app_state::VendorClis {
-        claude: config.claude_cli_bin.as_deref(),
-        codex: config.codex_cli_bin.as_deref(),
-    });
+    state.register_credential_recovery_in(
+        &config.data_dir,
+        &link_assistant_router::app_state::VendorClis {
+            claude: config.claude_cli_bin.as_deref(),
+            codex: config.codex_cli_bin.as_deref(),
+        },
+    );
     // Persist terminal refusals so the CLI — a separate short-lived process
     // that performs no refresh — can report a revoked chain too (issue #245).
     state
         .subscription_cache
         .persist_rejections_in(&config.data_dir);
 
+    let mut catalog_readers = state
+        .subscription_readers
+        .iter()
+        .filter(|reader| {
+            state
+                .account_router
+                .as_ref()
+                .is_none_or(|router| router.provider() != reader.provider())
+        })
+        .cloned()
+        .map(|reader| {
+            (
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                reader,
+            )
+        })
+        .collect::<Vec<_>>();
+    if let Some(router) = state.account_router.as_ref() {
+        catalog_readers.extend(router.subscription_readers());
+    }
     let catalog_refresh = tokio::spawn(
-        link_assistant_router::model_catalog::refresh_catalogs_forever(
+        link_assistant_router::model_catalog::refresh_catalogs_for_accounts_forever(
             state.client.clone(),
-            state.subscription_readers.clone(),
+            catalog_readers,
             Arc::clone(&state.subscription_cache),
             Arc::clone(&state.model_catalogs),
         ),

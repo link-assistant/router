@@ -109,11 +109,34 @@ impl AppState {
     /// that could recover a Claude subscription automatically but needed an
     /// operator for Codex was drawing a line the credentials do not (#275).
     pub fn register_credential_recovery(&self, vendor_clis: &VendorClis<'_>) {
-        self.subscription_cache
-            .register_readers("primary", &self.subscription_readers);
+        self.subscription_cache.register_readers(
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &self.subscription_readers,
+        );
         if let Some(router) = &self.account_router {
             router.register_credential_stores(&self.subscription_cache);
         }
+        self.register_vendor_clis(vendor_clis);
+    }
+
+    /// Register durable data-directory recovery for every credential.
+    pub fn register_credential_recovery_in(
+        &self,
+        data_dir: &std::path::Path,
+        vendor_clis: &VendorClis<'_>,
+    ) {
+        self.subscription_cache.register_readers_in(
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &self.subscription_readers,
+            data_dir,
+        );
+        if let Some(router) = &self.account_router {
+            router.register_credential_stores_in(&self.subscription_cache, data_dir);
+        }
+        self.register_vendor_clis(vendor_clis);
+    }
+
+    fn register_vendor_clis(&self, vendor_clis: &VendorClis<'_>) {
         for reader in &self.subscription_readers {
             let Some(binary) = vendor_clis.binary_for(reader.provider()) else {
                 continue;
@@ -125,8 +148,10 @@ impl AppState {
             ) else {
                 continue;
             };
-            self.subscription_cache
-                .register_vendor_cli("primary", Arc::new(cli));
+            self.subscription_cache.register_vendor_cli(
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                Arc::new(cli),
+            );
         }
     }
 }
@@ -206,6 +231,96 @@ impl<'a> VendorClis<'a> {
             crate::subscription::SubscriptionProvider::Codex => self.codex,
             crate::subscription::SubscriptionProvider::Gemini
             | crate::subscription::SubscriptionProvider::Qwen => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn legacy_and_durable_registration_wrappers_share_the_same_readers() {
+        let root = tempfile::tempdir().expect("state directory");
+        let mut state = AppState::for_tests(root.path());
+        state
+            .subscription_readers
+            .push(crate::subscription::SubscriptionReader::new(
+                crate::subscription::SubscriptionProvider::Qwen,
+                root.path().join("qwen"),
+            ));
+
+        state.register_credential_recovery(&VendorClis::default());
+        assert!(
+            state
+                .subscription_cache
+                .store_for_subscription(
+                    crate::subscription::SubscriptionProvider::Qwen,
+                    crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                )
+                .is_some()
+        );
+
+        state.register_credential_recovery_in(root.path(), &VendorClis::default());
+        assert!(
+            state
+                .subscription_cache
+                .store_for_subscription(
+                    crate::subscription::SubscriptionProvider::Qwen,
+                    crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                )
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn registration_installs_only_supported_configured_vendor_clients() {
+        let root = tempfile::tempdir().expect("state directory");
+        let mut state = AppState::for_tests(root.path());
+        for provider in [
+            crate::subscription::SubscriptionProvider::Claude,
+            crate::subscription::SubscriptionProvider::Codex,
+            crate::subscription::SubscriptionProvider::Gemini,
+            crate::subscription::SubscriptionProvider::Qwen,
+        ] {
+            state
+                .subscription_readers
+                .push(crate::subscription::SubscriptionReader::new(
+                    provider,
+                    root.path().join(provider.as_str()),
+                ));
+        }
+        let claude = root.path().join("claude-cli");
+        let codex = root.path().join("codex-cli");
+
+        state.register_credential_recovery(&VendorClis {
+            claude: Some(&claude),
+            codex: Some(&codex),
+        });
+
+        for provider in [
+            crate::subscription::SubscriptionProvider::Claude,
+            crate::subscription::SubscriptionProvider::Codex,
+        ] {
+            assert!(
+                state
+                    .subscription_cache
+                    .vendor_cli_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT,)
+                    .is_some(),
+                "{provider} configured client was not registered"
+            );
+        }
+        for provider in [
+            crate::subscription::SubscriptionProvider::Gemini,
+            crate::subscription::SubscriptionProvider::Qwen,
+        ] {
+            assert!(
+                state
+                    .subscription_cache
+                    .vendor_cli_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT,)
+                    .is_none(),
+                "{provider} must not invent an unsupported vendor probe"
+            );
         }
     }
 }

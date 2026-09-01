@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -54,6 +55,7 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
     let address = listener.local_addr().unwrap();
     let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
     let home = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
     let config = ClaudeAuthConfig {
         authorize_url: "https://claude.test/oauth/authorize".into(),
         token_url: format!("http://{address}/token"),
@@ -74,7 +76,7 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
 
     let path = ClaudeLogin::resume(config)
         .unwrap()
-        .complete(&format!("copied-code#{state}"))
+        .complete_with_data_dir(&format!("copied-code#{state}"), data.path())
         .await
         .unwrap();
     server.abort();
@@ -101,6 +103,59 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
         stored["claudeAiOauth"]["scopes"],
         json!(["user:profile", "user:inference"])
     );
+}
+
+/// Native OAuth exchanges before opening the exact primary refresh lock.
+#[tokio::test]
+async fn native_claude_install_uses_the_exact_primary_refresh_lock() {
+    let exchange_requests = Arc::new(AtomicUsize::new(0));
+    let request_counter = Arc::clone(&exchange_requests);
+    let app = Router::new().route(
+        "/token",
+        post(move || {
+            let request_counter = Arc::clone(&request_counter);
+            async move {
+                request_counter.fetch_add(1, Ordering::SeqCst);
+                Json(json!({
+                    "access_token": "native-access",
+                    "refresh_token": "native-refresh",
+                    "expires_in": 3600
+                }))
+            }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let home = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
+    let config = ClaudeAuthConfig {
+        authorize_url: "https://claude.test/oauth/authorize".into(),
+        token_url: format!("http://{address}/token"),
+        client_id: "public-client".into(),
+        redirect_uri: "https://callback.test/code".into(),
+        claude_home: home.path().into(),
+        scopes: CLAUDE_SCOPES.into(),
+    };
+    let login = ClaudeLogin::begin(config);
+    let lock_path = link_assistant_router::credential_recovery_store::credential_lock_path(
+        data.path(),
+        link_assistant_router::subscription::SubscriptionProvider::Claude,
+        link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+    );
+    std::fs::create_dir_all(&lock_path).expect("make the exact lock path unopenable as a file");
+
+    let error = login
+        .complete_with_data_dir("copied-code", data.path())
+        .await
+        .expect_err("native installation must open the exact refresh lock");
+    assert_eq!(exchange_requests.load(Ordering::SeqCst), 1);
+    assert!(
+        error.contains("could not acquire the durable claude credential lock"),
+        "unexpected lock-open error: {error}"
+    );
+    assert!(!home.path().join(".credentials.json").exists());
+    server.abort();
 }
 
 async fn token_endpoint(

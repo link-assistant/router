@@ -511,7 +511,9 @@ async fn complete_native_claude(
         );
     }
     let login = link_assistant_router::claude_auth::ClaudeLogin::resume(auth_config)?;
-    login.complete(submitted.trim()).await?;
+    login
+        .complete_with_data_dir(submitted.trim(), &config.data_dir)
+        .await?;
     println!(
         "Claude authorization saved in {}",
         config.login.claude_code_home.display()
@@ -564,7 +566,8 @@ async fn run_claude_cli_fallback(
                 return ExitCode::from(1);
             }
         };
-    match complete_claude_cli(config, &LoginManager::new(fallback_config), code).await {
+    let manager = LoginManager::new_with_data_dir(fallback_config, config.data_dir.clone());
+    match complete_claude_cli(config, &manager, code).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("error: {error}");
@@ -613,7 +616,7 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
     };
     println!("Open this URL:\n{}", login.authorization_url());
     println!("Waiting for the browser callback on port {}…", login.port());
-    match login.complete().await {
+    match login.complete_with_data_dir(&config.data_dir).await {
         Ok(path) => {
             println!("Codex authorization saved in {}", path.display());
             ExitCode::SUCCESS
@@ -645,7 +648,7 @@ async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
         login.user_code()
     );
     println!("Waiting for device authorization…");
-    match login.complete().await {
+    match login.complete_with_data_dir(&config.data_dir).await {
         Ok(path) => {
             println!("Codex authorization saved in {}", path.display());
             ExitCode::SUCCESS
@@ -668,38 +671,74 @@ async fn status(config: &Config) -> ExitCode {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let now = chrono::Utc::now().timestamp_millis();
     let client = reqwest::Client::new();
-    let token_cache = link_assistant_router::refresh::TokenCache::new();
+    let readers: Vec<_> = SubscriptionProvider::ALL
+        .into_iter()
+        .map(|provider| {
+            SubscriptionReader::new(
+                provider,
+                crate::auth_import::provider_home(config, provider, &user_home),
+            )
+        })
+        .collect();
+    let token_cache =
+        link_assistant_router::refresh::TokenCache::registered_for(&readers, &config.data_dir);
+    let mut refresh_failed = false;
 
-    for provider in SubscriptionProvider::ALL {
-        let reader = SubscriptionReader::new(
-            provider,
-            crate::auth_import::provider_home(config, provider, &user_home),
-        );
-        let value = match reader.read_token() {
-            Ok(disk_token) => {
+    for reader in readers {
+        let provider = reader.provider();
+        let value = match token_cache
+            .load_authoritative(
+                provider,
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+            )
+            .await
+        {
+            Ok(Some(_)) => {
                 // Refresh first when the stored expiry says to, exactly as the
                 // proxy would, so the probe reflects what a real request sees.
                 let token = token_cache
-                    .get_fresh(&client, provider, disk_token, now)
+                    .get_fresh_registered(
+                        &client,
+                        provider,
+                        link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now,
+                    )
                     .await;
-                match link_assistant_router::model_catalog::fetch_provider_catalog(
-                    &client, provider, &token, None,
-                )
-                .await
+                if let Ok(token) = token
+                    && token_cache.last_refresh_error(provider).is_none()
                 {
-                    Ok(_) => "usable",
-                    Err(error)
-                        if link_assistant_router::model_catalog::is_credential_rejection(
-                            &error,
-                        ) =>
+                    match link_assistant_router::model_catalog::fetch_provider_catalog(
+                        &client, provider, &token, None,
+                    )
+                    .await
                     {
-                        "rejected"
+                        Ok(_) => "usable",
+                        Err(error)
+                            if link_assistant_router::model_catalog::is_credential_rejection(
+                                &error,
+                            ) =>
+                        {
+                            "rejected"
+                        }
+                        // The credential may well be fine; the probe could not say.
+                        Err(_) => "unverified",
                     }
-                    // The credential may well be fine; the probe could not say.
-                    Err(_) => "unverified",
+                } else {
+                    eprintln!(
+                        "error: {provider} refresh failed; credential state was not reported usable"
+                    );
+                    refresh_failed = true;
+                    "refresh-failed"
                 }
             }
-            Err(_) => "absent",
+            Ok(None) => "absent",
+            Err(_) => {
+                eprintln!(
+                    "error: {provider} refresh failed; credential recovery state could not be loaded"
+                );
+                refresh_failed = true;
+                "refresh-failed"
+            }
         };
         println!(
             "{:<8} {value:<10} {}",
@@ -707,7 +746,11 @@ async fn status(config: &Config) -> ExitCode {
             reader.home().display()
         );
     }
-    ExitCode::SUCCESS
+    if refresh_failed {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }
 
 #[cfg(test)]

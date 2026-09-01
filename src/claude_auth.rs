@@ -201,6 +201,16 @@ impl ClaudeLogin {
 
     /// Exchange a copied code and write the credential layout Claude Code uses.
     pub async fn complete(&self, pasted_code: &str) -> Result<PathBuf, String> {
+        self.complete_with_data_dir(pasted_code, &self.config.claude_home)
+            .await
+    }
+
+    /// Exchange a copied code and install under a Router-resolved lock root.
+    pub async fn complete_with_data_dir(
+        &self,
+        pasted_code: &str,
+        data_dir: impl AsRef<Path>,
+    ) -> Result<PathBuf, String> {
         let (code, returned_state) = pasted_code.trim().split_once('#').map_or_else(
             || (pasted_code.trim(), None),
             |(code, state)| (code, Some(state)),
@@ -239,7 +249,7 @@ impl ClaudeLogin {
         if token.access_token.trim().is_empty() {
             return Err("invalid Claude token response: missing access_token".to_string());
         }
-        persist(&self.config.claude_home, token, &self.config.scopes)
+        persist(&self.config, token, data_dir.as_ref()).await
     }
 }
 
@@ -292,14 +302,16 @@ fn take_pending(home: &Path) -> Result<PendingLogin, String> {
     result
 }
 
-fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<PathBuf, String> {
-    std::fs::create_dir_all(home)
-        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
+async fn persist(
+    config: &ClaudeAuthConfig,
+    token: TokenResponse,
+    data_dir: &Path,
+) -> Result<PathBuf, String> {
     let now = chrono::Utc::now().timestamp_millis();
     // Fall back to what this login actually asked for, so a narrow
     // `setup-token` credential is not recorded as carrying full scopes.
     let scopes = token.scope.as_deref().map_or_else(
-        || requested_scopes.split_whitespace().collect::<Vec<_>>(),
+        || config.scopes.split_whitespace().collect::<Vec<_>>(),
         |scope| scope.split_whitespace().collect::<Vec<_>>(),
     );
     let mut oauth = serde_json::json!({
@@ -317,22 +329,26 @@ fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<
     if let Some(seconds) = token.refresh_token_expires_in {
         oauth["refreshTokenExpiresAt"] = (now + seconds.saturating_mul(1000)).into();
     }
-    let path = home.join(".credentials.json");
-    let bytes = serde_json::to_vec_pretty(&serde_json::json!({ "claudeAiOauth": oauth }))
+    let document = serde_json::to_string_pretty(&serde_json::json!({ "claudeAiOauth": oauth }))
         .map_err(|error| format!("could not encode Claude credential: {error}"))?;
-    let temporary = home.join(format!(".credentials.json.{}.tmp", uuid::Uuid::new_v4()));
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&temporary)
-        .map_err(|error| crate::durable_file::describe_write_failure(&temporary, &error))?;
-    file.write_all(&bytes)
-        .and_then(|()| file.sync_all())
-        .map_err(|error| format!("could not write {}: {error}", temporary.display()))?;
-    restrict_permissions(&temporary)?;
-    std::fs::rename(&temporary, &path)
-        .map_err(|error| format!("could not install {}: {error}", path.display()))?;
-    Ok(path)
+    let reader = crate::subscription::SubscriptionReader::new(
+        crate::subscription::SubscriptionProvider::Claude,
+        &config.claude_home,
+    );
+    match reader
+        .install_document_locked(
+            data_dir,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &document,
+            crate::subscription::InstallMode::Replace,
+        )
+        .await?
+    {
+        crate::subscription::InstallDocumentResult::Installed(path) => Ok(path),
+        crate::subscription::InstallDocumentResult::AlreadyPresent(_) => {
+            Err("native Claude replacement unexpectedly became conditional".to_string())
+        }
+    }
 }
 
 fn random_urlsafe() -> String {

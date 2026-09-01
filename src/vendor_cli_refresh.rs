@@ -261,7 +261,7 @@ impl VendorCli {
             );
         }
 
-        let rotated = store.reload()?;
+        let rotated = store.try_reload().ok().flatten()?;
         let before = link_digest(spent);
         let after = link_digest(&rotated);
         if before == after {

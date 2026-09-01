@@ -1,7 +1,4 @@
-//! Provider-aware interactive subscription authorization.
-//!
-//! Claude uses its vendor CLI's copy/paste flow. Codex defaults to device-code
-//! authorization, with its PKCE loopback callback server available as fallback.
+//! Provider-aware native Claude and Codex subscription authorization.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -179,8 +176,17 @@ impl CodexDeviceLogin {
 
     /// Poll until the browser authorizes this device, then persist `auth.json`.
     pub async fn complete(self) -> Result<PathBuf, String> {
+        let data_dir = self.config.codex_home.clone();
+        self.complete_with_data_dir(data_dir).await
+    }
+
+    /// Complete device authorization under a Router-resolved lock root.
+    pub async fn complete_with_data_dir(
+        self,
+        data_dir: impl AsRef<Path>,
+    ) -> Result<PathBuf, String> {
         let timeout = self.config.timeout;
-        tokio::time::timeout(timeout, self.poll_and_store())
+        tokio::time::timeout(timeout, self.poll_and_store(data_dir.as_ref()))
             .await
             .unwrap_or_else(|_| {
                 Err(format!(
@@ -190,7 +196,7 @@ impl CodexDeviceLogin {
             })
     }
 
-    async fn poll_and_store(mut self) -> Result<PathBuf, String> {
+    async fn poll_and_store(mut self, data_dir: &Path) -> Result<PathBuf, String> {
         loop {
             match self.poll_once().await? {
                 DevicePoll::Pending => tokio::time::sleep(self.interval).await,
@@ -217,6 +223,7 @@ impl CodexDeviceLogin {
                         &redirect_uri,
                         &code.code_verifier,
                         &code.authorization_code,
+                        data_dir,
                     )
                     .await;
                 }
@@ -375,17 +382,30 @@ impl CodexLogin {
             .expect("redirect URI was built from a u16 port")
     }
 
-    /// Wait for a valid callback, exchange its code, persist the credential,
-    /// and stop the callback server on every exit path.
-    pub async fn complete(mut self) -> Result<PathBuf, String> {
+    /// Complete a callback and stop its server on every exit path.
+    pub async fn complete(self) -> Result<PathBuf, String> {
+        let data_dir = self.config.codex_home.clone();
+        self.complete_with_data_dir(data_dir).await
+    }
+
+    /// Complete loopback authorization under a Router-resolved lock root.
+    pub async fn complete_with_data_dir(
+        mut self,
+        data_dir: impl AsRef<Path>,
+    ) -> Result<PathBuf, String> {
         let callback = tokio::time::timeout(self.config.timeout, self.outcome_rx.recv()).await;
-        // The listener's only job is receiving one valid callback. Release the
-        // port before doing a potentially slow token exchange.
+        // Release the callback port before the potentially slow exchange.
         self.stop().await;
         match callback {
             Ok(Some(Ok(code))) => {
-                exchange_and_store(&self.config, &self.redirect_uri, &self.code_verifier, &code)
-                    .await
+                exchange_and_store(
+                    &self.config,
+                    &self.redirect_uri,
+                    &self.code_verifier,
+                    &code,
+                    data_dir.as_ref(),
+                )
+                .await
             }
             Ok(Some(Err(error))) => Err(error),
             Ok(None) => Err("Codex callback listener stopped before authorization".to_string()),
@@ -508,6 +528,7 @@ async fn exchange_and_store(
     redirect_uri: &str,
     verifier: &str,
     code: &str,
+    data_dir: &Path,
 ) -> Result<PathBuf, String> {
     let body = form_encode(&[
         ("grant_type", "authorization_code"),
@@ -535,13 +556,14 @@ async fn exchange_and_store(
         .json()
         .await
         .map_err(|error| format!("invalid Codex token response: {error}"))?;
-    persist_codex_auth(&config.codex_home, &tokens)
+    persist_codex_auth(config, &tokens, data_dir).await
 }
 
-fn persist_codex_auth(home: &Path, tokens: &TokenResponse) -> Result<PathBuf, String> {
-    std::fs::create_dir_all(home)
-        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
-    let path = home.join("auth.json");
+async fn persist_codex_auth(
+    config: &CodexAuthConfig,
+    tokens: &TokenResponse,
+    data_dir: &Path,
+) -> Result<PathBuf, String> {
     let value = serde_json::json!({
         "auth_mode": "chatgpt",
         "tokens": {
@@ -551,10 +573,25 @@ fn persist_codex_auth(home: &Path, tokens: &TokenResponse) -> Result<PathBuf, St
         },
         "last_refresh": chrono::Utc::now().to_rfc3339(),
     });
-    let body = serde_json::to_vec_pretty(&value).map_err(|error| error.to_string())?;
-    crate::durable_file::atomic_write_owner_only(&path, &body)
-        .map_err(|error| format!("could not install {}: {error}", path.display()))?;
-    Ok(path)
+    let document = serde_json::to_string_pretty(&value).map_err(|error| error.to_string())?;
+    let reader = crate::subscription::SubscriptionReader::new(
+        crate::subscription::SubscriptionProvider::Codex,
+        &config.codex_home,
+    );
+    match reader
+        .install_document_locked(
+            data_dir,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &document,
+            crate::subscription::InstallMode::Replace,
+        )
+        .await?
+    {
+        crate::subscription::InstallDocumentResult::Installed(path) => Ok(path),
+        crate::subscription::InstallDocumentResult::AlreadyPresent(_) => {
+            Err("native Codex replacement unexpectedly became conditional".to_string())
+        }
+    }
 }
 
 fn form_encode(pairs: &[(&str, &str)]) -> String {
@@ -591,6 +628,7 @@ mod tests {
     #[derive(Default)]
     struct DeviceStubState {
         polls: AtomicUsize,
+        exchanges: AtomicUsize,
     }
 
     async fn issue_device_code(Json(body): Json<serde_json::Value>) -> Json<serde_json::Value> {
@@ -626,7 +664,11 @@ mod tests {
         .into_response()
     }
 
-    async fn exchange_device_code(body: Bytes) -> Json<serde_json::Value> {
+    async fn exchange_device_code(
+        State(state): State<Arc<DeviceStubState>>,
+        body: Bytes,
+    ) -> Json<serde_json::Value> {
+        state.exchanges.fetch_add(1, Ordering::SeqCst);
         let body = String::from_utf8(body.to_vec()).unwrap();
         assert!(body.contains("code=device-authorization-code"));
         assert!(body.contains("code_verifier=device-verifier"));
@@ -720,6 +762,51 @@ mod tests {
         assert_eq!(saved["auth_mode"], "chatgpt");
         assert_eq!(saved["tokens"]["access_token"], "device-access");
         assert_eq!(state.polls.load(Ordering::SeqCst), 2);
+        server.abort();
+    }
+
+    /// Native Codex exchanges before taking the primary refresh lock.
+    #[tokio::test]
+    async fn native_codex_install_contends_on_the_primary_refresh_lock() {
+        let (issuer, state, server) = device_stub().await;
+        let home = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let login = CodexDeviceLogin::begin(CodexAuthConfig {
+            issuer,
+            client_id: CODEX_CLIENT_ID.to_string(),
+            port: 1455,
+            codex_home: home.path().to_path_buf(),
+            timeout: Duration::from_secs(3),
+            bind_host: "127.0.0.1".to_string(),
+        })
+        .await
+        .unwrap();
+        let lock_path = crate::credential_recovery_store::credential_lock_path(
+            data.path(),
+            crate::subscription::SubscriptionProvider::Codex,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        );
+        let holder = crate::durable_file::lock_exclusive_async(&lock_path, Duration::from_secs(1))
+            .await
+            .unwrap();
+        let data_path = data.path().to_path_buf();
+        let completion = tokio::spawn(login.complete_with_data_dir(data_path));
+        for _ in 0..100 {
+            if state.exchanges.load(Ordering::SeqCst) > 0 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+
+        assert_eq!(state.exchanges.load(Ordering::SeqCst), 1);
+        assert!(
+            !completion.is_finished(),
+            "Codex install bypassed refresh lock"
+        );
+        assert!(!home.path().join("auth.json").exists());
+        drop(holder);
+
+        assert!(completion.await.unwrap().unwrap().is_file());
         server.abort();
     }
 

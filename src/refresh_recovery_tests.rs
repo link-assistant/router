@@ -146,6 +146,9 @@ async fn drain(server: tokio::task::JoinHandle<()>) {
 const INVALID_GRANT: &str =
     r#"{"error":"invalid_grant","error_description":"refresh token not found"}"#;
 
+#[path = "refresh_transaction_tests.rs"]
+mod transaction;
+
 /// The case from issue #239: our refresh token is rejected because another
 /// holder already rotated the chain forward. Re-reading the credential is all
 /// it takes to keep serving, so no `invalid_grant` may be reported as revoked
@@ -222,7 +225,7 @@ async fn a_rotation_that_lands_during_the_exchange_is_adopted_instead_of_reporte
 
 /// A credential the store has *not* rotated past is genuinely revoked, and must
 /// still be terminal — but the message has to say which of the two causes it is
-/// and where that was checked.
+/// and that the registered store was checked without exposing its path.
 #[tokio::test]
 async fn a_revoked_credential_stays_terminal_and_names_the_cause() {
     let home = tempfile::tempdir().expect("temp home");
@@ -264,23 +267,30 @@ async fn a_revoked_credential_stays_terminal_and_names_the_cause() {
         message.contains("link-assistant-router auth claude"),
         "{message}"
     );
-    assert!(message.contains(".credentials.json"), "{message}");
+    assert!(
+        message.contains("registered claude credential store"),
+        "{message}"
+    );
+    assert!(!message.contains(home.path().to_string_lossy().as_ref()));
     // The generic "waiting will not help" advice is the sentence issue #239
     // calls misleading; the ladder gives the checked one instead.
     assert!(!message.contains("waiting will not help"), "{message}");
 
     // A second call must not spend another exchange against a credential that
     // is known dead.
-    let again = cache
-        .get_fresh_for_at(
+    let again = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        cache.get_fresh_for_at(
             &client,
             &url,
             SubscriptionProvider::Claude,
             "primary",
             stale,
             NOW_MS + 1_000,
-        )
-        .await;
+        ),
+    )
+    .await
+    .expect("authoritative suppression reload must not reacquire its held attempt lock");
     assert_eq!(again.access_token, "access-1");
     drain(server).await;
     assert_eq!(received.lock().unwrap().len(), 1, "one exchange only");
@@ -451,6 +461,86 @@ async fn a_rotated_refresh_token_survives_a_process_restart() {
         received.lock().unwrap().len(),
         1,
         "the restarted process must not need another exchange"
+    );
+}
+
+/// The same constructor used by short-lived diagnostics must rotate the real
+/// vendor document, not merely its in-memory cache. Codex fields that the
+/// normalized token does not model must survive that merge, and a new process
+/// must pick up the replacement refresh link without another exchange.
+#[tokio::test]
+async fn diagnostic_registration_persists_codex_rotation_for_a_fresh_cache() {
+    let root = tempfile::tempdir().expect("temp root");
+    let home = root.path().join("codex-home");
+    let data_dir = root.path().join("router-data");
+    std::fs::create_dir_all(&home).expect("codex home");
+    std::fs::write(
+        home.join("auth.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "auth_mode": "chatgpt",
+            "expiry_date": NOW_MS - 1,
+            "tokens": {
+                "access_token": "access-1",
+                "refresh_token": "refresh-1",
+                "id_token": "vendor-id-token",
+                "account_id": "acct-synthetic"
+            },
+            "last_refresh": "vendor-owned",
+            "vendor_extension": {"opaque": true}
+        }))
+        .expect("serialize credential"),
+    )
+    .expect("seed credential");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &home);
+    let readers = vec![reader.clone()];
+    let (url, received, server) = scripted_endpoint(
+        vec![Answer::new(
+            200,
+            r#"{"access_token":"access-2","refresh_token":"refresh-2","expires_in":3600}"#,
+        )],
+        |_| {},
+    )
+    .await;
+
+    let before_restart = TokenCache::registered_for(&readers, &data_dir);
+    let fresh = before_restart
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            reader.read_token().expect("initial credential"),
+            NOW_MS,
+        )
+        .await;
+    assert_eq!(fresh.refresh_token.as_deref(), Some("refresh-2"));
+    drop(before_restart);
+    drain(server).await;
+
+    let raw = std::fs::read_to_string(home.join("auth.json")).expect("rotated credential");
+    let document: serde_json::Value = serde_json::from_str(&raw).expect("valid vendor JSON");
+    assert_eq!(document["tokens"]["refresh_token"], "refresh-2");
+    assert_eq!(document["tokens"]["id_token"], "vendor-id-token");
+    assert_eq!(document["auth_mode"], "chatgpt");
+    assert_eq!(document["vendor_extension"]["opaque"], true);
+
+    let restarted = TokenCache::registered_for(&readers, &data_dir);
+    let from_disk = reader.read_token().expect("replacement credential");
+    let reused = restarted
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            from_disk,
+            NOW_MS + 1_000,
+        )
+        .await;
+    assert_eq!(reused.access_token, "access-2");
+    assert_eq!(
+        received.lock().unwrap().len(),
+        1,
+        "restart replayed a spent link"
     );
 }
 
@@ -709,7 +799,11 @@ async fn a_family_that_is_revoked_wholesale_says_the_newer_link_was_tried_too() 
         reported.contains("token family has been revoked"),
         "{reported}"
     );
-    assert!(reported.contains(".credentials.json"), "{reported}");
+    assert!(
+        reported.contains("registered claude credential store"),
+        "{reported}"
+    );
+    assert!(!reported.contains(home.path().to_string_lossy().as_ref()));
     assert!(
         reported.contains("link-assistant-router auth claude"),
         "{reported}"
@@ -790,4 +884,101 @@ async fn a_self_rotation_persisted_to_disk_does_not_clear_the_guard() {
          itself minted seconds earlier is the whole of issue #319"
     );
     server.abort();
+}
+
+/// Codex deliberately persists a rotated access/refresh pair without the
+/// response-derived expiry. The next pinned request therefore reads the same
+/// credential with a stale expiry representation. That lossy round trip must
+/// preserve both the cached access token and the single-use rotation guard.
+#[tokio::test]
+async fn a_codex_rotation_with_lossy_expiry_is_not_spent_by_the_next_pinned_request() {
+    let home = tempfile::tempdir().expect("temp Codex home");
+    std::fs::write(
+        home.path().join("auth.json"),
+        serde_json::json!({
+            "tokens": {
+                "access_token": "access-1",
+                "refresh_token": "refresh-1",
+                "account_id": "account-a"
+            },
+            "expiry_date": 1
+        })
+        .to_string(),
+    )
+    .expect("seed Codex credential");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
+    let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
+    let client = reqwest::Client::new();
+
+    let (refresh_url, first_requests, first_server) = scripted_endpoint(
+        vec![Answer::new(
+            200,
+            r#"{"access_token":"access-2","refresh_token":"refresh-2","expires_in":3600}"#,
+        )],
+        |_| {},
+    )
+    .await;
+    let rotated = cache
+        .get_fresh_registered_at(
+            &client,
+            &refresh_url,
+            SubscriptionProvider::Codex,
+            "primary",
+            NOW_MS,
+        )
+        .await
+        .expect("the first pinned request refreshes and persists Codex");
+    drain(first_server).await;
+    assert_eq!(first_requests.lock().unwrap().len(), 1);
+    assert_eq!(rotated.access_token, "access-2");
+    let durable = reader.read_token().expect("read the persisted rotation");
+    assert_eq!(durable.access_token, rotated.access_token);
+    assert_eq!(durable.refresh_token, rotated.refresh_token);
+    assert_ne!(
+        durable.expires_at_ms, rotated.expires_at_ms,
+        "Codex must reproduce its lossy expiry round trip"
+    );
+
+    // The second pinned request performs the same authoritative load and
+    // preflight refresh as production. A subsequent 401 also enters the real
+    // reactive path, still within the five-minute rotation grace period.
+    let (must_not_call, repeated_requests, repeated_server) = scripted_endpoint(
+        vec![
+            Answer::new(400, INVALID_GRANT),
+            Answer::new(400, INVALID_GRANT),
+        ],
+        |_| {},
+    )
+    .await;
+    let second = cache
+        .get_fresh_registered_at(
+            &client,
+            &must_not_call,
+            SubscriptionProvider::Codex,
+            "primary",
+            NOW_MS + 5_000,
+        )
+        .await
+        .expect("the next pinned request reuses the cached rotation");
+    assert_eq!(second.access_token, "access-2");
+    assert!(
+        cache
+            .refresh_rejected_at(
+                &client,
+                &must_not_call,
+                SubscriptionProvider::Codex,
+                "primary",
+                second,
+                NOW_MS + 10_000,
+            )
+            .await
+            .is_none(),
+        "a 401 inside the grace period must not spend the new link"
+    );
+    assert!(
+        repeated_requests.lock().unwrap().is_empty(),
+        "neither the second pinned preflight nor its immediate 401 may exchange refresh-2"
+    );
+    repeated_server.abort();
 }

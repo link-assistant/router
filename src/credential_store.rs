@@ -13,7 +13,8 @@
 //! particular vendor layout and lets tests drive the same recovery ladder
 //! against an in-memory store.
 //!
-//! Secrets are never logged here; only the path a credential was read from is.
+//! Secrets, account identifiers, credential paths, and path-bearing read errors
+//! are never logged here. Refresh diagnostics name only the provider.
 
 use std::path::{Path, PathBuf};
 
@@ -38,6 +39,16 @@ pub trait CredentialStore: std::fmt::Debug + Send + Sync {
     /// simply continues with the token it already has.
     fn reload(&self) -> Option<SubscriptionToken>;
 
+    /// Fallible form of [`Self::reload`] for stores whose durable state can be
+    /// present but unusable.
+    ///
+    /// Existing store implementations retain their source-compatible
+    /// `reload` contract. Recovery-aware stores override this method so a
+    /// corrupt sidecar cannot be confused with an absent one.
+    fn try_reload(&self) -> Result<Option<SubscriptionToken>, String> {
+        Ok(self.reload())
+    }
+
     /// Write a refreshed credential back, preserving vendor fields this crate
     /// does not model.
     ///
@@ -58,13 +69,23 @@ impl CredentialStore for SubscriptionReader {
     fn reload(&self) -> Option<SubscriptionToken> {
         match self.read_token() {
             Ok(token) => Some(token),
-            Err(error) => {
-                tracing::debug!(
-                    "could not re-read the {} credential from {}: {error}",
-                    self.provider(),
-                    self.home().display()
-                );
+            Err(_error) => {
+                tracing::debug!("could not re-read the {} credential", self.provider());
                 None
+            }
+        }
+    }
+
+    fn try_reload(&self) -> Result<Option<SubscriptionToken>, String> {
+        match self.read_token() {
+            Ok(token) => Ok(Some(token)),
+            Err(crate::subscription::SubscriptionError::NoCredentials(_)) => Ok(None),
+            Err(_) => {
+                tracing::debug!("could not re-read the {} credential", self.provider());
+                Err(format!(
+                    "the {} credential store is unusable",
+                    self.provider()
+                ))
             }
         }
     }

@@ -265,6 +265,7 @@ const fn terminal_retention() -> chrono::Duration {
 #[derive(Clone)]
 pub struct LoginManager {
     config: Arc<LoginConfig>,
+    data_dir: Option<Arc<PathBuf>>,
     sessions: Arc<Mutex<HashMap<String, Arc<Session>>>>,
 }
 
@@ -274,6 +275,17 @@ impl LoginManager {
     pub fn new(config: LoginConfig) -> Self {
         Self {
             config: Arc::new(config),
+            data_dir: None,
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// Create a manager whose native writers use the resolved Router data dir.
+    #[must_use]
+    pub fn new_with_data_dir(config: LoginConfig, data_dir: impl Into<PathBuf>) -> Self {
+        Self {
+            config: Arc::new(config),
+            data_dir: Some(Arc::new(data_dir.into())),
             sessions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -429,8 +441,12 @@ impl LoginManager {
         });
         self.lock_sessions().insert(id, Arc::clone(&session));
         let task_session = Arc::clone(&session);
+        let data_dir = self
+            .data_dir
+            .clone()
+            .unwrap_or_else(|| Arc::new(self.config.codex_home.clone()));
         let task = tokio::spawn(async move {
-            let outcome = login.complete().await;
+            let outcome = login.complete_with_data_dir(data_dir.as_ref()).await;
             let mut state = task_session
                 .state
                 .lock()
@@ -492,7 +508,15 @@ impl LoginManager {
 
         let code = code.trim().to_string();
         let outcome = if let Some(login) = claude_login {
-            match login.complete(&code).await {
+            match login
+                .complete_with_data_dir(
+                    &code,
+                    self.data_dir
+                        .as_deref()
+                        .map_or(self.config.claude_code_home.as_path(), PathBuf::as_path),
+                )
+                .await
+            {
                 Ok(_) => read_credential(&self.config.claude_code_home).map_or_else(
                     || {
                         Outcome::Failed(

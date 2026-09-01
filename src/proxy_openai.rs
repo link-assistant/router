@@ -34,6 +34,32 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
+    openai_chat_completions_with_subscription(state, query, headers, body, None).await
+}
+
+pub async fn openai_chat_completions_routed(
+    state: AppState,
+    headers: HeaderMap,
+    body: serde_json::Value,
+    subscription: Option<crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    openai_chat_completions_with_subscription(
+        state,
+        BTreeMap::new(),
+        headers,
+        Ok(axum::Json(body)),
+        subscription,
+    )
+    .await
+}
+
+async fn openai_chat_completions_with_subscription(
+    state: AppState,
+    query: BTreeMap<String, String>,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+    initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
+) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
         Err(error) => {
@@ -51,10 +77,19 @@ pub async fn openai_chat_completions(
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
     }
-    let state = match crate::model_routing::route_state(&state, &body).await {
-        Ok(state) => state,
-        Err(error) => return crate::model_routing::model_route_error_response(&error),
+    let routed = if let Some(subscription) = initial_subscription {
+        crate::model_routing::RoutedState {
+            state,
+            subscription: Some(subscription),
+        }
+    } else {
+        match crate::model_routing::route_state_with_subscription(&state, &body).await {
+            Ok(routed) => routed,
+            Err(error) => return crate::model_routing::model_route_error_response(&error),
+        }
     };
+    let state = routed.state;
+    let subscription = routed.subscription;
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -107,29 +142,37 @@ pub async fn openai_chat_completions(
     }
     if state.upstream_provider == UpstreamProvider::Qwen {
         let routing_body = body.clone();
-        return crate::subscription_proxy::forward_subscription_openai(
+        return crate::subscription_proxy::forward_subscription_openai_routed(
             &state,
             &headers,
             body,
             &routing_body,
             "/v1/chat/completions",
             crate::metrics::Surface::OpenAIChat,
+            subscription.as_ref(),
         )
         .await;
     }
     if state.upstream_provider == UpstreamProvider::Gemini {
-        return crate::gemini::forward_chat_completions(&state, &headers, body).await;
+        return crate::gemini::forward_chat_completions_routed(
+            &state,
+            &headers,
+            body,
+            subscription.as_ref(),
+        )
+        .await;
     }
     if state.upstream_provider == UpstreamProvider::Codex {
         // The ChatGPT backend speaks only the Responses API; translate the
         // Chat Completions request before forwarding.
         let responses_body = responses::chat_completion_to_responses(&body);
-        return crate::subscription_proxy::forward_codex_chat_completions(
+        return crate::subscription_proxy::forward_codex_chat_completions_routed(
             &state,
             &headers,
             responses_body,
             &body,
             crate::metrics::Surface::OpenAIChat,
+            subscription.as_ref(),
         )
         .await;
     }
@@ -193,6 +236,7 @@ pub async fn openai_chat_completions(
         &routing_body,
         crate::metrics::Surface::OpenAIChat,
         (stream_requested, OpenAIShape::Chat, include_usage),
+        subscription.as_ref(),
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)
@@ -213,10 +257,12 @@ pub async fn openai_responses(
             );
         }
     };
-    let state = match crate::model_routing::route_state(&state, &body).await {
-        Ok(state) => state,
+    let routed = match crate::model_routing::route_state_with_subscription(&state, &body).await {
+        Ok(routed) => routed,
         Err(error) => return crate::model_routing::model_route_error_response(&error),
     };
+    let state = routed.state;
+    let subscription = routed.subscription;
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -264,18 +310,25 @@ pub async fn openai_responses(
         UpstreamProvider::Codex | UpstreamProvider::Qwen
     ) {
         let routing_body = body.clone();
-        return crate::subscription_proxy::forward_subscription_openai(
+        return crate::subscription_proxy::forward_subscription_openai_routed(
             &state,
             &headers,
             body,
             &routing_body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
+            subscription.as_ref(),
         )
         .await;
     }
     if state.upstream_provider == UpstreamProvider::Gemini {
-        return crate::gemini::forward_responses(&state, &headers, body).await;
+        return crate::gemini::forward_responses_routed(
+            &state,
+            &headers,
+            body,
+            subscription.as_ref(),
+        )
+        .await;
     }
     let routing_body = body.clone();
     let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
@@ -337,6 +390,7 @@ pub async fn openai_responses(
         &routing_body,
         crate::metrics::Surface::OpenAIResponses,
         (stream_requested, OpenAIShape::Response, false),
+        subscription.as_ref(),
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)

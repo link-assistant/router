@@ -105,7 +105,7 @@ const fn credential_status(was_expired: bool, still_expired: bool, rejected: boo
         (_, true, false) => "found, token EXPIRED on disk but ACCEPTED upstream",
         (true, false, true) => "found, token REJECTED after refresh",
         (false, _, true) => "found, token REJECTED",
-        (true, false, false) => "found, token OK (refreshed in memory)",
+        (true, false, false) => "found, token OK (refreshed durably)",
         (false, false, false) => "found, token OK",
     }
 }
@@ -134,44 +134,67 @@ fn credential_location(
 
 /// Report credential and live-catalog health for every provider.
 ///
-/// Expired credentials are refreshed in memory before their catalogs are
+/// Expired credentials are refreshed durably before their catalogs are
 /// fetched. Returns `true` when a present credential cannot become healthy or
 /// cannot fetch its catalog.
-/// `data_dir`, when given, is where a terminal refusal learned here is
+/// `data_dir` is where a terminal refusal learned here is
 /// recorded, so `accounts list` — which performs no refresh of its own — stops
 /// contradicting this command about the same credential (issue #245).
 pub async fn subscription_catalog_diagnostics(
-    _active_provider: SubscriptionProvider,
+    active_provider: SubscriptionProvider,
     claude_home: &str,
     user_home: &str,
     data_dir: Option<&std::path::Path>,
 ) -> bool {
+    subscription_catalog_diagnostics_with_token_url(
+        active_provider,
+        claude_home,
+        user_home,
+        data_dir,
+        None,
+    )
+    .await
+}
+
+async fn subscription_catalog_diagnostics_with_token_url(
+    _active_provider: SubscriptionProvider,
+    claude_home: &str,
+    user_home: &str,
+    data_dir: Option<&std::path::Path>,
+    token_url: Option<(SubscriptionProvider, &str)>,
+) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
     let client = reqwest::Client::new();
-    let token_cache = crate::refresh::TokenCache::new();
-    if let Some(dir) = data_dir {
-        token_cache.persist_rejections_in(dir);
-    }
+    let token_cache = data_dir.map_or_else(
+        || {
+            let cache = crate::refresh::TokenCache::new();
+            cache.register_readers(crate::credential_recovery_store::PRIMARY_ACCOUNT, &readers);
+            cache
+        },
+        |data_dir| crate::refresh::TokenCache::registered_for(&readers, data_dir),
+    );
     let now_ms = chrono::Utc::now().timestamp_millis();
     let mut catalog_error = false;
     for reader in readers {
         let provider = reader.provider();
         let label = format!("{provider} subscription");
-        // A credential may exist with no file at all: on macOS a recent Claude
-        // Code login writes only the Keychain (issue #249). Reporting MISSING
-        // on the strength of an absent file would hide a working subscription.
-        let path = match reader.discover_credential_path() {
-            Some(path) => path,
-            None if reader.read_token().is_ok() => reader.home().to_path_buf(),
-            None => {
+        let path = reader
+            .discover_credential_path()
+            .unwrap_or_else(|| reader.home().to_path_buf());
+        let origin = reader
+            .read_token_from()
+            .map_or(crate::platform_keychain::Origin::File, |(_, origin)| origin);
+        let disk_token = match token_cache
+            .load_authoritative(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            .await
+        {
+            Ok(Some(token)) => token,
+            Ok(None) => {
                 println!("{label:<23}: {} (MISSING)", reader.home().display());
                 continue;
             }
-        };
-        let (disk_token, origin) = match reader.read_token_from() {
-            Ok(found) => found,
-            Err(error) => {
-                println!("{label:<23}: {} (found, NO TOKEN: {error})", path.display());
+            Err(_) => {
+                println!("{label:<23}: {provider} credential store (found, NO TOKEN)");
                 println!(
                     "{:<23}: ERROR (credential is unreadable)",
                     format!("{provider} catalog")
@@ -181,9 +204,66 @@ pub async fn subscription_catalog_diagnostics(
             }
         };
         let was_expired = disk_token.is_expired(now_ms);
-        let token = token_cache
-            .get_fresh(&client, provider, disk_token, now_ms)
-            .await;
+        let refreshed = match token_url {
+            Some((override_provider, url)) if override_provider == provider => {
+                token_cache
+                    .get_fresh_registered_at(
+                        &client,
+                        url,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now_ms,
+                    )
+                    .await
+            }
+            _ => {
+                token_cache
+                    .get_fresh_registered(
+                        &client,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now_ms,
+                    )
+                    .await
+            }
+        };
+        let Ok(token) = refreshed else {
+            let location = credential_location(provider, origin, &path);
+            println!(
+                "{label:<23}: {location} (found, refresh FAILED, store: {})",
+                origin.label()
+            );
+            println!(
+                "{:<23}: ERROR (credential refresh failed)",
+                format!("{provider} refresh")
+            );
+            println!(
+                "{:<23}: ERROR (credential refresh failed before catalog probe)",
+                format!("{provider} catalog")
+            );
+            catalog_error = true;
+            continue;
+        };
+        if token_cache
+            .last_refresh_error_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            .is_some()
+        {
+            let location = credential_location(provider, origin, &path);
+            println!(
+                "{label:<23}: {location} (found, refresh FAILED, store: {})",
+                origin.label()
+            );
+            println!(
+                "{:<23}: ERROR (credential refresh transaction failed)",
+                format!("{provider} refresh")
+            );
+            println!(
+                "{:<23}: ERROR (credential refresh failed before catalog probe)",
+                format!("{provider} catalog")
+            );
+            catalog_error = true;
+            continue;
+        }
         // `expiresAt` is a hint, so a still-expired token is probed rather than
         // declared dead: the catalog endpoint is what actually knows.
         let still_expired = token.is_expired(now_ms);
@@ -197,10 +277,6 @@ pub async fn subscription_catalog_diagnostics(
             "{label:<23}: {location} ({status}, store: {})",
             origin.label()
         );
-        if let Some(error) = token_cache.last_refresh_error(provider) {
-            println!("{:<23}: {error}", format!("{provider} refresh"));
-        }
-
         match catalog {
             Ok(models) => println!(
                 "{:<23}: OK ({} live model(s))",
@@ -216,9 +292,109 @@ pub async fn subscription_catalog_diagnostics(
     catalog_error
 }
 
+/// Data-directory-backed variant of [`subscription_catalog_diagnostics`].
+pub async fn subscription_catalog_diagnostics_in(
+    active_provider: SubscriptionProvider,
+    claude_home: &str,
+    user_home: &str,
+    data_dir: &std::path::Path,
+) -> bool {
+    subscription_catalog_diagnostics(active_provider, claude_home, user_home, Some(data_dir)).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    async fn one_successful_qwen_catalog() -> (
+        String,
+        std::sync::Arc<std::sync::atomic::AtomicUsize>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("loopback listener");
+        let base = format!(
+            "http://{}",
+            listener.local_addr().expect("listener address")
+        );
+        let requests = std::sync::Arc::new(AtomicUsize::new(0));
+        let observed = std::sync::Arc::clone(&requests);
+        let server = tokio::spawn(async move {
+            if let Ok(Ok((mut socket, _))) =
+                tokio::time::timeout(std::time::Duration::from_millis(500), listener.accept()).await
+            {
+                let mut buffer = [0_u8; 4096];
+                let _ = socket.read(&mut buffer).await;
+                observed.fetch_add(1, Ordering::SeqCst);
+                let body = r#"{"data":[{"id":"synthetic-model"}]}"#;
+                socket
+                    .write_all(
+                        format!(
+                            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                            body.len()
+                        )
+                        .as_bytes(),
+                    )
+                    .await
+                    .expect("catalog response");
+            }
+        });
+        (base, requests, server)
+    }
+
+    #[cfg(unix)]
+    async fn one_successful_qwen_refresh_that_blocks_both_writes(
+        credential_home: std::path::PathBuf,
+        recovery_path: std::path::PathBuf,
+    ) -> (
+        String,
+        std::sync::Arc<std::sync::atomic::AtomicUsize>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        use std::os::unix::fs::PermissionsExt as _;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("loopback listener");
+        let url = format!(
+            "http://{}",
+            listener.local_addr().expect("listener address")
+        );
+        let requests = std::sync::Arc::new(AtomicUsize::new(0));
+        let observed = std::sync::Arc::clone(&requests);
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.expect("refresh request");
+            let mut buffer = [0_u8; 4096];
+            let _ = socket.read(&mut buffer).await;
+            observed.fetch_add(1, Ordering::SeqCst);
+
+            // Initial authoritative loading has completed by the time the
+            // token endpoint is called. Make both transaction destinations
+            // fail only now, so this exercises post-exchange durability.
+            std::fs::set_permissions(&credential_home, std::fs::Permissions::from_mode(0o500))
+                .expect("make primary unwritable");
+            std::fs::create_dir(&recovery_path).expect("block recovery file replacement");
+
+            let body = r#"{"access_token":"rotated-access","refresh_token":"rotated-refresh","expires_in":3600}"#;
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .expect("refresh response");
+        });
+        (url, requests, server)
+    }
 
     fn config(command: &str, args: &[&str]) -> LoginConfig {
         LoginConfig {
@@ -226,6 +402,170 @@ mod tests {
             args: args.iter().map(|value| (*value).to_string()).collect(),
             ..LoginConfig::default()
         }
+    }
+
+    #[tokio::test]
+    async fn refresh_storage_failure_is_a_diagnostic_failure_before_catalog_probe() {
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "expired-access",
+                "refresh_token": "refresh-link",
+                "expiry_date": 1,
+                "resource_url": resource_url,
+                "vendor_field": "preserve-me"
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+        let blocked_data_dir = root.path().join("not-a-directory");
+        std::fs::write(&blocked_data_dir, b"occupied").expect("block recovery directory");
+
+        let failed = subscription_catalog_diagnostics_in(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            &blocked_data_dir,
+        )
+        .await;
+        server.await.expect("catalog server task");
+
+        assert!(failed, "refresh durability failure was reported healthy");
+        assert_eq!(
+            catalog_requests.load(Ordering::SeqCst),
+            0,
+            "a catalog success must not hide an unsafe refresh"
+        );
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn successful_rotation_with_dual_persistence_failure_never_probes_catalog() {
+        use std::os::unix::fs::PermissionsExt as _;
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        let data_dir = root.path().join("router-data");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, catalog_server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "expired-access",
+                "refresh_token": "refresh-link",
+                "expiry_date": 1,
+                "resource_url": resource_url
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+
+        let recovery_path = crate::credential_recovery_store::credential_lock_path(
+            &data_dir,
+            SubscriptionProvider::Qwen,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        )
+        .with_extension("json");
+        let (token_url, refresh_requests, refresh_server) =
+            one_successful_qwen_refresh_that_blocks_both_writes(qwen_home.clone(), recovery_path)
+                .await;
+
+        let failed = subscription_catalog_diagnostics_with_token_url(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            Some(&data_dir),
+            Some((SubscriptionProvider::Qwen, token_url.as_str())),
+        )
+        .await;
+        refresh_server.await.expect("refresh server task");
+        catalog_server.await.expect("catalog server task");
+        std::fs::set_permissions(&qwen_home, std::fs::Permissions::from_mode(0o700))
+            .expect("restore credential permissions");
+
+        assert!(failed, "lost rotation was reported healthy");
+        assert_eq!(refresh_requests.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            catalog_requests.load(Ordering::SeqCst),
+            0,
+            "the old access token must not hide a failed refresh transaction"
+        );
+    }
+
+    #[tokio::test]
+    async fn an_authoritative_unexpired_credential_is_probed_and_reported_healthy() {
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "current-access",
+                "refresh_token": "current-refresh",
+                "expiry_date": 9_999_999_999_999_i64,
+                "resource_url": resource_url
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+
+        let failed = subscription_catalog_diagnostics_in(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            &root.path().join("router-data"),
+        )
+        .await;
+        server.await.expect("catalog server task");
+
+        assert!(!failed, "a successful authoritative catalog probe failed");
+        assert_eq!(catalog_requests.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn the_legacy_optional_data_directory_path_still_probes_credentials() {
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "legacy-access",
+                "expiry_date": 9_999_999_999_999_i64,
+                "resource_url": resource_url
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+
+        let failed = subscription_catalog_diagnostics(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            None,
+        )
+        .await;
+        server.await.expect("catalog server task");
+
+        assert!(!failed, "the compatibility wrapper failed a live probe");
+        assert_eq!(catalog_requests.load(Ordering::SeqCst), 1);
     }
 
     /// Both in-process modes are always available, and the report names the
@@ -340,7 +680,7 @@ mod tests {
     fn a_refreshed_credential_reads_as_ok() {
         assert_eq!(
             credential_status(true, false, false),
-            "found, token OK (refreshed in memory)"
+            "found, token OK (refreshed durably)"
         );
         assert_eq!(credential_status(false, false, false), "found, token OK");
     }

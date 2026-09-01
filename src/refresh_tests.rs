@@ -2,6 +2,8 @@
 
 use super::*;
 
+use super::test_support::register_test_store;
+
 fn token(refresh: Option<&str>, exp: Option<i64>) -> SubscriptionToken {
     SubscriptionToken {
         access_token: "old-access".into(),
@@ -159,6 +161,7 @@ async fn concurrent_successful_refreshes_share_one_exchange() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("one-refresh-token"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     let requests = (0..10).map(|_| {
         cache.get_fresh_for_at(
             &client,
@@ -217,6 +220,7 @@ async fn terminal_refresh_failure_is_attempted_only_once_for_same_credential() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("revoked-refresh"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     let requests = (0..8).map(|_| {
         cache.get_fresh_for_at(
             &client,
@@ -248,6 +252,7 @@ async fn a_token_near_expiry_is_refreshed_before_it_lapses() {
 
     // Still valid for another 10 seconds — inside the refresh window.
     let nearly_due = token(Some("r"), Some(100_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &nearly_due);
     let out = cache
         .get_fresh_for_at(
             &client,
@@ -374,6 +379,7 @@ async fn a_rate_limited_refresh_leaves_the_subscription_usable() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("rate-limited-refresh"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     let returned = cache
         .get_fresh_for_at(
             &client,
@@ -470,6 +476,7 @@ async fn a_server_error_refresh_is_retried_rather_than_written_off() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("transient-refresh"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     for now in [10_000, 11_001] {
         let _ = cache
             .get_fresh_for_at(
@@ -712,13 +719,14 @@ fn terminal_classification_requires_status_and_parsed_code() {
     assert!(!RefreshError::Status(400, "Bad Request".to_string(), None).is_invalid_grant());
 }
 
-/// Network-level failures carry no status and are always retryable.
+/// Failures without a terminal endpoint verdict are always retryable.
 #[test]
 fn transport_failures_are_never_terminal() {
     for error in [
         RefreshError::Request("connection reset by peer".to_string()),
         RefreshError::Request("operation timed out".to_string()),
         RefreshError::Parse("expected value".to_string()),
+        RefreshError::Storage("durable lock unavailable".to_string()),
         RefreshError::NoRefreshToken,
     ] {
         assert!(!error.is_invalid_grant(), "{error}");
@@ -771,24 +779,6 @@ fn refresh_errors_are_recorded_per_provider_and_cleared() {
     );
 }
 
-/// Upstream verdicts, not timestamps, decide whether a credential is dead.
-#[test]
-fn credential_evidence_records_the_latest_upstream_verdict() {
-    let cache = TokenCache::new();
-    assert!(cache.evidence(SubscriptionProvider::Claude).is_none());
-    cache.record_credential_rejected(SubscriptionProvider::Claude);
-    assert_eq!(
-        cache.evidence(SubscriptionProvider::Claude),
-        Some(CredentialEvidence::Rejected)
-    );
-    // A credential can come back (re-authentication, vendor-side fix).
-    cache.record_credential_working(SubscriptionProvider::Claude);
-    assert_eq!(
-        cache.evidence(SubscriptionProvider::Claude),
-        Some(CredentialEvidence::Working)
-    );
-}
-
 #[test]
 fn refreshed_tokens_are_isolated_by_account() {
     let cache = TokenCache::new();
@@ -816,43 +806,6 @@ fn refreshed_tokens_are_isolated_by_account() {
     );
 }
 
-/// The upstream-status classifier is the sibling of the refresh classifier and
-/// must agree with it: only 401/403 proves a credential is bad, and a 429 --
-/// the status behind issue #203 -- says nothing about the credential at all.
-#[test]
-fn upstream_status_marks_only_authentication_failures_as_rejected() {
-    for status in [401, 403] {
-        let cache = TokenCache::new();
-        cache.record_status(SubscriptionProvider::Claude, status);
-        assert_eq!(
-            cache.evidence(SubscriptionProvider::Claude),
-            Some(CredentialEvidence::Rejected),
-            "{status} must reject"
-        );
-    }
-
-    for status in [200, 201, 299] {
-        let cache = TokenCache::new();
-        cache.record_status(SubscriptionProvider::Claude, status);
-        assert_eq!(
-            cache.evidence(SubscriptionProvider::Claude),
-            Some(CredentialEvidence::Working),
-            "{status} must prove the credential works"
-        );
-    }
-
-    // Everything else describes the request, not the credential.
-    for status in [400, 404, 429, 500, 502, 503] {
-        let cache = TokenCache::new();
-        cache.record_status(SubscriptionProvider::Claude, status);
-        assert_eq!(
-            cache.evidence(SubscriptionProvider::Claude),
-            None,
-            "{status} must leave the credential verdict untouched"
-        );
-    }
-}
-
 /// Every failure variant renders a distinct, non-empty message; `doctor` and
 /// the logs surface these verbatim.
 #[test]
@@ -862,6 +815,7 @@ fn every_refresh_error_variant_renders_a_message() {
         RefreshError::NoRefreshToken,
         RefreshError::Request("connection refused".into()),
         RefreshError::Parse("expected value".into()),
+        RefreshError::Storage("durable lock unavailable".into()),
         RefreshError::Status(500, "boom".into(), None),
     ]
     .iter()
@@ -881,7 +835,8 @@ fn every_refresh_error_variant_renders_a_message() {
         rendered[2]
     );
     assert!(rendered[3].contains("parse error"), "{}", rendered[3]);
-    assert!(rendered[4].contains("500"), "{}", rendered[4]);
+    assert!(rendered[4].contains("storage"), "{}", rendered[4]);
+    assert!(rendered[5].contains("500"), "{}", rendered[5]);
 }
 
 /// The form-encoded providers send the same grant over

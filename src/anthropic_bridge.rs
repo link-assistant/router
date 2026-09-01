@@ -638,6 +638,16 @@ pub async fn handle_anthropic_surface(
     path: &str,
     body: Value,
 ) -> Response {
+    handle_anthropic_surface_routed(state, headers, path, body, None).await
+}
+
+pub(crate) async fn handle_anthropic_surface_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    path: &str,
+    body: Value,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
     if path.ends_with("/count_tokens") {
         // Answered locally, so no delegate forwarder validates the token for
         // us. Do it here: an expired or revoked token must not get an estimate
@@ -660,7 +670,7 @@ pub async fn handle_anthropic_surface(
         )
             .into_response();
     }
-    forward_anthropic_messages(state, headers, body).await
+    forward_anthropic_messages_routed(state, headers, body, subscription).await
 }
 
 /// Validate the client token for a locally answered `count_tokens` request.
@@ -693,6 +703,15 @@ pub async fn forward_anthropic_messages(
     state: &AppState,
     headers: &HeaderMap,
     anthropic_body: Value,
+) -> Response {
+    forward_anthropic_messages_routed(state, headers, anthropic_body, None).await
+}
+
+async fn forward_anthropic_messages_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    anthropic_body: Value,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
     if anthropic_body
         .get("max_tokens")
@@ -773,33 +792,36 @@ pub async fn forward_anthropic_messages(
     let upstream = match state.upstream_provider {
         UpstreamProvider::Codex => {
             let responses_body = crate::responses::chat_completion_to_responses(&chat_body);
-            crate::subscription_proxy::forward_subscription_openai(
+            crate::subscription_proxy::forward_subscription_openai_routed(
                 state,
                 headers,
                 responses_body,
                 &chat_body,
                 "/v1/responses",
                 Surface::Anthropic,
+                subscription,
             )
             .await
         }
         UpstreamProvider::Qwen => {
-            crate::subscription_proxy::forward_subscription_openai(
+            crate::subscription_proxy::forward_subscription_openai_routed(
                 state,
                 headers,
                 chat_body.clone(),
                 &chat_body,
                 "/v1/chat/completions",
                 Surface::Anthropic,
+                subscription,
             )
             .await
         }
         UpstreamProvider::Gemini => {
-            crate::gemini::forward_chat_completions_as(
+            crate::gemini::forward_chat_completions_as_routed(
                 state,
                 headers,
                 chat_body,
                 Surface::Anthropic,
+                subscription,
             )
             .await
         }

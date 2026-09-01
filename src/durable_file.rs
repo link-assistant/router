@@ -313,6 +313,23 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn lock_open_errors_are_returned_to_the_caller() {
+        let directory = tempfile::tempdir().unwrap();
+        let blocking_file = directory.path().join("not-a-directory");
+        fs::write(&blocking_file, b"occupied").unwrap();
+
+        let error = lock_exclusive_async(
+            &blocking_file.join("credential.lock"),
+            std::time::Duration::from_millis(60),
+        )
+        .await
+        .expect_err("a lock below a regular file cannot be opened");
+
+        assert_ne!(error.kind(), io::ErrorKind::WouldBlock);
+        assert!(error.raw_os_error().is_some(), "{error}");
+    }
+
     /// Two holders of one credential must serialise, and a holder that cannot
     /// get in must give up rather than wait forever: a stale lock must never be
     /// able to wedge token renewal (issue #239).

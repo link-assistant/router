@@ -24,14 +24,10 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
     // A dead subscription had no counter of its own, so no scrape could see it
     // (issue #318). Rendered here rather than in `metrics.rs` so the counter
     // registry stays free of subscription types.
-    let health = crate::model_routing::configured_provider_health(
-        &state.subscription_readers,
-        &state.subscription_cache,
-        &state.model_catalogs,
-    );
+    let health = crate::model_routing::configured_provider_health_report(&state).await;
     let gauges = health
         .iter()
-        .map(|entry| (entry.provider.as_str(), entry.healthy))
+        .map(|entry| (entry.provider.as_str(), entry.is_serving()))
         .collect::<Vec<_>>();
     body.push_str(&crate::metrics::render_subscription_health(&gauges));
     (

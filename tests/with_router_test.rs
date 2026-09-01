@@ -403,7 +403,10 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
         .env_remove("CODEX_HOME")
         .spawn()
         .expect("spawn wrapper");
-    for _ in 0..100 {
+    // Instrumented and highly parallel CI can spend more than two seconds
+    // scheduling the wrapper before the fake client writes its start marker.
+    // Keep this comfortably below the separate eight-second cleanup bound.
+    for _ in 0..250 {
         if capture.join("home").exists() {
             break;
         }

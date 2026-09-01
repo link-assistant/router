@@ -1,22 +1,16 @@
 //! Subscription OAuth credential readers for vendor coding CLIs.
 //!
-//! Several coding assistants (Claude Code, `OpenAI` Codex, Gemini CLI, qwen-code)
-//! authenticate the user's *subscription* via OAuth and cache the resulting
-//! bearer token in a well-known file under the user's home directory. Reading
-//! that file is the fastest, most reliable way to let the router forward
-//! requests against a real subscription — exactly how Claude works today via
-//! [`crate::oauth`]. This module generalizes that idea to all four vendors so
-//! each provider has a single, well-tested credential reader.
+//! Vendor coding assistants cache subscription OAuth credentials in well-known
+//! home-directory files; this module reads all four supported layouts into one
+//! normalized token shape.
 //!
-//! The on-disk layouts are vendor specific (documented per provider below and
-//! in `docs/case-studies/issue-37/online-research.md`); this module normalizes
-//! them into a single [`SubscriptionToken`] the proxy can route with.
+//! Vendor-specific layouts normalize into [`SubscriptionToken`].
 
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 /// A subscription-backed upstream that authenticates with vendor OAuth tokens.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SubscriptionProvider {
     /// Anthropic Claude (Pro/Max) via Claude Code — `~/.claude`.
@@ -168,7 +162,7 @@ impl std::fmt::Display for SubscriptionProvider {
 }
 
 /// A normalized subscription token plus the metadata the proxy needs to route.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SubscriptionToken {
     /// OAuth bearer access token sent as `Authorization: Bearer <token>`.
     pub access_token: String,
@@ -254,6 +248,24 @@ pub struct ImportSource {
     pub token: SubscriptionToken,
     /// Which store `document` came from, for naming it in the report.
     pub origin: crate::platform_keychain::Origin,
+}
+
+/// Replacement policy for a Router-owned credential install.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InstallMode {
+    /// Replace the canonical vendor document after taking the shared lock.
+    Replace,
+    /// Install only when none of the provider's recognized files exists.
+    IfAbsent,
+}
+
+/// Successful credential-install outcome.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InstallDocumentResult {
+    /// The candidate document was installed at the canonical vendor path.
+    Installed(PathBuf),
+    /// A recognized credential appeared before installation and was preserved.
+    AlreadyPresent(PathBuf),
 }
 
 /// Reads and normalizes a single provider's subscription credentials.
@@ -419,14 +431,7 @@ impl SubscriptionReader {
         self.is_vendor_default_home()
     }
 
-    /// Install a credential document as this provider's credential.
-    ///
-    /// Written owner-only through the durable path, so a half-written file is
-    /// never left behind and the credential is not world-readable.
-    ///
-    /// # Errors
-    ///
-    /// Returns an operator-readable message when the write cannot land.
+    /// Install a credential document owner-only and atomically.
     pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
         // Where the provider's own client writes, so an adopted credential
         // lands exactly where a fresh login would put it.
@@ -436,6 +441,75 @@ impl SubscriptionReader {
         crate::durable_file::atomic_write_owner_only(&path, document.as_bytes())
             .map_err(|error| crate::durable_file::describe_write_failure(&path, &error))?;
         Ok(path)
+    }
+
+    /// Install while holding the provider/account refresh lock.
+    pub async fn install_document_locked(
+        &self,
+        data_dir: &Path,
+        account: &str,
+        document: &str,
+        mode: InstallMode,
+    ) -> Result<InstallDocumentResult, String> {
+        self.install_document_locked_with_refusal(data_dir, account, document, mode, None)
+            .await
+    }
+
+    /// Enforce `refusal` only after the locked absence check.
+    pub async fn install_document_locked_with_refusal(
+        &self,
+        data_dir: &Path,
+        account: &str,
+        document: &str,
+        mode: InstallMode,
+        refusal: Option<String>,
+    ) -> Result<InstallDocumentResult, String> {
+        let lock_path = crate::credential_recovery_store::credential_lock_path(
+            data_dir,
+            self.provider,
+            account,
+        );
+        let _lock = crate::durable_file::lock_exclusive_async(
+            &lock_path,
+            crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+        )
+        .await
+        .map_err(|error| {
+            let action = if error.kind() == std::io::ErrorKind::WouldBlock {
+                "timed out waiting for"
+            } else {
+                "could not acquire"
+            };
+            format!("{action} the durable {} credential lock", self.provider)
+        })?;
+
+        if mode == InstallMode::IfAbsent {
+            for path in self.credential_paths() {
+                match path.try_exists() {
+                    Ok(true) => return Ok(InstallDocumentResult::AlreadyPresent(path)),
+                    Ok(false) => {}
+                    Err(error) => {
+                        return Err(format!(
+                            "could not check the {} credential destination: {error}",
+                            self.provider
+                        ));
+                    }
+                }
+            }
+            if let Some(path) = crate::credential_recovery_store::valid_recovery_record_path(
+                data_dir,
+                self.provider,
+                account,
+            )? {
+                return Ok(InstallDocumentResult::AlreadyPresent(path));
+            }
+            if let Some(error) = refusal {
+                return Err(error);
+            }
+        }
+
+        self.install_document(document)
+            .map(InstallDocumentResult::Installed)
     }
 
     /// Remove every credential file this provider is read from.
@@ -917,6 +991,9 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
         .map(ToString::to_string)
 }
 
+#[cfg(test)]
+#[path = "subscription_install_tests.rs"]
+mod install_tests;
 #[cfg(test)]
 #[path = "subscription_tests.rs"]
 mod tests;

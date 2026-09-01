@@ -2,7 +2,7 @@
 //! (issue #205).
 
 use super::super::*;
-use super::{stub_token_endpoint, token};
+use super::{register_test_store, stub_token_endpoint, token};
 
 /// The reported defect (issue #205): a vendor may reject an access token whose
 /// own `exp` is still days away. `exp` must not veto the refresh.
@@ -15,6 +15,7 @@ async fn a_rejected_token_is_refreshed_even_when_its_exp_is_in_the_future() {
     let cache = TokenCache::new();
     // Expires four days from "now" -- the pre-flight path would skip this.
     let unexpired = token(Some("stored-refresh"), Some(10_000 + 4 * 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &unexpired);
 
     let refreshed = cache
         .refresh_rejected_at(
@@ -55,6 +56,8 @@ async fn a_refresh_returning_the_same_token_is_not_worth_retrying() {
     let (url, server) =
         stub_token_endpoint(r#"{"access_token":"old-access","expires_in":3600}"#).await;
     let cache = TokenCache::new();
+    let rejected = token(Some("r"), Some(10_000 + 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &rejected);
 
     let outcome = cache
         .refresh_rejected_at(
@@ -62,7 +65,7 @@ async fn a_refresh_returning_the_same_token_is_not_worth_retrying() {
             &url,
             SubscriptionProvider::Codex,
             "primary",
-            token(Some("r"), Some(10_000 + 86_400_000)),
+            rejected,
             10_000,
         )
         .await;
@@ -110,6 +113,7 @@ async fn a_terminally_rejected_credential_is_not_refreshed_repeatedly() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let rejected = token(Some("revoked-refresh"), Some(10_000 + 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &rejected);
     for _ in 0..5 {
         assert!(
             cache
@@ -149,6 +153,7 @@ async fn concurrent_rejections_share_one_refresh() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let rejected = token(Some("one-shot"), Some(10_000 + 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &rejected);
 
     let attempts = (0..8).map(|_| {
         cache.refresh_rejected_at(
@@ -226,6 +231,7 @@ async fn a_token_this_process_just_rotated_into_is_not_spent_again() {
     .await;
     let cache = TokenCache::new();
     let rejected = token(Some("original-refresh"), Some(10_000 + 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &rejected);
 
     // 17:39:49 — recovery works and the rotated token is adopted.
     let rotated = cache
@@ -311,13 +317,15 @@ async fn the_rotation_guard_lapses_and_refresh_resumes() {
     )
     .await;
     let cache = TokenCache::new();
+    let original = token(Some("original"), Some(10_000 + 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &original);
     let rotated = cache
         .refresh_rejected_at(
             &reqwest::Client::new(),
             &url,
             SubscriptionProvider::Codex,
             "primary",
-            token(Some("original"), Some(10_000 + 86_400_000)),
+            original,
             10_000,
         )
         .await
@@ -355,6 +363,8 @@ async fn the_rotation_guard_does_not_block_a_proactive_pre_expiry_refresh() {
     )
     .await;
     let cache = TokenCache::new();
+    let original = token(Some("original"), Some(10_000 + 86_400_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Codex, "primary", &original);
     // A rotation happens now, so the guard is armed for the next five minutes.
     let rotated = cache
         .refresh_rejected_at(
@@ -362,7 +372,7 @@ async fn the_rotation_guard_does_not_block_a_proactive_pre_expiry_refresh() {
             &url,
             SubscriptionProvider::Codex,
             "primary",
-            token(Some("original"), Some(10_000 + 86_400_000)),
+            original,
             10_000,
         )
         .await
@@ -377,13 +387,20 @@ async fn the_rotation_guard_does_not_block_a_proactive_pre_expiry_refresh() {
         r#"{"access_token":"renewed","refresh_token":"fourth","expires_in":3600}"#,
     )
     .await;
+    let short_lived = token(Some("about-to-expire"), Some(10_000 + 60_000));
+    let _short_lived_store = register_test_store(
+        &cache,
+        SubscriptionProvider::Codex,
+        "short-lived",
+        &short_lived,
+    );
     let renewed = cache
         .get_fresh_for_at(
             &reqwest::Client::new(),
             &url,
             SubscriptionProvider::Codex,
             "short-lived",
-            token(Some("about-to-expire"), Some(10_000 + 60_000)),
+            short_lived,
             10_000 + 60_000,
         )
         .await;
@@ -418,5 +435,44 @@ fn a_terminal_failure_is_announced_once_per_outage() {
     assert!(
         cache.take_terminal_announcement(SubscriptionProvider::Claude),
         "a second outage after a recovery must be reported"
+    );
+}
+
+/// Re-authentication starts a new credential lifecycle even when the new
+/// credential is rejected before it ever produces a successful request. Its
+/// first outage must therefore regain the one ERROR announcement.
+#[tokio::test]
+async fn authoritative_reauthentication_rearms_the_terminal_announcement() {
+    let cache = TokenCache::new();
+    let provider = SubscriptionProvider::Claude;
+    let account = "primary";
+    let original = token(Some("old-refresh"), Some(10_000 + 86_400_000));
+    cache
+        .reconcile_authoritative_credential(provider, account, &original)
+        .await;
+    cache.record_status_for(provider, account, 401);
+    assert!(
+        !cache.take_terminal_announcement_for(provider, account),
+        "the first outage is latched after its ERROR announcement"
+    );
+
+    let mut replacement = original.clone();
+    replacement.access_token = "new-login-access".into();
+    replacement.refresh_token = Some("new-login-refresh".into());
+    cache
+        .reconcile_authoritative_credential(provider, account, &replacement)
+        .await;
+    assert!(
+        cache.take_terminal_announcement_for(provider, account),
+        "authoritative replacement must re-arm the next outage announcement"
+    );
+
+    // The assertion above claims the latch, so restore the pre-outage state
+    // before proving that a second rejection consumes it as an ERROR again.
+    cache.clear_terminal_announcement_for(provider, account);
+    cache.record_status_for(provider, account, 403);
+    assert!(
+        !cache.take_terminal_announcement_for(provider, account),
+        "the replacement credential's first rejection must consume the re-armed announcement"
     );
 }

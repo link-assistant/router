@@ -64,9 +64,38 @@ pub async fn forward_subscription_openai(
         headers,
         body,
         routing_body,
-        path,
-        surface,
-        SubscriptionResponseShape::Passthrough,
+        ForwardOptions {
+            path,
+            surface,
+            response_shape: SubscriptionResponseShape::Passthrough,
+            validated: None,
+        },
+    )
+    .await
+}
+
+/// Internal automatic-routing entry point carrying the credential snapshot
+/// whose account was validated against the selected catalog.
+pub(crate) async fn forward_subscription_openai_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    path: &str,
+    surface: Surface,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        ForwardOptions {
+            path,
+            surface,
+            response_shape: SubscriptionResponseShape::Passthrough,
+            validated: subscription,
+        },
     )
     .await
 }
@@ -85,9 +114,35 @@ pub async fn forward_codex_chat_completions(
         headers,
         body,
         routing_body,
-        "/v1/responses",
-        surface,
-        SubscriptionResponseShape::ChatCompletion,
+        ForwardOptions {
+            path: "/v1/responses",
+            surface,
+            response_shape: SubscriptionResponseShape::ChatCompletion,
+            validated: None,
+        },
+    )
+    .await
+}
+
+pub(crate) async fn forward_codex_chat_completions_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    surface: Surface,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        ForwardOptions {
+            path: "/v1/responses",
+            surface,
+            response_shape: SubscriptionResponseShape::ChatCompletion,
+            validated: subscription,
+        },
     )
     .await
 }
@@ -98,15 +153,26 @@ enum SubscriptionResponseShape {
     ChatCompletion,
 }
 
+struct ForwardOptions<'a> {
+    path: &'a str,
+    surface: Surface,
+    response_shape: SubscriptionResponseShape,
+    validated: Option<&'a crate::model_routing::ValidatedSubscription>,
+}
+
 async fn forward_subscription_openai_inner(
     state: &AppState,
     headers: &HeaderMap,
     mut body: serde_json::Value,
     routing_body: &serde_json::Value,
-    path: &str,
-    surface: Surface,
-    response_shape: SubscriptionResponseShape,
+    options: ForwardOptions<'_>,
 ) -> Response {
+    let ForwardOptions {
+        path,
+        surface,
+        response_shape,
+        validated,
+    } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
     }
@@ -148,8 +214,36 @@ async fn forward_subscription_openai_inner(
         }
     };
     let routing_context = request_routing_context(headers, routing_body, pinned_account);
-    let selected = if let Some(router) = state.account_router.as_ref() {
-        match router.select_subscription(&routing_context) {
+    let selected = if let Some(validated) = validated {
+        if validated.provider != provider {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                "validated subscription does not match the routed provider",
+            );
+        }
+        match validated
+            .for_dispatch_with_context(state, &routing_context)
+            .await
+        {
+            Ok(selected) => selected,
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "authentication_error",
+                    &error,
+                );
+            }
+        }
+    } else if let Some(router) = state.account_router.as_ref() {
+        match router
+            .select_subscription_where_authoritative(
+                &routing_context,
+                &state.subscription_cache,
+                |_| true,
+            )
+            .await
+        {
             Ok(selected) => selected,
             Err(error) => {
                 return error_response(
@@ -167,36 +261,58 @@ async fn forward_subscription_openai_inner(
                 "subscription credentials reader is not configured",
             );
         };
-        let disk_token = match reader.read_token() {
-            Ok(token) => token,
-            Err(e) => {
-                return error_response(
-                    StatusCode::BAD_GATEWAY,
-                    "authentication_error",
-                    &format!("failed to read {provider} subscription credentials: {e}"),
-                );
-            }
+        state
+            .subscription_cache
+            .register_reader(crate::credential_recovery_store::PRIMARY_ACCOUNT, reader);
+        let Ok(Some(disk_token)) = state
+            .subscription_cache
+            .load_authoritative(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            .await
+        else {
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "authentication_error",
+                &format!("failed to read {provider} subscription credentials"),
+            );
         };
         crate::accounts::SelectedSubscriptionAccount {
             name: "primary".to_string(),
             token: disk_token,
         }
     };
-    // Refresh if the on-disk token has expired. A rotated refresh token is
-    // written back to the credential file before the new access token is used
-    // (issue #239); a read-only mount degrades to an in-memory refresh.
-    let now_ms = chrono::Utc::now().timestamp_millis();
-    let sub_token = state
-        .subscription_cache
-        .get_fresh_for(
-            &state.client,
-            provider,
-            &selected.name,
-            selected.token,
-            now_ms,
-        )
-        .await;
+    // Automatic model routing already refreshed and validated this exact
+    // token. Refreshing again here could adopt a credential that appeared
+    // after catalog validation, recreating the account-crossing race.
+    let sub_token = if validated.is_some() {
+        selected.token
+    } else {
+        // Pinned routing performs its ordinary serving-path refresh here.
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        match state
+            .subscription_cache
+            .get_fresh_loaded(
+                &state.client,
+                provider,
+                &selected.name,
+                selected.token,
+                now_ms,
+            )
+            .await
+        {
+            Ok(token) => token,
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "authentication_error",
+                    &error,
+                );
+            }
+        }
+    };
     let selected_account = Some(selected.name);
+    // Evidence must name the credential that produced the final upstream
+    // response. A successful reactive retry replaces this below.
+    let mut evidence_token = Some(sub_token.clone());
 
     // The Codex backend rejects every explicit output cap, so the field is
     // stripped below and enforced locally instead of refusing the request
@@ -268,11 +384,16 @@ async fn forward_subscription_openai_inner(
             );
         }
     };
+    // A validated automatic route owns one account/catalog decision for the
+    // whole request. Its 401 is returned unchanged: the ordinary recovery
+    // ladder could adopt a different account that appeared after validation.
+    // A non-validated pinned route keeps the established reactive refresh.
     // A `401` is the vendor disproving the token's own `exp` claim: it may have
     // invalidated the access token early, and the stored expiry is no evidence
     // to the contrary. Refresh and replay the request exactly once, so a
     // recoverable credential is not reported as dead (issue #205).
-    if upstream_resp.status() == reqwest::StatusCode::UNAUTHORIZED
+    if validated.is_none()
+        && upstream_resp.status() == reqwest::StatusCode::UNAUTHORIZED
         && let Some(account) = selected_account.as_deref()
         && let Some(refreshed) = state
             .subscription_cache
@@ -294,9 +415,16 @@ async fn forward_subscription_openai_inner(
             .await
         {
             // Only one retry: a second 401 is surfaced rather than looped.
-            Ok(retried) => upstream_resp = retried,
+            Ok(retried) => {
+                upstream_resp = retried;
+                evidence_token = Some(refreshed);
+            }
             Err(error) => {
                 tracing::warn!("{provider} retry after refresh failed: {error}");
+                // B produced no HTTP status. The retained A response is still
+                // returned to the caller, but its verdict was superseded by
+                // the successful rotation and must not be attributed to B.
+                evidence_token = None;
             }
         }
     }
@@ -306,9 +434,19 @@ async fn forward_subscription_openai_inner(
     state
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
-    state
-        .subscription_cache
-        .record_status(provider, status.as_u16());
+    if let Some(evidence_token) = evidence_token.as_ref() {
+        state
+            .subscription_cache
+            .record_status_for_credential(
+                provider,
+                selected_account
+                    .as_deref()
+                    .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+                evidence_token,
+                status.as_u16(),
+            )
+            .await;
+    }
     let retry_after = retry_after_duration(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =

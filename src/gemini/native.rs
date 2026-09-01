@@ -37,22 +37,28 @@ fn native_model_document(
 /// In automatic mode every healthy subscription contributes, so one router JWT
 /// exposes Codex, Claude, Qwen and Gemini models to Gemini CLI. A pinned
 /// `UPSTREAM_PROVIDER` narrows the namespace to that single subscription.
-async fn advertised_providers(state: &AppState) -> Vec<crate::subscription::SubscriptionProvider> {
-    let healthy = crate::model_routing::healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
-    match state.upstream_provider {
+async fn advertised_models(
+    state: &AppState,
+) -> Vec<(crate::subscription::SubscriptionProvider, String)> {
+    let snapshot = crate::model_routing::configured_catalog_snapshot(state).await;
+    let healthy = snapshot.healthy_providers();
+    let providers = match state.upstream_provider {
         crate::config::UpstreamProvider::Auto => healthy,
         provider => provider
             .subscription_provider()
             .filter(|provider| healthy.contains(provider))
             .into_iter()
             .collect(),
-    }
+    };
+    providers
+        .into_iter()
+        .flat_map(|provider| {
+            snapshot
+                .models(provider)
+                .into_iter()
+                .map(move |model| (provider, model))
+        })
+        .collect()
 }
 
 /// Native Gemini `ListModels` response.
@@ -61,16 +67,10 @@ async fn advertised_providers(state: &AppState) -> Vec<crate::subscription::Subs
 /// subscription; nothing is synthesized for a provider that is disconnected or
 /// no longer advertises a model.
 pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
-    let models = advertised_providers(&state)
+    let models = advertised_models(&state)
         .await
         .into_iter()
-        .flat_map(|provider| {
-            state
-                .model_catalogs
-                .models(provider)
-                .into_iter()
-                .map(move |model| native_model_document(&model, provider))
-        })
+        .map(|(provider, model)| native_model_document(&model, provider))
         .collect::<Vec<_>>();
     (StatusCode::OK, axum::Json(json!({"models": models})))
 }
@@ -81,16 +81,10 @@ pub async fn native_model(
     Path(model): Path<String>,
 ) -> impl IntoResponse {
     let model = model.trim_start_matches("models/").to_string();
-    let owner = advertised_providers(&state)
+    let owner = advertised_models(&state)
         .await
         .into_iter()
-        .find(|owner| {
-            state
-                .model_catalogs
-                .models(*owner)
-                .iter()
-                .any(|candidate| candidate == &model)
-        });
+        .find_map(|(owner, candidate)| (candidate == model).then_some(owner));
     owner.map_or_else(
         || {
             (
@@ -177,9 +171,11 @@ fn native_error(status: StatusCode, message: &str) -> Response {
 async fn native_owner(
     state: &AppState,
     model: &str,
-) -> Result<crate::subscription::SubscriptionProvider, Response> {
-    if state.upstream_provider != crate::config::UpstreamProvider::Auto {
-        return state
+) -> Result<crate::model_routing::RoutedState, Response> {
+    let routed = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
+        crate::model_routing::route_subscription_model(state, model).await
+    } else {
+        let provider = state
             .upstream_provider
             .subscription_provider()
             .ok_or_else(|| {
@@ -190,23 +186,16 @@ async fn native_owner(
                         state.upstream_provider.as_str()
                     ),
                 )
-            });
-    }
-    let healthy = crate::model_routing::healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
-    crate::model_routing::available_provider_for_model(model, &healthy, &state.model_catalogs)
-        .map_err(|error| {
-            let status = match error {
-                crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
-                _ => StatusCode::BAD_REQUEST,
-            };
-            native_error(status, &error.to_string())
-        })
+            })?;
+        crate::model_routing::route_pinned_subscription(state, provider).await
+    };
+    routed.map_err(|error| {
+        let status = match error {
+            crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
+            _ => StatusCode::BAD_REQUEST,
+        };
+        native_error(status, &error.to_string())
+    })
 }
 
 async fn forward_native(
@@ -221,31 +210,32 @@ async fn forward_native(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let owner = match native_owner(state, &model).await {
-        Ok(owner) => owner,
+    let routed = match native_owner(state, &model).await {
+        Ok(routed) => routed,
         Err(response) => return response,
     };
+    let owner = routed
+        .state
+        .upstream_provider
+        .subscription_provider()
+        .expect("native routing always selects a subscription provider");
     if owner != crate::subscription::SubscriptionProvider::Gemini {
         // Codex, Claude and Qwen have no `generateContent` surface, so the
         // request crosses through the shared OpenAI Chat Completions path and
         // the response is translated back into Gemini's native shape.
-        return forward_native_via_chat(state, headers, &model, streaming, &body).await;
+        return forward_native_via_chat(routed, headers, &model, streaming, &body).await;
     }
-    let routed_state = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
-        match crate::model_routing::route_provider(
-            state,
-            crate::subscription::SubscriptionProvider::Gemini,
-        )
-        .await
-        {
-            Ok(state) => Some(state),
-            Err(error) => return native_error(StatusCode::BAD_REQUEST, &error),
-        }
-    } else {
-        None
-    };
-    let state = routed_state.as_ref().unwrap_or(state);
-    let routed = match route_gemini_token(state, headers, &body, Surface::OpenAIChat, path).await {
+    let state = &routed.state;
+    let routed = match route_gemini_token(
+        state,
+        headers,
+        &body,
+        Surface::OpenAIChat,
+        path,
+        routed.subscription.as_ref(),
+    )
+    .await
+    {
         Ok(routed) => routed,
         Err(response) => return response,
     };
@@ -298,6 +288,18 @@ async fn forward_native(
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream.headers());
     let retry_header = upstream.headers().get("retry-after").cloned();
+    // The response status is already authoritative even if the peer closes
+    // before its declared body is complete. Record it while the response still
+    // carries the exact credential generation that produced it.
+    state
+        .subscription_cache
+        .record_status_for_credential(
+            crate::subscription::SubscriptionProvider::Gemini,
+            &routed.account,
+            &routed.token,
+            status.as_u16(),
+        )
+        .await;
     let response_body = match upstream.bytes().await {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -369,18 +371,19 @@ async fn forward_native(
 /// place. The completion is then translated back into a
 /// `GenerateContentResponse`.
 async fn forward_native_via_chat(
-    state: &AppState,
+    routed: crate::model_routing::RoutedState,
     headers: &HeaderMap,
     model: &str,
     streaming: bool,
     body: &Value,
 ) -> Response {
     let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
-    let response = crate::proxy::openai_chat_completions(
-        State(state.clone()),
-        axum::extract::Query(std::collections::BTreeMap::new()),
+    let state = routed.state;
+    let response = crate::proxy::openai_chat_completions_routed(
+        state.clone(),
         headers.clone(),
-        Ok(axum::Json(chat_request)),
+        chat_request,
+        routed.subscription,
     )
     .await;
 
