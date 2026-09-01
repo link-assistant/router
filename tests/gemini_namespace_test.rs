@@ -7,12 +7,12 @@
 //! list while `/v1/models` listed eight live Codex models.
 
 use std::fmt::Write as _;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
@@ -36,6 +36,7 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
+    forwarded: Arc<Mutex<Vec<Value>>>,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -48,7 +49,10 @@ impl TestRouter {
 
     async fn start_with(claude_connected: bool) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
-        let stub = Router::new().fallback(stub_vendor);
+        let forwarded = Arc::new(Mutex::new(Vec::new()));
+        let stub = Router::new()
+            .fallback(stub_vendor)
+            .with_state(Arc::clone(&forwarded));
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("gemini-namespace-secret");
@@ -159,6 +163,7 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
+            forwarded,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
@@ -214,12 +219,16 @@ async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
 }
 
 /// Vendor stub that answers in the dialect implied by the upstream path.
-async fn stub_vendor(request: Request) -> Response {
+async fn stub_vendor(
+    State(forwarded): State<Arc<Mutex<Vec<Value>>>>,
+    request: Request,
+) -> Response {
     let path = request.uri().path().to_string();
     let body = to_bytes(request.into_body(), 1024 * 1024)
         .await
         .expect("read stub request");
     let body = serde_json::from_slice::<Value>(&body).unwrap_or(Value::Null);
+    forwarded.lock().expect("capture vendor request").push(body.clone());
 
     let anthropic = path.contains("/v1/messages");
     let (payload, content_type) = if anthropic {
@@ -445,6 +454,32 @@ async fn generate_content_serves_codex_and_claude_models_natively() {
         assert_eq!(native["usageMetadata"]["totalTokenCount"], 5);
         assert_eq!(native["modelVersion"], model);
     }
+}
+
+/// Issue #378: Gemini CLI supplies `topP`, which is translated to `top_p`.
+/// The ChatGPT subscription backend rejects that field, so capability
+/// reconciliation must remove it only when the selected owner is Codex.
+#[tokio::test]
+async fn gemini_top_p_is_not_forwarded_to_codex() {
+    let router = TestRouter::start().await;
+
+    let (status, body) = router
+        .post_native(
+            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            &json!({
+                "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
+                "generationConfig": {"topP": 0.9}
+            }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let forwarded = router.forwarded.lock().expect("captured vendor requests");
+    let request = forwarded.last().expect("Codex request reached the stub");
+    assert!(
+        request.get("top_p").is_none(),
+        "Codex received unsupported top_p: {request:#}"
+    );
 }
 
 /// `maxOutputTokens` is optional in Gemini's protocol, and the `ChatGPT`

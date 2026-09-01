@@ -47,6 +47,25 @@ fn codex_normalizes_responses_body_for_chatgpt_backend() {
     assert_eq!(body["reasoning"]["effort"], "none");
 }
 
+#[test]
+fn codex_strips_unsupported_top_p_without_narrowing_claude() {
+    let mut codex = serde_json::json!({
+        "model": "gpt-5.6-sol",
+        "input": "hi",
+        "top_p": 0.9
+    });
+    normalize_subscription_request(SubscriptionProvider::Codex, &mut codex);
+    assert!(codex.get("top_p").is_none(), "{codex:#}");
+
+    let mut claude = serde_json::json!({
+        "model": "claude-opus-4-7",
+        "messages": [{"role": "user", "content": "hi"}],
+        "top_p": 0.9
+    });
+    normalize_subscription_request(SubscriptionProvider::Claude, &mut claude);
+    assert_eq!(claude["top_p"], 0.9, "{claude:#}");
+}
+
 /// Both documented `input` forms must reach the `ChatGPT` backend as a list;
 /// the string form previously went through unchanged and drew a 400
 /// ("Input must be a list").

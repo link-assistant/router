@@ -17,6 +17,7 @@ pub enum Capability {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ProviderCapabilities {
     pub temperature: Capability,
+    pub top_p: Capability,
     pub stop_sequences: Capability,
     pub output_token_limit: Capability,
     pub reasoning: Capability,
@@ -33,6 +34,7 @@ pub fn subscription(provider: SubscriptionProvider, model: Option<&str>) -> Prov
             } else {
                 Capability::Native
             },
+            top_p: Capability::Native,
             stop_sequences: Capability::Native,
             output_token_limit: Capability::Native,
             reasoning: Capability::Native,
@@ -41,6 +43,7 @@ pub fn subscription(provider: SubscriptionProvider, model: Option<&str>) -> Prov
         },
         SubscriptionProvider::Codex => ProviderCapabilities {
             temperature: Capability::Unsupported,
+            top_p: Capability::Unsupported,
             stop_sequences: Capability::Emulated,
             output_token_limit: Capability::Emulated,
             reasoning: Capability::Native,
@@ -49,6 +52,7 @@ pub fn subscription(provider: SubscriptionProvider, model: Option<&str>) -> Prov
         },
         SubscriptionProvider::Qwen | SubscriptionProvider::Gemini => ProviderCapabilities {
             temperature: Capability::Native,
+            top_p: Capability::Native,
             stop_sequences: Capability::Native,
             output_token_limit: Capability::Native,
             reasoning: Capability::Native,
@@ -63,6 +67,7 @@ pub fn upstream(provider: UpstreamProvider) -> ProviderCapabilities {
     provider.subscription_provider().map_or(
         ProviderCapabilities {
             temperature: Capability::Unknown,
+            top_p: Capability::Unknown,
             stop_sequences: Capability::Unknown,
             output_token_limit: Capability::Unknown,
             reasoning: Capability::Unknown,
@@ -178,12 +183,14 @@ mod tests {
     fn unknown_providers_are_never_assumed_unsupported() {
         let capabilities = upstream(UpstreamProvider::OpenAICompatible);
         assert_eq!(capabilities.temperature, Capability::Unknown);
+        assert_eq!(capabilities.top_p, Capability::Unknown);
         assert_eq!(capabilities.web_search, Capability::Unknown);
     }
 
     #[test]
     fn matrix_distinguishes_server_tools_and_local_emulation() {
         let codex = subscription(SubscriptionProvider::Codex, Some("gpt-5.6-sol"));
+        assert_eq!(codex.top_p, Capability::Unsupported);
         assert_eq!(codex.web_search, Capability::Native);
         assert_eq!(codex.web_fetch, Capability::Unsupported);
         assert_eq!(codex.stop_sequences, Capability::Emulated);
@@ -197,6 +204,7 @@ mod tests {
             Some("web_fetch")
         );
         let claude = subscription(SubscriptionProvider::Claude, Some("claude-opus-5"));
+        assert_eq!(claude.top_p, Capability::Native);
         assert_eq!(claude.temperature, Capability::Unsupported);
         assert_eq!(claude.output_token_limit, Capability::Native);
         assert!(claude_uses_adaptive_thinking(Some("claude-opus-5")));
