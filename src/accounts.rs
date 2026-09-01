@@ -471,7 +471,7 @@ impl AccountRouter {
         let (indices, mode) = self.selection_plan(context)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.is_available() || !allowed(&account.name) {
+            if !account.is_available() {
                 if !matches!(mode, SelectionMode::Automatic) {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
@@ -481,6 +481,11 @@ impl AccountRouter {
                 .load_authoritative(self.provider(), &account.name)
                 .await
             {
+                Ok(Some(_)) if !allowed(&account.name) => {
+                    if !matches!(mode, SelectionMode::Automatic) {
+                        return Err(Self::unavailable_error(mode, &account.name));
+                    }
+                }
                 Ok(Some(token)) if account.try_record_use() => {
                     self.bind_session(context, idx);
                     return Ok(SelectedSubscriptionAccount {

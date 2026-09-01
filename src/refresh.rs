@@ -1,15 +1,15 @@
-//! In-memory OAuth refresh for vendor subscription tokens.
+//! OAuth refresh and durable rotation handling for vendor subscriptions.
 //!
 //! When a token read from disk has expired, this module exchanges its
 //! `refresh_token` for a fresh access token using the vendor's public OAuth
 //! client (the same client ids embedded in each vendor's open-source CLI) and
 //! caches the result in memory.
 //!
-//! Vendor credential files are otherwise left alone, with one exception: when
-//! the vendor **rotates** the refresh token, the replacement is written back
-//! (see [`crate::subscription::SubscriptionReader::write_token`]) so a restart
-//! does not replay a token the vendor has already spent (issue #205). That
-//! write is best effort — a read-only mount logs and continues.
+//! Production callers register a recovery-aware store. Any refreshed token is
+//! durably persisted there before it can be used; if neither the vendor file
+//! nor its recovery sidecar can be committed, serving and diagnostics fail
+//! closed. The legacy stateless refresh API still accepts a caller-provided
+//! token and cannot provide that transaction guarantee.
 //!
 //! This is the same behavior `ProxyPal` relies on so the proxy keeps working even
 //! when the vendor CLI is not running to refresh its own credential file.
@@ -499,11 +499,13 @@ async fn refresh_at(
 /// account. Two subscriptions for the same vendor must never reuse each
 /// other's bearer token.
 ///
-/// A rotated refresh token is written back to the credential store it came
-/// from (issue #239) so the rotation survives a restart; the write is best
-/// effort, so a read-only mount keeps serving from memory instead of failing.
-/// Also records what upstreams actually said about each credential, so health
-/// decisions can be based on observed behaviour rather than on `expiresAt`.
+/// Registered production subscriptions persist every usable refresh result to
+/// their authoritative credential store or recovery sidecar before serving it
+/// (issue #239). A dual persistence failure is recorded and fails closed. The
+/// legacy stateless methods retain their caller-owned, in-memory behavior.
+/// The cache also records what upstreams actually said about each credential,
+/// so health decisions can be based on observed behaviour rather than on
+/// `expiresAt`.
 #[derive(Debug, Default)]
 pub struct TokenCache {
     inner: Mutex<HashMap<SubscriptionKey, SubscriptionToken>>,

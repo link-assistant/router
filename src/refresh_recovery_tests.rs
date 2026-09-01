@@ -6,60 +6,12 @@
 //! re-reading the file another holder had already rotated forward.
 
 use std::sync::{Arc, Mutex};
-use std::{fmt, io};
 
 use super::super::TokenCache;
 use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
 
 const NOW_MS: i64 = 1_700_000_000_000;
-
-#[derive(Clone, Default)]
-struct CapturedLogs(Arc<Mutex<Vec<u8>>>);
-
-impl fmt::Debug for CapturedLogs {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter
-            .debug_struct("CapturedLogs")
-            .finish_non_exhaustive()
-    }
-}
-
-impl io::Write for CapturedLogs {
-    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
-        self.0.lock().unwrap().extend_from_slice(bytes);
-        Ok(bytes.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
-
-impl<'writer> tracing_subscriber::fmt::MakeWriter<'writer> for CapturedLogs {
-    type Writer = Self;
-
-    fn make_writer(&'writer self) -> Self::Writer {
-        self.clone()
-    }
-}
-
-impl CapturedLogs {
-    fn subscriber(&self) -> tracing::Dispatch {
-        tracing::Dispatch::new(
-            tracing_subscriber::fmt()
-                .with_ansi(false)
-                .without_time()
-                .with_max_level(tracing::Level::TRACE)
-                .with_writer(self.clone())
-                .finish(),
-        )
-    }
-
-    fn contents(&self) -> String {
-        String::from_utf8(self.0.lock().unwrap().clone()).expect("UTF-8 tracing output")
-    }
-}
 
 /// A Claude credential file in the layout the Claude CLI writes.
 fn seed_credential(home: &std::path::Path, access: &str, refresh: &str, expires_at_ms: i64) {
@@ -326,16 +278,19 @@ async fn a_revoked_credential_stays_terminal_and_names_the_cause() {
 
     // A second call must not spend another exchange against a credential that
     // is known dead.
-    let again = cache
-        .get_fresh_for_at(
+    let again = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        cache.get_fresh_for_at(
             &client,
             &url,
             SubscriptionProvider::Claude,
             "primary",
             stale,
             NOW_MS + 1_000,
-        )
-        .await;
+        ),
+    )
+    .await
+    .expect("authoritative suppression reload must not reacquire its held attempt lock");
     assert_eq!(again.access_token, "access-1");
     drain(server).await;
     assert_eq!(received.lock().unwrap().len(), 1, "one exchange only");

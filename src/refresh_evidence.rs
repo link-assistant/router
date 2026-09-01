@@ -24,12 +24,13 @@ impl TokenCache {
         account: &str,
         message: &str,
     ) {
-        if self.take_terminal_announcement_for(provider, account) {
-            tracing::error!(
-                "{provider} subscription is unusable and cannot recover on its own: {message}"
-            );
+        let first = self.take_terminal_announcement_for(provider, account);
+        let diagnostic =
+            super::refresh_recovery::terminal_failure_diagnostic(provider, message, first);
+        if first {
+            tracing::error!("{diagnostic}");
         } else {
-            tracing::debug!("{provider} subscription is still unusable: {message}");
+            tracing::debug!("{diagnostic}");
         }
     }
 

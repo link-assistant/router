@@ -2,15 +2,11 @@
 
 use std::path::PathBuf;
 
-use super::super::{RefreshError, terminal_message};
+use super::super::{
+    RefreshError, refresh_failure_diagnostic, terminal_failure_diagnostic, terminal_message,
+};
 use super::*;
 use crate::credential_recovery_store::RecoverableCredentialStore;
-
-// `tracing` rebuilds callsite interest globally when a thread-local dispatcher
-// is installed or removed. Two capture tests changing dispatchers in parallel
-// can therefore temporarily disable one another's callsites even though their
-// writers are thread-local. Keep the small capture windows serialized.
-static LOG_CAPTURE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 #[derive(Debug)]
 struct ControlledStore {
@@ -171,10 +167,9 @@ async fn a_failed_post_lock_reload_fails_closed_before_the_token_endpoint() {
     .await;
 }
 
-#[tokio::test(flavor = "current_thread")]
+#[tokio::test]
 async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
     const SENTINEL: &str = "raw-account-sentinel@example.invalid";
-    let _capture = LOG_CAPTURE_LOCK.lock().await;
     let directory = tempfile::tempdir().expect("credential parent");
     let home = directory.path().join(SENTINEL);
     let reader = SubscriptionReader::new(SubscriptionProvider::Claude, &home);
@@ -193,10 +188,6 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
         Arc::new(reader) as Arc<dyn CredentialStore>,
     );
     let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
-    let logs = CapturedLogs::default();
-    let subscriber = logs.subscriber();
-    let subscriber_guard = tracing::dispatcher::set_default(&subscriber);
-
     let returned = cache
         .get_fresh_for_at(
             &reqwest::Client::new(),
@@ -207,28 +198,26 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
             NOW_MS,
         )
         .await;
-    drop(subscriber_guard);
 
     assert_eq!(returned, original);
     assert!(received.lock().unwrap().is_empty());
     let reported = cache
         .last_refresh_error_for(SubscriptionProvider::Claude, SENTINEL)
         .expect("storage failure is operator-visible");
-    let captured = logs.contents();
+    let diagnostic = refresh_failure_diagnostic(SubscriptionProvider::Claude, &reported);
     assert!(reported.contains("re-read"), "{reported}");
     assert!(
-        captured.contains("could not re-read the registered claude credential"),
-        "the test must capture the failing internal diagnostic: {captured}"
+        diagnostic.contains("could not re-read the registered claude credential"),
+        "the log formatter must retain the provider-scoped cause: {diagnostic}"
     );
     assert!(!reported.contains(SENTINEL), "{reported}");
-    assert!(!captured.contains(SENTINEL), "{captured}");
+    assert!(!diagnostic.contains(SENTINEL), "{diagnostic}");
     server.abort();
 }
 
-#[tokio::test(flavor = "current_thread")]
+#[tokio::test]
 async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
     const SENTINEL: &str = "raw-account-sentinel@example.invalid";
-    let _capture = LOG_CAPTURE_LOCK.lock().await;
     let directory = tempfile::tempdir().expect("lock directory");
     let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
     let store = Arc::new(ControlledStore {
@@ -244,9 +233,6 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
         SENTINEL,
         store.clone() as Arc<dyn CredentialStore>,
     );
-    let logs = CapturedLogs::default();
-    let subscriber = logs.subscriber();
-    let subscriber_guard = tracing::dispatcher::set_default(&subscriber);
 
     let returned = cache
         .get_fresh_for_at(
@@ -258,13 +244,12 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
             NOW_MS,
         )
         .await;
-    drop(subscriber_guard);
     drain(server).await;
 
     let reported = cache
         .last_refresh_error_for(SubscriptionProvider::Claude, SENTINEL)
         .expect("terminal rejection is operator-visible");
-    let captured = logs.contents();
+    let diagnostic = terminal_failure_diagnostic(SubscriptionProvider::Claude, &reported, true);
     assert_eq!(returned, original);
     assert_eq!(received.lock().unwrap().len(), 1);
     assert!(reported.contains("invalid_grant"), "{reported}");
@@ -272,9 +257,9 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
         reported.contains("link-assistant-router auth claude"),
         "{reported}"
     );
-    assert!(captured.contains("invalid_grant"), "{captured}");
+    assert!(diagnostic.contains("invalid_grant"), "{diagnostic}");
     assert!(!reported.contains(SENTINEL), "{reported}");
-    assert!(!captured.contains(SENTINEL), "{captured}");
+    assert!(!diagnostic.contains(SENTINEL), "{diagnostic}");
 
     let endpoint_error = RefreshError::Status(400, INVALID_GRANT.into(), None);
     for retried_with_newer_link in [false, true] {

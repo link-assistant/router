@@ -4,6 +4,8 @@ use super::tests::auto_state;
 use super::*;
 use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::response::Response;
+use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::sync::{Arc, Mutex};
@@ -264,6 +266,116 @@ async fn one_rejected_codex_account_fails_over_without_poisoning_provider_health
     let health = configured_provider_health_report(&state).await;
     assert_eq!(health.len(), 1);
     assert_eq!(health[0].state, ProviderHealthState::Healthy);
+}
+
+async fn json_body(response: Response) -> serde_json::Value {
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    serde_json::from_slice(&bytes).unwrap()
+}
+
+#[tokio::test]
+async fn inference_rejection_removes_only_that_accounts_models_from_both_listings() {
+    let (state, _data, _primary, _additional) =
+        codex_pool_state(crate::accounts::AccountRouterOptions::default());
+    state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        Some("acct-primary".into()),
+        vec!["gpt-primary-only".into()],
+    );
+    state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "account-1",
+        Some("acct-secondary".into()),
+        vec!["gpt-secondary-only".into()],
+    );
+    state
+        .subscription_cache
+        .record_status_for(SubscriptionProvider::Codex, "primary", 401);
+
+    let client_token = state.token_manager.issue_token(1, "pool listing").unwrap();
+    let openai = json_body(
+        models(
+            State(state.clone()),
+            PoolHarness::headers(&client_token, None),
+        )
+        .await,
+    )
+    .await;
+    let openai_ids = openai["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|model| model["id"].as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(openai_ids, ["gpt-secondary-only"]);
+
+    let gemini = json_body(
+        crate::gemini::native_models(State(state.clone()))
+            .await
+            .into_response(),
+    )
+    .await;
+    let gemini_ids = gemini["models"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|model| model["name"].as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(gemini_ids, ["models/gpt-secondary-only"]);
+
+    let routed = route_subscription_model(&state, "gpt-primary-only")
+        .await
+        .expect("provider catalog still identifies the owning pool");
+    assert!(
+        routed
+            .subscription
+            .unwrap()
+            .for_dispatch_with_context(&routed.state, &crate::accounts::RoutingContext::default())
+            .await
+            .is_err(),
+        "the healthy neighbour must not serve an account-A-only model"
+    );
+}
+
+#[tokio::test]
+async fn replacing_a_rejected_pool_credential_makes_it_immediately_eligible() {
+    let (state, _data, primary, _additional) =
+        codex_pool_state(crate::accounts::AccountRouterOptions::default());
+    let original = state
+        .subscription_cache
+        .load_authoritative(SubscriptionProvider::Codex, "primary")
+        .await
+        .unwrap()
+        .unwrap();
+    state
+        .subscription_cache
+        .get_fresh_loaded(
+            &state.client,
+            SubscriptionProvider::Codex,
+            "primary",
+            original,
+            chrono::Utc::now().timestamp_millis(),
+        )
+        .await
+        .unwrap();
+    state
+        .subscription_cache
+        .record_status_for(SubscriptionProvider::Codex, "primary", 401);
+    write_codex_credential(&primary, "reauthenticated-access", "acct-primary");
+
+    assert_eq!(
+        selected_codex_account(&state, &crate::accounts::RoutingContext::pinned("primary"))
+            .await
+            .unwrap(),
+        "primary"
+    );
+    assert_ne!(
+        state
+            .subscription_cache
+            .evidence_for(SubscriptionProvider::Codex, "primary"),
+        Some(crate::refresh::CredentialEvidence::Rejected)
+    );
 }
 
 #[tokio::test]

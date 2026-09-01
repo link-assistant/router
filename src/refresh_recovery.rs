@@ -159,6 +159,27 @@ fn storage_rejection(message: impl Into<String>) -> Rejected {
     Rejected { error, message }
 }
 
+/// Fixed provider-scoped text used for a proactive refresh warning.
+///
+/// Kept as a pure formatter so redaction tests verify the exact value handed
+/// to tracing without installing process-global tracing dispatchers.
+pub(super) fn refresh_failure_diagnostic(provider: SubscriptionProvider, message: &str) -> String {
+    format!("subscription token refresh for {provider} failed: {message}")
+}
+
+/// Fixed provider-scoped text used for a terminal refresh announcement.
+pub(super) fn terminal_failure_diagnostic(
+    provider: SubscriptionProvider,
+    message: &str,
+    first_announcement: bool,
+) -> String {
+    if first_announcement {
+        format!("{provider} subscription is unusable and cannot recover on its own: {message}")
+    } else {
+        format!("{provider} subscription is still unusable: {message}")
+    }
+}
+
 /// Take the credential's advisory lock or reject the transaction.
 async fn acquire_lock(
     store: &Arc<dyn CredentialStore>,

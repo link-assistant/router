@@ -651,9 +651,9 @@ async fn proxy_handler_with_subscription(
 ///
 /// Either way an expired access token is refreshed via
 /// `state.subscription_cache`, which persists a rotated refresh token back to
-/// the credential file so the rotation survives a restart (issue #239). The
-/// write is best effort, so a read-only `CLAUDE_CODE_HOME` mount still
-/// survives expiry from memory without a Claude CLI in the image.
+/// the credential file or its durable recovery sidecar before dispatch, so the
+/// rotation survives a restart (issue #239). If both writes fail, the request
+/// fails closed instead of spending a chain link that cannot be recovered.
 async fn resolve_upstream_credentials(
     state: &AppState,
     context: &RoutingContext,

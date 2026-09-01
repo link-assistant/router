@@ -141,10 +141,27 @@ fn credential_location(
 /// recorded, so `accounts list` — which performs no refresh of its own — stops
 /// contradicting this command about the same credential (issue #245).
 pub async fn subscription_catalog_diagnostics(
+    active_provider: SubscriptionProvider,
+    claude_home: &str,
+    user_home: &str,
+    data_dir: Option<&std::path::Path>,
+) -> bool {
+    subscription_catalog_diagnostics_with_token_url(
+        active_provider,
+        claude_home,
+        user_home,
+        data_dir,
+        None,
+    )
+    .await
+}
+
+async fn subscription_catalog_diagnostics_with_token_url(
     _active_provider: SubscriptionProvider,
     claude_home: &str,
     user_home: &str,
     data_dir: Option<&std::path::Path>,
+    token_url: Option<(SubscriptionProvider, &str)>,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
     let client = reqwest::Client::new();
@@ -187,15 +204,30 @@ pub async fn subscription_catalog_diagnostics(
             }
         };
         let was_expired = disk_token.is_expired(now_ms);
-        let Ok(token) = token_cache
-            .get_fresh_registered(
-                &client,
-                provider,
-                crate::credential_recovery_store::PRIMARY_ACCOUNT,
-                now_ms,
-            )
-            .await
-        else {
+        let refreshed = match token_url {
+            Some((override_provider, url)) if override_provider == provider => {
+                token_cache
+                    .get_fresh_registered_at(
+                        &client,
+                        url,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now_ms,
+                    )
+                    .await
+            }
+            _ => {
+                token_cache
+                    .get_fresh_registered(
+                        &client,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now_ms,
+                    )
+                    .await
+            }
+        };
+        let Ok(token) = refreshed else {
             let location = credential_location(provider, origin, &path);
             println!(
                 "{label:<23}: {location} (found, refresh FAILED, store: {})",
@@ -212,6 +244,26 @@ pub async fn subscription_catalog_diagnostics(
             catalog_error = true;
             continue;
         };
+        if token_cache
+            .last_refresh_error_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            .is_some()
+        {
+            let location = credential_location(provider, origin, &path);
+            println!(
+                "{label:<23}: {location} (found, refresh FAILED, store: {})",
+                origin.label()
+            );
+            println!(
+                "{:<23}: ERROR (credential refresh transaction failed)",
+                format!("{provider} refresh")
+            );
+            println!(
+                "{:<23}: ERROR (credential refresh failed before catalog probe)",
+                format!("{provider} catalog")
+            );
+            catalog_error = true;
+            continue;
+        }
         // `expiresAt` is a hint, so a still-expired token is probed rather than
         // declared dead: the catalog endpoint is what actually knows.
         let still_expired = token.is_expired(now_ms);
@@ -294,6 +346,56 @@ mod tests {
         (base, requests, server)
     }
 
+    #[cfg(unix)]
+    async fn one_successful_qwen_refresh_that_blocks_both_writes(
+        credential_home: std::path::PathBuf,
+        recovery_path: std::path::PathBuf,
+    ) -> (
+        String,
+        std::sync::Arc<std::sync::atomic::AtomicUsize>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        use std::os::unix::fs::PermissionsExt as _;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("loopback listener");
+        let url = format!(
+            "http://{}",
+            listener.local_addr().expect("listener address")
+        );
+        let requests = std::sync::Arc::new(AtomicUsize::new(0));
+        let observed = std::sync::Arc::clone(&requests);
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.expect("refresh request");
+            let mut buffer = [0_u8; 4096];
+            let _ = socket.read(&mut buffer).await;
+            observed.fetch_add(1, Ordering::SeqCst);
+
+            // Initial authoritative loading has completed by the time the
+            // token endpoint is called. Make both transaction destinations
+            // fail only now, so this exercises post-exchange durability.
+            std::fs::set_permissions(&credential_home, std::fs::Permissions::from_mode(0o500))
+                .expect("make primary unwritable");
+            std::fs::create_dir(&recovery_path).expect("block recovery file replacement");
+
+            let body = r#"{"access_token":"rotated-access","refresh_token":"rotated-refresh","expires_in":3600}"#;
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .expect("refresh response");
+        });
+        (url, requests, server)
+    }
+
     fn config(command: &str, args: &[&str]) -> LoginConfig {
         LoginConfig {
             command: command.to_string(),
@@ -340,6 +442,62 @@ mod tests {
             catalog_requests.load(Ordering::SeqCst),
             0,
             "a catalog success must not hide an unsafe refresh"
+        );
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn successful_rotation_with_dual_persistence_failure_never_probes_catalog() {
+        use std::os::unix::fs::PermissionsExt as _;
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        let data_dir = root.path().join("router-data");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, catalog_server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "expired-access",
+                "refresh_token": "refresh-link",
+                "expiry_date": 1,
+                "resource_url": resource_url
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+
+        let recovery_path = crate::credential_recovery_store::credential_lock_path(
+            &data_dir,
+            SubscriptionProvider::Qwen,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        )
+        .with_extension("json");
+        let (token_url, refresh_requests, refresh_server) =
+            one_successful_qwen_refresh_that_blocks_both_writes(qwen_home.clone(), recovery_path)
+                .await;
+
+        let failed = subscription_catalog_diagnostics_with_token_url(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            Some(&data_dir),
+            Some((SubscriptionProvider::Qwen, token_url.as_str())),
+        )
+        .await;
+        refresh_server.await.expect("refresh server task");
+        catalog_server.await.expect("catalog server task");
+        std::fs::set_permissions(&qwen_home, std::fs::Permissions::from_mode(0o700))
+            .expect("restore credential permissions");
+
+        assert!(failed, "lost rotation was reported healthy");
+        assert_eq!(refresh_requests.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            catalog_requests.load(Ordering::SeqCst),
+            0,
+            "the old access token must not hide a failed refresh transaction"
         );
     }
 

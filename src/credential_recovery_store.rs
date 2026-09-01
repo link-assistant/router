@@ -59,8 +59,8 @@ struct RecoveryRecord {
 }
 
 /// Return the matching durable recovery record while its transaction lock is
-/// held. Invalid metadata is stale data, but an unreadable record is surfaced
-/// rather than treated as absence and overwritten.
+/// held. Invalid metadata and unreadable contents are storage uncertainty, so
+/// both are surfaced rather than treated as absence and overwritten.
 pub(crate) fn valid_recovery_record_path(
     data_dir: impl AsRef<Path>,
     provider: SubscriptionProvider,

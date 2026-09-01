@@ -37,21 +37,28 @@ fn native_model_document(
 /// In automatic mode every healthy subscription contributes, so one router JWT
 /// exposes Codex, Claude, Qwen and Gemini models to Gemini CLI. A pinned
 /// `UPSTREAM_PROVIDER` narrows the namespace to that single subscription.
-async fn advertised_providers(state: &AppState) -> Vec<crate::subscription::SubscriptionProvider> {
-    let health = crate::model_routing::configured_provider_health_report(state).await;
-    let healthy = health
-        .iter()
-        .filter(|entry| entry.state == crate::model_routing::ProviderHealthState::Healthy)
-        .map(|entry| entry.provider)
-        .collect::<Vec<_>>();
-    match state.upstream_provider {
+async fn advertised_models(
+    state: &AppState,
+) -> Vec<(crate::subscription::SubscriptionProvider, String)> {
+    let snapshot = crate::model_routing::configured_catalog_snapshot(state).await;
+    let healthy = snapshot.healthy_providers();
+    let providers = match state.upstream_provider {
         crate::config::UpstreamProvider::Auto => healthy,
         provider => provider
             .subscription_provider()
             .filter(|provider| healthy.contains(provider))
             .into_iter()
             .collect(),
-    }
+    };
+    providers
+        .into_iter()
+        .flat_map(|provider| {
+            snapshot
+                .models(provider)
+                .into_iter()
+                .map(move |model| (provider, model))
+        })
+        .collect()
 }
 
 /// Native Gemini `ListModels` response.
@@ -60,16 +67,10 @@ async fn advertised_providers(state: &AppState) -> Vec<crate::subscription::Subs
 /// subscription; nothing is synthesized for a provider that is disconnected or
 /// no longer advertises a model.
 pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
-    let models = advertised_providers(&state)
+    let models = advertised_models(&state)
         .await
         .into_iter()
-        .flat_map(|provider| {
-            state
-                .model_catalogs
-                .models(provider)
-                .into_iter()
-                .map(move |model| native_model_document(&model, provider))
-        })
+        .map(|(provider, model)| native_model_document(&model, provider))
         .collect::<Vec<_>>();
     (StatusCode::OK, axum::Json(json!({"models": models})))
 }
@@ -80,16 +81,10 @@ pub async fn native_model(
     Path(model): Path<String>,
 ) -> impl IntoResponse {
     let model = model.trim_start_matches("models/").to_string();
-    let owner = advertised_providers(&state)
+    let owner = advertised_models(&state)
         .await
         .into_iter()
-        .find(|owner| {
-            state
-                .model_catalogs
-                .models(*owner)
-                .iter()
-                .any(|candidate| candidate == &model)
-        });
+        .find_map(|(owner, candidate)| (candidate == model).then_some(owner));
     owner.map_or_else(
         || {
             (

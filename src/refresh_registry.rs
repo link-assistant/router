@@ -24,27 +24,56 @@ impl TokenCache {
         provider: SubscriptionProvider,
         account: &str,
     ) -> Result<Option<crate::subscription::SubscriptionToken>, String> {
+        let credential = self
+            .reload_registered_store_locked(provider, account)
+            .await?;
+        // A changed credential is a re-authentication, so verdicts about its
+        // predecessor must not keep the account excluded until catalog poll.
+        if let Some(token) = credential.as_ref() {
+            self.reconcile_authoritative_credential(provider, account, token)
+                .await;
+        }
+        Ok(credential)
+    }
+
+    /// Reload the registered store under its durable lock without touching
+    /// process-local attempt state.
+    ///
+    /// The suppression path already holds that attempt's async mutex and must
+    /// use this lower-level operation before reconciling through its existing
+    /// guard. Calling [`Self::load_authoritative`] there would recursively
+    /// acquire the same non-reentrant mutex.
+    pub(super) async fn reload_registered_store_locked(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+    ) -> Result<Option<crate::subscription::SubscriptionToken>, String> {
         let store = self
             .store_for_subscription(provider, account)
             .ok_or_else(|| format!("no durable {provider} credential store is registered"))?;
         let lock_path = store.lock_path().ok_or_else(|| {
             format!("no durable transaction lock is available for {provider} credentials")
         })?;
-        let _guard = crate::durable_file::lock_exclusive_async(
-            &lock_path,
-            crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
-        )
-        .await
-        .map_err(|error| {
-            if error.kind() == std::io::ErrorKind::WouldBlock {
-                format!("timed out waiting for the {provider} credential transaction lock")
-            } else {
-                format!("could not acquire the {provider} credential transaction lock")
-            }
-        })?;
-        store
-            .try_reload()
-            .map_err(|_| format!("the {provider} credential store is unusable"))
+        let credential = {
+            let _guard = crate::durable_file::lock_exclusive_async(
+                &lock_path,
+                crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+            )
+            .await
+            .map_err(|error| {
+                if error.kind() == std::io::ErrorKind::WouldBlock {
+                    format!("timed out waiting for the {provider} credential transaction lock")
+                } else {
+                    format!("could not acquire the {provider} credential transaction lock")
+                }
+            })?;
+            store
+                .try_reload()
+                .map_err(|_| format!("the {provider} credential store is unusable"))?
+        };
+        // The durable guard is gone before this method returns. No network call
+        // or process-local async lock is made while it is held.
+        Ok(credential)
     }
 
     /// Register where a subscription's credential lives.

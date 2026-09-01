@@ -174,6 +174,65 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
     stub_task.abort();
 }
 
+/// Wrong-id guidance is derived entirely from the catalog/evidence snapshot.
+/// It must not wait for, or even try to reload, a credential that cannot make
+/// the unknown id routable.
+#[tokio::test]
+async fn unknown_model_does_not_wait_on_an_unrelated_credential_lock() {
+    let data = tempdir().unwrap();
+    let claude = tempdir().unwrap();
+    fs::write(
+        claude.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"claude-live","expiresAt":9999999999999}}"#,
+    )
+    .unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, claude.path());
+    let state = auto_state(vec![reader], data.path());
+    state
+        .model_catalogs
+        .record_success(SubscriptionProvider::Claude, vec!["claude-known".into()]);
+
+    let lock_path = data.path().join("held-credential.lock");
+    let lock = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&lock_path)
+        .unwrap();
+    lock.lock().unwrap();
+    let store = Arc::new(LockCheckingStore {
+        token: crate::subscription::SubscriptionToken {
+            access_token: "claude-live".into(),
+            refresh_token: None,
+            expires_at_ms: Some(9_999_999_999_999),
+            account_id: None,
+            resource_url: None,
+        },
+        lock_path,
+        reloads: AtomicUsize::new(0),
+        unlocked_reloads: AtomicUsize::new(0),
+    });
+    state.subscription_cache.register_store(
+        SubscriptionProvider::Claude,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        Arc::clone(&store) as Arc<dyn crate::credential_store::CredentialStore>,
+    );
+
+    let result = tokio::time::timeout(
+        Duration::from_millis(750),
+        route_subscription_model(&state, "not-in-any-catalog"),
+    )
+    .await
+    .expect("unknown-model routing must not wait for the five-second lock timeout");
+    let Err(error) = result else {
+        panic!("the model is unknown");
+    };
+    assert!(error.to_string().contains("claude-known"), "{error}");
+    assert_eq!(store.reloads.load(Ordering::SeqCst), 0);
+    lock.unlock().unwrap();
+}
+
 /// A validated request owns one credential decision for its entire lifetime.
 /// If account A reaches the upstream and is rejected, a later file rotation to
 /// account B must not turn the generic reactive-refresh retry into a second

@@ -28,6 +28,10 @@ pub(crate) use snapshot::{
     RoutedState, ValidatedSubscription, route_pinned_subscription, route_subscription_model,
 };
 
+#[path = "model_routing_catalog_snapshot.rs"]
+mod catalog_snapshot;
+pub(crate) use catalog_snapshot::ConfiguredCatalogSnapshot;
+
 impl std::fmt::Display for ModelRouteError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -461,9 +465,7 @@ fn account_health(
 }
 
 /// Recovery-aware lifecycle health for every configured provider.
-pub(crate) async fn configured_provider_health_report(
-    state: &AppState,
-) -> Vec<ProviderHealthReport> {
+async fn configured_account_health_report(state: &AppState) -> Vec<(String, ProviderHealthReport)> {
     let checks = SubscriptionProvider::ALL
         .into_iter()
         .map(|provider| async move {
@@ -507,9 +509,29 @@ pub(crate) async fn configured_provider_health_report(
                     &state.subscription_cache,
                     &state.model_catalogs,
                 ) {
-                    reports.push(report);
+                    reports.push((account, report));
                 }
             }
+            reports
+        });
+    futures_util::future::join_all(checks)
+        .await
+        .into_iter()
+        .flatten()
+        .collect()
+}
+
+fn aggregate_provider_health(
+    accounts: &[(String, ProviderHealthReport)],
+) -> Vec<ProviderHealthReport> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter_map(|provider| {
+            let reports = accounts
+                .iter()
+                .map(|(_, report)| report)
+                .filter(|report| report.provider == provider)
+                .collect::<Vec<_>>();
             if reports.is_empty() {
                 return None;
             }
@@ -527,25 +549,63 @@ pub(crate) async fn configured_provider_health_report(
                 ProviderHealthState::Degraded
             };
             let degraded = reports
-                .into_iter()
+                .iter()
                 .find(|report| report.state == ProviderHealthState::Degraded);
             Some(ProviderHealthReport {
                 provider,
                 state,
-                reason: degraded.as_ref().and_then(|report| report.reason.clone()),
+                reason: degraded.and_then(|report| report.reason.clone()),
                 summary: degraded.and_then(|report| report.summary),
             })
-        });
-    futures_util::future::join_all(checks)
-        .await
-        .into_iter()
-        .flatten()
+        })
         .collect()
+}
+
+/// Recovery-aware lifecycle health for every configured provider.
+pub(crate) async fn configured_provider_health_report(
+    state: &AppState,
+) -> Vec<ProviderHealthReport> {
+    aggregate_provider_health(&configured_account_health_report(state).await)
+}
+
+/// Resolve health and the corresponding account-filtered model union once.
+pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredCatalogSnapshot {
+    let accounts = configured_account_health_report(state).await;
+    let models = SubscriptionProvider::ALL
+        .into_iter()
+        .map(|provider| {
+            let healthy_accounts = accounts
+                .iter()
+                .filter(|(_, report)| {
+                    report.provider == provider && report.state == ProviderHealthState::Healthy
+                })
+                .map(|(account, _)| account.clone())
+                .collect::<Vec<_>>();
+            (
+                provider,
+                state
+                    .model_catalogs
+                    .models_for_accounts(provider, &healthy_accounts),
+            )
+        })
+        .collect();
+    ConfiguredCatalogSnapshot {
+        health: aggregate_provider_health(&accounts),
+        models,
+    }
 }
 
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
+    model_catalog_with(providers, catalogs, |provider| catalogs.models(provider))
+}
+
+fn model_catalog_with(
+    providers: &[SubscriptionProvider],
+    catalogs: &ModelCatalogCache,
+    models: impl Fn(SubscriptionProvider) -> Vec<String>,
+) -> Value {
     let now = chrono::Utc::now().timestamp();
     // A provider is degraded when it has never discovered a live catalog or its
     // credential has stopped working. There is no bundled fallback to fall back
@@ -565,7 +625,7 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
         .iter()
         .flat_map(|provider| {
             let owner = provider_owner(*provider);
-            catalogs.models(*provider).into_iter().map(move |id| {
+            models(*provider).into_iter().map(move |id| {
                 json!({
                     "id": id,
                     "object": "model",
@@ -589,16 +649,20 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.
 #[must_use]
 pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) -> Value {
-    let health = configured_provider_health_report(state)
-        .await
-        .into_iter()
+    let snapshot = configured_catalog_snapshot(state).await;
+    let health = snapshot
+        .health()
+        .iter()
         .filter(|entry| entry.provider == provider)
+        .cloned()
         .collect::<Vec<_>>();
     let mut catalog = if health
         .first()
         .is_some_and(|entry| entry.state == ProviderHealthState::Healthy)
     {
-        model_catalog(&[provider], &state.model_catalogs)
+        model_catalog_with(&[provider], &state.model_catalogs, |provider| {
+            snapshot.models(provider)
+        })
     } else {
         model_catalog(&[], &state.model_catalogs)
     };
@@ -642,19 +706,17 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
 
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => {
-            let health = configured_provider_health_report(&state).await;
-            let healthy = health
-                .iter()
-                .filter(|entry| entry.state == ProviderHealthState::Healthy)
-                .map(|entry| entry.provider)
-                .collect::<Vec<_>>();
-            let mut catalog = model_catalog(&healthy, &state.model_catalogs);
+            let snapshot = configured_catalog_snapshot(&state).await;
+            let healthy = snapshot.healthy_providers();
+            let mut catalog = model_catalog_with(&healthy, &state.model_catalogs, |provider| {
+                snapshot.models(provider)
+            });
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
             // simply vanished from `data`. Absence is not an alert: a monitor
             // cannot tell it from a provider that was never configured here
             // (issue #318).
-            merge_configured_degradation(&health, &mut catalog);
+            merge_configured_degradation(snapshot.health(), &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
             catalog
         }

@@ -245,6 +245,67 @@ fn account_pool_matches(state: &AppState, provider: SubscriptionProvider) -> boo
         .is_some_and(|router| router.provider() == provider)
 }
 
+/// Catalog/evidence-only view for wrong-model guidance.
+///
+/// No credential can make an id absent from every catalog routable, so this
+/// path must not wait on durable credential locks merely to compose an error.
+fn local_routing_catalog(
+    state: &AppState,
+) -> (
+    crate::model_catalog::ModelCatalogCache,
+    Vec<SubscriptionProvider>,
+) {
+    let catalog = crate::model_catalog::ModelCatalogCache::new();
+    let mut healthy = Vec::new();
+    for provider in SubscriptionProvider::ALL {
+        let accounts = state
+            .account_router
+            .as_ref()
+            .filter(|router| router.provider() == provider)
+            .map_or_else(
+                || {
+                    if state
+                        .subscription_readers
+                        .iter()
+                        .any(|reader| reader.provider() == provider)
+                    {
+                        vec![crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()]
+                    } else {
+                        Vec::new()
+                    }
+                },
+                |router| {
+                    router
+                        .subscription_readers()
+                        .into_iter()
+                        .map(|(account, _)| account)
+                        .collect::<Vec<_>>()
+                },
+            );
+        let mut provider_healthy = false;
+        for account in accounts {
+            let status = state.model_catalogs.status_for(provider, &account);
+            if status.discovered
+                && status.credential_healthy
+                && state.subscription_cache.evidence_for(provider, &account)
+                    != Some(crate::refresh::CredentialEvidence::Rejected)
+            {
+                provider_healthy = true;
+                catalog.record_success_for_account(
+                    provider,
+                    &account,
+                    status.account,
+                    status.models,
+                );
+            }
+        }
+        if provider_healthy {
+            healthy.push(provider);
+        }
+    }
+    (catalog, healthy)
+}
+
 async fn subscription_candidate(
     state: &AppState,
     provider: SubscriptionProvider,
@@ -357,6 +418,13 @@ pub async fn route_subscription_model(
         })
         .collect::<Vec<_>>();
     let has_catalog_candidate = !candidates.is_empty();
+    if !has_catalog_candidate {
+        let (catalog, healthy) = local_routing_catalog(state);
+        return match available_provider_for_model(model, &healthy, &catalog) {
+            Err(error) => Err(error),
+            Ok(_) => unreachable!("a model absent from the complete catalog appeared locally"),
+        };
+    }
     let relevant = super::provider_for_model(model, &state.model_catalogs)
         .map_or(candidates, |provider| vec![provider]);
     let validated = futures_util::future::join_all(
@@ -368,22 +436,10 @@ pub async fn route_subscription_model(
     .into_iter()
     .flatten()
     .collect::<Vec<_>>();
-    let healthy = if has_catalog_candidate {
-        validated
-            .iter()
-            .map(|subscription| subscription.provider)
-            .collect::<Vec<_>>()
-    } else {
-        // Preserve the existing wrong-id guidance without paying the lock and
-        // refresh cost for providers that cannot serve this request. This
-        // health view is local-only and still applies catalog ownership.
-        super::configured_provider_health_report(state)
-            .await
-            .into_iter()
-            .filter(|entry| entry.state == super::ProviderHealthState::Healthy)
-            .map(|entry| entry.provider)
-            .collect()
-    };
+    let healthy = validated
+        .iter()
+        .map(|subscription| subscription.provider)
+        .collect::<Vec<_>>();
     let provider = available_provider_for_model(model, &healthy, &state.model_catalogs)?;
     let subscription = validated
         .into_iter()

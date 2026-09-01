@@ -70,21 +70,37 @@ impl TokenCache {
         account: &str,
         now_ms: i64,
     ) -> Result<SubscriptionToken, String> {
+        self.get_fresh_registered_at(
+            client,
+            refresh_config(provider).token_url,
+            provider,
+            account,
+            now_ms,
+        )
+        .await
+    }
+
+    /// Testable token-endpoint variant of [`Self::get_fresh_registered`].
+    ///
+    /// The registered durable store remains authoritative; only the remote
+    /// endpoint is replaceable so diagnostics can exercise real transaction
+    /// failures without contacting a vendor.
+    pub(crate) async fn get_fresh_registered_at(
+        &self,
+        client: &reqwest::Client,
+        token_url: &str,
+        provider: SubscriptionProvider,
+        account: &str,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, String> {
         let disk_token = self
             .load_authoritative(provider, account)
             .await?
             .ok_or_else(|| {
                 format!("failed to load {provider} credentials from the registered store")
             })?;
-        self.get_fresh_for_at_checked(
-            client,
-            refresh_config(provider).token_url,
-            provider,
-            account,
-            disk_token,
-            now_ms,
-        )
-        .await
+        self.get_fresh_for_at_checked(client, token_url, provider, account, disk_token, now_ms)
+            .await
     }
 
     /// Refresh a baseline that was just returned by [`Self::load_authoritative`].
@@ -336,8 +352,8 @@ impl TokenCache {
                     self.record_refresh_refused(provider, account, &base);
                 } else {
                     tracing::warn!(
-                        "subscription token refresh for {provider} failed: {}",
-                        rejection.message
+                        "{}",
+                        refresh_recovery::refresh_failure_diagnostic(provider, &rejection.message)
                     );
                     // Everything else is retryable. In particular a 429 must
                     // not record rejection evidence: the credential is fine,
@@ -403,7 +419,7 @@ impl TokenCache {
             return Ok(Some(held));
         }
         let stored = self
-            .load_authoritative(provider, account)
+            .reload_registered_store_locked(provider, account)
             .await?
             .ok_or_else(|| {
                 format!("failed to load {provider} credentials from the registered store")
@@ -453,7 +469,7 @@ impl TokenCache {
     }
 
     /// Drop cached state derived from a credential that has been replaced.
-    fn forget(&self, key: &SubscriptionKey, provider: SubscriptionProvider) {
+    pub(super) fn forget(&self, key: &SubscriptionKey, provider: SubscriptionProvider) {
         if let Ok(mut guard) = self.inner.lock() {
             guard.remove(key);
         }
@@ -464,6 +480,23 @@ impl TokenCache {
             guard.remove(key);
         }
         self.rejections.clear(provider, &key.1);
+    }
+
+    /// Clear verdicts derived from a credential that an authoritative reload
+    /// proves has been replaced.
+    pub(super) async fn reconcile_authoritative_credential(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+        credential: &SubscriptionToken,
+    ) {
+        let key = (provider, account.to_string());
+        let attempt = self
+            .attempts
+            .for_subscription(provider, account, credential);
+        if attempt.lock().await.reset_if_changed(credential) {
+            self.forget(&key, provider);
+        }
     }
 
     /// Record that an upstream call succeeded with `provider`'s credential.

@@ -64,6 +64,54 @@ fn a_discovery_records_models_against_its_account() {
     assert_eq!(status.routable_models(), [ALPHA_SMALL]);
 }
 
+/// The account-scoped cache keeps the original provider-wide API useful for
+/// callers compiled against earlier patch releases. Only primary catalogs are
+/// included in that diagnostic view, while a legacy anonymous primary catalog
+/// remains valid fallback evidence for a named pool account.
+#[test]
+fn legacy_catalog_views_preserve_primary_and_anonymous_fallback_semantics() {
+    let catalogs = ModelCatalogCache::default();
+    catalogs.record_success_for_account(
+        SubscriptionProvider::Claude,
+        "primary",
+        None,
+        vec![ALPHA_SMALL.into(), ALPHA_SMALL.into()],
+    );
+    catalogs.record_success_for_account(
+        SubscriptionProvider::Claude,
+        "account-1",
+        Some("claude-account-1".into()),
+        vec![ALPHA_LARGE.into()],
+    );
+    catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        Some("codex-primary".into()),
+        vec![BETA_ONLY.into()],
+    );
+
+    let anonymous_fallback = catalogs.status_for(SubscriptionProvider::Claude, "account-2");
+    assert_eq!(anonymous_fallback.routable_models(), [ALPHA_SMALL]);
+    assert_eq!(anonymous_fallback.account, None);
+
+    let known_owner_does_not_fallback =
+        catalogs.status_for(SubscriptionProvider::Codex, "account-2");
+    assert!(!known_owner_does_not_fallback.discovered);
+    assert!(known_owner_does_not_fallback.models.is_empty());
+
+    let legacy = catalogs.statuses();
+    assert_eq!(legacy.len(), 2, "secondary accounts are not duplicated");
+    assert_eq!(legacy[0].0, SubscriptionProvider::Claude);
+    assert_eq!(legacy[0].1.routable_models(), [ALPHA_SMALL]);
+    assert_eq!(legacy[1].0, SubscriptionProvider::Codex);
+    assert_eq!(legacy[1].1.routable_models(), [BETA_ONLY]);
+
+    assert!(catalogs.provider_has_observation(SubscriptionProvider::Claude));
+    assert!(!catalogs.provider_has_observation(SubscriptionProvider::Qwen));
+    assert!(!catalogs.provider_is_degraded(SubscriptionProvider::Claude));
+    assert!(catalogs.provider_is_degraded(SubscriptionProvider::Qwen));
+}
+
 /// A persisted catalog stops being exposed the moment its credential fails,
 /// while remaining visible to administrators.
 #[test]
