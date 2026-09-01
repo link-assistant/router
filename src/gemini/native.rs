@@ -131,8 +131,17 @@ pub async fn forward_native_gemini(
     State(state): State<AppState>,
     Path(path): Path<String>,
     headers: HeaderMap,
-    axum::Json(body): axum::Json<Value>,
+    body: Result<axum::Json<Value>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(axum::Json(body)) => body,
+        Err(error) => {
+            return crate::api_error::malformed_json_response_for_dialect(
+                crate::api_error::ApiDialect::Gemini,
+                &error.to_string(),
+            );
+        }
+    };
     forward_native(&state, &headers, &path, body).await
 }
 
@@ -141,8 +150,17 @@ pub async fn forward_native_vertex(
     State(state): State<AppState>,
     Path(path): Path<String>,
     headers: HeaderMap,
-    axum::Json(body): axum::Json<Value>,
+    body: Result<axum::Json<Value>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    let body = match body {
+        Ok(axum::Json(body)) => body,
+        Err(error) => {
+            return crate::api_error::malformed_json_response_for_dialect(
+                crate::api_error::ApiDialect::Gemini,
+                &error.to_string(),
+            );
+        }
+    };
     forward_native(&state, &headers, &path, body).await
 }
 

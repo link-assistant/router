@@ -184,6 +184,16 @@ pub fn malformed_json_response_for_surface(
     )
 }
 
+pub fn malformed_json_response_for_dialect(dialect: ApiDialect, error: &str) -> Response {
+    let message = format!("Failed to parse request body as JSON: {error}");
+    PresentedError {
+        status: StatusCode::BAD_REQUEST,
+        error_type: "invalid_request_error",
+        message: &message,
+    }
+    .render(dialect)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -148,6 +148,10 @@ impl TestRouter {
                 "/api/gemini/v1beta/models/{model}",
                 get(gemini::native_model).post(gemini::forward_native_gemini),
             )
+            .route(
+                "/api/vertex/v1/{*path}",
+                axum::routing::post(gemini::forward_native_vertex),
+            )
             .with_state(state);
         let (url, router_task) = spawn(app).await;
 
@@ -590,4 +594,52 @@ async fn generate_content_reports_an_unavailable_model_in_the_gemini_error_shape
             .expect("error message")
             .contains("totally-made-up-xyz")
     );
+}
+
+/// Issue #377: JSON extraction failures must be rendered by the native API
+/// boundary, otherwise Axum's generic rejection bypasses Gemini's documented
+/// error envelope before either handler gets control.
+#[tokio::test]
+async fn malformed_json_uses_the_gemini_error_envelope_on_every_native_route() {
+    let router = TestRouter::start().await;
+
+    for path in [
+        "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+        "/api/gemini/v1beta/models/gpt-5.4-mini:streamGenerateContent",
+        "/api/vertex/v1/projects/p/locations/us/publishers/google/models/gpt-5.4-mini:generateContent",
+    ] {
+        let response = router
+            .client
+            .post(format!("{}{path}", router.url))
+            .bearer_auth(&router.token)
+            .header("content-type", "application/json")
+            .body(r#"{"contents":["#)
+            .send()
+            .await
+            .expect("router malformed JSON POST");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
+        assert_eq!(
+            response
+                .headers()
+                .get("content-type")
+                .and_then(|value| value.to_str().ok()),
+            Some("application/json"),
+            "{path}"
+        );
+        let body: Value = response.json().await.expect("Gemini error JSON");
+        assert_eq!(body["error"]["code"], 400, "{path}: {body}");
+        assert_eq!(
+            body["error"]["status"],
+            "INVALID_ARGUMENT",
+            "{path}: {body}"
+        );
+        assert!(
+            body["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message
+                    .starts_with("Failed to parse request body as JSON:")),
+            "{path}: {body}"
+        );
+    }
 }
