@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 use crate::model_catalog::ModelCatalogCache;
-use crate::subscription::{SubscriptionProvider, SubscriptionReader};
+use crate::subscription::{SubscriptionError, SubscriptionProvider, SubscriptionReader};
 
 /// Failure to resolve a request model in automatic provider mode.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -300,6 +300,17 @@ pub async fn healthy_providers(
         .collect()
 }
 
+/// The lifecycle state of a configured subscription credential.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProviderHealthState {
+    /// The credential is readable, but no live catalog has completed yet.
+    Starting,
+    /// Live discovery succeeded and the credential remains usable.
+    Healthy,
+    /// The credential cannot be read or current evidence says it cannot serve.
+    Degraded,
+}
+
 /// Whether a configured subscription can serve requests right now, and why not.
 ///
 /// One answer, computed once, for every surface that reports health: `/health`,
@@ -310,8 +321,8 @@ pub async fn healthy_providers(
 pub struct ProviderHealth {
     /// The subscription this describes.
     pub provider: SubscriptionProvider,
-    /// Whether it can serve a request now.
-    pub healthy: bool,
+    /// The explicit credential and discovery state.
+    pub state: ProviderHealthState,
     /// Operator-facing reason, when it cannot.
     ///
     /// May name a credential path or an upstream body, so it belongs in a log
@@ -321,13 +332,27 @@ pub struct ProviderHealth {
     pub summary: Option<&'static str>,
 }
 
+impl ProviderHealth {
+    /// Whether this provider requires operator attention.
+    #[must_use]
+    pub const fn is_degraded(&self) -> bool {
+        matches!(self.state, ProviderHealthState::Degraded)
+    }
+
+    /// Compatibility verdict for routing metrics: startup is non-paging.
+    #[must_use]
+    pub const fn is_serving(&self) -> bool {
+        !self.is_degraded()
+    }
+}
+
 /// Health for every subscription that is actually configured on this
 /// deployment.
 ///
-/// A provider with no credential reader is not reported at all: "claude was
-/// never configured here" and "claude died twelve hours ago" must not render
-/// identically, which is precisely the ambiguity that let a dead subscription
-/// hide behind an absence (issue #318).
+/// A provider whose reader finds no credential is not reported at all:
+/// "claude was never configured here" and "claude died twelve hours ago" must
+/// not render identically, which is precisely the ambiguity that let a dead
+/// subscription hide behind an absence (issue #318).
 #[must_use]
 pub fn configured_provider_health(
     readers: &[SubscriptionReader],
@@ -336,44 +361,60 @@ pub fn configured_provider_health(
 ) -> Vec<ProviderHealth> {
     SubscriptionProvider::ALL
         .into_iter()
-        .filter(|provider| readers.iter().any(|reader| reader.provider() == *provider))
-        .map(|provider| {
+        .filter_map(|provider| {
+            let reader = readers
+                .iter()
+                .find(|reader| reader.provider() == provider)?;
+            let read_error = match reader.read_token() {
+                Ok(_) => None,
+                Err(SubscriptionError::NoCredentials(_)) => return None,
+                Err(error) => Some(error.to_string()),
+            };
             let rejected = token_cache.evidence(provider)
                 == Some(crate::refresh::CredentialEvidence::Rejected);
             let status = catalogs.status(provider);
-            let reason =
-                if rejected {
+            let (state, reason, summary) = if let Some(error) = read_error {
+                (
+                    ProviderHealthState::Degraded,
+                    Some(error),
+                    Some("the configured credential could not be read"),
+                )
+            } else if rejected {
+                (
+                    ProviderHealthState::Degraded,
                     Some(token_cache.last_refresh_error(provider).unwrap_or_else(|| {
                         format!("the {provider} credential was rejected upstream")
-                    }))
-                } else if status.discovered && !status.credential_healthy {
-                    credential_state(provider, catalogs)
-                } else {
-                    // A provider that has not yet completed its first live
-                    // discovery is *starting*, not dead. Reporting it degraded
-                    // would fire a page on every cold start and on any transient
-                    // catalog-endpoint failure — an alert that cries wolf is the
-                    // same failure as one that never fires (issue #318).
-                    None
-                };
-            ProviderHealth {
+                    })),
+                    Some("the credential was rejected upstream and needs re-authentication"),
+                )
+            } else if status.discovered && !status.credential_healthy {
+                (
+                    ProviderHealthState::Degraded,
+                    credential_state(provider, catalogs),
+                    Some("the credential was rejected upstream and needs re-authentication"),
+                )
+            } else if status.discovered && status.credential_healthy {
+                (ProviderHealthState::Healthy, None, None)
+            } else {
+                // A provider that has not yet completed its first live
+                // discovery is *starting*, not dead. Reporting it degraded
+                // would fire a page on every cold start and on any transient
+                // catalog-endpoint failure — an alert that cries wolf is the
+                // same failure as one that never fires (issue #318).
+                (ProviderHealthState::Starting, None, None)
+            };
+            Some(ProviderHealth {
                 provider,
-                healthy: reason.is_none(),
+                state,
+                reason,
                 // A credential path, an account id or an endpoint body can all
                 // reach `reason` through `last_refresh_error`. That is right
                 // for an operator reading a log or an admin-gated listing, and
                 // wrong for an endpoint a monitor polls without a credential,
                 // so the public summary is derived rather than passed through
                 // (issues #318, and the disclosure rule #300 set).
-                summary: reason.as_ref().map(|_| {
-                    if rejected {
-                        "the credential was rejected upstream and needs re-authentication"
-                    } else {
-                        "no live catalog has been discovered for this subscription"
-                    }
-                }),
-                reason,
-            }
+                summary,
+            })
         })
         .collect()
 }
@@ -393,6 +434,7 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
         .collect::<Vec<_>>();
     let healthy_providers = providers
         .iter()
+        .filter(|provider| !catalogs.status(**provider).is_degraded())
         .map(|provider| provider.as_str())
         .collect::<Vec<_>>();
     let data = providers
@@ -423,46 +465,54 @@ pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalog
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.
 #[must_use]
 pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvider) -> Value {
-    let healthy = healthy_providers(
+    let routable = healthy_providers(
         &state.client,
         &state.subscription_readers,
         &state.subscription_cache,
         chrono::Utc::now().timestamp_millis(),
     )
     .await;
-    if healthy.contains(&provider) {
+    let health = configured_provider_health(
+        &state.subscription_readers,
+        &state.subscription_cache,
+        &state.model_catalogs,
+    )
+    .into_iter()
+    .filter(|entry| entry.provider == provider)
+    .collect::<Vec<_>>();
+    let mut catalog = if routable.contains(&provider)
+        && health
+            .first()
+            .is_some_and(|entry| entry.state == ProviderHealthState::Healthy)
+    {
         model_catalog(&[provider], &state.model_catalogs)
     } else {
         model_catalog(&[], &state.model_catalogs)
-    }
+    };
+    merge_configured_degradation(&health, &mut catalog);
+    catalog
 }
 
 /// Add every configured-but-unusable subscription to `degraded_providers`.
 ///
-/// Reported with a reason, so the list distinguishes "revoked, re-authenticate"
-/// from "has never discovered a catalog" without a container-log excavation
-/// (issue #318).
-fn merge_configured_degradation(state: &AppState, catalog: &mut Value) {
-    let unhealthy = configured_provider_health(
-        &state.subscription_readers,
-        &state.subscription_cache,
-        &state.model_catalogs,
-    );
+/// Reported with a fixed public reason, so a client can distinguish degradation
+/// without receiving a credential path or upstream response body (issue #318).
+fn merge_configured_degradation(health: &[ProviderHealth], catalog: &mut Value) {
     let mut degraded = catalog
         .get("degraded_providers")
         .and_then(Value::as_array)
         .cloned()
         .unwrap_or_default();
     let mut reasons = serde_json::Map::new();
-    for health in unhealthy.iter().filter(|health| !health.healthy) {
-        let name = Value::from(health.provider.as_str());
+    for entry in health.iter().filter(|entry| entry.is_degraded()) {
+        let name = Value::from(entry.provider.as_str());
         if !degraded.contains(&name) {
             degraded.push(name);
         }
         // The summary, not the reason: `/v1/models` answers any client token,
         // and a credential path is not a client's business.
-        if let Some(summary) = health.summary {
-            reasons.insert(health.provider.as_str().to_string(), Value::from(summary));
+        if let Some(summary) = entry.summary {
+            reasons.insert(entry.provider.as_str().to_string(), Value::from(summary));
         }
     }
     if let Some(object) = catalog.as_object_mut() {
@@ -479,22 +529,33 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
 
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => {
-            let mut catalog = model_catalog(
-                &healthy_providers(
-                    &state.client,
-                    &state.subscription_readers,
-                    &state.subscription_cache,
-                    chrono::Utc::now().timestamp_millis(),
-                )
-                .await,
+            let routable = healthy_providers(
+                &state.client,
+                &state.subscription_readers,
+                &state.subscription_cache,
+                chrono::Utc::now().timestamp_millis(),
+            )
+            .await;
+            let health = configured_provider_health(
+                &state.subscription_readers,
+                &state.subscription_cache,
                 &state.model_catalogs,
             );
+            let healthy = routable
+                .into_iter()
+                .filter(|provider| {
+                    health.iter().any(|entry| {
+                        entry.provider == *provider && entry.state == ProviderHealthState::Healthy
+                    })
+                })
+                .collect::<Vec<_>>();
+            let mut catalog = model_catalog(&healthy, &state.model_catalogs);
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
             // simply vanished from `data`. Absence is not an alert: a monitor
             // cannot tell it from a provider that was never configured here
             // (issue #318).
-            merge_configured_degradation(&state, &mut catalog);
+            merge_configured_degradation(&health, &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
             catalog
         }

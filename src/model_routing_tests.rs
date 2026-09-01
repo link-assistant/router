@@ -68,6 +68,7 @@ fn catalog_unions_only_live_discovered_models() {
     assert_eq!(empty["data"], json!([]));
     assert_eq!(empty["using_fallback"], false);
     assert_eq!(empty["degraded_providers"], json!(["claude", "codex"]));
+    assert_eq!(empty["healthy_providers"], json!([]));
 
     // Synthetic ids: no real vendor name appears anywhere in this test.
     catalogs.record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
@@ -142,15 +143,14 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let catalog: Value = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(catalog["healthy_providers"], json!(["codex"]));
-    // Codex has discovered nothing in this test, so it is reported as
-    // degraded and contributes no models -- there is no fallback to show.
-    //
-    // Claude is degraded too, and that is the point of issue #318: a revoked
+    // Codex has discovered nothing in this test, so it is starting and appears
+    // in neither verdict list. It contributes no models until discovery.
+    assert_eq!(catalog["healthy_providers"], json!([]));
+    // Claude is degraded, and that is the point of issue #318: a revoked
     // subscription used to vanish from `data` with `degraded_providers` left
     // empty, so a monitor could not tell it from a provider that was never
     // configured on this deployment. It is now named, with a reason.
-    assert_eq!(catalog["degraded_providers"], json!(["codex", "claude"]));
+    assert_eq!(catalog["degraded_providers"], json!(["claude"]));
     assert!(
         catalog["degraded_reasons"]["claude"]
             .as_str()

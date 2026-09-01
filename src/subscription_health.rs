@@ -16,9 +16,11 @@ use crate::app_state::AppState;
 /// learned about it from a client hours later via a message that named neither
 /// the subscription nor the credential (issue #318).
 ///
-/// Answers `503` when a *configured* subscription cannot serve, which is what
+/// Answers `503` when a *configured* subscription is degraded, which is what
 /// lets a stock uptime check fire without knowing anything about router
-/// internals. A deployment with no subscription configured answers `200`.
+/// internals. A readable credential still awaiting its first live catalog is
+/// listed as starting and answers `200`; a deployment with no credential also
+/// answers `200` with empty provider lists.
 #[allow(clippy::unused_async)]
 pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResponse {
     let providers = crate::model_routing::configured_provider_health(
@@ -28,7 +30,7 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
     );
     let degraded = providers
         .iter()
-        .filter(|health| !health.healthy)
+        .filter(|health| health.is_degraded())
         .map(|health| {
             serde_json::json!({
                 "provider": health.provider.as_str(),
@@ -38,7 +40,12 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         .collect::<Vec<_>>();
     let healthy = providers
         .iter()
-        .filter(|health| health.healthy)
+        .filter(|health| health.state == crate::model_routing::ProviderHealthState::Healthy)
+        .map(|health| health.provider.as_str())
+        .collect::<Vec<_>>();
+    let starting = providers
+        .iter()
+        .filter(|health| health.state == crate::model_routing::ProviderHealthState::Starting)
         .map(|health| health.provider.as_str())
         .collect::<Vec<_>>();
     let status = if degraded.is_empty() {
@@ -50,6 +57,7 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         status,
         axum::Json(serde_json::json!({
             "status": if degraded.is_empty() { "ok" } else { "degraded" },
+            "starting_providers": starting,
             "healthy_providers": healthy,
             "degraded_providers": degraded,
         })),

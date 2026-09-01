@@ -31,7 +31,7 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
     );
     let gauges = health
         .iter()
-        .map(|entry| (entry.provider.as_str(), entry.healthy))
+        .map(|entry| (entry.provider.as_str(), entry.is_serving()))
         .collect::<Vec<_>>();
     body.push_str(&crate::metrics::render_subscription_health(&gauges));
     (
