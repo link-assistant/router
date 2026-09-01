@@ -61,6 +61,3 @@ ui/node_modules/
 
 # Build-artifact sweep marker (scripts/sweep-build-artifacts.sh)
 sweep.timestamp
-
-# Local isolated feature worktrees
-.worktrees/
