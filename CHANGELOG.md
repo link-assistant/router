@@ -142,6 +142,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.125.2] - 2026-09-01
+
+### Fixed
+
+- Poll remote Codex device logins when the router also returns a verification URL.
+- Return malformed Gemini and Vertex JSON errors in the Gemini API envelope.
+- Remove unsupported `topP` sampling from Gemini requests routed to Codex.
+- Preserve Codex settings and sessions during ordinary `router with codex` runs.
+- Preserve Codex Responses Lite tool declarations for current Codex CLI clients.
+
 ## [0.125.1] - 2026-08-30
 
 ### Fixed
