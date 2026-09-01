@@ -192,7 +192,7 @@ async fn an_unreachable_router_is_an_error() {
 #[tokio::test]
 async fn a_device_flow_is_polled_until_the_router_authorizes_it() {
     let (origin, requests, handle) = serve(vec![
-        r#"{"login_id":"dev","provider":"codex","status":"awaiting_device","user_code":"ABCD-EFGH","session_expires_at":"2030-01-01T00:00:00Z"}"#,
+        r#"{"login_id":"dev","provider":"codex","status":"awaiting_device","url":"https://auth.openai.com/codex/device","user_code":"ABCD-EFGH","session_expires_at":"2030-01-01T00:00:00Z"}"#,
         r#"{"login_id":"dev","provider":"codex","status":"awaiting_device","session_expires_at":"2030-01-01T00:00:00Z"}"#,
         r#"{"login_id":"dev","provider":"codex","status":"authorized","session_expires_at":"2030-01-01T00:00:00Z"}"#,
     ])
@@ -209,6 +209,10 @@ async fn a_device_flow_is_polled_until_the_router_authorizes_it() {
         seen[1].starts_with("GET /api/login/dev"),
         "the device login was not polled: {}",
         seen[1]
+    );
+    assert!(
+        seen.iter().skip(1).all(|request| !request.contains("/code")),
+        "a device flow must never submit a pasted code: {seen:#?}"
     );
 }
 
