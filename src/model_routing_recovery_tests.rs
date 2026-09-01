@@ -25,13 +25,22 @@ fn credential_recovery_registers_stores_and_only_an_asked_for_vendor_client() {
     let readers = vec![SubscriptionReader::new(SubscriptionProvider::Claude, &home)];
 
     let without = auto_state(readers.clone(), dir.path());
-    without.register_credential_recovery(&crate::app_state::VendorClis::default());
+    without.register_credential_recovery(dir.path(), &crate::app_state::VendorClis::default());
     assert!(
         without
             .subscription_cache
             .store_for_subscription(SubscriptionProvider::Claude, "primary")
             .is_some(),
         "the serving path must know where the credential lives"
+    );
+    let lock = without
+        .subscription_cache
+        .store_for_subscription(SubscriptionProvider::Claude, "primary")
+        .and_then(|store| store.lock_path())
+        .expect("recoverable serving lock");
+    assert!(
+        lock.starts_with(dir.path().join("refresh-recovery")),
+        "{lock:?}"
     );
     assert!(
         without
@@ -43,10 +52,13 @@ fn credential_recovery_registers_stores_and_only_an_asked_for_vendor_client() {
 
     let claude_binary = dir.path().join("claude");
     let with = auto_state(readers, dir.path());
-    with.register_credential_recovery(&crate::app_state::VendorClis {
-        claude: Some(&claude_binary),
-        codex: None,
-    });
+    with.register_credential_recovery(
+        dir.path(),
+        &crate::app_state::VendorClis {
+            claude: Some(&claude_binary),
+            codex: None,
+        },
+    );
     let registered = with
         .subscription_cache
         .vendor_cli_for(SubscriptionProvider::Claude, "primary")
@@ -76,10 +88,13 @@ fn credential_recovery_registers_a_codex_client_independently() {
 
     let codex_binary = dir.path().join("codex");
     let state = auto_state(readers, dir.path());
-    state.register_credential_recovery(&crate::app_state::VendorClis {
-        claude: None,
-        codex: Some(&codex_binary),
-    });
+    state.register_credential_recovery(
+        dir.path(),
+        &crate::app_state::VendorClis {
+            claude: None,
+            codex: Some(&codex_binary),
+        },
+    );
 
     let registered = state
         .subscription_cache

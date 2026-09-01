@@ -7,6 +7,7 @@
 use std::sync::Arc;
 
 use super::{SubscriptionKey, TokenCache};
+use crate::credential_recovery_store::RecoverableCredentialStore;
 use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 use crate::vendor_cli_refresh::VendorCli;
@@ -31,13 +32,52 @@ impl TokenCache {
 
     /// Register a [`SubscriptionReader`] as the credential store for an account.
     pub fn register_reader(&self, account: &str, reader: &SubscriptionReader) {
-        self.register_store(reader.provider(), account, Arc::new(reader.clone()));
+        self.register_store_if_absent(reader.provider(), account, Arc::new(reader.clone()));
     }
 
     /// Register every reader under the same account name.
     pub fn register_readers(&self, account: &str, readers: &[SubscriptionReader]) {
         for reader in readers {
             self.register_reader(account, reader);
+        }
+    }
+
+    /// Register every reader with data-directory-backed durable recovery.
+    pub fn register_readers_in(
+        &self,
+        account: &str,
+        readers: &[SubscriptionReader],
+        data_dir: &std::path::Path,
+    ) {
+        for reader in readers {
+            let primary: Arc<dyn CredentialStore> = Arc::new(reader.clone());
+            let recoverable = Arc::new(RecoverableCredentialStore::new(
+                reader.provider(),
+                account,
+                primary,
+                data_dir,
+            ));
+            self.register_store_if_absent(reader.provider(), account, recoverable);
+        }
+    }
+
+    /// Construct a diagnostic cache with the same durable stores as serving.
+    #[must_use]
+    pub fn registered_for(readers: &[SubscriptionReader], data_dir: &std::path::Path) -> Self {
+        let cache = Self::new();
+        cache.register_readers_in("primary", readers, data_dir);
+        cache.persist_rejections_in(data_dir);
+        cache
+    }
+
+    fn register_store_if_absent(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+        store: Arc<dyn CredentialStore>,
+    ) {
+        if let Ok(mut guard) = self.stores.lock() {
+            guard.entry(key(provider, account)).or_insert(store);
         }
     }
 
@@ -77,4 +117,38 @@ impl TokenCache {
 
 fn key(provider: SubscriptionProvider, account: &str) -> SubscriptionKey {
     (provider, account.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn raw_catalog_registration_does_not_replace_recoverable_registration() {
+        let root = tempfile::tempdir().expect("temp root");
+        let credential_home = root.path().join("codex-home");
+        let data_dir = root.path().join("router-data");
+        std::fs::create_dir_all(&credential_home).expect("credential home");
+        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &credential_home);
+        let readers = vec![reader.clone()];
+
+        let cache = TokenCache::registered_for(&readers, &data_dir);
+        let recovery_lock = cache
+            .store_for_subscription(SubscriptionProvider::Codex, "primary")
+            .and_then(|store| store.lock_path())
+            .expect("recoverable store lock");
+
+        cache.register_reader("primary", &reader);
+
+        assert_eq!(
+            cache
+                .store_for_subscription(SubscriptionProvider::Codex, "primary")
+                .and_then(|store| store.lock_path()),
+            Some(recovery_lock.clone())
+        );
+        assert!(
+            recovery_lock.starts_with(data_dir.join("refresh-recovery")),
+            "the durable lock must live in router data, not the vendor home"
+        );
+    }
 }

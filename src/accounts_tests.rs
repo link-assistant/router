@@ -488,3 +488,33 @@ async fn one_revoked_account_does_not_condemn_the_pool() {
     );
     assert!(snapshot[1].healthy, "a healthy neighbour was condemned");
 }
+
+#[test]
+fn account_pool_registers_every_reader_with_data_dir_recovery() {
+    let root = tempdir("recoverable-pool");
+    let primary = root.join("primary");
+    let secondary = root.join("secondary");
+    let data_dir = root.join("router-data");
+    fs::create_dir_all(&primary).unwrap();
+    fs::create_dir_all(&secondary).unwrap();
+    let router = AccountRouter::new_for_provider(
+        primary,
+        &[secondary],
+        SubscriptionProvider::Codex,
+        AccountRouterOptions::default(),
+    );
+    let cache = crate::refresh::TokenCache::new();
+
+    router.register_credential_stores(&cache, &data_dir);
+
+    for account in ["primary", "account-1"] {
+        let lock = cache
+            .store_for_subscription(SubscriptionProvider::Codex, account)
+            .and_then(|store| store.lock_path())
+            .expect("pooled recoverable store lock");
+        assert!(
+            lock.starts_with(data_dir.join("refresh-recovery")),
+            "{lock:?}"
+        );
+    }
+}

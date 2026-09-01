@@ -509,6 +509,86 @@ async fn a_rotated_refresh_token_survives_a_process_restart() {
     );
 }
 
+/// The same constructor used by short-lived diagnostics must rotate the real
+/// vendor document, not merely its in-memory cache. Codex fields that the
+/// normalized token does not model must survive that merge, and a new process
+/// must pick up the replacement refresh link without another exchange.
+#[tokio::test]
+async fn diagnostic_registration_persists_codex_rotation_for_a_fresh_cache() {
+    let root = tempfile::tempdir().expect("temp root");
+    let home = root.path().join("codex-home");
+    let data_dir = root.path().join("router-data");
+    std::fs::create_dir_all(&home).expect("codex home");
+    std::fs::write(
+        home.join("auth.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "auth_mode": "chatgpt",
+            "expiry_date": NOW_MS - 1,
+            "tokens": {
+                "access_token": "access-1",
+                "refresh_token": "refresh-1",
+                "id_token": "vendor-id-token",
+                "account_id": "acct-synthetic"
+            },
+            "last_refresh": "vendor-owned",
+            "vendor_extension": {"opaque": true}
+        }))
+        .expect("serialize credential"),
+    )
+    .expect("seed credential");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &home);
+    let readers = vec![reader.clone()];
+    let (url, received, server) = scripted_endpoint(
+        vec![Answer::new(
+            200,
+            r#"{"access_token":"access-2","refresh_token":"refresh-2","expires_in":3600}"#,
+        )],
+        |_| {},
+    )
+    .await;
+
+    let before_restart = TokenCache::registered_for(&readers, &data_dir);
+    let fresh = before_restart
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            reader.read_token().expect("initial credential"),
+            NOW_MS,
+        )
+        .await;
+    assert_eq!(fresh.refresh_token.as_deref(), Some("refresh-2"));
+    drop(before_restart);
+    drain(server).await;
+
+    let raw = std::fs::read_to_string(home.join("auth.json")).expect("rotated credential");
+    let document: serde_json::Value = serde_json::from_str(&raw).expect("valid vendor JSON");
+    assert_eq!(document["tokens"]["refresh_token"], "refresh-2");
+    assert_eq!(document["tokens"]["id_token"], "vendor-id-token");
+    assert_eq!(document["auth_mode"], "chatgpt");
+    assert_eq!(document["vendor_extension"]["opaque"], true);
+
+    let restarted = TokenCache::registered_for(&readers, &data_dir);
+    let from_disk = reader.read_token().expect("replacement credential");
+    let reused = restarted
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Codex,
+            "primary",
+            from_disk,
+            NOW_MS + 1_000,
+        )
+        .await;
+    assert_eq!(reused.access_token, "access-2");
+    assert_eq!(
+        received.lock().unwrap().len(),
+        1,
+        "restart replayed a spent link"
+    );
+}
+
 /// Claude's token endpoint attests the client from the request itself, so the
 /// exchange has to look like the one the vendor client sends.
 #[tokio::test]

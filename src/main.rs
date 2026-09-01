@@ -382,10 +382,13 @@ async fn run_server(
         .map_err(std::io::Error::other)?,
     };
 
-    state.register_credential_recovery(&link_assistant_router::app_state::VendorClis {
-        claude: config.claude_cli_bin.as_deref(),
-        codex: config.codex_cli_bin.as_deref(),
-    });
+    state.register_credential_recovery(
+        &config.data_dir,
+        &link_assistant_router::app_state::VendorClis {
+            claude: config.claude_cli_bin.as_deref(),
+            codex: config.codex_cli_bin.as_deref(),
+        },
+    );
     // Persist terminal refusals so the CLI — a separate short-lived process
     // that performs no refresh — can report a revoked chain too (issue #245).
     state

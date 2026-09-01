@@ -180,9 +180,10 @@ pub async fn refresh_catalogs(
     // exchanged. Without a store it can only reason about the token it was
     // handed: it cannot notice that another holder rotated the chain forward,
     // and it cannot write its own rotation back (issue #239).
-    for reader in readers {
-        token_cache.register_reader("primary", reader);
-    }
+    // This is deliberately a raw, insert-if-absent fallback. Production has
+    // already installed data-directory-backed recoverable stores; a catalog
+    // tick must never replace those decorators with bare vendor readers.
+    token_cache.register_readers("primary", readers);
     let refreshes = readers
         .iter()
         .filter_map(|reader| {

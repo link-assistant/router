@@ -186,7 +186,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
         active_provider,
         &config.claude_code_home,
         &user_home,
-        Some(&config.data_dir),
+        &config.data_dir,
     )
     .await;
 

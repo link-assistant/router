@@ -221,6 +221,44 @@ fn without_a_selection_auth_stays_local() {
     );
 }
 
+#[test]
+fn status_exits_nonzero_and_never_prints_usable_when_refresh_storage_fails() {
+    let config = tempfile::tempdir().expect("config home");
+    let home = tempfile::tempdir().expect("temp home");
+    let codex = home.path().join(".codex");
+    std::fs::create_dir_all(&codex).expect("codex home");
+    std::fs::write(
+        codex.join("auth.json"),
+        r#"{"tokens":{"access_token":"expired-access","refresh_token":"refresh-link"},"expiry_date":1}"#,
+    )
+    .expect("seed codex credential");
+    let blocked_data_dir = home.path().join("not-a-directory");
+    std::fs::write(&blocked_data_dir, b"occupied").expect("block recovery directory");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["auth", "status", "--managed"])
+        .env("XDG_CONFIG_HOME", config.path())
+        .env("HOME", home.path())
+        .env("DATA_DIR", &blocked_data_dir)
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .output()
+        .expect("router CLI should run");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(
+        output.status.code(),
+        Some(1),
+        "stdout={stdout}\nstderr={stderr}"
+    );
+    assert!(!stdout.contains("codex    usable"), "{stdout}");
+    assert!(stderr.contains("codex refresh"), "{stderr}");
+    assert!(
+        !stderr.contains(blocked_data_dir.to_string_lossy().as_ref()),
+        "{stderr}"
+    );
+}
+
 /// `--local` and `--server` are mutually exclusive: the target must be one
 /// unambiguous thing, which is the entire point of naming it.
 #[test]

@@ -668,13 +668,21 @@ async fn status(config: &Config) -> ExitCode {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     let now = chrono::Utc::now().timestamp_millis();
     let client = reqwest::Client::new();
-    let token_cache = link_assistant_router::refresh::TokenCache::new();
+    let readers: Vec<_> = SubscriptionProvider::ALL
+        .into_iter()
+        .map(|provider| {
+            SubscriptionReader::new(
+                provider,
+                crate::auth_import::provider_home(config, provider, &user_home),
+            )
+        })
+        .collect();
+    let token_cache =
+        link_assistant_router::refresh::TokenCache::registered_for(&readers, &config.data_dir);
+    let mut refresh_failed = false;
 
-    for provider in SubscriptionProvider::ALL {
-        let reader = SubscriptionReader::new(
-            provider,
-            crate::auth_import::provider_home(config, provider, &user_home),
-        );
+    for reader in readers {
+        let provider = reader.provider();
         let value = match reader.read_token() {
             Ok(disk_token) => {
                 // Refresh first when the stored expiry says to, exactly as the
@@ -682,21 +690,29 @@ async fn status(config: &Config) -> ExitCode {
                 let token = token_cache
                     .get_fresh(&client, provider, disk_token, now)
                     .await;
-                match link_assistant_router::model_catalog::fetch_provider_catalog(
-                    &client, provider, &token, None,
-                )
-                .await
-                {
-                    Ok(_) => "usable",
-                    Err(error)
-                        if link_assistant_router::model_catalog::is_credential_rejection(
-                            &error,
-                        ) =>
+                if token_cache.last_refresh_error(provider).is_some() {
+                    eprintln!(
+                        "error: {provider} refresh failed; credential state was not reported usable"
+                    );
+                    refresh_failed = true;
+                    "refresh-failed"
+                } else {
+                    match link_assistant_router::model_catalog::fetch_provider_catalog(
+                        &client, provider, &token, None,
+                    )
+                    .await
                     {
-                        "rejected"
+                        Ok(_) => "usable",
+                        Err(error)
+                            if link_assistant_router::model_catalog::is_credential_rejection(
+                                &error,
+                            ) =>
+                        {
+                            "rejected"
+                        }
+                        // The credential may well be fine; the probe could not say.
+                        Err(_) => "unverified",
                     }
-                    // The credential may well be fine; the probe could not say.
-                    Err(_) => "unverified",
                 }
             }
             Err(_) => "absent",
@@ -707,7 +723,11 @@ async fn status(config: &Config) -> ExitCode {
             reader.home().display()
         );
     }
-    ExitCode::SUCCESS
+    if refresh_failed {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }
 
 #[cfg(test)]

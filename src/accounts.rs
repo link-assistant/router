@@ -292,9 +292,17 @@ impl AccountRouter {
     /// rotated refresh token would stay in memory and be lost at restart, and a
     /// rejection could not be checked against the newest credential on disk
     /// (issue #239).
-    pub fn register_credential_stores(&self, cache: &crate::refresh::TokenCache) {
+    pub fn register_credential_stores(
+        &self,
+        cache: &crate::refresh::TokenCache,
+        data_dir: &std::path::Path,
+    ) {
         for account in &self.inner.accounts {
-            cache.register_reader(&account.name, &account.reader);
+            cache.register_readers_in(
+                &account.name,
+                std::slice::from_ref(&account.reader),
+                data_dir,
+            );
         }
     }
 
