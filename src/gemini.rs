@@ -524,6 +524,17 @@ async fn forward(
     state
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
+    state
+        .subscription_cache
+        .record_status_for_credential(
+            crate::subscription::SubscriptionProvider::Gemini,
+            selected_account
+                .as_deref()
+                .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+            &sub_token,
+            status.as_u16(),
+        )
+        .await;
     let retry_after = retry_after_duration(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =

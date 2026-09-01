@@ -307,6 +307,15 @@ async fn forward_native(
     state
         .metrics
         .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
+    state
+        .subscription_cache
+        .record_status_for_credential(
+            crate::subscription::SubscriptionProvider::Gemini,
+            &routed.account,
+            &routed.token,
+            status.as_u16(),
+        )
+        .await;
     if status == StatusCode::TOO_MANY_REQUESTS
         && let Some(router) = state.account_router.as_ref()
     {

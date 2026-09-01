@@ -310,6 +310,9 @@ async fn forward_subscription_openai_inner(
         }
     };
     let selected_account = Some(selected.name);
+    // Evidence must name the credential that produced the final upstream
+    // response. A successful reactive retry replaces this below.
+    let mut evidence_token = sub_token.clone();
 
     // The Codex backend rejects every explicit output cap, so the field is
     // stripped below and enforced locally instead of refusing the request
@@ -412,7 +415,10 @@ async fn forward_subscription_openai_inner(
             .await
         {
             // Only one retry: a second 401 is surfaced rather than looped.
-            Ok(retried) => upstream_resp = retried,
+            Ok(retried) => {
+                upstream_resp = retried;
+                evidence_token = refreshed;
+            }
             Err(error) => {
                 tracing::warn!("{provider} retry after refresh failed: {error}");
             }
@@ -424,13 +430,17 @@ async fn forward_subscription_openai_inner(
     state
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
-    state.subscription_cache.record_status_for(
-        provider,
-        selected_account
-            .as_deref()
-            .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
-        status.as_u16(),
-    );
+    state
+        .subscription_cache
+        .record_status_for_credential(
+            provider,
+            selected_account
+                .as_deref()
+                .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+            &evidence_token,
+            status.as_u16(),
+        )
+        .await;
     let retry_after = retry_after_duration(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =

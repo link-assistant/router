@@ -6,6 +6,13 @@ use axum::http::HeaderMap;
 
 use crate::accounts::RoutingContext;
 
+/// Private carrier retaining the full selected credential for later evidence.
+pub struct ResolvedUpstreamCredential {
+    pub access_token: String,
+    pub account: Option<String>,
+    pub evidence_token: Option<crate::subscription::SubscriptionToken>,
+}
+
 /// Copy only stable routing signals from a request. Header signals take
 /// precedence over JSON metadata and the caller token's account binding is
 /// carried separately as a strict pin.
@@ -65,15 +72,31 @@ pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
 ///
 /// The response status is the only authority on whether a credential still
 /// works; see [`crate::refresh::CredentialEvidence`].
-pub fn record_claude_evidence(
+pub async fn record_claude_evidence(
     state: &crate::app_state::AppState,
     account: Option<&str>,
+    credential: Option<&crate::subscription::SubscriptionToken>,
     status: u16,
 ) {
     let cache = &state.subscription_cache;
-    cache.record_status_for(
-        crate::subscription::SubscriptionProvider::Claude,
-        account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
-        status,
-    );
+    let account = account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT);
+    if let Some(credential) = credential {
+        cache
+            .record_status_for_credential(
+                crate::subscription::SubscriptionProvider::Claude,
+                account,
+                credential,
+                status,
+            )
+            .await;
+    } else {
+        // Preserve the legacy unregistered OAuth provider exactly. It returns
+        // only a bearer string, so there is no authoritative generation to
+        // compare and no registered store that could reconcile a replacement.
+        cache.record_status_for(
+            crate::subscription::SubscriptionProvider::Claude,
+            account,
+            status,
+        );
+    }
 }

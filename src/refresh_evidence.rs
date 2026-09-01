@@ -99,6 +99,31 @@ impl TokenCache {
         }
     }
 
+    /// Record an inference verdict only while it still describes the current
+    /// credential generation for this stable router account.
+    ///
+    /// Selection and the upstream call happen before this method. The only
+    /// guard acquired here is the per-account refresh-attempt mutex, after the
+    /// network response exists; no durable credential/store lock or network
+    /// operation overlaps it. Reconciliation uses the same mutex, so either an
+    /// old response commits first and replacement clears it, or replacement
+    /// wins first and the stale response is ignored atomically.
+    pub(crate) async fn record_status_for_credential(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+        credential: &SubscriptionToken,
+        status: u16,
+    ) {
+        let attempt = self
+            .attempts
+            .for_subscription(provider, account, credential);
+        let attempt = attempt.lock().await;
+        if attempt.matches_current(provider, credential) {
+            self.record_status_for(provider, account, status);
+        }
+    }
+
     /// Record that an upstream rejected `provider`'s credential (401/403).
     /// Announce that a provider became unusable, whichever path discovered it.
     ///

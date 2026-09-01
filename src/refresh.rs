@@ -577,3 +577,7 @@ pub(crate) mod test_support;
 #[cfg(test)]
 #[path = "refresh_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "refresh_inference_evidence_tests.rs"]
+mod inference_evidence_tests;

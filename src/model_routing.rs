@@ -990,3 +990,7 @@ mod pool_tests;
 #[cfg(test)]
 #[path = "model_routing_recovery_tests.rs"]
 mod recovery_tests;
+
+#[cfg(test)]
+#[path = "model_routing_evidence_tests.rs"]
+mod evidence_tests;
