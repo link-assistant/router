@@ -107,6 +107,66 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(!rendered.contains(&router.token));
 }
 
+/// Issue #380: Codex 0.151 moved its tool declaration into an
+/// `additional_tools` developer input item and marks that wire protocol with a
+/// dedicated header. The item and marker must cross the router together.
+#[tokio::test]
+async fn codex_responses_lite_preserves_additional_tools_and_protocol_marker() {
+    let codex = TestRouter::start(UpstreamProvider::Codex).await;
+    let response = codex
+        .post(
+            "/v1/responses",
+            &json!({
+                "model": "gpt-5.6-sol",
+                "instructions": "",
+                "input": [
+                    {
+                        "type": "additional_tools",
+                        "id": "1",
+                        "role": "developer",
+                        "tools": [{
+                            "name": "shell",
+                            "description": "Runs a shell command",
+                            "input_schema": {"type": "object"}
+                        }]
+                    },
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [{"type": "input_text", "text": "Use the shell tool"}]
+                    }
+                ],
+                "stream": true,
+                "store": false
+            }),
+        )
+        .header("x-openai-internal-codex-responses-lite", "true")
+        .send()
+        .await
+        .expect("Codex Responses Lite request");
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let requests = codex.requests.lock().expect("stub requests");
+    assert_eq!(requests.len(), 1);
+    assert_eq!(
+        requests[0]["input"][0]["type"], "additional_tools",
+        "the Responses Lite tool declaration was discarded: {:#}",
+        requests[0]
+    );
+    assert_eq!(requests[0]["input"][0]["tools"][0]["name"], "shell");
+    assert_eq!(requests[0]["instructions"], "");
+    drop(requests);
+
+    let headers = codex.upstream_headers.lock().expect("stub headers");
+    assert_eq!(headers.len(), 1);
+    assert_eq!(
+        headers[0]
+            .get("x-openai-internal-codex-responses-lite")
+            .and_then(|value| value.to_str().ok()),
+        Some("true")
+    );
+}
+
 #[tokio::test]
 async fn unavailable_server_tool_fails_explicitly_without_reaching_codex() {
     let router = TestRouter::start(UpstreamProvider::Codex).await;

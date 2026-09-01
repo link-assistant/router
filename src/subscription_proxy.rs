@@ -26,6 +26,27 @@ use crate::proxy::{
 };
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
+const CODEX_RESPONSES_LITE_HEADER: &str = "x-openai-internal-codex-responses-lite";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CodexResponsesMode {
+    Standard,
+    Lite,
+}
+
+fn codex_responses_mode(provider: SubscriptionProvider, headers: &HeaderMap) -> CodexResponsesMode {
+    let enabled = provider == SubscriptionProvider::Codex
+        && headers
+            .get(CODEX_RESPONSES_LITE_HEADER)
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.trim().eq_ignore_ascii_case("true"));
+    if enabled {
+        CodexResponsesMode::Lite
+    } else {
+        CodexResponsesMode::Standard
+    }
+}
+
 /// Forward one `OpenAI`-shaped request to the active subscription upstream.
 ///
 /// `path` is the router's own route (e.g. `/v1/chat/completions` or
@@ -115,6 +136,7 @@ async fn forward_subscription_openai_inner(
             "active upstream is not a subscription provider",
         );
     };
+    let responses_mode = codex_responses_mode(provider, headers);
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
         Err(error) => {
@@ -195,7 +217,7 @@ async fn forward_subscription_openai_inner(
 
     // The ChatGPT Codex backend is stricter than the generic Responses API, so
     // reshape the body before forwarding (see `normalize_codex_responses_body`).
-    normalize_subscription_request(provider, &mut body);
+    normalize_subscription_request(provider, &mut body, responses_mode);
 
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
@@ -222,7 +244,7 @@ async fn forward_subscription_openai_inner(
             .header("content-type", "application/json")
             .header("authorization", format!("Bearer {}", token.access_token))
             .body(serialized.clone());
-        for (name, value) in subscription_headers(provider, token) {
+        for (name, value) in subscription_headers(provider, token, responses_mode) {
             request = request.header(name, value);
         }
         request
@@ -607,6 +629,7 @@ fn update_codex_output_text(
 fn subscription_headers(
     provider: SubscriptionProvider,
     token: &SubscriptionToken,
+    responses_mode: CodexResponsesMode,
 ) -> Vec<(&'static str, String)> {
     let mut out = Vec::new();
     if provider == SubscriptionProvider::Codex {
@@ -617,6 +640,9 @@ fn subscription_headers(
         // identifies the originating client.
         out.push(("openai-beta", "responses=experimental".to_string()));
         out.push(("originator", "codex_cli_rs".to_string()));
+        if responses_mode == CodexResponsesMode::Lite {
+            out.push((CODEX_RESPONSES_LITE_HEADER, "true".to_string()));
+        }
         // Codex gates newer models (e.g. gpt-5.6-luna) behind a recent client version
         // advertised via the `version` header; without it the backend replies "Model not
         // found". Mirror the Codex CLI. Overridable via CODEX_CLIENT_VERSION.
@@ -683,20 +709,27 @@ fn input_item_text(item: &serde_json::Value) -> Option<String> {
 }
 
 /// Apply provider capability rules, then any provider-specific body shaping.
-fn normalize_subscription_request(provider: SubscriptionProvider, body: &mut serde_json::Value) {
+fn normalize_subscription_request(
+    provider: SubscriptionProvider,
+    body: &mut serde_json::Value,
+    responses_mode: CodexResponsesMode,
+) {
     crate::openai::reconcile_subscription_parameters(provider, body);
     if provider == SubscriptionProvider::Codex {
-        normalize_codex_responses_body(body);
+        normalize_codex_responses_body(body, responses_mode);
     }
 }
 
 /// Shape a Responses-API request body for the `ChatGPT` Codex backend.
 ///
 /// The Codex backend is stricter than the generic `OpenAI` Responses API: it
-/// always streams, rejects `max_output_tokens` and system/developer input
-/// messages, and requires non-empty top-level `instructions`. System turns are
-/// hoisted into `instructions`; a default is used only if nothing remains.
-fn normalize_codex_responses_body(body: &mut serde_json::Value) {
+/// always streams and rejects `max_output_tokens`. Standard Responses requests
+/// also reject system/developer input messages and require non-empty top-level
+/// `instructions`, so those turns are hoisted and a default is used when
+/// nothing remains. Responses Lite deliberately keeps its protocol envelope:
+/// Codex places `additional_tools` in a developer input item and keeps
+/// `instructions` empty.
+fn normalize_codex_responses_body(body: &mut serde_json::Value, mode: CodexResponsesMode) {
     let Some(obj) = body.as_object_mut() else {
         return;
     };
@@ -709,6 +742,9 @@ fn normalize_codex_responses_body(body: &mut serde_json::Value) {
     obj.insert("store".to_string(), serde_json::Value::Bool(false));
     // `max_output_tokens` is not accepted by the Codex backend.
     obj.remove("max_output_tokens");
+    if mode == CodexResponsesMode::Lite {
+        return;
+    }
     // The backend rejects a bare-string `input` ("Input must be a list"), so
     // normalise both documented forms to the typed list shape.
     if let Some(input) = obj.get("input") {

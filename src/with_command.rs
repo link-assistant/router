@@ -422,10 +422,8 @@ impl TemporaryClient {
                     append_codex_router_overrides(&mut command, base_url)?;
                 }
             }
-            ClientKind::GrokCli
-            | ClientKind::Opencode
-            | ClientKind::Agent
-            | ClientKind::Cursor => {}
+            ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent | ClientKind::Cursor => {
+            }
         }
         Ok(Self { directory, command })
     }

@@ -228,7 +228,10 @@ async fn stub_vendor(
         .await
         .expect("read stub request");
     let body = serde_json::from_slice::<Value>(&body).unwrap_or(Value::Null);
-    forwarded.lock().expect("capture vendor request").push(body.clone());
+    forwarded
+        .lock()
+        .expect("capture vendor request")
+        .push(body.clone());
 
     let anthropic = path.contains("/v1/messages");
     let (payload, content_type) = if anthropic {
@@ -665,8 +668,7 @@ async fn malformed_json_uses_the_gemini_error_envelope_on_every_native_route() {
         let body: Value = response.json().await.expect("Gemini error JSON");
         assert_eq!(body["error"]["code"], 400, "{path}: {body}");
         assert_eq!(
-            body["error"]["status"],
-            "INVALID_ARGUMENT",
+            body["error"]["status"], "INVALID_ARGUMENT",
             "{path}: {body}"
         );
         assert!(

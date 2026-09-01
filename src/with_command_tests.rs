@@ -203,7 +203,13 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         "isolation must prevent an inherited CODEX_HOME from escaping"
     );
     assert!(isolated.command.get_args().next().is_none());
-    assert!(isolated.directory.path().join(".codex/config.toml").is_file());
+    assert!(
+        isolated
+            .directory
+            .path()
+            .join(".codex/config.toml")
+            .is_file()
+    );
 }
 
 /// A client configured through a file is isolated even though extending is

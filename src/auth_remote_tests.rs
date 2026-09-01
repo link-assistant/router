@@ -211,7 +211,9 @@ async fn a_device_flow_is_polled_until_the_router_authorizes_it() {
         seen[1]
     );
     assert!(
-        seen.iter().skip(1).all(|request| !request.contains("/code")),
+        seen.iter()
+            .skip(1)
+            .all(|request| !request.contains("/code")),
         "a device flow must never submit a pasted code: {seen:#?}"
     );
 }
