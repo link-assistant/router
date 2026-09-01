@@ -240,6 +240,16 @@ async fn malformed_and_unreadable_credentials_are_safely_degraded() {
         );
     }
 
+    let metrics = metrics_report(state.clone()).await;
+    for provider in ["codex", "gemini", "qwen"] {
+        assert!(
+            metrics.contains(&format!(
+                "link_assistant_subscription_healthy{{provider=\"{provider}\"}} 0"
+            )),
+            "configured unusable {provider} must emit gauge 0: {metrics}"
+        );
+    }
+
     let catalog = model_report(state).await;
     assert_eq!(
         catalog["degraded_providers"],
@@ -305,6 +315,175 @@ async fn cold_start_moves_to_healthy_after_live_discovery() {
     assert_eq!(healthy_models["healthy_providers"], json!(["codex"]));
     assert_eq!(healthy_models["degraded_providers"], json!([]));
     assert_eq!(healthy_models["data"][0]["id"], "gpt-live");
+}
+
+/// A provider-wide catalog cannot be reused after the credential changes to a
+/// different known account. Until that account completes discovery it is a
+/// fresh startup, and the previous account's models must remain private.
+#[tokio::test]
+async fn credential_rotation_requires_discovery_for_the_current_account() {
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let credential_path = codex.path().join("auth.json");
+    fs::write(
+        &credential_path,
+        r#"{"tokens":{"access_token":"codex-a","account_id":"account-a"}}"#,
+    )
+    .unwrap();
+    let state = auto_state(
+        vec![SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            codex.path(),
+        )],
+        data.path(),
+    );
+    state.model_catalogs.record_success(
+        SubscriptionProvider::Codex,
+        vec!["unknown-account-model".into()],
+    );
+    let (status, unknown_catalog_account) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        unknown_catalog_account["starting_providers"],
+        json!(["codex"])
+    );
+    assert_eq!(model_report(state.clone()).await["data"], json!([]));
+
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["account-a-model".into()],
+    );
+
+    let (status, account_a) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(account_a["healthy_providers"], json!(["codex"]));
+    assert_eq!(
+        model_report(state.clone()).await["data"][0]["id"],
+        "account-a-model"
+    );
+    assert!(
+        metrics_report(state.clone())
+            .await
+            .contains("link_assistant_subscription_healthy{provider=\"codex\"} 1")
+    );
+
+    fs::write(
+        &credential_path,
+        r#"{"tokens":{"access_token":"codex-b","account_id":"account-b"}}"#,
+    )
+    .unwrap();
+
+    let (status, account_b_starting) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(account_b_starting["starting_providers"], json!(["codex"]));
+    assert_eq!(account_b_starting["healthy_providers"], json!([]));
+    assert_eq!(account_b_starting["degraded_providers"], json!([]));
+    let stale_catalog = model_report(state.clone()).await;
+    assert_eq!(stale_catalog["data"], json!([]));
+    assert_eq!(stale_catalog["healthy_providers"], json!([]));
+    assert_eq!(stale_catalog["degraded_providers"], json!([]));
+    assert!(
+        metrics_report(state.clone())
+            .await
+            .contains("link_assistant_subscription_healthy{provider=\"codex\"} 1"),
+        "a rotated account awaiting discovery remains non-paging"
+    );
+
+    state
+        .subscription_cache
+        .record_credential_rejected(SubscriptionProvider::Codex);
+    let (status, account_b_rejected) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(account_b_rejected["starting_providers"], json!([]));
+    assert_eq!(account_b_rejected["healthy_providers"], json!([]));
+    assert_eq!(
+        account_b_rejected["degraded_providers"][0]["provider"],
+        "codex"
+    );
+    assert_eq!(model_report(state.clone()).await["data"], json!([]));
+    assert!(
+        metrics_report(state.clone())
+            .await
+            .contains("link_assistant_subscription_healthy{provider=\"codex\"} 0")
+    );
+
+    state
+        .subscription_cache
+        .record_credential_working(SubscriptionProvider::Codex);
+
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-b".into()),
+        vec!["account-b-model".into()],
+    );
+    let (status, account_b) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(account_b["starting_providers"], json!([]));
+    assert_eq!(account_b["healthy_providers"], json!(["codex"]));
+    let current_catalog = model_report(state).await;
+    assert_eq!(current_catalog["data"].as_array().unwrap().len(), 1);
+    assert_eq!(current_catalog["data"][0]["id"], "account-b-model");
+}
+
+#[tokio::test]
+async fn post_success_transient_failure_retains_models_but_rejection_removes_them() {
+    let data = tempdir().unwrap();
+    let claude = tempdir().unwrap();
+    fs::write(
+        claude.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"claude-live"}}"#,
+    )
+    .unwrap();
+    let state = auto_state(
+        vec![SubscriptionReader::new(
+            SubscriptionProvider::Claude,
+            claude.path(),
+        )],
+        data.path(),
+    );
+    state
+        .model_catalogs
+        .record_success(SubscriptionProvider::Claude, vec!["retained-model".into()]);
+
+    state.model_catalogs.record_failure(
+        SubscriptionProvider::Claude,
+        "temporary vendor outage",
+        false,
+    );
+    let (status, transient) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(transient["healthy_providers"], json!(["claude"]));
+    assert_eq!(transient["starting_providers"], json!([]));
+    assert_eq!(transient["degraded_providers"], json!([]));
+    let retained = model_report(state.clone()).await;
+    assert_eq!(retained["data"][0]["id"], "retained-model");
+    assert!(
+        metrics_report(state.clone())
+            .await
+            .contains("link_assistant_subscription_healthy{provider=\"claude\"} 1")
+    );
+
+    state
+        .model_catalogs
+        .record_failure(SubscriptionProvider::Claude, "HTTP 401: rejected", true);
+    state
+        .subscription_cache
+        .record_credential_rejected(SubscriptionProvider::Claude);
+    let (status, rejected) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(rejected["healthy_providers"], json!([]));
+    assert_eq!(rejected["starting_providers"], json!([]));
+    assert_eq!(rejected["degraded_providers"][0]["provider"], "claude");
+    let removed = model_report(state.clone()).await;
+    assert_eq!(removed["data"], json!([]));
+    assert_eq!(removed["healthy_providers"], json!([]));
+    assert_eq!(removed["degraded_providers"], json!(["claude"]));
+    assert!(
+        metrics_report(state)
+            .await
+            .contains("link_assistant_subscription_healthy{provider=\"claude\"} 0")
+    );
 }
 
 /// The core of issue #318: a revoked subscription must be visible to a stock

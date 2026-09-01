@@ -365,15 +365,27 @@ pub fn configured_provider_health(
             let reader = readers
                 .iter()
                 .find(|reader| reader.provider() == provider)?;
-            let read_error = match reader.read_token() {
-                Ok(_) => None,
+            let credential = match reader.read_token() {
+                Ok(token) => Ok(token),
                 Err(SubscriptionError::NoCredentials(_)) => return None,
-                Err(error) => Some(error.to_string()),
+                Err(error) => Err(error.to_string()),
             };
             let rejected = token_cache.evidence(provider)
                 == Some(crate::refresh::CredentialEvidence::Rejected);
             let status = catalogs.status(provider);
-            let (state, reason, summary) = if let Some(error) = read_error {
+            let account_matches = credential.as_ref().is_ok_and(|token| {
+                match (token.account_id.as_deref(), status.account.as_deref()) {
+                    (Some(current), Some(discovered)) => current == discovered,
+                    // Some providers expose no stable account id. When both
+                    // sides are anonymous, the discovery is the best evidence
+                    // available and remains compatible. A one-sided identity
+                    // is not enough to prove the catalog belongs to the
+                    // current credential, so discovery must run again.
+                    (None, None) => true,
+                    _ => false,
+                }
+            });
+            let (state, reason, summary) = if let Err(error) = credential {
                 (
                     ProviderHealthState::Degraded,
                     Some(error),
@@ -387,6 +399,12 @@ pub fn configured_provider_health(
                     })),
                     Some("the credential was rejected upstream and needs re-authentication"),
                 )
+            } else if !account_matches {
+                // Provider-wide catalog evidence belongs to the credential
+                // account that produced it. A newly readable known account is
+                // starting until its own live discovery completes; retaining
+                // the previous account's models would cross that boundary.
+                (ProviderHealthState::Starting, None, None)
             } else if status.discovered && !status.credential_healthy {
                 (
                     ProviderHealthState::Degraded,
