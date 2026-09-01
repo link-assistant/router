@@ -151,6 +151,108 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
     stub_task.abort();
 }
 
+/// A validated request owns one credential decision for its entire lifetime.
+/// If account A reaches the upstream and is rejected, a later file rotation to
+/// account B must not turn the generic reactive-refresh retry into a second
+/// request for A's already-selected model.
+#[tokio::test]
+async fn validated_401_never_retries_with_a_post_dispatch_rotation() {
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let credential_path = codex.path().join("auth.json");
+    fs::write(
+        &credential_path,
+        r#"{"tokens":{"access_token":"codex-a","refresh_token":"refresh-a","account_id":"account-a"}}"#,
+    )
+    .unwrap();
+
+    let reached_upstream = Arc::new(Barrier::new(2));
+    let may_answer = Arc::new(Barrier::new(2));
+    let authorizations = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let reached_for_stub = Arc::clone(&reached_upstream);
+    let answer_for_stub = Arc::clone(&may_answer);
+    let authorizations_for_stub = Arc::clone(&authorizations);
+    let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+        let reached = Arc::clone(&reached_for_stub);
+        let may_answer = Arc::clone(&answer_for_stub);
+        let authorizations = Arc::clone(&authorizations_for_stub);
+        async move {
+            let authorization = headers
+                .get("authorization")
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or_default()
+                .to_string();
+            authorizations.lock().unwrap().push(authorization.clone());
+            if authorization == "Bearer codex-a" {
+                reached.wait().await;
+                may_answer.wait().await;
+                (StatusCode::UNAUTHORIZED, "rejected account A")
+            } else {
+                (StatusCode::OK, "{}")
+            }
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let stub_url = format!("http://{}", listener.local_addr().unwrap());
+    let stub_task = tokio::spawn(async move {
+        axum::serve(listener, stub).await.unwrap();
+    });
+
+    let mut state = auto_state(
+        vec![SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            codex.path(),
+        )],
+        data.path(),
+    );
+    state.subscription_base_url = Some(stub_url);
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["account-a-model".into()],
+    );
+    let client_token = state.token_manager.issue_token(1, "401 race").unwrap();
+    let body = json!({"model": "account-a-model", "input": "hello"});
+    let routed = route_state_with_subscription(&state, &body)
+        .await
+        .expect("account A owns the selected catalog");
+    let request_body = body.clone();
+    let request = tokio::spawn(async move {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "authorization",
+            HeaderValue::from_str(&format!("Bearer {client_token}")).unwrap(),
+        );
+        crate::subscription_proxy::forward_subscription_openai_routed(
+            &routed.state,
+            &headers,
+            request_body.clone(),
+            &request_body,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+            routed.subscription.as_ref(),
+        )
+        .await
+    });
+
+    reached_upstream.wait().await;
+    fs::write(
+        &credential_path,
+        r#"{"tokens":{"access_token":"codex-b","refresh_token":"refresh-b","account_id":"account-b"}}"#,
+    )
+    .unwrap();
+    may_answer.wait().await;
+
+    let response = request.await.unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        authorizations.lock().unwrap().as_slice(),
+        ["Bearer codex-a"],
+        "a validated request must return A's rejection without sending B"
+    );
+    stub_task.abort();
+}
+
 /// Recovery-aware reload may reconcile a sidecar into the primary credential,
 /// so both catalog validation and dispatch revalidation are write-capable
 /// operations and must hold the store's own transaction lock.

@@ -360,11 +360,16 @@ async fn forward_subscription_openai_inner(
             );
         }
     };
+    // A validated automatic route owns one account/catalog decision for the
+    // whole request. Its 401 is returned unchanged: the ordinary recovery
+    // ladder could adopt a different account that appeared after validation.
+    // A non-validated pinned route keeps the established reactive refresh.
     // A `401` is the vendor disproving the token's own `exp` claim: it may have
     // invalidated the access token early, and the stored expiry is no evidence
     // to the contrary. Refresh and replay the request exactly once, so a
     // recoverable credential is not reported as dead (issue #205).
-    if upstream_resp.status() == reqwest::StatusCode::UNAUTHORIZED
+    if validated.is_none()
+        && upstream_resp.status() == reqwest::StatusCode::UNAUTHORIZED
         && let Some(account) = selected_account.as_deref()
         && let Some(refreshed) = state
             .subscription_cache
