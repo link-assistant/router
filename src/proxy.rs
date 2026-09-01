@@ -320,6 +320,14 @@ pub(crate) fn authenticate_client(
 /// - Vertex rawPredict: paths ending in `:rawPredict`, `:streamRawPredict`
 /// - Legacy: `/api/latest/anthropic/*`
 pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Response {
+    proxy_handler_with_subscription(state, req, None).await
+}
+
+async fn proxy_handler_with_subscription(
+    state: AppState,
+    req: Request,
+    subscription: Option<crate::model_routing::ValidatedSubscription>,
+) -> Response {
     let path = req.uri().path().to_string();
     let method = req.method().clone();
     let incoming_headers = req.headers().clone();
@@ -328,11 +336,17 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             return *response;
         }
         let (routed, request) =
-            match crate::model_routing::route_anthropic_request(&state, req).await {
+            match crate::model_routing::route_anthropic_request_with_subscription(&state, req).await
+            {
                 Ok(routed) => routed,
                 Err(response) => return response,
             };
-        return Box::pin(proxy_handler(State(routed), request)).await;
+        return Box::pin(proxy_handler_with_subscription(
+            routed.state,
+            request,
+            routed.subscription,
+        ))
+        .await;
     }
     state.logger.verbose(|| format!("Incoming {method} {path}"));
     // Resolve the upstream path based on which API format the request matches
@@ -385,11 +399,12 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
             Ok(body) => body,
             Err(error) => return malformed_json_response(&error.to_string()),
         };
-        return crate::anthropic_bridge::handle_anthropic_surface(
+        return crate::anthropic_bridge::handle_anthropic_surface_routed(
             &state,
             &incoming_headers,
             &path,
             body,
+            subscription.as_ref(),
         )
         .await;
     }
@@ -463,7 +478,7 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
 
     // Get the real OAuth token (multi-account aware).
     let (oauth_token, selected_account) =
-        match resolve_upstream_credentials(&state, &routing_context).await {
+        match resolve_upstream_credentials(&state, &routing_context, subscription.as_ref()).await {
             Ok(pair) => pair,
             Err(e) => {
                 tracing::error!("Failed to resolve upstream credentials: {e}");
@@ -638,7 +653,18 @@ pub async fn proxy_handler(State(state): State<AppState>, req: Request) -> Respo
 async fn resolve_upstream_credentials(
     state: &AppState,
     context: &RoutingContext,
+    validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Send + Sync>> {
+    if let Some(validated) = validated {
+        if validated.provider != SubscriptionProvider::Claude {
+            return Err("validated subscription does not match the Anthropic provider".into());
+        }
+        let selected = validated
+            .for_dispatch()
+            .await
+            .map_err(std::io::Error::other)?;
+        return Ok((selected.token.access_token, Some(selected.name)));
+    }
     if let Some(router) = state.account_router.as_ref() {
         let sel = router.select_subscription(context)?;
         let now_ms = chrono::Utc::now().timestamp_millis();
@@ -666,8 +692,9 @@ async fn resolve_upstream_credentials(
 /// Translates to Anthropic Messages, forwards via the same OAuth-substituting
 /// pipeline used by [`proxy_handler`], and converts the response back.
 #[path = "proxy_openai.rs"]
-mod openai_handlers;
+pub(crate) mod openai_handlers;
 
+pub(crate) use openai_handlers::openai_chat_completions_routed;
 pub use openai_handlers::{openai_chat_completions, openai_responses};
 
 #[derive(Clone, Copy)]
@@ -683,6 +710,7 @@ async fn forward_openai(
     routing_body: &serde_json::Value,
     surface: crate::metrics::Surface,
     stream_options: (bool, OpenAIShape, bool),
+    validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
     let (stream_requested, shape, include_usage) = stream_options;
     let served_model = body["model"].as_str().unwrap_or_default().to_string();
@@ -727,7 +755,7 @@ async fn forward_openai(
 
     // Resolve OAuth credentials.
     let (oauth_token, selected_account) =
-        match resolve_upstream_credentials(state, &routing_context).await {
+        match resolve_upstream_credentials(state, &routing_context, validated).await {
             Ok(p) => p,
             Err(e) => {
                 tracing::error!("openai: upstream credentials unavailable: {e}");

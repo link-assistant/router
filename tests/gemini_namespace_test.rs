@@ -49,6 +49,14 @@ impl TestRouter {
     }
 
     async fn start_with(claude_connected: bool) -> Self {
+        Self::start_configured(claude_connected, UpstreamProvider::Auto, Some("acct_stub")).await
+    }
+
+    async fn start_configured(
+        claude_connected: bool,
+        upstream_provider: UpstreamProvider,
+        codex_catalog_account: Option<&str>,
+    ) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
         let forwarded = Arc::new(Mutex::new(Vec::new()));
         let stub = Router::new()
@@ -81,11 +89,13 @@ impl TestRouter {
         }
 
         let catalogs = Arc::new(ModelCatalogCache::new());
-        catalogs.record_success_for(
-            SubscriptionProvider::Codex,
-            Some("acct_stub".to_string()),
-            CODEX_MODELS.iter().map(ToString::to_string).collect(),
-        );
+        if let Some(account) = codex_catalog_account {
+            catalogs.record_success_for(
+                SubscriptionProvider::Codex,
+                Some(account.to_string()),
+                CODEX_MODELS.iter().map(ToString::to_string).collect(),
+            );
+        }
         catalogs.record_success(
             SubscriptionProvider::Claude,
             CLAUDE_MODELS.iter().map(ToString::to_string).collect(),
@@ -93,21 +103,26 @@ impl TestRouter {
         catalogs.record_success(SubscriptionProvider::Gemini, Vec::new());
         catalogs.record_success(SubscriptionProvider::Qwen, Vec::new());
 
+        let subscription_readers = vec![
+            SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home),
+            SubscriptionReader::new(SubscriptionProvider::Claude, &claude_home),
+        ];
+        let subscription_reader = link_assistant_router::subscription::active_subscription_reader(
+            upstream_provider,
+            &subscription_readers,
+        );
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
             oauth_provider,
             account_router: None,
-            subscription_reader: None,
+            subscription_reader,
             subscription_base_url: Some(stub_url.clone()),
-            subscription_readers: vec![
-                SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home),
-                SubscriptionReader::new(SubscriptionProvider::Claude, &claude_home),
-            ],
+            subscription_readers,
             model_catalogs: Arc::clone(&catalogs),
             subscription_cache: Arc::new(TokenCache::new()),
             upstream_base_url: stub_url,
-            upstream_provider: UpstreamProvider::Auto,
+            upstream_provider,
             gonka: None,
             bridge_model: None,
             bridge_model_policy:
@@ -448,6 +463,56 @@ async fn gemini_and_openai_omit_a_catalog_owned_by_another_account() {
             .expect("forwarded requests")
             .is_empty(),
         "an account-mismatched catalog must be rejected before any upstream request"
+    );
+}
+
+#[tokio::test]
+async fn pinned_native_inference_rejects_a_catalog_owned_by_another_account() {
+    let router =
+        TestRouter::start_configured(true, UpstreamProvider::Codex, Some("acct_previous")).await;
+
+    let (status, body) = router
+        .post_native(
+            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
+        )
+        .await;
+
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "a pinned provider cannot bypass catalog ownership: {body}"
+    );
+    assert!(
+        router
+            .forwarded
+            .lock()
+            .expect("forwarded requests")
+            .is_empty(),
+        "a pinned account mismatch must be refused before any upstream request"
+    );
+}
+
+#[tokio::test]
+async fn pinned_native_inference_keeps_cold_start_passthrough_without_an_owner_conflict() {
+    let router = TestRouter::start_configured(true, UpstreamProvider::Codex, None).await;
+
+    let (status, body) = router
+        .post_native(
+            "/api/gemini/v1beta/models/gpt-cold-start:generateContent",
+            &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
+        )
+        .await;
+
+    assert_eq!(
+        status,
+        StatusCode::OK,
+        "a pinned cold start has no conflicting owner evidence: {body}"
+    );
+    assert_eq!(
+        router.forwarded.lock().expect("forwarded requests").len(),
+        1,
+        "pinned cold-start inference must retain its established passthrough"
     );
 }
 

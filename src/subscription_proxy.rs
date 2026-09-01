@@ -64,9 +64,38 @@ pub async fn forward_subscription_openai(
         headers,
         body,
         routing_body,
-        path,
-        surface,
-        SubscriptionResponseShape::Passthrough,
+        ForwardOptions {
+            path,
+            surface,
+            response_shape: SubscriptionResponseShape::Passthrough,
+            validated: None,
+        },
+    )
+    .await
+}
+
+/// Internal automatic-routing entry point carrying the credential snapshot
+/// whose account was validated against the selected catalog.
+pub(crate) async fn forward_subscription_openai_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    path: &str,
+    surface: Surface,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        ForwardOptions {
+            path,
+            surface,
+            response_shape: SubscriptionResponseShape::Passthrough,
+            validated: subscription,
+        },
     )
     .await
 }
@@ -85,9 +114,35 @@ pub async fn forward_codex_chat_completions(
         headers,
         body,
         routing_body,
-        "/v1/responses",
-        surface,
-        SubscriptionResponseShape::ChatCompletion,
+        ForwardOptions {
+            path: "/v1/responses",
+            surface,
+            response_shape: SubscriptionResponseShape::ChatCompletion,
+            validated: None,
+        },
+    )
+    .await
+}
+
+pub(crate) async fn forward_codex_chat_completions_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    surface: Surface,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        ForwardOptions {
+            path: "/v1/responses",
+            surface,
+            response_shape: SubscriptionResponseShape::ChatCompletion,
+            validated: subscription,
+        },
     )
     .await
 }
@@ -98,15 +153,26 @@ enum SubscriptionResponseShape {
     ChatCompletion,
 }
 
+struct ForwardOptions<'a> {
+    path: &'a str,
+    surface: Surface,
+    response_shape: SubscriptionResponseShape,
+    validated: Option<&'a crate::model_routing::ValidatedSubscription>,
+}
+
 async fn forward_subscription_openai_inner(
     state: &AppState,
     headers: &HeaderMap,
     mut body: serde_json::Value,
     routing_body: &serde_json::Value,
-    path: &str,
-    surface: Surface,
-    response_shape: SubscriptionResponseShape,
+    options: ForwardOptions<'_>,
 ) -> Response {
+    let ForwardOptions {
+        path,
+        surface,
+        response_shape,
+        validated,
+    } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
     }
@@ -148,7 +214,25 @@ async fn forward_subscription_openai_inner(
         }
     };
     let routing_context = request_routing_context(headers, routing_body, pinned_account);
-    let selected = if let Some(router) = state.account_router.as_ref() {
+    let selected = if let Some(validated) = validated {
+        if validated.provider != provider {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                "validated subscription does not match the routed provider",
+            );
+        }
+        match validated.for_dispatch().await {
+            Ok(selected) => selected,
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "authentication_error",
+                    &error,
+                );
+            }
+        }
+    } else if let Some(router) = state.account_router.as_ref() {
         match router.select_subscription(&routing_context) {
             Ok(selected) => selected,
             Err(error) => {
@@ -182,20 +266,25 @@ async fn forward_subscription_openai_inner(
             token: disk_token,
         }
     };
-    // Refresh if the on-disk token has expired. A rotated refresh token is
-    // written back to the credential file before the new access token is used
-    // (issue #239); a read-only mount degrades to an in-memory refresh.
-    let now_ms = chrono::Utc::now().timestamp_millis();
-    let sub_token = state
-        .subscription_cache
-        .get_fresh_for(
-            &state.client,
-            provider,
-            &selected.name,
-            selected.token,
-            now_ms,
-        )
-        .await;
+    // Automatic model routing already refreshed and validated this exact
+    // token. Refreshing again here could adopt a credential that appeared
+    // after catalog validation, recreating the account-crossing race.
+    let sub_token = if validated.is_some() {
+        selected.token
+    } else {
+        // Pinned routing performs its ordinary serving-path refresh here.
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        state
+            .subscription_cache
+            .get_fresh_for(
+                &state.client,
+                provider,
+                &selected.name,
+                selected.token,
+                now_ms,
+            )
+            .await
+    };
     let selected_account = Some(selected.name);
 
     // The Codex backend rejects every explicit output cap, so the field is

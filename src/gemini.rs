@@ -190,7 +190,32 @@ pub async fn forward_chat_completions(
     headers: &HeaderMap,
     body: Value,
 ) -> Response {
-    forward(state, headers, body, Surface::OpenAIChat, ShapeIn::Chat).await
+    forward(
+        state,
+        headers,
+        body,
+        Surface::OpenAIChat,
+        ShapeIn::Chat,
+        None,
+    )
+    .await
+}
+
+pub(crate) async fn forward_chat_completions_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: Value,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward(
+        state,
+        headers,
+        body,
+        Surface::OpenAIChat,
+        ShapeIn::Chat,
+        subscription,
+    )
+    .await
 }
 
 /// `POST /v1/chat/completions` with an explicit metrics surface.
@@ -203,7 +228,17 @@ pub async fn forward_chat_completions_as(
     body: Value,
     surface: Surface,
 ) -> Response {
-    forward(state, headers, body, surface, ShapeIn::Chat).await
+    forward(state, headers, body, surface, ShapeIn::Chat, None).await
+}
+
+pub(crate) async fn forward_chat_completions_as_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: Value,
+    surface: Surface,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward(state, headers, body, surface, ShapeIn::Chat, subscription).await
 }
 
 /// `POST /v1/responses` for the Gemini subscription upstream.
@@ -214,6 +249,24 @@ pub async fn forward_responses(state: &AppState, headers: &HeaderMap, body: Valu
         body,
         Surface::OpenAIResponses,
         ShapeIn::Responses,
+        None,
+    )
+    .await
+}
+
+pub(crate) async fn forward_responses_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: Value,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) -> Response {
+    forward(
+        state,
+        headers,
+        body,
+        Surface::OpenAIResponses,
+        ShapeIn::Responses,
+        subscription,
     )
     .await
 }
@@ -238,6 +291,7 @@ async fn route_gemini_token(
     body: &Value,
     surface: Surface,
     path: &str,
+    validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Result<RoutedGeminiToken, Response> {
     let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
     let reserved = crate::token_reservation::estimate(body).total();
@@ -262,7 +316,22 @@ async fn route_gemini_token(
             )
         })?;
     let routing_context = request_routing_context(headers, body, pinned_account);
-    let selected = if let Some(router) = state.account_router.as_ref() {
+    let selected = if let Some(validated) = validated {
+        if validated.provider != crate::subscription::SubscriptionProvider::Gemini {
+            return Err(error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                "validated subscription does not match the Gemini provider",
+            ));
+        }
+        validated.for_dispatch().await.map_err(|error| {
+            error_response(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "authentication_error",
+                &error,
+            )
+        })?
+    } else if let Some(router) = state.account_router.as_ref() {
         router
             .select_subscription(&routing_context)
             .map_err(|error| {
@@ -292,17 +361,21 @@ async fn route_gemini_token(
             token,
         }
     };
-    let now_ms = chrono::Utc::now().timestamp_millis();
-    let token = state
-        .subscription_cache
-        .get_fresh_for(
-            &state.client,
-            crate::subscription::SubscriptionProvider::Gemini,
-            &selected.name,
-            selected.token,
-            now_ms,
-        )
-        .await;
+    let token = if validated.is_some() {
+        selected.token
+    } else {
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        state
+            .subscription_cache
+            .get_fresh_for(
+                &state.client,
+                crate::subscription::SubscriptionProvider::Gemini,
+                &selected.name,
+                selected.token,
+                now_ms,
+            )
+            .await
+    };
     Ok(RoutedGeminiToken {
         token,
         account: selected.name,
@@ -316,15 +389,24 @@ async fn forward(
     body: Value,
     surface: Surface,
     shape: ShapeIn,
+    validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
     if let Some(resp) = maybe_mpp_challenge(state, headers, "/v1/chat/completions") {
         return resp;
     }
-    let routed =
-        match route_gemini_token(state, headers, &body, surface, "/v1/chat/completions").await {
-            Ok(routed) => routed,
-            Err(response) => return response,
-        };
+    let routed = match route_gemini_token(
+        state,
+        headers,
+        &body,
+        surface,
+        "/v1/chat/completions",
+        validated,
+    )
+    .await
+    {
+        Ok(routed) => routed,
+        Err(response) => return response,
+    };
     let sub_token = routed.token;
     let selected_account = Some(routed.account);
     // The reservation carries the token id; usage settles through it.

@@ -183,9 +183,11 @@ fn native_error(status: StatusCode, message: &str) -> Response {
 async fn native_owner(
     state: &AppState,
     model: &str,
-) -> Result<crate::subscription::SubscriptionProvider, Response> {
-    if state.upstream_provider != crate::config::UpstreamProvider::Auto {
-        return state
+) -> Result<crate::model_routing::RoutedState, Response> {
+    let routed = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
+        crate::model_routing::route_subscription_model(state, model).await
+    } else {
+        let provider = state
             .upstream_provider
             .subscription_provider()
             .ok_or_else(|| {
@@ -196,17 +198,16 @@ async fn native_owner(
                         state.upstream_provider.as_str()
                     ),
                 )
-            });
-    }
-    let healthy = advertised_providers(state).await;
-    crate::model_routing::available_provider_for_model(model, &healthy, &state.model_catalogs)
-        .map_err(|error| {
-            let status = match error {
-                crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
-                _ => StatusCode::BAD_REQUEST,
-            };
-            native_error(status, &error.to_string())
-        })
+            })?;
+        crate::model_routing::route_pinned_subscription(state, provider).await
+    };
+    routed.map_err(|error| {
+        let status = match error {
+            crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
+            _ => StatusCode::BAD_REQUEST,
+        };
+        native_error(status, &error.to_string())
+    })
 }
 
 async fn forward_native(
@@ -221,31 +222,32 @@ async fn forward_native(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let owner = match native_owner(state, &model).await {
-        Ok(owner) => owner,
+    let routed = match native_owner(state, &model).await {
+        Ok(routed) => routed,
         Err(response) => return response,
     };
+    let owner = routed
+        .state
+        .upstream_provider
+        .subscription_provider()
+        .expect("native routing always selects a subscription provider");
     if owner != crate::subscription::SubscriptionProvider::Gemini {
         // Codex, Claude and Qwen have no `generateContent` surface, so the
         // request crosses through the shared OpenAI Chat Completions path and
         // the response is translated back into Gemini's native shape.
-        return forward_native_via_chat(state, headers, &model, streaming, &body).await;
+        return forward_native_via_chat(routed, headers, &model, streaming, &body).await;
     }
-    let routed_state = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
-        match crate::model_routing::route_provider(
-            state,
-            crate::subscription::SubscriptionProvider::Gemini,
-        )
-        .await
-        {
-            Ok(state) => Some(state),
-            Err(error) => return native_error(StatusCode::BAD_REQUEST, &error),
-        }
-    } else {
-        None
-    };
-    let state = routed_state.as_ref().unwrap_or(state);
-    let routed = match route_gemini_token(state, headers, &body, Surface::OpenAIChat, path).await {
+    let state = &routed.state;
+    let routed = match route_gemini_token(
+        state,
+        headers,
+        &body,
+        Surface::OpenAIChat,
+        path,
+        routed.subscription.as_ref(),
+    )
+    .await
+    {
         Ok(routed) => routed,
         Err(response) => return response,
     };
@@ -369,18 +371,19 @@ async fn forward_native(
 /// place. The completion is then translated back into a
 /// `GenerateContentResponse`.
 async fn forward_native_via_chat(
-    state: &AppState,
+    routed: crate::model_routing::RoutedState,
     headers: &HeaderMap,
     model: &str,
     streaming: bool,
     body: &Value,
 ) -> Response {
     let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
-    let response = crate::proxy::openai_chat_completions(
-        State(state.clone()),
-        axum::extract::Query(std::collections::BTreeMap::new()),
+    let state = routed.state;
+    let response = crate::proxy::openai_chat_completions_routed(
+        state.clone(),
         headers.clone(),
-        Ok(axum::Json(chat_request)),
+        chat_request,
+        routed.subscription,
     )
     .await;
 

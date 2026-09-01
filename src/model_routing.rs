@@ -22,6 +22,12 @@ pub enum ModelRouteError {
     Ambiguous(String),
 }
 
+#[path = "model_routing_snapshot.rs"]
+pub(crate) mod snapshot;
+pub(crate) use snapshot::{
+    RoutedState, ValidatedSubscription, route_pinned_subscription, route_subscription_model,
+};
+
 impl std::fmt::Display for ModelRouteError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -616,6 +622,15 @@ pub async fn route_anthropic_request(
     state: &AppState,
     request: Request,
 ) -> Result<(AppState, Request), Response> {
+    route_anthropic_request_with_subscription(state, request)
+        .await
+        .map(|(routed, request)| (routed.state, request))
+}
+
+pub(crate) async fn route_anthropic_request_with_subscription(
+    state: &AppState,
+    request: Request,
+) -> Result<(RoutedState, Request), Response> {
     let path = request.uri().path().to_string();
     let (parts, body) = request.into_parts();
     let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
@@ -638,17 +653,17 @@ pub async fn route_anthropic_request(
         )
     })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        route_state(state, &routing_body)
+        route_state_with_subscription(state, &routing_body)
             .await
             .map_err(|error| model_route_error_response(&error))?
     } else {
-        route_provider(state, SubscriptionProvider::Claude)
+        route_pinned_subscription(state, SubscriptionProvider::Claude)
             .await
             .map_err(|error| {
                 crate::proxy::error_response(
                     StatusCode::BAD_REQUEST,
                     "invalid_request_error",
-                    &error,
+                    &error.to_string(),
                 )
             })?
     };
@@ -800,9 +815,15 @@ pub fn bare_model_id(model: &str) -> &str {
     model.split_once('/').map_or(model, |(_, bare)| bare)
 }
 
-pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
+pub(crate) async fn route_state_with_subscription(
+    state: &AppState,
+    body: &Value,
+) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
-        return Ok(state.clone());
+        return Ok(RoutedState {
+            state: state.clone(),
+            subscription: None,
+        });
     }
     let model = body
         .get("model")
@@ -812,39 +833,19 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
     // Stored providers are consulted first: a declared model is an explicit
     // operator statement, while a subscription catalog is discovered.
     if let Some(stored) = stored_provider_for_model(state, model)? {
-        return Ok(route_stored_provider(state, &stored, model));
+        return Ok(RoutedState {
+            state: route_stored_provider(state, &stored, model),
+            subscription: None,
+        });
     }
-    let routable = healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
-    let health = configured_provider_health(
-        &state.subscription_readers,
-        &state.subscription_cache,
-        &state.model_catalogs,
-    );
-    let healthy = providers_with_healthy_catalogs(routable, &health);
-    let provider = available_provider_for_model(model, &healthy, &state.model_catalogs)?;
-    let mut routed = route_provider(state, provider).await.map_err(|_| {
-        // The same sentence as the sibling refusal 480 lines up, which appends
-        // the cause. One with a reason and one without, depending on which of
-        // two adjacent branches failed, is exactly the asymmetry #239 fixed.
-        let cause = credential_state(provider, &state.model_catalogs)
-            .unwrap_or_else(|| format!("no usable {provider} credential is available"));
-        ModelRouteError::NotFound(format!(
-            "model '{model}' has no healthy {provider} credential: {cause}"
-        ))
-    })?;
-    if provider != SubscriptionProvider::Claude {
-        // The Anthropic bridge normally substitutes its provider default
-        // because pinned clients name Claude models. Auto mode selected this
-        // provider from the requested model itself, so preserve that exact id.
-        routed.bridge_model = Some(model.to_string());
-    }
-    Ok(routed)
+    route_subscription_model(state, model).await
+}
+
+/// Compatibility wrapper returning only the routed state.
+pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, ModelRouteError> {
+    route_state_with_subscription(state, body)
+        .await
+        .map(|routed| routed.state)
 }
 
 #[cfg(test)]
@@ -854,6 +855,10 @@ mod tests;
 #[cfg(test)]
 #[path = "model_routing_health_tests.rs"]
 mod health_tests;
+
+#[cfg(test)]
+#[path = "model_routing_snapshot_tests.rs"]
+mod snapshot_tests;
 
 #[cfg(test)]
 #[path = "model_routing_recovery_tests.rs"]
