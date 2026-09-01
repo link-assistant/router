@@ -6,6 +6,12 @@ use super::super::{RefreshError, terminal_message};
 use super::*;
 use crate::credential_recovery_store::RecoverableCredentialStore;
 
+// `tracing` rebuilds callsite interest globally when a thread-local dispatcher
+// is installed or removed. Two capture tests changing dispatchers in parallel
+// can therefore temporarily disable one another's callsites even though their
+// writers are thread-local. Keep the small capture windows serialized.
+static LOG_CAPTURE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 #[derive(Debug)]
 struct ControlledStore {
     credential: Option<SubscriptionToken>,
@@ -165,11 +171,10 @@ async fn a_failed_post_lock_reload_fails_closed_before_the_token_endpoint() {
     .await;
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "current_thread")]
 async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
-    use tracing::instrument::WithSubscriber as _;
-
     const SENTINEL: &str = "raw-account-sentinel@example.invalid";
+    let _capture = LOG_CAPTURE_LOCK.lock().await;
     let directory = tempfile::tempdir().expect("credential parent");
     let home = directory.path().join(SENTINEL);
     let reader = SubscriptionReader::new(SubscriptionProvider::Claude, &home);
@@ -189,6 +194,8 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
     );
     let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
     let logs = CapturedLogs::default();
+    let subscriber = logs.subscriber();
+    let subscriber_guard = tracing::dispatcher::set_default(&subscriber);
 
     let returned = cache
         .get_fresh_for_at(
@@ -199,8 +206,8 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
             original.clone(),
             NOW_MS,
         )
-        .with_subscriber(logs.subscriber())
         .await;
+    drop(subscriber_guard);
 
     assert_eq!(returned, original);
     assert!(received.lock().unwrap().is_empty());
@@ -218,11 +225,10 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
     server.abort();
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "current_thread")]
 async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
-    use tracing::instrument::WithSubscriber as _;
-
     const SENTINEL: &str = "raw-account-sentinel@example.invalid";
+    let _capture = LOG_CAPTURE_LOCK.lock().await;
     let directory = tempfile::tempdir().expect("lock directory");
     let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
     let store = Arc::new(ControlledStore {
@@ -239,6 +245,8 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
         store.clone() as Arc<dyn CredentialStore>,
     );
     let logs = CapturedLogs::default();
+    let subscriber = logs.subscriber();
+    let subscriber_guard = tracing::dispatcher::set_default(&subscriber);
 
     let returned = cache
         .get_fresh_for_at(
@@ -249,8 +257,8 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
             original.clone(),
             NOW_MS,
         )
-        .with_subscriber(logs.subscriber())
         .await;
+    drop(subscriber_guard);
     drain(server).await;
 
     let reported = cache

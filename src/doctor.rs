@@ -343,6 +343,73 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn an_authoritative_unexpired_credential_is_probed_and_reported_healthy() {
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "current-access",
+                "refresh_token": "current-refresh",
+                "expiry_date": 9_999_999_999_999_i64,
+                "resource_url": resource_url
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+
+        let failed = subscription_catalog_diagnostics_in(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            &root.path().join("router-data"),
+        )
+        .await;
+        server.await.expect("catalog server task");
+
+        assert!(!failed, "a successful authoritative catalog probe failed");
+        assert_eq!(catalog_requests.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn the_legacy_optional_data_directory_path_still_probes_credentials() {
+        use std::sync::atomic::Ordering;
+
+        let root = tempfile::tempdir().expect("temp root");
+        let user_home = root.path().join("user");
+        let qwen_home = user_home.join(".qwen");
+        std::fs::create_dir_all(&qwen_home).expect("qwen home");
+        let (resource_url, catalog_requests, server) = one_successful_qwen_catalog().await;
+        std::fs::write(
+            qwen_home.join("oauth_creds.json"),
+            serde_json::to_vec(&serde_json::json!({
+                "access_token": "legacy-access",
+                "expiry_date": 9_999_999_999_999_i64,
+                "resource_url": resource_url
+            }))
+            .expect("serialize credential"),
+        )
+        .expect("seed qwen credential");
+
+        let failed = subscription_catalog_diagnostics(
+            SubscriptionProvider::Qwen,
+            root.path().join("claude").to_str().expect("claude home"),
+            user_home.to_str().expect("user home"),
+            None,
+        )
+        .await;
+        server.await.expect("catalog server task");
+
+        assert!(!failed, "the compatibility wrapper failed a live probe");
+        assert_eq!(catalog_requests.load(Ordering::SeqCst), 1);
+    }
+
     /// Both in-process modes are always available, and the report names the
     /// scopes each would request before a login is attempted (issue #193).
     #[test]
