@@ -143,6 +143,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.125.3] - 2026-09-01
+
+### Fixed
+
+- Persist OAuth rotations triggered by diagnostic commands.
+- Fail closed when OAuth refresh locking or durable persistence is unavailable.
+- Omit absent subscription providers and distinguish startup in health reports.
+- Add locked conditional credential import that never replaces an existing login.
+
 ## [0.125.2] - 2026-09-01
 
 ### Fixed
