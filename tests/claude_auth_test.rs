@@ -105,22 +105,17 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
     );
 }
 
-/// Native OAuth exchanges before locking, then contends on the exact primary
-/// refresh lock only for installation.
+/// Native OAuth exchanges before opening the exact primary refresh lock.
 #[tokio::test]
-async fn native_claude_install_contends_on_the_primary_refresh_lock() {
-    let exchange_completed = Arc::new(tokio::sync::Notify::new());
-    let exchange_signal = Arc::clone(&exchange_completed);
+async fn native_claude_install_uses_the_exact_primary_refresh_lock() {
     let exchange_requests = Arc::new(AtomicUsize::new(0));
     let request_counter = Arc::clone(&exchange_requests);
     let app = Router::new().route(
         "/token",
         post(move || {
-            let exchange_signal = Arc::clone(&exchange_signal);
             let request_counter = Arc::clone(&request_counter);
             async move {
                 request_counter.fetch_add(1, Ordering::SeqCst);
-                exchange_signal.notify_one();
                 Json(json!({
                     "access_token": "native-access",
                     "refresh_token": "native-refresh",
@@ -148,28 +143,18 @@ async fn native_claude_install_contends_on_the_primary_refresh_lock() {
         link_assistant_router::subscription::SubscriptionProvider::Claude,
         link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
     );
-    let holder = link_assistant_router::durable_file::lock_exclusive_async(
-        &lock_path,
-        Duration::from_secs(1),
-    )
-    .await
-    .unwrap();
+    std::fs::create_dir_all(&lock_path).expect("make the exact lock path unopenable as a file");
 
-    let data_path = data.path().to_path_buf();
-    let completion =
-        tokio::spawn(async move { login.complete_with_data_dir("copied-code", data_path).await });
-    exchange_completed.notified().await;
-    tokio::task::yield_now().await;
+    let error = login
+        .complete_with_data_dir("copied-code", data.path())
+        .await
+        .expect_err("native installation must open the exact refresh lock");
     assert_eq!(exchange_requests.load(Ordering::SeqCst), 1);
     assert!(
-        !completion.is_finished(),
-        "native Claude installation bypassed the refresh lock"
+        error.contains("could not acquire the durable claude credential lock"),
+        "unexpected lock-open error: {error}"
     );
     assert!(!home.path().join(".credentials.json").exists());
-    drop(holder);
-
-    let path = completion.await.unwrap().unwrap();
-    assert!(path.is_file());
     server.abort();
 }
 
