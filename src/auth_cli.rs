@@ -492,6 +492,7 @@ async fn complete_native_claude(
 ) -> Result<(), String> {
     let auth_config = link_assistant_router::claude_auth::ClaudeAuthConfig::for_mode(
         config.login.claude_code_home.clone(),
+        config.data_dir.clone(),
         mode,
     );
     let submitted = if let Some(code) = code {
@@ -600,6 +601,7 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
     }
     let mut settings = link_assistant_router::auth::CodexAuthConfig::production(
         config.login.codex_home.clone(),
+        config.data_dir.clone(),
         port,
         config.login.session_ttl,
     );
@@ -628,6 +630,7 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
 async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
     let mut settings = link_assistant_router::auth::CodexAuthConfig::production(
         config.login.codex_home.clone(),
+        config.data_dir.clone(),
         port,
         config.login.session_ttl,
     );

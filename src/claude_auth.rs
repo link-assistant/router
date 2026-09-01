@@ -80,25 +80,28 @@ pub struct ClaudeAuthConfig {
     pub client_id: String,
     pub redirect_uri: String,
     pub claude_home: PathBuf,
+    /// Router data directory containing the shared provider/account lock.
+    pub data_dir: PathBuf,
     /// Scopes to request; see [`ClaudeAuthMode`].
     pub scopes: String,
 }
 
 impl ClaudeAuthConfig {
     #[must_use]
-    pub fn production(claude_home: PathBuf) -> Self {
-        Self::for_mode(claude_home, ClaudeAuthMode::Full)
+    pub fn production(claude_home: PathBuf, data_dir: PathBuf) -> Self {
+        Self::for_mode(claude_home, data_dir, ClaudeAuthMode::Full)
     }
 
     /// Production settings requesting the scopes of `mode`.
     #[must_use]
-    pub fn for_mode(claude_home: PathBuf, mode: ClaudeAuthMode) -> Self {
+    pub fn for_mode(claude_home: PathBuf, data_dir: PathBuf, mode: ClaudeAuthMode) -> Self {
         Self {
             authorize_url: CLAUDE_AUTHORIZE_URL.to_string(),
             token_url: CLAUDE_TOKEN_URL.to_string(),
             client_id: CLAUDE_CLIENT_ID.to_string(),
             redirect_uri: CLAUDE_REDIRECT_URI.to_string(),
             claude_home,
+            data_dir,
             scopes: mode.scopes().to_string(),
         }
     }
@@ -239,7 +242,7 @@ impl ClaudeLogin {
         if token.access_token.trim().is_empty() {
             return Err("invalid Claude token response: missing access_token".to_string());
         }
-        persist(&self.config.claude_home, token, &self.config.scopes)
+        persist(&self.config, token).await
     }
 }
 
@@ -292,14 +295,12 @@ fn take_pending(home: &Path) -> Result<PendingLogin, String> {
     result
 }
 
-fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<PathBuf, String> {
-    std::fs::create_dir_all(home)
-        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
+async fn persist(config: &ClaudeAuthConfig, token: TokenResponse) -> Result<PathBuf, String> {
     let now = chrono::Utc::now().timestamp_millis();
     // Fall back to what this login actually asked for, so a narrow
     // `setup-token` credential is not recorded as carrying full scopes.
     let scopes = token.scope.as_deref().map_or_else(
-        || requested_scopes.split_whitespace().collect::<Vec<_>>(),
+        || config.scopes.split_whitespace().collect::<Vec<_>>(),
         |scope| scope.split_whitespace().collect::<Vec<_>>(),
     );
     let mut oauth = serde_json::json!({
@@ -317,22 +318,26 @@ fn persist(home: &Path, token: TokenResponse, requested_scopes: &str) -> Result<
     if let Some(seconds) = token.refresh_token_expires_in {
         oauth["refreshTokenExpiresAt"] = (now + seconds.saturating_mul(1000)).into();
     }
-    let path = home.join(".credentials.json");
-    let bytes = serde_json::to_vec_pretty(&serde_json::json!({ "claudeAiOauth": oauth }))
+    let document = serde_json::to_string_pretty(&serde_json::json!({ "claudeAiOauth": oauth }))
         .map_err(|error| format!("could not encode Claude credential: {error}"))?;
-    let temporary = home.join(format!(".credentials.json.{}.tmp", uuid::Uuid::new_v4()));
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&temporary)
-        .map_err(|error| crate::durable_file::describe_write_failure(&temporary, &error))?;
-    file.write_all(&bytes)
-        .and_then(|()| file.sync_all())
-        .map_err(|error| format!("could not write {}: {error}", temporary.display()))?;
-    restrict_permissions(&temporary)?;
-    std::fs::rename(&temporary, &path)
-        .map_err(|error| format!("could not install {}: {error}", path.display()))?;
-    Ok(path)
+    let reader = crate::subscription::SubscriptionReader::new(
+        crate::subscription::SubscriptionProvider::Claude,
+        &config.claude_home,
+    );
+    match reader
+        .install_document_locked(
+            &config.data_dir,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &document,
+            crate::subscription::InstallMode::Replace,
+        )
+        .await?
+    {
+        crate::subscription::InstallDocumentResult::Installed(path) => Ok(path),
+        crate::subscription::InstallDocumentResult::AlreadyPresent(_) => {
+            Err("native Claude replacement unexpectedly became conditional".to_string())
+        }
+    }
 }
 
 fn random_urlsafe() -> String {

@@ -78,6 +78,8 @@ pub struct LoginConfig {
     pub claude_code_home: PathBuf,
     /// Directory where Codex credentials are written.
     pub codex_home: PathBuf,
+    /// Router data directory containing native-login credential locks.
+    pub data_dir: PathBuf,
     /// Codex OAuth issuer. Overridable for compatible deployments and tests.
     pub codex_issuer: String,
     /// Loopback callback port registered for the Codex OAuth client.
@@ -104,6 +106,7 @@ impl Default for LoginConfig {
             package_cache: None,
             claude_code_home: PathBuf::from("/data/claude"),
             codex_home: PathBuf::from("/data/codex"),
+            data_dir: PathBuf::from("/data"),
             codex_issuer: crate::auth::CODEX_ISSUER.to_string(),
             codex_callback_port: 1455,
             session_ttl: Duration::from_secs(900),
@@ -366,6 +369,7 @@ impl LoginManager {
             let login = crate::claude_auth::ClaudeLogin::begin(
                 crate::claude_auth::ClaudeAuthConfig::for_mode(
                     self.config.claude_code_home.clone(),
+                    self.config.data_dir.clone(),
                     mode,
                 ),
             );
@@ -401,6 +405,7 @@ impl LoginManager {
         ensure_writable_dir(&codex_home)?;
         let mut codex_config = crate::auth::CodexAuthConfig::production(
             codex_home,
+            self.config.data_dir.clone(),
             self.config.codex_callback_port,
             self.config.session_ttl,
         );

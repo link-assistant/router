@@ -15,6 +15,29 @@ use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 const RECOVERY_VERSION: u8 = 1;
 const RECOVERY_DIRECTORY: &str = "refresh-recovery";
 
+/// Account name used by the configured, non-pooled credential homes.
+pub const PRIMARY_ACCOUNT: &str = "primary";
+
+/// Maximum time a Router-owned writer waits for another credential transaction.
+pub const CREDENTIAL_LOCK_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// One provider/account lock shared by refresh, import, and native login.
+///
+/// The account is hashed so an email address or other operator-chosen account
+/// label never appears in a filename.
+#[must_use]
+pub fn credential_lock_path(
+    data_dir: impl AsRef<Path>,
+    provider: SubscriptionProvider,
+    account: impl AsRef<str>,
+) -> PathBuf {
+    let account_digest = hex::encode(Sha256::digest(account.as_ref().as_bytes()));
+    data_dir
+        .as_ref()
+        .join(RECOVERY_DIRECTORY)
+        .join(format!("{}-{account_digest}.lock", provider.as_str()))
+}
+
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct RecoveryRecord {
     version: u8,
@@ -48,7 +71,7 @@ impl RecoverableCredentialStore {
             provider,
             primary,
             recovery_path: directory.join(format!("{stem}.json")),
-            lock_path: directory.join(format!("{stem}.lock")),
+            lock_path: credential_lock_path(data_dir, provider, account),
         }
     }
 
@@ -189,7 +212,7 @@ mod tests {
     use crate::credential_store::CredentialStore;
     use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
 
-    use super::RecoverableCredentialStore;
+    use super::{RecoverableCredentialStore, credential_lock_path};
 
     const ACCOUNT: &str = "team@example.com";
     const ACCOUNT_SHA256: &str = "a96e3689637c79fb389b70f6a2ff545458d0796e44c61722e8a569b58fcecf85";
@@ -324,6 +347,10 @@ mod tests {
             let expected_lock_name = format!("{}-{ACCOUNT_SHA256}.lock", case.provider.as_str());
             let recovery_lock = store.lock_path().expect("recovery lock");
             assert_eq!(recovery_lock, store.lock_path);
+            assert_eq!(
+                recovery_lock,
+                credential_lock_path(data.path(), case.provider, ACCOUNT)
+            );
             assert_eq!(
                 recovery_lock.file_name().and_then(|name| name.to_str()),
                 Some(expected_lock_name.as_str())

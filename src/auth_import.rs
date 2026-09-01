@@ -12,7 +12,34 @@
 use std::process::ExitCode;
 
 use link_assistant_router::cli::{AuthOp, ImportProvider};
-use link_assistant_router::subscription::{ImportSource, SubscriptionProvider, SubscriptionReader};
+use link_assistant_router::subscription::{
+    ImportSource, InstallDocumentResult, InstallMode, SubscriptionProvider, SubscriptionReader,
+};
+
+/// Vendor evidence gathered before an import may touch its destination.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CredentialProbe {
+    Accepted,
+    Rejected,
+    Unverified,
+}
+
+impl CredentialProbe {
+    const fn description(self) -> &'static str {
+        match self {
+            Self::Accepted => "accepted by the vendor",
+            Self::Rejected => "REJECTED by the vendor",
+            Self::Unverified => "not verified (the vendor could not be reached)",
+        }
+    }
+}
+
+/// Destination and rejection policy selected by the public import flags.
+#[derive(Debug, Clone, Copy, Default)]
+struct ImportPolicy {
+    if_absent: bool,
+    force: bool,
+}
 
 /// Adopt an existing vendor login, when this invocation asked to.
 ///
@@ -28,6 +55,15 @@ pub async fn run_import(
     if let Some(exit) = refuse_a_remote_import(op).await {
         return Some(exit);
     }
+    let policy = match op {
+        AuthOp::Import {
+            if_absent, force, ..
+        } => ImportPolicy {
+            if_absent: *if_absent,
+            force: *force,
+        },
+        _ => ImportPolicy::default(),
+    };
     let requested: Vec<(ImportProvider, String)> = match op {
         AuthOp::Claude {
             from_claude_home: Some(source),
@@ -61,12 +97,15 @@ pub async fn run_import(
     let mut failed = false;
     for (provider, source) in requested {
         let outcome = match provider {
+            ImportProvider::Gh if policy.if_absent => Err(String::from(
+                "--if-absent is supported only for Claude, Codex, Gemini, and Qwen; GitHub import keeps its existing replacement behavior",
+            )),
             ImportProvider::Gh => import_github(config, &source),
             other => {
                 let Some(subscription) = subscription_of(other) else {
                     continue;
                 };
-                import_provider(config, subscription, &source).await
+                import_provider(config, subscription, &source, policy).await
             }
         };
         if let Err(error) = outcome {
@@ -218,6 +257,7 @@ async fn import_provider(
     config: &link_assistant_router::config::Config,
     provider: SubscriptionProvider,
     source: &str,
+    policy: ImportPolicy,
 ) -> Result<(), String> {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     // An empty value asks for the vendor's own default location.
@@ -273,22 +313,66 @@ async fn import_provider(
     // Probe before installing. The stored expiry is a hint; only the vendor
     // knows whether the credential still works, and an operator should learn
     // that here rather than from a 401 on the first served request.
-    let verdict = probe_credential(provider, token).await;
+    let probe = probe_credential(provider, token).await;
 
+    let destination = SubscriptionReader::new(provider, &destination_home);
     let installed =
-        SubscriptionReader::new(provider, &destination_home).install_document(document)?;
+        install_candidate(&destination, &config.data_dir, document, probe, policy).await?;
+    match &installed {
+        InstallDocumentResult::Installed(path) => {
+            println!(
+                "{provider:<8} imported {} from {where_from}",
+                path.display()
+            );
+            // Adopting a credential does not mint one: both holders now rotate
+            // the same chain, and revoking it at the vendor revokes it for both.
+            println!(
+                "{provider:<8} note: the source keeps working; the two now share one rotating \
+                 chain, and a revocation at the vendor ends both"
+            );
+        }
+        InstallDocumentResult::AlreadyPresent(path) => {
+            println!(
+                "{provider:<8} already present at {}; candidate from {where_from} was not installed",
+                path.display()
+            );
+        }
+    }
     println!(
-        "{provider:<8} imported {} from {where_from}",
-        installed.display()
-    );
-    println!("{provider:<8} {}, {verdict}", describe_credential(token));
-    // Adopting a credential does not mint one: both holders now rotate the same
-    // chain, and revoking it at the vendor revokes it for both.
-    println!(
-        "{provider:<8} note: the source keeps working; the two now share one rotating \
-         chain, and a revocation at the vendor ends both"
+        "{provider:<8} candidate {}, {}",
+        describe_credential(token),
+        probe.description()
     );
     Ok(())
+}
+
+/// Enforce candidate rejection policy, then enter the shared writer boundary.
+async fn install_candidate(
+    destination: &SubscriptionReader,
+    data_dir: &std::path::Path,
+    document: &str,
+    probe: CredentialProbe,
+    policy: ImportPolicy,
+) -> Result<InstallDocumentResult, String> {
+    let refusal = (policy.if_absent && probe == CredentialProbe::Rejected && !policy.force)
+        .then(|| format!(
+            "{} candidate was rejected by the vendor; rerun with --if-absent --force to install it only if the destination is still empty",
+            destination.provider()
+        ));
+    let mode = if policy.if_absent {
+        InstallMode::IfAbsent
+    } else {
+        InstallMode::Replace
+    };
+    destination
+        .install_document_locked_with_refusal(
+            data_dir,
+            link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+            document,
+            mode,
+            refusal,
+        )
+        .await
 }
 
 /// What an operator needs to know about a credential at import time.
@@ -328,18 +412,18 @@ pub fn describe_credential(
 async fn probe_credential(
     provider: SubscriptionProvider,
     token: &link_assistant_router::subscription::SubscriptionToken,
-) -> &'static str {
+) -> CredentialProbe {
     let client = reqwest::Client::new();
     match link_assistant_router::model_catalog::fetch_provider_catalog(
         &client, provider, token, None,
     )
     .await
     {
-        Ok(_) => "accepted by the vendor",
+        Ok(_) => CredentialProbe::Accepted,
         Err(error) if link_assistant_router::model_catalog::is_credential_rejection(&error) => {
-            "REJECTED by the vendor — importing it anyway, but it will not serve"
+            CredentialProbe::Rejected
         }
-        Err(_) => "not verified (the vendor could not be reached)",
+        Err(_) => CredentialProbe::Unverified,
     }
 }
 

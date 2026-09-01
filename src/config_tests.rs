@@ -70,6 +70,7 @@ fn test_config_with_valid_values() {
     assert_eq!(config.claude_code_home, "/tmp/claude");
     assert_eq!(config.upstream_base_url, "https://api.anthropic.com");
     assert_eq!(config.upstream_provider, UpstreamProvider::Auto);
+    assert_eq!(config.login.data_dir, config.data_dir);
     assert!(!config.verbose);
     assert_eq!(config.routing_mode, RoutingMode::Direct);
 }

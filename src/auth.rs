@@ -4,7 +4,7 @@
 //! authorization, with its PKCE loopback callback server available as fallback.
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -38,6 +38,8 @@ pub struct CodexAuthConfig {
     pub port: u16,
     /// Directory in which `auth.json` is written.
     pub codex_home: PathBuf,
+    /// Router data directory containing the shared provider/account lock.
+    pub data_dir: PathBuf,
     /// Maximum time to wait for the browser callback.
     pub timeout: Duration,
     /// Interface on which the callback listener is reachable.
@@ -47,12 +49,18 @@ pub struct CodexAuthConfig {
 impl CodexAuthConfig {
     /// Production configuration for a resolved Codex home.
     #[must_use]
-    pub fn production(codex_home: PathBuf, port: u16, timeout: Duration) -> Self {
+    pub fn production(
+        codex_home: PathBuf,
+        data_dir: PathBuf,
+        port: u16,
+        timeout: Duration,
+    ) -> Self {
         Self {
             issuer: CODEX_ISSUER.to_string(),
             client_id: CODEX_CLIENT_ID.to_string(),
             port,
             codex_home,
+            data_dir,
             timeout,
             bind_host: "127.0.0.1".to_string(),
         }
@@ -535,13 +543,13 @@ async fn exchange_and_store(
         .json()
         .await
         .map_err(|error| format!("invalid Codex token response: {error}"))?;
-    persist_codex_auth(&config.codex_home, &tokens)
+    persist_codex_auth(config, &tokens).await
 }
 
-fn persist_codex_auth(home: &Path, tokens: &TokenResponse) -> Result<PathBuf, String> {
-    std::fs::create_dir_all(home)
-        .map_err(|error| crate::durable_file::describe_write_failure(home, &error))?;
-    let path = home.join("auth.json");
+async fn persist_codex_auth(
+    config: &CodexAuthConfig,
+    tokens: &TokenResponse,
+) -> Result<PathBuf, String> {
     let value = serde_json::json!({
         "auth_mode": "chatgpt",
         "tokens": {
@@ -551,10 +559,25 @@ fn persist_codex_auth(home: &Path, tokens: &TokenResponse) -> Result<PathBuf, St
         },
         "last_refresh": chrono::Utc::now().to_rfc3339(),
     });
-    let body = serde_json::to_vec_pretty(&value).map_err(|error| error.to_string())?;
-    crate::durable_file::atomic_write_owner_only(&path, &body)
-        .map_err(|error| format!("could not install {}: {error}", path.display()))?;
-    Ok(path)
+    let document = serde_json::to_string_pretty(&value).map_err(|error| error.to_string())?;
+    let reader = crate::subscription::SubscriptionReader::new(
+        crate::subscription::SubscriptionProvider::Codex,
+        &config.codex_home,
+    );
+    match reader
+        .install_document_locked(
+            &config.data_dir,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &document,
+            crate::subscription::InstallMode::Replace,
+        )
+        .await?
+    {
+        crate::subscription::InstallDocumentResult::Installed(path) => Ok(path),
+        crate::subscription::InstallDocumentResult::AlreadyPresent(_) => {
+            Err("native Codex replacement unexpectedly became conditional".to_string())
+        }
+    }
 }
 
 fn form_encode(pairs: &[(&str, &str)]) -> String {
@@ -591,6 +614,7 @@ mod tests {
     #[derive(Default)]
     struct DeviceStubState {
         polls: AtomicUsize,
+        exchanges: AtomicUsize,
     }
 
     async fn issue_device_code(Json(body): Json<serde_json::Value>) -> Json<serde_json::Value> {
@@ -626,7 +650,11 @@ mod tests {
         .into_response()
     }
 
-    async fn exchange_device_code(body: Bytes) -> Json<serde_json::Value> {
+    async fn exchange_device_code(
+        State(state): State<Arc<DeviceStubState>>,
+        body: Bytes,
+    ) -> Json<serde_json::Value> {
+        state.exchanges.fetch_add(1, Ordering::SeqCst);
         let body = String::from_utf8(body.to_vec()).unwrap();
         assert!(body.contains("code=device-authorization-code"));
         assert!(body.contains("code_verifier=device-verifier"));
@@ -686,6 +714,7 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: occupied_port,
             codex_home: home.path().to_path_buf(),
+            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -708,6 +737,7 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 1455,
             codex_home: home.path().to_path_buf(),
+            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -720,6 +750,52 @@ mod tests {
         assert_eq!(saved["auth_mode"], "chatgpt");
         assert_eq!(saved["tokens"]["access_token"], "device-access");
         assert_eq!(state.polls.load(Ordering::SeqCst), 2);
+        server.abort();
+    }
+
+    /// Native Codex performs its network exchange before contending on the
+    /// same primary-account lock used by refresh, then installs atomically.
+    #[tokio::test]
+    async fn native_codex_install_contends_on_the_primary_refresh_lock() {
+        let (issuer, state, server) = device_stub().await;
+        let home = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let login = CodexDeviceLogin::begin(CodexAuthConfig {
+            issuer,
+            client_id: CODEX_CLIENT_ID.to_string(),
+            port: 1455,
+            codex_home: home.path().to_path_buf(),
+            data_dir: data.path().to_path_buf(),
+            timeout: Duration::from_secs(3),
+            bind_host: "127.0.0.1".to_string(),
+        })
+        .await
+        .unwrap();
+        let lock_path = crate::credential_recovery_store::credential_lock_path(
+            data.path(),
+            crate::subscription::SubscriptionProvider::Codex,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        );
+        let holder = crate::durable_file::lock_exclusive_async(&lock_path, Duration::from_secs(1))
+            .await
+            .unwrap();
+        let completion = tokio::spawn(login.complete());
+        for _ in 0..100 {
+            if state.exchanges.load(Ordering::SeqCst) > 0 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+
+        assert_eq!(state.exchanges.load(Ordering::SeqCst), 1);
+        assert!(
+            !completion.is_finished(),
+            "Codex install bypassed refresh lock"
+        );
+        assert!(!home.path().join("auth.json").exists());
+        drop(holder);
+
+        assert!(completion.await.unwrap().unwrap().is_file());
         server.abort();
     }
 
@@ -772,6 +848,7 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
+            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -827,6 +904,7 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
+            data_dir: home.path().join("router-data"),
             timeout: Duration::from_millis(10),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -849,6 +927,7 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
+            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -874,6 +953,7 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
+            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })

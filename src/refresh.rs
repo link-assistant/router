@@ -577,8 +577,14 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> SubscriptionToken {
-        self.get_fresh_for(client, provider, "primary", disk_token, now_ms)
-            .await
+        self.get_fresh_for(
+            client,
+            provider,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            disk_token,
+            now_ms,
+        )
+        .await
     }
 
     /// Account-scoped variant of [`Self::get_fresh`].

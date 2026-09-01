@@ -183,7 +183,7 @@ pub async fn refresh_catalogs(
     // This is deliberately a raw, insert-if-absent fallback. Production has
     // already installed data-directory-backed recoverable stores; a catalog
     // tick must never replace those decorators with bare vendor readers.
-    token_cache.register_readers("primary", readers);
+    token_cache.register_readers(crate::credential_recovery_store::PRIMARY_ACCOUNT, readers);
     let refreshes = readers
         .iter()
         .filter_map(|reader| {
@@ -212,7 +212,13 @@ pub async fn refresh_catalogs(
                 .as_ref()
                 .is_err_and(|error| is_credential_rejection(error))
                 && let Some(refreshed) = token_cache
-                    .refresh_rejected(client, provider, "primary", token, now_ms)
+                    .refresh_rejected(
+                        client,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        token,
+                        now_ms,
+                    )
                     .await
             {
                 tracing::info!(

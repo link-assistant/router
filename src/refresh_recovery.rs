@@ -26,18 +26,11 @@
 //! values.
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use super::{REFRESH_SKEW_MS, RefreshError, refresh_at};
 use crate::credential_store::{CredentialStore, has_newer_refresh_link, is_same_link};
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 use crate::vendor_cli_refresh::VendorCli;
-
-/// How long to wait for another holder's read → refresh → write cycle.
-///
-/// Long enough to cover a token exchange over a slow link, short enough that a
-/// stale holder reports a retryable storage failure instead of waiting forever.
-const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Which rung of the ladder produced a usable credential.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -176,16 +169,19 @@ async fn acquire_lock(
             "the registered {provider} credential store has no durable lock path"
         ))
     })?;
-    crate::durable_file::lock_exclusive_async(&path, LOCK_TIMEOUT)
-        .await
-        .map_err(|error| {
-            let action = if error.kind() == std::io::ErrorKind::WouldBlock {
-                "timed out waiting for"
-            } else {
-                "could not acquire"
-            };
-            storage_rejection(format!("{action} the durable {provider} credential lock"))
-        })
+    crate::durable_file::lock_exclusive_async(
+        &path,
+        crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+    )
+    .await
+    .map_err(|error| {
+        let action = if error.kind() == std::io::ErrorKind::WouldBlock {
+            "timed out waiting for"
+        } else {
+            "could not acquire"
+        };
+        storage_rejection(format!("{action} the durable {provider} credential lock"))
+    })
 }
 
 /// Write a rotated refresh token back before its access token is used.

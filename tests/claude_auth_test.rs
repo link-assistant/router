@@ -10,12 +10,14 @@ use serde_json::{Value, json};
 #[test]
 fn native_login_builds_the_claude_pkce_authorization_url() {
     let home = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
     let login = ClaudeLogin::begin(ClaudeAuthConfig {
         authorize_url: "https://claude.test/oauth/authorize".into(),
         token_url: "https://unused.test/token".into(),
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
+        data_dir: data.path().into(),
         scopes: CLAUDE_SCOPES.into(),
     });
     let url = reqwest::Url::parse(login.authorization_url()).unwrap();
@@ -54,12 +56,14 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
     let address = listener.local_addr().unwrap();
     let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
     let home = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
     let config = ClaudeAuthConfig {
         authorize_url: "https://claude.test/oauth/authorize".into(),
         token_url: format!("http://{address}/token"),
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
+        data_dir: data.path().into(),
         scopes: CLAUDE_SCOPES.into(),
     };
     let login = ClaudeLogin::begin_persisted(config.clone(), Duration::from_secs(900)).unwrap();
@@ -101,6 +105,61 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
         stored["claudeAiOauth"]["scopes"],
         json!(["user:profile", "user:inference"])
     );
+}
+
+/// Native OAuth exchanges before locking, then contends on the exact primary
+/// refresh lock only for installation.
+#[tokio::test]
+async fn native_claude_install_contends_on_the_primary_refresh_lock() {
+    let app = Router::new().route(
+        "/token",
+        post(|| async {
+            Json(json!({
+                "access_token": "native-access",
+                "refresh_token": "native-refresh",
+                "expires_in": 3600
+            }))
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let home = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
+    let config = ClaudeAuthConfig {
+        authorize_url: "https://claude.test/oauth/authorize".into(),
+        token_url: format!("http://{address}/token"),
+        client_id: "public-client".into(),
+        redirect_uri: "https://callback.test/code".into(),
+        claude_home: home.path().into(),
+        data_dir: data.path().into(),
+        scopes: CLAUDE_SCOPES.into(),
+    };
+    let login = ClaudeLogin::begin(config);
+    let lock_path = link_assistant_router::credential_recovery_store::credential_lock_path(
+        data.path(),
+        link_assistant_router::subscription::SubscriptionProvider::Claude,
+        link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+    );
+    let holder = link_assistant_router::durable_file::lock_exclusive_async(
+        &lock_path,
+        Duration::from_secs(1),
+    )
+    .await
+    .unwrap();
+
+    let completion = tokio::spawn(async move { login.complete("copied-code").await });
+    tokio::time::sleep(Duration::from_millis(80)).await;
+    assert!(
+        !completion.is_finished(),
+        "native Claude installation bypassed the refresh lock"
+    );
+    assert!(!home.path().join(".credentials.json").exists());
+    drop(holder);
+
+    let path = completion.await.unwrap().unwrap();
+    assert!(path.is_file());
+    server.abort();
 }
 
 async fn token_endpoint(

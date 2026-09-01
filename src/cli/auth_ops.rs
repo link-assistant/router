@@ -70,6 +70,15 @@ pub enum AuthOp {
         /// writes the executing machine's credential home (issue #291).
         #[arg(long, conflicts_with = "provider")]
         all: bool,
+        /// Install only if no recognized credential exists after taking the
+        /// shared refresh/login lock.
+        #[arg(long, conflicts_with = "all")]
+        if_absent: bool,
+        /// Permit a vendor-rejected candidate in conditional mode.
+        ///
+        /// This never permits overwrite: an existing destination still wins.
+        #[arg(long, requires = "if_absent")]
+        force: bool,
         #[command(flatten)]
         target: AuthTarget,
     },

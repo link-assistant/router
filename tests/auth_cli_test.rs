@@ -610,6 +610,105 @@ fn import_is_a_verb_listed_in_the_auth_command_list() {
     for provider in ["claude", "codex", "gemini", "qwen", "gh"] {
         assert!(seen.contains(provider), "{provider} missing: {seen}");
     }
+    for flag in ["--if-absent", "--force"] {
+        assert!(seen.contains(flag), "{flag} missing: {seen}");
+    }
+}
+
+#[test]
+fn conditional_import_reports_already_present_without_replacement() {
+    let root = tempfile::tempdir().expect("root");
+    let source = root.path().join("source");
+    let destination = root.path().join("destination");
+    let data = root.path().join("data");
+    std::fs::create_dir_all(&source).expect("source");
+    std::fs::create_dir_all(&destination).expect("destination");
+    std::fs::write(
+        source.join("oauth_creds.json"),
+        r#"{"access_token":"candidate","refresh_token":"stale","resource_url":"http://127.0.0.1:1"}"#,
+    )
+    .expect("candidate");
+    let current = br#"{"access_token":"current","refresh_token":"rotated","resource_url":"http://127.0.0.1:1"}"#;
+    std::fs::write(destination.join("oauth_creds.json"), current).expect("current");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "qwen",
+            source.to_str().expect("source path"),
+            "--if-absent",
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", root.path())
+        .env("QWEN_HOME", &destination)
+        .env("DATA_DIR", &data)
+        .output()
+        .expect("router CLI should run");
+
+    assert!(output.status.success(), "{output:?}");
+    assert_eq!(
+        std::fs::read(destination.join("oauth_creds.json")).unwrap(),
+        current
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("already present"), "{stdout}");
+    assert!(
+        !stdout.contains("share one rotating chain"),
+        "no adoption occurred, so the shared-chain note is false: {stdout}"
+    );
+}
+
+#[test]
+fn conditional_import_rejects_unsupported_flag_combinations() {
+    for args in [
+        vec!["auth", "import", "gh", "/tmp", "--if-absent", "--local"],
+        vec!["auth", "import", "codex", "/tmp", "--force", "--local"],
+        vec!["auth", "import", "--all", "--if-absent", "--local"],
+    ] {
+        let output = router(&args);
+        assert!(!output.status.success(), "accepted {args:?}");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains("if-absent") || stderr.contains("--force"),
+            "{args:?}: {stderr}"
+        );
+    }
+}
+
+#[test]
+fn malformed_conditional_candidate_does_not_hide_behind_existing_destination() {
+    let root = tempfile::tempdir().expect("root");
+    let source = root.path().join("source");
+    let destination = root.path().join("destination");
+    std::fs::create_dir_all(&source).expect("source");
+    std::fs::create_dir_all(&destination).expect("destination");
+    std::fs::write(source.join("oauth_creds.json"), "not-json").expect("malformed");
+    let current = br#"{"access_token":"current","refresh_token":"rotated"}"#;
+    std::fs::write(destination.join("oauth_creds.json"), current).expect("current");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "gemini",
+            source.to_str().expect("source path"),
+            "--if-absent",
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", root.path())
+        .env("GEMINI_HOME", &destination)
+        .env("DATA_DIR", root.path().join("data"))
+        .output()
+        .expect("router CLI should run");
+
+    assert!(!output.status.success(), "malformed candidate must fail");
+    assert_eq!(
+        std::fs::read(destination.join("oauth_creds.json")).unwrap(),
+        current
+    );
 }
 
 /// The subcommand adopts a login, with the same report the flag produces.

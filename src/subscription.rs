@@ -256,6 +256,24 @@ pub struct ImportSource {
     pub origin: crate::platform_keychain::Origin,
 }
 
+/// Replacement policy for a Router-owned credential install.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InstallMode {
+    /// Replace the canonical vendor document after taking the shared lock.
+    Replace,
+    /// Install only when none of the provider's recognized files exists.
+    IfAbsent,
+}
+
+/// Successful credential-install outcome.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InstallDocumentResult {
+    /// The candidate document was installed at the canonical vendor path.
+    Installed(PathBuf),
+    /// A recognized credential appeared before installation and was preserved.
+    AlreadyPresent(PathBuf),
+}
+
 /// Reads and normalizes a single provider's subscription credentials.
 #[derive(Debug, Clone)]
 pub struct SubscriptionReader {
@@ -420,13 +438,7 @@ impl SubscriptionReader {
     }
 
     /// Install a credential document as this provider's credential.
-    ///
-    /// Written owner-only through the durable path, so a half-written file is
-    /// never left behind and the credential is not world-readable.
-    ///
-    /// # Errors
-    ///
-    /// Returns an operator-readable message when the write cannot land.
+    /// Written owner-only and atomically through the durable path.
     pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
         // Where the provider's own client writes, so an adopted credential
         // lands exactly where a fresh login would put it.
@@ -436,6 +448,68 @@ impl SubscriptionReader {
         crate::durable_file::atomic_write_owner_only(&path, document.as_bytes())
             .map_err(|error| crate::durable_file::describe_write_failure(&path, &error))?;
         Ok(path)
+    }
+
+    /// Install a vendor document while holding the refresh credential lock.
+    pub async fn install_document_locked(
+        &self,
+        data_dir: &Path,
+        account: &str,
+        document: &str,
+        mode: InstallMode,
+    ) -> Result<InstallDocumentResult, String> {
+        self.install_document_locked_with_refusal(data_dir, account, document, mode, None)
+            .await
+    }
+
+    /// Enforce `refusal` only after the locked conditional re-check is empty.
+    pub async fn install_document_locked_with_refusal(
+        &self,
+        data_dir: &Path,
+        account: &str,
+        document: &str,
+        mode: InstallMode,
+        refusal: Option<String>,
+    ) -> Result<InstallDocumentResult, String> {
+        let lock_path = crate::credential_recovery_store::credential_lock_path(
+            data_dir,
+            self.provider,
+            account,
+        );
+        let _lock = crate::durable_file::lock_exclusive_async(
+            &lock_path,
+            crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+        )
+        .await
+        .map_err(|error| {
+            let action = if error.kind() == std::io::ErrorKind::WouldBlock {
+                "timed out waiting for"
+            } else {
+                "could not acquire"
+            };
+            format!("{action} the durable {} credential lock", self.provider)
+        })?;
+
+        if mode == InstallMode::IfAbsent {
+            for path in self.credential_paths() {
+                match path.try_exists() {
+                    Ok(true) => return Ok(InstallDocumentResult::AlreadyPresent(path)),
+                    Ok(false) => {}
+                    Err(error) => {
+                        return Err(format!(
+                            "could not check the {} credential destination: {error}",
+                            self.provider
+                        ));
+                    }
+                }
+            }
+            if let Some(error) = refusal {
+                return Err(error);
+            }
+        }
+
+        self.install_document(document)
+            .map(InstallDocumentResult::Installed)
     }
 
     /// Remove every credential file this provider is read from.
@@ -917,6 +991,9 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
         .map(ToString::to_string)
 }
 
+#[cfg(test)]
+#[path = "subscription_install_tests.rs"]
+mod install_tests;
 #[cfg(test)]
 #[path = "subscription_tests.rs"]
 mod tests;

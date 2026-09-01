@@ -114,7 +114,7 @@ impl AppState {
         vendor_clis: &VendorClis<'_>,
     ) {
         self.subscription_cache.register_readers_in(
-            "primary",
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
             &self.subscription_readers,
             data_dir,
         );
@@ -132,8 +132,10 @@ impl AppState {
             ) else {
                 continue;
             };
-            self.subscription_cache
-                .register_vendor_cli("primary", Arc::new(cli));
+            self.subscription_cache.register_vendor_cli(
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                Arc::new(cli),
+            );
         }
     }
 }

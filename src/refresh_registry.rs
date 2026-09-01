@@ -65,7 +65,11 @@ impl TokenCache {
     #[must_use]
     pub fn registered_for(readers: &[SubscriptionReader], data_dir: &std::path::Path) -> Self {
         let cache = Self::new();
-        cache.register_readers_in("primary", readers, data_dir);
+        cache.register_readers_in(
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            readers,
+            data_dir,
+        );
         cache.persist_rejections_in(data_dir);
         cache
     }

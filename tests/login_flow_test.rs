@@ -18,10 +18,17 @@
 //! `src/login.rs`, which do run everywhere.
 #![cfg(unix)]
 
+use axum::Router;
+use axum::extract::State;
+use axum::routing::post;
+use base64::Engine as _;
 use link_assistant_router::login::{LoginConfig, LoginManager, LoginStatus};
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::subscription::SubscriptionProvider;
+use sha2::{Digest as _, Sha256};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 
@@ -548,5 +555,115 @@ async fn codex_login_defaults_to_device_auth_without_a_callback_listener() {
             .is_err()
     );
     assert!(manager.cancel(&begun.login_id));
+    server.abort();
+}
+
+#[derive(Default)]
+struct AdminCodexStub {
+    polls: AtomicUsize,
+    exchanges: AtomicUsize,
+}
+
+async fn admin_device_code() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "device_auth_id": "device-1",
+        "user_code": "ABCD-EFGH",
+        "interval": "0"
+    }))
+}
+
+async fn admin_poll_device(State(state): State<Arc<AdminCodexStub>>) -> axum::response::Response {
+    use axum::response::IntoResponse as _;
+    if state.polls.fetch_add(1, Ordering::SeqCst) == 0 {
+        return (
+            axum::http::StatusCode::FORBIDDEN,
+            axum::Json(serde_json::json!({"error": "authorization_pending"})),
+        )
+            .into_response();
+    }
+    let verifier = "device-verifier";
+    let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .encode(Sha256::digest(verifier.as_bytes()));
+    axum::Json(serde_json::json!({
+        "authorization_code": "device-code",
+        "code_challenge": challenge,
+        "code_verifier": verifier
+    }))
+    .into_response()
+}
+
+async fn admin_exchange(State(state): State<Arc<AdminCodexStub>>) -> axum::Json<serde_json::Value> {
+    state.exchanges.fetch_add(1, Ordering::SeqCst);
+    axum::Json(serde_json::json!({
+        "id_token": "header.payload.sig",
+        "access_token": "admin-access",
+        "refresh_token": "admin-refresh"
+    }))
+}
+
+/// The admin `LoginManager` passes the resolved data directory into native Codex
+/// and contends on the exact primary refresh lock during installation.
+#[tokio::test]
+async fn admin_native_codex_writer_contends_on_the_refresh_lock() {
+    let state = Arc::new(AdminCodexStub::default());
+    let app = Router::new()
+        .route("/api/accounts/deviceauth/usercode", post(admin_device_code))
+        .route("/api/accounts/deviceauth/token", post(admin_poll_device))
+        .route("/oauth/token", post(admin_exchange))
+        .with_state(Arc::clone(&state));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let issuer = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let root = tempfile::tempdir().unwrap();
+    let codex_home = root.path().join("codex");
+    let data_dir = root.path().join("data");
+    let lock_path = link_assistant_router::credential_recovery_store::credential_lock_path(
+        &data_dir,
+        SubscriptionProvider::Codex,
+        link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+    );
+    let holder = link_assistant_router::durable_file::lock_exclusive_async(
+        &lock_path,
+        Duration::from_secs(1),
+    )
+    .await
+    .unwrap();
+    let manager = LoginManager::new(LoginConfig {
+        codex_home: codex_home.clone(),
+        data_dir: data_dir.clone(),
+        codex_issuer: issuer,
+        session_ttl: Duration::from_secs(3),
+        ..LoginConfig::default()
+    });
+
+    let begun = manager
+        .begin_for(SubscriptionProvider::Codex)
+        .await
+        .expect("begin admin Codex login");
+    for _ in 0..100 {
+        if state.exchanges.load(Ordering::SeqCst) > 0 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    assert_eq!(state.exchanges.load(Ordering::SeqCst), 1);
+    assert_eq!(
+        manager.status(&begun.login_id).unwrap().status,
+        LoginStatus::AwaitingDevice
+    );
+    assert!(!codex_home.join("auth.json").exists());
+    drop(holder);
+
+    for _ in 0..100 {
+        if manager.status(&begun.login_id).unwrap().status == LoginStatus::Authorized {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    assert_eq!(
+        manager.status(&begun.login_id).unwrap().status,
+        LoginStatus::Authorized
+    );
+    assert!(codex_home.join("auth.json").is_file());
     server.abort();
 }
