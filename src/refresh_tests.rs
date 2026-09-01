@@ -2,9 +2,7 @@
 
 use super::*;
 
-#[path = "refresh_test_support.rs"]
-mod test_support;
-use test_support::register_test_store;
+use super::test_support::register_test_store;
 
 fn token(refresh: Option<&str>, exp: Option<i64>) -> SubscriptionToken {
     SubscriptionToken {

@@ -964,5 +964,9 @@ pub(crate) fn credential_fingerprint(credential: &SubscriptionToken) -> [u8; 32]
 mod refresh_evidence;
 
 #[cfg(test)]
+#[path = "refresh_test_support.rs"]
+pub(crate) mod test_support;
+
+#[cfg(test)]
 #[path = "refresh_tests.rs"]
 mod tests;

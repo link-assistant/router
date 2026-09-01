@@ -324,13 +324,16 @@ async fn route_gemini_token(
                 "validated subscription does not match the Gemini provider",
             ));
         }
-        validated.for_dispatch().await.map_err(|error| {
-            error_response(
-                StatusCode::SERVICE_UNAVAILABLE,
-                "authentication_error",
-                &error,
-            )
-        })?
+        validated
+            .for_dispatch_with_context(state, &routing_context)
+            .await
+            .map_err(|error| {
+                error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "authentication_error",
+                    &error,
+                )
+            })?
     } else if let Some(router) = state.account_router.as_ref() {
         router
             .select_subscription(&routing_context)

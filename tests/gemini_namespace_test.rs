@@ -32,6 +32,11 @@ use tempfile::TempDir;
 const CODEX_MODELS: [&str; 2] = ["gpt-5.4-mini", "gpt-5"];
 const CLAUDE_MODELS: [&str; 1] = ["claude-opus-4-7"];
 
+enum CodexCatalog {
+    Undiscovered,
+    Discovered(Option<&'static str>),
+}
+
 struct TestRouter {
     client: reqwest::Client,
     url: String,
@@ -49,13 +54,18 @@ impl TestRouter {
     }
 
     async fn start_with(claude_connected: bool) -> Self {
-        Self::start_configured(claude_connected, UpstreamProvider::Auto, Some("acct_stub")).await
+        Self::start_configured(
+            claude_connected,
+            UpstreamProvider::Auto,
+            CodexCatalog::Discovered(Some("acct_stub")),
+        )
+        .await
     }
 
     async fn start_configured(
         claude_connected: bool,
         upstream_provider: UpstreamProvider,
-        codex_catalog_account: Option<&str>,
+        codex_catalog: CodexCatalog,
     ) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
         let forwarded = Arc::new(Mutex::new(Vec::new()));
@@ -89,10 +99,10 @@ impl TestRouter {
         }
 
         let catalogs = Arc::new(ModelCatalogCache::new());
-        if let Some(account) = codex_catalog_account {
+        if let CodexCatalog::Discovered(account) = codex_catalog {
             catalogs.record_success_for(
                 SubscriptionProvider::Codex,
-                Some(account.to_string()),
+                account.map(ToString::to_string),
                 CODEX_MODELS.iter().map(ToString::to_string).collect(),
             );
         }
@@ -468,8 +478,12 @@ async fn gemini_and_openai_omit_a_catalog_owned_by_another_account() {
 
 #[tokio::test]
 async fn pinned_native_inference_rejects_a_catalog_owned_by_another_account() {
-    let router =
-        TestRouter::start_configured(true, UpstreamProvider::Codex, Some("acct_previous")).await;
+    let router = TestRouter::start_configured(
+        true,
+        UpstreamProvider::Codex,
+        CodexCatalog::Discovered(Some("acct_previous")),
+    )
+    .await;
 
     let (status, body) = router
         .post_native(
@@ -495,7 +509,9 @@ async fn pinned_native_inference_rejects_a_catalog_owned_by_another_account() {
 
 #[tokio::test]
 async fn pinned_native_inference_keeps_cold_start_passthrough_without_an_owner_conflict() {
-    let router = TestRouter::start_configured(true, UpstreamProvider::Codex, None).await;
+    let router =
+        TestRouter::start_configured(true, UpstreamProvider::Codex, CodexCatalog::Undiscovered)
+            .await;
 
     let (status, body) = router
         .post_native(
@@ -513,6 +529,37 @@ async fn pinned_native_inference_keeps_cold_start_passthrough_without_an_owner_c
         router.forwarded.lock().expect("forwarded requests").len(),
         1,
         "pinned cold-start inference must retain its established passthrough"
+    );
+}
+
+#[tokio::test]
+async fn pinned_native_inference_rejects_an_anonymous_discovered_catalog_for_a_known_account() {
+    let router = TestRouter::start_configured(
+        true,
+        UpstreamProvider::Codex,
+        CodexCatalog::Discovered(None),
+    )
+    .await;
+
+    let (status, body) = router
+        .post_native(
+            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
+        )
+        .await;
+
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "a completed anonymous discovery cannot own a known account: {body}"
+    );
+    assert!(
+        router
+            .forwarded
+            .lock()
+            .expect("forwarded requests")
+            .is_empty(),
+        "one-sided catalog identity must be refused before upstream"
     );
 }
 

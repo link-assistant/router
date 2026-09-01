@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 use std::fs::{self, OpenOptions, TryLockError};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
 use tempfile::tempdir;
 use tokio::sync::Barrier;
 
@@ -211,13 +212,183 @@ async fn catalog_and_dispatch_reloads_hold_the_registered_store_lock() {
     );
 }
 
+/// A successful refresh is allowed to leave the old access token on disk when
+/// the endpoint did not rotate the refresh link. Dispatch must use the fresh
+/// in-memory access token while accepting that exact pre-refresh baseline.
 #[tokio::test]
-async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
+async fn refreshed_access_with_an_unchanged_link_remains_dispatchable() {
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, codex.path());
+    fs::write(
+        codex.path().join("auth.json"),
+        json!({
+            "tokens": {
+                "access_token": "expired-access",
+                "refresh_token": "same-link",
+                "account_id": "account-a"
+            },
+            "expires_at": 1
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let state = auto_state(vec![reader.clone()], data.path());
+    state
+        .subscription_cache
+        .register_reader(crate::credential_recovery_store::PRIMARY_ACCOUNT, &reader);
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["account-a-model".into()],
+    );
+
+    let refresh = axum::Router::new().fallback(|| async {
+        axum::Json(json!({"access_token": "fresh-access", "expires_in": 3600}))
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let refresh_url = format!("http://{}", listener.local_addr().unwrap());
+    let refresh_task = tokio::spawn(async move {
+        axum::serve(listener, refresh).await.unwrap();
+    });
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let baseline = reader.read_token().unwrap();
+    let fresh = crate::refresh::test_support::refresh_against(
+        &state.subscription_cache,
+        &state.client,
+        &refresh_url,
+        SubscriptionProvider::Codex,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        baseline.clone(),
+        now_ms,
+    )
+    .await;
+    assert_eq!(fresh.access_token, "fresh-access");
+    assert_eq!(fresh.refresh_token, baseline.refresh_token);
+    assert_eq!(reader.read_token().unwrap(), baseline);
+
+    let routed = route_state_with_subscription(&state, &json!({"model": "account-a-model"}))
+        .await
+        .expect("the refreshed account still owns the catalog");
+    let selected = routed
+        .subscription
+        .as_ref()
+        .expect("automatic subscription snapshot")
+        .for_dispatch()
+        .await
+        .expect("an unchanged durable refresh link remains valid");
+    assert_eq!(selected.token.access_token, "fresh-access");
+    refresh_task.abort();
+}
+
+/// A valid cached access token is intentionally newer than the unchanged disk
+/// baseline. Revalidation must not mistake that normal cache state for an
+/// external credential rotation.
+#[tokio::test]
+async fn cached_access_with_an_unchanged_disk_baseline_remains_dispatchable() {
+    let data = tempdir().unwrap();
+    let qwen = tempdir().unwrap();
+    fs::write(
+        qwen.path().join("oauth_creds.json"),
+        json!({
+            "access_token": "expired-access",
+            "refresh_token": "same-link",
+            "expiry_date": 1,
+            "account_id": "account-a"
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, qwen.path());
+    let state = auto_state(vec![reader.clone()], data.path());
+    state
+        .subscription_cache
+        .register_reader(crate::credential_recovery_store::PRIMARY_ACCOUNT, &reader);
+    crate::refresh::test_support::seed_cached_token(
+        &state.subscription_cache,
+        SubscriptionProvider::Qwen,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        crate::subscription::SubscriptionToken {
+            access_token: "cached-access".into(),
+            refresh_token: Some("same-link".into()),
+            expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 3_600_000),
+            account_id: Some("account-a".into()),
+            resource_url: None,
+        },
+    );
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Qwen,
+        Some("account-a".into()),
+        vec!["account-a-model".into()],
+    );
+
+    let routed = route_state_with_subscription(&state, &json!({"model": "account-a-model"}))
+        .await
+        .expect("the cached account still owns the catalog");
+    let selected = routed
+        .subscription
+        .as_ref()
+        .expect("automatic subscription snapshot")
+        .for_dispatch()
+        .await
+        .expect("a valid cached access token remains dispatchable");
+    assert_eq!(selected.token.access_token, "cached-access");
+}
+
+/// Provider discovery happens before credential work. A held Claude lock must
+/// not delay a request for a model advertised only by Codex.
+#[tokio::test]
+async fn unrelated_provider_lock_does_not_delay_automatic_routing() {
+    let data = tempdir().unwrap();
+    let claude = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let claude_path = claude.path().join(".credentials.json");
+    fs::write(
+        &claude_path,
+        r#"{"claudeAiOauth":{"accessToken":"claude-access"}}"#,
+    )
+    .unwrap();
+    fs::write(
+        codex.path().join("auth.json"),
+        r#"{"tokens":{"access_token":"codex-access","account_id":"account-a"}}"#,
+    )
+    .unwrap();
+    let state = auto_state(
+        vec![
+            SubscriptionReader::new(SubscriptionProvider::Claude, claude.path()),
+            SubscriptionReader::new(SubscriptionProvider::Codex, codex.path()),
+        ],
+        data.path(),
+    );
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["codex-only-model".into()],
+    );
+    let lock_path = crate::credential_store::lock_path_for(&claude_path);
+    let _held = crate::durable_file::lock_exclusive_async(&lock_path, Duration::from_secs(1))
+        .await
+        .unwrap();
+
+    let routed = tokio::time::timeout(
+        Duration::from_millis(100),
+        route_state_with_subscription(&state, &json!({"model": "codex-only-model"})),
+    )
+    .await
+    .expect("an unrelated provider lock must not be consulted")
+    .expect("Codex owns the requested model");
+    assert_eq!(routed.state.upstream_provider, UpstreamProvider::Codex);
+}
+
+/// Candidate-first routing must retain the useful catalog detail for a wrong
+/// model id without locking or refreshing every configured provider.
+#[tokio::test]
+async fn an_unknown_model_still_names_the_healthy_advertised_models() {
     let data = tempdir().unwrap();
     let codex = tempdir().unwrap();
     fs::write(
         codex.path().join("auth.json"),
-        r#"{"tokens":{"access_token":"codex-a","account_id":"account-a"}}"#,
+        r#"{"tokens":{"access_token":"codex-access","account_id":"account-a"}}"#,
     )
     .unwrap();
     let state = auto_state(
@@ -227,6 +398,54 @@ async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
         )],
         data.path(),
     );
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["known-codex-model".into()],
+    );
+
+    let Err(error) = route_state_with_subscription(&state, &json!({"model": "wrong-model"})).await
+    else {
+        panic!("a model absent from every live catalog must be rejected");
+    };
+    let message = error.to_string();
+    assert!(
+        message.contains("known-codex-model"),
+        "the refusal must retain the existing advertised-model guidance: {message}"
+    );
+}
+
+#[tokio::test]
+async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
+    let forwarded = Arc::new(AtomicUsize::new(0));
+    let forwarded_for_stub = Arc::clone(&forwarded);
+    let stub = axum::Router::new().fallback(move || {
+        let forwarded = Arc::clone(&forwarded_for_stub);
+        async move {
+            forwarded.fetch_add(1, Ordering::SeqCst);
+            (StatusCode::OK, "{}")
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let stub_url = format!("http://{}", listener.local_addr().unwrap());
+    let stub_task = tokio::spawn(async move {
+        axum::serve(listener, stub).await.unwrap();
+    });
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    fs::write(
+        codex.path().join("auth.json"),
+        r#"{"tokens":{"access_token":"codex-a","account_id":"account-a"}}"#,
+    )
+    .unwrap();
+    let mut state = auto_state(
+        vec![SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            codex.path(),
+        )],
+        data.path(),
+    );
+    state.subscription_base_url = Some(stub_url);
     state.model_catalogs.record_success_for(
         SubscriptionProvider::Codex,
         Some("account-a".into()),
@@ -275,6 +494,8 @@ async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
     assert!(!body.contains(&data.path().to_string_lossy().to_string()));
     assert!(!body.contains(&codex.path().to_string_lossy().to_string()));
     assert!(!body.contains(&lock_path.to_string_lossy().to_string()));
+    assert_eq!(forwarded.load(Ordering::SeqCst), 0);
+    stub_task.abort();
 }
 
 #[tokio::test]

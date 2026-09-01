@@ -47,3 +47,30 @@ pub(super) fn register_test_store(
     );
     directory
 }
+
+/// Seed a cached access token without adding a test-only method to
+/// [`TokenCache`] itself.
+pub fn seed_cached_token(
+    cache: &TokenCache,
+    provider: SubscriptionProvider,
+    account: &str,
+    token: SubscriptionToken,
+) {
+    cache.store_for(provider, account, token);
+}
+
+/// Exercise one real refresh exchange against a controlled endpoint while
+/// keeping the endpoint override in test infrastructure.
+pub async fn refresh_against(
+    cache: &TokenCache,
+    client: &reqwest::Client,
+    token_url: &str,
+    provider: SubscriptionProvider,
+    account: &str,
+    disk_token: SubscriptionToken,
+    now_ms: i64,
+) -> SubscriptionToken {
+    cache
+        .get_fresh_for_at(client, token_url, provider, account, disk_token, now_ms)
+        .await
+}

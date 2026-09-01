@@ -861,5 +861,9 @@ mod health_tests;
 mod snapshot_tests;
 
 #[cfg(test)]
+#[path = "model_routing_pool_tests.rs"]
+mod pool_tests;
+
+#[cfg(test)]
 #[path = "model_routing_recovery_tests.rs"]
 mod recovery_tests;

@@ -660,7 +660,7 @@ async fn resolve_upstream_credentials(
             return Err("validated subscription does not match the Anthropic provider".into());
         }
         let selected = validated
-            .for_dispatch()
+            .for_dispatch_with_context(state, context)
             .await
             .map_err(std::io::Error::other)?;
         return Ok((selected.token.access_token, Some(selected.name)));

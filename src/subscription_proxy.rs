@@ -222,7 +222,10 @@ async fn forward_subscription_openai_inner(
                 "validated subscription does not match the routed provider",
             );
         }
-        match validated.for_dispatch().await {
+        match validated
+            .for_dispatch_with_context(state, &routing_context)
+            .await
+        {
             Ok(selected) => selected,
             Err(error) => {
                 return error_response(
