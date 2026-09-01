@@ -57,9 +57,13 @@ impl ValidatedSubscription {
         let current = reload_store_locked(store, self.provider).await?;
         // An endpoint may issue a new access token without rotating the refresh
         // link. That access token is intentionally cached rather than written,
-        // so either the exact pre-refresh baseline or a durably persisted full
-        // selected token proves no outside holder replaced the credential.
-        if current != *baseline && current != selected.token {
+        // so the pre-refresh baseline remains acceptable. A rotated Codex link
+        // is written, but its response-derived expiry is not part of Codex's
+        // durable format; compare every credential/routing field while ignoring
+        // only that provider-specific lossy representation.
+        if !durably_equivalent(self.provider, &current, baseline)
+            && !durably_equivalent(self.provider, &current, &selected.token)
+        {
             return Err(format!(
                 "the {} credential changed after its model catalog was validated; retry after discovery completes",
                 self.provider
@@ -118,6 +122,19 @@ impl ValidatedSubscription {
     const fn uses_account_pool(&self) -> bool {
         matches!(self.selection, CredentialSelection::AccountPool)
     }
+}
+
+fn durably_equivalent(
+    provider: SubscriptionProvider,
+    current: &SubscriptionToken,
+    expected: &SubscriptionToken,
+) -> bool {
+    current == expected
+        || (provider == SubscriptionProvider::Codex
+            && current.access_token == expected.access_token
+            && current.refresh_token == expected.refresh_token
+            && current.account_id == expected.account_id
+            && current.resource_url == expected.resource_url)
 }
 
 /// Internal routing result carrying request-local credential evidence.

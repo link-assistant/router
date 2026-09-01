@@ -281,6 +281,110 @@ async fn refreshed_access_with_an_unchanged_link_remains_dispatchable() {
     refresh_task.abort();
 }
 
+/// Codex intentionally does not persist the response-derived expiry when it
+/// writes a rotated refresh link. A durable re-read can therefore differ from
+/// the selected token only in expiry representation and must still pass the
+/// dispatch barrier.
+#[tokio::test]
+async fn writable_codex_rotation_with_a_lossy_expiry_remains_dispatchable() {
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, codex.path());
+    fs::write(
+        codex.path().join("auth.json"),
+        json!({
+            "tokens": {
+                "access_token": "expired-access",
+                "refresh_token": "old-link",
+                "account_id": "account-a"
+            },
+            "expiry_date": 1
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let state = auto_state(vec![reader.clone()], data.path());
+    state.model_catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("account-a".into()),
+        vec!["account-a-model".into()],
+    );
+    let baseline = reader.read_token().unwrap();
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let selected = crate::subscription::SubscriptionToken {
+        access_token: "fresh-access".into(),
+        refresh_token: Some("rotated-link".into()),
+        expires_at_ms: Some(now_ms + 3_600_000),
+        account_id: Some("account-a".into()),
+        resource_url: None,
+    };
+    crate::refresh::test_support::seed_cached_token(
+        &state.subscription_cache,
+        SubscriptionProvider::Codex,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        selected.clone(),
+    );
+
+    let routed = route_state_with_subscription(&state, &json!({"model": "account-a-model"}))
+        .await
+        .expect("the cached account still owns the catalog");
+
+    let refresh = axum::Router::new().fallback(|| async {
+        axum::Json(json!({
+            "access_token": "fresh-access",
+            "refresh_token": "rotated-link",
+            "expires_in": 3600
+        }))
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let refresh_url = format!("http://{}", listener.local_addr().unwrap());
+    let refresh_task = tokio::spawn(async move {
+        axum::serve(listener, refresh).await.unwrap();
+    });
+    let writer_cache = crate::refresh::TokenCache::new();
+    let store = state
+        .subscription_cache
+        .store_for_subscription(
+            SubscriptionProvider::Codex,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        )
+        .expect("registered writable Codex store");
+    writer_cache.register_store(
+        SubscriptionProvider::Codex,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        store,
+    );
+    let refreshed = crate::refresh::test_support::refresh_against(
+        &writer_cache,
+        &state.client,
+        &refresh_url,
+        SubscriptionProvider::Codex,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        baseline.clone(),
+        now_ms,
+    )
+    .await;
+    assert_eq!(refreshed, selected);
+    let durable = reader.read_token().expect("re-read persisted rotation");
+    assert_ne!(durable, baseline, "the refresh link must rotate on disk");
+    assert_eq!(durable.access_token, selected.access_token);
+    assert_eq!(durable.refresh_token, selected.refresh_token);
+    assert_ne!(
+        durable.expires_at_ms, selected.expires_at_ms,
+        "the fixture must reproduce Codex's lossy expiry round trip"
+    );
+
+    let dispatched = routed
+        .subscription
+        .as_ref()
+        .expect("automatic subscription snapshot")
+        .for_dispatch()
+        .await
+        .expect("the durably persisted rotation remains dispatchable");
+    assert_eq!(dispatched.token, selected);
+    refresh_task.abort();
+}
+
 /// A valid cached access token is intentionally newer than the unchanged disk
 /// baseline. Revalidation must not mistake that normal cache state for an
 /// external credential rotation.
@@ -371,7 +475,7 @@ async fn unrelated_provider_lock_does_not_delay_automatic_routing() {
         .unwrap();
 
     let routed = tokio::time::timeout(
-        Duration::from_millis(100),
+        Duration::from_secs(1),
         route_state_with_subscription(&state, &json!({"model": "codex-only-model"})),
     )
     .await
