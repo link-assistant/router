@@ -241,23 +241,23 @@ fn terminal_message(
     if !error.is_invalid_grant() {
         return error.to_string();
     }
-    let Some(store) = store else {
+    if store.is_none() {
         return error.to_string();
-    };
-    let location = store.describe();
+    }
     if retried_with_newer_link {
         return format!(
             "refresh token is no longer valid (invalid_grant): a newer refresh token found in \
-             {location} was rejected as well, so the whole token family has been revoked — \
-             re-authenticate this subscription with `link-assistant-router auth {provider}` ({})",
+             the registered {provider} credential store was rejected as well, so the whole token \
+             family has been revoked — re-authenticate this subscription with \
+             `link-assistant-router auth {provider}` ({})",
             endpoint_answer(error)
         );
     }
     format!(
-        "refresh token is no longer valid (invalid_grant): {location} still holds the same \
-         refresh token that was just rejected, so it was revoked or already spent elsewhere \
-         rather than rotated past — re-authenticate this subscription with \
-         `link-assistant-router auth {provider}` ({})",
+        "refresh token is no longer valid (invalid_grant): the registered {provider} credential \
+         store still holds the same refresh token that was just rejected, so it was revoked or \
+         already spent elsewhere rather than rotated past — re-authenticate this subscription \
+         with `link-assistant-router auth {provider}` ({})",
         endpoint_answer(error)
     )
 }

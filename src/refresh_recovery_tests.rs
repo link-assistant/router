@@ -6,12 +6,60 @@
 //! re-reading the file another holder had already rotated forward.
 
 use std::sync::{Arc, Mutex};
+use std::{fmt, io};
 
 use super::super::TokenCache;
 use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
 
 const NOW_MS: i64 = 1_700_000_000_000;
+
+#[derive(Clone, Default)]
+struct CapturedLogs(Arc<Mutex<Vec<u8>>>);
+
+impl fmt::Debug for CapturedLogs {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("CapturedLogs")
+            .finish_non_exhaustive()
+    }
+}
+
+impl io::Write for CapturedLogs {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(bytes);
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+impl<'writer> tracing_subscriber::fmt::MakeWriter<'writer> for CapturedLogs {
+    type Writer = Self;
+
+    fn make_writer(&'writer self) -> Self::Writer {
+        self.clone()
+    }
+}
+
+impl CapturedLogs {
+    fn subscriber(&self) -> tracing::Dispatch {
+        tracing::Dispatch::new(
+            tracing_subscriber::fmt()
+                .with_ansi(false)
+                .without_time()
+                .with_max_level(tracing::Level::TRACE)
+                .with_writer(self.clone())
+                .finish(),
+        )
+    }
+
+    fn contents(&self) -> String {
+        String::from_utf8(self.0.lock().unwrap().clone()).expect("UTF-8 tracing output")
+    }
+}
 
 /// A Claude credential file in the layout the Claude CLI writes.
 fn seed_credential(home: &std::path::Path, access: &str, refresh: &str, expires_at_ms: i64) {
@@ -225,7 +273,7 @@ async fn a_rotation_that_lands_during_the_exchange_is_adopted_instead_of_reporte
 
 /// A credential the store has *not* rotated past is genuinely revoked, and must
 /// still be terminal — but the message has to say which of the two causes it is
-/// and where that was checked.
+/// and that the registered store was checked without exposing its path.
 #[tokio::test]
 async fn a_revoked_credential_stays_terminal_and_names_the_cause() {
     let home = tempfile::tempdir().expect("temp home");
@@ -267,7 +315,11 @@ async fn a_revoked_credential_stays_terminal_and_names_the_cause() {
         message.contains("link-assistant-router auth claude"),
         "{message}"
     );
-    assert!(message.contains(".credentials.json"), "{message}");
+    assert!(
+        message.contains("registered claude credential store"),
+        "{message}"
+    );
+    assert!(!message.contains(home.path().to_string_lossy().as_ref()));
     // The generic "waiting will not help" advice is the sentence issue #239
     // calls misleading; the ladder gives the checked one instead.
     assert!(!message.contains("waiting will not help"), "{message}");
@@ -712,7 +764,11 @@ async fn a_family_that_is_revoked_wholesale_says_the_newer_link_was_tried_too() 
         reported.contains("token family has been revoked"),
         "{reported}"
     );
-    assert!(reported.contains(".credentials.json"), "{reported}");
+    assert!(
+        reported.contains("registered claude credential store"),
+        "{reported}"
+    );
+    assert!(!reported.contains(home.path().to_string_lossy().as_ref()));
     assert!(
         reported.contains("link-assistant-router auth claude"),
         "{reported}"

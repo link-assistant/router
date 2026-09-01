@@ -13,7 +13,8 @@
 //! particular vendor layout and lets tests drive the same recovery ladder
 //! against an in-memory store.
 //!
-//! Secrets are never logged here; only the path a credential was read from is.
+//! Secrets, account identifiers, credential paths, and path-bearing read errors
+//! are never logged here. Refresh diagnostics name only the provider.
 
 use std::path::{Path, PathBuf};
 
@@ -58,12 +59,8 @@ impl CredentialStore for SubscriptionReader {
     fn reload(&self) -> Option<SubscriptionToken> {
         match self.read_token() {
             Ok(token) => Some(token),
-            Err(error) => {
-                tracing::debug!(
-                    "could not re-read the {} credential from {}: {error}",
-                    self.provider(),
-                    self.home().display()
-                );
+            Err(_error) => {
+                tracing::debug!("could not re-read the {} credential", self.provider());
                 None
             }
         }
