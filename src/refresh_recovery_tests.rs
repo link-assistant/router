@@ -146,6 +146,9 @@ async fn drain(server: tokio::task::JoinHandle<()>) {
 const INVALID_GRANT: &str =
     r#"{"error":"invalid_grant","error_description":"refresh token not found"}"#;
 
+#[path = "refresh_transaction_tests.rs"]
+mod transaction;
+
 /// The case from issue #239: our refresh token is rejected because another
 /// holder already rotated the chain forward. Re-reading the credential is all
 /// it takes to keep serving, so no `invalid_grant` may be reported as revoked

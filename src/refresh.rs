@@ -223,6 +223,9 @@ pub enum RefreshError {
     Status(u16, String, Option<i64>),
     /// The response body could not be parsed or lacked an access token.
     Parse(String),
+    /// The refresh transaction could not acquire or durably update its
+    /// credential store.
+    Storage(String),
 }
 
 /// OAuth error codes that mean the refresh token itself will never work again.
@@ -319,6 +322,7 @@ impl std::fmt::Display for RefreshError {
             ),
             Self::Status(code, m, _) => write!(f, "refresh endpoint returned {code}: {m}"),
             Self::Parse(m) => write!(f, "refresh response parse error: {m}"),
+            Self::Storage(m) => write!(f, "refresh credential storage failed: {m}"),
         }
     }
 }

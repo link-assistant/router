@@ -36,8 +36,7 @@ use crate::vendor_cli_refresh::VendorCli;
 /// How long to wait for another holder's read → refresh → write cycle.
 ///
 /// Long enough to cover a token exchange over a slow link, short enough that a
-/// stale lock cannot wedge the router: on timeout the refresh proceeds
-/// unlocked, which is exactly the behaviour that existed before locking.
+/// stale holder reports a retryable storage failure instead of waiting forever.
 const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Which rung of the ladder produced a usable credential.
@@ -161,57 +160,56 @@ fn is_usable(
     }
 }
 
-/// Take the credential's advisory lock, or proceed without it.
-///
-/// Failing to lock is never fatal: a read-only mount cannot create the lock
-/// file, and a stale holder must not be able to wedge token renewal. Both cases
-/// degrade to the unlocked behaviour that existed before, and say so at `debug`.
+fn storage_rejection(message: impl Into<String>) -> Rejected {
+    let error = RefreshError::Storage(message.into());
+    let message = error.to_string();
+    Rejected { error, message }
+}
+
+/// Take the credential's advisory lock or reject the transaction.
 async fn acquire_lock(
-    store: Option<&Arc<dyn CredentialStore>>,
+    store: &Arc<dyn CredentialStore>,
     provider: SubscriptionProvider,
-) -> Option<crate::durable_file::FileLockGuard> {
-    let path = store?.lock_path()?;
-    match crate::durable_file::lock_exclusive_async(&path, LOCK_TIMEOUT).await {
-        Ok(guard) => Some(guard),
-        Err(error) => {
-            tracing::debug!(
-                "proceeding without the {provider} credential lock at {}: {error}",
-                path.display()
-            );
-            None
-        }
-    }
+) -> Result<crate::durable_file::FileLockGuard, Rejected> {
+    let path = store.lock_path().ok_or_else(|| {
+        storage_rejection(format!(
+            "the registered {provider} credential store has no durable lock path"
+        ))
+    })?;
+    crate::durable_file::lock_exclusive_async(&path, LOCK_TIMEOUT)
+        .await
+        .map_err(|error| {
+            let action = if error.kind() == std::io::ErrorKind::WouldBlock {
+                "timed out waiting for"
+            } else {
+                "could not acquire"
+            };
+            storage_rejection(format!("{action} the durable {provider} credential lock"))
+        })
 }
 
 /// Write a rotated refresh token back before its access token is used.
 ///
 /// Only a genuinely rotated link is written, so an unchanged credential on a
-/// read-only mount stays silent. A failed write is logged and tolerated: the
-/// in-memory token still serves this process, it just will not survive a
-/// restart — and saying so is more useful than failing the refresh.
+/// read-only mount stays silent. A failed write rejects the transaction so the
+/// fresh chain link cannot escape into memory without a durable replacement.
 fn persist_rotation(
-    store: Option<&Arc<dyn CredentialStore>>,
+    store: &Arc<dyn CredentialStore>,
     baseline: &SubscriptionToken,
     fresh: &SubscriptionToken,
     provider: SubscriptionProvider,
-) {
-    let Some(store) = store else {
-        return;
-    };
+) -> Result<(), Rejected> {
     if !has_newer_refresh_link(baseline, fresh) {
-        return;
+        return Ok(());
     }
-    match store.persist(fresh) {
-        Ok(()) => tracing::info!(
-            "persisted a rotated {provider} refresh token to {}",
-            store.describe()
-        ),
-        Err(error) => tracing::warn!(
-            "could not persist the rotated {provider} refresh token to {}: {error} — this \
-             process keeps working, but the rotation will not survive a restart",
-            store.describe()
-        ),
+    if store.persist(fresh).is_err() {
+        return Err(storage_rejection(format!(
+            "could not durably persist the rotated {provider} credential; the registered \
+             primary and recovery storage did not accept it"
+        )));
     }
+    tracing::info!("persisted a rotated {provider} refresh token");
+    Ok(())
 }
 
 /// What the endpoint actually answered.
@@ -279,36 +277,45 @@ pub(super) async fn exchange_with_recovery(
         now_ms,
         mode,
     } = exchange;
+    let store = store.ok_or_else(|| {
+        storage_rejection(format!(
+            "a durable credential store is not registered for {provider}"
+        ))
+    })?;
     // Held for the whole read → refresh → write cycle so the router never races
     // with another holder and never writes a link older than the one on disk.
-    let _lock = acquire_lock(store, provider).await;
+    let _lock = acquire_lock(store, provider).await?;
 
     // Rung 1: the store may already be ahead of the token we were handed.
-    let stored = store.and_then(|store| store.reload());
+    let stored = store.reload().ok_or_else(|| {
+        storage_rejection(format!(
+            "could not re-read the registered {provider} credential while holding its lock"
+        ))
+    })?;
     let mut candidate = base.clone();
     let mut from_store = false;
-    if let Some(stored) = stored.as_ref().filter(|stored| !is_same_link(stored, base)) {
-        if is_usable(stored, base, mode, now_ms) {
+    if !is_same_link(&stored, base) {
+        if is_usable(&stored, base, mode, now_ms) {
             tracing::info!(
                 "{provider} credential recovery: {}",
                 RecoveryRung::AdoptedStoredToken.describe()
             );
             return Ok(Recovered {
-                token: stored.clone(),
+                token: stored,
                 rung: RecoveryRung::AdoptedStoredToken,
             });
         }
-        if has_newer_refresh_link(base, stored) {
+        if has_newer_refresh_link(base, &stored) {
             candidate = stored.clone();
             from_store = true;
         }
     }
-    let baseline = stored.clone().unwrap_or_else(|| base.clone());
+    let baseline = stored;
 
     // Rung 2: exchange the newest link we hold.
     let error = match refresh_at(client, token_url, provider, &candidate, now_ms).await {
         Ok(fresh) => {
-            persist_rotation(store, &baseline, &fresh, provider);
+            persist_rotation(store, &baseline, &fresh, provider)?;
             let rung = if from_store {
                 RecoveryRung::AdoptedRotatedLink
             } else {
@@ -331,23 +338,19 @@ pub(super) async fn exchange_with_recovery(
     // Rung 3: the rotation may have landed on disk while we were exchanging.
     // This is the single check that turns the common case from a mandatory
     // re-login back into a retry.
-    let Some(reread) = store.and_then(|store| store.reload()) else {
-        // Without a store there is nothing to re-read, so the vendor client
-        // could rotate the chain and we would never see it.
-        return Err(Rejected {
-            message: terminal_message(provider, &error, store, false),
-            error,
-        });
-    };
+    let reread = store.reload().ok_or_else(|| {
+        storage_rejection(format!(
+            "could not re-read the registered {provider} credential after the endpoint rejected it"
+        ))
+    })?;
     if has_newer_refresh_link(&candidate, &reread) {
         tracing::info!(
-            "{provider} rejected a refresh token that {} has already rotated past; retrying \
-             once with the newer one",
-            store.map_or_else(|| String::from("the credential store"), |s| s.describe())
+            "{provider} rejected a refresh token that the registered credential store has \
+             already rotated past; retrying once with the newer one"
         );
         match refresh_at(client, token_url, provider, &reread, now_ms).await {
             Ok(fresh) => {
-                persist_rotation(store, &reread, &fresh, provider);
+                persist_rotation(store, &reread, &fresh, provider)?;
                 tracing::info!(
                     "{provider} credential recovery: {}",
                     RecoveryRung::AdoptedRotatedLink.describe()
@@ -408,7 +411,7 @@ pub(super) async fn exchange_with_recovery(
 /// touching anything (issue #239).
 async fn vendor_cli_or_reject(
     exchange: &Exchange<'_>,
-    store: Option<&Arc<dyn CredentialStore>>,
+    store: &Arc<dyn CredentialStore>,
     vendor_cli: Option<&Arc<VendorCli>>,
     error: RefreshError,
     tried: Tried<'_>,
@@ -422,10 +425,10 @@ async fn vendor_cli_or_reject(
         mode,
     } = exchange;
     let reject = |error: RefreshError| Rejected {
-        message: terminal_message(provider, &error, store, retried_with_newer_link),
+        message: terminal_message(provider, &error, Some(store), retried_with_newer_link),
         error,
     };
-    let (Some(store), Some(cli)) = (store, vendor_cli) else {
+    let Some(cli) = vendor_cli else {
         return Err(reject(error));
     };
     // Record our own request shape next to the client's, so that if the vendor
@@ -455,7 +458,7 @@ async fn vendor_cli_or_reject(
     }
     match refresh_at(client, token_url, provider, &rotated, now_ms).await {
         Ok(fresh) => {
-            persist_rotation(Some(store), &rotated, &fresh, provider);
+            persist_rotation(store, &rotated, &fresh, provider)?;
             tracing::info!(
                 "{provider} credential recovery: {}",
                 RecoveryRung::VendorCliRotation.describe()

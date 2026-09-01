@@ -2,6 +2,10 @@
 
 use super::*;
 
+#[path = "refresh_test_support.rs"]
+mod test_support;
+use test_support::register_test_store;
+
 fn token(refresh: Option<&str>, exp: Option<i64>) -> SubscriptionToken {
     SubscriptionToken {
         access_token: "old-access".into(),
@@ -159,6 +163,7 @@ async fn concurrent_successful_refreshes_share_one_exchange() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("one-refresh-token"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     let requests = (0..10).map(|_| {
         cache.get_fresh_for_at(
             &client,
@@ -217,6 +222,7 @@ async fn terminal_refresh_failure_is_attempted_only_once_for_same_credential() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("revoked-refresh"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     let requests = (0..8).map(|_| {
         cache.get_fresh_for_at(
             &client,
@@ -248,6 +254,7 @@ async fn a_token_near_expiry_is_refreshed_before_it_lapses() {
 
     // Still valid for another 10 seconds — inside the refresh window.
     let nearly_due = token(Some("r"), Some(100_000));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &nearly_due);
     let out = cache
         .get_fresh_for_at(
             &client,
@@ -374,6 +381,7 @@ async fn a_rate_limited_refresh_leaves_the_subscription_usable() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("rate-limited-refresh"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     let returned = cache
         .get_fresh_for_at(
             &client,
@@ -470,6 +478,7 @@ async fn a_server_error_refresh_is_retried_rather_than_written_off() {
     let cache = TokenCache::new();
     let client = reqwest::Client::new();
     let expired = token(Some("transient-refresh"), Some(1));
+    let _store = register_test_store(&cache, SubscriptionProvider::Claude, "primary", &expired);
     for now in [10_000, 11_001] {
         let _ = cache
             .get_fresh_for_at(
@@ -712,13 +721,14 @@ fn terminal_classification_requires_status_and_parsed_code() {
     assert!(!RefreshError::Status(400, "Bad Request".to_string(), None).is_invalid_grant());
 }
 
-/// Network-level failures carry no status and are always retryable.
+/// Failures without a terminal endpoint verdict are always retryable.
 #[test]
 fn transport_failures_are_never_terminal() {
     for error in [
         RefreshError::Request("connection reset by peer".to_string()),
         RefreshError::Request("operation timed out".to_string()),
         RefreshError::Parse("expected value".to_string()),
+        RefreshError::Storage("durable lock unavailable".to_string()),
         RefreshError::NoRefreshToken,
     ] {
         assert!(!error.is_invalid_grant(), "{error}");
@@ -862,6 +872,7 @@ fn every_refresh_error_variant_renders_a_message() {
         RefreshError::NoRefreshToken,
         RefreshError::Request("connection refused".into()),
         RefreshError::Parse("expected value".into()),
+        RefreshError::Storage("durable lock unavailable".into()),
         RefreshError::Status(500, "boom".into(), None),
     ]
     .iter()
@@ -881,7 +892,8 @@ fn every_refresh_error_variant_renders_a_message() {
         rendered[2]
     );
     assert!(rendered[3].contains("parse error"), "{}", rendered[3]);
-    assert!(rendered[4].contains("500"), "{}", rendered[4]);
+    assert!(rendered[4].contains("storage"), "{}", rendered[4]);
+    assert!(rendered[5].contains("500"), "{}", rendered[5]);
 }
 
 /// The form-encoded providers send the same grant over

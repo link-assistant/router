@@ -44,6 +44,8 @@ async fn a_refused_refresh_chain_is_reported_rejected_and_unhealthy() {
         r#"{"claudeAiOauth":{"accessToken":"tok","refreshToken":"revoked-refresh-token","expiresAt":1600000000000}}"#,
     )
     .unwrap();
+    let reader =
+        crate::subscription::SubscriptionReader::new(SubscriptionProvider::Claude, dir.clone());
     let router = crate::accounts::AccountRouter::new(
         dir,
         &[],
@@ -51,6 +53,7 @@ async fn a_refused_refresh_chain_is_reported_rejected_and_unhealthy() {
         std::time::Duration::from_secs(60),
     );
     let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
 
     // Before the ladder has tried anything, the file is all there is to go on,
     // and "expired with a refresh token" is genuinely recoverable.
