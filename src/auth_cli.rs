@@ -492,7 +492,6 @@ async fn complete_native_claude(
 ) -> Result<(), String> {
     let auth_config = link_assistant_router::claude_auth::ClaudeAuthConfig::for_mode(
         config.login.claude_code_home.clone(),
-        config.data_dir.clone(),
         mode,
     );
     let submitted = if let Some(code) = code {
@@ -512,7 +511,9 @@ async fn complete_native_claude(
         );
     }
     let login = link_assistant_router::claude_auth::ClaudeLogin::resume(auth_config)?;
-    login.complete(submitted.trim()).await?;
+    login
+        .complete_with_data_dir(submitted.trim(), &config.data_dir)
+        .await?;
     println!(
         "Claude authorization saved in {}",
         config.login.claude_code_home.display()
@@ -565,7 +566,8 @@ async fn run_claude_cli_fallback(
                 return ExitCode::from(1);
             }
         };
-    match complete_claude_cli(config, &LoginManager::new(fallback_config), code).await {
+    let manager = LoginManager::new_with_data_dir(fallback_config, config.data_dir.clone());
+    match complete_claude_cli(config, &manager, code).await {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("error: {error}");
@@ -601,7 +603,6 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
     }
     let mut settings = link_assistant_router::auth::CodexAuthConfig::production(
         config.login.codex_home.clone(),
-        config.data_dir.clone(),
         port,
         config.login.session_ttl,
     );
@@ -615,7 +616,7 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
     };
     println!("Open this URL:\n{}", login.authorization_url());
     println!("Waiting for the browser callback on port {}…", login.port());
-    match login.complete().await {
+    match login.complete_with_data_dir(&config.data_dir).await {
         Ok(path) => {
             println!("Codex authorization saved in {}", path.display());
             ExitCode::SUCCESS
@@ -630,7 +631,6 @@ async fn run_codex(config: &Config, flow: AuthFlow, port: u16) -> ExitCode {
 async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
     let mut settings = link_assistant_router::auth::CodexAuthConfig::production(
         config.login.codex_home.clone(),
-        config.data_dir.clone(),
         port,
         config.login.session_ttl,
     );
@@ -648,7 +648,7 @@ async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
         login.user_code()
     );
     println!("Waiting for device authorization…");
-    match login.complete().await {
+    match login.complete_with_data_dir(&config.data_dir).await {
         Ok(path) => {
             println!("Codex authorization saved in {}", path.display());
             ExitCode::SUCCESS

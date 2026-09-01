@@ -38,12 +38,48 @@ pub fn credential_lock_path(
         .join(format!("{}-{account_digest}.lock", provider.as_str()))
 }
 
+fn recovery_record_path(
+    data_dir: impl AsRef<Path>,
+    provider: SubscriptionProvider,
+    account: impl AsRef<str>,
+) -> PathBuf {
+    let account_digest = hex::encode(Sha256::digest(account.as_ref().as_bytes()));
+    data_dir
+        .as_ref()
+        .join(RECOVERY_DIRECTORY)
+        .join(format!("{}-{account_digest}.json", provider.as_str()))
+}
+
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct RecoveryRecord {
     version: u8,
     provider: SubscriptionProvider,
     baseline_fingerprint: Option<String>,
     token: SubscriptionToken,
+}
+
+/// Return the matching durable recovery record while its transaction lock is
+/// held. Invalid metadata is stale data, but an unreadable record is surfaced
+/// rather than treated as absence and overwritten.
+pub(crate) fn valid_recovery_record_path(
+    data_dir: impl AsRef<Path>,
+    provider: SubscriptionProvider,
+    account: impl AsRef<str>,
+) -> Result<Option<PathBuf>, String> {
+    let path = recovery_record_path(data_dir, provider, account);
+    let bytes = match std::fs::read(&path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(format!(
+                "could not check the durable {provider} credential recovery record: {error}"
+            ));
+        }
+    };
+    let Ok(record) = serde_json::from_slice::<RecoveryRecord>(&bytes) else {
+        return Ok(None);
+    };
+    Ok((record.version == RECOVERY_VERSION && record.provider == provider).then_some(path))
 }
 
 /// A credential store that falls back to the router's writable data directory.
@@ -64,13 +100,10 @@ impl RecoverableCredentialStore {
         primary: Arc<dyn CredentialStore>,
         data_dir: impl AsRef<Path>,
     ) -> Self {
-        let account_digest = hex::encode(Sha256::digest(account.as_ref().as_bytes()));
-        let stem = format!("{}-{account_digest}", provider.as_str());
-        let directory = data_dir.as_ref().join(RECOVERY_DIRECTORY);
         Self {
             provider,
             primary,
-            recovery_path: directory.join(format!("{stem}.json")),
+            recovery_path: recovery_record_path(&data_dir, provider, &account),
             lock_path: credential_lock_path(data_dir, provider, account),
         }
     }

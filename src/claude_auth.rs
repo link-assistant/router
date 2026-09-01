@@ -80,28 +80,25 @@ pub struct ClaudeAuthConfig {
     pub client_id: String,
     pub redirect_uri: String,
     pub claude_home: PathBuf,
-    /// Router data directory containing the shared provider/account lock.
-    pub data_dir: PathBuf,
     /// Scopes to request; see [`ClaudeAuthMode`].
     pub scopes: String,
 }
 
 impl ClaudeAuthConfig {
     #[must_use]
-    pub fn production(claude_home: PathBuf, data_dir: PathBuf) -> Self {
-        Self::for_mode(claude_home, data_dir, ClaudeAuthMode::Full)
+    pub fn production(claude_home: PathBuf) -> Self {
+        Self::for_mode(claude_home, ClaudeAuthMode::Full)
     }
 
     /// Production settings requesting the scopes of `mode`.
     #[must_use]
-    pub fn for_mode(claude_home: PathBuf, data_dir: PathBuf, mode: ClaudeAuthMode) -> Self {
+    pub fn for_mode(claude_home: PathBuf, mode: ClaudeAuthMode) -> Self {
         Self {
             authorize_url: CLAUDE_AUTHORIZE_URL.to_string(),
             token_url: CLAUDE_TOKEN_URL.to_string(),
             client_id: CLAUDE_CLIENT_ID.to_string(),
             redirect_uri: CLAUDE_REDIRECT_URI.to_string(),
             claude_home,
-            data_dir,
             scopes: mode.scopes().to_string(),
         }
     }
@@ -204,6 +201,16 @@ impl ClaudeLogin {
 
     /// Exchange a copied code and write the credential layout Claude Code uses.
     pub async fn complete(&self, pasted_code: &str) -> Result<PathBuf, String> {
+        self.complete_with_data_dir(pasted_code, &self.config.claude_home)
+            .await
+    }
+
+    /// Exchange a copied code and install under a Router-resolved lock root.
+    pub async fn complete_with_data_dir(
+        &self,
+        pasted_code: &str,
+        data_dir: impl AsRef<Path>,
+    ) -> Result<PathBuf, String> {
         let (code, returned_state) = pasted_code.trim().split_once('#').map_or_else(
             || (pasted_code.trim(), None),
             |(code, state)| (code, Some(state)),
@@ -242,7 +249,7 @@ impl ClaudeLogin {
         if token.access_token.trim().is_empty() {
             return Err("invalid Claude token response: missing access_token".to_string());
         }
-        persist(&self.config, token).await
+        persist(&self.config, token, data_dir.as_ref()).await
     }
 }
 
@@ -295,7 +302,11 @@ fn take_pending(home: &Path) -> Result<PendingLogin, String> {
     result
 }
 
-async fn persist(config: &ClaudeAuthConfig, token: TokenResponse) -> Result<PathBuf, String> {
+async fn persist(
+    config: &ClaudeAuthConfig,
+    token: TokenResponse,
+    data_dir: &Path,
+) -> Result<PathBuf, String> {
     let now = chrono::Utc::now().timestamp_millis();
     // Fall back to what this login actually asked for, so a narrow
     // `setup-token` credential is not recorded as carrying full scopes.
@@ -326,7 +337,7 @@ async fn persist(config: &ClaudeAuthConfig, token: TokenResponse) -> Result<Path
     );
     match reader
         .install_document_locked(
-            &config.data_dir,
+            data_dir,
             crate::credential_recovery_store::PRIMARY_ACCOUNT,
             &document,
             crate::subscription::InstallMode::Replace,

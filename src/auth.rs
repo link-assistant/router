@@ -1,10 +1,7 @@
-//! Provider-aware interactive subscription authorization.
-//!
-//! Claude uses its vendor CLI's copy/paste flow. Codex defaults to device-code
-//! authorization, with its PKCE loopback callback server available as fallback.
+//! Provider-aware native Claude and Codex subscription authorization.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -38,8 +35,6 @@ pub struct CodexAuthConfig {
     pub port: u16,
     /// Directory in which `auth.json` is written.
     pub codex_home: PathBuf,
-    /// Router data directory containing the shared provider/account lock.
-    pub data_dir: PathBuf,
     /// Maximum time to wait for the browser callback.
     pub timeout: Duration,
     /// Interface on which the callback listener is reachable.
@@ -49,18 +44,12 @@ pub struct CodexAuthConfig {
 impl CodexAuthConfig {
     /// Production configuration for a resolved Codex home.
     #[must_use]
-    pub fn production(
-        codex_home: PathBuf,
-        data_dir: PathBuf,
-        port: u16,
-        timeout: Duration,
-    ) -> Self {
+    pub fn production(codex_home: PathBuf, port: u16, timeout: Duration) -> Self {
         Self {
             issuer: CODEX_ISSUER.to_string(),
             client_id: CODEX_CLIENT_ID.to_string(),
             port,
             codex_home,
-            data_dir,
             timeout,
             bind_host: "127.0.0.1".to_string(),
         }
@@ -187,8 +176,17 @@ impl CodexDeviceLogin {
 
     /// Poll until the browser authorizes this device, then persist `auth.json`.
     pub async fn complete(self) -> Result<PathBuf, String> {
+        let data_dir = self.config.codex_home.clone();
+        self.complete_with_data_dir(data_dir).await
+    }
+
+    /// Complete device authorization under a Router-resolved lock root.
+    pub async fn complete_with_data_dir(
+        self,
+        data_dir: impl AsRef<Path>,
+    ) -> Result<PathBuf, String> {
         let timeout = self.config.timeout;
-        tokio::time::timeout(timeout, self.poll_and_store())
+        tokio::time::timeout(timeout, self.poll_and_store(data_dir.as_ref()))
             .await
             .unwrap_or_else(|_| {
                 Err(format!(
@@ -198,7 +196,7 @@ impl CodexDeviceLogin {
             })
     }
 
-    async fn poll_and_store(mut self) -> Result<PathBuf, String> {
+    async fn poll_and_store(mut self, data_dir: &Path) -> Result<PathBuf, String> {
         loop {
             match self.poll_once().await? {
                 DevicePoll::Pending => tokio::time::sleep(self.interval).await,
@@ -225,6 +223,7 @@ impl CodexDeviceLogin {
                         &redirect_uri,
                         &code.code_verifier,
                         &code.authorization_code,
+                        data_dir,
                     )
                     .await;
                 }
@@ -383,17 +382,30 @@ impl CodexLogin {
             .expect("redirect URI was built from a u16 port")
     }
 
-    /// Wait for a valid callback, exchange its code, persist the credential,
-    /// and stop the callback server on every exit path.
-    pub async fn complete(mut self) -> Result<PathBuf, String> {
+    /// Complete a callback and stop its server on every exit path.
+    pub async fn complete(self) -> Result<PathBuf, String> {
+        let data_dir = self.config.codex_home.clone();
+        self.complete_with_data_dir(data_dir).await
+    }
+
+    /// Complete loopback authorization under a Router-resolved lock root.
+    pub async fn complete_with_data_dir(
+        mut self,
+        data_dir: impl AsRef<Path>,
+    ) -> Result<PathBuf, String> {
         let callback = tokio::time::timeout(self.config.timeout, self.outcome_rx.recv()).await;
-        // The listener's only job is receiving one valid callback. Release the
-        // port before doing a potentially slow token exchange.
+        // Release the callback port before the potentially slow exchange.
         self.stop().await;
         match callback {
             Ok(Some(Ok(code))) => {
-                exchange_and_store(&self.config, &self.redirect_uri, &self.code_verifier, &code)
-                    .await
+                exchange_and_store(
+                    &self.config,
+                    &self.redirect_uri,
+                    &self.code_verifier,
+                    &code,
+                    data_dir.as_ref(),
+                )
+                .await
             }
             Ok(Some(Err(error))) => Err(error),
             Ok(None) => Err("Codex callback listener stopped before authorization".to_string()),
@@ -516,6 +528,7 @@ async fn exchange_and_store(
     redirect_uri: &str,
     verifier: &str,
     code: &str,
+    data_dir: &Path,
 ) -> Result<PathBuf, String> {
     let body = form_encode(&[
         ("grant_type", "authorization_code"),
@@ -543,12 +556,13 @@ async fn exchange_and_store(
         .json()
         .await
         .map_err(|error| format!("invalid Codex token response: {error}"))?;
-    persist_codex_auth(config, &tokens).await
+    persist_codex_auth(config, &tokens, data_dir).await
 }
 
 async fn persist_codex_auth(
     config: &CodexAuthConfig,
     tokens: &TokenResponse,
+    data_dir: &Path,
 ) -> Result<PathBuf, String> {
     let value = serde_json::json!({
         "auth_mode": "chatgpt",
@@ -566,7 +580,7 @@ async fn persist_codex_auth(
     );
     match reader
         .install_document_locked(
-            &config.data_dir,
+            data_dir,
             crate::credential_recovery_store::PRIMARY_ACCOUNT,
             &document,
             crate::subscription::InstallMode::Replace,
@@ -714,7 +728,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: occupied_port,
             codex_home: home.path().to_path_buf(),
-            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -737,7 +750,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 1455,
             codex_home: home.path().to_path_buf(),
-            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -753,8 +765,7 @@ mod tests {
         server.abort();
     }
 
-    /// Native Codex performs its network exchange before contending on the
-    /// same primary-account lock used by refresh, then installs atomically.
+    /// Native Codex exchanges before taking the primary refresh lock.
     #[tokio::test]
     async fn native_codex_install_contends_on_the_primary_refresh_lock() {
         let (issuer, state, server) = device_stub().await;
@@ -765,7 +776,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 1455,
             codex_home: home.path().to_path_buf(),
-            data_dir: data.path().to_path_buf(),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -779,7 +789,8 @@ mod tests {
         let holder = crate::durable_file::lock_exclusive_async(&lock_path, Duration::from_secs(1))
             .await
             .unwrap();
-        let completion = tokio::spawn(login.complete());
+        let data_path = data.path().to_path_buf();
+        let completion = tokio::spawn(login.complete_with_data_dir(data_path));
         for _ in 0..100 {
             if state.exchanges.load(Ordering::SeqCst) > 0 {
                 break;
@@ -848,7 +859,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
-            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -904,7 +914,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
-            data_dir: home.path().join("router-data"),
             timeout: Duration::from_millis(10),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -927,7 +936,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
-            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })
@@ -953,7 +961,6 @@ mod tests {
             client_id: CODEX_CLIENT_ID.to_string(),
             port: 0,
             codex_home: home.path().to_path_buf(),
-            data_dir: home.path().join("router-data"),
             timeout: Duration::from_secs(3),
             bind_host: "127.0.0.1".to_string(),
         })

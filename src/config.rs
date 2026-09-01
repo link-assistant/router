@@ -516,7 +516,6 @@ impl Config {
             return Err(ConfigError::MismatchedAccountRequestLimits);
         }
 
-        let login_data_dir = args.data_dir.clone();
         Ok(Self {
             listen_addr,
             token_secret,
@@ -566,7 +565,6 @@ impl Config {
             mpp: args.mpp,
             login: crate::login::LoginConfig {
                 claude_code_home: PathBuf::from(args.claude_code_home),
-                data_dir: login_data_dir,
                 ..args.login
             },
             admin_ui: args.admin_ui,

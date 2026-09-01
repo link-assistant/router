@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -10,14 +11,12 @@ use serde_json::{Value, json};
 #[test]
 fn native_login_builds_the_claude_pkce_authorization_url() {
     let home = tempfile::tempdir().unwrap();
-    let data = tempfile::tempdir().unwrap();
     let login = ClaudeLogin::begin(ClaudeAuthConfig {
         authorize_url: "https://claude.test/oauth/authorize".into(),
         token_url: "https://unused.test/token".into(),
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
-        data_dir: data.path().into(),
         scopes: CLAUDE_SCOPES.into(),
     });
     let url = reqwest::Url::parse(login.authorization_url()).unwrap();
@@ -63,7 +62,6 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
-        data_dir: data.path().into(),
         scopes: CLAUDE_SCOPES.into(),
     };
     let login = ClaudeLogin::begin_persisted(config.clone(), Duration::from_secs(900)).unwrap();
@@ -78,7 +76,7 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
 
     let path = ClaudeLogin::resume(config)
         .unwrap()
-        .complete(&format!("copied-code#{state}"))
+        .complete_with_data_dir(&format!("copied-code#{state}"), data.path())
         .await
         .unwrap();
     server.abort();
@@ -111,14 +109,24 @@ async fn native_login_exchanges_code_and_persists_a_refreshable_credential() {
 /// refresh lock only for installation.
 #[tokio::test]
 async fn native_claude_install_contends_on_the_primary_refresh_lock() {
+    let exchange_completed = Arc::new(tokio::sync::Notify::new());
+    let exchange_signal = Arc::clone(&exchange_completed);
+    let exchange_requests = Arc::new(AtomicUsize::new(0));
+    let request_counter = Arc::clone(&exchange_requests);
     let app = Router::new().route(
         "/token",
-        post(|| async {
-            Json(json!({
-                "access_token": "native-access",
-                "refresh_token": "native-refresh",
-                "expires_in": 3600
-            }))
+        post(move || {
+            let exchange_signal = Arc::clone(&exchange_signal);
+            let request_counter = Arc::clone(&request_counter);
+            async move {
+                request_counter.fetch_add(1, Ordering::SeqCst);
+                exchange_signal.notify_one();
+                Json(json!({
+                    "access_token": "native-access",
+                    "refresh_token": "native-refresh",
+                    "expires_in": 3600
+                }))
+            }
         }),
     );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -132,7 +140,6 @@ async fn native_claude_install_contends_on_the_primary_refresh_lock() {
         client_id: "public-client".into(),
         redirect_uri: "https://callback.test/code".into(),
         claude_home: home.path().into(),
-        data_dir: data.path().into(),
         scopes: CLAUDE_SCOPES.into(),
     };
     let login = ClaudeLogin::begin(config);
@@ -148,8 +155,12 @@ async fn native_claude_install_contends_on_the_primary_refresh_lock() {
     .await
     .unwrap();
 
-    let completion = tokio::spawn(async move { login.complete("copied-code").await });
-    tokio::time::sleep(Duration::from_millis(80)).await;
+    let data_path = data.path().to_path_buf();
+    let completion =
+        tokio::spawn(async move { login.complete_with_data_dir("copied-code", data_path).await });
+    exchange_completed.notified().await;
+    tokio::task::yield_now().await;
+    assert_eq!(exchange_requests.load(Ordering::SeqCst), 1);
     assert!(
         !completion.is_finished(),
         "native Claude installation bypassed the refresh lock"

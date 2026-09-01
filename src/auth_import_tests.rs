@@ -153,10 +153,9 @@ async fn rejected_candidate_without_force_reports_existing_destination_as_presen
     assert_eq!(std::fs::read_to_string(existing).unwrap(), current);
 }
 
-/// Force adopts a rejected candidate only into an empty destination; it never
-/// turns conditional mode into overwrite.
+/// Force never turns conditional mode into overwrite.
 #[tokio::test]
-async fn force_allows_rejected_candidate_only_when_destination_is_empty() {
+async fn force_does_not_overwrite_an_existing_destination() {
     let home = tempfile::tempdir().expect("credential home");
     let data = tempfile::tempdir().expect("router data");
     let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
@@ -183,6 +182,36 @@ async fn force_allows_rejected_candidate_only_when_destination_is_empty() {
         InstallDocumentResult::AlreadyPresent(existing.clone())
     );
     assert_eq!(std::fs::read_to_string(existing).unwrap(), current);
+}
+
+/// Force permits an explicitly rejected candidate when conditional mode finds
+/// no live destination state.
+#[tokio::test]
+async fn force_installs_a_rejected_candidate_into_an_empty_destination() {
+    let home = tempfile::tempdir().expect("credential home");
+    let data = tempfile::tempdir().expect("router data");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
+    let candidate = r#"{"auth_mode":"chatgpt","tokens":{"access_token":"rejected","refresh_token":"explicit"}}"#;
+
+    let outcome = install_candidate(
+        &reader,
+        data.path(),
+        candidate,
+        CredentialProbe::Rejected,
+        ImportPolicy {
+            if_absent: true,
+            force: true,
+        },
+    )
+    .await
+    .expect("force permits rejected candidate in empty destination");
+
+    let destination = home.path().join("auth.json");
+    assert_eq!(
+        outcome,
+        InstallDocumentResult::Installed(destination.clone())
+    );
+    assert_eq!(std::fs::read(destination).unwrap(), candidate.as_bytes());
 }
 
 /// Ordinary import retains its compatibility contract: an explicit

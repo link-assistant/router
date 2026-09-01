@@ -78,8 +78,6 @@ pub struct LoginConfig {
     pub claude_code_home: PathBuf,
     /// Directory where Codex credentials are written.
     pub codex_home: PathBuf,
-    /// Router data directory containing native-login credential locks.
-    pub data_dir: PathBuf,
     /// Codex OAuth issuer. Overridable for compatible deployments and tests.
     pub codex_issuer: String,
     /// Loopback callback port registered for the Codex OAuth client.
@@ -106,7 +104,6 @@ impl Default for LoginConfig {
             package_cache: None,
             claude_code_home: PathBuf::from("/data/claude"),
             codex_home: PathBuf::from("/data/codex"),
-            data_dir: PathBuf::from("/data"),
             codex_issuer: crate::auth::CODEX_ISSUER.to_string(),
             codex_callback_port: 1455,
             session_ttl: Duration::from_secs(900),
@@ -268,6 +265,7 @@ const fn terminal_retention() -> chrono::Duration {
 #[derive(Clone)]
 pub struct LoginManager {
     config: Arc<LoginConfig>,
+    data_dir: Option<Arc<PathBuf>>,
     sessions: Arc<Mutex<HashMap<String, Arc<Session>>>>,
 }
 
@@ -277,6 +275,17 @@ impl LoginManager {
     pub fn new(config: LoginConfig) -> Self {
         Self {
             config: Arc::new(config),
+            data_dir: None,
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// Create a manager whose native writers use the resolved Router data dir.
+    #[must_use]
+    pub fn new_with_data_dir(config: LoginConfig, data_dir: impl Into<PathBuf>) -> Self {
+        Self {
+            config: Arc::new(config),
+            data_dir: Some(Arc::new(data_dir.into())),
             sessions: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -369,7 +378,6 @@ impl LoginManager {
             let login = crate::claude_auth::ClaudeLogin::begin(
                 crate::claude_auth::ClaudeAuthConfig::for_mode(
                     self.config.claude_code_home.clone(),
-                    self.config.data_dir.clone(),
                     mode,
                 ),
             );
@@ -405,7 +413,6 @@ impl LoginManager {
         ensure_writable_dir(&codex_home)?;
         let mut codex_config = crate::auth::CodexAuthConfig::production(
             codex_home,
-            self.config.data_dir.clone(),
             self.config.codex_callback_port,
             self.config.session_ttl,
         );
@@ -434,8 +441,12 @@ impl LoginManager {
         });
         self.lock_sessions().insert(id, Arc::clone(&session));
         let task_session = Arc::clone(&session);
+        let data_dir = self
+            .data_dir
+            .clone()
+            .unwrap_or_else(|| Arc::new(self.config.codex_home.clone()));
         let task = tokio::spawn(async move {
-            let outcome = login.complete().await;
+            let outcome = login.complete_with_data_dir(data_dir.as_ref()).await;
             let mut state = task_session
                 .state
                 .lock()
@@ -497,7 +508,15 @@ impl LoginManager {
 
         let code = code.trim().to_string();
         let outcome = if let Some(login) = claude_login {
-            match login.complete(&code).await {
+            match login
+                .complete_with_data_dir(
+                    &code,
+                    self.data_dir
+                        .as_deref()
+                        .map_or(self.config.claude_code_home.as_path(), PathBuf::as_path),
+                )
+                .await
+            {
                 Ok(_) => read_credential(&self.config.claude_code_home).map_or_else(
                     || {
                         Outcome::Failed(

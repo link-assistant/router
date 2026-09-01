@@ -1,16 +1,10 @@
 //! Subscription OAuth credential readers for vendor coding CLIs.
 //!
-//! Several coding assistants (Claude Code, `OpenAI` Codex, Gemini CLI, qwen-code)
-//! authenticate the user's *subscription* via OAuth and cache the resulting
-//! bearer token in a well-known file under the user's home directory. Reading
-//! that file is the fastest, most reliable way to let the router forward
-//! requests against a real subscription — exactly how Claude works today via
-//! [`crate::oauth`]. This module generalizes that idea to all four vendors so
-//! each provider has a single, well-tested credential reader.
+//! Vendor coding assistants cache subscription OAuth credentials in well-known
+//! home-directory files; this module reads all four supported layouts into one
+//! normalized token shape.
 //!
-//! The on-disk layouts are vendor specific (documented per provider below and
-//! in `docs/case-studies/issue-37/online-research.md`); this module normalizes
-//! them into a single [`SubscriptionToken`] the proxy can route with.
+//! Vendor-specific layouts normalize into [`SubscriptionToken`].
 
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
@@ -437,8 +431,7 @@ impl SubscriptionReader {
         self.is_vendor_default_home()
     }
 
-    /// Install a credential document as this provider's credential.
-    /// Written owner-only and atomically through the durable path.
+    /// Install a credential document owner-only and atomically.
     pub fn install_document(&self, document: &str) -> Result<PathBuf, String> {
         // Where the provider's own client writes, so an adopted credential
         // lands exactly where a fresh login would put it.
@@ -450,7 +443,7 @@ impl SubscriptionReader {
         Ok(path)
     }
 
-    /// Install a vendor document while holding the refresh credential lock.
+    /// Install while holding the provider/account refresh lock.
     pub async fn install_document_locked(
         &self,
         data_dir: &Path,
@@ -462,7 +455,7 @@ impl SubscriptionReader {
             .await
     }
 
-    /// Enforce `refusal` only after the locked conditional re-check is empty.
+    /// Enforce `refusal` only after the locked absence check.
     pub async fn install_document_locked_with_refusal(
         &self,
         data_dir: &Path,
@@ -502,6 +495,13 @@ impl SubscriptionReader {
                         ));
                     }
                 }
+            }
+            if let Some(path) = crate::credential_recovery_store::valid_recovery_record_path(
+                data_dir,
+                self.provider,
+                account,
+            )? {
+                return Ok(InstallDocumentResult::AlreadyPresent(path));
             }
             if let Some(error) = refusal {
                 return Err(error);

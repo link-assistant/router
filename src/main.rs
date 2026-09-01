@@ -372,7 +372,10 @@ async fn run_server(
         activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
         activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
         mpp: config.mpp.clone(),
-        login_manager: LoginManager::new(config.login.clone()),
+        login_manager: LoginManager::new_with_data_dir(
+            config.login.clone(),
+            config.data_dir.clone(),
+        ),
         // The resolved directory, not `DATA_DIR`: clap merged the flag and the
         // environment into `config.data_dir`, and only that value knows which
         // one the operator used (issue #282).

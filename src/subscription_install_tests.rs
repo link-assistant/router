@@ -2,6 +2,55 @@
 
 use super::*;
 
+fn spawn_with_first_poll_signal<F>(
+    future: F,
+) -> (
+    tokio::task::JoinHandle<F::Output>,
+    tokio::sync::oneshot::Receiver<()>,
+)
+where
+    F: std::future::Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    let (polled_tx, polled_rx) = tokio::sync::oneshot::channel();
+    let task = tokio::spawn(async move {
+        let mut future = std::pin::pin!(future);
+        let mut polled_tx = Some(polled_tx);
+        std::future::poll_fn(|context| {
+            let result = future.as_mut().poll(context);
+            if let Some(polled_tx) = polled_tx.take() {
+                let _ = polled_tx.send(());
+            }
+            result
+        })
+        .await
+    });
+    (task, polled_rx)
+}
+
+#[derive(Debug)]
+struct ReadOnlyPrimary {
+    reader: SubscriptionReader,
+}
+
+impl crate::credential_store::CredentialStore for ReadOnlyPrimary {
+    fn reload(&self) -> Option<SubscriptionToken> {
+        crate::credential_store::CredentialStore::reload(&self.reader)
+    }
+
+    fn persist(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        Err("primary credential store is read-only".to_string())
+    }
+
+    fn lock_path(&self) -> Option<std::path::PathBuf> {
+        None
+    }
+
+    fn describe(&self) -> String {
+        "read-only test primary".to_string()
+    }
+}
+
 struct InstallCase {
     provider: SubscriptionProvider,
     document: &'static str,
@@ -120,6 +169,60 @@ async fn conditional_install_leaves_an_existing_recognized_destination_unchanged
     assert!(!home.path().join(".credentials.json").exists());
 }
 
+/// A fallback recovery record is a live destination even when the vendor home
+/// is empty. Installing an older candidate must not invalidate that chain on
+/// the next reload.
+#[tokio::test]
+async fn conditional_install_preserves_a_recovery_only_rotated_credential() {
+    use crate::credential_store::CredentialStore as _;
+    use std::sync::Arc;
+
+    let home = tempfile::tempdir().expect("credential home");
+    let data = tempfile::tempdir().expect("router data");
+    let provider = SubscriptionProvider::Codex;
+    let account = crate::credential_recovery_store::PRIMARY_ACCOUNT;
+    let primary = Arc::new(ReadOnlyPrimary {
+        reader: SubscriptionReader::new(provider, home.path()),
+    });
+    let store = crate::credential_recovery_store::RecoverableCredentialStore::new(
+        provider,
+        account,
+        primary,
+        data.path(),
+    );
+    let rotated = SubscriptionToken {
+        access_token: "rotated-access".into(),
+        refresh_token: Some("rotated-refresh".into()),
+        expires_at_ms: Some(9_000),
+        account_id: Some("acct-current".into()),
+        resource_url: None,
+    };
+    store
+        .persist(&rotated)
+        .expect("failed primary persistence falls back durably");
+
+    let reader = SubscriptionReader::new(provider, home.path());
+    let result = reader
+        .install_document_locked(
+            data.path(),
+            account,
+            r#"{"auth_mode":"chatgpt","tokens":{"access_token":"staged-old","refresh_token":"staged-refresh","account_id":"acct-old"}}"#,
+            InstallMode::IfAbsent,
+        )
+        .await
+        .expect("recovery state counts as already present");
+
+    let recovery_path = match result {
+        InstallDocumentResult::AlreadyPresent(path) => path,
+        InstallDocumentResult::Installed(path) => {
+            panic!("conditional import replaced recovery-only state at {path:?}")
+        }
+    };
+    assert!(recovery_path.starts_with(data.path()));
+    assert!(!home.path().join("auth.json").exists());
+    assert_eq!(store.reload(), Some(rotated));
+}
+
 /// The destination is re-checked only after the shared refresh lock is held;
 /// a credential created while import waits wins unchanged.
 #[tokio::test]
@@ -138,7 +241,7 @@ async fn destination_created_while_conditional_install_waits_for_lock_wins() {
             .expect("hold refresh lock");
     let reader = SubscriptionReader::new(provider, home.path());
     let data_path = data.path().to_path_buf();
-    let waiter = tokio::spawn(async move {
+    let (waiter, first_poll) = spawn_with_first_poll_signal(async move {
         reader
             .install_document_locked(
                 &data_path,
@@ -148,7 +251,7 @@ async fn destination_created_while_conditional_install_waits_for_lock_wins() {
             )
             .await
     });
-    tokio::time::sleep(std::time::Duration::from_millis(80)).await;
+    first_poll.await.expect("conditional install was polled");
     assert!(
         !waiter.is_finished(),
         "conditional import did not wait for refresh"
@@ -188,7 +291,7 @@ async fn replacement_install_waits_for_the_refresh_lock() {
             .expect("hold refresh lock");
     let reader = SubscriptionReader::new(provider, home.path());
     let data_path = data.path().to_path_buf();
-    let waiter = tokio::spawn(async move {
+    let (waiter, first_poll) = spawn_with_first_poll_signal(async move {
         reader
             .install_document_locked(
                 &data_path,
@@ -198,7 +301,7 @@ async fn replacement_install_waits_for_the_refresh_lock() {
             )
             .await
     });
-    tokio::time::sleep(std::time::Duration::from_millis(80)).await;
+    first_poll.await.expect("replacement install was polled");
     assert!(
         !waiter.is_finished(),
         "replacement import bypassed refresh lock"

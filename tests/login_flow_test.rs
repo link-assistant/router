@@ -628,13 +628,15 @@ async fn admin_native_codex_writer_contends_on_the_refresh_lock() {
     )
     .await
     .unwrap();
-    let manager = LoginManager::new(LoginConfig {
-        codex_home: codex_home.clone(),
-        data_dir: data_dir.clone(),
-        codex_issuer: issuer,
-        session_ttl: Duration::from_secs(3),
-        ..LoginConfig::default()
-    });
+    let manager = LoginManager::new_with_data_dir(
+        LoginConfig {
+            codex_home: codex_home.clone(),
+            codex_issuer: issuer,
+            session_ttl: Duration::from_secs(3),
+            ..LoginConfig::default()
+        },
+        data_dir.clone(),
+    );
 
     let begun = manager
         .begin_for(SubscriptionProvider::Codex)
