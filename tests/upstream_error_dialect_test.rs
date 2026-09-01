@@ -70,7 +70,11 @@ impl TestRouter {
         .expect("write Codex credentials");
 
         let catalogs = Arc::new(ModelCatalogCache::new());
-        catalogs.record_success(SubscriptionProvider::Codex, vec!["gpt-5".to_string()]);
+        catalogs.record_success_for(
+            SubscriptionProvider::Codex,
+            Some("acct_stub".to_string()),
+            vec!["gpt-5".to_string()],
+        );
 
         let config = link_assistant_router::cli::Cli::try_parse_from(vec![
             "router",
