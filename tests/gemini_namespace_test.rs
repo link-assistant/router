@@ -429,6 +429,26 @@ async fn gemini_and_openai_omit_a_catalog_owned_by_another_account() {
             .any(|codex| model == &format!("models/{codex}"))),
         "a prior account's Codex catalog must not be advertised: {gemini_names:?}"
     );
+
+    let (status, body) = router
+        .post_native(
+            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
+        )
+        .await;
+    assert_eq!(
+        status,
+        StatusCode::NOT_FOUND,
+        "a prior account's model must not route through the current credential: {body}"
+    );
+    assert!(
+        router
+            .forwarded
+            .lock()
+            .expect("forwarded requests")
+            .is_empty(),
+        "an account-mismatched catalog must be rejected before any upstream request"
+    );
 }
 
 /// A disconnected subscription must not contribute a synthesized model.

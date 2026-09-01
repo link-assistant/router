@@ -437,6 +437,27 @@ pub fn configured_provider_health(
         .collect()
 }
 
+/// Keep only providers whose readable credential owns their live catalog.
+///
+/// A readable token is enough to attempt first discovery, but an existing
+/// catalog can advertise or route models only for the account that produced
+/// it. Every model surface uses this boundary so listing and inference cannot
+/// disagree after credential rotation.
+#[must_use]
+pub(crate) fn providers_with_healthy_catalogs(
+    routable: Vec<SubscriptionProvider>,
+    health: &[ProviderHealth],
+) -> Vec<SubscriptionProvider> {
+    routable
+        .into_iter()
+        .filter(|provider| {
+            health.iter().any(|entry| {
+                entry.provider == *provider && entry.state == ProviderHealthState::Healthy
+            })
+        })
+        .collect()
+}
+
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
@@ -559,14 +580,7 @@ pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Respon
                 &state.subscription_cache,
                 &state.model_catalogs,
             );
-            let healthy = routable
-                .into_iter()
-                .filter(|provider| {
-                    health.iter().any(|entry| {
-                        entry.provider == *provider && entry.state == ProviderHealthState::Healthy
-                    })
-                })
-                .collect::<Vec<_>>();
+            let healthy = providers_with_healthy_catalogs(routable, &health);
             let mut catalog = model_catalog(&healthy, &state.model_catalogs);
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
@@ -800,17 +814,20 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
     if let Some(stored) = stored_provider_for_model(state, model)? {
         return Ok(route_stored_provider(state, &stored, model));
     }
-    let provider = available_provider_for_model(
-        model,
-        &healthy_providers(
-            &state.client,
-            &state.subscription_readers,
-            &state.subscription_cache,
-            chrono::Utc::now().timestamp_millis(),
-        )
-        .await,
+    let routable = healthy_providers(
+        &state.client,
+        &state.subscription_readers,
+        &state.subscription_cache,
+        chrono::Utc::now().timestamp_millis(),
+    )
+    .await;
+    let health = configured_provider_health(
+        &state.subscription_readers,
+        &state.subscription_cache,
         &state.model_catalogs,
-    )?;
+    );
+    let healthy = providers_with_healthy_catalogs(routable, &health);
+    let provider = available_provider_for_model(model, &healthy, &state.model_catalogs)?;
     let mut routed = route_provider(state, provider).await.map_err(|_| {
         // The same sentence as the sibling refusal 480 lines up, which appends
         // the cause. One with a reason and one without, depending on which of

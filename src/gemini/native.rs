@@ -50,15 +50,7 @@ async fn advertised_providers(state: &AppState) -> Vec<crate::subscription::Subs
         &state.subscription_cache,
         &state.model_catalogs,
     );
-    let healthy = routable
-        .into_iter()
-        .filter(|provider| {
-            health.iter().any(|entry| {
-                entry.provider == *provider
-                    && entry.state == crate::model_routing::ProviderHealthState::Healthy
-            })
-        })
-        .collect::<Vec<_>>();
+    let healthy = crate::model_routing::providers_with_healthy_catalogs(routable, &health);
     match state.upstream_provider {
         crate::config::UpstreamProvider::Auto => healthy,
         provider => provider
@@ -206,13 +198,7 @@ async fn native_owner(
                 )
             });
     }
-    let healthy = crate::model_routing::healthy_providers(
-        &state.client,
-        &state.subscription_readers,
-        &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
-    )
-    .await;
+    let healthy = advertised_providers(state).await;
     crate::model_routing::available_provider_for_model(model, &healthy, &state.model_catalogs)
         .map_err(|error| {
             let status = match error {

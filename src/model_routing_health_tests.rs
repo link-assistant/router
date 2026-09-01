@@ -383,6 +383,13 @@ async fn credential_rotation_requires_discovery_for_the_current_account() {
     assert_eq!(stale_catalog["data"], json!([]));
     assert_eq!(stale_catalog["healthy_providers"], json!([]));
     assert_eq!(stale_catalog["degraded_providers"], json!([]));
+    let Err(stale_route) = route_state(&state, &json!({"model": "account-a-model"})).await else {
+        panic!("a previous account's catalog must not route the current credential");
+    };
+    assert!(
+        matches!(stale_route, ModelRouteError::NotFound(_)),
+        "the account-mismatched model is unavailable: {stale_route}"
+    );
     assert!(
         metrics_report(state.clone())
             .await
