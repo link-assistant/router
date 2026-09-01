@@ -81,14 +81,15 @@ impl RefreshAttempts {
 
 impl RefreshAttempt {
     /// Whether `credential` belongs to the generation this attempt currently
-    /// represents, including a token this process just refreshed into.
+    /// represents. A token this process just refreshed into supersedes the
+    /// stored generation that produced it.
     pub(super) fn matches_current(
         &self,
         provider: SubscriptionProvider,
         credential: &SubscriptionToken,
     ) -> bool {
         let fingerprint = attempt_fingerprint(provider, credential);
-        self.credential == fingerprint || self.rotated_to == Some(fingerprint)
+        self.rotated_to.unwrap_or(self.credential) == fingerprint
     }
 
     /// Reset state when this provider's durable credential identity changes.

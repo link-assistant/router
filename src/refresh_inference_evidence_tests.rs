@@ -1,6 +1,9 @@
 //! Credential-generation semantics for inference verdicts.
 
+use super::test_support::register_test_store;
 use super::*;
+use std::sync::Arc;
+use tokio::sync::Barrier;
 
 fn token(access: &str, refresh: &str, expiry: i64, account: &str) -> SubscriptionToken {
     SubscriptionToken {
@@ -10,6 +13,41 @@ fn token(access: &str, refresh: &str, expiry: i64, account: &str) -> Subscriptio
         account_id: Some(account.into()),
         resource_url: None,
     }
+}
+
+async fn self_rotate(
+    cache: &TokenCache,
+    original: SubscriptionToken,
+    now_ms: i64,
+) -> SubscriptionToken {
+    let app = axum::Router::new().fallback(|| async {
+        axum::Json(serde_json::json!({
+            "access_token": "access-b",
+            "refresh_token": "refresh-b",
+            "expires_in": 3600
+        }))
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let endpoint = format!("http://{}/token", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+
+    let rotated = cache
+        .refresh_rejected_at(
+            &reqwest::Client::new(),
+            &endpoint,
+            SubscriptionProvider::Codex,
+            "primary",
+            original,
+            now_ms,
+        )
+        .await
+        .expect("the controlled refresh must mint generation B");
+    server.abort();
+    assert_eq!(rotated.access_token, "access-b");
+    assert_eq!(rotated.refresh_token.as_deref(), Some("refresh-b"));
+    rotated
 }
 
 /// Upstream verdicts, not timestamps, decide whether a credential is dead.
@@ -147,5 +185,97 @@ async fn late_inference_verdicts_cannot_overwrite_an_authoritative_replacement()
         replacement_after_response.evidence_for(provider, account),
         None,
         "a later authoritative B reconciliation must clear A's earlier verdict"
+    );
+}
+
+/// A verdict from stored A was already in flight when this process refreshed
+/// into B. Once B has an upstream rejection, A's late success cannot erase it.
+#[tokio::test]
+async fn self_rotation_rejects_a_delayed_success_from_the_stored_generation() {
+    let cache = Arc::new(TokenCache::new());
+    let credential_a = token("access-a", "refresh-a", 10, "account-a");
+    let _store = register_test_store(
+        &cache,
+        SubscriptionProvider::Codex,
+        "primary",
+        &credential_a,
+    );
+    let dispatched = Arc::new(Barrier::new(2));
+    let may_answer = Arc::new(Barrier::new(2));
+    let delayed_cache = Arc::clone(&cache);
+    let delayed_credential = credential_a.clone();
+    let dispatched_response = Arc::clone(&dispatched);
+    let release_response = Arc::clone(&may_answer);
+    let delayed = tokio::spawn(async move {
+        dispatched_response.wait().await;
+        release_response.wait().await;
+        delayed_cache
+            .record_status_for_credential(
+                SubscriptionProvider::Codex,
+                "primary",
+                &delayed_credential,
+                204,
+            )
+            .await;
+    });
+
+    dispatched.wait().await;
+    let credential_b = self_rotate(&cache, credential_a, 1_000).await;
+    cache
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 403)
+        .await;
+    may_answer.wait().await;
+    delayed.await.unwrap();
+
+    assert_eq!(
+        cache.evidence_for(SubscriptionProvider::Codex, "primary"),
+        Some(CredentialEvidence::Rejected),
+        "stored A's delayed success must not erase self-minted B's rejection"
+    );
+}
+
+/// The symmetric race is equally dangerous: stored A cannot poison B after a
+/// successful self-rotation and a real B response.
+#[tokio::test]
+async fn self_rotation_rejects_a_delayed_rejection_from_the_stored_generation() {
+    let cache = Arc::new(TokenCache::new());
+    let credential_a = token("access-a", "refresh-a", 10, "account-a");
+    let _store = register_test_store(
+        &cache,
+        SubscriptionProvider::Codex,
+        "primary",
+        &credential_a,
+    );
+    let dispatched = Arc::new(Barrier::new(2));
+    let may_answer = Arc::new(Barrier::new(2));
+    let delayed_cache = Arc::clone(&cache);
+    let delayed_credential = credential_a.clone();
+    let dispatched_response = Arc::clone(&dispatched);
+    let release_response = Arc::clone(&may_answer);
+    let delayed = tokio::spawn(async move {
+        dispatched_response.wait().await;
+        release_response.wait().await;
+        delayed_cache
+            .record_status_for_credential(
+                SubscriptionProvider::Codex,
+                "primary",
+                &delayed_credential,
+                401,
+            )
+            .await;
+    });
+
+    dispatched.wait().await;
+    let credential_b = self_rotate(&cache, credential_a, 2_000).await;
+    cache
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 200)
+        .await;
+    may_answer.wait().await;
+    delayed.await.unwrap();
+
+    assert_eq!(
+        cache.evidence_for(SubscriptionProvider::Codex, "primary"),
+        Some(CredentialEvidence::Working),
+        "stored A's delayed rejection must not poison self-minted B"
     );
 }

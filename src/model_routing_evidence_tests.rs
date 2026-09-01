@@ -63,6 +63,7 @@ fn write_credential(provider: SubscriptionProvider, home: &TempDir, base_url: &s
             "oauth_creds.json",
             json!({
                 "access_token": "qwen-access-a",
+                "refresh_token": "qwen-refresh-a",
                 "expiry_date": 9_999_999_999_999_i64,
                 "account_id": "account-a",
                 "resource_url": base_url
@@ -501,4 +502,150 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
     assert!(!public_body.contains("qwen-access"), "{public_body}");
     assert!(!public_body.contains("account-a"), "{public_body}");
     task.abort();
+}
+
+/// Once a response from A has caused this process to mint B, failure to obtain
+/// any HTTP response from B must not fall back to recording A's old 401.
+#[tokio::test]
+async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_minted_b() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let reached_a = Arc::new(Barrier::new(2));
+    let release_a = Arc::new(Barrier::new(2));
+    let reached_for_stub = Arc::clone(&reached_a);
+    let release_for_stub = Arc::clone(&release_a);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let upstream = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0u8; 8192];
+        let read = socket.read(&mut request).await.unwrap();
+        assert!(
+            String::from_utf8_lossy(&request[..read])
+                .contains("authorization: Bearer qwen-access-a")
+        );
+        reached_for_stub.wait().await;
+        release_for_stub.wait().await;
+        socket
+            .write_all(
+                b"HTTP/1.1 401 Unauthorized\r\ncontent-type: application/json\r\ncontent-length: 2\r\nconnection: close\r\n\r\n{}",
+            )
+            .await
+            .unwrap();
+        // The listener and socket now close. B's retry receives no HTTP
+        // response, deterministically exercising the transport-error branch.
+    });
+
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Qwen, &data, &home, &base_url);
+    let body = json!({
+        "model": MODEL,
+        "messages": [{"role": "user", "content": "hello"}]
+    });
+    let request_state = state.clone();
+    let request_headers = client_headers(&state);
+    let request_body = body.clone();
+    let request = tokio::spawn(async move {
+        crate::subscription_proxy::forward_subscription_openai(
+            &request_state,
+            &request_headers,
+            request_body.clone(),
+            &request_body,
+            "/v1/chat/completions",
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await
+    });
+
+    reached_a.wait().await;
+    let token_a = state
+        .subscription_cache
+        .load_authoritative(SubscriptionProvider::Qwen, "primary")
+        .await
+        .unwrap()
+        .expect("generation A is registered");
+    let token_endpoint = axum::Router::new().fallback(|| async {
+        axum::Json(json!({
+            "access_token": "qwen-access-b",
+            "refresh_token": "qwen-refresh-b",
+            "expires_in": 3600
+        }))
+    });
+    let token_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let token_url = format!("http://{}/token", token_listener.local_addr().unwrap());
+    let token_server = tokio::spawn(async move {
+        axum::serve(token_listener, token_endpoint).await.unwrap();
+    });
+    let token_b = crate::refresh::test_support::refresh_against(
+        &state.subscription_cache,
+        &state.client,
+        &token_url,
+        SubscriptionProvider::Qwen,
+        "primary",
+        token_a,
+        10_000_000_000_000,
+    )
+    .await;
+    token_server.abort();
+    assert_eq!(token_b.access_token, "qwen-access-b");
+    release_a.wait().await;
+
+    let response = request.await.unwrap();
+    upstream.await.unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        state
+            .subscription_cache
+            .evidence_for(SubscriptionProvider::Qwen, "primary"),
+        Some(crate::refresh::CredentialEvidence::Working),
+        "a transport failure for B must not commit A's superseded 401"
+    );
+    let response_body = response.into_body().collect().await.unwrap().to_bytes();
+    let public_body = String::from_utf8_lossy(&response_body);
+    assert!(!public_body.contains("qwen-access"), "{public_body}");
+    assert!(!public_body.contains("account-a"), "{public_body}");
+}
+
+/// Receiving a 401 is enough to reject the credential even if the upstream
+/// closes before its declared body is complete. Body-read failure remains a
+/// sanitized 502, but cannot erase the authentication verdict already known.
+#[tokio::test]
+async fn native_gemini_records_401_before_an_incomplete_body_fails() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0u8; 8192];
+        let _ = socket.read(&mut request).await.unwrap();
+        socket
+            .write_all(
+                b"HTTP/1.1 401 Unauthorized\r\ncontent-type: application/json\r\ncontent-length: 200\r\nconnection: close\r\n\r\n{\"error\":\"sentinel-account/path",
+            )
+            .await
+            .unwrap();
+    });
+
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = Box::pin(crate::gemini::forward_native_gemini(
+        State(state.clone()),
+        Path(format!("models/{MODEL}:generateContent")),
+        client_headers(&state),
+        Ok(axum::Json(json!({
+            "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
+        }))),
+    ))
+    .await;
+    server.await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    assert_rejected(&state, SubscriptionProvider::Gemini);
+    let public_body = response.into_body().collect().await.unwrap().to_bytes();
+    let public_body = String::from_utf8_lossy(&public_body);
+    assert!(!public_body.contains("sentinel-account"), "{public_body}");
+    assert!(!public_body.contains("/path"), "{public_body}");
 }

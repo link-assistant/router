@@ -288,6 +288,18 @@ async fn forward_native(
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream.headers());
     let retry_header = upstream.headers().get("retry-after").cloned();
+    // The response status is already authoritative even if the peer closes
+    // before its declared body is complete. Record it while the response still
+    // carries the exact credential generation that produced it.
+    state
+        .subscription_cache
+        .record_status_for_credential(
+            crate::subscription::SubscriptionProvider::Gemini,
+            &routed.account,
+            &routed.token,
+            status.as_u16(),
+        )
+        .await;
     let response_body = match upstream.bytes().await {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -307,15 +319,6 @@ async fn forward_native(
     state
         .metrics
         .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
-    state
-        .subscription_cache
-        .record_status_for_credential(
-            crate::subscription::SubscriptionProvider::Gemini,
-            &routed.account,
-            &routed.token,
-            status.as_u16(),
-        )
-        .await;
     if status == StatusCode::TOO_MANY_REQUESTS
         && let Some(router) = state.account_router.as_ref()
     {
