@@ -113,7 +113,7 @@ fn the_users_configuration_is_kept_by_default() {
 }
 
 /// Issue #379: Codex supports repeatable global `-c` overlays, so routing does
-/// not require replacing HOME or CODEX_HOME. The overlay must precede the
+/// not require replacing `HOME` or `CODEX_HOME`. The overlay must precede the
 /// user's subcommand and arguments; `launch` appends those after preparation.
 #[test]
 fn codex_overlays_routing_without_repointing_user_configuration() {

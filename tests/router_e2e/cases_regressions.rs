@@ -165,6 +165,7 @@ async fn codex_responses_lite_preserves_additional_tools_and_protocol_marker() {
             .and_then(|value| value.to_str().ok()),
         Some("true")
     );
+    drop(headers);
 }
 
 #[tokio::test]

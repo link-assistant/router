@@ -460,7 +460,7 @@ async fn generate_content_serves_codex_and_claude_models_natively() {
 }
 
 /// Issue #378: Gemini CLI supplies `topP`, which is translated to `top_p`.
-/// The ChatGPT subscription backend rejects that field, so capability
+/// The `ChatGPT` subscription backend rejects that field, so capability
 /// reconciliation must remove it only when the selected owner is Codex.
 #[tokio::test]
 async fn gemini_top_p_is_not_forwarded_to_codex() {
@@ -477,8 +477,13 @@ async fn gemini_top_p_is_not_forwarded_to_codex() {
         .await;
     assert_eq!(status, StatusCode::OK, "{body}");
 
-    let forwarded = router.forwarded.lock().expect("captured vendor requests");
-    let request = forwarded.last().expect("Codex request reached the stub");
+    let request = router
+        .forwarded
+        .lock()
+        .expect("captured vendor requests")
+        .last()
+        .cloned()
+        .expect("Codex request reached the stub");
     assert!(
         request.get("top_p").is_none(),
         "Codex received unsupported top_p: {request:#}"

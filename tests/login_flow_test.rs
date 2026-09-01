@@ -37,6 +37,11 @@ use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 /// hanging the suite.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(120);
 
+/// Keep the portable PTY fixture from competing with itself under the full
+/// suite. Concurrent login sessions are covered by `pending_sessions_are_capped`;
+/// parallel shell/PTY processes are not part of the behavior under test here.
+static PTY_TEST_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 fn fake_cli() -> String {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("examples/fake-login-cli.sh")
@@ -96,6 +101,7 @@ async fn native_claude_login_starts_without_spawning_the_vendor_cli() {
 
 #[tokio::test]
 async fn login_produces_a_url_then_a_usable_credential() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let manager = manager_with(&home);
 
@@ -297,6 +303,7 @@ fn doctor_reports_the_availability_of_each_login_mode() {
 
 #[tokio::test]
 async fn setup_token_remains_an_explicit_alternative() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let manager = setup_token_manager_with(&home);
 
@@ -323,6 +330,7 @@ async fn setup_token_remains_an_explicit_alternative() {
 
 #[tokio::test]
 async fn a_rejected_code_fails_the_session_without_writing_a_credential() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let timeout = Duration::from_secs(3);
     let manager = LoginManager::new(LoginConfig {
@@ -376,6 +384,7 @@ async fn a_rejected_code_fails_the_session_without_writing_a_credential() {
 
 #[tokio::test]
 async fn a_code_cannot_be_submitted_twice() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let manager = manager_with(&home);
 
@@ -394,6 +403,7 @@ async fn a_code_cannot_be_submitted_twice() {
 
 #[tokio::test]
 async fn cancelling_releases_the_session_and_its_process() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let manager = manager_with(&home);
 
@@ -413,6 +423,7 @@ async fn cancelling_releases_the_session_and_its_process() {
 
 #[tokio::test]
 async fn an_expired_session_reports_expired_and_stops_accepting_codes() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let manager = LoginManager::new(LoginConfig {
         command: fake_cli(),
@@ -441,6 +452,7 @@ async fn an_expired_session_reports_expired_and_stops_accepting_codes() {
 
 #[tokio::test]
 async fn pending_sessions_are_capped() {
+    let _pty_test = PTY_TEST_LOCK.lock().await;
     let home = temp_home();
     let manager = LoginManager::new(LoginConfig {
         command: fake_cli(),
