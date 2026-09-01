@@ -16,7 +16,7 @@ use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
 /// A subscription-backed upstream that authenticates with vendor OAuth tokens.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SubscriptionProvider {
     /// Anthropic Claude (Pro/Max) via Claude Code — `~/.claude`.
@@ -168,7 +168,7 @@ impl std::fmt::Display for SubscriptionProvider {
 }
 
 /// A normalized subscription token plus the metadata the proxy needs to route.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SubscriptionToken {
     /// OAuth bearer access token sent as `Authorization: Bearer <token>`.
     pub access_token: String,
