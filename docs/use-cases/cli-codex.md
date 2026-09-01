@@ -14,10 +14,13 @@ for this CLI.
 router with codex "hi"
 ```
 
-This creates an isolated `HOME`, writes a disposable `~/.codex/config.toml`,
-passes the run token through `LINK_ASSISTANT_TOKEN`, and removes the temporary
-home afterward. The normal `$CODEX_HOME` and `~/.codex` are untouched. See
-[with-router.md](with-router.md) for remote servers and token input.
+This keeps the real `HOME`, `CODEX_HOME`, configuration, sessions, MCP servers,
+personality and reasoning effort. The wrapper prepends process-local `-c`
+overrides that select a `link-assistant` provider at the router URL, then passes
+the run token through `LINK_ASSISTANT_TOKEN`; it neither edits nor replaces the
+user's config. Pass `--isolated-config` to deliberately use a disposable Codex
+home instead. See [with-router.md](with-router.md) for remote servers and token
+input.
 
 Wrapper flags may appear before or after `codex`; an explicit `--` forwards
 every later token verbatim. See

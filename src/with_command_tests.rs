@@ -112,6 +112,100 @@ fn the_users_configuration_is_kept_by_default() {
     );
 }
 
+/// Issue #379: Codex supports repeatable global `-c` overlays, so routing does
+/// not require replacing HOME or CODEX_HOME. The overlay must precede the
+/// user's subcommand and arguments; `launch` appends those after preparation.
+#[test]
+fn codex_overlays_routing_without_repointing_user_configuration() {
+    let models = [RouterModel {
+        id: "gpt-5.6-sol".to_string(),
+        owned_by: "codex".to_string(),
+    }];
+    assert!(
+        extends_user_configuration(ClientKind::Codex, false),
+        "ordinary Codex runs can layer routing through CLI configuration"
+    );
+    assert!(
+        !extends_user_configuration(ClientKind::Codex, true),
+        "explicit isolation must still replace the client configuration"
+    );
+
+    let prepared = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::Codex,
+        base_url: "http://router.test/path?tenant=one",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        one_shot: true,
+        profile_root: None,
+    })
+    .expect("prepare Codex overlay");
+
+    let environment = prepared
+        .command
+        .get_envs()
+        .map(|(name, value)| (name.to_string_lossy().into_owned(), value))
+        .collect::<std::collections::HashMap<_, _>>();
+    assert!(!environment.contains_key("HOME"), "{environment:?}");
+    assert!(!environment.contains_key("CODEX_HOME"), "{environment:?}");
+    assert_eq!(
+        environment
+            .get("LINK_ASSISTANT_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("task-token"))
+    );
+
+    let arguments = prepared
+        .command
+        .get_args()
+        .map(|argument| argument.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        arguments,
+        [
+            "-c",
+            "model_provider=\"link-assistant\"",
+            "-c",
+            "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
+            "-c",
+            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/v1\"",
+            "-c",
+            "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
+            "-c",
+            "model_providers.link-assistant.wire_api=\"responses\"",
+        ]
+    );
+
+    let isolated = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::Codex,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: true,
+        one_shot: true,
+        profile_root: None,
+    })
+    .expect("prepare isolated Codex");
+    let isolated_home = isolated
+        .command
+        .get_envs()
+        .find_map(|(name, value)| (name == "HOME").then_some(value?))
+        .expect("isolated Codex sets HOME");
+    assert_eq!(Path::new(isolated_home), isolated.directory.path());
+    assert!(
+        isolated
+            .command
+            .get_envs()
+            .any(|(name, value)| name == "CODEX_HOME" && value.is_none()),
+        "isolation must prevent an inherited CODEX_HOME from escaping"
+    );
+    assert!(isolated.command.get_args().next().is_none());
+    assert!(isolated.directory.path().join(".codex/config.toml").is_file());
+}
+
 /// A client configured through a file is isolated even though extending is
 /// the default, because there is nothing to layer short of rewriting that
 /// file.
