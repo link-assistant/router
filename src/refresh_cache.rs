@@ -305,7 +305,7 @@ impl TokenCache {
 
         // Re-authentication replaces at least one credential field. Forget
         // both negative and positive state derived from the previous file.
-        if attempt.reset_if_changed(&disk_token) {
+        if attempt.reset_if_changed(provider, &disk_token) {
             self.forget(&key, provider);
         }
         // Refresh slightly *before* expiry rather than after a request has
@@ -424,7 +424,7 @@ impl TokenCache {
             .ok_or_else(|| {
                 format!("failed to load {provider} credentials from the registered store")
             })?;
-        if !attempt.reset_if_changed(&stored) {
+        if !attempt.reset_if_changed(provider, &stored) {
             return Ok(None);
         }
         tracing::info!(
@@ -455,7 +455,7 @@ impl TokenCache {
             // ladder has already written it to the file the next caller reads.
             // Leaving it behind is what let a rotation this process performed
             // look like a re-authentication (issue #319).
-            attempt.record_rotation(now_ms, token);
+            attempt.record_rotation(provider, now_ms, token);
         }
         self.store_for(provider, account, token.clone());
         attempt.record_success();
@@ -480,6 +480,7 @@ impl TokenCache {
             guard.remove(key);
         }
         self.rejections.clear(provider, &key.1);
+        self.clear_terminal_announcement_for(provider, &key.1);
     }
 
     /// Clear verdicts derived from a credential that an authoritative reload
@@ -494,7 +495,7 @@ impl TokenCache {
         let attempt = self
             .attempts
             .for_subscription(provider, account, credential);
-        if attempt.lock().await.reset_if_changed(credential) {
+        if attempt.lock().await.reset_if_changed(provider, credential) {
             self.forget(&key, provider);
         }
     }

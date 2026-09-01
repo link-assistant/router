@@ -885,3 +885,100 @@ async fn a_self_rotation_persisted_to_disk_does_not_clear_the_guard() {
     );
     server.abort();
 }
+
+/// Codex deliberately persists a rotated access/refresh pair without the
+/// response-derived expiry. The next pinned request therefore reads the same
+/// credential with a stale expiry representation. That lossy round trip must
+/// preserve both the cached access token and the single-use rotation guard.
+#[tokio::test]
+async fn a_codex_rotation_with_lossy_expiry_is_not_spent_by_the_next_pinned_request() {
+    let home = tempfile::tempdir().expect("temp Codex home");
+    std::fs::write(
+        home.path().join("auth.json"),
+        serde_json::json!({
+            "tokens": {
+                "access_token": "access-1",
+                "refresh_token": "refresh-1",
+                "account_id": "account-a"
+            },
+            "expiry_date": 1
+        })
+        .to_string(),
+    )
+    .expect("seed Codex credential");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
+    let cache = TokenCache::new();
+    cache.register_reader("primary", &reader);
+    let client = reqwest::Client::new();
+
+    let (refresh_url, first_requests, first_server) = scripted_endpoint(
+        vec![Answer::new(
+            200,
+            r#"{"access_token":"access-2","refresh_token":"refresh-2","expires_in":3600}"#,
+        )],
+        |_| {},
+    )
+    .await;
+    let rotated = cache
+        .get_fresh_registered_at(
+            &client,
+            &refresh_url,
+            SubscriptionProvider::Codex,
+            "primary",
+            NOW_MS,
+        )
+        .await
+        .expect("the first pinned request refreshes and persists Codex");
+    drain(first_server).await;
+    assert_eq!(first_requests.lock().unwrap().len(), 1);
+    assert_eq!(rotated.access_token, "access-2");
+    let durable = reader.read_token().expect("read the persisted rotation");
+    assert_eq!(durable.access_token, rotated.access_token);
+    assert_eq!(durable.refresh_token, rotated.refresh_token);
+    assert_ne!(
+        durable.expires_at_ms, rotated.expires_at_ms,
+        "Codex must reproduce its lossy expiry round trip"
+    );
+
+    // The second pinned request performs the same authoritative load and
+    // preflight refresh as production. A subsequent 401 also enters the real
+    // reactive path, still within the five-minute rotation grace period.
+    let (must_not_call, repeated_requests, repeated_server) = scripted_endpoint(
+        vec![
+            Answer::new(400, INVALID_GRANT),
+            Answer::new(400, INVALID_GRANT),
+        ],
+        |_| {},
+    )
+    .await;
+    let second = cache
+        .get_fresh_registered_at(
+            &client,
+            &must_not_call,
+            SubscriptionProvider::Codex,
+            "primary",
+            NOW_MS + 5_000,
+        )
+        .await
+        .expect("the next pinned request reuses the cached rotation");
+    assert_eq!(second.access_token, "access-2");
+    assert!(
+        cache
+            .refresh_rejected_at(
+                &client,
+                &must_not_call,
+                SubscriptionProvider::Codex,
+                "primary",
+                second,
+                NOW_MS + 10_000,
+            )
+            .await
+            .is_none(),
+        "a 401 inside the grace period must not spend the new link"
+    );
+    assert!(
+        repeated_requests.lock().unwrap().is_empty(),
+        "neither the second pinned preflight nor its immediate 401 may exchange refresh-2"
+    );
+    repeated_server.abort();
+}

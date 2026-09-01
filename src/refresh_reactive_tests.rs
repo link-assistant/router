@@ -437,3 +437,42 @@ fn a_terminal_failure_is_announced_once_per_outage() {
         "a second outage after a recovery must be reported"
     );
 }
+
+/// Re-authentication starts a new credential lifecycle even when the new
+/// credential is rejected before it ever produces a successful request. Its
+/// first outage must therefore regain the one ERROR announcement.
+#[tokio::test]
+async fn authoritative_reauthentication_rearms_the_terminal_announcement() {
+    let cache = TokenCache::new();
+    let provider = SubscriptionProvider::Claude;
+    let account = "primary";
+    let original = token(Some("old-refresh"), Some(10_000 + 86_400_000));
+    cache
+        .reconcile_authoritative_credential(provider, account, &original)
+        .await;
+    cache.record_status_for(provider, account, 401);
+    assert!(
+        !cache.take_terminal_announcement_for(provider, account),
+        "the first outage is latched after its ERROR announcement"
+    );
+
+    let mut replacement = original.clone();
+    replacement.access_token = "new-login-access".into();
+    replacement.refresh_token = Some("new-login-refresh".into());
+    cache
+        .reconcile_authoritative_credential(provider, account, &replacement)
+        .await;
+    assert!(
+        cache.take_terminal_announcement_for(provider, account),
+        "authoritative replacement must re-arm the next outage announcement"
+    );
+
+    // The assertion above claims the latch, so restore the pre-outage state
+    // before proving that a second rejection consumes it as an ERROR again.
+    cache.clear_terminal_announcement_for(provider, account);
+    cache.record_status_for(provider, account, 403);
+    assert!(
+        !cache.take_terminal_announcement_for(provider, account),
+        "the replacement credential's first rejection must consume the re-armed announcement"
+    );
+}

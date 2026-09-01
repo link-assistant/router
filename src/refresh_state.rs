@@ -59,7 +59,7 @@ impl RefreshAttempts {
         account: &str,
         credential: &SubscriptionToken,
     ) -> AttemptLock {
-        let fingerprint = credential_fingerprint(credential);
+        let fingerprint = attempt_fingerprint(provider, credential);
         let mut guard = self
             .inner
             .lock()
@@ -80,9 +80,13 @@ impl RefreshAttempts {
 }
 
 impl RefreshAttempt {
-    /// Reset state when any credential-file field changes.
-    pub(super) fn reset_if_changed(&mut self, credential: &SubscriptionToken) -> bool {
-        let fingerprint = credential_fingerprint(credential);
+    /// Reset state when this provider's durable credential identity changes.
+    pub(super) fn reset_if_changed(
+        &mut self,
+        provider: SubscriptionProvider,
+        credential: &SubscriptionToken,
+    ) -> bool {
+        let fingerprint = attempt_fingerprint(provider, credential);
         if self.credential == fingerprint {
             return false;
         }
@@ -111,8 +115,13 @@ impl RefreshAttempt {
     /// one this attempt was keyed on, [`Self::reset_if_changed`] reads the
     /// router's own rotation as a re-authentication, and the guard is cleared
     /// seconds after it is armed (issue #319).
-    pub(super) fn record_rotation(&mut self, now_ms: i64, credential: &SubscriptionToken) {
-        self.rotated_to = Some(credential_fingerprint(credential));
+    pub(super) fn record_rotation(
+        &mut self,
+        provider: SubscriptionProvider,
+        now_ms: i64,
+        credential: &SubscriptionToken,
+    ) {
+        self.rotated_to = Some(attempt_fingerprint(provider, credential));
         self.rotated_at_ms = Some(now_ms);
     }
 
@@ -176,6 +185,21 @@ impl RefreshAttempt {
 /// Shared with the rejection registry so a verdict reached about one chain link
 /// is discarded the moment the file on disk holds a different one (issue #245).
 pub(super) fn credential_fingerprint(token: &SubscriptionToken) -> [u8; 32] {
+    credential_fingerprint_with_expiry(token, true)
+}
+
+/// Identity used only by one process's refresh attempt state.
+///
+/// Codex writes access/refresh/account state but intentionally leaves its old
+/// expiry representation in the credential document. Ignoring only that
+/// provider's expiry keeps a self-minted rotation recognizable after its real
+/// durable round trip. Durable recovery and rejection records continue to use
+/// [`credential_fingerprint`], which remains exact across every token field.
+fn attempt_fingerprint(provider: SubscriptionProvider, token: &SubscriptionToken) -> [u8; 32] {
+    credential_fingerprint_with_expiry(token, provider != SubscriptionProvider::Codex)
+}
+
+fn credential_fingerprint_with_expiry(token: &SubscriptionToken, include_expiry: bool) -> [u8; 32] {
     fn hash_field(hasher: &mut Sha256, value: Option<&str>) {
         match value {
             Some(value) => {
@@ -190,12 +214,14 @@ pub(super) fn credential_fingerprint(token: &SubscriptionToken) -> [u8; 32] {
     let mut hasher = Sha256::new();
     hash_field(&mut hasher, Some(&token.access_token));
     hash_field(&mut hasher, token.refresh_token.as_deref());
-    match token.expires_at_ms {
-        Some(expiry) => {
-            hasher.update([1]);
-            hasher.update(expiry.to_le_bytes());
+    if include_expiry {
+        match token.expires_at_ms {
+            Some(expiry) => {
+                hasher.update([1]);
+                hasher.update(expiry.to_le_bytes());
+            }
+            None => hasher.update([0]),
         }
-        None => hasher.update([0]),
     }
     hash_field(&mut hasher, token.account_id.as_deref());
     hash_field(&mut hasher, token.resource_url.as_deref());
@@ -224,9 +250,9 @@ mod tests {
         let mut state = attempt.lock().await;
         state.record_terminal_failure();
         assert!(state.suppresses_attempt(10_000));
-        assert!(!state.reset_if_changed(&original));
+        assert!(!state.reset_if_changed(SubscriptionProvider::Claude, &original));
         assert!(state.suppresses_attempt(20_000));
-        assert!(state.reset_if_changed(&token("new-login")));
+        assert!(state.reset_if_changed(SubscriptionProvider::Claude, &token("new-login")));
         assert!(!state.suppresses_attempt(20_000));
         drop(state);
     }
@@ -278,7 +304,7 @@ mod rotation_tests {
         };
         assert_eq!(attempt.rotated_within(1_000, ROTATION_GRACE_MS), None);
 
-        attempt.record_rotation(1_000, &token("b", "r2"));
+        attempt.record_rotation(SubscriptionProvider::Claude, 1_000, &token("b", "r2"));
         assert_eq!(attempt.rotated_within(1_000, ROTATION_GRACE_MS), Some(0));
         assert_eq!(
             attempt.rotated_within(61_000, ROTATION_GRACE_MS),
@@ -304,10 +330,10 @@ mod rotation_tests {
             rotated_at_ms: None,
             rotated_to: None,
         };
-        attempt.record_rotation(1_000, &rotated);
+        attempt.record_rotation(SubscriptionProvider::Claude, 1_000, &rotated);
 
         assert!(
-            !attempt.reset_if_changed(&rotated),
+            !attempt.reset_if_changed(SubscriptionProvider::Claude, &rotated),
             "the router's own rotation must not clear its own guard"
         );
         assert_eq!(
@@ -317,7 +343,62 @@ mod rotation_tests {
         );
 
         // A credential nobody here minted *is* a re-authentication.
-        assert!(attempt.reset_if_changed(&token("c", "r3")));
+        assert!(attempt.reset_if_changed(SubscriptionProvider::Claude, &token("c", "r3")));
         assert_eq!(attempt.rotated_within(2_000, ROTATION_GRACE_MS), None);
+    }
+
+    /// Codex's expiry is serialization loss, not credential identity. Every
+    /// bearer, refresh-chain, account, and resource change remains an external
+    /// replacement and must clear the old attempt state.
+    #[test]
+    fn codex_attempt_identity_ignores_only_expiry() {
+        let original = SubscriptionToken {
+            access_token: "access-a".into(),
+            refresh_token: Some("refresh-a".into()),
+            expires_at_ms: Some(10),
+            account_id: Some("account-a".into()),
+            resource_url: Some("resource-a".into()),
+        };
+        let attempt_for = || RefreshAttempt {
+            credential: attempt_fingerprint(SubscriptionProvider::Codex, &original),
+            failure: None,
+            rotated_at_ms: Some(1),
+            rotated_to: Some(attempt_fingerprint(SubscriptionProvider::Codex, &original)),
+        };
+
+        let mut lossy_expiry = original.clone();
+        lossy_expiry.expires_at_ms = Some(1);
+        assert!(
+            !attempt_for().reset_if_changed(SubscriptionProvider::Codex, &lossy_expiry),
+            "Codex expiry alone is not a new credential"
+        );
+        assert!(
+            attempt_for().reset_if_changed(SubscriptionProvider::Claude, &lossy_expiry),
+            "other providers retain exact expiry identity"
+        );
+
+        for replacement in [
+            SubscriptionToken {
+                access_token: "access-b".into(),
+                ..original.clone()
+            },
+            SubscriptionToken {
+                refresh_token: Some("refresh-b".into()),
+                ..original.clone()
+            },
+            SubscriptionToken {
+                account_id: Some("account-b".into()),
+                ..original.clone()
+            },
+            SubscriptionToken {
+                resource_url: Some("resource-b".into()),
+                ..original.clone()
+            },
+        ] {
+            assert!(
+                attempt_for().reset_if_changed(SubscriptionProvider::Codex, &replacement),
+                "a changed Codex bearer/refresh/account/resource must be a new credential"
+            );
+        }
     }
 }
