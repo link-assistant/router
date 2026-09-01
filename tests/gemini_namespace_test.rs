@@ -7,12 +7,12 @@
 //! list while `/v1/models` listed eight live Codex models.
 
 use std::fmt::Write as _;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
@@ -36,6 +36,7 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
+    forwarded: Arc<Mutex<Vec<Value>>>,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -48,7 +49,10 @@ impl TestRouter {
 
     async fn start_with(claude_connected: bool) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
-        let stub = Router::new().fallback(stub_vendor);
+        let forwarded = Arc::new(Mutex::new(Vec::new()));
+        let stub = Router::new()
+            .fallback(stub_vendor)
+            .with_state(Arc::clone(&forwarded));
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("gemini-namespace-secret");
@@ -148,6 +152,10 @@ impl TestRouter {
                 "/api/gemini/v1beta/models/{model}",
                 get(gemini::native_model).post(gemini::forward_native_gemini),
             )
+            .route(
+                "/api/vertex/v1/{*path}",
+                axum::routing::post(gemini::forward_native_vertex),
+            )
             .with_state(state);
         let (url, router_task) = spawn(app).await;
 
@@ -155,6 +163,7 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
+            forwarded,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
@@ -210,12 +219,19 @@ async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
 }
 
 /// Vendor stub that answers in the dialect implied by the upstream path.
-async fn stub_vendor(request: Request) -> Response {
+async fn stub_vendor(
+    State(forwarded): State<Arc<Mutex<Vec<Value>>>>,
+    request: Request,
+) -> Response {
     let path = request.uri().path().to_string();
     let body = to_bytes(request.into_body(), 1024 * 1024)
         .await
         .expect("read stub request");
     let body = serde_json::from_slice::<Value>(&body).unwrap_or(Value::Null);
+    forwarded
+        .lock()
+        .expect("capture vendor request")
+        .push(body.clone());
 
     let anthropic = path.contains("/v1/messages");
     let (payload, content_type) = if anthropic {
@@ -443,6 +459,37 @@ async fn generate_content_serves_codex_and_claude_models_natively() {
     }
 }
 
+/// Issue #378: Gemini CLI supplies `topP`, which is translated to `top_p`.
+/// The `ChatGPT` subscription backend rejects that field, so capability
+/// reconciliation must remove it only when the selected owner is Codex.
+#[tokio::test]
+async fn gemini_top_p_is_not_forwarded_to_codex() {
+    let router = TestRouter::start().await;
+
+    let (status, body) = router
+        .post_native(
+            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            &json!({
+                "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
+                "generationConfig": {"topP": 0.9}
+            }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+
+    let request = router
+        .forwarded
+        .lock()
+        .expect("captured vendor requests")
+        .last()
+        .cloned()
+        .expect("Codex request reached the stub");
+    assert!(
+        request.get("top_p").is_none(),
+        "Codex received unsupported top_p: {request:#}"
+    );
+}
+
 /// `maxOutputTokens` is optional in Gemini's protocol, and the `ChatGPT`
 /// backend rejects the field outright, so the router enforces the cap itself
 /// (see [`link_assistant_router::output_limit`]) instead of refusing an
@@ -590,4 +637,51 @@ async fn generate_content_reports_an_unavailable_model_in_the_gemini_error_shape
             .expect("error message")
             .contains("totally-made-up-xyz")
     );
+}
+
+/// Issue #377: JSON extraction failures must be rendered by the native API
+/// boundary, otherwise Axum's generic rejection bypasses Gemini's documented
+/// error envelope before either handler gets control.
+#[tokio::test]
+async fn malformed_json_uses_the_gemini_error_envelope_on_every_native_route() {
+    let router = TestRouter::start().await;
+
+    for path in [
+        "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+        "/api/gemini/v1beta/models/gpt-5.4-mini:streamGenerateContent",
+        "/api/vertex/v1/projects/p/locations/us/publishers/google/models/gpt-5.4-mini:generateContent",
+    ] {
+        let response = router
+            .client
+            .post(format!("{}{path}", router.url))
+            .bearer_auth(&router.token)
+            .header("content-type", "application/json")
+            .body(r#"{"contents":["#)
+            .send()
+            .await
+            .expect("router malformed JSON POST");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
+        assert_eq!(
+            response
+                .headers()
+                .get("content-type")
+                .and_then(|value| value.to_str().ok()),
+            Some("application/json"),
+            "{path}"
+        );
+        let body: Value = response.json().await.expect("Gemini error JSON");
+        assert_eq!(body["error"]["code"], 400, "{path}: {body}");
+        assert_eq!(
+            body["error"]["status"], "INVALID_ARGUMENT",
+            "{path}: {body}"
+        );
+        assert!(
+            body["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message
+                    .starts_with("Failed to parse request body as JSON:")),
+            "{path}: {body}"
+        );
+    }
 }

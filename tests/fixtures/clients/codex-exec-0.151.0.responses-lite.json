@@ -1,0 +1,46 @@
+{
+  "client": "codex",
+  "version": "0.151.0",
+  "source": "issue #380 and the Codex 0.151 Responses Lite request builder",
+  "method": "POST",
+  "path": "/api/codex/v1/responses",
+  "credential_carrier": "authorization",
+  "expected_surface": "openai-responses",
+  "headers": {
+    "user-agent": "codex_exec/0.151.0",
+    "content-type": "application/json",
+    "x-openai-internal-codex-responses-lite": "true"
+  },
+  "body": {
+    "model": "{model}",
+    "instructions": "",
+    "input": [
+      {
+        "type": "additional_tools",
+        "id": "1",
+        "role": "developer",
+        "tools": [
+          {
+            "name": "shell",
+            "description": "Runs a shell command",
+            "input_schema": {
+              "type": "object"
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "Use the shell tool"
+          }
+        ]
+      }
+    ],
+    "stream": true,
+    "store": false
+  }
+}

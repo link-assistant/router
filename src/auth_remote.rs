@@ -160,7 +160,7 @@ async fn authorize_inner(
         finish(provider, server);
         return Ok(());
     }
-    if begun.get("url").is_none() && begun.get("user_code").is_some() {
+    if status_of(&begun) == "awaiting_device" {
         return poll_until_authorized(&client, server, &login_id, provider).await;
     }
 

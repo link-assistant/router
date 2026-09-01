@@ -271,7 +271,17 @@ fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf
 /// need a router-written settings file — Gemini CLI does exactly that, so
 /// having both variables is not on its own enough to layer onto.
 const fn extends_user_configuration(client: ClientKind, isolated_config: bool) -> bool {
-    if isolated_config || needs_a_written_configuration(client) {
+    if isolated_config {
+        return false;
+    }
+    // Codex accepts repeatable global `-c key=TOML_VALUE` overlays before its
+    // subcommand. That gives it router connection settings while its real
+    // HOME/CODEX_HOME continues to supply sessions, MCP servers and preferences
+    // (issue #379), even though it has no base-url environment variable.
+    if matches!(client, ClientKind::Codex) {
+        return true;
+    }
+    if needs_a_written_configuration(client) {
         return false;
     }
     let integration = client.integration();
@@ -407,11 +417,13 @@ impl TemporaryClient {
                     command.env("OPENAI_MODEL", model);
                 }
             }
-            ClientKind::Codex
-            | ClientKind::GrokCli
-            | ClientKind::Opencode
-            | ClientKind::Agent
-            | ClientKind::Cursor => {}
+            ClientKind::Codex => {
+                if !isolated_config {
+                    append_codex_router_overrides(&mut command, base_url)?;
+                }
+            }
+            ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent | ClientKind::Cursor => {
+            }
         }
         Ok(Self { directory, command })
     }
@@ -444,6 +456,38 @@ impl TemporaryClient {
             }
         }
     }
+}
+
+/// Overlay only the connection provider for an ordinary Codex run.
+///
+/// Codex parses every value after `-c` as TOML. JSON string literals are also
+/// valid TOML basic strings and safely quote URLs and names without ever
+/// embedding the token, which remains in `LINK_ASSISTANT_TOKEN`.
+fn append_codex_router_overrides(command: &mut Command, base_url: &str) -> Result<(), AnyError> {
+    for (key, value) in [
+        ("model_provider", "link-assistant".to_string()),
+        (
+            "model_providers.link-assistant.name",
+            "Link.Assistant.Router".to_string(),
+        ),
+        (
+            "model_providers.link-assistant.base_url",
+            endpoint(base_url, "/v1"),
+        ),
+        (
+            "model_providers.link-assistant.env_key",
+            "LINK_ASSISTANT_TOKEN".to_string(),
+        ),
+        (
+            "model_providers.link-assistant.wire_api",
+            "responses".to_string(),
+        ),
+    ] {
+        command
+            .arg("-c")
+            .arg(format!("{key}={}", serde_json::to_string(&value)?));
+    }
+    Ok(())
 }
 
 async fn interrupt_child(

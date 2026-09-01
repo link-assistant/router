@@ -196,7 +196,13 @@ if [ "${{{wait}}}" = 1 ]; then
 fi
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
 printf '%s\n' "$HOME" > "$CAPTURE_HOME"
-cp "$HOME/.codex/config.toml" "$CAPTURE_CONFIG"
+if [ -n "$CAPTURE_CODEX_HOME" ]; then
+  printf '%s\n' "${{CODEX_HOME:-}}" > "$CAPTURE_CODEX_HOME"
+fi
+codex_config="${{CODEX_HOME:-$HOME/.codex}}/config.toml"
+if [ -f "$codex_config" ]; then
+  cp "$codex_config" "$CAPTURE_CONFIG"
+fi
 printf '%s\n' "$LINK_ASSISTANT_TOKEN" > "$CAPTURE_TOKEN"
 if [ -n "$FAKE_DELAY" ]; then
   sleep "$FAKE_DELAY"
@@ -249,18 +255,20 @@ fn run_with(
         .env("CAPTURE_ARGS", capture.join("args"))
         .env("CAPTURE_HOME", capture.join("home"))
         .env("CAPTURE_CONFIG", capture.join("config"))
+        .env("CAPTURE_CODEX_HOME", capture.join("codex-home"))
         .env("CAPTURE_TOKEN", capture.join("token"))
-        .env_remove("CODEX_HOME")
+        .env("CODEX_HOME", home.join("codex-state"))
         .output()
         .expect("run wrapper")
 }
 
-fn assert_temporary_launch(standalone: bool) {
+fn assert_codex_overlay_launch(standalone: bool) {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
     let capture = directory.path().join("capture");
-    fs::create_dir_all(home.join(".codex")).expect("create real Codex home");
+    let codex_home = home.join("codex-state");
+    fs::create_dir_all(&codex_home).expect("create real Codex home");
     fs::create_dir_all(&capture).expect("create capture directory");
     let stale = std::env::temp_dir().join(format!(
         "link-assistant-router-with-4294967294-{}",
@@ -271,8 +279,14 @@ fn assert_temporary_launch(standalone: bool) {
             .to_string_lossy()
     ));
     fs::create_dir_all(&stale).expect("create stale wrapper directory");
-    let original = "model_provider = \"user-owned\"\n";
-    fs::write(home.join(".codex/config.toml"), original).expect("seed real config");
+    let original = concat!(
+        "model_provider = \"user-owned\"\n",
+        "model_reasoning_effort = \"xhigh\"\n",
+        "personality = \"pragmatic\"\n",
+        "\n[mcp_servers.memory]\n",
+        "command = \"memory-server\"\n",
+    );
+    fs::write(codex_home.join("config.toml"), original).expect("seed real config");
     fake_codex(&bin);
     let (server, requests) = mock_router();
 
@@ -297,35 +311,47 @@ fn assert_temporary_launch(standalone: bool) {
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(
-        fs::read_to_string(home.join(".codex/config.toml")).expect("read real config"),
+        fs::read_to_string(codex_home.join("config.toml")).expect("read real config"),
         original,
         "temporary launch must not change the user's config"
     );
-    let args = fs::read_to_string(capture.join("args")).expect("captured argv");
-    assert!(args.lines().any(|argument| argument == "--global"));
-    assert_eq!(args.lines().last(), Some("hi"));
-    let config = fs::read_to_string(capture.join("config")).expect("captured temp config");
-    assert!(config.contains(&format!("base_url = \"{server}/v1\"")));
-    assert!(!config.contains("la_sk_ordinary"));
+    let args = fs::read_to_string(capture.join("args"))
+        .expect("captured argv")
+        .lines()
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        args,
+        [
+            "-c".to_string(),
+            "model_provider=\"link-assistant\"".to_string(),
+            "-c".to_string(),
+            "model_providers.link-assistant.name=\"Link.Assistant.Router\"".to_string(),
+            "-c".to_string(),
+            format!("model_providers.link-assistant.base_url=\"{server}/v1\""),
+            "-c".to_string(),
+            "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"".to_string(),
+            "-c".to_string(),
+            "model_providers.link-assistant.wire_api=\"responses\"".to_string(),
+            "exec".to_string(),
+            "--global".to_string(),
+            "hi".to_string(),
+        ]
+    );
+    assert_eq!(
+        fs::read_to_string(capture.join("config")).expect("captured real config"),
+        original,
+        "Codex must read the caller's existing configuration"
+    );
     assert_eq!(
         fs::read_to_string(capture.join("token")).expect("captured token"),
         "la_sk_ordinary\n"
     );
-    let router_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
-    let router_home = router_home.trim();
-    assert_ne!(router_home, home.to_string_lossy());
-    // Codex is routed through a file the router writes, so it cannot be
-    // extended and lives in a profile of its own. That profile is kept: a
-    // directory thrown away after every run made every launch a first launch,
-    // with no session history and nothing to resume (issue #298).
-    assert!(
-        std::path::Path::new(router_home).is_dir(),
-        "a client that cannot be extended must keep its profile"
-    );
-    assert!(
-        std::path::Path::new(router_home).starts_with(home.join(".config")),
-        "the profile belongs under the router's own directory, not TMPDIR: {router_home}"
-    );
+    let captured_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
+    assert_eq!(captured_home.trim(), home.to_string_lossy());
+    let captured_codex_home =
+        fs::read_to_string(capture.join("codex-home")).expect("captured CODEX_HOME");
+    assert_eq!(captured_codex_home.trim(), codex_home.to_string_lossy());
     assert!(!stale.exists(), "a later run must sweep crash leftovers");
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
@@ -334,13 +360,13 @@ fn assert_temporary_launch(standalone: bool) {
 }
 
 #[test]
-fn router_with_uses_temporary_config_and_preserves_status() {
-    assert_temporary_launch(false);
+fn router_with_preserves_codex_config_and_client_status() {
+    assert_codex_overlay_launch(false);
 }
 
 #[test]
 fn standalone_with_router_uses_the_same_safe_contract() {
-    assert_temporary_launch(true);
+    assert_codex_overlay_launch(true);
 }
 
 #[test]
@@ -398,8 +424,7 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
         });
     assert_eq!(status.code(), Some(42));
     let router_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
-    // The profile survives an interrupted run too — that is the point of
-    // keeping it (issue #298). What must not survive is a disposable root.
+    // An ordinary Codex run keeps the caller's real home even when interrupted.
     assert!(std::path::Path::new(router_home.trim()).is_dir());
     assert_eq!(
         requests.join().expect("mock router thread").join(","),

@@ -17,17 +17,17 @@ later invocation sweeps directories left behind by a wrapper killed with
 
 ## Clients and configuration surfaces
 
-A temporary run either **extends** the client's own configuration — adding the
-router's two connection variables to one process and nothing else — or gives
-the client a **router profile**, when routing it depends on a file the router
-writes. A profile is kept between runs under
+A temporary run either **extends** the client's own configuration — adding
+process-local connection variables or Codex CLI config overlays and nothing
+else — or gives the client a **router profile**, when routing it depends on a
+file the router writes. A profile is kept between runs under
 `$XDG_CONFIG_HOME/link-assistant-router/clients/<client>/home`, so sessions
 stay resumable and onboarding is answered once; `--isolated-config` makes it
 disposable instead (issues #277, #298).
 
 | Tool | Dialect and router base | Temporary run | Permanent target |
 | --- | --- | --- | --- |
-| `codex` | Responses, `URL/v1` | router profile | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
+| `codex` | Responses, `URL/v1` | extends your own through `-c` overlays | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
 | `claude` (`claude-code`) | Anthropic Messages, `URL` | extends your own | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
 | `gemini` (`gemini-cli`) | Gemini native, `URL/api/gemini` | router profile | temporary only; API-key endpoint override is environmental |
 | `grok` (`grok-cli`) | Chat Completions, `URL/v1` | extends your own | owner-only managed environment file |
@@ -44,6 +44,12 @@ Each client-specific document keeps a binary-free manual path with the exact
 environment variables or config fields. Cursor deliberately fails before
 launch with the verified limitation instead of pretending a private protocol
 can use an OpenAI URL.
+
+For Codex, an ordinary temporary run leaves `HOME`, `CODEX_HOME`, the config
+file, session history, personality, reasoning effort and MCP servers in place.
+Repeatable global `-c` arguments select only the router provider for that
+process, and `LINK_ASSISTANT_TOKEN` carries the credential. Use
+`--isolated-config` when a disposable Codex home is intentionally required.
 
 ## Arguments, interaction, and models
 
