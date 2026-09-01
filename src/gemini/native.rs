@@ -38,13 +38,27 @@ fn native_model_document(
 /// exposes Codex, Claude, Qwen and Gemini models to Gemini CLI. A pinned
 /// `UPSTREAM_PROVIDER` narrows the namespace to that single subscription.
 async fn advertised_providers(state: &AppState) -> Vec<crate::subscription::SubscriptionProvider> {
-    let healthy = crate::model_routing::healthy_providers(
+    let routable = crate::model_routing::healthy_providers(
         &state.client,
         &state.subscription_readers,
         &state.subscription_cache,
         chrono::Utc::now().timestamp_millis(),
     )
     .await;
+    let health = crate::model_routing::configured_provider_health(
+        &state.subscription_readers,
+        &state.subscription_cache,
+        &state.model_catalogs,
+    );
+    let healthy = routable
+        .into_iter()
+        .filter(|provider| {
+            health.iter().any(|entry| {
+                entry.provider == *provider
+                    && entry.state == crate::model_routing::ProviderHealthState::Healthy
+            })
+        })
+        .collect::<Vec<_>>();
     match state.upstream_provider {
         crate::config::UpstreamProvider::Auto => healthy,
         provider => provider

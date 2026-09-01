@@ -36,6 +36,7 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
+    catalogs: Arc<ModelCatalogCache>,
     forwarded: Arc<Mutex<Vec<Value>>>,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
@@ -80,8 +81,9 @@ impl TestRouter {
         }
 
         let catalogs = Arc::new(ModelCatalogCache::new());
-        catalogs.record_success(
+        catalogs.record_success_for(
             SubscriptionProvider::Codex,
+            Some("acct_stub".to_string()),
             CODEX_MODELS.iter().map(ToString::to_string).collect(),
         );
         catalogs.record_success(
@@ -102,7 +104,7 @@ impl TestRouter {
                 SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home),
                 SubscriptionReader::new(SubscriptionProvider::Claude, &claude_home),
             ],
-            model_catalogs: catalogs,
+            model_catalogs: Arc::clone(&catalogs),
             subscription_cache: Arc::new(TokenCache::new()),
             upstream_base_url: stub_url,
             upstream_provider: UpstreamProvider::Auto,
@@ -163,6 +165,7 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
+            catalogs,
             forwarded,
             tasks: vec![stub_task, router_task],
             _data: data,
@@ -388,6 +391,43 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
     assert_eq!(
         sorted_gemini, sorted_openai,
         "the Gemini namespace must advertise exactly the main catalog"
+    );
+}
+
+/// A catalog discovered for an old account must disappear from every model
+/// namespace until discovery completes for the credential that is installed
+/// now.
+#[tokio::test]
+async fn gemini_and_openai_omit_a_catalog_owned_by_another_account() {
+    let router = TestRouter::start().await;
+    router.catalogs.record_success_for(
+        SubscriptionProvider::Codex,
+        Some("acct_previous".to_string()),
+        CODEX_MODELS.iter().map(ToString::to_string).collect(),
+    );
+
+    let (status, gemini_catalog) = router.get_json("/api/gemini/v1beta/models").await;
+    assert_eq!(status, StatusCode::OK);
+    let gemini_names = model_names(&gemini_catalog);
+
+    let (status, openai_catalog) = router.get_json("/v1/models").await;
+    assert_eq!(status, StatusCode::OK);
+    let openai_names = openai_catalog["data"]
+        .as_array()
+        .expect("data array")
+        .iter()
+        .map(|model| format!("models/{}", model["id"].as_str().expect("model id")))
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        gemini_names, openai_names,
+        "every namespace must apply the same credential-account ownership boundary"
+    );
+    assert!(
+        !gemini_names.iter().any(|model| CODEX_MODELS
+            .iter()
+            .any(|codex| model == &format!("models/{codex}"))),
+        "a prior account's Codex catalog must not be advertised: {gemini_names:?}"
     );
 }
 
