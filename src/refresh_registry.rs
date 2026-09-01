@@ -57,7 +57,7 @@ impl TokenCache {
                 primary,
                 data_dir,
             ));
-            self.register_store_if_absent(reader.provider(), account, recoverable);
+            self.register_store(reader.provider(), account, recoverable);
         }
     }
 
@@ -149,6 +149,38 @@ mod tests {
         assert!(
             recovery_lock.starts_with(data_dir.join("refresh-recovery")),
             "the durable lock must live in router data, not the vendor home"
+        );
+    }
+
+    #[test]
+    fn durable_registration_upgrades_an_existing_raw_catalog_reader() {
+        let root = tempfile::tempdir().expect("temp root");
+        let credential_home = root.path().join("codex-home");
+        let data_dir = root.path().join("router-data");
+        std::fs::create_dir_all(&credential_home).expect("credential home");
+        let reader = SubscriptionReader::new(SubscriptionProvider::Codex, &credential_home);
+        let readers = vec![reader.clone()];
+        let cache = TokenCache::new();
+
+        cache.register_reader("primary", &reader);
+        let raw_lock = cache
+            .store_for_subscription(SubscriptionProvider::Codex, "primary")
+            .and_then(|store| store.lock_path())
+            .expect("raw reader lock");
+        assert!(
+            !raw_lock.starts_with(data_dir.join("refresh-recovery")),
+            "the setup must begin with a bare reader"
+        );
+
+        cache.register_readers_in("primary", &readers, &data_dir);
+
+        let durable_lock = cache
+            .store_for_subscription(SubscriptionProvider::Codex, "primary")
+            .and_then(|store| store.lock_path())
+            .expect("recoverable store lock");
+        assert!(
+            durable_lock.starts_with(data_dir.join("refresh-recovery")),
+            "durable registration left the raw store installed: {durable_lock:?}"
         );
     }
 }

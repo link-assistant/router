@@ -134,7 +134,7 @@ fn credential_location(
 
 /// Report credential and live-catalog health for every provider.
 ///
-/// Expired credentials are refreshed in memory before their catalogs are
+/// Expired credentials are refreshed durably before their catalogs are
 /// fetched. Returns `true` when a present credential cannot become healthy or
 /// cannot fetch its catalog.
 /// `data_dir` is where a terminal refusal learned here is
