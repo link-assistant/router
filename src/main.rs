@@ -385,7 +385,7 @@ async fn run_server(
         .map_err(std::io::Error::other)?,
     };
 
-    state.register_credential_recovery(
+    state.register_credential_recovery_in(
         &config.data_dir,
         &link_assistant_router::app_state::VendorClis {
             claude: config.claude_cli_bin.as_deref(),
@@ -398,10 +398,30 @@ async fn run_server(
         .subscription_cache
         .persist_rejections_in(&config.data_dir);
 
+    let mut catalog_readers = state
+        .subscription_readers
+        .iter()
+        .filter(|reader| {
+            state
+                .account_router
+                .as_ref()
+                .is_none_or(|router| router.provider() != reader.provider())
+        })
+        .cloned()
+        .map(|reader| {
+            (
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                reader,
+            )
+        })
+        .collect::<Vec<_>>();
+    if let Some(router) = state.account_router.as_ref() {
+        catalog_readers.extend(router.subscription_readers());
+    }
     let catalog_refresh = tokio::spawn(
-        link_assistant_router::model_catalog::refresh_catalogs_forever(
+        link_assistant_router::model_catalog::refresh_catalogs_for_accounts_forever(
             state.client.clone(),
-            state.subscription_readers.clone(),
+            catalog_readers,
             Arc::clone(&state.subscription_cache),
             Arc::clone(&state.model_catalogs),
         ),

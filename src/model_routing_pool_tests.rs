@@ -10,6 +10,7 @@ use std::sync::{Arc, Mutex};
 use tempfile::TempDir;
 
 const MODEL: &str = "claude-pool-model";
+const CODEX_MODEL: &str = "gpt-pool-model";
 
 struct PoolHarness {
     state: AppState,
@@ -73,7 +74,7 @@ impl PoolHarness {
             SubscriptionProvider::Claude,
             options,
         );
-        router.register_credential_stores(&state.subscription_cache, data.path());
+        router.register_credential_stores_in(&state.subscription_cache, data.path());
         state.account_router = Some(router);
 
         Self {
@@ -137,6 +138,132 @@ fn write_claude_credential(directory: &TempDir, access_token: &str) {
         .to_string(),
     )
     .unwrap();
+}
+
+fn write_codex_credential(directory: &TempDir, access_token: &str, account_id: &str) {
+    fs::write(
+        directory.path().join("auth.json"),
+        json!({
+            "tokens": {
+                "access_token": access_token,
+                "account_id": account_id
+            }
+        })
+        .to_string(),
+    )
+    .unwrap();
+}
+
+fn codex_pool_state(
+    options: crate::accounts::AccountRouterOptions,
+) -> (AppState, TempDir, TempDir, TempDir) {
+    let data = tempfile::tempdir().unwrap();
+    let primary = tempfile::tempdir().unwrap();
+    let additional = tempfile::tempdir().unwrap();
+    write_codex_credential(&primary, "primary-access", "acct-primary");
+    write_codex_credential(&additional, "account-1-access", "acct-secondary");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, primary.path());
+    let mut state = auto_state(vec![reader], data.path());
+    let router = crate::accounts::AccountRouter::new_for_provider(
+        primary.path().to_path_buf(),
+        &[additional.path().to_path_buf()],
+        SubscriptionProvider::Codex,
+        options,
+    );
+    router.register_credential_stores_in(&state.subscription_cache, data.path());
+    state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        Some("acct-primary".to_string()),
+        vec![CODEX_MODEL.to_string()],
+    );
+    state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "account-1",
+        Some("acct-secondary".to_string()),
+        vec![CODEX_MODEL.to_string()],
+    );
+    state.account_router = Some(router);
+    (state, data, primary, additional)
+}
+
+async fn selected_codex_account(
+    state: &AppState,
+    context: &crate::accounts::RoutingContext,
+) -> Result<String, String> {
+    let routed = route_subscription_model(state, CODEX_MODEL)
+        .await
+        .map_err(|error| error.to_string())?;
+    routed
+        .subscription
+        .expect("Codex pool carries a deferred snapshot")
+        .for_dispatch_with_context(&routed.state, context)
+        .await
+        .map(|selected| selected.name)
+}
+
+#[tokio::test]
+async fn known_codex_accounts_preserve_strict_pins_and_limits() {
+    let (state, _data, _primary, _additional) =
+        codex_pool_state(crate::accounts::AccountRouterOptions {
+            request_limits: vec![None, Some(1)],
+            ..crate::accounts::AccountRouterOptions::default()
+        });
+    let pin = crate::accounts::RoutingContext::pinned("account-1");
+
+    assert_eq!(
+        selected_codex_account(&state, &pin).await.unwrap(),
+        "account-1"
+    );
+    assert!(selected_codex_account(&state, &pin).await.is_err());
+}
+
+#[tokio::test]
+async fn known_codex_accounts_preserve_round_robin_and_session_affinity() {
+    let (state, _data, _primary, _additional) =
+        codex_pool_state(crate::accounts::AccountRouterOptions::default());
+
+    assert_eq!(
+        selected_codex_account(&state, &crate::accounts::RoutingContext::default())
+            .await
+            .unwrap(),
+        "primary"
+    );
+    assert_eq!(
+        selected_codex_account(&state, &crate::accounts::RoutingContext::default())
+            .await
+            .unwrap(),
+        "account-1"
+    );
+    let session = crate::accounts::RoutingContext::for_session("stable-session");
+    let first = selected_codex_account(&state, &session).await.unwrap();
+    let second = selected_codex_account(&state, &session).await.unwrap();
+    assert_eq!(first, second);
+}
+
+#[tokio::test]
+async fn one_rejected_codex_account_fails_over_without_poisoning_provider_health() {
+    let (state, _data, _primary, _additional) =
+        codex_pool_state(crate::accounts::AccountRouterOptions::default());
+    state
+        .subscription_cache
+        .record_credential_rejected_for(SubscriptionProvider::Codex, "primary");
+    state.model_catalogs.record_failure_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        "HTTP 401 primary rejected",
+        true,
+    );
+
+    assert_eq!(
+        selected_codex_account(&state, &crate::accounts::RoutingContext::default())
+            .await
+            .unwrap(),
+        "account-1"
+    );
+    let health = configured_provider_health_report(&state).await;
+    assert_eq!(health.len(), 1);
+    assert_eq!(health[0].state, ProviderHealthState::Healthy);
 }
 
 #[tokio::test]

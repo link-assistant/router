@@ -21,13 +21,8 @@ use crate::app_state::AppState;
 /// internals. A readable credential still awaiting its first live catalog is
 /// listed as starting and answers `200`; a deployment with no credential also
 /// answers `200` with empty provider lists.
-#[allow(clippy::unused_async)]
 pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResponse {
-    let providers = crate::model_routing::configured_provider_health(
-        &state.subscription_readers,
-        &state.subscription_cache,
-        &state.model_catalogs,
-    );
+    let providers = crate::model_routing::configured_provider_health_report(&state).await;
     let degraded = providers
         .iter()
         .filter(|health| health.is_degraded())

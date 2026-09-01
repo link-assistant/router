@@ -70,16 +70,20 @@ pub(crate) fn valid_recovery_record_path(
     let bytes = match std::fs::read(&path) {
         Ok(bytes) => bytes,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => {
+        Err(_) => {
             return Err(format!(
-                "could not check the durable {provider} credential recovery record: {error}"
+                "the {provider} credential recovery record is unusable"
             ));
         }
     };
-    let Ok(record) = serde_json::from_slice::<RecoveryRecord>(&bytes) else {
-        return Ok(None);
-    };
-    Ok((record.version == RECOVERY_VERSION && record.provider == provider).then_some(path))
+    let record = serde_json::from_slice::<RecoveryRecord>(&bytes)
+        .map_err(|_| format!("the {provider} credential recovery record is unusable"))?;
+    if record.version != RECOVERY_VERSION || record.provider != provider {
+        return Err(format!(
+            "the {provider} credential recovery record is unusable"
+        ));
+    }
+    Ok(Some(path))
 }
 
 /// A credential store that falls back to the router's writable data directory.
@@ -112,33 +116,25 @@ impl RecoverableCredentialStore {
         hex::encode(crate::refresh::credential_fingerprint(token))
     }
 
-    fn read_recovery(&self) -> Option<RecoveryRecord> {
+    fn read_recovery(&self) -> Result<Option<RecoveryRecord>, String> {
         let bytes = match std::fs::read(&self.recovery_path) {
             Ok(bytes) => bytes,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return None,
-            Err(_) => {
-                tracing::debug!(
-                    "could not read OAuth recovery record at {}",
-                    self.recovery_path.display()
-                );
-                return None;
-            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(_) => return Err(self.unusable_recovery()),
         };
-        let Ok(record) = serde_json::from_slice::<RecoveryRecord>(&bytes) else {
-            tracing::debug!(
-                "could not parse OAuth recovery record at {}",
-                self.recovery_path.display()
-            );
-            return None;
-        };
+        let record = serde_json::from_slice::<RecoveryRecord>(&bytes)
+            .map_err(|_| self.unusable_recovery())?;
         if record.version != RECOVERY_VERSION || record.provider != self.provider {
-            tracing::debug!(
-                "ignored OAuth recovery record with invalid metadata at {}",
-                self.recovery_path.display()
-            );
-            return None;
+            return Err(self.unusable_recovery());
         }
-        Some(record)
+        Ok(Some(record))
+    }
+
+    fn unusable_recovery(&self) -> String {
+        format!(
+            "the {} credential recovery record is unusable",
+            self.provider
+        )
     }
 
     fn write_recovery(
@@ -181,34 +177,41 @@ impl RecoverableCredentialStore {
 
 impl CredentialStore for RecoverableCredentialStore {
     fn reload(&self) -> Option<SubscriptionToken> {
-        let primary = self.primary.reload();
-        let Some(record) = self.read_recovery() else {
-            return primary;
+        self.try_reload().ok().flatten()
+    }
+
+    fn try_reload(&self) -> Result<Option<SubscriptionToken>, String> {
+        let primary = self.primary.try_reload()?;
+        let Some(record) = self.read_recovery()? else {
+            return Ok(primary);
         };
         let primary_fingerprint = primary.as_ref().map(Self::fingerprint);
         let recovered_fingerprint = Self::fingerprint(&record.token);
 
         if primary_fingerprint.as_deref() == Some(recovered_fingerprint.as_str()) {
-            let _ = self.remove_recovery();
-            return primary;
+            self.remove_recovery()
+                .map_err(|_| self.unusable_recovery())?;
+            return Ok(primary);
         }
 
         if primary_fingerprint.is_some()
             && primary_fingerprint != record.baseline_fingerprint
             && primary_fingerprint.as_deref() != Some(recovered_fingerprint.as_str())
         {
-            let _ = self.remove_recovery();
-            return primary;
+            self.remove_recovery()
+                .map_err(|_| self.unusable_recovery())?;
+            return Ok(primary);
         }
 
         if self.primary.persist(&record.token).is_ok() {
-            let _ = self.remove_recovery();
+            self.remove_recovery()
+                .map_err(|_| self.unusable_recovery())?;
         }
-        Some(record.token)
+        Ok(Some(record.token))
     }
 
     fn persist(&self, token: &SubscriptionToken) -> Result<(), String> {
-        let baseline_fingerprint = self.primary.reload().as_ref().map(Self::fingerprint);
+        let baseline_fingerprint = self.primary.try_reload()?.as_ref().map(Self::fingerprint);
         match self.primary.persist(token) {
             Ok(()) => {
                 let _ = self.remove_recovery();
@@ -522,7 +525,20 @@ mod tests {
             )
             .expect("alter recovery record");
 
-            assert_eq!(store.reload(), Some(baseline), "invalid {field}");
+            let error = store
+                .try_reload()
+                .expect_err("invalid recovery fails closed");
+            assert_eq!(
+                error,
+                format!(
+                    "the {} credential recovery record is unusable",
+                    case.provider
+                )
+            );
+            assert!(!error.contains(ACCOUNT));
+            assert!(!error.contains(&data.path().display().to_string()));
+            assert_eq!(store.reload(), None, "invalid {field}");
+            assert_eq!(primary.reload(), Some(baseline), "primary remains intact");
         }
     }
 

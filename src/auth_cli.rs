@@ -686,20 +686,27 @@ async fn status(config: &Config) -> ExitCode {
 
     for reader in readers {
         let provider = reader.provider();
-        let value = match reader.read_token() {
-            Ok(disk_token) => {
+        let value = match token_cache
+            .load_authoritative(
+                provider,
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+            )
+            .await
+        {
+            Ok(Some(_)) => {
                 // Refresh first when the stored expiry says to, exactly as the
                 // proxy would, so the probe reflects what a real request sees.
                 let token = token_cache
-                    .get_fresh(&client, provider, disk_token, now)
+                    .get_fresh_registered(
+                        &client,
+                        provider,
+                        link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now,
+                    )
                     .await;
-                if token_cache.last_refresh_error(provider).is_some() {
-                    eprintln!(
-                        "error: {provider} refresh failed; credential state was not reported usable"
-                    );
-                    refresh_failed = true;
-                    "refresh-failed"
-                } else {
+                if let Ok(token) = token
+                    && token_cache.last_refresh_error(provider).is_none()
+                {
                     match link_assistant_router::model_catalog::fetch_provider_catalog(
                         &client, provider, &token, None,
                     )
@@ -716,9 +723,22 @@ async fn status(config: &Config) -> ExitCode {
                         // The credential may well be fine; the probe could not say.
                         Err(_) => "unverified",
                     }
+                } else {
+                    eprintln!(
+                        "error: {provider} refresh failed; credential state was not reported usable"
+                    );
+                    refresh_failed = true;
+                    "refresh-failed"
                 }
             }
-            Err(_) => "absent",
+            Ok(None) => "absent",
+            Err(_) => {
+                eprintln!(
+                    "error: {provider} refresh failed; credential recovery state could not be loaded"
+                );
+                refresh_failed = true;
+                "refresh-failed"
+            }
         };
         println!(
             "{:<8} {value:<10} {}",

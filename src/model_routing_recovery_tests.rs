@@ -25,7 +25,7 @@ fn credential_recovery_registers_stores_and_only_an_asked_for_vendor_client() {
     let readers = vec![SubscriptionReader::new(SubscriptionProvider::Claude, &home)];
 
     let without = auto_state(readers.clone(), dir.path());
-    without.register_credential_recovery(dir.path(), &crate::app_state::VendorClis::default());
+    without.register_credential_recovery_in(dir.path(), &crate::app_state::VendorClis::default());
     assert!(
         without
             .subscription_cache
@@ -52,7 +52,7 @@ fn credential_recovery_registers_stores_and_only_an_asked_for_vendor_client() {
 
     let claude_binary = dir.path().join("claude");
     let with = auto_state(readers, dir.path());
-    with.register_credential_recovery(
+    with.register_credential_recovery_in(
         dir.path(),
         &crate::app_state::VendorClis {
             claude: Some(&claude_binary),
@@ -88,7 +88,7 @@ fn credential_recovery_registers_a_codex_client_independently() {
 
     let codex_binary = dir.path().join("codex");
     let state = auto_state(readers, dir.path());
-    state.register_credential_recovery(
+    state.register_credential_recovery_in(
         dir.path(),
         &crate::app_state::VendorClis {
             claude: None,

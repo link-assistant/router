@@ -65,7 +65,15 @@ pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
 ///
 /// The response status is the only authority on whether a credential still
 /// works; see [`crate::refresh::CredentialEvidence`].
-pub fn record_claude_evidence(state: &crate::app_state::AppState, status: u16) {
+pub fn record_claude_evidence(
+    state: &crate::app_state::AppState,
+    account: Option<&str>,
+    status: u16,
+) {
     let cache = &state.subscription_cache;
-    cache.record_status(crate::subscription::SubscriptionProvider::Claude, status);
+    cache.record_status_for(
+        crate::subscription::SubscriptionProvider::Claude,
+        account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+        status,
+    );
 }

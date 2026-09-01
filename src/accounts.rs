@@ -286,13 +286,30 @@ impl AccountRouter {
         self.inner.provider
     }
 
+    /// Stable router account names paired with their credential readers.
+    #[must_use]
+    pub fn subscription_readers(&self) -> Vec<(String, SubscriptionReader)> {
+        self.inner
+            .accounts
+            .iter()
+            .map(|account| (account.name.clone(), account.reader.clone()))
+            .collect()
+    }
+
     /// Tell the shared token cache where each account's credential lives.
     ///
     /// A pooled account refreshes on the serving path, so without this its
     /// rotated refresh token would stay in memory and be lost at restart, and a
     /// rejection could not be checked against the newest credential on disk
     /// (issue #239).
-    pub fn register_credential_stores(
+    pub fn register_credential_stores(&self, cache: &crate::refresh::TokenCache) {
+        for account in &self.inner.accounts {
+            cache.register_reader(&account.name, &account.reader);
+        }
+    }
+
+    /// Register data-directory-backed recovery stores for every account.
+    pub fn register_credential_stores_in(
         &self,
         cache: &crate::refresh::TokenCache,
         data_dir: &std::path::Path,
@@ -401,10 +418,19 @@ impl AccountRouter {
         &self,
         context: &RoutingContext,
     ) -> Result<SelectedSubscriptionAccount, AccountError> {
+        self.select_subscription_where(context, |_| true)
+    }
+
+    /// Select an account that also satisfies a request-local routing boundary.
+    pub(crate) fn select_subscription_where(
+        &self,
+        context: &RoutingContext,
+        allowed: impl Fn(&str) -> bool,
+    ) -> Result<SelectedSubscriptionAccount, AccountError> {
         let (indices, mode) = self.selection_plan(context)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.is_available() {
+            if !account.is_available() || !allowed(&account.name) {
                 if !matches!(mode, SelectionMode::Automatic) {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
@@ -426,6 +452,49 @@ impl AccountRouter {
                 Err(error) => {
                     self.record_error(idx, &error.to_string());
                     self.start_cooldown(idx, self.inner.cooldown);
+                    if !matches!(mode, SelectionMode::Automatic) {
+                        return Err(Self::unavailable_error(mode, &account.name));
+                    }
+                }
+            }
+        }
+        Err(AccountError::NoHealthyAccounts)
+    }
+
+    /// Select through the registered recovery-aware credential stores.
+    pub(crate) async fn select_subscription_where_authoritative(
+        &self,
+        context: &RoutingContext,
+        cache: &crate::refresh::TokenCache,
+        allowed: impl Fn(&str) -> bool,
+    ) -> Result<SelectedSubscriptionAccount, AccountError> {
+        let (indices, mode) = self.selection_plan(context)?;
+        for idx in indices {
+            let account = &self.inner.accounts[idx];
+            if !account.is_available() || !allowed(&account.name) {
+                if !matches!(mode, SelectionMode::Automatic) {
+                    return Err(Self::unavailable_error(mode, &account.name));
+                }
+                continue;
+            }
+            match cache
+                .load_authoritative(self.provider(), &account.name)
+                .await
+            {
+                Ok(Some(token)) if account.try_record_use() => {
+                    self.bind_session(context, idx);
+                    return Ok(SelectedSubscriptionAccount {
+                        name: account.name.clone(),
+                        token,
+                    });
+                }
+                Ok(Some(_)) => {
+                    if !matches!(mode, SelectionMode::Automatic) {
+                        return Err(Self::unavailable_error(mode, &account.name));
+                    }
+                }
+                Ok(None) | Err(_) => {
+                    self.record_error(idx, "the registered credential store is unusable");
                     if !matches!(mode, SelectionMode::Automatic) {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }

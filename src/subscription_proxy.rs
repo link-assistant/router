@@ -236,7 +236,14 @@ async fn forward_subscription_openai_inner(
             }
         }
     } else if let Some(router) = state.account_router.as_ref() {
-        match router.select_subscription(&routing_context) {
+        match router
+            .select_subscription_where_authoritative(
+                &routing_context,
+                &state.subscription_cache,
+                |_| true,
+            )
+            .await
+        {
             Ok(selected) => selected,
             Err(error) => {
                 return error_response(
@@ -254,15 +261,19 @@ async fn forward_subscription_openai_inner(
                 "subscription credentials reader is not configured",
             );
         };
-        let disk_token = match reader.read_token() {
-            Ok(token) => token,
-            Err(e) => {
-                return error_response(
-                    StatusCode::BAD_GATEWAY,
-                    "authentication_error",
-                    &format!("failed to read {provider} subscription credentials: {e}"),
-                );
-            }
+        state
+            .subscription_cache
+            .register_reader(crate::credential_recovery_store::PRIMARY_ACCOUNT, reader);
+        let Ok(Some(disk_token)) = state
+            .subscription_cache
+            .load_authoritative(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            .await
+        else {
+            return error_response(
+                StatusCode::BAD_GATEWAY,
+                "authentication_error",
+                &format!("failed to read {provider} subscription credentials"),
+            );
         };
         crate::accounts::SelectedSubscriptionAccount {
             name: "primary".to_string(),
@@ -277,9 +288,9 @@ async fn forward_subscription_openai_inner(
     } else {
         // Pinned routing performs its ordinary serving-path refresh here.
         let now_ms = chrono::Utc::now().timestamp_millis();
-        state
+        match state
             .subscription_cache
-            .get_fresh_for(
+            .get_fresh_loaded(
                 &state.client,
                 provider,
                 &selected.name,
@@ -287,6 +298,16 @@ async fn forward_subscription_openai_inner(
                 now_ms,
             )
             .await
+        {
+            Ok(token) => token,
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "authentication_error",
+                    &error,
+                );
+            }
+        }
     };
     let selected_account = Some(selected.name);
 
@@ -403,9 +424,13 @@ async fn forward_subscription_openai_inner(
     state
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
-    state
-        .subscription_cache
-        .record_status(provider, status.as_u16());
+    state.subscription_cache.record_status_for(
+        provider,
+        selected_account
+            .as_deref()
+            .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+        status.as_u16(),
+    );
     let retry_after = retry_after_duration(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =

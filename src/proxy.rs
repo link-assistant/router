@@ -542,7 +542,11 @@ async fn proxy_handler_with_subscription(
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream_resp.headers());
-    crate::request_routing::record_claude_evidence(&state, status.as_u16());
+    crate::request_routing::record_claude_evidence(
+        &state,
+        selected_account.as_deref(),
+        status.as_u16(),
+    );
     state
         .logger
         .verbose(|| format!("Upstream responded: {status}"));
@@ -666,19 +670,42 @@ async fn resolve_upstream_credentials(
         return Ok((selected.token.access_token, Some(selected.name)));
     }
     if let Some(router) = state.account_router.as_ref() {
-        let sel = router.select_subscription(context)?;
+        let sel = router
+            .select_subscription_where_authoritative(context, &state.subscription_cache, |_| true)
+            .await?;
         let now_ms = chrono::Utc::now().timestamp_millis();
         let token = state
             .subscription_cache
-            .get_fresh_for(
+            .get_fresh_loaded(
                 &state.client,
                 router.provider(),
                 &sel.name,
                 sel.token,
                 now_ms,
             )
-            .await;
+            .await
+            .map_err(std::io::Error::other)?;
         return Ok((token.access_token, Some(sel.name)));
+    }
+    if state
+        .subscription_cache
+        .store_for_subscription(
+            SubscriptionProvider::Claude,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        )
+        .is_some()
+    {
+        let token = state
+            .subscription_cache
+            .get_fresh_registered(
+                &state.client,
+                SubscriptionProvider::Claude,
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                chrono::Utc::now().timestamp_millis(),
+            )
+            .await
+            .map_err(std::io::Error::other)?;
+        return Ok((token.access_token, None));
     }
     let token = state
         .oauth_provider

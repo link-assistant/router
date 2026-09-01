@@ -13,6 +13,40 @@ use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 use crate::vendor_cli_refresh::VendorCli;
 
 impl TokenCache {
+    /// Load one credential from its authoritative registered store.
+    ///
+    /// Recovery-aware stores may reconcile a sidecar into the vendor's primary
+    /// document while loading, so this operation takes the store's exact
+    /// durable transaction lock. The guard is dropped before this method
+    /// returns: callers must never carry it into an OAuth or catalog request.
+    pub async fn load_authoritative(
+        &self,
+        provider: SubscriptionProvider,
+        account: &str,
+    ) -> Result<Option<crate::subscription::SubscriptionToken>, String> {
+        let store = self
+            .store_for_subscription(provider, account)
+            .ok_or_else(|| format!("no durable {provider} credential store is registered"))?;
+        let lock_path = store.lock_path().ok_or_else(|| {
+            format!("no durable transaction lock is available for {provider} credentials")
+        })?;
+        let _guard = crate::durable_file::lock_exclusive_async(
+            &lock_path,
+            crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+        )
+        .await
+        .map_err(|error| {
+            if error.kind() == std::io::ErrorKind::WouldBlock {
+                format!("timed out waiting for the {provider} credential transaction lock")
+            } else {
+                format!("could not acquire the {provider} credential transaction lock")
+            }
+        })?;
+        store
+            .try_reload()
+            .map_err(|_| format!("the {provider} credential store is unusable"))
+    }
+
     /// Register where a subscription's credential lives.
     ///
     /// Every path that can refresh a token registers its store, so a rotation

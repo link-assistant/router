@@ -94,6 +94,29 @@ fn catalog_unions_only_live_discovered_models() {
     assert_eq!(unavailable["healthy_providers"], json!([]));
 }
 
+#[test]
+fn account_catalog_union_reports_provider_healthy_when_any_account_is_healthy() {
+    let catalogs = ModelCatalogCache::new();
+    catalogs.record_failure_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        "primary catalog failed",
+        true,
+    );
+    catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "account-1",
+        Some("account-secondary".into()),
+        vec!["secondary-model".into()],
+    );
+
+    let catalog = model_catalog(&[SubscriptionProvider::Codex], &catalogs);
+
+    assert_eq!(catalog["healthy_providers"], json!(["codex"]));
+    assert_eq!(catalog["degraded_providers"], json!([]));
+    assert_eq!(catalog["data"][0]["id"], "secondary-model");
+}
+
 #[tokio::test]
 async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it() {
     let data = tempdir().unwrap();
@@ -694,7 +717,10 @@ fn an_empty_catalog_names_the_credential_state_behind_it() {
         "{message}"
     );
     assert!(message.contains("credential is not usable"), "{message}");
-    assert!(message.contains("invalid_grant"), "{message}");
+    assert!(
+        !message.contains("invalid_grant"),
+        "upstream catalog details are private: {message}"
+    );
 }
 
 #[test]
@@ -950,4 +976,20 @@ async fn a_request_without_a_model_is_refused() {
         matches!(error, crate::model_routing::ModelRouteError::ModelRequired),
         "{error:?}"
     );
+}
+
+#[test]
+fn automatic_routing_errors_never_expose_catalog_bodies_accounts_or_paths() {
+    let catalogs = ModelCatalogCache::new();
+    let sentinel = "vendor-body account-secret /private/credentials/codex.json";
+    catalogs.record_failure(SubscriptionProvider::Codex, sentinel, true);
+
+    let error = available_provider_for_model("gpt-secret", &[], &catalogs)
+        .expect_err("a failed catalog is not routable")
+        .to_string();
+
+    assert!(error.contains("codex"));
+    assert!(!error.contains("vendor-body"), "{error}");
+    assert!(!error.contains("account-secret"), "{error}");
+    assert!(!error.contains("/private/credentials"), "{error}");
 }

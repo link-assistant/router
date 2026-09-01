@@ -144,31 +144,40 @@ pub async fn subscription_catalog_diagnostics(
     _active_provider: SubscriptionProvider,
     claude_home: &str,
     user_home: &str,
-    data_dir: &std::path::Path,
+    data_dir: Option<&std::path::Path>,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
     let client = reqwest::Client::new();
-    let token_cache = crate::refresh::TokenCache::registered_for(&readers, data_dir);
+    let token_cache = data_dir.map_or_else(
+        || {
+            let cache = crate::refresh::TokenCache::new();
+            cache.register_readers(crate::credential_recovery_store::PRIMARY_ACCOUNT, &readers);
+            cache
+        },
+        |data_dir| crate::refresh::TokenCache::registered_for(&readers, data_dir),
+    );
     let now_ms = chrono::Utc::now().timestamp_millis();
     let mut catalog_error = false;
     for reader in readers {
         let provider = reader.provider();
         let label = format!("{provider} subscription");
-        // A credential may exist with no file at all: on macOS a recent Claude
-        // Code login writes only the Keychain (issue #249). Reporting MISSING
-        // on the strength of an absent file would hide a working subscription.
-        let path = match reader.discover_credential_path() {
-            Some(path) => path,
-            None if reader.read_token().is_ok() => reader.home().to_path_buf(),
-            None => {
+        let path = reader
+            .discover_credential_path()
+            .unwrap_or_else(|| reader.home().to_path_buf());
+        let origin = reader
+            .read_token_from()
+            .map_or(crate::platform_keychain::Origin::File, |(_, origin)| origin);
+        let disk_token = match token_cache
+            .load_authoritative(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            .await
+        {
+            Ok(Some(token)) => token,
+            Ok(None) => {
                 println!("{label:<23}: {} (MISSING)", reader.home().display());
                 continue;
             }
-        };
-        let (disk_token, origin) = match reader.read_token_from() {
-            Ok(found) => found,
-            Err(error) => {
-                println!("{label:<23}: {} (found, NO TOKEN: {error})", path.display());
+            Err(_) => {
+                println!("{label:<23}: {provider} credential store (found, NO TOKEN)");
                 println!(
                     "{:<23}: ERROR (credential is unreadable)",
                     format!("{provider} catalog")
@@ -178,10 +187,15 @@ pub async fn subscription_catalog_diagnostics(
             }
         };
         let was_expired = disk_token.is_expired(now_ms);
-        let token = token_cache
-            .get_fresh(&client, provider, disk_token, now_ms)
-            .await;
-        if token_cache.last_refresh_error(provider).is_some() {
+        let Ok(token) = token_cache
+            .get_fresh_registered(
+                &client,
+                provider,
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                now_ms,
+            )
+            .await
+        else {
             let location = credential_location(provider, origin, &path);
             println!(
                 "{label:<23}: {location} (found, refresh FAILED, store: {})",
@@ -197,7 +211,7 @@ pub async fn subscription_catalog_diagnostics(
             );
             catalog_error = true;
             continue;
-        }
+        };
         // `expiresAt` is a hint, so a still-expired token is probed rather than
         // declared dead: the catalog endpoint is what actually knows.
         let still_expired = token.is_expired(now_ms);
@@ -224,6 +238,16 @@ pub async fn subscription_catalog_diagnostics(
         }
     }
     catalog_error
+}
+
+/// Data-directory-backed variant of [`subscription_catalog_diagnostics`].
+pub async fn subscription_catalog_diagnostics_in(
+    active_provider: SubscriptionProvider,
+    claude_home: &str,
+    user_home: &str,
+    data_dir: &std::path::Path,
+) -> bool {
+    subscription_catalog_diagnostics(active_provider, claude_home, user_home, Some(data_dir)).await
 }
 
 #[cfg(test)]
@@ -302,7 +326,7 @@ mod tests {
         let blocked_data_dir = root.path().join("not-a-directory");
         std::fs::write(&blocked_data_dir, b"occupied").expect("block recovery directory");
 
-        let failed = subscription_catalog_diagnostics(
+        let failed = subscription_catalog_diagnostics_in(
             SubscriptionProvider::Qwen,
             root.path().join("claude").to_str().expect("claude home"),
             user_home.to_str().expect("user home"),

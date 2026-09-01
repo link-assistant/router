@@ -336,7 +336,12 @@ async fn route_gemini_token(
             })?
     } else if let Some(router) = state.account_router.as_ref() {
         router
-            .select_subscription(&routing_context)
+            .select_subscription_where_authoritative(
+                &routing_context,
+                &state.subscription_cache,
+                |_| true,
+            )
+            .await
             .map_err(|error| {
                 error_response(
                     StatusCode::SERVICE_UNAVAILABLE,
@@ -352,13 +357,30 @@ async fn route_gemini_token(
                 "subscription credentials reader is not configured",
             )
         })?;
-        let token = reader.read_token().map_err(|error| {
-            error_response(
-                StatusCode::BAD_GATEWAY,
-                "authentication_error",
-                &format!("failed to read Gemini subscription credentials: {error}"),
+        state
+            .subscription_cache
+            .register_reader(crate::credential_recovery_store::PRIMARY_ACCOUNT, reader);
+        let token = state
+            .subscription_cache
+            .load_authoritative(
+                crate::subscription::SubscriptionProvider::Gemini,
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
             )
-        })?;
+            .await
+            .map_err(|_| {
+                error_response(
+                    StatusCode::BAD_GATEWAY,
+                    "authentication_error",
+                    "failed to read Gemini subscription credentials",
+                )
+            })?
+            .ok_or_else(|| {
+                error_response(
+                    StatusCode::BAD_GATEWAY,
+                    "authentication_error",
+                    "failed to read Gemini subscription credentials",
+                )
+            })?;
         crate::accounts::SelectedSubscriptionAccount {
             name: "primary".to_string(),
             token,
@@ -370,7 +392,7 @@ async fn route_gemini_token(
         let now_ms = chrono::Utc::now().timestamp_millis();
         state
             .subscription_cache
-            .get_fresh_for(
+            .get_fresh_loaded(
                 &state.client,
                 crate::subscription::SubscriptionProvider::Gemini,
                 &selected.name,
@@ -378,6 +400,13 @@ async fn route_gemini_token(
                 now_ms,
             )
             .await
+            .map_err(|error| {
+                error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "authentication_error",
+                    &error,
+                )
+            })?
     };
     Ok(RoutedGeminiToken {
         token,

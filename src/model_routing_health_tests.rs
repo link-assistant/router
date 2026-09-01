@@ -826,8 +826,9 @@ async fn no_provider_is_both_healthy_and_degraded() {
     );
 }
 
-#[test]
-fn provider_health_state_helpers_match_serving_semantics() {
+#[tokio::test]
+async fn provider_health_state_helpers_match_serving_semantics() {
+    let data = tempdir().unwrap();
     let codex = tempdir().unwrap();
     fs::write(
         codex.path().join("auth.json"),
@@ -838,22 +839,30 @@ fn provider_health_state_helpers_match_serving_semantics() {
         SubscriptionProvider::Codex,
         codex.path(),
     )];
-    let cache = crate::refresh::TokenCache::new();
-    let catalogs = ModelCatalogCache::new();
+    let mut state = AppState::for_tests(data.path());
+    state.subscription_readers = readers;
+    state.subscription_cache.register_readers(
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        &state.subscription_readers,
+    );
 
-    let starting = configured_provider_health(&readers, &cache, &catalogs);
+    let starting = configured_provider_health_report(&state).await;
     assert_eq!(starting[0].state, ProviderHealthState::Starting);
     assert!(!starting[0].is_degraded());
     assert!(starting[0].is_serving());
 
-    catalogs.record_success(SubscriptionProvider::Codex, vec!["gpt-live".into()]);
-    let healthy = configured_provider_health(&readers, &cache, &catalogs);
+    state
+        .model_catalogs
+        .record_success(SubscriptionProvider::Codex, vec!["gpt-live".into()]);
+    let healthy = configured_provider_health_report(&state).await;
     assert_eq!(healthy[0].state, ProviderHealthState::Healthy);
     assert!(!healthy[0].is_degraded());
     assert!(healthy[0].is_serving());
 
-    cache.record_credential_rejected(SubscriptionProvider::Codex);
-    let degraded = configured_provider_health(&readers, &cache, &catalogs);
+    state
+        .subscription_cache
+        .record_credential_rejected(SubscriptionProvider::Codex);
+    let degraded = configured_provider_health_report(&state).await;
     assert_eq!(degraded[0].state, ProviderHealthState::Degraded);
     assert!(degraded[0].is_degraded());
     assert!(!degraded[0].is_serving());

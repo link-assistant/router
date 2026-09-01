@@ -45,8 +45,13 @@ one of these upstreams:
 codex     # writes ~/.codex/auth.json
 ```
 
-The router reads that file read-only, refreshes an expired token **in memory**,
-and never writes back.
+The router refreshes access tokens in memory. If OpenAI rotates the refresh
+token, the router atomically persists the new chain link before serving it,
+preserving unrelated fields in `auth.json`. A read-only Codex home uses an
+owner-only recovery sidecar under `DATA_DIR/refresh-recovery`, reconciled when
+the primary becomes writable. Refresh and login/import share one account lock;
+if neither the lock nor durable persistence is available, the request fails
+closed instead of leaving a spent refresh token on disk.
 
 ## 2. Start the router against that subscription
 

@@ -505,7 +505,7 @@ fn account_pool_registers_every_reader_with_data_dir_recovery() {
     );
     let cache = crate::refresh::TokenCache::new();
 
-    router.register_credential_stores(&cache, &data_dir);
+    router.register_credential_stores_in(&cache, &data_dir);
 
     for account in ["primary", "account-1"] {
         let lock = cache

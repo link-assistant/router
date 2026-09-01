@@ -205,12 +205,12 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
     assert_eq!(returned, original);
     assert!(received.lock().unwrap().is_empty());
     let reported = cache
-        .last_refresh_error(SubscriptionProvider::Claude)
+        .last_refresh_error_for(SubscriptionProvider::Claude, SENTINEL)
         .expect("storage failure is operator-visible");
     let captured = logs.contents();
     assert!(reported.contains("re-read"), "{reported}");
     assert!(
-        captured.contains("could not re-read the claude credential"),
+        captured.contains("could not re-read the registered claude credential"),
         "the test must capture the failing internal diagnostic: {captured}"
     );
     assert!(!reported.contains(SENTINEL), "{reported}");
@@ -254,7 +254,7 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
     drain(server).await;
 
     let reported = cache
-        .last_refresh_error(SubscriptionProvider::Claude)
+        .last_refresh_error_for(SubscriptionProvider::Claude, SENTINEL)
         .expect("terminal rejection is operator-visible");
     let captured = logs.contents();
     assert_eq!(returned, original);

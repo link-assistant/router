@@ -21,6 +21,29 @@ struct LockCheckingStore {
     unlocked_reloads: AtomicUsize,
 }
 
+#[derive(Debug)]
+struct RecoveryOnlyPrimary {
+    lock_path: std::path::PathBuf,
+}
+
+impl crate::credential_store::CredentialStore for RecoveryOnlyPrimary {
+    fn reload(&self) -> Option<crate::subscription::SubscriptionToken> {
+        None
+    }
+
+    fn persist(&self, _token: &crate::subscription::SubscriptionToken) -> Result<(), String> {
+        Err("primary is read-only".into())
+    }
+
+    fn lock_path(&self) -> Option<std::path::PathBuf> {
+        Some(self.lock_path.clone())
+    }
+
+    fn describe(&self) -> String {
+        "read-only test primary".into()
+    }
+}
+
 impl crate::credential_store::CredentialStore for LockCheckingStore {
     fn reload(&self) -> Option<crate::subscription::SubscriptionToken> {
         self.reloads.fetch_add(1, Ordering::SeqCst);
@@ -249,6 +272,103 @@ async fn validated_401_never_retries_with_a_post_dispatch_rotation() {
         authorizations.lock().unwrap().as_slice(),
         ["Bearer codex-a"],
         "a validated request must return A's rejection without sending B"
+    );
+    stub_task.abort();
+}
+
+/// Pinned serving must resolve the same recovery-aware authority as catalog
+/// and health. A durable sidecar is a usable credential even when the vendor
+/// primary is absent, and the raw reader must not erase that state.
+#[tokio::test]
+async fn pinned_serving_uses_a_recovery_only_authoritative_token() {
+    use crate::credential_store::CredentialStore as _;
+
+    let authorizations = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+    let authorizations_for_stub = Arc::clone(&authorizations);
+    let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+        let authorizations = Arc::clone(&authorizations_for_stub);
+        async move {
+            authorizations.lock().unwrap().push(
+                headers
+                    .get("authorization")
+                    .and_then(|value| value.to_str().ok())
+                    .unwrap_or_default()
+                    .to_string(),
+            );
+            axum::Json(json!({
+                "id": "resp_1",
+                "object": "response",
+                "status": "completed",
+                "output": []
+            }))
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let stub_url = format!("http://{}", listener.local_addr().unwrap());
+    let stub_task = tokio::spawn(async move {
+        axum::serve(listener, stub).await.unwrap();
+    });
+
+    let data = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, codex.path());
+    let primary: Arc<dyn crate::credential_store::CredentialStore> =
+        Arc::new(RecoveryOnlyPrimary {
+            lock_path: data.path().join("primary.lock"),
+        });
+    let recoverable = Arc::new(
+        crate::credential_recovery_store::RecoverableCredentialStore::new(
+            SubscriptionProvider::Codex,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            primary,
+            data.path(),
+        ),
+    );
+    recoverable
+        .persist(&crate::subscription::SubscriptionToken {
+            access_token: "recovered-access".into(),
+            refresh_token: Some("recovered-refresh".into()),
+            expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 3_600_000),
+            account_id: Some("recovered-account".into()),
+            resource_url: None,
+        })
+        .expect("recovery-only credential");
+
+    let mut state = auto_state(vec![reader.clone()], data.path());
+    state.upstream_provider = UpstreamProvider::Codex;
+    state.subscription_reader = Some(reader);
+    state.subscription_base_url = Some(stub_url);
+    state.subscription_cache.register_store(
+        SubscriptionProvider::Codex,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        recoverable,
+    );
+    let client_token = state
+        .token_manager
+        .issue_token(1, "recovery serving")
+        .unwrap();
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {client_token}")).unwrap(),
+    );
+    let body = json!({"model": "recovered-model", "input": "hello"});
+
+    let response = crate::subscription_proxy::forward_subscription_openai_routed(
+        &state,
+        &headers,
+        body.clone(),
+        &body,
+        "/v1/responses",
+        crate::metrics::Surface::OpenAIResponses,
+        None,
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        authorizations.lock().unwrap().as_slice(),
+        ["Bearer recovered-access"]
     );
     stub_task.abort();
 }

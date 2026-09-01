@@ -182,7 +182,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     }
 
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let catalog_error = link_assistant_router::doctor::subscription_catalog_diagnostics(
+    let catalog_error = link_assistant_router::doctor::subscription_catalog_diagnostics_in(
         active_provider,
         &config.claude_code_home,
         &user_home,

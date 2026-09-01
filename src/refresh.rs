@@ -511,16 +511,16 @@ pub struct TokenCache {
     /// exchange so concurrent requests share one attempt.
     attempts: RefreshAttempts,
     /// Latest observed verdict per provider from real upstream calls.
-    evidence: Mutex<HashMap<SubscriptionProvider, CredentialEvidence>>,
+    evidence: Mutex<HashMap<SubscriptionKey, CredentialEvidence>>,
     /// Latest refresh failure per provider, cleared by a successful refresh.
-    refresh_errors: Mutex<HashMap<SubscriptionProvider, String>>,
+    refresh_errors: Mutex<HashMap<SubscriptionKey, String>>,
     /// Providers whose terminal failure has already been announced.
     ///
     /// The transition healthy -> permanently unauthenticated is one event and
     /// deserves one loud record. Re-deriving it every five minutes and logging
     /// it at full volume buried the line that mattered under 146 restatements
     /// of its consequence (issue #321).
-    announced_terminal: Mutex<std::collections::HashSet<SubscriptionProvider>>,
+    announced_terminal: Mutex<std::collections::HashSet<SubscriptionKey>>,
     /// How the last successful refresh was obtained, per provider.
     ///
     /// These OAuth endpoints are undocumented; when a credential recovers only
@@ -607,6 +607,58 @@ impl TokenCache {
         .await
     }
 
+    /// Load one registered credential authoritatively, then refresh it if
+    /// necessary after releasing the durable load lock.
+    ///
+    /// Unlike [`Self::get_fresh_for`], storage uncertainty is returned to the
+    /// caller instead of being collapsed into a caller-provided fallback.
+    pub async fn get_fresh_registered(
+        &self,
+        client: &reqwest::Client,
+        provider: SubscriptionProvider,
+        account: &str,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, String> {
+        let disk_token = self
+            .load_authoritative(provider, account)
+            .await?
+            .ok_or_else(|| {
+                format!("failed to load {provider} credentials from the registered store")
+            })?;
+        self.get_fresh_for_at_checked(
+            client,
+            refresh_config(provider).token_url,
+            provider,
+            account,
+            disk_token,
+            now_ms,
+        )
+        .await
+    }
+
+    /// Refresh a baseline that was just returned by [`Self::load_authoritative`].
+    ///
+    /// This avoids a redundant second locked reload while preserving the rule
+    /// that no caller-provided raw credential can bypass the registered store.
+    pub(crate) async fn get_fresh_loaded(
+        &self,
+        client: &reqwest::Client,
+        provider: SubscriptionProvider,
+        account: &str,
+        disk_token: SubscriptionToken,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, String> {
+        self.get_fresh_for_at_checked(
+            client,
+            refresh_config(provider).token_url,
+            provider,
+            account,
+            disk_token,
+            now_ms,
+        )
+        .await
+    }
+
     /// Refresh regardless of what the token's own `exp` claim says.
     ///
     /// A vendor may invalidate an access token *before* its stated expiry —
@@ -671,8 +723,17 @@ impl TokenCache {
             );
             return None;
         }
-        let base =
-            self.unsuppressed_base(&mut attempt, provider, account, rejected.clone(), now_ms)?;
+        let base = match self
+            .unsuppressed_base(&mut attempt, provider, account, rejected.clone(), now_ms)
+            .await
+        {
+            Ok(Some(base)) => base,
+            Ok(None) => return None,
+            Err(error) => {
+                self.record_refresh_error_for(provider, account, &error);
+                return None;
+            }
+        };
         let exchange = Exchange {
             client,
             token_url,
@@ -680,7 +741,7 @@ impl TokenCache {
             now_ms,
             mode: RecoveryMode::AfterRejection,
         };
-        match self.climb(&exchange, account, &base).await {
+        let result = match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
                 self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
                 // A refresh that returned the same access token has not
@@ -709,16 +770,16 @@ impl TokenCache {
                     message,
                     ..rejection
                 };
-                self.record_refresh_error(provider, &rejection.message);
+                self.record_refresh_error_for(provider, account, &rejection.message);
                 if rejection.error.is_invalid_grant() {
                     // healthy -> permanently unauthenticated is a state
                     // transition that needs a human in a browser and will not
                     // self-heal. Logged at WARN it sat below every sane
                     // `level>=ERROR` pipeline, so a twelve-hour outage produced
                     // a clean log (issue #321).
-                    self.log_terminal_once(provider, &rejection.message);
+                    self.log_terminal_once_for(provider, account, &rejection.message);
                     attempt.record_terminal_failure();
-                    self.record_credential_rejected(provider);
+                    self.record_credential_rejected_for(provider, account);
                     // Per account as well as per provider: the provider-wide
                     // verdict cannot say *which* account of a pool is dead,
                     // and `accounts list` reports one row each (issue #245).
@@ -733,7 +794,9 @@ impl TokenCache {
                 }
                 None
             }
-        }
+        };
+        drop(attempt);
+        result
     }
 
     async fn get_fresh_for_at(
@@ -745,6 +808,28 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> SubscriptionToken {
+        let fallback = disk_token.clone();
+        match self
+            .get_fresh_for_at_checked(client, token_url, provider, account, disk_token, now_ms)
+            .await
+        {
+            Ok(token) => token,
+            Err(error) => {
+                self.record_refresh_error_for(provider, account, &error);
+                fallback
+            }
+        }
+    }
+
+    async fn get_fresh_for_at_checked(
+        &self,
+        client: &reqwest::Client,
+        token_url: &str,
+        provider: SubscriptionProvider,
+        account: &str,
+        disk_token: SubscriptionToken,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, String> {
         let key = (provider, account.to_string());
         let attempt = self
             .attempts
@@ -761,21 +846,22 @@ impl TokenCache {
         // caller as an upstream error, and a credential only ever refreshed
         // reactively can sit unused past its refresh window (issue #203).
         if !disk_token.is_expired(now_ms.saturating_add(REFRESH_SKEW_MS)) {
-            return disk_token;
+            return Ok(disk_token);
         }
         if let Some(cached) = self.cached_valid_for(provider, account, now_ms) {
-            return cached;
+            return Ok(cached);
         }
-        let Some(base) =
-            self.unsuppressed_base(&mut attempt, provider, account, disk_token.clone(), now_ms)
+        let Some(base) = self
+            .unsuppressed_base(&mut attempt, provider, account, disk_token.clone(), now_ms)
+            .await?
         else {
-            return disk_token;
+            return Ok(disk_token);
         };
         if !base.is_expired(now_ms.saturating_add(REFRESH_SKEW_MS)) {
             // The store was already ahead of the token we were handed; there is
             // nothing to exchange.
             self.accept(&mut attempt, provider, account, &base, None);
-            return base;
+            return Ok(base);
         }
         let exchange = Exchange {
             client,
@@ -787,14 +873,15 @@ impl TokenCache {
         match self.climb(&exchange, account, &base).await {
             Ok(fresh) => {
                 self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
-                fresh
+                drop(attempt);
+                Ok(fresh)
             }
             Err(rejection) => {
-                self.record_refresh_error(provider, &rejection.message);
+                self.record_refresh_error_for(provider, account, &rejection.message);
                 if rejection.error.is_invalid_grant() {
-                    self.log_terminal_once(provider, &rejection.message);
+                    self.log_terminal_once_for(provider, account, &rejection.message);
                     attempt.record_terminal_failure();
-                    self.record_credential_rejected(provider);
+                    self.record_credential_rejected_for(provider, account);
                     self.record_refresh_refused(provider, account, &base);
                 } else {
                     tracing::warn!(
@@ -808,9 +895,10 @@ impl TokenCache {
                     attempt
                         .record_transient_failure_after(now_ms, rejection.error.retry_after_ms());
                 }
+                drop(attempt);
                 // The stamped-expired token is returned unchanged on purpose:
                 // it may still be honoured by the inference endpoint.
-                disk_token
+                Ok(disk_token)
             }
         }
     }
@@ -852,29 +940,32 @@ impl TokenCache {
     /// chain forward since. Re-reading the store before honouring the
     /// suppression is what stops a single `invalid_grant` from disabling the
     /// subscription until someone re-authenticates by hand (issue #239).
-    fn unsuppressed_base(
+    async fn unsuppressed_base(
         &self,
         attempt: &mut refresh_state::RefreshAttempt,
         provider: SubscriptionProvider,
         account: &str,
         held: SubscriptionToken,
         now_ms: i64,
-    ) -> Option<SubscriptionToken> {
+    ) -> Result<Option<SubscriptionToken>, String> {
         if !attempt.suppresses_attempt(now_ms) {
-            return Some(held);
+            return Ok(Some(held));
         }
         let stored = self
-            .store_for_subscription(provider, account)
-            .and_then(|store| store.reload())?;
+            .load_authoritative(provider, account)
+            .await?
+            .ok_or_else(|| {
+                format!("failed to load {provider} credentials from the registered store")
+            })?;
         if !attempt.reset_if_changed(&stored) {
-            return None;
+            return Ok(None);
         }
         tracing::info!(
             "the {provider} credential on disk changed since it was last rejected; retrying with \
              it instead of waiting for a manual re-authentication"
         );
         self.forget(&(provider, account.to_string()), provider);
-        Some(stored)
+        Ok(Some(stored))
     }
 
     /// Record a successful resolution: cache the token and clear failure state.
@@ -901,9 +992,9 @@ impl TokenCache {
         }
         self.store_for(provider, account, token.clone());
         attempt.record_success();
-        self.record_credential_working(provider);
+        self.record_credential_working_for(provider, account);
         if let Ok(mut guard) = self.refresh_errors.lock() {
-            guard.remove(&provider);
+            guard.remove(&(provider, account.to_string()));
         }
         // A refresh that succeeded settles the question for this account: any
         // earlier refusal was about a link the chain has since moved past.
@@ -916,20 +1007,28 @@ impl TokenCache {
             guard.remove(key);
         }
         if let Ok(mut guard) = self.evidence.lock() {
-            guard.remove(&provider);
+            guard.remove(key);
         }
         if let Ok(mut guard) = self.refresh_errors.lock() {
-            guard.remove(&provider);
+            guard.remove(key);
         }
         self.rejections.clear(provider, &key.1);
     }
 
     /// Record that an upstream call succeeded with `provider`'s credential.
     pub fn record_credential_working(&self, provider: SubscriptionProvider) {
-        self.record_evidence(provider, CredentialEvidence::Working);
+        self.record_credential_working_for(
+            provider,
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        );
+    }
+
+    /// Record that one stable router account served successfully.
+    pub fn record_credential_working_for(&self, provider: SubscriptionProvider, account: &str) {
+        self.record_evidence_for(provider, account, CredentialEvidence::Working);
         // A provider that is serving again may die again, and that death is a
         // new event that must be announced (issue #321).
-        self.clear_terminal_announcement(provider);
+        self.clear_terminal_announcement_for(provider, account);
     }
     fn cached_valid_for(
         &self,

@@ -5,7 +5,6 @@ use std::sync::Arc;
 use crate::accounts::SelectedSubscriptionAccount;
 use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
-use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
 
 use super::{ModelRouteError, available_provider_for_model, credential_state};
@@ -21,13 +20,15 @@ pub struct ValidatedSubscription {
     reader: Option<SubscriptionReader>,
     selection: CredentialSelection,
     requires_live_catalog: bool,
+    required_model: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 enum CredentialSelection {
     /// A single-account credential captured during model routing.
     Ready {
-        store: Arc<dyn CredentialStore>,
+        cache: Arc<crate::refresh::TokenCache>,
+        account: String,
         baseline: SubscriptionToken,
         selected: Box<SelectedSubscriptionAccount>,
     },
@@ -44,7 +45,8 @@ impl ValidatedSubscription {
     /// the new account can never be substituted for the catalog owner.
     pub(crate) async fn for_dispatch(&self) -> Result<SelectedSubscriptionAccount, String> {
         let CredentialSelection::Ready {
-            store,
+            cache,
+            account,
             baseline,
             selected,
         } = &self.selection
@@ -54,7 +56,15 @@ impl ValidatedSubscription {
                 self.provider
             ));
         };
-        let current = reload_store_locked(store, self.provider).await?;
+        let current = cache
+            .load_authoritative(self.provider, account)
+            .await?
+            .ok_or_else(|| {
+                format!(
+                    "failed to reload {} credentials from the registered store",
+                    self.provider
+                )
+            })?;
         // An endpoint may issue a new access token without rotating the refresh
         // link. That access token is intentionally cached rather than written,
         // so the pre-refresh baseline remains acceptable. A rotated Codex link
@@ -89,11 +99,33 @@ impl ValidatedSubscription {
             .filter(|router| router.provider() == self.provider)
             .ok_or_else(|| format!("no {} account pool is configured", self.provider))?;
         let selected = router
-            .select_subscription(context)
+            .select_subscription_where_authoritative(
+                context,
+                &state.subscription_cache,
+                |account| {
+                    if !self.requires_live_catalog {
+                        return true;
+                    }
+                    let catalog = state.model_catalogs.status_for(self.provider, account);
+                    catalog.discovered
+                        && catalog.credential_healthy
+                        && self
+                            .required_model
+                            .as_ref()
+                            .is_none_or(|model| catalog.routable_models().contains(model))
+                        && state
+                            .subscription_cache
+                            .evidence_for(self.provider, account)
+                            != Some(crate::refresh::CredentialEvidence::Rejected)
+                },
+            )
+            .await
             .map_err(|error| error.to_string())?;
         let snapshot =
             subscription_snapshot_for_account(state, self.provider, &selected.name, None).await?;
-        let catalog = state.model_catalogs.status(self.provider);
+        let catalog = state
+            .model_catalogs
+            .status_for(self.provider, &selected.name);
         if self.requires_live_catalog && (!catalog.discovered || !catalog.credential_healthy) {
             return Err(format!(
                 "the {} model catalog is not currently routable",
@@ -151,37 +183,6 @@ fn catalog_belongs_to(token: &SubscriptionToken, account: Option<&str>) -> bool 
     }
 }
 
-/// Reload a possibly recoverable credential while holding its exact
-/// read/refresh/write transaction lock.
-///
-/// A recovery decorator can reconcile its sidecar into the primary credential
-/// during `reload`, so this is an exclusive operation even though its name
-/// sounds read-only. The guard is deliberately dropped before the caller may
-/// enter `TokenCache::get_fresh`, which acquires the same lock when refreshing.
-async fn reload_store_locked(
-    store: &Arc<dyn CredentialStore>,
-    provider: SubscriptionProvider,
-) -> Result<SubscriptionToken, String> {
-    let lock_path = store.lock_path().ok_or_else(|| {
-        format!("no durable transaction lock is available for {provider} credentials")
-    })?;
-    let _guard = crate::durable_file::lock_exclusive_async(
-        &lock_path,
-        crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
-    )
-    .await
-    .map_err(|error| {
-        if error.kind() == std::io::ErrorKind::WouldBlock {
-            format!("timed out waiting for the {provider} credential transaction lock")
-        } else {
-            format!("could not acquire the {provider} credential transaction lock")
-        }
-    })?;
-    store
-        .reload()
-        .ok_or_else(|| format!("failed to reload {provider} credentials from the registered store"))
-}
-
 /// Capture one refreshed credential from the authoritative registered store.
 async fn subscription_snapshot_for_account(
     state: &AppState,
@@ -194,24 +195,26 @@ async fn subscription_snapshot_for_account(
     if let Some(reader) = reader.as_ref() {
         state.subscription_cache.register_reader(account, reader);
     }
-    let store = state
+    let baseline = state
         .subscription_cache
-        .store_for_subscription(provider, account)
-        .ok_or_else(|| format!("no durable {provider} credential store is registered"))?;
-    let baseline = reload_store_locked(&store, provider).await?;
-    // `reload_store_locked` has released the store lock. A refresh may now
+        .load_authoritative(provider, account)
+        .await?
+        .ok_or_else(|| {
+            format!("failed to load {provider} credentials from the registered store")
+        })?;
+    // `load_authoritative` has released the store lock. A refresh may now
     // acquire that same lock without recursively deadlocking.
     let token = state
         .subscription_cache
-        .get_fresh_for(
+        .get_fresh_loaded(
             &state.client,
             provider,
             account,
             baseline.clone(),
             chrono::Utc::now().timestamp_millis(),
         )
-        .await;
-    if state.subscription_cache.evidence(provider)
+        .await?;
+    if state.subscription_cache.evidence_for(provider, account)
         == Some(crate::refresh::CredentialEvidence::Rejected)
     {
         return Err(format!(
@@ -222,7 +225,8 @@ async fn subscription_snapshot_for_account(
         provider,
         reader,
         selection: CredentialSelection::Ready {
-            store,
+            cache: Arc::clone(&state.subscription_cache),
+            account: account.to_string(),
             baseline,
             selected: Box::new(SelectedSubscriptionAccount {
                 name: account.to_string(),
@@ -230,6 +234,7 @@ async fn subscription_snapshot_for_account(
             }),
         },
         requires_live_catalog: false,
+        required_model: None,
     })
 }
 
@@ -244,6 +249,7 @@ async fn subscription_candidate(
     state: &AppState,
     provider: SubscriptionProvider,
     requires_live_catalog: bool,
+    required_model: Option<&str>,
 ) -> Result<ValidatedSubscription, String> {
     if account_pool_matches(state, provider) {
         return Ok(ValidatedSubscription {
@@ -251,6 +257,7 @@ async fn subscription_candidate(
             reader: None,
             selection: CredentialSelection::AccountPool,
             requires_live_catalog,
+            required_model: required_model.map(str::to_string),
         });
     }
     let reader = state
@@ -267,18 +274,25 @@ async fn subscription_candidate(
     )
     .await?;
     subscription.requires_live_catalog = requires_live_catalog;
+    subscription.required_model = required_model.map(str::to_string);
     Ok(subscription)
 }
 
 async fn validated_catalog_subscription(
     state: &AppState,
     provider: SubscriptionProvider,
+    model: &str,
 ) -> Option<ValidatedSubscription> {
-    let catalog = state.model_catalogs.status(provider);
-    if !catalog.discovered || !catalog.credential_healthy {
-        return None;
+    if !account_pool_matches(state, provider) {
+        let catalog = state.model_catalogs.status(provider);
+        if !catalog.discovered || !catalog.credential_healthy {
+            return None;
+        }
     }
-    let subscription = subscription_candidate(state, provider, true).await.ok()?;
+    let subscription = subscription_candidate(state, provider, true, Some(model))
+        .await
+        .ok()?;
+    let catalog = state.model_catalogs.status(provider);
     if subscription
         .selected_token()
         .is_some_and(|token| !catalog_belongs_to(token, catalog.account.as_deref()))
@@ -348,7 +362,7 @@ pub async fn route_subscription_model(
     let validated = futures_util::future::join_all(
         relevant
             .into_iter()
-            .map(|provider| validated_catalog_subscription(state, provider)),
+            .map(|provider| validated_catalog_subscription(state, provider, model)),
     )
     .await
     .into_iter()
@@ -363,15 +377,12 @@ pub async fn route_subscription_model(
         // Preserve the existing wrong-id guidance without paying the lock and
         // refresh cost for providers that cannot serve this request. This
         // health view is local-only and still applies catalog ownership.
-        super::configured_provider_health(
-            &state.subscription_readers,
-            &state.subscription_cache,
-            &state.model_catalogs,
-        )
-        .into_iter()
-        .filter(|entry| entry.state == super::ProviderHealthState::Healthy)
-        .map(|entry| entry.provider)
-        .collect()
+        super::configured_provider_health_report(state)
+            .await
+            .into_iter()
+            .filter(|entry| entry.state == super::ProviderHealthState::Healthy)
+            .map(|entry| entry.provider)
+            .collect()
     };
     let provider = available_provider_for_model(model, &healthy, &state.model_catalogs)?;
     let subscription = validated
@@ -417,7 +428,7 @@ pub async fn route_pinned_subscription(
             subscription: None,
         });
     }
-    let subscription = subscription_candidate(state, provider, false)
+    let subscription = subscription_candidate(state, provider, false, None)
         .await
         .map_err(ModelRouteError::NotFound)?;
     if catalog.discovered

@@ -6,6 +6,8 @@ use std::time::Duration;
 use link_assistant_router::auth::CodexAuthConfig;
 use link_assistant_router::claude_auth::{ClaudeAuthConfig, ClaudeAuthMode};
 use link_assistant_router::login::LoginConfig;
+use link_assistant_router::model_routing::ProviderHealth;
+use link_assistant_router::subscription::SubscriptionProvider;
 
 #[test]
 fn pre_task_five_native_auth_config_literals_and_constructors_still_compile() {
@@ -53,4 +55,49 @@ fn pre_task_five_native_auth_config_literals_and_constructors_still_compile() {
     assert_eq!(claude.claude_home, claude_production.claude_home);
     assert_eq!(claude_mode.scopes, ClaudeAuthMode::SetupToken.scopes());
     assert!(login.enabled);
+}
+
+#[test]
+fn pre_task_six_routing_and_diagnostic_apis_still_compile() {
+    let register: for<'a> fn(
+        &link_assistant_router::app_state::AppState,
+        &link_assistant_router::app_state::VendorClis<'a>,
+    ) = link_assistant_router::app_state::AppState::register_credential_recovery;
+    let register_in: for<'a> fn(
+        &link_assistant_router::app_state::AppState,
+        &std::path::Path,
+        &link_assistant_router::app_state::VendorClis<'a>,
+    ) = link_assistant_router::app_state::AppState::register_credential_recovery_in;
+    let pool_register: fn(
+        &link_assistant_router::accounts::AccountRouter,
+        &link_assistant_router::refresh::TokenCache,
+    ) = link_assistant_router::accounts::AccountRouter::register_credential_stores;
+    let pool_register_in: fn(
+        &link_assistant_router::accounts::AccountRouter,
+        &link_assistant_router::refresh::TokenCache,
+        &std::path::Path,
+    ) = link_assistant_router::accounts::AccountRouter::register_credential_stores_in;
+    std::hint::black_box((register, register_in, pool_register, pool_register_in));
+
+    let legacy_diagnostics = link_assistant_router::doctor::subscription_catalog_diagnostics(
+        SubscriptionProvider::Claude,
+        "/tmp/claude",
+        "/tmp/user",
+        None,
+    );
+    let durable_diagnostics = link_assistant_router::doctor::subscription_catalog_diagnostics_in(
+        SubscriptionProvider::Claude,
+        "/tmp/claude",
+        "/tmp/user",
+        std::path::Path::new("/tmp/router"),
+    );
+    drop((legacy_diagnostics, durable_diagnostics));
+
+    let health = ProviderHealth {
+        provider: SubscriptionProvider::Codex,
+        healthy: true,
+        reason: None,
+        summary: None,
+    };
+    assert!(health.healthy);
 }

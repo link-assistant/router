@@ -283,11 +283,14 @@ pub(super) async fn exchange_with_recovery(
     let _lock = acquire_lock(store, provider).await?;
 
     // Rung 1: the store may already be ahead of the token we were handed.
-    let stored = store.reload().ok_or_else(|| {
-        storage_rejection(format!(
-            "could not re-read the registered {provider} credential while holding its lock"
-        ))
-    })?;
+    let stored = store
+        .try_reload()
+        .map_err(storage_rejection)?
+        .ok_or_else(|| {
+            storage_rejection(format!(
+                "could not re-read the registered {provider} credential while holding its lock"
+            ))
+        })?;
     let mut candidate = base.clone();
     let mut from_store = false;
     if !is_same_link(&stored, base) {
@@ -334,7 +337,7 @@ pub(super) async fn exchange_with_recovery(
     // Rung 3: the rotation may have landed on disk while we were exchanging.
     // This is the single check that turns the common case from a mandatory
     // re-login back into a retry.
-    let reread = store.reload().ok_or_else(|| {
+    let reread = store.try_reload().map_err(storage_rejection)?.ok_or_else(|| {
         storage_rejection(format!(
             "could not re-read the registered {provider} credential after the endpoint rejected it"
         ))

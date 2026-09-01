@@ -108,7 +108,19 @@ impl AppState {
     /// is an OAuth chain with the same single-use rotation, so a deployment
     /// that could recover a Claude subscription automatically but needed an
     /// operator for Codex was drawing a line the credentials do not (#275).
-    pub fn register_credential_recovery(
+    pub fn register_credential_recovery(&self, vendor_clis: &VendorClis<'_>) {
+        self.subscription_cache.register_readers(
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            &self.subscription_readers,
+        );
+        if let Some(router) = &self.account_router {
+            router.register_credential_stores(&self.subscription_cache);
+        }
+        self.register_vendor_clis(vendor_clis);
+    }
+
+    /// Register durable data-directory recovery for every credential.
+    pub fn register_credential_recovery_in(
         &self,
         data_dir: &std::path::Path,
         vendor_clis: &VendorClis<'_>,
@@ -119,8 +131,12 @@ impl AppState {
             data_dir,
         );
         if let Some(router) = &self.account_router {
-            router.register_credential_stores(&self.subscription_cache, data_dir);
+            router.register_credential_stores_in(&self.subscription_cache, data_dir);
         }
+        self.register_vendor_clis(vendor_clis);
+    }
+
+    fn register_vendor_clis(&self, vendor_clis: &VendorClis<'_>) {
         for reader in &self.subscription_readers {
             let Some(binary) = vendor_clis.binary_for(reader.provider()) else {
                 continue;

@@ -861,6 +861,25 @@ fn upstream_status_marks_only_authentication_failures_as_rejected() {
     }
 }
 
+#[test]
+fn credential_evidence_is_scoped_to_the_stable_router_account_name() {
+    let cache = TokenCache::new();
+
+    cache.record_status_for(SubscriptionProvider::Codex, "account-1", 401);
+
+    assert_eq!(cache.evidence(SubscriptionProvider::Codex), None);
+    assert_eq!(
+        cache.evidence_for(SubscriptionProvider::Codex, "account-1"),
+        Some(CredentialEvidence::Rejected)
+    );
+    cache.record_credential_working_for(SubscriptionProvider::Codex, "primary");
+    assert_eq!(
+        cache.evidence_for(SubscriptionProvider::Codex, "account-1"),
+        Some(CredentialEvidence::Rejected),
+        "a healthy neighbour must not erase the rejected account's evidence"
+    );
+}
+
 /// Every failure variant renders a distinct, non-empty message; `doctor` and
 /// the logs surface these verbatim.
 #[test]
