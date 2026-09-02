@@ -4,7 +4,7 @@
 //! the real router over HTTP against a stubbed vendor to prove that one router
 //! JWT exposes every connected subscription through that namespace — the gap
 //! reported in issue #187, where `/api/services/gemini/v1beta/models` returned an empty
-//! list while `/v1/models` listed eight live Codex models.
+//! list while `/api/services/openai/v1/models` listed eight live Codex models.
 
 use std::fmt::Write as _;
 use std::sync::{Arc, Mutex};
@@ -189,7 +189,7 @@ impl TestRouter {
 
         let app = Router::new()
             .route(
-                "/v1/models",
+                "/api/services/openai/v1/models",
                 get(link_assistant_router::proxy::openai_models),
             )
             .route(
@@ -408,7 +408,7 @@ fn model_names(catalog: &Value) -> Vec<String> {
         .collect()
 }
 
-/// Issue #187: the Gemini namespace listed nothing while `/v1/models` listed
+/// Issue #187: the Gemini namespace listed nothing while the OpenAI catalog listed
 /// every connected subscription's live catalog.
 #[tokio::test]
 async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
