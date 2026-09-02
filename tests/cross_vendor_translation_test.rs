@@ -22,12 +22,13 @@ use axum::extract::Request;
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use link_assistant_router::app_state::AppState;
+use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
 use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::refresh::TokenCache;
 use link_assistant_router::subscription::SubscriptionProvider;
-use link_assistant_router::token::TokenManager;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use lino_arguments::Parser as _;
 use serde_json::{Value, json};
 use tempfile::TempDir;
@@ -42,13 +43,14 @@ struct TestRouter {
     client: reqwest::Client,
     url: String,
     token: String,
+    client_kind: ClientKind,
     upstream: Captured,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
 
 impl TestRouter {
-    async fn start() -> Self {
+    async fn start(client_kind: ClientKind) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
         let upstream: Captured = Arc::new(Mutex::new(Vec::new()));
         let captured = Arc::clone(&upstream);
@@ -59,9 +61,16 @@ impl TestRouter {
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("cross-vendor-secret");
-        let token = token_manager
-            .issue_token(1, "cross vendor client")
-            .expect("issue test token");
+        let (token, _) = token_manager
+            .issue_with_id(&IssueRequest {
+                ttl_hours: 1,
+                label: "cross vendor client",
+                account: Some("primary"),
+                client_kind: Some(client_kind.canonical_name()),
+                principal_id: Some("primary"),
+                ..IssueRequest::default()
+            })
+            .expect("issue bound test token");
         let oauth_provider = OAuthProvider::new(data.path().to_str().expect("UTF-8 test path"));
         oauth_provider.set_token("stub-anthropic-oauth-token");
 
@@ -83,6 +92,19 @@ impl TestRouter {
         .into_config()
         .expect("test config is valid");
 
+        let provider_store = link_assistant_router::providers::ProviderStore::open(
+            data.path(),
+            "cross-vendor-secret",
+        )
+        .expect("provider store");
+        provider_store
+            .set_subscription_entitlement_policy(
+                link_assistant_router::client_policy::SubscriptionEntitlementPolicy::parse([
+                    format!("{}:claude", client_kind.canonical_name()),
+                ])
+                .expect("exact test override"),
+            )
+            .expect("install test policy");
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
@@ -101,11 +123,7 @@ impl TestRouter {
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
             crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
-            provider_store: link_assistant_router::providers::ProviderStore::open(
-                data.path(),
-                "cross-vendor-secret",
-            )
-            .expect("provider store"),
+            provider_store,
             logger: log_lazy::LogLazy::new(),
             admin: Arc::new(link_assistant_router::admin::AdminClaim::load(
                 Some("admin-only".to_string()),
@@ -138,6 +156,7 @@ impl TestRouter {
             client: reqwest::Client::new(),
             url,
             token,
+            client_kind,
             upstream,
             tasks: vec![stub_task, router_task],
             _data: data,
@@ -146,9 +165,7 @@ impl TestRouter {
 
     async fn post(&self, path: &str, body: &Value) -> (StatusCode, Value) {
         let response = self
-            .client
-            .post(format!("{}{path}", self.url))
-            .bearer_auth(&self.token)
+            .request(path)
             .json(body)
             .send()
             .await
@@ -159,6 +176,23 @@ impl TestRouter {
             status,
             serde_json::from_str(&text).unwrap_or(Value::String(text)),
         )
+    }
+
+    fn request(&self, path: &str) -> reqwest::RequestBuilder {
+        let request = self.client.post(format!("{}{path}", self.url));
+        match self.client_kind {
+            ClientKind::Codex => request
+                .bearer_auth(&self.token)
+                .header("x-openai-internal-codex-responses-lite", "true"),
+            ClientKind::GeminiCli => request
+                .header("x-goog-api-key", &self.token)
+                .header("x-goog-api-client", "gl-node/test gccl/test"),
+            ClientKind::Opencode => request
+                .bearer_auth(&self.token)
+                .header("user-agent", "opencode/test")
+                .header("x-session-id", "cross-vendor-test"),
+            _ => request.bearer_auth(&self.token),
+        }
     }
 
     /// The last body the router sent upstream.
@@ -265,13 +299,13 @@ fn codex_tools() -> Value {
 /// must reach the vendor.
 #[tokio::test]
 async fn codex_can_drive_a_claude_model_despite_an_untranslatable_tool() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::Codex).await;
     let (status, body) = router
         .post(
-            "/v1/chat/completions",
+            "/v1/responses",
             &json!({
                 "model": CLAUDE_MODEL,
-                "messages": [{"role": "user", "content": "test"}],
+                "input": "test",
                 "tools": codex_tools()
             }),
         )
@@ -289,14 +323,12 @@ async fn codex_can_drive_a_claude_model_despite_an_untranslatable_tool() {
 /// Issue #215 item 2: the drop must be discoverable rather than silent.
 #[tokio::test]
 async fn a_dropped_tool_is_reported_to_the_caller() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
-        .client
-        .post(format!("{}/v1/chat/completions", router.url))
-        .bearer_auth(&router.token)
+        .request("/v1/responses")
         .json(&json!({
             "model": CLAUDE_MODEL,
-            "messages": [{"role": "user", "content": "test"}],
+            "input": "test",
             "tools": codex_tools()
         }))
         .send()
@@ -318,14 +350,12 @@ async fn a_dropped_tool_is_reported_to_the_caller() {
 /// header means something when it is present.
 #[tokio::test]
 async fn an_ordinary_request_reports_no_dropped_tools() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
-        .client
-        .post(format!("{}/v1/chat/completions", router.url))
-        .bearer_auth(&router.token)
+        .request("/v1/responses")
         .json(&json!({
             "model": CLAUDE_MODEL,
-            "messages": [{"role": "user", "content": "test"}],
+            "input": "test",
             "tools": [{"type": "function", "name": "ok", "parameters": {"type": "object"}}]
         }))
         .send()
@@ -339,7 +369,7 @@ async fn an_ordinary_request_reports_no_dropped_tools() {
 /// the vendor.
 #[tokio::test]
 async fn gemini_cli_sampling_parameters_do_not_both_reach_anthropic() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::GeminiCli).await;
     let (status, body) = router
         .post(
             &format!("/api/gemini/v1beta/models/{CLAUDE_MODEL}:generateContent"),
@@ -372,7 +402,7 @@ async fn gemini_cli_sampling_parameters_do_not_both_reach_anthropic() {
 /// mapped, not dropped merely because it loses a conflict.
 #[tokio::test]
 async fn a_lone_top_p_still_reaches_anthropic() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::GeminiCli).await;
     let (status, body) = router
         .post(
             &format!("/api/gemini/v1beta/models/{CLAUDE_MODEL}:generateContent"),
@@ -394,11 +424,9 @@ async fn a_lone_top_p_still_reaches_anthropic() {
 /// successful, completely empty answer and stopped.
 #[tokio::test]
 async fn a_streamed_tool_call_reaches_the_responses_caller() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
-        .client
-        .post(format!("{}/v1/responses", router.url))
-        .bearer_auth(&router.token)
+        .request("/v1/responses")
         .json(&json!({
             "model": CLAUDE_MODEL,
             "stream": true,
@@ -445,11 +473,9 @@ async fn a_streamed_tool_call_reaches_the_responses_caller() {
 /// (issue #230).
 #[tokio::test]
 async fn a_streamed_relay_records_how_it_ended_without_losing_frames() {
-    let router = TestRouter::start().await;
+    let router = TestRouter::start(ClientKind::Opencode).await;
     let response = router
-        .client
-        .post(format!("{}/v1/chat/completions", router.url))
-        .bearer_auth(&router.token)
+        .request("/v1/chat/completions")
         .json(&json!({
             "model": CLAUDE_MODEL,
             "stream": true,
