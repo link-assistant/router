@@ -46,7 +46,12 @@ impl ClientManager {
         let previous = providers.get(ROUTER_PROVIDER).cloned();
         let managed =
             router_json_provider(base_url, models, previous.as_ref(), &previous_managed_ids)?;
-        if providers.get(ROUTER_PROVIDER) == Some(&managed) {
+        if providers.get(ROUTER_PROVIDER) == Some(&managed)
+            && ownership
+                .as_ref()
+                .and_then(|marker| marker.get("managed_provider"))
+                == Some(&managed)
+        {
             return Ok(unchanged(path));
         }
         providers.insert(ROUTER_PROVIDER.into(), managed.clone());
@@ -120,7 +125,13 @@ impl ClientManager {
             .filter(|model| qwen_model_is_managed(model) || previous.contains(model))
             .cloned()
             .collect::<Vec<_>>();
-        if current == managed {
+        if current == managed
+            && ownership
+                .as_ref()
+                .and_then(|marker| marker.get("managed_models"))
+                .and_then(Value::as_array)
+                == Some(&managed)
+        {
             return Ok(unchanged(path));
         }
         models.retain(|model| !qwen_model_is_managed(model) && !previous.contains(model));

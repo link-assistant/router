@@ -30,7 +30,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
     );
     let requests = server.join().expect("mock catalog server");
     let request = &requests[0];
-    assert!(request.starts_with("GET /v1/models HTTP/1.1"));
+    assert!(request.starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
     assert!(
         request
             .to_ascii_lowercase()
@@ -217,7 +217,7 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     assert_eq!(settings["env"]["KEEP_ME"], "yes");
     assert_eq!(
         settings["env"]["ANTHROPIC_BASE_URL"],
-        "http://router.test:8080"
+        "http://router.test:8080/api/services/anthropic"
     );
     assert!(settings["env"].get("ANTHROPIC_AUTH_TOKEN").is_none());
     assert!(!settings.to_string().contains("la_sk_existing"));
@@ -229,7 +229,10 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     )
     .expect("read Claude credential file");
     assert!(environment.contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'"));
-    assert!(environment.contains("export ANTHROPIC_BASE_URL='http://router.test:8080'"));
+    assert!(
+        environment
+            .contains("export ANTHROPIC_BASE_URL='http://router.test:8080/api/services/anthropic'")
+    );
     assert!(!environment.contains("http://router.test:8080/v1"));
 
     let removed = router(home.path(), &["clients", "remove", "claude-code"]);
@@ -351,7 +354,9 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
     let doctor = router(home.path(), &["clients", "doctor", "codex"]);
     assert!(!doctor.status.success());
     let diagnostic = String::from_utf8_lossy(&doctor.stderr);
-    assert!(diagnostic.contains("Codex CLI is not configured"));
+    assert!(diagnostic.contains("ManagedDrifted"));
+    assert!(diagnostic.contains("public-config:model_provider"));
+    assert!(diagnostic.contains("clients repair codex"));
 }
 
 #[test]
@@ -385,11 +390,11 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
     assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
     let requests = server.join().expect("mock server thread");
     assert!(
-        requests[0].starts_with("GET /api/codex/v1/models HTTP/1.1"),
+        requests[0].starts_with("GET /api/services/codex/v1/models HTTP/1.1"),
         "unexpected requests: {requests:?}"
     );
     let request = &requests[1];
-    assert!(request.starts_with("POST /v1/responses HTTP/1.1"));
+    assert!(request.starts_with("POST /api/services/codex/v1/responses HTTP/1.1"));
     assert!(request.contains("gpt-codex-live"));
     assert!(
         request
@@ -464,10 +469,10 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
         String::from_utf8_lossy(&doctor.stderr)
     );
     let requests = server.join().expect("mock server thread");
-    assert!(requests[0].starts_with("GET /v1/models HTTP/1.1"));
-    assert!(requests[1].starts_with("GET /v1/models HTTP/1.1"));
+    assert!(requests[0].starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
     let request = &requests[2];
-    assert!(request.starts_with("POST /v1/chat/completions HTTP/1.1"));
+    assert!(request.starts_with("POST /api/services/openai/v1/chat/completions HTTP/1.1"));
     assert!(request.contains("gpt-chat-live"));
     assert!(
         request
@@ -583,7 +588,7 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
         assert_eq!(document["provider"]["mine"]["name"], "Mine");
         assert_eq!(
             document["provider"]["link-assistant"]["options"]["baseURL"],
-            format!("{base_url}/v1")
+            format!("{base_url}/api/services/openai/v1")
         );
         assert_eq!(
             document["provider"]["link-assistant"]["options"]["apiKey"],
@@ -647,7 +652,8 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
         .expect("current Qwen modelProviders array");
     assert!(models.iter().any(|model| model["id"] == "mine"));
     assert!(models.iter().any(|model| {
-        model["baseUrl"] == format!("{base_url}/v1") && model["envKey"] == "LINK_ASSISTANT_TOKEN"
+        model["baseUrl"] == format!("{base_url}/api/services/qwen/v1")
+            && model["envKey"] == "LINK_ASSISTANT_TOKEN"
     }));
     assert_eq!(server.join().expect("catalog server").len(), 1);
     assert!(!configured.contains("la_sk_existing"));
@@ -753,7 +759,10 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
             .join(".config/link-assistant-router/clients/grok.env"),
     )
     .expect("read Grok credential file");
-    assert!(environment.contains("export GROK_BASE_URL='http://router.test:8080/v1'"));
+    assert!(
+        environment
+            .contains("export GROK_BASE_URL='http://router.test:8080/api/services/openai/v1'")
+    );
     assert!(environment.contains("export GROK_API_KEY='la_sk_existing'"));
     assert_eq!(
         fs::read_to_string(settings_path).expect("read Grok settings"),

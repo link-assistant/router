@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use super::{ClientError, SetupResult};
 
-pub(super) type ClaudeEnvOwnership = Vec<(String, String, Option<String>)>;
+pub(super) type ClaudeEnvOwnership = Vec<(String, Option<String>, Option<String>)>;
 
 pub(super) fn read_or_empty(path: &Path) -> Result<String, ClientError> {
     match fs::read_to_string(path) {
@@ -79,7 +79,14 @@ pub(super) fn backup_file(path: &Path) -> Result<PathBuf, ClientError> {
         .and_then(|name| name.to_str())
         .ok_or_else(|| ClientError::message("config file name is not valid UTF-8"))?;
     let backup = path.with_file_name(format!("{file_name}.link-assistant-router.{stamp}.bak"));
-    fs::copy(path, &backup)?;
+    // Client configs can contain vendor credentials. A process umask must not
+    // decide whether the timestamped safety copy is world-readable.
+    atomic_write(&backup, &fs::read(path)?)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        fs::set_permissions(&backup, fs::Permissions::from_mode(0o600))?;
+    }
     Ok(backup)
 }
 
@@ -157,7 +164,11 @@ pub(super) fn claude_marker(
         .into_iter()
         .flatten()
         .filter_map(|(key, ownership)| {
-            let managed = ownership.get("managed")?.as_str()?.to_string();
+            let managed = match ownership.get("managed") {
+                Some(Value::String(value)) => Some(value.clone()),
+                Some(Value::Null) | None => None,
+                _ => return None,
+            };
             let previous = ownership
                 .get("previous")
                 .and_then(Value::as_str)

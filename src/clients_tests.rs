@@ -220,7 +220,11 @@ fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
         settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
         "0"
     );
-    assert_eq!(settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"], "user-opus");
+    assert!(
+        settings["env"]
+            .get("ANTHROPIC_DEFAULT_OPUS_MODEL")
+            .is_none()
+    );
     assert!(settings["env"].get("ANTHROPIC_MODEL").is_none());
     assert!(
         settings["env"]
@@ -236,6 +240,7 @@ fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
         .unwrap();
     let env = std::fs::read_to_string(env).unwrap();
     assert!(env.contains("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"));
+    assert!(env.contains("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"));
     assert!(env.contains("https://router.example/api/services/anthropic"));
     assert!(!env.contains("zai-secret"));
 

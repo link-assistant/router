@@ -9,7 +9,8 @@ use serde_json::json;
 
 use super::files::read_environment_value;
 use super::{
-    ClientError, ClientKind, ClientManager, DOCTOR_MAX_TOKENS, compact_body, doctor_model,
+    ClientError, ClientKind, ClientManager, DOCTOR_MAX_TOKENS, OwnershipState, compact_body,
+    doctor_model,
 };
 
 impl ClientManager {
@@ -20,6 +21,19 @@ impl ClientManager {
         }
         if client == ClientKind::ClaudeCode {
             require_claude_gateway_version()?;
+        }
+        let ownership = self.analyze(client)?;
+        if ownership.state != OwnershipState::ManagedIntact {
+            return Err(ClientError::message(format!(
+                "{} routing ownership is {:?}{}; run `clients repair {client} --dry-run` to inspect it, then `clients repair {client}`",
+                client.display_name(),
+                ownership.state,
+                if ownership.conflicts.is_empty() {
+                    String::new()
+                } else {
+                    format!(" (conflicts: {})", ownership.conflicts.join(", "))
+                }
+            )));
         }
         let status = self.status(client)?;
         let base_url = status.base_url.ok_or_else(|| {

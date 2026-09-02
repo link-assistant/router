@@ -1003,6 +1003,7 @@ fn catalog_base_url(provider: SubscriptionProvider, token: &SubscriptionToken) -
     }
 }
 
+#[cfg(test)]
 fn parse_catalog(provider: SubscriptionProvider, body: &Value) -> Result<Vec<String>, String> {
     parse_catalog_records(
         provider,

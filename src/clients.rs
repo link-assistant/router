@@ -13,11 +13,16 @@ use serde::Serialize;
 use serde_json::{Value, json};
 use toml_edit::{DocumentMut, Item, Table, value};
 
+mod analysis;
 mod catalog;
 pub mod credentials;
 pub(crate) mod doctor;
 mod files;
 mod json_config;
+mod repair;
+
+pub use analysis::{ClientConfigAnalysis, ConfigSource, ObservedFile, OwnershipState};
+pub use repair::{RepairPlan, RepairResult};
 
 pub(crate) use catalog::RouterModel;
 use catalog::doctor_model;
@@ -467,6 +472,13 @@ pub struct ClientStatus {
     pub base_url: Option<String>,
     pub token_env: Option<&'static str>,
     pub token_env_set: bool,
+    /// Router ownership of the effective routing configuration.
+    pub ownership_state: OwnershipState,
+    /// Highest-precedence source which currently selects the endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub effective_source: Option<ConfigSource>,
+    /// Routing-critical key names which disagree; values are never retained.
+    pub conflicts: Vec<String>,
     /// Why this client's configuration could not be read, if it could not.
     ///
     /// A damaged file is a property of one row, not of the listing: propagating
@@ -556,7 +568,7 @@ impl ClientManager {
     }
 
     /// Read a process environment variable unless this root is isolated.
-    fn environment_var(&self, name: &str) -> Option<String> {
+    pub(super) fn environment_var(&self, name: &str) -> Option<String> {
         self.respect_environment
             .then(|| std::env::var(name).ok())
             .flatten()
@@ -615,6 +627,14 @@ impl ClientManager {
         credentials::read(&self.credential_metadata_path(client))
     }
 
+    /// Read the token from Router's private managed environment file.
+    pub(crate) fn managed_token(&self, client: ClientKind) -> Result<Option<String>, ClientError> {
+        let Some(name) = client.token_env() else {
+            return Ok(None);
+        };
+        read_environment_value(&self.environment_path(client), name)
+    }
+
     /// Record which token the managed environment file now holds.
     pub fn write_credential_metadata(
         &self,
@@ -646,7 +666,7 @@ impl ClientManager {
     /// Never fails on a damaged configuration: the reason is carried in the
     /// row instead, so one hand-edited file cannot take the rest of the
     /// listing away from the reader (issue #304).
-    pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
+    pub(super) fn raw_status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
         let path = self.config_path(client);
         let read = match client {
             ClientKind::Codex => read_codex_base_url(&path),
@@ -692,9 +712,30 @@ impl ClientManager {
                         .flatten()
                         .is_some()
             }),
+            ownership_state: OwnershipState::Unconfigured,
+            effective_source: None,
+            conflicts: Vec::new(),
             unreadable,
             unsupported: client.setup_limitation(),
         })
+    }
+
+    /// Analyze endpoint ownership and routing-critical precedence without
+    /// retaining any credential value.
+    pub fn analyze(&self, client: ClientKind) -> Result<ClientConfigAnalysis, ClientError> {
+        analysis::analyze_client(self, client)
+    }
+
+    /// What this machine holds for `client`, including explicit ownership.
+    pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
+        let mut status = self.raw_status(client)?;
+        let analysis = self.analyze(client)?;
+        status.configured = analysis.state == OwnershipState::ManagedIntact;
+        status.base_url.clone_from(&analysis.safe_origin);
+        status.ownership_state = analysis.state;
+        status.effective_source = analysis.effective_source;
+        status.conflicts = analysis.conflicts;
+        Ok(status)
     }
 
     pub(crate) fn setup(
@@ -781,6 +822,11 @@ impl ClientManager {
             writeln!(
                 &mut contents,
                 "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
+            )
+            .expect("writing to a String cannot fail");
+            writeln!(
+                &mut contents,
+                "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"
             )
             .expect("writing to a String cannot fail");
         }
@@ -884,10 +930,31 @@ impl ClientManager {
             let previous = recorded_previous
                 .unwrap_or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
             env.insert(key.into(), Value::String(managed.into()));
-            managed_gateway_env.push((key.to_string(), managed.to_string(), previous));
+            managed_gateway_env.push((key.to_string(), Some(managed.to_string()), previous));
         };
         set_managed("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
         set_managed("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+        let cleared = [
+            "ANTHROPIC_AUTH_TOKEN",
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "CLAUDE_CODE_SUBAGENT_MODEL",
+        ];
+        for key in cleared {
+            let recorded_previous = existing_marker.as_ref().and_then(|(_, _, entries)| {
+                entries
+                    .iter()
+                    .find(|(recorded, _, _)| recorded == key)
+                    .and_then(|(_, _, previous)| previous.clone())
+            });
+            let previous = recorded_previous
+                .or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
+            env.remove(key);
+            managed_gateway_env.push((key.to_string(), None, previous));
+        }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
         // A marker already present names the value the *first* takeover
@@ -972,7 +1039,11 @@ impl ClientManager {
                 }
             }
             for (key, managed, previous) in gateway_env {
-                if env.get(&key).and_then(Value::as_str) != Some(managed.as_str()) {
+                let owns_current = managed.as_deref().map_or_else(
+                    || !env.contains_key(&key),
+                    |managed| env.get(&key).and_then(Value::as_str) == Some(managed),
+                );
+                if !owns_current {
                     continue;
                 }
                 if let Some(previous) = previous {

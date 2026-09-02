@@ -115,7 +115,12 @@ fn repair_dry_run_is_byte_identical_and_needs_no_router() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(fs::read(&settings).unwrap(), before);
-    assert!(!home.path().join(".config/link-assistant-router/repairs").exists());
+    assert!(
+        !home
+            .path()
+            .join(".config/link-assistant-router/repairs")
+            .exists()
+    );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("foreign"), "{stdout}");
     assert!(!stdout.contains("z.ai-secret"), "{stdout}");
