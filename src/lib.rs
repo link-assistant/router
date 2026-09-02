@@ -77,6 +77,7 @@ pub mod remote_command;
 pub mod request_log;
 mod request_routing;
 pub mod responses;
+pub mod route_contract;
 pub mod security_headers;
 pub mod server_command;
 pub mod server_router;

@@ -69,22 +69,22 @@ fn canonical_endpoint_builders_treat_saved_servers_as_origins() {
 
 #[test]
 fn listener_eligibility_is_a_security_boundary() {
-    let health = route_for_path(http::Method::GET, "/api/health").unwrap();
+    let health = route_for_path(&http::Method::GET, "/api/health").unwrap();
     assert!(health.listeners.contains(&ListenerKind::Combined));
     assert!(health.listeners.contains(&ListenerKind::InferenceOnly));
 
-    let management = route_for_path(http::Method::GET, "/api/management/tokens").unwrap();
+    let management = route_for_path(&http::Method::GET, "/api/management/tokens").unwrap();
     assert!(management.listeners.contains(&ListenerKind::Combined));
     assert!(management.listeners.contains(&ListenerKind::Admin));
     assert!(!management.listeners.contains(&ListenerKind::InferenceOnly));
 
     let anthropic =
-        route_for_path(http::Method::POST, "/api/services/anthropic/v1/messages").unwrap();
+        route_for_path(&http::Method::POST, "/api/services/anthropic/v1/messages").unwrap();
     assert!(anthropic.listeners.contains(&ListenerKind::Combined));
     assert!(anthropic.listeners.contains(&ListenerKind::InferenceOnly));
     assert!(!anthropic.listeners.contains(&ListenerKind::Admin));
 
-    let github = route_for_path(http::Method::POST, "/api/services/github/api/graphql").unwrap();
+    let github = route_for_path(&http::Method::POST, "/api/services/github/api/graphql").unwrap();
     assert_eq!(github.class, RouteClass::Service(ServiceKind::GitHub));
     assert!(!github.listeners.contains(&ListenerKind::InferenceOnly));
 }
@@ -119,7 +119,7 @@ fn removed_paths_have_no_route_contract() {
         (http::Method::GET, "/actor/code"),
     ] {
         assert!(
-            route_for_path(method.clone(), path).is_none(),
+            route_for_path(&method, path).is_none(),
             "removed route still classified: {method} {path}"
         );
     }
