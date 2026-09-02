@@ -298,7 +298,7 @@ async fn import_provider(
         std::path::PathBuf::from(source)
     };
     let destination_home = provider_home(config, provider, &user_home);
-    if source_home == destination_home {
+    if same_credential_home(&source_home, &destination_home) {
         // A deployment that reads the vendor's own home already holds whatever
         // is there; there is nothing to copy, and copying a file onto itself
         // would truncate it.
@@ -344,6 +344,12 @@ async fn import_provider(
     // Do not spend a rotating candidate chain when conditional provisioning
     // already has a winner. Installation repeats this check after validation,
     // under the same lock, so a concurrent login/refresh still wins the race.
+    if policy.if_absent && destination.has_platform_store_credential() {
+        println!(
+            "{provider:<8} already present in the platform credential store; candidate from {where_from} was not validated or installed"
+        );
+        return Ok(());
+    }
     if policy.if_absent
         && let Some(path) = destination
             .existing_document_locked(
@@ -365,6 +371,15 @@ async fn import_provider(
     // result. The destination remains untouched throughout both network calls.
     let validated = validate_candidate(&config.data_dir, provider, document).await?;
     let report = describe_credential(&validated.token);
+    if (policy.if_absent && destination.has_platform_store_credential())
+        || (!policy.if_absent
+            && destination.candidate_is_shadowed_by_platform_store(&validated.token))
+    {
+        let transaction_id = validated.retain();
+        return Err(format!(
+            "the {provider} platform credential remains authoritative; validated candidate retained as transaction {transaction_id}"
+        ));
+    }
     let promotion = install_candidate(
         &destination,
         &config.data_dir,
@@ -419,7 +434,37 @@ async fn validate_candidate(
     provider: SubscriptionProvider,
     document: &str,
 ) -> Result<ValidatedCandidate, String> {
+    import_refresh_prerequisite(provider, |key| std::env::var(key).ok())?;
     validate_candidate_with(data_dir, provider, document, None, None).await
+}
+
+fn import_refresh_prerequisite(
+    provider: SubscriptionProvider,
+    lookup: impl FnOnce(&str) -> Option<String>,
+) -> Result<(), String> {
+    if provider != SubscriptionProvider::Gemini {
+        return Ok(());
+    }
+    let variable = link_assistant_router::refresh::GEMINI_CLIENT_SECRET_ENV;
+    if lookup(variable).is_some_and(|value| !value.trim().is_empty()) {
+        return Ok(());
+    }
+    Err(format!(
+        "Gemini refresh-chain import requires {variable}; set it to the OAuth client secret shipped with Gemini CLI"
+    ))
+}
+
+fn same_credential_home(source: &std::path::Path, destination: &std::path::Path) -> bool {
+    if source == destination {
+        return true;
+    }
+    match (
+        std::fs::canonicalize(source),
+        std::fs::canonicalize(destination),
+    ) {
+        (Ok(source), Ok(destination)) => source == destination,
+        _ => false,
+    }
 }
 
 /// Validate a credential in a Router-owned store that is isolated from the
@@ -427,9 +472,9 @@ async fn validate_candidate(
 ///
 /// Endpoint overrides exist only so the unit matrix can exercise the exact
 /// four vendor layouts and request order against a loopback vendor. Production
-/// always uses the provider's public OAuth endpoint and a Router-chosen catalog
-/// origin; a candidate-controlled `resource_url` can therefore never receive
-/// the refreshed bearer token.
+/// always uses the provider's public OAuth endpoint and a Router-validated
+/// catalog origin; a candidate-controlled `resource_url` can therefore never
+/// send the refreshed bearer token outside the vendor allowlist.
 async fn validate_candidate_with(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,
@@ -458,6 +503,14 @@ async fn validate_candidate_with(
     reader
         .install_document(document)
         .map_err(|_| format!("the {provider} candidate could not be staged durably"))?;
+    let catalog_base = if let Some(base) = catalog_base_url_override {
+        base.trim_end_matches('/').to_string()
+    } else {
+        let staged = reader.read_document_for_import().map_err(|_| {
+            format!("the staged {provider} candidate could not be read for validation")
+        })?;
+        catalog_base_for_candidate(provider, &staged.token)?
+    };
 
     let candidate_data = stage.path().join("router-state");
     let cache = link_assistant_router::refresh::TokenCache::registered_for(
@@ -470,7 +523,7 @@ async fn validate_candidate_with(
         .build()
         .map_err(|_| "could not initialize candidate validation".to_string())?;
     let now_ms = chrono::Utc::now().timestamp_millis();
-    let refreshed = match token_url_override {
+    let refresh_result = match token_url_override {
         Some(token_url) => {
             cache
                 .validate_refresh_chain_registered_at(
@@ -492,19 +545,28 @@ async fn validate_candidate_with(
                 )
                 .await
         }
-    }?;
+    };
+    let refreshed = match refresh_result {
+        Ok(refreshed) => refreshed,
+        Err(error) => {
+            // The endpoint may have advanced a rotating chain before a
+            // response, persistence, or authoritative reread failed. Retain
+            // the isolated store conservatively; dropping it here could
+            // delete the only durable successor.
+            let _retained_path = stage.keep();
+            return Err(format!(
+                "{error}; isolated candidate retained as transaction {transaction_id}"
+            ));
+        }
+    };
 
     // The refresh has advanced the source's rotating chain. From this point on,
     // a failed catalog or promotion must retain the staged durable successor.
-    let catalog_base = catalog_base_url_override.unwrap_or_else(|| match provider {
-        SubscriptionProvider::Gemini => "https://generativelanguage.googleapis.com",
-        _ => provider.default_base_url(),
-    });
     if let Err(error) = link_assistant_router::model_catalog::fetch_provider_catalog(
         &client,
         provider,
         &refreshed,
-        Some(catalog_base),
+        Some(&catalog_base),
     )
     .await
     {
@@ -539,6 +601,42 @@ async fn validate_candidate_with(
         stage,
         transaction_id,
     })
+}
+
+/// Select the catalog origin without trusting arbitrary credential input.
+///
+/// Qwen Code binds a token to `portal.qwen.ai` through `resource_url`, while
+/// credentials without that field use the public `DashScope` endpoint. Only
+/// those exact HTTPS origins on the default port are eligible to receive the
+/// refreshed bearer token.
+fn catalog_base_for_candidate(
+    provider: SubscriptionProvider,
+    token: &link_assistant_router::subscription::SubscriptionToken,
+) -> Result<String, String> {
+    if provider == SubscriptionProvider::Gemini {
+        return Ok("https://generativelanguage.googleapis.com".to_string());
+    }
+    if provider != SubscriptionProvider::Qwen {
+        return Ok(provider.default_base_url().to_string());
+    }
+
+    let base = token.base_url(provider);
+    let parsed = reqwest::Url::parse(&base)
+        .map_err(|_| "the Qwen candidate names an invalid catalog origin".to_string())?;
+    let trusted_host = matches!(
+        parsed.host_str(),
+        Some("portal.qwen.ai" | "dashscope.aliyuncs.com")
+    );
+    let safe_authority = parsed.scheme() == "https"
+        && parsed.username().is_empty()
+        && parsed.password().is_none()
+        && parsed.port_or_known_default() == Some(443)
+        && parsed.query().is_none()
+        && parsed.fragment().is_none();
+    if !trusted_host || !safe_authority {
+        return Err("the Qwen candidate catalog origin is not trusted".to_string());
+    }
+    Ok(base.trim_end_matches('/').to_string())
 }
 
 /// Enforce candidate acceptance policy, then enter the shared writer boundary.

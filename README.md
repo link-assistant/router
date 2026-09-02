@@ -817,6 +817,11 @@ rereads the result, then proves that fresh access token at the vendor's
 non-inference model catalog. A rejected, malformed, timed-out, unreachable, or
 non-refreshable candidate is never installed.
 
+Gemini's installed-app refresh grant also requires
+`GEMINI_OAUTH_CLIENT_SECRET`, set to the OAuth client secret shipped with the
+Gemini CLI. Router checks this before creating a staging transaction or making
+a network request and names the missing variable directly.
+
 Subscription imports use the same durable provider/account lock as refresh and
 native login. Ordinary import is an explicit replacement operation.
 `--if-absent` is the provisioning-safe form for Claude, Codex, Gemini, and Qwen:
@@ -840,8 +845,13 @@ Refresh-chain validation advances the candidate before installation, so the
 source copy may contain the spent predecessor after a successful import. If a
 concurrent credential wins the conditional race or catalog validation fails
 after refresh, Router retains the advanced candidate under a non-secret
-transaction identifier instead of deleting the only current chain link. To
-withdraw an installed credential:
+transaction identifier instead of deleting the only current chain link. The
+directory is
+`DATA_DIR/auth-import-candidates/<transaction-id>-<random>/<provider>`; locate
+the prefix Router reported and resume through the same safe command, for
+example `router auth import qwen <that-directory>/qwen --local`. Do not copy the
+file around the import command, because that would bypass validation and locked
+promotion. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh

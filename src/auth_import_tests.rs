@@ -114,10 +114,17 @@ fn candidate_document(provider: SubscriptionProvider) -> String {
             },
             "vendor_marker":"preserved"
         }),
-        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => serde_json::json!({
+        SubscriptionProvider::Gemini => serde_json::json!({
             "access_token":"stale-access",
             "refresh_token":"stale-refresh",
             "expiry_date":9_999_999_999_999_i64,
+            "vendor_marker":"preserved"
+        }),
+        SubscriptionProvider::Qwen => serde_json::json!({
+            "access_token":"stale-access",
+            "refresh_token":"stale-refresh",
+            "expiry_date":9_999_999_999_999_i64,
+            "resource_url":"portal.qwen.ai",
             "vendor_marker":"preserved"
         }),
     }
@@ -306,6 +313,20 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
         .expect_err("spent refresh chain must be rejected");
 
         assert!(error.contains("invalid_grant"), "{provider}: {error}");
+        assert!(
+            error.contains("retained as transaction"),
+            "validation uncertainty discarded the isolated candidate: {provider}: {error}"
+        );
+        let transactions = std::fs::read_dir(root.path().join("auth-import-candidates"))
+            .expect("retained staging root")
+            .collect::<Result<Vec<_>, _>>()
+            .expect("retained transactions");
+        assert_eq!(transactions.len(), 1, "{provider}: {error}");
+        let retained = transactions[0]
+            .path()
+            .join(provider.as_str())
+            .join(provider.canonical_credential_filename());
+        assert!(retained.is_file(), "{provider}: retained candidate missing");
         assert_eq!(
             std::fs::read_to_string(destination_path).unwrap(),
             current,
@@ -321,6 +342,91 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
         drop(seen);
         server.abort();
     }
+}
+
+/// Qwen Code issues a per-credential service origin. Safe import must use that
+/// official origin rather than silently probing a different `DashScope` service.
+#[test]
+fn qwen_import_uses_the_vendor_issued_catalog_origin() {
+    let token = link_assistant_router::subscription::SubscriptionToken {
+        access_token: "redacted".into(),
+        refresh_token: Some("redacted".into()),
+        expires_at_ms: None,
+        account_id: None,
+        resource_url: Some("portal.qwen.ai".into()),
+    };
+
+    assert_eq!(
+        catalog_base_for_candidate(SubscriptionProvider::Qwen, &token).unwrap(),
+        "https://portal.qwen.ai/v1"
+    );
+}
+
+/// A credential document is untrusted input. Its Qwen `resource_url` must not
+/// turn catalog validation into a bearer-token SSRF.
+#[test]
+fn qwen_import_rejects_non_vendor_catalog_origins() {
+    for resource_url in [
+        "http://portal.qwen.ai",
+        "https://127.0.0.1",
+        "https://portal.qwen.ai.attacker.example",
+        "https://user@portal.qwen.ai",
+        "https://portal.qwen.ai:8443",
+        "https://portal.qwen.ai?redirect=https://attacker.example",
+    ] {
+        let token = link_assistant_router::subscription::SubscriptionToken {
+            access_token: "redacted".into(),
+            refresh_token: Some("redacted".into()),
+            expires_at_ms: None,
+            account_id: None,
+            resource_url: Some(resource_url.into()),
+        };
+
+        assert!(
+            catalog_base_for_candidate(SubscriptionProvider::Qwen, &token).is_err(),
+            "untrusted Qwen origin was accepted: {resource_url}"
+        );
+    }
+}
+
+/// Gemini's installed-app refresh grant requires the client secret shipped by
+/// Gemini CLI. Import must name that prerequisite before staging or contacting
+/// an OAuth endpoint.
+#[test]
+fn gemini_import_refresh_prerequisite_is_explicit() {
+    let absent = import_refresh_prerequisite(SubscriptionProvider::Gemini, |_| None)
+        .expect_err("missing Gemini secret must fail closed");
+    assert!(
+        absent.contains(link_assistant_router::refresh::GEMINI_CLIENT_SECRET_ENV),
+        "{absent}"
+    );
+    assert!(
+        import_refresh_prerequisite(SubscriptionProvider::Gemini, |_| {
+            Some("configured".to_string())
+        })
+        .is_ok()
+    );
+    for provider in [
+        SubscriptionProvider::Claude,
+        SubscriptionProvider::Codex,
+        SubscriptionProvider::Qwen,
+    ] {
+        assert!(import_refresh_prerequisite(provider, |_| None).is_ok());
+    }
+}
+
+/// Lexically different paths can still name the same credential home. That
+/// must be detected before a rotating refresh link is spent.
+#[cfg(unix)]
+#[test]
+fn a_symlink_alias_is_the_same_credential_home() {
+    let root = tempfile::tempdir().expect("root");
+    let destination = root.path().join("destination");
+    let alias = root.path().join("alias");
+    std::fs::create_dir(&destination).expect("destination");
+    std::os::unix::fs::symlink(&destination, &alias).expect("source alias");
+
+    assert!(same_credential_home(&alias, &destination));
 }
 
 /// Once refresh succeeds, failure to obtain a positive catalog verdict keeps

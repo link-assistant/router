@@ -137,11 +137,11 @@ fn reads_qwen_oauth_creds_with_resource_url() {
     let token = reader.read_token().expect("qwen token");
     assert_eq!(token.access_token, "qwen-access");
     assert_eq!(token.resource_url.as_deref(), Some("portal.qwen.ai"));
-    // resource_url overrides the default DashScope base and gets the
-    // OpenAI-compatible suffix + scheme added.
+    // resource_url overrides the default DashScope base and gets the exact
+    // `/v1` suffix Qwen Code itself adds, plus a scheme when absent.
     assert_eq!(
         token.base_url(SubscriptionProvider::Qwen),
-        "https://portal.qwen.ai/compatible-mode/v1"
+        "https://portal.qwen.ai/v1"
     );
 }
 
@@ -458,6 +458,26 @@ fn a_keychain_credential_is_used_when_no_file_exists() {
     assert_eq!(token.access_token, "keychain-access");
 }
 
+/// A file promotion cannot replace a platform-store credential with a later
+/// expiry. Import must detect that the candidate would remain shadowed and
+/// refuse before reporting success.
+#[test]
+fn a_newer_platform_credential_would_shadow_an_import_candidate() {
+    let candidate = keychain_token("candidate", Some(6_000));
+
+    assert!(SubscriptionReader::candidate_is_shadowed_by_store(
+        &candidate,
+        Some(keychain_token("keychain", Some(7_000)))
+    ));
+    assert!(!SubscriptionReader::candidate_is_shadowed_by_store(
+        &candidate,
+        Some(keychain_token("keychain", Some(6_000)))
+    ));
+    assert!(!SubscriptionReader::candidate_is_shadowed_by_store(
+        &candidate, None
+    ));
+}
+
 /// Neither store holding a credential must still report the file's error, so a
 /// machine with nothing configured says what it always said.
 #[test]
@@ -571,8 +591,8 @@ fn every_error_renders_its_message() {
     }
 }
 
-/// Qwen returns a bare host, so the scheme and the OpenAI-compatible suffix are
-/// added; a base that already carries them is left alone.
+/// Qwen returns a bare host, so the scheme and `/v1` suffix are added; a base
+/// that already ends in `/v1` is left alone.
 #[test]
 fn a_qwen_resource_url_is_completed_only_where_it_is_incomplete() {
     let bare = SubscriptionToken {
@@ -584,7 +604,7 @@ fn a_qwen_resource_url_is_completed_only_where_it_is_incomplete() {
     };
     let completed = bare.base_url(SubscriptionProvider::Qwen);
     assert!(completed.starts_with("https://"), "{completed}");
-    assert!(completed.ends_with("/compatible-mode/v1"), "{completed}");
+    assert!(completed.ends_with("/v1"), "{completed}");
 
     let already_complete = SubscriptionToken {
         resource_url: Some("https://dashscope.example/compatible-mode/v1".into()),
