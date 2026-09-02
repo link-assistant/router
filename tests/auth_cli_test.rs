@@ -610,9 +610,13 @@ fn import_is_a_verb_listed_in_the_auth_command_list() {
     for provider in ["claude", "codex", "gemini", "qwen", "gh"] {
         assert!(seen.contains(provider), "{provider} missing: {seen}");
     }
-    for flag in ["--if-absent", "--force"] {
+    for flag in ["--if-absent", "--safe-refresh-chain-import-v1"] {
         assert!(seen.contains(flag), "{flag} missing: {seen}");
     }
+    assert!(
+        !seen.contains("--force"),
+        "unsafe rejection bypass is still public: {seen}"
+    );
 }
 
 #[test]
