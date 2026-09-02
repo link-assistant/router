@@ -674,3 +674,116 @@ fn account_catalogs_are_independent_and_provider_listing_is_their_union() {
             .credential_healthy
     );
 }
+
+#[tokio::test]
+async fn paginated_catalog_preserves_unknown_metadata_and_source_order() {
+    use axum::extract::Query;
+    use std::collections::HashMap;
+
+    async fn handler(
+        State(seen): State<Arc<Mutex<Vec<Option<String>>>>>,
+        Query(query): Query<HashMap<String, String>>,
+    ) -> axum::Json<Value> {
+        let cursor = query.get("after_id").cloned();
+        seen.lock().unwrap().push(cursor.clone());
+        if cursor.is_none() {
+            axum::Json(serde_json::json!({
+                "data": [{
+                    "id": "future-saffron-91",
+                    "display_name": "Saffron 91",
+                    "unknown_future_field": {"tier": 7}
+                }],
+                "has_more": true,
+                "last_id": "future-saffron-91"
+            }))
+        } else {
+            axum::Json(serde_json::json!({
+                "data": [{
+                    "id": "future-cobalt-12",
+                    "display_name": "Cobalt 12",
+                    "unknown_future_field": ["kept"]
+                }],
+                "has_more": false
+            }))
+        }
+    }
+
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let app = Router::new()
+        .route("/v1/models", get(handler))
+        .with_state(Arc::clone(&seen));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let token = SubscriptionToken {
+        access_token: "live-token".to_string(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: Some("account-future".to_string()),
+        resource_url: None,
+    };
+
+    let records = fetch_provider_catalog_records(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Claude,
+        &token,
+        Some(&format!("http://{address}")),
+    )
+    .await
+    .expect("all catalog pages");
+
+    assert_eq!(
+        records
+            .iter()
+            .map(|record| record.canonical_id.as_str())
+            .collect::<Vec<_>>(),
+        ["future-saffron-91", "future-cobalt-12"]
+    );
+    assert_eq!(records[0].source_order, 0);
+    assert_eq!(records[1].source_order, 1);
+    assert_eq!(
+        records[0].raw["unknown_future_field"],
+        serde_json::json!({"tier": 7})
+    );
+    assert_eq!(
+        records[1].raw["unknown_future_field"],
+        serde_json::json!(["kept"])
+    );
+    assert_eq!(
+        seen.lock().unwrap().as_slice(),
+        &[None, Some("future-saffron-91".to_string())]
+    );
+}
+
+#[tokio::test]
+async fn repeated_catalog_cursor_fails_closed() {
+    async fn handler() -> axum::Json<Value> {
+        axum::Json(serde_json::json!({
+            "data": [{"id": "future-loop-1"}],
+            "has_more": true,
+            "last_id": "future-loop-1"
+        }))
+    }
+
+    let app = Router::new().route("/v1/models", get(handler));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let token = SubscriptionToken {
+        access_token: "live-token".to_string(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: Some("account-loop".to_string()),
+        resource_url: None,
+    };
+
+    let error = fetch_provider_catalog_records(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Claude,
+        &token,
+        Some(&format!("http://{address}")),
+    )
+    .await
+    .expect_err("a repeated cursor must not spin or publish a partial catalog");
+    assert!(error.contains("repeated pagination cursor"), "{error}");
+}
