@@ -88,11 +88,11 @@ fn mock_managed_router(
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/api/tokens" => (
+                "/api/tokens/client" => (
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJtYW5hZ2VkLXJ1biJ9.signature"}"#,
                 ),
-                "/v1/models" => (
+                "/api/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
                 ),
@@ -409,8 +409,8 @@ fn managed_admin_is_used_only_for_unclaimed_per_run_minting() {
             "/health",
             "/health",
             "/api/tokens/list",
-            "/api/tokens",
-            "/v1/models",
+            "/api/tokens/client",
+            "/api/codex/v1/models",
             "/api/tokens/revoke"
         ]
     );
@@ -727,7 +727,12 @@ fn claimed_managed_router_accepts_an_explicit_ordinary_token() {
     );
     assert_eq!(
         router.join().expect("managed router thread"),
-        ["/health", "/health", "/api/tokens/list", "/v1/models"]
+        [
+            "/health",
+            "/health",
+            "/api/tokens/list",
+            "/api/codex/v1/models"
+        ]
     );
 }
 
