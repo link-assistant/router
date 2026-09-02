@@ -127,7 +127,7 @@ async fn repair(
         } else {
             for plan in &plans {
                 println!(
-                    "{}: {:?}; action={}{}",
+                    "{}: {}; action={}{}",
                     plan.client,
                     plan.state,
                     plan.action,
@@ -177,6 +177,11 @@ async fn repair(
                     result.client,
                     result.backup_id.as_deref().unwrap_or("none")
                 );
+                if result.restart_required {
+                    println!(
+                        "restart Claude Code to refresh its gateway catalog; its cache was left intact"
+                    );
+                }
             } else {
                 println!("{} is already managed and intact", result.client);
             }
@@ -218,12 +223,14 @@ async fn repair_one(
     client: ClientKind,
 ) -> Result<RepairResult, Box<dyn std::error::Error + Send + Sync>> {
     let analysis = manager.analyze(client)?;
+    let old_metadata = manager.credential_metadata(client).ok().flatten();
     if analysis.state == OwnershipState::ManagedIntact {
         return Ok(RepairResult {
             client,
             before: analysis.state,
             after: analysis.state,
             changed: false,
+            restart_required: false,
             backup_id: None,
         });
     }
@@ -307,6 +314,26 @@ async fn repair_one(
         let _ = crate::managed_server::cleanup_run_credential(candidate).await;
         return Err(format!("post-repair catalog validation failed: {error}").into());
     }
+    if candidate.was_minted()
+        && let (Some(old), Some(old_id), Some(new_id), Some(admin_token)) = (
+            old_metadata.as_ref(),
+            old_metadata
+                .as_ref()
+                .filter(|old| old.source == TokenSource::Minted)
+                .and_then(|old| old.token_id.as_deref()),
+            metadata.token_id.as_deref(),
+            server.token.as_deref(),
+        )
+        && old_id != new_id
+        && old.router.as_deref() == Some(server.base_url.as_str())
+        && let Err(error) =
+            crate::managed_server::revoke(&server.base_url, admin_token, old_id).await
+    {
+        eprintln!(
+            "warning: repaired {client}, but the replaced Router-owned token could not be revoked: {}",
+            crate::login_url::redact_secrets(&error.to_string())
+        );
+    }
     // The candidate intentionally remains live: it is now the credential
     // named by the private environment and secret-free metadata files.
     Ok(result)
@@ -340,8 +367,8 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
     let mut rows = Vec::new();
     if !json {
         println!(
-            "{:<12}  {:<9}  {:<11}  {:<19}  config",
-            "client", "installed", "configured", "dialect"
+            "{:<12}  {:<9}  {:<16}  {:<19}  config",
+            "client", "installed", "ownership", "dialect"
         );
     }
     let mut unreadable = Vec::new();
@@ -349,19 +376,19 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
     for client in ClientKind::ALL {
         match manager.status(client) {
             Ok(status) => {
-                let configured = if status.unreadable.is_some() {
+                let ownership = if status.unreadable.is_some() {
                     "unreadable".to_string()
                 } else {
-                    status.configured.to_string()
+                    status.ownership_state.to_string()
                 };
                 if json {
                     rows.push(status.clone());
                 } else {
                     println!(
-                        "{:<12}  {:<9}  {:<11}  {:<19}  {}",
+                        "{:<12}  {:<9}  {:<16}  {:<19}  {}",
                         status.client,
                         status.installed,
-                        configured,
+                        ownership,
                         status.dialect,
                         status.config_path.display()
                     );
@@ -372,7 +399,7 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
             }
             Err(error) => {
                 if !json {
-                    println!("{client:<12}  {:<9}  {:<11}  {:<19}  -", "?", "error", "?");
+                    println!("{client:<12}  {:<9}  {:<16}  {:<19}  -", "?", "error", "?");
                 }
                 failures.push((client, error.to_string()));
             }

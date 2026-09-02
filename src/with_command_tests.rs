@@ -122,6 +122,7 @@ fn the_users_configuration_is_kept_by_default() {
         "ANTHROPIC_DEFAULT_OPUS_MODEL",
         "ANTHROPIC_DEFAULT_SONNET_MODEL",
         "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+        "CLAUDE_CODE_SUBAGENT_MODEL",
     ] {
         assert_eq!(
             environment.get(cleared).map(String::as_str),

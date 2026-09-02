@@ -354,7 +354,7 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
     let doctor = router(home.path(), &["clients", "doctor", "codex"]);
     assert!(!doctor.status.success());
     let diagnostic = String::from_utf8_lossy(&doctor.stderr);
-    assert!(diagnostic.contains("ManagedDrifted"));
+    assert!(diagnostic.contains("managed-drifted"));
     assert!(diagnostic.contains("public-config:model_provider"));
     assert!(diagnostic.contains("clients repair codex"));
 }

@@ -912,12 +912,6 @@ impl ClientManager {
             .and_then(Value::as_str)
             .map(str::to_string)
             .filter(|previous| previous != base_url);
-        if let Some(previous) = previous.as_deref() {
-            println!(
-                "note: replacing {CLAUDE_BASE_ENV}={previous}; `clients remove claude` will \
-                 restore it"
-            );
-        }
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
         let mut managed_gateway_env = Vec::new();
         let mut set_managed = |key: &str, managed: &str| {

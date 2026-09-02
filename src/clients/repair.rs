@@ -29,6 +29,7 @@ pub struct RepairResult {
     pub before: OwnershipState,
     pub after: OwnershipState,
     pub changed: bool,
+    pub restart_required: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_id: Option<String>,
 }
@@ -90,6 +91,7 @@ impl ClientManager {
                 before: before.state,
                 after: before.state,
                 changed: false,
+                restart_required: false,
                 backup_id: None,
             });
         }
@@ -136,6 +138,7 @@ impl ClientManager {
                 before: before.state,
                 after: after.state,
                 changed: true,
+                restart_required: client == ClientKind::ClaudeCode,
                 backup_id: Some(id),
             })
         })();
@@ -176,6 +179,7 @@ impl ClientManager {
             before,
             after,
             changed: true,
+            restart_required: client == ClientKind::ClaudeCode,
             backup_id: Some(id.to_string()),
         })
     }
@@ -215,6 +219,13 @@ impl ClientManager {
                     "refusing to repair {} because it is a {}",
                     observed.path.display(),
                     observed.kind
+                )));
+            }
+            let current = current_state(&observed.path)?;
+            if current.0 != observed.exists || current.1 != observed.sha256 {
+                return Err(ClientError::message(format!(
+                    "{} changed after analysis; retry repair",
+                    observed.path.display()
                 )));
             }
         }

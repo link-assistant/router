@@ -1,5 +1,6 @@
 //! Secret-free ownership and precedence analysis for client routing config.
 
+use std::fmt;
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
@@ -21,6 +22,18 @@ pub enum OwnershipState {
     ManagedIntact,
     ManagedDrifted,
     Ambiguous,
+}
+
+impl fmt::Display for OwnershipState {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(match self {
+            Self::Unconfigured => "unconfigured",
+            Self::Foreign => "foreign",
+            Self::ManagedIntact => "managed-intact",
+            Self::ManagedDrifted => "managed-drifted",
+            Self::Ambiguous => "ambiguous",
+        })
+    }
 }
 
 /// Highest-precedence source selecting the endpoint.

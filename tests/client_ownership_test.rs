@@ -2,7 +2,7 @@
 
 mod common;
 
-use common::router;
+use common::{mock_router, router, router_with_env};
 use link_assistant_router::clients::{ClientKind, ClientManager, OwnershipState};
 use std::fs;
 
@@ -124,4 +124,75 @@ fn repair_dry_run_is_byte_identical_and_needs_no_router() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("foreign"), "{stdout}");
     assert!(!stdout.contains("z.ai-secret"), "{stdout}");
+}
+
+#[test]
+fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let settings = home.path().join(".claude/settings.json");
+    fs::create_dir_all(settings.parent().unwrap()).unwrap();
+    fs::write(&settings, helper_claude_settings()).unwrap();
+    let original = fs::read(&settings).unwrap();
+    let vendor_auth = home.path().join(".claude/.credentials.json");
+    fs::write(&vendor_auth, b"vendor-auth-must-stay-exact").unwrap();
+    let external = home.path().join(".chelper/state.json");
+    fs::create_dir_all(external.parent().unwrap()).unwrap();
+    fs::write(&external, b"external-tool-state").unwrap();
+
+    let (base_url, server) = mock_router(&[("claude-future-2099", "anthropic")], 4);
+    let output = router_with_env(
+        home.path(),
+        &["clients", "repair", "claude", "--json"],
+        &[
+            ("LINK_ASSISTANT_ROUTER_URL", &base_url),
+            ("LINK_ASSISTANT_ROUTER_TOKEN", "la_sk_selected"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let requests = server.join().unwrap();
+    assert_eq!(requests.len(), 4, "{requests:?}");
+    assert!(requests[0].starts_with("GET /api/health "));
+    assert!(requests[1].starts_with("GET /api/management/tokens "));
+    assert!(requests[2].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(requests[3].starts_with("GET /api/services/anthropic/v1/models "));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(!stdout.contains("la_sk_selected"));
+    assert!(!stdout.contains("z.ai-secret"));
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let id = value["results"][0]["backup_id"]
+        .as_str()
+        .expect("backup id")
+        .to_string();
+
+    let repaired = fs::read(&settings).unwrap();
+    let repairs = home.path().join(".config/link-assistant-router/repairs");
+    let snapshot_count = fs::read_dir(&repairs).unwrap().count();
+    let second = router(home.path(), &["clients", "repair", "claude", "--json"]);
+    assert!(
+        second.status.success(),
+        "{}",
+        String::from_utf8_lossy(&second.stderr)
+    );
+    assert_eq!(fs::read(&settings).unwrap(), repaired);
+    assert_eq!(fs::read_dir(&repairs).unwrap().count(), snapshot_count);
+
+    let rollback = router(
+        home.path(),
+        &["clients", "repair", "claude", "--rollback", &id],
+    );
+    assert!(
+        rollback.status.success(),
+        "{}",
+        String::from_utf8_lossy(&rollback.stderr)
+    );
+    assert_eq!(fs::read(&settings).unwrap(), original);
+    assert_eq!(
+        fs::read(&vendor_auth).unwrap(),
+        b"vendor-auth-must-stay-exact"
+    );
+    assert_eq!(fs::read(&external).unwrap(), b"external-tool-state");
 }

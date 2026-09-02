@@ -25,7 +25,7 @@ impl ClientManager {
         let ownership = self.analyze(client)?;
         if ownership.state != OwnershipState::ManagedIntact {
             return Err(ClientError::message(format!(
-                "{} routing ownership is {:?}{}; run `clients repair {client} --dry-run` to inspect it, then `clients repair {client}`",
+                "{} routing ownership is {}{}; run `clients repair {client} --dry-run` to inspect it, then `clients repair {client}`",
                 client.display_name(),
                 ownership.state,
                 if ownership.conflicts.is_empty() {
