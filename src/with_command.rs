@@ -47,7 +47,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             .into());
     }
     if args.client == ClientKind::ClaudeCode {
-        crate::clients::doctor::require_claude_gateway_version()?;
+        crate::clients::require_claude_gateway_version()?;
     }
     let explicit_token = if args.token_stdin {
         Some(crate::server_command::read_token()?)

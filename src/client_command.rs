@@ -193,7 +193,7 @@ async fn setup(
     }
     let (token, credential) = match supplied_token {
         Some(token) => {
-            let (token_id, principal_id) = match local_token_binding(config, token, client) {
+            let binding = match local_token_binding(config, token, client) {
                 Ok(binding) => binding,
                 Err(error) => return failed(error),
             };
@@ -202,11 +202,11 @@ async fn setup(
                 ManagedCredential {
                     client: client.to_string(),
                     source: TokenSource::Supplied,
-                    token_id: Some(token_id),
+                    token_id: binding.as_ref().map(|(token_id, _)| token_id.clone()),
                     label: None,
                     issued_at: None,
                     router: Some(base_url.clone()),
-                    principal_id: Some(principal_id),
+                    principal_id: binding.map(|(_, principal_id)| principal_id),
                 },
             )
         }
@@ -395,8 +395,15 @@ fn local_token_binding(
     config: &Config,
     token: &str,
     client: ClientKind,
-) -> Result<(String, String), Box<dyn std::error::Error>> {
-    let claims = token_manager(config)?.validate_token(token)?;
+) -> Result<Option<(String, String)>, Box<dyn std::error::Error>> {
+    let manager = token_manager(config)?;
+    let Ok(claims) = manager.validate_token(token) else {
+        // The supplied credential can belong to a remote Router with a
+        // different signing key. Its catalog endpoint is the authority for
+        // that credential; only locally verifiable tokens can be inspected or
+        // revoked from this data directory.
+        return Ok(None);
+    };
     let bound_client = claims
         .client_kind
         .as_deref()
@@ -414,7 +421,7 @@ fn local_token_binding(
         .principal_id
         .filter(|value| !value.is_empty())
         .ok_or("the supplied token has no subscriber principal")?;
-    Ok((claims.sub, principal))
+    Ok(Some((claims.sub, principal)))
 }
 
 fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Error>> {

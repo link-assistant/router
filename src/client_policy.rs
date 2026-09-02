@@ -19,11 +19,11 @@ use crate::subscription::SubscriptionProvider;
 pub enum ClientProtocol {
     /// Authenticated model discovery before a client launches.
     Catalog,
-    /// Anthropic Messages or token-counting surface.
+    /// `Anthropic Messages` or token-counting surface.
     AnthropicMessages,
-    /// OpenAI Chat Completions surface.
+    /// `OpenAI Chat Completions` surface.
     OpenAIChat,
-    /// OpenAI Responses surface.
+    /// `OpenAI Responses` surface.
     OpenAIResponses,
     /// Gemini's native `generateContent` surface.
     GeminiNative,
@@ -202,10 +202,14 @@ impl SubscriptionEntitlementPolicy {
         ) {
             return EntitlementDecision::Native;
         }
-        self.overrides
+        if self
+            .overrides
             .contains(&SubscriptionOverride { client, provider })
-            .then_some(EntitlementDecision::Override)
-            .unwrap_or(EntitlementDecision::Denied)
+        {
+            EntitlementDecision::Override
+        } else {
+            EntitlementDecision::Denied
+        }
     }
 
     /// Sorted exact overrides for warnings and administrative diagnostics.
@@ -272,12 +276,9 @@ pub fn request_evidence(
     }
     match client {
         ClientKind::ClaudeCode => {
-            { path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens") }
-                .then(|| {
-                    header_present(headers, "x-api-key")
-                        && header_present(headers, "anthropic-version")
-                })
-                .unwrap_or(false)
+            (path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens"))
+                && header_present(headers, "x-api-key")
+                && header_present(headers, "anthropic-version")
         }
         ClientKind::Codex => {
             path.contains("/v1/responses")

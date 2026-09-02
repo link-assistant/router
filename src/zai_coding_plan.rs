@@ -11,9 +11,9 @@ use crate::providers::{ProviderKind, ResolvedProvider};
 
 /// Documented base path for native Anthropic Messages traffic.
 pub const ANTHROPIC_BASE_PATH: &str = "/api/anthropic";
-/// Documented base path for OpenAI Chat Completions traffic.
+/// Documented base path for `OpenAI Chat Completions` traffic.
 pub const CHAT_BASE_PATH: &str = "/api/coding/paas/v4";
-/// Documented base path for OpenAI Responses traffic.
+/// Documented base path for `OpenAI Responses` traffic.
 pub const RESPONSES_BASE_PATH: &str = "/api/v1";
 /// Documented, non-inference quota operation used for health checks.
 pub const HEALTH_PATH: &str = "/api/monitor/usage/quota/limit";
@@ -334,6 +334,31 @@ pub async fn credential_healthy(
             response.status()
         ))
     }
+}
+
+/// Live health for the enabled personal Coding Plan credential, when present.
+///
+/// The same documented non-inference quota operation gates catalogs and
+/// dispatch. Keeping the public health surfaces on that operation means a
+/// rejected key cannot remain green merely because no client has refreshed its
+/// model picker yet.
+pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> Option<bool> {
+    let configured = match state.provider_store.list() {
+        Ok(providers) => providers
+            .iter()
+            .any(|record| record.enabled && record.kind == ProviderKind::ZaiCodingPlan),
+        Err(_) => {
+            return (state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan)
+                .then_some(false);
+        }
+    };
+    if !configured {
+        return None;
+    }
+    let Ok(Some(provider)) = resolve(state) else {
+        return Some(false);
+    };
+    Some(credential_healthy(&state.client, &provider).await.is_ok())
 }
 
 fn policy_error(surface: crate::metrics::Surface, message: &str) -> axum::response::Response {

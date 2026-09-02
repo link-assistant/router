@@ -228,20 +228,21 @@ pub async fn forward_native_gemini(
             );
         }
     };
-    forward_native(&state, &headers, &path, body).await
+    Box::pin(forward_native(&state, &headers, &path, body)).await
 }
 
 /// Internal positive-path entry after an ingress entitlement was already
 /// checked. Kept for the translated bridge and forwarding evidence tests so
 /// deny-by-default does not delete protocol compatibility coverage.
 #[cfg(test)]
+#[allow(clippy::redundant_pub_crate)]
 pub(crate) async fn forward_native_gemini_authorized(
     state: &AppState,
     path: &str,
     headers: &HeaderMap,
     body: Value,
 ) -> Response {
-    forward_native_authorized(state, headers, path, body).await
+    Box::pin(forward_native_authorized(state, headers, path, body)).await
 }
 
 /// Forward a Vertex publisher-model request using the same native Gemini body.
@@ -260,7 +261,7 @@ pub async fn forward_native_vertex(
             );
         }
     };
-    forward_native(&state, &headers, &path, body).await
+    Box::pin(forward_native(&state, &headers, &path, body)).await
 }
 
 /// Native Gemini error envelope, so Gemini CLI can surface router failures.
@@ -341,7 +342,10 @@ async fn forward_native(
             "selected provider has no Gemini adapter",
         );
     }
-    forward_native_authorized_after_route(routed, headers, path, model, streaming, body).await
+    Box::pin(forward_native_authorized_after_route(
+        routed, headers, path, model, streaming, body,
+    ))
+    .await
 }
 
 #[cfg(test)]
@@ -361,7 +365,10 @@ async fn forward_native_authorized(
         Ok(routed) => routed,
         Err(response) => return response,
     };
-    forward_native_authorized_after_route(routed, headers, path, model, streaming, body).await
+    Box::pin(forward_native_authorized_after_route(
+        routed, headers, path, model, streaming, body,
+    ))
+    .await
 }
 
 async fn forward_native_authorized_after_route(

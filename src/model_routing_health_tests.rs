@@ -12,6 +12,35 @@ use std::fs;
 use tempfile::tempdir;
 use tower::ServiceExt;
 
+async fn state_with_zai_health(
+    status: StatusCode,
+) -> (AppState, tempfile::TempDir, tokio::task::JoinHandle<()>) {
+    let app = axum::Router::new().fallback(move || async move { (status, "{}") });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let data = tempdir().unwrap();
+    let state = auto_state(Vec::new(), data.path());
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "z-ai-personal".into(),
+            kind: Some("z.ai-coding-plan".into()),
+            base_url,
+            default_model: Some("glm-5".into()),
+            models: Some(vec!["glm-5".into()]),
+            api_key: Some("zai-secret-key".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: Some("owner-a".into()),
+            acknowledge_intermediary_risk: Some(true),
+            acknowledge_unsupported_clients: Some(Vec::new()),
+        })
+        .unwrap();
+    (state, data, handle)
+}
+
 async fn subscription_report(state: AppState) -> (StatusCode, Value) {
     let app = axum::Router::new()
         .route(
@@ -101,6 +130,38 @@ async fn health_stays_a_bare_ok_when_no_subscription_is_configured() {
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(&body[..], b"ok");
+}
+
+#[tokio::test]
+async fn healthy_zai_coding_plan_is_visible_to_health_checks_and_metrics() {
+    let (state, _data, handle) = state_with_zai_health(StatusCode::OK).await;
+
+    let (status, report) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(report["healthy_providers"], json!(["z.ai"]));
+    assert_eq!(report["degraded_providers"], json!([]));
+
+    let metrics = metrics_report(state).await;
+    assert!(metrics.contains("link_assistant_subscription_healthy{provider=\"z.ai\"} 1"));
+    handle.abort();
+}
+
+#[tokio::test]
+async fn rejected_zai_key_is_degraded_without_hiding_other_health() {
+    let (state, _data, handle) = state_with_zai_health(StatusCode::UNAUTHORIZED).await;
+
+    let (status, report) = subscription_report(state.clone()).await;
+    assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(report["healthy_providers"], json!([]));
+    assert_eq!(report["degraded_providers"][0]["provider"], "z.ai");
+    assert_eq!(
+        report["degraded_providers"][0]["reason"],
+        "the Coding Plan credential was rejected upstream and needs replacement"
+    );
+
+    let metrics = metrics_report(state).await;
+    assert!(metrics.contains("link_assistant_subscription_healthy{provider=\"z.ai\"} 0"));
+    handle.abort();
 }
 
 /// Production constructs readers for every supported provider. Configuration

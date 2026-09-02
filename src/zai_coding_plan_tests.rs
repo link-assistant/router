@@ -455,21 +455,20 @@ async fn one_unsupported_gemini_override_reuses_translation_and_revocation_is_im
     install_provider(&mut state, &base_url, &["gemini"]);
     state.upstream_provider = crate::config::UpstreamProvider::Auto;
     let headers = client_headers(&state, ClientKind::GeminiCli, "owner-a");
-    let response = crate::gemini::forward_native_gemini(
+    let response = Box::pin(crate::gemini::forward_native_gemini(
         axum::extract::State(state.clone()),
         axum::extract::Path("v1beta/models/z.ai/glm-5:generateContent".to_string()),
         headers,
         Ok(axum::Json(serde_json::json!({
             "contents": [{"role":"user","parts":[{"text":"hi"}]}]
         }))),
-    )
+    ))
     .await;
     assert_eq!(response.status(), StatusCode::OK);
-    let recorded = requests.lock().unwrap();
+    let recorded = requests.lock().unwrap().clone();
     assert_eq!(recorded.len(), 2);
     assert_eq!(recorded[1].0, "/api/coding/paas/v4/chat/completions");
     assert!(recorded[1].2.contains(r#""model":"glm-5""#));
-    drop(recorded);
 
     state
         .provider_store
@@ -489,12 +488,12 @@ async fn one_unsupported_gemini_override_reuses_translation_and_revocation_is_im
         })
         .unwrap();
     let before = requests.lock().unwrap().len();
-    let response = crate::gemini::forward_native_gemini(
+    let response = Box::pin(crate::gemini::forward_native_gemini(
         axum::extract::State(state.clone()),
         axum::extract::Path("v1beta/models/z.ai/glm-5:generateContent".to_string()),
         client_headers(&state, ClientKind::GeminiCli, "owner-a"),
         Ok(axum::Json(serde_json::json!({"contents": []}))),
-    )
+    ))
     .await;
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
     assert_eq!(
@@ -580,13 +579,13 @@ async fn streaming_tool_cycle_and_count_tokens_keep_the_exact_model_boundary() {
     );
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(requests.lock().unwrap().len(), before, "counting is local");
-    let stale = crate::zai_coding_plan::count_tokens(
+    let ghost_response = crate::zai_coding_plan::count_tokens(
         &state,
         &claude_headers,
         "/v1/messages/count_tokens",
         &serde_json::json!({"model":"claude-sonnet-built-in","messages":[]}),
     );
-    assert_eq!(stale.status(), StatusCode::FORBIDDEN);
+    assert_eq!(ghost_response.status(), StatusCode::FORBIDDEN);
     assert_eq!(
         requests.lock().unwrap().len(),
         before,

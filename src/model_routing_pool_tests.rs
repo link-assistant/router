@@ -368,14 +368,13 @@ async fn inference_rejection_removes_only_that_accounts_models_from_both_listing
         .await,
     )
     .await;
-    let openai_ids = openai["data"]
+    let has_openai_id = openai["data"]
         .as_array()
         .unwrap()
         .iter()
-        .filter_map(|model| model["id"].as_str())
-        .collect::<Vec<_>>();
+        .any(|model| model["id"].as_str().is_some());
     assert!(
-        openai_ids.is_empty(),
+        !has_openai_id,
         "a token pinned to primary must not inherit its healthy neighbour's catalog"
     );
 
@@ -398,13 +397,12 @@ async fn inference_rejection_removes_only_that_accounts_models_from_both_listing
         .await,
     )
     .await;
-    let gemini_ids = gemini["models"]
+    let has_gemini_id = gemini["models"]
         .as_array()
         .unwrap()
         .iter()
-        .filter_map(|model| model["name"].as_str())
-        .collect::<Vec<_>>();
-    assert!(gemini_ids.is_empty());
+        .any(|model| model["name"].as_str().is_some());
+    assert!(!has_gemini_id);
 
     let routed = route_subscription_model(&state, "gpt-primary-only")
         .await

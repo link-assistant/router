@@ -1,6 +1,6 @@
 use super::{
-    AppState, BTreeMap, HeaderMap, JsonRejection, OpenAIShape, Query, Response, State, StatusCode,
-    UpstreamProvider, forward_openai, openai, responses,
+    AppState, BTreeMap, HeaderMap, JsonRejection, OpenAIForwardContext, OpenAIShape, Query,
+    Response, State, StatusCode, UpstreamProvider, forward_openai, openai, responses,
 };
 
 /// Provider-independent fields owned by the Chat Completions surface.
@@ -278,11 +278,13 @@ async fn openai_chat_completions_with_subscription(
         &state,
         &headers,
         body,
-        &routing_body,
-        crate::metrics::Surface::OpenAIChat,
-        (stream_requested, OpenAIShape::Chat, include_usage),
-        subscription.as_ref(),
-        true,
+        OpenAIForwardContext {
+            routing_body: &routing_body,
+            surface: crate::metrics::Surface::OpenAIChat,
+            stream_options: (stream_requested, OpenAIShape::Chat, include_usage),
+            validated: subscription.as_ref(),
+            entitlement_granted: true,
+        },
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)
@@ -455,11 +457,13 @@ pub async fn openai_responses(
         &state,
         &headers,
         body,
-        &routing_body,
-        crate::metrics::Surface::OpenAIResponses,
-        (stream_requested, OpenAIShape::Response, false),
-        subscription.as_ref(),
-        true,
+        OpenAIForwardContext {
+            routing_body: &routing_body,
+            surface: crate::metrics::Surface::OpenAIResponses,
+            stream_options: (stream_requested, OpenAIShape::Response, false),
+            validated: subscription.as_ref(),
+            entitlement_granted: true,
+        },
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)

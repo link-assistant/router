@@ -66,8 +66,11 @@ pub(super) const fn client_models_path(client: ClientKind) -> &'static str {
         ClientKind::Codex => "/api/codex/v1/models",
         ClientKind::GeminiCli => "/api/gemini/v1beta/models",
         ClientKind::QwenCode => "/api/qwen/v1/models",
-        ClientKind::ClaudeCode | ClientKind::Opencode | ClientKind::GrokCli => "/v1/models",
-        ClientKind::Cursor | ClientKind::Agent => "/v1/models",
+        ClientKind::ClaudeCode
+        | ClientKind::Opencode
+        | ClientKind::GrokCli
+        | ClientKind::Cursor
+        | ClientKind::Agent => "/v1/models",
     }
 }
 

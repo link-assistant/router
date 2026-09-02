@@ -184,7 +184,7 @@ pub fn record_authorised_request(
         path,
         model,
     );
-    event.client_kind = claims.client_kind.clone();
+    event.client_kind.clone_from(&claims.client_kind);
     if let (Some(client), Some(provider)) = (
         claims
             .client_kind

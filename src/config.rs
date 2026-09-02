@@ -762,8 +762,8 @@ impl std::fmt::Display for ConfigError {
                 f,
                 "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, gonka, crater, openai-compatible"
             ),
-            Self::InvalidBridgeModelPolicy(message) => write!(f, "{message}"),
-            Self::InvalidSubscriptionBridgePolicy(message) => write!(f, "{message}"),
+            Self::InvalidBridgeModelPolicy(message)
+            | Self::InvalidSubscriptionBridgePolicy(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"

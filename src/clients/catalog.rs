@@ -78,10 +78,13 @@ impl ClientManager {
 fn models_url(client: ClientKind, base_url: &str) -> String {
     let base_url = base_url.trim_end_matches('/');
     if client == ClientKind::Codex {
+        let base_url = base_url.strip_suffix("/v1").unwrap_or(base_url);
         format!("{base_url}/api/codex/v1/models")
     } else if client == ClientKind::GeminiCli {
+        let base_url = base_url.strip_suffix("/api/gemini").unwrap_or(base_url);
         format!("{base_url}/api/gemini/v1beta/models")
     } else if client == ClientKind::QwenCode {
+        let base_url = base_url.strip_suffix("/api/qwen/v1").unwrap_or(base_url);
         format!("{base_url}/api/qwen/v1/models")
     } else if base_url.ends_with("/v1") {
         format!("{base_url}/models")
