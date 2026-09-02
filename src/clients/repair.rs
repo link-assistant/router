@@ -470,6 +470,7 @@ mod tests {
             .rollback_repair(ClientKind::ClaudeCode, id)
             .expect("rollback");
         assert_eq!(fs::read(&path).unwrap(), original);
+        #[cfg(unix)]
         assert_eq!(file_mode(&path), Some(0o640));
         assert!(!manager.environment_path(ClientKind::ClaudeCode).exists());
         assert!(
