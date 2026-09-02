@@ -252,6 +252,7 @@ impl ModelCatalogCache {
     /// Full routable records for a provider, ordered by account then by the
     /// provider's original order within that account.
     #[must_use]
+    #[allow(clippy::significant_drop_tightening)]
     pub fn records(&self, provider: SubscriptionProvider) -> Vec<CatalogRecord> {
         let entries = self
             .entries

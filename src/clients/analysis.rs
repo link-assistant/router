@@ -83,7 +83,7 @@ pub(super) fn analyze_client(
     manager: &ClientManager,
     client: ClientKind,
 ) -> Result<ClientConfigAnalysis, ClientError> {
-    let raw = manager.raw_status(client)?;
+    let raw = manager.raw_status(client);
     let config_path = manager.config_path(client);
     let environment_path = manager.environment_path(client);
     let metadata_path = manager.credential_metadata_path(client);
@@ -109,13 +109,10 @@ pub(super) fn analyze_client(
         conflicts.push("public-config:invalid".to_string());
     }
 
-    let metadata = match manager.credential_metadata(client) {
-        Ok(metadata) => metadata,
-        Err(_) => {
-            conflicts.push("ownership-metadata:invalid".to_string());
-            None
-        }
-    };
+    let metadata = manager.credential_metadata(client).unwrap_or_else(|_| {
+        conflicts.push("ownership-metadata:invalid".to_string());
+        None
+    });
     let metadata_complete = metadata.as_ref().is_some_and(|record| {
         let client_matches = ClientKind::from_str_opt(&record.client) == Some(client);
         let complete =
@@ -292,12 +289,11 @@ fn marker_valid(
             }),
         ClientKind::Cursor | ClientKind::GeminiCli | ClientKind::GrokCli => Ok(true),
     };
-    match valid {
-        Ok(true) => true,
-        Ok(false) | Err(_) => {
-            conflicts.push("ownership-marker:invalid".to_string());
-            false
-        }
+    if matches!(valid, Ok(true)) {
+        true
+    } else {
+        conflicts.push("ownership-marker:invalid".to_string());
+        false
     }
 }
 
@@ -334,10 +330,11 @@ fn critical_conflicts(
     {
         conflicts.push(format!("managed-environment:{key}"));
     }
-    if managed_token.is_none() && manager.environment_path(client).exists() {
-        if let Some(key) = client.token_env() {
-            conflicts.push(format!("managed-environment:{key}"));
-        }
+    if managed_token.is_none()
+        && manager.environment_path(client).exists()
+        && let Some(key) = client.token_env()
+    {
+        conflicts.push(format!("managed-environment:{key}"));
     }
     if client == ClientKind::ClaudeCode {
         let environment = manager.environment_path(client);
@@ -360,7 +357,7 @@ fn critical_conflicts(
         ClientKind::ClaudeCode => claude_conflicts(config_path, expected_endpoint, conflicts),
         ClientKind::Codex => codex_conflicts(config_path, expected_endpoint, conflicts),
         ClientKind::Opencode | ClientKind::Agent => {
-            json_provider_conflicts(config_path, expected_endpoint, conflicts)
+            json_provider_conflicts(config_path, expected_endpoint, conflicts);
         }
         ClientKind::QwenCode => qwen_conflicts(config_path, expected_endpoint, conflicts),
         ClientKind::Cursor | ClientKind::GeminiCli | ClientKind::GrokCli => {}

@@ -56,7 +56,7 @@ pub(super) fn parse_catalog_records(
         .filter_map(|raw| {
             let id = raw.get(id_key).and_then(Value::as_str)?;
             let canonical_id = id.strip_prefix("models/").unwrap_or(id).to_string();
-            (!canonical_id.is_empty()).then(|| (raw, canonical_id))
+            (!canonical_id.is_empty()).then_some((raw, canonical_id))
         })
         .enumerate()
         .map(|(index, (raw, canonical_id))| CatalogRecord {

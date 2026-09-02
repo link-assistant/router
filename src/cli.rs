@@ -448,7 +448,7 @@ pub struct Cli {
     pub disable_metrics: bool,
 
     /// Expose only neutral health and AI inference/catalog routes on the main
-    /// listener. Management, GitHub/Git, and ActivityPub routes are omitted.
+    /// listener. Management, GitHub/Git, and `ActivityPub` routes are omitted.
     #[arg(
         long,
         env = "INFERENCE_ONLY",

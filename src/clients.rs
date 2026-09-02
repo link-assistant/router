@@ -590,7 +590,7 @@ impl ClientManager {
     /// Never fails on a damaged configuration: the reason is carried in the
     /// row instead, so one hand-edited file cannot take the rest of the
     /// listing away from the reader (issue #304).
-    pub(super) fn raw_status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
+    pub(super) fn raw_status(&self, client: ClientKind) -> ClientStatus {
         let path = self.config_path(client);
         let read = match client {
             ClientKind::Codex => read_codex_base_url(&path),
@@ -621,7 +621,7 @@ impl ClientManager {
             Err(error) => (None, Some(error.to_string())),
         };
         let token_env = client.token_env();
-        Ok(ClientStatus {
+        ClientStatus {
             client: client.to_string(),
             installed: command_exists(client.command()),
             configured: base_url.is_some(),
@@ -641,7 +641,7 @@ impl ClientManager {
             conflicts: Vec::new(),
             unreadable,
             unsupported: client.setup_limitation(),
-        })
+        }
     }
 
     /// Analyze endpoint ownership and routing-critical precedence without
@@ -652,7 +652,7 @@ impl ClientManager {
 
     /// What this machine holds for `client`, including explicit ownership.
     pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
-        let mut status = self.raw_status(client)?;
+        let mut status = self.raw_status(client);
         let analysis = self.analyze(client)?;
         status.configured = analysis.state == OwnershipState::ManagedIntact;
         status.base_url.clone_from(&analysis.safe_origin);

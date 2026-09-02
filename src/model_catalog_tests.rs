@@ -811,22 +811,22 @@ async fn gemini_next_page_tokens_are_followed_without_losing_raw_records() {
     use std::collections::HashMap;
 
     async fn handler(Query(query): Query<HashMap<String, String>>) -> axum::Json<Value> {
-        if query.get("pageToken").is_none() {
-            axum::Json(serde_json::json!({
-                "models": [{
-                    "name": "models/future-jade-17",
-                    "supportedGenerationMethods": ["generateContent"],
-                    "newCapability": {"window": 123456}
-                }],
-                "nextPageToken": "future-page-2"
-            }))
-        } else {
+        if query.contains_key("pageToken") {
             axum::Json(serde_json::json!({
                 "models": [{
                     "name": "models/future-amber-18",
                     "supportedGenerationMethods": ["generateContent"],
-                    "newCapability": {"window": 654321}
+                    "newCapability": {"window": 654_321}
                 }]
+            }))
+        } else {
+            axum::Json(serde_json::json!({
+                "models": [{
+                    "name": "models/future-jade-17",
+                    "supportedGenerationMethods": ["generateContent"],
+                    "newCapability": {"window": 123_456}
+                }],
+                "nextPageToken": "future-page-2"
             }))
         }
     }
@@ -858,7 +858,7 @@ async fn gemini_next_page_tokens_are_followed_without_losing_raw_records() {
             .collect::<Vec<_>>(),
         ["future-jade-17", "future-amber-18"]
     );
-    assert_eq!(records[0].raw["newCapability"]["window"], 123456);
+    assert_eq!(records[0].raw["newCapability"]["window"], 123_456);
     assert_eq!(records[1].source_order, 1);
 }
 

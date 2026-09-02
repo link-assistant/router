@@ -30,7 +30,7 @@ pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
         "followers": activitypub_url(base, RouteId::ActivityPubFollowers),
         "aliases": [
             "urn:link-assistant:router:code".to_string(),
-            actor.clone()
+            actor
         ],
         "publicKey": {
             "id": format!("{actor}#main-key"),

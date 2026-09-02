@@ -6,7 +6,7 @@ use common::{mock_router, router, router_with_env};
 use link_assistant_router::clients::{ClientKind, ClientManager, OwnershipState};
 use std::fs;
 
-fn helper_claude_settings() -> &'static str {
+const fn helper_claude_settings() -> &'static str {
     r#"{
   "permissions": {"allow": ["Read"]},
   "env": {
