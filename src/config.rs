@@ -274,7 +274,7 @@ pub struct Config {
     pub allow_anonymous_admin: bool,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
-    /// Interactive login API settings (`/api/login`).
+    /// Interactive login API settings (`/api/management/login`).
     pub login: crate::login::LoginConfig,
     /// Opt-in admin UI listener (separate port, disabled by default).
     pub admin_ui: crate::admin::AdminUiConfig,

@@ -50,7 +50,7 @@ mod tests {
     }
 
     /// Reproduces the issue: with no admin key configured, an unauthenticated
-    /// request used to be authorised (`POST /api/tokens` answered `200`).
+    /// request used to be authorised (`POST /api/management/tokens` answered `200`).
     #[test]
     fn unauthenticated_request_is_refused_when_no_credential_is_configured() {
         assert!(!admin_access_granted(&manager(), None, None, false));

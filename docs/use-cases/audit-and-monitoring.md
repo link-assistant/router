@@ -13,15 +13,15 @@ when it authorises a request.
 
 | View | Endpoint / file | Retention | Best for |
 | --- | --- | --- | --- |
-| Prometheus counters | `GET /metrics` (public, aggregate only) | in-memory, resets on restart | dashboards, alerts |
-| JSON snapshot | `GET /v1/usage` (admin only) | in-memory, resets on restart | per-token inspection, scripts |
+| Prometheus counters | `GET /api/management/metrics` (admin only) | in-memory, resets on restart | dashboards, alerts |
+| JSON snapshot | `GET /api/management/usage` (admin only) | in-memory, resets on restart | per-token inspection, scripts |
 | Audit trail | `--audit-log <file>` (JSONL) | durable, append-only | forensics, compliance |
 | Persisted budgets | `tokens list` | durable token store | quota enforcement |
-| Subscription health | `GET /health/subscriptions` (public) | live | uptime checks, paging |
+| Subscription health | `GET /api/management/health/subscriptions` (admin only) | live | uptime checks, paging |
 
 ## Is the router serving what it advertises?
 
-`/health` answers whether the *process* is up. It is wired to both the liveness
+`/api/health` answers whether the *process* is up. It is wired to both the liveness
 and readiness probes in `deploy/k8s/router.yaml`, so it deliberately stays `ok`
 when a subscription dies: restarting the container cannot mint a new OAuth
 token, and failing the probe would crash-loop a deployment that is still serving
@@ -30,7 +30,8 @@ its other providers.
 Subscription health is a separate question with a separate answer:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/health/subscriptions
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/api/management/health/subscriptions \
+  -H "Authorization: Bearer $ROUTER_ADMIN_TOKEN"
 ```
 
 `200` means every configured subscription can serve. `503` names each one that
@@ -62,10 +63,10 @@ so this is the signal worth paging on.
 
 Every authorised request is attributed to its token id (the JWT `sub`) and the
 label the token was issued with. The detailed counters are available only from
-the admin-gated `/v1/usage` endpoint:
+the admin-gated `/api/management/usage` endpoint:
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/usage \
+curl -s http://127.0.0.1:8080/api/management/usage \
   -H "Authorization: Bearer $ROUTER_ADMIN_TOKEN" | jq .token_calls
 ```
 
@@ -78,9 +79,9 @@ curl -s http://127.0.0.1:8080/v1/usage \
 The count increments once per *authorised* request — the same unit
 `--max-requests` budgets. Persisted `used_tokens/max_tokens` in `tokens list`
 instead comes from actual vendor response usage and survives restarts.
-`/metrics` remains unauthenticated for standard
-Prometheus scrapers, so it exposes aggregate totals and status codes only; it
-never emits token ids, token labels, or account names.
+`/api/management/metrics` exposes aggregate totals and status codes only; it
+never emits token ids, token labels, or account names, and remains on the
+management listener.
 
 ## Durable audit trail
 
@@ -95,7 +96,7 @@ AUDIT_LOG=/var/log/link-assistant/audit.jsonl router serve
 One JSON object per line is appended as each request is authorised:
 
 ```json
-{"time":"2026-08-07T12:00:00.123456+00:00","token_id":"550e8400-…","label":"issue-45-solver","provider":"codex","surface":"anthropic","path":"/v1/messages","model":"claude-sonnet-4-20250514"}
+{"time":"2026-08-07T12:00:00.123456+00:00","token_id":"550e8400-…","label":"issue-45-solver","provider":"codex","surface":"anthropic","path":"/api/services/anthropic/v1/messages","model":"catalog-model-id"}
 ```
 
 | Field | Meaning |

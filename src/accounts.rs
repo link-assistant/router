@@ -334,7 +334,7 @@ impl AccountRouter {
         self.inner.accounts.is_empty()
     }
 
-    /// Snapshot of account names + health (used by `/v1/accounts` admin endpoint).
+    /// Snapshot of account names + health (used by `/api/management/accounts`).
     ///
     /// `healthy` combines cooldown, the configured request cap, and the state
     /// of the credential on disk. Consulting only the cooldown timer meant a

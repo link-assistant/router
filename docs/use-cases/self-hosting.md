@@ -16,14 +16,14 @@ so no request reaches an upstream.
 
 ## The one thing to get right
 
-`POST /api/tokens` mints generic `la_sk_…` tokens for ordinary provider routes,
+`POST /api/management/tokens` mints generic `la_sk_…` tokens for ordinary provider routes,
 but only the dedicated managed-client mint can create the immutable binding
 needed for a consumer subscription. Both are privileged operations, so they —
-and every other `/api/tokens*` endpoint — is **closed by default**. An
+and every other `/api/management/tokens*` endpoint — is **closed by default**. An
 unauthenticated call is refused:
 
 ```console
-$ curl -X POST http://router:8080/api/tokens -d '{"ttl_hours":1,"label":"anyone"}'
+$ curl -X POST http://router:8080/api/management/tokens -d '{"ttl_hours":1,"label":"anyone"}'
 {"error":{"type":"authentication_error", …}}              # 401, no credential sent
 ```
 
@@ -41,7 +41,7 @@ Admin token (shown once, store it now): la_sk_eyJ0eXAi...
 
 That token is an ordinary `la_sk_…` JWT with `"scope": "admin"`: it expires, it
 is listed by `tokens list`, and it can be revoked or rotated
-(`POST /api/tokens/rotate` mints a replacement and revokes the caller's own
+(`POST /api/management/tokens/rotate` mints a replacement and revokes the caller's own
 subject in one step). Issue more with `tokens issue --admin` or
 `{"scope":"admin"}`.
 
@@ -58,9 +58,9 @@ an outsider cannot cancel a running task's token:
 
 | Request | Result |
 | --- | --- |
-| `POST /api/tokens` with no key / a wrong key | `401` |
-| `GET /api/tokens/list` with no key | `401` |
-| `POST /api/tokens/revoke` with no key | `401`, and the token stays valid |
+| `POST /api/management/tokens` with no key / a wrong key | `401` |
+| `GET /api/management/tokens` with no key | `401` |
+| `POST /api/management/tokens/revoke` with no key | `401`, and the token stays valid |
 | any of the above with `Authorization: Bearer $TOKEN_ADMIN_KEY` | `200` |
 | any of the above with an admin-scoped `la_sk_…` token | `200` |
 
@@ -76,7 +76,8 @@ broken by an upgrade; do not use it on a reachable port.
 | `la_sk_…` task token | one task | proxied inference, within that token's TTL and budget |
 
 They do not substitute for each other: a task token presented to
-`/api/tokens/list` is `401`, and the admin key presented to `/v1/messages` is
+`/api/management/tokens` is `401`, and the admin key presented to
+`/api/services/anthropic/v1/messages` is
 `401` (rejected at authentication, so it never reaches an upstream). The vendor
 credential is a third thing that never leaves the process.
 
@@ -115,7 +116,7 @@ docker run -d --name router \
 `-p 127.0.0.1:8080:8080` publishes to the host's loopback only; drop the
 `127.0.0.1:` prefix **only** once `TOKEN_ADMIN_KEY` is set.
 
-The router starts and serves `/health` with **no subscription mounted at all**,
+The router starts and serves `/api/health` with **no subscription mounted at all**,
 so it can be deployed before credentials are provisioned; requests then fail at
 the upstream rather than at startup.
 

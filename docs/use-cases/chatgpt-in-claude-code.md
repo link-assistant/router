@@ -25,7 +25,7 @@ Anthropic → OpenAI on the way in and OpenAI → Anthropic on the way out.
 That bridge is what `src/anthropic_bridge.rs` and `src/anthropic_stream.rs` do:
 
 ```
-Claude Code ──POST /v1/messages (Bearer la_sk_…)──► router
+Claude Code ──POST /api/services/anthropic/v1/messages (Bearer la_sk_…)──► router
                                                       │ Anthropic → OpenAI
                                                       ▼
                                              Codex / Qwen / Gemini /
@@ -97,18 +97,12 @@ changing User-Agent or a label cannot create that authority.
 
 ## 5. Choose the upstream model
 
-Claude Code sends a `claude-…` model id, which means nothing to a Codex or Qwen
-backend. The router resolves the upstream model in this order:
-
-1. `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL`, if set;
-2. a per-provider default:
-
-| Provider | Default upstream model |
-| --- | --- |
-| `codex` | `gpt-5-codex` |
-| `qwen` | `qwen3-coder-plus` |
-| `gemini` | the Gemini default model |
-| `openai-compatible` | the stored provider's `default_model` |
+Claude Code sends an exact client-visible identity. Router resolves an
+operator-configured bridge model only after validating it against the healthy
+account's current catalog; without one it deterministically selects a
+protocol-compatible live record. There is no source-code provider/model
+default. An empty or incompatible catalog returns a local selection error and
+makes no upstream inference request.
 
 ```bash
 router serve --bridge-model gpt-5
@@ -117,7 +111,8 @@ ANTHROPIC_BRIDGE_MODEL=gpt-5 router serve
 ```
 
 The response echoes back the model id **the client asked for**, so Claude Code's
-own display and bookkeeping stay consistent. Use the audit log or `/v1/usage`
+own display and bookkeeping stay consistent. Use the audit log or
+`/api/management/usage`
 to see which upstream actually served it — see
 [audit-and-monitoring.md](audit-and-monitoring.md).
 
@@ -126,7 +121,7 @@ to see which upstream actually served it — see
 Non-streaming:
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/messages \
+curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $TASK_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":64,
@@ -139,7 +134,7 @@ Expect an Anthropic-shaped body: `"type":"message"`, `"role":"assistant"`, a
 Streaming:
 
 ```bash
-curl -sN http://127.0.0.1:8080/v1/messages \
+curl -sN http://127.0.0.1:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $TASK_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":64,"stream":true,
@@ -164,7 +159,7 @@ Expect the Anthropic SSE vocabulary, in order: `message_start`,
 | `stop_reason` | mapped from the OpenAI `finish_reason` |
 | `usage.input_tokens` / `output_tokens` | mapped from upstream usage when reported |
 
-`POST /v1/messages/count_tokens` is answered **locally** with an estimate, since
+`POST /api/services/anthropic/v1/messages/count_tokens` is answered **locally** with an estimate, since
 the OpenAI-dialect upstreams expose no equivalent endpoint. Treat the number as
 an approximation for budgeting, not as a billing figure.
 

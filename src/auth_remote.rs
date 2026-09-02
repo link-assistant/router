@@ -379,7 +379,7 @@ fn http_client() -> Result<reqwest::Client, String> {
 /// The lines an operator reads, built here rather than at the call site so the
 /// wording is asserted directly. Import installs into the credential home of
 /// the executing machine, and no endpoint accepts a credential document —
-/// `/api/login` begins an interactive OAuth flow and `submit_code` takes a
+/// `/api/management/login` begins an interactive OAuth flow and `submit_code` takes a
 /// short-lived code, neither of which adopts a credential that already exists.
 ///
 /// `home` names the directory that router reads from, when it reports one:
@@ -406,7 +406,7 @@ pub fn remote_import_refusal(base_url: &str, home: Option<&str>) -> Vec<String> 
     lines
 }
 
-/// The home a `/v1/accounts` body reports for `provider`, if it names one.
+/// The home an `/api/management/accounts` body reports for `provider`, if it names one.
 ///
 /// Split from the request so the shape-handling can be asserted without a
 /// server: single-account deployments report under `credentials` and pooled

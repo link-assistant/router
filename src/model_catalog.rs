@@ -767,7 +767,8 @@ pub async fn refresh_catalogs_for_accounts(
                     // 146 identical WARNs over twelve hours, which is not
                     // reporting — it is noise that hides the one line saying
                     // the state changed (issue #321). The condition stays
-                    // visible in `last_error`, on `/health/subscriptions` and
+                    // visible in `last_error`, on
+                    // `/api/management/health/subscriptions` and
                     // in the `/metrics` gauge.
                     tracing::debug!("{provider} model catalog is still failing: {error}");
                 } else {

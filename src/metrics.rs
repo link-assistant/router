@@ -1,7 +1,8 @@
 //! Live metrics and operational endpoints.
 //!
 //! Issue #7 R11 requires the router to expose Prometheus-compatible
-//! `/metrics`, plus `/v1/usage` and `/v1/accounts` for fleet ops.
+//! `/api/management/metrics`, plus `/api/management/usage` and
+//! `/api/management/accounts` for fleet ops.
 //!
 //! This module provides:
 //!
@@ -10,7 +11,7 @@
 //! - [`render_prometheus`] — formats those counters in the Prometheus
 //!   text-exposition format consumed by `/metrics`.
 //! - [`UsageSnapshot`] / [`usage_snapshot`] — aggregate counts and per-
-//!   account usage, served as JSON by `/v1/usage`.
+//!   account usage, served as JSON by `/api/management/usage`.
 //! - [`Metrics`] recording methods — tiny helpers that handlers can call from
 //!   `proxy_handler` and the `OpenAI` translators.
 //!
@@ -118,7 +119,7 @@ pub enum Surface {
     OpenAIResponses,
 }
 
-/// JSON-serialisable snapshot of [`Metrics`] for the `/v1/usage` endpoint.
+/// JSON-serialisable snapshot of [`Metrics`] for `/api/management/usage`.
 #[derive(Debug, Serialize)]
 pub struct UsageSnapshot {
     pub requests_total: u64,

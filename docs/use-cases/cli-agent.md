@@ -1,7 +1,8 @@
 # CLI: Link.Assistant Agent through the router
 
 **Dialect:** OpenAI Chat Completions through Agent's OpenCode-compatible
-provider configuration. **Router endpoint:** `/v1/chat/completions`.
+provider configuration. **Router endpoint:**
+`/api/services/openai/v1/chat/completions`.
 
 ## One-line temporary launch
 
@@ -41,7 +42,7 @@ and settings, creates a timestamped backup, and refers to the token as
       "name": "Link.Assistant.Router",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "http://127.0.0.1:8080/v1",
+        "baseURL": "http://127.0.0.1:8080/api/services/openai/v1",
         "apiKey": "{env:LINK_ASSISTANT_TOKEN}"
       },
       "models": {

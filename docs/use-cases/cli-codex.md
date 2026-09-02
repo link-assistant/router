@@ -1,7 +1,7 @@
 # CLI: Codex CLI through the router
 
-**Dialect:** OpenAI **Responses** only. **Router endpoint:** `/v1/responses`
-(alias `/api/codex/v1/responses`).
+**Dialect:** OpenAI **Responses** only. **Router endpoint:**
+`/api/services/codex/v1/responses`.
 
 The [Codex config reference](https://learn.chatgpt.com/docs/config-file/config-reference)
 states that `responses` is the only supported value of `wire_api` and the
@@ -51,7 +51,7 @@ model = "gpt-5"
 
 [model_providers.link-assistant]
 name = "Link.Assistant.Router"
-base_url = "http://127.0.0.1:8080/v1"
+base_url = "http://127.0.0.1:8080/api/services/codex/v1"
 env_key = "LINK_ASSISTANT_TOKEN"
 wire_api = "responses"
 ```
@@ -95,7 +95,7 @@ that quietly never uses sub-agents is diagnosable rather than mysterious.
 ## Smoke test
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/responses \
+curl -s http://127.0.0.1:8080/api/services/codex/v1/responses \
   -H "Authorization: Bearer $LINK_ASSISTANT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-5","input":"say hello in five words"}' | jq .
@@ -105,7 +105,7 @@ Streaming should produce `response.created`, `response.output_text.delta`, and
 `response.completed` events:
 
 ```bash
-curl -sN http://127.0.0.1:8080/v1/responses \
+curl -sN http://127.0.0.1:8080/api/services/codex/v1/responses \
   -H "Authorization: Bearer $LINK_ASSISTANT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-5","input":"count to three","stream":true}'

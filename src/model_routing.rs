@@ -298,8 +298,9 @@ pub enum ProviderHealthState {
 
 /// Whether a configured subscription can serve requests right now, and why not.
 ///
-/// One answer, computed once, for every surface that reports health: `/health`,
-/// `/v1/models` and `/metrics` disagreed about a revoked subscription because
+/// One answer, computed once, for every surface that reports health:
+/// `/api/health`, `/api/services/*/v1/models` and `/api/management/metrics`
+/// disagreed about a revoked subscription because
 /// each derived its own view, and the only one that was truthful was an error
 /// message a client saw after a request had already failed (issue #318).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -709,7 +710,7 @@ fn merge_configured_degradation(health: &[ProviderHealthReport], catalog: &mut V
         if !degraded.contains(&name) {
             degraded.push(name);
         }
-        // The summary, not the reason: `/v1/models` answers any client token,
+        // The summary, not the reason: service model catalogs answer client tokens,
         // and a credential path is not a client's business.
         if let Some(summary) = entry.summary {
             reasons.insert(entry.provider.as_str().to_string(), Value::from(summary));
@@ -738,7 +739,8 @@ fn principal_catalog_records(
     }
 }
 
-/// `GET /v1/models` across automatic or explicitly pinned providers.
+/// Canonical `GET /api/services/*/v1/models` catalogs across automatic or
+/// explicitly pinned providers.
 pub async fn models(
     State(state): State<AppState>,
     OriginalUri(uri): OriginalUri,

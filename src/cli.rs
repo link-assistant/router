@@ -437,7 +437,8 @@ pub struct Cli {
     )]
     pub disable_anthropic_api: bool,
 
-    /// Disable `/metrics`, `/v1/usage` and `/v1/accounts` endpoints.
+    /// Disable `/api/management/metrics`, `/api/management/usage` and
+    /// `/api/management/accounts` endpoints.
     #[arg(
         long,
         env = "DISABLE_METRICS",
@@ -546,8 +547,9 @@ pub struct Cli {
     )]
     pub admin_claim_ttl_secs: u64,
 
-    /// Leave the admin endpoints (`/api/tokens*`, `/api/providers*`,
-    /// `/api/login*`) open to unauthenticated callers.
+    /// Leave the admin endpoints (`/api/management/tokens*`,
+    /// `/api/management/providers*`, `/api/management/login*`) open to
+    /// unauthenticated callers.
     ///
     /// Off by default. Without it, a deployment that configures no admin
     /// credential mints a one-off admin token at startup and prints it once.
@@ -626,7 +628,7 @@ pub struct Cli {
     #[arg(long, env = "MPP_METHOD", global = true)]
     pub mpp_method: Option<String>,
 
-    /// Disable the interactive login API (`/api/login`).
+    /// Disable the interactive login API (`/api/management/login`).
     #[arg(
         long,
         env = "DISABLE_LOGIN_API",

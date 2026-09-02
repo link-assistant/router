@@ -39,7 +39,11 @@ pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleC
 /// Default crater provider config.
 #[must_use]
 pub fn default_crater_config(actor_base_url: &str) -> crate::crater::CraterConfig {
-    let actor = format!("{}/actor/code", actor_base_url.trim_end_matches('/'));
+    let actor = format!(
+        "{}{}",
+        actor_base_url.trim_end_matches('/'),
+        crate::route_contract::route_template(crate::route_contract::RouteId::ActivityPubActor)
+    );
     crate::crater::CraterConfig::new(
         None,
         &actor,

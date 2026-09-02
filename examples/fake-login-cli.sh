@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # A stand-in for the Claude Code login flows used by the login-flow tests and
-# by anyone who wants to exercise `POST /api/login` without a real Anthropic
+# by anyone who wants to exercise `POST /api/management/login` without a real Anthropic
 # account. With no arguments it behaves like the TUI `/login` flow; with
 # `setup-token` it behaves like that explicit alternative.
 #

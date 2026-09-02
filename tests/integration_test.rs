@@ -274,17 +274,26 @@ mod activitypub_tests {
     fn actor_document_exposes_required_activitypub_fields() {
         let actor = actor_document(BASE, KEY);
 
-        assert_eq!(actor["id"], "https://router.example/actor/code");
+        assert_eq!(
+            actor["id"],
+            "https://router.example/api/services/activitypub/actor/code"
+        );
         assert_eq!(actor["type"], "Service");
-        assert_eq!(actor["inbox"], "https://router.example/inbox/code");
-        assert_eq!(actor["outbox"], "https://router.example/outbox/code");
+        assert_eq!(
+            actor["inbox"],
+            "https://router.example/api/services/activitypub/inbox/code"
+        );
+        assert_eq!(
+            actor["outbox"],
+            "https://router.example/api/services/activitypub/outbox/code"
+        );
         assert_eq!(
             actor["followers"],
-            "https://router.example/actors/code/followers"
+            "https://router.example/api/services/activitypub/actors/code/followers"
         );
         assert_eq!(
             actor["publicKey"]["id"],
-            "https://router.example/actor/code#main-key"
+            "https://router.example/api/services/activitypub/actor/code#main-key"
         );
         assert_eq!(actor["publicKey"]["publicKeyPem"], KEY);
         assert!(actor["aliases"].as_array().expect("aliases").len() >= 2);
@@ -310,10 +319,13 @@ mod activitypub_tests {
 
         assert_eq!(
             follow["id"],
-            "https://router.example/activities/follow-problemsets-code-001"
+            "https://router.example/api/services/activitypub/activities/follow-problemsets-code-001"
         );
         assert_eq!(follow["type"], "Follow");
-        assert_eq!(follow["actor"], "https://router.example/actor/code");
+        assert_eq!(
+            follow["actor"],
+            "https://router.example/api/services/activitypub/actor/code"
+        );
         assert_eq!(
             follow["object"],
             "https://problemsets.lefine.pro/actor/code"
@@ -723,8 +735,8 @@ mod support_docs_tests {
     fn forgefed_docs_describe_public_actor_and_inbox() {
         let docs = fs::read_to_string("docs/forgefed.md").expect("forgefed docs should exist");
 
-        assert!(docs.contains("/actor/code"));
-        assert!(docs.contains("/inbox/code"));
+        assert!(docs.contains("/api/services/activitypub/actor/code"));
+        assert!(docs.contains("/api/services/activitypub/inbox/code"));
         assert!(docs.contains("https://forgefed.org/ns"));
         assert!(docs.contains("ACTIVITYPUB_ACTOR_BASE_URL"));
     }

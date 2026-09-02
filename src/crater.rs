@@ -546,8 +546,9 @@ pub async fn forward_chat_completions(
         return provider_error(&CraterError::MissingConfig("CRATER_FORGEFED_INBOX"));
     };
     let default_actor = format!(
-        "{}/actor/code",
-        state.activitypub_actor_base_url.trim_end_matches('/')
+        "{}{}",
+        state.activitypub_actor_base_url.trim_end_matches('/'),
+        crate::route_contract::route_template(crate::route_contract::RouteId::ActivityPubActor)
     );
     let request = match normalize_chat_request(&body, &default_actor) {
         Ok(request) => request,

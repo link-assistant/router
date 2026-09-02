@@ -9,6 +9,7 @@ use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
 
 use crate::proxy::AppState;
+use crate::route_contract::{RouteId, route_template};
 
 const ACTIVITY_JSON: &str = "application/activity+json";
 
@@ -16,23 +17,24 @@ const ACTIVITY_JSON: &str = "application/activity+json";
 #[must_use]
 pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
+    let actor = activitypub_url(base, RouteId::ActivityPubActor);
     json!({
         "@context": activitypub_context(),
-        "id": format!("{base}/actor/code"),
+        "id": actor,
         "type": "Service",
         "preferredUsername": "code",
         "name": "Link Assistant Code Router",
         "summary": "ActivityPub and ForgeFed service actor for coding problem federation",
-        "inbox": format!("{base}/inbox/code"),
-        "outbox": format!("{base}/outbox/code"),
-        "followers": format!("{base}/actors/code/followers"),
+        "inbox": activitypub_url(base, RouteId::ActivityPubInbox),
+        "outbox": activitypub_url(base, RouteId::ActivityPubOutbox),
+        "followers": activitypub_url(base, RouteId::ActivityPubFollowers),
         "aliases": [
             "urn:link-assistant:router:code".to_string(),
-            format!("{base}/actor/code")
+            actor.clone()
         ],
         "publicKey": {
-            "id": format!("{base}/actor/code#main-key"),
-            "owner": format!("{base}/actor/code"),
+            "id": format!("{actor}#main-key"),
+            "owner": actor,
             "publicKeyPem": public_key_pem
         }
     })
@@ -44,7 +46,7 @@ pub fn outbox_document(actor_base_url: &str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     json!({
         "@context": activitypub_context(),
-        "id": format!("{base}/outbox/code"),
+        "id": activitypub_url(base, RouteId::ActivityPubOutbox),
         "type": "OrderedCollection",
         "totalItems": 0,
         "orderedItems": []
@@ -57,7 +59,7 @@ pub fn followers_document(actor_base_url: &str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     json!({
         "@context": activitypub_context(),
-        "id": format!("{base}/actors/code/followers"),
+        "id": activitypub_url(base, RouteId::ActivityPubFollowers),
         "type": "OrderedCollection",
         "totalItems": 0,
         "orderedItems": []
@@ -70,12 +72,16 @@ pub fn follow_problemsets_activity(actor_base_url: &str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     json!({
         "@context": activitypub_context(),
-        "id": format!("{base}/activities/follow-problemsets-code-001"),
+        "id": activitypub_url(base, RouteId::ActivityPubFollowProblemsets),
         "type": "Follow",
-        "actor": format!("{base}/actor/code"),
+        "actor": activitypub_url(base, RouteId::ActivityPubActor),
         "object": "https://problemsets.lefine.pro/actor/code",
         "to": ["https://problemsets.lefine.pro/actor/code"]
     })
+}
+
+fn activitypub_url(base: &str, route: RouteId) -> String {
+    format!("{base}{}", route_template(route))
 }
 
 /// Validate the minimum fields required for an inbound `ActivityStreams` object.
@@ -93,7 +99,7 @@ pub fn validate_activity(activity: &Value) -> Result<(), &'static str> {
     Ok(())
 }
 
-/// `GET /actor/code`.
+/// `GET /api/services/activitypub/actor/code`.
 #[allow(clippy::unused_async)]
 pub async fn actor(State(state): State<AppState>) -> impl IntoResponse {
     activity_response(actor_document(
@@ -102,19 +108,19 @@ pub async fn actor(State(state): State<AppState>) -> impl IntoResponse {
     ))
 }
 
-/// `GET /outbox/code`.
+/// `GET /api/services/activitypub/outbox/code`.
 #[allow(clippy::unused_async)]
 pub async fn outbox(State(state): State<AppState>) -> impl IntoResponse {
     activity_response(outbox_document(&state.activitypub_actor_base_url))
 }
 
-/// `GET /actors/code/followers`.
+/// `GET /api/services/activitypub/actors/code/followers`.
 #[allow(clippy::unused_async)]
 pub async fn followers(State(state): State<AppState>) -> impl IntoResponse {
     activity_response(followers_document(&state.activitypub_actor_base_url))
 }
 
-/// `GET /activities/follow-problemsets-code-001`.
+/// `GET /api/services/activitypub/activities/follow-problemsets-code-001`.
 #[allow(clippy::unused_async)]
 pub async fn follow_problemsets(State(state): State<AppState>) -> impl IntoResponse {
     activity_response(follow_problemsets_activity(
@@ -122,7 +128,7 @@ pub async fn follow_problemsets(State(state): State<AppState>) -> impl IntoRespo
     ))
 }
 
-/// `POST /inbox/code`.
+/// `POST /api/services/activitypub/inbox/code`.
 #[allow(clippy::unused_async)]
 pub async fn inbox(axum::Json(activity): axum::Json<Value>) -> impl IntoResponse {
     match validate_activity(&activity) {
@@ -198,13 +204,22 @@ mod tests {
     fn actor_contains_required_activitypub_and_forgefed_metadata() {
         let doc = actor_document(BASE, KEY);
 
-        assert_eq!(doc["id"], "https://router.example/actor/code");
+        assert_eq!(
+            doc["id"],
+            "https://router.example/api/services/activitypub/actor/code"
+        );
         assert_eq!(doc["type"], "Service");
-        assert_eq!(doc["inbox"], "https://router.example/inbox/code");
-        assert_eq!(doc["outbox"], "https://router.example/outbox/code");
+        assert_eq!(
+            doc["inbox"],
+            "https://router.example/api/services/activitypub/inbox/code"
+        );
+        assert_eq!(
+            doc["outbox"],
+            "https://router.example/api/services/activitypub/outbox/code"
+        );
         assert_eq!(
             doc["followers"],
-            "https://router.example/actors/code/followers"
+            "https://router.example/api/services/activitypub/actors/code/followers"
         );
         assert_eq!(doc["publicKey"]["owner"], doc["id"]);
         assert_eq!(doc["publicKey"]["publicKeyPem"], KEY);
@@ -223,7 +238,10 @@ mod tests {
         let activity = follow_problemsets_activity(BASE);
 
         assert_eq!(activity["type"], "Follow");
-        assert_eq!(activity["actor"], "https://router.example/actor/code");
+        assert_eq!(
+            activity["actor"],
+            "https://router.example/api/services/activitypub/actor/code"
+        );
         assert_eq!(
             activity["object"],
             "https://problemsets.lefine.pro/actor/code"

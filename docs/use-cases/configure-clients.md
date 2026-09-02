@@ -51,6 +51,9 @@ router clients setup qwen
 router clients setup agent
 router clients show codex
 router clients doctor codex
+router clients repair codex --dry-run --json
+router clients repair codex
+router clients repair --all --dry-run
 router clients remove codex
 ```
 
@@ -104,8 +107,8 @@ command to run in every shell that launches the client. Use
 `--ttl-hours` to change the minted token lifetime and `--base-url` when the
 router is not reachable at the local CLI host and port.
 
-OpenCode, Qwen Code, and Agent setup authenticate to `/v1/models` and configure
-models that the router currently advertises. Setup fails before changing the
+OpenCode, Qwen Code, and Agent setup authenticate to their canonical
+`/api/services/*/models` catalog and configure models that the router currently advertises. Setup fails before changing the
 client config if the router is unreachable or has no healthy model. Re-running
 setup refreshes catalog models while preserving user-added OpenCode entries.
 
@@ -124,6 +127,24 @@ Before changing an existing config, the command creates a sibling timestamped
 `*.link-assistant-router.*.bak` file. JSON objects, TOML tables, comments and
 unknown settings are preserved. Running `setup` again updates the same entry;
 it never creates a duplicate.
+
+`list`, `show`, and `doctor` report `unconfigured`, `foreign`,
+`managed-intact`, `managed-drifted`, or `ambiguous` ownership. `configured:
+true` means the effective route is the one described by Router's managed
+metadata, not merely that some base URL exists. Reports contain safe endpoint
+origins and conflicting key names, never credential values.
+
+`clients repair` is the explicit recovery path after another tool rewrites a
+routing-critical setting. Dry-run performs the identical precedence analysis
+without filesystem writes, Router calls, token changes, or inference. A real
+repair validates a catalog first, snapshots exact allowed files under
+`$XDG_CONFIG_HOME/link-assistant-router/repairs/<id>/`, writes configuration,
+environment and metadata transactionally, then validates the public catalog
+again. A second repair of an intact client is a no-op. Roll back with
+`clients repair <client> --rollback <id>`; later user edits are never erased.
+
+See [the 1.0.0 migration guide](../migrations/1.0.0-canonical-routes.md) for the
+complete old-to-new HTTP route table.
 
 Grok's current settings schema can persist `apiKey`, but it reads the API base
 URL only from `GROK_BASE_URL`. To avoid writing an ignored setting,
@@ -145,10 +166,11 @@ alone. OpenCode and Agent restore any provider entry that setup replaced. Qwen
 removes its exact set of managed catalog model entries. Other environment keys, providers,
 models, and settings remain untouched.
 
-`show` reports the path, URL, dialect, installed/configured state, and whether
-the expected token variable is set, but never prints its value. `doctor` sends
-one minimal request using the explicit family default (`gpt-5.6-sol`/`xhigh`
-or `claude-opus-5`/`high`) rather than depending on catalog order, and distinguishes missing
+`show` reports the path, safe URL, dialect, installed/configured and ownership
+state, conflicts, and whether the expected token variable is set, but never
+prints its value. `doctor` sends one minimal request using a compatible model
+from the current authenticated catalog rather than a source-code model name,
+and distinguishes missing
 configuration, missing token environment, an unreachable router, rejected
 tokens, unavailable upstream credentials, and other HTTP failures.
 

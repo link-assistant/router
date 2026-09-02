@@ -51,12 +51,12 @@ fn bearer(headers: &HeaderMap) -> Option<&str> {
         .and_then(|value| value.strip_prefix("Bearer "))
 }
 
-/// `GET /api/admin/status` — is admin claimed, and may bootstrap run?
+/// `GET /api/management/admin/status` — is admin claimed, and may bootstrap run?
 pub async fn admin_status(State(state): State<AppState>) -> impl IntoResponse {
     (StatusCode::OK, axum::Json(state.admin.status())).into_response()
 }
 
-/// `POST /api/admin/bootstrap` — phase 1 of the claim.
+/// `POST /api/management/admin/bootstrap` — phase 1 of the claim.
 ///
 /// Mints a candidate admin JWT. Bootstrap stays **open**: the token is minted
 /// revoked, so it is not valid for anything until the client confirms it.
@@ -85,7 +85,7 @@ pub async fn bootstrap(
     }
 }
 
-/// `POST /api/admin/bootstrap/confirm` — phase 2 of the claim.
+/// `POST /api/management/admin/bootstrap/confirm` — phase 2 of the claim.
 ///
 /// The request must be authenticated with the candidate token itself; that is
 /// the proof the client stored it. Only this call closes bootstrap.
@@ -111,7 +111,7 @@ pub async fn bootstrap_confirm(
     }
 }
 
-/// `POST /api/admin/rotate` — issue a replacement admin credential and retire
+/// `POST /api/management/admin/rotate` — issue a replacement admin credential and retire
 /// the current one. Requires the current credential.
 pub async fn rotate_credential(
     State(state): State<AppState>,
@@ -143,7 +143,7 @@ pub struct TtlRequest {
     pub ttl_hours: Option<i64>,
 }
 
-/// `GET /api/admin/summary` — `doctor`-style read-only view of what the router
+/// `GET /api/management/admin/summary` — `doctor`-style read-only view of what the router
 /// is wired to. Requires the admin credential.
 pub async fn admin_summary(State(state): State<AppState>) -> impl IntoResponse {
     let accounts = state
@@ -195,7 +195,7 @@ fn claim_error_response(error: ClaimError) -> Response {
     error_response(status, kind, &error.to_string())
 }
 
-/// Body of `POST /api/admin/bootstrap/confirm`.
+/// Body of `POST /api/management/admin/bootstrap/confirm`.
 #[derive(serde::Deserialize)]
 pub struct ConfirmRequest {
     /// The `claim_id` returned by the mint call.

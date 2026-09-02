@@ -280,7 +280,7 @@ pub async fn rotate_admin_token(
     }
 }
 
-/// `POST /api/tokens/rotate-client` — reissue one client token by id.
+/// `POST /api/management/tokens/rotate-client` — reissue one client token by id.
 ///
 /// Distinct from [`rotate_admin_token`], which rotates the caller's own admin
 /// credential. Every constraint is preserved unless explicitly overridden, and

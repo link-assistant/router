@@ -1,7 +1,7 @@
 # CLI: Gemini CLI through the router
 
-**Dialect:** Gemini / Vertex. **Router endpoints:** `/api/gemini/v1beta/…` and
-`/api/vertex/v1/…`.
+**Dialect:** Gemini / Vertex. **Router endpoints:**
+`/api/services/gemini/v1beta/…` and `/api/services/vertex/v1/…`.
 
 ## One-line temporary launch
 
@@ -10,7 +10,8 @@ router with gemini "hi"
 ```
 
 The wrapper selects the Gemini API-key flow below a disposable
-`GEMINI_CLI_HOME`, sets `GOOGLE_GEMINI_BASE_URL` to `URL/api/gemini`, and
+`GEMINI_CLI_HOME`, sets `GOOGLE_GEMINI_BASE_URL` to
+`URL/api/services/gemini`, and
 passes the run token as `GEMINI_API_KEY`. The normal Gemini home is untouched.
 Permanent setup is not offered because this endpoint override belongs to the
 API-key environment. See [with-router.md](with-router.md).
@@ -31,7 +32,7 @@ documents `GOOGLE_GEMINI_BASE_URL`:
 and the matching `GOOGLE_VERTEX_BASE_URL` for `vertex-ai` authentication.
 
 ```bash
-export GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:8080/api/gemini
+export GOOGLE_GEMINI_BASE_URL=http://127.0.0.1:8080/api/services/gemini
 export GEMINI_API_KEY=la_sk_...        # your task token
 gemini
 ```
@@ -39,7 +40,7 @@ gemini
 For the Vertex auth path:
 
 ```bash
-export GOOGLE_VERTEX_BASE_URL=http://127.0.0.1:8080/api/vertex
+export GOOGLE_VERTEX_BASE_URL=http://127.0.0.1:8080/api/services/vertex/v1
 ```
 
 Two consequences of the documented rule above:
@@ -76,11 +77,11 @@ that on an older router, either upgrade or send the token as
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/gemini/v1beta/models` | model list |
-| `GET /api/gemini/v1beta/models/{model}` | model metadata |
-| `POST /api/gemini/v1beta/models/{model}:generateContent` | generation |
-| `POST /api/gemini/v1beta/models/{model}:streamGenerateContent` | SSE generation |
-| `POST /api/vertex/v1/projects/.../models/{model}:generateContent` | Vertex-style generation |
+| `GET /api/services/gemini/v1beta/models` | model list |
+| `GET /api/services/gemini/v1beta/models/{model}` | model metadata |
+| `POST /api/services/gemini/v1beta/models/{model}:generateContent` | generation |
+| `POST /api/services/gemini/v1beta/models/{model}:streamGenerateContent` | SSE generation |
+| `POST /api/services/vertex/v1/projects/.../models/{model}:generateContent` | Vertex-style generation |
 
 These native namespaces work under `UPSTREAM_PROVIDER=auto`, but the catalog is
 filtered by the signed Gemini client/principal policy. Gemini consumer OAuth is
@@ -130,10 +131,10 @@ synthesises SSE for streaming.
 ## Smoke test
 
 ```bash
-curl -s "http://127.0.0.1:8080/api/gemini/v1beta/models" \
+curl -s "http://127.0.0.1:8080/api/services/gemini/v1beta/models" \
   -H "Authorization: Bearer $GEMINI_API_KEY" | jq .
 
-curl -s "http://127.0.0.1:8080/api/gemini/v1beta/models/gemini-2.5-pro:generateContent" \
+curl -s "http://127.0.0.1:8080/api/services/gemini/v1beta/models/gemini-2.5-pro:generateContent" \
   -H "Authorization: Bearer $GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"contents":[{"role":"user","parts":[{"text":"ping"}]}]}' | jq .

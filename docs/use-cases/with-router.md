@@ -27,13 +27,13 @@ disposable instead (issues #277, #298).
 
 | Tool | Dialect and router base | Temporary run | Permanent target |
 | --- | --- | --- | --- |
-| `codex` | Responses, `URL/v1` | extends your own through `-c` overlays | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
-| `claude` (`claude-code`) | Anthropic Messages, `URL` | extends your own | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
-| `gemini` (`gemini-cli`) | Gemini native, `URL/api/gemini` | router profile | temporary only; API-key endpoint override is environmental |
-| `grok` (`grok-cli`) | Chat Completions, `URL/v1` | extends your own | owner-only managed environment file |
-| `opencode` | Chat Completions, `URL/v1` | router profile | `$XDG_CONFIG_HOME/opencode/opencode.json` |
-| `qwen` (`qwen-code`) | Chat Completions, `URL/v1` | extends your own | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
-| `agent` | Chat Completions, `URL/v1` | router profile | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
+| `codex` | Responses, `URL/api/services/codex/v1` | extends your own through `-c` overlays | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
+| `claude` (`claude-code`) | Anthropic Messages, `URL/api/services/anthropic` | extends your own | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
+| `gemini` (`gemini-cli`) | Gemini native, `URL/api/services/gemini` | router profile | temporary only; API-key endpoint override is environmental |
+| `grok` (`grok-cli`) | Chat Completions, `URL/api/services/openai/v1` | extends your own | owner-only managed environment file |
+| `opencode` | Chat Completions, `URL/api/services/openai/v1` | router profile | `$XDG_CONFIG_HOME/opencode/opencode.json` |
+| `qwen` (`qwen-code`) | Chat Completions, `URL/api/services/qwen/v1` | extends your own | `$QWEN_HOME/settings.json` or `~/.qwen/settings.json` |
+| `agent` | Chat Completions, `URL/api/services/openai/v1` | router profile | `$XDG_CONFIG_HOME/link-assistant-agent/opencode.json` |
 | `cursor-agent` (`cursor`) | Cursor Connect-RPC (`agent.v1` / `aiserver.v1`) | not implemented: router RPC adapter does not exist | none |
 
 Each name is the command the client installs as, which is what your shell
@@ -50,6 +50,13 @@ file, session history, personality, reasoning effort and MCP servers in place.
 Repeatable global `-c` arguments select only the router provider for that
 process, and `LINK_ASSISTANT_TOKEN` carries the credential. Use
 `--isolated-config` when a disposable Codex home is intentionally required.
+
+For Claude, the process overlay wins over persistent helper configuration: it
+sets Router's URL/token, clears the higher-priority API key and family/subagent
+pins, enables gateway discovery, and forces nonessential startup traffic on so
+the catalog request is not suppressed. The real settings, credentials, shell
+startup files, history and gateway cache remain byte-identical. Claude Code
+2.1.255 or newer is required for current aliases.
 
 ## Arguments, interaction, and models
 
@@ -90,7 +97,7 @@ they would without the router.
 from the target's live catalog and reports what it picked and why. `opencode`,
 `qwen` and `agent` are always given an id because their configuration embeds
 the catalog and they cannot start without one. When a model is named, the
-wrapper fetches `/v1/models` with the run token before execution and refuses an
+wrapper fetches the client's canonical `/api/services/*/models` route with the run token before execution and refuses an
 unavailable one, listing what the selected server advertises.
 
 ## Selecting a server and token
@@ -194,7 +201,7 @@ See [configure-clients.md](configure-clients.md) for the full surface.
 First check the selected router, then ask the client a tiny question:
 
 ```bash
-curl -fsS https://router.example.internal/health
+curl -fsS https://router.example.internal/api/health
 with-router --server https://router.example.internal --token-stdin codex "reply only: hi"
 ```
 

@@ -211,7 +211,7 @@ const BOOTSTRAP_ADMIN_LABEL: &str = "bootstrap-admin";
 fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
     if config.allow_anonymous_admin {
         tracing::warn!(
-            "--allow-anonymous-admin is set: /api/tokens*, /api/providers* and /api/login* accept unauthenticated requests"
+            "--allow-anonymous-admin is set: /api/management/tokens*, /api/management/providers* and /api/management/login* accept unauthenticated requests"
         );
         return;
     }

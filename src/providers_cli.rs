@@ -174,7 +174,7 @@ pub fn upsert_body(upsert: &ProviderUpsert) -> Result<serde_json::Value, String>
     serde_json::to_value(upsert).map_err(|error| error.to_string())
 }
 
-/// The provider records inside a `/api/providers` answer.
+/// The provider records inside a `/api/management/providers` answer.
 #[must_use]
 pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
     answer

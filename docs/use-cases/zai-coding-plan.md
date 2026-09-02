@@ -23,7 +23,7 @@ pass show z-ai/coding-plan-key | router providers add \
   --name z-ai-personal \
   --kind z.ai-coding-plan \
   --base-url https://api.z.ai \
-  --models glm-5.3,glm-5.2,glm-5.1,glm-5,glm-4.7 \
+  --models <comma-separated-model-ids-available-to-this-key> \
   --subscriber-id primary \
   --acknowledge-intermediary-risk \
   --api-key-stdin
@@ -55,7 +55,7 @@ For example, accepting the separate risk for Gemini CLI changes only that cell:
 ```bash
 pass show z-ai/coding-plan-key | router providers add \
   --name z-ai-personal --kind z.ai-coding-plan \
-  --base-url https://api.z.ai --models glm-5 \
+  --base-url https://api.z.ai --models <available-model-id> \
   --subscriber-id primary --acknowledge-intermediary-risk \
   --acknowledge-unsupported-client gemini --api-key-stdin
 ```
@@ -79,10 +79,12 @@ dispatch. A removed, expired, rejected, or unreachable key immediately removes
 only GLM entries and makes stale selections fail locally. No inference probe is
 used and no other provider is selected as fallback.
 
-z.ai does not document a free dynamic model-catalog operation. Therefore the
-configured list is intersected with Router's reviewed `REVIEWED_MODELS` table;
-an unknown `glm-*` is rejected at configuration time. Expanding the table is an
-explicit reviewed source change, never an automatic access expansion.
+z.ai does not document a free dynamic model-catalog operation. The provider's
+explicit operator configuration is therefore its catalog source, validated by
+the free health operation. Router preserves those identifiers and does not
+intersect them with a reviewed or hardcoded model-name table. A future model
+can be configured without a Router source change. The reviewed boundary is the
+provider/client/protocol policy, not recognition of a model name.
 
 The exact client-visible registry selects the credential and fixed endpoint:
 
@@ -95,16 +97,19 @@ The exact client-visible registry selects the credential and fixed endpoint:
 Router sends only the canonical `glm-*` id upstream and records that id in the
 audit event. It never derives ownership by stripping an arbitrary prefix.
 Streaming and tool calls use the same final authorization. Claude Code
-`/v1/messages/count_tokens` applies the same mapping locally and never calls a
+`/api/services/anthropic/v1/messages/count_tokens` applies the same mapping locally and never calls a
 forbidden provider.
 
 ## Claude Code model discovery
 
-Claude Code **2.1.129 or newer** is required. `router with claude` and
+Claude Code **2.1.255 or newer** is required. `router with claude` and
 `router clients setup claude` set
-`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`. Setup also pins Default and the
-opus/sonnet/haiku family variables to a currently permitted discovered model,
-so built-in defaults cannot silently select another credential.
+`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, force nonessential startup
+traffic on for discovery, and clear higher-priority credentials plus
+family/subagent pins in their owned scope. An explicit command-line model is
+preserved. Router validates every selected alias locally against the current
+signed client/provider registry, so a built-in or cached choice cannot silently
+select another credential.
 
 Claude Code reads the gateway catalog at startup and may retain
 `~/.claude/cache/gateway-models.json`. Restart Claude Code after changing the
@@ -124,4 +129,3 @@ router providers remove z-ai-personal
 
 Removal makes every GLM alias unroutable immediately. Restart clients to clear
 their picker cache; Router's final dispatch check is already authoritative.
-

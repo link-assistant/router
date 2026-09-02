@@ -1,5 +1,10 @@
 # Network and data-flow security review — August 2026
 
+> Historical route inventory: this review records the HTTP paths that existed
+> at the reviewed commit. Router 1.0.0 removed those aliases; use the
+> [canonical route migration](../migrations/1.0.0-canonical-routes.md) for the
+> current surface.
+
 Issue [#149](https://github.com/link-assistant/router/issues/149) requested a
 second, whole-router review after the admin-focused [issue #52
 review](review-2026-08.md). This document records the threat model, every
