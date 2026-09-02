@@ -1,0 +1,30 @@
+(
+  type "RouterState"
+  subtype "TokenStore"
+  value (
+    (
+      type "TokenRecord"
+      subtype "id/with spaces"
+      value (
+        id "id/with spaces"
+        label 'label with "quotes" and a newline
+'
+        issued_at -9223372036854775808
+        expires_at 9223372036854775807
+        revoked false
+        account ""
+        sliding_window_seconds null
+        max_requests "18446744073709551615"
+        used_requests "18446744073709551615"
+        max_tokens "18446744073709551615"
+        used_tokens "18446744073709551615"
+        reserved_tokens "18446744073709551615"
+        rate_limit_per_minute "18446744073709551615"
+        rate_window_started_at "9223372036854775807"
+        rate_window_requests "18446744073709551615"
+        scope "admin"
+        github_repos ""
+      )
+    )
+  )
+)

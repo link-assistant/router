@@ -48,6 +48,21 @@ fn official_lino_codec_roundtrip_is_lossless() {
 }
 
 #[test]
+fn fields_added_in_v0_125_4_are_optional_when_absent() {
+    let mut record = sample_record();
+    record.client_kind = None;
+    record.principal_id = None;
+    let encoded = encode_text(std::iter::once(&record));
+    let pre_binding = encoded
+        .lines()
+        .filter(|line| !line.contains("client_kind") && !line.contains("principal_id"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    assert_eq!(decode_text(&pre_binding).unwrap(), vec![record]);
+}
+
+#[test]
 fn native_doublets_links_network_reopens_across_growth_boundary() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("tokens.bin");

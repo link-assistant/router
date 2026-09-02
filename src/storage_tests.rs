@@ -54,6 +54,32 @@ fn text_store_roundtrip() {
 }
 
 #[test]
+fn decoder_errors_preserve_both_causes() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("tokens.lino");
+    std::fs::write(&path, "this is neither associative nor legacy lino").unwrap();
+
+    let error = TextTokenStore::open(path)
+        .err()
+        .expect("invalid store must fail");
+    let message = error.to_string();
+    let associative = message
+        .find("associative decoder:")
+        .expect("the primary decoder error must be retained");
+    let legacy = message
+        .find("legacy decoder:")
+        .expect("the fallback decoder error must be retained");
+    assert!(
+        associative < legacy,
+        "primary cause must be reported first: {message}"
+    );
+    assert!(
+        !message.contains("this is neither"),
+        "store contents leaked: {message}"
+    );
+}
+
+#[test]
 fn binary_store_roundtrip() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("tokens.bin");
