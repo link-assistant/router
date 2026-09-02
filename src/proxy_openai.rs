@@ -3,6 +3,18 @@ use super::{
     UpstreamProvider, forward_openai, openai, responses,
 };
 
+/// Provider-independent fields owned by the Chat Completions surface.
+///
+/// Passthrough providers may accept extensions and some provide a default
+/// model, so validating the entire normalized request here would narrow their
+/// public contract. `messages`, however, belongs to Chat Completions itself and
+/// must exist before routing or translating to any upstream dialect (#387).
+#[derive(serde::Deserialize)]
+struct RequiredChatFields {
+    #[allow(dead_code)]
+    messages: Vec<openai::ChatMessage>,
+}
+
 /// Names the tools that were dropped on the way to Anthropic.
 ///
 /// A silent drop is the failure mode issue #215 warns about: an agent that
@@ -69,6 +81,14 @@ async fn openai_chat_completions_with_subscription(
             );
         }
     };
+    if let Err(error) = serde_json::from_value::<RequiredChatFields>(body.clone()) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &format!("invalid OpenAI chat completion request: {error}"),
+        );
+    }
     let include_usage = body
         .pointer("/stream_options/include_usage")
         .and_then(serde_json::Value::as_bool)
