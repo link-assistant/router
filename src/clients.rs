@@ -132,7 +132,7 @@ pub struct ClientIntegration {
 /// error taught a name the user's shell does not have (issue #220). The
 /// invariant that keeps the two in step is asserted in the tests below: every
 /// variant's canonical string equals its [`ClientIntegration::command`].
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum ClientKind {
     Codex,
     #[value(name = "claude", alias = "claude-code")]
@@ -346,6 +346,22 @@ impl ClientKind {
     #[must_use]
     pub const fn integration(self) -> &'static ClientIntegration {
         &CLIENT_INTEGRATIONS[self as usize]
+    }
+
+    /// Parse a canonical client adapter name or one of its documented aliases.
+    #[must_use]
+    pub fn from_str_opt(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "codex" => Some(Self::Codex),
+            "claude" | "claude-code" => Some(Self::ClaudeCode),
+            "cursor" | "cursor-agent" => Some(Self::Cursor),
+            "gemini" | "gemini-cli" => Some(Self::GeminiCli),
+            "grok" | "grok-cli" => Some(Self::GrokCli),
+            "opencode" => Some(Self::Opencode),
+            "qwen" | "qwen-code" => Some(Self::QwenCode),
+            "agent" => Some(Self::Agent),
+            _ => None,
+        }
     }
 }
 
