@@ -73,3 +73,21 @@ fn token_rejection_reason(body: &str) -> &'static str {
         "invalid"
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::clients::ClientKind;
+
+    #[test]
+    fn catalog_paths_are_namespaced_for_clients_with_non_anthropic_protocols() {
+        assert_eq!(client_models_path(ClientKind::ClaudeCode), "/v1/models");
+        assert_eq!(client_models_path(ClientKind::Codex), "/api/codex/v1/models");
+        assert_eq!(
+            client_models_path(ClientKind::GeminiCli),
+            "/api/gemini/v1beta/models"
+        );
+        assert_eq!(client_models_path(ClientKind::QwenCode), "/api/qwen/v1/models");
+        assert_eq!(client_models_path(ClientKind::Opencode), "/v1/models");
+    }
+}
