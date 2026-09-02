@@ -408,7 +408,7 @@ fn model_names(catalog: &Value) -> Vec<String> {
         .collect()
 }
 
-/// Issue #187: the Gemini namespace listed nothing while the OpenAI catalog listed
+/// Issue #187: the Gemini namespace listed nothing while the `OpenAI` catalog listed
 /// every connected subscription's live catalog.
 #[tokio::test]
 async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
