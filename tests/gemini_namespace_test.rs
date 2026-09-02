@@ -17,13 +17,14 @@ use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
 use link_assistant_router::app_state::AppState;
+use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
 use link_assistant_router::gemini;
 use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::refresh::TokenCache;
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
-use link_assistant_router::token::TokenManager;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use serde_json::{Value, json};
 use tempfile::TempDir;
 
@@ -75,9 +76,16 @@ impl TestRouter {
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("gemini-namespace-secret");
-        let token = token_manager
-            .issue_token(1, "gemini namespace client")
-            .expect("issue test token");
+        let (token, _) = token_manager
+            .issue_with_id(&IssueRequest {
+                ttl_hours: 1,
+                label: "gemini namespace client",
+                account: Some("primary"),
+                client_kind: Some(ClientKind::GeminiCli.canonical_name()),
+                principal_id: Some("primary"),
+                ..IssueRequest::default()
+            })
+            .expect("issue bound Gemini test token");
         let oauth_provider = OAuthProvider::new(data.path().to_str().expect("UTF-8 test path"));
         oauth_provider.set_token("stub-anthropic-oauth-token");
 
@@ -121,6 +129,20 @@ impl TestRouter {
             upstream_provider,
             &subscription_readers,
         );
+        let provider_store = link_assistant_router::providers::ProviderStore::open(
+            data.path(),
+            "gemini-namespace-secret",
+        )
+        .expect("provider store");
+        provider_store
+            .set_subscription_entitlement_policy(
+                link_assistant_router::client_policy::SubscriptionEntitlementPolicy::parse([
+                    "gemini:claude",
+                    "gemini:codex",
+                ])
+                .expect("exact Gemini compatibility overrides"),
+            )
+            .expect("install test policy");
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
@@ -139,11 +161,7 @@ impl TestRouter {
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
             crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
-            provider_store: link_assistant_router::providers::ProviderStore::open(
-                data.path(),
-                "gemini-namespace-secret",
-            )
-            .expect("provider store"),
+            provider_store,
             logger: log_lazy::LogLazy::new(),
             admin: Arc::new(link_assistant_router::admin::AdminClaim::load(
                 Some("admin-only".to_string()),
@@ -201,7 +219,8 @@ impl TestRouter {
         let response = self
             .client
             .get(format!("{}{path}", self.url))
-            .bearer_auth(&self.token)
+            .header("x-goog-api-key", &self.token)
+            .header("x-link-assistant-client", "gemini")
             .send()
             .await
             .expect("router GET");
@@ -217,7 +236,8 @@ impl TestRouter {
         let response = self
             .client
             .post(format!("{}{path}", self.url))
-            .bearer_auth(&self.token)
+            .header("x-goog-api-key", &self.token)
+            .header("x-goog-api-client", "gl-node/test gccl/test")
             .json(body)
             .send()
             .await
@@ -401,21 +421,17 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
         );
     }
 
-    let (status, openai_catalog) = router.get_json("/v1/models").await;
-    assert_eq!(status, StatusCode::OK);
-    let openai_names = openai_catalog["data"]
-        .as_array()
-        .expect("data array")
-        .iter()
-        .map(|model| format!("models/{}", model["id"].as_str().expect("model id")))
-        .collect::<Vec<_>>();
     let mut sorted_gemini = names;
-    let mut sorted_openai = openai_names;
+    let mut expected = CODEX_MODELS
+        .iter()
+        .chain(CLAUDE_MODELS.iter())
+        .map(|model| format!("models/{model}"))
+        .collect::<Vec<_>>();
     sorted_gemini.sort();
-    sorted_openai.sort();
+    expected.sort();
     assert_eq!(
-        sorted_gemini, sorted_openai,
-        "the Gemini namespace must advertise exactly the main catalog"
+        sorted_gemini, expected,
+        "the signed Gemini catalog must advertise exactly its permitted providers"
     );
 }
 
@@ -423,7 +439,7 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
 /// namespace until discovery completes for the credential that is installed
 /// now.
 #[tokio::test]
-async fn gemini_and_openai_omit_a_catalog_owned_by_another_account() {
+async fn gemini_omits_a_catalog_owned_by_another_account() {
     let router = TestRouter::start().await;
     router.catalogs.record_success_for(
         SubscriptionProvider::Codex,
@@ -435,19 +451,6 @@ async fn gemini_and_openai_omit_a_catalog_owned_by_another_account() {
     assert_eq!(status, StatusCode::OK);
     let gemini_names = model_names(&gemini_catalog);
 
-    let (status, openai_catalog) = router.get_json("/v1/models").await;
-    assert_eq!(status, StatusCode::OK);
-    let openai_names = openai_catalog["data"]
-        .as_array()
-        .expect("data array")
-        .iter()
-        .map(|model| format!("models/{}", model["id"].as_str().expect("model id")))
-        .collect::<Vec<_>>();
-
-    assert_eq!(
-        gemini_names, openai_names,
-        "every namespace must apply the same credential-account ownership boundary"
-    );
     assert!(
         !gemini_names.iter().any(|model| CODEX_MODELS
             .iter()
