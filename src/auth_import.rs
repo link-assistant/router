@@ -153,7 +153,7 @@ pub async fn run_import(
 ///
 /// A credential can only be installed where the process running the import can
 /// write, and a router reads its subscription credentials from its own home at
-/// startup. Nothing accepts a credential document over HTTP — `/api/login`
+/// startup. Nothing accepts a credential document over HTTP — `/api/management/login`
 /// begins an interactive OAuth flow and `submit_code` takes a short-lived
 /// code, neither of which adopts a credential that already exists. So there is
 /// no remote import to perform, and the honest move is to say so.

@@ -437,7 +437,8 @@ pub struct Cli {
     )]
     pub disable_anthropic_api: bool,
 
-    /// Disable `/metrics`, `/v1/usage` and `/v1/accounts` endpoints.
+    /// Disable `/api/management/metrics`, `/api/management/usage` and
+    /// `/api/management/accounts` endpoints.
     #[arg(
         long,
         env = "DISABLE_METRICS",
@@ -445,6 +446,19 @@ pub struct Cli {
         value_parser = parse_truthy
     )]
     pub disable_metrics: bool,
+
+    /// Expose only neutral health and AI inference/catalog routes on the main
+    /// listener. Management, GitHub/Git, and `ActivityPub` routes are omitted.
+    #[arg(
+        long,
+        env = "INFERENCE_ONLY",
+        global = true,
+        num_args = 0..=1,
+        default_value_t = false,
+        default_missing_value = "true",
+        value_parser = parse_truthy
+    )]
+    pub inference_only: bool,
 
     /// Comma-separated list of additional account credential directories.
     #[arg(
@@ -533,8 +547,9 @@ pub struct Cli {
     )]
     pub admin_claim_ttl_secs: u64,
 
-    /// Leave the admin endpoints (`/api/tokens*`, `/api/providers*`,
-    /// `/api/login*`) open to unauthenticated callers.
+    /// Leave the admin endpoints (`/api/management/tokens*`,
+    /// `/api/management/providers*`, `/api/management/login*`) open to
+    /// unauthenticated callers.
     ///
     /// Off by default. Without it, a deployment that configures no admin
     /// credential mints a one-off admin token at startup and prints it once.
@@ -613,7 +628,7 @@ pub struct Cli {
     #[arg(long, env = "MPP_METHOD", global = true)]
     pub mpp_method: Option<String>,
 
-    /// Disable the interactive login API (`/api/login`).
+    /// Disable the interactive login API (`/api/management/login`).
     #[arg(
         long,
         env = "DISABLE_LOGIN_API",
@@ -845,7 +860,7 @@ impl Cli {
             .filter(|value| !value.is_empty())
             .unwrap_or_else(|| {
                 format!(
-                    "{}/actor/code",
+                    "{}/api/services/activitypub/actor/code",
                     activitypub_actor_base_url.trim_end_matches('/')
                 )
             });
@@ -913,6 +928,7 @@ impl Cli {
             enable_openai_api: !self.disable_openai_api,
             enable_anthropic_api: !self.disable_anthropic_api,
             enable_metrics: !self.disable_metrics,
+            inference_only: self.inference_only,
             additional_account_dirs: self.additional_account_dirs.clone(),
             account_routing_strategy,
             account_cooldown_secs: self.account_cooldown_secs,

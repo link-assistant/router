@@ -4,7 +4,8 @@
 //! every routine action was remote-only in practice: a token expires and a job
 //! starts returning 401, or one leaks and must be revoked now, and the only
 //! routes to either were `ssh` into the host or a hand-written `curl` with the
-//! right path — `/api/tokens/list`, not `/api/tokens`, which is `POST`-only and
+//! right path — `/api/management/tokens/list`, not
+//! `/api/management/tokens`, which is `POST`-only and
 //! answers 405 to a `GET` (issue #293).
 //!
 //! The HTTP surface was already complete and admin-gated, and the CLI was
@@ -33,7 +34,7 @@ pub async fn run(server: &ResolvedServer, op: &TokenOp) -> ExitCode {
 /// Separated from sending it so the request an operation builds can be
 /// asserted without a server. What goes on the wire is the part that can be
 /// wrong in a way an operator notices — a rotate aimed at
-/// `/api/tokens/rotate` would rotate the caller's *own* admin credential
+/// `/api/management/tokens/rotate` would rotate the caller's *own* admin credential
 /// rather than the named token — and it is exactly the part a live-server test
 /// covers worst.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -62,7 +63,7 @@ pub fn call_for(op: &TokenOp) -> Call {
             ..
         } => Call {
             method: "POST",
-            path: "/api/tokens",
+            path: crate::route_contract::route_template(crate::route_contract::RouteId::Tokens),
             body: Some(serde_json::json!({
                 "ttl_hours": ttl_hours,
                 "label": label,
@@ -85,10 +86,12 @@ pub fn call_for(op: &TokenOp) -> Call {
             ..
         } => Call {
             method: "POST",
-            // `rotate-client` replaces a named token. `/api/tokens/rotate`
+            // `rotate-client` replaces a named token. `/api/management/tokens/rotate`
             // rotates the *caller's own* admin credential, which is a
             // different operation and not what `tokens rotate <ID>` means.
-            path: "/api/tokens/rotate-client",
+            path: crate::route_contract::route_template(
+                crate::route_contract::RouteId::RotateClientToken,
+            ),
             body: Some(serde_json::json!({
                 "id": id,
                 "ttl_hours": ttl_hours,
@@ -99,18 +102,20 @@ pub fn call_for(op: &TokenOp) -> Call {
                 "account": account,
             })),
         },
-        // `show` has no route of its own: no `GET /api/tokens/{id}` exists, and
+        // `show` has no route of its own: no `GET /api/management/tokens/{id}` exists, and
         // the local command is itself a filter over the list, so this stays a
         // filter rather than growing server surface for something already
         // answerable.
         TokenOp::List { .. } | TokenOp::Show { .. } => Call {
             method: "GET",
-            path: "/api/tokens/list",
+            path: crate::route_contract::route_template(crate::route_contract::RouteId::Tokens),
             body: None,
         },
         TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => Call {
             method: "POST",
-            path: "/api/tokens/revoke",
+            path: crate::route_contract::route_template(
+                crate::route_contract::RouteId::RevokeToken,
+            ),
             body: Some(serde_json::json!({ "id": id })),
         },
     }
@@ -170,7 +175,7 @@ pub fn show_one(records: &[serde_json::Value], id: &str) -> ExitCode {
         )
 }
 
-/// The token records inside a `/api/tokens/list` answer.
+/// The token records inside a `/api/management/tokens/list` answer.
 #[must_use]
 pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
     answer

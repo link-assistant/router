@@ -77,20 +77,32 @@ impl ClientManager {
 
 fn models_url(client: ClientKind, base_url: &str) -> String {
     let base_url = base_url.trim_end_matches('/');
-    if client == ClientKind::Codex {
-        let base_url = base_url.strip_suffix("/v1").unwrap_or(base_url);
-        format!("{base_url}/api/codex/v1/models")
-    } else if client == ClientKind::GeminiCli {
-        let base_url = base_url.strip_suffix("/api/gemini").unwrap_or(base_url);
-        format!("{base_url}/api/gemini/v1beta/models")
-    } else if client == ClientKind::QwenCode {
-        let base_url = base_url.strip_suffix("/api/qwen/v1").unwrap_or(base_url);
-        format!("{base_url}/api/qwen/v1/models")
-    } else if base_url.ends_with("/v1") {
-        format!("{base_url}/models")
-    } else {
-        format!("{base_url}/v1/models")
-    }
+    let origin = [
+        "/api/services/anthropic",
+        "/api/services/openai/v1",
+        "/api/services/codex/v1",
+        "/api/services/qwen/v1",
+        "/api/services/gemini",
+        // Read an old client config only to locate its origin. Requests still
+        // use the canonical route below; no removed server alias is revived.
+        "/api/gemini",
+        "/api/qwen/v1",
+        "/api/codex/v1",
+        "/v1",
+    ]
+    .into_iter()
+    .find_map(|suffix| base_url.strip_suffix(suffix))
+    .unwrap_or(base_url);
+    let id = match client {
+        ClientKind::Codex => crate::route_contract::RouteId::CodexModels,
+        ClientKind::GeminiCli => crate::route_contract::RouteId::GeminiModels,
+        ClientKind::QwenCode => crate::route_contract::RouteId::QwenModels,
+        ClientKind::ClaudeCode => crate::route_contract::RouteId::AnthropicModels,
+        ClientKind::Cursor | ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent => {
+            crate::route_contract::RouteId::OpenAiModels
+        }
+    };
+    format!("{origin}{}", crate::route_contract::route_template(id))
 }
 
 pub(super) fn doctor_model(

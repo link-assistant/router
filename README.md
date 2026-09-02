@@ -27,16 +27,16 @@ containment controls local to the operator.
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
 - **Vendor subscriptions** — `UPSTREAM_PROVIDER=auto` discovers healthy credentials, then exposes only the models allowed for the token's signed client/principal; a second pre-upstream check prevents stale or forged selection
-- **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
+- **OpenAI-compatible endpoints** — `/api/services/openai/v1/chat/completions`, `/api/services/openai/v1/responses`, and `/api/services/openai/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
 - **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
 - **Optional LiteLLM/OpenAI-compatible upstream** — `UPSTREAM_PROVIDER=openai-compatible` routes OpenAI SDK traffic to a stored provider such as LiteLLM
 - **Multi-account routing** — manage multiple account-bound credentials with session affinity, strict token pins, selection strategies, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration/revocation plus immutable managed-client and subscriber bindings
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
-- **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`, subscription health at `/health/subscriptions`
+- **Live observability** — Prometheus `/api/management/metrics`, JSON `/api/management/usage`, per-account state at `/api/management/accounts`, subscription health at `/api/management/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
-- **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor`, and deployment diagnostics
+- **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor|repair`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
 
@@ -67,7 +67,7 @@ router forwards OpenAI-compatible requests to the configured provider, such as
 a LiteLLM proxy, and substitutes only the upstream provider key inside the
 router.
 
-When `UPSTREAM_PROVIDER=crater`, `/v1/chat/completions` accepts normal OpenAI
+When `UPSTREAM_PROVIDER=crater`, `/api/services/openai/v1/chat/completions` accepts normal OpenAI
 chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
 `CRATER_FORGEFED_INBOX`, reads `Accept.result`, polls that task URI until
 `isResolved:true`, and maps the resolved content back to OpenAI JSON or SSE.
@@ -75,7 +75,8 @@ chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
 ### Vendor subscriptions (Codex, Gemini, Qwen)
 
 With `UPSTREAM_PROVIDER=auto`, Router discovers every healthy credential but
-returns a client-specific intersection from `/v1/models`. The signed
+returns a client-specific intersection from the client's canonical
+`/api/services/*/models` route. The signed
 `client_kind`, subscriber principal, native protocol evidence, model owner, and
 credential health must all agree again at dispatch. Pinning a provider does not
 bypass that rule. Generic/manual/admin/legacy tokens cannot spend a consumer
@@ -104,7 +105,8 @@ Refresh, native login, and import share one provider/account transaction lock;
 if the lock or every durable destination is unavailable, the request fails
 closed instead of serving a token whose rotation could be lost. An access-token
 refresh that leaves the refresh link unchanged remains an in-memory cache entry,
-avoiding an unnecessary write. Secrets are never logged. `/v1/chat/completions` and `/v1/responses` are
+avoiding an unnecessary write. Secrets are never logged. The canonical OpenAI
+Chat Completions and Responses service routes are
 translated to each backend's dialect (Codex uses the OpenAI Responses API;
 Gemini uses the Code Assist envelope with synthesized SSE for streaming; Qwen is
 OpenAI-compatible). Run `router doctor` to verify each credential file is
@@ -247,7 +249,7 @@ INFO Listening on 0.0.0.0:8080
 ### 5. Issue a custom token
 
 ```bash
-curl -s -X POST http://localhost:8080/api/tokens \
+curl -s -X POST http://localhost:8080/api/management/tokens \
   -H "Content-Type: application/json" \
   -d '{"ttl_hours": 24, "label": "my-dev-token"}' | jq .
 ```
@@ -268,7 +270,7 @@ Save the `token` value for use in API requests.
 
 ```bash
 # Use the custom token to make requests through the router
-curl -s http://localhost:8080/api/latest/anthropic/v1/messages \
+curl -s http://localhost:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer la_sk_eyJ0eXAi..." \
   -H "Content-Type: application/json" \
   -H "anthropic-version: 2023-06-01" \
@@ -302,7 +304,7 @@ need:
 | Document | Scenario |
 | --- | --- |
 | [per-task-tokens.md](docs/use-cases/per-task-tokens.md) | One `la_sk_…` token per task — audit, monitoring, security, isolation |
-| [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Aggregate `/metrics`, admin-only per-token `/v1/usage`, and the JSONL audit log |
+| [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Aggregate `/api/management/metrics`, admin-only per-token `/api/management/usage`, and the JSONL audit log |
 | [with-router.md](docs/use-cases/with-router.md) | Temporary-by-default one-line launcher, remote selection, managed Docker lifecycle, and exact global undo |
 | [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | Historical Claude MAX → Codex bridge, disabled by default behind one exact risk acceptance |
 | [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | Historical subscription bridge defaults superseded; API-key adapters remain separate |
@@ -339,7 +341,7 @@ router with claude
 
 ```bash
 # Set the base URL to point to the router
-export ANTHROPIC_BASE_URL=http://your-server:8080/api/latest/anthropic
+export ANTHROPIC_BASE_URL=http://your-server:8080/api/services/anthropic
 
 # The token must carry client_kind=claude and the matching principal_id.
 export ANTHROPIC_API_KEY=la_sk_eyJ0eXAi...
@@ -357,14 +359,13 @@ Claude Code will work exactly as normal, with all requests transparently proxied
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/health` | GET | Liveness check, returns `ok` — independent of subscription health, because it drives both Kubernetes probes |
-| `/health/subscriptions` | GET | Whether every configured subscription can serve: `200` when it can, `503` naming each degraded provider and why |
-| `/api/tokens` | POST | (admin) Issue a new custom token |
-| `/api/tokens/list` | GET | (admin) List every persisted token |
-| `/api/tokens/revoke` | POST | (admin) Revoke a token by id |
-| `/api/tokens/rotate` | POST | (admin) Issue a replacement admin token and revoke the caller's own |
-| `/api/providers` | GET/POST | (admin) List or upsert OpenAI-compatible upstream providers |
-| `/api/providers/{name}` | GET/DELETE | (admin) Show or delete one provider |
+| `/api/health` | GET | Liveness check, returns `ok` — independent of subscription health |
+| `/api/management/health/subscriptions` | GET | (admin) Whether every configured subscription can serve |
+| `/api/management/tokens` | GET/POST | (admin) List persisted tokens or issue a new one |
+| `/api/management/tokens/revoke` | POST | (admin) Revoke a token by id |
+| `/api/management/tokens/rotate` | POST | (admin) Issue a replacement admin token and revoke the caller's own |
+| `/api/management/providers` | GET/POST | (admin) List or upsert OpenAI-compatible upstream providers |
+| `/api/management/providers/{name}` | GET/DELETE | (admin) Show or delete one provider |
 
 ### Login surface (`--disable-login-api` to opt out)
 
@@ -380,10 +381,10 @@ its PKCE loopback flow remains available as a CLI fallback.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/login` | POST | (admin) Start a login; optional body: `{"provider":"claude"|"codex"}` |
-| `/api/login/{id}` | GET | (admin) Status includes `awaiting_code` (Claude) or `awaiting_device` plus `user_code` (Codex) |
-| `/api/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
-| `/api/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
+| `/api/management/login` | POST | (admin) Start a login; optional body: `{"provider":"claude"|"codex"}` |
+| `/api/management/login/{id}` | GET | (admin) Status includes `awaiting_code` (Claude) or `awaiting_device` plus `user_code` (Codex) |
+| `/api/management/login/{id}` | DELETE | (admin) Cancel a pending login and kill its process |
+| `/api/management/login/{id}/code` | POST | (admin) Submit the code the human copied from the browser |
 
 For a foreground login, use `router auth claude` or `auth codex`. Claude's
 `--flow code` stores its pending PKCE login for 15 minutes, so the code can be
@@ -424,7 +425,7 @@ start a managed container when none answers. The rule, in one sentence: if a
 router is already listening locally, use it. Selection order is `--server`, then
 `ROUTER_URL`/`LINK_ASSISTANT_ROUTER_URL`, then the persisted `server use`
 selection, then a running local router, then a managed container. A discovered
-endpoint is adopted only after the same `/health` check every other branch
+endpoint is adopted only after the same `/api/health` check every other branch
 performs, so an unrelated service on port 8080 is not mistaken for the router.
 `router server status` names whichever one the next command will use, and
 `--managed` forces a disposable container for CI and clean-room runs.
@@ -437,11 +438,11 @@ credential — see [docs/use-cases/admin-ui.md](docs/use-cases/admin-ui.md).
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/admin/status` | GET | (open) Credential state: claimed, bootstrap open, provisioned by environment |
-| `/api/admin/bootstrap` | POST | (open while unclaimed) Mint a candidate token; authorises nothing on its own |
-| `/api/admin/bootstrap/confirm` | POST | Activate the candidate, authenticated with the candidate token itself |
-| `/api/admin/rotate` | POST | (admin) Mint a replacement admin credential and retire the current one |
-| `/api/admin/summary` | GET | (admin) Version, upstream, accounts and credential state |
+| `/api/management/admin/status` | GET | (open) Credential state: claimed, bootstrap open, provisioned by environment |
+| `/api/management/admin/bootstrap` | POST | (open while unclaimed) Mint a candidate token; authorises nothing on its own |
+| `/api/management/admin/bootstrap/confirm` | POST | Activate the candidate, authenticated with the candidate token itself |
+| `/api/management/admin/rotate` | POST | (admin) Mint a replacement admin credential and retire the current one |
+| `/api/management/admin/summary` | GET | (admin) Version, upstream, accounts and credential state |
 | `/` and static assets | GET | The embedded React console |
 
 ### Chat admin channels (`TELEGRAM_BOT_TOKEN` / `VK_BOT_TOKEN` to opt in)
@@ -464,33 +465,26 @@ in a browser *or* in a chat. See
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
-| `/v1/messages/count_tokens` | POST | Token-count helper |
-| `/api/anthropic/v1/messages` | POST | Namespaced Anthropic Messages alias |
-| `/api/anthropic/v1/messages/count_tokens` | POST | Namespaced token-count alias |
-| `/invoke` | POST | Bedrock-format invoke |
-| `/invoke-with-response-stream` | POST | Bedrock streaming invoke |
-| `/api/latest/anthropic/v1/messages` | POST | Legacy Messages alias; prefix stripped before forwarding |
-| `/api/latest/anthropic/v1/messages/count_tokens` | POST | Legacy token-count alias; prefix stripped before forwarding |
-| `/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:rawPredict` | POST | Vertex rawPredict pass-through |
-| `/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:streamRawPredict` | POST | Vertex streaming rawPredict pass-through |
-| `/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}/count-tokens:rawPredict` | POST | Vertex token-count pass-through |
+| `/api/services/anthropic/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
+| `/api/services/anthropic/v1/messages/count_tokens` | POST | Token-count helper |
+| `/api/services/bedrock/invoke` | POST | Bedrock-format invoke |
+| `/api/services/bedrock/invoke-with-response-stream` | POST | Bedrock streaming invoke |
+| `/api/services/vertex/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:rawPredict` | POST | Vertex rawPredict pass-through |
 
 ### OpenAI surface (`--disable-openai-api` to opt out)
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages, forwarded to the selected OpenAI-compatible provider, or delivered as a Crater ForgeFed task |
-| `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
-| `/v1/models` | GET | Authenticated client/principal-specific intersection of healthy allowed models |
-| `/api/openai/v1/*` | GET/POST | Namespaced aliases for models, Chat Completions, and Responses |
-| `/api/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
-| `/api/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
-| `/api/gemini/v1beta/models` | GET | Native Gemini model list filtered by the signed Gemini client policy |
-| `/api/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
-| `/api/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation after exact client/provider entitlement; experimental z.ai requires its second acknowledgement |
-| `/api/gemini/v1beta/models/{model}:streamGenerateContent` | POST | Native Gemini SSE response |
-| `/api/vertex/v1/projects/.../models/{model}:generateContent` | POST | Native Vertex-style generation through Gemini Code Assist |
+| `/api/services/openai/v1/chat/completions` | POST | Generic OpenAI Chat Completions service |
+| `/api/services/openai/v1/responses` | POST | Generic OpenAI Responses service |
+| `/api/services/openai/v1/models` | GET | Authenticated client/principal-specific intersection of healthy allowed models |
+| `/api/services/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
+| `/api/services/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
+| `/api/services/gemini/v1beta/models` | GET | Native Gemini model list filtered by the signed Gemini client policy |
+| `/api/services/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
+| `/api/services/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation after exact client/provider entitlement |
+| `/api/services/gemini/v1beta/models/{model}:streamGenerateContent` | POST | Native Gemini SSE response |
+| `/api/services/vertex/v1/projects/.../models/{model}:generateContent` | POST | Native Vertex-style generation through Gemini Code Assist |
 
 Provider-specific namespaces still enforce the matching signed client,
 principal, protocol evidence, and healthy credential; pinning never grants
@@ -500,10 +494,10 @@ authority.
 Consumer catalogs exist only after authenticated discovery for that exact
 account, and are recorded with the account identity, the fetch time and an
 explicit health flag. Before the first discovery a provider advertises nothing;
-`GET /v1/models` reports it under `degraded_providers` rather than filling the
-gap from source. The experimental z.ai Coding Plan is the deliberate exception:
-z.ai documents no free model catalog, so its operator list is intersected with
-a code-reviewed allowlist after a non-inference quota health check. When a
+the canonical client catalog reports it under `degraded_providers` rather than
+filling the gap from source. The experimental z.ai Coding Plan uses its
+explicit operator catalog because z.ai documents no free model catalog; no
+source-code model allowlist filters it. When a
 credential is revoked its last known catalog stays
 visible to administrators but stops being advertised or routed.
 
@@ -536,7 +530,8 @@ visible output is truncated at the caller's budget and the exchange ends with
 estimated at roughly four characters per token, and hidden reasoning tokens are
 not observable, so the cap bounds visible output rather than billed tokens.
 
-With `UPSTREAM_PROVIDER=gonka`, `/v1/chat/completions` and `/v1/responses`
+With `UPSTREAM_PROVIDER=gonka`, `/api/services/openai/v1/chat/completions` and
+`/api/services/openai/v1/responses`
 forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
 request omits `model`, the router uses `GONKA_MODEL`.
 
@@ -546,7 +541,8 @@ provider base URL to the LiteLLM `/v1` API base. Streaming OpenAI requests are
 passed through for OpenAI-compatible providers, and Anthropic-backed streaming
 requests are translated to OpenAI SSE chunks.
 
-With `UPSTREAM_PROVIDER=crater`, `/v1/chat/completions` supports normal JSON
+With `UPSTREAM_PROVIDER=crater`, `/api/services/openai/v1/chat/completions`
+supports normal JSON
 responses and SSE with either request-body `"stream": true` or `?stream=true`.
 The SSE stream emits OpenAI chat-completion chunks once the ForgeFed task
 resolves.
@@ -565,7 +561,8 @@ MPP_RECIPIENT=acct_or_wallet
 MPP_METHOD=stripe
 ```
 
-When enabled, unpaid calls to `/v1/chat/completions` and `/v1/responses`
+When enabled, unpaid calls to `/api/services/openai/v1/chat/completions` and
+`/api/services/openai/v1/responses`
 return `WWW-Authenticate: Payment ...` with `protocol="mpp"` and
 `intent="charge"`. This is separate from the ForgeFed/ActivityPub discovery
 surface. Payment credential settlement is intentionally not accepted until a
@@ -575,20 +572,19 @@ method-specific verifier is configured.
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/metrics` | GET | Public Prometheus text-exposition aggregate counters, plus a `link_assistant_subscription_healthy{provider="…"}` gauge per configured subscription |
-| `/v1/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
-| `/v1/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
+| `/api/management/metrics` | GET | Admin Prometheus text-exposition aggregate counters, plus a subscription-health gauge |
+| `/api/management/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
+| `/api/management/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 
-`/metrics` deliberately contains no token ids, labels, or account names because
-it is available without authentication. The `link_assistant_subscription_healthy`
+`/api/management/metrics` deliberately contains no token ids, labels, or account names. The `link_assistant_subscription_healthy`
 gauge is labelled by vendor name only, never by account, and answers `0` for a
 subscription that is configured but cannot serve — the signal that turns a
 silent multi-hour outage into an alert. Administrators can inspect per-token
-usage in the `/v1/usage` `token_calls` JSON map. Set `--audit-log` for a durable
+usage in the `/api/management/usage` `token_calls` JSON map. Set `--audit-log` for a durable
 JSONL trail of the same events. See
 [docs/use-cases/audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md).
 
-### POST /api/tokens
+### POST /api/management/tokens
 
 Issue a new custom JWT token.
 
@@ -619,8 +615,8 @@ Issue a new custom JWT token.
 
 ### Proxy Routes
 
-The two documented `/api/latest/anthropic/v1/messages` routes are forwarded to
-the corresponding upstream Anthropic API paths. Unknown routes and methods are
+Only canonical `/api/services/*` routes are forwarded to their corresponding
+vendor API paths. Unknown routes and methods are
 rejected locally rather than forwarded. The proxy:
 
 - Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
@@ -679,7 +675,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
-| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (from live catalog) | No | Upstream model used when `/v1/messages` is served from a non-Anthropic upstream. Unset selects one from the account's live catalog ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
+| `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (from live catalog) | No | Upstream model used when the Anthropic service is served from a non-Anthropic upstream. Unset selects one from the account's live catalog ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
 | `--bridge-model-policy` / `BRIDGE_MODEL_POLICY` | `first-advertised` | No | How to pick that model from the catalog: `first-advertised` or `last-advertised`. When no compatible model exists the request fails with `model_selection_required` rather than falling back to a built-in name |
 | `--audit-log` / `AUDIT_LOG` | (disabled) | No | Append one JSON line per authorised request (token id, label, provider, surface, path, model) to this file ([details](docs/use-cases/audit-and-monitoring.md)) |
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
@@ -897,7 +893,7 @@ for `gh` it differs per platform as well.
 
 ```bash
 router tls ca > /tmp/router-ca.pem
-curl --cacert /tmp/router-ca.pem https://router.internal:8080/health
+curl --cacert /tmp/router-ca.pem https://router.internal:8080/api/health
 ```
 
 **`git`** takes it through its own configuration:
@@ -1004,14 +1000,14 @@ TOKEN_SECRET=your-router-token-secret
 UPSTREAM_PROVIDER=crater
 CRATER_FORGEFED_INBOX=https://tracker.example/inbox
 CRATER_FORGEFED_TARGET=https://tracker.example/projects/demo
-# Optional; defaults to ACTIVITYPUB_ACTOR_BASE_URL/actor/code
-CRATER_FORGEFED_ACTOR=https://router.example/actor/code
+# Optional; defaults to ACTIVITYPUB_ACTOR_BASE_URL/api/services/activitypub/actor/code
+CRATER_FORGEFED_ACTOR=https://router.example/api/services/activitypub/actor/code
 ```
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
 | `--crater-forgefed-inbox` / `CRATER_FORGEFED_INBOX` | — | Yes, for Crater | Remote ForgeFed inbox that receives `Offer{Ticket}` activities |
-| `--crater-forgefed-actor` / `CRATER_FORGEFED_ACTOR` | `${ACTIVITYPUB_ACTOR_BASE_URL}/actor/code` | No | Local actor URI used in outbound activities |
+| `--crater-forgefed-actor` / `CRATER_FORGEFED_ACTOR` | `${ACTIVITYPUB_ACTOR_BASE_URL}/api/services/activitypub/actor/code` | No | Local actor URI used in outbound activities |
 | `--crater-forgefed-target` / `CRATER_FORGEFED_TARGET` | inbox URI | No | Ticket tracker or project URI used as `Offer.target` |
 | `--crater-poll-interval-ms` / `CRATER_POLL_INTERVAL_MS` | `1000` | No | Delay between task URI polls |
 | `--crater-poll-timeout-secs` / `CRATER_POLL_TIMEOUT_SECS` | `120` | No | Maximum wait for `isResolved:true` |
@@ -1039,7 +1035,7 @@ OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
 | `--openai-compatible-api-key` / `OPENAI_COMPATIBLE_API_KEY` | — | No | Inline upstream key; prefer persisted provider storage for long-lived secrets |
 | `--openai-compatible-api-key-env` / `OPENAI_COMPATIBLE_API_KEY_ENV` | — | No | Environment variable containing the upstream key |
 | `--openai-compatible-model` / `OPENAI_COMPATIBLE_MODEL` | — | No | Default model injected when requests omit `model` |
-| `--openai-compatible-models` / `OPENAI_COMPATIBLE_MODELS` | — | No | Comma-separated models exposed from `/v1/models` |
+| `--openai-compatible-models` / `OPENAI_COMPATIBLE_MODELS` | — | No | Comma-separated models exposed from the authenticated service catalog |
 
 Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
 provider API keys are encrypted with AES-GCM using a key derived from
@@ -1050,7 +1046,7 @@ The personal z.ai Coding Plan is deliberately **not** a generic provider. It is
 experimental, disabled by default, single-subscriber, and requires separate
 provider/client policy acknowledgements. See
 [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) for the exact setup,
-health check, reviewed models, aliases, endpoints, and account-ban warning.
+health check, explicit operator catalog, aliases, endpoints, and account-ban warning.
 
 ```bash
 router providers add \
@@ -1077,7 +1073,7 @@ litellm
   api-key-env "LITELLM_MASTER_KEY"
 ```
 
-The HTTP API accepts the same shape at `POST /api/providers`:
+The HTTP API accepts the same shape at `POST /api/management/providers`:
 
 ```json
 {
@@ -1150,17 +1146,17 @@ Other files keep the format of the boundary they serve:
 
 | Flag / env | Default | Description |
 |---|---|---|
-| `--disable-openai-api` / `DISABLE_OPENAI_API` | off | Hide `/v1/chat/completions`, `/v1/responses`, `/v1/models` |
-| `--disable-anthropic-api` / `DISABLE_ANTHROPIC_API` | off | Hide `/v1/messages*` and Bedrock paths |
-| `--disable-metrics` / `DISABLE_METRICS` | off | Hide `/metrics`, `/v1/usage`, `/v1/accounts` |
-| `--disable-login-api` / `DISABLE_LOGIN_API` | off | Hide `/api/login*` |
+| `--disable-openai-api` / `DISABLE_OPENAI_API` | off | Hide OpenAI-compatible `/api/services/*` routes |
+| `--disable-anthropic-api` / `DISABLE_ANTHROPIC_API` | off | Hide Anthropic and Bedrock service routes |
+| `--disable-metrics` / `DISABLE_METRICS` | off | Hide management metrics, usage, and account routes |
+| `--disable-login-api` / `DISABLE_LOGIN_API` | off | Hide `/api/management/login*` |
 | `--login-cli-command` / `LOGIN_CLI_COMMAND` | `claude` | Compatibility backend driven on a PTY. The default value spawns nothing: both login modes run in-process |
 | `--login-cli-args` / `LOGIN_CLI_ARGS` | (none; full scopes) | Comma-separated arguments for that program; set `setup-token` to make the narrow `user:inference` mode the deployment default |
 | `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | How long a pending login waits for its code before expiring |
 | `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Maximum simultaneously pending logins; beyond it, `429` |
 | `--experimental-compatibility` / `EXPERIMENTAL_COMPATIBILITY` | off | XML history, model spoofing and other community-proxy behaviours |
-| `--admin-key` / `TOKEN_ADMIN_KEY` | — | Flat bootstrap Bearer key accepted by `/api/tokens*` alongside admin-scoped tokens |
-| `--allow-anonymous-admin` / `ALLOW_ANONYMOUS_ADMIN` | off | Opt back into unauthenticated `/api/tokens*` access (**not recommended**) |
+| `--admin-key` / `TOKEN_ADMIN_KEY` | — | Flat bootstrap Bearer key accepted by `/api/management/*` alongside admin-scoped tokens |
+| `--allow-anonymous-admin` / `ALLOW_ANONYMOUS_ADMIN` | off | Opt back into unauthenticated management access (**not recommended**) |
 | `--admin-port` / `ADMIN_PORT` | — (disabled) | Port for the admin UI listener; no port, no admin surface |
 | `--admin-host` / `ADMIN_HOST` | `127.0.0.1` | Address the admin UI listener binds, independent of the proxy |
 | `--admin-claim-ttl-secs` / `ADMIN_CLAIM_TTL_SECS` | `120` | Lifetime of an unconfirmed admin bootstrap candidate |
@@ -1283,7 +1279,7 @@ The single image intentionally contains no vendor CLI. It performs Claude OAuth 
 | Serve requests with a valid access token | No | `:ro` |
 | Renew an **expired** access token | No — the router exchanges the `refreshToken` itself | `:ro` when `DATA_DIR` is writable (see below) |
 | **First-time login** (no credential file yet) | No — native OAuth | writable |
-| `POST /api/login` (remote login over HTTP) | No — native OAuth | writable |
+| `POST /api/management/login` (remote login over HTTP) | No — native OAuth | writable |
 
 The router exchanges the `refreshToken` stored in the mounted credential file against Anthropic's token endpoint and serves from the result, so serving continues across expiry. The same mechanism covers Codex, Gemini, and Qwen.
 
@@ -1448,7 +1444,7 @@ The router uses JWT-based custom tokens with the `la_sk_` prefix.
 
 ### Token lifecycle
 
-1. **Issue**: `POST /api/tokens` creates a signed JWT with a UUID subject, expiration, optional label, and optional per-token request, token-spend, and rate controls
+1. **Issue**: `POST /api/management/tokens` creates a signed JWT with a UUID subject, expiration, optional label, and optional per-token request, token-spend, and rate controls
 2. **Validate**: Each proxy request extracts the `Authorization: Bearer la_sk_...` header, strips the prefix, and verifies the JWT signature and expiration
 3. **Meter**: Each admitted request increments `used_requests`; successful upstream usage payloads add actual input and output tokens to `used_tokens`. Reaching `max_requests`, `max_tokens`, or `rate_limit_per_minute` returns `429 Too Many Requests` before another request is forwarded
 4. **Revoke**: Tokens can be revoked by their subject ID. Records (including the revoked flag and usage counter) are written to the persistent token store, so revocations and usage survive restarts
@@ -1472,7 +1468,7 @@ administrative one — see [Admin access](#admin-access).
 
 ### Admin access
 
-The `/api/tokens*` endpoints — and every other endpoint marked *(admin)* above
+The `/api/management/*` endpoints — and every other endpoint marked *(admin)* above
 — are **closed by default**. Three things can open them:
 
 1. **An admin-scoped token.** It is an ordinary `la_sk_…` JWT carrying
@@ -1483,7 +1479,7 @@ The `/api/tokens*` endpoints — and every other endpoint marked *(admin)* above
    # CLI
    router tokens issue --admin --ttl-hours 168 --label ops
    # HTTP (from an existing admin credential)
-   curl -s -X POST http://localhost:8080/api/tokens \
+   curl -s -X POST http://localhost:8080/api/management/tokens \
      -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" \
      -d '{"ttl_hours": 168, "label": "ops", "scope": "admin"}' | jq -r .token
    ```
@@ -1493,14 +1489,14 @@ The `/api/tokens*` endpoints — and every other endpoint marked *(admin)* above
 
    ```bash
    router tokens rotate <sub> --ttl-hours 168 --label ops
-   curl -s -X POST http://localhost:8080/api/tokens/rotate \
+   curl -s -X POST http://localhost:8080/api/management/tokens/rotate \
      -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" -d '{}' | jq .
    ```
 
 2. **The flat `--admin-key` / `TOKEN_ADMIN_KEY`.** Still supported unchanged as
    a bootstrap and compatibility credential for deployments that configure
    everything externally, and now compared in constant time. It carries no
-   identity or expiry, so it cannot rotate itself (`/api/tokens/rotate` answers
+   identity or expiry, so it cannot rotate itself (`/api/management/tokens/rotate` answers
    `400`); prefer an admin-scoped token for day-to-day use.
 
 3. **Nothing at all** — only if you pass `--allow-anonymous-admin`
@@ -1530,7 +1526,8 @@ nothing and cannot brick the deployment; confirming it activates the credential,
 closes bootstrap on every channel, and retires the startup `bootstrap-admin`
 token by id, so the Tokens table, the CLI and the bots all show it revoked.
 
-`POST /api/admin/bootstrap` and `POST /api/admin/rotate` accept an optional
+`POST /api/management/admin/bootstrap` and
+`POST /api/management/admin/rotate` accept an optional
 `{"ttl_hours": n}` body to limit the credential lifetime (capped at one year;
 omitted means the cap). Expiry and revocation are enforced on the same path as
 every other token. Rotation is atomic: the replacement is minted and the
@@ -1538,7 +1535,7 @@ previous credential revoked by id under the claim lock.
 
 Deployments claimed by an older version still hold an opaque `la_admin_…`
 credential. It keeps working, `doctor` warns about it, and the first
-`/api/admin/rotate` converts the claim into a JWT.
+`/api/management/admin/rotate` converts the claim into a JWT.
 
 ### Per-token containment controls
 
@@ -1553,7 +1550,7 @@ router tokens issue --ttl-hours 24 --label scoped-agent \
   --max-requests 100 --max-tokens 100000 --rate-limit-per-minute 10
 
 # HTTP: same, via the admin endpoint
-curl -s -X POST http://localhost:8080/api/tokens \
+curl -s -X POST http://localhost:8080/api/management/tokens \
   -H "Content-Type: application/json" \
   -d '{"ttl_hours":24,"label":"scoped-agent","max_requests":100,"max_tokens":100000,"rate_limit_per_minute":10}' | jq .
 ```
@@ -1664,27 +1661,27 @@ cargo run
 # Terminal 2: Test the endpoints
 
 # 1. Health check
-curl -s http://localhost:8080/health
+curl -s http://localhost:8080/api/health
 # Expected: ok
 
 # 2. Issue a token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/tokens \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/management/tokens \
   -H "Content-Type: application/json" \
   -d '{"ttl_hours": 1, "label": "test"}' | jq -r '.token')
 echo "Token: $TOKEN"
 
 # 3. Test proxy with token (will get auth error from Anthropic since test-oauth-token is not real)
-curl -s http://localhost:8080/api/latest/anthropic/v1/messages \
+curl -s http://localhost:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -H "anthropic-version: 2023-06-01" \
   -d '{"model": "claude-sonnet-4-20250514", "max_tokens": 10, "messages": [{"role": "user", "content": "Hi"}]}' | jq .
 
 # 4. Test without token (should get 401)
-curl -s http://localhost:8080/api/latest/anthropic/v1/messages | jq .
+curl -s http://localhost:8080/api/services/anthropic/v1/messages | jq .
 
 # 5. Test with invalid token (should get 401)
-curl -s http://localhost:8080/api/latest/anthropic/v1/messages \
+curl -s http://localhost:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer la_sk_invalid" | jq .
 ```
 

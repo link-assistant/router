@@ -325,7 +325,7 @@ async fn forward_native(
         Ok(routed) => routed,
         Err(response) => return response,
     };
-    let full_path = format!("/api/gemini/{path}");
+    let full_path = format!("/api/services/gemini/{path}");
     if let Some(owner) = routed.state.upstream_provider.subscription_provider() {
         if let Err(response) = crate::client_policy::enforce_subscription(
             &routed.state,
@@ -540,7 +540,7 @@ async fn forward_native_via_zai(
     body: &Value,
 ) -> Response {
     let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
-    let full_path = format!("/api/gemini/{path}");
+    let full_path = format!("/api/services/gemini/{path}");
     let response = crate::zai_coding_plan::forward(
         &state,
         headers,

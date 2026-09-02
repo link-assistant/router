@@ -157,7 +157,7 @@ async fn gemini_cli_key_header_authenticates() {
     let token = token_for(dir.path());
     let (status, body) = carrier_status(
         dir.path(),
-        "/api/gemini/v1beta/models",
+        "/api/services/gemini/v1beta/models",
         Some(("x-goog-api-key", token)),
     )
     .await;
@@ -170,7 +170,7 @@ async fn an_invalid_gemini_key_is_still_rejected() {
     let dir = tempfile::tempdir().expect("tempdir");
     let (status, _) = carrier_status(
         dir.path(),
-        "/api/gemini/v1beta/models",
+        "/api/services/gemini/v1beta/models",
         Some(("x-goog-api-key", "la_sk_not_a_real_token".to_string())),
     )
     .await;
@@ -187,7 +187,7 @@ async fn a_foreign_token_in_the_gemini_carrier_is_rejected() {
         .expect("issue foreign token");
     let (status, _) = carrier_status(
         dir.path(),
-        "/api/gemini/v1beta/models",
+        "/api/services/gemini/v1beta/models",
         Some(("x-goog-api-key", foreign)),
     )
     .await;
@@ -203,8 +203,12 @@ async fn bearer_and_x_api_key_still_authenticate() {
         ("authorization", format!("Bearer {token}")),
         ("x-api-key", token.clone()),
     ] {
-        let (status, body) =
-            carrier_status(dir.path(), "/api/gemini/v1beta/models", Some((name, value))).await;
+        let (status, body) = carrier_status(
+            dir.path(),
+            "/api/services/gemini/v1beta/models",
+            Some((name, value)),
+        )
+        .await;
         assert_eq!(status, StatusCode::OK, "{name}: {body}");
     }
 }
@@ -213,7 +217,7 @@ async fn bearer_and_x_api_key_still_authenticate() {
 #[tokio::test]
 async fn a_missing_credential_is_refused() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (status, _) = carrier_status(dir.path(), "/api/gemini/v1beta/models", None).await;
+    let (status, _) = carrier_status(dir.path(), "/api/services/gemini/v1beta/models", None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 
@@ -223,7 +227,8 @@ async fn a_missing_credential_is_refused() {
 #[tokio::test]
 async fn the_refusal_is_rendered_in_the_surfaces_own_dialect() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (status, body) = carrier_status(dir.path(), "/api/gemini/v1beta/models", None).await;
+    let (status, body) =
+        carrier_status(dir.path(), "/api/services/gemini/v1beta/models", None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
     assert_eq!(body["error"]["code"], 401, "{body}");
     assert_eq!(body["error"]["status"], "UNAUTHENTICATED", "{body}");
@@ -235,7 +240,7 @@ async fn the_refusal_is_rendered_in_the_surfaces_own_dialect() {
 #[tokio::test]
 async fn the_refusal_names_every_accepted_carrier() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (_, body) = carrier_status(dir.path(), "/api/gemini/v1beta/models", None).await;
+    let (_, body) = carrier_status(dir.path(), "/api/services/gemini/v1beta/models", None).await;
     let message = body["error"]["message"].as_str().expect("message");
     for carrier in ["Authorization: Bearer", "x-api-key", "x-goog-api-key"] {
         assert!(
@@ -254,7 +259,7 @@ async fn the_key_query_parameter_is_refused_and_explains_itself() {
     let token = token_for(dir.path());
     let (status, body) = carrier_status(
         dir.path(),
-        &format!("/api/gemini/v1beta/models?key={token}"),
+        &format!("/api/services/gemini/v1beta/models?key={token}"),
         None,
     )
     .await;
@@ -272,9 +277,9 @@ async fn generate_and_stream_pass_authentication_with_the_gemini_carrier() {
     let dir = tempfile::tempdir().expect("tempdir");
     let token = token_for(dir.path());
     for path in [
-        "/api/gemini/v1beta/models/gemini-2.5-pro:generateContent",
-        "/api/gemini/v1beta/models/gemini-2.5-pro:streamGenerateContent?alt=sse",
-        "/api/vertex/v1/projects/p/locations/l/publishers/google/models/gemini-2.5-pro:generateContent",
+        "/api/services/gemini/v1beta/models/gemini-2.5-pro:generateContent",
+        "/api/services/gemini/v1beta/models/gemini-2.5-pro:streamGenerateContent?alt=sse",
+        "/api/services/vertex/v1/projects/p/locations/l/publishers/google/models/gemini-2.5-pro:generateContent",
     ] {
         let status = post_carrier_status(dir.path(), path, &token).await;
         assert!(
@@ -289,8 +294,8 @@ async fn generate_and_stream_pass_authentication_with_the_gemini_carrier() {
 async fn generate_and_stream_still_refuse_an_invalid_gemini_carrier() {
     let dir = tempfile::tempdir().expect("tempdir");
     for path in [
-        "/api/gemini/v1beta/models/gemini-2.5-pro:generateContent",
-        "/api/gemini/v1beta/models/gemini-2.5-pro:streamGenerateContent?alt=sse",
+        "/api/services/gemini/v1beta/models/gemini-2.5-pro:generateContent",
+        "/api/services/gemini/v1beta/models/gemini-2.5-pro:streamGenerateContent?alt=sse",
     ] {
         let status = post_carrier_status(dir.path(), path, "la_sk_not_a_real_token").await;
         assert_eq!(status, StatusCode::UNAUTHORIZED, "{path}");

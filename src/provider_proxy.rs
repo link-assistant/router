@@ -315,9 +315,6 @@ pub fn openai_compatible_models(state: &AppState) -> serde_json::Value {
     {
         models.push(model);
     }
-    if models.is_empty() {
-        models.push("default".to_string());
-    }
     let data: Vec<serde_json::Value> = models
         .into_iter()
         .map(|id| {
@@ -449,6 +446,22 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_unconfigured_openai_compatible_catalog_is_empty() {
+        let data = tempfile::tempdir().expect("provider data");
+        let mut state = crate::app_state::AppState::for_tests(data.path());
+        state.upstream_provider = crate::config::UpstreamProvider::OpenAICompatible;
+        state.openai_compatible.default_model = None;
+        state.openai_compatible.models.clear();
+
+        let catalog = openai_compatible_models(&state);
+        assert_eq!(catalog["data"], serde_json::json!([]));
+        assert!(
+            !catalog.to_string().contains("default"),
+            "Router must not invent a model absent from live or operator configuration"
+        );
+    }
 
     /// `/v1` in the configured base URL must not be duplicated by the request
     /// path, and a base without it keeps the path verbatim.

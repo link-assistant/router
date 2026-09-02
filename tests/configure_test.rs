@@ -12,7 +12,7 @@ use std::time::Duration;
 /// A router that answers the three probes permanent setup makes: is it there,
 /// is this credential an admin one, and what does it serve?
 ///
-/// `/api/tokens/list` answers 401 so the supplied token is treated as an
+/// `/api/management/tokens` answers 401 so the supplied token is treated as an
 /// ordinary one and used as-is — the same shape as a real ordinary token, and
 /// it keeps the test from having to mint a signed JWT.
 fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
@@ -63,9 +63,9 @@ fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
                 .unwrap_or("")
                 .to_string();
             let (status, body) = match path.as_str() {
-                "/health" => ("200 OK", r#"{"status":"ok","version":"0.115.0"}"#),
-                "/api/tokens/list" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
-                "/v1/models" => (
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.115.0"}"#),
+                "/api/management/tokens" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
+                "/api/services/anthropic/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol","owned_by":"openai"}]}"#,
                 ),

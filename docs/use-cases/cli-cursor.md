@@ -100,7 +100,8 @@ would need:
       path touches, captured from a pinned client build;
 - [ ] the session handshake the client performs before its first turn;
 - [ ] `/agent.v1.AgentService/Run` — the entry point — translating each turn to
-      an existing router surface (`/v1/chat/completions` is the closest fit);
+      an existing router surface (`/api/services/openai/v1/chat/completions` is
+      the closest fit);
 - [ ] streamed tool calls and tool results in both directions, which is where
       the shape diverges most from the chat dialects;
 - [ ] the supporting `aiserver.v1` RPCs the client calls during a run;

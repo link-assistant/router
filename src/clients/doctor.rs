@@ -9,7 +9,8 @@ use serde_json::json;
 
 use super::files::read_environment_value;
 use super::{
-    ClientError, ClientKind, ClientManager, DOCTOR_MAX_TOKENS, compact_body, doctor_model,
+    ClientError, ClientKind, ClientManager, DOCTOR_MAX_TOKENS, OwnershipState, compact_body,
+    doctor_model,
 };
 
 impl ClientManager {
@@ -20,6 +21,19 @@ impl ClientManager {
         }
         if client == ClientKind::ClaudeCode {
             require_claude_gateway_version()?;
+        }
+        let ownership = self.analyze(client)?;
+        if ownership.state != OwnershipState::ManagedIntact {
+            return Err(ClientError::message(format!(
+                "{} routing ownership is {}{}; run `clients repair {client} --dry-run` to inspect it, then `clients repair {client}`",
+                client.display_name(),
+                ownership.state,
+                if ownership.conflicts.is_empty() {
+                    String::new()
+                } else {
+                    format!(" (conflicts: {})", ownership.conflicts.join(", "))
+                }
+            )));
         }
         let status = self.status(client)?;
         let base_url = status.base_url.ok_or_else(|| {
@@ -108,9 +122,10 @@ impl ClientManager {
     }
 }
 
-const MINIMUM_CLAUDE_GATEWAY_VERSION: (u64, u64, u64) = (2, 1, 129);
+const MINIMUM_CLAUDE_GATEWAY_VERSION: (u64, u64, u64) = (2, 1, 255);
 
-/// Claude Code began accepting gateway-discovered model ids in 2.1.129.
+/// Claude Code 2.1.255 includes current gateway alias resolution as well as
+/// the original discovery support introduced in 2.1.129.
 fn claude_gateway_version_supported(output: &str) -> bool {
     output
         .split(|character: char| !(character.is_ascii_digit() || character == '.'))
@@ -143,7 +158,7 @@ pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
         return Ok(());
     }
     Err(ClientError::message(format!(
-        "Claude Code >= 2.1.129 is required for Router gateway model discovery; installed version reports '{}'. Upgrade Claude Code, then restart it to refresh ~/.claude/cache/gateway-models.json",
+        "Claude Code >= 2.1.255 is required for current Router gateway model discovery and aliases; installed version reports '{}'. Upgrade Claude Code, then restart it to refresh ~/.claude/cache/gateway-models.json",
         version.trim()
     )))
 }
@@ -231,9 +246,9 @@ mod tests {
     }
 
     #[test]
-    fn gateway_discovery_requires_claude_code_2_1_129() {
-        assert!(!claude_gateway_version_supported("2.1.128 (Claude Code)"));
-        assert!(claude_gateway_version_supported("2.1.129 (Claude Code)"));
+    fn gateway_discovery_requires_current_claude_alias_support() {
+        assert!(!claude_gateway_version_supported("2.1.252 (Claude Code)"));
+        assert!(claude_gateway_version_supported("2.1.255 (Claude Code)"));
         assert!(claude_gateway_version_supported("Claude Code v2.2.0"));
     }
 }

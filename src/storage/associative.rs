@@ -228,13 +228,20 @@ fn object_field<'a>(
     key: &str,
     context: &str,
 ) -> Result<&'a LinoValue, String> {
+    optional_object_field(value, key, context)?.ok_or_else(|| format!("{context} is missing {key}"))
+}
+
+fn optional_object_field<'a>(
+    value: &'a LinoValue,
+    key: &str,
+    context: &str,
+) -> Result<Option<&'a LinoValue>, String> {
     let LinoValue::Object(fields) = value else {
         return Err(format!("{context} must be an object"));
     };
-    fields
+    Ok(fields
         .iter()
-        .find_map(|(field, value)| (field == key).then_some(value))
-        .ok_or_else(|| format!("{context} is missing {key}"))
+        .find_map(|(field, value)| (field == key).then_some(value)))
 }
 
 fn expect_string_field<'a>(
@@ -286,9 +293,9 @@ fn optional_string_field(
     key: &str,
     context: &str,
 ) -> Result<Option<String>, String> {
-    match object_field(value, key, context)? {
-        LinoValue::Null => Ok(None),
-        LinoValue::String(value) => Ok(Some(value.clone())),
+    match optional_object_field(value, key, context)? {
+        None | Some(LinoValue::Null) => Ok(None),
+        Some(LinoValue::String(value)) => Ok(Some(value.clone())),
         _ => Err(format!("{context}.{key} must be a string or null")),
     }
 }
@@ -344,14 +351,11 @@ fn optional_i64_string_field(
 /// of the semantic links network -- which is what made a read-only `list()` take
 /// seconds while the underlying disk write was a fraction of that (issue #357).
 ///
-/// Writing through the held mapping is also what makes holding it *safe*. The
-/// previous write path built a fresh file and `rename`d it over the old one,
-/// which replaces the inode: a process holding the store would have kept
-/// reading the replaced inode and never seen another process's writes. Mutating
-/// the mapping in place keeps every process pointed at the same inode, and the
-/// mapping is `MAP_SHARED`, so a write is visible to the others as soon as it
-/// lands. Durability is the kernel's: dirty pages are written back on its own
-/// schedule, and the mapping is synced when it is closed.
+/// A rebuild replaces the inode so other processes can detect the changed file
+/// fingerprint and remap; this process keeps the replacement mapping as its
+/// current store. Because that mapping remains open after publication,
+/// [`Self::publish`] explicitly syncs its dirty pages before the transaction
+/// may be considered complete.
 pub(super) struct PersistentStore {
     store: FileStore,
     path: PathBuf,
@@ -476,6 +480,18 @@ impl PersistentStore {
         let Some(temporary) = self.pending.take() else {
             return Ok(());
         };
+        // `write_semantic_links` mutates a MAP_SHARED mapping which stays open
+        // after this method returns. Without an explicit sync, the kernel can
+        // write those pages back later: the dual store then removes its
+        // recovery journal before the binary projection is durable, and its
+        // mtime can move during a subsequent read-only operation. A writable
+        // handle is required for FlushFileBuffers on Windows; on Unix fsync
+        // also flushes dirty pages belonging to this file-backed mapping.
+        OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&temporary)?
+            .sync_all()?;
         if let Ok(metadata) = fs::metadata(&self.path) {
             fs::set_permissions(&temporary, metadata.permissions())?;
         }

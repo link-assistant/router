@@ -4,10 +4,10 @@
 //! (`TOKEN_ADMIN_KEY`). When it is not, and the admin UI is enabled, the first
 //! visitor may *claim* admin. Claiming is deliberately **two-phase**:
 //!
-//! 1. `POST /api/admin/bootstrap` mints a *candidate* token and a `claim_id`.
+//! 1. `POST /api/management/admin/bootstrap` mints a *candidate* token and a `claim_id`.
 //!    The system stays unclaimed and the candidate is not valid for anything.
 //! 2. The client stores the token, reads it back, and calls
-//!    `POST /api/admin/bootstrap/confirm` with the `claim_id`, authenticated
+//!    `POST /api/management/admin/bootstrap/confirm` with the `claim_id`, authenticated
 //!    with the freshly stored token. Presenting the token is the proof that the
 //!    client actually holds it.
 //! 3. Only the confirm activates the token and closes bootstrap.
@@ -31,7 +31,7 @@
 //! Claims written by earlier versions stored a SHA-256 of an opaque
 //! `la_admin_…` value instead. Those keep working (see [`AdminClaim::verify`])
 //! so an upgrade cannot lock an operator out, and `doctor` warns until the
-//! operator rotates them into a JWT with `POST /api/admin/rotate`.
+//! operator rotates them into a JWT with `POST /api/management/admin/rotate`.
 
 use std::fs;
 use std::io;
@@ -150,7 +150,8 @@ pub enum CredentialKind {
     LegacyOpaque,
 }
 
-/// Public view of the admin credential state, used by `GET /api/admin/status`.
+/// Public view of the admin credential state, used by
+/// `GET /api/management/admin/status`.
 ///
 /// The flags are independent facts about the same credential, so they are
 /// reported as flags rather than collapsed into an enum the client would have
@@ -459,7 +460,7 @@ impl AdminClaim {
     ///
     /// The JWT is revoked immediately after issuance. That is what makes phase
     /// one inert: an abandoned candidate is a revoked token everywhere in the
-    /// router — on the admin port, on `/api/tokens*` and on `/v1/*` — instead
+    /// router — on the admin port and under `/api/management/*` — instead
     /// of a live administrator credential nobody confirmed.
     fn mint_candidate(&self, ttl_hours: i64) -> Result<(String, Option<String>), ClaimError> {
         let Some(tokens) = self.issuer() else {

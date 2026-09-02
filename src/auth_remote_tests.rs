@@ -75,7 +75,11 @@ async fn status_reports_the_accounts_of_the_targeted_router() {
         "the router was not asked"
     );
     let seen = handle.await.unwrap();
-    assert!(seen[0].starts_with("GET /v1/accounts"), "{}", seen[0]);
+    assert!(
+        seen[0].starts_with("GET /api/management/accounts"),
+        "{}",
+        seen[0]
+    );
     assert!(
         seen[0].contains("authorization: Bearer admin"),
         "the selected token was not presented: {}",
@@ -98,10 +102,14 @@ async fn authorize_begins_and_completes_the_login_on_the_router() {
     assert_eq!(code, std::process::ExitCode::SUCCESS);
     assert_eq!(requests.load(Ordering::SeqCst), 2);
     let seen = handle.await.unwrap();
-    assert!(seen[0].starts_with("POST /api/login"), "{}", seen[0]);
+    assert!(
+        seen[0].starts_with("POST /api/management/login"),
+        "{}",
+        seen[0]
+    );
     assert!(seen[0].contains("claude"), "{}", seen[0]);
     assert!(
-        seen[1].starts_with("POST /api/login/abc/code"),
+        seen[1].starts_with("POST /api/management/login/abc/code"),
         "the code went somewhere else: {}",
         seen[1]
     );
@@ -168,10 +176,15 @@ async fn an_unauthorised_reply_names_the_remedy() {
     let server = ResolvedServer::at(&origin, None, "test");
 
     let client = reqwest::Client::new();
-    let error =
-        send::<serde_json::Value>(&client, &server, reqwest::Method::GET, "/v1/accounts", None)
-            .await
-            .expect_err("a 401 must be an error");
+    let error = send::<serde_json::Value>(
+        &client,
+        &server,
+        reqwest::Method::GET,
+        "/api/management/accounts",
+        None,
+    )
+    .await
+    .expect_err("a 401 must be an error");
 
     assert!(error.contains("server use"), "{error}");
     assert!(error.contains(&origin), "{error}");
@@ -204,9 +217,13 @@ async fn a_device_flow_is_polled_until_the_router_authorizes_it() {
     assert_eq!(code, std::process::ExitCode::SUCCESS);
     assert_eq!(requests.load(Ordering::SeqCst), 3);
     let seen = handle.await.unwrap();
-    assert!(seen[0].starts_with("POST /api/login"), "{}", seen[0]);
     assert!(
-        seen[1].starts_with("GET /api/login/dev"),
+        seen[0].starts_with("POST /api/management/login"),
+        "{}",
+        seen[0]
+    );
+    assert!(
+        seen[1].starts_with("GET /api/management/login/dev"),
         "the device login was not polled: {}",
         seen[1]
     );
@@ -311,10 +328,15 @@ async fn a_server_error_reports_the_status_and_the_reply() {
     let server = ResolvedServer::at(&origin, Some("admin".into()), "test");
 
     let client = reqwest::Client::new();
-    let error =
-        send::<serde_json::Value>(&client, &server, reqwest::Method::GET, "/v1/accounts", None)
-            .await
-            .expect_err("a 503 must be an error");
+    let error = send::<serde_json::Value>(
+        &client,
+        &server,
+        reqwest::Method::GET,
+        "/api/management/accounts",
+        None,
+    )
+    .await
+    .expect_err("a 503 must be an error");
 
     assert!(error.contains("503"), "{error}");
     assert!(error.contains("still booting"), "{error}");
@@ -328,10 +350,15 @@ async fn an_unreadable_reply_is_an_error() {
     let server = ResolvedServer::at(origin, Some("admin".into()), "test");
 
     let client = reqwest::Client::new();
-    let error =
-        send::<serde_json::Value>(&client, &server, reqwest::Method::GET, "/v1/accounts", None)
-            .await
-            .expect_err("an unreadable reply must be an error");
+    let error = send::<serde_json::Value>(
+        &client,
+        &server,
+        reqwest::Method::GET,
+        "/api/management/accounts",
+        None,
+    )
+    .await
+    .expect_err("an unreadable reply must be an error");
 
     assert!(error.contains("could not read the reply"), "{error}");
 }
@@ -661,7 +688,7 @@ async fn accounts_reads_the_route_the_selected_port_serves() {
     assert_eq!(request_count.load(Ordering::SeqCst), 1);
     let seen = handle.await.expect("the server task");
     assert!(
-        seen[0].starts_with("GET /v1/accounts"),
+        seen[0].starts_with("GET /api/management/accounts"),
         "the admin-port spelling 404s on this listener: {}",
         seen[0]
     );

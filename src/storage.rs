@@ -359,13 +359,7 @@ impl TextTokenStore {
         }
         let (records, migrated) = if path.exists() {
             let contents = fs::read_to_string(&path)?;
-            match associative::decode_text(&contents) {
-                Ok(records) => (records, false),
-                Err(_) => (
-                    legacy::decode_text(&contents).map_err(StorageError::Codec)?,
-                    true,
-                ),
-            }
+            decode_text_records(&contents).map_err(StorageError::Codec)?
         } else {
             (Vec::new(), false)
         };
@@ -394,9 +388,7 @@ impl TextTokenStore {
             return Ok(HashMap::new());
         }
         let contents = fs::read_to_string(&self.path)?;
-        let records = associative::decode_text(&contents)
-            .or_else(|_| legacy::decode_text(&contents))
-            .map_err(StorageError::Codec)?;
+        let (records, _) = decode_text_records(&contents).map_err(StorageError::Codec)?;
         Ok(records
             .into_iter()
             .map(|record| (record.id.clone(), record))
@@ -439,6 +431,30 @@ impl TextTokenStore {
             );
         })
     }
+}
+
+fn decode_text_records(contents: &str) -> Result<(Vec<TokenRecord>, bool), String> {
+    match associative::decode_text(contents) {
+        Ok(records) => Ok((records, false)),
+        Err(associative_error) => match legacy::decode_text(contents) {
+            Ok(records) => Ok((records, true)),
+            Err(legacy_error) => Err(format!(
+                "associative decoder: {}; legacy decoder: {}",
+                sanitize_codec_error(&associative_error, contents),
+                sanitize_codec_error(&legacy_error, contents)
+            )),
+        },
+    }
+}
+
+fn sanitize_codec_error(error: &str, contents: &str) -> String {
+    contents
+        .lines()
+        .map(str::trim)
+        .filter(|line| line.len() >= 8)
+        .fold(error.to_string(), |message, line| {
+            message.replace(line, "<redacted input>")
+        })
 }
 
 impl TokenStore for TextTokenStore {

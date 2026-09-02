@@ -405,7 +405,23 @@ impl TemporaryClient {
             ClientKind::ClaudeCode => {
                 // Emptied rather than left alone: an inherited API key
                 // outranks the auth token, so the run would leave the router.
-                command.env("ANTHROPIC_API_KEY", "");
+                command
+                    .env("ANTHROPIC_API_KEY", "")
+                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
+                    .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+                // Persistent tools commonly pin these families in the public
+                // settings file. Empty process values keep a managed launch
+                // on Router's live catalog unless the user supplied a model
+                // explicitly on the command line.
+                for key in [
+                    "ANTHROPIC_MODEL",
+                    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+                    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+                    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+                    "CLAUDE_CODE_SUBAGENT_MODEL",
+                ] {
+                    command.env(key, "");
+                }
             }
             ClientKind::GeminiCli => {
                 // `GEMINI_CLI_TRUST_WORKSPACE` is deliberately not set here.
@@ -417,9 +433,10 @@ impl TemporaryClient {
                 command.env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key");
             }
             ClientKind::QwenCode => {
-                command
-                    .env("OPENAI_API_KEY", token)
-                    .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"));
+                command.env("OPENAI_API_KEY", token).env(
+                    "OPENAI_BASE_URL",
+                    endpoint(base_url, integration.endpoint_suffix),
+                );
                 // Qwen Code reads its model from the environment and cannot
                 // start without one, so this is the client's requirement.
                 if let Some(model) = model_override {
@@ -481,7 +498,10 @@ fn append_codex_router_overrides(command: &mut Command, base_url: &str) -> Resul
         ),
         (
             "model_providers.link-assistant.base_url",
-            endpoint(base_url, "/v1"),
+            endpoint(
+                base_url,
+                crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+            ),
         ),
         (
             "model_providers.link-assistant.env_key",

@@ -132,11 +132,11 @@ impl Router {
     /// Wait for *this* router, reporting whether it is the one answering.
     ///
     /// A router replying on the port is not necessarily this one: a sibling
-    /// binary that won the race answers `/health` just the same. A child that
+    /// binary that won the race answers `/api/health` just the same. A child that
     /// lost exits, so its liveness is what tells the two apart (issue #368).
     fn await_health(&mut self) -> bool {
         let deadline = Instant::now() + Duration::from_secs(30);
-        let url = format!("http://127.0.0.1:{}/health", self.port);
+        let url = format!("http://127.0.0.1:{}/api/health", self.port);
         while Instant::now() < deadline {
             match self.child.try_wait() {
                 Ok(Some(_)) => return false,

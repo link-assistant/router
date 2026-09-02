@@ -19,12 +19,12 @@ subscription usage inside Codex"*.
 Codex CLI speaks the OpenAI **Responses** API and nothing else — the
 [Codex config reference](https://learn.chatgpt.com/docs/config-file/config-reference)
 states that `responses` is the only supported value of `wire_api`. The router
-serves `/v1/responses`, translates the request into Anthropic Messages, calls
+serves `/api/services/codex/v1/responses`, translates the request into Anthropic Messages, calls
 `api.anthropic.com` with the Claude MAX OAuth token it holds, and translates the
 answer — including SSE — back into Responses events.
 
 ```
-Codex CLI ──POST /v1/responses (Bearer la_sk_…)──► router ──Anthropic Messages
+Codex CLI ──POST /api/services/codex/v1/responses (Bearer la_sk_…)──► router ──Anthropic Messages
                                                             (Bearer OAuth)──► api.anthropic.com
 ```
 
@@ -94,7 +94,7 @@ model = "gpt-5"
 
 [model_providers.link-assistant]
 name = "Link.Assistant.Router"
-base_url = "http://127.0.0.1:8080/v1"
+base_url = "http://127.0.0.1:8080/api/services/codex/v1"
 env_key = "LINK_ASSISTANT_TOKEN"
 wire_api = "responses"
 ```
@@ -109,42 +109,31 @@ codex "explain this repository"
 Notes on this configuration:
 
 - `wire_api = "responses"` is required. Chat Completions is not an option for
-  Codex, which is why the router's `/v1/responses` endpoint (and its
+  Codex, which is why the router's `/api/services/codex/v1/responses` endpoint (and its
   `response.created` / `response.output_text.delta` / `response.completed` SSE
   events) is the integration point.
 - Built-in provider ids (`openai`, `ollama`, `lmstudio`) cannot be overridden —
   use a new id such as `link-assistant`.
 - `env_key` names an environment variable, so each task can export a different
   `la_sk_…` token against the same config file.
-- `/api/codex/v1/responses` is an equivalent namespaced alias if you prefer an
-  explicit path.
+- `/api/services/codex/v1/responses` is the only public Codex Responses path.
 
 ## 5. Model names
 
-Codex will send an OpenAI model id. The router maps it to a Claude tier:
+Codex sends the exact model selected from its authenticated client catalog.
+Automatic mode routes only an unambiguous live identity; it never maps a
+familiar spelling to a source-code tier. Cross-provider use must select an
+operator bridge policy that resolves against the healthy account's current
+catalog. If no compatible model is available, Router returns a local selection
+error and makes no upstream request.
 
-This compatibility alias table applies when the router is explicitly pinned to
-Anthropic. In automatic multi-subscription mode, the live catalogs own model
-attribution, so an OpenAI-shaped name cannot silently select Claude.
-
-| Requested | Served by |
-| --- | --- |
-| `gpt-4o-mini`, `gpt-4-mini` | Claude Haiku |
-| `o1`, `o1-pro`, `o3`, `o4`, `gpt-5` | Claude Opus |
-| `gpt-4`, `gpt-4-turbo`, `gpt-4o` | Claude Sonnet |
-| `claude-…` | passed through unchanged |
-| anything else | rejected with `404 not_found_error` |
-
-If you want an exact model, set `model = "claude-sonnet-4-5-20250929"` in
-`config.toml` — Claude-native ids pass through untouched.
-
-The `model` field in successful buffered and streaming responses contains the
-resolved Claude model id, not the OpenAI alias from the request.
+The audit record preserves requested, resolved, provider and canonical upstream
+identity. The upstream receives its original catalog identifier.
 
 ## 6. Verify without the CLI
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/responses \
+curl -s http://127.0.0.1:8080/api/services/codex/v1/responses \
   -H "Authorization: Bearer $LINK_ASSISTANT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-5","input":"say hello in five words"}' | jq .
@@ -153,7 +142,7 @@ curl -s http://127.0.0.1:8080/v1/responses \
 A streaming check:
 
 ```bash
-curl -sN http://127.0.0.1:8080/v1/responses \
+curl -sN http://127.0.0.1:8080/api/services/codex/v1/responses \
   -H "Authorization: Bearer $LINK_ASSISTANT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-5","input":"count to three","stream":true}'

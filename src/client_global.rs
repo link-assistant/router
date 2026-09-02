@@ -26,6 +26,36 @@ struct BackupState {
     setup_backup: Option<PathBuf>,
 }
 
+/// Existing `with --global` undo state is part of a repair transaction. A
+/// repair must either advance its edit guard or restore it with everything
+/// else, otherwise a later undo falsely reports the router's own repair as a
+/// user edit.
+pub(crate) fn undo_state_path(config_path: &Path) -> PathBuf {
+    backup_paths(config_path).state
+}
+
+pub(crate) fn update_post_configure_hash(
+    config_path: &Path,
+    marker_path: Option<&Path>,
+) -> Result<(), AnyError> {
+    let path = undo_state_path(config_path);
+    let source = match fs::read(&path) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.into()),
+    };
+    let mut state: BackupState = crate::lino_json::decode(&String::from_utf8_lossy(&source))?;
+    state.config_hash_after_setup = digest(&fs::read(config_path).unwrap_or_default());
+    state.marker_hash_after_setup = marker_path
+        .and_then(|path| fs::read(path).ok())
+        .map(|contents| digest(&contents));
+    crate::durable_file::atomic_write_owner_only(
+        &path,
+        crate::lino_json::encode(&state)?.as_bytes(),
+    )?;
+    Ok(())
+}
+
 /// Write the router into the client's own configuration, reversibly.
 ///
 /// Returns the path that was written. Nothing is printed here: the caller

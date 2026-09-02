@@ -469,7 +469,7 @@ pub fn deletion_note(secret_ttl: Duration) -> String {
 /// The live router behind `/status`: upstream, account health, usage.
 ///
 /// Deliberately read-only and free of secrets — it repeats what `doctor`,
-/// `/v1/accounts` and `/v1/usage` already report.
+/// `/api/management/accounts` and `/api/management/usage` already report.
 impl RouterStatus for crate::app_state::AppState {
     fn status_lines(&self) -> Vec<String> {
         let usage = crate::metrics::usage_snapshot(&self.metrics);

@@ -36,7 +36,7 @@ fn signed_in_chat(tokens: TokenManager) -> ChatAdmin {
 async fn issue_over_http(router: &TestRouter, body: Value) -> Value {
     let response = router
         .client
-        .post(format!("{}/api/tokens", router.url))
+        .post(format!("{}/api/management/tokens", router.url))
         .bearer_auth(ADMIN_KEY)
         .json(&body)
         .send()
@@ -91,7 +91,7 @@ async fn every_surface_rejects_the_same_invalid_constraints() {
     ] {
         let response = router
             .client
-            .post(format!("{}/api/tokens", router.url))
+            .post(format!("{}/api/management/tokens", router.url))
             .bearer_auth(ADMIN_KEY)
             .json(&body)
             .send()
@@ -159,7 +159,7 @@ async fn generic_tokens_from_chat_and_http_cannot_spend_a_consumer_subscription(
     for token in [&chat_token, &http_token] {
         let response = router
             .client
-            .post(format!("{}/v1/messages", router.url))
+            .post(format!("{}/api/services/anthropic/v1/messages", router.url))
             .bearer_auth(token)
             .header("anthropic-version", "2023-06-01")
             .json(&body)
@@ -216,7 +216,10 @@ async fn rotation_preserves_constraints_and_revokes_the_old_value() {
 
     let response = router
         .client
-        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .post(format!(
+            "{}/api/management/tokens/rotate-client",
+            router.url
+        ))
         .bearer_auth(ADMIN_KEY)
         .json(&json!({"id": original_id}))
         .send()
@@ -249,7 +252,7 @@ async fn rotation_preserves_constraints_and_revokes_the_old_value() {
     // The revoked value stops working immediately.
     let refused = router
         .client
-        .post(format!("{}/v1/messages", router.url))
+        .post(format!("{}/api/services/anthropic/v1/messages", router.url))
         .bearer_auth(issued["token"].as_str().expect("original token"))
         .json(&json!({
             "model": "claude-sonnet-4-5",
@@ -274,7 +277,10 @@ async fn rotation_rejects_unknown_ids_and_admin_credentials() {
 
     let unknown = router
         .client
-        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .post(format!(
+            "{}/api/management/tokens/rotate-client",
+            router.url
+        ))
         .bearer_auth(ADMIN_KEY)
         .json(&json!({"id": "no-such-token-id"}))
         .send()
@@ -294,7 +300,10 @@ async fn rotation_rejects_unknown_ids_and_admin_credentials() {
         .expect("issue admin token");
     let refused = router
         .client
-        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .post(format!(
+            "{}/api/management/tokens/rotate-client",
+            router.url
+        ))
         .bearer_auth(ADMIN_KEY)
         .json(&json!({"id": admin_id}))
         .send()
@@ -306,7 +315,7 @@ async fn rotation_rejects_unknown_ids_and_admin_credentials() {
             .text()
             .await
             .expect("body")
-            .contains("/api/tokens/rotate")
+            .contains("/api/management/tokens/rotate")
     );
 }
 
@@ -315,8 +324,8 @@ async fn rotation_rejects_unknown_ids_and_admin_credentials() {
 async fn the_token_endpoints_require_an_admin_credential() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     for (path, body) in [
-        ("/api/tokens", json!({"label": "x"})),
-        ("/api/tokens/rotate-client", json!({"id": "x"})),
+        ("/api/management/tokens", json!({"label": "x"})),
+        ("/api/management/tokens/rotate-client", json!({"id": "x"})),
     ] {
         let response = router
             .client
@@ -353,7 +362,10 @@ async fn rotation_applies_explicit_overrides() {
 
     let response = router
         .client
-        .post(format!("{}/api/tokens/rotate-client", router.url))
+        .post(format!(
+            "{}/api/management/tokens/rotate-client",
+            router.url
+        ))
         .bearer_auth(ADMIN_KEY)
         .json(&json!({"id": id, "max_tokens": 9_000, "label": "renamed"}))
         .send()
@@ -440,7 +452,7 @@ async fn listing_reports_every_constraint_and_counter() {
 
     let response = router
         .client
-        .get(format!("{}/api/tokens/list", router.url))
+        .get(format!("{}/api/management/tokens", router.url))
         .bearer_auth(ADMIN_KEY)
         .send()
         .await

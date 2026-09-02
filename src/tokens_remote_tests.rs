@@ -24,7 +24,7 @@ fn token_op(args: &[&str]) -> TokenOp {
 fn rotate_targets_the_named_token_not_the_callers_credential() {
     let call = call_for(&token_op(&["router", "tokens", "rotate", "tok-1"]));
 
-    assert_eq!(call.path, "/api/tokens/rotate-client");
+    assert_eq!(call.path, "/api/management/tokens/rotate-client");
     assert_eq!(call.method, "POST");
     let body = call.body.expect("a rotate carries a body");
     assert_eq!(
@@ -97,7 +97,7 @@ fn revoke_and_expire_are_one_operation() {
     let expire = call_for(&token_op(&["router", "tokens", "expire", "tok-9"]));
 
     assert_eq!(revoke, expire);
-    assert_eq!(revoke.path, "/api/tokens/revoke");
+    assert_eq!(revoke.path, "/api/management/tokens/revoke");
     assert_eq!(revoke.body.expect("body")["id"], "tok-9");
 }
 
@@ -108,7 +108,7 @@ fn show_reads_the_list_rather_than_a_route_of_its_own() {
     let show = call_for(&token_op(&["router", "tokens", "show", "tok-1"]));
 
     assert_eq!(list.method, "GET");
-    assert_eq!(list.path, "/api/tokens/list");
+    assert_eq!(list.path, "/api/management/tokens");
     assert_eq!(show, list, "show filters the list");
     assert!(list.body.is_none(), "a GET carries no body");
 }
@@ -194,7 +194,10 @@ async fn a_remote_issue_prints_the_token_the_deployment_minted() {
         format!("{:?}", std::process::ExitCode::SUCCESS)
     );
     let request = handle.await.expect("the server task");
-    assert!(request.starts_with("POST /api/tokens"), "{request}");
+    assert!(
+        request.starts_with("POST /api/management/tokens"),
+        "{request}"
+    );
     assert!(request.contains(r#""label":"ci""#), "{request}");
 }
 

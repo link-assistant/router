@@ -14,11 +14,11 @@ In both cases the human opens the returned URL and approves access.
 
 | Request | Does |
 | --- | --- |
-| `POST /api/login` | Starts Claude by default; `{"provider":"codex"}` requests a Codex device code without binding a port |
+| `POST /api/management/login` | Starts Claude by default; `{"provider":"codex"}` requests a Codex device code without binding a port |
 | *(human)* | Opens that URL and approves; Claude displays a code to copy, while Codex asks for the returned `user_code` |
-| `POST /api/login/{id}/code` | Claude only: exchanges the copied code with the session's PKCE verifier |
-| `GET /api/login/{id}` | Reports `awaiting_code`, `awaiting_device`, `authorized`, `failed` or `expired` |
-| `DELETE /api/login/{id}` | Cancels a pending login and kills its process |
+| `POST /api/management/login/{id}/code` | Claude only: exchanges the copied code with the session's PKCE verifier |
+| `GET /api/management/login/{id}` | Reports `awaiting_code`, `awaiting_device`, `authorized`, `failed` or `expired` |
+| `DELETE /api/management/login/{id}` | Cancels a pending login and kills its process |
 
 The middle step can take minutes, so the PKCE verifier created by the first
 request must outlive it. The router keeps that secret in a bounded session
@@ -36,7 +36,7 @@ $ docker run -d -p 8080:8080 \
 Nothing is authorized yet — `/data/claude` is empty. Start a login:
 
 ```console
-$ curl -s -X POST http://localhost:8080/api/login \
+$ curl -s -X POST http://localhost:8080/api/management/login \
     -H "Authorization: Bearer $ADMIN"
 {
   "login_id": "3f2b…",
@@ -49,7 +49,7 @@ $ curl -s -X POST http://localhost:8080/api/login \
 Open that URL, approve, and hand the code back to the same session:
 
 ```console
-$ curl -s -X POST http://localhost:8080/api/login/3f2b…/code \
+$ curl -s -X POST http://localhost:8080/api/management/login/3f2b…/code \
     -H "Authorization: Bearer $ADMIN" \
     -H 'content-type: application/json' \
     -d '{"code":"abc123#xyz"}'
@@ -58,14 +58,14 @@ $ curl -s -X POST http://localhost:8080/api/login/3f2b…/code \
 
 The deployment is now authorized: the credential is written into
 `CLAUDE_CODE_HOME` in the layout the proxy reads, and the proxy's cached token
-is refreshed, so the very next `/v1/messages` request works without a restart.
+is refreshed, so the very next `/api/services/anthropic/v1/messages` request works without a restart.
 
 ### Codex / ChatGPT
 
 Start a provider-aware Codex device session:
 
 ```console
-$ curl -s -X POST http://localhost:8080/api/login \
+$ curl -s -X POST http://localhost:8080/api/management/login \
     -H "Authorization: Bearer $ADMIN" \
     -H 'content-type: application/json' \
     -d '{"provider":"codex"}'
@@ -87,7 +87,7 @@ works unchanged in Docker, over SSH and on headless hosts.
 Polling is available for clients that would rather not block:
 
 ```console
-$ curl -s http://localhost:8080/api/login/3f2b… -H "Authorization: Bearer $ADMIN"
+$ curl -s http://localhost:8080/api/management/login/3f2b… -H "Authorization: Bearer $ADMIN"
 {"login_id":"3f2b…","status":"awaiting_code","url":"https://claude.com/…", …}
 ```
 
@@ -110,7 +110,7 @@ $ curl -s http://localhost:8080/api/login/3f2b… -H "Authorization: Bearer $ADM
 | Setting | Default | Why it exists |
 | --- | --- | --- |
 | `--login-session-ttl-secs` / `LOGIN_SESSION_TTL_SECS` | `900` | A human opening a browser is slow; a process parked forever is a leak. Generous, but bounded. |
-| `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Bounds retained PKCE state. Beyond the cap, `POST /api/login` is `429`. |
+| `--login-max-sessions` / `LOGIN_MAX_SESSIONS` | `4` | Bounds retained PKCE state. Beyond the cap, `POST /api/management/login` is `429`. |
 
 A session's retained state is dropped and its slot freed on **every** terminal
 path: success, failure, `DELETE`, and TTL expiry. Cancelling is the polite way to
@@ -120,7 +120,7 @@ free a slot early.
 
 These endpoints start a process inside your deployment, so they are **admin**
 endpoints: they require an admin credential as a Bearer token, exactly like
-`/api/tokens/list` — either an admin-scoped `la_sk_…` token or the flat
+`/api/management/tokens` — either an admin-scoped `la_sk_…` token or the flat
 `TOKEN_ADMIN_KEY`. They are closed when neither is presented; see
 [self-hosting.md](self-hosting.md) for how to obtain one.
 
@@ -152,7 +152,7 @@ long-lived credential intended for non-interactive consumers is preferable.
 The mode is selectable **per request**, so a single running router serves both:
 
 ```bash
-curl -X POST http://localhost:8080/api/login \
+curl -X POST http://localhost:8080/api/management/login \
   -H 'content-type: application/json' \
   -d '{"provider":"claude","mode":"setup-token"}'
 
@@ -200,7 +200,7 @@ OAuth state; the listener closes on success, denial, timeout and cancellation.
 ## Requirements
 
 * **No vendor CLI must exist in the image.** Native Claude OAuth is the only
-  path used by `POST /api/login`, in both the full and `setup-token` modes. The
+  path used by `POST /api/management/login`, in both the full and `setup-token` modes. The
   image carries bun, which downloads a current CLI package into a disposable
   directory only when the foreground `--flow cli` fallback is explicitly asked
   for.

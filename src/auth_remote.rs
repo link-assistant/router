@@ -135,7 +135,7 @@ async fn authorize_inner(
         &client,
         server,
         reqwest::Method::POST,
-        "/api/login",
+        crate::route_contract::route_template(crate::route_contract::RouteId::Login),
         Some(body),
     )
     .await?;
@@ -180,7 +180,8 @@ async fn authorize_inner(
         &client,
         server,
         reqwest::Method::POST,
-        &format!("/api/login/{login_id}/code"),
+        &crate::route_contract::route_template(crate::route_contract::RouteId::LoginCode)
+            .replace("{id}", &login_id),
         Some(serde_json::json!({ "code": submitted })),
     )
     .await?;
@@ -208,7 +209,8 @@ async fn poll_until_authorized(
             client,
             server,
             reqwest::Method::GET,
-            &format!("/api/login/{login_id}"),
+            &crate::route_contract::route_template(crate::route_contract::RouteId::LoginSession)
+                .replace("{id}", login_id),
             None,
         )
         .await?;
@@ -251,8 +253,14 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    match send::<serde_json::Value>(&client, server, reqwest::Method::GET, "/v1/accounts", None)
-        .await
+    match send::<serde_json::Value>(
+        &client,
+        server,
+        reqwest::Method::GET,
+        crate::route_contract::route_template(crate::route_contract::RouteId::Accounts),
+        None,
+    )
+    .await
     {
         Ok(body) => {
             println!("server: {} ({})", server.base_url, server.source);
@@ -282,9 +290,15 @@ pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<
         .timeout(REQUEST_TIMEOUT)
         .build()
         .ok()?;
-    let body: serde_json::Value = send(&client, server, reqwest::Method::GET, "/v1/accounts", None)
-        .await
-        .ok()?;
+    let body: serde_json::Value = send(
+        &client,
+        server,
+        reqwest::Method::GET,
+        crate::route_contract::route_template(crate::route_contract::RouteId::Accounts),
+        None,
+    )
+    .await
+    .ok()?;
     home_in_accounts(&body, provider)
 }
 
@@ -294,10 +308,12 @@ pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<
 /// renders the same columns from the same field names rather than growing a
 /// second format an operator would have to reconcile.
 pub async fn accounts(server: &ResolvedServer) -> ExitCode {
-    // `/v1/accounts` on the proxy listener, which is the port `ResolvedServer`
-    // names. `/api/admin/accounts` is the admin listener's spelling of the same
-    // handler and 404s here.
-    match get(server, "/v1/accounts").await {
+    match get(
+        server,
+        crate::route_contract::route_template(crate::route_contract::RouteId::Accounts),
+    )
+    .await
+    {
         Ok(body) => {
             println!("server: {} ({})", server.base_url, server.source);
             report_credentials(&body);
@@ -363,7 +379,7 @@ fn http_client() -> Result<reqwest::Client, String> {
 /// The lines an operator reads, built here rather than at the call site so the
 /// wording is asserted directly. Import installs into the credential home of
 /// the executing machine, and no endpoint accepts a credential document —
-/// `/api/login` begins an interactive OAuth flow and `submit_code` takes a
+/// `/api/management/login` begins an interactive OAuth flow and `submit_code` takes a
 /// short-lived code, neither of which adopts a credential that already exists.
 ///
 /// `home` names the directory that router reads from, when it reports one:
@@ -390,7 +406,7 @@ pub fn remote_import_refusal(base_url: &str, home: Option<&str>) -> Vec<String> 
     lines
 }
 
-/// The home a `/v1/accounts` body reports for `provider`, if it names one.
+/// The home an `/api/management/accounts` body reports for `provider`, if it names one.
 ///
 /// Split from the request so the shape-handling can be asserted without a
 /// server: single-account deployments report under `credentials` and pooled

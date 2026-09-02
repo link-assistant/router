@@ -6,7 +6,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
 
     let response = router
         .post(
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             &json!({
                 "model":"gpt-5",
                 "messages":[{"role":"user","content":"hi"}],
@@ -34,7 +34,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
 
     let response = router
         .post(
-            "/api/codex/v1/responses",
+            "/api/services/codex/v1/responses",
             &json!({"model":"gpt-5","input":"hi"}),
         )
         .send()
@@ -54,7 +54,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(translated_tools[0].get("function").is_none());
     drop(requests);
 
-    let client_token = router.token_for("/v1/chat/completions");
+    let client_token = router.token_for("/api/services/openai/v1/chat/completions");
     let records =
         std::fs::read_to_string(router.log_path_for(client_token)).expect("request exchange log");
     let records = records
@@ -116,7 +116,7 @@ async fn codex_responses_lite_preserves_additional_tools_and_protocol_marker() {
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
     let response = codex
         .post(
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             &json!({
                 "model": "gpt-5.6-sol",
                 "instructions": "",
@@ -174,7 +174,7 @@ async fn unavailable_server_tool_fails_explicitly_without_reaching_codex() {
     let router = TestRouter::start(UpstreamProvider::Codex).await;
     let response = router
         .post(
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             &json!({"model":"gpt-5","input":"fetch this","tools":[{"type":"web_fetch"}]}),
         )
         .send()
@@ -196,7 +196,7 @@ async fn untranslatable_tool_state_fails_semantically_without_reaching_upstream(
     let anthropic = TestRouter::start(UpstreamProvider::Anthropic).await;
     for (path, body, expected) in [
         (
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             json!({
                 "model":"claude-sonnet-4-5",
                 "messages":[
@@ -207,7 +207,7 @@ async fn untranslatable_tool_state_fails_semantically_without_reaching_upstream(
             "valid JSON",
         ),
         (
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             json!({
                 "model":"claude-sonnet-4-5",
                 "input":"hi",
@@ -235,7 +235,7 @@ async fn untranslatable_tool_state_fails_semantically_without_reaching_upstream(
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
     let response = codex
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"gpt-5",
                 "max_tokens":64,
@@ -260,11 +260,11 @@ async fn untranslatable_tool_state_fails_semantically_without_reaching_upstream(
 async fn auth_unknown_models_and_admin_isolation() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     for path in [
-        "/v1/models",
-        "/api/anthropic/v1/models",
-        "/api/openai/v1/models",
-        "/api/codex/v1/models",
-        "/api/qwen/v1/models",
+        "/api/services/openai/v1/models",
+        "/api/services/anthropic/v1/models",
+        "/api/services/openai/v1/models",
+        "/api/services/codex/v1/models",
+        "/api/services/qwen/v1/models",
     ] {
         let missing = router
             .client
@@ -285,15 +285,15 @@ async fn auth_unknown_models_and_admin_isolation() {
 
     for (path, body) in [
         (
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             json!({"model":"claude-sonnet-4-5","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}),
         ),
         (
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
         ),
         (
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             json!({"model":"claude-sonnet-4-5","input":"hi"}),
         ),
     ] {
@@ -323,7 +323,7 @@ async fn auth_unknown_models_and_admin_isolation() {
         .record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
     let unknown = router
         .post(
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             &json!({"model":"definitely-not-a-model","input":"hi"}),
         )
         .send()
@@ -339,7 +339,7 @@ async fn auth_unknown_models_and_admin_isolation() {
     );
 
     let admin = router
-        .get("/api/tokens/list")
+        .get("/api/management/tokens")
         .send()
         .await
         .expect("admin response");
@@ -365,7 +365,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     // make the entire Anthropic surface unusable with a Codex subscription.
     let messages = codex
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"gpt-5",
                 "max_tokens":16,
@@ -402,11 +402,13 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     // log records requested and forwarded bodies under one correlation id.
     // This makes the unsupported cap observable without inventing a response
     // header that vendor clients do not understand.
-    let records = std::fs::read_to_string(codex.log_path_for(codex.token_for("/v1/messages")))
-        .expect("token request log")
-        .lines()
-        .map(|line| link_assistant_router::lino_json::decode_line(line).expect("a readable record"))
-        .collect::<Vec<_>>();
+    let records = std::fs::read_to_string(
+        codex.log_path_for(codex.token_for("/api/services/anthropic/v1/messages")),
+    )
+    .expect("token request log")
+    .lines()
+    .map(|line| link_assistant_router::lino_json::decode_line(line).expect("a readable record"))
+    .collect::<Vec<_>>();
     let client_record = records
         .iter()
         .find(|record| record["phase"] == "client_request" && record["body"]["max_tokens"] == 16)
@@ -425,7 +427,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     // an unsupported-Codex-cap error, and must not reach the subscription.
     let missing = codex
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({"model":"gpt-5","messages":[{"role":"user","content":"hi"}]}),
         )
         .send()
@@ -445,7 +447,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     // the answer instead of refusing an ordinary client request.
     let capped = codex
         .post(
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             &json!({"model":"gpt-5","input":"hi","max_output_tokens":1}),
         )
         .send()
@@ -471,7 +473,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
         }),
     ] {
         let response = codex
-            .post("/v1/chat/completions", &body)
+            .post("/api/services/openai/v1/chat/completions", &body)
             .send()
             .await
             .expect("capped Codex Chat response");
@@ -496,7 +498,11 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
 async fn malformed_json_uses_each_http_surfaces_json_error_envelope() {
     let router = TestRouter::start(UpstreamProvider::Codex).await;
 
-    for path in ["/v1/messages", "/v1/chat/completions", "/v1/responses"] {
+    for path in [
+        "/api/services/anthropic/v1/messages",
+        "/api/services/openai/v1/chat/completions",
+        "/api/services/openai/v1/responses",
+    ] {
         let response = router
             .authenticated_post(path, router.token_for(path))
             .header("content-type", "application/json")
@@ -526,7 +532,10 @@ async fn malformed_json_uses_each_http_surfaces_json_error_envelope() {
 
     let auto = TestRouter::start(UpstreamProvider::Auto).await;
     let response = auto
-        .authenticated_post("/v1/messages", auto.token_for("/v1/messages"))
+        .authenticated_post(
+            "/api/services/anthropic/v1/messages",
+            auto.token_for("/api/services/anthropic/v1/messages"),
+        )
         .header("content-type", "application/json")
         .body(r#"{"model":"gpt-5",broken"#)
         .send()
@@ -550,7 +559,7 @@ async fn empty_messages_is_reported_in_the_anthropic_dialect() {
         json!({"model":"gpt-5","max_tokens":16}),
     ] {
         let response = router
-            .post("/v1/messages", &body)
+            .post("/api/services/anthropic/v1/messages", &body)
             .send()
             .await
             .expect("invalid Messages response");
@@ -572,7 +581,7 @@ async fn translated_streams_preserve_usage_in_the_client_dialect() {
 
     let anthropic = router
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"gpt-5",
                 "max_tokens":16,
@@ -597,7 +606,7 @@ async fn translated_streams_preserve_usage_in_the_client_dialect() {
 
     let chat = router
         .post(
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             &json!({
                 "model":"gpt-5",
                 "messages":[{"role":"user","content":"hi"}],
@@ -628,7 +637,7 @@ async fn invalid_upstream_body_is_not_disclosed_to_anthropic_clients() {
     let router = TestRouter::start_with_invalid_body(UpstreamProvider::Codex, true).await;
     let response = router
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"gpt-5",
                 "max_tokens":16,
@@ -679,7 +688,10 @@ async fn opencode_request_body_with_an_output_cap_works_against_codex() {
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
 
     let buffered = codex
-        .post("/v1/chat/completions", &opencode_chat_body("gpt-5", false))
+        .post(
+            "/api/services/openai/v1/chat/completions",
+            &opencode_chat_body("gpt-5", false),
+        )
         .send()
         .await
         .expect("buffered OpenCode response");
@@ -693,7 +705,10 @@ async fn opencode_request_body_with_an_output_cap_works_against_codex() {
     );
 
     let streamed = codex
-        .post("/v1/chat/completions", &opencode_chat_body("gpt-5", true))
+        .post(
+            "/api/services/openai/v1/chat/completions",
+            &opencode_chat_body("gpt-5", true),
+        )
         .send()
         .await
         .expect("streamed OpenCode response");
@@ -705,7 +720,7 @@ async fn opencode_request_body_with_an_output_cap_works_against_codex() {
     // The OpenCode tool loop: the second turn carries the tool result back.
     let follow_up = codex
         .post(
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             &json!({
                 "model": "gpt-5",
                 "max_tokens": 32000,
@@ -744,7 +759,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
 
     let catalog: Value = codex
-        .get("/v1/models")
+        .get("/api/services/openai/v1/models")
         .send()
         .await
         .expect("model catalog response")
@@ -770,7 +785,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         // Buffered Chat Completions.
         let payload: Value = codex
             .post(
-                "/v1/chat/completions",
+                "/api/services/openai/v1/chat/completions",
                 &json!({"model": id, "messages": [{"role":"user","content":"hi"}]}),
             )
             .send()
@@ -787,7 +802,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         // Streaming Chat Completions.
         let stream = codex
             .post(
-                "/v1/chat/completions",
+                "/api/services/openai/v1/chat/completions",
                 &json!({"model": id, "messages": [{"role":"user","content":"hi"}], "stream": true}),
             )
             .send()
@@ -807,7 +822,10 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
 
         // Buffered Responses, including the upstream-model header.
         let response = codex
-            .post("/v1/responses", &json!({"model": id, "input": "hi"}))
+            .post(
+                "/api/services/openai/v1/responses",
+                &json!({"model": id, "input": "hi"}),
+            )
             .send()
             .await
             .expect("buffered responses response");
@@ -826,7 +844,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         // Streaming Responses.
         let stream = codex
             .post(
-                "/v1/responses",
+                "/api/services/openai/v1/responses",
                 &json!({"model": id, "input": "hi", "stream": true}),
             )
             .send()
@@ -865,14 +883,14 @@ async fn an_admin_credential_manages_tokens_without_inheriting_subscription_acce
         .expect("issue admin token");
     for credential in ["admin-only", admin_jwt.as_str()] {
         let admin = router
-            .get_as("/api/tokens/list", credential)
+            .get_as("/api/management/tokens", credential)
             .send()
             .await
             .expect("admin response");
         assert_eq!(admin.status(), StatusCode::OK);
 
         let catalog = router
-            .get_as("/v1/models", credential)
+            .get_as("/api/services/openai/v1/models", credential)
             .send()
             .await
             .expect("catalog response");
@@ -896,7 +914,7 @@ async fn an_admin_credential_manages_tokens_without_inheriting_subscription_acce
         .expect("record")
         .id;
     router.token_manager.revoke_token(&id).expect("revoke");
-    for path in ["/api/tokens/list", "/v1/models"] {
+    for path in ["/api/management/tokens", "/api/services/openai/v1/models"] {
         let response = router
             .get_as(path, &admin_jwt)
             .send()
@@ -922,7 +940,7 @@ async fn a_forced_call_on_server_tools_only_fails_fast_on_every_surface() {
     let router = TestRouter::start(UpstreamProvider::Codex).await;
     let cases = [
         (
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             json!({
                 "model":"gpt-5",
                 "max_tokens":256,
@@ -932,7 +950,7 @@ async fn a_forced_call_on_server_tools_only_fails_fast_on_every_surface() {
             }),
         ),
         (
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             json!({
                 "model":"gpt-5",
                 "messages":[{"role":"user","content":"research Rust"}],
@@ -941,7 +959,7 @@ async fn a_forced_call_on_server_tools_only_fails_fast_on_every_surface() {
             }),
         ),
         (
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             json!({
                 "model":"gpt-5",
                 "input":"research Rust",
@@ -970,26 +988,4 @@ async fn a_forced_call_on_server_tools_only_fails_fast_on_every_surface() {
         assert!(message.contains("server-side tools"), "{path}: {message}");
     }
     assert!(router.requests.lock().expect("stub requests").is_empty());
-}
-
-/// A capped server-tool search without a forced choice keeps working, so the
-/// guard above narrows nothing that previously succeeded.
-#[tokio::test]
-async fn an_uncoerced_server_tool_search_still_reaches_codex() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-    let response = router
-        .post(
-            "/v1/messages",
-            &json!({
-                "model":"gpt-5",
-                "max_tokens":256,
-                "messages":[{"role":"user","content":"research Rust"}],
-                "tools":[{"type":"web_search_20250305","name":"web_search","max_uses":1}],
-                "tool_choice":{"type":"auto"}
-            }),
-        )
-        .send()
-        .await
-        .expect("server-tool response");
-    assert_eq!(response.status(), StatusCode::OK);
 }

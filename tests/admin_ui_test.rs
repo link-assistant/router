@@ -110,12 +110,14 @@ impl Harness {
     /// Complete the two-phase claim and return the credential.
     async fn claim(&self, ttl_hours: Option<i64>) -> String {
         let body = ttl_hours.map(|hours| serde_json::json!({"ttl_hours": hours}));
-        let (status, minted) = self.post("/api/admin/bootstrap", None, body).await;
+        let (status, minted) = self
+            .post("/api/management/admin/bootstrap", None, body)
+            .await;
         assert_eq!(status, StatusCode::OK, "mint: {minted}");
         let token = minted["token"].as_str().expect("token").to_string();
         let (status, _) = self
             .post(
-                "/api/admin/bootstrap/confirm",
+                "/api/management/admin/bootstrap/confirm",
                 Some(&token),
                 Some(serde_json::json!({"claim_id": minted["claim_id"]})),
             )
@@ -183,7 +185,7 @@ const fn minutes(n: u64) -> Duration {
 #[tokio::test]
 async fn status_reports_an_open_bootstrap_before_any_claim() {
     let harness = Harness::new(None, minutes(2));
-    let (status, body) = harness.get("/api/admin/status", None).await;
+    let (status, body) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["claimed"], false);
     assert_eq!(body["bootstrap_open"], true);
@@ -192,25 +194,27 @@ async fn status_reports_an_open_bootstrap_before_any_claim() {
 #[tokio::test]
 async fn admin_api_is_closed_before_a_claim_exists() {
     let harness = Harness::new(None, minutes(2));
-    let (status, _) = harness.get("/api/tokens/list", None).await;
+    let (status, _) = harness.get("/api/management/tokens", None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
-    let (status, _) = harness.get("/api/admin/summary", None).await;
+    let (status, _) = harness.get("/api/management/admin/summary", None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 
 #[tokio::test]
 async fn mint_alone_does_not_close_bootstrap_or_authorise() {
     let harness = Harness::new(None, minutes(2));
-    let (status, minted) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (status, minted) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     assert_eq!(status, StatusCode::OK);
     let token = minted["token"].as_str().expect("token").to_string();
 
     // The candidate is not a credential yet.
-    let (status, _) = harness.get("/api/tokens/list", Some(&token)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&token)).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 
     // And the system is still unclaimed, so a lost response is recoverable.
-    let (_, state) = harness.get("/api/admin/status", None).await;
+    let (_, state) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(state["claimed"], false);
     assert_eq!(state["bootstrap_open"], true);
 }
@@ -218,13 +222,15 @@ async fn mint_alone_does_not_close_bootstrap_or_authorise() {
 #[tokio::test]
 async fn confirm_activates_the_credential_and_closes_bootstrap() {
     let harness = Harness::new(None, minutes(2));
-    let (_, minted) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (_, minted) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     let token = minted["token"].as_str().expect("token").to_string();
     let claim_id = minted["claim_id"].as_str().expect("claim_id").to_string();
 
     let (status, body) = harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some(&token),
             Some(serde_json::json!({"claim_id": claim_id})),
         )
@@ -232,22 +238,26 @@ async fn confirm_activates_the_credential_and_closes_bootstrap() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["claimed"], true);
 
-    let (status, _) = harness.get("/api/tokens/list", Some(&token)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&token)).await;
     assert_eq!(status, StatusCode::OK);
 
-    let (status, _) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (status, _) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     assert_eq!(status, StatusCode::CONFLICT);
 }
 
 #[tokio::test]
 async fn confirm_requires_the_candidate_token_itself() {
     let harness = Harness::new(None, minutes(2));
-    let (_, minted) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (_, minted) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     let claim_id = minted["claim_id"].as_str().expect("claim_id").to_string();
 
     let (status, _) = harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             None,
             Some(serde_json::json!({"claim_id": claim_id.clone()})),
         )
@@ -256,7 +266,7 @@ async fn confirm_requires_the_candidate_token_itself() {
 
     let (status, _) = harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some("la_admin_wrong"),
             Some(serde_json::json!({"claim_id": claim_id})),
         )
@@ -264,20 +274,24 @@ async fn confirm_requires_the_candidate_token_itself() {
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 
     // Still unclaimed: a failed confirm must never brick the deployment.
-    let (_, state) = harness.get("/api/admin/status", None).await;
+    let (_, state) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(state["bootstrap_open"], true);
 }
 
 #[tokio::test]
 async fn only_the_first_confirmer_wins() {
     let harness = Harness::new(None, minutes(2));
-    let (_, first) = harness.post("/api/admin/bootstrap", None, None).await;
-    let (_, second) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (_, first) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
+    let (_, second) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
 
     // The first visitor's candidate was discarded by the second mint.
     let (status, _) = harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some(first["token"].as_str().expect("token")),
             Some(serde_json::json!({"claim_id": first["claim_id"]})),
         )
@@ -286,7 +300,7 @@ async fn only_the_first_confirmer_wins() {
 
     let (status, _) = harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some(second["token"].as_str().expect("token")),
             Some(serde_json::json!({"claim_id": second["claim_id"]})),
         )
@@ -297,38 +311,44 @@ async fn only_the_first_confirmer_wins() {
 #[tokio::test]
 async fn an_expired_candidate_leaves_bootstrap_open() {
     let harness = Harness::new(None, Duration::from_secs(0));
-    let (_, minted) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (_, minted) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
 
     let (status, _) = harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some(minted["token"].as_str().expect("token")),
             Some(serde_json::json!({"claim_id": minted["claim_id"]})),
         )
         .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
 
-    let (_, state) = harness.get("/api/admin/status", None).await;
+    let (_, state) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(state["bootstrap_open"], true);
 
     // Trying again works — this is the recovery path.
-    let (status, _) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (status, _) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
 async fn an_environment_key_disables_bootstrap_entirely() {
     let harness = Harness::new(Some("env-admin-key".to_string()), minutes(2));
-    let (_, state) = harness.get("/api/admin/status", None).await;
+    let (_, state) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(state["claimed"], true);
     assert_eq!(state["bootstrap_open"], false);
     assert_eq!(state["provisioned_by_environment"], true);
 
-    let (status, _) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (status, _) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     assert_eq!(status, StatusCode::CONFLICT);
 
     let (status, _) = harness
-        .get("/api/admin/summary", Some("env-admin-key"))
+        .get("/api/management/admin/summary", Some("env-admin-key"))
         .await;
     assert_eq!(status, StatusCode::OK);
 }
@@ -336,24 +356,28 @@ async fn an_environment_key_disables_bootstrap_entirely() {
 #[tokio::test]
 async fn rotation_replaces_the_claimed_credential() {
     let harness = Harness::new(None, minutes(2));
-    let (_, minted) = harness.post("/api/admin/bootstrap", None, None).await;
+    let (_, minted) = harness
+        .post("/api/management/admin/bootstrap", None, None)
+        .await;
     let old = minted["token"].as_str().expect("token").to_string();
     harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some(&old),
             Some(serde_json::json!({"claim_id": minted["claim_id"]})),
         )
         .await;
 
-    let (status, rotated) = harness.post("/api/admin/rotate", Some(&old), None).await;
+    let (status, rotated) = harness
+        .post("/api/management/admin/rotate", Some(&old), None)
+        .await;
     assert_eq!(status, StatusCode::OK);
     let new = rotated["token"].as_str().expect("token").to_string();
     assert_ne!(new, old);
 
-    let (status, _) = harness.get("/api/tokens/list", Some(&new)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&new)).await;
     assert_eq!(status, StatusCode::OK);
-    let (status, _) = harness.get("/api/tokens/list", Some(&old)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&old)).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 
@@ -364,7 +388,7 @@ async fn tokens_can_be_issued_listed_and_revoked_through_the_admin_port() {
 
     let (status, issued) = harness
         .post(
-            "/api/tokens",
+            "/api/management/tokens",
             key,
             Some(serde_json::json!({"label": "ci", "ttl_hours": 1, "max_requests": 5})),
         )
@@ -372,7 +396,7 @@ async fn tokens_can_be_issued_listed_and_revoked_through_the_admin_port() {
     assert_eq!(status, StatusCode::OK);
     assert!(issued["token"].as_str().is_some_and(|t| !t.is_empty()));
 
-    let (status, listed) = harness.get("/api/tokens/list", key).await;
+    let (status, listed) = harness.get("/api/management/tokens", key).await;
     assert_eq!(status, StatusCode::OK);
     let records = listed["data"].as_array().expect("records");
     assert_eq!(records.len(), 1);
@@ -381,14 +405,14 @@ async fn tokens_can_be_issued_listed_and_revoked_through_the_admin_port() {
 
     let (status, _) = harness
         .post(
-            "/api/tokens/revoke",
+            "/api/management/tokens/revoke",
             key,
             Some(serde_json::json!({"id": id})),
         )
         .await;
     assert_eq!(status, StatusCode::OK);
 
-    let (_, listed) = harness.get("/api/tokens/list", key).await;
+    let (_, listed) = harness.get("/api/management/tokens", key).await;
     assert_eq!(listed["data"][0]["revoked"], true);
 }
 
@@ -450,7 +474,7 @@ async fn the_first_visitor_receives_an_admin_scoped_jwt() {
     assert!(claims.exp > claims.iat, "and a lifetime");
     assert_eq!(claims.label, "first-visitor-admin");
 
-    let (_, status) = harness.get("/api/admin/status", None).await;
+    let (_, status) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(status["credential_kind"], "jwt");
     assert_eq!(status["token_id"], claims.sub);
 }
@@ -460,7 +484,7 @@ async fn the_first_administrator_may_limit_the_credential_lifetime() {
     let harness = Harness::new(None, minutes(2));
     let (_, minted) = harness
         .post(
-            "/api/admin/bootstrap",
+            "/api/management/admin/bootstrap",
             None,
             Some(serde_json::json!({"ttl_hours": 3})),
         )
@@ -469,7 +493,7 @@ async fn the_first_administrator_may_limit_the_credential_lifetime() {
     let token = minted["token"].as_str().expect("token").to_string();
     harness
         .post(
-            "/api/admin/bootstrap/confirm",
+            "/api/management/admin/bootstrap/confirm",
             Some(&token),
             Some(serde_json::json!({"claim_id": minted["claim_id"]})),
         )
@@ -496,16 +520,20 @@ async fn claiming_retires_the_startup_bootstrap_credential() {
         .token_manager
         .issue_admin_token(24, "bootstrap-admin")
         .expect("bootstrap token");
-    let (status, _) = harness.get("/api/tokens/list", Some(&bootstrap)).await;
+    let (status, _) = harness
+        .get("/api/management/tokens", Some(&bootstrap))
+        .await;
     assert_eq!(status, StatusCode::OK, "it administers the router");
 
     let claimed = harness.claim(None).await;
 
     // One credential model means the superseded one is retired, not merely
     // ignored: the API says so, so the UI, the CLI and the bots agree.
-    let (status, _) = harness.get("/api/tokens/list", Some(&bootstrap)).await;
+    let (status, _) = harness
+        .get("/api/management/tokens", Some(&bootstrap))
+        .await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
-    let (_, listed) = harness.get("/api/tokens/list", Some(&claimed)).await;
+    let (_, listed) = harness.get("/api/management/tokens", Some(&claimed)).await;
     let records = listed["data"].as_array().expect("records");
     let retired = records
         .iter()
@@ -520,10 +548,10 @@ async fn a_claimed_credential_survives_a_restart() {
     let token = harness.claim(None).await;
 
     let harness = harness.restart();
-    let (_, status) = harness.get("/api/admin/status", None).await;
+    let (_, status) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(status["claimed"], true);
     assert_eq!(status["bootstrap_open"], false);
-    let (status, _) = harness.get("/api/tokens/list", Some(&token)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&token)).await;
     assert_eq!(
         status,
         StatusCode::OK,
@@ -535,9 +563,11 @@ async fn a_claimed_credential_survives_a_restart() {
 async fn rotation_is_atomic_across_a_restart() {
     let harness = Harness::new(None, minutes(2));
     let old = harness.claim(None).await;
-    let (_, before) = harness.get("/api/admin/status", None).await;
+    let (_, before) = harness.get("/api/management/admin/status", None).await;
 
-    let (status, rotated) = harness.post("/api/admin/rotate", Some(&old), None).await;
+    let (status, rotated) = harness
+        .post("/api/management/admin/rotate", Some(&old), None)
+        .await;
     assert_eq!(status, StatusCode::OK);
     let new = rotated["token"].as_str().expect("token").to_string();
     assert_eq!(rotated["credential_kind"], "jwt");
@@ -549,9 +579,9 @@ async fn rotation_is_atomic_across_a_restart() {
     // Both halves of the swap are on disk: the new credential is the claim and
     // the old one is revoked by id.
     let harness = harness.restart();
-    let (status, _) = harness.get("/api/tokens/list", Some(&new)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&new)).await;
     assert_eq!(status, StatusCode::OK);
-    let (status, _) = harness.get("/api/tokens/list", Some(&old)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&old)).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 
@@ -586,9 +616,9 @@ async fn an_expired_credential_stops_administering() {
     .expect("write claim");
 
     let harness = harness.restart();
-    let (_, status) = harness.get("/api/admin/status", None).await;
+    let (_, status) = harness.get("/api/management/admin/status", None).await;
     assert_eq!(status["claimed"], true, "the claim is still on record");
-    let (status, _) = harness.get("/api/tokens/list", Some(&stale)).await;
+    let (status, _) = harness.get("/api/management/tokens", Some(&stale)).await;
     assert_eq!(
         status,
         StatusCode::UNAUTHORIZED,
@@ -596,7 +626,7 @@ async fn an_expired_credential_stops_administering() {
     );
 }
 
-/// `GET /api/admin/accounts` must report a credential that cannot serve a
+/// `GET /api/management/accounts` must report a credential that cannot serve a
 /// request as unhealthy, and say why.
 ///
 /// The admin API is what the UI and any automated health check read. It
@@ -622,7 +652,7 @@ async fn the_accounts_endpoint_reports_a_dead_credential_as_unhealthy() {
     ));
     let token = harness.claim(None).await;
 
-    let (status, body) = harness.get("/api/admin/accounts", Some(&token)).await;
+    let (status, body) = harness.get("/api/management/accounts", Some(&token)).await;
 
     assert_eq!(status, StatusCode::OK, "{body}");
     let account = &body["accounts"][0];
@@ -671,7 +701,7 @@ fn the_chat_status_summary_names_why_an_account_is_unhealthy() {
     assert!(lines.contains("primary: expired"), "{lines}");
 }
 
-/// `GET /api/admin/accounts` must not call a revoked chain `refreshable`.
+/// `GET /api/management/accounts` must not call a revoked chain `refreshable`.
 ///
 /// The endpoint is what the admin UI and any automated health check read. A
 /// revoked refresh token is still a non-empty string on disk, so the file alone
@@ -695,7 +725,7 @@ async fn the_accounts_endpoint_reports_a_refused_chain_as_rejected() {
     let token = harness.claim(None).await;
 
     // With nothing yet known, "expired but holds a refresh token" is honest.
-    let (_, before) = harness.get("/api/admin/accounts", Some(&token)).await;
+    let (_, before) = harness.get("/api/management/accounts", Some(&token)).await;
     assert_eq!(before["accounts"][0]["credential"], "refreshable");
     assert_eq!(before["accounts"][0]["healthy"], true);
 
@@ -712,7 +742,7 @@ async fn the_accounts_endpoint_reports_a_refused_chain_as_rejected() {
         },
     );
 
-    let (status, body) = harness.get("/api/admin/accounts", Some(&token)).await;
+    let (status, body) = harness.get("/api/management/accounts", Some(&token)).await;
 
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["accounts"][0]["credential"], "rejected");

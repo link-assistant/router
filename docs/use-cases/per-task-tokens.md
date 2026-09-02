@@ -15,7 +15,7 @@ This is the first requirement of
 | Property | What a per-task token gives you |
 | --- | --- |
 | **Audit** | Every request carries a token id, so the JSONL audit log answers "which task did this?" after the fact |
-| **Monitoring** | Admin-only `/v1/usage` exposes per-token request counts while public `/metrics` stays aggregate-only |
+| **Monitoring** | Admin-only `/api/management/usage` exposes per-token request counts while `/api/management/metrics` stays aggregate-only |
 | **Security** | A leaked task token exposes one task's limits, not the vendor credential, which never leaves the router |
 | **Containment** | `--max-tokens` bounds actual reported token spend and `--rate-limit-per-minute` prevents one runaway agent from consuming its allowance in a burst |
 
@@ -42,7 +42,7 @@ router tokens issue \
 Or via the admin endpoint, which is what a CI job or an orchestrator will use:
 
 ```bash
-curl -s -X POST http://127.0.0.1:8080/api/tokens \
+curl -s -X POST http://127.0.0.1:8080/api/management/tokens \
   -H "Content-Type: application/json" \
   -d '{"ttl_hours":24,"label":"issue-45-solver","max_requests":500,"max_tokens":100000,"rate_limit_per_minute":10}' \
   | jq -r .token
@@ -59,7 +59,7 @@ Issuing is **universal**: one endpoint issues every token. What makes a token
 
 | Flag / field | Effect |
 | --- | --- |
-| `--label` / `label` | Name shown in `tokens list`, admin-only `/v1/usage`, and the audit log |
+| `--label` / `label` | Name shown in `tokens list`, admin-only `/api/management/usage`, and the audit log |
 | `--ttl-hours` / `ttl_hours` | Token stops working after this many hours; short TTLs make revocation mostly unnecessary |
 | `--max-requests` / `max_requests` | Hard cap on forwarded requests; `429 rate_limit_error` after that. Omit for unlimited |
 | `--max-tokens` / `max_tokens` | Cap on actual input plus output tokens reported by successful upstream responses; the next request after exhaustion gets `429` |

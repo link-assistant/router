@@ -211,7 +211,7 @@ const BOOTSTRAP_ADMIN_LABEL: &str = "bootstrap-admin";
 fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
     if config.allow_anonymous_admin {
         tracing::warn!(
-            "--allow-anonymous-admin is set: /api/tokens*, /api/providers* and /api/login* accept unauthenticated requests"
+            "--allow-anonymous-admin is set: /api/management/tokens*, /api/management/providers* and /api/management/login* accept unauthenticated requests"
         );
         return;
     }
@@ -323,7 +323,9 @@ async fn run_server(
         config.upstream_provider,
         &subscription_readers,
     );
-    let model_catalogs = Arc::new(link_assistant_router::model_catalog::ModelCatalogCache::new());
+    let model_catalogs = Arc::new(
+        link_assistant_router::model_catalog::ModelCatalogCache::persistent(&config.data_dir),
+    );
 
     // The admin credential: a deploy-time key when provided, otherwise the
     // persisted first-visitor claim (unclaimed until someone confirms one).
@@ -434,12 +436,21 @@ async fn run_server(
         ),
     );
 
-    let app = link_assistant_router::server_router::router(state.clone(), &config)
-        .layer(from_fn_with_state(
-            state.clone(),
-            link_assistant_router::request_log::log_http_exchange,
-        ))
-        .layer(TraceLayer::new_for_http());
+    let listener_kind = if config.inference_only {
+        link_assistant_router::route_contract::ListenerKind::InferenceOnly
+    } else {
+        link_assistant_router::route_contract::ListenerKind::Combined
+    };
+    let app = link_assistant_router::server_router::router_for_listener(
+        state.clone(),
+        &config,
+        listener_kind,
+    )
+    .layer(from_fn_with_state(
+        state.clone(),
+        link_assistant_router::request_log::log_http_exchange,
+    ))
+    .layer(TraceLayer::new_for_http());
 
     tracing::info!("Listening on {}", config.listen_addr);
 
@@ -448,12 +459,13 @@ async fn run_server(
     let shutdown = shutdown::Shutdown::listening();
     let admin_server = if config.admin_ui.enabled {
         let admin_addr = config.admin_ui.listen_addr;
-        let admin_app = link_assistant_router::admin_api::router(state.clone())
-            .layer(from_fn_with_state(
-                state.clone(),
-                link_assistant_router::request_log::log_http_exchange,
-            ))
-            .layer(TraceLayer::new_for_http());
+        let admin_app =
+            link_assistant_router::admin_api::router_with_config(state.clone(), &config)
+                .layer(from_fn_with_state(
+                    state.clone(),
+                    link_assistant_router::request_log::log_http_exchange,
+                ))
+                .layer(TraceLayer::new_for_http());
         let admin_shutdown = shutdown.notified();
         let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
         tracing::info!("Admin UI listening on {admin_addr}");
@@ -484,9 +496,11 @@ async fn run_server(
     // Unix domain sockets do not exist on Windows, so the listener is compiled
     // only where it can be served.
     #[cfg(unix)]
-    let socket_server =
-        link_assistant_router::unix_listener::serve_configured(app.clone(), shutdown.notified())
-            .await?;
+    let socket_server = link_assistant_router::unix_listener::serve_configured(
+        link_assistant_router::server_router::github_adapter_router(state.clone()),
+        shutdown.notified(),
+    )
+    .await?;
     #[cfg(not(unix))]
     let socket_server: Option<tokio::task::JoinHandle<()>> = None;
 

@@ -1,7 +1,9 @@
 # CLI: Qwen Code through the router
 
 **Dialects:** OpenAI-compatible **or** Anthropic (Qwen Code ships both SDKs).
-**Router endpoints:** `/v1/chat/completions`, `/v1/responses`, or `/v1/messages`.
+**Router endpoints:** `/api/services/qwen/v1/chat/completions` and
+`/api/services/qwen/v1/responses`; Anthropic-compatible experiments use
+`/api/services/anthropic/v1/messages`.
 
 [Qwen Code's model-provider documentation](https://github.com/QwenLM/qwen-code/blob/main/docs/users/configuration/model-providers.md)
 defines `modelProviders` in `settings.json`, keyed by auth type, with `id`,
@@ -33,7 +35,7 @@ forwards every later token verbatim. See
       {
         "id": "<model-from-v1-models>",
         "name": "Link.Assistant.Router",
-        "baseUrl": "http://127.0.0.1:8080/v1",
+        "baseUrl": "http://127.0.0.1:8080/api/services/qwen/v1",
         "envKey": "LINK_ASSISTANT_TOKEN"
       }
     ]
@@ -63,7 +65,7 @@ the same path Claude Code uses:
     "anthropic": [
       {
         "id": "claude-sonnet-4-5-20250929",
-        "baseUrl": "http://127.0.0.1:8080",
+        "baseUrl": "http://127.0.0.1:8080/api/services/anthropic",
         "envKey": "LINK_ASSISTANT_TOKEN"
       }
     ]
@@ -87,13 +89,12 @@ straightforward.
 | `openai-compatible` | ordinary API-key provider under its own terms |
 | `z.ai-coding-plan` | denied by default; exact `qwen` second acknowledgement required — see [zai-coding-plan.md](zai-coding-plan.md) |
 
-`/api/qwen/v1/*` is a namespaced alias that forwards Qwen's native
-OpenAI-compatible protocol.
+`/api/services/qwen/v1/*` is the canonical Qwen-native service namespace.
 
 ## Smoke test
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/chat/completions \
+curl -s http://127.0.0.1:8080/api/services/qwen/v1/chat/completions \
   -H "Authorization: Bearer $LINK_ASSISTANT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"qwen3-coder-plus","messages":[{"role":"user","content":"ping"}]}' | jq .

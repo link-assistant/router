@@ -674,3 +674,314 @@ fn account_catalogs_are_independent_and_provider_listing_is_their_union() {
             .credential_healthy
     );
 }
+
+#[tokio::test]
+async fn paginated_catalog_preserves_unknown_metadata_and_source_order() {
+    use axum::extract::Query;
+    use std::collections::HashMap;
+
+    async fn handler(
+        State(seen): State<Arc<Mutex<Vec<Option<String>>>>>,
+        Query(query): Query<HashMap<String, String>>,
+    ) -> axum::Json<Value> {
+        let cursor = query.get("after_id").cloned();
+        seen.lock().unwrap().push(cursor.clone());
+        if cursor.is_none() {
+            axum::Json(serde_json::json!({
+                "data": [{
+                    "id": "future-saffron-91",
+                    "display_name": "Saffron 91",
+                    "unknown_future_field": {"tier": 7}
+                }],
+                "has_more": true,
+                "last_id": "future-saffron-91"
+            }))
+        } else {
+            axum::Json(serde_json::json!({
+                "data": [{
+                    "id": "future-cobalt-12",
+                    "display_name": "Cobalt 12",
+                    "unknown_future_field": ["kept"]
+                }],
+                "has_more": false
+            }))
+        }
+    }
+
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let app = Router::new()
+        .route("/v1/models", get(handler))
+        .with_state(Arc::clone(&seen));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let token = SubscriptionToken {
+        access_token: "live-token".to_string(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: Some("account-future".to_string()),
+        resource_url: None,
+    };
+
+    let records = fetch_provider_catalog_records(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Claude,
+        &token,
+        Some(&format!("http://{address}")),
+    )
+    .await
+    .expect("all catalog pages");
+
+    assert_eq!(
+        records
+            .iter()
+            .map(|record| record.canonical_id.as_str())
+            .collect::<Vec<_>>(),
+        ["future-saffron-91", "future-cobalt-12"]
+    );
+    assert_eq!(records[0].source_order, 0);
+    assert_eq!(records[1].source_order, 1);
+    assert_eq!(
+        records[0].raw["unknown_future_field"],
+        serde_json::json!({"tier": 7})
+    );
+    assert_eq!(
+        records[1].raw["unknown_future_field"],
+        serde_json::json!(["kept"])
+    );
+    assert_eq!(
+        seen.lock().unwrap().as_slice(),
+        &[None, Some("future-saffron-91".to_string())]
+    );
+
+    let cache = ModelCatalogCache::new();
+    cache.record_records_for_account(
+        SubscriptionProvider::Claude,
+        "primary",
+        Some("account-future".into()),
+        records,
+    );
+    let projected = crate::model_routing::model_catalog(&[SubscriptionProvider::Claude], &cache);
+    assert_eq!(projected["data"][0]["id"], "future-saffron-91");
+    assert_eq!(projected["data"][1]["id"], "future-cobalt-12");
+    assert_eq!(
+        projected["data"][0]["unknown_future_field"],
+        serde_json::json!({"tier": 7})
+    );
+    assert_eq!(projected["data"][0]["canonical_id"], "future-saffron-91");
+    assert_eq!(projected["data"][0]["provider"], "claude");
+}
+
+#[tokio::test]
+async fn repeated_catalog_cursor_fails_closed() {
+    async fn handler() -> axum::Json<Value> {
+        axum::Json(serde_json::json!({
+            "data": [{"id": "future-loop-1"}],
+            "has_more": true,
+            "last_id": "future-loop-1"
+        }))
+    }
+
+    let app = Router::new().route("/v1/models", get(handler));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let token = SubscriptionToken {
+        access_token: "live-token".to_string(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: Some("account-loop".to_string()),
+        resource_url: None,
+    };
+
+    let error = fetch_provider_catalog_records(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Claude,
+        &token,
+        Some(&format!("http://{address}")),
+    )
+    .await
+    .expect_err("a repeated cursor must not spin or publish a partial catalog");
+    assert!(error.contains("repeated pagination cursor"), "{error}");
+}
+
+#[tokio::test]
+async fn gemini_next_page_tokens_are_followed_without_losing_raw_records() {
+    use axum::extract::Query;
+    use std::collections::HashMap;
+
+    async fn handler(Query(query): Query<HashMap<String, String>>) -> axum::Json<Value> {
+        if query.contains_key("pageToken") {
+            axum::Json(serde_json::json!({
+                "models": [{
+                    "name": "models/future-amber-18",
+                    "supportedGenerationMethods": ["generateContent"],
+                    "newCapability": {"window": 654_321}
+                }]
+            }))
+        } else {
+            axum::Json(serde_json::json!({
+                "models": [{
+                    "name": "models/future-jade-17",
+                    "supportedGenerationMethods": ["generateContent"],
+                    "newCapability": {"window": 123_456}
+                }],
+                "nextPageToken": "future-page-2"
+            }))
+        }
+    }
+
+    let app = Router::new().route("/v1beta/models", get(handler));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let token = SubscriptionToken {
+        access_token: "live-google-token".to_string(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: Some("google-account".to_string()),
+        resource_url: None,
+    };
+
+    let records = fetch_provider_catalog_records(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Gemini,
+        &token,
+        Some(&format!("http://{address}")),
+    )
+    .await
+    .expect("all Google pages");
+    assert_eq!(
+        records
+            .iter()
+            .map(|record| record.canonical_id.as_str())
+            .collect::<Vec<_>>(),
+        ["future-jade-17", "future-amber-18"]
+    );
+    assert_eq!(records[0].raw["newCapability"]["window"], 123_456);
+    assert_eq!(records[1].source_order, 1);
+}
+
+#[test]
+fn colliding_live_ids_are_reversibly_provider_qualified() {
+    let cache = ModelCatalogCache::new();
+    cache.record_success(
+        SubscriptionProvider::Claude,
+        vec!["future-shared-77".into()],
+    );
+    cache.record_success(SubscriptionProvider::Codex, vec!["future-shared-77".into()]);
+
+    let projected = crate::model_routing::model_catalog(
+        &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
+        &cache,
+    );
+    let ids = projected["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|entry| entry["id"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(ids, ["claude/future-shared-77", "codex/future-shared-77"]);
+    assert_eq!(
+        crate::model_routing::provider_for_model("claude/future-shared-77", &cache),
+        Some(SubscriptionProvider::Claude)
+    );
+    assert_eq!(
+        crate::model_routing::provider_for_model("codex/future-shared-77", &cache),
+        Some(SubscriptionProvider::Codex)
+    );
+    assert_eq!(
+        crate::model_routing::provider_for_model("future-shared-77", &cache),
+        None
+    );
+}
+
+#[test]
+fn successful_catalogs_persist_losslessly_but_restart_fail_closed() {
+    let data = tempdir().expect("catalog data");
+    let cache = ModelCatalogCache::persistent(data.path());
+    let mut raw = serde_json::Map::new();
+    raw.insert("id".into(), Value::String("future-persisted-44".into()));
+    raw.insert(
+        "unknown_after_restart".into(),
+        serde_json::json!({"nested": [1, 2, 3]}),
+    );
+    cache.record_records_for_account(
+        SubscriptionProvider::Claude,
+        "primary",
+        Some("account-persisted".into()),
+        vec![CatalogRecord {
+            provider: SubscriptionProvider::Claude,
+            account: "account-persisted".into(),
+            canonical_id: "future-persisted-44".into(),
+            raw,
+            source_order: 7,
+            fetched_at: 123,
+            health_generation: "generation-persisted".into(),
+            protocols: provider_protocols(SubscriptionProvider::Claude),
+        }],
+    );
+    drop(cache);
+
+    let reopened = ModelCatalogCache::persistent(data.path());
+    let status = reopened.status(SubscriptionProvider::Claude);
+    assert!(status.discovered, "the diagnostic catalog survives restart");
+    assert_eq!(status.account.as_deref(), Some("account-persisted"));
+    assert_eq!(status.records[0].source_order, 7);
+    assert_eq!(
+        status.records[0].raw["unknown_after_restart"],
+        serde_json::json!({"nested": [1, 2, 3]})
+    );
+    assert!(
+        status.routable_records().is_empty(),
+        "persisted models remain unavailable until this process authenticates them"
+    );
+}
+
+#[test]
+fn authorization_replacement_invalidates_a_running_cache_immediately() {
+    let data = tempdir().expect("catalog data");
+    let cache = ModelCatalogCache::persistent(data.path());
+    cache.record_success_for_account(
+        SubscriptionProvider::Claude,
+        "primary",
+        Some("old-account".into()),
+        vec!["future-old-11".into()],
+    );
+    cache.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        Some("other-account".into()),
+        vec!["future-other-22".into()],
+    );
+
+    ModelCatalogCache::invalidate_persisted(data.path(), SubscriptionProvider::Claude, "primary")
+        .expect("credential mutation invalidation");
+
+    assert!(
+        cache.models(SubscriptionProvider::Claude).is_empty(),
+        "the already-running cache observes another process's invalidation"
+    );
+    assert_eq!(
+        cache.models(SubscriptionProvider::Codex),
+        ["future-other-22"],
+        "one authorization cannot remove another provider"
+    );
+    assert_eq!(
+        cache.status(SubscriptionProvider::Claude).models.as_slice(),
+        ["future-old-11"],
+        "the last catalog remains available to diagnostics"
+    );
+
+    cache.record_success_for_account(
+        SubscriptionProvider::Claude,
+        "primary",
+        Some("new-account".into()),
+        vec!["future-new-33".into()],
+    );
+    assert_eq!(
+        cache.models(SubscriptionProvider::Claude),
+        ["future-new-33"],
+        "a complete authenticated refresh clears the invalidation"
+    );
+}

@@ -41,7 +41,7 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
         .into_response()
 }
 
-/// `GET /v1/usage` — JSON usage snapshot. Requires an admin credential.
+/// `GET /api/management/usage` — JSON usage snapshot. Requires an admin credential.
 ///
 /// Unlike `/metrics`, this snapshot names individual tokens and accounts.
 pub async fn usage_endpoint(
@@ -55,7 +55,7 @@ pub async fn usage_endpoint(
     (StatusCode::OK, axum::Json(snap)).into_response()
 }
 
-/// `GET /v1/accounts` — admin-only health snapshot of configured accounts.
+/// `GET /api/management/accounts` — admin-only health snapshot of configured accounts.
 pub async fn accounts_endpoint(
     State(state): State<AppState>,
     headers: HeaderMap,

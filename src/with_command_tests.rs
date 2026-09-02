@@ -90,6 +90,46 @@ fn the_users_configuration_is_kept_by_default() {
             "{required} missing: {names:?}"
         );
     }
+    let environment = extended
+        .command
+        .get_envs()
+        .filter_map(|(name, value)| {
+            Some((
+                name.to_string_lossy().into_owned(),
+                value?.to_string_lossy().into_owned(),
+            ))
+        })
+        .collect::<std::collections::HashMap<_, _>>();
+    assert_eq!(
+        environment.get("ANTHROPIC_BASE_URL").map(String::as_str),
+        Some("http://router.test/api/services/anthropic")
+    );
+    assert_eq!(
+        environment
+            .get("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY")
+            .map(String::as_str),
+        Some("1")
+    );
+    assert_eq!(
+        environment
+            .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+            .map(String::as_str),
+        Some("0")
+    );
+    for cleared in [
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_MODEL",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+        "CLAUDE_CODE_SUBAGENT_MODEL",
+    ] {
+        assert_eq!(
+            environment.get(cleared).map(String::as_str),
+            Some(""),
+            "{cleared}"
+        );
+    }
 
     // Asking for isolation still repoints the directory.
     let isolated = TemporaryClient::prepare(&Preparation {
@@ -170,7 +210,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             "-c",
             "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
             "-c",
-            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/v1\"",
+            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
             "-c",
             "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
             "-c",

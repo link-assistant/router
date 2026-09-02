@@ -2,8 +2,8 @@
 //! and read-only status, plus the router that serves them on the dedicated
 //! admin port.
 //!
-//! Everything under `/api/admin` except the three bootstrap routes requires the
-//! admin credential. The bootstrap routes carry their own rules — see
+//! Everything under `/api/management` except the three bootstrap routes requires
+//! the admin credential. The bootstrap routes carry their own rules — see
 //! [`crate::admin`] for the two-phase claim protocol.
 
 // The handlers here are `async fn` to match axum's handler signature even when
@@ -13,75 +13,35 @@
 use std::sync::Arc;
 
 use axum::Router;
-use axum::extract::{Request, State};
+use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
-use axum::middleware::{Next, from_fn, from_fn_with_state};
+use axum::middleware::from_fn;
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
 
 use crate::admin::{AdminClaim, ClaimError};
 use crate::proxy::{AppState, error_response};
-use crate::{provider_proxy, proxy, token_admin};
-
-/// Routes that must stay reachable without an admin credential, because they
-/// are how a credential comes into existence in the first place.
-const OPEN_PATHS: &[&str] = &[
-    "/api/admin/status",
-    "/api/admin/bootstrap",
-    "/api/admin/bootstrap/confirm",
-];
+use crate::route_contract::{RouteId, route_template};
 
 /// Build the admin-port router: the bootstrap/status API, the admin-only
 /// management API, and the embedded React UI.
 pub fn router(state: AppState) -> Router {
-    Router::new()
-        .route("/api/admin/status", get(admin_status))
-        .route("/api/admin/bootstrap", post(bootstrap))
-        .route("/api/admin/bootstrap/confirm", post(bootstrap_confirm))
-        .route("/api/admin/rotate", post(rotate_credential))
-        .route("/api/admin/summary", get(admin_summary))
-        .route("/api/admin/usage", get(proxy::usage_endpoint))
-        .route("/api/admin/accounts", get(proxy::accounts_endpoint))
-        .route(
-            "/api/tokens",
-            post(token_admin::issue_token).get(token_admin::list_tokens),
-        )
-        .route("/api/tokens/list", get(token_admin::list_tokens))
-        .route("/api/tokens/revoke", post(token_admin::revoke_token))
-        .route(
-            "/api/tokens/rotate-client",
-            post(token_admin::rotate_client_token),
-        )
-        .route("/api/providers", get(provider_proxy::list_providers))
-        .route_layer(from_fn_with_state(state.clone(), require_admin))
+    let login_enabled = state.login_manager.is_enabled();
+    router_with_features(state, login_enabled, true)
+}
+
+/// Build the admin UI listener with the same feature switches as the public
+/// listener. Both listener shapes consume the same management-route builder.
+pub fn router_with_config(state: AppState, config: &crate::config::Config) -> Router {
+    router_with_features(state, config.login.enabled, config.enable_metrics)
+}
+
+fn router_with_features(state: AppState, login_enabled: bool, metrics_enabled: bool) -> Router {
+    crate::server_router::management_routes(state.clone(), login_enabled, metrics_enabled)
         .fallback(crate::admin_ui::serve_asset)
         // Outermost, so the UI assets and the error responses of the auth
         // middleware are hardened too — see [`crate::security_headers`].
         .layer(from_fn(crate::security_headers::apply))
         .with_state(state)
-}
-
-/// Reject every admin-port API request that does not carry the admin
-/// credential, except the bootstrap routes and the UI assets themselves.
-///
-/// Both ports now run the same rule ([`crate::proxy::is_admin_authorised`]):
-/// the claimed credential, any admin-scoped `la_sk_…` JWT, or the flat
-/// `TOKEN_ADMIN_KEY`. One credential model means an administrator does not
-/// need a different token depending on which port they reach for.
-async fn require_admin(State(state): State<AppState>, request: Request, next: Next) -> Response {
-    let path = request.uri().path();
-    let is_api = path.starts_with("/api/");
-    if !is_api || OPEN_PATHS.contains(&path) {
-        return next.run(request).await;
-    }
-    if proxy::is_admin_authorised(&state, request.headers()) {
-        return next.run(request).await;
-    }
-    error_response(
-        StatusCode::UNAUTHORIZED,
-        "authentication_error",
-        "admin credential required",
-    )
 }
 
 fn bearer(headers: &HeaderMap) -> Option<&str> {
@@ -91,12 +51,12 @@ fn bearer(headers: &HeaderMap) -> Option<&str> {
         .and_then(|value| value.strip_prefix("Bearer "))
 }
 
-/// `GET /api/admin/status` — is admin claimed, and may bootstrap run?
+/// `GET /api/management/admin/status` — is admin claimed, and may bootstrap run?
 pub async fn admin_status(State(state): State<AppState>) -> impl IntoResponse {
     (StatusCode::OK, axum::Json(state.admin.status())).into_response()
 }
 
-/// `POST /api/admin/bootstrap` — phase 1 of the claim.
+/// `POST /api/management/admin/bootstrap` — phase 1 of the claim.
 ///
 /// Mints a candidate admin JWT. Bootstrap stays **open**: the token is minted
 /// revoked, so it is not valid for anything until the client confirms it.
@@ -117,7 +77,7 @@ pub async fn bootstrap(
                 "token": candidate.token,
                 "expires_in_secs": candidate.expires_in_secs,
                 "ttl_hours": candidate.ttl_hours,
-                "confirm_url": "/api/admin/bootstrap/confirm",
+                "confirm_url": route_template(RouteId::AdminBootstrapConfirm),
             })),
         )
             .into_response(),
@@ -125,7 +85,7 @@ pub async fn bootstrap(
     }
 }
 
-/// `POST /api/admin/bootstrap/confirm` — phase 2 of the claim.
+/// `POST /api/management/admin/bootstrap/confirm` — phase 2 of the claim.
 ///
 /// The request must be authenticated with the candidate token itself; that is
 /// the proof the client stored it. Only this call closes bootstrap.
@@ -151,7 +111,7 @@ pub async fn bootstrap_confirm(
     }
 }
 
-/// `POST /api/admin/rotate` — issue a replacement admin credential and retire
+/// `POST /api/management/admin/rotate` — issue a replacement admin credential and retire
 /// the current one. Requires the current credential.
 pub async fn rotate_credential(
     State(state): State<AppState>,
@@ -183,7 +143,7 @@ pub struct TtlRequest {
     pub ttl_hours: Option<i64>,
 }
 
-/// `GET /api/admin/summary` — `doctor`-style read-only view of what the router
+/// `GET /api/management/admin/summary` — `doctor`-style read-only view of what the router
 /// is wired to. Requires the admin credential.
 pub async fn admin_summary(State(state): State<AppState>) -> impl IntoResponse {
     let accounts = state
@@ -235,7 +195,7 @@ fn claim_error_response(error: ClaimError) -> Response {
     error_response(status, kind, &error.to_string())
 }
 
-/// Body of `POST /api/admin/bootstrap/confirm`.
+/// Body of `POST /api/management/admin/bootstrap/confirm`.
 #[derive(serde::Deserialize)]
 pub struct ConfirmRequest {
     /// The `claim_id` returned by the mint call.

@@ -302,7 +302,7 @@ async fn codex_can_drive_a_claude_model_despite_an_untranslatable_tool() {
     let router = TestRouter::start(ClientKind::Codex).await;
     let (status, body) = router
         .post(
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             &json!({
                 "model": CLAUDE_MODEL,
                 "input": "test",
@@ -325,7 +325,7 @@ async fn codex_can_drive_a_claude_model_despite_an_untranslatable_tool() {
 async fn a_dropped_tool_is_reported_to_the_caller() {
     let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
-        .request("/v1/responses")
+        .request("/api/services/openai/v1/responses")
         .json(&json!({
             "model": CLAUDE_MODEL,
             "input": "test",
@@ -352,7 +352,7 @@ async fn a_dropped_tool_is_reported_to_the_caller() {
 async fn an_ordinary_request_reports_no_dropped_tools() {
     let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
-        .request("/v1/responses")
+        .request("/api/services/openai/v1/responses")
         .json(&json!({
             "model": CLAUDE_MODEL,
             "input": "test",
@@ -372,7 +372,7 @@ async fn gemini_cli_sampling_parameters_do_not_both_reach_anthropic() {
     let router = TestRouter::start(ClientKind::GeminiCli).await;
     let (status, body) = router
         .post(
-            &format!("/api/gemini/v1beta/models/{CLAUDE_MODEL}:generateContent"),
+            &format!("/api/services/gemini/v1beta/models/{CLAUDE_MODEL}:generateContent"),
             &json!({
                 "contents": [{"role": "user", "parts": [{"text": "ping"}]}],
                 // The real GeminiCLI-tui body, including the Gemini-only fields.
@@ -405,7 +405,7 @@ async fn a_lone_top_p_still_reaches_anthropic() {
     let router = TestRouter::start(ClientKind::GeminiCli).await;
     let (status, body) = router
         .post(
-            &format!("/api/gemini/v1beta/models/{CLAUDE_MODEL}:generateContent"),
+            &format!("/api/services/gemini/v1beta/models/{CLAUDE_MODEL}:generateContent"),
             &json!({
                 "contents": [{"role": "user", "parts": [{"text": "ping"}]}],
                 "generationConfig": {"topP": 0.95}
@@ -426,7 +426,7 @@ async fn a_lone_top_p_still_reaches_anthropic() {
 async fn a_streamed_tool_call_reaches_the_responses_caller() {
     let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
-        .request("/v1/responses")
+        .request("/api/services/openai/v1/responses")
         .json(&json!({
             "model": CLAUDE_MODEL,
             "stream": true,
@@ -475,7 +475,7 @@ async fn a_streamed_tool_call_reaches_the_responses_caller() {
 async fn a_streamed_relay_records_how_it_ended_without_losing_frames() {
     let router = TestRouter::start(ClientKind::Opencode).await;
     let response = router
-        .request("/v1/chat/completions")
+        .request("/api/services/openai/v1/chat/completions")
         .json(&json!({
             "model": CLAUDE_MODEL,
             "stream": true,

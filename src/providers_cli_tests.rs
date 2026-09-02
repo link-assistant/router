@@ -183,7 +183,7 @@ fn each_provider_operation_names_its_own_route() {
         target: AuthTarget::default(),
     });
     assert_eq!(list.method, "GET");
-    assert_eq!(list.path, "/api/providers");
+    assert_eq!(list.path, "/api/management/providers");
     assert!(list.body.is_none());
 
     let show = call(ProviderOp::Show {
@@ -192,7 +192,7 @@ fn each_provider_operation_names_its_own_route() {
         target: AuthTarget::default(),
     });
     assert_eq!(show.method, "GET");
-    assert_eq!(show.path, "/api/providers/demo");
+    assert_eq!(show.path, "/api/management/providers/demo");
 
     let remove = call(ProviderOp::Remove {
         name: "demo".into(),
@@ -200,7 +200,7 @@ fn each_provider_operation_names_its_own_route() {
     });
     assert_eq!(remove.method, "DELETE");
     assert_eq!(
-        remove.path, "/api/providers/demo",
+        remove.path, "/api/management/providers/demo",
         "removal must name the provider, not the collection"
     );
 }
@@ -232,7 +232,7 @@ fn adding_a_provider_sends_what_routing_reads() {
     .expect("a call");
 
     assert_eq!(call.method, "POST");
-    assert_eq!(call.path, "/api/providers");
+    assert_eq!(call.path, "/api/management/providers");
     let body = call.body.expect("a body");
     assert_eq!(body["name"], "formal-ai", "{body}");
     assert_eq!(body["base_url"], "https://provider.example/v1", "{body}");
@@ -326,7 +326,10 @@ async fn a_remote_add_declares_the_provider_on_the_deployment() {
 
     assert_eq!(format!("{code:?}"), format!("{:?}", ExitCode::SUCCESS));
     let request = handle.await.expect("the server task");
-    assert!(request.starts_with("POST /api/providers"), "{request}");
+    assert!(
+        request.starts_with("POST /api/management/providers"),
+        "{request}"
+    );
     assert!(request.contains(r#""name":"demo""#), "{request}");
 }
 
@@ -374,7 +377,10 @@ async fn a_remote_list_reads_the_providers_route() {
 
     assert_eq!(format!("{code:?}"), format!("{:?}", ExitCode::SUCCESS));
     let request = handle.await.expect("the server task");
-    assert!(request.starts_with("GET /api/providers"), "{request}");
+    assert!(
+        request.starts_with("GET /api/management/providers"),
+        "{request}"
+    );
 }
 
 /// A remote `import` declares one provider per manifest entry.

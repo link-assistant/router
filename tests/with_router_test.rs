@@ -63,12 +63,12 @@ fn mock_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 .to_string();
             paths.push(path.clone());
             let (status, body) = match path.as_str() {
-                "/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
-                "/api/tokens/list" => (
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
+                "/api/management/tokens" => (
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/v1/models" | "/api/codex/v1/models" => (
+                "/api/services/anthropic/v1/models" | "/api/services/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
                 ),
@@ -101,17 +101,17 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 .and_then(|line| line.split_whitespace().nth(1))
                 .unwrap_or("");
             let (status, body) = match path {
-                "/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
-                "/api/tokens/list" => ("200 OK", r#"{"data":[]}"#),
-                "/api/tokens/client" => (
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
+                "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
+                "/api/management/tokens/client" => (
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
                 ),
-                "/api/codex/v1/models" => (
+                "/api/services/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
                 ),
-                "/api/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
+                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
             requests.push(request);
@@ -162,12 +162,12 @@ fn mock_rejected_token_router(message: &'static str) -> (String, thread::JoinHan
                 .and_then(|line| line.split_whitespace().nth(1))
                 .unwrap_or("");
             let (status, body) = match path {
-                "/health" => ("200 OK", r#"{"status":"ok"}"#.to_string()),
-                "/api/tokens/list" => (
+                "/api/health" => ("200 OK", r#"{"status":"ok"}"#.to_string()),
+                "/api/management/tokens" => (
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#.to_string(),
                 ),
-                "/api/codex/v1/models" => (
+                "/api/services/codex/v1/models" => (
                     "401 Unauthorized",
                     format!(r#"{{"error":{{"message":"{message}"}}}}"#),
                 ),
@@ -328,7 +328,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
             "-c".to_string(),
             "model_providers.link-assistant.name=\"Link.Assistant.Router\"".to_string(),
             "-c".to_string(),
-            format!("model_providers.link-assistant.base_url=\"{server}/v1\""),
+            format!("model_providers.link-assistant.base_url=\"{server}/api/services/codex/v1\""),
             "-c".to_string(),
             "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"".to_string(),
             "-c".to_string(),
@@ -355,7 +355,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
     assert!(!stale.exists(), "a later run must sweep crash leftovers");
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/health,/api/tokens/list,/api/codex/v1/models"
+        "/api/health,/api/management/tokens,/api/services/codex/v1/models"
     );
 }
 
@@ -431,7 +431,7 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
     assert!(std::path::Path::new(router_home.trim()).is_dir());
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/health,/api/tokens/list,/api/codex/v1/models"
+        "/api/health,/api/management/tokens,/api/services/codex/v1/models"
     );
 }
 
@@ -708,11 +708,11 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
     assert_eq!(
         paths,
         [
-            "/health",
-            "/api/tokens/list",
-            "/api/tokens/client",
-            "/api/codex/v1/models",
-            "/api/tokens/revoke"
+            "/api/health",
+            "/api/management/tokens",
+            "/api/management/tokens/client",
+            "/api/services/codex/v1/models",
+            "/api/management/tokens/revoke"
         ]
     );
     assert!(requests[1].contains("authorization: Bearer admin-secret"));
@@ -772,7 +772,7 @@ fn fake_claude(bin_dir: &std::path::Path) {
         &path,
         r#"#!/bin/sh
 if [ "$1" = "--version" ]; then
-  printf '2.1.129\n'
+  printf '2.1.255\n'
   exit 0
 fi
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
@@ -872,6 +872,6 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     );
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/health,/api/tokens/list,/v1/models"
+        "/api/health,/api/management/tokens,/api/services/anthropic/v1/models"
     );
 }

@@ -309,7 +309,7 @@ impl Router {
         let router = Self { child, port };
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         while std::time::Instant::now() < deadline {
-            if http_post(&router.url("/health"), None, "").is_some() {
+            if http_post(&router.url("/api/health"), None, "").is_some() {
                 return router;
             }
             std::thread::sleep(std::time::Duration::from_millis(100));
@@ -378,7 +378,7 @@ fn a_removed_client_credential_is_rejected_by_a_live_router() {
         );
         assert!(created.status.success(), "setup: {}", text(&created));
         let token = environment_token(home, "codex");
-        let probe = format!("{base_url}/v1/chat/completions");
+        let probe = format!("{base_url}/api/services/openai/v1/chat/completions");
         let body = r#"{"model":"gpt-5.6-sol","messages":[{"role":"user","content":"hi"}]}"#;
         let before = http_post(&probe, Some(&token), body).expect("router answers");
         assert!(

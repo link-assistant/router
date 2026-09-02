@@ -192,7 +192,7 @@ fn a_strict_client_refuses_another_vendors_model() {
 }
 
 #[test]
-fn claude_setup_enables_gateway_discovery_and_pins_every_default_family() {
+fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
     let home = tempfile::tempdir().unwrap();
     let manager = ClientManager::isolated(home.path());
     std::fs::create_dir_all(home.path().join(".claude")).unwrap();
@@ -216,14 +216,21 @@ fn claude_setup_enables_gateway_discovery_and_pins_every_default_family() {
         settings["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
         "1"
     );
-    for key in [
-        "ANTHROPIC_MODEL",
-        "ANTHROPIC_DEFAULT_OPUS_MODEL",
-        "ANTHROPIC_DEFAULT_SONNET_MODEL",
-        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-    ] {
-        assert_eq!(settings["env"][key], "claude-zai-glm-5", "{key}");
-    }
+    assert_eq!(
+        settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
+        "0"
+    );
+    assert!(
+        settings["env"]
+            .get("ANTHROPIC_DEFAULT_OPUS_MODEL")
+            .is_none()
+    );
+    assert!(settings["env"].get("ANTHROPIC_MODEL").is_none());
+    assert!(
+        settings["env"]
+            .get("ANTHROPIC_DEFAULT_SONNET_MODEL")
+            .is_none()
+    );
     let env = manager
         .write_environment(
             ClientKind::ClaudeCode,
@@ -233,6 +240,8 @@ fn claude_setup_enables_gateway_discovery_and_pins_every_default_family() {
         .unwrap();
     let env = std::fs::read_to_string(env).unwrap();
     assert!(env.contains("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"));
+    assert!(env.contains("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"));
+    assert!(env.contains("https://router.example/api/services/anthropic"));
     assert!(!env.contains("zai-secret"));
 
     manager.remove(ClientKind::ClaudeCode).unwrap();
@@ -245,6 +254,11 @@ fn claude_setup_enables_gateway_discovery_and_pins_every_default_family() {
         "0"
     );
     assert_eq!(restored["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"], "user-opus");
+    assert!(
+        restored["env"]
+            .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+            .is_none()
+    );
     assert!(restored["env"].get("ANTHROPIC_MODEL").is_none());
     assert!(
         restored["env"]

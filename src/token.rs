@@ -22,7 +22,8 @@ pub const TOKEN_PREFIX: &str = "la_sk_";
 /// Scope claim marking a token as an administrative credential.
 ///
 /// A token carrying this scope unlocks the administrative endpoints
-/// (`/api/tokens*`, `/api/providers*`, `/api/login*`) in addition to the
+/// (`/api/management/tokens*`, `/api/management/providers*`,
+/// `/api/management/login*`) in addition to the
 /// inference proxy. Tokens issued without a scope may only proxy inference.
 pub const ADMIN_SCOPE: &str = "admin";
 

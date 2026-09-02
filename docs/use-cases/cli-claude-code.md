@@ -1,6 +1,7 @@
 # CLI: Claude Code through the router
 
-**Dialect:** Anthropic Messages only. **Router endpoint:** `/v1/messages`.
+**Dialect:** Anthropic Messages only. **Router endpoint:**
+`/api/services/anthropic/v1/messages`.
 
 ## One-line temporary launch
 
@@ -10,7 +11,7 @@ router with claude "hi"
 
 The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
 `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN`; the normal Claude settings are
-not changed. It also enables gateway discovery; Claude Code >= 2.1.129 is
+not changed. It also enables gateway discovery; Claude Code >= 2.1.255 is
 required. See [with-router.md](with-router.md) for server and token options.
 
 Wrapper flags may appear before or after `claude`; an explicit `--`
@@ -38,7 +39,7 @@ Claude Code's [settings reference](https://code.claude.com/docs/en/settings)
 documents the two variables that matter:
 
 ```bash
-export ANTHROPIC_BASE_URL=http://127.0.0.1:8080
+export ANTHROPIC_BASE_URL=http://127.0.0.1:8080/api/services/anthropic
 export ANTHROPIC_AUTH_TOKEN=la_sk_...      # your task token
 export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1
 claude
@@ -47,8 +48,8 @@ claude
 `ANTHROPIC_API_KEY=la_sk_...` works as well; the router accepts the token from
 `Authorization: Bearer`, `x-api-key`, or the legacy `la_sk_` prefixed forms.
 
-The legacy prefix `http://127.0.0.1:8080/api/latest/anthropic` is also accepted
-and stripped, for configurations written against older versions.
+Pre-1.0.0 prefixes are not accepted. See the
+[canonical-route migration](../migrations/1.0.0-canonical-routes.md).
 
 ## What the router supplies
 
@@ -81,8 +82,8 @@ Because the credential is a single environment variable, one token per task is
 just one export per task:
 
 ```bash
-ANTHROPIC_BASE_URL=http://127.0.0.1:8080 ANTHROPIC_AUTH_TOKEN="$TOKEN_A" claude -p "task A"
-ANTHROPIC_BASE_URL=http://127.0.0.1:8080 ANTHROPIC_AUTH_TOKEN="$TOKEN_B" claude -p "task B"
+ANTHROPIC_BASE_URL=http://127.0.0.1:8080/api/services/anthropic ANTHROPIC_AUTH_TOKEN="$TOKEN_A" claude -p "task A"
+ANTHROPIC_BASE_URL=http://127.0.0.1:8080/api/services/anthropic ANTHROPIC_AUTH_TOKEN="$TOKEN_B" claude -p "task B"
 ```
 
 See [per-task-tokens.md](per-task-tokens.md).
@@ -90,7 +91,7 @@ See [per-task-tokens.md](per-task-tokens.md).
 ## Smoke test
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/messages \
+curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $ANTHROPIC_AUTH_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":32,
@@ -107,3 +108,4 @@ curl -s http://127.0.0.1:8080/v1/messages \
 | `503` naming an account | the pinned account is in a `Retry-After` cooldown |
 | Extended thinking missing | you are on a bridged upstream; `thinking` blocks are dropped (see the bridge document) |
 | GLM model missing after a policy/credential change | restart Claude Code to refresh `~/.claude/cache/gateway-models.json`; cached ghosts are still rejected locally |
+| Another tool's endpoint, credential, discovery flag, or model pin wins | run `router clients repair claude --dry-run --json`, then explicitly repair; Router backs up the public settings but never edits Claude credentials, account data, shell startup files, or model caches |

@@ -82,10 +82,7 @@ pub fn upstream(provider: UpstreamProvider) -> ProviderCapabilities {
 pub fn claude_generation(model: Option<&str>) -> Option<u32> {
     let model = model?;
     let model = model.strip_prefix("claude-").unwrap_or(model);
-    let mut parts = model.split('-');
-    let family = parts.next()?;
-    let generation = parts.next()?.parse::<u32>().ok()?;
-    matches!(family, "haiku" | "sonnet" | "opus" | "fable").then_some(generation)
+    model.split('-').find_map(|part| part.parse::<u32>().ok())
 }
 
 /// Whether the selected Claude model uses the current adaptive-thinking wire
@@ -95,19 +92,12 @@ pub fn claude_uses_adaptive_thinking(model: Option<&str>) -> bool {
     let Some(model) = model.map(|model| model.strip_prefix("claude-").unwrap_or(model)) else {
         return false;
     };
-    let mut parts = model.split('-');
-    let Some(family) = parts.next() else {
+    let mut version = model.split('-').filter_map(|part| part.parse::<u32>().ok());
+    let Some(major) = version.next() else {
         return false;
     };
-    let Some(major) = parts.next().and_then(|part| part.parse::<u32>().ok()) else {
-        return false;
-    };
-    let minor = parts
-        .next()
-        .and_then(|part| part.parse::<u32>().ok())
-        .unwrap_or(0);
-    matches!(family, "sonnet" | "fable") && major >= 5
-        || family == "opus" && (major > 4 || major == 4 && minor >= 7)
+    let minor = version.next().unwrap_or(0);
+    major > 4 || major == 4 && minor >= 7
 }
 
 /// Return a requested server-side tool the target subscription cannot

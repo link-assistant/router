@@ -87,7 +87,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
             println!(
                 "admin_credential_warning: WARNING legacy opaque `la_admin_` credential; \
                  it carries no expiry, scope or revocation. Rotate it into an admin JWT \
-                 with POST /api/admin/rotate (or /rotate in the chat admin bot)."
+                 with POST /api/management/admin/rotate (or /rotate in the chat admin bot)."
             );
         }
     }
@@ -118,7 +118,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     println!(
         "login_api              : {}",
         if config.login.enabled {
-            "enabled (POST /api/login)"
+            "enabled (POST /api/management/login)"
         } else {
             "disabled"
         }

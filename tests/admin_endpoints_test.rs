@@ -3,7 +3,7 @@
 //! The unit tests in `src/admin_auth.rs` pin the authorisation *rule*; this
 //! file pins the thing the issue actually reported — that a real router
 //! process, started with no admin key, answered `200` to an unauthenticated
-//! `POST /api/tokens`. It boots the released binary on a loopback port and
+//! `POST /api/management/tokens`. It boots the released binary on a loopback port and
 //! speaks HTTP to it, so nothing about the wiring between the rule and the
 //! routes is assumed.
 //!
@@ -147,7 +147,7 @@ impl Router {
     fn await_health(&mut self) -> bool {
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
-            if ureq_get(&self.url("/health"), None).is_some() {
+            if ureq_get(&self.url("/api/health"), None).is_some() {
                 return true;
             }
             if matches!(self.child.try_wait(), Ok(Some(_))) {
@@ -237,14 +237,14 @@ fn strip_chunking(body: &str) -> String {
 }
 
 /// The reproduction from issue #49: with no admin credential configured, a
-/// `POST /api/tokens` carrying no `Authorization` header used to return `200`
+/// `POST /api/management/tokens` carrying no `Authorization` header used to return `200`
 /// and a usable `la_sk_…` token.
 #[test]
 fn unauthenticated_token_issuance_is_refused_by_default() {
     let router = Router::start(&[]);
 
     let (status, body) = ureq_post(
-        &router.url("/api/tokens"),
+        &router.url("/api/management/tokens"),
         None,
         r#"{"ttl_hours":1,"label":"anyone"}"#,
     )
@@ -256,7 +256,8 @@ fn unauthenticated_token_issuance_is_refused_by_default() {
         "no token may be handed to an unauthenticated caller: {body}"
     );
 
-    let (status, body) = ureq_get(&router.url("/api/tokens/list"), None).expect("should answer");
+    let (status, body) =
+        ureq_get(&router.url("/api/management/tokens"), None).expect("should answer");
     assert_eq!(status, 401, "unexpected body: {body}");
 }
 
@@ -272,7 +273,7 @@ fn bootstrap_admin_token_is_printed_and_opens_the_admin_surface() {
     assert!(token.starts_with("la_sk_"), "unexpected token: {token}");
 
     let (status, body) =
-        ureq_get(&router.url("/api/tokens/list"), Some(&token)).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some(&token)).expect("should answer");
     assert_eq!(status, 200, "unexpected body: {body}");
 }
 
@@ -283,7 +284,7 @@ fn client_tokens_cannot_reach_the_admin_surface() {
     let admin = router.bootstrap_token.clone().expect("bootstrap token");
 
     let (status, body) = ureq_post(
-        &router.url("/api/tokens"),
+        &router.url("/api/management/tokens"),
         Some(&admin),
         r#"{"ttl_hours":1,"label":"task"}"#,
     )
@@ -292,7 +293,7 @@ fn client_tokens_cannot_reach_the_admin_surface() {
     let client = token_from(&body);
 
     let (status, body) =
-        ureq_get(&router.url("/api/tokens/list"), Some(&client)).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some(&client)).expect("should answer");
     assert_eq!(
         status, 401,
         "a client token must not read the admin surface: {body}"
@@ -308,7 +309,7 @@ fn managed_client_token_issuance_validates_and_persists_the_signed_binding() {
     let admin = router.bootstrap_token.clone().expect("bootstrap token");
 
     let (status, _) = ureq_post(
-        &router.url("/api/tokens/client"),
+        &router.url("/api/management/tokens/client"),
         None,
         r#"{"client_kind":"codex"}"#,
     )
@@ -320,13 +321,17 @@ fn managed_client_token_issuance_validates_and_persists_the_signed_binding() {
         (r#"{"client_kind":"cursor"}"#, 400),
         (r#"{"client_kind":"codex","ttl_hours":0}"#, 400),
     ] {
-        let (status, response) = ureq_post(&router.url("/api/tokens/client"), Some(&admin), body)
-            .expect("should answer");
+        let (status, response) = ureq_post(
+            &router.url("/api/management/tokens/client"),
+            Some(&admin),
+            body,
+        )
+        .expect("should answer");
         assert_eq!(status, expected, "unexpected body: {response}");
     }
 
     let (status, defaulted) = ureq_post(
-        &router.url("/api/tokens/client"),
+        &router.url("/api/management/tokens/client"),
         Some(&admin),
         r#"{"client_kind":"codex"}"#,
     )
@@ -335,7 +340,7 @@ fn managed_client_token_issuance_validates_and_persists_the_signed_binding() {
     assert!(token_from(&defaulted).starts_with("la_sk_"));
 
     let (status, explicit) = ureq_post(
-        &router.url("/api/tokens/client"),
+        &router.url("/api/management/tokens/client"),
         Some(&admin),
         r#"{"client_kind":"claude","label":"managed-claude","ttl_hours":2,"max_requests":7,"sliding_expiry":true}"#,
     )
@@ -348,7 +353,7 @@ fn managed_client_token_issuance_validates_and_persists_the_signed_binding() {
     assert_eq!(explicit["label"], "managed-claude");
 
     let (status, listed) =
-        ureq_get(&router.url("/api/tokens/list"), Some(&admin)).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some(&admin)).expect("should answer");
     assert_eq!(status, 200, "unexpected body: {listed}");
     let listed: serde_json::Value =
         serde_json::from_str(&strip_chunking(&listed)).expect("token list JSON");
@@ -371,7 +376,7 @@ fn admin_scoped_tokens_are_issuable_and_rotatable_over_http() {
     let admin = router.bootstrap_token.clone().expect("bootstrap token");
 
     let (status, body) = ureq_post(
-        &router.url("/api/tokens"),
+        &router.url("/api/management/tokens"),
         Some(&admin),
         r#"{"ttl_hours":1,"label":"ops","scope":"admin"}"#,
     )
@@ -380,21 +385,25 @@ fn admin_scoped_tokens_are_issuable_and_rotatable_over_http() {
     let scoped = token_from(&body);
 
     let (status, body) =
-        ureq_get(&router.url("/api/tokens/list"), Some(&scoped)).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some(&scoped)).expect("should answer");
     assert_eq!(status, 200, "unexpected body: {body}");
 
-    let (status, body) =
-        ureq_post(&router.url("/api/tokens/rotate"), Some(&scoped), "{}").expect("should answer");
+    let (status, body) = ureq_post(
+        &router.url("/api/management/tokens/rotate"),
+        Some(&scoped),
+        "{}",
+    )
+    .expect("should answer");
     assert_eq!(status, 200, "unexpected body: {body}");
     let replacement = token_from(&body);
     assert_ne!(replacement, scoped);
 
     // The rotated-away credential is revoked; its replacement works.
     let (status, _) =
-        ureq_get(&router.url("/api/tokens/list"), Some(&scoped)).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some(&scoped)).expect("should answer");
     assert_eq!(status, 401, "the rotated-away token must stop working");
     let (status, _) =
-        ureq_get(&router.url("/api/tokens/list"), Some(&replacement)).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some(&replacement)).expect("should answer");
     assert_eq!(status, 200);
 }
 
@@ -405,7 +414,7 @@ fn an_unknown_scope_is_rejected() {
     let admin = router.bootstrap_token.clone().expect("bootstrap token");
 
     let (status, body) = ureq_post(
-        &router.url("/api/tokens"),
+        &router.url("/api/management/tokens"),
         Some(&admin),
         r#"{"ttl_hours":1,"label":"x","scope":"root"}"#,
     )
@@ -423,15 +432,15 @@ fn the_flat_admin_key_still_authorises() {
         "a configured admin key must not trigger token generation"
     );
 
-    let (status, _) = ureq_get(&router.url("/api/tokens/list"), None).expect("should answer");
+    let (status, _) = ureq_get(&router.url("/api/management/tokens"), None).expect("should answer");
     assert_eq!(status, 401);
 
     let (status, _) =
-        ureq_get(&router.url("/api/tokens/list"), Some("wrong-key")).expect("should answer");
+        ureq_get(&router.url("/api/management/tokens"), Some("wrong-key")).expect("should answer");
     assert_eq!(status, 401);
 
     let (status, body) = ureq_get(
-        &router.url("/api/tokens/list"),
+        &router.url("/api/management/tokens"),
         Some("s3cret-bootstrap-key"),
     )
     .expect("should answer");
@@ -444,7 +453,7 @@ fn allow_anonymous_admin_restores_the_open_surface() {
     let router = Router::start(&[("ALLOW_ANONYMOUS_ADMIN", "1")]);
 
     let (status, body) = ureq_post(
-        &router.url("/api/tokens"),
+        &router.url("/api/management/tokens"),
         None,
         r#"{"ttl_hours":1,"label":"anyone"}"#,
     )

@@ -14,6 +14,15 @@
 /// - `/api/latest/anthropic/*` -> `/*` (legacy)
 #[must_use]
 pub fn resolve_upstream_path(path: &str) -> String {
+    if let Some(rest) = path.strip_prefix("/api/services/anthropic") {
+        return rest.to_string();
+    }
+    if let Some(rest) = path.strip_prefix("/api/services/bedrock") {
+        return rest.to_string();
+    }
+    if let Some(rest) = path.strip_prefix("/api/services/vertex") {
+        return rest.to_string();
+    }
     if let Some(rest) = path.strip_prefix("/api/anthropic") {
         return rest.to_string();
     }

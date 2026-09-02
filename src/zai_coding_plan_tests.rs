@@ -192,7 +192,7 @@ fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
             &provider,
             &claims(Some("codex"), Some("owner-a"), ""),
             &HeaderMap::new(),
-            "/api/codex/v1/models",
+            "/api/services/codex/v1/models",
         )
         .is_err()
     );
@@ -226,7 +226,9 @@ fn registries_are_explicit_client_specific_and_canonical() {
     let opencode = registry_for_client(ClientKind::Opencode, &["glm-5"]).unwrap();
     assert_eq!(opencode[0].protocol, ClientProtocol::OpenAIChat);
 
-    assert!(registry_for_client(ClientKind::Codex, &["glm-future-unreviewed"]).is_err());
+    let future = registry_for_client(ClientKind::Codex, &["future-saffron-91"]).unwrap();
+    assert_eq!(future[0].exposed_id, "z.ai/future-saffron-91");
+    assert_eq!(future[0].canonical_id, "future-saffron-91");
 }
 
 #[test]
@@ -369,7 +371,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         (
             ClientKind::ClaudeCode,
             ClientProtocol::AnthropicMessages,
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             "claude-zai-glm-5",
             "/api/anthropic/v1/messages",
             crate::metrics::Surface::Anthropic,
@@ -377,7 +379,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         (
             ClientKind::Codex,
             ClientProtocol::OpenAIResponses,
-            "/v1/responses",
+            "/api/services/codex/v1/responses",
             "z.ai/glm-5",
             "/api/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
@@ -385,7 +387,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         (
             ClientKind::Opencode,
             ClientProtocol::OpenAIChat,
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             "z.ai/glm-5",
             "/api/coding/paas/v4/chat/completions",
             crate::metrics::Surface::OpenAIChat,
@@ -545,22 +547,47 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
     let data = tempfile::tempdir().unwrap();
     let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
     install_provider(&mut state, &base_url, &[]);
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "z-ai-personal".into(),
+            kind: Some("z.ai-coding-plan".into()),
+            base_url: base_url.clone(),
+            default_model: Some("future-saffron-91".into()),
+            models: Some(vec!["future-saffron-91".into()]),
+            api_key: Some("zai-secret-key".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: Some("owner-a".into()),
+            acknowledge_intermediary_risk: Some(true),
+            acknowledge_unsupported_clients: Some(Vec::new()),
+        })
+        .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::Auto;
 
     for (client, expected, forbidden) in [
-        (ClientKind::ClaudeCode, "claude-zai-glm-5", "z.ai/glm-5"),
-        (ClientKind::Codex, "z.ai/glm-5", "claude-zai-glm-5"),
-        (ClientKind::Opencode, "z.ai/glm-5", "claude-zai-glm-5"),
+        (
+            ClientKind::ClaudeCode,
+            "claude-zai-future-saffron-91",
+            "z.ai/future-saffron-91",
+        ),
+        (
+            ClientKind::Codex,
+            "z.ai/future-saffron-91",
+            "claude-zai-future-saffron-91",
+        ),
+        (
+            ClientKind::Opencode,
+            "z.ai/future-saffron-91",
+            "claude-zai-future-saffron-91",
+        ),
     ] {
-        let mut headers = client_headers(&state, client, "owner-a");
-        headers.insert(
-            "x-link-assistant-client",
-            HeaderValue::from_str(client.canonical_name()).unwrap(),
-        );
-        let path = if client == ClientKind::Codex {
-            "/api/codex/v1/models"
-        } else {
-            "/v1/models"
+        let headers = client_headers(&state, client, "owner-a");
+        let path = match client {
+            ClientKind::Codex => "/api/services/codex/v1/models",
+            ClientKind::ClaudeCode => "/api/services/anthropic/v1/models",
+            _ => "/api/services/openai/v1/models",
         };
         let response = crate::model_routing::models(
             axum::extract::State(state.clone()),
@@ -582,15 +609,17 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
         "one free health check per catalog"
     );
 
-    let routed =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model":"claude-zai-glm-5"}))
-            .await
-            .unwrap();
+    let routed = crate::model_routing::route_state(
+        &state,
+        &serde_json::json!({"model":"claude-zai-future-saffron-91"}),
+    )
+    .await
+    .unwrap();
     assert_eq!(
         routed.upstream_provider,
         crate::config::UpstreamProvider::ZaiCodingPlan
     );
-    assert_eq!(routed.bridge_model.as_deref(), Some("glm-5"));
+    assert_eq!(routed.bridge_model.as_deref(), Some("future-saffron-91"));
     assert!(
         crate::model_routing::route_state(
             &state,
@@ -644,7 +673,7 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
     headers.insert("x-link-assistant-client", HeaderValue::from_static("codex"));
     let response = crate::model_routing::models(
         axum::extract::State(state),
-        axum::extract::OriginalUri("/api/codex/v1/models".parse().unwrap()),
+        axum::extract::OriginalUri("/api/services/codex/v1/models".parse().unwrap()),
         headers,
     )
     .await;

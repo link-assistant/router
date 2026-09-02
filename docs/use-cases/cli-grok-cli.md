@@ -1,7 +1,7 @@
 # CLI: Grok CLI through the router
 
 **Dialect:** OpenAI Chat Completions. **Router endpoint:**
-`/v1/chat/completions`.
+`/api/services/openai/v1/chat/completions`.
 
 ## One-line temporary launch
 
@@ -9,7 +9,8 @@
 router with grok "hi"
 ```
 
-The wrapper isolates `HOME` and supplies `GROK_BASE_URL=URL/v1` and a per-run
+The wrapper isolates `HOME` and supplies
+`GROK_BASE_URL=URL/api/services/openai/v1` and a per-run
 `GROK_API_KEY`. Grok has no persistent base-URL field, so `--global` directs
 users to the temporary or manual environment path. See
 [with-router.md](with-router.md).
@@ -26,7 +27,7 @@ every later token verbatim. See
 `~/.grok/user-settings.json`.
 
 ```bash
-export GROK_BASE_URL=http://127.0.0.1:8080/v1
+export GROK_BASE_URL=http://127.0.0.1:8080/api/services/openai/v1
 export GROK_API_KEY=la_sk_...            # your task token
 grok
 ```
@@ -52,7 +53,7 @@ acknowledgement; see [zai-coding-plan.md](zai-coding-plan.md).
 ## Smoke test
 
 ```bash
-curl -s http://127.0.0.1:8080/v1/chat/completions \
+curl -s http://127.0.0.1:8080/api/services/openai/v1/chat/completions \
   -H "Authorization: Bearer $GROK_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"gpt-4o","messages":[{"role":"user","content":"ping"}]}' | jq -r '.choices[0].message.content'

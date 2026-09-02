@@ -76,12 +76,12 @@ spec:
                   key: ACTIVITYPUB_PUBLIC_KEY_PEM
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: http
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/health
               port: http
             periodSeconds: 30
           volumeMounts:

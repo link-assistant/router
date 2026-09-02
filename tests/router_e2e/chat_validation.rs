@@ -21,7 +21,10 @@ async fn missing_chat_messages_is_rejected_locally_for_every_provider() {
     ] {
         let router = TestRouter::start(provider).await;
         let response = router
-            .post("/v1/chat/completions", &json!({"model":"gpt-5"}))
+            .post(
+                "/api/services/openai/v1/chat/completions",
+                &json!({"model":"gpt-5"}),
+            )
             .send()
             .await
             .expect("invalid Chat Completions response");

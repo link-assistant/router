@@ -158,7 +158,7 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
     assert!(request_evidence(
         ClientKind::Codex,
         ClientProtocol::OpenAIResponses,
-        "/api/codex/v1/responses",
+        "/api/services/codex/v1/responses",
         &codex
     ));
 
@@ -177,17 +177,23 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
 fn catalog_probe_evidence_is_client_specific_and_not_authority_by_itself() {
     let mut headers = HeaderMap::new();
     headers.insert("authorization", "Bearer redacted".parse().unwrap());
-    headers.insert("x-link-assistant-client", "codex".parse().unwrap());
     assert!(request_evidence(
         ClientKind::Codex,
         ClientProtocol::Catalog,
-        "/api/codex/v1/models",
+        "/api/services/codex/v1/models",
+        &headers
+    ));
+    headers.insert("x-link-assistant-client", "claude".parse().unwrap());
+    assert!(!request_evidence(
+        ClientKind::Codex,
+        ClientProtocol::Catalog,
+        "/api/services/codex/v1/models",
         &headers
     ));
     assert!(!request_evidence(
         ClientKind::ClaudeCode,
         ClientProtocol::Catalog,
-        "/api/codex/v1/models",
+        "/api/services/codex/v1/models",
         &headers
     ));
 }
@@ -220,7 +226,7 @@ fn signed_binding_and_fixture_evidence_are_both_required() {
             &bound_claims("codex"),
             SubscriptionProvider::Codex,
             ClientProtocol::OpenAIResponses,
-            "/api/codex/v1/responses",
+            "/api/services/codex/v1/responses",
             &headers,
         ),
         Ok(EntitlementDecision::Native)
@@ -235,7 +241,7 @@ fn signed_binding_and_fixture_evidence_are_both_required() {
             &unbound,
             SubscriptionProvider::Codex,
             ClientProtocol::OpenAIResponses,
-            "/api/codex/v1/responses",
+            "/api/services/codex/v1/responses",
             &headers,
         )
         .is_err()
@@ -321,7 +327,7 @@ fn every_supported_evidence_variant_is_explicit() {
     assert!(request_evidence(
         ClientKind::GeminiCli,
         ClientProtocol::GeminiNative,
-        "/api/gemini/v1beta/models/gemini:generateContent",
+        "/api/services/gemini/v1beta/models/gemini:generateContent",
         &gemini,
     ));
 
@@ -331,14 +337,14 @@ fn every_supported_evidence_variant_is_explicit() {
     assert!(request_evidence(
         ClientKind::QwenCode,
         ClientProtocol::OpenAIChat,
-        "/api/qwen/v1/chat/completions",
+        "/api/services/qwen/v1/chat/completions",
         &qwen,
     ));
     qwen.insert("x-link-assistant-client", "qwen".parse().unwrap());
     assert!(request_evidence(
         ClientKind::QwenCode,
         ClientProtocol::Catalog,
-        "/api/qwen/v1/models",
+        "/api/services/qwen/v1/models",
         &qwen,
     ));
 
@@ -354,7 +360,7 @@ fn every_supported_evidence_variant_is_explicit() {
     assert!(!request_evidence(
         ClientKind::Cursor,
         ClientProtocol::Catalog,
-        "/v1/models",
+        "/api/services/openai/v1/models",
         &HeaderMap::new(),
     ));
 }
@@ -394,7 +400,7 @@ async fn pinned_catalog_returns_forbidden_for_an_unbound_token() {
 
     let response = crate::model_routing::models(
         State(state),
-        OriginalUri("/v1/models".parse().unwrap()),
+        OriginalUri("/api/services/anthropic/v1/models".parse().unwrap()),
         headers,
     )
     .await;

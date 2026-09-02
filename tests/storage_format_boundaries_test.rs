@@ -72,7 +72,7 @@ impl Router {
         let mut stream = TcpStream::connect(("127.0.0.1", self.port)).ok()?;
         write!(
             stream,
-            "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n{extra_headers}\r\n"
+            "GET /api/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n{extra_headers}\r\n"
         )
         .ok()?;
         let mut response = String::new();

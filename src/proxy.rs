@@ -45,8 +45,8 @@ pub(crate) use crate::request_routing::{request_routing_context, retry_after_dur
 use crate::responses;
 use crate::subscription::SubscriptionProvider;
 
-/// The legacy API path prefix used to route requests through the proxy.
-pub const API_PREFIX: &str = "/api/latest/anthropic/";
+/// The canonical Anthropic service path prefix used by the proxy.
+pub const API_PREFIX: &str = "/api/services/anthropic/";
 
 /// Headers that Claude Code LLM Gateway spec requires to be forwarded.
 ///
@@ -129,7 +129,7 @@ fn is_operator_subscription_header(name: &str) -> bool {
 
 /// Liveness endpoint: is this process up and serving?
 ///
-/// Deliberately independent of subscription health. `/health` is wired to both
+/// Deliberately independent of subscription health. `/api/health` is wired to both
 /// the liveness *and* readiness probes in `deploy/k8s/router.yaml`, so failing
 /// it for a revoked credential would make Kubernetes restart a container that
 /// is running perfectly — and a restart cannot mint a new OAuth token, so the

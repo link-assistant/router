@@ -78,6 +78,8 @@ impl Router {
             .env("STORAGE_POLICY", "text")
             .env("DATA_DIR", data.path())
             .env("DISABLE_LOGIN_API", "true")
+            .env("GITHUB_PROXY_TOKEN", "unix-socket-upstream-token")
+            .env("GITHUB_PROXY_BASE_URL", "http://127.0.0.1:9")
             .env("LISTEN_UNIX_SOCKET", &socket)
             .stdout(Stdio::null())
             .stderr(Stdio::from(stderr))
@@ -92,7 +94,10 @@ impl Router {
         };
         let deadline = Instant::now() + Duration::from_secs(40);
         while Instant::now() < deadline {
-            if router.request("GET /health HTTP/1.1").contains(" 200 ") {
+            if router
+                .request("GET /api/v3/user HTTP/1.1")
+                .contains(" 401 ")
+            {
                 return router;
             }
             // A process that has already exited will never answer, so waiting
@@ -163,9 +168,9 @@ impl Router {
 fn the_socket_answers_plain_http() {
     let router = Router::start();
 
-    let response = router.request("GET /health HTTP/1.1");
+    let response = router.request("GET /api/v3/user HTTP/1.1");
 
-    assert!(response.contains(" 200 "), "{response}");
+    assert!(response.contains(" 401 "), "{response}");
     assert!(
         !response.is_empty(),
         "a TLS listener would have rejected a plaintext request"
@@ -192,7 +197,7 @@ fn the_socket_is_owner_only() {
 fn the_socket_still_requires_a_token() {
     let router = Router::start();
 
-    let refused = router.request("GET /v1/models HTTP/1.1");
+    let refused = router.request("GET /api/v3/user HTTP/1.1");
     assert!(
         refused.contains(" 401 ") || refused.contains(" 403 "),
         "an unauthenticated request must be refused: {refused}"
@@ -206,7 +211,7 @@ fn the_socket_still_requires_a_token() {
     stream
         .write_all(
             format!(
-                "GET /v1/models HTTP/1.1\r\nHost: router.internal\r\n\
+                "GET /api/v3/user HTTP/1.1\r\nHost: router.internal\r\n\
                  authorization: Bearer {token}\r\nConnection: close\r\n\r\n"
             )
             .as_bytes(),
@@ -214,5 +219,8 @@ fn the_socket_still_requires_a_token() {
         .expect("send the authenticated request");
     let mut accepted = String::new();
     let _ = stream.read_to_string(&mut accepted);
-    assert!(accepted.contains(" 200 "), "{accepted}");
+    assert!(
+        !accepted.contains(" 401 ") && !accepted.contains(" 403 ") && !accepted.contains(" 404 "),
+        "an authenticated request must reach the configured upstream: {accepted}"
+    );
 }

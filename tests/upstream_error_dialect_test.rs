@@ -242,7 +242,10 @@ fn body_text(body: &Value) -> String {
 #[tokio::test]
 async fn openai_surfaces_render_upstream_errors_in_their_own_dialect() {
     let router = TestRouter::start().await;
-    for path in ["/v1/chat/completions", "/v1/responses"] {
+    for path in [
+        "/api/services/openai/v1/chat/completions",
+        "/api/services/openai/v1/responses",
+    ] {
         let (status, body) = router
             .post(
                 path,
@@ -272,7 +275,10 @@ async fn openai_surfaces_render_upstream_errors_in_their_own_dialect() {
 #[tokio::test]
 async fn no_surface_forwards_operator_account_fields() {
     let router = TestRouter::start().await;
-    for path in ["/v1/chat/completions", "/v1/responses"] {
+    for path in [
+        "/api/services/openai/v1/chat/completions",
+        "/api/services/openai/v1/responses",
+    ] {
         let (_, body) = router
             .post(
                 path,
@@ -296,7 +302,7 @@ async fn the_anthropic_surface_rendering_is_unchanged() {
     let router = TestRouter::start().await;
     let (status, body) = router
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model": "gpt-5",
                 "max_tokens": 16,

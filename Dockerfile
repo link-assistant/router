@@ -62,7 +62,7 @@ ENV ROUTER_PORT=8080
 ENV CLAUDE_CODE_HOME=/data/claude
 
 # The login flow writes the credential it obtains here, so this must be
-# writable — a read-only mount makes `POST /api/login` fail immediately.
+# writable — a read-only mount makes `POST /api/management/login` fail immediately.
 RUN mkdir -p /data/claude
 
 EXPOSE 8080

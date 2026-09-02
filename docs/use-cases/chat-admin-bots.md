@@ -122,7 +122,7 @@ so no limit is reachable only from a terminal. Beyond the positional
 ```
 
 Values are validated against the same bounds as `tokens issue` and
-`POST /api/tokens`, so a request accepted in one surface is accepted in all of
+`POST /api/management/tokens`, so a request accepted in one surface is accepted in all of
 them. Rotation keeps every constraint that is not named explicitly and revokes
 the previous value as part of the same operation.
 

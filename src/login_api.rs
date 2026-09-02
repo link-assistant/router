@@ -1,10 +1,10 @@
 //! HTTP endpoints for authorizing a deployment (issue #47).
 //!
 //! ```text
-//! POST   /api/login            -> { login_id, provider, url, status, ... }
-//! GET    /api/login/{id}       -> { status: "awaiting_code" | "awaiting_device" | ... }
-//! POST   /api/login/{id}/code  -> { status: "authorized", expires_at, ... }
-//! DELETE /api/login/{id}       -> { cancelled: true }
+//! POST   /api/management/login            -> { login_id, provider, url, status, ... }
+//! GET    /api/management/login/{id}       -> { status: "awaiting_code" | "awaiting_device" | ... }
+//! POST   /api/management/login/{id}/code  -> { status: "authorized", expires_at, ... }
+//! DELETE /api/management/login/{id}       -> { cancelled: true }
 //! ```
 //!
 //! These endpoints start a process inside the deployment, so they are admin

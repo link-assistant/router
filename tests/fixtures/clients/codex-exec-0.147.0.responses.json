@@ -3,7 +3,7 @@
   "version": "0.147.0",
   "source": "issue #211 (headers) and issue #215 (the real tool array, including the `namespace` entry Anthropic cannot represent)",
   "method": "POST",
-  "path": "/api/codex/v1/responses",
+  "path": "/api/services/codex/v1/responses",
   "credential_carrier": "authorization",
   "expected_surface": "openai-responses",
   "headers": {

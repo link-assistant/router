@@ -1,7 +1,8 @@
 //! What upstream responses say about a subscription's credential.
 //!
 //! Split from `refresh.rs` to stay inside the per-file line limit. This is the
-//! evidence `/health/subscriptions`, `/metrics` and `model_routing` all read
+//! evidence `/api/management/health/subscriptions`, `/api/management/metrics`
+//! and `model_routing` all read
 //! (issues #318, #319).
 
 use super::{CredentialEvidence, SubscriptionProvider, SubscriptionToken, TokenCache};
@@ -127,7 +128,8 @@ impl TokenCache {
     /// Record that an upstream rejected `provider`'s credential (401/403).
     /// Announce that a provider became unusable, whichever path discovered it.
     ///
-    /// `Rejected` is the single state that drives `/health/subscriptions` to
+    /// `Rejected` is the single state that drives
+    /// `/api/management/health/subscriptions` to
     /// 503, the `/metrics` gauge to 0, and removal from routing. It was set
     /// from three places at three severities — once at `ERROR`, once at
     /// `WARN`, and once silently — so a subscription revoked between refresh

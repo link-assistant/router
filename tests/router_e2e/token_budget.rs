@@ -25,7 +25,7 @@ async fn a_request_that_cannot_fit_the_spend_cap_is_rejected_before_dispatch() {
     });
 
     let rejected = router
-        .authenticated_post("/v1/messages", &capped)
+        .authenticated_post("/api/services/anthropic/v1/messages", &capped)
         .json(&body)
         .send()
         .await
@@ -42,7 +42,7 @@ async fn a_request_that_cannot_fit_the_spend_cap_is_rejected_before_dispatch() {
 
     // A token without the cap is unaffected.
     let isolated = router
-        .post("/v1/messages", &body)
+        .post("/api/services/anthropic/v1/messages", &body)
         .send()
         .await
         .expect("isolated token response");
@@ -76,7 +76,7 @@ async fn a_request_that_fits_is_admitted_and_settled_against_real_usage() {
     });
 
     let response = router
-        .authenticated_post("/v1/messages", &token)
+        .authenticated_post("/api/services/anthropic/v1/messages", &token)
         .json(&body)
         .send()
         .await
@@ -139,7 +139,7 @@ async fn concurrent_requests_cannot_overshoot_the_cap_together() {
         let body = body.clone();
         handles.push(tokio::spawn(async move {
             client
-                .post(format!("{url}/v1/messages"))
+                .post(format!("{url}/api/services/anthropic/v1/messages"))
                 .header("x-api-key", token)
                 .header("anthropic-version", "2023-06-01")
                 .json(&body)
@@ -192,7 +192,7 @@ async fn a_rejected_request_does_not_leak_its_reservation() {
     // A malformed body never reaches the upstream, but it has already been
     // admitted by the time it is rejected.
     let response = router
-        .authenticated_post("/v1/messages", &token)
+        .authenticated_post("/api/services/anthropic/v1/messages", &token)
         .header("content-type", "application/json")
         .body("{ not json")
         .send()

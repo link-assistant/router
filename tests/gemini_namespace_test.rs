@@ -3,8 +3,8 @@
 //! Gemini CLI only speaks `ListModels` and `generateContent`. These tests drive
 //! the real router over HTTP against a stubbed vendor to prove that one router
 //! JWT exposes every connected subscription through that namespace — the gap
-//! reported in issue #187, where `/api/gemini/v1beta/models` returned an empty
-//! list while `/v1/models` listed eight live Codex models.
+//! reported in issue #187, where `/api/services/gemini/v1beta/models` returned an empty
+//! list while `/api/services/openai/v1/models` listed eight live Codex models.
 
 use std::fmt::Write as _;
 use std::sync::{Arc, Mutex};
@@ -189,16 +189,19 @@ impl TestRouter {
 
         let app = Router::new()
             .route(
-                "/v1/models",
+                "/api/services/openai/v1/models",
                 get(link_assistant_router::proxy::openai_models),
             )
-            .route("/api/gemini/v1beta/models", get(gemini::native_models))
             .route(
-                "/api/gemini/v1beta/models/{model}",
+                "/api/services/gemini/v1beta/models",
+                get(gemini::native_models),
+            )
+            .route(
+                "/api/services/gemini/v1beta/models/{model}",
                 get(gemini::native_model).post(gemini::forward_native_gemini),
             )
             .route(
-                "/api/vertex/v1/{*path}",
+                "/api/services/vertex/v1/{*path}",
                 axum::routing::post(gemini::forward_native_vertex),
             )
             .with_state(state);
@@ -405,13 +408,13 @@ fn model_names(catalog: &Value) -> Vec<String> {
         .collect()
 }
 
-/// Issue #187: the Gemini namespace listed nothing while `/v1/models` listed
+/// Issue #187: the Gemini namespace listed nothing while the `OpenAI` catalog listed
 /// every connected subscription's live catalog.
 #[tokio::test]
 async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
     let router = TestRouter::start().await;
 
-    let (status, gemini_catalog) = router.get_json("/api/gemini/v1beta/models").await;
+    let (status, gemini_catalog) = router.get_json("/api/services/gemini/v1beta/models").await;
     assert_eq!(status, StatusCode::OK);
     let names = model_names(&gemini_catalog);
     for model in CODEX_MODELS.iter().chain(CLAUDE_MODELS.iter()) {
@@ -447,7 +450,7 @@ async fn gemini_omits_a_catalog_owned_by_another_account() {
         CODEX_MODELS.iter().map(ToString::to_string).collect(),
     );
 
-    let (status, gemini_catalog) = router.get_json("/api/gemini/v1beta/models").await;
+    let (status, gemini_catalog) = router.get_json("/api/services/gemini/v1beta/models").await;
     assert_eq!(status, StatusCode::OK);
     let gemini_names = model_names(&gemini_catalog);
 
@@ -460,7 +463,7 @@ async fn gemini_omits_a_catalog_owned_by_another_account() {
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
             &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
         )
         .await;
@@ -490,7 +493,7 @@ async fn pinned_native_inference_rejects_a_catalog_owned_by_another_account() {
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
             &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
         )
         .await;
@@ -518,7 +521,7 @@ async fn pinned_native_inference_keeps_cold_start_passthrough_without_an_owner_c
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-cold-start:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-cold-start:generateContent",
             &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
         )
         .await;
@@ -546,7 +549,7 @@ async fn pinned_native_inference_rejects_an_anonymous_discovered_catalog_for_a_k
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
             &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
         )
         .await;
@@ -571,7 +574,7 @@ async fn pinned_native_inference_rejects_an_anonymous_discovered_catalog_for_a_k
 async fn gemini_list_models_omits_disconnected_subscriptions() {
     let router = TestRouter::start_with(false).await;
 
-    let (status, catalog) = router.get_json("/api/gemini/v1beta/models").await;
+    let (status, catalog) = router.get_json("/api/services/gemini/v1beta/models").await;
     assert_eq!(status, StatusCode::OK);
     let names = model_names(&catalog);
     assert!(names.contains(&"models/gpt-5.4-mini".to_string()));
@@ -586,7 +589,7 @@ async fn gemini_get_model_resolves_a_codex_model_and_rejects_unknown_ones() {
     let router = TestRouter::start().await;
 
     let (status, model) = router
-        .get_json("/api/gemini/v1beta/models/gpt-5.4-mini")
+        .get_json("/api/services/gemini/v1beta/models/gpt-5.4-mini")
         .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(model["name"], "models/gpt-5.4-mini");
@@ -598,7 +601,7 @@ async fn gemini_get_model_resolves_a_codex_model_and_rejects_unknown_ones() {
     );
 
     let (status, error) = router
-        .get_json("/api/gemini/v1beta/models/totally-made-up-xyz")
+        .get_json("/api/services/gemini/v1beta/models/totally-made-up-xyz")
         .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
     assert_eq!(error["error"]["status"], "NOT_FOUND");
@@ -613,7 +616,7 @@ async fn generate_content_serves_codex_and_claude_models_natively() {
     for model in ["gpt-5.4-mini", "claude-opus-4-7"] {
         let (status, body) = router
             .post_native(
-                &format!("/api/gemini/v1beta/models/{model}:generateContent"),
+                &format!("/api/services/gemini/v1beta/models/{model}:generateContent"),
                 &json!({
                     "systemInstruction": {"parts": [{"text": "be terse"}]},
                     "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
@@ -643,7 +646,7 @@ async fn gemini_top_p_is_not_forwarded_to_codex() {
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
             &json!({
                 "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
                 "generationConfig": {"topP": 0.9}
@@ -679,7 +682,7 @@ async fn generate_content_emulates_the_output_cap_natively() {
         // A cap the answer fits into must not disturb an ordinary exchange.
         let (status, body) = router
             .post_native(
-                &format!("/api/gemini/v1beta/models/{model}:generateContent"),
+                &format!("/api/services/gemini/v1beta/models/{model}:generateContent"),
                 &json!({
                     "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
                     "generationConfig": {"maxOutputTokens": 32}
@@ -697,7 +700,7 @@ async fn generate_content_emulates_the_output_cap_natively() {
         // A cap below the answer truncates it and says so natively.
         let (status, body) = router
             .post_native(
-                &format!("/api/gemini/v1beta/models/{model}:generateContent"),
+                &format!("/api/services/gemini/v1beta/models/{model}:generateContent"),
                 &json!({
                     "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
                     "generationConfig": {"maxOutputTokens": 1}
@@ -726,7 +729,7 @@ async fn stream_generate_content_emits_gemini_sse_for_a_cross_provider_model() {
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:streamGenerateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:streamGenerateContent",
             &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
         )
         .await;
@@ -755,7 +758,7 @@ async fn generate_content_completes_a_client_tool_loop_over_codex() {
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
             &json!({
                 "contents": [{"role": "user", "parts": [{"text": "look up value"}]}],
                 "tools": tools,
@@ -771,7 +774,7 @@ async fn generate_content_completes_a_client_tool_loop_over_codex() {
     // Second turn: the client returns the tool result in Gemini's shape.
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+            "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
             &json!({
                 "contents": [
                     {"role": "user", "parts": [{"text": "look up value"}]},
@@ -798,7 +801,7 @@ async fn generate_content_reports_an_unavailable_model_in_the_gemini_error_shape
 
     let (status, body) = router
         .post_native(
-            "/api/gemini/v1beta/models/totally-made-up-xyz:generateContent",
+            "/api/services/gemini/v1beta/models/totally-made-up-xyz:generateContent",
             &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
         )
         .await;
@@ -822,9 +825,9 @@ async fn malformed_json_uses_the_gemini_error_envelope_on_every_native_route() {
     let router = TestRouter::start().await;
 
     for path in [
-        "/api/gemini/v1beta/models/gpt-5.4-mini:generateContent",
-        "/api/gemini/v1beta/models/gpt-5.4-mini:streamGenerateContent",
-        "/api/vertex/v1/projects/p/locations/us/publishers/google/models/gpt-5.4-mini:generateContent",
+        "/api/services/gemini/v1beta/models/gpt-5.4-mini:generateContent",
+        "/api/services/gemini/v1beta/models/gpt-5.4-mini:streamGenerateContent",
+        "/api/services/vertex/v1/projects/p/locations/us/publishers/google/models/gpt-5.4-mini:generateContent",
     ] {
         let response = router
             .client

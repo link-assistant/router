@@ -279,11 +279,17 @@ pub async fn prepare_run_credential(
         }
     })?;
     let client = http_client()?;
-    let list_url = format!("{}/api/tokens/list", server.base_url);
+    let list_url = crate::route_contract::management_endpoint(
+        &server.base_url,
+        crate::route_contract::RouteId::Tokens,
+    );
     let list = client.get(&list_url).bearer_auth(token).send().await;
     match list {
         Ok(response) if response.status().is_success() => {
-            let issue_url = format!("{}/api/tokens/client", server.base_url);
+            let issue_url = crate::route_contract::management_endpoint(
+                &server.base_url,
+                crate::route_contract::RouteId::ClientTokens,
+            );
             let response = client
                 .post(&issue_url)
                 .bearer_auth(token)
@@ -406,7 +412,10 @@ pub async fn cleanup_run_credential(credential: RunCredential) -> Result<(), Any
 /// — deleting the file that holds a live credential and leaving nobody able to
 /// name it is the regression issue #190 exists to prevent.
 pub async fn revoke(base_url: &str, admin_token: &str, id: &str) -> Result<(), AnyError> {
-    let url = format!("{base_url}/api/tokens/revoke");
+    let url = crate::route_contract::management_endpoint(
+        base_url,
+        crate::route_contract::RouteId::RevokeToken,
+    );
     let response = http_client()?
         .post(&url)
         .bearer_auth(admin_token)
@@ -422,7 +431,11 @@ pub async fn revoke(base_url: &str, admin_token: &str, id: &str) -> Result<(), A
 }
 
 async fn verify_health(base_url: &str) -> Result<(), AnyError> {
-    let url = format!("{base_url}/health");
+    let url = format!(
+        "{}{}",
+        base_url.trim_end_matches('/'),
+        crate::route_contract::route_template(crate::route_contract::RouteId::Health)
+    );
     let response = http_client()?.get(&url).send().await.map_err(|error| {
         let rendered = error.to_string();
         if rendered.to_ascii_lowercase().contains("certificate") {
@@ -755,7 +768,7 @@ fn tcp_health(port: u16) -> bool {
     let _ = stream.set_read_timeout(Some(Duration::from_secs(1)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(1)));
     if stream
-        .write_all(b"GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+        .write_all(b"GET /api/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
         .is_err()
     {
         return false;

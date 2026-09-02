@@ -77,6 +77,7 @@ pub mod remote_command;
 pub mod request_log;
 mod request_routing;
 pub mod responses;
+pub mod route_contract;
 pub mod security_headers;
 pub mod server_command;
 pub mod server_router;
@@ -112,6 +113,8 @@ mod anthropic_bridge_tests;
 mod client_policy_tests;
 #[cfg(test)]
 mod proxy_tests;
+#[cfg(test)]
+mod route_contract_tests;
 #[cfg(test)]
 mod token_admin_tests;
 #[cfg(test)]

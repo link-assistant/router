@@ -20,15 +20,7 @@ pub enum ApiDialect {
 
 #[must_use]
 pub fn dialect_for_path(path: &str) -> ApiDialect {
-    if path.starts_with("/api/gemini/") || path.starts_with("/api/vertex/") {
-        ApiDialect::Gemini
-    } else if path.starts_with("/api/v3") || path == "/api/graphql" || path == "/graphql" {
-        ApiDialect::GitHub
-    } else if path.ends_with("/chat/completions") || path.ends_with("/responses") {
-        ApiDialect::OpenAi
-    } else {
-        ApiDialect::Anthropic
-    }
+    crate::route_contract::dialect_for_path(path).unwrap_or(ApiDialect::Anthropic)
 }
 
 impl PresentedError<'_> {

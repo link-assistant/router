@@ -71,6 +71,29 @@ pub enum ClientOp {
         #[arg(long)]
         force: bool,
     },
+    /// Reconcile routing-critical client settings with the selected Router.
+    Repair {
+        /// One client to repair. Use --all to inspect or repair every client.
+        #[arg(value_enum, required_unless_present = "all")]
+        client: Option<ClientKind>,
+        /// Inspect or repair every documented client independently.
+        #[arg(long, conflicts_with = "client")]
+        all: bool,
+        /// Print the secret-free plan without network access or filesystem writes.
+        #[arg(long)]
+        dry_run: bool,
+        /// Emit stable machine-readable output.
+        #[arg(long)]
+        json: bool,
+        /// Restore an earlier repair snapshot after verifying no later edits exist.
+        #[arg(
+            long,
+            value_name = "BACKUP_ID",
+            requires = "client",
+            conflicts_with_all = ["all", "dry_run"]
+        )]
+        rollback: Option<String>,
+    },
     /// Make a real request using the client's configured URL and token variable.
     ///
     /// The probe is deliberately the cheapest the dialect accepts: a 64-token

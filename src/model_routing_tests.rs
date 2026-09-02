@@ -191,13 +191,13 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
         .unwrap();
     let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
         .with_state(state.clone());
 
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/v1/models")
+                .uri("/api/services/anthropic/v1/models")
                 .header("x-api-key", client_token)
                 .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
@@ -264,11 +264,14 @@ async fn model_catalog_routes_require_a_valid_client_token() {
     let state = auto_state(Vec::new(), data.path());
     let valid_token = state.token_manager.issue_token(1, "catalog test").unwrap();
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
-        .route("/api/codex/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
+        .route("/api/services/codex/v1/models", get(models))
         .with_state(state);
 
-    for path in ["/v1/models", "/api/codex/v1/models"] {
+    for path in [
+        "/api/services/anthropic/v1/models",
+        "/api/services/codex/v1/models",
+    ] {
         for authorization in [None, Some("Bearer la_sk_garbage")] {
             let mut request = Request::builder().uri(path);
             if let Some(value) = authorization {
@@ -348,7 +351,7 @@ async fn malformed_client_tokens_return_a_fixed_message() {
     let data = tempdir().unwrap();
     let state = auto_state(Vec::new(), data.path());
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
         .with_state(state);
     let malformed = ["wrong-prefix", "la_sk_zzzzQQQrandom.stuff.here"];
     let mut responses = Vec::new();
@@ -358,7 +361,7 @@ async fn malformed_client_tokens_return_a_fixed_message() {
             .clone()
             .oneshot(
                 Request::builder()
-                    .uri("/v1/models")
+                    .uri("/api/services/anthropic/v1/models")
                     .header("authorization", format!("Bearer {token}"))
                     .body(Body::empty())
                     .unwrap(),
@@ -695,9 +698,13 @@ async fn automatic_state_never_uses_a_claude_alias_for_an_unadvertised_openai_mo
         SubscriptionProvider::Codex,
         vec!["gpt-5".to_string(), "gpt-5.6-sol".to_string()],
     );
-    let routed = route_state(&state, &json!({"model": "gpt-5"}))
+    let Err(error) = route_state(&state, &json!({"model": "gpt-5"})).await else {
+        panic!("a familiar-looking unqualified collision must stay ambiguous");
+    };
+    assert!(error.to_string().contains("multiple subscriptions"));
+    let routed = route_state(&state, &json!({"model": "codex/gpt-5"}))
         .await
-        .expect("an OpenAI-shaped collision must route to Codex");
+        .expect("the explicit provider-qualified identity routes to Codex");
     assert_eq!(routed.upstream_provider, UpstreamProvider::Codex);
     assert_eq!(routed.bridge_model.as_deref(), Some("gpt-5"));
 }
@@ -714,14 +721,13 @@ fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
         vec!["gpt-5".to_string(), "shared-model".to_string()],
     );
 
-    assert_eq!(
-        available_provider_for_model(
-            "gpt-5",
-            &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
-            &catalogs,
-        ),
-        Ok(SubscriptionProvider::Codex)
-    );
+    let familiar = available_provider_for_model(
+        "gpt-5",
+        &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
+        &catalogs,
+    )
+    .expect_err("spelling never resolves a collision");
+    assert!(familiar.to_string().contains("multiple subscriptions"));
     let error = available_provider_for_model(
         "shared-model",
         &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
@@ -729,10 +735,10 @@ fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
     )
     .expect_err("an unqualified collision must require disambiguation");
     assert!(error.to_string().contains("multiple subscriptions"));
-    assert_eq!(
-        available_provider_for_model("shared-model", &[SubscriptionProvider::Codex], &catalogs,),
-        Ok(SubscriptionProvider::Codex)
-    );
+    assert!(matches!(
+        available_provider_for_model("shared-model", &[SubscriptionProvider::Codex], &catalogs),
+        Err(ModelRouteError::Ambiguous(_))
+    ));
 }
 
 #[test]
@@ -766,14 +772,14 @@ fn an_empty_catalog_names_the_credential_state_behind_it() {
 }
 
 #[test]
-fn a_never_discovered_subscription_says_so_rather_than_blaming_the_model_id() {
+fn a_never_discovered_subscription_is_not_inferred_from_model_spelling() {
     let catalogs = ModelCatalogCache::new();
     let error = available_provider_for_model("gemini-3-pro", &[], &catalogs)
         .expect_err("nothing has been discovered yet");
     let message = error.to_string();
-    assert!(
-        message.contains("no gemini credential has been read yet"),
-        "{message}"
+    assert_eq!(
+        message,
+        "model 'gemini-3-pro' is not advertised by any subscription"
     );
 
     // An unqualified id cannot blame one vendor, and stays quiet about

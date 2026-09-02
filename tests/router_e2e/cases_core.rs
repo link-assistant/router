@@ -30,7 +30,7 @@ async fn configured_proxy_body_ceiling_returns_413_without_reaching_upstream() {
     let router = TestRouter::start_with_max_request_bytes(UpstreamProvider::Anthropic, 1024).await;
     let response = router
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"claude-sonnet-4-5",
                 "max_tokens":64,
@@ -57,37 +57,37 @@ async fn anthropic_upstream_returns_each_client_dialect_and_pinned_alias() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let cases = [
         (
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
             "content",
         ),
         (
-            "/api/anthropic/v1/messages",
+            "/api/services/anthropic/v1/messages",
             json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
             "content",
         ),
         (
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
             "choices",
         ),
         (
-            "/api/codex/v1/chat/completions",
+            "/api/services/codex/v1/chat/completions",
             json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
             "choices",
         ),
         (
-            "/api/qwen/v1/chat/completions",
+            "/api/services/qwen/v1/chat/completions",
             json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
             "choices",
         ),
         (
-            "/api/openai/v1/responses",
+            "/api/services/openai/v1/responses",
             json!({"model":"claude-sonnet-4-5","input":"hi"}),
             "output",
         ),
         (
-            "/api/qwen/v1/responses",
+            "/api/services/qwen/v1/responses",
             json!({"model":"claude-sonnet-4-5","input":"hi"}),
             "output",
         ),
@@ -121,17 +121,17 @@ async fn both_upstream_dialects_serve_all_three_buffered_client_surfaces() {
         let router = TestRouter::start(provider).await;
         let cases = [
             (
-                "/v1/messages",
+                "/api/services/anthropic/v1/messages",
                 json!({"model":requested_model,"max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
                 "content",
             ),
             (
-                "/v1/chat/completions",
+                "/api/services/openai/v1/chat/completions",
                 json!({"model":requested_model,"messages":[{"role":"user","content":"hi"}]}),
                 "choices",
             ),
             (
-                "/v1/responses",
+                "/api/services/openai/v1/responses",
                 json!({"model":requested_model,"input":"hi"}),
                 "output",
             ),
@@ -167,7 +167,7 @@ async fn every_surface_and_upstream_completes_a_two_turn_tool_loop() {
             let router = TestRouter::start(provider).await;
             let (path, first_body) = match surface {
                 "messages" => (
-                    "/v1/messages",
+                    "/api/services/anthropic/v1/messages",
                     json!({
                         "model":model,
                         "max_tokens":256,
@@ -176,7 +176,7 @@ async fn every_surface_and_upstream_completes_a_two_turn_tool_loop() {
                     }),
                 ),
                 "chat" => (
-                    "/v1/chat/completions",
+                    "/api/services/openai/v1/chat/completions",
                     json!({
                         "model":model,
                         "messages":[{"role":"user","content":"look up value"}],
@@ -184,7 +184,7 @@ async fn every_surface_and_upstream_completes_a_two_turn_tool_loop() {
                     }),
                 ),
                 _ => (
-                    "/v1/responses",
+                    "/api/services/openai/v1/responses",
                     json!({
                         "model":model,
                         "input":"look up value",
@@ -324,15 +324,15 @@ async fn both_upstream_dialects_stream_all_three_client_surfaces() {
         let router = TestRouter::start(provider).await;
         for (path, body) in [
             (
-                "/v1/messages",
+                "/api/services/anthropic/v1/messages",
                 json!({"model":model,"max_tokens":64,"messages":[{"role":"user","content":"hi"}],"stream":true}),
             ),
             (
-                "/v1/chat/completions",
+                "/api/services/openai/v1/chat/completions",
                 json!({"model":model,"messages":[{"role":"user","content":"hi"}],"stream":true}),
             ),
             (
-                "/v1/responses",
+                "/api/services/openai/v1/responses",
                 json!({"model":model,"input":"hi","stream":true}),
             ),
         ] {
@@ -354,11 +354,11 @@ async fn both_upstream_dialects_stream_all_three_client_surfaces() {
             assert!(stream.contains("stub answer"), "{provider:?} {path}");
             assert!(stream.contains(served_model), "{provider:?} {path}");
             match path {
-                "/v1/messages" => {
+                "/api/services/anthropic/v1/messages" => {
                     assert!(stream.contains("event: message_start"));
                     assert!(stream.contains("event: message_stop"));
                 }
-                "/v1/chat/completions" => {
+                "/api/services/openai/v1/chat/completions" => {
                     assert!(stream.contains("chat.completion.chunk"));
                     assert!(stream.trim_end().ends_with("data: [DONE]"));
                 }
@@ -377,15 +377,15 @@ async fn anthropic_upstream_relays_vendor_headers_across_client_dialects() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let cases = [
         (
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             json!({"model":"claude-sonnet-4-5","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}),
         ),
         (
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             json!({"model":"claude-sonnet-4-5","input":"hi"}),
         ),
         (
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             json!({"model":"claude-sonnet-4-5","messages":[{"role":"user","content":"hi"}]}),
         ),
     ];
@@ -421,7 +421,7 @@ async fn native_anthropic_server_tools_and_beta_headers_survive_the_full_route()
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let response = router
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"claude-sonnet-4-5",
                 "max_tokens":256,
@@ -479,7 +479,7 @@ async fn anthropic_web_search_translates_to_codex_without_becoming_a_client_tool
     let router = TestRouter::start(UpstreamProvider::Codex).await;
     let response = router
         .post(
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             &json!({
                 "model":"gpt-5",
                 "max_tokens":256,
@@ -519,7 +519,7 @@ async fn responses_web_search_translates_to_anthropic_with_result_and_usage() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let response = router
         .post(
-            "/v1/responses",
+            "/api/services/openai/v1/responses",
             &json!({
                 "model":"claude-sonnet-4-5",
                 "input":"research Rust",
@@ -565,7 +565,7 @@ async fn responses_stream_has_complete_named_lifecycle() {
         let router = TestRouter::start(provider).await;
         let response = router
             .post(
-                "/v1/responses",
+                "/api/services/openai/v1/responses",
                 &json!({"model":model,"input":"hi","stream":true}),
             )
             .send()

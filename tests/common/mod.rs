@@ -21,6 +21,10 @@ pub fn router_with_env(home: &std::path::Path, args: &[&str], env: &[(&str, &str
         .env_remove("XDG_CONFIG_HOME")
         .env_remove("QWEN_HOME")
         .env_remove("CURSOR_CONFIG_DIR")
+        .env_remove("LINK_ASSISTANT_ROUTER_URL")
+        .env_remove("ROUTER_URL")
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .env_remove("LINK_ASSISTANT_TOKEN")
         .env("TOKEN_SECRET", "clients-cli-test-secret")
         .env("DATA_DIR", home.join("router-data"))
         .env("STORAGE_POLICY", "text");
@@ -82,13 +86,19 @@ pub fn mock_router(
                 }
             }
             let request = String::from_utf8_lossy(&bytes).into_owned();
-            let response_body = if request.starts_with("GET ") {
-                &body
-            } else {
-                "{}"
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, response_body) = match path {
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
+                "/api/management/tokens" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
+                _ if request.starts_with("GET ") => ("200 OK", body.as_str()),
+                _ => ("200 OK", "{}"),
             };
             let response = format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response_body}",
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response_body}",
                 response_body.len()
             );
             stream

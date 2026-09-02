@@ -62,7 +62,7 @@ impl Router {
     fn wait_until_ready(&self) {
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
-            if self.get("/health").is_some() {
+            if self.get("/api/health").is_some() {
                 return;
             }
             std::thread::sleep(Duration::from_millis(100));
@@ -135,7 +135,7 @@ fn a_stopped_router_stops_answering() {
     let mut router = Router::start();
     assert!(
         router
-            .get("/health")
+            .get("/api/health")
             .is_some_and(|body| body.contains("200")),
         "the router answers before it is asked to stop"
     );
@@ -145,7 +145,7 @@ fn a_stopped_router_stops_answering() {
     assert!(status.success(), "clean stop, got {status:?}");
 
     assert!(
-        router.get("/health").is_none(),
+        router.get("/api/health").is_none(),
         "a stopped router must not still be answering"
     );
 }

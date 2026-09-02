@@ -90,6 +90,30 @@ fn legacy_text_store_is_loaded_and_migrated() {
 }
 
 #[test]
+fn pre_0_125_4_text_store_is_read_mutated_and_reopened() {
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("tokens.lino");
+    fs::write(
+        &path,
+        include_str!("fixtures/token_stores/v0.125.3-one-record.lino"),
+    )
+    .unwrap();
+
+    let store = TextTokenStore::open(&path).unwrap();
+    let record = store.get("id/with spaces").unwrap().unwrap();
+    assert_eq!(record.client_kind, None);
+    assert_eq!(record.principal_id, None);
+    assert_eq!(record.label, "label with \"quotes\" and a newline\n");
+
+    store.revoke("id/with spaces").unwrap();
+    let reopened = TextTokenStore::open(&path).unwrap();
+    let record = reopened.get("id/with spaces").unwrap().unwrap();
+    assert!(record.revoked);
+    assert_eq!(record.client_kind, None);
+    assert_eq!(record.principal_id, None);
+}
+
+#[test]
 fn legacy_binary_store_is_loaded_and_migrated() {
     let dir = tempdir().unwrap();
     let path = dir.path().join("tokens.bin");

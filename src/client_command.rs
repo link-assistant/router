@@ -4,7 +4,9 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use crate::cli::ClientOp;
-use crate::clients::{ClientKind, ClientManager, ManagedCredential, TokenSource};
+use crate::clients::{
+    ClientKind, ClientManager, ManagedCredential, OwnershipState, RepairResult, TokenSource,
+};
 use crate::config::Config;
 use crate::storage::build_token_store;
 use crate::token::{IssueRequest, TokenManager};
@@ -52,6 +54,23 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             revoke_supplied,
             force,
         } => remove(config, &manager, *client, *revoke_supplied, *force),
+        ClientOp::Repair {
+            client,
+            all,
+            dry_run,
+            json,
+            rollback,
+        } => {
+            repair(
+                &manager,
+                *client,
+                *all,
+                *dry_run,
+                *json,
+                rollback.as_deref(),
+            )
+            .await
+        }
         ClientOp::Doctor { client } => match manager.doctor(*client).await {
             Ok(message) => {
                 println!("ok: {message}");
@@ -60,6 +79,264 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             Err(error) => failed(error),
         },
     }
+}
+
+async fn repair(
+    manager: &ClientManager,
+    client: Option<ClientKind>,
+    all: bool,
+    dry_run: bool,
+    json: bool,
+    rollback: Option<&str>,
+) -> ExitCode {
+    let clients = if all {
+        ClientKind::ALL.to_vec()
+    } else if let Some(client) = client {
+        vec![client]
+    } else {
+        return failed("choose one client or pass --all");
+    };
+
+    if let Some(id) = rollback {
+        let result = manager.rollback_repair(clients[0], id);
+        return print_repair_result(result, json, "rolled back");
+    }
+
+    if dry_run {
+        let mut plans = Vec::new();
+        let mut errors = Vec::new();
+        for client in clients {
+            match manager.repair_plan(client) {
+                Ok(plan) => plans.push(plan),
+                Err(error) => errors.push(serde_json::json!({
+                    "client": client.canonical_name(),
+                    "error": error.to_string(),
+                })),
+            }
+        }
+        if json {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "dry_run": true,
+                    "plans": plans,
+                    "errors": errors,
+                }))
+                .unwrap_or_default()
+            );
+        } else {
+            for plan in &plans {
+                println!(
+                    "{}: {}; action={}{}",
+                    plan.client,
+                    plan.state,
+                    plan.action,
+                    if plan.conflicts.is_empty() {
+                        String::new()
+                    } else {
+                        format!("; conflicts={}", plan.conflicts.join(","))
+                    }
+                );
+            }
+            for error in &errors {
+                eprintln!("error: {error}");
+            }
+        }
+        return if errors.is_empty() {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::from(1)
+        };
+    }
+
+    let mut results = Vec::new();
+    let mut errors = Vec::new();
+    for client in clients {
+        match repair_one(manager, client).await {
+            Ok(result) => results.push(result),
+            Err(error) => errors.push(serde_json::json!({
+                "client": client.canonical_name(),
+                "error": crate::login_url::redact_secrets(&error.to_string()),
+            })),
+        }
+    }
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::json!({
+                "results": results,
+                "errors": errors,
+            }))
+            .unwrap_or_default()
+        );
+    } else {
+        for result in &results {
+            if result.changed {
+                println!(
+                    "repaired {} (backup {})",
+                    result.client,
+                    result.backup_id.as_deref().unwrap_or("none")
+                );
+                if result.restart_required {
+                    println!(
+                        "restart Claude Code to refresh its gateway catalog; its cache was left intact"
+                    );
+                }
+            } else {
+                println!("{} is already managed and intact", result.client);
+            }
+        }
+        for error in &errors {
+            eprintln!("error: {error}");
+        }
+    }
+    if errors.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
+}
+
+fn print_repair_result(
+    result: Result<RepairResult, crate::clients::ClientError>,
+    json: bool,
+    verb: &str,
+) -> ExitCode {
+    match result {
+        Ok(result) => {
+            if json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&result).unwrap_or_default()
+                );
+            } else {
+                println!("{verb} {} using repair snapshot", result.client);
+            }
+            ExitCode::SUCCESS
+        }
+        Err(error) => failed(error),
+    }
+}
+
+async fn repair_one(
+    manager: &ClientManager,
+    client: ClientKind,
+) -> Result<RepairResult, Box<dyn std::error::Error + Send + Sync>> {
+    let analysis = manager.analyze(client)?;
+    let old_metadata = manager.credential_metadata(client).ok().flatten();
+    if analysis.state == OwnershipState::ManagedIntact {
+        return Ok(RepairResult {
+            client,
+            before: analysis.state,
+            after: analysis.state,
+            changed: false,
+            restart_required: false,
+            backup_id: None,
+        });
+    }
+    if let Some(limitation) = client.setup_limitation() {
+        return Err(limitation.into());
+    }
+
+    // A drifted managed installation keeps its existing credential. Foreign,
+    // incomplete and unconfigured installations acquire and validate a
+    // candidate first; no client file is touched until that succeeds.
+    if analysis.state == OwnershipState::ManagedDrifted
+        && let (Some(token), Some(metadata)) = (
+            manager.managed_token(client)?,
+            manager.credential_metadata(client)?,
+        )
+        && let Some(base_url) = metadata.router.as_deref()
+    {
+        let models = manager.catalog(client, base_url, &token).await?;
+        let usable = crate::clients::usable_models(client, &models);
+        let result = manager.apply_repair(client, base_url, &token, &metadata, &usable)?;
+        if let Err(error) = manager.catalog(client, base_url, &token).await {
+            if let Some(id) = result.backup_id.as_deref() {
+                manager.rollback_repair(client, id)?;
+            }
+            return Err(format!("post-repair catalog validation failed: {error}").into());
+        }
+        return Ok(result);
+    }
+
+    let server = crate::managed_server::resolve(None, None, None, false).await?;
+    let candidate = crate::managed_server::prepare_run_credential(
+        &server,
+        client,
+        &format!("client-repair-{client}"),
+        24,
+        false,
+    )
+    .await?;
+    let source = if candidate.was_minted() {
+        TokenSource::Minted
+    } else {
+        TokenSource::Supplied
+    };
+    let metadata = ManagedCredential {
+        client: client.to_string(),
+        source,
+        token_id: candidate.id(),
+        label: candidate
+            .was_minted()
+            .then(|| format!("client-repair-{client}")),
+        issued_at: candidate
+            .was_minted()
+            .then(|| chrono::Utc::now().timestamp()),
+        router: Some(server.base_url.clone()),
+        principal_id: candidate
+            .was_minted()
+            .then(|| crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
+    };
+    let models = crate::clients::usable_models(client, candidate.models());
+    let applied = manager.apply_repair(
+        client,
+        &server.base_url,
+        &candidate.token,
+        &metadata,
+        &models,
+    );
+    let result = match applied {
+        Ok(result) => result,
+        Err(error) => {
+            let _ = crate::managed_server::cleanup_run_credential(candidate).await;
+            return Err(error.into());
+        }
+    };
+    if let Err(error) = manager
+        .catalog(client, &server.base_url, &candidate.token)
+        .await
+    {
+        if let Some(id) = result.backup_id.as_deref() {
+            manager.rollback_repair(client, id)?;
+        }
+        let _ = crate::managed_server::cleanup_run_credential(candidate).await;
+        return Err(format!("post-repair catalog validation failed: {error}").into());
+    }
+    if candidate.was_minted()
+        && let (Some(old), Some(old_id), Some(new_id), Some(admin_token)) = (
+            old_metadata.as_ref(),
+            old_metadata
+                .as_ref()
+                .filter(|old| old.source == TokenSource::Minted)
+                .and_then(|old| old.token_id.as_deref()),
+            metadata.token_id.as_deref(),
+            server.token.as_deref(),
+        )
+        && old_id != new_id
+        && old.router.as_deref() == Some(server.base_url.as_str())
+        && let Err(error) =
+            crate::managed_server::revoke(&server.base_url, admin_token, old_id).await
+    {
+        eprintln!(
+            "warning: repaired {client}, but the replaced Router-owned token could not be revoked: {}",
+            crate::login_url::redact_secrets(&error.to_string())
+        );
+    }
+    // The candidate intentionally remains live: it is now the credential
+    // named by the private environment and secret-free metadata files.
+    Ok(result)
 }
 
 /// Resolve an existing router token from argv, standard input, or the
@@ -90,8 +367,8 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
     let mut rows = Vec::new();
     if !json {
         println!(
-            "{:<12}  {:<9}  {:<11}  {:<19}  config",
-            "client", "installed", "configured", "dialect"
+            "{:<12}  {:<9}  {:<16}  {:<19}  config",
+            "client", "installed", "ownership", "dialect"
         );
     }
     let mut unreadable = Vec::new();
@@ -99,19 +376,19 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
     for client in ClientKind::ALL {
         match manager.status(client) {
             Ok(status) => {
-                let configured = if status.unreadable.is_some() {
+                let ownership = if status.unreadable.is_some() {
                     "unreadable".to_string()
                 } else {
-                    status.configured.to_string()
+                    status.ownership_state.to_string()
                 };
                 if json {
                     rows.push(status.clone());
                 } else {
                     println!(
-                        "{:<12}  {:<9}  {:<11}  {:<19}  {}",
+                        "{:<12}  {:<9}  {:<16}  {:<19}  {}",
                         status.client,
                         status.installed,
-                        configured,
+                        ownership,
                         status.dialect,
                         status.config_path.display()
                     );
@@ -122,7 +399,7 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
             }
             Err(error) => {
                 if !json {
-                    println!("{client:<12}  {:<9}  {:<11}  {:<19}  -", "?", "error", "?");
+                    println!("{client:<12}  {:<9}  {:<16}  {:<19}  -", "?", "error", "?");
                 }
                 failures.push((client, error.to_string()));
             }

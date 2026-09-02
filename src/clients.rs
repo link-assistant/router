@@ -9,15 +9,21 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use clap::ValueEnum;
-use serde::Serialize;
 use serde_json::{Value, json};
 use toml_edit::{DocumentMut, Item, Table, value};
 
+mod analysis;
 mod catalog;
 pub mod credentials;
 pub(crate) mod doctor;
 mod files;
 mod json_config;
+mod repair;
+mod types;
+
+pub use analysis::{ClientConfigAnalysis, ConfigSource, ObservedFile, OwnershipState};
+pub use repair::{RepairPlan, RepairResult};
+pub use types::{ClientError, ClientStatus, SetupResult};
 
 pub(crate) use catalog::RouterModel;
 use catalog::doctor_model;
@@ -161,7 +167,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Responses",
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Codex,
+        ),
         model_owners: &[OPENAI_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -179,7 +187,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "Anthropic Messages",
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
-        endpoint_suffix: "",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Anthropic,
+        ),
         model_owners: &[ANTHROPIC_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
@@ -217,7 +227,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "Gemini native",
         token_env: Some("GEMINI_API_KEY"),
         base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
-        endpoint_suffix: "/api/gemini",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Gemini,
+        ),
         model_owners: &[GOOGLE_MODEL_OWNER],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -237,7 +249,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(GROK_TOKEN_ENV),
         base_url_env: Some(GROK_BASE_ENV),
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
         model_owners: &[],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -255,7 +269,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
         model_owners: &[],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -273,7 +289,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: Some("OPENAI_BASE_URL"),
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Qwen,
+        ),
         model_owners: &[QWEN_MODEL_OWNER],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -291,7 +309,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
         model_owners: &[],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -407,76 +427,6 @@ impl fmt::Display for ClientKind {
     }
 }
 
-#[derive(Debug)]
-pub struct ClientError(String);
-
-impl ClientError {
-    /// Build a diagnostic with credential-looking runs already removed.
-    ///
-    /// Every client diagnostic quotes something the router or an upstream sent
-    /// back — a URL, a response body, a transport error — and any of those can
-    /// carry the bearer token that was just used. Redacting here, at the single
-    /// constructor, keeps that out of terminals, logs, and CI output.
-    fn message(message: impl Into<String>) -> Self {
-        Self(crate::login_url::redact_secrets(&message.into()))
-    }
-}
-
-impl fmt::Display for ClientError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl std::error::Error for ClientError {}
-
-impl From<std::io::Error> for ClientError {
-    fn from(error: std::io::Error) -> Self {
-        Self::message(error.to_string())
-    }
-}
-
-impl From<serde_json::Error> for ClientError {
-    fn from(error: serde_json::Error) -> Self {
-        Self::message(error.to_string())
-    }
-}
-
-/// Secret-free state returned by `clients list` and `clients show`.
-#[derive(Clone, Debug, Serialize)]
-pub struct ClientStatus {
-    pub client: String,
-    pub installed: bool,
-    pub configured: bool,
-    pub config_path: PathBuf,
-    pub dialect: &'static str,
-    pub base_url: Option<String>,
-    pub token_env: Option<&'static str>,
-    pub token_env_set: bool,
-    /// Why this client's configuration could not be read, if it could not.
-    ///
-    /// A damaged file is a property of one row, not of the listing: propagating
-    /// it ended the table at that client and silently hid every client after
-    /// it, while the error named a *different* client than the one missing
-    /// (issue #304).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub unreadable: Option<String>,
-    /// Why the router cannot manage this client at all, if it cannot.
-    ///
-    /// `configured: false` is indistinguishable from a real answer for a
-    /// client whose reader is a hardcoded `None` (issue #303).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub unsupported: Option<&'static str>,
-}
-
-/// Result of a successful setup operation.
-#[derive(Debug)]
-pub struct SetupResult {
-    pub path: PathBuf,
-    pub backup: Option<PathBuf>,
-    pub changed: bool,
-}
-
 /// Reads and updates supported clients below their normal user config roots.
 #[derive(Debug)]
 pub struct ClientManager {
@@ -542,7 +492,7 @@ impl ClientManager {
     }
 
     /// Read a process environment variable unless this root is isolated.
-    fn environment_var(&self, name: &str) -> Option<String> {
+    pub(super) fn environment_var(&self, name: &str) -> Option<String> {
         self.respect_environment
             .then(|| std::env::var(name).ok())
             .flatten()
@@ -601,6 +551,14 @@ impl ClientManager {
         credentials::read(&self.credential_metadata_path(client))
     }
 
+    /// Read the token from Router's private managed environment file.
+    pub(crate) fn managed_token(&self, client: ClientKind) -> Result<Option<String>, ClientError> {
+        let Some(name) = client.token_env() else {
+            return Ok(None);
+        };
+        read_environment_value(&self.environment_path(client), name)
+    }
+
     /// Record which token the managed environment file now holds.
     pub fn write_credential_metadata(
         &self,
@@ -632,7 +590,7 @@ impl ClientManager {
     /// Never fails on a damaged configuration: the reason is carried in the
     /// row instead, so one hand-edited file cannot take the rest of the
     /// listing away from the reader (issue #304).
-    pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
+    pub(super) fn raw_status(&self, client: ClientKind) -> ClientStatus {
         let path = self.config_path(client);
         let read = match client {
             ClientKind::Codex => read_codex_base_url(&path),
@@ -663,7 +621,7 @@ impl ClientManager {
             Err(error) => (None, Some(error.to_string())),
         };
         let token_env = client.token_env();
-        Ok(ClientStatus {
+        ClientStatus {
             client: client.to_string(),
             installed: command_exists(client.command()),
             configured: base_url.is_some(),
@@ -678,9 +636,30 @@ impl ClientManager {
                         .flatten()
                         .is_some()
             }),
+            ownership_state: OwnershipState::Unconfigured,
+            effective_source: None,
+            conflicts: Vec::new(),
             unreadable,
             unsupported: client.setup_limitation(),
-        })
+        }
+    }
+
+    /// Analyze endpoint ownership and routing-critical precedence without
+    /// retaining any credential value.
+    pub fn analyze(&self, client: ClientKind) -> Result<ClientConfigAnalysis, ClientError> {
+        analysis::analyze_client(self, client)
+    }
+
+    /// What this machine holds for `client`, including explicit ownership.
+    pub fn status(&self, client: ClientKind) -> Result<ClientStatus, ClientError> {
+        let mut status = self.raw_status(client);
+        let analysis = self.analyze(client)?;
+        status.configured = analysis.state == OwnershipState::ManagedIntact;
+        status.base_url.clone_from(&analysis.safe_origin);
+        status.ownership_state = analysis.state;
+        status.effective_source = analysis.effective_source;
+        status.conflicts = analysis.conflicts;
+        Ok(status)
     }
 
     pub(crate) fn setup(
@@ -693,13 +672,18 @@ impl ClientManager {
             return Err(ClientError::message(limitation));
         }
         let base_url = normalize_base_url(base_url)?;
+        let endpoint = format!(
+            "{}{}",
+            base_url.trim_end_matches('/'),
+            client.integration().endpoint_suffix
+        );
         match client {
-            ClientKind::Codex => self.setup_codex(&base_url),
-            ClientKind::ClaudeCode => self.setup_claude(&base_url, models),
+            ClientKind::Codex => self.setup_codex(&endpoint),
+            ClientKind::ClaudeCode => self.setup_claude(&endpoint, models),
             ClientKind::Opencode | ClientKind::Agent => {
-                self.setup_json_provider(client, &base_url, models)
+                self.setup_json_provider(client, &endpoint, models)
             }
-            ClientKind::QwenCode => self.setup_qwen(&base_url, models),
+            ClientKind::QwenCode => self.setup_qwen(&endpoint, models),
             ClientKind::GrokCli => Ok(unchanged(self.config_path(client))),
             ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
         }
@@ -764,6 +748,11 @@ impl ClientManager {
                 "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
             )
             .expect("writing to a String cannot fail");
+            writeln!(
+                &mut contents,
+                "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"
+            )
+            .expect("writing to a String cannot fail");
         }
         atomic_write(&path, contents.as_bytes())?;
         #[cfg(unix)]
@@ -805,7 +794,7 @@ impl ClientManager {
                 ClientError::message("model_providers.link-assistant must be a TOML table")
             })?;
         provider.insert("name", value("Link.Assistant.Router"));
-        provider.insert("base_url", value(format!("{base_url}/v1")));
+        provider.insert("base_url", value(base_url));
         provider.insert("env_key", value(CODEX_TOKEN_ENV));
         provider.insert("wire_api", value("responses"));
         let result = write_if_changed(&path, &source, &document.to_string())?;
@@ -820,7 +809,7 @@ impl ClientManager {
     fn setup_claude(
         &self,
         base_url: &str,
-        models: &[RouterModel],
+        _models: &[RouterModel],
     ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::ClaudeCode);
         let source = read_or_empty(&path)?;
@@ -847,12 +836,6 @@ impl ClientManager {
             .and_then(Value::as_str)
             .map(str::to_string)
             .filter(|previous| previous != base_url);
-        if let Some(previous) = previous.as_deref() {
-            println!(
-                "note: replacing {CLAUDE_BASE_ENV}={previous}; `clients remove claude` will \
-                 restore it"
-            );
-        }
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
         let mut managed_gateway_env = Vec::new();
         let mut set_managed = |key: &str, managed: &str| {
@@ -865,18 +848,30 @@ impl ClientManager {
             let previous = recorded_previous
                 .unwrap_or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
             env.insert(key.into(), Value::String(managed.into()));
-            managed_gateway_env.push((key.to_string(), managed.to_string(), previous));
+            managed_gateway_env.push((key.to_string(), Some(managed.to_string()), previous));
         };
         set_managed("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
-        if let Some(model) = select_model(ClientKind::ClaudeCode, models) {
-            for key in [
-                "ANTHROPIC_MODEL",
-                "ANTHROPIC_DEFAULT_OPUS_MODEL",
-                "ANTHROPIC_DEFAULT_SONNET_MODEL",
-                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-            ] {
-                set_managed(key, model);
-            }
+        set_managed("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+        let cleared = [
+            "ANTHROPIC_AUTH_TOKEN",
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "CLAUDE_CODE_SUBAGENT_MODEL",
+        ];
+        for key in cleared {
+            let recorded_previous = existing_marker.as_ref().and_then(|(_, _, entries)| {
+                entries
+                    .iter()
+                    .find(|(recorded, _, _)| recorded == key)
+                    .and_then(|(_, _, previous)| previous.clone())
+            });
+            let previous = recorded_previous
+                .or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
+            env.remove(key);
+            managed_gateway_env.push((key.to_string(), None, previous));
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
@@ -962,7 +957,11 @@ impl ClientManager {
                 }
             }
             for (key, managed, previous) in gateway_env {
-                if env.get(&key).and_then(Value::as_str) != Some(managed.as_str()) {
+                let owns_current = managed.as_deref().map_or_else(
+                    || !env.contains_key(&key),
+                    |managed| env.get(&key).and_then(Value::as_str) == Some(managed),
+                );
+                if !owns_current {
                     continue;
                 }
                 if let Some(previous) = previous {

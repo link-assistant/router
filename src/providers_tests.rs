@@ -104,20 +104,13 @@ fn coding_plan_defaults_disabled_and_requires_explicit_risk_acknowledgement() {
 }
 
 #[test]
-fn coding_plan_rejects_unreviewed_models_and_multiple_enabled_subscribers() {
+fn coding_plan_accepts_future_models_but_rejects_multiple_enabled_subscribers() {
     let dir = tempdir().unwrap();
     let store = ProviderStore::open(dir.path(), "secret").unwrap();
     let mut future = zai_upsert(Some(true), true);
-    future.models = Some(vec!["glm-future".into()]);
-    assert!(
-        store
-            .upsert(future)
-            .unwrap_err()
-            .to_string()
-            .contains("unreviewed")
-    );
-
-    store.upsert(zai_upsert(Some(true), true)).unwrap();
+    future.models = Some(vec!["future-saffron-91".into()]);
+    let stored = store.upsert(future).unwrap();
+    assert_eq!(stored.models, ["future-saffron-91"]);
     let mut second = zai_upsert(Some(true), true);
     second.name = "another-subscriber".into();
     second.subscriber_id = Some("owner-b".into());

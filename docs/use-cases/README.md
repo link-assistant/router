@@ -59,18 +59,20 @@ subscription rows remain denied pending recorded terms.
 ```
 Claude Code ──Anthropic──┐
 Qwen Code   ──Anthropic──┤
-                         ├─► /v1/messages ──► Anthropic upstream (pass-through)
+                         ├─► /api/services/anthropic/v1/messages
+                         │                  └─► Anthropic upstream (pass-through)
                          │                └─► Codex / Qwen / Gemini / OpenAI-compatible
                          │                    upstream (bridged, see
                          │                    chatgpt-in-claude-code.md)
 Codex CLI   ──Responses──┐
 opencode    ──Responses──┤
-                         ├─► /v1/responses ─► Anthropic upstream (translated)
+                         ├─► /api/services/openai/v1/responses
+                         │                  └─► Anthropic upstream (translated)
 Grok CLI    ──Chat───────┤                 └─► native provider upstream
 Agent       ──Chat───────┤
-opencode    ──Chat───────┴─► /v1/chat/completions
+opencode    ──Chat───────┴─► /api/services/openai/v1/chat/completions
 
-Gemini CLI  ──Gemini─────► /api/gemini/v1beta, /api/vertex/v1
+Gemini CLI  ──Gemini─────► /api/services/gemini/v1beta, /api/services/vertex/v1
 ```
 
 ## Related documents

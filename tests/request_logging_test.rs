@@ -50,7 +50,7 @@ impl Router {
         let mut stream = TcpStream::connect(("127.0.0.1", self.port)).ok()?;
         write!(
             stream,
-            "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n{extra_headers}\r\n"
+            "GET /api/health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n{extra_headers}\r\n"
         )
         .ok()?;
         let mut response = String::new();
@@ -147,7 +147,7 @@ fn a_rejected_request_does_not_claim_an_empty_body() {
     let router = Router::start();
     let response = router
         .post(
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             "authorization: Bearer la_sk_invalid\r\nx-test-marker: issue-210-rejected\r\n",
             r#"{"model":"m","messages":[{"role":"user","content":"MARKER-210"}]}"#,
         )
@@ -197,7 +197,7 @@ fn a_declared_content_length_implies_a_non_empty_logged_body() {
     let router = Router::start();
     router
         .post(
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             "authorization: Bearer la_sk_invalid\r\nx-test-marker: issue-210-consistent\r\n",
             r#"{"model":"m","messages":[{"role":"user","content":"CONSISTENCY"}]}"#,
         )
@@ -226,7 +226,7 @@ fn a_zero_length_body_is_not_reported_as_unread() {
     let router = Router::start();
     router
         .post(
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             "authorization: Bearer la_sk_invalid\r\nx-test-marker: issue-210-zero-length\r\n",
             "",
         )

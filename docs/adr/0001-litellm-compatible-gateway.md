@@ -18,10 +18,10 @@ Anthropic interface for Claude Code style clients.
 Link.Assistant.Router is a Rust gateway focused on protecting Claude MAX OAuth
 credentials behind router-issued `la_sk_...` tokens. It already exposes:
 
-- `POST /v1/chat/completions`
-- `POST /v1/responses`
-- `GET /v1/models`
-- `POST /v1/messages`
+- `POST /api/services/openai/v1/chat/completions`
+- `POST /api/services/openai/v1/responses`
+- `GET /api/services/openai/v1/models`
+- `POST /api/services/anthropic/v1/messages`
 - Claude Code gateway pass-through routes, metrics, and token management
 
 The issue asks for an architecture decision record that completes the design
@@ -39,15 +39,15 @@ The compatibility contract has three levels:
 
 | Level | Goal | Status |
 | --- | --- | --- |
-| L0: LiteLLM in front | LiteLLM can call this router as an OpenAI-compatible upstream by setting `api_base` to the router `/v1` base URL and `api_key` to a router-issued `la_sk_...` token. | Supported for chat completions, responses, models, bearer tokens, and streaming SSE translation. |
+| L0: LiteLLM in front | LiteLLM can call this router as an OpenAI-compatible upstream by setting `api_base` to the router `/api/services/openai/v1` base URL and `api_key` to a router-issued `la_sk_...` token. | Supported for chat completions, responses, models, bearer tokens, and streaming SSE translation. |
 | L1: Router as LiteLLM-like gateway | OpenAI SDK clients and Claude Code style Anthropic clients can point directly at this router with the same endpoint assumptions they use for LiteLLM proxy. | Supported for the implemented OpenAI and Anthropic surfaces; non-chat LiteLLM surfaces remain separate feature decisions. |
 | L2: Router in front of LiteLLM | This router can route selected models to a LiteLLM proxy as another OpenAI-compatible provider while keeping router-issued tokens at the edge. | Supported for a configured OpenAI-compatible provider record such as LiteLLM. |
 
 The router remains Rust-first and headless. It should adopt the proven LiteLLM
 gateway contract where it improves interoperability:
 
-- one stable OpenAI-compatible `/v1` surface for generic clients,
-- an Anthropic `/v1/messages` surface for Claude Code compatible clients,
+- one stable OpenAI-compatible `/api/services/openai/v1` surface for generic clients,
+- an Anthropic `/api/services/anthropic/v1/messages` surface for Claude Code compatible clients,
 - model aliases that decouple caller model names from upstream provider IDs,
 - provider records shaped around `model`, `api_base`, secret source, supported
   endpoints, and capability metadata,
@@ -105,9 +105,9 @@ The supported L0/L1 compatibility surface is:
 
 - `Authorization: Bearer la_sk_...` is accepted.
 - `x-api-key: la_sk_...` is accepted for SDKs that use API-key headers.
-- `/v1/chat/completions` returns OpenAI-shaped `choices`, `usage`, and `model`.
-- `/v1/responses` returns an OpenAI Responses-shaped object.
-- `/v1/models` returns model IDs that can be used in subsequent requests.
+- `/api/services/openai/v1/chat/completions` returns OpenAI-shaped `choices`, `usage`, and `model`.
+- `/api/services/openai/v1/responses` returns an OpenAI Responses-shaped object.
+- `/api/services/openai/v1/models` returns model IDs that can be used in subsequent requests.
 - Streaming Chat Completions are emitted as OpenAI SSE chunks instead of a
   buffered fallback.
 - Unknown or unsupported parameters are either ignored safely or rejected with

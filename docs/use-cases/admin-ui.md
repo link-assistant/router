@@ -73,9 +73,9 @@ So minting and claiming are separate steps:
 
 | Step | Request | Effect on the server |
 | --- | --- | --- |
-| 1 | `POST /api/admin/bootstrap` | Mints a candidate token and a `claim_id`. **Nothing is persisted. The candidate authorises nothing. The system is still unclaimed.** |
+| 1 | `POST /api/management/admin/bootstrap` | Mints a candidate token and a `claim_id`. **Nothing is persisted. The candidate authorises nothing. The system is still unclaimed.** |
 | 2 | *(browser)* | Writes the token to `localStorage` and **reads it back** |
-| 3 | `POST /api/admin/bootstrap/confirm` with `{claim_id}`, authenticated with the freshly stored token | Activates the token and closes bootstrap |
+| 3 | `POST /api/management/admin/bootstrap/confirm` with `{claim_id}`, authenticated with the freshly stored token | Activates the token and closes bootstrap |
 
 Only step 3 changes anything durable. The rules that follow from it:
 
@@ -104,7 +104,8 @@ rotate that at the deployment instead.
   against the cap, and revoked state; a form to issue one (label, TTL, optional
   request cap, optional account pin); revoke behind a confirmation dialog.
 - **Status** — read-only: version, upstream provider and base URL, credential
-  state, accounts (`/v1/accounts`) and usage counters (`/v1/usage`).
+  state, accounts (`/api/management/accounts`) and usage counters
+  (`/api/management/usage`).
 
 ![Issuing a token; the value is shown exactly once](https://github.com/link-assistant/router/blob/issue-50-e84c64dc1eb6/docs/screenshots/admin-ui-tokens.png?raw=true)
 

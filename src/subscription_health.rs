@@ -1,6 +1,6 @@
 //! Subscription health reporting (issue #318).
 //!
-//! Separate from `proxy::health`, which answers liveness only: `/health` drives
+//! Separate from `proxy::health`, which answers liveness only: `/api/health` drives
 //! both Kubernetes probes and a restart cannot mint an OAuth token.
 
 use axum::extract::State;
@@ -9,9 +9,9 @@ use axum::response::IntoResponse;
 
 use crate::app_state::AppState;
 
-/// `GET /health/subscriptions` — can this router serve what it advertises?
+/// `GET /api/management/health/subscriptions` — can this router serve what it advertises?
 ///
-/// The signal that did not exist. A revoked subscription left `/health` at
+/// The signal that did not exist. A revoked subscription left `/api/health` at
 /// `ok`, `degraded_providers` empty and no counter anywhere, so the operator
 /// learned about it from a client hours later via a message that named neither
 /// the subscription nor the credential (issue #318).

@@ -513,7 +513,7 @@ pub async fn forward_chat_completions(
     body: Value,
     stream_requested: bool,
 ) -> Response {
-    let path = "/v1/chat/completions";
+    let path = "/api/services/openai/v1/chat/completions";
     if let Some(resp) = crate::proxy::maybe_mpp_challenge(state, headers, path) {
         return resp;
     }
@@ -546,8 +546,9 @@ pub async fn forward_chat_completions(
         return provider_error(&CraterError::MissingConfig("CRATER_FORGEFED_INBOX"));
     };
     let default_actor = format!(
-        "{}/actor/code",
-        state.activitypub_actor_base_url.trim_end_matches('/')
+        "{}{}",
+        state.activitypub_actor_base_url.trim_end_matches('/'),
+        crate::route_contract::route_template(crate::route_contract::RouteId::ActivityPubActor)
     );
     let request = match normalize_chat_request(&body, &default_actor) {
         Ok(request) => request,

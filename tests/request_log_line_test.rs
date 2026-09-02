@@ -66,7 +66,7 @@ impl Router {
     fn wait_until_ready(&self) {
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
-            if self.get("/health").is_some() {
+            if self.get("/api/health").is_some() {
                 return;
             }
             std::thread::sleep(Duration::from_millis(100));
@@ -106,7 +106,7 @@ impl Router {
     /// Mint a client token, so a request gets past authentication.
     fn client_token(&self) -> String {
         let response = self.post(
-            "/api/tokens",
+            "/api/management/tokens",
             "",
             r#"{"label":"request-log-line-test","expires_in_seconds":3600}"#,
         );
@@ -128,7 +128,7 @@ impl Router {
 
     /// Discard the lines the readiness probes produced.
     ///
-    /// `wait_until_ready` polls `/health`, and each poll logs a line; without
+    /// `wait_until_ready` polls `/api/health`, and each poll logs a line; without
     /// this a test reads a probe's line and asserts against the wrong request.
     fn discard_pending(&self) {
         while self.lines.try_recv().is_ok() {}
@@ -211,7 +211,7 @@ fn the_response_line_names_the_model_the_request_asked_for() {
     let token = router.client_token();
     router.discard_pending();
     let response = router.post(
-        "/v1/messages",
+        "/api/services/anthropic/v1/messages",
         &format!("authorization: Bearer {token}\r\n"),
         r#"{"model":"no-such-model-xyz","max_tokens":10,"messages":[]}"#,
     );
@@ -243,7 +243,7 @@ fn the_response_line_names_the_model_the_request_asked_for() {
 /// `-` stays reserved for a request that genuinely has no model.
 ///
 /// A placeholder that means "unfilled" is what made the field useless; one
-/// that means "there was none" is honest, so `/health` must still print it.
+/// that means "there was none" is honest, so `/api/health` must still print it.
 #[test]
 fn a_request_with_no_model_still_reports_none() {
     let router = Router::start();
@@ -253,7 +253,7 @@ fn a_request_with_no_model_still_reports_none() {
     // A body that parses but names no model, sent authenticated so it reaches
     // routing: the model is genuinely absent rather than merely unread.
     router.post(
-        "/v1/messages",
+        "/api/services/anthropic/v1/messages",
         &format!("authorization: Bearer {token}\r\n"),
         r#"{"max_tokens":10,"messages":[]}"#,
     );
