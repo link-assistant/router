@@ -837,6 +837,8 @@ impl ClientManager {
         let env = env.as_object_mut().ok_or_else(|| {
             ClientError::message(format!("{}.env must be a JSON object", path.display()))
         })?;
+        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
+        let existing_marker = claude_marker(&marker_path)?;
         // Recorded before it is replaced, so removal can put it back — the
         // mechanism `setup_codex` already uses for `model_provider` (#302).
         let previous = env
@@ -851,10 +853,20 @@ impl ClientManager {
             );
         }
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
-        env.insert(
-            "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY".into(),
-            Value::String("1".into()),
-        );
+        let mut managed_gateway_env = Vec::new();
+        let mut set_managed = |key: &str, managed: &str| {
+            let recorded_previous = existing_marker.as_ref().and_then(|(_, _, entries)| {
+                entries
+                    .iter()
+                    .find(|(recorded, _, _)| recorded == key)
+                    .map(|(_, _, previous)| previous.clone())
+            });
+            let previous = recorded_previous
+                .unwrap_or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
+            env.insert(key.into(), Value::String(managed.into()));
+            managed_gateway_env.push((key.to_string(), managed.to_string(), previous));
+        };
+        set_managed("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
         if let Some(model) = select_model(ClientKind::ClaudeCode, models) {
             for key in [
                 "ANTHROPIC_MODEL",
@@ -862,19 +874,23 @@ impl ClientManager {
                 "ANTHROPIC_DEFAULT_SONNET_MODEL",
                 "ANTHROPIC_DEFAULT_HAIKU_MODEL",
             ] {
-                env.insert(key.into(), Value::String(model.into()));
+                set_managed(key, model);
             }
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
-        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
         // A marker already present names the value the *first* takeover
         // replaced; a second configure must not overwrite it with its own URL.
         let previous = match claude_marker(&marker_path)? {
-            Some((_, recorded)) => recorded,
+            Some((_, recorded, _)) => recorded,
             None => previous,
         };
-        write_claude_marker(&marker_path, base_url, previous.as_deref())?;
+        write_claude_marker(
+            &marker_path,
+            base_url,
+            previous.as_deref(),
+            &managed_gateway_env,
+        )?;
         Ok(result)
     }
 
@@ -919,30 +935,39 @@ impl ClientManager {
             return Ok(unchanged(path));
         }
         let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
-        let Some((managed_url, previous_url)) = claude_marker(&marker_path)? else {
+        let Some((managed_url, previous_url, gateway_env)) = claude_marker(&marker_path)? else {
             return Ok(unchanged(path));
         };
         let mut document: Value = serde_json::from_str(&source).map_err(|error| {
             ClientError::message(format!("invalid JSON in {}: {error}", path.display()))
         })?;
-        let current_url = document
+        let owns_current_url = document
             .get("env")
             .and_then(|env| env.get(CLAUDE_BASE_ENV))
-            .and_then(Value::as_str);
-        if current_url != Some(managed_url.as_str()) {
-            fs::remove_file(marker_path)?;
-            return Ok(unchanged(path));
-        }
+            .and_then(Value::as_str)
+            == Some(managed_url.as_str());
         if let Some(env) = document.get_mut("env").and_then(Value::as_object_mut) {
-            match previous_url.as_deref() {
-                // Restore what the takeover replaced rather than deleting the
-                // key: the value was the user's, not the router's (#302).
-                Some(previous) => {
-                    env.insert(CLAUDE_BASE_ENV.into(), Value::String(previous.into()));
-                    println!("restored {CLAUDE_BASE_ENV}={previous}");
+            if owns_current_url {
+                match previous_url.as_deref() {
+                    // Restore what the takeover replaced rather than deleting the
+                    // key: the value was the user's, not the router's (#302).
+                    Some(previous) => {
+                        env.insert(CLAUDE_BASE_ENV.into(), Value::String(previous.into()));
+                        println!("restored {CLAUDE_BASE_ENV}={previous}");
+                    }
+                    None => {
+                        env.remove(CLAUDE_BASE_ENV);
+                    }
                 }
-                None => {
-                    env.remove(CLAUDE_BASE_ENV);
+            }
+            for (key, managed, previous) in gateway_env {
+                if env.get(&key).and_then(Value::as_str) != Some(managed.as_str()) {
+                    continue;
+                }
+                if let Some(previous) = previous {
+                    env.insert(key, Value::String(previous));
+                } else {
+                    env.remove(&key);
                 }
             }
         }

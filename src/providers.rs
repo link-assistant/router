@@ -33,7 +33,7 @@ impl ProviderKind {
     #[must_use]
     pub fn from_str_opt(value: &str) -> Option<Self> {
         match value.to_lowercase().as_str() {
-            "openai" | "openai-compatible" | "openai_like" | "litellm" => {
+            "openai" | "openai-compatible" | "open-a-i-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
             "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
@@ -155,9 +155,9 @@ pub struct ProviderUpsert {
     pub enabled: Option<bool>,
     #[serde(default)]
     pub subscriber_id: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "intermediary_risk_acknowledged")]
     pub acknowledge_intermediary_risk: Option<bool>,
-    #[serde(default)]
+    #[serde(default, alias = "unsupported_clients")]
     pub acknowledge_unsupported_clients: Option<Vec<String>>,
 }
 
@@ -272,21 +272,22 @@ impl ProviderStore {
     /// Add or replace a provider, encrypting any inline API key.
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let record = self.build_record(input)?;
-        if record.enabled
-            && record.kind == ProviderKind::ZaiCodingPlan
-            && self.list()?.into_iter().any(|existing| {
-                existing.enabled
-                    && existing.kind == ProviderKind::ZaiCodingPlan
-                    && existing.name != record.name
-            })
-        {
-            return Err(ProviderError::Invalid(
-                "only one personal z.ai Coding Plan subscriber may be enabled".into(),
-            ));
-        }
-        self.mutate(|records| {
+        self.mutate(|records| -> Result<(), ProviderError> {
+            if record.enabled
+                && record.kind == ProviderKind::ZaiCodingPlan
+                && records.values().any(|existing| {
+                    existing.enabled
+                        && existing.kind == ProviderKind::ZaiCodingPlan
+                        && existing.name != record.name
+                })
+            {
+                return Err(ProviderError::Invalid(
+                    "only one personal z.ai Coding Plan subscriber may be enabled".into(),
+                ));
+            }
             records.insert(record.name.clone(), record.clone());
-        })?;
+            Ok(())
+        })??;
         Ok(record)
     }
 
@@ -347,6 +348,11 @@ impl ProviderStore {
                 .ok_or_else(|| ProviderError::Invalid(format!("unknown provider kind: {value}")))?,
             None => ProviderKind::default(),
         };
+        if name == "z.ai" && kind != ProviderKind::ZaiCodingPlan {
+            return Err(ProviderError::Invalid(
+                "provider name 'z.ai' is reserved for the Coding Plan model namespace".into(),
+            ));
+        }
         let base_url = input.base_url.trim_end_matches('/').to_string();
         if base_url.is_empty() {
             return Err(ProviderError::Invalid("base_url is required".into()));
@@ -361,6 +367,11 @@ impl ProviderStore {
         let unsupported_clients = input.acknowledge_unsupported_clients.unwrap_or_default();
         let enabled = input.enabled.unwrap_or(kind != ProviderKind::ZaiCodingPlan);
         if kind == ProviderKind::ZaiCodingPlan {
+            if base_url != "https://api.z.ai" && !cfg!(test) {
+                return Err(ProviderError::Invalid(
+                    "z.ai Coding Plan base_url must be https://api.z.ai".into(),
+                ));
+            }
             let subscriber = subscriber_id.as_deref().ok_or_else(|| {
                 ProviderError::Invalid("z.ai Coding Plan requires --subscriber-id".into())
             })?;
@@ -870,6 +881,19 @@ mod tests {
                 .as_deref(),
             Some("sk-test")
         );
+    }
+
+    #[test]
+    fn persisted_provider_kind_spellings_round_trip_through_import() {
+        assert_eq!(
+            ProviderKind::from_str_opt("open-a-i-compatible"),
+            Some(ProviderKind::OpenAICompatible)
+        );
+        assert_eq!(
+            ProviderKind::from_str_opt("zai-coding-plan"),
+            Some(ProviderKind::ZaiCodingPlan)
+        );
+        assert_eq!(ProviderKind::from_str_opt("future-provider"), None);
     }
 
     #[test]

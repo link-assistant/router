@@ -10,6 +10,8 @@ use serde_json::{Value, json};
 
 use super::{ClientError, SetupResult};
 
+pub(super) type ClaudeEnvOwnership = Vec<(String, String, Option<String>)>;
+
 pub(super) fn read_or_empty(path: &Path) -> Result<String, ClientError> {
     match fs::read_to_string(path) {
         Ok(source) => Ok(source),
@@ -96,12 +98,23 @@ pub(super) fn write_claude_marker(
     path: &Path,
     base_url: &str,
     previous: Option<&str>,
+    gateway_env: &ClaudeEnvOwnership,
 ) -> Result<(), ClientError> {
+    let gateway_env = gateway_env
+        .iter()
+        .map(|(key, managed, previous)| {
+            (
+                key.clone(),
+                json!({"managed": managed, "previous": previous}),
+            )
+        })
+        .collect::<serde_json::Map<_, _>>();
     let rendered = format!(
         "{}\n",
         serde_json::to_string_pretty(&json!({
             "anthropic_base_url": base_url,
             "previous_anthropic_base_url": previous,
+            "gateway_env": gateway_env,
         }))?
     );
     if read_or_empty(path)? != rendered {
@@ -119,7 +132,9 @@ pub(super) fn write_claude_marker(
 /// A marker written before issue #302 has no `previous_anthropic_base_url`,
 /// which reads as `None` — the same answer as "there was nothing there", and
 /// the same removal behaviour those markers already had.
-pub(super) fn claude_marker(path: &Path) -> Result<Option<(String, Option<String>)>, ClientError> {
+pub(super) fn claude_marker(
+    path: &Path,
+) -> Result<Option<(String, Option<String>, ClaudeEnvOwnership)>, ClientError> {
     let source = read_or_empty(path)?;
     if source.trim().is_empty() {
         return Ok(None);
@@ -136,7 +151,21 @@ pub(super) fn claude_marker(path: &Path) -> Result<Option<(String, Option<String
         .get("previous_anthropic_base_url")
         .and_then(Value::as_str)
         .map(str::to_string);
-    Ok(Some((managed, previous)))
+    let gateway_env = marker
+        .get("gateway_env")
+        .and_then(Value::as_object)
+        .into_iter()
+        .flatten()
+        .filter_map(|(key, ownership)| {
+            let managed = ownership.get("managed")?.as_str()?.to_string();
+            let previous = ownership
+                .get("previous")
+                .and_then(Value::as_str)
+                .map(str::to_string);
+            Some((key.clone(), managed, previous))
+        })
+        .collect();
+    Ok(Some((managed, previous, gateway_env)))
 }
 
 pub(super) fn write_codex_marker(

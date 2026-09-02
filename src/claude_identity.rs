@@ -11,9 +11,10 @@
 //! `/v1/responses`, an SDK, a `curl` smoke test — does not, which broke the
 //! "Claude MAX subscription inside Codex" use case of issue #45.
 //!
-//! The router therefore prepends the line for OAuth-backed upstream requests.
-//! The operation is idempotent: a body that already starts with it is left
-//! untouched, so Claude Code's own requests are unchanged.
+//! The router prepends the line only after client-bound authorization: for
+//! native Claude Code or one exact risk-accepted cross-client Claude route.
+//! Generic/manual/admin tokens and mere protocol compatibility never reach
+//! this function. The operation remains idempotent.
 
 use axum::body::Bytes;
 use serde_json::{Value, json};

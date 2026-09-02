@@ -13,6 +13,12 @@
 //!
 //! Streaming replies are translated incrementally by
 //! [`crate::anthropic_stream::AnthropicStreamTranslator`].
+//!
+//! Translation is not subscription authority. Consumer-subscription bridges
+//! are denied by default and run only after `client_policy` authorizes the
+//! exact signed client/provider pair; issue #45's historical default is
+//! superseded by issue #389. Ordinary API-key providers and the separately
+//! policy-gated z.ai Coding Plan retain their own credential rules.
 
 use axum::body::{Body, Bytes};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};

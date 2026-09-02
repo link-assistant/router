@@ -333,6 +333,11 @@ pub fn openai_compatible_models(state: &AppState) -> serde_json::Value {
 }
 
 fn resolve_openai_compatible_provider(state: &AppState) -> Result<ResolvedProvider, ProviderError> {
+    if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
+        return crate::zai_coding_plan::resolve(state)
+            .map_err(ProviderError::Invalid)?
+            .ok_or_else(|| ProviderError::Invalid("z.ai Coding Plan is not enabled".into()));
+    }
     state
         .provider_store
         .resolve(&state.openai_compatible.provider_name)

@@ -1,8 +1,8 @@
 //! The native Gemini namespace (`/api/gemini/v1beta`, `/api/vertex`).
 //!
-//! These routes list and serve the union of every connected subscription:
-//! each model is routed to the vendor that owns it, so Gemini CLI can run on a
-//! Codex or Claude subscription with one router JWT.
+//! These routes list only the models permitted for the signed Gemini client and
+//! subscriber. Consumer subscriptions remain deny-by-default; an experimental
+//! z.ai translation additionally requires its exact second acknowledgement.
 
 use axum::body::Body;
 use axum::extract::{OriginalUri, Path, State};
@@ -31,9 +31,8 @@ fn native_model_document(model: &str, owner: &str) -> Value {
 
 /// Subscriptions whose live catalogs the Gemini namespace may advertise.
 ///
-/// In automatic mode every healthy subscription contributes, so one router JWT
-/// exposes Codex, Claude, Qwen and Gemini models to Gemini CLI. A pinned
-/// `UPSTREAM_PROVIDER` narrows the namespace to that single subscription.
+/// Candidate models before the signed-client entitlement filter. A pinned
+/// provider narrows candidates but never widens authority.
 async fn advertised_models(
     state: &AppState,
     principal: Option<&str>,
@@ -74,9 +73,8 @@ async fn advertised_models(
 
 /// Native Gemini `ListModels` response.
 ///
-/// The listing is the union of the *live* catalogs of every connected
-/// subscription; nothing is synthesized for a provider that is disconnected or
-/// no longer advertises a model.
+/// The listing is the entitled intersection of live credentials and the
+/// signed client/principal. Nothing is synthesized for a disconnected vendor.
 pub async fn native_models(
     State(state): State<AppState>,
     OriginalUri(uri): OriginalUri,

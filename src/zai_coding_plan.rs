@@ -208,12 +208,15 @@ pub fn resolve(state: &crate::app_state::AppState) -> Result<Option<ResolvedProv
         .provider_store
         .list()
         .map_err(|error| error.to_string())?;
-    let Some(record) = providers
+    let mut enabled = providers
         .into_iter()
-        .find(|record| record.enabled && record.kind == ProviderKind::ZaiCodingPlan)
-    else {
+        .filter(|record| record.enabled && record.kind == ProviderKind::ZaiCodingPlan);
+    let Some(record) = enabled.next() else {
         return Ok(None);
     };
+    if enabled.next().is_some() {
+        return Err("multiple personal z.ai Coding Plan credentials are enabled".into());
+    }
     state
         .provider_store
         .resolve(&record.name)

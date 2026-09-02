@@ -139,7 +139,7 @@ pub enum ProviderOp {
         #[command(flatten)]
         target: AuthTarget,
     },
-    /// Add or replace an OpenAI-compatible provider.
+    /// Add or replace an API provider or policy-gated credential class.
     ///
     /// `create` and `issue` are accepted too (issue #314).
     #[command(alias = "create", alias = "issue")]

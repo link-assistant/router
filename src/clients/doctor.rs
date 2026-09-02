@@ -133,7 +133,11 @@ pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
     else {
         return Ok(());
     };
-    let version = String::from_utf8_lossy(&output.stdout);
+    let version = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
     if output.status.success() && claude_gateway_version_supported(&version) {
         return Ok(());
     }
