@@ -1,7 +1,7 @@
 //! Model catalog and automatic subscription-provider routing.
 
 use axum::body::Body;
-use axum::extract::{Request, State};
+use axum::extract::{OriginalUri, Request, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
@@ -698,40 +698,115 @@ fn merge_configured_degradation(health: &[ProviderHealthReport], catalog: &mut V
     }
 }
 
-/// `GET /v1/models` across automatic or explicitly pinned providers.
-pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Response {
-    if let Err(response) = crate::proxy::authenticate_client(&state, &headers) {
-        return *response;
+fn principal_catalog_models(
+    state: &AppState,
+    provider: SubscriptionProvider,
+    accounts: &[String],
+) -> Vec<String> {
+    if accounts.iter().any(|account| {
+        state.subscription_cache.evidence_for(provider, account)
+            == Some(crate::refresh::CredentialEvidence::Rejected)
+    }) {
+        Vec::new()
+    } else {
+        state.model_catalogs.models_for_accounts(provider, accounts)
     }
+}
+
+/// `GET /v1/models` across automatic or explicitly pinned providers.
+pub async fn models(
+    State(state): State<AppState>,
+    OriginalUri(uri): OriginalUri,
+    headers: HeaderMap,
+) -> Response {
+    let claims = match crate::proxy::authenticate_client(&state, &headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    let path = uri.path();
+    let principal_accounts = claims.principal_id.clone().into_iter().collect::<Vec<_>>();
+
+    let entitled = |provider| {
+        crate::client_policy::enforce_subscription_for_claims(
+            &state,
+            &claims,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::Catalog,
+            path,
+        )
+    };
 
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => {
             let snapshot = configured_catalog_snapshot(&state).await;
-            let healthy = snapshot.healthy_providers();
+            let healthy = snapshot
+                .healthy_providers()
+                .into_iter()
+                .filter(|provider| entitled(*provider).is_ok())
+                .collect::<Vec<_>>();
             let mut catalog = model_catalog_with(&healthy, &state.model_catalogs, |provider| {
-                snapshot.models(provider)
+                principal_catalog_models(&state, provider, &principal_accounts)
             });
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
             // simply vanished from `data`. Absence is not an alert: a monitor
             // cannot tell it from a provider that was never configured here
             // (issue #318).
-            merge_configured_degradation(snapshot.health(), &mut catalog);
+            let visible_health = snapshot
+                .health()
+                .iter()
+                .filter(|entry| entitled(entry.provider).is_ok())
+                .cloned()
+                .collect::<Vec<_>>();
+            merge_configured_degradation(&visible_health, &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
             catalog
         }
         UpstreamProvider::Anthropic => {
-            pinned_model_catalog(&state, SubscriptionProvider::Claude).await
+            if let Err(response) = entitled(SubscriptionProvider::Claude) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Claude],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
         }
         UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
             || crate::gonka::list_models(&crate::config::default_gonka_model()),
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
         UpstreamProvider::Crater => crate::crater::list_models(),
-        UpstreamProvider::Codex => pinned_model_catalog(&state, SubscriptionProvider::Codex).await,
-        UpstreamProvider::Qwen => pinned_model_catalog(&state, SubscriptionProvider::Qwen).await,
+        UpstreamProvider::Codex => {
+            if let Err(response) = entitled(SubscriptionProvider::Codex) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Codex],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
+        }
+        UpstreamProvider::Qwen => {
+            if let Err(response) = entitled(SubscriptionProvider::Qwen) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Qwen],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
+        }
         UpstreamProvider::Gemini => {
-            pinned_model_catalog(&state, SubscriptionProvider::Gemini).await
+            if let Err(response) = entitled(SubscriptionProvider::Gemini) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Gemini],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
         }
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)

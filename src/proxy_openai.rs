@@ -46,7 +46,7 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None).await
+    openai_chat_completions_with_subscription(state, query, headers, body, None, false).await
 }
 
 pub async fn openai_chat_completions_routed(
@@ -61,6 +61,7 @@ pub async fn openai_chat_completions_routed(
         headers,
         Ok(axum::Json(body)),
         subscription,
+        true,
     )
     .await
 }
@@ -71,6 +72,7 @@ async fn openai_chat_completions_with_subscription(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
     initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
+    entitlement_already_checked: bool,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -110,6 +112,18 @@ async fn openai_chat_completions_with_subscription(
     };
     let state = routed.state;
     let subscription = routed.subscription;
+    if !entitlement_already_checked
+        && let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription(
+            &state,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::OpenAIChat,
+            "/v1/chat/completions",
+        )
+    {
+        return response;
+    }
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -257,6 +271,7 @@ async fn openai_chat_completions_with_subscription(
         crate::metrics::Surface::OpenAIChat,
         (stream_requested, OpenAIShape::Chat, include_usage),
         subscription.as_ref(),
+        true,
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)
@@ -283,6 +298,17 @@ pub async fn openai_responses(
     };
     let state = routed.state;
     let subscription = routed.subscription;
+    if let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription(
+            &state,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::OpenAIResponses,
+            "/v1/responses",
+        )
+    {
+        return response;
+    }
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -411,6 +437,7 @@ pub async fn openai_responses(
         crate::metrics::Surface::OpenAIResponses,
         (stream_requested, OpenAIShape::Response, false),
         subscription.as_ref(),
+        true,
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)

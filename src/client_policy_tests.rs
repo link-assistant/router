@@ -1,7 +1,10 @@
-use axum::http::HeaderMap;
+use axum::body::Body;
+use axum::extract::{OriginalUri, State};
+use axum::http::{HeaderMap, Request, StatusCode};
 
 use crate::client_policy::{
-    ClientProtocol, EntitlementDecision, SubscriptionEntitlementPolicy, request_evidence,
+    ClientProtocol, EntitlementDecision, SubscriptionEntitlementPolicy, authorize_subscription,
+    request_evidence,
 };
 use crate::clients::ClientKind;
 use crate::subscription::SubscriptionProvider;
@@ -256,4 +259,47 @@ fn a_bound_token_cannot_change_clients_with_request_headers() {
         )
         .is_err()
     );
+}
+
+#[tokio::test]
+async fn unbound_tokens_are_denied_before_an_anthropic_upstream_can_be_contacted() {
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+    state.upstream_base_url = "http://127.0.0.1:9".into();
+    let token = state.token_manager.issue_token(1, "legacy token").unwrap();
+    let request = Request::builder()
+        .method("POST")
+        .uri("/v1/messages")
+        .header("x-api-key", token)
+        .header("anthropic-version", "2023-06-01")
+        .header("content-type", "application/json")
+        .body(Body::from(
+            r#"{"model":"claude-live","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+        ))
+        .unwrap();
+
+    let response = crate::proxy::proxy_handler(State(state), request).await;
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn pinned_catalog_returns_forbidden_for_an_unbound_token() {
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+    let token = state.token_manager.issue_token(1, "legacy token").unwrap();
+    let mut headers = HeaderMap::new();
+    headers.insert("x-api-key", token.parse().unwrap());
+    headers.insert("x-link-assistant-client", "claude".parse().unwrap());
+
+    let response = crate::model_routing::models(
+        State(state),
+        OriginalUri("/v1/models".parse().unwrap()),
+        headers,
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }

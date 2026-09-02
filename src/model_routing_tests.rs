@@ -53,6 +53,40 @@ pub(super) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path:
     }
 }
 
+pub(super) fn bound_client_token(
+    state: &AppState,
+    client: crate::clients::ClientKind,
+    account: Option<&str>,
+) -> String {
+    let principal = account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT);
+    state
+        .token_manager
+        .issue_with_id(&crate::token::IssueRequest {
+            ttl_hours: 1,
+            label: "fixture client",
+            account: Some(principal),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some(client.canonical_name()),
+            principal_id: Some(principal),
+        })
+        .unwrap()
+        .0
+}
+
+pub(super) fn opencode_headers(state: &AppState, account: Option<&str>) -> HeaderMap {
+    let token = bound_client_token(state, crate::clients::ClientKind::Opencode, account);
+    let mut headers = HeaderMap::new();
+    headers.insert("authorization", format!("Bearer {token}").parse().unwrap());
+    headers.insert("user-agent", "opencode/test-fixture".parse().unwrap());
+    headers.insert("x-session-id", "test-session".parse().unwrap());
+    headers
+}
+
 /// Only live-discovered models are advertised, tagged with their real
 /// owner. An undiscovered provider contributes nothing and is reported as
 /// degraded rather than filled in from source (issue #192).
@@ -147,7 +181,13 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
     state
         .subscription_cache
         .record_credential_rejected(SubscriptionProvider::Claude);
-    let client_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["claude:codex"]).unwrap(),
+        )
+        .unwrap();
+    let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
         .route("/v1/models", get(models))
         .with_state(state.clone());
@@ -156,7 +196,8 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
         .oneshot(
             Request::builder()
                 .uri("/v1/models")
-                .header("authorization", format!("Bearer {client_token}"))
+                .header("x-api-key", client_token)
+                .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -428,15 +469,14 @@ async fn openai_request_rejects_unknown_model_in_pinned_and_auto_modes() {
         state
             .model_catalogs
             .record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
-        let client_token = state
-            .token_manager
-            .issue_token(1, "catalog client")
-            .expect("issue client token");
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "authorization",
-            format!("Bearer {client_token}").parse().unwrap(),
-        );
+        state
+            .provider_store
+            .set_subscription_entitlement_policy(
+                crate::client_policy::SubscriptionEntitlementPolicy::parse(["opencode:claude"])
+                    .unwrap(),
+            )
+            .unwrap();
+        let headers = opencode_headers(&state, None);
 
         let response = crate::proxy::openai_chat_completions(
             State(state),

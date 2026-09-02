@@ -384,6 +384,7 @@ mod config_verbose_tests {
             session_affinity_ttl_secs: 3600,
             account_request_limits: vec![],
             experimental_compatibility: false,
+            subscription_bridge_overrides: vec![],
             admin_key: None,
             allow_anonymous_admin: false,
             mpp: link_assistant_router::config::default_mpp_config(),

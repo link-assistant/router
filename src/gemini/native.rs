@@ -5,7 +5,7 @@
 //! Codex or Claude subscription with one router JWT.
 
 use axum::body::Body;
-use axum::extract::{Path, State};
+use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
@@ -39,6 +39,7 @@ fn native_model_document(
 /// `UPSTREAM_PROVIDER` narrows the namespace to that single subscription.
 async fn advertised_models(
     state: &AppState,
+    principal: Option<&str>,
 ) -> Vec<(crate::subscription::SubscriptionProvider, String)> {
     let snapshot = crate::model_routing::configured_catalog_snapshot(state).await;
     let healthy = snapshot.healthy_providers();
@@ -53,8 +54,21 @@ async fn advertised_models(
     providers
         .into_iter()
         .flat_map(|provider| {
-            snapshot
-                .models(provider)
+            principal
+                .map_or_else(
+                    || snapshot.models(provider),
+                    |principal| {
+                        if state.subscription_cache.evidence_for(provider, principal)
+                            == Some(crate::refresh::CredentialEvidence::Rejected)
+                        {
+                            Vec::new()
+                        } else {
+                            state
+                                .model_catalogs
+                                .models_for_accounts(provider, &[principal.to_string()])
+                        }
+                    },
+                )
                 .into_iter()
                 .map(move |model| (provider, model))
         })
@@ -66,42 +80,95 @@ async fn advertised_models(
 /// The listing is the union of the *live* catalogs of every connected
 /// subscription; nothing is synthesized for a provider that is disconnected or
 /// no longer advertises a model.
-pub async fn native_models(State(state): State<AppState>) -> impl IntoResponse {
-    let models = advertised_models(&state)
-        .await
+pub async fn native_models(
+    State(state): State<AppState>,
+    OriginalUri(uri): OriginalUri,
+    headers: HeaderMap,
+) -> Response {
+    let claims = match crate::proxy::authenticate_client(&state, &headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    let mut advertised = advertised_models(&state, claims.principal_id.as_deref()).await;
+    advertised.retain(|(provider, _)| {
+        crate::client_policy::enforce_subscription_for_claims(
+            &state,
+            &claims,
+            &headers,
+            *provider,
+            crate::client_policy::ClientProtocol::Catalog,
+            uri.path(),
+        )
+        .is_ok()
+    });
+    if state.upstream_provider != crate::config::UpstreamProvider::Auto
+        && advertised.is_empty()
+        && let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription_for_claims(
+            &state,
+            &claims,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::Catalog,
+            uri.path(),
+        )
+    {
+        return response;
+    }
+    let models = advertised
         .into_iter()
         .map(|(provider, model)| native_model_document(&model, provider))
         .collect::<Vec<_>>();
-    (StatusCode::OK, axum::Json(json!({"models": models})))
+    (StatusCode::OK, axum::Json(json!({"models": models}))).into_response()
 }
 
 /// Native Gemini `GetModel` response.
 pub async fn native_model(
     State(state): State<AppState>,
+    OriginalUri(uri): OriginalUri,
+    headers: HeaderMap,
     Path(model): Path<String>,
-) -> impl IntoResponse {
+) -> Response {
+    let claims = match crate::proxy::authenticate_client(&state, &headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
     let model = model.trim_start_matches("models/").to_string();
-    let owner = advertised_models(&state)
+    let owner = advertised_models(&state, claims.principal_id.as_deref())
         .await
         .into_iter()
-        .find_map(|(owner, candidate)| (candidate == model).then_some(owner));
-    owner.map_or_else(
-        || {
-            (
-                StatusCode::NOT_FOUND,
-                axum::Json(crate::gemini_bridge::openai_error_to_gemini(
-                    404,
-                    &json!({"error": {"message": format!("model '{model}' is not available")}}),
-                )),
-            )
-        },
-        |owner| {
-            (
-                StatusCode::OK,
-                axum::Json(native_model_document(&model, owner)),
-            )
-        },
-    )
+        .find_map(|(owner, candidate)| {
+            (candidate == model
+                && crate::client_policy::enforce_subscription_for_claims(
+                    &state,
+                    &claims,
+                    &headers,
+                    owner,
+                    crate::client_policy::ClientProtocol::Catalog,
+                    uri.path(),
+                )
+                .is_ok())
+            .then_some(owner)
+        });
+    owner
+        .map_or_else(
+            || {
+                (
+                    StatusCode::NOT_FOUND,
+                    axum::Json(crate::gemini_bridge::openai_error_to_gemini(
+                        404,
+                        &json!({"error": {"message": format!("model '{model}' is not available")}}),
+                    )),
+                )
+            },
+            |owner| {
+                (
+                    StatusCode::OK,
+                    axum::Json(native_model_document(&model, owner)),
+                )
+            },
+        )
+        .into_response()
 }
 
 pub(super) fn parse_native_target(path: &str) -> Option<(String, bool)> {
@@ -137,6 +204,19 @@ pub async fn forward_native_gemini(
         }
     };
     forward_native(&state, &headers, &path, body).await
+}
+
+/// Internal positive-path entry after an ingress entitlement was already
+/// checked. Kept for the translated bridge and forwarding evidence tests so
+/// deny-by-default does not delete protocol compatibility coverage.
+#[cfg(test)]
+pub(crate) async fn forward_native_gemini_authorized(
+    state: &AppState,
+    path: &str,
+    headers: &HeaderMap,
+    body: Value,
+) -> Response {
+    forward_native_authorized(state, headers, path, body).await
 }
 
 /// Forward a Vertex publisher-model request using the same native Gemini body.
@@ -214,6 +294,52 @@ async fn forward_native(
         Ok(routed) => routed,
         Err(response) => return response,
     };
+    let full_path = format!("/api/gemini/{path}");
+    let owner = routed
+        .state
+        .upstream_provider
+        .subscription_provider()
+        .expect("native routing always selects a subscription provider");
+    if let Err(response) = crate::client_policy::enforce_subscription(
+        &routed.state,
+        headers,
+        owner,
+        crate::client_policy::ClientProtocol::GeminiNative,
+        &full_path,
+    ) {
+        return response;
+    }
+    forward_native_authorized_after_route(routed, headers, path, model, streaming, body).await
+}
+
+#[cfg(test)]
+async fn forward_native_authorized(
+    state: &AppState,
+    headers: &HeaderMap,
+    path: &str,
+    body: Value,
+) -> Response {
+    let Some((model, streaming)) = parse_native_target(path) else {
+        return native_error(
+            StatusCode::NOT_FOUND,
+            "expected a model :generateContent or :streamGenerateContent action",
+        );
+    };
+    let routed = match native_owner(state, &model).await {
+        Ok(routed) => routed,
+        Err(response) => return response,
+    };
+    forward_native_authorized_after_route(routed, headers, path, model, streaming, body).await
+}
+
+async fn forward_native_authorized_after_route(
+    routed: crate::model_routing::RoutedState,
+    headers: &HeaderMap,
+    path: &str,
+    model: String,
+    streaming: bool,
+    body: Value,
+) -> Response {
     let owner = routed
         .state
         .upstream_provider

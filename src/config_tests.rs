@@ -41,6 +41,7 @@ fn default_args(secret: Option<&'static str>) -> BuildArgs<'static> {
         session_affinity_ttl_secs: 3600,
         account_request_limits: vec![],
         experimental_compatibility: false,
+        subscription_bridge_overrides: vec![],
         admin_key: None,
         allow_anonymous_admin: false,
         mpp: default_mpp_config(),
@@ -78,6 +79,24 @@ fn test_config_with_valid_values() {
 fn default_provider_routes_across_subscriptions() {
     let config = build_default(Some("secret")).expect("should build");
     assert_eq!(config.upstream_provider, UpstreamProvider::Auto);
+}
+
+#[test]
+fn subscription_bridges_are_exact_and_validated_at_boot() {
+    let mut args = default_args(Some("secret"));
+    args.subscription_bridge_overrides = vec!["codex:claude".into()];
+    let config = Config::build(args).expect("exact reviewed bridge");
+    assert_eq!(
+        config.subscription_entitlement_policy.overrides()[0].to_string(),
+        "codex:claude"
+    );
+
+    let mut args = default_args(Some("secret"));
+    args.subscription_bridge_overrides = vec!["*:*".into()];
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::InvalidSubscriptionBridgePolicy(_))
+    ));
 }
 
 #[test]
@@ -186,6 +205,7 @@ fn gonka_args(private_key: Option<&str>) -> BuildArgs<'static> {
         session_affinity_ttl_secs: 3600,
         account_request_limits: vec![],
         experimental_compatibility: false,
+        subscription_bridge_overrides: vec![],
         admin_key: None,
         allow_anonymous_admin: false,
         mpp: default_mpp_config(),

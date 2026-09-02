@@ -2,7 +2,7 @@
 //!
 //! Split from `model_routing_tests.rs` to stay inside the per-file line limit.
 
-use super::tests::auto_state;
+use super::tests::{auto_state, bound_client_token};
 use super::*;
 use axum::body::Body;
 use axum::http::Request;
@@ -34,7 +34,13 @@ async fn subscription_report(state: AppState) -> (StatusCode, Value) {
 }
 
 async fn model_report(state: AppState) -> Value {
-    let client_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["claude:codex"]).unwrap(),
+        )
+        .unwrap();
+    let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
         .route("/v1/models", get(models))
         .with_state(state);
@@ -42,7 +48,8 @@ async fn model_report(state: AppState) -> Value {
         .oneshot(
             Request::builder()
                 .uri("/v1/models")
-                .header("authorization", format!("Bearer {client_token}"))
+                .header("x-api-key", client_token)
+                .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -251,10 +258,7 @@ async fn malformed_and_unreadable_credentials_are_safely_degraded() {
     }
 
     let catalog = model_report(state).await;
-    assert_eq!(
-        catalog["degraded_providers"],
-        json!(["codex", "gemini", "qwen"])
-    );
+    assert_eq!(catalog["degraded_providers"], json!(["codex"]));
     let public = catalog.to_string();
     assert!(
         !public.contains(private_body),
@@ -780,7 +784,13 @@ async fn no_provider_is_both_healthy_and_degraded() {
         );
     }
 
-    let client_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["claude:codex"]).unwrap(),
+        )
+        .unwrap();
+    let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
         .route("/v1/models", get(models))
         .with_state(state);
@@ -788,7 +798,8 @@ async fn no_provider_is_both_healthy_and_degraded() {
         .oneshot(
             Request::builder()
                 .uri("/v1/models")
-                .header("authorization", format!("Bearer {client_token}"))
+                .header("x-api-key", client_token)
+                .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
                 .unwrap(),
         )

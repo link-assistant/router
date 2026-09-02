@@ -43,10 +43,30 @@ impl ClientManager {
         let catalog = self.catalog(client, &base_url, &token).await?;
         let model = doctor_model(client, &catalog)?;
         let (url, body) = probe_request(client, &base_url, model);
-        let response = reqwest::Client::new()
-            .post(&url)
-            .bearer_auth(token)
-            .json(&body)
+        let request = reqwest::Client::new().post(&url).json(&body);
+        let request = match client {
+            ClientKind::ClaudeCode => request
+                .header("x-api-key", &token)
+                .header("anthropic-version", "2023-06-01"),
+            ClientKind::GeminiCli => request
+                .header("x-goog-api-key", &token)
+                .header("x-goog-api-client", "link-assistant-router-doctor"),
+            ClientKind::Codex => request
+                .bearer_auth(&token)
+                .header("x-openai-internal-codex-responses-lite", "true"),
+            ClientKind::QwenCode => request
+                .bearer_auth(&token)
+                .header("x-stainless-package-version", "router-doctor"),
+            ClientKind::Opencode => request
+                .bearer_auth(&token)
+                .header("user-agent", "opencode/router-doctor")
+                .header("x-session-id", "router-doctor"),
+            ClientKind::GrokCli => request
+                .bearer_auth(&token)
+                .header("user-agent", "grok/router-doctor"),
+            ClientKind::Cursor | ClientKind::Agent => request.bearer_auth(&token),
+        };
+        let response = request
             .timeout(Duration::from_secs(30))
             .send()
             .await

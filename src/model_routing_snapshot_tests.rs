@@ -785,7 +785,7 @@ async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
 }
 
 #[tokio::test]
-async fn automatic_gemini_snapshot_serves_both_openai_surfaces() {
+async fn automatic_gemini_subscription_is_denied_on_both_openai_surfaces() {
     let forwarded = Arc::new(AtomicUsize::new(0));
     let forwarded_for_stub = Arc::clone(&forwarded);
     let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
@@ -857,10 +857,7 @@ async fn automatic_gemini_snapshot_serves_both_openai_surfaces() {
         }))),
     )
     .await;
-    assert_eq!(chat.status(), StatusCode::OK);
-    let chat = chat.into_body().collect().await.unwrap().to_bytes();
-    let chat: Value = serde_json::from_slice(&chat).unwrap();
-    assert_eq!(chat["choices"][0]["message"]["content"], "gemini answer");
+    assert_eq!(chat.status(), StatusCode::FORBIDDEN);
 
     let responses = crate::proxy::openai_responses(
         State(state),
@@ -871,13 +868,7 @@ async fn automatic_gemini_snapshot_serves_both_openai_surfaces() {
         }))),
     )
     .await;
-    assert_eq!(responses.status(), StatusCode::OK);
-    let responses = responses.into_body().collect().await.unwrap().to_bytes();
-    let responses: Value = serde_json::from_slice(&responses).unwrap();
-    assert_eq!(
-        responses["choices"][0]["message"]["content"],
-        "gemini answer"
-    );
-    assert_eq!(forwarded.load(Ordering::SeqCst), 2);
+    assert_eq!(responses.status(), StatusCode::FORBIDDEN);
+    assert_eq!(forwarded.load(Ordering::SeqCst), 0);
     stub_task.abort();
 }

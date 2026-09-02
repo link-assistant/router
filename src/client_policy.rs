@@ -8,6 +8,8 @@
 use std::collections::HashSet;
 
 use axum::http::HeaderMap;
+use axum::http::StatusCode;
+use axum::response::Response;
 
 use crate::clients::ClientKind;
 use crate::subscription::SubscriptionProvider;
@@ -36,6 +38,86 @@ pub enum EntitlementDecision {
     Override,
     /// No reviewed entitlement exists.
     Denied,
+}
+
+/// Validate the signed binding, reviewed matrix cell, and request fixture
+/// evidence as one indivisible authorization decision.
+pub fn authorize_subscription(
+    policy: &SubscriptionEntitlementPolicy,
+    claims: &crate::token::TokenClaims,
+    provider: SubscriptionProvider,
+    protocol: ClientProtocol,
+    path: &str,
+    headers: &HeaderMap,
+) -> Result<EntitlementDecision, String> {
+    if claims.is_admin() {
+        return Err("administrative credentials do not imply consumer-subscription access".into());
+    }
+    let client_name = claims
+        .client_kind
+        .as_deref()
+        .ok_or("the token has no managed-client binding")?;
+    let client = ClientKind::from_str_opt(client_name)
+        .ok_or("the token contains an unknown managed-client binding")?;
+    if client_name != client.canonical_name() {
+        return Err("the token's managed-client binding is not canonical".into());
+    }
+    if claims
+        .principal_id
+        .as_deref()
+        .is_none_or(|principal| principal.trim().is_empty())
+    {
+        return Err("the token has no subscriber principal".into());
+    }
+    if !request_evidence(client, protocol, path, headers) {
+        return Err(format!(
+            "request evidence does not match the token's {} client binding",
+            client.canonical_name()
+        ));
+    }
+    match policy.decide(Some(client), provider, protocol) {
+        EntitlementDecision::Denied => Err(format!(
+            "{} is not entitled to use the {provider} consumer subscription",
+            client.display_name()
+        )),
+        decision => Ok(decision),
+    }
+}
+
+/// Apply the active deployment policy and render a stable pre-upstream denial.
+pub fn enforce_subscription(
+    state: &crate::app_state::AppState,
+    headers: &HeaderMap,
+    provider: SubscriptionProvider,
+    protocol: ClientProtocol,
+    path: &str,
+) -> Result<EntitlementDecision, Response> {
+    let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+    enforce_subscription_for_claims(state, &claims, headers, provider, protocol, path)
+}
+
+/// Variant for catalog handlers that have already authenticated the caller.
+pub fn enforce_subscription_for_claims(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &HeaderMap,
+    provider: SubscriptionProvider,
+    protocol: ClientProtocol,
+    path: &str,
+) -> Result<EntitlementDecision, Response> {
+    let policy = state
+        .provider_store
+        .subscription_entitlement_policy()
+        .map_err(|error| {
+            crate::proxy::error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("could not read subscription entitlement policy: {error}"),
+            )
+        })?;
+    authorize_subscription(&policy, claims, provider, protocol, path, headers).map_err(|message| {
+        crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &message)
+    })
 }
 
 /// One exact risk-accepted bridge cell.
@@ -210,7 +292,7 @@ pub fn request_evidence(
                     || header_present(headers, "x-gemini-api-privileged-user-id"))
         }
         ClientKind::QwenCode => {
-            path.contains("/api/qwen/")
+            path.ends_with("/v1/chat/completions")
                 && header_present(headers, "authorization")
                 && header_present(headers, "x-stainless-package-version")
         }
@@ -238,7 +320,9 @@ fn credential_carrier_matches(client: ClientKind, headers: &HeaderMap) -> bool {
 fn path_belongs_to_client(client: ClientKind, path: &str) -> bool {
     match client {
         ClientKind::Codex => path == "/api/codex/v1/models",
-        ClientKind::GeminiCli => path == "/api/gemini/v1beta/models",
+        ClientKind::GeminiCli => {
+            path == "/api/gemini/v1beta/models" || path.starts_with("/api/gemini/v1beta/models/")
+        }
         ClientKind::QwenCode => path == "/api/qwen/v1/models",
         ClientKind::ClaudeCode | ClientKind::Opencode | ClientKind::GrokCli => path == "/v1/models",
         ClientKind::Cursor | ClientKind::Agent => false,

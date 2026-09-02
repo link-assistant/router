@@ -164,6 +164,7 @@ pub struct ProviderStore {
     lock_path: PathBuf,
     token_secret: Arc<String>,
     inner: Arc<RwLock<HashMap<String, ProviderRecord>>>,
+    entitlement_policy: Arc<RwLock<crate::client_policy::SubscriptionEntitlementPolicy>>,
 }
 
 impl ProviderStore {
@@ -187,7 +188,32 @@ impl ProviderStore {
             path,
             token_secret: Arc::new(token_secret.to_string()),
             inner: Arc::new(RwLock::new(inner)),
+            entitlement_policy: Arc::new(RwLock::new(
+                crate::client_policy::SubscriptionEntitlementPolicy::default(),
+            )),
         })
+    }
+
+    /// Install the boot-validated consumer-subscription bridge policy.
+    pub fn set_subscription_entitlement_policy(
+        &self,
+        policy: crate::client_policy::SubscriptionEntitlementPolicy,
+    ) -> Result<(), ProviderError> {
+        *self
+            .entitlement_policy
+            .write()
+            .map_err(|_| ProviderError::LockPoisoned)? = policy;
+        Ok(())
+    }
+
+    /// Snapshot the policy used by catalog and dispatch.
+    pub fn subscription_entitlement_policy(
+        &self,
+    ) -> Result<crate::client_policy::SubscriptionEntitlementPolicy, ProviderError> {
+        self.entitlement_policy
+            .read()
+            .map_err(|_| ProviderError::LockPoisoned)
+            .map(|policy| policy.clone())
     }
 
     /// Return all providers sorted by name.

@@ -371,6 +371,30 @@ async fn proxy_handler_with_subscription(
         upstream_url
     };
 
+    // A protocol-compatible request is not authority to spend a consumer
+    // subscription. Decide the exact signed client/provider cell before the
+    // bridge or any upstream credential lookup can run.
+    let claims = match authenticate_client(&state, &incoming_headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    let subscription_entitlement =
+        if let Some(provider) = state.upstream_provider.subscription_provider() {
+            match crate::client_policy::enforce_subscription_for_claims(
+                &state,
+                &claims,
+                &incoming_headers,
+                provider,
+                crate::client_policy::ClientProtocol::AnthropicMessages,
+                &path,
+            ) {
+                Ok(decision) => Some(decision),
+                Err(response) => return response,
+            }
+        } else {
+            None
+        };
+
     // Log session tracking header if present
     if let Some(session_id) = incoming_headers.get("x-claude-code-session-id") {
         state
@@ -411,11 +435,6 @@ async fn proxy_handler_with_subscription(
         )
         .await;
     }
-
-    let claims = match authenticate_client(&state, &incoming_headers) {
-        Ok(claims) => claims,
-        Err(response) => return *response,
-    };
 
     // Read the body before account selection so the router gets a copy of
     // stable request metadata and can preserve conversation affinity. It is
@@ -505,7 +524,9 @@ async fn proxy_handler_with_subscription(
             .map(bytes::Bytes::from)
             .unwrap_or(body_bytes);
     }
-    let body_bytes = if crate::claude_identity::is_oauth_credential(&oauth_token) {
+    let body_bytes = if subscription_entitlement.is_some()
+        && crate::claude_identity::is_oauth_credential(&oauth_token)
+    {
         crate::claude_identity::ensure_claude_code_system_bytes(&upstream_body, body_bytes)
     } else {
         body_bytes
@@ -754,6 +775,7 @@ async fn forward_openai(
     surface: crate::metrics::Surface,
     stream_options: (bool, OpenAIShape, bool),
     validated: Option<&crate::model_routing::ValidatedSubscription>,
+    entitlement_granted: bool,
 ) -> Response {
     let (stream_requested, shape, include_usage) = stream_options;
     let served_model = body["model"].as_str().unwrap_or_default().to_string();
@@ -770,6 +792,13 @@ async fn forward_openai(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    if !entitlement_granted {
+        return error_response(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            "consumer-subscription entitlement was not checked at ingress",
+        );
+    }
     let reserved = crate::token_reservation::estimate(&body).total();
     if let Err(e) = state
         .token_manager
@@ -819,7 +848,7 @@ async fn forward_openai(
     // Claude MAX OAuth inference requires Claude Code's identity as the first
     // system block; OpenAI-dialect clients such as Codex never send it.
     let mut body = body;
-    if crate::claude_identity::is_oauth_credential(&oauth_token) {
+    if entitlement_granted && crate::claude_identity::is_oauth_credential(&oauth_token) {
         crate::claude_identity::ensure_claude_code_system(&mut body);
     }
     let serialized = match serde_json::to_vec(&body) {

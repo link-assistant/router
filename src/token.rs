@@ -554,6 +554,12 @@ impl TokenManager {
                     "signed client binding does not match the durable token record".to_string(),
                 ));
             }
+        } else if token_data.claims.client_kind.is_some()
+            || token_data.claims.principal_id.is_some()
+        {
+            return Err(TokenError::Invalid(
+                "bound client token has no durable token record".to_string(),
+            ));
         }
 
         Ok(token_data.claims)
