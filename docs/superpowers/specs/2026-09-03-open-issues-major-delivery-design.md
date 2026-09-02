@@ -11,7 +11,7 @@ the client/subscriber policy shipped in `v0.125.4`.
 
 The five issues form one release boundary even though the token-store decoder is internally
 independent. Route construction, client setup, managed launches, catalog discovery, repair, doctor,
-and the admin UI all need the same canonical endpoints. Publishing only part of that graph would
+and the admin UI all need the same canonical endpoints. Publishing only part of that contract would
 leave generated configurations pointing at paths that another part of the release does not serve.
 
 The implementation will therefore use one branch and one pull request with small red/green commits.

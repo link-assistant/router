@@ -9,6 +9,17 @@ use serde_json::Value;
 
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, SubscriptionToken};
 
+#[path = "model_catalog_parse.rs"]
+mod parse;
+#[cfg(test)]
+use parse::parse_catalog;
+use parse::{next_catalog_cursor, parse_catalog_records, provider_protocols};
+#[path = "model_catalog_errors.rs"]
+mod errors;
+#[cfg(test)]
+use errors::resource_error_code;
+pub use errors::{is_credential_rejection, is_permission_refusal};
+
 /// How often live provider catalogs are refreshed.
 pub const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const FETCH_TIMEOUT: Duration = Duration::from_secs(15);
@@ -780,70 +791,6 @@ pub async fn refresh_catalogs_for_accounts(
     }
 }
 
-/// Error codes a provider returns on a **permission** failure: the credential
-/// is fine and this organization is not permitted to use it right now.
-///
-/// A 403 carrying one of these is not evidence about the token, so refreshing
-/// against it can only spend a link of a single-use chain for no obtainable
-/// gain — which is exactly how a healthy subscription was destroyed five
-/// minutes after recovery succeeded (issue #319).
-const PERMISSION_ERROR_CODES: [&str; 1] = ["oauth_not_allowed_for_organization"];
-
-/// The provider's own error code for a failed resource call, when it gave one.
-///
-/// Anthropic nests it two levels down, under `error.details.error_code`;
-/// [`crate::refresh::oauth_error_code`] reads the token endpoint's shallower
-/// shapes and stops at `error.type`, which for a permission failure is the
-/// uninformative `permission_error` (issue #319).
-fn resource_error_code(body: &str) -> Option<String> {
-    let value: Value = serde_json::from_str(body).ok()?;
-    let error = value.get("error")?;
-    [
-        &["details", "error_code"][..],
-        &["error_code"][..],
-        &["code"][..],
-    ]
-    .into_iter()
-    .find_map(|path| {
-        path.iter()
-            .try_fold(error, |node, key| node.get(key))?
-            .as_str()
-            .map(str::to_string)
-    })
-}
-
-/// Whether a catalog failure is a permission verdict rather than a credential
-/// one — the organization is not allowed to use OAuth right now.
-///
-/// The existing token stays on disk and is retried on the next tick. Nothing
-/// is refreshed, because a new token cannot change an answer that was never
-/// about the token (issue #319).
-#[must_use]
-pub fn is_permission_refusal(error: &str) -> bool {
-    let Some(body) = error.strip_prefix("HTTP ") else {
-        return false;
-    };
-    let Some((status, body)) = body.split_once(": ") else {
-        return false;
-    };
-    if !status.starts_with("403") {
-        return false;
-    }
-    resource_error_code(body).is_some_and(|code| PERMISSION_ERROR_CODES.contains(&code.as_str()))
-}
-
-/// Whether a catalog response proves that the supplied credential is unusable.
-///
-/// A 403 that names a permission error is excluded: it says the token is fine
-/// and the organization is not currently permitted, so treating it as a
-/// credential verdict both refreshes a healthy chain and hides the provider
-/// for a reason that is not the credential's (issue #319).
-#[must_use]
-pub fn is_credential_rejection(error: &str) -> bool {
-    (error.starts_with("HTTP 401") || error.starts_with("HTTP 403"))
-        && !is_permission_refusal(error)
-}
-
 /// Continuously refresh live catalogs, beginning immediately at startup.
 pub async fn refresh_catalogs_forever(
     client: reqwest::Client,
@@ -1002,136 +949,6 @@ fn catalog_base_url(provider: SubscriptionProvider, token: &SubscriptionToken) -
         SubscriptionProvider::Gemini => "https://generativelanguage.googleapis.com".to_string(),
         _ => token.base_url(provider).trim_end_matches('/').to_string(),
     }
-}
-
-#[cfg(test)]
-fn parse_catalog(provider: SubscriptionProvider, body: &Value) -> Result<Vec<String>, String> {
-    parse_catalog_records(
-        provider,
-        body,
-        "primary",
-        chrono::Utc::now().timestamp(),
-        "test",
-        0,
-    )
-    .map(|records| {
-        records
-            .into_iter()
-            .map(|record| record.canonical_id)
-            .collect()
-    })
-}
-
-fn parse_catalog_records(
-    provider: SubscriptionProvider,
-    body: &Value,
-    account: &str,
-    fetched_at: i64,
-    generation: &str,
-    offset: usize,
-) -> Result<Vec<CatalogRecord>, String> {
-    let (array_key, id_key) = match provider {
-        SubscriptionProvider::Claude | SubscriptionProvider::Qwen => ("data", "id"),
-        SubscriptionProvider::Codex => ("models", "slug"),
-        SubscriptionProvider::Gemini => ("models", "name"),
-    };
-    let models = body
-        .get(array_key)
-        .and_then(Value::as_array)
-        .ok_or_else(|| format!("response has no {array_key} array"))?
-        .iter()
-        .filter(|entry| {
-            provider != SubscriptionProvider::Gemini
-                || entry
-                    .get("supportedGenerationMethods")
-                    .and_then(Value::as_array)
-                    .is_none_or(|methods| methods.iter().any(|method| method == "generateContent"))
-        })
-        .filter_map(Value::as_object)
-        .filter_map(|raw| {
-            let id = raw.get(id_key).and_then(Value::as_str)?;
-            let canonical_id = id.strip_prefix("models/").unwrap_or(id).to_string();
-            (!canonical_id.is_empty()).then(|| (raw, canonical_id))
-        })
-        .enumerate()
-        .map(|(index, (raw, canonical_id))| CatalogRecord {
-            provider,
-            account: account.to_string(),
-            canonical_id,
-            raw: raw.clone(),
-            source_order: (offset + index) as u64,
-            fetched_at,
-            health_generation: generation.to_string(),
-            protocols: provider_protocols(provider),
-        })
-        .collect::<Vec<_>>();
-    if models.is_empty() {
-        Err("response contained no model identifiers".to_string())
-    } else {
-        Ok(models)
-    }
-}
-
-fn provider_protocols(
-    provider: SubscriptionProvider,
-) -> BTreeSet<crate::client_policy::ClientProtocol> {
-    use crate::client_policy::ClientProtocol;
-    let native = match provider {
-        SubscriptionProvider::Claude => ClientProtocol::AnthropicMessages,
-        SubscriptionProvider::Codex => ClientProtocol::OpenAIResponses,
-        SubscriptionProvider::Gemini => ClientProtocol::GeminiNative,
-        SubscriptionProvider::Qwen => ClientProtocol::OpenAIChat,
-    };
-    [ClientProtocol::Catalog, native].into_iter().collect()
-}
-
-fn next_catalog_cursor(
-    provider: SubscriptionProvider,
-    body: &Value,
-    page: &[CatalogRecord],
-) -> Result<Option<(String, String)>, String> {
-    if let Some(token) = body
-        .get("nextPageToken")
-        .or_else(|| body.get("next_page_token"))
-        .and_then(Value::as_str)
-        .filter(|token| !token.is_empty())
-    {
-        let key = if provider == SubscriptionProvider::Gemini {
-            "pageToken"
-        } else {
-            "page_token"
-        };
-        return Ok(Some((key.into(), token.into())));
-    }
-    if let Some(token) = body
-        .get("next_cursor")
-        .or_else(|| body.get("cursor"))
-        .or_else(|| body.get("next"))
-        .or_else(|| body.pointer("/pagination/next_cursor"))
-        .and_then(Value::as_str)
-        .filter(|token| !token.is_empty())
-    {
-        return Ok(Some(("cursor".into(), token.into())));
-    }
-    if !body
-        .get("has_more")
-        .and_then(Value::as_bool)
-        .unwrap_or(false)
-    {
-        return Ok(None);
-    }
-    let token = body
-        .get("last_id")
-        .and_then(Value::as_str)
-        .filter(|token| !token.is_empty())
-        .or_else(|| page.last().map(|record| record.canonical_id.as_str()))
-        .ok_or_else(|| format!("{provider} catalog says has_more without a cursor"))?;
-    let key = if provider == SubscriptionProvider::Claude {
-        "after_id"
-    } else {
-        "after"
-    };
-    Ok(Some((key.into(), token.into())))
 }
 
 #[cfg(test)]

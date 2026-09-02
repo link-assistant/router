@@ -610,5 +610,8 @@ mod cases_core;
 #[path = "router_e2e/cases_regressions.rs"]
 mod cases_regressions;
 
+#[path = "router_e2e/cases_server_tools.rs"]
+mod cases_server_tools;
+
 #[path = "router_e2e/chat_validation.rs"]
 mod chat_validation;
