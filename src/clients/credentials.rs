@@ -44,6 +44,9 @@ pub struct ManagedCredential {
     /// cannot do once the target is another deployment.
     #[serde(default)]
     pub router: Option<String>,
+    /// Non-secret subscriber identity carried by the signed client token.
+    #[serde(default)]
+    pub principal_id: Option<String>,
 }
 
 impl ManagedCredential {
@@ -113,6 +116,7 @@ mod tests {
             label: None,
             issued_at: None,
             router: None,
+            principal_id: Some("primary".into()),
         };
         assert!(minted.revocable_by_default());
         let supplied = ManagedCredential {
@@ -133,6 +137,7 @@ mod tests {
             label: Some("client-codex".into()),
             issued_at: Some(7),
             router: Some("http://router.test".into()),
+            principal_id: Some("primary".into()),
         };
         write(&path, &credential).expect("write metadata");
         let contents = fs::read_to_string(&path).expect("read metadata");

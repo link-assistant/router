@@ -149,6 +149,7 @@ async fn configure_one(
     // which means the command did half its job (issue #296).
     let credential = prepare_run_credential(
         server,
+        client,
         &format!("configure-{client}"),
         args.ttl_hours,
         false,
@@ -175,6 +176,7 @@ async fn configure_one(
         label: Some(format!("configure-{client}")),
         issued_at: Some(chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
+        principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
     };
     if !environment_only(client) {
         let models = crate::clients::usable_models(client, credential.models());

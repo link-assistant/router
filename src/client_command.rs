@@ -192,19 +192,24 @@ async fn setup(
         ));
     }
     let (token, credential) = match supplied_token {
-        Some(token) => (
-            token.to_string(),
-            ManagedCredential {
-                client: client.to_string(),
-                source: TokenSource::Supplied,
-                // Recorded only when this router can recognise the token, so
-                // `--revoke-supplied` has an id to act on.
-                token_id: local_token_id(config, token),
-                label: None,
-                issued_at: None,
-                router: Some(base_url.clone()),
-            },
-        ),
+        Some(token) => {
+            let (token_id, principal_id) = match local_token_binding(config, token, client) {
+                Ok(binding) => binding,
+                Err(error) => return failed(error),
+            };
+            (
+                token.to_string(),
+                ManagedCredential {
+                    client: client.to_string(),
+                    source: TokenSource::Supplied,
+                    token_id: Some(token_id),
+                    label: None,
+                    issued_at: None,
+                    router: Some(base_url.clone()),
+                    principal_id: Some(principal_id),
+                },
+            )
+        }
         None => match issue_client_token(config, client, ttl_hours) {
             Ok((token, id)) => (
                 token,
@@ -215,6 +220,9 @@ async fn setup(
                     label: Some(format!("client-{client}")),
                     issued_at: Some(chrono::Utc::now().timestamp()),
                     router: Some(base_url.clone()),
+                    principal_id: Some(
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                    ),
                 },
             ),
             Err(error) => return failed(error),
@@ -224,7 +232,7 @@ async fn setup(
         client,
         ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
     ) {
-        match manager.catalog(&base_url, &token).await {
+        match manager.catalog(client, &base_url, &token).await {
             // Filtered by the same rule `with` and `doctor` use, so a client
             // config cannot embed a model the launcher would refuse to start
             // it on (issue #301).
@@ -382,13 +390,31 @@ fn revoke_managed_credential(
     Ok(Some(id.to_string()))
 }
 
-/// Recognise a supplied token issued by this router and return its record id.
-fn local_token_id(config: &Config, token: &str) -> Option<String> {
-    token_manager(config)
-        .ok()?
-        .validate_token(token)
-        .ok()
-        .map(|claims| claims.sub)
+/// Validate that a supplied local token is bound to exactly this adapter.
+fn local_token_binding(
+    config: &Config,
+    token: &str,
+    client: ClientKind,
+) -> Result<(String, String), Box<dyn std::error::Error>> {
+    let claims = token_manager(config)?.validate_token(token)?;
+    let bound_client = claims
+        .client_kind
+        .as_deref()
+        .and_then(ClientKind::from_str_opt)
+        .ok_or("the supplied token has no managed-client binding")?;
+    if bound_client != client {
+        return Err(format!(
+            "the supplied token is bound to {}, not {}",
+            bound_client.display_name(),
+            client.display_name()
+        )
+        .into());
+    }
+    let principal = claims
+        .principal_id
+        .filter(|value| !value.is_empty())
+        .ok_or("the supplied token has no subscriber principal")?;
+    Ok((claims.sub, principal))
 }
 
 fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Error>> {

@@ -40,7 +40,7 @@ impl ClientManager {
                     "{token_env} is unset and no managed credential exists; run `clients setup {client}`"
                 ))
             })?;
-        let catalog = self.catalog(&base_url, &token).await?;
+        let catalog = self.catalog(client, &base_url, &token).await?;
         let model = doctor_model(client, &catalog)?;
         let (url, body) = probe_request(client, &base_url, model);
         let response = reqwest::Client::new()
