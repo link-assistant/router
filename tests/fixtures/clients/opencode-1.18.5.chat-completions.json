@@ -3,7 +3,7 @@
   "version": "1.18.5",
   "source": "issue #211, captured from a real opencode/1.18.5 run",
   "method": "POST",
-  "path": "/v1/chat/completions",
+  "path": "/api/services/openai/v1/chat/completions",
   "credential_carrier": "authorization",
   "expected_surface": "openai-chat",
   "headers": {

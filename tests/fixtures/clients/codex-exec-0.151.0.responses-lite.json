@@ -3,7 +3,7 @@
   "version": "0.151.0",
   "source": "issue #380 and the Codex 0.151 Responses Lite request builder",
   "method": "POST",
-  "path": "/api/codex/v1/responses",
+  "path": "/api/services/codex/v1/responses",
   "credential_carrier": "authorization",
   "expected_surface": "openai-responses",
   "headers": {

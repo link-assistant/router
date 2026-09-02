@@ -3,7 +3,7 @@
   "version": "0.7.1",
   "source": "issue #211, captured from a real QwenCode/0.7.1 run (OpenAI/JS 5.23.2 SDK, hence the x-stainless-* set)",
   "method": "POST",
-  "path": "/api/qwen/v1/chat/completions",
+  "path": "/api/services/qwen/v1/chat/completions",
   "credential_carrier": "authorization",
   "expected_surface": "openai-chat",
   "headers": {

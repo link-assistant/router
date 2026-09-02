@@ -19,7 +19,7 @@ actually sends — `x-goog-api-key` rather than `Authorization: Bearer`.
   "version": "0.51.0",
   "source":  "how this was captured",
   "method":  "POST",
-  "path":    "/api/gemini/v1beta/models/{model}:streamGenerateContent?alt=sse",
+  "path":    "/api/services/gemini/v1beta/models/{model}:streamGenerateContent?alt=sse",
   "credential_carrier": "x-goog-api-key",
   "headers": { "...": "vendor headers, credentials redacted" },
   "body":    { }
@@ -37,7 +37,8 @@ regenerate them when a client is upgraded:
 
 1. Run the router with request logging on (it is on by default) and drive the
    real client through it — `link-assistant-router with <client> "hi"` is
-   enough for a single turn.
+   enough for a single turn. Record the complete canonical Router path after
+   the configured `/api/services/<service>` base has been applied.
 2. Read the `client_request` record from
    `$DATA_DIR/requests/<token>/requests.jsonl`. Headers there are already
    redacted by `redacted_headers`.

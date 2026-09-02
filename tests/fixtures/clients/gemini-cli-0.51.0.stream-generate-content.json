@@ -3,7 +3,7 @@
   "version": "0.51.0",
   "source": "issue #211 (headers, streaming path) and issue #216 (the real generationConfig, which carries temperature and topP together)",
   "method": "POST",
-  "path": "/api/gemini/v1beta/models/{model}:streamGenerateContent?alt=sse",
+  "path": "/api/services/gemini/v1beta/models/{model}:streamGenerateContent?alt=sse",
   "credential_carrier": "x-goog-api-key",
   "expected_surface": "gemini",
   "headers": {
