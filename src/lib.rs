@@ -113,6 +113,8 @@ mod client_policy_tests;
 #[cfg(test)]
 mod proxy_tests;
 #[cfg(test)]
+mod token_admin_tests;
+#[cfg(test)]
 mod zai_coding_plan_tests;
 
 /// Package version (matches Cargo.toml version).

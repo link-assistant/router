@@ -261,6 +261,104 @@ fn a_bound_token_cannot_change_clients_with_request_headers() {
     );
 }
 
+#[test]
+fn invalid_canonical_principal_and_matrix_claims_fail_independently() {
+    let policy = SubscriptionEntitlementPolicy::default();
+    let mut claude_headers = HeaderMap::new();
+    claude_headers.insert("x-api-key", "redacted".parse().unwrap());
+    claude_headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
+
+    assert!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("claude-code"),
+            SubscriptionProvider::Claude,
+            ClientProtocol::AnthropicMessages,
+            "/v1/messages",
+            &claude_headers,
+        )
+        .is_err()
+    );
+    let mut no_principal = bound_claims("claude");
+    no_principal.principal_id = Some(" ".into());
+    assert!(
+        authorize_subscription(
+            &policy,
+            &no_principal,
+            SubscriptionProvider::Claude,
+            ClientProtocol::AnthropicMessages,
+            "/v1/messages",
+            &claude_headers,
+        )
+        .is_err()
+    );
+
+    let mut opencode_headers = HeaderMap::new();
+    opencode_headers.insert("authorization", "Bearer redacted".parse().unwrap());
+    opencode_headers.insert("user-agent", "opencode/fixture".parse().unwrap());
+    opencode_headers.insert("x-session-id", "fixture".parse().unwrap());
+    assert!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("opencode"),
+            SubscriptionProvider::Claude,
+            ClientProtocol::OpenAIChat,
+            "/v1/chat/completions",
+            &opencode_headers,
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn every_supported_evidence_variant_is_explicit() {
+    let mut gemini = HeaderMap::new();
+    gemini.insert("x-goog-api-key", "redacted".parse().unwrap());
+    gemini.insert(
+        "x-gemini-api-privileged-user-id",
+        "fixture".parse().unwrap(),
+    );
+    assert!(request_evidence(
+        ClientKind::GeminiCli,
+        ClientProtocol::GeminiNative,
+        "/api/gemini/v1beta/models/gemini:generateContent",
+        &gemini,
+    ));
+
+    let mut qwen = HeaderMap::new();
+    qwen.insert("authorization", "Bearer redacted".parse().unwrap());
+    qwen.insert("x-stainless-package-version", "1.0".parse().unwrap());
+    assert!(request_evidence(
+        ClientKind::QwenCode,
+        ClientProtocol::OpenAIChat,
+        "/api/qwen/v1/chat/completions",
+        &qwen,
+    ));
+    qwen.insert("x-link-assistant-client", "qwen".parse().unwrap());
+    assert!(request_evidence(
+        ClientKind::QwenCode,
+        ClientProtocol::Catalog,
+        "/api/qwen/v1/models",
+        &qwen,
+    ));
+
+    let mut grok = HeaderMap::new();
+    grok.insert("authorization", "Bearer redacted".parse().unwrap());
+    grok.insert("user-agent", "Grok CLI fixture".parse().unwrap());
+    assert!(request_evidence(
+        ClientKind::GrokCli,
+        ClientProtocol::OpenAIChat,
+        "/v1/chat/completions",
+        &grok,
+    ));
+    assert!(!request_evidence(
+        ClientKind::Cursor,
+        ClientProtocol::Catalog,
+        "/v1/models",
+        &HeaderMap::new(),
+    ));
+}
+
 #[tokio::test]
 async fn unbound_tokens_are_denied_before_an_anthropic_upstream_can_be_contacted() {
     let data = tempfile::tempdir().unwrap();

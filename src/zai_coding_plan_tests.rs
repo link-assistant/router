@@ -70,6 +70,135 @@ fn unsupported_client_acknowledgement_is_exact_and_revocable() {
 }
 
 #[test]
+fn invalid_policy_and_registry_configuration_fails_closed() {
+    assert!(ZaiCodingPlanPolicy::new("   ", true, &[]).is_err());
+    assert!(ZaiCodingPlanPolicy::new("owner", true, &["unknown".into()]).is_err());
+    assert!(ZaiCodingPlanPolicy::new("owner", true, &["claude".into()]).is_err());
+    assert!(ZaiCodingPlanPolicy::new("owner", true, &["gemini-cli".into()]).is_err());
+
+    for client in [ClientKind::Cursor, ClientKind::Agent] {
+        assert!(registry_for_client(client, &["glm-5"]).is_err());
+    }
+}
+
+fn resolved_zai_provider() -> crate::providers::ResolvedProvider {
+    crate::providers::ResolvedProvider {
+        name: "z-ai-personal".into(),
+        kind: crate::providers::ProviderKind::ZaiCodingPlan,
+        base_url: "http://127.0.0.1:9".into(),
+        default_model: Some("glm-5".into()),
+        models: vec!["glm-5".into()],
+        api_key: Some("zai-secret-key".into()),
+        subscriber_id: Some("owner-a".into()),
+        intermediary_risk_acknowledged: true,
+        unsupported_clients: Vec::new(),
+    }
+}
+
+fn claims(client: Option<&str>, principal: Option<&str>, scope: &str) -> crate::token::TokenClaims {
+    crate::token::TokenClaims {
+        sub: "token-id".into(),
+        iat: 1,
+        exp: i64::MAX,
+        label: "z.ai test".into(),
+        scope: scope.into(),
+        github_repos: Vec::new(),
+        client_kind: client.map(str::to_string),
+        principal_id: principal.map(str::to_string),
+    }
+}
+
+#[test]
+fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
+    let provider = resolved_zai_provider();
+    let mut inference_headers = HeaderMap::new();
+    inference_headers.insert("authorization", HeaderValue::from_static("Bearer redacted"));
+    inference_headers.insert("x-codex-turn-metadata", HeaderValue::from_static("fixture"));
+    let authorize = |claims: &crate::token::TokenClaims,
+                     headers: &HeaderMap,
+                     provider: &crate::providers::ResolvedProvider| {
+        crate::zai_coding_plan::authorize_model(
+            provider,
+            claims,
+            headers,
+            ClientProtocol::OpenAIResponses,
+            "/v1/responses",
+            "z.ai/glm-5",
+        )
+    };
+
+    assert!(
+        authorize(
+            &claims(Some("codex"), Some("owner-a"), "admin"),
+            &inference_headers,
+            &provider
+        )
+        .is_err()
+    );
+    assert!(
+        authorize(
+            &claims(None, Some("owner-a"), ""),
+            &inference_headers,
+            &provider
+        )
+        .is_err()
+    );
+    assert!(
+        authorize(
+            &claims(Some("unknown"), Some("owner-a"), ""),
+            &inference_headers,
+            &provider
+        )
+        .is_err()
+    );
+    assert!(
+        authorize(
+            &claims(Some("claude-code"), Some("owner-a"), ""),
+            &inference_headers,
+            &provider
+        )
+        .is_err()
+    );
+    assert!(
+        authorize(
+            &claims(Some("codex"), None, ""),
+            &inference_headers,
+            &provider
+        )
+        .is_err()
+    );
+    assert!(
+        authorize(
+            &claims(Some("codex"), Some("owner-a"), ""),
+            &HeaderMap::new(),
+            &provider
+        )
+        .is_err()
+    );
+
+    let mut ordinary = provider.clone();
+    ordinary.kind = crate::providers::ProviderKind::OpenAICompatible;
+    assert!(
+        authorize(
+            &claims(Some("codex"), Some("owner-a"), ""),
+            &inference_headers,
+            &ordinary
+        )
+        .is_err()
+    );
+
+    assert!(
+        crate::zai_coding_plan::authorize_catalog(
+            &provider,
+            &claims(Some("codex"), Some("owner-a"), ""),
+            &HeaderMap::new(),
+            "/api/codex/v1/models",
+        )
+        .is_err()
+    );
+}
+
+#[test]
 fn coding_plan_is_single_subscriber_only() {
     let policy = ZaiCodingPlanPolicy::new("subscriber-a", true, &[]).unwrap();
     let error = policy
@@ -323,6 +452,91 @@ async fn denied_principal_and_unacknowledged_client_make_zero_upstream_requests(
         assert!(requests.lock().unwrap().is_empty());
         handle.abort();
     }
+}
+
+#[tokio::test]
+async fn local_input_authentication_and_health_failures_are_stable() {
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
+    let headers = client_headers(&state, ClientKind::Codex, "owner-a");
+    let surface = crate::metrics::Surface::OpenAIResponses;
+
+    let unauthenticated = crate::zai_coding_plan::forward(
+        &state,
+        &HeaderMap::new(),
+        serde_json::json!({"model":"z.ai/glm-5","input":"hi"}),
+        "/v1/responses",
+        ClientProtocol::OpenAIResponses,
+        surface,
+    )
+    .await;
+    assert_eq!(unauthenticated.status(), StatusCode::UNAUTHORIZED);
+
+    let missing_model = crate::zai_coding_plan::forward(
+        &state,
+        &headers,
+        serde_json::json!({"input":"hi"}),
+        "/v1/responses",
+        ClientProtocol::OpenAIResponses,
+        surface,
+    )
+    .await;
+    assert_eq!(missing_model.status(), StatusCode::BAD_REQUEST);
+
+    let unavailable = crate::zai_coding_plan::forward(
+        &state,
+        &headers,
+        serde_json::json!({"model":"z.ai/glm-5","input":"hi"}),
+        "/v1/responses",
+        ClientProtocol::OpenAIResponses,
+        surface,
+    )
+    .await;
+    assert_eq!(unavailable.status(), StatusCode::SERVICE_UNAVAILABLE);
+
+    let unauthenticated_count = crate::zai_coding_plan::count_tokens(
+        &state,
+        &HeaderMap::new(),
+        "/v1/messages/count_tokens",
+        &serde_json::json!({"model":"claude-zai-glm-5"}),
+    );
+    assert_eq!(unauthenticated_count.status(), StatusCode::UNAUTHORIZED);
+
+    let claude_headers = client_headers(&state, ClientKind::ClaudeCode, "owner-a");
+    let missing_count_model = crate::zai_coding_plan::count_tokens(
+        &state,
+        &claude_headers,
+        "/v1/messages/count_tokens",
+        &serde_json::json!({"messages":[]}),
+    );
+    assert_eq!(missing_count_model.status(), StatusCode::BAD_REQUEST);
+    let unavailable_count = crate::zai_coding_plan::count_tokens(
+        &state,
+        &claude_headers,
+        "/v1/messages/count_tokens",
+        &serde_json::json!({"model":"claude-zai-glm-5","messages":[]}),
+    );
+    assert_eq!(unavailable_count.status(), StatusCode::SERVICE_UNAVAILABLE);
+
+    install_provider(&mut state, "http://127.0.0.1:9", &[]);
+    let unhealthy = crate::zai_coding_plan::forward(
+        &state,
+        &headers,
+        serde_json::json!({"model":"z.ai/glm-5","input":"hi"}),
+        "/v1/responses",
+        ClientProtocol::OpenAIResponses,
+        surface,
+    )
+    .await;
+    assert_eq!(unhealthy.status(), StatusCode::SERVICE_UNAVAILABLE);
+
+    let mut missing_key = resolved_zai_provider();
+    missing_key.api_key = None;
+    assert!(
+        crate::zai_coding_plan::credential_healthy(&state.client, &missing_key)
+            .await
+            .is_err()
+    );
 }
 
 #[tokio::test]
