@@ -33,7 +33,7 @@ async fn recorded_qwen_catalog() -> (String, Arc<Mutex<Vec<String>>>, tokio::tas
     let authorizations = Arc::new(Mutex::new(Vec::new()));
     let captured = Arc::clone(&authorizations);
     let app = Router::new().route(
-        "/compatible-mode/v1/models",
+        "/v1/models",
         get(move |headers: HeaderMap| {
             let captured = Arc::clone(&captured);
             async move {
@@ -160,7 +160,7 @@ async fn catalog_refresh_uses_an_in_memory_refreshed_token() {
         axum::Json(serde_json::json!({"data":[{"id":"qwen-live"}]}))
     }
 
-    let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+    let app = Router::new().route("/v1/models", get(handler));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
@@ -403,7 +403,7 @@ async fn expired_credential_is_still_probed_and_keeps_its_cached_catalog() {
         (axum::http::StatusCode::UNAUTHORIZED, "expired token")
     }
 
-    let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+    let app = Router::new().route("/v1/models", get(handler));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
@@ -447,7 +447,7 @@ async fn catalog_auth_rejection_is_recorded_as_credential_evidence() {
         (axum::http::StatusCode::UNAUTHORIZED, "revoked token")
     }
 
-    let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+    let app = Router::new().route("/v1/models", get(handler));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
@@ -490,7 +490,7 @@ async fn a_permission_refusal_does_not_reject_or_refresh_the_credential() {
         )
     }
 
-    let app = Router::new().route("/compatible-mode/v1/models", get(handler));
+    let app = Router::new().route("/v1/models", get(handler));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
