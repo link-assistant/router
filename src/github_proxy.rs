@@ -742,15 +742,14 @@ async fn forward(
 }
 
 fn normalize_path(path: &str) -> String {
+    if matches!(path, "/api/graphql" | "/api/services/github/api/graphql") {
+        return "/graphql".to_string();
+    }
     path.strip_prefix("/api/services/github/api/v3")
+        .or_else(|| path.strip_prefix("/api/v3"))
+        .or_else(|| path.strip_prefix("/github"))
         .filter(|path| !path.is_empty())
-        .unwrap_or({
-            if path == "/api/services/github/api/graphql" {
-                "/graphql"
-            } else {
-                path
-            }
-        })
+        .unwrap_or(path)
         .to_string()
 }
 
