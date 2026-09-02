@@ -389,6 +389,142 @@ fn qwen_import_rejects_non_vendor_catalog_origins() {
     }
 }
 
+/// Every non-Qwen provider uses the catalog origin owned by that provider,
+/// while a Qwen credential without an issued resource URL uses its documented
+/// `DashScope` default.
+#[test]
+fn catalog_validation_uses_only_provider_owned_defaults() {
+    let token = link_assistant_router::subscription::SubscriptionToken {
+        access_token: "redacted".into(),
+        refresh_token: Some("redacted".into()),
+        expires_at_ms: None,
+        account_id: None,
+        resource_url: None,
+    };
+
+    assert_eq!(
+        catalog_base_for_candidate(SubscriptionProvider::Gemini, &token).unwrap(),
+        "https://generativelanguage.googleapis.com"
+    );
+    assert_eq!(
+        catalog_base_for_candidate(SubscriptionProvider::Claude, &token).unwrap(),
+        SubscriptionProvider::Claude.default_base_url()
+    );
+    assert_eq!(
+        catalog_base_for_candidate(SubscriptionProvider::Qwen, &token).unwrap(),
+        SubscriptionProvider::Qwen.default_base_url()
+    );
+}
+
+/// Diagnostics for an advanced refresh chain must identify the transaction
+/// without retaining credential material in formatted output. Explicit
+/// retention must leave that transaction available for operator recovery.
+#[test]
+fn validated_candidate_diagnostics_are_redacted_and_retention_is_durable() {
+    let root = tempfile::tempdir().expect("staging root");
+    let stage = tempfile::Builder::new()
+        .prefix("transaction-")
+        .tempdir_in(root.path())
+        .expect("candidate transaction");
+    let retained_path = stage.path().to_path_buf();
+    std::fs::write(stage.path().join("credential"), "secret-document").expect("candidate bytes");
+    let candidate = ValidatedCandidate {
+        document: "secret-document".into(),
+        token: link_assistant_router::subscription::SubscriptionToken {
+            access_token: "secret-access".into(),
+            refresh_token: Some("secret-refresh".into()),
+            expires_at_ms: None,
+            account_id: None,
+            resource_url: None,
+        },
+        stage,
+        transaction_id: "visible-transaction-id".into(),
+    };
+
+    let diagnostic = format!("{candidate:?}");
+    assert!(
+        diagnostic.contains("visible-transaction-id"),
+        "{diagnostic}"
+    );
+    assert!(!diagnostic.contains("secret"), "{diagnostic}");
+
+    assert_eq!(candidate.retain(), "visible-transaction-id");
+    assert!(retained_path.join("credential").is_file());
+}
+
+/// The CLI spelling, report label, and subscription implementation must remain
+/// a total, explicit mapping. GitHub is intentionally the one non-subscription
+/// import target.
+#[test]
+fn every_import_target_has_the_expected_label_and_subscription() {
+    let cases = [
+        (
+            ImportProvider::Claude,
+            "claude",
+            Some(SubscriptionProvider::Claude),
+        ),
+        (
+            ImportProvider::Codex,
+            "codex",
+            Some(SubscriptionProvider::Codex),
+        ),
+        (
+            ImportProvider::Gemini,
+            "gemini",
+            Some(SubscriptionProvider::Gemini),
+        ),
+        (
+            ImportProvider::Qwen,
+            "qwen",
+            Some(SubscriptionProvider::Qwen),
+        ),
+        (ImportProvider::Gh, "github", None),
+    ];
+
+    for (target, label, subscription) in cases {
+        assert_eq!(provider_label(target), label);
+        assert_eq!(subscription_of(target), subscription);
+    }
+}
+
+/// GitHub import copies the exact credential from the explicitly named `gh`
+/// home into Router's durable credential store.
+#[test]
+fn github_import_adopts_the_named_login() {
+    let source = tempfile::tempdir().expect("gh config");
+    let data = tempfile::tempdir().expect("router data");
+    std::fs::write(
+        source.path().join("hosts.yml"),
+        "github.com:\n    oauth_token: gho_imported\n",
+    )
+    .expect("gh credential");
+
+    import_github(data.path(), source.path().to_str().unwrap()).expect("GitHub import");
+
+    assert_eq!(
+        link_assistant_router::github_proxy::stored_credential(data.path()).as_deref(),
+        Some("gho_imported")
+    );
+}
+
+/// A named `gh` home without a token fails closed and names the source rather
+/// than silently falling back to another machine credential.
+#[test]
+fn github_import_refuses_a_named_home_without_a_login() {
+    let source = tempfile::tempdir().expect("empty gh config");
+    let data = tempfile::tempdir().expect("router data");
+
+    let error = import_github(data.path(), source.path().to_str().unwrap())
+        .expect_err("an absent GitHub login must not import");
+
+    assert!(error.contains("no GitHub credential"), "{error}");
+    assert!(
+        error.contains(&source.path().display().to_string()),
+        "{error}"
+    );
+    assert!(link_assistant_router::github_proxy::stored_credential(data.path()).is_none());
+}
+
 /// Gemini's installed-app refresh grant requires the client secret shipped by
 /// Gemini CLI. Import must name that prerequisite before staging or contacting
 /// an OAuth endpoint.

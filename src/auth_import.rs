@@ -125,7 +125,7 @@ pub async fn run_import(
             ImportProvider::Gh if policy.if_absent => Err(String::from(
                 "--if-absent is supported only for Claude, Codex, Gemini, and Qwen; GitHub import keeps its existing replacement behavior",
             )),
-            ImportProvider::Gh => import_github(config, &source),
+            ImportProvider::Gh => import_github(&config.data_dir, &source),
             other => {
                 let Some(subscription) = subscription_of(other) else {
                     continue;
@@ -241,10 +241,7 @@ const fn provider_label(provider: ImportProvider) -> &'static str {
 ///
 /// Shares `run_gh`'s reader so the two spellings cannot drift, and reports in
 /// the same column format the subscription imports use.
-fn import_github(
-    config: &link_assistant_router::config::Config,
-    source: &str,
-) -> Result<(), String> {
+fn import_github(data_dir: &std::path::Path, source: &str) -> Result<(), String> {
     use link_assistant_router::github_proxy;
 
     let directory = Some(source)
@@ -260,7 +257,7 @@ fn import_github(
             directory.display()
         )
     })?;
-    let path = github_proxy::store_credential(std::path::Path::new(&config.data_dir), &token)?;
+    let path = github_proxy::store_credential(data_dir, &token)?;
     println!(
         "github   imported {} from {}",
         path.display(),

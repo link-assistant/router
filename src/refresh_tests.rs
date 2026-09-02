@@ -919,6 +919,35 @@ async fn the_public_refresh_wrapper_reports_a_missing_refresh_token() {
     ));
 }
 
+/// Import validation is deliberately stricter than ordinary serving refresh:
+/// even a currently live access token is refused when its durable chain has no
+/// next refresh link.
+#[tokio::test]
+async fn import_validation_requires_a_durable_refresh_link() {
+    let cache = TokenCache::new();
+    let without_refresh = token(None, Some(9_999_999_999_999));
+    let _store = register_test_store(
+        &cache,
+        SubscriptionProvider::Claude,
+        "import-candidate",
+        &without_refresh,
+    );
+
+    let error = cache
+        .validate_refresh_chain_registered_at(
+            &reqwest::Client::new(),
+            "http://127.0.0.1:1/token",
+            SubscriptionProvider::Claude,
+            "import-candidate",
+            10_000,
+        )
+        .await
+        .expect_err("a non-refreshable candidate must fail before network I/O");
+
+    assert!(error.contains("not refreshable"), "{error}");
+    assert!(!error.contains("127.0.0.1"), "{error}");
+}
+
 #[path = "refresh_reactive_tests.rs"]
 mod reactive;
 

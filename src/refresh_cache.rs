@@ -654,3 +654,33 @@ impl TokenCache {
         }
     }
 }
+
+#[cfg(test)]
+mod import_error_tests {
+    use super::*;
+
+    /// Safe-import failures describe the class of failure without echoing an
+    /// endpoint body or storage detail that may contain credential material.
+    #[test]
+    fn import_refresh_errors_are_complete_and_secret_free() {
+        let cases = [
+            super::super::RefreshError::NoRefreshToken,
+            super::super::RefreshError::Status(
+                400,
+                r#"{"error":"invalid_grant","secret":"must-not-leak"}"#.into(),
+                None,
+            ),
+            super::super::RefreshError::Status(503, "upstream body must-not-leak".into(), None),
+            super::super::RefreshError::Request("request detail must-not-leak".into()),
+            super::super::RefreshError::Parse("parse detail must-not-leak".into()),
+            super::super::RefreshError::Storage("storage detail must-not-leak".into()),
+            super::super::RefreshError::Unsupported,
+        ];
+
+        for error in cases {
+            let message = safe_import_refresh_error(SubscriptionProvider::Claude, &error);
+            assert!(message.contains("claude"), "{message}");
+            assert!(!message.contains("must-not-leak"), "{message}");
+        }
+    }
+}
