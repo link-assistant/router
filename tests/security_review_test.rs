@@ -17,13 +17,14 @@ use std::time::Duration;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use axum::routing::get;
 use http_body_util::BodyExt;
 use link_assistant_router::admin::AdminClaim;
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::chat_admin::{ChatAdmin, ChatAdminConfig, ChatChannel};
+use link_assistant_router::cli::Cli;
 use link_assistant_router::providers::ProviderStore;
 use link_assistant_router::token::TokenManager;
+use lino_arguments::Parser as _;
 use tower::ServiceExt;
 
 /// A claim that has to be won, with a generous candidate TTL.
@@ -74,27 +75,19 @@ fn state_with(admin: Arc<AdminClaim>, data_dir: &std::path::Path) -> AppState {
     }
 }
 
-/// The proxy-port routes `main` mounts when metrics are enabled — the ones this
-/// review had to re-examine, because that port is the network-facing one.
-fn proxy_router(state: AppState) -> axum::Router {
-    axum::Router::new()
-        .route(
-            "/metrics",
-            get(link_assistant_router::proxy::metrics_endpoint),
-        )
-        .route(
-            "/v1/usage",
-            get(link_assistant_router::proxy::usage_endpoint),
-        )
-        .route(
-            "/v1/accounts",
-            get(link_assistant_router::proxy::accounts_endpoint),
-        )
-        .route(
-            "/health/subscriptions",
-            get(link_assistant_router::subscription_health::subscription_health),
-        )
-        .with_state(state)
+/// The combined network listener with its real route-level authentication.
+fn proxy_router(state: AppState, data_dir: &std::path::Path) -> axum::Router {
+    let config = Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--data-dir",
+        data_dir.to_str().expect("UTF-8 data directory"),
+    ])
+    .expect("test CLI parses")
+    .into_config()
+    .expect("test config is valid");
+    link_assistant_router::server_router::router(state, &config)
 }
 
 fn get_request(path: &str, token: Option<&str>) -> Request<Body> {
@@ -146,7 +139,7 @@ async fn the_bootstrap_claim_can_be_won_only_once_across_channels() {
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/api/admin/bootstrap")
+                .uri("/api/management/admin/bootstrap")
                 .body(Body::empty())
                 .expect("request"),
         )
@@ -177,7 +170,7 @@ async fn a_client_token_is_refused_where_an_admin_credential_is_required() {
     assert_eq!(
         status_of(
             link_assistant_router::admin_api::router(state.clone()),
-            "/api/admin/summary",
+            "/api/management/admin/summary",
             Some(&client_token),
         )
         .await,
@@ -185,17 +178,23 @@ async fn a_client_token_is_refused_where_an_admin_credential_is_required() {
         "the admin port must not accept a client token"
     );
     assert_eq!(
-        status_of(proxy_router(state), "/v1/usage", Some(&client_token)).await,
+        status_of(
+            proxy_router(state, dir.path()),
+            "/api/management/usage",
+            Some(&client_token),
+        )
+        .await,
         StatusCode::UNAUTHORIZED,
         "the proxy port must not accept a client token for admin reads"
     );
 }
 
-/// `/v1/usage` names tokens and `/v1/accounts` names credential directories.
+/// `/api/management/usage` names tokens and `/api/management/accounts` names
+/// credential directories.
 /// Both are served on the port that faces the network, so both need the admin
-/// credential; `/metrics` stays open because it is aggregate-only.
+/// credential, as do metrics and subscription health in the management namespace.
 #[tokio::test]
-async fn the_disclosing_read_endpoints_require_admin_but_metrics_stays_scrapable() {
+async fn every_management_read_endpoint_requires_an_administrator() {
     let dir = tempfile::tempdir().expect("tempdir");
     let state = state_with(claim(dir.path()), dir.path());
     let admin_token = state
@@ -203,36 +202,32 @@ async fn the_disclosing_read_endpoints_require_admin_but_metrics_stays_scrapable
         .issue_admin_token(1, "ops")
         .expect("issue admin");
 
-    for path in ["/v1/usage", "/v1/accounts"] {
+    for path in [
+        "/api/management/usage",
+        "/api/management/accounts",
+        "/api/management/metrics",
+        "/api/management/health/subscriptions",
+    ] {
         assert_eq!(
-            status_of(proxy_router(state.clone()), path, None).await,
+            status_of(proxy_router(state.clone(), dir.path()), path, None).await,
             StatusCode::UNAUTHORIZED,
             "{path} must not answer an unauthenticated caller"
         );
         assert_eq!(
-            status_of(proxy_router(state.clone()), path, Some(&admin_token)).await,
+            status_of(
+                proxy_router(state.clone(), dir.path()),
+                path,
+                Some(&admin_token),
+            )
+            .await,
             StatusCode::OK,
             "{path} must still answer an administrator"
         );
     }
-    assert_eq!(
-        status_of(proxy_router(state.clone()), "/metrics", None).await,
-        StatusCode::OK,
-        "aggregate metrics stay scrapable without a credential"
-    );
-    // A monitor cannot hold a credential, which is the whole point of the
-    // endpoint (issue #318). It must therefore disclose no more than the
-    // vendor names it reports on.
-    assert_eq!(
-        status_of(proxy_router(state), "/health/subscriptions", None).await,
-        StatusCode::OK,
-        "subscription health stays reachable by a stock uptime check"
-    );
 }
 
-/// `/health/subscriptions` is unauthenticated, so what it says has to stay
-/// within what `/metrics` already discloses: vendor names and a verdict. It
-/// must never name an account, a credential path, or a token (issue #318).
+/// Subscription health must never name an account, a credential path, or a
+/// token even to an authenticated administrator (issue #318).
 #[tokio::test]
 async fn subscription_health_discloses_no_more_than_the_vendor_names() {
     let dir = tempfile::tempdir().expect("tempdir");
@@ -262,8 +257,15 @@ async fn subscription_health_discloses_no_more_than_the_vendor_names() {
     state.subscription_cache.record_credential_rejected(
         link_assistant_router::subscription::SubscriptionProvider::Qwen,
     );
-    let response = proxy_router(state)
-        .oneshot(get_request("/health/subscriptions", None))
+    let admin_token = state
+        .token_manager
+        .issue_admin_token(1, "ops")
+        .expect("issue admin token");
+    let response = proxy_router(state, dir.path())
+        .oneshot(get_request(
+            "/api/management/health/subscriptions",
+            Some(&admin_token),
+        ))
         .await
         .expect("health responds");
     assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
@@ -281,7 +283,7 @@ async fn subscription_health_discloses_no_more_than_the_vendor_names() {
     ] {
         assert!(
             !body.contains(secret),
-            "an unauthenticated health answer must not contain {secret}: {body}"
+            "a health answer must not contain {secret}: {body}"
         );
     }
     assert!(
@@ -302,8 +304,8 @@ async fn every_admin_response_is_hardened() {
     let dir = tempfile::tempdir().expect("tempdir");
     let state = state_with(claim(dir.path()), dir.path());
     for (path, token) in [
-        ("/api/admin/status", None),
-        ("/api/admin/summary", None),
+        ("/api/management/admin/status", None),
+        ("/api/management/admin/summary", None),
         ("/", None),
     ] {
         let response = link_assistant_router::admin_api::router(state.clone())
