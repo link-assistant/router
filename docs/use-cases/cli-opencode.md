@@ -65,12 +65,14 @@ the provider, and preserves user-added model entries on later runs.
 no config edit; `options.headers` can add custom headers if you front the router
 with a reverse proxy that requires them.
 
-## Which subscription answers
+## Which credential answers
 
-Any of them. The router's OpenAI surface is served by the active
-`UPSTREAM_PROVIDER`: translated to Anthropic for `anthropic`, forwarded natively
-for `codex`/`qwen`/`openai-compatible`, translated for `gemini`, and forwarded to
-Gonka or delivered as a Crater ForgeFed task for those upstreams.
+OpenCode cannot spend Claude, ChatGPT, Gemini, or Qwen consumer subscriptions by
+default. It may use ordinary API-key/Gonka/Crater providers under their own
+terms, or the separately policy-gated `z.ai-coding-plan` `z.ai/glm-*` catalog
+described in [zai-coding-plan.md](zai-coding-plan.md). The exact signed OpenCode
+binding, request evidence, principal, provider health, and model identity are
+all re-checked before upstream.
 
 ## Smoke test
 

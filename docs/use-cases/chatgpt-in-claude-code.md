@@ -3,6 +3,13 @@
 > **Goal** — drive **Claude Code** (or any other Anthropic-dialect client) with
 > a **ChatGPT/Codex**, Qwen, Gemini or generic OpenAI-compatible backend.
 
+> **Consumer subscription bridges are disabled by default.** ChatGPT OAuth is
+> native only to Codex. Claude Code → ChatGPT requires the exact
+> `claude:codex` risk acceptance and a Router-managed Claude token. Gemini and
+> Qwen consumer subscriptions remain denied until their terms are recorded.
+> Ordinary API-key providers, including LiteLLM, are a separate credential
+> class and do not use this consumer-subscription override.
+
 This is the second compatibility scenario named in
 [issue #45](https://github.com/link-assistant/router/issues/45): *"ChatGPT Pro
 usage inside Claude Code and so on (in any agentic CLI …)"*.
@@ -27,15 +34,15 @@ Claude Code ──POST /v1/messages (Bearer la_sk_…)──► router
    Anthropic Messages JSON or SSE ◄───────────────────┘
 ```
 
-The bridge is enabled automatically whenever the Anthropic surface is used with
-one of these upstreams:
+The protocol adapter remains available, but a consumer subscription is reached
+only after the signed client/provider entitlement check:
 
 | `UPSTREAM_PROVIDER` | Bridged? | Notes |
 | --- | --- | --- |
 | `anthropic` | no | native pass-through, nothing to translate |
-| `codex` (`chatgpt`, `openai-codex`) | **yes** | request is further converted to the Responses shape |
-| `qwen` (`qwen-code`, `dashscope`) | **yes** | Chat Completions upstream |
-| `gemini` (`google`, `code-assist`) | **yes** | Code Assist upstream |
+| `codex` (`chatgpt`, `openai-codex`) | opt-in | requires `--allow-subscription-bridge claude:codex` |
+| `qwen` (`qwen-code`, `dashscope`) | denied | terms row is pending; no override enables it |
+| `gemini` (`google`, `code-assist`) | denied | terms row is pending; no override enables it |
 | `openai-compatible` | **yes** | LiteLLM, vLLM, any `/v1/chat/completions` gateway |
 | `gonka`, `crater` | no | these keep the Anthropic-surface behaviour they already had |
 
@@ -58,7 +65,7 @@ closed instead of leaving a spent refresh token on disk.
 ```bash
 export TOKEN_SECRET=$(openssl rand -hex 32)
 export UPSTREAM_PROVIDER=codex
-router serve
+router serve --allow-subscription-bridge claude:codex
 ```
 
 Check the credential:
@@ -67,24 +74,26 @@ Check the credential:
 router doctor
 ```
 
-## 3. Issue a task token
+## 3. Launch with a Claude-bound token
 
 ```bash
-export TASK_TOKEN=$(
-  router tokens issue --label claude-code-on-chatgpt --ttl-hours 8 --max-requests 200
-)
+router with claude
 ```
 
-## 4. Point Claude Code at the router
+For permanent setup use `router clients setup claude` and source the printed
+environment file. Generic tokens from `router tokens issue`, admin tokens, and
+legacy unbound tokens cannot spend the ChatGPT subscription.
+
+## 4. Point Claude Code at the router manually
 
 ```bash
 export ANTHROPIC_BASE_URL=http://127.0.0.1:8080
-export ANTHROPIC_AUTH_TOKEN="$TASK_TOKEN"
+export ANTHROPIC_AUTH_TOKEN="$CLAUDE_BOUND_ROUTER_TOKEN"
 claude
 ```
 
-Claude Code now issues `POST /v1/messages` as usual; the answers come from the
-ChatGPT subscription.
+The placeholder above must be an already issued immutable Claude-bound token;
+changing User-Agent or a label cannot create that authority.
 
 ## 5. Choose the upstream model
 
@@ -177,7 +186,8 @@ an approximation for budgeting, not as a billing figure.
 - Anthropic-only beta features and vendor-specific fields are not emulated.
 - Token *estimates* replace exact `count_tokens` results (see above).
 - Cost and quota accounting are the upstream vendor's; the router only counts
-  requests.
+  requests. Cross-client use may violate provider account policy, is audited as
+  the exact override cell, and must never be exposed as shared capacity.
 - The reverse direction — a Claude MAX subscription inside an OpenAI-dialect
   client — is documented in
   [claude-max-in-codex.md](claude-max-in-codex.md).

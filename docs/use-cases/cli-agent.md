@@ -60,9 +60,10 @@ agent --model link-assistant/claude-sonnet-4-5-20250929 -p "ping"
 ```
 
 Agent already uses this OpenCode JSON provider shape for configurable local
-servers such as Formal AI. The router entry uses its OpenAI-compatible surface,
-so the active subscription can be Anthropic, Codex, Qwen, Gemini, or another
-configured upstream.
+servers such as Formal AI. It may use ordinary API-key/Gonka/Crater routes, but
+the generic Agent adapter can never spend consumer subscriptions or z.ai Coding
+Plan quota: it has no fixture-tested signed client identity that can enforce
+those provider boundaries.
 
 ## Diagnosis and removal
 

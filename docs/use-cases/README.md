@@ -18,8 +18,9 @@ come first; the per-CLI documents follow.
 | [per-task-tokens.md](per-task-tokens.md) | One `la_sk_…` token per task, for audit, monitoring, security and isolation |
 | [audit-and-monitoring.md](audit-and-monitoring.md) | Public aggregate metrics, admin-only per-token usage, and the JSONL audit log |
 | [with-router.md](with-router.md) | Temporary one-line client launcher, remote selection, managed Docker server, per-run credentials, and exact global undo |
-| [claude-max-in-codex.md](claude-max-in-codex.md) | Use a **Claude MAX** subscription from **Codex CLI** (and any other OpenAI-dialect client) |
-| [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) | Use a **ChatGPT/Codex** subscription from **Claude Code** (and any other Anthropic-dialect client) |
+| [claude-max-in-codex.md](claude-max-in-codex.md) | Historical Claude MAX → Codex bridge, disabled by default behind exact risk acceptance |
+| [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) | Historical cross-client adapters with deny-by-default subscription policy |
+| [zai-coding-plan.md](zai-coding-plan.md) | Experimental, subscriber-bound **z.ai GLM Coding Plan** routing for explicitly recognized tools |
 
 ## Per-CLI configuration
 
@@ -42,13 +43,16 @@ protocol details.
 
 ## The one rule that makes all of this work
 
-Every client above authenticates to the router with a **single opaque bearer
-token** read from an environment variable or config file. That is exactly the
-shape of a router `la_sk_…` token, so switching tasks, quotas or subscriptions
-never requires touching the client's code — only the value of one variable.
+Every managed client above authenticates with a short-lived `la_sk_…` token
+whose signed immutable claims identify the exact client adapter and subscriber
+principal. A generic/manual/admin/legacy token is deliberately not an inference
+superset and cannot spend consumer subscriptions.
 
-The vendor credential (Claude MAX OAuth, ChatGPT OAuth, Gemini, Qwen, or a
-provider API key) stays inside the router and is never sent to a client.
+The vendor credential stays inside Router. Consumer subscriptions are
+deny-by-default: Claude OAuth is native only to Claude Code and ChatGPT OAuth
+only to Codex. Every cross-client bridge requires one exact
+`--allow-subscription-bridge CLIENT:PROVIDER` risk acceptance; Gemini and Qwen
+subscription rows remain denied pending recorded terms.
 
 ## Which dialect goes where
 

@@ -82,11 +82,15 @@ that on an older router, either upgrade or send the token as
 | `POST /api/gemini/v1beta/models/{model}:streamGenerateContent` | SSE generation |
 | `POST /api/vertex/v1/projects/.../models/{model}:generateContent` | Vertex-style generation |
 
-These native namespaces work under the default `UPSTREAM_PROVIDER=auto`: they
-list the union of every connected subscription and route each model to its
-owning vendor, exactly like `/v1/models` and `/v1/chat/completions`. A Codex or
-Claude subscription therefore serves Gemini CLI without a Gemini credential;
-pinning `UPSTREAM_PROVIDER=gemini` narrows the namespace to Gemini models only.
+These native namespaces work under `UPSTREAM_PROVIDER=auto`, but the catalog is
+filtered by the signed Gemini client/principal policy. Gemini consumer OAuth is
+currently denied until Google's terms are recorded; Claude and ChatGPT
+consumer credentials are not exposed to Gemini CLI by default. Pinning a
+provider does not bypass this entitlement check.
+
+The experimental z.ai Coding Plan can reuse this translation only after its
+separate provider-level acknowledgement and exact `gemini` unsupported-tool
+acknowledgement. See [zai-coding-plan.md](zai-coding-plan.md).
 
 Three provider gaps are handled here explicitly:
 
@@ -137,10 +141,9 @@ curl -s "http://127.0.0.1:8080/api/gemini/v1beta/models/gemini-2.5-pro:generateC
 
 ## Using a Gemini subscription from other CLIs
 
-The router also serves
-`/v1/chat/completions`, `/v1/responses` and — via the bridge —
-`/v1/messages`, so Claude Code, Codex CLI and opencode can all run on a Gemini
-subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
+The translation remains implemented and tested, but consumer Gemini OAuth is
+denied for every client until the applicable terms and a reviewed native row
+are recorded. Protocol compatibility alone cannot enable it.
 
 ## Troubleshooting
 
@@ -151,6 +154,6 @@ subscription. See [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).
 | `401` on every request with a valid token | a router older than 0.87.0 did not accept `x-goog-api-key`; upgrade, or send `Authorization: Bearer` |
 | `401` mentioning `?key=` | the token was put in the URL; move it into a header |
 | `404` on a Gemini namespace | the route is disabled, or the model is not owned by any connected subscription |
-| Empty `models` list | no subscription is healthy; run `router doctor` |
+| Empty `models` list | no healthy credential is entitled to this signed client/principal; run `router doctor` |
 | `INVALID_ARGUMENT` about server-side tools | a forced tool choice offers only `web_search`; use `AUTO` or add a client function |
 | Answer ends early with `finishReason: "MAX_TOKENS"` | `generationConfig.maxOutputTokens` was reached; raise or drop the cap |

@@ -43,9 +43,11 @@ Codex subscription, whose backend cannot accept them.
 
 ## Which subscription answers
 
-Any active `UPSTREAM_PROVIDER`. Grok CLI speaks plain Chat Completions, which
-the router either translates to Anthropic Messages (`anthropic`), converts to
-Responses (`codex`), or forwards natively (`qwen`, `openai-compatible`, `gonka`).
+Grok CLI may use ordinary API-key/OpenAI-compatible or Gonka routes according
+to those providers' terms. It cannot spend Claude, ChatGPT, Gemini, or Qwen
+consumer subscriptions by protocol compatibility. Experimental z.ai Coding
+Plan requires its provider acknowledgement plus the exact second `grok`
+acknowledgement; see [zai-coding-plan.md](zai-coding-plan.md).
 
 ## Smoke test
 
@@ -62,4 +64,4 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | --- | --- |
 | Requests still hit `api.x.ai` | `GROK_BASE_URL` was not exported in the shell that launched `grok` |
 | `404` | the base URL must include the `/v1` suffix |
-| Model not recognised upstream | unknown OpenAI ids map to the default Sonnet tier on `UPSTREAM_PROVIDER=anthropic`; set an explicit `claude-…` id if you need a specific model |
+| `403 permission_error` | the signed Grok client is not entitled to that consumer/provider credential |
