@@ -13,15 +13,24 @@ use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::providers::ProviderStore;
 use link_assistant_router::refresh::TokenCache;
+use link_assistant_router::route_contract::ListenerKind;
 use link_assistant_router::token::TokenManager;
 use lino_arguments::Parser as _;
 use tower::ServiceExt as _;
 
 fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
-    test_app_with_mpp(dir, false)
+    test_app_for_listener(dir, false, ListenerKind::Combined)
 }
 
 fn test_app_with_mpp(dir: &std::path::Path, mpp: bool) -> (axum::Router, String) {
+    test_app_for_listener(dir, mpp, ListenerKind::Combined)
+}
+
+fn test_app_for_listener(
+    dir: &std::path::Path,
+    mpp: bool,
+    listener: ListenerKind,
+) -> (axum::Router, String) {
     let dir_arg = dir.to_str().expect("UTF-8 test path");
     let mut args = vec![
         "router",
@@ -94,7 +103,7 @@ fn test_app_with_mpp(dir: &std::path::Path, mpp: bool) -> (axum::Router, String)
         max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     };
     (
-        link_assistant_router::server_router::router(state, &config),
+        link_assistant_router::server_router::router_for_listener(state, &config, listener),
         token,
     )
 }
@@ -132,6 +141,88 @@ async fn unknown_paths_never_reach_the_oauth_upstream() {
     .await;
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn canonical_namespaces_replace_all_public_legacy_aliases() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let (app, token) = test_app(dir.path());
+
+    let health = response(app.clone(), Method::GET, "/api/health", None, "").await;
+    assert_eq!(health.status(), StatusCode::OK);
+
+    for (method, path) in [
+        (Method::POST, "/api/services/anthropic/v1/messages"),
+        (Method::POST, "/api/services/openai/v1/responses"),
+        (Method::GET, "/api/services/openai/v1/models"),
+        (Method::POST, "/api/management/tokens"),
+        (Method::GET, "/api/management/usage"),
+    ] {
+        let result = response(app.clone(), method, path, None, "{}").await;
+        assert_eq!(result.status(), StatusCode::UNAUTHORIZED, "{path}");
+    }
+
+    let legacy = [
+        (Method::GET, "/health"),
+        (Method::GET, "/health/subscriptions"),
+        (Method::POST, "/v1/messages"),
+        (Method::POST, "/v1/messages/count_tokens"),
+        (Method::POST, "/api/anthropic/v1/messages"),
+        (Method::POST, "/api/latest/anthropic/v1/messages"),
+        (Method::POST, "/v1/chat/completions"),
+        (Method::POST, "/v1/responses"),
+        (Method::GET, "/v1/models"),
+        (Method::POST, "/api/openai/v1/responses"),
+        (Method::POST, "/api/codex/v1/responses"),
+        (Method::POST, "/api/qwen/v1/responses"),
+        (Method::GET, "/api/gemini/v1beta/models"),
+        (Method::POST, "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict"),
+        (Method::POST, "/invoke"),
+        (Method::POST, "/invoke-with-response-stream"),
+        (Method::GET, "/api/tokens/list"),
+        (Method::POST, "/api/tokens"),
+        (Method::GET, "/api/providers"),
+        (Method::POST, "/api/login"),
+        (Method::GET, "/v1/usage"),
+        (Method::GET, "/metrics"),
+        (Method::GET, "/actor/code"),
+        (Method::GET, "/api/v3/user"),
+        (Method::POST, "/api/graphql"),
+        (Method::POST, "/git/acme/repo.git/git-upload-pack"),
+    ];
+    for (method, path) in legacy {
+        for credential in [None, Some(token.as_str()), Some("network-audit-admin")] {
+            let result = response(app.clone(), method.clone(), path, credential, "{}").await;
+            assert_eq!(result.status(), StatusCode::NOT_FOUND, "{method} {path}");
+        }
+    }
+}
+
+#[tokio::test]
+async fn inference_only_listener_has_no_management_or_private_service_routes() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let (app, _) = test_app_for_listener(dir.path(), false, ListenerKind::InferenceOnly);
+
+    for (method, path) in [
+        (Method::POST, "/api/management/tokens"),
+        (Method::GET, "/api/management/usage"),
+        (Method::GET, "/api/services/github/api/v3/user"),
+        (Method::POST, "/api/services/github/git/acme/repo.git/git-upload-pack"),
+        (Method::GET, "/api/services/activitypub/actor/code"),
+    ] {
+        let result = response(app.clone(), method, path, None, "{}").await;
+        assert_eq!(result.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+
+    let inference = response(
+        app,
+        Method::POST,
+        "/api/services/anthropic/v1/messages",
+        None,
+        "{}",
+    )
+    .await;
+    assert_eq!(inference.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[tokio::test]
