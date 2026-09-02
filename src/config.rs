@@ -42,6 +42,8 @@ pub enum UpstreamProvider {
     Qwen,
     /// Generic OpenAI-compatible inference provider, including `LiteLLM` proxy.
     OpenAICompatible,
+    /// Policy-gated personal z.ai GLM Coding Plan credential.
+    ZaiCodingPlan,
 }
 
 impl UpstreamProvider {
@@ -59,6 +61,7 @@ impl UpstreamProvider {
             "openai" | "openai-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
+            "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
             _ => None,
         }
     }
@@ -73,7 +76,11 @@ impl UpstreamProvider {
             Self::Codex => Some(S::Codex),
             Self::Gemini => Some(S::Gemini),
             Self::Qwen => Some(S::Qwen),
-            Self::Auto | Self::Gonka | Self::Crater | Self::OpenAICompatible => None,
+            Self::Auto
+            | Self::Gonka
+            | Self::Crater
+            | Self::OpenAICompatible
+            | Self::ZaiCodingPlan => None,
         }
     }
 
@@ -89,6 +96,7 @@ impl UpstreamProvider {
             Self::Gemini => "gemini",
             Self::Qwen => "qwen",
             Self::OpenAICompatible => "openai-compatible",
+            Self::ZaiCodingPlan => "z.ai-coding-plan",
         }
     }
 }

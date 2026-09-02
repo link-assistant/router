@@ -212,6 +212,24 @@ pub fn record_authorised_request(
             event.subscription_override = Some(format!("{client}:{provider}"));
         }
     }
+    if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan
+        && let Some(client) = claims
+            .client_kind
+            .as_deref()
+            .and_then(crate::clients::ClientKind::from_str_opt)
+        && crate::zai_coding_plan::resolve(state).is_ok_and(|provider| {
+            provider.is_some_and(|provider| {
+                crate::zai_coding_plan::ZaiCodingPlanPolicy::new(
+                    provider.subscriber_id.as_deref().unwrap_or_default(),
+                    provider.intermediary_risk_acknowledged,
+                    &provider.unsupported_clients,
+                )
+                .is_ok_and(|policy| policy.is_unsupported_override(client))
+            })
+        })
+    {
+        event.subscription_override = Some(format!("{client}:z.ai-coding-plan"));
+    }
     state.audit.record(&event);
 }
 

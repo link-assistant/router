@@ -15,7 +15,7 @@ use toml_edit::{DocumentMut, Item, Table, value};
 
 mod catalog;
 pub mod credentials;
-mod doctor;
+pub(crate) mod doctor;
 mod files;
 mod json_config;
 
@@ -47,6 +47,8 @@ pub const ANTHROPIC_MODEL_OWNER: &str = "anthropic";
 pub const GOOGLE_MODEL_OWNER: &str = "google";
 /// Catalog owner the server labels a Qwen subscription with.
 pub const QWEN_MODEL_OWNER: &str = "qwen";
+/// Catalog owner for personal z.ai Coding Plan models.
+pub const ZAI_MODEL_OWNER: &str = "z.ai";
 pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
 /// Output budget for the `clients doctor` reachability probe.
 ///
@@ -159,7 +161,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        model_owners: &[OPENAI_MODEL_OWNER],
+        model_owners: &[OPENAI_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
@@ -177,7 +179,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
         endpoint_suffix: "",
-        model_owners: &[ANTHROPIC_MODEL_OWNER],
+        model_owners: &[ANTHROPIC_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
         model_arg: Some("--model"),
@@ -692,7 +694,7 @@ impl ClientManager {
         let base_url = normalize_base_url(base_url)?;
         match client {
             ClientKind::Codex => self.setup_codex(&base_url),
-            ClientKind::ClaudeCode => self.setup_claude(&base_url),
+            ClientKind::ClaudeCode => self.setup_claude(&base_url, models),
             ClientKind::Opencode | ClientKind::Agent => {
                 self.setup_json_provider(client, &base_url, models)
             }
@@ -755,6 +757,13 @@ impl ClientManager {
         }
         writeln!(&mut contents, "export {token_env}={}", shell_quote(token))
             .expect("writing to a String cannot fail");
+        if client == ClientKind::ClaudeCode {
+            writeln!(
+                &mut contents,
+                "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
+            )
+            .expect("writing to a String cannot fail");
+        }
         atomic_write(&path, contents.as_bytes())?;
         #[cfg(unix)]
         {
@@ -807,7 +816,11 @@ impl ClientManager {
         Ok(result)
     }
 
-    fn setup_claude(&self, base_url: &str) -> Result<SetupResult, ClientError> {
+    fn setup_claude(
+        &self,
+        base_url: &str,
+        models: &[RouterModel],
+    ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::ClaudeCode);
         let source = read_or_empty(&path)?;
         let mut document: Value = if source.trim().is_empty() {
@@ -838,6 +851,20 @@ impl ClientManager {
             );
         }
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
+        env.insert(
+            "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY".into(),
+            Value::String("1".into()),
+        );
+        if let Some(model) = select_model(ClientKind::ClaudeCode, models) {
+            for key in [
+                "ANTHROPIC_MODEL",
+                "ANTHROPIC_DEFAULT_OPUS_MODEL",
+                "ANTHROPIC_DEFAULT_SONNET_MODEL",
+                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            ] {
+                env.insert(key.into(), Value::String(model.into()));
+            }
+        }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
         let marker_path = self.claude_home.join(OWNERSHIP_MARKER);

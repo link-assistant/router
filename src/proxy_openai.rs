@@ -164,6 +164,17 @@ async fn openai_chat_completions_with_subscription(
         return crate::crater::forward_chat_completions(&state, &headers, body, stream_requested)
             .await;
     }
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        return crate::zai_coding_plan::forward(
+            &state,
+            &headers,
+            body,
+            "/v1/chat/completions",
+            crate::client_policy::ClientProtocol::OpenAIChat,
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
+    }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
         return crate::provider_proxy::forward_openai_compatible(
             &state,
@@ -337,6 +348,17 @@ pub async fn openai_responses(
             &headers,
             body,
             "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        return crate::zai_coding_plan::forward(
+            &state,
+            &headers,
+            body,
+            "/v1/responses",
+            crate::client_policy::ClientProtocol::OpenAIResponses,
             crate::metrics::Surface::OpenAIResponses,
         )
         .await;

@@ -179,6 +179,15 @@ pub enum ProviderOp {
         /// request time, instead of storing one.
         #[arg(long)]
         api_key_env: Option<String>,
+        /// Single subscriber allowed to spend a personal Coding Plan key.
+        #[arg(long)]
+        subscriber_id: Option<String>,
+        /// Accept the documented account risk of intermediary personal proxying.
+        #[arg(long)]
+        acknowledge_intermediary_risk: bool,
+        /// Individually risk-accept a known tool not listed by z.ai.
+        #[arg(long, value_delimiter = ',')]
+        acknowledge_unsupported_client: Vec<String>,
         /// Whether this provider takes part in routing. Disabled records are
         /// kept and ignored, so one can be parked without deleting it.
         #[arg(

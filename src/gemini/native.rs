@@ -14,16 +14,13 @@ use super::{AppState, code_assist_envelope, route_gemini_token};
 use crate::metrics::Surface;
 use crate::proxy::{error_response, retry_after_duration};
 
-fn native_model_document(
-    model: &str,
-    provider: crate::subscription::SubscriptionProvider,
-) -> Value {
+fn native_model_document(model: &str, owner: &str) -> Value {
     let model = model.trim_start_matches("models/");
     json!({
         "name": format!("models/{model}"),
         "displayName": model,
         "description": format!(
-            "{provider} subscription model routed by Link.Assistant.Router over the native Gemini \
+            "{owner} model routed by Link.Assistant.Router over the native Gemini \
              namespace"
         ),
         "inputTokenLimit": 1_048_576,
@@ -115,10 +112,24 @@ pub async fn native_models(
     {
         return response;
     }
-    let models = advertised
+    let mut models = advertised
         .into_iter()
-        .map(|(provider, model)| native_model_document(&model, provider))
+        .map(|(provider, model)| native_model_document(&model, provider.as_str()))
         .collect::<Vec<_>>();
+    if let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
+        && let Ok((client, registry, _)) =
+            crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
+        && client == crate::clients::ClientKind::GeminiCli
+        && crate::zai_coding_plan::credential_healthy(&state.client, &provider)
+            .await
+            .is_ok()
+    {
+        models.extend(
+            registry
+                .into_iter()
+                .map(|entry| native_model_document(&entry.exposed_id, entry.owner)),
+        );
+    }
     (StatusCode::OK, axum::Json(json!({"models": models}))).into_response()
 }
 
@@ -150,6 +161,22 @@ pub async fn native_model(
                 .is_ok())
             .then_some(owner)
         });
+    if owner.is_none()
+        && let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
+        && let Ok((client, registry, _)) =
+            crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
+        && client == crate::clients::ClientKind::GeminiCli
+        && registry.iter().any(|entry| entry.exposed_id == model)
+        && crate::zai_coding_plan::credential_healthy(&state.client, &provider)
+            .await
+            .is_ok()
+    {
+        return (
+            StatusCode::OK,
+            axum::Json(native_model_document(&model, "z.ai")),
+        )
+            .into_response();
+    }
     owner
         .map_or_else(
             || {
@@ -164,7 +191,7 @@ pub async fn native_model(
             |owner| {
                 (
                     StatusCode::OK,
-                    axum::Json(native_model_document(&model, owner)),
+                    axum::Json(native_model_document(&model, owner.as_str())),
                 )
             },
         )
@@ -253,7 +280,12 @@ async fn native_owner(
     model: &str,
 ) -> Result<crate::model_routing::RoutedState, Response> {
     let routed = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
-        crate::model_routing::route_subscription_model(state, model).await
+        crate::model_routing::route_state_with_subscription(state, &json!({"model": model})).await
+    } else if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
+        Ok(crate::model_routing::RoutedState {
+            state: state.clone(),
+            subscription: None,
+        })
     } else {
         let provider = state
             .upstream_provider
@@ -295,19 +327,21 @@ async fn forward_native(
         Err(response) => return response,
     };
     let full_path = format!("/api/gemini/{path}");
-    let owner = routed
-        .state
-        .upstream_provider
-        .subscription_provider()
-        .expect("native routing always selects a subscription provider");
-    if let Err(response) = crate::client_policy::enforce_subscription(
-        &routed.state,
-        headers,
-        owner,
-        crate::client_policy::ClientProtocol::GeminiNative,
-        &full_path,
-    ) {
-        return response;
+    if let Some(owner) = routed.state.upstream_provider.subscription_provider() {
+        if let Err(response) = crate::client_policy::enforce_subscription(
+            &routed.state,
+            headers,
+            owner,
+            crate::client_policy::ClientProtocol::GeminiNative,
+            &full_path,
+        ) {
+            return response;
+        }
+    } else if routed.state.upstream_provider != crate::config::UpstreamProvider::ZaiCodingPlan {
+        return native_error(
+            StatusCode::BAD_REQUEST,
+            "selected provider has no Gemini adapter",
+        );
     }
     forward_native_authorized_after_route(routed, headers, path, model, streaming, body).await
 }
@@ -340,6 +374,9 @@ async fn forward_native_authorized_after_route(
     streaming: bool,
     body: Value,
 ) -> Response {
+    if routed.state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
+        return forward_native_via_zai(routed.state, headers, path, &model, streaming, &body).await;
+    }
     let owner = routed
         .state
         .upstream_provider
@@ -489,6 +526,28 @@ async fn forward_native_authorized_after_route(
     (StatusCode::OK, axum::Json(native)).into_response()
 }
 
+async fn forward_native_via_zai(
+    state: AppState,
+    headers: &HeaderMap,
+    path: &str,
+    model: &str,
+    streaming: bool,
+    body: &Value,
+) -> Response {
+    let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
+    let full_path = format!("/api/gemini/{path}");
+    let response = crate::zai_coding_plan::forward(
+        &state,
+        headers,
+        chat_request,
+        &full_path,
+        crate::client_policy::ClientProtocol::GeminiNative,
+        Surface::OpenAIChat,
+    )
+    .await;
+    translated_chat_response(response, &state, model, streaming).await
+}
+
 /// Serve a native Gemini request from a non-Gemini subscription.
 ///
 /// The Gemini body is translated into an `OpenAI` Chat Completions request and
@@ -513,6 +572,15 @@ async fn forward_native_via_chat(
     )
     .await;
 
+    translated_chat_response(response, &state, model, streaming).await
+}
+
+async fn translated_chat_response(
+    response: Response,
+    state: &AppState,
+    model: &str,
+    streaming: bool,
+) -> Response {
     let status = response.status();
     let bytes =
         match axum::body::to_bytes(response.into_body(), state.max_proxy_request_bytes).await {

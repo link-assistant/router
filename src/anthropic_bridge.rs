@@ -42,6 +42,7 @@ pub const fn is_bridged(provider: UpstreamProvider) -> bool {
             | UpstreamProvider::Qwen
             | UpstreamProvider::Gemini
             | UpstreamProvider::OpenAICompatible
+            | UpstreamProvider::ZaiCodingPlan
     )
 }
 
@@ -648,6 +649,20 @@ pub(crate) async fn handle_anthropic_surface_routed(
     body: Value,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        if path.ends_with("/count_tokens") {
+            return crate::zai_coding_plan::count_tokens(state, headers, path, &body);
+        }
+        return crate::zai_coding_plan::forward(
+            state,
+            headers,
+            body,
+            path,
+            crate::client_policy::ClientProtocol::AnthropicMessages,
+            Surface::Anthropic,
+        )
+        .await;
+    }
     if path.ends_with("/count_tokens") {
         // Answered locally, so no delegate forwarder validates the token for
         // us. Do it here: an expired or revoked token must not get an estimate

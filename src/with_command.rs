@@ -46,6 +46,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             .unwrap_or("client integration is unsupported")
             .into());
     }
+    if args.client == ClientKind::ClaudeCode {
+        crate::clients::doctor::require_claude_gateway_version()?;
+    }
     let explicit_token = if args.token_stdin {
         Some(crate::server_command::read_token()?)
     } else {

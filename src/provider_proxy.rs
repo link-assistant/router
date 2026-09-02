@@ -129,9 +129,23 @@ pub async fn delete_provider(
 pub async fn forward_openai_compatible(
     state: &AppState,
     headers: &HeaderMap,
-    mut body: serde_json::Value,
+    body: serde_json::Value,
     path: &str,
     surface: Surface,
+) -> Response {
+    forward_provider_at(state, headers, body, path, path, surface, false).await
+}
+
+/// Forward through the selected stored provider while keeping the caller path
+/// distinct from a provider's fixed native endpoint.
+pub(crate) async fn forward_provider_at(
+    state: &AppState,
+    headers: &HeaderMap,
+    mut body: serde_json::Value,
+    path: &str,
+    upstream_path: &str,
+    surface: Surface,
+    copy_anthropic_headers: bool,
 ) -> Response {
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
@@ -190,7 +204,7 @@ pub async fn forward_openai_compatible(
     };
     let bytes_sent = serialized.len() as u64;
 
-    let upstream_url = join_openai_compatible_url(&provider.base_url, path);
+    let upstream_url = join_openai_compatible_url(&provider.base_url, upstream_path);
     let mut upstream_req = state
         .client
         .post(upstream_url)
@@ -198,6 +212,13 @@ pub async fn forward_openai_compatible(
         .body(serialized);
     if let Some(api_key) = provider.api_key.as_deref() {
         upstream_req = upstream_req.header("authorization", format!("Bearer {api_key}"));
+    }
+    if copy_anthropic_headers {
+        for name in ["anthropic-version", "anthropic-beta"] {
+            if let Some(value) = headers.get(name) {
+                upstream_req = upstream_req.header(name, value);
+            }
+        }
     }
 
     let correlation_id = crate::request_log::correlation_id(headers);

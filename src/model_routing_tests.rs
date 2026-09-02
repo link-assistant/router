@@ -11,7 +11,7 @@ use std::sync::Arc;
 use tempfile::tempdir;
 use tower::ServiceExt;
 
-pub(super) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
+pub(crate) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
     AppState {
         client: reqwest::Client::new(),
         token_manager: crate::token::TokenManager::new("test-secret"),
@@ -53,7 +53,7 @@ pub(super) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path:
     }
 }
 
-pub(super) fn bound_client_token(
+pub(crate) fn bound_client_token(
     state: &AppState,
     client: crate::clients::ClientKind,
     account: Option<&str>,
@@ -815,6 +815,9 @@ fn store_provider(state: &AppState, name: &str, models: &[&str]) {
             api_key_env: None,
             encrypted_api_key: None,
             enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
         })
         .expect("store the provider");
 }
@@ -913,6 +916,9 @@ async fn a_disabled_provider_advertises_nothing() {
             api_key_env: None,
             encrypted_api_key: None,
             enabled: Some(false),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
         })
         .expect("disable the provider");
 

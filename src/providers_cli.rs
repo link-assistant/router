@@ -32,11 +32,38 @@ pub async fn run_remote(
     server: &crate::managed_server::ResolvedServer,
     op: &ProviderOp,
 ) -> ExitCode {
+    warn_zai_policy(op);
     match remote_result(server, op).await {
         Ok(code) => code,
         Err(error) => {
             eprintln!("error: {error}");
             ExitCode::from(1)
+        }
+    }
+}
+
+fn warn_zai_policy(op: &ProviderOp) {
+    if let ProviderOp::Add {
+        kind,
+        enabled,
+        acknowledge_intermediary_risk,
+        acknowledge_unsupported_client,
+        ..
+    } = op
+        && crate::providers::ProviderKind::from_str_opt(kind)
+            == Some(crate::providers::ProviderKind::ZaiCodingPlan)
+        && *enabled
+    {
+        eprintln!(
+            "WARNING: z.ai Coding Plan is a personal subscription. Intermediary proxying is not explicitly approved; policy violations may restrict or ban the subscriber account."
+        );
+        if *acknowledge_intermediary_risk {
+            eprintln!("risk accepted: intermediary z.ai Coding Plan proxying");
+        }
+        for client in acknowledge_unsupported_client {
+            eprintln!(
+                "WARNING: unsupported z.ai tool risk accepted only for client '{client}'; this may cause account restrictions or a ban"
+            );
         }
     }
 }
@@ -90,6 +117,9 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
             api_key,
             api_key_stdin,
             api_key_env,
+            subscriber_id,
+            acknowledge_intermediary_risk,
+            acknowledge_unsupported_client,
             enabled,
             ..
         } => Some(Call {
@@ -106,6 +136,9 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
                 api_key_env: api_key_env.clone(),
                 encrypted_api_key: None,
                 enabled: Some(*enabled),
+                subscriber_id: subscriber_id.clone(),
+                acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
+                acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
             })?),
         }),
         ProviderOp::Import { .. } => None,
@@ -266,6 +299,7 @@ fn print_remote_table(records: &[serde_json::Value]) {
 /// a whole configuration around them.
 #[must_use]
 pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
+    warn_zai_policy(op);
     match op {
         ProviderOp::List { json, .. } => match store.list_redacted() {
             Ok(records) if *json => {
@@ -306,6 +340,9 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
             api_key,
             api_key_stdin,
             api_key_env,
+            subscriber_id,
+            acknowledge_intermediary_risk,
+            acknowledge_unsupported_client,
             enabled,
             ..
         } => {
@@ -326,6 +363,9 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 api_key_env: api_key_env.clone(),
                 encrypted_api_key: None,
                 enabled: Some(*enabled),
+                subscriber_id: subscriber_id.clone(),
+                acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
+                acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
             };
             match store.upsert(input) {
                 Ok(record) => {

@@ -24,6 +24,8 @@ pub enum ProviderKind {
     /// Generic OpenAI-compatible upstream such as `LiteLLM`.
     #[default]
     OpenAICompatible,
+    /// Personal z.ai GLM Coding Plan with client/subscriber policy gates.
+    ZaiCodingPlan,
 }
 
 impl ProviderKind {
@@ -34,6 +36,7 @@ impl ProviderKind {
             "openai" | "openai-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
+            "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
             _ => None,
         }
     }
@@ -43,6 +46,7 @@ impl ProviderKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::OpenAICompatible => "openai-compatible",
+            Self::ZaiCodingPlan => "z.ai-coding-plan",
         }
     }
 }
@@ -72,6 +76,15 @@ pub struct ProviderRecord {
     /// Whether this provider is available for routing.
     #[serde(default = "default_enabled")]
     pub enabled: bool,
+    /// Subscriber allowed to spend this personal Coding Plan credential.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subscriber_id: Option<String>,
+    /// Explicit acknowledgement that z.ai has not documented intermediary use.
+    #[serde(default)]
+    pub intermediary_risk_acknowledged: bool,
+    /// Exact unsupported tools separately accepted by the operator.
+    #[serde(default)]
+    pub unsupported_clients: Vec<String>,
 }
 
 const fn default_enabled() -> bool {
@@ -91,6 +104,9 @@ impl ProviderRecord {
             api_key_env: self.api_key_env.clone(),
             has_encrypted_api_key: self.encrypted_api_key.is_some(),
             enabled: self.enabled,
+            subscriber_id: self.subscriber_id.clone(),
+            intermediary_risk_acknowledged: self.intermediary_risk_acknowledged,
+            unsupported_clients: self.unsupported_clients.clone(),
         }
     }
 }
@@ -108,6 +124,10 @@ pub struct RedactedProviderRecord {
     pub api_key_env: Option<String>,
     pub has_encrypted_api_key: bool,
     pub enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscriber_id: Option<String>,
+    pub intermediary_risk_acknowledged: bool,
+    pub unsupported_clients: Vec<String>,
 }
 
 /// API / CLI input for creating or replacing a provider.
@@ -133,16 +153,26 @@ pub struct ProviderUpsert {
     pub encrypted_api_key: Option<String>,
     #[serde(default)]
     pub enabled: Option<bool>,
+    #[serde(default)]
+    pub subscriber_id: Option<String>,
+    #[serde(default)]
+    pub acknowledge_intermediary_risk: Option<bool>,
+    #[serde(default)]
+    pub acknowledge_unsupported_clients: Option<Vec<String>>,
 }
 
 /// OpenAI-compatible provider resolved for runtime forwarding.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedProvider {
     pub name: String,
+    pub kind: ProviderKind,
     pub base_url: String,
     pub default_model: Option<String>,
     pub models: Vec<String>,
     pub api_key: Option<String>,
+    pub subscriber_id: Option<String>,
+    pub intermediary_risk_acknowledged: bool,
+    pub unsupported_clients: Vec<String>,
 }
 
 impl ResolvedProvider {
@@ -242,6 +272,18 @@ impl ProviderStore {
     /// Add or replace a provider, encrypting any inline API key.
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let record = self.build_record(input)?;
+        if record.enabled
+            && record.kind == ProviderKind::ZaiCodingPlan
+            && self.list()?.into_iter().any(|existing| {
+                existing.enabled
+                    && existing.kind == ProviderKind::ZaiCodingPlan
+                    && existing.name != record.name
+            })
+        {
+            return Err(ProviderError::Invalid(
+                "only one personal z.ai Coding Plan subscriber may be enabled".into(),
+            ));
+        }
         self.mutate(|records| {
             records.insert(record.name.clone(), record.clone());
         })?;
@@ -287,20 +329,24 @@ impl ProviderStore {
             .transpose()?;
         Ok(Some(ResolvedProvider {
             name: record.name,
+            kind: record.kind,
             base_url: record.base_url,
             default_model: record.default_model,
             models: record.models,
             api_key,
+            subscriber_id: record.subscriber_id,
+            intermediary_risk_acknowledged: record.intermediary_risk_acknowledged,
+            unsupported_clients: record.unsupported_clients,
         }))
     }
 
     fn build_record(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let name = normalize_name(&input.name)?;
-        let kind = input
-            .kind
-            .as_deref()
-            .and_then(ProviderKind::from_str_opt)
-            .unwrap_or_default();
+        let kind = match input.kind.as_deref() {
+            Some(value) => ProviderKind::from_str_opt(value)
+                .ok_or_else(|| ProviderError::Invalid(format!("unknown provider kind: {value}")))?,
+            None => ProviderKind::default(),
+        };
         let base_url = input.base_url.trim_end_matches('/').to_string();
         if base_url.is_empty() {
             return Err(ProviderError::Invalid("base_url is required".into()));
@@ -310,6 +356,40 @@ impl ProviderStore {
             None => input.encrypted_api_key.filter(|s| !s.is_empty()),
         };
         let models = input.models.unwrap_or_default();
+        let subscriber_id = input.subscriber_id.filter(|value| !value.trim().is_empty());
+        let intermediary_risk_acknowledged = input.acknowledge_intermediary_risk.unwrap_or(false);
+        let unsupported_clients = input.acknowledge_unsupported_clients.unwrap_or_default();
+        let enabled = input.enabled.unwrap_or(kind != ProviderKind::ZaiCodingPlan);
+        if kind == ProviderKind::ZaiCodingPlan {
+            let subscriber = subscriber_id.as_deref().ok_or_else(|| {
+                ProviderError::Invalid("z.ai Coding Plan requires --subscriber-id".into())
+            })?;
+            crate::zai_coding_plan::ZaiCodingPlanPolicy::new(
+                subscriber,
+                intermediary_risk_acknowledged,
+                &unsupported_clients,
+            )
+            .map_err(ProviderError::Invalid)?;
+            for model in &models {
+                if !crate::zai_coding_plan::REVIEWED_MODELS.contains(&model.as_str()) {
+                    return Err(ProviderError::Invalid(format!(
+                        "unreviewed z.ai Coding Plan model: {model}"
+                    )));
+                }
+            }
+            if enabled && !intermediary_risk_acknowledged {
+                return Err(ProviderError::Invalid(
+                    "enabling z.ai Coding Plan requires --acknowledge-intermediary-risk".into(),
+                ));
+            }
+        } else if subscriber_id.is_some()
+            || intermediary_risk_acknowledged
+            || !unsupported_clients.is_empty()
+        {
+            return Err(ProviderError::Invalid(
+                "Coding Plan subscriber/risk settings require kind z.ai-coding-plan".into(),
+            ));
+        }
         Ok(ProviderRecord {
             name,
             kind,
@@ -318,7 +398,10 @@ impl ProviderStore {
             models,
             api_key_env: input.api_key_env.filter(|s| !s.is_empty()),
             encrypted_api_key,
-            enabled: input.enabled.unwrap_or(true),
+            enabled,
+            subscriber_id,
+            intermediary_risk_acknowledged,
+            unsupported_clients,
         })
     }
 
@@ -397,10 +480,14 @@ impl OpenAICompatibleConfig {
         });
         ResolvedProvider {
             name: self.provider_name.clone(),
+            kind: ProviderKind::OpenAICompatible,
             base_url: self.base_url.trim_end_matches('/').to_string(),
             default_model: self.default_model.clone(),
             models: self.models.clone(),
             api_key,
+            subscriber_id: None,
+            intermediary_risk_acknowledged: false,
+            unsupported_clients: Vec::new(),
         }
     }
 
@@ -417,6 +504,9 @@ impl OpenAICompatibleConfig {
             api_key_env: self.api_key_env.clone(),
             encrypted_api_key: None,
             enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
         }
     }
 }
@@ -651,6 +741,9 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
                 api_key_env: None,
                 encrypted_api_key: None,
                 enabled: Some(true),
+                subscriber_id: None,
+                acknowledge_intermediary_risk: None,
+                acknowledge_unsupported_clients: None,
             });
             continue;
         }
@@ -677,6 +770,21 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
             "api_key" | "api-key" => provider.api_key = Some(value),
             "api_key_env" | "api-key-env" => provider.api_key_env = Some(value),
             "enabled" => provider.enabled = Some(matches!(value.as_str(), "true" | "1" | "yes")),
+            "subscriber_id" | "subscriber-id" => provider.subscriber_id = Some(value),
+            "acknowledge_intermediary_risk" | "acknowledge-intermediary-risk" => {
+                provider.acknowledge_intermediary_risk =
+                    Some(matches!(value.as_str(), "true" | "1" | "yes"));
+            }
+            "acknowledge_unsupported_clients" | "acknowledge-unsupported-clients" => {
+                provider.acknowledge_unsupported_clients = Some(
+                    value
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|entry| !entry.is_empty())
+                        .map(ToString::to_string)
+                        .collect(),
+                );
+            }
             other => {
                 return Err(ProviderError::Invalid(format!(
                     "unknown provider field: {other}"
@@ -733,6 +841,9 @@ mod tests {
             api_key_env: None,
             encrypted_api_key: None,
             enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
         }
     }
 
@@ -769,6 +880,70 @@ mod tests {
 
         let redacted = store.list_redacted().unwrap();
         assert!(redacted[0].has_encrypted_api_key);
+    }
+
+    fn zai_upsert(enabled: Option<bool>, acknowledged: bool) -> ProviderUpsert {
+        ProviderUpsert {
+            name: "z-ai-personal".into(),
+            kind: Some("z.ai-coding-plan".into()),
+            base_url: "https://api.z.ai".into(),
+            default_model: Some("glm-5".into()),
+            models: Some(vec!["glm-5".into()]),
+            api_key: Some("zai-secret".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled,
+            subscriber_id: Some("owner-a".into()),
+            acknowledge_intermediary_risk: Some(acknowledged),
+            acknowledge_unsupported_clients: Some(Vec::new()),
+        }
+    }
+
+    #[test]
+    fn coding_plan_defaults_disabled_and_requires_explicit_risk_acknowledgement() {
+        let dir = tempdir().unwrap();
+        let store = ProviderStore::open(dir.path(), "secret").unwrap();
+        let disabled = store.upsert(zai_upsert(None, false)).unwrap();
+        assert!(!disabled.enabled);
+        assert!(store.resolve("z-ai-personal").unwrap().is_none());
+
+        let error = store.upsert(zai_upsert(Some(true), false)).unwrap_err();
+        assert!(error.to_string().contains("acknowledge-intermediary-risk"));
+        let enabled = store.upsert(zai_upsert(Some(true), true)).unwrap();
+        assert!(enabled.enabled);
+        assert!(enabled.encrypted_api_key.is_some());
+        assert!(
+            !serde_json::to_string(&enabled.redacted())
+                .unwrap()
+                .contains("zai-secret")
+        );
+    }
+
+    #[test]
+    fn coding_plan_rejects_unreviewed_models_and_multiple_enabled_subscribers() {
+        let dir = tempdir().unwrap();
+        let store = ProviderStore::open(dir.path(), "secret").unwrap();
+        let mut future = zai_upsert(Some(true), true);
+        future.models = Some(vec!["glm-future".into()]);
+        assert!(
+            store
+                .upsert(future)
+                .unwrap_err()
+                .to_string()
+                .contains("unreviewed")
+        );
+
+        store.upsert(zai_upsert(Some(true), true)).unwrap();
+        let mut second = zai_upsert(Some(true), true);
+        second.name = "another-subscriber".into();
+        second.subscriber_id = Some("owner-b".into());
+        assert!(
+            store
+                .upsert(second)
+                .unwrap_err()
+                .to_string()
+                .contains("only one personal")
+        );
     }
 
     #[test]

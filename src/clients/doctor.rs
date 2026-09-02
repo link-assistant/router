@@ -18,6 +18,9 @@ impl ClientManager {
         if let Some(limitation) = client.setup_limitation() {
             return Err(ClientError::message(limitation));
         }
+        if client == ClientKind::ClaudeCode {
+            require_claude_gateway_version()?;
+        }
         let status = self.status(client)?;
         let base_url = status.base_url.ok_or_else(|| {
             ClientError::message(format!(
@@ -105,6 +108,41 @@ impl ClientManager {
     }
 }
 
+const MINIMUM_CLAUDE_GATEWAY_VERSION: (u64, u64, u64) = (2, 1, 129);
+
+/// Claude Code began accepting gateway-discovered model ids in 2.1.129.
+pub(crate) fn claude_gateway_version_supported(output: &str) -> bool {
+    output
+        .split(|character: char| !(character.is_ascii_digit() || character == '.'))
+        .find_map(|part| {
+            let mut pieces = part.split('.');
+            Some((
+                pieces.next()?.parse::<u64>().ok()?,
+                pieces.next()?.parse::<u64>().ok()?,
+                pieces.next()?.parse::<u64>().ok()?,
+            ))
+        })
+        .is_some_and(|version| version >= MINIMUM_CLAUDE_GATEWAY_VERSION)
+}
+
+/// Fail with an actionable diagnostic when an installed Claude is too old.
+pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
+    let Ok(output) = std::process::Command::new("claude")
+        .arg("--version")
+        .output()
+    else {
+        return Ok(());
+    };
+    let version = String::from_utf8_lossy(&output.stdout);
+    if output.status.success() && claude_gateway_version_supported(&version) {
+        return Ok(());
+    }
+    Err(ClientError::message(format!(
+        "Claude Code >= 2.1.129 is required for Router gateway model discovery; installed version reports '{}'. Upgrade Claude Code, then restart it to refresh ~/.claude/cache/gateway-models.json",
+        version.trim()
+    )))
+}
+
 /// The URL and body `doctor` probes with.
 ///
 /// A connectivity check is answered by a 200 with any body. Probing at the
@@ -150,7 +188,7 @@ fn probe_request(client: ClientKind, base_url: &str, model: &str) -> (String, se
 
 #[cfg(test)]
 mod tests {
-    use super::{DOCTOR_MAX_TOKENS, probe_request};
+    use super::{DOCTOR_MAX_TOKENS, claude_gateway_version_supported, probe_request};
     use crate::clients::ClientKind;
 
     /// The probe asks for the cheapest answer that proves a URL responds, for
@@ -185,5 +223,12 @@ mod tests {
                 assert_eq!(effort, "low", "{client} must not buy deep reasoning");
             }
         }
+    }
+
+    #[test]
+    fn gateway_discovery_requires_claude_code_2_1_129() {
+        assert!(!claude_gateway_version_supported("2.1.128 (Claude Code)"));
+        assert!(claude_gateway_version_supported("2.1.129 (Claude Code)"));
+        assert!(claude_gateway_version_supported("Claude Code v2.2.0"));
     }
 }

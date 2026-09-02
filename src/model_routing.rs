@@ -761,6 +761,7 @@ pub async fn models(
                 .collect::<Vec<_>>();
             merge_configured_degradation(&visible_health, &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
+            append_zai_models(&state, &claims, &headers, path, &mut catalog).await;
             catalog
         }
         UpstreamProvider::Anthropic => {
@@ -810,6 +811,11 @@ pub async fn models(
         }
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)
+        }
+        UpstreamProvider::ZaiCodingPlan => {
+            let mut catalog = json!({"object": "list", "data": []});
+            append_zai_models(&state, &claims, &headers, path, &mut catalog).await;
+            catalog
         }
     };
     (StatusCode::OK, axum::Json(models)).into_response()
@@ -917,7 +923,9 @@ fn append_stored_provider_models(state: &AppState, catalog: &mut Value) {
     let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
         return;
     };
-    for provider in providers.iter().filter(|record| record.enabled) {
+    for provider in providers.iter().filter(|record| {
+        record.enabled && record.kind != crate::providers::ProviderKind::ZaiCodingPlan
+    }) {
         for model in &provider.models {
             if data
                 .iter()
@@ -942,6 +950,61 @@ fn append_stored_provider_models(state: &AppState, catalog: &mut Value) {
     }
 }
 
+/// Add only the healthy Coding Plan aliases authorized for this signed client.
+async fn append_zai_models(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &HeaderMap,
+    path: &str,
+    catalog: &mut Value,
+) {
+    let Ok(Some(provider)) = crate::zai_coding_plan::resolve(state) else {
+        return;
+    };
+    let Ok((_, registry, _)) =
+        crate::zai_coding_plan::authorize_catalog(&provider, claims, headers, path)
+    else {
+        return;
+    };
+    if let Err(reason) = crate::zai_coding_plan::credential_healthy(&state.client, &provider).await
+    {
+        if let Some(object) = catalog.as_object_mut() {
+            let degraded = object
+                .entry("degraded_providers")
+                .or_insert_with(|| Value::Array(Vec::new()));
+            if let Some(entries) = degraded.as_array_mut()
+                && !entries.iter().any(|entry| entry == "z.ai")
+            {
+                entries.push(Value::String("z.ai".into()));
+            }
+            let reasons = object
+                .entry("degraded_reasons")
+                .or_insert_with(|| Value::Object(serde_json::Map::new()));
+            if let Some(reasons) = reasons.as_object_mut() {
+                reasons.insert("z.ai".into(), Value::String(reason));
+            }
+        }
+        return;
+    }
+    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
+        return;
+    };
+    for entry in registry {
+        if data
+            .iter()
+            .any(|model| model.get("id").and_then(Value::as_str) == Some(&entry.exposed_id))
+        {
+            continue;
+        }
+        data.push(json!({
+            "id": entry.exposed_id,
+            "object": "model",
+            "owned_by": entry.owner,
+            "display_name": entry.display_name,
+        }));
+    }
+}
+
 /// The stored provider that declares `model`, when exactly one does.
 ///
 /// Stored providers were reachable only by pinning `UPSTREAM_PROVIDER`, which
@@ -956,7 +1019,12 @@ fn stored_provider_for_model(
     state: &AppState,
     model: &str,
 ) -> Result<Option<crate::providers::ResolvedProvider>, ModelRouteError> {
-    if let Some((name, bare)) = model.split_once('/') {
+    if let Some((name, bare)) = model.split_once('/')
+        && state
+            .provider_store
+            .get(name)
+            .is_ok_and(|provider| provider.is_some())
+    {
         // An explicitly qualified name addresses one provider and must not
         // silently fall through to a subscription of the same model id.
         return match state.provider_store.resolve(name) {
@@ -972,7 +1040,15 @@ fn stored_provider_for_model(
     };
     let mut declaring = providers
         .into_iter()
-        .filter(|record| record.enabled && record.models.iter().any(|id| id == model))
+        .filter(|record| {
+            record.enabled
+                && if record.kind == crate::providers::ProviderKind::ZaiCodingPlan {
+                    crate::zai_coding_plan::canonical_for_any_client(&record.models, model)
+                        .is_some()
+                } else {
+                    record.models.iter().any(|id| id == model)
+                }
+        })
         .map(|record| record.name);
     let Some(first) = declaring.next() else {
         return Ok(None);
@@ -995,14 +1071,25 @@ fn route_stored_provider(
     model: &str,
 ) -> AppState {
     let mut routed = state.clone();
-    routed.upstream_provider = UpstreamProvider::OpenAICompatible;
+    routed.upstream_provider = if provider.kind == crate::providers::ProviderKind::ZaiCodingPlan {
+        UpstreamProvider::ZaiCodingPlan
+    } else {
+        UpstreamProvider::OpenAICompatible
+    };
     routed
         .openai_compatible
         .provider_name
         .clone_from(&provider.name);
     // A qualified name addressed the provider; the upstream only knows the
     // bare id, so forward what it will recognise.
-    routed.bridge_model = Some(bare_model_id(model).to_string());
+    routed.bridge_model = Some(
+        if provider.kind == crate::providers::ProviderKind::ZaiCodingPlan {
+            crate::zai_coding_plan::canonical_for_any_client(&provider.models, model)
+                .unwrap_or_else(|| model.to_string())
+        } else {
+            bare_model_id(model).to_string()
+        },
+    );
     routed
 }
 
@@ -1048,7 +1135,7 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
 
 #[cfg(test)]
 #[path = "model_routing_tests.rs"]
-mod tests;
+pub(crate) mod tests;
 
 #[cfg(test)]
 #[path = "model_routing_health_tests.rs"]
