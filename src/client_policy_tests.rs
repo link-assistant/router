@@ -188,3 +188,72 @@ fn catalog_probe_evidence_is_client_specific_and_not_authority_by_itself() {
         &headers
     ));
 }
+
+fn bound_claims(client: &str) -> crate::token::TokenClaims {
+    crate::token::TokenClaims {
+        sub: "token-id".into(),
+        iat: 1,
+        exp: i64::MAX,
+        label: "managed".into(),
+        scope: String::new(),
+        github_repos: Vec::new(),
+        client_kind: Some(client.into()),
+        principal_id: Some("primary".into()),
+    }
+}
+
+#[test]
+fn signed_binding_and_fixture_evidence_are_both_required() {
+    let policy = SubscriptionEntitlementPolicy::default();
+    let mut headers = HeaderMap::new();
+    headers.insert("authorization", "Bearer redacted".parse().unwrap());
+    headers.insert(
+        "x-openai-internal-codex-responses-lite",
+        "true".parse().unwrap(),
+    );
+    assert_eq!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("codex"),
+            SubscriptionProvider::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/codex/v1/responses",
+            &headers,
+        ),
+        Ok(EntitlementDecision::Native)
+    );
+
+    let mut unbound = bound_claims("codex");
+    unbound.client_kind = None;
+    unbound.principal_id = None;
+    assert!(
+        authorize_subscription(
+            &policy,
+            &unbound,
+            SubscriptionProvider::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/codex/v1/responses",
+            &headers,
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn a_bound_token_cannot_change_clients_with_request_headers() {
+    let policy = SubscriptionEntitlementPolicy::default();
+    let mut headers = HeaderMap::new();
+    headers.insert("x-api-key", "redacted".parse().unwrap());
+    headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
+    assert!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("codex"),
+            SubscriptionProvider::Claude,
+            ClientProtocol::AnthropicMessages,
+            "/v1/messages",
+            &headers,
+        )
+        .is_err()
+    );
+}
