@@ -149,7 +149,7 @@ impl Router {
                 Ok(None) => {}
                 Err(error) => panic!("cannot poll the router: {error}"),
             }
-            if router.get("/health").contains(" 200 ") {
+            if router.get("/api/health").contains(" 200 ") {
                 return Some(router);
             }
             std::thread::sleep(Duration::from_millis(150));
@@ -196,7 +196,7 @@ impl Router {
         let line = format!("{command}\n");
         let body = format!("{:04x}{line}0000PACK", line.len() + 4);
         self.send(&format!(
-            "POST /git/{repository}.git/git-receive-pack HTTP/1.1\r\nHost: x\r\n\
+            "POST /api/services/github/git/{repository}.git/git-receive-pack HTTP/1.1\r\nHost: x\r\n\
              authorization: Bearer {token}\r\n\
              content-type: application/x-git-receive-pack-request\r\n\
              content-length: {}\r\nConnection: close\r\n\r\n{body}",
@@ -352,7 +352,7 @@ fn a_scoped_token_cannot_reach_another_repository_over_rest() {
     let token = router.token(&["--github-repo", "acme/demo"]);
 
     let response = router.send(&format!(
-        "GET /repos/someone-else/private/issues HTTP/1.1\r\nHost: x\r\n\
+        "GET /api/services/github/api/v3/repos/someone-else/private/issues HTTP/1.1\r\nHost: x\r\n\
          authorization: Bearer {token}\r\nConnection: close\r\n\r\n"
     ));
 
