@@ -97,14 +97,16 @@ impl Harness {
 
     /// Complete the web-UI bootstrap, returning the claimed credential.
     async fn claim_through_the_web_ui(&self) -> String {
-        let (status, minted) = self.post("/api/admin/bootstrap", json!({})).await;
+        let (status, minted) = self
+            .post("/api/management/admin/bootstrap", json!({}))
+            .await;
         assert_eq!(status, StatusCode::OK, "mint: {minted}");
         let token = minted["token"].as_str().expect("token").to_string();
         let claim_id = minted["claim_id"].as_str().expect("claim id").to_string();
         let (status, _) = self
             .request(
                 "POST",
-                "/api/admin/bootstrap/confirm",
+                "/api/management/admin/bootstrap/confirm",
                 Some(&token),
                 Some(json!({"claim_id": claim_id})),
             )
@@ -209,7 +211,7 @@ async fn a_claim_made_in_chat_closes_the_web_ui_bootstrap() {
     assert!(minted.secret, "a minted credential must not linger");
 
     // Phase one alone claims nothing: the browser bootstrap is still open.
-    let (status, body) = harness.get("/api/admin/status").await;
+    let (status, body) = harness.get("/api/management/admin/status").await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
         body["bootstrap_open"], true,
@@ -221,7 +223,9 @@ async fn a_claim_made_in_chat_closes_the_web_ui_bootstrap() {
         .handle(ChatChannel::Vk, "7", &format!("/confirm {token}"));
     assert!(confirmed.text.contains("Administration claimed"));
 
-    let (status, body) = harness.post("/api/admin/bootstrap", json!({})).await;
+    let (status, body) = harness
+        .post("/api/management/admin/bootstrap", json!({}))
+        .await;
     assert_eq!(
         status,
         StatusCode::CONFLICT,
@@ -292,7 +296,7 @@ async fn a_chat_claim_yields_an_admin_scoped_jwt() {
 
     // Phase one is inert: the candidate authorises nothing anywhere.
     let (status, _) = harness
-        .request("GET", "/api/tokens/list", Some(&token), None)
+        .request("GET", "/api/management/tokens", Some(&token), None)
         .await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 
@@ -309,7 +313,7 @@ async fn a_chat_claim_yields_an_admin_scoped_jwt() {
     assert!(claims.exp > claims.iat, "the credential carries a lifetime");
 
     let (status, _) = harness
-        .request("GET", "/api/tokens/list", Some(&token), None)
+        .request("GET", "/api/management/tokens", Some(&token), None)
         .await;
     assert_eq!(
         status,
