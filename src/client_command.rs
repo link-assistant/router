@@ -202,11 +202,11 @@ async fn setup(
                 ManagedCredential {
                     client: client.to_string(),
                     source: TokenSource::Supplied,
-                    token_id: binding.as_ref().map(|(token_id, _)| token_id.clone()),
+                    token_id: binding.as_ref().map(|binding| binding.token_id.clone()),
                     label: None,
                     issued_at: None,
                     router: Some(base_url.clone()),
-                    principal_id: binding.map(|(_, principal_id)| principal_id),
+                    principal_id: binding.and_then(|binding| binding.principal_id),
                 },
             )
         }
@@ -391,11 +391,16 @@ fn revoke_managed_credential(
 }
 
 /// Validate that a supplied local token is bound to exactly this adapter.
+struct LocalTokenBinding {
+    token_id: String,
+    principal_id: Option<String>,
+}
+
 fn local_token_binding(
     config: &Config,
     token: &str,
     client: ClientKind,
-) -> Result<Option<(String, String)>, Box<dyn std::error::Error>> {
+) -> Result<Option<LocalTokenBinding>, Box<dyn std::error::Error>> {
     let manager = token_manager(config)?;
     let Ok(claims) = manager.validate_token(token) else {
         // The supplied credential can belong to a remote Router with a
@@ -404,11 +409,21 @@ fn local_token_binding(
         // revoked from this data directory.
         return Ok(None);
     };
-    let bound_client = claims
-        .client_kind
-        .as_deref()
-        .and_then(ClientKind::from_str_opt)
-        .ok_or("the supplied token has no managed-client binding")?;
+    let Some(client_name) = claims.client_kind.as_deref() else {
+        if claims.principal_id.is_some() {
+            return Err("the supplied token has an incomplete managed-client binding".into());
+        }
+        // Legacy and deliberately generic tokens remain usable with ordinary
+        // API-key providers. The server still denies them access to every
+        // consumer subscription because they carry no signed client/principal
+        // entitlement.
+        return Ok(Some(LocalTokenBinding {
+            token_id: claims.sub,
+            principal_id: None,
+        }));
+    };
+    let bound_client = ClientKind::from_str_opt(client_name)
+        .ok_or("the supplied token has an unknown managed-client binding")?;
     if bound_client != client {
         return Err(format!(
             "the supplied token is bound to {}, not {}",
@@ -421,7 +436,10 @@ fn local_token_binding(
         .principal_id
         .filter(|value| !value.is_empty())
         .ok_or("the supplied token has no subscriber principal")?;
-    Ok(Some((claims.sub, principal)))
+    Ok(Some(LocalTokenBinding {
+        token_id: claims.sub,
+        principal_id: Some(principal),
+    }))
 }
 
 fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Error>> {
