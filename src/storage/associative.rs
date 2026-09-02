@@ -228,13 +228,20 @@ fn object_field<'a>(
     key: &str,
     context: &str,
 ) -> Result<&'a LinoValue, String> {
+    optional_object_field(value, key, context)?.ok_or_else(|| format!("{context} is missing {key}"))
+}
+
+fn optional_object_field<'a>(
+    value: &'a LinoValue,
+    key: &str,
+    context: &str,
+) -> Result<Option<&'a LinoValue>, String> {
     let LinoValue::Object(fields) = value else {
         return Err(format!("{context} must be an object"));
     };
-    fields
+    Ok(fields
         .iter()
-        .find_map(|(field, value)| (field == key).then_some(value))
-        .ok_or_else(|| format!("{context} is missing {key}"))
+        .find_map(|(field, value)| (field == key).then_some(value)))
 }
 
 fn expect_string_field<'a>(
@@ -286,9 +293,9 @@ fn optional_string_field(
     key: &str,
     context: &str,
 ) -> Result<Option<String>, String> {
-    match object_field(value, key, context)? {
-        LinoValue::Null => Ok(None),
-        LinoValue::String(value) => Ok(Some(value.clone())),
+    match optional_object_field(value, key, context)? {
+        None | Some(LinoValue::Null) => Ok(None),
+        Some(LinoValue::String(value)) => Ok(Some(value.clone())),
         _ => Err(format!("{context}.{key} must be a string or null")),
     }
 }
