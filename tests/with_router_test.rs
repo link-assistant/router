@@ -772,7 +772,7 @@ fn fake_claude(bin_dir: &std::path::Path) {
         &path,
         r#"#!/bin/sh
 if [ "$1" = "--version" ]; then
-  printf '2.1.129\n'
+  printf '2.1.255\n'
   exit 0
 fi
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
