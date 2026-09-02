@@ -23,14 +23,21 @@ impl ClientManager {
     /// Read the authenticated model catalog used by setup and doctor.
     pub(crate) async fn catalog(
         &self,
+        client: ClientKind,
         base_url: &str,
         token: &str,
     ) -> Result<Vec<RouterModel>, ClientError> {
         let base_url = normalize_base_url(base_url)?;
-        let url = models_url(&base_url);
-        let response = reqwest::Client::new()
+        let url = models_url(client, &base_url);
+        let request = reqwest::Client::new()
             .get(&url)
-            .bearer_auth(token)
+            .header("x-link-assistant-client", client.canonical_name());
+        let request = match client {
+            ClientKind::ClaudeCode => request.header("x-api-key", token),
+            ClientKind::GeminiCli => request.header("x-goog-api-key", token),
+            _ => request.bearer_auth(token),
+        };
+        let response = request
             .timeout(Duration::from_secs(15))
             .send()
             .await
@@ -68,9 +75,18 @@ impl ClientManager {
     }
 }
 
-fn models_url(base_url: &str) -> String {
+fn models_url(client: ClientKind, base_url: &str) -> String {
     let base_url = base_url.trim_end_matches('/');
-    if base_url.ends_with("/v1") {
+    if client == ClientKind::Codex {
+        let base_url = base_url.strip_suffix("/v1").unwrap_or(base_url);
+        format!("{base_url}/api/codex/v1/models")
+    } else if client == ClientKind::GeminiCli {
+        let base_url = base_url.strip_suffix("/api/gemini").unwrap_or(base_url);
+        format!("{base_url}/api/gemini/v1beta/models")
+    } else if client == ClientKind::QwenCode {
+        let base_url = base_url.strip_suffix("/api/qwen/v1").unwrap_or(base_url);
+        format!("{base_url}/api/qwen/v1/models")
+    } else if base_url.ends_with("/v1") {
         format!("{base_url}/models")
     } else {
         format!("{base_url}/v1/models")

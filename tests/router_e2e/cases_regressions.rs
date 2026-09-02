@@ -54,8 +54,9 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(translated_tools[0].get("function").is_none());
     drop(requests);
 
+    let client_token = router.token_for("/v1/chat/completions");
     let records =
-        std::fs::read_to_string(router.log_path_for(&router.token)).expect("request exchange log");
+        std::fs::read_to_string(router.log_path_for(client_token)).expect("request exchange log");
     let records = records
         .lines()
         .map(|line| link_assistant_router::lino_json::decode_line(line).expect("a readable record"))
@@ -86,7 +87,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
             "missing {phase} for one correlation id"
         );
     }
-    let token_log_path = router.log_path_for(&router.token);
+    let token_log_path = router.log_path_for(client_token);
     let expected_hash = token_log_path
         .parent()
         .and_then(std::path::Path::file_name)
@@ -104,7 +105,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(rendered.contains("client-boundary-marker"));
     assert!(rendered.contains("Bearer la_"));
     assert!(rendered.contains("***"));
-    assert!(!rendered.contains(&router.token));
+    assert!(!rendered.contains(client_token));
 }
 
 /// Issue #380: Codex 0.151 moved its tool declaration into an
@@ -401,7 +402,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     // log records requested and forwarded bodies under one correlation id.
     // This makes the unsupported cap observable without inventing a response
     // header that vendor clients do not understand.
-    let records = std::fs::read_to_string(codex.log_path_for(&codex.token))
+    let records = std::fs::read_to_string(codex.log_path_for(codex.token_for("/v1/messages")))
         .expect("token request log")
         .lines()
         .map(|line| link_assistant_router::lino_json::decode_line(line).expect("a readable record"))
@@ -497,9 +498,7 @@ async fn malformed_json_uses_each_http_surfaces_json_error_envelope() {
 
     for path in ["/v1/messages", "/v1/chat/completions", "/v1/responses"] {
         let response = router
-            .client
-            .post(format!("{}{path}", router.url))
-            .bearer_auth(&router.token)
+            .authenticated_post(path, router.token_for(path))
             .header("content-type", "application/json")
             .body(r#"{"model":"gpt-5",broken"#)
             .send()
@@ -527,9 +526,7 @@ async fn malformed_json_uses_each_http_surfaces_json_error_envelope() {
 
     let auto = TestRouter::start(UpstreamProvider::Auto).await;
     let response = auto
-        .client
-        .post(format!("{}/v1/messages", auto.url))
-        .bearer_auth(&auto.token)
+        .authenticated_post("/v1/messages", auto.token_for("/v1/messages"))
         .header("content-type", "application/json")
         .body(r#"{"model":"gpt-5",broken"#)
         .send()
@@ -852,13 +849,11 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
     }
 }
 
-/// Issue #189: one administrator credential, both surfaces.
-///
-/// `scope=admin` is a superset of client access, so whatever administers the
-/// router also reaches the models. Before this, an admin credential could list
-/// tokens and still get `401 invalid token` from `/v1/models`.
+/// Issue #189 and #389: one administrator credential manages every admin
+/// surface, but does not silently gain authority over a personal subscription.
+/// A separately client-bound token is required for model access.
 #[tokio::test]
-async fn an_admin_credential_both_manages_tokens_and_reaches_the_models() {
+async fn an_admin_credential_manages_tokens_without_inheriting_subscription_access() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
 
     // Every shape an administrator can hold: the environment-supplied
@@ -869,21 +864,29 @@ async fn an_admin_credential_both_manages_tokens_and_reaches_the_models() {
         .issue_admin_token(1, "issue-189-admin")
         .expect("issue admin token");
     for credential in ["admin-only", admin_jwt.as_str()] {
-        for path in ["/api/tokens/list", "/v1/models"] {
-            let response = router
-                .get_as(path, credential)
-                .send()
+        let admin = router
+            .get_as("/api/tokens/list", credential)
+            .send()
+            .await
+            .expect("admin response");
+        assert_eq!(admin.status(), StatusCode::OK);
+
+        let catalog = router
+            .get_as("/v1/models", credential)
+            .send()
+            .await
+            .expect("catalog response");
+        assert_eq!(catalog.status(), StatusCode::FORBIDDEN);
+        assert!(
+            catalog
+                .text()
                 .await
-                .expect("response");
-            assert_eq!(
-                response.status(),
-                StatusCode::OK,
-                "{path} must accept the admin credential {credential}"
-            );
-        }
+                .expect("catalog denial")
+                .contains("administrative credentials do not imply consumer-subscription access")
+        );
     }
 
-    // A revoked admin JWT loses both at once.
+    // Revocation still removes all authority from the administrative JWT.
     let id = router
         .token_manager
         .list_tokens()

@@ -15,6 +15,7 @@ use axum::middleware::from_fn_with_state;
 use axum::response::Response;
 use axum::routing::{get, post};
 use link_assistant_router::app_state::AppState;
+use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
 use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
@@ -49,7 +50,9 @@ struct TestRouter {
     client: reqwest::Client,
     model_catalogs: Arc<ModelCatalogCache>,
     url: String,
-    token: String,
+    claude_token: String,
+    codex_token: String,
+    opencode_token: String,
     token_manager: TokenManager,
     requests: Arc<Mutex<Vec<Value>>>,
     upstream_headers: Arc<Mutex<Vec<HeaderMap>>>,
@@ -104,9 +107,21 @@ impl TestRouter {
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("router-e2e-secret");
-        let token = token_manager
-            .issue_token(1, "router e2e client")
-            .expect("issue test token");
+        let issue_client = |client: ClientKind| {
+            token_manager
+                .issue(&IssueRequest {
+                    ttl_hours: 1,
+                    label: "router e2e client",
+                    account: Some("primary"),
+                    client_kind: Some(client.canonical_name()),
+                    principal_id: Some("primary"),
+                    ..IssueRequest::default()
+                })
+                .expect("issue bound test token")
+        };
+        let claude_token = issue_client(ClientKind::ClaudeCode);
+        let codex_token = issue_client(ClientKind::Codex);
+        let opencode_token = issue_client(ClientKind::Opencode);
         let oauth_provider = OAuthProvider::new(data.path().to_str().expect("UTF-8 test path"));
         oauth_provider.set_token("stub-anthropic-oauth-token");
 
@@ -122,6 +137,20 @@ impl TestRouter {
 
         let log_root = data.path().join("requests");
         let model_catalogs = Arc::new(ModelCatalogCache::new());
+        let provider_store =
+            link_assistant_router::providers::ProviderStore::open(data.path(), "router-e2e-secret")
+                .expect("provider store");
+        provider_store
+            .set_subscription_entitlement_policy(
+                link_assistant_router::client_policy::SubscriptionEntitlementPolicy::parse([
+                    "claude:codex",
+                    "codex:claude",
+                    "opencode:claude",
+                    "opencode:codex",
+                ])
+                .expect("router e2e bridge policy"),
+            )
+            .expect("install router e2e bridge policy");
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager: token_manager.clone(),
@@ -140,11 +169,7 @@ impl TestRouter {
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
             crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
-            provider_store: link_assistant_router::providers::ProviderStore::open(
-                data.path(),
-                "router-e2e-secret",
-            )
-            .expect("provider store"),
+            provider_store,
             logger: log_lazy::LogLazy::new(),
             admin: Arc::new(link_assistant_router::admin::AdminClaim::load(
                 Some("admin-only".to_string()),
@@ -176,7 +201,9 @@ impl TestRouter {
             client: reqwest::Client::new(),
             model_catalogs,
             url,
-            token,
+            claude_token,
+            codex_token,
+            opencode_token,
             token_manager,
             requests,
             upstream_headers,
@@ -192,16 +219,24 @@ impl TestRouter {
     }
 
     fn post(&self, path: &str, body: &Value) -> reqwest::RequestBuilder {
-        self.client
-            .post(format!("{}{path}", self.url))
-            .bearer_auth(&self.token)
-            .json(&body)
+        self.authenticated_post(path, self.token_for(path))
+            .json(body)
     }
 
     fn get(&self, path: &str) -> reqwest::RequestBuilder {
-        self.client
-            .get(format!("{}{path}", self.url))
-            .bearer_auth(&self.token)
+        if path == "/api/codex/v1/models" {
+            self.client
+                .get(format!("{}{path}", self.url))
+                .bearer_auth(&self.codex_token)
+                .header("x-link-assistant-client", "codex")
+        } else {
+            self.client
+                .get(format!("{}{path}", self.url))
+                .bearer_auth(&self.opencode_token)
+                .header("user-agent", "opencode/router-e2e")
+                .header("x-session-id", "router-e2e")
+                .header("x-link-assistant-client", "opencode")
+        }
     }
 
     /// A GET carrying a credential other than the default client token.
@@ -209,6 +244,37 @@ impl TestRouter {
         self.client
             .get(format!("{}{path}", self.url))
             .bearer_auth(credential)
+            .header("user-agent", "opencode/router-e2e")
+            .header("x-session-id", "router-e2e")
+            .header("x-link-assistant-client", "opencode")
+    }
+
+    fn token_for(&self, path: &str) -> &str {
+        if path.ends_with("/v1/messages") {
+            &self.claude_token
+        } else if path.ends_with("/v1/responses") {
+            &self.codex_token
+        } else {
+            &self.opencode_token
+        }
+    }
+
+    fn authenticated_post(&self, path: &str, token: &str) -> reqwest::RequestBuilder {
+        let request = self.client.post(format!("{}{path}", self.url));
+        if path.ends_with("/v1/messages") {
+            request
+                .header("x-api-key", token)
+                .header("anthropic-version", "2023-06-01")
+        } else if path.ends_with("/v1/responses") {
+            request
+                .bearer_auth(token)
+                .header("x-openai-internal-codex-responses-lite", "true")
+        } else {
+            request
+                .bearer_auth(token)
+                .header("user-agent", "opencode/router-e2e")
+                .header("x-session-id", "router-e2e")
+        }
     }
 
     fn log_path_for(&self, token: &str) -> std::path::PathBuf {
@@ -535,3 +601,6 @@ mod cases_core;
 
 #[path = "router_e2e/cases_regressions.rs"]
 mod cases_regressions;
+
+#[path = "router_e2e/chat_validation.rs"]
+mod chat_validation;

@@ -117,6 +117,12 @@ pub struct TokenRecord {
     /// and an existing token keeps the access it was issued with.
     #[serde(default)]
     pub github_repos: Vec<String>,
+    /// Canonical managed client adapter; absent on legacy/manual tokens.
+    #[serde(default)]
+    pub client_kind: Option<String>,
+    /// Subscriber identity paired with `client_kind`.
+    #[serde(default)]
+    pub principal_id: Option<String>,
 }
 
 /// Errors a [`TokenStore`] can return.

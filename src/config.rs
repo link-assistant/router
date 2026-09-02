@@ -42,6 +42,8 @@ pub enum UpstreamProvider {
     Qwen,
     /// Generic OpenAI-compatible inference provider, including `LiteLLM` proxy.
     OpenAICompatible,
+    /// Policy-gated personal z.ai GLM Coding Plan credential.
+    ZaiCodingPlan,
 }
 
 impl UpstreamProvider {
@@ -59,6 +61,7 @@ impl UpstreamProvider {
             "openai" | "openai-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
+            "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
             _ => None,
         }
     }
@@ -73,7 +76,11 @@ impl UpstreamProvider {
             Self::Codex => Some(S::Codex),
             Self::Gemini => Some(S::Gemini),
             Self::Qwen => Some(S::Qwen),
-            Self::Auto | Self::Gonka | Self::Crater | Self::OpenAICompatible => None,
+            Self::Auto
+            | Self::Gonka
+            | Self::Crater
+            | Self::OpenAICompatible
+            | Self::ZaiCodingPlan => None,
         }
     }
 
@@ -89,6 +96,7 @@ impl UpstreamProvider {
             Self::Gemini => "gemini",
             Self::Qwen => "qwen",
             Self::OpenAICompatible => "openai-compatible",
+            Self::ZaiCodingPlan => "z.ai-coding-plan",
         }
     }
 }
@@ -252,6 +260,8 @@ pub struct Config {
     /// Whether to enable experimental compatibility features (spoofing,
     /// XML history reconstruction, etc.). Off by default.
     pub experimental_compatibility: bool,
+    /// Exact, audited client/provider consumer-subscription bridge cells.
+    pub subscription_entitlement_policy: crate::client_policy::SubscriptionEntitlementPolicy,
     /// Optional flat bootstrap admin key accepted by the admin endpoints in
     /// addition to admin-scoped `la_sk_…` tokens.
     pub admin_key: Option<String>,
@@ -416,6 +426,10 @@ impl Config {
             .unwrap_or_default();
         let experimental_compatibility = env::var("EXPERIMENTAL_COMPATIBILITY")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+        let subscription_bridge_overrides = env::var("SUBSCRIPTION_BRIDGE_OVERRIDES")
+            .ok()
+            .map(|raw| parse_csv(&raw))
+            .unwrap_or_default();
         let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
         let allow_anonymous_admin = env::var("ALLOW_ANONYMOUS_ADMIN")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
@@ -479,6 +493,7 @@ impl Config {
             session_affinity_ttl_secs,
             account_request_limits,
             experimental_compatibility,
+            subscription_bridge_overrides,
             admin_key,
             allow_anonymous_admin,
             mpp,
@@ -560,6 +575,11 @@ impl Config {
             session_affinity_ttl_secs: args.session_affinity_ttl_secs,
             account_request_limits: args.account_request_limits,
             experimental_compatibility: args.experimental_compatibility,
+            subscription_entitlement_policy:
+                crate::client_policy::SubscriptionEntitlementPolicy::parse(
+                    args.subscription_bridge_overrides,
+                )
+                .map_err(ConfigError::InvalidSubscriptionBridgePolicy)?,
             admin_key: args.admin_key,
             allow_anonymous_admin: args.allow_anonymous_admin,
             mpp: args.mpp,
@@ -609,6 +629,7 @@ pub struct BuildArgs<'a> {
     pub session_affinity_ttl_secs: u64,
     pub account_request_limits: Vec<usize>,
     pub experimental_compatibility: bool,
+    pub subscription_bridge_overrides: Vec<String>,
     pub admin_key: Option<String>,
     pub allow_anonymous_admin: bool,
     pub mpp: crate::mpp::MppConfig,
@@ -704,6 +725,8 @@ pub enum ConfigError {
     InvalidUpstreamProvider,
     /// The bridge model selection policy was not recognised.
     InvalidBridgeModelPolicy(String),
+    /// A consumer-subscription bridge override was not an exact reviewed cell.
+    InvalidSubscriptionBridgePolicy(String),
     /// The multi-account strategy was not recognised.
     InvalidAccountRoutingStrategy,
     /// An account request cap was not a non-negative integer.
@@ -739,7 +762,8 @@ impl std::fmt::Display for ConfigError {
                 f,
                 "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, gonka, crater, openai-compatible"
             ),
-            Self::InvalidBridgeModelPolicy(message) => write!(f, "{message}"),
+            Self::InvalidBridgeModelPolicy(message)
+            | Self::InvalidSubscriptionBridgePolicy(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"

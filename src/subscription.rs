@@ -9,200 +9,8 @@
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
-/// A subscription-backed upstream that authenticates with vendor OAuth tokens.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SubscriptionProvider {
-    /// Anthropic Claude (Pro/Max) via Claude Code — `~/.claude`.
-    Claude,
-    /// `OpenAI` Codex / `ChatGPT` subscription via the Codex CLI — `~/.codex`.
-    Codex,
-    /// Google Gemini Code Assist via the Gemini CLI — `~/.gemini`.
-    Gemini,
-    /// Alibaba Qwen via the qwen-code CLI — `~/.qwen`.
-    Qwen,
-}
-
-impl SubscriptionProvider {
-    /// All known subscription providers, in priority order.
-    pub const ALL: [Self; 4] = [Self::Claude, Self::Codex, Self::Gemini, Self::Qwen];
-
-    /// Stable lowercase identifier (used in CLI args, env vars, logs).
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Claude => "claude",
-            Self::Codex => "codex",
-            Self::Gemini => "gemini",
-            Self::Qwen => "qwen",
-        }
-    }
-
-    /// Parse a provider from a free-form string (aliases included).
-    #[must_use]
-    pub fn from_str_opt(s: &str) -> Option<Self> {
-        match s.trim().to_lowercase().as_str() {
-            "claude" | "anthropic" | "claude-code" => Some(Self::Claude),
-            "codex" | "chatgpt" | "openai-codex" => Some(Self::Codex),
-            "gemini" | "google" | "code-assist" => Some(Self::Gemini),
-            "qwen" | "qwen-code" | "dashscope" => Some(Self::Qwen),
-            _ => None,
-        }
-    }
-
-    /// The home subdirectory the vendor CLI writes credentials into, relative
-    /// to the user's home directory (e.g. `.codex`).
-    #[must_use]
-    pub const fn home_subdir(self) -> &'static str {
-        match self {
-            Self::Claude => ".claude",
-            Self::Codex => ".codex",
-            Self::Gemini => ".gemini",
-            Self::Qwen => ".qwen",
-        }
-    }
-
-    /// Environment variable that overrides the credential home directory, if any.
-    #[must_use]
-    pub const fn home_env(self) -> &'static str {
-        match self {
-            Self::Claude => "CLAUDE_CODE_HOME",
-            Self::Codex => "CODEX_HOME",
-            Self::Gemini => "GEMINI_HOME",
-            Self::Qwen => "QWEN_HOME",
-        }
-    }
-
-    /// The filename this provider's own client writes.
-    ///
-    /// Distinct from the first search candidate: Claude is *read* from
-    /// `credentials.json` first for legacy-pool parity, but Claude Code
-    /// *writes* `.credentials.json`. Installing an adopted credential under the
-    /// search-first name would leave the vendor client with a file it does not
-    /// recognise, so an import lands where a fresh login would put it.
-    #[must_use]
-    pub const fn canonical_credential_filename(self) -> &'static str {
-        match self {
-            Self::Claude => ".credentials.json",
-            Self::Codex => "auth.json",
-            Self::Gemini | Self::Qwen => "oauth_creds.json",
-        }
-    }
-
-    /// Candidate credential filenames within the home directory, most specific
-    /// first.
-    #[must_use]
-    pub const fn credential_filenames(self) -> &'static [&'static str] {
-        match self {
-            // Keep parity with the legacy OAuthProvider search order so
-            // enabling a pool does not make an existing Claude login vanish.
-            Self::Claude => &[
-                "credentials.json",
-                ".credentials.json",
-                "auth.json",
-                "oauth.json",
-                "config.json",
-            ],
-            Self::Codex => &["auth.json"],
-            Self::Gemini | Self::Qwen => &["oauth_creds.json"],
-        }
-    }
-
-    /// Default upstream base URL for the provider's subscription endpoint.
-    ///
-    /// Qwen's per-token `resource_url` overrides this at request time.
-    #[must_use]
-    pub const fn default_base_url(self) -> &'static str {
-        match self {
-            Self::Claude => "https://api.anthropic.com",
-            Self::Codex => "https://chatgpt.com/backend-api/codex",
-            Self::Gemini => "https://cloudcode-pa.googleapis.com",
-            Self::Qwen => "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        }
-    }
-
-    /// Resolve the credential home directory, honoring the provider's override
-    /// env var, then falling back to `<home>/<home_subdir>`.
-    #[must_use]
-    pub fn resolve_home(self, home: &str) -> PathBuf {
-        self.named_home()
-            .unwrap_or_else(|| PathBuf::from(home).join(self.home_subdir()))
-    }
-
-    /// The directory this provider's own home variable names, if it names one.
-    #[must_use]
-    pub fn named_home(self) -> Option<PathBuf> {
-        std::env::var(self.home_env())
-            .ok()
-            .filter(|dir| !dir.is_empty())
-            .map(PathBuf::from)
-    }
-
-    /// The directory the *vendor's own client* keeps its login in.
-    ///
-    /// Deliberately not `resolve_home`. In a deployment `CLAUDE_CODE_HOME` and
-    /// friends name the router's own credential directory — its destination —
-    /// so resolving "where does this vendor keep its login" that way makes
-    /// every unqualified `auth import` refuse itself as a self-import (issue
-    /// #278), and makes the vendor's conventional directory stop counting as
-    /// the vendor's home for the platform-store guard (issue #307).
-    #[must_use]
-    pub fn conventional_home(self, home: &str) -> PathBuf {
-        PathBuf::from(home).join(self.home_subdir())
-    }
-}
-
-impl std::fmt::Display for SubscriptionProvider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // `pad`, not `write_str`: only `pad` applies the width, fill and
-        // alignment the caller asked for, so `{:<8}` is silently ignored by a
-        // `write_str` implementation (issue #212).
-        f.pad(self.as_str())
-    }
-}
-
-/// A normalized subscription token plus the metadata the proxy needs to route.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct SubscriptionToken {
-    /// OAuth bearer access token sent as `Authorization: Bearer <token>`.
-    pub access_token: String,
-    /// OAuth refresh token, when the vendor file stores one.
-    pub refresh_token: Option<String>,
-    /// Expiry as Unix epoch milliseconds, when known.
-    pub expires_at_ms: Option<i64>,
-    /// `ChatGPT` account id (`chatgpt-account-id` header) for Codex billing.
-    pub account_id: Option<String>,
-    /// Per-token base URL override (Qwen `resource_url`).
-    pub resource_url: Option<String>,
-}
-
-impl SubscriptionToken {
-    /// Whether the token is expired relative to `now_ms` (with no skew).
-    #[must_use]
-    pub fn is_expired(&self, now_ms: i64) -> bool {
-        self.expires_at_ms.is_some_and(|exp| exp <= now_ms)
-    }
-
-    /// Effective base URL for this token: `resource_url` override or the
-    /// provider default. Qwen returns a bare host in `resource_url`, so a
-    /// scheme and the OpenAI-compatible suffix are added when missing.
-    #[must_use]
-    pub fn base_url(&self, provider: SubscriptionProvider) -> String {
-        let Some(resource) = self.resource_url.as_deref().filter(|s| !s.is_empty()) else {
-            return provider.default_base_url().to_string();
-        };
-        let with_scheme = if resource.starts_with("http://") || resource.starts_with("https://") {
-            resource.to_string()
-        } else {
-            format!("https://{resource}")
-        };
-        if provider == SubscriptionProvider::Qwen && !with_scheme.contains("/compatible-mode") {
-            format!("{}/compatible-mode/v1", with_scheme.trim_end_matches('/'))
-        } else {
-            with_scheme
-        }
-    }
-}
+mod types;
+pub use types::{SubscriptionProvider, SubscriptionToken};
 
 /// Errors raised while reading subscription credentials.
 #[derive(Debug)]
@@ -253,7 +61,8 @@ pub struct ImportSource {
 /// Replacement policy for a Router-owned credential install.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstallMode {
-    /// Replace the canonical vendor document after taking the shared lock.
+    /// Replace the authoritative recognized document after taking the shared
+    /// lock, falling back to the canonical vendor path when the home is empty.
     Replace,
     /// Install only when none of the provider's recognized files exists.
     IfAbsent,
@@ -262,7 +71,7 @@ pub enum InstallMode {
 /// Successful credential-install outcome.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InstallDocumentResult {
-    /// The candidate document was installed at the canonical vendor path.
+    /// The candidate document was installed at the authoritative vendor path.
     Installed(PathBuf),
     /// A recognized credential appeared before installation and was preserved.
     AlreadyPresent(PathBuf),
@@ -273,6 +82,15 @@ pub enum InstallDocumentResult {
 pub struct SubscriptionReader {
     provider: SubscriptionProvider,
     home: PathBuf,
+}
+
+fn credential_lock_error(provider: SubscriptionProvider, error: &std::io::Error) -> String {
+    let action = if error.kind() == std::io::ErrorKind::WouldBlock {
+        "timed out waiting for"
+    } else {
+        "could not acquire"
+    };
+    format!("{action} the durable {provider} credential lock")
 }
 
 impl SubscriptionReader {
@@ -438,9 +256,13 @@ impl SubscriptionReader {
         let path = self
             .home
             .join(self.provider.canonical_credential_filename());
-        crate::durable_file::atomic_write_owner_only(&path, document.as_bytes())
-            .map_err(|error| crate::durable_file::describe_write_failure(&path, &error))?;
-        Ok(path)
+        Self::install_document_at(&path, document)
+    }
+
+    fn install_document_at(path: &Path, document: &str) -> Result<PathBuf, String> {
+        crate::durable_file::atomic_write_owner_only(path, document.as_bytes())
+            .map_err(|error| crate::durable_file::describe_write_failure(path, &error))?;
+        Ok(path.to_path_buf())
     }
 
     /// Install while holding the provider/account refresh lock.
@@ -453,6 +275,32 @@ impl SubscriptionReader {
     ) -> Result<InstallDocumentResult, String> {
         self.install_document_locked_with_refusal(data_dir, account, document, mode, None)
             .await
+    }
+
+    /// Check for any recognized primary or recovery credential while holding
+    /// the same transaction lock used by refresh, login, and installation.
+    ///
+    /// Conditional import uses this as a non-destructive preflight so an
+    /// already-provisioned destination can win without spending the staged
+    /// candidate's rotating refresh token. Installation still performs the
+    /// same check again under its own lock after validation, closing the race.
+    pub async fn existing_document_locked(
+        &self,
+        data_dir: &Path,
+        account: &str,
+    ) -> Result<Option<PathBuf>, String> {
+        let lock_path = crate::credential_recovery_store::credential_lock_path(
+            data_dir,
+            self.provider,
+            account,
+        );
+        let _lock = crate::durable_file::lock_exclusive_async(
+            &lock_path,
+            crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+        )
+        .await
+        .map_err(|error| credential_lock_error(self.provider, &error))?;
+        self.existing_document(data_dir, account)
     }
 
     /// Enforce `refusal` only after the locked absence check.
@@ -474,33 +322,22 @@ impl SubscriptionReader {
             crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
         )
         .await
-        .map_err(|error| {
-            let action = if error.kind() == std::io::ErrorKind::WouldBlock {
-                "timed out waiting for"
-            } else {
-                "could not acquire"
-            };
-            format!("{action} the durable {} credential lock", self.provider)
-        })?;
+        .map_err(|error| credential_lock_error(self.provider, &error))?;
 
-        if mode == InstallMode::IfAbsent {
-            for path in self.credential_paths() {
-                match path.try_exists() {
-                    Ok(true) => return Ok(InstallDocumentResult::AlreadyPresent(path)),
-                    Ok(false) => {}
-                    Err(error) => {
-                        return Err(format!(
-                            "could not check the {} credential destination: {error}",
-                            self.provider
-                        ));
-                    }
-                }
-            }
-            if let Some(path) = crate::credential_recovery_store::valid_recovery_record_path(
+        // Replacement must not report success over storage state that serving
+        // will reject. A valid sidecar is reconciled naturally against the new
+        // primary on the next reload; an unreadable or malformed one is
+        // uncertainty and blocks every destination mutation.
+        if mode == InstallMode::Replace {
+            let _ = crate::credential_recovery_store::valid_recovery_record_path(
                 data_dir,
                 self.provider,
                 account,
-            )? {
+            )?;
+        }
+
+        if mode == InstallMode::IfAbsent {
+            if let Some(path) = self.existing_document(data_dir, account)? {
                 return Ok(InstallDocumentResult::AlreadyPresent(path));
             }
             if let Some(error) = refusal {
@@ -508,8 +345,35 @@ impl SubscriptionReader {
             }
         }
 
-        self.install_document(document)
+        let authoritative = (mode == InstallMode::Replace)
+            .then(|| self.discover_credential_path())
+            .flatten();
+        authoritative
+            .map_or_else(
+                || self.install_document(document),
+                |path| Self::install_document_at(&path, document),
+            )
             .map(InstallDocumentResult::Installed)
+    }
+
+    fn existing_document(&self, data_dir: &Path, account: &str) -> Result<Option<PathBuf>, String> {
+        for path in self.credential_paths() {
+            match path.try_exists() {
+                Ok(true) => return Ok(Some(path)),
+                Ok(false) => {}
+                Err(error) => {
+                    return Err(format!(
+                        "could not check the {} credential destination: {error}",
+                        self.provider
+                    ));
+                }
+            }
+        }
+        crate::credential_recovery_store::valid_recovery_record_path(
+            data_dir,
+            self.provider,
+            account,
+        )
     }
 
     /// Remove every credential file this provider is read from.
@@ -642,6 +506,28 @@ impl SubscriptionReader {
         }
         let raw = crate::platform_keychain::lookup(self.provider)?;
         self.parse_store_credential(&raw)
+    }
+
+    /// Whether this home currently has a usable credential in the platform
+    /// store. Conditional import treats that as an existing destination even
+    /// when no credential file exists.
+    #[must_use]
+    pub fn has_platform_store_credential(&self) -> bool {
+        self.read_token_from_keychain().is_some()
+    }
+
+    /// Whether writing `candidate` to this home would still leave a newer
+    /// platform-store credential authoritative.
+    #[must_use]
+    pub fn candidate_is_shadowed_by_platform_store(&self, candidate: &SubscriptionToken) -> bool {
+        Self::candidate_is_shadowed_by_store(candidate, self.read_token_from_keychain())
+    }
+
+    fn candidate_is_shadowed_by_store(
+        candidate: &SubscriptionToken,
+        from_store: Option<SubscriptionToken>,
+    ) -> bool {
+        from_store.is_some_and(|stored| stored.expires_at_ms > candidate.expires_at_ms)
     }
 
     /// Normalize a credential held by the platform store.

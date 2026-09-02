@@ -20,6 +20,8 @@ use axum::response::Response;
 use serde_json::{Value, json};
 
 mod native;
+#[cfg(test)]
+pub(crate) use native::forward_native_gemini_authorized;
 pub use native::{forward_native_gemini, forward_native_vertex, native_model, native_models};
 
 use crate::metrics::Surface;

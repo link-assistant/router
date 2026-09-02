@@ -24,6 +24,8 @@ pub enum ProviderKind {
     /// Generic OpenAI-compatible upstream such as `LiteLLM`.
     #[default]
     OpenAICompatible,
+    /// Personal z.ai GLM Coding Plan with client/subscriber policy gates.
+    ZaiCodingPlan,
 }
 
 impl ProviderKind {
@@ -31,9 +33,10 @@ impl ProviderKind {
     #[must_use]
     pub fn from_str_opt(value: &str) -> Option<Self> {
         match value.to_lowercase().as_str() {
-            "openai" | "openai-compatible" | "openai_like" | "litellm" => {
+            "openai" | "openai-compatible" | "open-a-i-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
+            "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
             _ => None,
         }
     }
@@ -43,6 +46,7 @@ impl ProviderKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::OpenAICompatible => "openai-compatible",
+            Self::ZaiCodingPlan => "z.ai-coding-plan",
         }
     }
 }
@@ -72,6 +76,15 @@ pub struct ProviderRecord {
     /// Whether this provider is available for routing.
     #[serde(default = "default_enabled")]
     pub enabled: bool,
+    /// Subscriber allowed to spend this personal Coding Plan credential.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subscriber_id: Option<String>,
+    /// Explicit acknowledgement that z.ai has not documented intermediary use.
+    #[serde(default)]
+    pub intermediary_risk_acknowledged: bool,
+    /// Exact unsupported tools separately accepted by the operator.
+    #[serde(default)]
+    pub unsupported_clients: Vec<String>,
 }
 
 const fn default_enabled() -> bool {
@@ -91,6 +104,9 @@ impl ProviderRecord {
             api_key_env: self.api_key_env.clone(),
             has_encrypted_api_key: self.encrypted_api_key.is_some(),
             enabled: self.enabled,
+            subscriber_id: self.subscriber_id.clone(),
+            intermediary_risk_acknowledged: self.intermediary_risk_acknowledged,
+            unsupported_clients: self.unsupported_clients.clone(),
         }
     }
 }
@@ -108,6 +124,10 @@ pub struct RedactedProviderRecord {
     pub api_key_env: Option<String>,
     pub has_encrypted_api_key: bool,
     pub enabled: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscriber_id: Option<String>,
+    pub intermediary_risk_acknowledged: bool,
+    pub unsupported_clients: Vec<String>,
 }
 
 /// API / CLI input for creating or replacing a provider.
@@ -133,16 +153,26 @@ pub struct ProviderUpsert {
     pub encrypted_api_key: Option<String>,
     #[serde(default)]
     pub enabled: Option<bool>,
+    #[serde(default)]
+    pub subscriber_id: Option<String>,
+    #[serde(default, alias = "intermediary_risk_acknowledged")]
+    pub acknowledge_intermediary_risk: Option<bool>,
+    #[serde(default, alias = "unsupported_clients")]
+    pub acknowledge_unsupported_clients: Option<Vec<String>>,
 }
 
 /// OpenAI-compatible provider resolved for runtime forwarding.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedProvider {
     pub name: String,
+    pub kind: ProviderKind,
     pub base_url: String,
     pub default_model: Option<String>,
     pub models: Vec<String>,
     pub api_key: Option<String>,
+    pub subscriber_id: Option<String>,
+    pub intermediary_risk_acknowledged: bool,
+    pub unsupported_clients: Vec<String>,
 }
 
 impl ResolvedProvider {
@@ -164,6 +194,7 @@ pub struct ProviderStore {
     lock_path: PathBuf,
     token_secret: Arc<String>,
     inner: Arc<RwLock<HashMap<String, ProviderRecord>>>,
+    entitlement_policy: Arc<RwLock<crate::client_policy::SubscriptionEntitlementPolicy>>,
 }
 
 impl ProviderStore {
@@ -187,7 +218,32 @@ impl ProviderStore {
             path,
             token_secret: Arc::new(token_secret.to_string()),
             inner: Arc::new(RwLock::new(inner)),
+            entitlement_policy: Arc::new(RwLock::new(
+                crate::client_policy::SubscriptionEntitlementPolicy::default(),
+            )),
         })
+    }
+
+    /// Install the boot-validated consumer-subscription bridge policy.
+    pub fn set_subscription_entitlement_policy(
+        &self,
+        policy: crate::client_policy::SubscriptionEntitlementPolicy,
+    ) -> Result<(), ProviderError> {
+        *self
+            .entitlement_policy
+            .write()
+            .map_err(|_| ProviderError::LockPoisoned)? = policy;
+        Ok(())
+    }
+
+    /// Snapshot the policy used by catalog and dispatch.
+    pub fn subscription_entitlement_policy(
+        &self,
+    ) -> Result<crate::client_policy::SubscriptionEntitlementPolicy, ProviderError> {
+        self.entitlement_policy
+            .read()
+            .map_err(|_| ProviderError::LockPoisoned)
+            .map(|policy| policy.clone())
     }
 
     /// Return all providers sorted by name.
@@ -216,9 +272,22 @@ impl ProviderStore {
     /// Add or replace a provider, encrypting any inline API key.
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let record = self.build_record(input)?;
-        self.mutate(|records| {
+        self.mutate(|records| -> Result<(), ProviderError> {
+            if record.enabled
+                && record.kind == ProviderKind::ZaiCodingPlan
+                && records.values().any(|existing| {
+                    existing.enabled
+                        && existing.kind == ProviderKind::ZaiCodingPlan
+                        && existing.name != record.name
+                })
+            {
+                return Err(ProviderError::Invalid(
+                    "only one personal z.ai Coding Plan subscriber may be enabled".into(),
+                ));
+            }
             records.insert(record.name.clone(), record.clone());
-        })?;
+            Ok(())
+        })??;
         Ok(record)
     }
 
@@ -261,20 +330,29 @@ impl ProviderStore {
             .transpose()?;
         Ok(Some(ResolvedProvider {
             name: record.name,
+            kind: record.kind,
             base_url: record.base_url,
             default_model: record.default_model,
             models: record.models,
             api_key,
+            subscriber_id: record.subscriber_id,
+            intermediary_risk_acknowledged: record.intermediary_risk_acknowledged,
+            unsupported_clients: record.unsupported_clients,
         }))
     }
 
     fn build_record(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let name = normalize_name(&input.name)?;
-        let kind = input
-            .kind
-            .as_deref()
-            .and_then(ProviderKind::from_str_opt)
-            .unwrap_or_default();
+        let kind = match input.kind.as_deref() {
+            Some(value) => ProviderKind::from_str_opt(value)
+                .ok_or_else(|| ProviderError::Invalid(format!("unknown provider kind: {value}")))?,
+            None => ProviderKind::default(),
+        };
+        if name == "z.ai" && kind != ProviderKind::ZaiCodingPlan {
+            return Err(ProviderError::Invalid(
+                "provider name 'z.ai' is reserved for the Coding Plan model namespace".into(),
+            ));
+        }
         let base_url = input.base_url.trim_end_matches('/').to_string();
         if base_url.is_empty() {
             return Err(ProviderError::Invalid("base_url is required".into()));
@@ -284,6 +362,45 @@ impl ProviderStore {
             None => input.encrypted_api_key.filter(|s| !s.is_empty()),
         };
         let models = input.models.unwrap_or_default();
+        let subscriber_id = input.subscriber_id.filter(|value| !value.trim().is_empty());
+        let intermediary_risk_acknowledged = input.acknowledge_intermediary_risk.unwrap_or(false);
+        let unsupported_clients = input.acknowledge_unsupported_clients.unwrap_or_default();
+        let enabled = input.enabled.unwrap_or(kind != ProviderKind::ZaiCodingPlan);
+        if kind == ProviderKind::ZaiCodingPlan {
+            if base_url != "https://api.z.ai" && !cfg!(test) {
+                return Err(ProviderError::Invalid(
+                    "z.ai Coding Plan base_url must be https://api.z.ai".into(),
+                ));
+            }
+            let subscriber = subscriber_id.as_deref().ok_or_else(|| {
+                ProviderError::Invalid("z.ai Coding Plan requires --subscriber-id".into())
+            })?;
+            crate::zai_coding_plan::ZaiCodingPlanPolicy::new(
+                subscriber,
+                intermediary_risk_acknowledged,
+                &unsupported_clients,
+            )
+            .map_err(ProviderError::Invalid)?;
+            for model in &models {
+                if !crate::zai_coding_plan::REVIEWED_MODELS.contains(&model.as_str()) {
+                    return Err(ProviderError::Invalid(format!(
+                        "unreviewed z.ai Coding Plan model: {model}"
+                    )));
+                }
+            }
+            if enabled && !intermediary_risk_acknowledged {
+                return Err(ProviderError::Invalid(
+                    "enabling z.ai Coding Plan requires --acknowledge-intermediary-risk".into(),
+                ));
+            }
+        } else if subscriber_id.is_some()
+            || intermediary_risk_acknowledged
+            || !unsupported_clients.is_empty()
+        {
+            return Err(ProviderError::Invalid(
+                "Coding Plan subscriber/risk settings require kind z.ai-coding-plan".into(),
+            ));
+        }
         Ok(ProviderRecord {
             name,
             kind,
@@ -292,7 +409,10 @@ impl ProviderStore {
             models,
             api_key_env: input.api_key_env.filter(|s| !s.is_empty()),
             encrypted_api_key,
-            enabled: input.enabled.unwrap_or(true),
+            enabled,
+            subscriber_id,
+            intermediary_risk_acknowledged,
+            unsupported_clients,
         })
     }
 
@@ -371,10 +491,14 @@ impl OpenAICompatibleConfig {
         });
         ResolvedProvider {
             name: self.provider_name.clone(),
+            kind: ProviderKind::OpenAICompatible,
             base_url: self.base_url.trim_end_matches('/').to_string(),
             default_model: self.default_model.clone(),
             models: self.models.clone(),
             api_key,
+            subscriber_id: None,
+            intermediary_risk_acknowledged: false,
+            unsupported_clients: Vec::new(),
         }
     }
 
@@ -391,6 +515,9 @@ impl OpenAICompatibleConfig {
             api_key_env: self.api_key_env.clone(),
             encrypted_api_key: None,
             enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
         }
     }
 }
@@ -625,6 +752,9 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
                 api_key_env: None,
                 encrypted_api_key: None,
                 enabled: Some(true),
+                subscriber_id: None,
+                acknowledge_intermediary_risk: None,
+                acknowledge_unsupported_clients: None,
             });
             continue;
         }
@@ -651,6 +781,21 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
             "api_key" | "api-key" => provider.api_key = Some(value),
             "api_key_env" | "api-key-env" => provider.api_key_env = Some(value),
             "enabled" => provider.enabled = Some(matches!(value.as_str(), "true" | "1" | "yes")),
+            "subscriber_id" | "subscriber-id" => provider.subscriber_id = Some(value),
+            "acknowledge_intermediary_risk" | "acknowledge-intermediary-risk" => {
+                provider.acknowledge_intermediary_risk =
+                    Some(matches!(value.as_str(), "true" | "1" | "yes"));
+            }
+            "acknowledge_unsupported_clients" | "acknowledge-unsupported-clients" => {
+                provider.acknowledge_unsupported_clients = Some(
+                    value
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|entry| !entry.is_empty())
+                        .map(ToString::to_string)
+                        .collect(),
+                );
+            }
             other => {
                 return Err(ProviderError::Invalid(format!(
                     "unknown provider field: {other}"
@@ -692,167 +837,5 @@ fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ProviderError> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    fn upsert() -> ProviderUpsert {
-        ProviderUpsert {
-            name: "litellm".into(),
-            kind: Some("openai-compatible".into()),
-            base_url: "http://localhost:4000/v1/".into(),
-            default_model: Some("claude-sonnet".into()),
-            models: Some(vec!["claude-sonnet".into()]),
-            api_key: Some("sk-test".into()),
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(true),
-        }
-    }
-
-    #[test]
-    fn provider_store_encrypts_and_resolves_api_key() {
-        let dir = tempdir().unwrap();
-        let store = ProviderStore::open(dir.path(), "secret").unwrap();
-        let record = store.upsert(upsert()).unwrap();
-
-        assert!(record.encrypted_api_key.is_some());
-        assert_ne!(record.encrypted_api_key.as_deref(), Some("sk-test"));
-
-        let resolved = store.resolve("litellm").unwrap().unwrap();
-        assert_eq!(resolved.api_key.as_deref(), Some("sk-test"));
-        assert_eq!(resolved.base_url, "http://localhost:4000/v1");
-
-        let reopened = ProviderStore::open(dir.path(), "secret").unwrap();
-        assert_eq!(
-            reopened
-                .resolve("litellm")
-                .unwrap()
-                .unwrap()
-                .api_key
-                .as_deref(),
-            Some("sk-test")
-        );
-    }
-
-    #[test]
-    fn provider_store_redacts_saved_secret() {
-        let dir = tempdir().unwrap();
-        let store = ProviderStore::open(dir.path(), "secret").unwrap();
-        store.upsert(upsert()).unwrap();
-
-        let redacted = store.list_redacted().unwrap();
-        assert!(redacted[0].has_encrypted_api_key);
-    }
-
-    #[test]
-    fn independently_opened_provider_stores_do_not_lose_updates() {
-        let dir = tempdir().unwrap();
-        let first = ProviderStore::open(dir.path(), "secret").unwrap();
-        let second = ProviderStore::open(dir.path(), "secret").unwrap();
-        first.upsert(upsert()).unwrap();
-        let mut other = upsert();
-        other.name = "other".into();
-        other.base_url = "https://other.example/v1".into();
-        second.upsert(other).unwrap();
-
-        assert_eq!(first.list().unwrap().len(), 2);
-        assert_eq!(second.list().unwrap().len(), 2);
-    }
-
-    #[test]
-    fn import_indented_provider_config() {
-        let input = r#"
-litellm
-  kind "openai-compatible"
-  base-url "http://litellm:4000/v1"
-  model "claude-sonnet"
-  models "claude-sonnet,gpt-4o"
-  api-key "sk-local"
-"#;
-        let parsed = parse_provider_import(input).unwrap();
-        assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0].name, "litellm");
-        assert_eq!(parsed[0].base_url, "http://litellm:4000/v1");
-        assert_eq!(
-            parsed[0].models.as_ref().unwrap(),
-            &vec!["claude-sonnet".to_string(), "gpt-4o".to_string()]
-        );
-    }
-
-    #[test]
-    fn import_json_provider_config() {
-        let input = r#"{"providers":[{"name":"litellm","base_url":"http://litellm:4000/v1"}]}"#;
-        let parsed = parse_provider_import(input).unwrap();
-        assert_eq!(parsed[0].name, "litellm");
-    }
-
-    #[test]
-    fn import_provider_store_lenv_preserves_encrypted_key() {
-        let source_dir = tempdir().unwrap();
-        let source = ProviderStore::open(source_dir.path(), "secret").unwrap();
-        source.upsert(upsert()).unwrap();
-
-        let target_dir = tempdir().unwrap();
-        let target = ProviderStore::open(target_dir.path(), "secret").unwrap();
-        let imported = target
-            .import_file(&source_dir.path().join("providers.lenv"))
-            .unwrap();
-
-        assert_eq!(imported, 1);
-        assert_eq!(
-            target
-                .resolve("litellm")
-                .unwrap()
-                .unwrap()
-                .api_key
-                .as_deref(),
-            Some("sk-test")
-        );
-    }
-
-    /// A record encrypted under a published stand-in is named as disclosed,
-    /// not surfaced as an opaque decryption failure: that key can be read out
-    /// of the router's own source, so it has to be rotated (issue #300).
-    #[test]
-    fn a_key_encrypted_under_a_placeholder_is_reported_as_disclosed() {
-        use aes_gcm::aead::Aead as _;
-
-        let placeholder = crate::token_secret::LEGACY_PLACEHOLDERS[0];
-        // What the old build wrote: encryption under a key published in the
-        // source. `cipher` refuses to produce this now, which is the fix; the
-        // record it already wrote still has to be recognised.
-        let legacy = legacy_cipher(placeholder).expect("legacy key");
-        let nonce = Nonce::default();
-        let ciphertext = legacy
-            .encrypt(&nonce, b"sk-real-vendor-key".as_ref())
-            .expect("encrypt under the placeholder");
-        let mut packed = nonce.to_vec();
-        packed.extend_from_slice(&ciphertext);
-        let encrypted = format!("aes256gcm:{}", STANDARD.encode(&packed));
-
-        let error = decrypt_api_key(&encrypted, "a-real-signing-secret")
-            .expect_err("a real secret cannot decrypt it");
-        let message = error.to_string();
-
-        assert!(
-            message.contains("disclosed"),
-            "the operator must be told the key is compromised: {message}"
-        );
-        assert!(
-            message.contains(placeholder),
-            "and which stand-in it was encrypted under: {message}"
-        );
-        assert!(
-            message.contains("rotate"),
-            "and what to do about it: {message}"
-        );
-        // A genuinely wrong secret still fails plainly, without crying wolf.
-        let sound = encrypt_api_key("sk-real-vendor-key", "the-right-secret").expect("encrypt");
-        let error = decrypt_api_key(&sound, "the-wrong-secret").expect_err("wrong key");
-        assert!(
-            !error.to_string().contains("disclosed"),
-            "an ordinary mismatch is not a disclosure: {error}"
-        );
-    }
-}
+#[path = "providers_tests.rs"]
+mod tests;

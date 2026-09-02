@@ -10,7 +10,8 @@ router with claude "hi"
 
 The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
 `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN`; the normal Claude settings are
-not changed. See [with-router.md](with-router.md) for server and token options.
+not changed. It also enables gateway discovery; Claude Code >= 2.1.129 is
+required. See [with-router.md](with-router.md) for server and token options.
 
 Wrapper flags may appear before or after `claude`; an explicit `--`
 forwards every later token verbatim. See
@@ -39,6 +40,7 @@ documents the two variables that matter:
 ```bash
 export ANTHROPIC_BASE_URL=http://127.0.0.1:8080
 export ANTHROPIC_AUTH_TOKEN=la_sk_...      # your task token
+export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1
 claude
 ```
 
@@ -63,11 +65,15 @@ The client sends only its `la_sk_…` token. The router adds, per request:
 | --- | --- |
 | `auto` (default) | routes the requested advertised model to its healthy owning subscription |
 | `anthropic` | native pass-through to `api.anthropic.com` with the Claude MAX OAuth token |
-| `codex`, `qwen`, `gemini`, `openai-compatible` | bridged — see [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) |
+| `codex` | denied by default; exact `claude:codex` risk acceptance required — see [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) |
+| `qwen`, `gemini` | consumer subscription denied pending recorded terms |
+| `openai-compatible` | ordinary API-key provider; bridged by its configured terms |
+| `z.ai-coding-plan` | experimental, subscriber-bound aliases — see [zai-coding-plan.md](zai-coding-plan.md) |
 | `gonka`, `crater` | unchanged prior behaviour on this surface |
 
-So the same Claude Code configuration works against any of them; only the
-router's `UPSTREAM_PROVIDER` changes.
+The signed managed-client binding and exact model identity are checked again
+immediately before upstream; a stale/cached picker entry cannot select another
+provider.
 
 ## Per-task usage
 
@@ -100,3 +106,4 @@ curl -s http://127.0.0.1:8080/v1/messages \
 | `429 rate_limit_error` whose message is just `"Error"` | the upstream rejected the request because the Claude Code identity system block was missing — the router adds it for OAuth credentials, so this indicates an API-key upstream ([details](claude-max-in-codex.md#the-claude-code-identity-block)) |
 | `503` naming an account | the pinned account is in a `Retry-After` cooldown |
 | Extended thinking missing | you are on a bridged upstream; `thinking` blocks are dropped (see the bridge document) |
+| GLM model missing after a policy/credential change | restart Claude Code to refresh `~/.claude/cache/gateway-models.json`; cached ghosts are still rejected locally |

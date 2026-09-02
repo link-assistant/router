@@ -3,17 +3,24 @@
 use serde_json::Value;
 
 use super::{AnyError, compact};
-use crate::clients::RouterModel;
+use crate::clients::{ClientKind, RouterModel};
 
 pub(super) async fn fetch_models(
-    client: &reqwest::Client,
+    http: &reqwest::Client,
+    client: ClientKind,
     base_url: &str,
     token: &str,
 ) -> Result<Vec<RouterModel>, AnyError> {
-    let url = format!("{base_url}/v1/models");
-    let response = client
+    let url = format!("{base_url}{}", client_models_path(client));
+    let request = http
         .get(&url)
-        .bearer_auth(token)
+        .header("x-link-assistant-client", client.canonical_name());
+    let request = match client {
+        ClientKind::ClaudeCode => request.header("x-api-key", token),
+        ClientKind::GeminiCli => request.header("x-goog-api-key", token),
+        _ => request.bearer_auth(token),
+    };
+    let response = request
         .send()
         .await
         .map_err(|error| format!("router token validation could not reach {url}: {error}"))?;
@@ -54,6 +61,19 @@ pub(super) async fn fetch_models(
     .into())
 }
 
+pub(super) const fn client_models_path(client: ClientKind) -> &'static str {
+    match client {
+        ClientKind::Codex => "/api/codex/v1/models",
+        ClientKind::GeminiCli => "/api/gemini/v1beta/models",
+        ClientKind::QwenCode => "/api/qwen/v1/models",
+        ClientKind::ClaudeCode
+        | ClientKind::Opencode
+        | ClientKind::GrokCli
+        | ClientKind::Cursor
+        | ClientKind::Agent => "/v1/models",
+    }
+}
+
 fn token_rejection_reason(body: &str) -> &'static str {
     let message = serde_json::from_str::<Value>(body)
         .ok()
@@ -71,5 +91,29 @@ fn token_rejection_reason(body: &str) -> &'static str {
         "revoked"
     } else {
         "invalid"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::clients::ClientKind;
+
+    #[test]
+    fn catalog_paths_are_namespaced_for_clients_with_non_anthropic_protocols() {
+        assert_eq!(client_models_path(ClientKind::ClaudeCode), "/v1/models");
+        assert_eq!(
+            client_models_path(ClientKind::Codex),
+            "/api/codex/v1/models"
+        );
+        assert_eq!(
+            client_models_path(ClientKind::GeminiCli),
+            "/api/gemini/v1beta/models"
+        );
+        assert_eq!(
+            client_models_path(ClientKind::QwenCode),
+            "/api/qwen/v1/models"
+        );
+        assert_eq!(client_models_path(ClientKind::Opencode), "/v1/models");
     }
 }

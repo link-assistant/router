@@ -46,6 +46,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             .unwrap_or("client integration is unsupported")
             .into());
     }
+    if args.client == ClientKind::ClaudeCode {
+        crate::clients::require_claude_gateway_version()?;
+    }
     let explicit_token = if args.token_stdin {
         Some(crate::server_command::read_token()?)
     } else {
@@ -78,8 +81,14 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .label
         .clone()
         .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
-    let credential =
-        prepare_run_credential(&server, &label, args.run_ttl_hours, !args.fixed_run_ttl).await?;
+    let credential = prepare_run_credential(
+        &server,
+        args.client,
+        &label,
+        args.run_ttl_hours,
+        !args.fixed_run_ttl,
+    )
+    .await?;
     // Which model the client uses, and how hard it thinks, are the user's own
     // settings. `with` chooses a route to a model, so both are left alone
     // unless the user asked — the rule `--global` already followed (issue

@@ -169,6 +169,120 @@ async fn conditional_install_leaves_an_existing_recognized_destination_unchanged
     assert!(!home.path().join(".credentials.json").exists());
 }
 
+/// Replacement must update the credential the Router actually reads. Claude
+/// searches legacy `credentials.json` before its canonical dotfile, so merely
+/// creating `.credentials.json` leaves the old login authoritative.
+#[tokio::test]
+async fn replacement_overwrites_the_existing_authoritative_claude_document() {
+    let home = tempfile::tempdir().expect("credential home");
+    let data = tempfile::tempdir().expect("router data");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+    let authoritative = home.path().join("credentials.json");
+    std::fs::write(
+        &authoritative,
+        r#"{"claudeAiOauth":{"accessToken":"old","refreshToken":"old-refresh"}}"#,
+    )
+    .expect("legacy credential");
+    let candidate =
+        r#"{"claudeAiOauth":{"accessToken":"candidate","refreshToken":"candidate-refresh"}}"#;
+
+    let result = reader
+        .install_document_locked(
+            data.path(),
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            candidate,
+            InstallMode::Replace,
+        )
+        .await
+        .expect("replace credential");
+
+    assert_eq!(
+        result,
+        InstallDocumentResult::Installed(authoritative.clone())
+    );
+    assert_eq!(std::fs::read_to_string(authoritative).unwrap(), candidate);
+    assert_eq!(reader.read_token().unwrap().access_token, "candidate");
+    assert!(!home.path().join(".credentials.json").exists());
+}
+
+/// Replacement is an atomic overwrite, so a malformed legacy file cannot
+/// block fallback parsing and keep shadowing the validated candidate.
+#[tokio::test]
+async fn replacement_repairs_a_malformed_authoritative_claude_document() {
+    let home = tempfile::tempdir().expect("credential home");
+    let data = tempfile::tempdir().expect("router data");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+    let authoritative = home.path().join("credentials.json");
+    std::fs::write(&authoritative, "not-json").expect("malformed legacy credential");
+    let candidate =
+        r#"{"claudeAiOauth":{"accessToken":"candidate","refreshToken":"candidate-refresh"}}"#;
+
+    reader
+        .install_document_locked(
+            data.path(),
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            candidate,
+            InstallMode::Replace,
+        )
+        .await
+        .expect("replace malformed credential");
+
+    assert_eq!(reader.read_token().unwrap().access_token, "candidate");
+    assert_eq!(std::fs::read_to_string(authoritative).unwrap(), candidate);
+}
+
+/// An unusable recovery sidecar is storage uncertainty. Replacement must fail
+/// before mutating the working primary document rather than report success for
+/// a destination serving cannot subsequently load.
+#[tokio::test]
+async fn replacement_refuses_an_unusable_recovery_before_mutating_primary() {
+    use crate::credential_store::CredentialStore as _;
+    use std::sync::Arc;
+
+    let home = tempfile::tempdir().expect("credential home");
+    let data = tempfile::tempdir().expect("router data");
+    let provider = SubscriptionProvider::Codex;
+    let account = crate::credential_recovery_store::PRIMARY_ACCOUNT;
+    let primary_path = home.path().join("auth.json");
+    let old =
+        r#"{"auth_mode":"chatgpt","tokens":{"access_token":"old","refresh_token":"old-refresh"}}"#;
+    std::fs::write(&primary_path, old).expect("primary credential");
+    let fallback = crate::credential_recovery_store::RecoverableCredentialStore::new(
+        provider,
+        account,
+        Arc::new(ReadOnlyPrimary {
+            reader: SubscriptionReader::new(provider, home.path()),
+        }),
+        data.path(),
+    );
+    fallback
+        .persist(&SubscriptionToken {
+            access_token: "recovery".into(),
+            refresh_token: Some("recovery-refresh".into()),
+            expires_at_ms: None,
+            account_id: None,
+            resource_url: None,
+        })
+        .expect("create recovery record");
+    let recovery = crate::credential_recovery_store::valid_recovery_record_path(
+        data.path(),
+        provider,
+        account,
+    )
+    .unwrap()
+    .expect("recovery path");
+    std::fs::write(&recovery, "not a recovery record").expect("corrupt recovery");
+
+    let candidate = r#"{"auth_mode":"chatgpt","tokens":{"access_token":"candidate","refresh_token":"candidate-refresh"}}"#;
+    let error = SubscriptionReader::new(provider, home.path())
+        .install_document_locked(data.path(), account, candidate, InstallMode::Replace)
+        .await
+        .expect_err("unusable recovery must block replacement");
+
+    assert!(error.contains("recovery record is unusable"), "{error}");
+    assert_eq!(std::fs::read_to_string(primary_path).unwrap(), old);
+}
+
 /// A fallback recovery record is a live destination even when the vendor home
 /// is empty. Installing an older candidate must not invalidate that chain on
 /// the next reload.

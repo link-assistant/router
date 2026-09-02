@@ -1,15 +1,14 @@
 # Link.Assistant.Router
 
-A self-hosted gateway for safely sharing one AI subscription with family,
-household members, colleagues, or a small team. Each person, task, or agent gets
-an independently expiring, revocable, rate-limited `la_sk_…` token while the
-vendor credential stays inside the router.
+A self-hosted gateway for policy-bound access to AI subscriptions and API
+providers. Each task gets an independently expiring, revocable, rate-limited
+`la_sk_…` token while the vendor credential stays inside the router.
 
-The primary use case is putting Claude Code and other agentic clients behind
-one Claude MAX subscription without handing its OAuth credential to every
-user. Per-token request and actual-token budgets contain runaway agents and
-make usage attributable. The router also supports additional subscription and
-OpenAI-compatible providers when a deployment needs them.
+Consumer subscriptions remain bound to their documented native client and one
+subscriber principal: Claude OAuth to Claude Code, ChatGPT OAuth to Codex, and
+Gemini/Qwen denied until their terms are recorded. Per-token budgets contain
+runaway agents and make usage attributable. Ordinary API providers have their
+own credential terms.
 
 [![CI/CD Pipeline](https://github.com/link-assistant/router/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/link-assistant/router/actions/workflows/release.yml?query=branch%3Amain)
 [![crates.io](https://img.shields.io/crates/v/link-assistant-router.svg?label=crates.io)](https://crates.io/crates/link-assistant-router)
@@ -22,18 +21,18 @@ OpenAI-compatible providers when a deployment needs them.
 
 Link.Assistant.Router is a transparent proxy between API clients (such as
 Claude Code) and vendor APIs. It provides an OpenRouter-like surface for
-subscription credentials while keeping the sharing, attribution, and
+subscription credentials while keeping authorization, attribution, and
 containment controls local to the operator.
 
 - **Proxies all Anthropic API requests** transparently, including SSE/streaming responses
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
-- **Vendor subscriptions** — the default `UPSTREAM_PROVIDER=auto` discovers healthy Claude, Codex, Gemini, and Qwen CLI credentials, exposes their model union, and routes each model to its owning subscription; an explicit provider value pins all traffic
+- **Vendor subscriptions** — `UPSTREAM_PROVIDER=auto` discovers healthy credentials, then exposes only the models allowed for the token's signed client/principal; a second pre-upstream check prevents stale or forged selection
 - **OpenAI-compatible endpoints** — `/v1/chat/completions`, `/v1/responses`, `/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
 - **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
 - **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
 - **Optional LiteLLM/OpenAI-compatible upstream** — `UPSTREAM_PROVIDER=openai-compatible` routes OpenAI SDK traffic to a stored provider such as LiteLLM
-- **Multi-account routing** — pool any number of Claude, Codex, Gemini, or Qwen subscriptions; session affinity, strict token pins, round-robin / fill-first / least-used selection, request caps, and `Retry-After`-aware cooldowns
-- **Issues custom `la_sk_...` JWT tokens** with expiration and revocation for multi-tenant access
+- **Multi-account routing** — manage multiple account-bound credentials with session affinity, strict token pins, selection strategies, request caps, and `Retry-After`-aware cooldowns
+- **Issues custom `la_sk_...` JWT tokens** with expiration/revocation plus immutable managed-client and subscriber bindings
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
 - **Live observability** — Prometheus `/metrics`, JSON `/v1/usage`, per-account health at `/v1/accounts`, subscription health at `/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
@@ -75,11 +74,12 @@ chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
 
 ### Vendor subscriptions (Codex, Gemini, Qwen)
 
-By default, leave `UPSTREAM_PROVIDER=auto`: the router discovers every healthy
-vendor credential, returns their union from `/v1/models`, and sends each model
-to its owning subscription. Set a concrete value to pin a deployment to one
-provider. Clients still authenticate with their `la_sk_...` token; the router
-supplies the selected vendor OAuth token.
+With `UPSTREAM_PROVIDER=auto`, Router discovers every healthy credential but
+returns a client-specific intersection from `/v1/models`. The signed
+`client_kind`, subscriber principal, native protocol evidence, model owner, and
+credential health must all agree again at dispatch. Pinning a provider does not
+bypass that rule. Generic/manual/admin/legacy tokens cannot spend a consumer
+subscription.
 
 | Provider | `UPSTREAM_PROVIDER` (aliases) | Credential home | Upstream |
 | --- | --- | --- | --- |
@@ -87,6 +87,12 @@ supplies the selected vendor OAuth token.
 | Codex / ChatGPT | `codex` (`chatgpt`, `openai-codex`) | `~/.codex/auth.json` | ChatGPT backend Responses API |
 | Gemini | `gemini` (`google`, `code-assist`) | `~/.gemini/oauth_creds.json` | Code Assist `generateContent` |
 | Qwen | `qwen` (`qwen-code`, `dashscope`) | `~/.qwen/oauth_creds.json` | DashScope OpenAI-compatible |
+
+The conservative entitlement matrix is Claude Code → Claude and Codex →
+ChatGPT. Exact cross-client experimentation requires
+`--allow-subscription-bridge CLIENT:PROVIDER`, emits a policy/account warning,
+and is audited. Gemini and Qwen rows cannot be overridden until their consumer
+terms are recorded. Protocol compatibility alone never grants access.
 
 The credential files are produced by each vendor's own CLI (run its `login`
 once). The router refreshes expiring access tokens with the vendor's public
@@ -298,8 +304,9 @@ need:
 | [per-task-tokens.md](docs/use-cases/per-task-tokens.md) | One `la_sk_…` token per task — audit, monitoring, security, isolation |
 | [audit-and-monitoring.md](docs/use-cases/audit-and-monitoring.md) | Aggregate `/metrics`, admin-only per-token `/v1/usage`, and the JSONL audit log |
 | [with-router.md](docs/use-cases/with-router.md) | Temporary-by-default one-line launcher, remote selection, managed Docker lifecycle, and exact global undo |
-| [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | A Claude MAX subscription inside Codex CLI and other OpenAI-dialect clients |
-| [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | A ChatGPT/Qwen/Gemini/LiteLLM backend inside Claude Code and other Anthropic-dialect clients |
+| [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | Historical Claude MAX → Codex bridge, disabled by default behind one exact risk acceptance |
+| [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | Historical subscription bridge defaults superseded; API-key adapters remain separate |
+| [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) | Experimental, subscriber-bound z.ai GLM Coding Plan routing with explicit policy acknowledgements |
 | [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |
 | [cli-codex.md](docs/use-cases/cli-codex.md) | Codex CLI configuration |
 | [cli-qwen-code.md](docs/use-cases/cli-qwen-code.md) | Qwen Code configuration |
@@ -311,7 +318,8 @@ need:
 
 ## Using with Claude Code
 
-The primary use case is routing Claude Code through the proxy so multiple users can share a single Claude MAX subscription.
+The supported consumer-subscription use case is routing a subscriber's managed
+Claude Code through the proxy without exposing its Claude OAuth credential.
 
 ### Step 1: Start the router (on the server/host machine)
 
@@ -320,28 +328,22 @@ export TOKEN_SECRET=your-secure-secret
 ./target/release/link-assistant-router
 ```
 
-### Step 2: Issue a token for each user
+### Step 2: Configure or launch the bound Claude client
 
 ```bash
-# Issue a token for user Alice
-curl -s -X POST http://localhost:8080/api/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"ttl_hours": 168, "label": "alice"}' | jq -r '.token'
-
-# Issue a token for user Bob
-curl -s -X POST http://localhost:8080/api/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"ttl_hours": 168, "label": "bob"}' | jq -r '.token'
+router with claude
+# or: router clients setup claude
 ```
 
-### Step 3: Configure Claude Code to use the router (on each user's machine)
+### Step 3: Manual configuration only with an already bound token
 
 ```bash
 # Set the base URL to point to the router
 export ANTHROPIC_BASE_URL=http://your-server:8080/api/latest/anthropic
 
-# Set the custom token as the API key
+# The token must carry client_kind=claude and the matching principal_id.
 export ANTHROPIC_API_KEY=la_sk_eyJ0eXAi...
+export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1
 
 # Run Claude Code normally — all requests go through the router
 claude
@@ -480,26 +482,29 @@ in a browser *or* in a chat. See
 |---|---|---|
 | `/v1/chat/completions` | POST | Chat Completions, translated to Anthropic Messages, forwarded to the selected OpenAI-compatible provider, or delivered as a Crater ForgeFed task |
 | `/v1/responses` | POST | Responses API, translated to Anthropic Messages or forwarded to the selected OpenAI-compatible provider |
-| `/v1/models` | GET | OpenAI-shaped union of models from healthy subscriptions and stored providers in automatic mode |
+| `/v1/models` | GET | Authenticated client/principal-specific intersection of healthy allowed models |
 | `/api/openai/v1/*` | GET/POST | Namespaced aliases for models, Chat Completions, and Responses |
 | `/api/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
 | `/api/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
-| `/api/gemini/v1beta/models` | GET | Native Gemini model list (union of every connected subscription) |
+| `/api/gemini/v1beta/models` | GET | Native Gemini model list filtered by the signed Gemini client policy |
 | `/api/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
-| `/api/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation, routed to the model's owning subscription (Codex, Claude, Qwen or Gemini) |
+| `/api/gemini/v1beta/models/{model}:generateContent` | POST | Native Gemini generation after exact client/provider entitlement; experimental z.ai requires its second acknowledgement |
 | `/api/gemini/v1beta/models/{model}:streamGenerateContent` | POST | Native Gemini SSE response |
 | `/api/vertex/v1/projects/.../models/{model}:generateContent` | POST | Native Vertex-style generation through Gemini Code Assist |
 
-Provider-specific namespaces use the matching healthy subscription in
-automatic mode, or the provider pinned by `UPSTREAM_PROVIDER`.
+Provider-specific namespaces still enforce the matching signed client,
+principal, protocol evidence, and healthy credential; pinning never grants
+authority.
 
-**Every advertised and routable model comes from a live provider catalog.** The
-router ships no built-in model list, no per-provider default model, and no alias
-table: a catalog exists only after a successful authenticated discovery for that
-exact account, and is recorded with the account identity, the fetch time and an
+**Every advertised and routable model comes from current credential evidence.**
+Consumer catalogs exist only after authenticated discovery for that exact
+account, and are recorded with the account identity, the fetch time and an
 explicit health flag. Before the first discovery a provider advertises nothing;
 `GET /v1/models` reports it under `degraded_providers` rather than filling the
-gap from source. When a credential is revoked its last known catalog stays
+gap from source. The experimental z.ai Coding Plan is the deliberate exception:
+z.ai documents no free model catalog, so its operator list is intersected with
+a code-reviewed allowlist after a non-inference quota health check. When a
+credential is revoked its last known catalog stays
 visible to administrators but stops being advertised or routed.
 
 Requested model names pass through unchanged. In automatic mode, routing uses
@@ -669,7 +674,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
-| `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy subscriptions, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, or `openai-compatible` |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible`, or `z.ai-coding-plan` |
+| `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
@@ -795,6 +801,7 @@ router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
 router auth import claude /path  # or name the source, read exactly as given
 router auth import --all         # every login this machine has, in one step
 router auth import codex --if-absent # install only while the destination is empty
+router auth import codex --safe-refresh-chain-import-v1 # assert the safe contract
 ```
 
 Importing is a different operation from authorizing, not a variation of it:
@@ -810,16 +817,27 @@ authorize a remote deployment from this machine, use `router auth claude` or
 `router auth codex`, which do follow the selection.
 
 The import reports what it adopted — where it came from, when it expires, and
-whether it carries a refresh token — so an already-expired credential is caught
-at import time rather than as a `401` later.
+whether it carries a refresh token. Before anything reaches the destination it
+forces a direct OAuth refresh in a private Router staging store, persists and
+rereads the result, then proves that fresh access token at the vendor's
+non-inference model catalog. A rejected, malformed, timed-out, unreachable, or
+non-refreshable candidate is never installed.
+
+Gemini's installed-app refresh grant also requires
+`GEMINI_OAUTH_CLIENT_SECRET`, set to the OAuth client secret shipped with the
+Gemini CLI. Router checks this before creating a staging transaction or making
+a network request and names the missing variable directly.
 
 Subscription imports use the same durable provider/account lock as refresh and
 native login. Ordinary import is an explicit replacement operation.
 `--if-absent` is the provisioning-safe form for Claude, Codex, Gemini, and Qwen:
 it rechecks the destination and recovery sidecar while holding that lock and
 never replaces a login that already exists or appeared while it waited. A
-vendor-rejected candidate is refused; add `--force` only when deliberately
-installing that candidate into a destination that is still empty.
+candidate must pass the same positive refresh-chain and catalog checks in both
+modes; there is no force bypass. Deployment tooling can pass
+`--safe-refresh-chain-import-v1` as a stable capability assertion: older Router
+versions reject the flag, while versions that accept it guarantee isolated
+refresh-chain validation plus locked atomic promotion.
 
 On macOS the live Claude credential is in the login Keychain rather than the
 file beside it, so an import from the vendor's own home consults both and takes
@@ -829,8 +847,17 @@ left out of it and the named directory is read exactly as given. Without that
 distinction a pool of per-account directories collapses onto whichever account
 happens to be logged in interactively.
 
-Adopting a credential does not mint one: both holders then rotate the same
-chain, and revoking it at the vendor ends both. To withdraw one:
+Refresh-chain validation advances the candidate before installation, so the
+source copy may contain the spent predecessor after a successful import. If a
+concurrent credential wins the conditional race or catalog validation fails
+after refresh, Router retains the advanced candidate under a non-secret
+transaction identifier instead of deleting the only current chain link. The
+directory is
+`DATA_DIR/auth-import-candidates/<transaction-id>-<random>/<provider>`; locate
+the prefix Router reported and resume through the same safe command, for
+example `router auth import qwen <that-directory>/qwen --local`. Do not copy the
+file around the import command, because that would bypass validation and locked
+promotion. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh
@@ -1018,6 +1045,12 @@ Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
 provider API keys are encrypted with AES-GCM using a key derived from
 `TOKEN_SECRET`; API responses and CLI output only show whether a stored key is
 present.
+
+The personal z.ai Coding Plan is deliberately **not** a generic provider. It is
+experimental, disabled by default, single-subscriber, and requires separate
+provider/client policy acknowledgements. See
+[zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) for the exact setup,
+health check, reviewed models, aliases, endpoints, and account-ban warning.
 
 ```bash
 router providers add \
@@ -1482,10 +1515,10 @@ Admin token (shown once, store it now): la_sk_eyJ0eXAi...
 ```
 
 A client token presented to an admin endpoint is rejected: authorisation is by
-scope, not by "any valid token". The converse does not hold: `scope=admin` is a
-**superset** of client access, so one administrator credential both manages
-tokens (`/api/tokens/list`) and reaches the models (`/v1/models`). The same is
-true of the flat `TOKEN_ADMIN_KEY`.
+scope, not by "any valid token". The converse also does not hold: `scope=admin`
+manages Router but is not an inference superset. Without an immutable managed
+client/subscriber binding it cannot list or spend consumer subscriptions. The
+same boundary applies to the flat `TOKEN_ADMIN_KEY`.
 
 #### The first-visitor claim
 
@@ -1510,9 +1543,9 @@ credential. It keeps working, `doctor` warns about it, and the first
 ### Per-token containment controls
 
 Each token can cap request count, actual upstream-reported input plus output
-tokens, and requests per minute. This lets you hand a credential to a separate
-person, task, or agent without exposing the vendor OAuth credential or letting
-one runaway loop immediately consume the shared subscription.
+tokens, and requests per minute. Managed launch/setup tokens also bind one
+client adapter and subscriber principal. Generic tokens below remain useful for
+ordinary API-key/Gonka/Crater routes but cannot consume vendor subscriptions.
 
 ```bash
 # CLI

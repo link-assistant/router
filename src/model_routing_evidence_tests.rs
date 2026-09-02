@@ -3,7 +3,7 @@
 use super::tests::auto_state;
 use super::*;
 use axum::body::Body;
-use axum::extract::{Path, Query, State};
+use axum::extract::{Query, State};
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
@@ -110,6 +110,37 @@ fn client_headers(state: &AppState) -> HeaderMap {
         "authorization",
         HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
     );
+    headers
+}
+
+fn managed_headers(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
+    let token = super::tests::bound_client_token(state, client, None);
+    let mut headers = HeaderMap::new();
+    match client {
+        crate::clients::ClientKind::ClaudeCode => {
+            headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
+            headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+        }
+        crate::clients::ClientKind::GeminiCli => {
+            headers.insert("x-goog-api-key", HeaderValue::from_str(&token).unwrap());
+            headers.insert(
+                "x-goog-api-client",
+                HeaderValue::from_static("router-test-fixture"),
+            );
+        }
+        crate::clients::ClientKind::Opencode => {
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+            headers.insert(
+                "user-agent",
+                HeaderValue::from_static("opencode/test-fixture"),
+            );
+            headers.insert("x-session-id", HeaderValue::from_static("test-session"));
+        }
+        _ => unreachable!("only evidence fixtures used here"),
+    }
     headers
 }
 
@@ -282,9 +313,12 @@ async fn raw_anthropic_records_the_current_claude_credential_rejection() {
         .method("POST")
         .uri("/v1/messages")
         .header(
-            "authorization",
-            client_headers(&state).get("authorization").unwrap(),
+            "x-api-key",
+            managed_headers(&state, crate::clients::ClientKind::ClaudeCode)
+                .get("x-api-key")
+                .unwrap(),
         )
+        .header("anthropic-version", "2023-06-01")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap();
@@ -302,10 +336,17 @@ async fn openai_anthropic_bridge_records_the_current_claude_credential_rejection
     let data = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
     let state = state_for(SubscriptionProvider::Claude, &data, &home, &base_url);
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["opencode:claude"])
+                .unwrap(),
+        )
+        .unwrap();
     let response = crate::proxy::openai_chat_completions(
         State(state.clone()),
         Query(BTreeMap::new()),
-        client_headers(&state),
+        managed_headers(&state, crate::clients::ClientKind::Opencode),
         Ok(axum::Json(json!({
             "model": MODEL,
             "messages": [{"role": "user", "content": "hello"}]
@@ -381,13 +422,14 @@ async fn gemini_openai_and_native_surfaces_record_the_current_credential_rejecti
         &native_home,
         &base_url,
     );
-    let native = Box::pin(crate::gemini::forward_native_gemini(
-        State(native_state.clone()),
-        Path(format!("models/{MODEL}:generateContent")),
-        client_headers(&native_state),
-        Ok(axum::Json(json!({
+    let native_headers = client_headers(&native_state);
+    let native = Box::pin(crate::gemini::forward_native_gemini_authorized(
+        &native_state,
+        &format!("models/{MODEL}:generateContent"),
+        &native_headers,
+        json!({
             "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
-        }))),
+        }),
     ))
     .await;
     assert_eq!(native.status(), StatusCode::UNAUTHORIZED);
@@ -631,13 +673,14 @@ async fn native_gemini_records_401_before_an_incomplete_body_fails() {
     let data = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
     let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
-    let response = Box::pin(crate::gemini::forward_native_gemini(
-        State(state.clone()),
-        Path(format!("models/{MODEL}:generateContent")),
-        client_headers(&state),
-        Ok(axum::Json(json!({
+    let headers = client_headers(&state);
+    let response = Box::pin(crate::gemini::forward_native_gemini_authorized(
+        &state,
+        &format!("models/{MODEL}:generateContent"),
+        &headers,
+        json!({
             "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
-        }))),
+        }),
     ))
     .await;
     server.await.unwrap();

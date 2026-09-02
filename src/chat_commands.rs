@@ -303,6 +303,8 @@ fn issue(context: &CommandContext<'_>, rest: &str) -> Reply {
         scope: "",
         github_repos: Vec::new(),
         sliding_window_seconds: None,
+        client_kind: None,
+        principal_id: None,
     };
     // Same bounds as the CLI and HTTP surfaces, rather than chat-only rules.
     if let Err(message) = request.validate() {

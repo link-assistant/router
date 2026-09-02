@@ -12,7 +12,7 @@ use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::clients::RouterModel;
+use crate::clients::{ClientKind, RouterModel};
 
 mod bootstrap;
 mod catalog;
@@ -249,6 +249,7 @@ pub async fn resolve(
 /// Validate an ordinary token or exchange an admin credential for a run token.
 pub async fn prepare_run_credential(
     server: &ResolvedServer,
+    client_kind: ClientKind,
     label: &str,
     ttl_hours: i64,
     sliding: bool,
@@ -282,13 +283,14 @@ pub async fn prepare_run_credential(
     let list = client.get(&list_url).bearer_auth(token).send().await;
     match list {
         Ok(response) if response.status().is_success() => {
-            let issue_url = format!("{}/api/tokens", server.base_url);
+            let issue_url = format!("{}/api/tokens/client", server.base_url);
             let response = client
                 .post(&issue_url)
                 .bearer_auth(token)
                 .json(&serde_json::json!({
                     "ttl_hours": ttl_hours,
                     "label": label,
+                    "client_kind": client_kind.canonical_name(),
                     "max_requests": server.run_max_requests,
                     // The run is revoked when the client exits, so the clock
                     // is a backstop for a client that never got to exit --
@@ -327,7 +329,7 @@ pub async fn prepare_run_credential(
                     id,
                 }),
             };
-            match fetch_models(&client, &server.base_url, &credential.token).await {
+            match fetch_models(&client, client_kind, &server.base_url, &credential.token).await {
                 Ok(models) => {
                     credential.available_models = models;
                     Ok(credential)
@@ -339,7 +341,8 @@ pub async fn prepare_run_credential(
             }
         }
         Ok(response) if response.status().as_u16() == 401 || response.status().as_u16() == 403 => {
-            let available_models = fetch_models(&client, &server.base_url, token).await?;
+            let available_models =
+                fetch_models(&client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
                 token: token.to_string(),
                 available_models,

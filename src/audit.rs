@@ -45,6 +45,12 @@ pub struct AuditEvent {
     pub surface: String,
     /// Request path as seen by the router.
     pub path: String,
+    /// Signed managed-client adapter, when this was a bound token.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_kind: Option<String>,
+    /// Exact risk-accepted matrix cell, when native entitlement was not used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscription_override: Option<String>,
     /// Model requested by the client, when the body carried one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
@@ -131,6 +137,8 @@ pub fn event(
         provider: provider.to_string(),
         surface: surface.to_string(),
         path: path.to_string(),
+        client_kind: None,
+        subscription_override: None,
         model: model.map(String::from),
     }
 }
@@ -168,14 +176,61 @@ pub fn record_authorised_request(
     let model = body
         .and_then(|b| b.get("model"))
         .and_then(serde_json::Value::as_str);
-    state.audit.record(&event(
+    let mut event = event(
         &claims.sub,
         &claims.label,
         state.upstream_provider.as_str(),
         surface_name(surface),
         path,
         model,
-    ));
+    );
+    event.client_kind.clone_from(&claims.client_kind);
+    if let (Some(client), Some(provider)) = (
+        claims
+            .client_kind
+            .as_deref()
+            .and_then(crate::clients::ClientKind::from_str_opt),
+        state.upstream_provider.subscription_provider(),
+    ) {
+        let protocol = match surface {
+            crate::metrics::Surface::Anthropic => {
+                crate::client_policy::ClientProtocol::AnthropicMessages
+            }
+            crate::metrics::Surface::OpenAIChat => crate::client_policy::ClientProtocol::OpenAIChat,
+            crate::metrics::Surface::OpenAIResponses => {
+                crate::client_policy::ClientProtocol::OpenAIResponses
+            }
+        };
+        if state
+            .provider_store
+            .subscription_entitlement_policy()
+            .is_ok_and(|policy| {
+                policy.decide(Some(client), provider, protocol)
+                    == crate::client_policy::EntitlementDecision::Override
+            })
+        {
+            event.subscription_override = Some(format!("{client}:{provider}"));
+        }
+    }
+    if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan
+        && let Some(client) = claims
+            .client_kind
+            .as_deref()
+            .and_then(crate::clients::ClientKind::from_str_opt)
+        && crate::zai_coding_plan::resolve(state).is_ok_and(|provider| {
+            provider.is_some_and(|provider| {
+                crate::zai_coding_plan::ZaiCodingPlanPolicy::new(
+                    provider.subscriber_id.as_deref().unwrap_or_default(),
+                    provider.intermediary_risk_acknowledged,
+                    &provider.unsupported_clients,
+                )
+                .is_ok_and(|policy| policy.is_unsupported_override(client))
+            })
+        })
+    {
+        event.subscription_override = Some(format!("{client}:z.ai-coding-plan"));
+    }
+    state.audit.record(&event);
 }
 
 #[cfg(test)]
@@ -289,5 +344,44 @@ mod tests {
         let json = serde_json::to_string(&e).expect("serialize");
         assert!(!json.contains("la_sk_"));
         assert!(!json.contains("Bearer"));
+    }
+
+    #[test]
+    fn authorised_bridge_events_name_the_signed_client_and_exact_override() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file = dir.path().join("audit.jsonl");
+        let mut state = crate::app_state::AppState::for_tests(dir.path());
+        state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+        state.audit = std::sync::Arc::new(AuditLog::to_path(file.to_str()));
+        state
+            .provider_store
+            .set_subscription_entitlement_policy(
+                crate::client_policy::SubscriptionEntitlementPolicy::parse(["codex:claude"])
+                    .unwrap(),
+            )
+            .unwrap();
+        let claims = crate::token::TokenClaims {
+            sub: "token-id".into(),
+            iat: 1,
+            exp: i64::MAX,
+            label: "managed".into(),
+            scope: String::new(),
+            github_repos: Vec::new(),
+            client_kind: Some("codex".into()),
+            principal_id: Some("primary".into()),
+        };
+
+        record_authorised_request(
+            &state,
+            &claims,
+            crate::metrics::Surface::OpenAIResponses,
+            "/v1/responses",
+            None,
+        );
+
+        let event: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(file).unwrap()).unwrap();
+        assert_eq!(event["client_kind"], "codex");
+        assert_eq!(event["subscription_override"], "codex:claude");
     }
 }

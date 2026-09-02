@@ -4,6 +4,37 @@ use super::{
     refresh_config, refresh_recovery, refresh_state,
 };
 
+/// Import errors must classify the failure without echoing token-endpoint
+/// bodies, which can contain credential or account material.
+fn safe_import_refresh_error(
+    provider: SubscriptionProvider,
+    error: &super::RefreshError,
+) -> String {
+    match error {
+        super::RefreshError::NoRefreshToken => {
+            format!("the {provider} candidate is not refreshable and was not accepted")
+        }
+        error if error.is_invalid_grant() => {
+            format!("the {provider} candidate refresh chain was rejected (invalid_grant)")
+        }
+        super::RefreshError::Status(code, _, _) => format!(
+            "the {provider} candidate refresh chain was not verified (token endpoint HTTP {code})"
+        ),
+        super::RefreshError::Request(_) => format!(
+            "the {provider} candidate refresh chain was not verified (token endpoint unavailable)"
+        ),
+        super::RefreshError::Parse(_) => format!(
+            "the {provider} candidate refresh chain was not verified (invalid token response)"
+        ),
+        super::RefreshError::Storage(_) => {
+            format!("the {provider} candidate refresh result could not be durably persisted")
+        }
+        super::RefreshError::Unsupported => {
+            format!("the {provider} candidate refresh chain cannot be validated")
+        }
+    }
+}
+
 impl TokenCache {
     /// Create an empty cache.
     #[must_use]
@@ -78,6 +109,90 @@ impl TokenCache {
             now_ms,
         )
         .await
+    }
+
+    /// Prove that a registered credential's refresh chain can advance.
+    ///
+    /// Unlike ordinary pre-flight refresh, this always exchanges the refresh
+    /// token even when the current access token is still live. It uses only the
+    /// direct OAuth recovery rungs, persists the complete result through the
+    /// registered durable store, and returns no token until that persistence
+    /// succeeds. Credential import uses this against an isolated candidate
+    /// store so a stale refresh link can never replace a working destination
+    /// merely because its access token still passes a catalog probe (#385).
+    pub async fn validate_refresh_chain_registered(
+        &self,
+        client: &reqwest::Client,
+        provider: SubscriptionProvider,
+        account: &str,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, String> {
+        self.validate_refresh_chain_registered_at(
+            client,
+            refresh_config(provider).token_url,
+            provider,
+            account,
+            now_ms,
+        )
+        .await
+    }
+
+    /// Endpoint-overridable variant used by end-to-end import tests.
+    #[doc(hidden)]
+    pub async fn validate_refresh_chain_registered_at(
+        &self,
+        client: &reqwest::Client,
+        token_url: &str,
+        provider: SubscriptionProvider,
+        account: &str,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, String> {
+        let baseline = self
+            .load_authoritative(provider, account)
+            .await?
+            .ok_or_else(|| format!("the {provider} candidate credential is absent"))?;
+        if baseline.refresh_token.as_deref().is_none_or(str::is_empty) {
+            return Err(format!(
+                "the {provider} candidate is not refreshable and was not accepted"
+            ));
+        }
+        let attempt = self.attempts.for_subscription(provider, account, &baseline);
+        let mut attempt = attempt.lock().await;
+        if attempt.reset_if_changed(provider, &baseline) {
+            self.forget(&(provider, account.to_string()), provider);
+        }
+        let store = self
+            .store_for_subscription(provider, account)
+            .ok_or_else(|| format!("no durable {provider} candidate store is registered"))?;
+        let exchange = Exchange {
+            client,
+            token_url,
+            provider,
+            now_ms,
+            mode: RecoveryMode::ImportValidation,
+        };
+        let fresh = exchange_with_recovery(&exchange, Some(&store), None, &baseline)
+            .await
+            .map_err(|rejection| safe_import_refresh_error(provider, &rejection.error))?
+            .token;
+        self.accept(&mut attempt, provider, account, &fresh, Some(now_ms));
+        drop(attempt);
+
+        // Reread what was durably committed rather than trusting the exchange's
+        // in-memory return value. This is the credential later catalog-tested
+        // and promoted.
+        let durable = self
+            .load_authoritative(provider, account)
+            .await?
+            .ok_or_else(|| format!("the durable {provider} candidate disappeared after refresh"))?;
+        if fresh.access_token != durable.access_token
+            || fresh.refresh_token != durable.refresh_token
+        {
+            return Err(format!(
+                "the durable {provider} candidate did not retain the validated refresh result"
+            ));
+        }
+        Ok(durable)
     }
 
     /// Testable token-endpoint variant of [`Self::get_fresh_registered`].
@@ -536,6 +651,36 @@ impl TokenCache {
     ) {
         if let Ok(mut guard) = self.inner.lock() {
             guard.insert((provider, account.to_string()), token);
+        }
+    }
+}
+
+#[cfg(test)]
+mod import_error_tests {
+    use super::*;
+
+    /// Safe-import failures describe the class of failure without echoing an
+    /// endpoint body or storage detail that may contain credential material.
+    #[test]
+    fn import_refresh_errors_are_complete_and_secret_free() {
+        let cases = [
+            super::super::RefreshError::NoRefreshToken,
+            super::super::RefreshError::Status(
+                400,
+                r#"{"error":"invalid_grant","secret":"must-not-leak"}"#.into(),
+                None,
+            ),
+            super::super::RefreshError::Status(503, "upstream body must-not-leak".into(), None),
+            super::super::RefreshError::Request("request detail must-not-leak".into()),
+            super::super::RefreshError::Parse("parse detail must-not-leak".into()),
+            super::super::RefreshError::Storage("storage detail must-not-leak".into()),
+            super::super::RefreshError::Unsupported,
+        ];
+
+        for error in cases {
+            let message = safe_import_refresh_error(SubscriptionProvider::Claude, &error);
+            assert!(message.contains("claude"), "{message}");
+            assert!(!message.contains("must-not-leak"), "{message}");
         }
     }
 }

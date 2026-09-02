@@ -384,7 +384,10 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
     );
     assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
     let requests = server.join().expect("mock server thread");
-    assert!(requests[0].starts_with("GET /v1/models HTTP/1.1"));
+    assert!(
+        requests[0].starts_with("GET /api/codex/v1/models HTTP/1.1"),
+        "unexpected requests: {requests:?}"
+    );
     let request = &requests[1];
     assert!(request.starts_with("POST /v1/responses HTTP/1.1"));
     assert!(request.contains("gpt-codex-live"));
@@ -423,7 +426,7 @@ fn codex_doctor_requires_an_openai_owned_catalog_model() {
     assert!(!doctor.status.success());
     let stderr = String::from_utf8_lossy(&doctor.stderr);
     assert!(
-        stderr.contains("no model for Codex CLI (openai models)"),
+        stderr.contains("no model for Codex CLI (openai, z.ai models)"),
         "{stderr}"
     );
     // The refusal points at the way out rather than leaving the reader to

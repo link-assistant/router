@@ -191,6 +191,68 @@ fn a_strict_client_refuses_another_vendors_model() {
     }
 }
 
+#[test]
+fn claude_setup_enables_gateway_discovery_and_pins_every_default_family() {
+    let home = tempfile::tempdir().unwrap();
+    let manager = ClientManager::isolated(home.path());
+    std::fs::create_dir_all(home.path().join(".claude")).unwrap();
+    std::fs::write(
+        manager.config_path(ClientKind::ClaudeCode),
+        r#"{"env":{"CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY":"0","ANTHROPIC_DEFAULT_OPUS_MODEL":"user-opus"}}"#,
+    )
+    .unwrap();
+    let models = vec![RouterModel {
+        id: "claude-zai-glm-5".into(),
+        owned_by: ZAI_MODEL_OWNER.into(),
+    }];
+    manager
+        .setup(ClientKind::ClaudeCode, "https://router.example", &models)
+        .unwrap();
+    let settings: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(manager.config_path(ClientKind::ClaudeCode)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        settings["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
+        "1"
+    );
+    for key in [
+        "ANTHROPIC_MODEL",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    ] {
+        assert_eq!(settings["env"][key], "claude-zai-glm-5", "{key}");
+    }
+    let env = manager
+        .write_environment(
+            ClientKind::ClaudeCode,
+            "https://router.example",
+            "router-token",
+        )
+        .unwrap();
+    let env = std::fs::read_to_string(env).unwrap();
+    assert!(env.contains("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"));
+    assert!(!env.contains("zai-secret"));
+
+    manager.remove(ClientKind::ClaudeCode).unwrap();
+    let restored: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(manager.config_path(ClientKind::ClaudeCode)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        restored["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
+        "0"
+    );
+    assert_eq!(restored["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"], "user-opus");
+    assert!(restored["env"].get("ANTHROPIC_MODEL").is_none());
+    assert!(
+        restored["env"]
+            .get("ANTHROPIC_DEFAULT_SONNET_MODEL")
+            .is_none()
+    );
+}
+
 /// What a client config embeds is what `with` would launch it on. The three
 /// paths used to answer this differently, so `clients setup opencode` could
 /// write a model the launcher would then refuse (issue #301).

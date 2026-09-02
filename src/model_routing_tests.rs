@@ -11,7 +11,8 @@ use std::sync::Arc;
 use tempfile::tempdir;
 use tower::ServiceExt;
 
-pub(super) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path::Path) -> AppState {
     AppState {
         client: reqwest::Client::new(),
         token_manager: crate::token::TokenManager::new("test-secret"),
@@ -51,6 +52,41 @@ pub(super) fn auto_state(readers: Vec<SubscriptionReader>, data_dir: &std::path:
         github: crate::github_proxy::GitHubProxyConfig::default(),
         max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     }
+}
+
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) fn bound_client_token(
+    state: &AppState,
+    client: crate::clients::ClientKind,
+    account: Option<&str>,
+) -> String {
+    let principal = account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT);
+    state
+        .token_manager
+        .issue_with_id(&crate::token::IssueRequest {
+            ttl_hours: 1,
+            label: "fixture client",
+            account: Some(principal),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some(client.canonical_name()),
+            principal_id: Some(principal),
+        })
+        .unwrap()
+        .0
+}
+
+pub(super) fn opencode_headers(state: &AppState, account: Option<&str>) -> HeaderMap {
+    let token = bound_client_token(state, crate::clients::ClientKind::Opencode, account);
+    let mut headers = HeaderMap::new();
+    headers.insert("authorization", format!("Bearer {token}").parse().unwrap());
+    headers.insert("user-agent", "opencode/test-fixture".parse().unwrap());
+    headers.insert("x-session-id", "test-session".parse().unwrap());
+    headers
 }
 
 /// Only live-discovered models are advertised, tagged with their real
@@ -147,7 +183,13 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
     state
         .subscription_cache
         .record_credential_rejected(SubscriptionProvider::Claude);
-    let client_token = state.token_manager.issue_token(1, "catalog test").unwrap();
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["claude:codex"]).unwrap(),
+        )
+        .unwrap();
+    let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
         .route("/v1/models", get(models))
         .with_state(state.clone());
@@ -156,7 +198,8 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
         .oneshot(
             Request::builder()
                 .uri("/v1/models")
-                .header("authorization", format!("Bearer {client_token}"))
+                .header("x-api-key", client_token)
+                .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -428,15 +471,14 @@ async fn openai_request_rejects_unknown_model_in_pinned_and_auto_modes() {
         state
             .model_catalogs
             .record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
-        let client_token = state
-            .token_manager
-            .issue_token(1, "catalog client")
-            .expect("issue client token");
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "authorization",
-            format!("Bearer {client_token}").parse().unwrap(),
-        );
+        state
+            .provider_store
+            .set_subscription_entitlement_policy(
+                crate::client_policy::SubscriptionEntitlementPolicy::parse(["opencode:claude"])
+                    .unwrap(),
+            )
+            .unwrap();
+        let headers = opencode_headers(&state, None);
 
         let response = crate::proxy::openai_chat_completions(
             State(state),
@@ -759,237 +801,4 @@ fn an_unavailable_credential_is_named_in_the_routing_error() {
         message.contains("missing or rejected upstream"),
         "{message}"
     );
-}
-
-/// Add a stored OpenAI-compatible provider declaring `models`.
-fn store_provider(state: &AppState, name: &str, models: &[&str]) {
-    state
-        .provider_store
-        .upsert(crate::providers::ProviderUpsert {
-            name: name.to_string(),
-            kind: None,
-            base_url: "https://provider.example/v1".to_string(),
-            default_model: models.first().map(|model| (*model).to_string()),
-            models: Some(models.iter().map(|model| (*model).to_string()).collect()),
-            api_key: Some("provider-key".to_string()),
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(true),
-        })
-        .expect("store the provider");
-}
-
-/// The bug in issue #260: a stored provider was reachable only by pinning
-/// `UPSTREAM_PROVIDER`, which pins the whole deployment — so one router could
-/// serve vendor subscriptions or a local endpoint, never both.
-#[tokio::test]
-async fn a_stored_providers_declared_model_routes_in_automatic_mode() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
-
-    let routed =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "formal-ai-mini"}))
-            .await
-            .expect("a declared model must route");
-
-    assert_eq!(routed.upstream_provider, UpstreamProvider::OpenAICompatible);
-    assert_eq!(routed.openai_compatible.provider_name, "formal-ai");
-    assert_eq!(routed.bridge_model.as_deref(), Some("formal-ai-mini"));
-    // The deployment itself is untouched: this routed one request.
-    assert_eq!(state.upstream_provider, UpstreamProvider::Auto);
-}
-
-/// A declared model appears in `/v1/models`, so one token reaches every model
-/// the router can serve rather than only the discovered subscriptions.
-#[tokio::test]
-async fn declared_models_are_listed_alongside_subscription_catalogs() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini", "formal-ai-large"]);
-
-    let mut catalog = crate::model_routing::model_catalog(&[], &state.model_catalogs);
-    crate::model_routing::append_stored_provider_models(&state, &mut catalog);
-
-    let ids: Vec<&str> = catalog["data"]
-        .as_array()
-        .expect("a data array")
-        .iter()
-        .filter_map(|entry| entry["id"].as_str())
-        .collect();
-    assert!(ids.contains(&"formal-ai-mini"), "{ids:?}");
-    assert!(ids.contains(&"formal-ai-large"), "{ids:?}");
-}
-
-/// A model declared by two stored providers is refused rather than resolved by
-/// declaration order — the rule subscriptions already follow.
-#[tokio::test]
-async fn a_model_declared_twice_is_ambiguous_until_qualified() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "alpha", &["shared-model"]);
-    store_provider(&state, "beta", &["shared-model"]);
-
-    // Matched rather than `expect_err`: `AppState` holds credentials and so
-    // deliberately does not implement `Debug`.
-    let Err(error) =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "shared-model"}))
-            .await
-    else {
-        panic!("an ambiguous name must be refused");
-    };
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::Ambiguous(_)),
-        "{error:?}"
-    );
-
-    // Naming the provider resolves it.
-    let routed = crate::model_routing::route_state(
-        &state,
-        &serde_json::json!({"model": "beta/shared-model"}),
-    )
-    .await
-    .expect("a qualified name is unambiguous");
-    assert_eq!(routed.openai_compatible.provider_name, "beta");
-    assert_eq!(routed.bridge_model.as_deref(), Some("shared-model"));
-}
-
-/// A disabled provider advertises nothing, so disabling one takes its models
-/// out of both the catalog and the routing table.
-#[tokio::test]
-async fn a_disabled_provider_advertises_nothing() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
-    state
-        .provider_store
-        .upsert(crate::providers::ProviderUpsert {
-            name: "formal-ai".to_string(),
-            kind: None,
-            base_url: "https://provider.example/v1".to_string(),
-            default_model: None,
-            models: Some(vec!["formal-ai-mini".to_string()]),
-            api_key: None,
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(false),
-        })
-        .expect("disable the provider");
-
-    let Err(error) =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "formal-ai-mini"}))
-            .await
-    else {
-        panic!("a disabled provider must not route");
-    };
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
-        "{error:?}"
-    );
-}
-
-/// A qualified name that the provider does not advertise is an error naming
-/// the provider, rather than a silent fall through to a subscription.
-#[tokio::test]
-async fn a_qualified_name_the_provider_lacks_is_reported() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
-
-    let Err(error) = crate::model_routing::route_state(
-        &state,
-        &serde_json::json!({"model": "formal-ai/not-declared"}),
-    )
-    .await
-    else {
-        panic!("an undeclared qualified model must be refused");
-    };
-
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
-        "{error:?}"
-    );
-    assert!(format!("{error:?}").contains("formal-ai"), "{error:?}");
-}
-
-/// A qualified name for a provider that does not exist falls through to
-/// ordinary routing rather than being treated as a provider reference.
-#[tokio::test]
-async fn an_unknown_provider_prefix_is_not_a_provider_reference() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-
-    let Err(error) =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "nobody/model"}))
-            .await
-    else {
-        panic!("nothing advertises this model");
-    };
-
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
-        "{error:?}"
-    );
-}
-
-/// A stored model whose id collides with a subscription's is listed in its
-/// qualified form, so both stay reachable and the bare id stays ambiguous.
-#[tokio::test]
-async fn a_colliding_declared_model_is_listed_qualified() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["shared-id"]);
-
-    let mut catalog = serde_json::json!({
-        "object": "list",
-        "data": [{"id": "shared-id", "object": "model", "owned_by": "anthropic"}]
-    });
-    crate::model_routing::append_stored_provider_models(&state, &mut catalog);
-
-    let ids: Vec<&str> = catalog["data"]
-        .as_array()
-        .expect("data")
-        .iter()
-        .filter_map(|entry| entry["id"].as_str())
-        .collect();
-    assert!(
-        ids.contains(&"shared-id"),
-        "the subscription keeps its id: {ids:?}"
-    );
-    assert!(
-        ids.contains(&"formal-ai/shared-id"),
-        "the stored provider is reachable by its qualified name: {ids:?}"
-    );
-}
-
-/// A request with no model is refused before any provider is consulted.
-#[tokio::test]
-async fn a_request_without_a_model_is_refused() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-
-    let Err(error) = crate::model_routing::route_state(&state, &serde_json::json!({})).await else {
-        panic!("a model is required in automatic mode");
-    };
-
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::ModelRequired),
-        "{error:?}"
-    );
-}
-
-#[test]
-fn automatic_routing_errors_never_expose_catalog_bodies_accounts_or_paths() {
-    let catalogs = ModelCatalogCache::new();
-    let sentinel = "vendor-body account-secret /private/credentials/codex.json";
-    catalogs.record_failure(SubscriptionProvider::Codex, sentinel, true);
-
-    let error = available_provider_for_model("gpt-secret", &[], &catalogs)
-        .expect_err("a failed catalog is not routable")
-        .to_string();
-
-    assert!(error.contains("codex"));
-    assert!(!error.contains("vendor-body"), "{error}");
-    assert!(!error.contains("account-secret"), "{error}");
-    assert!(!error.contains("/private/credentials"), "{error}");
 }

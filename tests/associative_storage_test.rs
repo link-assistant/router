@@ -23,6 +23,8 @@ fn sample_record() -> TokenRecord {
         rate_window_started_at: 1_700_000_000,
         rate_window_requests: 3,
         scope: "admin".into(),
+        client_kind: Some("codex".into()),
+        principal_id: Some("primary".into()),
     }
 }
 

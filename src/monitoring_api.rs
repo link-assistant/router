@@ -25,10 +25,13 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
     // (issue #318). Rendered here rather than in `metrics.rs` so the counter
     // registry stays free of subscription types.
     let health = crate::model_routing::configured_provider_health_report(&state).await;
-    let gauges = health
+    let mut gauges = health
         .iter()
         .map(|entry| (entry.provider.as_str(), entry.is_serving()))
         .collect::<Vec<_>>();
+    if let Some(healthy) = crate::zai_coding_plan::configured_health(&state).await {
+        gauges.push(("z.ai", healthy));
+    }
     body.push_str(&crate::metrics::render_subscription_health(&gauges));
     (
         StatusCode::OK,

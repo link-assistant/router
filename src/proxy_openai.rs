@@ -1,7 +1,19 @@
 use super::{
-    AppState, BTreeMap, HeaderMap, JsonRejection, OpenAIShape, Query, Response, State, StatusCode,
-    UpstreamProvider, forward_openai, openai, responses,
+    AppState, BTreeMap, HeaderMap, JsonRejection, OpenAIForwardContext, OpenAIShape, Query,
+    Response, State, StatusCode, UpstreamProvider, forward_openai, openai, responses,
 };
+
+/// Provider-independent fields owned by the Chat Completions surface.
+///
+/// Passthrough providers may accept extensions and some provide a default
+/// model, so validating the entire normalized request here would narrow their
+/// public contract. `messages`, however, belongs to Chat Completions itself and
+/// must exist before routing or translating to any upstream dialect (#387).
+#[derive(serde::Deserialize)]
+struct RequiredChatFields {
+    #[allow(dead_code)]
+    messages: Vec<openai::ChatMessage>,
+}
 
 /// Names the tools that were dropped on the way to Anthropic.
 ///
@@ -34,7 +46,7 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None).await
+    openai_chat_completions_with_subscription(state, query, headers, body, None, false).await
 }
 
 pub async fn openai_chat_completions_routed(
@@ -49,6 +61,7 @@ pub async fn openai_chat_completions_routed(
         headers,
         Ok(axum::Json(body)),
         subscription,
+        true,
     )
     .await
 }
@@ -59,6 +72,7 @@ async fn openai_chat_completions_with_subscription(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
     initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
+    entitlement_already_checked: bool,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -69,6 +83,14 @@ async fn openai_chat_completions_with_subscription(
             );
         }
     };
+    if let Err(error) = serde_json::from_value::<RequiredChatFields>(body.clone()) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &format!("invalid OpenAI chat completion request: {error}"),
+        );
+    }
     let include_usage = body
         .pointer("/stream_options/include_usage")
         .and_then(serde_json::Value::as_bool)
@@ -90,6 +112,18 @@ async fn openai_chat_completions_with_subscription(
     };
     let state = routed.state;
     let subscription = routed.subscription;
+    if !entitlement_already_checked
+        && let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription(
+            &state,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::OpenAIChat,
+            "/v1/chat/completions",
+        )
+    {
+        return response;
+    }
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -129,6 +163,17 @@ async fn openai_chat_completions_with_subscription(
             .unwrap_or(false);
         return crate::crater::forward_chat_completions(&state, &headers, body, stream_requested)
             .await;
+    }
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        return crate::zai_coding_plan::forward(
+            &state,
+            &headers,
+            body,
+            "/v1/chat/completions",
+            crate::client_policy::ClientProtocol::OpenAIChat,
+            crate::metrics::Surface::OpenAIChat,
+        )
+        .await;
     }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
         return crate::provider_proxy::forward_openai_compatible(
@@ -233,10 +278,13 @@ async fn openai_chat_completions_with_subscription(
         &state,
         &headers,
         body,
-        &routing_body,
-        crate::metrics::Surface::OpenAIChat,
-        (stream_requested, OpenAIShape::Chat, include_usage),
-        subscription.as_ref(),
+        OpenAIForwardContext {
+            routing_body: &routing_body,
+            surface: crate::metrics::Surface::OpenAIChat,
+            stream_options: (stream_requested, OpenAIShape::Chat, include_usage),
+            validated: subscription.as_ref(),
+            entitlement_granted: true,
+        },
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)
@@ -263,6 +311,17 @@ pub async fn openai_responses(
     };
     let state = routed.state;
     let subscription = routed.subscription;
+    if let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription(
+            &state,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::OpenAIResponses,
+            "/v1/responses",
+        )
+    {
+        return response;
+    }
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -291,6 +350,17 @@ pub async fn openai_responses(
             &headers,
             body,
             "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
+        )
+        .await;
+    }
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        return crate::zai_coding_plan::forward(
+            &state,
+            &headers,
+            body,
+            "/v1/responses",
+            crate::client_policy::ClientProtocol::OpenAIResponses,
             crate::metrics::Surface::OpenAIResponses,
         )
         .await;
@@ -387,10 +457,13 @@ pub async fn openai_responses(
         &state,
         &headers,
         body,
-        &routing_body,
-        crate::metrics::Surface::OpenAIResponses,
-        (stream_requested, OpenAIShape::Response, false),
-        subscription.as_ref(),
+        OpenAIForwardContext {
+            routing_body: &routing_body,
+            surface: crate::metrics::Surface::OpenAIResponses,
+            stream_options: (stream_requested, OpenAIShape::Response, false),
+            validated: subscription.as_ref(),
+            entitlement_granted: true,
+        },
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)

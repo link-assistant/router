@@ -15,7 +15,7 @@ use toml_edit::{DocumentMut, Item, Table, value};
 
 mod catalog;
 pub mod credentials;
-mod doctor;
+pub(crate) mod doctor;
 mod files;
 mod json_config;
 
@@ -23,6 +23,7 @@ pub(crate) use catalog::RouterModel;
 use catalog::doctor_model;
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
+pub(crate) use doctor::require_claude_gateway_version;
 use files::{
     atomic_write, claude_marker, read_codex_marker, read_environment_value, read_or_empty,
     unchanged, write_claude_marker, write_codex_marker, write_if_changed,
@@ -47,6 +48,8 @@ pub const ANTHROPIC_MODEL_OWNER: &str = "anthropic";
 pub const GOOGLE_MODEL_OWNER: &str = "google";
 /// Catalog owner the server labels a Qwen subscription with.
 pub const QWEN_MODEL_OWNER: &str = "qwen";
+/// Catalog owner for personal z.ai Coding Plan models.
+pub const ZAI_MODEL_OWNER: &str = "z.ai";
 pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
 /// Output budget for the `clients doctor` reachability probe.
 ///
@@ -132,7 +135,7 @@ pub struct ClientIntegration {
 /// error taught a name the user's shell does not have (issue #220). The
 /// invariant that keeps the two in step is asserted in the tests below: every
 /// variant's canonical string equals its [`ClientIntegration::command`].
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum ClientKind {
     Codex,
     #[value(name = "claude", alias = "claude-code")]
@@ -159,7 +162,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
         endpoint_suffix: "/v1",
-        model_owners: &[OPENAI_MODEL_OWNER],
+        model_owners: &[OPENAI_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
         model_arg: Some("--model"),
@@ -177,7 +180,7 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
         endpoint_suffix: "",
-        model_owners: &[ANTHROPIC_MODEL_OWNER],
+        model_owners: &[ANTHROPIC_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
         model_arg: Some("--model"),
@@ -346,6 +349,22 @@ impl ClientKind {
     #[must_use]
     pub const fn integration(self) -> &'static ClientIntegration {
         &CLIENT_INTEGRATIONS[self as usize]
+    }
+
+    /// Parse a canonical client adapter name or one of its documented aliases.
+    #[must_use]
+    pub fn from_str_opt(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "codex" => Some(Self::Codex),
+            "claude" | "claude-code" => Some(Self::ClaudeCode),
+            "cursor" | "cursor-agent" => Some(Self::Cursor),
+            "gemini" | "gemini-cli" => Some(Self::GeminiCli),
+            "grok" | "grok-cli" => Some(Self::GrokCli),
+            "opencode" => Some(Self::Opencode),
+            "qwen" | "qwen-code" => Some(Self::QwenCode),
+            "agent" => Some(Self::Agent),
+            _ => None,
+        }
     }
 }
 
@@ -676,7 +695,7 @@ impl ClientManager {
         let base_url = normalize_base_url(base_url)?;
         match client {
             ClientKind::Codex => self.setup_codex(&base_url),
-            ClientKind::ClaudeCode => self.setup_claude(&base_url),
+            ClientKind::ClaudeCode => self.setup_claude(&base_url, models),
             ClientKind::Opencode | ClientKind::Agent => {
                 self.setup_json_provider(client, &base_url, models)
             }
@@ -739,6 +758,13 @@ impl ClientManager {
         }
         writeln!(&mut contents, "export {token_env}={}", shell_quote(token))
             .expect("writing to a String cannot fail");
+        if client == ClientKind::ClaudeCode {
+            writeln!(
+                &mut contents,
+                "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
+            )
+            .expect("writing to a String cannot fail");
+        }
         atomic_write(&path, contents.as_bytes())?;
         #[cfg(unix)]
         {
@@ -791,7 +817,11 @@ impl ClientManager {
         Ok(result)
     }
 
-    fn setup_claude(&self, base_url: &str) -> Result<SetupResult, ClientError> {
+    fn setup_claude(
+        &self,
+        base_url: &str,
+        models: &[RouterModel],
+    ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::ClaudeCode);
         let source = read_or_empty(&path)?;
         let mut document: Value = if source.trim().is_empty() {
@@ -808,6 +838,8 @@ impl ClientManager {
         let env = env.as_object_mut().ok_or_else(|| {
             ClientError::message(format!("{}.env must be a JSON object", path.display()))
         })?;
+        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
+        let existing_marker = claude_marker(&marker_path)?;
         // Recorded before it is replaced, so removal can put it back — the
         // mechanism `setup_codex` already uses for `model_provider` (#302).
         let previous = env
@@ -822,16 +854,44 @@ impl ClientManager {
             );
         }
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
+        let mut managed_gateway_env = Vec::new();
+        let mut set_managed = |key: &str, managed: &str| {
+            let recorded_previous = existing_marker.as_ref().and_then(|(_, _, entries)| {
+                entries
+                    .iter()
+                    .find(|(recorded, _, _)| recorded == key)
+                    .map(|(_, _, previous)| previous.clone())
+            });
+            let previous = recorded_previous
+                .unwrap_or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
+            env.insert(key.into(), Value::String(managed.into()));
+            managed_gateway_env.push((key.to_string(), managed.to_string(), previous));
+        };
+        set_managed("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
+        if let Some(model) = select_model(ClientKind::ClaudeCode, models) {
+            for key in [
+                "ANTHROPIC_MODEL",
+                "ANTHROPIC_DEFAULT_OPUS_MODEL",
+                "ANTHROPIC_DEFAULT_SONNET_MODEL",
+                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            ] {
+                set_managed(key, model);
+            }
+        }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
-        let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
         // A marker already present names the value the *first* takeover
         // replaced; a second configure must not overwrite it with its own URL.
         let previous = match claude_marker(&marker_path)? {
-            Some((_, recorded)) => recorded,
+            Some((_, recorded, _)) => recorded,
             None => previous,
         };
-        write_claude_marker(&marker_path, base_url, previous.as_deref())?;
+        write_claude_marker(
+            &marker_path,
+            base_url,
+            previous.as_deref(),
+            &managed_gateway_env,
+        )?;
         Ok(result)
     }
 
@@ -876,30 +936,39 @@ impl ClientManager {
             return Ok(unchanged(path));
         }
         let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
-        let Some((managed_url, previous_url)) = claude_marker(&marker_path)? else {
+        let Some((managed_url, previous_url, gateway_env)) = claude_marker(&marker_path)? else {
             return Ok(unchanged(path));
         };
         let mut document: Value = serde_json::from_str(&source).map_err(|error| {
             ClientError::message(format!("invalid JSON in {}: {error}", path.display()))
         })?;
-        let current_url = document
+        let owns_current_url = document
             .get("env")
             .and_then(|env| env.get(CLAUDE_BASE_ENV))
-            .and_then(Value::as_str);
-        if current_url != Some(managed_url.as_str()) {
-            fs::remove_file(marker_path)?;
-            return Ok(unchanged(path));
-        }
+            .and_then(Value::as_str)
+            == Some(managed_url.as_str());
         if let Some(env) = document.get_mut("env").and_then(Value::as_object_mut) {
-            match previous_url.as_deref() {
-                // Restore what the takeover replaced rather than deleting the
-                // key: the value was the user's, not the router's (#302).
-                Some(previous) => {
-                    env.insert(CLAUDE_BASE_ENV.into(), Value::String(previous.into()));
-                    println!("restored {CLAUDE_BASE_ENV}={previous}");
+            if owns_current_url {
+                match previous_url.as_deref() {
+                    // Restore what the takeover replaced rather than deleting the
+                    // key: the value was the user's, not the router's (#302).
+                    Some(previous) => {
+                        env.insert(CLAUDE_BASE_ENV.into(), Value::String(previous.into()));
+                        println!("restored {CLAUDE_BASE_ENV}={previous}");
+                    }
+                    None => {
+                        env.remove(CLAUDE_BASE_ENV);
+                    }
                 }
-                None => {
-                    env.remove(CLAUDE_BASE_ENV);
+            }
+            for (key, managed, previous) in gateway_env {
+                if env.get(&key).and_then(Value::as_str) != Some(managed.as_str()) {
+                    continue;
+                }
+                if let Some(previous) = previous {
+                    env.insert(key, Value::String(previous));
+                } else {
+                    env.remove(&key);
                 }
             }
         }
@@ -912,84 +981,11 @@ impl ClientManager {
     }
 }
 
-fn normalize_base_url(base_url: &str) -> Result<String, ClientError> {
-    let trimmed = base_url.trim().trim_end_matches('/');
-    if !(trimmed.starts_with("http://") || trimmed.starts_with("https://")) {
-        return Err(ClientError::message(
-            "base URL must start with http:// or https://",
-        ));
-    }
-    Ok(trimmed.to_string())
-}
-
-fn read_codex_base_url(path: &Path) -> Result<Option<String>, ClientError> {
-    let source = read_or_empty(path)?;
-    if source.trim().is_empty() {
-        return Ok(None);
-    }
-    let document = source.parse::<DocumentMut>().map_err(|error| {
-        ClientError::message(format!("invalid TOML in {}: {error}", path.display()))
-    })?;
-    if document.get("model_provider").and_then(Item::as_str) != Some(CODEX_PROVIDER) {
-        return Ok(None);
-    }
-    let Some(provider) = document
-        .get("model_providers")
-        .and_then(Item::as_table_like)
-        .and_then(|providers| providers.get(CODEX_PROVIDER))
-    else {
-        return Ok(None);
-    };
-    let Some(provider) = provider.as_table_like() else {
-        return Ok(None);
-    };
-    let configured = provider.get("wire_api").and_then(Item::as_str) == Some("responses")
-        && provider.get("env_key").and_then(Item::as_str) == Some(CODEX_TOKEN_ENV);
-    Ok(configured
-        .then(|| {
-            provider
-                .get("base_url")
-                .and_then(Item::as_str)
-                .map(str::to_string)
-        })
-        .flatten())
-}
-
-fn read_claude_base_url(path: &Path) -> Result<Option<String>, ClientError> {
-    let source = read_or_empty(path)?;
-    if source.trim().is_empty() {
-        return Ok(None);
-    }
-    let document: Value = serde_json::from_str(&source).map_err(|error| {
-        ClientError::message(format!("invalid JSON in {}: {error}", path.display()))
-    })?;
-    Ok(document
-        .get("env")
-        .and_then(|env| env.get(CLAUDE_BASE_ENV))
-        .and_then(Value::as_str)
-        .map(str::to_string))
-}
-
-fn command_exists(command: &str) -> bool {
-    std::env::var_os("PATH").is_some_and(|path| {
-        std::env::split_paths(&path).any(|directory| directory.join(command).is_file())
-    })
-}
-
-fn compact_body(body: &str) -> String {
-    const MAX: usize = 240;
-    let compact = body.split_whitespace().collect::<Vec<_>>().join(" ");
-    if compact.chars().count() <= MAX {
-        compact
-    } else {
-        format!("{}…", compact.chars().take(MAX).collect::<String>())
-    }
-}
-
-fn shell_quote(value: &str) -> String {
-    format!("'{}'", value.replace('\'', "'\\''"))
-}
-
+mod util;
+use util::{
+    command_exists, compact_body, normalize_base_url, read_claude_base_url, read_codex_base_url,
+    shell_quote,
+};
 #[cfg(test)]
 #[path = "clients_tests.rs"]
 mod tests;

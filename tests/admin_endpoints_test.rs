@@ -299,6 +299,71 @@ fn client_tokens_cannot_reach_the_admin_surface() {
     );
 }
 
+/// Managed-client issuance is a distinct, admin-only surface: the server owns
+/// the principal and signs the client binding rather than trusting fields on
+/// ordinary/manual token issuance (#389).
+#[test]
+fn managed_client_token_issuance_validates_and_persists_the_signed_binding() {
+    let router = Router::start(&[]);
+    let admin = router.bootstrap_token.clone().expect("bootstrap token");
+
+    let (status, _) = ureq_post(
+        &router.url("/api/tokens/client"),
+        None,
+        r#"{"client_kind":"codex"}"#,
+    )
+    .expect("should answer");
+    assert_eq!(status, 401);
+
+    for (body, expected) in [
+        (r#"{"client_kind":"unknown"}"#, 400),
+        (r#"{"client_kind":"cursor"}"#, 400),
+        (r#"{"client_kind":"codex","ttl_hours":0}"#, 400),
+    ] {
+        let (status, response) = ureq_post(&router.url("/api/tokens/client"), Some(&admin), body)
+            .expect("should answer");
+        assert_eq!(status, expected, "unexpected body: {response}");
+    }
+
+    let (status, defaulted) = ureq_post(
+        &router.url("/api/tokens/client"),
+        Some(&admin),
+        r#"{"client_kind":"codex"}"#,
+    )
+    .expect("should answer");
+    assert_eq!(status, 200, "unexpected body: {defaulted}");
+    assert!(token_from(&defaulted).starts_with("la_sk_"));
+
+    let (status, explicit) = ureq_post(
+        &router.url("/api/tokens/client"),
+        Some(&admin),
+        r#"{"client_kind":"claude","label":"managed-claude","ttl_hours":2,"max_requests":7,"sliding_expiry":true}"#,
+    )
+    .expect("should answer");
+    assert_eq!(status, 200, "unexpected body: {explicit}");
+    let explicit: serde_json::Value =
+        serde_json::from_str(&strip_chunking(&explicit)).expect("client token JSON");
+    assert_eq!(explicit["client_kind"], "claude");
+    assert_eq!(explicit["principal_id"], "primary");
+    assert_eq!(explicit["label"], "managed-claude");
+
+    let (status, listed) =
+        ureq_get(&router.url("/api/tokens/list"), Some(&admin)).expect("should answer");
+    assert_eq!(status, 200, "unexpected body: {listed}");
+    let listed: serde_json::Value =
+        serde_json::from_str(&strip_chunking(&listed)).expect("token list JSON");
+    let managed = listed["data"]
+        .as_array()
+        .expect("token records")
+        .iter()
+        .find(|record| record["label"] == "managed-claude")
+        .expect("managed token record");
+    assert_eq!(managed["client_kind"], "claude");
+    assert_eq!(managed["principal_id"], "primary");
+    assert_eq!(managed["account"], "primary");
+    assert_eq!(managed["max_requests"], 7);
+}
+
 /// An admin-scoped token minted over HTTP works, and can rotate itself.
 #[test]
 fn admin_scoped_tokens_are_issuable_and_rotatable_over_http() {

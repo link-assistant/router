@@ -286,6 +286,13 @@ async fn run_server(
     let oauth_provider = OAuthProvider::new(&config.claude_code_home);
     let metrics = Arc::new(Metrics::default());
     let provider_store = ProviderStore::open(&config.data_dir, &config.token_secret)?;
+    provider_store
+        .set_subscription_entitlement_policy(config.subscription_entitlement_policy.clone())?;
+    for accepted in config.subscription_entitlement_policy.overrides() {
+        tracing::warn!(
+            "consumer-subscription bridge override enabled for exact cell {accepted}; operator accepted intermediary and provider-terms risk"
+        );
+    }
 
     let client = link_assistant_router::upstream_client::build_upstream_client()?;
     let crater_provider =
@@ -672,6 +679,8 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 scope: if *admin { ADMIN_SCOPE } else { "" },
                 github_repos: github_repo.clone(),
                 sliding_window_seconds: None,
+                client_kind: None,
+                principal_id: None,
             };
             // Shared with the HTTP and chat surfaces (issue #194).
             if let Err(message) = request.validate() {

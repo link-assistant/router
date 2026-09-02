@@ -11,7 +11,10 @@ async fn a_request_that_cannot_fit_the_spend_cap_is_rejected_before_dispatch() {
         .issue(&IssueRequest {
             ttl_hours: 1,
             label: "five token budget",
+            account: Some("primary"),
             max_tokens: Some(5),
+            client_kind: Some("claude"),
+            principal_id: Some("primary"),
             ..IssueRequest::default()
         })
         .expect("issue capped token");
@@ -22,9 +25,7 @@ async fn a_request_that_cannot_fit_the_spend_cap_is_rejected_before_dispatch() {
     });
 
     let rejected = router
-        .client
-        .post(format!("{}/v1/messages", router.url))
-        .bearer_auth(&capped)
+        .authenticated_post("/v1/messages", &capped)
         .json(&body)
         .send()
         .await
@@ -61,7 +62,10 @@ async fn a_request_that_fits_is_admitted_and_settled_against_real_usage() {
         .issue_with_id(&IssueRequest {
             ttl_hours: 1,
             label: "roomy budget",
+            account: Some("primary"),
             max_tokens: Some(100_000),
+            client_kind: Some("claude"),
+            principal_id: Some("primary"),
             ..IssueRequest::default()
         })
         .expect("issue token");
@@ -72,9 +76,7 @@ async fn a_request_that_fits_is_admitted_and_settled_against_real_usage() {
     });
 
     let response = router
-        .client
-        .post(format!("{}/v1/messages", router.url))
-        .bearer_auth(&token)
+        .authenticated_post("/v1/messages", &token)
         .json(&body)
         .send()
         .await
@@ -116,7 +118,10 @@ async fn concurrent_requests_cannot_overshoot_the_cap_together() {
         .issue_with_id(&IssueRequest {
             ttl_hours: 1,
             label: "single request budget",
+            account: Some("primary"),
             max_tokens: Some(70),
+            client_kind: Some("claude"),
+            principal_id: Some("primary"),
             ..IssueRequest::default()
         })
         .expect("issue token");
@@ -135,7 +140,8 @@ async fn concurrent_requests_cannot_overshoot_the_cap_together() {
         handles.push(tokio::spawn(async move {
             client
                 .post(format!("{url}/v1/messages"))
-                .bearer_auth(token)
+                .header("x-api-key", token)
+                .header("anthropic-version", "2023-06-01")
                 .json(&body)
                 .send()
                 .await
@@ -175,7 +181,10 @@ async fn a_rejected_request_does_not_leak_its_reservation() {
         .issue_with_id(&IssueRequest {
             ttl_hours: 1,
             label: "leak check",
+            account: Some("primary"),
             max_tokens: Some(100_000),
+            client_kind: Some("claude"),
+            principal_id: Some("primary"),
             ..IssueRequest::default()
         })
         .expect("issue token");
@@ -183,9 +192,7 @@ async fn a_rejected_request_does_not_leak_its_reservation() {
     // A malformed body never reaches the upstream, but it has already been
     // admitted by the time it is rejected.
     let response = router
-        .client
-        .post(format!("{}/v1/messages", router.url))
-        .bearer_auth(&token)
+        .authenticated_post("/v1/messages", &token)
         .header("content-type", "application/json")
         .body("{ not json")
         .send()

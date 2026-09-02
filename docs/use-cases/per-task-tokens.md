@@ -124,9 +124,11 @@ For where the usage numbers surface, see
 ## What isolation does and does not mean
 
 Per-token isolation covers attribution, independent budgets, rate windows,
-expiry, revocation, and optional account pinning. It is **not data isolation**:
-tokens routed to the same subscription can reach the same models, and the
-router does not create separate vendor context, history, or cache boundaries.
+expiry, revocation, immutable managed-client/subscriber binding, and optional
+account pinning. It is **not data isolation**: tokens authorized for the same
+principal and credential can reach the same models, and Router does not create
+separate vendor context, history, or cache boundaries. Generic/manual/admin or
+legacy tokens without the binding cannot spend consumer subscriptions.
 The operator can read the default diagnostic request log, which records full
 prompts and completions under
 `$DATA_DIR/requests/<token-hash>/requests.lino`. Protect that directory as

@@ -13,6 +13,12 @@
 //!
 //! Streaming replies are translated incrementally by
 //! [`crate::anthropic_stream::AnthropicStreamTranslator`].
+//!
+//! Translation is not subscription authority. Consumer-subscription bridges
+//! are denied by default and run only after `client_policy` authorizes the
+//! exact signed client/provider pair; issue #45's historical default is
+//! superseded by issue #389. Ordinary API-key providers and the separately
+//! policy-gated z.ai Coding Plan retain their own credential rules.
 
 use axum::body::{Body, Bytes};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
@@ -42,6 +48,7 @@ pub const fn is_bridged(provider: UpstreamProvider) -> bool {
             | UpstreamProvider::Qwen
             | UpstreamProvider::Gemini
             | UpstreamProvider::OpenAICompatible
+            | UpstreamProvider::ZaiCodingPlan
     )
 }
 
@@ -648,6 +655,20 @@ pub(crate) async fn handle_anthropic_surface_routed(
     body: Value,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        if path.ends_with("/count_tokens") {
+            return crate::zai_coding_plan::count_tokens(state, headers, path, &body);
+        }
+        return crate::zai_coding_plan::forward(
+            state,
+            headers,
+            body,
+            path,
+            crate::client_policy::ClientProtocol::AnthropicMessages,
+            Surface::Anthropic,
+        )
+        .await;
+    }
     if path.ends_with("/count_tokens") {
         // Answered locally, so no delegate forwarder validates the token for
         // us. Do it here: an expired or revoked token must not get an estimate
@@ -961,29 +982,6 @@ fn anthropic_sse_response(
 }
 
 /// Re-shape an upstream error body as an Anthropic error envelope.
-fn anthropic_error(status: StatusCode, body: &[u8]) -> Response {
-    let text = serde_json::from_slice::<Value>(body).map_or_else(
-        |_| String::from_utf8_lossy(body).to_string(),
-        |value| {
-            value
-                .get("error")
-                .and_then(|e| e.get("message"))
-                .and_then(Value::as_str)
-                .map_or_else(|| value.to_string(), String::from)
-        },
-    );
-    let error_type = match status {
-        StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN => "authentication_error",
-        StatusCode::TOO_MANY_REQUESTS => "rate_limit_error",
-        StatusCode::BAD_REQUEST => "invalid_request_error",
-        _ => "api_error",
-    };
-    (
-        status,
-        axum::Json(json!({
-            "type": "error",
-            "error": {"type": error_type, "message": text},
-        })),
-    )
-        .into_response()
-}
+#[path = "anthropic_bridge_error.rs"]
+mod error;
+use error::anthropic_error;

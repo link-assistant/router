@@ -4,6 +4,12 @@
 > **Claude MAX** subscription, without giving the client the Claude OAuth
 > credential.
 
+> **Disabled by default.** Anthropic documents subscription OAuth for Claude
+> Code/native applications, not third-party routing. This historical issue #45
+> bridge now requires the exact `codex:claude` risk acceptance. A generic task
+> token is never enough; use `router with codex` or `router clients setup codex`
+> so the token carries an immutable Codex client and subscriber binding.
+
 This is the first compatibility scenario named in
 [issue #45](https://github.com/link-assistant/router/issues/45): *"Claude Max
 subscription usage inside Codex"*.
@@ -39,9 +45,9 @@ line is rejected with a **misleading** `429 rate_limit_error` whose message is
 literally `"Error"`, even when no rate limit has been hit (captured live in
 [`docs/case-studies/issue-45/evidence/`](../case-studies/issue-45/evidence/)).
 
-The router therefore prepends the block whenever the upstream credential is a
-subscription OAuth token (`sk-ant-oat…`), on both the `/v1/responses` and the
-pass-through `/v1/messages` surfaces. Your own system prompt is preserved
+The router prepends the block only for native Claude Code traffic or after the
+exact `codex:claude` override has authorized a request using a subscription
+OAuth token (`sk-ant-oat…`). Your own system prompt is preserved
 immediately after it, and a request that already starts with the line — every
 request Claude Code itself makes — is left untouched. Plain API keys
 (`sk-ant-api…`) are never modified.
@@ -58,8 +64,8 @@ claude          # completes the OAuth login, writes ~/.claude/.credentials.json
 
 ```bash
 export TOKEN_SECRET=$(openssl rand -hex 32)
-export UPSTREAM_PROVIDER=anthropic          # the default
-router serve                 # listens on 0.0.0.0:8080
+export UPSTREAM_PROVIDER=anthropic
+router serve --allow-subscription-bridge codex:claude
 ```
 
 Verify the credential is readable and unexpired:
@@ -68,15 +74,15 @@ Verify the credential is readable and unexpired:
 router doctor
 ```
 
-## 3. Issue a token for this task
+## 3. Launch with a bound token
 
 ```bash
-export LINK_ASSISTANT_TOKEN=$(
-  router tokens issue --label codex-on-claude --ttl-hours 24 --max-requests 200
-)
+router with codex "explain this repository"
 ```
 
-(See [per-task-tokens.md](per-task-tokens.md) for what the flags buy you.)
+For permanent configuration, run `router clients setup codex`; it writes a
+short-lived Codex-bound token without printing it. `router tokens issue` creates
+a generic token and is intentionally refused for consumer subscriptions.
 
 ## 4. Point Codex CLI at the router
 
@@ -93,7 +99,8 @@ env_key = "LINK_ASSISTANT_TOKEN"
 wire_api = "responses"
 ```
 
-Then run Codex normally:
+Then run Codex normally after sourcing the managed environment file printed by
+setup:
 
 ```bash
 codex "explain this repository"
@@ -158,7 +165,8 @@ events, then `response.completed`.
 ## Limits and caveats
 
 - **Anthropic Terms apply.** A Claude MAX subscription is a personal
-  subscription; use this to serve your own tooling, not to resell capacity.
+  subscription. The override is an explicit policy/account-restriction risk;
+  never share or resell it. Removing `codex:claude` restores the safe default.
 - **Tool calls** are translated in both directions, but vendor-specific
   extensions that have no Anthropic equivalent are dropped rather than guessed.
 - **Codex-specific features** that assume the ChatGPT backend (for example

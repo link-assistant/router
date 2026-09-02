@@ -1,7 +1,7 @@
 //! Model catalog and automatic subscription-provider routing.
 
 use axum::body::Body;
-use axum::extract::{Request, State};
+use axum::extract::{OriginalUri, Request, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use serde_json::{Value, json};
@@ -698,43 +698,124 @@ fn merge_configured_degradation(health: &[ProviderHealthReport], catalog: &mut V
     }
 }
 
-/// `GET /v1/models` across automatic or explicitly pinned providers.
-pub async fn models(State(state): State<AppState>, headers: HeaderMap) -> Response {
-    if let Err(response) = crate::proxy::authenticate_client(&state, &headers) {
-        return *response;
+fn principal_catalog_models(
+    state: &AppState,
+    provider: SubscriptionProvider,
+    accounts: &[String],
+) -> Vec<String> {
+    if accounts.iter().any(|account| {
+        state.subscription_cache.evidence_for(provider, account)
+            == Some(crate::refresh::CredentialEvidence::Rejected)
+    }) {
+        Vec::new()
+    } else {
+        state.model_catalogs.models_for_accounts(provider, accounts)
     }
+}
+
+/// `GET /v1/models` across automatic or explicitly pinned providers.
+pub async fn models(
+    State(state): State<AppState>,
+    OriginalUri(uri): OriginalUri,
+    headers: HeaderMap,
+) -> Response {
+    let claims = match crate::proxy::authenticate_client(&state, &headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    let path = uri.path();
+    let principal_accounts = claims.principal_id.clone().into_iter().collect::<Vec<_>>();
+
+    let entitled = |provider| {
+        crate::client_policy::enforce_subscription_for_claims(
+            &state,
+            &claims,
+            &headers,
+            provider,
+            crate::client_policy::ClientProtocol::Catalog,
+            path,
+        )
+    };
 
     let models = match state.upstream_provider {
         UpstreamProvider::Auto => {
             let snapshot = configured_catalog_snapshot(&state).await;
-            let healthy = snapshot.healthy_providers();
+            let healthy = snapshot
+                .healthy_providers()
+                .into_iter()
+                .filter(|provider| entitled(*provider).is_ok())
+                .collect::<Vec<_>>();
             let mut catalog = model_catalog_with(&healthy, &state.model_catalogs, |provider| {
-                snapshot.models(provider)
+                principal_catalog_models(&state, provider, &principal_accounts)
             });
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
             // simply vanished from `data`. Absence is not an alert: a monitor
             // cannot tell it from a provider that was never configured here
             // (issue #318).
-            merge_configured_degradation(snapshot.health(), &mut catalog);
+            let visible_health = snapshot
+                .health()
+                .iter()
+                .filter(|entry| entitled(entry.provider).is_ok())
+                .cloned()
+                .collect::<Vec<_>>();
+            merge_configured_degradation(&visible_health, &mut catalog);
             append_stored_provider_models(&state, &mut catalog);
+            append_zai_models(&state, &claims, &headers, path, &mut catalog).await;
             catalog
         }
         UpstreamProvider::Anthropic => {
-            pinned_model_catalog(&state, SubscriptionProvider::Claude).await
+            if let Err(response) = entitled(SubscriptionProvider::Claude) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Claude],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
         }
         UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
             || crate::gonka::list_models(&crate::config::default_gonka_model()),
             |gonka| crate::gonka::list_models(&gonka.model),
         ),
         UpstreamProvider::Crater => crate::crater::list_models(),
-        UpstreamProvider::Codex => pinned_model_catalog(&state, SubscriptionProvider::Codex).await,
-        UpstreamProvider::Qwen => pinned_model_catalog(&state, SubscriptionProvider::Qwen).await,
+        UpstreamProvider::Codex => {
+            if let Err(response) = entitled(SubscriptionProvider::Codex) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Codex],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
+        }
+        UpstreamProvider::Qwen => {
+            if let Err(response) = entitled(SubscriptionProvider::Qwen) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Qwen],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
+        }
         UpstreamProvider::Gemini => {
-            pinned_model_catalog(&state, SubscriptionProvider::Gemini).await
+            if let Err(response) = entitled(SubscriptionProvider::Gemini) {
+                return response;
+            }
+            model_catalog_with(
+                &[SubscriptionProvider::Gemini],
+                &state.model_catalogs,
+                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+            )
         }
         UpstreamProvider::OpenAICompatible => {
             crate::provider_proxy::openai_compatible_models(&state)
+        }
+        UpstreamProvider::ZaiCodingPlan => {
+            let mut catalog = json!({"object": "list", "data": []});
+            append_zai_models(&state, &claims, &headers, path, &mut catalog).await;
+            catalog
         }
     };
     (StatusCode::OK, axum::Json(models)).into_response()
@@ -835,108 +916,13 @@ pub async fn route_provider(
 /// subscription catalogs (issue #260). Declared models are stated by the
 /// operator rather than discovered, so they are listed without disturbing the
 /// `degraded_providers` reporting, which describes credential discovery.
-fn append_stored_provider_models(state: &AppState, catalog: &mut Value) {
-    let Ok(providers) = state.provider_store.list() else {
-        return;
-    };
-    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
-        return;
-    };
-    for provider in providers.iter().filter(|record| record.enabled) {
-        for model in &provider.models {
-            if data
-                .iter()
-                .any(|entry| entry.get("id").and_then(Value::as_str) == Some(model.as_str()))
-            {
-                // The id is already listed by a subscription, so name this one
-                // in its qualified form: both remain reachable, and the
-                // unqualified id stays ambiguous rather than silently bound.
-                data.push(json!({
-                    "id": format!("{}/{}", provider.name, model),
-                    "object": "model",
-                    "owned_by": provider.name,
-                }));
-                continue;
-            }
-            data.push(json!({
-                "id": model,
-                "object": "model",
-                "owned_by": provider.name,
-            }));
-        }
-    }
-}
-
-/// The stored provider that declares `model`, when exactly one does.
-///
-/// Stored providers were reachable only by pinning `UPSTREAM_PROVIDER`, which
-/// pins the *whole deployment* — so one router could serve vendor
-/// subscriptions or a local OpenAI-compatible endpoint, never both (issue
-/// #260). A provider that declares its models can now win a route in automatic
-/// mode on the strength of that declaration.
-///
-/// `<provider>/<model>` names one explicitly, which is how an operator resolves
-/// a collision that automatic routing refuses to guess at.
-fn stored_provider_for_model(
-    state: &AppState,
-    model: &str,
-) -> Result<Option<crate::providers::ResolvedProvider>, ModelRouteError> {
-    if let Some((name, bare)) = model.split_once('/') {
-        // An explicitly qualified name addresses one provider and must not
-        // silently fall through to a subscription of the same model id.
-        return match state.provider_store.resolve(name) {
-            Ok(Some(provider)) if provider.declares(bare) => Ok(Some(provider)),
-            Ok(Some(_)) => Err(ModelRouteError::NotFound(format!(
-                "provider '{name}' does not advertise model '{bare}'"
-            ))),
-            _ => Ok(None),
-        };
-    }
-    let Ok(providers) = state.provider_store.list() else {
-        return Ok(None);
-    };
-    let mut declaring = providers
-        .into_iter()
-        .filter(|record| record.enabled && record.models.iter().any(|id| id == model))
-        .map(|record| record.name);
-    let Some(first) = declaring.next() else {
-        return Ok(None);
-    };
-    if let Some(second) = declaring.next() {
-        // The same rule subscriptions already follow: an ambiguous unqualified
-        // name is refused rather than resolved by declaration order.
-        return Err(ModelRouteError::Ambiguous(format!(
-            "model '{model}' is declared by multiple stored providers ({first}, {second}); name \
-             one as '<provider>/{model}' to disambiguate"
-        )));
-    }
-    Ok(state.provider_store.resolve(&first).ok().flatten())
-}
-
-/// Point `state` at a stored provider for this request only.
-fn route_stored_provider(
-    state: &AppState,
-    provider: &crate::providers::ResolvedProvider,
-    model: &str,
-) -> AppState {
-    let mut routed = state.clone();
-    routed.upstream_provider = UpstreamProvider::OpenAICompatible;
-    routed
-        .openai_compatible
-        .provider_name
-        .clone_from(&provider.name);
-    // A qualified name addressed the provider; the upstream only knows the
-    // bare id, so forward what it will recognise.
-    routed.bridge_model = Some(bare_model_id(model).to_string());
-    routed
-}
-
-/// The model id an upstream will recognise, with any `<provider>/` prefix
-/// removed.
-#[must_use]
-pub fn bare_model_id(model: &str) -> &str {
-    model.split_once('/').map_or(model, |(_, bare)| bare)
-}
+#[path = "model_routing_stored.rs"]
+mod stored;
+pub use stored::bare_model_id;
+use stored::{
+    append_stored_provider_models, append_zai_models, route_stored_provider,
+    stored_provider_for_model,
+};
 
 pub(crate) async fn route_state_with_subscription(
     state: &AppState,
@@ -973,7 +959,7 @@ pub async fn route_state(state: &AppState, body: &Value) -> Result<AppState, Mod
 
 #[cfg(test)]
 #[path = "model_routing_tests.rs"]
-mod tests;
+pub(crate) mod tests;
 
 #[cfg(test)]
 #[path = "model_routing_health_tests.rs"]
@@ -994,3 +980,7 @@ mod recovery_tests;
 #[cfg(test)]
 #[path = "model_routing_evidence_tests.rs"]
 mod evidence_tests;
+
+#[cfg(test)]
+#[path = "model_routing_provider_tests.rs"]
+mod provider_tests;

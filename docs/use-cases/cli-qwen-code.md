@@ -82,9 +82,10 @@ straightforward.
 
 | `UPSTREAM_PROVIDER` | Behaviour |
 | --- | --- |
-| `qwen` | native: DashScope OpenAI-compatible backend, using `~/.qwen/oauth_creds.json` |
-| `anthropic` | OpenAI requests are translated to Claude MAX; Anthropic requests pass through |
-| `codex`, `gemini`, `openai-compatible` | translated to that provider's dialect (the Anthropic surface is bridged) |
+| `qwen` | consumer OAuth denied until Alibaba's terms and native row are recorded |
+| `anthropic`, `codex`, `gemini` | consumer subscriptions denied by default; protocol compatibility grants nothing |
+| `openai-compatible` | ordinary API-key provider under its own terms |
+| `z.ai-coding-plan` | denied by default; exact `qwen` second acknowledgement required — see [zai-coding-plan.md](zai-coding-plan.md) |
 
 `/api/qwen/v1/*` is a namespaced alias that forwards Qwen's native
 OpenAI-compatible protocol.
@@ -104,4 +105,4 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | --- | --- |
 | Qwen Code ignores the provider | the model entry's `id` + `baseUrl` pair must be unique and the auth type must match the dialect |
 | `401` | `envKey` variable unset in the shell running `qwen` |
-| Wrong model served | on a non-Qwen upstream the id is remapped; see the bridge/model tables in the scenario documents |
+| `403 permission_error` | the signed Qwen client/provider cell is not approved; pinning or changing a model id cannot bypass it |

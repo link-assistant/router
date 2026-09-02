@@ -153,6 +153,20 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                     "github_repos",
                     LinoValue::String(record.github_repos.join(",")),
                 ),
+                (
+                    "client_kind",
+                    record
+                        .client_kind
+                        .as_ref()
+                        .map_or(LinoValue::Null, |value| LinoValue::String(value.clone())),
+                ),
+                (
+                    "principal_id",
+                    record
+                        .principal_id
+                        .as_ref()
+                        .map_or(LinoValue::Null, |value| LinoValue::String(value.clone())),
+                ),
             ]),
         ),
     ])
@@ -204,6 +218,8 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
                 .unwrap_or_default()
                 .unwrap_or_default(),
         ),
+        client_kind: optional_string_field(fields, "client_kind", "record value")?,
+        principal_id: optional_string_field(fields, "principal_id", "record value")?,
     })
 }
 
@@ -723,6 +739,12 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         "github_repos",
         &record.github_repos.join(","),
     );
+    if let Some(client) = &record.client_kind {
+        add_field(&mut links, &value, "client_kind", client);
+    }
+    if let Some(principal) = &record.principal_id {
+        add_field(&mut links, &value, "principal_id", principal);
+    }
     links
 }
 
@@ -818,6 +840,8 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         rate_window_requests: optional_parsed_field(&fields, "rate_window_requests")?.unwrap_or(0),
         scope: required_field(&fields, "scope")?.to_string(),
         github_repos: split_repository_list(fields.get("github_repos").map_or("", String::as_str)),
+        client_kind: fields.get("client_kind").cloned(),
+        principal_id: fields.get("principal_id").cloned(),
     })
 }
 
@@ -907,81 +931,5 @@ pub(super) fn encoded_pairs_for_test(path: &Path) -> Result<Vec<(usize, usize)>,
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    fn sample_record() -> TokenRecord {
-        TokenRecord {
-            github_repos: Vec::new(),
-            id: "id/with spaces".into(),
-            label: "label with \"quotes\" and a newline\n".into(),
-            issued_at: i64::MIN,
-            expires_at: i64::MAX,
-            revoked: true,
-            sliding_window_seconds: None,
-            account: Some(String::new()),
-            max_requests: Some(u64::MAX),
-            used_requests: u64::MAX,
-            max_tokens: Some(u64::MAX),
-            used_tokens: u64::MAX,
-            reserved_tokens: u64::MAX,
-            rate_limit_per_minute: Some(u64::MAX),
-            rate_window_started_at: i64::MAX,
-            rate_window_requests: u64::MAX,
-            scope: "admin".into(),
-        }
-    }
-
-    #[test]
-    fn semantic_reduction_is_lossless() {
-        let record = sample_record();
-        let mut links = BTreeSet::from([
-            SemanticLink::new(STORAGE_FORMAT, FORMAT_VERSION),
-            SemanticLink::new(TYPE, TOKEN_RECORD),
-            SemanticLink::new(TOKEN_RECORD, SUBTYPE),
-            SemanticLink::new(SUBTYPE, VALUE),
-        ]);
-        links.extend(record_to_links(&record));
-
-        assert_eq!(links_to_records(&links).unwrap(), vec![record]);
-    }
-
-    #[test]
-    fn official_lino_codec_roundtrip_is_lossless() {
-        let record = sample_record();
-        let encoded = encode_text(std::iter::once(&record));
-
-        assert_eq!(decode_text(&encoded).unwrap(), vec![record]);
-    }
-
-    #[test]
-    fn native_doublets_links_network_reopens_across_growth_boundary() {
-        let dir = tempdir().unwrap();
-        let path = dir.path().join("tokens.bin");
-        let mut record = sample_record();
-        record.label = "large associative value".repeat(500);
-        {
-            let mut store = PersistentStore::open(&path).unwrap();
-            store.replace(std::iter::once(&record)).unwrap();
-        }
-
-        let file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&path)
-            .unwrap();
-        let memory = LoadedFileMapped::new(file).unwrap();
-        let links_network = unit::Store::<usize, _>::new(memory).unwrap();
-        assert!(
-            links_network.count() > 8 * 1024,
-            "fixture must cross the upstream bootstrap page boundary"
-        );
-        drop(links_network);
-
-        // Reopened from scratch: what one process wrote in place is what the
-        // next one reads, across the growth boundary.
-        let reopened = PersistentStore::open(&path).unwrap();
-        assert_eq!(reopened.records().unwrap(), vec![record]);
-    }
-}
+#[path = "associative_tests.rs"]
+mod tests;

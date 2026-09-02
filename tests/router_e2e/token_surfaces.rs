@@ -120,10 +120,10 @@ async fn every_surface_rejects_the_same_invalid_constraints() {
     }
 }
 
-/// A chat-issued token is enforced over the proxy identically to an
-/// HTTP-issued one carrying the same limits.
+/// Generic tokens from both manual administration surfaces have identical
+/// constraints and neither is silently promoted into a managed client token.
 #[tokio::test]
-async fn a_chat_issued_token_is_enforced_like_an_http_issued_one() {
+async fn generic_tokens_from_chat_and_http_cannot_spend_a_consumer_subscription() {
     let router = TestRouter::start(UpstreamProvider::Anthropic).await;
     let chat = signed_in_chat(router.token_manager.clone());
 
@@ -154,32 +154,38 @@ async fn a_chat_issued_token_is_enforced_like_an_http_issued_one() {
         "messages": [{"role": "user", "content": "hi"}]
     });
 
-    // Both spend their single request, then both are refused.
+    // Both carry the same requested constraint, but neither has the signed
+    // client/principal binding required to spend the Claude subscription.
     for token in [&chat_token, &http_token] {
-        let first = router
+        let response = router
             .client
             .post(format!("{}/v1/messages", router.url))
             .bearer_auth(token)
+            .header("anthropic-version", "2023-06-01")
             .json(&body)
             .send()
             .await
-            .expect("first request");
-        assert_eq!(first.status(), StatusCode::OK);
-        first.bytes().await.expect("drain");
-
-        let second = router
-            .client
-            .post(format!("{}/v1/messages", router.url))
-            .bearer_auth(token)
-            .json(&body)
-            .send()
-            .await
-            .expect("second request");
-        assert_eq!(
-            second.status(),
-            StatusCode::TOO_MANY_REQUESTS,
-            "the request cap must apply regardless of issuing surface"
+            .expect("consumer subscription denial");
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert!(
+            response
+                .text()
+                .await
+                .expect("denial body")
+                .contains("managed-client binding")
         );
+    }
+    assert!(router.requests.lock().expect("stub requests").is_empty());
+
+    let records = router.token_manager.list_tokens().expect("list tokens");
+    for label in ["chat-issued", "http-issued"] {
+        let record = records
+            .iter()
+            .find(|record| record.label == label)
+            .expect("issued token record");
+        assert_eq!(record.max_requests, Some(1), "{label}");
+        assert_eq!(record.client_kind, None, "{label}");
+        assert_eq!(record.principal_id, None, "{label}");
     }
 }
 

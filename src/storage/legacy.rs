@@ -101,6 +101,8 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         rate_window_started_at: 0,
         rate_window_requests: 0,
         scope: String::new(),
+        client_kind: None,
+        principal_id: None,
     };
     while let Some(field) = tokens.next_paren_group() {
         parse_field(&mut record, field)?;
@@ -137,6 +139,8 @@ fn parse_field(record: &mut TokenRecord, field: &str) -> Result<(), String> {
             record.rate_window_requests = required_number(&mut tokens, key)?;
         }
         "scope" => record.scope = tokens.next_string().unwrap_or_default(),
+        "client_kind" => record.client_kind = tokens.next_string(),
+        "principal_id" => record.principal_id = tokens.next_string(),
         other => return Err(format!("unknown field: {other}")),
     }
     Ok(())

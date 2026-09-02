@@ -57,6 +57,8 @@ pub async fn issue_token(
             .sliding_expiry
             .unwrap_or(false)
             .then(|| ttl.saturating_mul(3_600)),
+        client_kind: None,
+        principal_id: None,
     };
     // One shared rule set across HTTP, CLI and chat (issue #194), so the same
     // request cannot be accepted on one surface and refused on another.
@@ -86,6 +88,83 @@ pub async fn issue_token(
             StatusCode::INTERNAL_SERVER_ERROR,
             "api_error",
             &format!("Failed to issue token: {e}"),
+        ),
+    }
+}
+
+/// Mint a short-lived token bound to one managed client and subscriber.
+///
+/// Kept separate from [`issue_token`] so ordinary/manual issuance never gains
+/// consumer-subscription authority merely by choosing a suggestive label.
+pub async fn issue_client_token(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    axum::Json(req): axum::Json<IssueClientTokenRequest>,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return error_response(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            "missing or invalid admin Bearer key",
+        );
+    }
+    let Some(client) = crate::clients::ClientKind::from_str_opt(&req.client_kind) else {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "unknown Router client kind",
+        );
+    };
+    if matches!(client, crate::clients::ClientKind::Cursor) {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "Cursor has no native Router adapter and cannot receive a bound token",
+        );
+    }
+    let ttl = req.ttl_hours.unwrap_or(24);
+    let label = req
+        .label
+        .unwrap_or_else(|| format!("client-{}", client.canonical_name()));
+    let principal = crate::credential_recovery_store::PRIMARY_ACCOUNT;
+    let request = IssueRequest {
+        ttl_hours: ttl,
+        label: &label,
+        account: Some(principal),
+        max_requests: req.max_requests,
+        max_tokens: None,
+        rate_limit_per_minute: None,
+        scope: "",
+        github_repos: Vec::new(),
+        sliding_window_seconds: req
+            .sliding_expiry
+            .unwrap_or(false)
+            .then(|| ttl.saturating_mul(3_600)),
+        client_kind: Some(client.canonical_name()),
+        principal_id: Some(principal),
+    };
+    if let Err(message) = request.validate() {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
+    }
+    match state.token_manager.issue(&request) {
+        Ok(token) => {
+            state.metrics.record_token_issued();
+            (
+                StatusCode::OK,
+                axum::Json(serde_json::json!({
+                    "token": token,
+                    "ttl_hours": ttl,
+                    "label": label,
+                    "client_kind": client.canonical_name(),
+                    "principal_id": principal,
+                })),
+            )
+                .into_response()
+        }
+        Err(error) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            &format!("Failed to issue bound client token: {error}"),
         ),
     }
 }
@@ -325,6 +404,16 @@ pub struct IssueTokenRequest {
     /// what every existing token keeps (issue #262).
     #[serde(default)]
     pub github_repos: Option<Vec<String>>,
+}
+
+/// Request body for the managed client-token issuance endpoint.
+#[derive(serde::Deserialize)]
+pub struct IssueClientTokenRequest {
+    pub client_kind: String,
+    pub ttl_hours: Option<i64>,
+    pub sliding_expiry: Option<bool>,
+    pub label: Option<String>,
+    pub max_requests: Option<u64>,
 }
 
 /// Request body for the admin rotation endpoint. All fields are optional.

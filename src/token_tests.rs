@@ -476,6 +476,8 @@ fn ordinary_token_rotation_preserves_its_controls_and_revokes_the_old_token() {
             scope: "",
             github_repos: Vec::new(),
             sliding_window_seconds: None,
+            client_kind: None,
+            principal_id: None,
         })
         .unwrap();
     let old_claims = mgr.validate_token(&old).unwrap();
@@ -827,6 +829,8 @@ fn a_slid_token_is_accepted_after_its_signed_expiry() {
             scope: "",
             github_repos: Vec::new(),
             sliding_window_seconds: Some(7 * 24 * 3_600),
+            client_kind: None,
+            principal_id: None,
         })
         .expect("issue");
     let id = manager.validate_token(&token).expect("valid now").sub;
@@ -850,6 +854,8 @@ fn a_slid_token_is_accepted_after_its_signed_expiry() {
             scope: "",
             github_repos: Vec::new(),
             sliding_window_seconds: Some(7 * 24 * 3_600),
+            client_kind: None,
+            principal_id: None,
         })
         .expect("issue an already-expired token");
     let aged_id = manager
@@ -880,6 +886,8 @@ fn a_fixed_token_is_still_refused_when_it_expires() {
             scope: "",
             github_repos: Vec::new(),
             sliding_window_seconds: None,
+            client_kind: None,
+            principal_id: None,
         })
         .expect("issue");
     assert!(
@@ -950,6 +958,8 @@ fn a_token_that_could_not_be_stored_is_not_returned() {
         scope: "",
         github_repos: Vec::new(),
         sliding_window_seconds: None,
+        client_kind: None,
+        principal_id: None,
     });
 
     assert!(

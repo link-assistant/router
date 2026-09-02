@@ -16,7 +16,9 @@ so no request reaches an upstream.
 
 ## The one thing to get right
 
-`POST /api/tokens` mints `la_sk_…` tokens that spend your subscription, so it —
+`POST /api/tokens` mints generic `la_sk_…` tokens for ordinary provider routes,
+but only the dedicated managed-client mint can create the immutable binding
+needed for a consumer subscription. Both are privileged operations, so they —
 and every other `/api/tokens*` endpoint — is **closed by default**. An
 unauthenticated call is refused:
 

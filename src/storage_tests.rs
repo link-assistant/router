@@ -22,6 +22,8 @@ fn sample_record(id: &str) -> TokenRecord {
         rate_window_started_at: 0,
         rate_window_requests: 0,
         scope: String::new(),
+        client_kind: None,
+        principal_id: None,
     }
 }
 
@@ -252,6 +254,8 @@ fn lino_codec_handles_special_chars() {
         rate_window_started_at: 1_700_000_000,
         rate_window_requests: 2,
         scope: crate::token::ADMIN_SCOPE.to_string(),
+        client_kind: Some("claude".into()),
+        principal_id: Some("primary".into()),
     };
     let s = associative::encode_text(std::iter::once(&rec));
     let parsed = associative::decode_text(&s).unwrap();

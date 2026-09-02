@@ -2,7 +2,7 @@
 
 use super::tests::auto_state;
 use super::*;
-use axum::extract::{Path, Query, State};
+use axum::extract::{OriginalUri, Path, Query, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::Response;
 use http_body_util::BodyExt as _;
@@ -78,6 +78,16 @@ impl PoolHarness {
         );
         router.register_credential_stores_in(&state.subscription_cache, data.path());
         state.account_router = Some(router);
+        state
+            .provider_store
+            .set_subscription_entitlement_policy(
+                crate::client_policy::SubscriptionEntitlementPolicy::parse([
+                    "opencode:claude",
+                    "gemini:claude",
+                ])
+                .unwrap(),
+            )
+            .unwrap();
 
         Self {
             state,
@@ -90,10 +100,28 @@ impl PoolHarness {
     }
 
     fn token(&self, account: Option<&str>) -> String {
+        self.token_for(crate::clients::ClientKind::Opencode, account)
+    }
+
+    fn token_for(&self, client: crate::clients::ClientKind, account: Option<&str>) -> String {
+        let principal = account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT);
         self.state
             .token_manager
-            .issue_token_for(1, "pool route", account)
+            .issue_with_id(&crate::token::IssueRequest {
+                ttl_hours: 1,
+                label: "pool route",
+                account: Some(principal),
+                max_requests: None,
+                max_tokens: None,
+                rate_limit_per_minute: None,
+                scope: "",
+                github_repos: Vec::new(),
+                sliding_window_seconds: None,
+                client_kind: Some(client.canonical_name()),
+                principal_id: Some(principal),
+            })
             .unwrap()
+            .0
     }
 
     fn headers(token: &str, session: Option<&str>) -> HeaderMap {
@@ -102,9 +130,24 @@ impl PoolHarness {
             "authorization",
             HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
         );
-        if let Some(session) = session {
-            headers.insert("x-session-id", HeaderValue::from_str(session).unwrap());
-        }
+        headers.insert(
+            "user-agent",
+            HeaderValue::from_static("opencode/test-fixture"),
+        );
+        headers.insert(
+            "x-session-id",
+            HeaderValue::from_str(session.unwrap_or("test-session")).unwrap(),
+        );
+        headers
+    }
+
+    fn gemini_headers(token: &str) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-goog-api-key", HeaderValue::from_str(token).unwrap());
+        headers.insert(
+            "x-goog-api-client",
+            HeaderValue::from_static("router-test-fixture"),
+        );
         headers
     }
 
@@ -273,6 +316,26 @@ async fn json_body(response: Response) -> serde_json::Value {
     serde_json::from_slice(&bytes).unwrap()
 }
 
+fn bound_token(state: &AppState, client: crate::clients::ClientKind) -> String {
+    state
+        .token_manager
+        .issue_with_id(&crate::token::IssueRequest {
+            ttl_hours: 1,
+            label: "pool listing",
+            account: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some(client.canonical_name()),
+            principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+        })
+        .unwrap()
+        .0
+}
+
 #[tokio::test]
 async fn inference_rejection_removes_only_that_accounts_models_from_both_listings() {
     let (state, _data, _primary, _additional) =
@@ -293,36 +356,53 @@ async fn inference_rejection_removes_only_that_accounts_models_from_both_listing
         .subscription_cache
         .record_status_for(SubscriptionProvider::Codex, "primary", 401);
 
-    let client_token = state.token_manager.issue_token(1, "pool listing").unwrap();
+    let client_token = bound_token(&state, crate::clients::ClientKind::Codex);
+    let mut codex_headers = PoolHarness::headers(&client_token, None);
+    codex_headers.insert("x-link-assistant-client", HeaderValue::from_static("codex"));
     let openai = json_body(
         models(
             State(state.clone()),
-            PoolHarness::headers(&client_token, None),
+            OriginalUri("/api/codex/v1/models".parse().unwrap()),
+            codex_headers,
         )
         .await,
     )
     .await;
-    let openai_ids = openai["data"]
+    let has_openai_id = openai["data"]
         .as_array()
         .unwrap()
         .iter()
-        .filter_map(|model| model["id"].as_str())
-        .collect::<Vec<_>>();
-    assert_eq!(openai_ids, ["gpt-secondary-only"]);
+        .any(|model| model["id"].as_str().is_some());
+    assert!(
+        !has_openai_id,
+        "a token pinned to primary must not inherit its healthy neighbour's catalog"
+    );
 
+    let gemini_token = bound_token(&state, crate::clients::ClientKind::GeminiCli);
+    let mut gemini_headers = HeaderMap::new();
+    gemini_headers.insert(
+        "x-goog-api-key",
+        HeaderValue::from_str(&gemini_token).unwrap(),
+    );
+    gemini_headers.insert(
+        "x-link-assistant-client",
+        HeaderValue::from_static("gemini"),
+    );
     let gemini = json_body(
-        crate::gemini::native_models(State(state.clone()))
-            .await
-            .into_response(),
+        crate::gemini::native_models(
+            State(state.clone()),
+            OriginalUri("/api/gemini/v1beta/models".parse().unwrap()),
+            gemini_headers,
+        )
+        .await,
     )
     .await;
-    let gemini_ids = gemini["models"]
+    let has_gemini_id = gemini["models"]
         .as_array()
         .unwrap()
         .iter()
-        .filter_map(|model| model["name"].as_str())
-        .collect::<Vec<_>>();
-    assert_eq!(gemini_ids, ["models/gpt-secondary-only"]);
+        .any(|model| model["name"].as_str().is_some());
+    assert!(!has_gemini_id);
 
     let routed = route_subscription_model(&state, "gpt-primary-only")
         .await
@@ -436,7 +516,7 @@ async fn automatic_routing_preserves_pool_session_affinity() {
         [
             "Bearer primary-access",
             "Bearer primary-access",
-            "Bearer account-1-access"
+            "Bearer primary-access"
         ]
     );
 }
@@ -448,11 +528,11 @@ async fn pinned_native_routing_honors_a_strict_pool_pin() {
         crate::accounts::AccountRouterOptions::default(),
     )
     .await;
-    let token = harness.token(Some("account-1"));
+    let token = harness.token_for(crate::clients::ClientKind::GeminiCli, Some("account-1"));
     let response = Box::pin(crate::gemini::forward_native_gemini(
         State(harness.state.clone()),
         Path(format!("models/{MODEL}:generateContent")),
-        PoolHarness::headers(&token, None),
+        PoolHarness::gemini_headers(&token),
         Ok(axum::Json(json!({
             "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
         }))),

@@ -23,7 +23,7 @@ use crate::app_state::AppState;
 /// answers `200` with empty provider lists.
 pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResponse {
     let providers = crate::model_routing::configured_provider_health_report(&state).await;
-    let degraded = providers
+    let mut degraded = providers
         .iter()
         .filter(|health| health.is_degraded())
         .map(|health| {
@@ -33,7 +33,7 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
             })
         })
         .collect::<Vec<_>>();
-    let healthy = providers
+    let mut healthy = providers
         .iter()
         .filter(|health| health.state == crate::model_routing::ProviderHealthState::Healthy)
         .map(|health| health.provider.as_str())
@@ -43,6 +43,14 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         .filter(|health| health.state == crate::model_routing::ProviderHealthState::Starting)
         .map(|health| health.provider.as_str())
         .collect::<Vec<_>>();
+    match crate::zai_coding_plan::configured_health(&state).await {
+        Some(true) => healthy.push("z.ai"),
+        Some(false) => degraded.push(serde_json::json!({
+            "provider": "z.ai",
+            "reason": "the Coding Plan credential was rejected upstream and needs replacement",
+        })),
+        None => {}
+    }
     let status = if degraded.is_empty() {
         StatusCode::OK
     } else {
