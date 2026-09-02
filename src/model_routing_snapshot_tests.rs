@@ -391,9 +391,10 @@ async fn catalog_and_dispatch_reloads_hold_the_registered_store_lock() {
     );
 }
 
-/// A successful refresh is allowed to leave the old access token on disk when
-/// the endpoint did not rotate the refresh link. Dispatch must use the fresh
-/// in-memory access token while accepting that exact pre-refresh baseline.
+/// A successful refresh persists the new access token even when the endpoint
+/// does not rotate the refresh link. This is required by safe import, which
+/// promotes the staged document the vendor actually accepted rather than its
+/// stale pre-refresh access token.
 #[tokio::test]
 async fn refreshed_access_with_an_unchanged_link_remains_dispatchable() {
     let data = tempdir().unwrap();
@@ -444,7 +445,9 @@ async fn refreshed_access_with_an_unchanged_link_remains_dispatchable() {
     .await;
     assert_eq!(fresh.access_token, "fresh-access");
     assert_eq!(fresh.refresh_token, baseline.refresh_token);
-    assert_eq!(reader.read_token().unwrap(), baseline);
+    let durable = reader.read_token().unwrap();
+    assert_eq!(durable.access_token, "fresh-access");
+    assert_eq!(durable.refresh_token, baseline.refresh_token);
 
     let routed = route_state_with_subscription(&state, &json!({"model": "account-a-model"}))
         .await

@@ -795,6 +795,7 @@ router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
 router auth import claude /path  # or name the source, read exactly as given
 router auth import --all         # every login this machine has, in one step
 router auth import codex --if-absent # install only while the destination is empty
+router auth import codex --safe-refresh-chain-import-v1 # assert the safe contract
 ```
 
 Importing is a different operation from authorizing, not a variation of it:
@@ -810,16 +811,22 @@ authorize a remote deployment from this machine, use `router auth claude` or
 `router auth codex`, which do follow the selection.
 
 The import reports what it adopted — where it came from, when it expires, and
-whether it carries a refresh token — so an already-expired credential is caught
-at import time rather than as a `401` later.
+whether it carries a refresh token. Before anything reaches the destination it
+forces a direct OAuth refresh in a private Router staging store, persists and
+rereads the result, then proves that fresh access token at the vendor's
+non-inference model catalog. A rejected, malformed, timed-out, unreachable, or
+non-refreshable candidate is never installed.
 
 Subscription imports use the same durable provider/account lock as refresh and
 native login. Ordinary import is an explicit replacement operation.
 `--if-absent` is the provisioning-safe form for Claude, Codex, Gemini, and Qwen:
 it rechecks the destination and recovery sidecar while holding that lock and
 never replaces a login that already exists or appeared while it waited. A
-vendor-rejected candidate is refused; add `--force` only when deliberately
-installing that candidate into a destination that is still empty.
+candidate must pass the same positive refresh-chain and catalog checks in both
+modes; there is no force bypass. Deployment tooling can pass
+`--safe-refresh-chain-import-v1` as a stable capability assertion: older Router
+versions reject the flag, while versions that accept it guarantee isolated
+refresh-chain validation plus locked atomic promotion.
 
 On macOS the live Claude credential is in the login Keychain rather than the
 file beside it, so an import from the vendor's own home consults both and takes
@@ -829,8 +836,12 @@ left out of it and the named directory is read exactly as given. Without that
 distinction a pool of per-account directories collapses onto whichever account
 happens to be logged in interactively.
 
-Adopting a credential does not mint one: both holders then rotate the same
-chain, and revoking it at the vendor ends both. To withdraw one:
+Refresh-chain validation advances the candidate before installation, so the
+source copy may contain the spent predecessor after a successful import. If a
+concurrent credential wins the conditional race or catalog validation fails
+after refresh, Router retains the advanced candidate under a non-secret
+transaction identifier instead of deleting the only current chain link. To
+withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh

@@ -109,7 +109,7 @@ pub(super) struct Exchange<'a> {
     pub(super) mode: RecoveryMode,
 }
 
-/// Why the ladder is climbing: proactively, or after an upstream said `401`.
+/// Why the ladder is climbing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum RecoveryMode {
     /// The token is at or near its stated expiry.
@@ -117,6 +117,10 @@ pub(super) enum RecoveryMode {
     /// An upstream rejected the token regardless of its stated expiry, so only
     /// a *different* access token counts as progress.
     AfterRejection,
+    /// Credential import must prove the rotating chain itself. A live access
+    /// token found in the isolated store is therefore not a substitute for a
+    /// successful refresh-token exchange.
+    ImportValidation,
 }
 
 /// The links this exchange has already spent.
@@ -150,6 +154,7 @@ fn is_usable(
         RecoveryMode::AfterRejection => {
             candidate.access_token != base.access_token && !candidate.is_expired(now_ms)
         }
+        RecoveryMode::ImportValidation => false,
     }
 }
 
@@ -205,18 +210,20 @@ async fn acquire_lock(
     })
 }
 
-/// Write a rotated refresh token back before its access token is used.
+/// Write every refreshed credential back before its access token is used.
 ///
-/// Only a genuinely rotated link is written, so an unchanged credential on a
-/// read-only mount stays silent. A failed write rejects the transaction so the
-/// fresh chain link cannot escape into memory without a durable replacement.
+/// Some providers rotate only the access token. That still has to be durable
+/// for safe import: promoting the original document after proving its refresh
+/// chain would install the stale access token rather than the credential the
+/// catalog actually accepted. A failed write rejects the transaction so no
+/// refreshed value can escape into memory without a durable replacement.
 fn persist_rotation(
     store: &Arc<dyn CredentialStore>,
     baseline: &SubscriptionToken,
     fresh: &SubscriptionToken,
     provider: SubscriptionProvider,
 ) -> Result<(), Rejected> {
-    if !has_newer_refresh_link(baseline, fresh) {
+    if crate::credential_store::is_same_link(baseline, fresh) {
         return Ok(());
     }
     if store.persist(fresh).is_err() {
@@ -225,7 +232,7 @@ fn persist_rotation(
              primary and recovery storage did not accept it"
         )));
     }
-    tracing::info!("persisted a rotated {provider} refresh token");
+    tracing::info!("persisted a refreshed {provider} credential");
     Ok(())
 }
 

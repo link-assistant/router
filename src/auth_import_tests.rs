@@ -1,17 +1,18 @@
 //! Unit tests for import reporting ([`crate::auth_import`]).
 
 use super::*;
+use axum::Router;
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse as _;
 use axum::routing::any;
-use axum::Router;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 struct CandidateVendor {
     provider: SubscriptionProvider,
     reject_refresh: bool,
+    fail_catalog: bool,
     requests: Arc<Mutex<Vec<(String, String, String)>>>,
 }
 
@@ -49,6 +50,14 @@ async fn candidate_vendor(
         .into_response();
     }
 
+    if state.fail_catalog {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            axum::Json(serde_json::json!({"error":"temporary catalog outage"})),
+        )
+            .into_response();
+    }
+
     let catalog = match state.provider {
         SubscriptionProvider::Claude => serde_json::json!({"data":[{"id":"claude-live"}]}),
         SubscriptionProvider::Codex => serde_json::json!({"models":[{"slug":"gpt-live"}]}),
@@ -63,17 +72,21 @@ async fn candidate_vendor(
 async fn start_candidate_vendor(
     provider: SubscriptionProvider,
     reject_refresh: bool,
+    fail_catalog: bool,
 ) -> (
     String,
     Arc<Mutex<Vec<(String, String, String)>>>,
     tokio::task::JoinHandle<()>,
 ) {
     let requests = Arc::new(Mutex::new(Vec::new()));
-    let app = Router::new().fallback(any(candidate_vendor)).with_state(CandidateVendor {
-        provider,
-        reject_refresh,
-        requests: Arc::clone(&requests),
-    });
+    let app = Router::new()
+        .fallback(any(candidate_vendor))
+        .with_state(CandidateVendor {
+            provider,
+            reject_refresh,
+            fail_catalog,
+            requests: Arc::clone(&requests),
+        });
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("candidate vendor listener");
@@ -209,7 +222,7 @@ fn durations_read_at_a_glance_at_each_threshold() {
 #[tokio::test]
 async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
     for provider in SubscriptionProvider::ALL {
-        let (url, requests, server) = start_candidate_vendor(provider, false).await;
+        let (url, requests, server) = start_candidate_vendor(provider, false, false).await;
         let root = tempfile::tempdir().expect("import root");
         let destination_home = root.path().join("destination");
         std::fs::create_dir_all(&destination_home).expect("destination home");
@@ -273,35 +286,96 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
 /// catalog acceptance of that access token cannot authorize replacement.
 #[tokio::test]
 async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
-    let provider = SubscriptionProvider::Qwen;
-    let (url, requests, server) = start_candidate_vendor(provider, true).await;
-    let root = tempfile::tempdir().expect("import root");
-    let destination_home = root.path().join("destination");
-    std::fs::create_dir_all(&destination_home).expect("destination home");
-    let destination_path = destination_home.join(provider.canonical_credential_filename());
-    let current = candidate_document(provider).replace("stale-", "current-");
-    std::fs::write(&destination_path, &current).expect("current destination");
+    for provider in SubscriptionProvider::ALL {
+        let (url, requests, server) = start_candidate_vendor(provider, true, false).await;
+        let root = tempfile::tempdir().expect("import root");
+        let destination_home = root.path().join("destination");
+        std::fs::create_dir_all(&destination_home).expect("destination home");
+        let destination_path = destination_home.join(provider.canonical_credential_filename());
+        let current = candidate_document(provider).replace("stale-", "current-");
+        std::fs::write(&destination_path, &current).expect("current destination");
 
-    let error = validate_candidate_with(
-        root.path(),
-        provider,
-        &candidate_document(provider),
-        Some(&format!("{url}/token")),
-        Some(&url),
-    )
-    .await
-    .expect_err("spent refresh chain must be rejected");
+        let error = validate_candidate_with(
+            root.path(),
+            provider,
+            &candidate_document(provider),
+            Some(&format!("{url}/token")),
+            Some(&url),
+        )
+        .await
+        .expect_err("spent refresh chain must be rejected");
 
-    assert!(error.contains("invalid_grant"), "{error}");
-    assert_eq!(
-        std::fs::read_to_string(destination_path).unwrap(),
-        current
-    );
-    let seen = requests.lock().expect("candidate requests");
-    assert_eq!(seen.len(), 1, "catalog was reached after refresh failure: {seen:?}");
-    assert_eq!(seen[0].1, "/token");
-    drop(seen);
-    server.abort();
+        assert!(error.contains("invalid_grant"), "{provider}: {error}");
+        assert_eq!(
+            std::fs::read_to_string(destination_path).unwrap(),
+            current,
+            "{provider} destination changed"
+        );
+        let seen = requests.lock().expect("candidate requests");
+        assert_eq!(
+            seen.len(),
+            1,
+            "{provider} catalog was reached after refresh failure: {seen:?}"
+        );
+        assert_eq!(seen[0].1, "/token");
+        drop(seen);
+        server.abort();
+    }
+}
+
+/// Once refresh succeeds, failure to obtain a positive catalog verdict keeps
+/// the fresh candidate durable without changing the serving destination.
+#[tokio::test]
+async fn an_unverified_catalog_retains_the_fresh_chain_for_every_provider() {
+    for provider in SubscriptionProvider::ALL {
+        let (url, requests, server) = start_candidate_vendor(provider, false, true).await;
+        let root = tempfile::tempdir().expect("import root");
+        let destination_home = root.path().join("destination");
+        std::fs::create_dir_all(&destination_home).expect("destination home");
+        let destination_path = destination_home.join(provider.canonical_credential_filename());
+        let current = candidate_document(provider).replace("stale-", "current-");
+        std::fs::write(&destination_path, &current).expect("current destination");
+
+        let error = validate_candidate_with(
+            root.path(),
+            provider,
+            &candidate_document(provider),
+            Some(&format!("{url}/token")),
+            Some(&url),
+        )
+        .await
+        .expect_err("unverified catalog must fail closed");
+
+        assert!(
+            error.contains("retained as transaction"),
+            "{provider}: {error}"
+        );
+        assert_eq!(
+            std::fs::read_to_string(&destination_path).unwrap(),
+            current,
+            "{provider} destination changed"
+        );
+        let transactions = std::fs::read_dir(root.path().join("auth-import-candidates"))
+            .expect("retained staging root")
+            .collect::<Result<Vec<_>, _>>()
+            .expect("retained transactions");
+        assert_eq!(transactions.len(), 1, "{provider}: {error}");
+        let retained = transactions[0]
+            .path()
+            .join(provider.as_str())
+            .join(provider.canonical_credential_filename());
+        let retained = std::fs::read_to_string(retained).expect("retained candidate document");
+        assert!(
+            retained.contains("fresh-access") && retained.contains("fresh-refresh"),
+            "{provider} retained stale candidate: {retained}"
+        );
+        let seen = requests.lock().expect("candidate requests");
+        assert_eq!(seen.len(), 2, "{provider}: {seen:?}");
+        assert_eq!(seen[0].0, "POST");
+        assert_eq!(seen[1].0, "GET");
+        drop(seen);
+        server.abort();
+    }
 }
 
 /// No import mode may install a credential the vendor did not positively
@@ -321,7 +395,7 @@ async fn rejected_conditional_candidate_has_no_bypass() {
         CredentialProbe::Rejected,
         ImportPolicy {
             if_absent: true,
-            force: false,
+            capability_asserted: false,
         },
     )
     .await
@@ -352,7 +426,7 @@ async fn rejected_candidate_without_force_reports_existing_destination_as_presen
         CredentialProbe::Rejected,
         ImportPolicy {
             if_absent: true,
-            force: false,
+            capability_asserted: false,
         },
     )
     .await
@@ -380,7 +454,7 @@ async fn conditional_import_refuses_an_unverified_candidate() {
         CredentialProbe::Unverified,
         ImportPolicy {
             if_absent: true,
-            force: false,
+            capability_asserted: false,
         },
     )
     .await
@@ -390,10 +464,9 @@ async fn conditional_import_refuses_an_unverified_candidate() {
     assert!(!home.path().join("oauth_creds.json").exists());
 }
 
-/// The obsolete force spelling is not a bypass: even if an older caller still
-/// constructs that internal policy, rejection wins.
+/// The positive capability assertion is not a bypass: rejection still wins.
 #[tokio::test]
-async fn force_cannot_install_a_rejected_candidate() {
+async fn capability_assertion_cannot_install_a_rejected_candidate() {
     let home = tempfile::tempdir().expect("credential home");
     let data = tempfile::tempdir().expect("router data");
     let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
@@ -406,11 +479,11 @@ async fn force_cannot_install_a_rejected_candidate() {
         CredentialProbe::Rejected,
         ImportPolicy {
             if_absent: true,
-            force: true,
+            capability_asserted: true,
         },
     )
     .await
-    .expect_err("force must not bypass positive vendor acceptance");
+    .expect_err("capability assertion must not bypass positive vendor acceptance");
 
     let destination = home.path().join("auth.json");
     assert!(error.contains("not accepted"), "{error}");
@@ -432,8 +505,7 @@ async fn ordinary_import_preserves_the_destination_when_candidate_is_rejected() 
     let candidate = r#"{"access_token":"rejected","scope":"preserved"}"#;
 
     let current = r#"{"access_token":"current","refresh_token":"rotated"}"#;
-    std::fs::write(home.path().join("oauth_creds.json"), current)
-        .expect("current credential");
+    std::fs::write(home.path().join("oauth_creds.json"), current).expect("current credential");
     let error = install_candidate(
         &reader,
         data.path(),
@@ -441,7 +513,7 @@ async fn ordinary_import_preserves_the_destination_when_candidate_is_rejected() 
         CredentialProbe::Rejected,
         ImportPolicy {
             if_absent: false,
-            force: false,
+            capability_asserted: false,
         },
     )
     .await
@@ -479,12 +551,15 @@ async fn rejected_and_unverified_candidates_never_change_any_provider_destinatio
                     probe,
                     ImportPolicy {
                         if_absent,
-                        force: false,
+                        capability_asserted: false,
                     },
                 )
                 .await;
 
-                assert!(result.is_err(), "{provider} if_absent={if_absent} {probe:?}");
+                assert!(
+                    result.is_err(),
+                    "{provider} if_absent={if_absent} {probe:?}"
+                );
                 if if_absent {
                     assert!(!path.exists(), "{provider} installed {probe:?}");
                 } else {

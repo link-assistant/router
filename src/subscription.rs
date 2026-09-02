@@ -275,6 +275,15 @@ pub struct SubscriptionReader {
     home: PathBuf,
 }
 
+fn credential_lock_error(provider: SubscriptionProvider, error: &std::io::Error) -> String {
+    let action = if error.kind() == std::io::ErrorKind::WouldBlock {
+        "timed out waiting for"
+    } else {
+        "could not acquire"
+    };
+    format!("{action} the durable {provider} credential lock")
+}
+
 impl SubscriptionReader {
     /// Create a reader for `provider` rooted at an explicit home directory.
     #[must_use]
@@ -455,6 +464,32 @@ impl SubscriptionReader {
             .await
     }
 
+    /// Check for any recognized primary or recovery credential while holding
+    /// the same transaction lock used by refresh, login, and installation.
+    ///
+    /// Conditional import uses this as a non-destructive preflight so an
+    /// already-provisioned destination can win without spending the staged
+    /// candidate's rotating refresh token. Installation still performs the
+    /// same check again under its own lock after validation, closing the race.
+    pub async fn existing_document_locked(
+        &self,
+        data_dir: &Path,
+        account: &str,
+    ) -> Result<Option<PathBuf>, String> {
+        let lock_path = crate::credential_recovery_store::credential_lock_path(
+            data_dir,
+            self.provider,
+            account,
+        );
+        let _lock = crate::durable_file::lock_exclusive_async(
+            &lock_path,
+            crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
+        )
+        .await
+        .map_err(|error| credential_lock_error(self.provider, &error))?;
+        self.existing_document(data_dir, account)
+    }
+
     /// Enforce `refusal` only after the locked absence check.
     pub async fn install_document_locked_with_refusal(
         &self,
@@ -474,33 +509,10 @@ impl SubscriptionReader {
             crate::credential_recovery_store::CREDENTIAL_LOCK_TIMEOUT,
         )
         .await
-        .map_err(|error| {
-            let action = if error.kind() == std::io::ErrorKind::WouldBlock {
-                "timed out waiting for"
-            } else {
-                "could not acquire"
-            };
-            format!("{action} the durable {} credential lock", self.provider)
-        })?;
+        .map_err(|error| credential_lock_error(self.provider, &error))?;
 
         if mode == InstallMode::IfAbsent {
-            for path in self.credential_paths() {
-                match path.try_exists() {
-                    Ok(true) => return Ok(InstallDocumentResult::AlreadyPresent(path)),
-                    Ok(false) => {}
-                    Err(error) => {
-                        return Err(format!(
-                            "could not check the {} credential destination: {error}",
-                            self.provider
-                        ));
-                    }
-                }
-            }
-            if let Some(path) = crate::credential_recovery_store::valid_recovery_record_path(
-                data_dir,
-                self.provider,
-                account,
-            )? {
+            if let Some(path) = self.existing_document(data_dir, account)? {
                 return Ok(InstallDocumentResult::AlreadyPresent(path));
             }
             if let Some(error) = refusal {
@@ -510,6 +522,26 @@ impl SubscriptionReader {
 
         self.install_document(document)
             .map(InstallDocumentResult::Installed)
+    }
+
+    fn existing_document(&self, data_dir: &Path, account: &str) -> Result<Option<PathBuf>, String> {
+        for path in self.credential_paths() {
+            match path.try_exists() {
+                Ok(true) => return Ok(Some(path)),
+                Ok(false) => {}
+                Err(error) => {
+                    return Err(format!(
+                        "could not check the {} credential destination: {error}",
+                        self.provider
+                    ));
+                }
+            }
+        }
+        crate::credential_recovery_store::valid_recovery_record_path(
+            data_dir,
+            self.provider,
+            account,
+        )
     }
 
     /// Remove every credential file this provider is read from.

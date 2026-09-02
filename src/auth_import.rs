@@ -18,27 +18,52 @@ use link_assistant_router::subscription::{
 
 /// Vendor evidence gathered before an import may touch its destination.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 enum CredentialProbe {
     Accepted,
     Rejected,
     Unverified,
 }
 
-impl CredentialProbe {
-    const fn description(self) -> &'static str {
-        match self {
-            Self::Accepted => "accepted by the vendor",
-            Self::Rejected => "REJECTED by the vendor",
-            Self::Unverified => "not verified (the vendor could not be reached)",
-        }
-    }
-}
-
 /// Destination and rejection policy selected by the public import flags.
 #[derive(Debug, Clone, Copy, Default)]
 struct ImportPolicy {
     if_absent: bool,
-    force: bool,
+    /// Whether the caller explicitly asserted the safe-flow capability. This
+    /// is diagnostic only and never bypasses candidate validation.
+    capability_asserted: bool,
+}
+
+/// A refresh-proven, catalog-accepted document living in an isolated store.
+struct ValidatedCandidate {
+    document: String,
+    token: link_assistant_router::subscription::SubscriptionToken,
+    stage: tempfile::TempDir,
+    transaction_id: String,
+}
+
+impl std::fmt::Debug for ValidatedCandidate {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ValidatedCandidate")
+            .field("provider", &"redacted")
+            .field("transaction_id", &self.transaction_id)
+            .finish_non_exhaustive()
+    }
+}
+
+impl ValidatedCandidate {
+    /// Keep the only durable copy of a newly advanced refresh chain when it
+    /// cannot be promoted. Returns a non-secret transaction identifier.
+    fn retain(self) -> String {
+        let Self {
+            stage,
+            transaction_id,
+            ..
+        } = self;
+        let _retained_path = stage.keep();
+        transaction_id
+    }
 }
 
 /// Adopt an existing vendor login, when this invocation asked to.
@@ -60,7 +85,7 @@ pub async fn run_import(
             if_absent, force, ..
         } => ImportPolicy {
             if_absent: *if_absent,
-            force: *force,
+            capability_asserted: *force,
         },
         _ => ImportPolicy::default(),
     };
@@ -109,7 +134,7 @@ pub async fn run_import(
             }
         };
         if let Err(error) = outcome {
-            if adopting_everything {
+            if adopting_everything && error.starts_with("no ") {
                 println!("{}: nothing to adopt ({error})", provider_label(provider));
                 continue;
             }
@@ -289,10 +314,15 @@ async fn import_provider(
     // installed credential name different things (issue #280).
     let source_credential = from
         .read_document_for_import()
-        .map_err(|error| format!("no {provider} credential to import: {error}"))?;
+        .map_err(|error| match error {
+            link_assistant_router::subscription::SubscriptionError::NoCredentials(message) => {
+                format!("no {provider} credential to import: {message}")
+            }
+            other => format!("invalid {provider} candidate credential: {other}"),
+        })?;
     let ImportSource {
         document,
-        token,
+        token: _,
         origin,
     } = &source_credential;
     let where_from = match origin {
@@ -310,43 +340,208 @@ async fn import_provider(
         }
     };
 
-    // Probe before installing. The stored expiry is a hint; only the vendor
-    // knows whether the credential still works, and an operator should learn
-    // that here rather than from a 401 on the first served request.
-    let probe = probe_credential(provider, token).await;
-
     let destination = SubscriptionReader::new(provider, &destination_home);
-    let installed =
-        install_candidate(&destination, &config.data_dir, document, probe, policy).await?;
-    match &installed {
+    // Do not spend a rotating candidate chain when conditional provisioning
+    // already has a winner. Installation repeats this check after validation,
+    // under the same lock, so a concurrent login/refresh still wins the race.
+    if policy.if_absent
+        && let Some(path) = destination
+            .existing_document_locked(
+                &config.data_dir,
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+            )
+            .await?
+    {
+        println!(
+            "{provider:<8} already present at {}; candidate from {where_from} was not validated or installed",
+            path.display()
+        );
+        return Ok(());
+    }
+
+    // A working access token can be paired with a stale, already-spent refresh
+    // link. Prove the chain by forcing one direct OAuth exchange in an isolated
+    // durable store, then ask the non-inference catalog with the persisted
+    // result. The destination remains untouched throughout both network calls.
+    let validated = validate_candidate(&config.data_dir, provider, document).await?;
+    let report = describe_credential(&validated.token);
+    let promotion = install_candidate(
+        &destination,
+        &config.data_dir,
+        &validated.document,
+        CredentialProbe::Accepted,
+        policy,
+    )
+    .await;
+    let installed = match promotion {
+        Ok(installed) => installed,
+        Err(error) => {
+            let transaction_id = validated.retain();
+            return Err(format!(
+                "{error}; validated candidate retained as transaction {transaction_id}"
+            ));
+        }
+    };
+    match installed {
         InstallDocumentResult::Installed(path) => {
             println!(
                 "{provider:<8} imported {} from {where_from}",
                 path.display()
             );
-            // Adopting a credential does not mint one: both holders now rotate
-            // the same chain, and revoking it at the vendor revokes it for both.
             println!(
-                "{provider:<8} note: the source keeps working; the two now share one rotating \
-                 chain, and a revocation at the vendor ends both"
+                "{provider:<8} note: refresh-chain validation advanced the candidate before \
+                 installation; the source copy may now contain the spent predecessor"
             );
+            // Dropping a successfully promoted candidate removes its isolated
+            // staging directory. The complete bytes now live at `path`.
+            drop(validated);
         }
         InstallDocumentResult::AlreadyPresent(path) => {
+            // A login or refresh won the race after the preflight. Its bytes
+            // remain authoritative, while the advanced candidate must stay
+            // durable because its source now holds a spent predecessor.
+            let transaction_id = validated.retain();
             println!(
                 "{provider:<8} already present at {}; candidate from {where_from} was not installed",
                 path.display()
             );
+            println!("{provider:<8} validated candidate retained as transaction {transaction_id}");
         }
     }
     println!(
-        "{provider:<8} candidate {}, {}",
-        describe_credential(token),
-        probe.description()
+        "{provider:<8} candidate {report}, accepted by the vendor after refresh-chain validation"
     );
     Ok(())
 }
 
-/// Enforce candidate rejection policy, then enter the shared writer boundary.
+async fn validate_candidate(
+    data_dir: &std::path::Path,
+    provider: SubscriptionProvider,
+    document: &str,
+) -> Result<ValidatedCandidate, String> {
+    validate_candidate_with(data_dir, provider, document, None, None).await
+}
+
+/// Validate a credential in a Router-owned store that is isolated from the
+/// serving destination.
+///
+/// Endpoint overrides exist only so the unit matrix can exercise the exact
+/// four vendor layouts and request order against a loopback vendor. Production
+/// always uses the provider's public OAuth endpoint and a Router-chosen catalog
+/// origin; a candidate-controlled `resource_url` can therefore never receive
+/// the refreshed bearer token.
+async fn validate_candidate_with(
+    data_dir: &std::path::Path,
+    provider: SubscriptionProvider,
+    document: &str,
+    token_url_override: Option<&str>,
+    catalog_base_url_override: Option<&str>,
+) -> Result<ValidatedCandidate, String> {
+    let staging_root = data_dir.join("auth-import-candidates");
+    std::fs::create_dir_all(&staging_root)
+        .map_err(|_| "could not create the private credential-import staging area".to_string())?;
+    let transaction_id = uuid::Uuid::new_v4().simple().to_string();
+    let stage = tempfile::Builder::new()
+        .prefix(&format!("{transaction_id}-"))
+        .tempdir_in(&staging_root)
+        .map_err(|_| "could not create a private credential-import transaction".to_string())?;
+    let candidate_home = stage.path().join(provider.as_str());
+    std::fs::create_dir(&candidate_home)
+        .map_err(|_| "could not create the isolated candidate store".to_string())?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        std::fs::set_permissions(&candidate_home, std::fs::Permissions::from_mode(0o700))
+            .map_err(|_| "could not protect the isolated candidate store".to_string())?;
+    }
+    let reader = SubscriptionReader::new(provider, &candidate_home);
+    reader
+        .install_document(document)
+        .map_err(|_| format!("the {provider} candidate could not be staged durably"))?;
+
+    let candidate_data = stage.path().join("router-state");
+    let cache = link_assistant_router::refresh::TokenCache::registered_for(
+        std::slice::from_ref(&reader),
+        &candidate_data,
+    );
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(20))
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|_| "could not initialize candidate validation".to_string())?;
+    let now_ms = chrono::Utc::now().timestamp_millis();
+    let refreshed = match token_url_override {
+        Some(token_url) => {
+            cache
+                .validate_refresh_chain_registered_at(
+                    &client,
+                    token_url,
+                    provider,
+                    link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+                    now_ms,
+                )
+                .await
+        }
+        None => {
+            cache
+                .validate_refresh_chain_registered(
+                    &client,
+                    provider,
+                    link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+                    now_ms,
+                )
+                .await
+        }
+    }?;
+
+    // The refresh has advanced the source's rotating chain. From this point on,
+    // a failed catalog or promotion must retain the staged durable successor.
+    let catalog_base = catalog_base_url_override.unwrap_or_else(|| match provider {
+        SubscriptionProvider::Gemini => "https://generativelanguage.googleapis.com",
+        _ => provider.default_base_url(),
+    });
+    if let Err(error) = link_assistant_router::model_catalog::fetch_provider_catalog(
+        &client,
+        provider,
+        &refreshed,
+        Some(catalog_base),
+    )
+    .await
+    {
+        let reason = if link_assistant_router::model_catalog::is_credential_rejection(&error) {
+            "was rejected by the vendor catalog"
+        } else {
+            "was not positively accepted by the vendor catalog"
+        };
+        let _retained_path = stage.keep();
+        return Err(format!(
+            "the {provider} candidate {reason}; refreshed candidate retained as transaction {transaction_id}"
+        ));
+    }
+
+    let Ok(durable) = reader.read_document_for_import() else {
+        let _retained_path = stage.keep();
+        return Err(format!(
+            "the durable {provider} candidate could not be reread; refreshed candidate retained as transaction {transaction_id}"
+        ));
+    };
+    if durable.token.access_token != refreshed.access_token
+        || durable.token.refresh_token != refreshed.refresh_token
+    {
+        let _retained_path = stage.keep();
+        return Err(format!(
+            "the durable {provider} candidate changed after validation; refreshed candidate retained as transaction {transaction_id}"
+        ));
+    }
+    Ok(ValidatedCandidate {
+        document: durable.document,
+        token: durable.token,
+        stage,
+        transaction_id,
+    })
+}
+
+/// Enforce candidate acceptance policy, then enter the shared writer boundary.
 async fn install_candidate(
     destination: &SubscriptionReader,
     data_dir: &std::path::Path,
@@ -354,11 +549,20 @@ async fn install_candidate(
     probe: CredentialProbe,
     policy: ImportPolicy,
 ) -> Result<InstallDocumentResult, String> {
-    let refusal = (policy.if_absent && probe == CredentialProbe::Rejected && !policy.force)
-        .then(|| format!(
-            "{} candidate was rejected by the vendor; rerun with --if-absent --force to install it only if the destination is still empty",
+    if policy.capability_asserted {
+        tracing::debug!("caller asserted safe-refresh-chain-import-v1");
+    }
+    let refusal = (probe != CredentialProbe::Accepted).then(|| {
+        format!(
+            "{} candidate was not accepted by the vendor and cannot be installed",
             destination.provider()
-        ));
+        )
+    });
+    if !policy.if_absent
+        && let Some(error) = refusal
+    {
+        return Err(error);
+    }
     let mode = if policy.if_absent {
         InstallMode::IfAbsent
     } else {
@@ -399,32 +603,6 @@ pub fn describe_credential(
         "NO refresh token, so it cannot be renewed"
     };
     format!("{expiry}, {refresh}")
-}
-
-/// Ask the vendor whether a credential still works.
-///
-/// The same three-valued verdict `auth status` uses: a network failure must not
-/// be reported as a bad credential, because refusing an import on an
-/// unreachable network would be worse than the problem it guards against. A
-/// rejected credential is still installed — the operator asked for it, may know
-/// something the probe does not, and the honest move is to say so rather than
-/// to overrule them.
-async fn probe_credential(
-    provider: SubscriptionProvider,
-    token: &link_assistant_router::subscription::SubscriptionToken,
-) -> CredentialProbe {
-    let client = reqwest::Client::new();
-    match link_assistant_router::model_catalog::fetch_provider_catalog(
-        &client, provider, token, None,
-    )
-    .await
-    {
-        Ok(_) => CredentialProbe::Accepted,
-        Err(error) if link_assistant_router::model_catalog::is_credential_rejection(&error) => {
-            CredentialProbe::Rejected
-        }
-        Err(_) => CredentialProbe::Unverified,
-    }
 }
 
 /// A duration an operator reads at a glance.

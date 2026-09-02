@@ -74,10 +74,13 @@ pub enum AuthOp {
         /// shared refresh/login lock.
         #[arg(long, conflicts_with = "all")]
         if_absent: bool,
-        /// Permit a vendor-rejected candidate in conditional mode.
+        /// Assert support for isolated refresh-chain validation and locked
+        /// promotion. Older Router versions reject this spelling, allowing
+        /// deployment tooling to fail closed before importing a credential.
         ///
-        /// This never permits overwrite: an existing destination still wins.
-        #[arg(long, requires = "if_absent")]
+        /// The internal field keeps its historical name for source
+        /// compatibility; this flag never bypasses positive validation.
+        #[arg(long = "safe-refresh-chain-import-v1")]
         force: bool,
         #[command(flatten)]
         target: AuthTarget,

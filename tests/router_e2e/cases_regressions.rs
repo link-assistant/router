@@ -584,12 +584,13 @@ async fn missing_chat_messages_is_rejected_locally_for_every_provider() {
             payload["error"]["type"], "invalid_request_error",
             "{provider:?}: {payload}"
         );
-        let message = payload["error"]["message"]
-            .as_str()
-            .expect("error message");
+        let message = payload["error"]["message"].as_str().expect("error message");
         assert!(message.contains("messages"), "{provider:?}: {message}");
         for leaked in ["input", "previous_response_id", "prompt", "conversation"] {
-            assert!(!message.contains(leaked), "{provider:?} leaked {leaked}: {message}");
+            assert!(
+                !message.contains(leaked),
+                "{provider:?} leaked {leaked}: {message}"
+            );
         }
         assert!(
             router.requests.lock().expect("stub requests").is_empty(),

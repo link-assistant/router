@@ -418,15 +418,10 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
     );
 }
 
-/// An existing vendor login can be adopted, and the report says what was
-/// adopted rather than only that something was.
-///
-/// Storing a credential was the easy half. `auth gh` could already reuse an
-/// existing login; Claude and Codex offered only interactive OAuth, so
-/// provisioning a headless deployment meant knowing each provider's path and
-/// copying files by hand (issue #274).
+/// A synthetic credential cannot be adopted merely because it parses and says
+/// it has not expired. Import now proves the refresh chain at the vendor first.
 #[test]
-fn an_existing_claude_login_can_be_adopted() {
+fn an_unverified_claude_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
     let source = home.path().join("source");
     let destination = home.path().join("router-claude");
@@ -453,34 +448,19 @@ fn an_existing_claude_login_can_be_adopted() {
         .env("CLAUDE_CODE_HOME", &destination)
         .output()
         .expect("router CLI should run");
-    assert!(output.status.success(), "{output:?}");
-
-    // It must land where a fresh login would put it, not under the first
-    // *search* candidate — Claude Code writes `.credentials.json`.
+    assert!(!output.status.success(), "{output:?}");
     assert!(
-        destination.join(".credentials.json").is_file(),
-        "the credential must be installed where the vendor client writes it"
+        !destination.join(".credentials.json").exists(),
+        "an unverified credential reached the destination"
     );
-
-    let seen = String::from_utf8_lossy(&output.stdout);
-    assert!(seen.contains("imported"), "{seen}");
-    assert!(
-        seen.contains("refresh token present"),
-        "an operator must learn whether it can be renewed: {seen}"
-    );
-    assert!(
-        seen.contains("share one rotating chain"),
-        "adopting a credential does not mint one: {seen}"
-    );
+    let seen = String::from_utf8_lossy(&output.stderr);
+    assert!(seen.contains("candidate refresh chain"), "{seen}");
 }
 
-/// A Codex import keeps the fields the router does not model.
-///
-/// `SubscriptionToken` carries no `id_token`, and Codex derives its account id
-/// from that token on every read — so re-serializing a parsed token would drop
-/// the field the next read depends on. The document is copied instead.
+/// Codex follows the same fail-closed public path; preservation of its complete
+/// rotated document is covered by the controlled four-provider unit matrix.
 #[test]
-fn adopting_a_codex_login_keeps_the_fields_the_router_does_not_model() {
+fn an_unverified_codex_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
     let source = home.path().join("source");
     let destination = home.path().join("router-codex");
@@ -504,17 +484,11 @@ fn adopting_a_codex_login_keeps_the_fields_the_router_does_not_model() {
         .env("CODEX_HOME", &destination)
         .output()
         .expect("router CLI should run");
-    assert!(output.status.success(), "{output:?}");
-
-    let installed = std::fs::read_to_string(destination.join("auth.json"))
-        .expect("the credential is installed");
+    assert!(!output.status.success(), "{output:?}");
+    assert!(!destination.join("auth.json").exists());
     assert!(
-        installed.contains("synthetic-id"),
-        "id_token must survive the import: {installed}"
-    );
-    assert!(
-        installed.contains("chatgpt"),
-        "auth_mode must survive the import: {installed}"
+        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        "{output:?}"
     );
 }
 
@@ -715,9 +689,10 @@ fn malformed_conditional_candidate_does_not_hide_behind_existing_destination() {
     );
 }
 
-/// The subcommand adopts a login, with the same report the flag produces.
+/// The import verb and the legacy per-provider spelling share the same safe
+/// validator; neither can install an unverified credential.
 #[test]
-fn the_import_subcommand_adopts_a_login() {
+fn the_import_subcommand_cannot_bypass_validation() {
     let home = tempfile::tempdir().expect("temp home");
     let source = home.path().join("source");
     let destination = home.path().join("router-claude");
@@ -742,12 +717,12 @@ fn the_import_subcommand_adopts_a_login() {
         .output()
         .expect("router CLI should run");
 
-    assert!(output.status.success(), "{output:?}");
-    assert!(destination.join(".credentials.json").is_file());
-    let seen = String::from_utf8_lossy(&output.stdout);
-    assert!(seen.contains("imported"), "{seen}");
-    // The #274 report is kept verbatim, which the issue asked for.
-    assert!(seen.contains("share one rotating chain"), "{seen}");
+    assert!(!output.status.success(), "{output:?}");
+    assert!(!destination.join(".credentials.json").exists());
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        "{output:?}"
+    );
 }
 
 /// An unqualified import reads the *vendor's* home, not the router's.
@@ -775,17 +750,21 @@ fn an_unqualified_import_reads_the_vendors_own_home() {
         .output()
         .expect("router CLI should run");
 
+    assert!(!output.status.success(), "{output:?}");
     assert!(
-        output.status.success(),
-        "an unqualified import must read ~/.claude: {output:?}"
+        !destination.join(".credentials.json").exists(),
+        "an unverified credential must not reach the router's home"
     );
+    let error = String::from_utf8_lossy(&output.stderr);
+    assert!(error.contains("candidate refresh chain"), "{error}");
     assert!(
-        destination.join(".credentials.json").is_file(),
-        "the credential must reach the router's home"
+        !error.contains("no claude credential"),
+        "the vendor home was not read: {error}"
     );
 }
 
-/// `--all` adopts what is there and reports what is not.
+/// `--all` reports absent providers but fails when a present candidate cannot
+/// be positively validated; a sweep must not claim successful provisioning.
 ///
 /// A workstation logged in to two of five providers is the ordinary case, not
 /// an error, so one absent login must not abort the rest.
@@ -812,15 +791,19 @@ fn importing_everything_adopts_what_exists_and_reports_what_does_not() {
         .expect("router CLI should run");
 
     assert!(
-        output.status.success(),
-        "a missing login must not fail the sweep: {output:?}"
+        !output.status.success(),
+        "unsafe sweep succeeded: {output:?}"
     );
     assert!(
-        destination.join(".credentials.json").is_file(),
-        "the login that exists must be adopted"
+        !destination.join(".credentials.json").exists(),
+        "an unverified login was adopted"
     );
     let seen = String::from_utf8_lossy(&output.stdout);
     assert!(seen.contains("nothing to adopt"), "{seen}");
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        "{output:?}"
+    );
 }
 
 /// Naming a provider and asking for everything are contradictory.
@@ -989,15 +972,20 @@ fn a_persisted_selection_also_refuses_a_local_import() {
         "nothing may be installed locally while another router is the target"
     );
 
-    // `--local` is how the local action is requested, and it still works.
+    // `--local` requests the local action, but it does not bypass safe
+    // refresh-chain validation.
     let local = run(&["auth", "import", "claude", "--local"], true);
     assert!(
-        local.status.success(),
-        "--local must still import here: {}",
+        !local.status.success(),
+        "an unverified local candidate was imported: {}",
         String::from_utf8_lossy(&local.stderr)
     );
     assert!(
-        destination.path().join(".credentials.json").exists(),
-        "--local must actually install the credential"
+        !destination.path().join(".credentials.json").exists(),
+        "--local bypassed refresh-chain validation"
+    );
+    assert!(
+        String::from_utf8_lossy(&local.stderr).contains("candidate refresh chain"),
+        "{local:?}"
     );
 }
