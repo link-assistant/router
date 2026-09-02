@@ -1,6 +1,115 @@
 //! Unit tests for import reporting ([`crate::auth_import`]).
 
 use super::*;
+use axum::extract::{Request, State};
+use axum::http::StatusCode;
+use axum::response::IntoResponse as _;
+use axum::routing::any;
+use axum::Router;
+use std::sync::{Arc, Mutex};
+
+#[derive(Clone)]
+struct CandidateVendor {
+    provider: SubscriptionProvider,
+    reject_refresh: bool,
+    requests: Arc<Mutex<Vec<(String, String, String)>>>,
+}
+
+async fn candidate_vendor(
+    State(state): State<CandidateVendor>,
+    request: Request,
+) -> axum::response::Response {
+    let method = request.method().to_string();
+    let path = request.uri().path().to_string();
+    let authorization = request
+        .headers()
+        .get("authorization")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default()
+        .to_string();
+    state
+        .requests
+        .lock()
+        .expect("candidate requests")
+        .push((method, path.clone(), authorization));
+
+    if path == "/token" {
+        if state.reject_refresh {
+            return (
+                StatusCode::BAD_REQUEST,
+                axum::Json(serde_json::json!({"error":"invalid_grant"})),
+            )
+                .into_response();
+        }
+        return axum::Json(serde_json::json!({
+            "access_token":"fresh-access",
+            "refresh_token":"fresh-refresh",
+            "expires_in":3600
+        }))
+        .into_response();
+    }
+
+    let catalog = match state.provider {
+        SubscriptionProvider::Claude => serde_json::json!({"data":[{"id":"claude-live"}]}),
+        SubscriptionProvider::Codex => serde_json::json!({"models":[{"slug":"gpt-live"}]}),
+        SubscriptionProvider::Gemini => serde_json::json!({
+            "models":[{"name":"models/gemini-live","supportedGenerationMethods":["generateContent"]}]
+        }),
+        SubscriptionProvider::Qwen => serde_json::json!({"data":[{"id":"qwen-live"}]}),
+    };
+    axum::Json(catalog).into_response()
+}
+
+async fn start_candidate_vendor(
+    provider: SubscriptionProvider,
+    reject_refresh: bool,
+) -> (
+    String,
+    Arc<Mutex<Vec<(String, String, String)>>>,
+    tokio::task::JoinHandle<()>,
+) {
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let app = Router::new().fallback(any(candidate_vendor)).with_state(CandidateVendor {
+        provider,
+        reject_refresh,
+        requests: Arc::clone(&requests),
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("candidate vendor listener");
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (url, requests, task)
+}
+
+fn candidate_document(provider: SubscriptionProvider) -> String {
+    match provider {
+        SubscriptionProvider::Claude => serde_json::json!({
+            "claudeAiOauth": {
+                "accessToken":"stale-access",
+                "refreshToken":"stale-refresh",
+                "expiresAt":9_999_999_999_999_i64
+            },
+            "vendor_marker":"preserved"
+        }),
+        SubscriptionProvider::Codex => serde_json::json!({
+            "auth_mode":"chatgpt",
+            "tokens": {
+                "access_token":"stale-access",
+                "refresh_token":"stale-refresh",
+                "account_id":"acct-import"
+            },
+            "vendor_marker":"preserved"
+        }),
+        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => serde_json::json!({
+            "access_token":"stale-access",
+            "refresh_token":"stale-refresh",
+            "expiry_date":9_999_999_999_999_i64,
+            "vendor_marker":"preserved"
+        }),
+    }
+    .to_string()
+}
 
 /// A credential's report says when it dies and whether it can be renewed.
 ///
@@ -92,6 +201,107 @@ fn durations_read_at_a_glance_at_each_threshold() {
         "the last hour reading"
     );
     assert_eq!(humanize_minutes(60 * 48), "2 days", "the first day reading");
+}
+
+/// A safe import proves the rotating chain in an isolated durable store, then
+/// probes the vendor's non-inference catalog with the persisted fresh access
+/// token. Only that staged document may be promoted (issue #385).
+#[tokio::test]
+async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
+    for provider in SubscriptionProvider::ALL {
+        let (url, requests, server) = start_candidate_vendor(provider, false).await;
+        let root = tempfile::tempdir().expect("import root");
+        let destination_home = root.path().join("destination");
+        std::fs::create_dir_all(&destination_home).expect("destination home");
+        let destination = SubscriptionReader::new(provider, &destination_home);
+        let destination_path = destination_home.join(provider.canonical_credential_filename());
+        let current = candidate_document(provider).replace("stale-", "current-");
+        std::fs::write(&destination_path, &current).expect("current destination");
+
+        let validated = validate_candidate_with(
+            root.path(),
+            provider,
+            &candidate_document(provider),
+            Some(&format!("{url}/token")),
+            Some(&url),
+        )
+        .await
+        .expect("refresh chain and catalog must validate");
+
+        let staged: serde_json::Value =
+            serde_json::from_str(&validated.document).expect("staged document");
+        assert_eq!(staged["vendor_marker"], "preserved", "{provider}");
+        assert!(
+            validated.document.contains("fresh-access")
+                && validated.document.contains("fresh-refresh"),
+            "{provider} did not return the durably rotated candidate: {}",
+            validated.document
+        );
+        assert_eq!(
+            std::fs::read_to_string(&destination_path).unwrap(),
+            current,
+            "{provider} changed destination during validation"
+        );
+
+        install_candidate(
+            &destination,
+            root.path(),
+            &validated.document,
+            CredentialProbe::Accepted,
+            ImportPolicy::default(),
+        )
+        .await
+        .expect("validated candidate promotion");
+        assert_eq!(
+            std::fs::read_to_string(&destination_path).unwrap(),
+            validated.document,
+            "{provider} did not promote the staged bytes"
+        );
+
+        let seen = requests.lock().expect("candidate requests");
+        assert_eq!(seen.len(), 2, "{provider}: {seen:?}");
+        assert_eq!(seen[0].0, "POST", "{provider}: {seen:?}");
+        assert_eq!(seen[0].1, "/token", "{provider}: {seen:?}");
+        assert_eq!(seen[1].0, "GET", "{provider}: {seen:?}");
+        assert_eq!(seen[1].2, "Bearer fresh-access", "{provider}: {seen:?}");
+        drop(seen);
+        server.abort();
+    }
+}
+
+/// A live access token paired with an already-spent refresh link is unsafe:
+/// catalog acceptance of that access token cannot authorize replacement.
+#[tokio::test]
+async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
+    let provider = SubscriptionProvider::Qwen;
+    let (url, requests, server) = start_candidate_vendor(provider, true).await;
+    let root = tempfile::tempdir().expect("import root");
+    let destination_home = root.path().join("destination");
+    std::fs::create_dir_all(&destination_home).expect("destination home");
+    let destination_path = destination_home.join(provider.canonical_credential_filename());
+    let current = candidate_document(provider).replace("stale-", "current-");
+    std::fs::write(&destination_path, &current).expect("current destination");
+
+    let error = validate_candidate_with(
+        root.path(),
+        provider,
+        &candidate_document(provider),
+        Some(&format!("{url}/token")),
+        Some(&url),
+    )
+    .await
+    .expect_err("spent refresh chain must be rejected");
+
+    assert!(error.contains("invalid_grant"), "{error}");
+    assert_eq!(
+        std::fs::read_to_string(destination_path).unwrap(),
+        current
+    );
+    let seen = requests.lock().expect("candidate requests");
+    assert_eq!(seen.len(), 1, "catalog was reached after refresh failure: {seen:?}");
+    assert_eq!(seen[0].1, "/token");
+    drop(seen);
+    server.abort();
 }
 
 /// No import mode may install a credential the vendor did not positively
