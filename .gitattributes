@@ -1,1 +1,2 @@
 docs/case-studies/**/raw/*.log -whitespace
+tests/fixtures/token_stores/*.lino text eol=lf
