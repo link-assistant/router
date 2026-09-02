@@ -68,7 +68,7 @@ fn mock_router() -> (String, thread::JoinHandle<Vec<String>>) {
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/v1/models" => (
+                "/v1/models" | "/api/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
                 ),
@@ -103,11 +103,11 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
             let (status, body) = match path {
                 "/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
                 "/api/tokens/list" => ("200 OK", r#"{"data":[]}"#),
-                "/api/tokens" => (
+                "/api/tokens/client" => (
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
                 ),
-                "/v1/models" => (
+                "/api/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
                 ),
@@ -167,7 +167,7 @@ fn mock_rejected_token_router(message: &'static str) -> (String, thread::JoinHan
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#.to_string(),
                 ),
-                "/v1/models" => (
+                "/api/codex/v1/models" => (
                     "401 Unauthorized",
                     format!(r#"{{"error":{{"message":"{message}"}}}}"#),
                 ),
@@ -355,7 +355,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
     assert!(!stale.exists(), "a later run must sweep crash leftovers");
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/health,/api/tokens/list,/v1/models"
+        "/health,/api/tokens/list,/api/codex/v1/models"
     );
 }
 
@@ -431,7 +431,7 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
     assert!(std::path::Path::new(router_home.trim()).is_dir());
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/health,/api/tokens/list,/v1/models"
+        "/health,/api/tokens/list,/api/codex/v1/models"
     );
 }
 
@@ -710,8 +710,8 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
         [
             "/health",
             "/api/tokens/list",
-            "/api/tokens",
-            "/v1/models",
+            "/api/tokens/client",
+            "/api/codex/v1/models",
             "/api/tokens/revoke"
         ]
     );
@@ -771,6 +771,10 @@ fn fake_claude(bin_dir: &std::path::Path) {
     fs::write(
         &path,
         r#"#!/bin/sh
+if [ "$1" = "--version" ]; then
+  printf '2.1.129\n'
+  exit 0
+fi
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
 printf 'MAX_THINKING_TOKENS=%s\n' "$MAX_THINKING_TOKENS" > "$CAPTURE_ENV"
 exit 0
