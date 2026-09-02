@@ -104,6 +104,7 @@ pub mod usage;
 pub mod vendor_cli_refresh;
 pub mod vk;
 pub mod with_command;
+pub mod zai_coding_plan;
 
 #[cfg(test)]
 mod anthropic_bridge_tests;
@@ -111,6 +112,8 @@ mod anthropic_bridge_tests;
 mod client_policy_tests;
 #[cfg(test)]
 mod proxy_tests;
+#[cfg(test)]
+mod zai_coding_plan_tests;
 
 /// Package version (matches Cargo.toml version).
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
