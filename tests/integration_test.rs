@@ -758,7 +758,7 @@ mod support_docs_tests {
 
         assert!(manifest.contains("kind: Deployment"));
         assert!(manifest.contains("kind: Service"));
-        assert!(manifest.contains("path: /health"));
+        assert!(manifest.contains("path: /api/health"));
         assert!(manifest.contains("ACTIVITYPUB_PUBLIC_KEY_PEM"));
     }
 }

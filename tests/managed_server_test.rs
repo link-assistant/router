@@ -296,6 +296,18 @@ exit "${{{exit}}}"
         .expect("make fake Codex executable");
 }
 
+fn fake_supported_claude(bin_dir: &std::path::Path) {
+    fs::create_dir_all(bin_dir).expect("create fake bin directory");
+    let path = bin_dir.join("claude");
+    fs::write(
+        &path,
+        "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo '2.1.255 (Claude Code)'; exit 0; fi\nexit 23\n",
+    )
+    .expect("write fake Claude");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o755))
+        .expect("make fake Claude executable");
+}
+
 #[test]
 fn managed_server_lifecycle_is_idempotent_and_preserves_data_until_remove() {
     let directory = tempfile::tempdir().expect("temporary test directory");
@@ -774,6 +786,7 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
     fs::create_dir_all(&selection).expect("create the selection directory");
     fs::write(&log, "").expect("create Docker log");
     fake_docker(&bin);
+    fake_supported_claude(&bin);
     // Port 1 is not listening, so the selection is unreachable.
     fs::write(
         selection.join("server.json"),

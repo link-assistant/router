@@ -139,7 +139,7 @@ impl Router {
             }
             if http(
                 router.port,
-                "GET /health HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
+                "GET /api/health HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
             )
             .contains(" 200 ")
             {
@@ -182,7 +182,7 @@ fn an_openai_compatible_stream_is_settled_in_the_log() {
     let response = http(
         router.port,
         &format!(
-            "POST /v1/chat/completions HTTP/1.1\r\nHost: x\r\n\
+            "POST /api/services/openai/v1/chat/completions HTTP/1.1\r\nHost: x\r\n\
              authorization: Bearer {token}\r\ncontent-type: application/json\r\n\
              content-length: {}\r\nConnection: close\r\n\r\n{body}",
             body.len()
