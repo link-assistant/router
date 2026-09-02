@@ -187,6 +187,8 @@ fn admin_credential_claims(token: &str) -> crate::token::TokenClaims {
         // An administrative credential is the operator themselves, so it is
         // never narrowed to a repository subset.
         github_repos: Vec::new(),
+        client_kind: None,
+        principal_id: None,
     }
 }
 

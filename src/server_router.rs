@@ -35,6 +35,7 @@ pub fn router(state: AppState, config: &Config) -> Router {
         );
     let mut admin_routes = Router::new()
         .route("/api/tokens", post(token_admin::issue_token))
+        .route("/api/tokens/client", post(token_admin::issue_client_token))
         .route("/api/tokens/list", get(token_admin::list_tokens))
         .route("/api/tokens/revoke", post(token_admin::revoke_token))
         .route("/api/tokens/rotate", post(token_admin::rotate_admin_token))

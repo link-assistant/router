@@ -153,6 +153,20 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                     "github_repos",
                     LinoValue::String(record.github_repos.join(",")),
                 ),
+                (
+                    "client_kind",
+                    record
+                        .client_kind
+                        .as_ref()
+                        .map_or(LinoValue::Null, |value| LinoValue::String(value.clone())),
+                ),
+                (
+                    "principal_id",
+                    record
+                        .principal_id
+                        .as_ref()
+                        .map_or(LinoValue::Null, |value| LinoValue::String(value.clone())),
+                ),
             ]),
         ),
     ])
@@ -204,6 +218,8 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
                 .unwrap_or_default()
                 .unwrap_or_default(),
         ),
+        client_kind: optional_string_field(fields, "client_kind", "record value")?,
+        principal_id: optional_string_field(fields, "principal_id", "record value")?,
     })
 }
 
@@ -723,6 +739,12 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         "github_repos",
         &record.github_repos.join(","),
     );
+    if let Some(client) = &record.client_kind {
+        add_field(&mut links, &value, "client_kind", client);
+    }
+    if let Some(principal) = &record.principal_id {
+        add_field(&mut links, &value, "principal_id", principal);
+    }
     links
 }
 
@@ -818,6 +840,8 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         rate_window_requests: optional_parsed_field(&fields, "rate_window_requests")?.unwrap_or(0),
         scope: required_field(&fields, "scope")?.to_string(),
         github_repos: split_repository_list(fields.get("github_repos").map_or("", String::as_str)),
+        client_kind: fields.get("client_kind").cloned(),
+        principal_id: fields.get("principal_id").cloned(),
     })
 }
 
@@ -930,6 +954,8 @@ mod tests {
             rate_window_started_at: i64::MAX,
             rate_window_requests: u64::MAX,
             scope: "admin".into(),
+            client_kind: Some("codex".into()),
+            principal_id: Some("primary".into()),
         }
     }
 

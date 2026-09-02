@@ -409,13 +409,15 @@ fn issue_client_token(
     Ok(manager.issue_with_id(&IssueRequest {
         ttl_hours,
         label: &format!("client-{client}"),
-        account: None,
+        account: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT),
         max_requests: None,
         max_tokens: None,
         rate_limit_per_minute: None,
         scope: "",
         github_repos: Vec::new(),
         sliding_window_seconds: None,
+        client_kind: Some(client.canonical_name()),
+        principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT),
     })?)
 }
 

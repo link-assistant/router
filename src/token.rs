@@ -51,6 +51,13 @@ pub struct TokenClaims {
     /// case-insensitively as GitHub itself does.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub github_repos: Vec<String>,
+    /// Canonical Router client adapter this token is immutably bound to.
+    /// Absent on manual, administrative, and pre-#389 tokens.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_kind: Option<String>,
+    /// Trusted subscriber identity, distinct from `sub` (the token id).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub principal_id: Option<String>,
 }
 
 impl TokenClaims {
@@ -108,6 +115,10 @@ pub struct IssueRequest<'a> {
     /// here is final. `Some(window)` extends it on use, so a session that is
     /// still being typed into does not die mid-work (issue #354).
     pub sliding_window_seconds: Option<i64>,
+    /// Canonical managed client adapter, paired with `principal_id`.
+    pub client_kind: Option<&'a str>,
+    /// Subscriber/account principal, paired with `client_kind`.
+    pub principal_id: Option<&'a str>,
 }
 
 /// Constraint changes to apply while rotating a token.
@@ -172,6 +183,31 @@ impl IssueRequest<'_> {
             return Err(format!(
                 "scope must be empty (client) or \"{ADMIN_SCOPE}\"."
             ));
+        }
+        match (self.client_kind, self.principal_id) {
+            (None, None) => {}
+            (Some(client), Some(principal)) => {
+                if !self.scope.is_empty() {
+                    return Err("administrative tokens cannot carry a client binding".to_string());
+                }
+                if crate::clients::ClientKind::from_str_opt(client).is_none() {
+                    return Err(format!("unknown Router client kind '{client}'."));
+                }
+                if principal.trim().is_empty() {
+                    return Err("principal_id must not be empty.".to_string());
+                }
+                if self.account != Some(principal) {
+                    return Err(
+                        "principal_id must equal the token's strict account binding.".to_string(),
+                    );
+                }
+            }
+            _ => {
+                return Err(
+                    "client_kind and principal_id must either both be set or both be absent."
+                        .to_string(),
+                );
+            }
         }
         for repository in &self.github_repos {
             // `owner/repo` exactly: a bare owner would read as "the whole
@@ -269,6 +305,8 @@ impl TokenManager {
             scope: "",
             github_repos: Vec::new(),
             sliding_window_seconds: None,
+            client_kind: None,
+            principal_id: None,
         })
     }
 
@@ -293,6 +331,8 @@ impl TokenManager {
             scope: ADMIN_SCOPE,
             github_repos: Vec::new(),
             sliding_window_seconds: None,
+            client_kind: None,
+            principal_id: None,
         })
     }
 
@@ -323,6 +363,10 @@ impl TokenManager {
         let max_requests = request.max_requests;
         let now = Utc::now();
         let exp = now + Duration::hours(ttl_hours);
+        let client_kind = request
+            .client_kind
+            .and_then(crate::clients::ClientKind::from_str_opt)
+            .map(|client| client.canonical_name().to_string());
         let claims = TokenClaims {
             sub: Uuid::new_v4().to_string(),
             iat: now.timestamp(),
@@ -330,6 +374,8 @@ impl TokenManager {
             label: label.to_string(),
             scope: request.scope.to_string(),
             github_repos: request.github_repos.clone(),
+            client_kind,
+            principal_id: request.principal_id.map(str::to_string),
         };
         let jwt = encode(
             &Header::default(),
@@ -356,6 +402,8 @@ impl TokenManager {
             rate_window_requests: 0,
             scope: claims.scope,
             github_repos: claims.github_repos,
+            client_kind: claims.client_kind,
+            principal_id: claims.principal_id,
         };
         let id = record.id.clone();
         // A token that was handed out but never stored is worse than a
@@ -491,13 +539,21 @@ impl TokenManager {
             _ => Err(TokenError::Invalid(e.to_string())),
         })?;
 
-        let revoked = self
+        let stored = self
             .store
             .get(&token_data.claims.sub)
-            .map_err(|e| TokenError::Storage(e.to_string()))?
-            .is_some_and(|r| r.revoked);
-        if revoked {
-            return Err(TokenError::Revoked);
+            .map_err(|e| TokenError::Storage(e.to_string()))?;
+        if let Some(record) = stored {
+            if record.revoked {
+                return Err(TokenError::Revoked);
+            }
+            if record.client_kind != token_data.claims.client_kind
+                || record.principal_id != token_data.claims.principal_id
+            {
+                return Err(TokenError::Invalid(
+                    "signed client binding does not match the durable token record".to_string(),
+                ));
+            }
         }
 
         Ok(token_data.claims)
@@ -707,6 +763,8 @@ impl TokenManager {
             // (issue #262).
             github_repos: record.github_repos.clone(),
             sliding_window_seconds: None,
+            client_kind: record.client_kind.as_deref(),
+            principal_id: record.principal_id.as_deref(),
         };
         request.validate().map_err(TokenError::Invalid)?;
         let replacement = self

@@ -328,6 +328,8 @@ async fn an_unrestricted_token_is_not_narrowed() {
         label: String::new(),
         scope: String::new(),
         github_repos: Vec::new(),
+        client_kind: None,
+        principal_id: None,
     };
 
     assert!(claims.may_reach_repository("acme/anything"));
@@ -345,6 +347,8 @@ async fn a_scope_is_case_insensitive_and_exclusive() {
         label: String::new(),
         scope: String::new(),
         github_repos: vec!["link-assistant/hive-mind".to_string()],
+        client_kind: None,
+        principal_id: None,
     };
 
     assert!(claims.may_reach_repository("link-assistant/hive-mind"));
