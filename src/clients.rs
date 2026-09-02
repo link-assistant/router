@@ -839,7 +839,7 @@ impl ClientManager {
     fn setup_claude(
         &self,
         base_url: &str,
-        models: &[RouterModel],
+        _models: &[RouterModel],
     ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::ClaudeCode);
         let source = read_or_empty(&path)?;
@@ -887,16 +887,7 @@ impl ClientManager {
             managed_gateway_env.push((key.to_string(), managed.to_string(), previous));
         };
         set_managed("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
-        if let Some(model) = select_model(ClientKind::ClaudeCode, models) {
-            for key in [
-                "ANTHROPIC_MODEL",
-                "ANTHROPIC_DEFAULT_OPUS_MODEL",
-                "ANTHROPIC_DEFAULT_SONNET_MODEL",
-                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-            ] {
-                set_managed(key, model);
-            }
-        }
+        set_managed("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
         // A marker already present names the value the *first* takeover

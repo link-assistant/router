@@ -405,7 +405,22 @@ impl TemporaryClient {
             ClientKind::ClaudeCode => {
                 // Emptied rather than left alone: an inherited API key
                 // outranks the auth token, so the run would leave the router.
-                command.env("ANTHROPIC_API_KEY", "");
+                command
+                    .env("ANTHROPIC_API_KEY", "")
+                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
+                    .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+                // Persistent tools commonly pin these families in the public
+                // settings file. Empty process values keep a managed launch
+                // on Router's live catalog unless the user supplied a model
+                // explicitly on the command line.
+                for key in [
+                    "ANTHROPIC_MODEL",
+                    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+                    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+                    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+                ] {
+                    command.env(key, "");
+                }
             }
             ClientKind::GeminiCli => {
                 // `GEMINI_CLI_TRUST_WORKSPACE` is deliberately not set here.

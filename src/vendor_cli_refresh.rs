@@ -36,9 +36,10 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 
 /// Probe that makes the Claude CLI exercise its credential.
 ///
-/// The cheapest thing that still forces a refresh: one word to the smallest
-/// model. Overridable because the vendor's command surface changes between
-/// releases and an operator should not need a router release to follow it.
+/// The cheapest thing that still forces a refresh: one word through the
+/// client's own current default. The Router deliberately does not compile a
+/// commercial model name into this recovery path; the authenticated live
+/// catalog and client decide what remains available (issue #192).
 ///
 /// ## Why not `claude auth status`
 ///
@@ -49,7 +50,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 /// | probe | result | credential file |
 /// | --- | --- | --- |
 /// | `claude auth status` | `{"loggedIn": true, …}`, exit 0 | unchanged |
-/// | `-p ok --model claude-haiku-4-5` | `OAuth session expired and could not be refreshed` | removed |
+/// | `-p ok` | `OAuth session expired and could not be refreshed` | removed |
 ///
 /// `auth status` reported a 42-hour-dead credential as logged in, and the
 /// account-derived fields (`email`, `orgId`, `subscriptionType`) all came back
@@ -60,7 +61,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 /// Measured on claude 2.1.239. Re-measure before changing it, the same way:
 /// point the client at a *copy* of an expired credential and compare the file
 /// before and after.
-const CLAUDE_PROBE: &[&str] = &["-p", "ok", "--model", "claude-haiku-4-5"];
+const CLAUDE_PROBE: &[&str] = &["-p", "ok"];
 
 /// Probe that makes the Codex CLI exercise its credential.
 ///

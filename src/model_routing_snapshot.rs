@@ -291,11 +291,11 @@ fn local_routing_catalog(
                     != Some(crate::refresh::CredentialEvidence::Rejected)
             {
                 provider_healthy = true;
-                catalog.record_success_for_account(
+                catalog.record_records_for_account(
                     provider,
                     &account,
                     status.account,
-                    status.models,
+                    status.records,
                 );
             }
         }
@@ -404,17 +404,19 @@ pub async fn route_subscription_model(
     state: &AppState,
     model: &str,
 ) -> Result<RoutedState, ModelRouteError> {
+    let (qualified_provider, canonical_model) = super::subscription_model_identity(model);
     // Consult catalogs before credential stores. Vendor-shaped and unique ids
     // need exactly one provider; only a genuinely ambiguous unqualified id
     // needs multiple independent snapshots, which run concurrently.
     let candidates = SubscriptionProvider::ALL
         .into_iter()
+        .filter(|provider| qualified_provider.is_none_or(|qualified| qualified == *provider))
         .filter(|provider| {
             state
                 .model_catalogs
                 .models(*provider)
                 .iter()
-                .any(|candidate| candidate == model)
+                .any(|candidate| candidate == canonical_model)
         })
         .collect::<Vec<_>>();
     let has_catalog_candidate = !candidates.is_empty();
@@ -430,7 +432,7 @@ pub async fn route_subscription_model(
     let validated = futures_util::future::join_all(
         relevant
             .into_iter()
-            .map(|provider| validated_catalog_subscription(state, provider, model)),
+            .map(|provider| validated_catalog_subscription(state, provider, canonical_model)),
     )
     .await
     .into_iter()
@@ -451,7 +453,11 @@ pub async fn route_subscription_model(
                 "model '{model}' has no healthy {provider} credential: {cause}"
             ))
         })?;
-    Ok(routed_subscription_state(state, subscription, Some(model)))
+    Ok(routed_subscription_state(
+        state,
+        subscription,
+        Some(canonical_model),
+    ))
 }
 
 /// Retain a pinned provider's credential while rejecting positive evidence

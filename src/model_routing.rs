@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 
 use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
-use crate::model_catalog::ModelCatalogCache;
+use crate::model_catalog::{CatalogRecord, ModelCatalogCache};
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
 /// Failure to resolve a request model in automatic provider mode.
@@ -79,48 +79,36 @@ const fn provider_owner(provider: SubscriptionProvider) -> &'static str {
     }
 }
 
-fn provider_hint(model: &str) -> Option<SubscriptionProvider> {
-    if model.starts_with("claude-") {
-        Some(SubscriptionProvider::Claude)
-    } else if model.starts_with("gpt-")
-        || model.starts_with("codex-")
-        || model
-            .strip_prefix('o')
-            .and_then(|suffix| suffix.chars().next())
-            .is_some_and(|character| character.is_ascii_digit())
-    {
-        Some(SubscriptionProvider::Codex)
-    } else if model.starts_with("gemini-") {
-        Some(SubscriptionProvider::Gemini)
-    } else if model.starts_with("qwen-") {
-        Some(SubscriptionProvider::Qwen)
-    } else {
-        None
-    }
-}
-
 fn providers_for_model(model: &str, catalogs: &ModelCatalogCache) -> Vec<SubscriptionProvider> {
+    let (qualified, canonical) = subscription_model_identity(model);
     SubscriptionProvider::ALL
         .into_iter()
-        .filter(|provider| catalogs.models(*provider).iter().any(|id| id == model))
+        .filter(|provider| qualified.is_none_or(|qualified| qualified == *provider))
+        .filter(|provider| catalogs.models(*provider).iter().any(|id| id == canonical))
         .collect()
+}
+
+fn subscription_model_identity(model: &str) -> (Option<SubscriptionProvider>, &str) {
+    let Some((prefix, canonical)) = model.split_once('/') else {
+        return (None, model);
+    };
+    let provider = SubscriptionProvider::ALL
+        .into_iter()
+        .find(|provider| provider.as_str() == prefix);
+    provider.map_or((None, model), |provider| (Some(provider), canonical))
 }
 
 /// Return the unambiguous provider whose last known live catalog owns a model id.
 ///
-/// A vendor-shaped model id resolves to that vendor when multiple catalogs
-/// contain it. An unqualified collision returns `None` instead of inheriting
-/// [`SubscriptionProvider::ALL`] ordering as an accidental routing policy.
+/// An unqualified collision returns `None` instead of guessing ownership from
+/// a familiar-looking name or [`SubscriptionProvider::ALL`] order.
 #[must_use]
 pub fn provider_for_model(
     model: &str,
     catalogs: &ModelCatalogCache,
 ) -> Option<SubscriptionProvider> {
     let providers = providers_for_model(model, catalogs);
-    if providers.len() == 1 {
-        return providers.first().copied();
-    }
-    provider_hint(model).filter(|provider| providers.contains(provider))
+    (providers.len() == 1).then(|| providers[0])
 }
 
 /// Describe why a provider currently contributes nothing to the catalog.
@@ -150,20 +138,15 @@ fn credential_state(
 
 /// Every credential state worth reporting for a model that nothing advertises.
 ///
-/// A vendor-shaped model id blames its own vendor; an unqualified one reports
-/// each provider that has actually recorded a problem, and stays quiet about
-/// providers that were simply never configured.
-fn credential_states(model: &str, catalogs: &ModelCatalogCache) -> Vec<String> {
-    provider_hint(model).map_or_else(
-        || {
-            SubscriptionProvider::ALL
-                .into_iter()
-                .filter(|provider| catalogs.provider_has_observation(*provider))
-                .filter_map(|provider| credential_state(provider, catalogs))
-                .collect()
-        },
-        |provider| credential_state(provider, catalogs).into_iter().collect(),
-    )
+/// Report each observed provider problem without inferring ownership from a
+/// model's spelling. A future vendor can adopt any identifier shape, so names
+/// carry no routing or diagnostic authority.
+fn credential_states(_model: &str, catalogs: &ModelCatalogCache) -> Vec<String> {
+    SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| catalogs.provider_has_observation(*provider))
+        .filter_map(|provider| credential_state(provider, catalogs))
+        .collect()
 }
 
 /// Resolve a model only when the owning subscription is available.
@@ -223,17 +206,8 @@ pub fn available_provider_for_model(
             "model '{model}' is not advertised by any subscription{detail}"
         )));
     }
-    let provider = provider_hint(model)
-        .filter(|provider| advertised.contains(provider))
-        .or_else(|| {
-            let healthy = advertised
-                .iter()
-                .copied()
-                .filter(|provider| available.contains(provider))
-                .collect::<Vec<_>>();
-            (healthy.len() == 1).then(|| healthy[0])
-        })
-        .or_else(|| (advertised.len() == 1).then(|| advertised[0]))
+    let provider = (advertised.len() == 1)
+        .then(|| advertised[0])
         .ok_or_else(|| {
             let providers = advertised
                 .iter()
@@ -571,7 +545,7 @@ pub(crate) async fn configured_provider_health_report(
 /// Resolve health and the corresponding account-filtered model union once.
 pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredCatalogSnapshot {
     let accounts = configured_account_health_report(state).await;
-    let models = SubscriptionProvider::ALL
+    let model_accounts = SubscriptionProvider::ALL
         .into_iter()
         .map(|provider| {
             let healthy_accounts = accounts
@@ -581,32 +555,49 @@ pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredC
                 })
                 .map(|(account, _)| account.clone())
                 .collect::<Vec<_>>();
+            (provider, healthy_accounts)
+        })
+        .collect::<Vec<_>>();
+    let models = model_accounts
+        .iter()
+        .map(|(provider, accounts)| {
             (
-                provider,
+                *provider,
                 state
                     .model_catalogs
-                    .models_for_accounts(provider, &healthy_accounts),
+                    .models_for_accounts(*provider, accounts),
+            )
+        })
+        .collect();
+    let records = model_accounts
+        .iter()
+        .map(|(provider, accounts)| {
+            (
+                *provider,
+                state
+                    .model_catalogs
+                    .records_for_accounts(*provider, accounts),
             )
         })
         .collect();
     ConfiguredCatalogSnapshot {
         health: aggregate_provider_health(&accounts),
         models,
+        records,
     }
 }
 
 /// `OpenAI` list-shape union for all supplied subscription providers.
 #[must_use]
 pub fn model_catalog(providers: &[SubscriptionProvider], catalogs: &ModelCatalogCache) -> Value {
-    model_catalog_with(providers, catalogs, |provider| catalogs.models(provider))
+    model_catalog_with(providers, catalogs, |provider| catalogs.records(provider))
 }
 
 fn model_catalog_with(
     providers: &[SubscriptionProvider],
     catalogs: &ModelCatalogCache,
-    models: impl Fn(SubscriptionProvider) -> Vec<String>,
+    records: impl Fn(SubscriptionProvider) -> Vec<CatalogRecord>,
 ) -> Value {
-    let now = chrono::Utc::now().timestamp();
     // A provider is degraded when it has never discovered a live catalog or its
     // credential has stopped working. There is no bundled fallback to fall back
     // to any more (issue #192), so this reports missing coverage rather than
@@ -621,18 +612,50 @@ fn model_catalog_with(
         .filter(|provider| !catalogs.provider_is_degraded(**provider))
         .map(|provider| provider.as_str())
         .collect::<Vec<_>>();
-    let data = providers
+    let records = providers
         .iter()
-        .flat_map(|provider| {
-            let owner = provider_owner(*provider);
-            models(*provider).into_iter().map(move |id| {
-                json!({
-                    "id": id,
-                    "object": "model",
-                    "created": now,
-                    "owned_by": owner,
-                })
-            })
+        .flat_map(|provider| records(*provider))
+        .collect::<Vec<_>>();
+    let mut seen_provider_ids = std::collections::HashSet::new();
+    let records = records
+        .into_iter()
+        .filter(|record| seen_provider_ids.insert((record.provider, record.canonical_id.clone())))
+        .collect::<Vec<_>>();
+    let mut counts = std::collections::HashMap::new();
+    for record in &records {
+        *counts.entry(record.canonical_id.clone()).or_insert(0_usize) += 1;
+    }
+    let data = records
+        .into_iter()
+        .map(|record| {
+            let exposed_id = if counts.get(&record.canonical_id).copied().unwrap_or(0) > 1 {
+                format!("{}/{}", record.provider.as_str(), record.canonical_id)
+            } else {
+                record.canonical_id.clone()
+            };
+            let mut projected = record.raw;
+            projected.insert("id".into(), Value::String(exposed_id.clone()));
+            projected.insert(
+                "canonical_id".into(),
+                Value::String(record.canonical_id.clone()),
+            );
+            projected.insert(
+                "provider".into(),
+                Value::String(record.provider.as_str().to_string()),
+            );
+            projected
+                .entry("object")
+                .or_insert_with(|| Value::String("model".into()));
+            projected
+                .entry("created")
+                .or_insert_with(|| Value::from(record.fetched_at));
+            projected
+                .entry("owned_by")
+                .or_insert_with(|| Value::String(provider_owner(record.provider).to_string()));
+            if exposed_id != record.canonical_id {
+                projected.insert("client_alias".into(), Value::String(exposed_id));
+            }
+            Value::Object(projected)
         })
         .collect::<Vec<_>>();
     json!({
@@ -661,7 +684,7 @@ pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvid
         .is_some_and(|entry| entry.state == ProviderHealthState::Healthy)
     {
         model_catalog_with(&[provider], &state.model_catalogs, |provider| {
-            snapshot.models(provider)
+            snapshot.records(provider)
         })
     } else {
         model_catalog(&[], &state.model_catalogs)
@@ -698,18 +721,20 @@ fn merge_configured_degradation(health: &[ProviderHealthReport], catalog: &mut V
     }
 }
 
-fn principal_catalog_models(
+fn principal_catalog_records(
     state: &AppState,
     provider: SubscriptionProvider,
     accounts: &[String],
-) -> Vec<String> {
+) -> Vec<CatalogRecord> {
     if accounts.iter().any(|account| {
         state.subscription_cache.evidence_for(provider, account)
             == Some(crate::refresh::CredentialEvidence::Rejected)
     }) {
         Vec::new()
     } else {
-        state.model_catalogs.models_for_accounts(provider, accounts)
+        state
+            .model_catalogs
+            .records_for_accounts(provider, accounts)
     }
 }
 
@@ -746,7 +771,7 @@ pub async fn models(
                 .filter(|provider| entitled(*provider).is_ok())
                 .collect::<Vec<_>>();
             let mut catalog = model_catalog_with(&healthy, &state.model_catalogs, |provider| {
-                principal_catalog_models(&state, provider, &principal_accounts)
+                principal_catalog_records(&state, provider, &principal_accounts)
             });
             // A revoked subscription is filtered out before `model_catalog`
             // ever sees it, so it could never reach `degraded_providers` and
@@ -771,7 +796,7 @@ pub async fn models(
             model_catalog_with(
                 &[SubscriptionProvider::Claude],
                 &state.model_catalogs,
-                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+                |provider| principal_catalog_records(&state, provider, &principal_accounts),
             )
         }
         UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
@@ -786,7 +811,7 @@ pub async fn models(
             model_catalog_with(
                 &[SubscriptionProvider::Codex],
                 &state.model_catalogs,
-                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+                |provider| principal_catalog_records(&state, provider, &principal_accounts),
             )
         }
         UpstreamProvider::Qwen => {
@@ -796,7 +821,7 @@ pub async fn models(
             model_catalog_with(
                 &[SubscriptionProvider::Qwen],
                 &state.model_catalogs,
-                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+                |provider| principal_catalog_records(&state, provider, &principal_accounts),
             )
         }
         UpstreamProvider::Gemini => {
@@ -806,7 +831,7 @@ pub async fn models(
             model_catalog_with(
                 &[SubscriptionProvider::Gemini],
                 &state.model_catalogs,
-                |provider| principal_catalog_models(&state, provider, &principal_accounts),
+                |provider| principal_catalog_records(&state, provider, &principal_accounts),
             )
         }
         UpstreamProvider::OpenAICompatible => {

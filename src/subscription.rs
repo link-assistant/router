@@ -348,12 +348,18 @@ impl SubscriptionReader {
         let authoritative = (mode == InstallMode::Replace)
             .then(|| self.discover_credential_path())
             .flatten();
-        authoritative
+        let installed = authoritative
             .map_or_else(
                 || self.install_document(document),
                 |path| Self::install_document_at(&path, document),
             )
-            .map(InstallDocumentResult::Installed)
+            .map(InstallDocumentResult::Installed)?;
+        crate::model_catalog::ModelCatalogCache::invalidate_persisted(
+            data_dir,
+            self.provider,
+            account,
+        )?;
+        Ok(installed)
     }
 
     fn existing_document(&self, data_dir: &Path, account: &str) -> Result<Option<PathBuf>, String> {

@@ -177,8 +177,14 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
 fn catalog_probe_evidence_is_client_specific_and_not_authority_by_itself() {
     let mut headers = HeaderMap::new();
     headers.insert("authorization", "Bearer redacted".parse().unwrap());
-    headers.insert("x-link-assistant-client", "codex".parse().unwrap());
     assert!(request_evidence(
+        ClientKind::Codex,
+        ClientProtocol::Catalog,
+        "/api/services/codex/v1/models",
+        &headers
+    ));
+    headers.insert("x-link-assistant-client", "claude".parse().unwrap());
+    assert!(!request_evidence(
         ClientKind::Codex,
         ClientProtocol::Catalog,
         "/api/services/codex/v1/models",

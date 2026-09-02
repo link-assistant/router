@@ -15,7 +15,10 @@ use crate::clients::ClientKind;
 use crate::subscription::SubscriptionProvider;
 
 /// Client-facing protocol used by one request.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(
+    Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, serde::Deserialize, serde::Serialize,
+)]
+#[serde(rename_all = "snake_case")]
 pub enum ClientProtocol {
     /// Authenticated model discovery before a client launches.
     Catalog,
@@ -270,7 +273,7 @@ pub fn request_evidence(
             .get("x-link-assistant-client")
             .and_then(|value| value.to_str().ok())
             .and_then(ClientKind::from_str_opt);
-        return claimed == Some(client)
+        return claimed.is_none_or(|claimed| claimed == client)
             && path_belongs_to_client(client, path)
             && credential_carrier_matches(client, headers);
     }

@@ -18,19 +18,6 @@ pub const RESPONSES_BASE_PATH: &str = "/api/v1";
 /// Documented, non-inference quota operation used for health checks.
 pub const HEALTH_PATH: &str = "/api/monitor/usage/quota/limit";
 
-/// Explicitly reviewed Coding Plan models. Updating this list is a policy
-/// change and must be code-reviewed; a remote catalog can never widen it.
-pub const REVIEWED_MODELS: &[&str] = &[
-    "glm-5.3",
-    "glm-5.3-flash",
-    "glm-5.2",
-    "glm-5.1",
-    "glm-5-turbo",
-    "glm-5",
-    "glm-4.7",
-    "glm-4.5-air",
-];
-
 /// One exact client-visible model mapping.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RegistryEntry {
@@ -141,11 +128,9 @@ pub fn registry_for_client(
     };
     let mut registry = Vec::new();
     for configured in configured_models {
-        let canonical = configured.as_ref();
-        if !REVIEWED_MODELS.contains(&canonical) {
-            return Err(format!(
-                "unreviewed z.ai Coding Plan model '{canonical}'; update REVIEWED_MODELS explicitly"
-            ));
+        let canonical = configured.as_ref().trim();
+        if canonical.is_empty() {
+            return Err("z.ai Coding Plan model identifiers cannot be empty".into());
         }
         if client == ClientKind::ClaudeCode {
             for prefix in ["claude-zai-", "anthropic-zai-"] {

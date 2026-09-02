@@ -805,6 +805,63 @@ async fn repeated_catalog_cursor_fails_closed() {
     assert!(error.contains("repeated pagination cursor"), "{error}");
 }
 
+#[tokio::test]
+async fn gemini_next_page_tokens_are_followed_without_losing_raw_records() {
+    use axum::extract::Query;
+    use std::collections::HashMap;
+
+    async fn handler(Query(query): Query<HashMap<String, String>>) -> axum::Json<Value> {
+        if query.get("pageToken").is_none() {
+            axum::Json(serde_json::json!({
+                "models": [{
+                    "name": "models/future-jade-17",
+                    "supportedGenerationMethods": ["generateContent"],
+                    "newCapability": {"window": 123456}
+                }],
+                "nextPageToken": "future-page-2"
+            }))
+        } else {
+            axum::Json(serde_json::json!({
+                "models": [{
+                    "name": "models/future-amber-18",
+                    "supportedGenerationMethods": ["generateContent"],
+                    "newCapability": {"window": 654321}
+                }]
+            }))
+        }
+    }
+
+    let app = Router::new().route("/v1beta/models", get(handler));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let token = SubscriptionToken {
+        access_token: "live-google-token".to_string(),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: Some("google-account".to_string()),
+        resource_url: None,
+    };
+
+    let records = fetch_provider_catalog_records(
+        &reqwest::Client::new(),
+        SubscriptionProvider::Gemini,
+        &token,
+        Some(&format!("http://{address}")),
+    )
+    .await
+    .expect("all Google pages");
+    assert_eq!(
+        records
+            .iter()
+            .map(|record| record.canonical_id.as_str())
+            .collect::<Vec<_>>(),
+        ["future-jade-17", "future-amber-18"]
+    );
+    assert_eq!(records[0].raw["newCapability"]["window"], 123456);
+    assert_eq!(records[1].source_order, 1);
+}
+
 #[test]
 fn colliding_live_ids_are_reversibly_provider_qualified() {
     let cache = ModelCatalogCache::new();
@@ -898,12 +955,8 @@ fn authorization_replacement_invalidates_a_running_cache_immediately() {
         vec!["future-other-22".into()],
     );
 
-    ModelCatalogCache::invalidate_persisted(
-        data.path(),
-        SubscriptionProvider::Claude,
-        "primary",
-    )
-    .expect("credential mutation invalidation");
+    ModelCatalogCache::invalidate_persisted(data.path(), SubscriptionProvider::Claude, "primary")
+        .expect("credential mutation invalidation");
 
     assert!(
         cache.models(SubscriptionProvider::Claude).is_empty(),
@@ -915,10 +968,7 @@ fn authorization_replacement_invalidates_a_running_cache_immediately() {
         "one authorization cannot remove another provider"
     );
     assert_eq!(
-        cache
-            .status(SubscriptionProvider::Claude)
-            .models
-            .as_slice(),
+        cache.status(SubscriptionProvider::Claude).models.as_slice(),
         ["future-old-11"],
         "the last catalog remains available to diagnostics"
     );

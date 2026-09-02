@@ -381,12 +381,10 @@ impl ProviderStore {
                 &unsupported_clients,
             )
             .map_err(ProviderError::Invalid)?;
-            for model in &models {
-                if !crate::zai_coding_plan::REVIEWED_MODELS.contains(&model.as_str()) {
-                    return Err(ProviderError::Invalid(format!(
-                        "unreviewed z.ai Coding Plan model: {model}"
-                    )));
-                }
+            if models.iter().any(|model| model.trim().is_empty()) {
+                return Err(ProviderError::Invalid(
+                    "z.ai Coding Plan model identifiers cannot be empty".into(),
+                ));
             }
             if enabled && !intermediary_risk_acknowledged {
                 return Err(ProviderError::Invalid(

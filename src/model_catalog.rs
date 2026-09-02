@@ -1,6 +1,7 @@
 //! Live subscription model discovery with stale-on-error caching.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use std::time::Duration;
 
@@ -11,6 +12,43 @@ use crate::subscription::{SubscriptionProvider, SubscriptionReader, Subscription
 /// How often live provider catalogs are refreshed.
 pub const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const FETCH_TIMEOUT: Duration = Duration::from_secs(15);
+const MAX_CATALOG_PAGES: usize = 100;
+
+/// One provider record retained without discarding vendor metadata.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+pub struct CatalogRecord {
+    pub provider: SubscriptionProvider,
+    pub account: String,
+    pub canonical_id: String,
+    pub raw: serde_json::Map<String, Value>,
+    pub source_order: u64,
+    pub fetched_at: i64,
+    pub health_generation: String,
+    pub protocols: BTreeSet<crate::client_policy::ClientProtocol>,
+}
+
+impl CatalogRecord {
+    fn synthetic(
+        provider: SubscriptionProvider,
+        account: &str,
+        canonical_id: String,
+        source_order: usize,
+        fetched_at: i64,
+    ) -> Self {
+        let mut raw = serde_json::Map::new();
+        raw.insert("id".into(), Value::String(canonical_id.clone()));
+        Self {
+            provider,
+            account: account.to_string(),
+            canonical_id,
+            raw,
+            source_order: source_order as u64,
+            fetched_at,
+            health_generation: format!("{provider}:{account}:{fetched_at}"),
+            protocols: provider_protocols(provider),
+        }
+    }
+}
 
 /// Last known catalog state for one provider account.
 ///
@@ -18,10 +56,12 @@ const FETCH_TIMEOUT: Duration = Duration::from_secs(15);
 /// only once a live, authenticated discovery has succeeded for that exact
 /// account (issue #192). Until then `models` is empty and `discovered` is
 /// false, so the router advertises and routes nothing it has not actually seen.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct CatalogStatus {
     /// Models observed in a successful live discovery.
     pub models: Vec<String>,
+    /// Original provider records in provider source order.
+    pub records: Vec<CatalogRecord>,
     /// Account identity the catalog was discovered for.
     pub account: Option<String>,
     /// Unix timestamp of the last successful live refresh.
@@ -51,6 +91,16 @@ impl CatalogStatus {
         }
     }
 
+    /// Full records that may be projected to clients right now.
+    #[must_use]
+    pub fn routable_records(&self) -> &[CatalogRecord] {
+        if self.discovered && self.credential_healthy {
+            &self.records
+        } else {
+            &[]
+        }
+    }
+
     /// Whether this account is degraded: it has a catalog that cannot be used,
     /// or has never discovered one.
     #[must_use]
@@ -62,7 +112,31 @@ impl CatalogStatus {
 /// Thread-safe, immediately readable model catalogs shared by all handlers.
 pub struct ModelCatalogCache {
     entries: RwLock<HashMap<(SubscriptionProvider, String), CatalogStatus>>,
+    persistence: Option<CatalogPersistence>,
 }
+
+#[derive(Debug, Clone)]
+struct CatalogPersistence {
+    path: PathBuf,
+    invalidations: PathBuf,
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+struct PersistedCatalogs {
+    version: u8,
+    entries: Vec<PersistedCatalogEntry>,
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+struct PersistedCatalogEntry {
+    provider: SubscriptionProvider,
+    router_account: String,
+    status: CatalogStatus,
+}
+
+const PERSISTED_CATALOG_VERSION: u8 = 1;
+const PERSISTED_CATALOG_FILE: &str = "model-catalogs.json";
+const CATALOG_INVALIDATION_DIR: &str = "model-catalog-invalidations";
 
 impl Default for ModelCatalogCache {
     fn default() -> Self {
@@ -80,7 +154,65 @@ impl ModelCatalogCache {
     pub fn new() -> Self {
         Self {
             entries: RwLock::new(HashMap::new()),
+            persistence: None,
         }
+    }
+
+    /// Open a durable catalog cache rooted in Router's private data directory.
+    ///
+    /// Records and vendor metadata survive restarts for diagnostics. A restart
+    /// deliberately clears their routable health until this process completes
+    /// an authenticated discovery for the same account: persisted availability
+    /// is evidence about the past, not authority to spend a current credential.
+    #[must_use]
+    pub fn persistent(data_dir: &Path) -> Self {
+        let persistence = CatalogPersistence {
+            path: data_dir.join(PERSISTED_CATALOG_FILE),
+            invalidations: data_dir.join(CATALOG_INVALIDATION_DIR),
+        };
+        let mut entries = load_persisted_catalogs(&persistence.path).unwrap_or_else(|error| {
+            tracing::warn!("could not load the persisted model catalog: {error}");
+            HashMap::new()
+        });
+        for status in entries.values_mut() {
+            if status.discovered {
+                status.credential_healthy = false;
+                status.last_error =
+                    Some("awaiting authenticated catalog refresh after router restart".to_string());
+            }
+        }
+        Self {
+            entries: RwLock::new(entries),
+            persistence: Some(persistence),
+        }
+    }
+
+    /// Invalidate one provider/account from a separate credential-mutating
+    /// process. Running servers consult the owner-only marker on every catalog
+    /// projection, so a successful login/import cannot leave old models
+    /// routable until the next background tick.
+    pub fn invalidate_persisted(
+        data_dir: &Path,
+        provider: SubscriptionProvider,
+        router_account: &str,
+    ) -> Result<(), String> {
+        let directory = data_dir.join(CATALOG_INVALIDATION_DIR);
+        secure_directory(&directory).map_err(|error| {
+            format!(
+                "could not create model-catalog invalidation directory {}: {error}",
+                directory.display()
+            )
+        })?;
+        let path = invalidation_path(&directory, provider, router_account);
+        crate::durable_file::atomic_write_owner_only(
+            &path,
+            chrono::Utc::now().timestamp_millis().to_string().as_bytes(),
+        )
+        .map_err(|error| {
+            format!(
+                "could not invalidate the {provider} model catalog for {router_account}: {error}"
+            )
+        })
     }
 
     /// Models that may be advertised and routed for `provider` right now.
@@ -94,12 +226,39 @@ impl ModelCatalogCache {
             entries
                 .iter()
                 .filter(|((entry_provider, _), _)| *entry_provider == provider)
-                .flat_map(|(_, status)| status.routable_models().iter().cloned())
+                .flat_map(|((_, account), status)| {
+                    self.routable_status(provider, account, status)
+                        .routable_models()
+                        .to_vec()
+                })
                 .collect::<Vec<_>>()
         };
         models.sort();
         models.dedup();
         models
+    }
+
+    /// Full routable records for a provider, ordered by account then by the
+    /// provider's original order within that account.
+    #[must_use]
+    pub fn records(&self, provider: SubscriptionProvider) -> Vec<CatalogRecord> {
+        let entries = self
+            .entries
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut matching = entries
+            .iter()
+            .filter(|((entry_provider, _), _)| *entry_provider == provider)
+            .collect::<Vec<_>>();
+        matching.sort_by(|((_, left), _), ((_, right), _)| left.cmp(right));
+        matching
+            .into_iter()
+            .flat_map(|((_, account), status)| {
+                self.routable_status(provider, account, status)
+                    .routable_records()
+                    .to_vec()
+            })
+            .collect()
     }
 
     /// Routable models belonging to the supplied stable router accounts.
@@ -125,6 +284,21 @@ impl ModelCatalogCache {
         models
     }
 
+    pub(crate) fn records_for_accounts(
+        &self,
+        provider: SubscriptionProvider,
+        accounts: &[String],
+    ) -> Vec<CatalogRecord> {
+        accounts
+            .iter()
+            .flat_map(|account| {
+                self.status_for(provider, account)
+                    .routable_records()
+                    .to_vec()
+            })
+            .collect()
+    }
+
     /// Whether every known account for `provider` lacks a usable catalog.
     ///
     /// A provider pool remains healthy when any selected account has completed
@@ -139,7 +313,7 @@ impl ModelCatalogCache {
             entries
                 .iter()
                 .filter(|((entry_provider, _), _)| *entry_provider == provider)
-                .map(|(_, status)| status.clone())
+                .map(|((_, account), status)| self.routable_status(provider, account, status))
                 .collect::<Vec<_>>()
         };
         let mut matching = statuses.iter();
@@ -170,16 +344,14 @@ impl ModelCatalogCache {
     /// Return diagnostic state for one stable router account.
     #[must_use]
     pub fn status_for(&self, provider: SubscriptionProvider, account: &str) -> CatalogStatus {
-        let status = {
+        let (status, effective_account) = {
             let entries = self
                 .entries
                 .read()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
-            entries
-                .get(&(provider, account.to_string()))
-                .cloned()
-                .or_else(|| {
-                    (account != crate::credential_recovery_store::PRIMARY_ACCOUNT)
+            entries.get(&(provider, account.to_string())).map_or_else(
+                || {
+                    let fallback = (account != crate::credential_recovery_store::PRIMARY_ACCOUNT)
                         .then(|| {
                             entries.get(&(
                                 provider,
@@ -188,13 +360,18 @@ impl ModelCatalogCache {
                         })
                         .flatten()
                         .filter(|primary| primary.account.is_none())
-                        .cloned()
-                })
+                        .cloned();
+                    (fallback, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+                },
+                |status| (Some(status.clone()), account),
+            )
         };
         // Legacy anonymous catalogs contain no identity that can differ
         // between accounts. Preserve established anonymous Claude pools; any
         // known selected identity still fails ownership before dispatch.
-        status.unwrap_or_default()
+        status
+            .map(|status| self.routable_status(provider, effective_account, &status))
+            .unwrap_or_default()
     }
 
     /// Diagnostic state for every provider the cache knows about.
@@ -208,7 +385,9 @@ impl ModelCatalogCache {
             .filter(|((_, account), _)| {
                 account == crate::credential_recovery_store::PRIMARY_ACCOUNT
             })
-            .map(|((provider, _), status)| (*provider, status.clone()))
+            .map(|((provider, account), status)| {
+                (*provider, self.routable_status(*provider, account, status))
+            })
             .collect();
         entries.sort_by_key(|(provider, _)| provider.to_string());
         entries
@@ -246,6 +425,35 @@ impl ModelCatalogCache {
     ) {
         models.sort();
         models.dedup();
+        let fetched_at = chrono::Utc::now().timestamp();
+        let record_account = account.as_deref().unwrap_or(router_account);
+        let records = models
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(index, model)| {
+                CatalogRecord::synthetic(provider, record_account, model, index, fetched_at)
+            })
+            .collect();
+        self.record_records_for_account(provider, router_account, account, records);
+    }
+
+    /// Atomically replace one account generation with fully retained records.
+    pub fn record_records_for_account(
+        &self,
+        provider: SubscriptionProvider,
+        router_account: &str,
+        account: Option<String>,
+        mut records: Vec<CatalogRecord>,
+    ) {
+        let mut seen = HashSet::new();
+        records.retain(|record| seen.insert(record.canonical_id.clone()));
+        let mut models = records
+            .iter()
+            .map(|record| record.canonical_id.clone())
+            .collect::<Vec<_>>();
+        models.sort();
+        models.dedup();
         let mut entries = self
             .entries
             .write()
@@ -254,6 +462,7 @@ impl ModelCatalogCache {
             (provider, router_account.to_string()),
             CatalogStatus {
                 models,
+                records,
                 account,
                 refreshed_at: Some(chrono::Utc::now().timestamp()),
                 last_error: None,
@@ -261,6 +470,10 @@ impl ModelCatalogCache {
                 credential_healthy: true,
             },
         );
+        drop(entries);
+        if self.persist_entries() {
+            self.clear_invalidation(provider, router_account);
+        }
     }
 
     /// Record a refresh failure, keeping any previously discovered catalog for
@@ -298,7 +511,131 @@ impl ModelCatalogCache {
             entry.credential_healthy = false;
         }
         drop(entries);
+        self.persist_entries();
     }
+
+    fn routable_status(
+        &self,
+        provider: SubscriptionProvider,
+        router_account: &str,
+        status: &CatalogStatus,
+    ) -> CatalogStatus {
+        let mut status = status.clone();
+        if self.is_invalidated(provider, router_account) {
+            status.credential_healthy = false;
+            status.last_error =
+                Some("authorization changed; awaiting authenticated catalog refresh".to_string());
+        }
+        status
+    }
+
+    fn is_invalidated(&self, provider: SubscriptionProvider, router_account: &str) -> bool {
+        self.persistence.as_ref().is_some_and(|persistence| {
+            invalidation_path(&persistence.invalidations, provider, router_account)
+                .try_exists()
+                .unwrap_or(true)
+        })
+    }
+
+    fn clear_invalidation(&self, provider: SubscriptionProvider, router_account: &str) {
+        let Some(persistence) = &self.persistence else {
+            return;
+        };
+        let path = invalidation_path(&persistence.invalidations, provider, router_account);
+        if let Err(error) = std::fs::remove_file(&path)
+            && error.kind() != std::io::ErrorKind::NotFound
+        {
+            tracing::warn!(
+                "could not clear the {provider} model-catalog invalidation for {router_account}: {error}"
+            );
+        }
+    }
+
+    fn persist_entries(&self) -> bool {
+        let Some(persistence) = &self.persistence else {
+            return true;
+        };
+        let mut entries = self
+            .entries
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .map(
+                |((provider, router_account), status)| PersistedCatalogEntry {
+                    provider: *provider,
+                    router_account: router_account.clone(),
+                    status: status.clone(),
+                },
+            )
+            .collect::<Vec<_>>();
+        entries.sort_by(|left, right| {
+            left.provider
+                .as_str()
+                .cmp(right.provider.as_str())
+                .then_with(|| left.router_account.cmp(&right.router_account))
+        });
+        let document = PersistedCatalogs {
+            version: PERSISTED_CATALOG_VERSION,
+            entries,
+        };
+        let result = serde_json::to_vec_pretty(&document)
+            .map_err(std::io::Error::other)
+            .and_then(|bytes| {
+                crate::durable_file::atomic_write_owner_only(&persistence.path, &bytes)
+            });
+        if let Err(error) = result {
+            tracing::warn!("could not persist the live model catalog: {error}");
+            return false;
+        }
+        true
+    }
+}
+
+fn load_persisted_catalogs(
+    path: &Path,
+) -> Result<HashMap<(SubscriptionProvider, String), CatalogStatus>, String> {
+    let bytes = match std::fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(HashMap::new()),
+        Err(error) => return Err(error.to_string()),
+    };
+    let persisted: PersistedCatalogs =
+        serde_json::from_slice(&bytes).map_err(|error| error.to_string())?;
+    if persisted.version != PERSISTED_CATALOG_VERSION {
+        return Err(format!(
+            "unsupported persisted catalog version {}",
+            persisted.version
+        ));
+    }
+    Ok(persisted
+        .entries
+        .into_iter()
+        .map(|entry| ((entry.provider, entry.router_account), entry.status))
+        .collect())
+}
+
+fn invalidation_path(
+    directory: &Path,
+    provider: SubscriptionProvider,
+    router_account: &str,
+) -> PathBuf {
+    use sha2::Digest as _;
+    let digest = sha2::Sha256::digest(format!("{provider}\0{router_account}").as_bytes());
+    directory.join(format!(
+        "{}-{}.invalidated",
+        provider.as_str(),
+        hex::encode(digest)
+    ))
+}
+
+fn secure_directory(path: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))?;
+    }
+    Ok(())
 }
 
 /// Fetch every currently healthy credential and update the cache independently.
@@ -355,7 +692,7 @@ pub async fn refresh_catalogs_for_accounts(
         // Bind the discovery to the account it was made for, so a catalog
         // is never reused across accounts (issue #192).
         let mut account = token.account_id.clone();
-        let mut result = fetch_provider_catalog(client, provider, &token, None).await;
+        let mut result = fetch_provider_catalog_records(client, provider, &token, None).await;
 
         // A 401 here means the vendor rejected a token whose own `exp` may
         // still be in the future. Refresh against that verdict rather than
@@ -371,7 +708,7 @@ pub async fn refresh_catalogs_for_accounts(
                 "{provider} rejected an unexpired catalog token; re-probing once after refresh"
             );
             account = refreshed.account_id.clone();
-            result = fetch_provider_catalog(client, provider, &refreshed, None).await;
+            result = fetch_provider_catalog_records(client, provider, &refreshed, None).await;
         }
         let result = result.map(|models| (account, models));
         (provider, router_account, stamped_expired, result)
@@ -380,13 +717,13 @@ pub async fn refresh_catalogs_for_accounts(
         futures_util::future::join_all(refreshes).await
     {
         match result {
-            Ok((account, models)) => {
+            Ok((account, records)) => {
                 tracing::info!(
                     "refreshed {provider} model catalog with {} model(s)",
-                    models.len()
+                    records.len()
                 );
                 token_cache.record_credential_working_for(provider, router_account);
-                cache.record_success_for_account(provider, router_account, account, models);
+                cache.record_records_for_account(provider, router_account, account, records);
             }
             Err(error) => {
                 // Keep the last known models in the cache for transient
@@ -542,6 +879,23 @@ pub async fn fetch_provider_catalog(
     token: &SubscriptionToken,
     base_url_override: Option<&str>,
 ) -> Result<Vec<String>, String> {
+    fetch_provider_catalog_records(client, provider, token, base_url_override)
+        .await
+        .map(|records| {
+            records
+                .into_iter()
+                .map(|record| record.canonical_id)
+                .collect()
+        })
+}
+
+/// Fetch every page of one provider catalog while retaining every record.
+pub async fn fetch_provider_catalog_records(
+    client: &reqwest::Client,
+    provider: SubscriptionProvider,
+    token: &SubscriptionToken,
+    base_url_override: Option<&str>,
+) -> Result<Vec<CatalogRecord>, String> {
     let base = base_url_override.map_or_else(
         || catalog_base_url(provider, token),
         |value| value.trim_end_matches('/').to_string(),
@@ -553,39 +907,91 @@ pub async fn fetch_provider_catalog(
         SubscriptionProvider::Codex | SubscriptionProvider::Qwen => format!("{base}/models"),
         SubscriptionProvider::Gemini => format!("{base}/v1beta/models"),
     };
-    let mut request = client
-        .get(url)
-        .bearer_auth(&token.access_token)
-        .timeout(FETCH_TIMEOUT);
-    match provider {
-        SubscriptionProvider::Claude => {
-            request = request
-                .header("anthropic-version", "2023-06-01")
-                .header("anthropic-beta", "oauth-2025-04-20");
+    let base_url =
+        reqwest::Url::parse(&url).map_err(|error| format!("invalid catalog URL: {error}"))?;
+    let account = token.account_id.clone().unwrap_or_else(|| "primary".into());
+    let fetched_at = chrono::Utc::now().timestamp();
+    let generation = format!("{provider}:{account}:{}", uuid::Uuid::new_v4());
+    let mut cursor: Option<(String, String)> = None;
+    let mut visited = HashSet::new();
+    let mut records = Vec::new();
+
+    for page in 0..MAX_CATALOG_PAGES {
+        if let Some((key, value)) = cursor.as_ref()
+            && !visited.insert(format!("{key}={value}"))
+        {
+            return Err(format!("repeated pagination cursor for {provider}: {key}"));
         }
-        SubscriptionProvider::Codex => {
-            request = request.query(&[("client_version", client_version)]);
-            if let Some(account_id) = token.account_id.as_deref() {
-                request = request.header("chatgpt-account-id", account_id);
+        let mut page_url = base_url.clone();
+        {
+            let mut query = page_url.query_pairs_mut();
+            match provider {
+                SubscriptionProvider::Claude => {
+                    query.append_pair("limit", "1000");
+                }
+                SubscriptionProvider::Gemini => {
+                    query.append_pair("pageSize", "1000");
+                }
+                SubscriptionProvider::Codex => {
+                    query.append_pair("client_version", &client_version);
+                }
+                SubscriptionProvider::Qwen => {}
+            }
+            if let Some((key, value)) = cursor.as_ref() {
+                query.append_pair(key, value);
             }
         }
-        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {}
+        let mut request = client
+            .get(page_url)
+            .bearer_auth(&token.access_token)
+            .timeout(FETCH_TIMEOUT);
+        match provider {
+            SubscriptionProvider::Claude => {
+                request = request
+                    .header("anthropic-version", "2023-06-01")
+                    .header("anthropic-beta", "oauth-2025-04-20");
+            }
+            SubscriptionProvider::Codex => {
+                if let Some(account_id) = token.account_id.as_deref() {
+                    request = request.header("chatgpt-account-id", account_id);
+                }
+            }
+            SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {}
+        }
+        let response = request
+            .send()
+            .await
+            .map_err(|error| format!("request failed: {error}"))?;
+        let status = response.status();
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            let detail = body.chars().take(240).collect::<String>();
+            return Err(format!("HTTP {status}: {detail}"));
+        }
+        let body: Value = response
+            .json()
+            .await
+            .map_err(|error| format!("invalid JSON response: {error}"))?;
+        let page_records = parse_catalog_records(
+            provider,
+            &body,
+            &account,
+            fetched_at,
+            &generation,
+            records.len(),
+        )?;
+        cursor = next_catalog_cursor(provider, &body, &page_records)?;
+        records.extend(page_records);
+        if cursor.is_none() {
+            return Ok(records);
+        }
+        if page + 1 == MAX_CATALOG_PAGES {
+            return Err(format!(
+                "{provider} catalog exceeded the {MAX_CATALOG_PAGES}-page safety limit"
+            ));
+        }
     }
-    let response = request
-        .send()
-        .await
-        .map_err(|error| format!("request failed: {error}"))?;
-    let status = response.status();
-    if !status.is_success() {
-        let body = response.text().await.unwrap_or_default();
-        let detail = body.chars().take(240).collect::<String>();
-        return Err(format!("HTTP {status}: {detail}"));
-    }
-    let body: Value = response
-        .json()
-        .await
-        .map_err(|error| format!("invalid JSON response: {error}"))?;
-    parse_catalog(provider, &body)
+    unreachable!("bounded catalog loop returns on its final iteration")
 }
 
 fn catalog_base_url(provider: SubscriptionProvider, token: &SubscriptionToken) -> String {
@@ -598,6 +1004,30 @@ fn catalog_base_url(provider: SubscriptionProvider, token: &SubscriptionToken) -
 }
 
 fn parse_catalog(provider: SubscriptionProvider, body: &Value) -> Result<Vec<String>, String> {
+    parse_catalog_records(
+        provider,
+        body,
+        "primary",
+        chrono::Utc::now().timestamp(),
+        "test",
+        0,
+    )
+    .map(|records| {
+        records
+            .into_iter()
+            .map(|record| record.canonical_id)
+            .collect()
+    })
+}
+
+fn parse_catalog_records(
+    provider: SubscriptionProvider,
+    body: &Value,
+    account: &str,
+    fetched_at: i64,
+    generation: &str,
+    offset: usize,
+) -> Result<Vec<CatalogRecord>, String> {
     let (array_key, id_key) = match provider {
         SubscriptionProvider::Claude | SubscriptionProvider::Qwen => ("data", "id"),
         SubscriptionProvider::Codex => ("models", "slug"),
@@ -615,15 +1045,91 @@ fn parse_catalog(provider: SubscriptionProvider, body: &Value) -> Result<Vec<Str
                     .and_then(Value::as_array)
                     .is_none_or(|methods| methods.iter().any(|method| method == "generateContent"))
         })
-        .filter_map(|entry| entry.get(id_key).and_then(Value::as_str))
-        .map(|id| id.strip_prefix("models/").unwrap_or(id).to_string())
-        .filter(|id| !id.is_empty())
+        .filter_map(Value::as_object)
+        .filter_map(|raw| {
+            let id = raw.get(id_key).and_then(Value::as_str)?;
+            let canonical_id = id.strip_prefix("models/").unwrap_or(id).to_string();
+            (!canonical_id.is_empty()).then(|| (raw, canonical_id))
+        })
+        .enumerate()
+        .map(|(index, (raw, canonical_id))| CatalogRecord {
+            provider,
+            account: account.to_string(),
+            canonical_id,
+            raw: raw.clone(),
+            source_order: (offset + index) as u64,
+            fetched_at,
+            health_generation: generation.to_string(),
+            protocols: provider_protocols(provider),
+        })
         .collect::<Vec<_>>();
     if models.is_empty() {
         Err("response contained no model identifiers".to_string())
     } else {
         Ok(models)
     }
+}
+
+fn provider_protocols(
+    provider: SubscriptionProvider,
+) -> BTreeSet<crate::client_policy::ClientProtocol> {
+    use crate::client_policy::ClientProtocol;
+    let native = match provider {
+        SubscriptionProvider::Claude => ClientProtocol::AnthropicMessages,
+        SubscriptionProvider::Codex => ClientProtocol::OpenAIResponses,
+        SubscriptionProvider::Gemini => ClientProtocol::GeminiNative,
+        SubscriptionProvider::Qwen => ClientProtocol::OpenAIChat,
+    };
+    [ClientProtocol::Catalog, native].into_iter().collect()
+}
+
+fn next_catalog_cursor(
+    provider: SubscriptionProvider,
+    body: &Value,
+    page: &[CatalogRecord],
+) -> Result<Option<(String, String)>, String> {
+    if let Some(token) = body
+        .get("nextPageToken")
+        .or_else(|| body.get("next_page_token"))
+        .and_then(Value::as_str)
+        .filter(|token| !token.is_empty())
+    {
+        let key = if provider == SubscriptionProvider::Gemini {
+            "pageToken"
+        } else {
+            "page_token"
+        };
+        return Ok(Some((key.into(), token.into())));
+    }
+    if let Some(token) = body
+        .get("next_cursor")
+        .or_else(|| body.get("cursor"))
+        .or_else(|| body.get("next"))
+        .or_else(|| body.pointer("/pagination/next_cursor"))
+        .and_then(Value::as_str)
+        .filter(|token| !token.is_empty())
+    {
+        return Ok(Some(("cursor".into(), token.into())));
+    }
+    if !body
+        .get("has_more")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+    {
+        return Ok(None);
+    }
+    let token = body
+        .get("last_id")
+        .and_then(Value::as_str)
+        .filter(|token| !token.is_empty())
+        .or_else(|| page.last().map(|record| record.canonical_id.as_str()))
+        .ok_or_else(|| format!("{provider} catalog says has_more without a cursor"))?;
+    let key = if provider == SubscriptionProvider::Claude {
+        "after_id"
+    } else {
+        "after"
+    };
+    Ok(Some((key.into(), token.into())))
 }
 
 #[cfg(test)]

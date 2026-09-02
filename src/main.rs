@@ -323,7 +323,9 @@ async fn run_server(
         config.upstream_provider,
         &subscription_readers,
     );
-    let model_catalogs = Arc::new(link_assistant_router::model_catalog::ModelCatalogCache::new());
+    let model_catalogs = Arc::new(
+        link_assistant_router::model_catalog::ModelCatalogCache::persistent(&config.data_dir),
+    );
 
     // The admin credential: a deploy-time key when provided, otherwise the
     // persisted first-visitor claim (unclaimed until someone confirms one).
