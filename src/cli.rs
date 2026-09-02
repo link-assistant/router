@@ -446,6 +446,19 @@ pub struct Cli {
     )]
     pub disable_metrics: bool,
 
+    /// Expose only neutral health and AI inference/catalog routes on the main
+    /// listener. Management, GitHub/Git, and ActivityPub routes are omitted.
+    #[arg(
+        long,
+        env = "INFERENCE_ONLY",
+        global = true,
+        num_args = 0..=1,
+        default_value_t = false,
+        default_missing_value = "true",
+        value_parser = parse_truthy
+    )]
+    pub inference_only: bool,
+
     /// Comma-separated list of additional account credential directories.
     #[arg(
         long,
@@ -845,7 +858,7 @@ impl Cli {
             .filter(|value| !value.is_empty())
             .unwrap_or_else(|| {
                 format!(
-                    "{}/actor/code",
+                    "{}/api/services/activitypub/actor/code",
                     activitypub_actor_base_url.trim_end_matches('/')
                 )
             });
@@ -913,6 +926,7 @@ impl Cli {
             enable_openai_api: !self.disable_openai_api,
             enable_anthropic_api: !self.disable_anthropic_api,
             enable_metrics: !self.disable_metrics,
+            inference_only: self.inference_only,
             additional_account_dirs: self.additional_account_dirs.clone(),
             account_routing_strategy,
             account_cooldown_secs: self.account_cooldown_secs,

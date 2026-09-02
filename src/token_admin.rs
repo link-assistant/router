@@ -305,7 +305,7 @@ pub async fn rotate_client_token(
             return error_response(
                 StatusCode::BAD_REQUEST,
                 "invalid_request_error",
-                "use /api/tokens/rotate to rotate an admin credential",
+                "use /api/management/tokens/rotate to rotate an admin credential",
             );
         }
         Ok(Some(_)) => {}

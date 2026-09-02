@@ -417,9 +417,10 @@ impl TemporaryClient {
                 command.env("GEMINI_DEFAULT_AUTH_TYPE", "gemini-api-key");
             }
             ClientKind::QwenCode => {
-                command
-                    .env("OPENAI_API_KEY", token)
-                    .env("OPENAI_BASE_URL", endpoint(base_url, "/v1"));
+                command.env("OPENAI_API_KEY", token).env(
+                    "OPENAI_BASE_URL",
+                    endpoint(base_url, integration.endpoint_suffix),
+                );
                 // Qwen Code reads its model from the environment and cannot
                 // start without one, so this is the client's requirement.
                 if let Some(model) = model_override {
@@ -481,7 +482,10 @@ fn append_codex_router_overrides(command: &mut Command, base_url: &str) -> Resul
         ),
         (
             "model_providers.link-assistant.base_url",
-            endpoint(base_url, "/v1"),
+            endpoint(
+                base_url,
+                crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+            ),
         ),
         (
             "model_providers.link-assistant.env_key",

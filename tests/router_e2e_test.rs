@@ -224,7 +224,7 @@ impl TestRouter {
     }
 
     fn get(&self, path: &str) -> reqwest::RequestBuilder {
-        if path == "/api/codex/v1/models" {
+        if path == "/api/services/codex/v1/models" {
             self.client
                 .get(format!("{}{path}", self.url))
                 .bearer_auth(&self.codex_token)
@@ -294,41 +294,49 @@ impl Drop for TestRouter {
 fn test_app(state: AppState) -> Router {
     let logging_state = state.clone();
     Router::new()
-        .route("/v1/messages", post(proxy::proxy_handler))
-        .route("/api/anthropic/v1/messages", post(proxy::proxy_handler))
-        .route("/v1/chat/completions", post(proxy::openai_chat_completions))
         .route(
-            "/api/openai/v1/chat/completions",
+            "/api/services/anthropic/v1/messages",
+            post(proxy::proxy_handler),
+        )
+        .route(
+            "/api/services/openai/v1/chat/completions",
             post(proxy::openai_chat_completions),
         )
         .route(
-            "/api/codex/v1/chat/completions",
+            "/api/services/codex/v1/chat/completions",
             post(proxy::openai_chat_completions),
         )
         .route(
-            "/api/qwen/v1/chat/completions",
+            "/api/services/qwen/v1/chat/completions",
             post(proxy::openai_chat_completions),
         )
-        .route("/v1/responses", post(proxy::openai_responses))
-        .route("/api/openai/v1/responses", post(proxy::openai_responses))
-        .route("/api/codex/v1/responses", post(proxy::openai_responses))
-        .route("/api/qwen/v1/responses", post(proxy::openai_responses))
-        .route("/v1/models", get(proxy::openai_models))
-        .route("/api/anthropic/v1/models", get(proxy::openai_models))
-        .route("/api/openai/v1/models", get(proxy::openai_models))
-        .route("/api/codex/v1/models", get(proxy::openai_models))
-        .route("/api/qwen/v1/models", get(proxy::openai_models))
+        .route(
+            "/api/services/openai/v1/responses",
+            post(proxy::openai_responses),
+        )
+        .route(
+            "/api/services/codex/v1/responses",
+            post(proxy::openai_responses),
+        )
+        .route(
+            "/api/services/qwen/v1/responses",
+            post(proxy::openai_responses),
+        )
+        .route("/api/services/openai/v1/models", get(proxy::openai_models))
+        .route(
+            "/api/services/anthropic/v1/models",
+            get(proxy::openai_models),
+        )
+        .route("/api/services/codex/v1/models", get(proxy::openai_models))
+        .route("/api/services/qwen/v1/models", get(proxy::openai_models))
         .route("/test/large-request", post(accept_large_request))
         .route(
-            "/api/tokens/list",
-            get(link_assistant_router::token_admin::list_tokens),
+            "/api/management/tokens",
+            get(link_assistant_router::token_admin::list_tokens)
+                .post(link_assistant_router::token_admin::issue_token),
         )
         .route(
-            "/api/tokens",
-            post(link_assistant_router::token_admin::issue_token),
-        )
-        .route(
-            "/api/tokens/rotate-client",
+            "/api/management/tokens/rotate-client",
             post(link_assistant_router::token_admin::rotate_client_token),
         )
         .with_state(state)

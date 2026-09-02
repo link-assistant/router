@@ -111,6 +111,7 @@ pub enum RouteId {
     GeminiModels,
     GeminiModel,
     Vertex,
+    AnthropicVertex,
     BedrockInvoke,
     BedrockInvokeStream,
     GitHubRest,
@@ -163,6 +164,13 @@ const fn management(id: RouteId, method: RouteMethod, template: &'static str) ->
     }
 }
 
+const fn open_management(id: RouteId, method: RouteMethod, template: &'static str) -> RouteSpec {
+    RouteSpec {
+        auth: RouteAuth::None,
+        ..management(id, method, template)
+    }
+}
+
 const fn ai_service(
     id: RouteId,
     method: RouteMethod,
@@ -196,6 +204,19 @@ const fn private_service(
         auth: RouteAuth::Client,
         dialect,
         listeners: COMBINED_ONLY,
+    }
+}
+
+const fn public_private_service(
+    id: RouteId,
+    method: RouteMethod,
+    template: &'static str,
+    service: ServiceKind,
+    dialect: ApiDialect,
+) -> RouteSpec {
+    RouteSpec {
+        auth: RouteAuth::None,
+        ..private_service(id, method, template, service, dialect)
     }
 }
 
@@ -275,17 +296,17 @@ const ROUTES: &[RouteSpec] = &[
         RouteMethod::Get,
         "/api/management/metrics",
     ),
-    management(
+    open_management(
         RouteId::AdminStatus,
         RouteMethod::Get,
         "/api/management/admin/status",
     ),
-    management(
+    open_management(
         RouteId::AdminBootstrap,
         RouteMethod::Post,
         "/api/management/admin/bootstrap",
     ),
-    management(
+    open_management(
         RouteId::AdminBootstrapConfirm,
         RouteMethod::Post,
         "/api/management/admin/bootstrap/confirm",
@@ -406,6 +427,13 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::Gemini,
     ),
     ai_service(
+        RouteId::AnthropicVertex,
+        RouteMethod::Post,
+        "/api/services/vertex/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{*model_action}",
+        ServiceKind::Vertex,
+        ApiDialect::Anthropic,
+    ),
+    ai_service(
         RouteId::Vertex,
         RouteMethod::Post,
         "/api/services/vertex/v1/{*path}",
@@ -447,35 +475,35 @@ const ROUTES: &[RouteSpec] = &[
         ServiceKind::Git,
         ApiDialect::GitHub,
     ),
-    private_service(
+    public_private_service(
         RouteId::ActivityPubActor,
         RouteMethod::Get,
         "/api/services/activitypub/actor/code",
         ServiceKind::ActivityPub,
         ApiDialect::Anthropic,
     ),
-    private_service(
+    public_private_service(
         RouteId::ActivityPubInbox,
         RouteMethod::Post,
         "/api/services/activitypub/inbox/code",
         ServiceKind::ActivityPub,
         ApiDialect::Anthropic,
     ),
-    private_service(
+    public_private_service(
         RouteId::ActivityPubOutbox,
         RouteMethod::Get,
         "/api/services/activitypub/outbox/code",
         ServiceKind::ActivityPub,
         ApiDialect::Anthropic,
     ),
-    private_service(
+    public_private_service(
         RouteId::ActivityPubFollowers,
         RouteMethod::Get,
         "/api/services/activitypub/actors/code/followers",
         ServiceKind::ActivityPub,
         ApiDialect::Anthropic,
     ),
-    private_service(
+    public_private_service(
         RouteId::ActivityPubFollowProblemsets,
         RouteMethod::Get,
         "/api/services/activitypub/activities/follow-problemsets-code-001",
@@ -487,6 +515,18 @@ const ROUTES: &[RouteSpec] = &[
 #[must_use]
 pub const fn route_specs() -> &'static [RouteSpec] {
     ROUTES
+}
+
+/// The canonical path template for a route id.
+///
+/// Multiple methods may share an id, but they must share this template.
+#[must_use]
+pub fn route_template(id: RouteId) -> &'static str {
+    ROUTES
+        .iter()
+        .find(|spec| spec.id == id)
+        .map(|spec| spec.template)
+        .expect("unknown route id")
 }
 
 #[must_use]
@@ -506,7 +546,16 @@ pub fn dialect_for_path(path: &str) -> Option<ApiDialect> {
 
 #[must_use]
 pub fn endpoint_base(origin: &str, service: ServiceKind) -> String {
-    let suffix = match service {
+    format!(
+        "{}{}",
+        origin.trim_end_matches('/'),
+        service_base_path(service)
+    )
+}
+
+#[must_use]
+pub const fn service_base_path(service: ServiceKind) -> &'static str {
+    match service {
         ServiceKind::Anthropic => "/api/services/anthropic",
         ServiceKind::OpenAi => "/api/services/openai/v1",
         ServiceKind::Codex => "/api/services/codex/v1",
@@ -517,8 +566,7 @@ pub fn endpoint_base(origin: &str, service: ServiceKind) -> String {
         ServiceKind::GitHub => "/api/services/github/api/v3",
         ServiceKind::Git => "/api/services/github/git",
         ServiceKind::ActivityPub => "/api/services/activitypub",
-    };
-    format!("{}{suffix}", origin.trim_end_matches('/'))
+    }
 }
 
 #[must_use]

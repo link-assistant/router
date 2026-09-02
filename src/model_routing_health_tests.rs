@@ -71,12 +71,12 @@ async fn model_report(state: AppState) -> Value {
         .unwrap();
     let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
         .with_state(state);
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/v1/models")
+                .uri("/api/services/anthropic/v1/models")
                 .header("x-api-key", client_token)
                 .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
@@ -853,12 +853,12 @@ async fn no_provider_is_both_healthy_and_degraded() {
         .unwrap();
     let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
         .with_state(state);
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/v1/models")
+                .uri("/api/services/anthropic/v1/models")
                 .header("x-api-key", client_token)
                 .header("x-link-assistant-client", "claude")
                 .body(Body::empty())

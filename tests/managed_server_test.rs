@@ -82,21 +82,21 @@ fn mock_managed_router(
                 .to_string();
             paths.push(path.clone());
             let (status, body) = match path.as_str() {
-                "/health" => ("200 OK", "ok"),
-                "/api/tokens/list" if admin => ("200 OK", r#"{"data":[]}"#),
-                "/api/tokens/list" => (
+                "/api/health" => ("200 OK", "ok"),
+                "/api/management/tokens" if admin => ("200 OK", r#"{"data":[]}"#),
+                "/api/management/tokens" => (
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/api/tokens/client" => (
+                "/api/management/tokens/client" => (
                     "200 OK",
                     r#"{"token":"e30.eyJzdWIiOiJtYW5hZ2VkLXJ1biJ9.signature"}"#,
                 ),
-                "/api/codex/v1/models" => (
+                "/api/services/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
                 ),
-                "/api/tokens/revoke" => ("200 OK", r#"{"revoked":"managed-run"}"#),
+                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"managed-run"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
             write!(
@@ -406,12 +406,12 @@ fn managed_admin_is_used_only_for_unclaimed_per_run_minting() {
     assert_eq!(
         router.join().expect("managed router thread"),
         [
-            "/health",
-            "/health",
-            "/api/tokens/list",
-            "/api/tokens/client",
-            "/api/codex/v1/models",
-            "/api/tokens/revoke"
+            "/api/health",
+            "/api/health",
+            "/api/management/tokens",
+            "/api/management/tokens/client",
+            "/api/services/codex/v1/models",
+            "/api/management/tokens/revoke"
         ]
     );
 }
@@ -680,7 +680,7 @@ fn managed_claim_is_one_time_and_requires_a_later_token() {
     assert!(error.contains("docker exec link-assistant-router-managed"));
     assert_eq!(
         router.join().expect("managed router thread"),
-        ["/health", "/health"]
+        ["/api/health", "/api/health"]
     );
 }
 
@@ -728,10 +728,10 @@ fn claimed_managed_router_accepts_an_explicit_ordinary_token() {
     assert_eq!(
         router.join().expect("managed router thread"),
         [
-            "/health",
-            "/health",
-            "/api/tokens/list",
-            "/api/codex/v1/models"
+            "/api/health",
+            "/api/health",
+            "/api/management/tokens",
+            "/api/services/codex/v1/models"
         ]
     );
 }

@@ -19,16 +19,17 @@ use lino_arguments::Parser as _;
 use tower::ServiceExt as _;
 
 fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
-    test_app_for_listener(dir, false, ListenerKind::Combined)
+    test_app_for_listener(dir, false, false, ListenerKind::Combined)
 }
 
 fn test_app_with_mpp(dir: &std::path::Path, mpp: bool) -> (axum::Router, String) {
-    test_app_for_listener(dir, mpp, ListenerKind::Combined)
+    test_app_for_listener(dir, mpp, false, ListenerKind::Combined)
 }
 
 fn test_app_for_listener(
     dir: &std::path::Path,
     mpp: bool,
+    github: bool,
     listener: ListenerKind,
 ) -> (axum::Router, String) {
     let dir_arg = dir.to_str().expect("UTF-8 test path");
@@ -99,7 +100,14 @@ fn test_app_for_listener(
             link_assistant_router::config::default_activitypub_public_key_pem(),
         mpp: config.mpp.clone(),
         login_manager: link_assistant_router::login::LoginManager::new(config.login.clone()),
-        github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
+        github: if github {
+            link_assistant_router::github_proxy::GitHubProxyConfig::with_credential(
+                "upstream-github-token",
+                "http://127.0.0.1:9",
+            )
+        } else {
+            link_assistant_router::github_proxy::GitHubProxyConfig::default()
+        },
         max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     };
     (
@@ -176,7 +184,10 @@ async fn canonical_namespaces_replace_all_public_legacy_aliases() {
         (Method::POST, "/api/codex/v1/responses"),
         (Method::POST, "/api/qwen/v1/responses"),
         (Method::GET, "/api/gemini/v1beta/models"),
-        (Method::POST, "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict"),
+        (
+            Method::POST,
+            "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict",
+        ),
         (Method::POST, "/invoke"),
         (Method::POST, "/invoke-with-response-stream"),
         (Method::GET, "/api/tokens/list"),
@@ -201,13 +212,16 @@ async fn canonical_namespaces_replace_all_public_legacy_aliases() {
 #[tokio::test]
 async fn inference_only_listener_has_no_management_or_private_service_routes() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (app, _) = test_app_for_listener(dir.path(), false, ListenerKind::InferenceOnly);
+    let (app, _) = test_app_for_listener(dir.path(), false, false, ListenerKind::InferenceOnly);
 
     for (method, path) in [
         (Method::POST, "/api/management/tokens"),
         (Method::GET, "/api/management/usage"),
         (Method::GET, "/api/services/github/api/v3/user"),
-        (Method::POST, "/api/services/github/git/acme/repo.git/git-upload-pack"),
+        (
+            Method::POST,
+            "/api/services/github/git/acme/repo.git/git-upload-pack",
+        ),
         (Method::GET, "/api/services/activitypub/actor/code"),
     ] {
         let result = response(app.clone(), method, path, None, "{}").await;
@@ -226,15 +240,74 @@ async fn inference_only_listener_has_no_management_or_private_service_routes() {
 }
 
 #[tokio::test]
-async fn only_documented_legacy_and_vertex_shapes_are_routable() {
+async fn admin_listener_has_management_but_no_service_routes() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let (app, _) = test_app_for_listener(dir.path(), false, false, ListenerKind::Admin);
+
+    let management = response(app.clone(), Method::GET, "/api/management/tokens", None, "").await;
+    assert_eq!(management.status(), StatusCode::UNAUTHORIZED);
+
+    for path in [
+        "/api/health",
+        "/api/services/openai/v1/models",
+        "/api/services/github/api/v3/user",
+        "/api/services/activitypub/actor/code",
+    ] {
+        let result = response(app.clone(), Method::GET, path, None, "").await;
+        assert_eq!(result.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+}
+
+#[tokio::test]
+async fn github_cli_aliases_exist_only_on_the_private_adapter_listener() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let (combined, token) = test_app_for_listener(dir.path(), false, true, ListenerKind::Combined);
+
+    let canonical = response(
+        combined.clone(),
+        Method::GET,
+        "/api/services/github/api/v3/user",
+        None,
+        "",
+    )
+    .await;
+    assert_eq!(canonical.status(), StatusCode::UNAUTHORIZED);
+    let public_alias = response(combined, Method::GET, "/api/v3/user", Some(&token), "").await;
+    assert_eq!(public_alias.status(), StatusCode::NOT_FOUND);
+
+    let (adapter, adapter_token) =
+        test_app_for_listener(dir.path(), false, true, ListenerKind::GitHubAdapter);
+    for (method, path) in [
+        (Method::GET, "/api/v3/user"),
+        (Method::POST, "/api/graphql"),
+    ] {
+        let anonymous = response(adapter.clone(), method.clone(), path, None, "{}").await;
+        assert_eq!(anonymous.status(), StatusCode::UNAUTHORIZED, "{path}");
+        let authenticated =
+            response(adapter.clone(), method, path, Some(&adapter_token), "{}").await;
+        assert_ne!(authenticated.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+
+    for path in [
+        "/api/health",
+        "/api/management/tokens",
+        "/api/services/github/api/v3/user",
+    ] {
+        let result = response(adapter.clone(), Method::GET, path, Some(&adapter_token), "").await;
+        assert_eq!(result.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+}
+
+#[tokio::test]
+async fn only_documented_canonical_vertex_shapes_are_routable() {
     let dir = tempfile::tempdir().expect("tempdir");
     let (app, token) = test_app(dir.path());
     let allowed = [
-        "/api/latest/anthropic/v1/messages",
-        "/api/latest/anthropic/v1/messages/count_tokens",
-        "/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4:rawPredict",
-        "/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4:streamRawPredict",
-        "/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4/count-tokens:rawPredict",
+        "/api/services/anthropic/v1/messages",
+        "/api/services/anthropic/v1/messages/count_tokens",
+        "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4:rawPredict",
+        "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4:streamRawPredict",
+        "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4/count-tokens:rawPredict",
     ];
     for path in allowed {
         let response = response(
@@ -249,9 +322,9 @@ async fn only_documented_legacy_and_vertex_shapes_are_routable() {
     }
 
     let rejected = [
-        "/api/latest/anthropic/v1/complete",
-        "/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4:delete",
-        "/v1/projects/p/locations/l/publishers/anthropic/models/nested/claude-sonnet-4:rawPredict",
+        "/api/services/anthropic/v1/complete",
+        "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/claude-sonnet-4:delete",
+        "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/nested/claude-sonnet-4:rawPredict",
     ];
     for path in rejected {
         let response = response(
@@ -271,25 +344,33 @@ async fn client_authentication_precedes_body_parsing_and_provider_discovery() {
     let dir = tempfile::tempdir().expect("tempdir");
     let (app, _) = test_app(dir.path());
     let cases = [
-        (Method::POST, "/v1/chat/completions", "{"),
-        (Method::POST, "/v1/responses", "{"),
         (
             Method::POST,
-            "/api/gemini/v1beta/models/gemini-2.5-pro:generateContent",
+            "/api/services/openai/v1/chat/completions",
+            "{",
+        ),
+        (Method::POST, "/api/services/openai/v1/responses", "{"),
+        (
+            Method::POST,
+            "/api/services/gemini/v1beta/models/gemini-2.5-pro:generateContent",
             "{",
         ),
         (
             Method::POST,
-            "/api/vertex/v1/projects/p/locations/l/publishers/google/models/gemini-2.5-pro:generateContent",
+            "/api/services/vertex/v1/projects/p/locations/l/publishers/google/models/gemini-2.5-pro:generateContent",
             "{",
         ),
-        (Method::GET, "/api/gemini/v1beta/models", ""),
-        (Method::GET, "/api/gemini/v1beta/models/gemini-2.5-pro", ""),
-        (Method::POST, "/api/tokens", "{"),
-        (Method::POST, "/api/tokens/revoke", "{"),
-        (Method::POST, "/api/providers", "{"),
-        (Method::POST, "/api/login", "{"),
-        (Method::POST, "/api/login/session/code", "{"),
+        (Method::GET, "/api/services/gemini/v1beta/models", ""),
+        (
+            Method::GET,
+            "/api/services/gemini/v1beta/models/gemini-2.5-pro",
+            "",
+        ),
+        (Method::POST, "/api/management/tokens", "{"),
+        (Method::POST, "/api/management/tokens/revoke", "{"),
+        (Method::POST, "/api/management/providers", "{"),
+        (Method::POST, "/api/management/login", "{"),
+        (Method::POST, "/api/management/login/session/code", "{"),
     ];
 
     for (method, path, body) in cases {
@@ -314,7 +395,14 @@ async fn client_authentication_precedes_body_parsing_and_provider_discovery() {
 async fn configured_mpp_challenge_precedes_client_authentication_and_parsing() {
     let dir = tempfile::tempdir().expect("tempdir");
     let (app, _) = test_app_with_mpp(dir.path(), true);
-    let response = response(app, Method::POST, "/v1/responses", None, "{").await;
+    let response = response(
+        app,
+        Method::POST,
+        "/api/services/openai/v1/responses",
+        None,
+        "{",
+    )
+    .await;
 
     assert_eq!(response.status(), StatusCode::PAYMENT_REQUIRED);
     assert_eq!(
@@ -322,7 +410,7 @@ async fn configured_mpp_challenge_precedes_client_authentication_and_parsing() {
             .headers()
             .get(header::WWW_AUTHENTICATE)
             .expect("MPP challenge"),
-        r#"Payment protocol="mpp", intent="charge", amount="1.00", currency="USD", recipient="audit-merchant", resource="/v1/responses""#
+        r#"Payment protocol="mpp", intent="charge", amount="1.00", currency="USD", recipient="audit-merchant", resource="/api/services/openai/v1/responses""#
     );
 }
 
@@ -331,7 +419,7 @@ async fn operational_details_require_admin_not_an_ordinary_task_token() {
     let dir = tempfile::tempdir().expect("tempdir");
     let (app, token) = test_app(dir.path());
 
-    for path in ["/v1/usage", "/v1/accounts"] {
+    for path in ["/api/management/usage", "/api/management/accounts"] {
         let ordinary = response(app.clone(), Method::GET, path, Some(&token), "").await;
         assert_eq!(ordinary.status(), StatusCode::UNAUTHORIZED, "{path}");
 

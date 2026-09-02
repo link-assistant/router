@@ -742,11 +742,12 @@ async fn forward(
 }
 
 fn normalize_path(path: &str) -> String {
-    path.strip_prefix("/api/v3")
+    path.strip_prefix("/api/services/github/api/v3")
+        .or_else(|| path.strip_prefix("/api/v3"))
         .or_else(|| path.strip_prefix("/github"))
         .filter(|path| !path.is_empty())
         .unwrap_or_else(|| {
-            if path == "/api/graphql" {
+            if matches!(path, "/api/graphql" | "/api/services/github/api/graphql") {
                 "/graphql"
             } else {
                 path
@@ -765,7 +766,7 @@ fn upstream_url(base_url: &str, path: &str) -> String {
 }
 
 fn github_error(status: StatusCode, message: &str) -> Response {
-    let dialect = crate::api_error::dialect_for_path("/api/v3");
+    let dialect = crate::api_error::dialect_for_path("/api/services/github/api/v3/user");
     crate::api_error::PresentedError {
         status,
         error_type: "policy_error",

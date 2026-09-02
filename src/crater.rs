@@ -513,7 +513,7 @@ pub async fn forward_chat_completions(
     body: Value,
     stream_requested: bool,
 ) -> Response {
-    let path = "/v1/chat/completions";
+    let path = "/api/services/openai/v1/chat/completions";
     if let Some(resp) = crate::proxy::maybe_mpp_challenge(state, headers, path) {
         return resp;
     }

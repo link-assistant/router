@@ -287,7 +287,7 @@ pub fn request_evidence(
                     || header_present(headers, "x-codex-turn-metadata"))
         }
         ClientKind::GeminiCli => {
-            path.contains("/api/gemini/")
+            path.contains("/api/services/gemini/")
                 && header_present(headers, "x-goog-api-key")
                 && (header_present(headers, "x-goog-api-client")
                     || header_present(headers, "x-gemini-api-privileged-user-id"))
@@ -320,12 +320,14 @@ fn credential_carrier_matches(client: ClientKind, headers: &HeaderMap) -> bool {
 
 fn path_belongs_to_client(client: ClientKind, path: &str) -> bool {
     match client {
-        ClientKind::Codex => path == "/api/codex/v1/models",
+        ClientKind::Codex => path == "/api/services/codex/v1/models",
         ClientKind::GeminiCli => {
-            path == "/api/gemini/v1beta/models" || path.starts_with("/api/gemini/v1beta/models/")
+            path == "/api/services/gemini/v1beta/models"
+                || path.starts_with("/api/services/gemini/v1beta/models/")
         }
-        ClientKind::QwenCode => path == "/api/qwen/v1/models",
-        ClientKind::ClaudeCode | ClientKind::Opencode | ClientKind::GrokCli => path == "/v1/models",
+        ClientKind::QwenCode => path == "/api/services/qwen/v1/models",
+        ClientKind::ClaudeCode => path == "/api/services/anthropic/v1/models",
+        ClientKind::Opencode | ClientKind::GrokCli => path == "/api/services/openai/v1/models",
         ClientKind::Cursor | ClientKind::Agent => false,
     }
 }

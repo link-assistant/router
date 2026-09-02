@@ -245,6 +245,9 @@ pub struct Config {
     pub enable_anthropic_api: bool,
     /// Whether to expose `/metrics` and other operational endpoints.
     pub enable_metrics: bool,
+    /// Serve only neutral health and AI inference/catalog routes on the main
+    /// listener. Management and private integration services remain absent.
+    pub inference_only: bool,
     /// Optional comma-separated list of additional credential directories for
     /// the active vendor-subscription provider.
     pub additional_account_dirs: Vec<PathBuf>,
@@ -357,7 +360,7 @@ impl Config {
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| {
                 format!(
-                    "{}/actor/code",
+                    "{}/api/services/activitypub/actor/code",
                     activitypub_actor_base_url.trim_end_matches('/')
                 )
             });
@@ -402,6 +405,8 @@ impl Config {
         let enable_metrics = env::var("ENABLE_METRICS").map_or(true, |v| {
             !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
         });
+        let inference_only = env::var("INFERENCE_ONLY")
+            .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON"));
         let additional_account_dirs = env::var("ADDITIONAL_ACCOUNT_DIRS")
             .ok()
             .map(|raw| {
@@ -487,6 +492,7 @@ impl Config {
             enable_openai_api,
             enable_anthropic_api,
             enable_metrics,
+            inference_only,
             additional_account_dirs,
             account_routing_strategy,
             account_cooldown_secs,
@@ -569,6 +575,7 @@ impl Config {
             enable_openai_api: args.enable_openai_api,
             enable_anthropic_api: args.enable_anthropic_api,
             enable_metrics: args.enable_metrics,
+            inference_only: args.inference_only,
             additional_account_dirs: args.additional_account_dirs,
             account_routing_strategy: args.account_routing_strategy,
             account_cooldown_secs: args.account_cooldown_secs,
@@ -623,6 +630,7 @@ pub struct BuildArgs<'a> {
     pub enable_openai_api: bool,
     pub enable_anthropic_api: bool,
     pub enable_metrics: bool,
+    pub inference_only: bool,
     pub additional_account_dirs: Vec<PathBuf>,
     pub account_routing_strategy: SelectionStrategy,
     pub account_cooldown_secs: u64,

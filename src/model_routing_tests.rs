@@ -191,13 +191,13 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
         .unwrap();
     let client_token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
         .with_state(state.clone());
 
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/v1/models")
+                .uri("/api/services/anthropic/v1/models")
                 .header("x-api-key", client_token)
                 .header("x-link-assistant-client", "claude")
                 .body(Body::empty())
@@ -264,11 +264,14 @@ async fn model_catalog_routes_require_a_valid_client_token() {
     let state = auto_state(Vec::new(), data.path());
     let valid_token = state.token_manager.issue_token(1, "catalog test").unwrap();
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
-        .route("/api/codex/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
+        .route("/api/services/codex/v1/models", get(models))
         .with_state(state);
 
-    for path in ["/v1/models", "/api/codex/v1/models"] {
+    for path in [
+        "/api/services/anthropic/v1/models",
+        "/api/services/codex/v1/models",
+    ] {
         for authorization in [None, Some("Bearer la_sk_garbage")] {
             let mut request = Request::builder().uri(path);
             if let Some(value) = authorization {
@@ -348,7 +351,7 @@ async fn malformed_client_tokens_return_a_fixed_message() {
     let data = tempdir().unwrap();
     let state = auto_state(Vec::new(), data.path());
     let app = axum::Router::new()
-        .route("/v1/models", get(models))
+        .route("/api/services/anthropic/v1/models", get(models))
         .with_state(state);
     let malformed = ["wrong-prefix", "la_sk_zzzzQQQrandom.stuff.here"];
     let mut responses = Vec::new();
@@ -358,7 +361,7 @@ async fn malformed_client_tokens_return_a_fixed_message() {
             .clone()
             .oneshot(
                 Request::builder()
-                    .uri("/v1/models")
+                    .uri("/api/services/anthropic/v1/models")
                     .header("authorization", format!("Bearer {token}"))
                     .body(Body::empty())
                     .unwrap(),

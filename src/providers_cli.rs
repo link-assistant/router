@@ -95,17 +95,18 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
     Ok(match op {
         ProviderOp::List { .. } => Some(Call {
             method: "GET",
-            path: "/api/providers".to_string(),
+            path: crate::route_contract::route_template(crate::route_contract::RouteId::Providers)
+                .to_string(),
             body: None,
         }),
         ProviderOp::Show { name, .. } => Some(Call {
             method: "GET",
-            path: format!("/api/providers/{name}"),
+            path: format!("/api/management/providers/{name}"),
             body: None,
         }),
         ProviderOp::Remove { name, .. } => Some(Call {
             method: "DELETE",
-            path: format!("/api/providers/{name}"),
+            path: format!("/api/management/providers/{name}"),
             body: None,
         }),
         ProviderOp::Add {
@@ -124,7 +125,8 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
             ..
         } => Some(Call {
             method: "POST",
-            path: "/api/providers".to_string(),
+            path: crate::route_contract::route_template(crate::route_contract::RouteId::Providers)
+                .to_string(),
             body: Some(upsert_body(&ProviderUpsert {
                 name: name.clone(),
                 kind: Some(kind.clone()),
@@ -196,7 +198,12 @@ async fn remote_result(
             .map_err(|error| format!("could not parse {}: {error}", path.display()))?;
         let count = imported.len();
         for record in &imported {
-            crate::auth_remote::post(server, "/api/providers", upsert_body(record)?).await?;
+            crate::auth_remote::post(
+                server,
+                crate::route_contract::route_template(crate::route_contract::RouteId::Providers),
+                upsert_body(record)?,
+            )
+            .await?;
         }
         println!("imported {count} providers into {}", server.base_url);
         return Ok(ExitCode::SUCCESS);

@@ -170,7 +170,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             "-c",
             "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
             "-c",
-            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/v1\"",
+            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
             "-c",
             "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
             "-c",

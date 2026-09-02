@@ -328,7 +328,7 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
         );
     };
     let (parts, body) = request.into_parts();
-    let path = parts.uri.path().to_string();
+    let path = canonical_git_path(parts.uri.path()).to_string();
     let Some(repository) = repository_in_git_path(&path) else {
         return git_error(StatusCode::NOT_FOUND, "not a git repository path");
     };
@@ -400,6 +400,10 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
     *relayed.status_mut() = status;
     *relayed.headers_mut() = headers;
     relayed
+}
+
+fn canonical_git_path(path: &str) -> &str {
+    path.strip_prefix("/api/services/github").unwrap_or(path)
 }
 
 /// Refuse any update whose fast-forwardness the upstream will not confirm.

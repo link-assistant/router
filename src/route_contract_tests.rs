@@ -27,11 +27,22 @@ fn every_registered_route_has_one_canonical_class_and_listener_contract() {
             }
             RouteClass::Management => {
                 assert!(spec.template.starts_with("/api/management/"));
-                assert_eq!(spec.auth, RouteAuth::Admin);
+                if matches!(
+                    spec.id,
+                    RouteId::AdminStatus | RouteId::AdminBootstrap | RouteId::AdminBootstrapConfirm
+                ) {
+                    assert_eq!(spec.auth, RouteAuth::None);
+                } else {
+                    assert_eq!(spec.auth, RouteAuth::Admin);
+                }
             }
-            RouteClass::Service(_) => {
+            RouteClass::Service(service) => {
                 assert!(spec.template.starts_with("/api/services/"));
-                assert_eq!(spec.auth, RouteAuth::Client);
+                if service == ServiceKind::ActivityPub {
+                    assert_eq!(spec.auth, RouteAuth::None);
+                } else {
+                    assert_eq!(spec.auth, RouteAuth::Client);
+                }
             }
         }
     }

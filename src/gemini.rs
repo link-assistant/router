@@ -425,7 +425,9 @@ async fn forward(
     shape: ShapeIn,
     validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
-    if let Some(resp) = maybe_mpp_challenge(state, headers, "/v1/chat/completions") {
+    if let Some(resp) =
+        maybe_mpp_challenge(state, headers, "/api/services/openai/v1/chat/completions")
+    {
         return resp;
     }
     let routed = match route_gemini_token(
@@ -433,7 +435,7 @@ async fn forward(
         headers,
         &body,
         surface,
-        "/v1/chat/completions",
+        "/api/services/openai/v1/chat/completions",
         validated,
     )
     .await

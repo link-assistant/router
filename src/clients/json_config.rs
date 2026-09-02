@@ -276,7 +276,7 @@ fn router_json_provider(
     provider.insert(
         "options".into(),
         json!({
-            "baseURL": format!("{base_url}/v1"),
+            "baseURL": base_url,
             "apiKey": format!("{{env:{ROUTER_TOKEN_ENV}}}")
         }),
     );
@@ -301,7 +301,7 @@ fn qwen_router_model(base_url: &str, model: &str) -> Value {
     json!({
         "id": model,
         "name": "Link.Assistant.Router",
-        "baseUrl": format!("{base_url}/v1"),
+        "baseUrl": base_url,
         "envKey": ROUTER_TOKEN_ENV
     })
 }

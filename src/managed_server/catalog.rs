@@ -61,16 +61,16 @@ pub(super) async fn fetch_models(
     .into())
 }
 
-pub(super) const fn client_models_path(client: ClientKind) -> &'static str {
+pub(super) fn client_models_path(client: ClientKind) -> &'static str {
+    use crate::route_contract::{RouteId, route_template};
     match client {
-        ClientKind::Codex => "/api/codex/v1/models",
-        ClientKind::GeminiCli => "/api/gemini/v1beta/models",
-        ClientKind::QwenCode => "/api/qwen/v1/models",
-        ClientKind::ClaudeCode
-        | ClientKind::Opencode
-        | ClientKind::GrokCli
-        | ClientKind::Cursor
-        | ClientKind::Agent => "/v1/models",
+        ClientKind::Codex => route_template(RouteId::CodexModels),
+        ClientKind::GeminiCli => route_template(RouteId::GeminiModels),
+        ClientKind::QwenCode => route_template(RouteId::QwenModels),
+        ClientKind::ClaudeCode => route_template(RouteId::AnthropicModels),
+        ClientKind::Opencode | ClientKind::GrokCli | ClientKind::Cursor | ClientKind::Agent => {
+            route_template(RouteId::OpenAiModels)
+        }
     }
 }
 
@@ -101,19 +101,25 @@ mod tests {
 
     #[test]
     fn catalog_paths_are_namespaced_for_clients_with_non_anthropic_protocols() {
-        assert_eq!(client_models_path(ClientKind::ClaudeCode), "/v1/models");
+        assert_eq!(
+            client_models_path(ClientKind::ClaudeCode),
+            "/api/services/anthropic/v1/models"
+        );
         assert_eq!(
             client_models_path(ClientKind::Codex),
-            "/api/codex/v1/models"
+            "/api/services/codex/v1/models"
         );
         assert_eq!(
             client_models_path(ClientKind::GeminiCli),
-            "/api/gemini/v1beta/models"
+            "/api/services/gemini/v1beta/models"
         );
         assert_eq!(
             client_models_path(ClientKind::QwenCode),
-            "/api/qwen/v1/models"
+            "/api/services/qwen/v1/models"
         );
-        assert_eq!(client_models_path(ClientKind::Opencode), "/v1/models");
+        assert_eq!(
+            client_models_path(ClientKind::Opencode),
+            "/api/services/openai/v1/models"
+        );
     }
 }

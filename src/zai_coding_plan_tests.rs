@@ -192,7 +192,7 @@ fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
             &provider,
             &claims(Some("codex"), Some("owner-a"), ""),
             &HeaderMap::new(),
-            "/api/codex/v1/models",
+            "/api/services/codex/v1/models",
         )
         .is_err()
     );
@@ -369,7 +369,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         (
             ClientKind::ClaudeCode,
             ClientProtocol::AnthropicMessages,
-            "/v1/messages",
+            "/api/services/anthropic/v1/messages",
             "claude-zai-glm-5",
             "/api/anthropic/v1/messages",
             crate::metrics::Surface::Anthropic,
@@ -377,7 +377,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         (
             ClientKind::Codex,
             ClientProtocol::OpenAIResponses,
-            "/v1/responses",
+            "/api/services/codex/v1/responses",
             "z.ai/glm-5",
             "/api/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
@@ -385,7 +385,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         (
             ClientKind::Opencode,
             ClientProtocol::OpenAIChat,
-            "/v1/chat/completions",
+            "/api/services/openai/v1/chat/completions",
             "z.ai/glm-5",
             "/api/coding/paas/v4/chat/completions",
             crate::metrics::Surface::OpenAIChat,
@@ -557,10 +557,10 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
             "x-link-assistant-client",
             HeaderValue::from_str(client.canonical_name()).unwrap(),
         );
-        let path = if client == ClientKind::Codex {
-            "/api/codex/v1/models"
-        } else {
-            "/v1/models"
+        let path = match client {
+            ClientKind::Codex => "/api/services/codex/v1/models",
+            ClientKind::ClaudeCode => "/api/services/anthropic/v1/models",
+            _ => "/api/services/openai/v1/models",
         };
         let response = crate::model_routing::models(
             axum::extract::State(state.clone()),
@@ -644,7 +644,7 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
     headers.insert("x-link-assistant-client", HeaderValue::from_static("codex"));
     let response = crate::model_routing::models(
         axum::extract::State(state),
-        axum::extract::OriginalUri("/api/codex/v1/models".parse().unwrap()),
+        axum::extract::OriginalUri("/api/services/codex/v1/models".parse().unwrap()),
         headers,
     )
     .await;

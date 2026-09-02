@@ -1,8 +1,4 @@
-//! Network-facing proxy router construction.
-//!
-//! Keeping the complete route table in the library makes the exposure policy
-//! reviewable and lets integration tests exercise the same router the binary
-//! serves.
+//! Network-facing route construction from the canonical route contract.
 
 use axum::extract::{Request, State};
 use axum::middleware::{Next, from_fn_with_state};
@@ -13,160 +9,279 @@ use axum::{Router, http::StatusCode};
 use crate::activitypub;
 use crate::app_state::AppState;
 use crate::config::Config;
+use crate::route_contract::{ListenerKind, RouteId, route_for_path, route_template};
 use crate::{gemini, login_api, provider_proxy, proxy, token_admin};
 
-/// Build the router served on the network-facing proxy listener.
+/// Build the configured router served on the network-facing proxy listener.
 pub fn router(state: AppState, config: &Config) -> Router {
-    let mut app = Router::new()
-        .route("/health", get(proxy::health))
-        // Subscription health is a separate answer from liveness: see
-        // `proxy::health` for why they must not be the same endpoint (#318).
+    let listener = if config.inference_only {
+        ListenerKind::InferenceOnly
+    } else {
+        ListenerKind::Combined
+    };
+    router_for_listener(state, config, listener)
+}
+
+/// Build exactly one listener shape from the canonical route contract.
+pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerKind) -> Router {
+    let mut app = Router::new();
+    if matches!(
+        listener,
+        ListenerKind::Combined | ListenerKind::InferenceOnly
+    ) {
+        app = app.merge(neutral_routes());
+    }
+    if matches!(listener, ListenerKind::Combined | ListenerKind::Admin) {
+        app = app.merge(management_routes(
+            state.clone(),
+            config.login.enabled,
+            config.enable_metrics,
+        ));
+    }
+    if matches!(
+        listener,
+        ListenerKind::Combined | ListenerKind::InferenceOnly
+    ) {
+        app = app.merge(inference_routes(state.clone(), config));
+    }
+    if listener == ListenerKind::Combined {
+        app = app.merge(private_service_routes(state.clone()));
+    }
+    if listener == ListenerKind::GitHubAdapter {
+        app = app.merge(github_adapter_routes(state.clone()));
+    }
+    app.fallback(not_found).with_state(state)
+}
+
+fn neutral_routes() -> Router<AppState> {
+    Router::new().route(route_template(RouteId::Health), get(proxy::health))
+}
+
+pub(crate) fn management_routes(
+    state: AppState,
+    login_enabled: bool,
+    metrics_enabled: bool,
+) -> Router<AppState> {
+    let open_routes = Router::new()
         .route(
-            "/health/subscriptions",
-            get(crate::subscription_health::subscription_health),
+            route_template(RouteId::AdminStatus),
+            get(crate::admin_api::admin_status),
         )
-        .route("/actor/code", get(activitypub::actor))
-        .route("/inbox/code", post(activitypub::inbox))
-        .route("/outbox/code", get(activitypub::outbox))
-        .route("/actors/code/followers", get(activitypub::followers))
         .route(
-            "/activities/follow-problemsets-code-001",
-            get(activitypub::follow_problemsets),
+            route_template(RouteId::AdminBootstrap),
+            post(crate::admin_api::bootstrap),
+        )
+        .route(
+            route_template(RouteId::AdminBootstrapConfirm),
+            post(crate::admin_api::bootstrap_confirm),
         );
-    let mut admin_routes = Router::new()
-        .route("/api/tokens", post(token_admin::issue_token))
-        .route("/api/tokens/client", post(token_admin::issue_client_token))
-        .route("/api/tokens/list", get(token_admin::list_tokens))
-        .route("/api/tokens/revoke", post(token_admin::revoke_token))
-        .route("/api/tokens/rotate", post(token_admin::rotate_admin_token))
+    let mut routes = Router::new()
         .route(
-            "/api/tokens/rotate-client",
+            route_template(RouteId::Tokens),
+            get(token_admin::list_tokens).post(token_admin::issue_token),
+        )
+        .route(
+            route_template(RouteId::ClientTokens),
+            post(token_admin::issue_client_token),
+        )
+        .route(
+            route_template(RouteId::RevokeToken),
+            post(token_admin::revoke_token),
+        )
+        .route(
+            route_template(RouteId::RotateToken),
+            post(token_admin::rotate_admin_token),
+        )
+        .route(
+            route_template(RouteId::RotateClientToken),
             post(token_admin::rotate_client_token),
         )
         .route(
-            "/api/providers",
+            route_template(RouteId::Providers),
             get(provider_proxy::list_providers).post(provider_proxy::upsert_provider),
         )
         .route(
-            "/api/providers/{name}",
+            route_template(RouteId::Provider),
             get(provider_proxy::show_provider).delete(provider_proxy::delete_provider),
+        )
+        .route(
+            route_template(RouteId::SubscriptionHealth),
+            get(crate::subscription_health::subscription_health),
+        )
+        .route(
+            route_template(RouteId::AdminRotate),
+            post(crate::admin_api::rotate_credential),
+        )
+        .route(
+            route_template(RouteId::AdminSummary),
+            get(crate::admin_api::admin_summary),
         );
 
-    if config.login.enabled {
-        admin_routes = admin_routes
-            .route("/api/login", post(login_api::begin_login))
+    if login_enabled {
+        routes = routes
+            .route(route_template(RouteId::Login), post(login_api::begin_login))
             .route(
-                "/api/login/{id}",
+                route_template(RouteId::LoginSession),
                 get(login_api::login_status).delete(login_api::cancel_login),
             )
-            .route("/api/login/{id}/code", post(login_api::submit_code));
+            .route(
+                route_template(RouteId::LoginCode),
+                post(login_api::submit_code),
+            );
     }
-
-    if config.enable_metrics {
-        admin_routes = admin_routes
-            .route("/v1/usage", get(proxy::usage_endpoint))
-            .route("/v1/accounts", get(proxy::accounts_endpoint));
+    if metrics_enabled {
+        routes = routes
+            .route(route_template(RouteId::Usage), get(proxy::usage_endpoint))
+            .route(
+                route_template(RouteId::Accounts),
+                get(proxy::accounts_endpoint),
+            )
+            .route(
+                route_template(RouteId::Metrics),
+                get(proxy::metrics_endpoint),
+            );
     }
+    open_routes.merge(routes.route_layer(from_fn_with_state(state, authenticate_admin_route)))
+}
 
-    let admin_routes =
-        admin_routes.route_layer(from_fn_with_state(state.clone(), authenticate_admin_route));
-    app = app.merge(admin_routes);
-
-    let mut client_routes = Router::new();
-
+fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
+    let mut routes = Router::new();
     if config.enable_anthropic_api {
-        client_routes = client_routes
-            .route("/v1/messages", post(proxy::proxy_handler))
-            .route("/v1/messages/count_tokens", post(proxy::proxy_handler))
-            .route("/api/anthropic/v1/messages", post(proxy::proxy_handler))
+        routes = routes
             .route(
-                "/api/anthropic/v1/messages/count_tokens",
-                post(proxy::proxy_handler),
-            )
-            .route("/invoke", post(proxy::proxy_handler))
-            .route("/invoke-with-response-stream", post(proxy::proxy_handler))
-            .route(
-                "/api/latest/anthropic/v1/messages",
+                route_template(RouteId::AnthropicMessages),
                 post(proxy::proxy_handler),
             )
             .route(
-                "/api/latest/anthropic/v1/messages/count_tokens",
+                route_template(RouteId::AnthropicCountTokens),
                 post(proxy::proxy_handler),
             )
             .route(
-                "/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{*model_action}",
+                route_template(RouteId::BedrockInvoke),
+                post(proxy::proxy_handler),
+            )
+            .route(
+                route_template(RouteId::BedrockInvokeStream),
+                post(proxy::proxy_handler),
+            )
+            .route(
+                route_template(RouteId::AnthropicVertex),
                 post(vertex_proxy_handler),
             );
     }
-
     if config.enable_openai_api {
-        client_routes = client_routes
-            .route("/v1/chat/completions", post(proxy::openai_chat_completions))
-            .route("/v1/responses", post(proxy::openai_responses))
-            .route("/v1/models", get(proxy::openai_models))
+        routes = routes
             .route(
-                "/api/openai/v1/chat/completions",
+                route_template(RouteId::AnthropicModels),
+                get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::OpenAiChatCompletions),
                 post(proxy::openai_chat_completions),
             )
-            .route("/api/openai/v1/responses", post(proxy::openai_responses))
-            .route("/api/openai/v1/models", get(proxy::openai_models))
-            .route("/api/anthropic/v1/models", get(proxy::openai_models))
             .route(
-                "/api/codex/v1/chat/completions",
+                route_template(RouteId::OpenAiResponses),
+                post(proxy::openai_responses),
+            )
+            .route(
+                route_template(RouteId::OpenAiModels),
+                get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::CodexChatCompletions),
                 post(proxy::openai_chat_completions),
             )
-            .route("/api/codex/v1/responses", post(proxy::openai_responses))
-            .route("/api/codex/v1/models", get(proxy::openai_models))
             .route(
-                "/api/qwen/v1/chat/completions",
+                route_template(RouteId::CodexResponses),
+                post(proxy::openai_responses),
+            )
+            .route(
+                route_template(RouteId::CodexModels),
+                get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::QwenChatCompletions),
                 post(proxy::openai_chat_completions),
             )
-            .route("/api/qwen/v1/responses", post(proxy::openai_responses))
-            .route("/api/qwen/v1/models", get(proxy::openai_models))
-            .route("/api/gemini/v1beta/models", get(gemini::native_models))
             .route(
-                "/api/gemini/v1beta/models/{model}",
+                route_template(RouteId::QwenResponses),
+                post(proxy::openai_responses),
+            )
+            .route(
+                route_template(RouteId::QwenModels),
+                get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::GeminiModels),
+                get(gemini::native_models),
+            )
+            .route(
+                route_template(RouteId::GeminiModel),
                 get(gemini::native_model).post(gemini::forward_native_gemini),
             )
             .route(
-                "/api/vertex/v1/{*path}",
+                route_template(RouteId::Vertex),
                 post(gemini::forward_native_vertex),
             );
     }
+    routes.route_layer(from_fn_with_state(state, authenticate_client_route))
+}
 
-    if state.github.enabled() {
-        // GitHub CLI uses `/api/v3` and `/api/graphql` for custom hosts. The
-        // bare routes make the same listener useful as a conventional API
-        // base URL for SDKs and agents.
-        client_routes = client_routes
-            .route("/api/v3/{*path}", any(crate::github_proxy::proxy))
-            .route("/github/{*path}", any(crate::github_proxy::proxy))
-            .route("/api/graphql", post(crate::github_proxy::proxy))
-            .route("/graphql", post(crate::github_proxy::proxy))
-            .route("/rate_limit", get(crate::github_proxy::proxy))
-            .route("/user", any(crate::github_proxy::proxy))
-            .route("/user/{*path}", any(crate::github_proxy::proxy))
-            .route("/users/{*path}", any(crate::github_proxy::proxy))
-            .route("/repos/{*path}", any(crate::github_proxy::proxy))
-            .route("/orgs/{*path}", any(crate::github_proxy::proxy))
-            .route("/search/{*path}", any(crate::github_proxy::proxy))
-            .route("/notifications", any(crate::github_proxy::proxy))
-            .route("/notifications/{*path}", any(crate::github_proxy::proxy))
-            .route("/gists", any(crate::github_proxy::proxy))
-            .route("/gists/{*path}", any(crate::github_proxy::proxy));
-        // Git smart-HTTP, so a `git push --force` reaches the same policy
-        // engine the REST surface already answers to (issue #261).
-        client_routes = client_routes.route("/git/{*path}", any(crate::git_proxy::proxy));
+fn private_service_routes(state: AppState) -> Router<AppState> {
+    let activitypub = Router::new()
+        .route(
+            route_template(RouteId::ActivityPubActor),
+            get(activitypub::actor),
+        )
+        .route(
+            route_template(RouteId::ActivityPubInbox),
+            post(activitypub::inbox),
+        )
+        .route(
+            route_template(RouteId::ActivityPubOutbox),
+            get(activitypub::outbox),
+        )
+        .route(
+            route_template(RouteId::ActivityPubFollowers),
+            get(activitypub::followers),
+        )
+        .route(
+            route_template(RouteId::ActivityPubFollowProblemsets),
+            get(activitypub::follow_problemsets),
+        );
+    activitypub.merge(canonical_github_routes(state))
+}
+
+fn canonical_github_routes(state: AppState) -> Router<AppState> {
+    if !state.github.enabled() {
+        return Router::new();
     }
+    Router::new()
+        .route(
+            route_template(RouteId::GitHubRest),
+            any(crate::github_proxy::proxy),
+        )
+        .route(
+            route_template(RouteId::GitHubGraphql),
+            post(crate::github_proxy::proxy),
+        )
+        .route(route_template(RouteId::Git), any(crate::git_proxy::proxy))
+        .route_layer(from_fn_with_state(state, authenticate_client_route))
+}
 
-    if config.enable_metrics {
-        app = app.route("/metrics", get(proxy::metrics_endpoint));
+fn github_adapter_routes(state: AppState) -> Router<AppState> {
+    if !state.github.enabled() {
+        return Router::new();
     }
+    Router::new()
+        .route("/api/v3/{*path}", any(crate::github_proxy::proxy))
+        .route("/api/graphql", post(crate::github_proxy::proxy))
+        .route_layer(from_fn_with_state(state, authenticate_client_route))
+}
 
-    let client_routes =
-        client_routes.route_layer(from_fn_with_state(state.clone(), authenticate_client_route));
-
-    app.merge(client_routes)
+/// Build the private, fixed-shape compatibility listener consumed by `gh`.
+pub fn github_adapter_router(state: AppState) -> Router {
+    github_adapter_routes(state.clone())
         .fallback(not_found)
         .with_state(state)
 }
@@ -182,8 +297,6 @@ async fn authenticate_client_route(
     {
         return response;
     }
-    // The refusal is rendered in the dialect of the surface the caller used, so
-    // a Gemini client can parse its own error envelope (issue #206).
     if let Err(error) = proxy::authenticate_client_error(&state, request.headers()) {
         return error.render(crate::api_error::dialect_for_path(path));
     }
@@ -206,10 +319,17 @@ async fn authenticate_admin_route(
 }
 
 fn is_openai_payment_path(path: &str) -> bool {
-    path == "/v1/chat/completions"
-        || path == "/v1/responses"
-        || path.ends_with("/v1/chat/completions")
-        || path.ends_with("/v1/responses")
+    route_for_path(&axum::http::Method::POST, path).is_some_and(|spec| {
+        matches!(
+            spec.id,
+            RouteId::OpenAiChatCompletions
+                | RouteId::OpenAiResponses
+                | RouteId::CodexChatCompletions
+                | RouteId::CodexResponses
+                | RouteId::QwenChatCompletions
+                | RouteId::QwenResponses
+        )
+    })
 }
 
 async fn not_found() -> Response {
@@ -232,8 +352,7 @@ async fn vertex_proxy_handler(State(state): State<AppState>, request: Request) -
     let count_tokens = model_action
         .strip_suffix("/count-tokens:rawPredict")
         .is_some_and(|model| !model.is_empty() && !model.contains('/'));
-    let supported = direct || count_tokens;
-    if !supported {
+    if !direct && !count_tokens {
         return not_found().await;
     }
     proxy::proxy_handler(State(state), request).await

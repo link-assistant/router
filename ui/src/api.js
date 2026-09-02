@@ -69,22 +69,24 @@ async function request(path, { method = 'GET', body, token } = {}) {
 }
 
 export const api = {
-  status: () => request('/api/admin/status'),
-  bootstrap: () => request('/api/admin/bootstrap', { method: 'POST' }),
+  status: () => request('/api/management/admin/status'),
+  bootstrap: () => request('/api/management/admin/bootstrap', { method: 'POST' }),
   confirm: (claimId, token) =>
-    request('/api/admin/bootstrap/confirm', {
+    request('/api/management/admin/bootstrap/confirm', {
       method: 'POST',
       body: { claim_id: claimId },
       token,
     }),
-  rotate: (token) => request('/api/admin/rotate', { method: 'POST', token }),
-  summary: (token) => request('/api/admin/summary', { token }),
-  usage: (token) => request('/api/admin/usage', { token }),
-  accounts: (token) => request('/api/admin/accounts', { token }),
-  listTokens: (token) => request('/api/tokens/list', { token }),
-  issueToken: (token, body) => request('/api/tokens', { method: 'POST', body, token }),
-  revokeToken: (token, id) => request('/api/tokens/revoke', { method: 'POST', body: { id }, token }),
+  rotate: (token) => request('/api/management/admin/rotate', { method: 'POST', token }),
+  summary: (token) => request('/api/management/admin/summary', { token }),
+  usage: (token) => request('/api/management/usage', { token }),
+  accounts: (token) => request('/api/management/accounts', { token }),
+  listTokens: (token) => request('/api/management/tokens', { token }),
+  issueToken: (token, body) =>
+    request('/api/management/tokens', { method: 'POST', body, token }),
+  revokeToken: (token, id) =>
+    request('/api/management/tokens/revoke', { method: 'POST', body: { id }, token }),
   // Reissues one client token. Omitted constraints are preserved server-side.
   rotateClientToken: (token, body) =>
-    request('/api/tokens/rotate-client', { method: 'POST', body, token }),
+    request('/api/management/tokens/rotate-client', { method: 'POST', body, token }),
 }

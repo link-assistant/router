@@ -62,7 +62,7 @@ pub fn call_for(op: &TokenOp) -> Call {
             ..
         } => Call {
             method: "POST",
-            path: "/api/tokens",
+            path: crate::route_contract::route_template(crate::route_contract::RouteId::Tokens),
             body: Some(serde_json::json!({
                 "ttl_hours": ttl_hours,
                 "label": label,
@@ -88,7 +88,9 @@ pub fn call_for(op: &TokenOp) -> Call {
             // `rotate-client` replaces a named token. `/api/tokens/rotate`
             // rotates the *caller's own* admin credential, which is a
             // different operation and not what `tokens rotate <ID>` means.
-            path: "/api/tokens/rotate-client",
+            path: crate::route_contract::route_template(
+                crate::route_contract::RouteId::RotateClientToken,
+            ),
             body: Some(serde_json::json!({
                 "id": id,
                 "ttl_hours": ttl_hours,
@@ -105,12 +107,14 @@ pub fn call_for(op: &TokenOp) -> Call {
         // answerable.
         TokenOp::List { .. } | TokenOp::Show { .. } => Call {
             method: "GET",
-            path: "/api/tokens/list",
+            path: crate::route_contract::route_template(crate::route_contract::RouteId::Tokens),
             body: None,
         },
         TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => Call {
             method: "POST",
-            path: "/api/tokens/revoke",
+            path: crate::route_contract::route_template(
+                crate::route_contract::RouteId::RevokeToken,
+            ),
             body: Some(serde_json::json!({ "id": id })),
         },
     }

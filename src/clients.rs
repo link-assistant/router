@@ -161,7 +161,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Responses",
         token_env: Some(CODEX_TOKEN_ENV),
         base_url_env: None,
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Codex,
+        ),
         model_owners: &[OPENAI_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -179,7 +181,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "Anthropic Messages",
         token_env: Some(CLAUDE_TOKEN_ENV),
         base_url_env: Some(CLAUDE_BASE_ENV),
-        endpoint_suffix: "",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Anthropic,
+        ),
         model_owners: &[ANTHROPIC_MODEL_OWNER, ZAI_MODEL_OWNER],
         strict_owner: true,
         default_reasoning_effort: DEFAULT_ANTHROPIC_REASONING_EFFORT,
@@ -217,7 +221,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "Gemini native",
         token_env: Some("GEMINI_API_KEY"),
         base_url_env: Some("GOOGLE_GEMINI_BASE_URL"),
-        endpoint_suffix: "/api/gemini",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Gemini,
+        ),
         model_owners: &[GOOGLE_MODEL_OWNER],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -237,7 +243,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(GROK_TOKEN_ENV),
         base_url_env: Some(GROK_BASE_ENV),
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
         model_owners: &[],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -255,7 +263,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
         model_owners: &[],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -273,7 +283,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: Some("OPENAI_BASE_URL"),
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::Qwen,
+        ),
         model_owners: &[QWEN_MODEL_OWNER],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -291,7 +303,9 @@ pub const CLIENT_INTEGRATIONS: [ClientIntegration; 8] = [
         dialect: "OpenAI Chat",
         token_env: Some(ROUTER_TOKEN_ENV),
         base_url_env: None,
-        endpoint_suffix: "/v1",
+        endpoint_suffix: crate::route_contract::service_base_path(
+            crate::route_contract::ServiceKind::OpenAi,
+        ),
         model_owners: &[],
         strict_owner: false,
         default_reasoning_effort: DEFAULT_OPENAI_REASONING_EFFORT,
@@ -693,13 +707,18 @@ impl ClientManager {
             return Err(ClientError::message(limitation));
         }
         let base_url = normalize_base_url(base_url)?;
+        let endpoint = format!(
+            "{}{}",
+            base_url.trim_end_matches('/'),
+            client.integration().endpoint_suffix
+        );
         match client {
-            ClientKind::Codex => self.setup_codex(&base_url),
-            ClientKind::ClaudeCode => self.setup_claude(&base_url, models),
+            ClientKind::Codex => self.setup_codex(&endpoint),
+            ClientKind::ClaudeCode => self.setup_claude(&endpoint, models),
             ClientKind::Opencode | ClientKind::Agent => {
-                self.setup_json_provider(client, &base_url, models)
+                self.setup_json_provider(client, &endpoint, models)
             }
-            ClientKind::QwenCode => self.setup_qwen(&base_url, models),
+            ClientKind::QwenCode => self.setup_qwen(&endpoint, models),
             ClientKind::GrokCli => Ok(unchanged(self.config_path(client))),
             ClientKind::Cursor | ClientKind::GeminiCli => unreachable!(),
         }
@@ -805,7 +824,7 @@ impl ClientManager {
                 ClientError::message("model_providers.link-assistant must be a TOML table")
             })?;
         provider.insert("name", value("Link.Assistant.Router"));
-        provider.insert("base_url", value(format!("{base_url}/v1")));
+        provider.insert("base_url", value(base_url));
         provider.insert("env_key", value(CODEX_TOKEN_ENV));
         provider.insert("wire_api", value("responses"));
         let result = write_if_changed(&path, &source, &document.to_string())?;

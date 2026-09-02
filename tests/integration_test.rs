@@ -378,6 +378,7 @@ mod config_verbose_tests {
             enable_openai_api: true,
             enable_anthropic_api: true,
             enable_metrics: true,
+            inference_only: false,
             additional_account_dirs: vec![],
             account_routing_strategy: link_assistant_router::accounts::SelectionStrategy::default(),
             account_cooldown_secs: 60,
