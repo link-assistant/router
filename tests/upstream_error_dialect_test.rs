@@ -18,12 +18,13 @@ use axum::body::Body;
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use link_assistant_router::app_state::AppState;
+use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
 use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::refresh::TokenCache;
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
-use link_assistant_router::token::TokenManager;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use lino_arguments::Parser as _;
 use serde_json::{Value, json};
 use tempfile::TempDir;
@@ -43,7 +44,9 @@ const OPERATOR_FIELDS: [&str; 4] = [
 struct TestRouter {
     client: reqwest::Client,
     url: String,
-    token: String,
+    claude_token: String,
+    codex_token: String,
+    opencode_token: String,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -55,9 +58,21 @@ impl TestRouter {
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("upstream-error-secret");
-        let token = token_manager
-            .issue_token(1, "upstream error client")
-            .expect("issue test token");
+        let issue_client = |client: ClientKind| {
+            token_manager
+                .issue(&IssueRequest {
+                    ttl_hours: 1,
+                    label: "upstream error client",
+                    account: Some("primary"),
+                    client_kind: Some(client.canonical_name()),
+                    principal_id: Some("primary"),
+                    ..IssueRequest::default()
+                })
+                .expect("issue bound test token")
+        };
+        let claude_token = issue_client(ClientKind::ClaudeCode);
+        let codex_token = issue_client(ClientKind::Codex);
+        let opencode_token = issue_client(ClientKind::Opencode);
         let oauth_provider = OAuthProvider::new(data.path().to_str().expect("UTF-8 test path"));
         oauth_provider.set_token("stub-anthropic-oauth-token");
 
@@ -87,6 +102,20 @@ impl TestRouter {
         .into_config()
         .expect("test config is valid");
 
+        let provider_store = link_assistant_router::providers::ProviderStore::open(
+            data.path(),
+            "upstream-error-secret",
+        )
+        .expect("provider store");
+        provider_store
+            .set_subscription_entitlement_policy(
+                link_assistant_router::client_policy::SubscriptionEntitlementPolicy::parse([
+                    "claude:codex",
+                    "opencode:codex",
+                ])
+                .expect("upstream error bridge policy"),
+            )
+            .expect("install upstream error bridge policy");
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
@@ -108,11 +137,7 @@ impl TestRouter {
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
             crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
-            provider_store: link_assistant_router::providers::ProviderStore::open(
-                data.path(),
-                "upstream-error-secret",
-            )
-            .expect("provider store"),
+            provider_store,
             logger: log_lazy::LogLazy::new(),
             admin: Arc::new(link_assistant_router::admin::AdminClaim::load(
                 Some("admin-only".to_string()),
@@ -144,21 +169,31 @@ impl TestRouter {
         Self {
             client: reqwest::Client::new(),
             url,
-            token,
+            claude_token,
+            codex_token,
+            opencode_token,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
     }
 
     async fn post(&self, path: &str, body: &Value) -> (StatusCode, Value) {
-        let response = self
-            .client
-            .post(format!("{}{path}", self.url))
-            .bearer_auth(&self.token)
-            .json(body)
-            .send()
-            .await
-            .expect("router POST");
+        let request = self.client.post(format!("{}{path}", self.url));
+        let request = if path.ends_with("/v1/messages") {
+            request
+                .header("x-api-key", &self.claude_token)
+                .header("anthropic-version", "2023-06-01")
+        } else if path.ends_with("/v1/responses") {
+            request
+                .bearer_auth(&self.codex_token)
+                .header("x-openai-internal-codex-responses-lite", "true")
+        } else {
+            request
+                .bearer_auth(&self.opencode_token)
+                .header("user-agent", "opencode/upstream-error-test")
+                .header("x-session-id", "upstream-error-test")
+        };
+        let response = request.json(body).send().await.expect("router POST");
         let status = response.status();
         let text = response.text().await.expect("router POST body");
         (
