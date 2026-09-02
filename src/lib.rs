@@ -28,6 +28,7 @@ pub mod claude_auth;
 pub mod claude_identity;
 pub mod cli;
 pub mod client_command;
+pub mod client_policy;
 pub mod client_global;
 mod client_launch;
 pub mod clients;
@@ -106,6 +107,8 @@ pub mod with_command;
 
 #[cfg(test)]
 mod anthropic_bridge_tests;
+#[cfg(test)]
+mod client_policy_tests;
 #[cfg(test)]
 mod proxy_tests;
 
