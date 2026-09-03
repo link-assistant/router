@@ -2,12 +2,25 @@ use serde_json::Value;
 
 use super::{
     AppState, ModelRouteError, RoutedState, UpstreamProvider, route_stored_provider,
-    route_subscription_model, stored_provider_for_model,
+    route_subscription_model_for_providers, stored_provider_for_model,
 };
 
 pub async fn route_state_with_subscription(
     state: &AppState,
     body: &Value,
+) -> Result<RoutedState, ModelRouteError> {
+    route_state_with_subscription_for_providers(
+        state,
+        body,
+        &crate::subscription::SubscriptionProvider::ALL,
+    )
+    .await
+}
+
+pub async fn route_state_with_subscription_for_providers(
+    state: &AppState,
+    body: &Value,
+    entitled_providers: &[crate::subscription::SubscriptionProvider],
 ) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         if let Some(provider) = state.upstream_provider.subscription_provider() {
@@ -29,7 +42,7 @@ pub async fn route_state_with_subscription(
             subscription: None,
         });
     }
-    route_subscription_model(state, model).await
+    route_subscription_model_for_providers(state, model, entitled_providers).await
 }
 
 /// Compatibility wrapper returning only the routed state.

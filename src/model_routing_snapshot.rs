@@ -432,15 +432,31 @@ fn routed_subscription_state(
 
 /// Select an automatic subscription model and retain the credential evidence
 /// that made its catalog routable.
+#[cfg(test)]
 pub async fn route_subscription_model(
     state: &AppState,
     model: &str,
+) -> Result<RoutedState, ModelRouteError> {
+    route_subscription_model_for_providers(state, model, &SubscriptionProvider::ALL).await
+}
+
+/// Select a subscription model after removing providers hidden by the signed
+/// client's entitlement policy.
+///
+/// A hidden provider must not make an id advertised to this client ambiguous.
+/// When no entitled provider advertises the id, keep the global candidate so
+/// the final pre-upstream policy check can return the stable 403 mismatch
+/// instead of disguising it as a missing model.
+pub async fn route_subscription_model_for_providers(
+    state: &AppState,
+    model: &str,
+    entitled_providers: &[SubscriptionProvider],
 ) -> Result<RoutedState, ModelRouteError> {
     let (qualified_provider, canonical_model) = super::subscription_model_identity(model);
     // Consult catalogs before credential stores. Vendor-shaped and unique ids
     // need exactly one provider; only a genuinely ambiguous unqualified id
     // needs multiple independent snapshots, which run concurrently.
-    let candidates = SubscriptionProvider::ALL
+    let all_candidates = SubscriptionProvider::ALL
         .into_iter()
         .filter(|provider| qualified_provider.is_none_or(|qualified| qualified == *provider))
         .filter(|provider| {
@@ -451,6 +467,16 @@ pub async fn route_subscription_model(
                 .any(|candidate| candidate == canonical_model)
         })
         .collect::<Vec<_>>();
+    let entitled_candidates = all_candidates
+        .iter()
+        .copied()
+        .filter(|provider| entitled_providers.contains(provider))
+        .collect::<Vec<_>>();
+    let candidates = if entitled_candidates.is_empty() {
+        all_candidates
+    } else {
+        entitled_candidates
+    };
     let has_catalog_candidate = !candidates.is_empty();
     if !has_catalog_candidate {
         let (catalog, healthy) = local_routing_catalog(state);
@@ -459,10 +485,20 @@ pub async fn route_subscription_model(
             Ok(_) => unreachable!("a model absent from the complete catalog appeared locally"),
         };
     }
-    let relevant = super::provider_for_model(model, &state.model_catalogs)
-        .map_or(candidates, |provider| vec![provider]);
+    if qualified_provider.is_none() && candidates.len() > 1 {
+        let providers = candidates
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(", ");
+        return Err(ModelRouteError::Ambiguous(format!(
+            "model '{model}' is advertised by multiple subscriptions ({providers}); pin \
+             UPSTREAM_PROVIDER to disambiguate"
+        )));
+    }
+    let provider = candidates[0];
     let validated = futures_util::future::join_all(
-        relevant
+        candidates
             .into_iter()
             .map(|provider| validated_catalog_subscription(state, provider, canonical_model)),
     )
@@ -470,11 +506,6 @@ pub async fn route_subscription_model(
     .into_iter()
     .flatten()
     .collect::<Vec<_>>();
-    let healthy = validated
-        .iter()
-        .map(|subscription| subscription.provider)
-        .collect::<Vec<_>>();
-    let provider = available_provider_for_model(model, &healthy, &state.model_catalogs)?;
     let subscription = validated
         .into_iter()
         .find(|subscription| subscription.provider == provider)

@@ -335,11 +335,25 @@ async fn proxy_handler_with_subscription(
     let method = req.method().clone();
     let incoming_headers = req.headers().clone();
     if state.upstream_provider == UpstreamProvider::Auto {
-        if let Err(response) = authenticate_client(&state, &incoming_headers) {
-            return *response;
-        }
+        let claims = match authenticate_client(&state, &incoming_headers) {
+            Ok(claims) => claims,
+            Err(response) => return *response,
+        };
+        let entitled = match crate::client_policy::entitled_subscription_providers_for_claims(
+            &state,
+            &claims,
+            &incoming_headers,
+            crate::client_policy::ClientProtocol::AnthropicMessages,
+            &path,
+        ) {
+            Ok(entitled) => entitled,
+            Err(response) => return response,
+        };
         let (routed, request) =
-            match crate::model_routing::route_anthropic_request_with_subscription(&state, req).await
+            match crate::model_routing::route_anthropic_request_with_subscription_for_providers(
+                &state, req, &entitled,
+            )
+            .await
             {
                 Ok(routed) => routed,
                 Err(response) => return response,

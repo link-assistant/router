@@ -25,8 +25,11 @@ pub enum ModelRouteError {
 #[path = "model_routing_snapshot.rs"]
 pub(crate) mod snapshot;
 pub(crate) use snapshot::{
-    RoutedState, ValidatedSubscription, route_pinned_subscription, route_subscription_model,
+    RoutedState, ValidatedSubscription, route_pinned_subscription,
+    route_subscription_model_for_providers,
 };
+#[cfg(test)]
+pub(crate) use snapshot::route_subscription_model;
 
 #[path = "model_routing_catalog_snapshot.rs"]
 mod catalog_snapshot;
@@ -862,6 +865,19 @@ pub(crate) async fn route_anthropic_request_with_subscription(
     state: &AppState,
     request: Request,
 ) -> Result<(RoutedState, Request), Response> {
+    route_anthropic_request_with_subscription_for_providers(
+        state,
+        request,
+        &SubscriptionProvider::ALL,
+    )
+    .await
+}
+
+pub(crate) async fn route_anthropic_request_with_subscription_for_providers(
+    state: &AppState,
+    request: Request,
+    entitled_providers: &[SubscriptionProvider],
+) -> Result<(RoutedState, Request), Response> {
     let path = request.uri().path().to_string();
     let (parts, body) = request.into_parts();
     let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
@@ -884,7 +900,7 @@ pub(crate) async fn route_anthropic_request_with_subscription(
         )
     })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        route_state_with_subscription(state, &routing_body)
+        route_state_with_subscription_for_providers(state, &routing_body, entitled_providers)
             .await
             .map_err(|error| model_route_error_response(&error))?
     } else {
@@ -954,7 +970,9 @@ use stored::{
 #[path = "model_routing_state.rs"]
 mod state_routing;
 pub use state_routing::route_state;
-pub(crate) use state_routing::route_state_with_subscription;
+pub(crate) use state_routing::{
+    route_state_with_subscription, route_state_with_subscription_for_providers,
+};
 
 #[cfg(test)]
 #[path = "model_routing_tests.rs"]

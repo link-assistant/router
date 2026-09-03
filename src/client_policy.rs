@@ -123,6 +123,37 @@ pub fn enforce_subscription_for_claims(
     })
 }
 
+/// Subscription providers that may participate in model selection for this
+/// already-authenticated request.
+///
+/// The final dispatch check remains mandatory. This earlier projection only
+/// keeps a provider hidden from the client's catalog from influencing
+/// ambiguity or automatic owner selection.
+pub fn entitled_subscription_providers_for_claims(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &HeaderMap,
+    protocol: ClientProtocol,
+    path: &str,
+) -> Result<Vec<SubscriptionProvider>, Response> {
+    let policy = state
+        .provider_store
+        .subscription_entitlement_policy()
+        .map_err(|error| {
+            crate::proxy::error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("could not read subscription entitlement policy: {error}"),
+            )
+        })?;
+    Ok(SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| {
+            authorize_subscription(&policy, claims, *provider, protocol, path, headers).is_ok()
+        })
+        .collect())
+}
+
 /// One exact risk-accepted bridge cell.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SubscriptionOverride {
