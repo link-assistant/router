@@ -134,14 +134,18 @@ impl Router {
         while self.lines.try_recv().is_ok() {}
     }
 
-    /// The next `request` log line.
-    fn await_request_line(&self) -> String {
-        self.await_line("request", "method=")
+    /// The `request` log line for one exact route.
+    ///
+    /// Token minting can finish writing its HTTP response just before its log
+    /// line reaches this process. Matching the route keeps that earlier line
+    /// from being mistaken for the inference request under test.
+    fn await_request_line(&self, uri: &str) -> String {
+        self.await_line("request", &format!("uri={uri}"))
     }
 
-    /// The next `response` log line, which is the one carrying `model`.
-    fn await_response_line(&self) -> String {
-        self.await_line("response", "latency_ms")
+    /// The `response` log line paired with one request ID.
+    fn await_response_line(&self, request_id: &str) -> String {
+        self.await_line("response", &format!("request_id={request_id}"))
     }
 
     fn await_line(&self, kind: &str, marker: &str) -> String {
@@ -157,6 +161,13 @@ impl Router {
         }
         panic!("no {kind} log line arrived");
     }
+}
+
+fn log_field<'a>(line: &'a str, name: &str) -> &'a str {
+    let prefix = format!("{name}=");
+    line.split_whitespace()
+        .find_map(|field| field.strip_prefix(&prefix))
+        .unwrap_or_else(|| panic!("missing {name} in log line: {line}"))
 }
 
 fn drain(stderr: ChildStderr) -> Receiver<String> {
@@ -222,12 +233,12 @@ fn the_response_line_names_the_model_the_request_asked_for() {
 
     // Both lines, which is what the report asked for: the request line is
     // what an operator greps when the response never comes.
-    let request_line = router.await_request_line();
+    let request_line = router.await_request_line("/api/services/anthropic/v1/messages");
     assert!(
         request_line.contains("model=no-such-model-xyz"),
         "the request line must name the model asked for: {request_line}"
     );
-    let line = router.await_response_line();
+    let line = router.await_response_line(log_field(&request_line, "request_id"));
     assert!(
         line.contains("model=no-such-model-xyz"),
         "the refused model must be named on the line: {line}"
@@ -257,7 +268,8 @@ fn a_request_with_no_model_still_reports_none() {
         r#"{"max_tokens":10,"messages":[]}"#,
     );
 
-    let line = router.await_response_line();
+    let request_line = router.await_request_line("/api/services/anthropic/v1/messages");
+    let line = router.await_response_line(log_field(&request_line, "request_id"));
     assert!(
         line.contains("model=-"),
         "a request naming no model reports none rather than guessing: {line}"
