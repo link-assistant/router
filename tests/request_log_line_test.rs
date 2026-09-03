@@ -1,9 +1,9 @@
 //! The `request`/`response` log lines an operator actually reads.
 //!
-//! Issue #320 was reported from live output: `model=-` on every line, on a
-//! deployment whose request store held the model for the same exchange. The
-//! unit tests cover the extraction; this covers the line, because the defect
-//! was that a populated field never reached it.
+//! Issue #320 left `model=-` on every line even when the request store held the
+//! model for the same exchange. The unit tests cover the extraction; this
+//! covers the line, because the defect was that a populated field never
+//! reached it.
 
 use std::io::{BufRead as _, BufReader, Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
@@ -197,17 +197,16 @@ fn strip_ansi(line: &str) -> String {
 
 /// The model a request names appears on the line that reports it.
 ///
-/// Reported from live output: `model=-` on a 200 whose body carried
-/// `claude-haiku-4-5-20251001`, and on every other line sampled. The field was
-/// in the format and never populated (issue #320).
+/// Before issue #320, the field existed in the format but was never populated,
+/// so every response line rendered `model=-` regardless of the request.
 #[test]
 fn the_response_line_names_the_model_the_request_asked_for() {
     let router = Router::start();
     router.discard_pending();
 
-    // A model this deployment does not advertise: the case that motivated the
-    // issue, where 50 identical 404s could not be told apart because the URI
-    // is the same for every Claude model.
+    // A model this synthetic catalog does not advertise. Without the field,
+    // otherwise identical routing failures cannot be distinguished because the
+    // URI is shared by every model on the same protocol surface.
     let token = router.client_token();
     router.discard_pending();
     let response = router.post(

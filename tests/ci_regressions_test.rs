@@ -99,10 +99,9 @@ fn archived_development_evidence_is_not_treated_as_product_source() {
 
 /// Local builds must not accumulate an unbounded incremental cache.
 ///
-/// A debug build here links 38 integration-test binaries plus three `[[bin]]`
-/// targets and evicts nothing, so `target/` reached 512,539 files and 61 GB —
-/// 42 GB of it the incremental cache alone. CI already sets
-/// `CARGO_INCREMENTAL=0`; this keeps local builds matched to it.
+/// A debug build links many integration-test binaries plus the `[[bin]]`
+/// targets and evicts nothing, so `target/` can grow without bound. CI already
+/// sets `CARGO_INCREMENTAL=0`; this keeps local builds matched to it.
 #[test]
 fn local_builds_disable_the_unbounded_incremental_cache() {
     let config = read_lf(".cargo/config.toml");

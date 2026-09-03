@@ -432,8 +432,7 @@ fn a_json_answer_to_a_streaming_request_is_not_a_stream() {
 ///
 /// The recorded frames are the compressed bytes that were relayed, so scanning
 /// them for `message_stop` searches gzip and always fails. Counting that as a
-/// missing terminator reported 315 of 400 streams as failing on a log whose
-/// sampled exchanges had all succeeded.
+/// missing terminator reported completed streams as failing.
 #[test]
 fn a_compressed_sse_stream_is_not_reported_as_truncated() {
     let root = tempfile::tempdir().expect("temporary log root");
@@ -593,8 +592,8 @@ fn stream_without_a_terminal_record(id: &str, uri: &str, body: &str) -> Vec<Valu
 /// The bug in issue #258: a stream whose terminator is right there in the
 /// recorded body was reported as ending in an unknown state.
 ///
-/// 239 of 251 uncompressed streams carried a valid terminator, so the class was
-/// ~95% healthy traffic — and the 12 that deserved attention were buried in it.
+/// Valid terminators make these healthy streams; classifying them as unknown
+/// buries the streams that actually deserve attention.
 #[test]
 fn a_terminator_in_the_recorded_body_settles_the_ending() {
     let root = tempfile::tempdir().expect("temporary log root");

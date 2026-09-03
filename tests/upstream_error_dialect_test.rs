@@ -8,7 +8,8 @@
 //! say nothing about the caller's request and, in a shared deployment, disclose
 //! the operator's billing posture to anyone who triggers a `429`.
 //!
-//! The upstream body below is the real one from the issue.
+//! The upstream body below is synthetic and contains only the fields needed to
+//! exercise the disclosure boundary.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -29,9 +30,9 @@ use lino_arguments::Parser as _;
 use serde_json::{Value, json};
 use tempfile::TempDir;
 
-/// The vendor's rate-limit body, verbatim from the issue: an error `type` that
-/// is not an `OpenAI` type, beside three operator-account fields.
-const UPSTREAM_RATE_LIMIT: &str = r#"{"error":{"type":"usage_limit_reached","message":"The usage limit has been reached","plan_type":"free","resets_at":1789529537,"eligible_promo":null,"resets_in_seconds":2488890}}"#;
+/// A synthetic vendor rate-limit body: an error `type` that is not an `OpenAI`
+/// type, beside three operator-account fields.
+const UPSTREAM_RATE_LIMIT: &str = r#"{"error":{"type":"usage_limit_reached","message":"Synthetic limit reached","plan_type":"example","resets_at":1893456000,"eligible_promo":null,"resets_in_seconds":3600}}"#;
 
 /// Fields that describe the operator's subscription rather than the request.
 const OPERATOR_FIELDS: [&str; 4] = [
@@ -265,7 +266,7 @@ async fn openai_surfaces_render_upstream_errors_in_their_own_dialect() {
         assert!(
             body["error"]["message"]
                 .as_str()
-                .is_some_and(|message| message.contains("usage limit")),
+                .is_some_and(|message| message.contains("Synthetic limit reached")),
             "{path} lost the message: {body}"
         );
     }
@@ -316,7 +317,7 @@ async fn the_anthropic_surface_rendering_is_unchanged() {
     assert!(
         body["error"]["message"]
             .as_str()
-            .is_some_and(|message| message.contains("usage limit")),
+            .is_some_and(|message| message.contains("Synthetic limit reached")),
         "the Anthropic surface lost the message: {body}"
     );
     let text = body_text(&body);

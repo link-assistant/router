@@ -344,9 +344,9 @@ impl ProviderHealthReport {
 /// deployment.
 ///
 /// A provider whose reader finds no credential is not reported at all:
-/// "claude was never configured here" and "claude died twelve hours ago" must
-/// not render identically, which is precisely the ambiguity that let a dead
-/// subscription hide behind an absence (issue #318).
+/// "claude was never configured here" and "claude is currently unavailable"
+/// must not render identically, which is precisely the ambiguity that let a
+/// dead subscription hide behind an absence (issue #318).
 #[must_use]
 pub fn configured_provider_health(
     readers: &[SubscriptionReader],

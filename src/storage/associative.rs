@@ -448,10 +448,9 @@ impl PersistentStore {
     ///
     /// Replacing the file moves both. `set_len(0)` on the live file would move
     /// them too, and is not an option either: it unmaps the pages another
-    /// process is still reading, and that process dies with **SIGBUS** the
-    /// moment it touches one -- observed as exit code 138 from a concurrent
-    /// `tokens issue`. So the rebuild goes to a temporary and [`Self::publish`]
-    /// renames it into place.
+    /// process is still reading, and that process can die with **SIGBUS** the
+    /// moment it touches one. So the rebuild goes to a temporary and
+    /// [`Self::publish`] renames it into place.
     fn reset(&mut self) -> Result<(), StorageError> {
         let parent = self
             .path

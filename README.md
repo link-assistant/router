@@ -1296,7 +1296,7 @@ Rotation makes the credential file shared mutable state: the vendor CLI, a secon
 3. **Retry once with a newer link.** If the store has moved forward while the exchange was in flight, the router adopts what is on disk and retries once — the common case stops being a mandatory re-login.
 4. **Ask the vendor client.** Only when that provider's binary is configured — `--claude-cli-bin` for Claude, `--codex-cli-bin` for Codex: the vendor's own client is run once, and if it rotates the chain the router adopts the credential it wrote. The invocation, the client's own (self-redacting) debug log, and the exchange the router itself sent — header names with values, body field *names* without them — are journalled, so the undocumented protocol can be reproduced from the log alone. Token values are never logged.
 
-   **This rung bills inference.** The probe is a real request to the vendor — one word to the smallest model (`claude -p ok --model claude-haiku-4-5`, `codex exec ok`) — because that is what forces a refresh. A status command does not: measured against a credential expired by 42 hours, `claude auth status` reported `loggedIn: true` and left the credential untouched, while the model probe took the refresh path (issue #275). Override the command with `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `ROUTER_VENDOR_REFRESH_ARGS_CODEX` if a future client version offers something cheaper that still rotates the chain — and measure it the same way before trusting it. Leaving the binary unset keeps the rung inert and costs nothing.
+   **This rung bills inference.** The probe is a real request to the vendor — one word to the smallest model (`claude -p ok --model claude-haiku-4-5`, `codex exec ok`) — because that is what forces a refresh. A status command does not: with an expired credential, `claude auth status` can report `loggedIn: true` and leave the credential untouched, while the model probe takes the refresh path (issue #275). Override the command with `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `ROUTER_VENDOR_REFRESH_ARGS_CODEX` if a future client version offers something cheaper that still rotates the chain — and measure it the same way before trusting it. Leaving the binary unset keeps the rung inert and costs nothing.
 5. **Report precisely.** Only then is the subscription reported as rejected, and operator logs distinguish a revoked credential from a lost rotation race and give the re-authentication command. Public health, model, and routing responses use fixed provider-only summaries; they never expose credential paths, account identities, or upstream response bodies.
 
 ### Logging in from inside a container
@@ -1744,14 +1744,13 @@ This demonstrates token issuance, validation, and revocation programmatically.
 
 ### Build cache
 
-A debug build links 38 integration-test binaries plus three `[[bin]]` targets
-and evicts nothing, so `target/` grows without bound — it reached 61 GB across
-512,539 files before this was addressed. Two things keep it in check, and both
-are automatic:
+A debug build links many integration-test binaries plus the `[[bin]]` targets
+and evicts nothing, so `target/` can grow without bound. Two things keep it in
+check, and both are automatic:
 
-- `.cargo/config.toml` disables the incremental cache (42 GB of that 61 GB) and
-  drops debug info to line tables. Backtraces still resolve; stepping through
-  variables in a debugger does not.
+- `.cargo/config.toml` disables the incremental cache and drops debug info to
+  line tables. Backtraces still resolve; stepping through variables in a
+  debugger does not.
 - A `post-commit` hook runs `scripts/sweep-build-artifacts.sh`, which prunes
   artifacts the commit's build did not touch. It needs `cargo-sweep`:
 

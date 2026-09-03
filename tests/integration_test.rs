@@ -106,7 +106,7 @@ mod version_tests {
 
     #[test]
     fn test_version_matches_cargo_toml() {
-        assert!(VERSION.starts_with("0."));
+        assert_eq!(VERSION, env!("CARGO_PKG_VERSION"));
     }
 }
 

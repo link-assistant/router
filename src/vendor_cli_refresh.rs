@@ -45,22 +45,21 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 ///
 /// Newer clients expose `claude auth status`, which looks strictly better —
 /// it bills no inference and does not depend on a model name staying valid.
-/// It was measured against a credential expired by ~42 hours (issue #275):
+/// Testing with an expired credential showed the following behavior (issue #275):
 ///
 /// | probe | result | credential file |
 /// | --- | --- | --- |
 /// | `claude auth status` | `{"loggedIn": true, …}`, exit 0 | unchanged |
 /// | `-p ok` | `OAuth session expired and could not be refreshed` | removed |
 ///
-/// `auth status` reported a 42-hour-dead credential as logged in, and the
+/// `auth status` reported the expired credential as logged in, and the
 /// account-derived fields (`email`, `orgId`, `subscriptionType`) all came back
 /// `null` — it answers from local state without reaching the account. It
 /// therefore cannot force a refresh, and adopting it would have disabled this
 /// rung while appearing to make it cheaper.
 ///
-/// Measured on claude 2.1.239. Re-measure before changing it, the same way:
-/// point the client at a *copy* of an expired credential and compare the file
-/// before and after.
+/// Re-validate before changing it: point the client at a *copy* of an expired
+/// credential and compare the file before and after.
 const CLAUDE_PROBE: &[&str] = &["-p", "ok"];
 
 /// Probe that makes the Codex CLI exercise its credential.
@@ -70,12 +69,10 @@ const CLAUDE_PROBE: &[&str] = &["-p", "ok"];
 /// recorded above: a status command that answers from local state cannot force
 /// the rotation this rung exists to trigger.
 ///
-/// Measured on codex-cli 0.148.0 against a credential with ~92h remaining: the
-/// probe reached the account (it came back with a usage-limit answer, which
-/// only a server that authenticated the request can give) and left the
-/// unexpired credential alone, which is the correct behaviour for a chain that
-/// is not due to rotate. `--skip-git-repo-check` matters because the router
-/// runs this from wherever it happens to live, which need not be a repository.
+/// Validation with a copied, non-expired credential confirmed that the probe
+/// reaches an authenticated endpoint without replacing a credential that is
+/// not due to rotate. `--skip-git-repo-check` matters because the router runs
+/// this from wherever it happens to live, which need not be a repository.
 const CODEX_PROBE: &[&str] = &["exec", "--skip-git-repo-check", "ok"];
 
 /// Environment variable overriding the probe arguments, whitespace separated.

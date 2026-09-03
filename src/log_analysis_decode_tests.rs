@@ -15,10 +15,9 @@ type Encoder = (&'static str, fn(&str) -> Vec<u8>);
 /// A compressed stream that finished is reported as finished.
 ///
 /// `stream_not_verifiable` was a refusal to decompress, not a limit: the bytes
-/// are ordinary gzip or brotli and decode to readable SSE, yet 1163 of ~1600
-/// exchanges on a real deployment were declared unknowable — every streamed
-/// one among them, so the log was blind to truncation on the majority of
-/// traffic (issue #328).
+/// are ordinary gzip or brotli and decode to readable SSE. Without decoding,
+/// compressed streamed exchanges were declared unknowable, leaving truncation
+/// undetectable for that traffic (issue #328).
 #[test]
 fn a_compressed_stream_is_decoded_and_its_ending_reported() {
     use std::io::Write as _;
@@ -231,10 +230,9 @@ fn an_error_event_inside_a_stream_is_reported() {
 
 /// `logs show` renders a body an operator can read.
 ///
-/// No body in the file was readable as stored — 11,208 compressed and the rest
-/// empty — so grepping for an error message, a model name or a prompt found
-/// nothing, not because the data was absent but because none of it was text
-/// (issue #328).
+/// Encoded bodies were unreadable as stored, so grepping for an error message,
+/// a model name or a prompt found nothing—not because the data was absent, but
+/// because none of it was text (issue #328).
 #[test]
 fn a_shown_exchange_renders_its_body_as_text() {
     use std::io::Write as _;

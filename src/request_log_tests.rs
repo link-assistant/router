@@ -570,9 +570,8 @@ fn only_a_real_encoding_makes_a_body_opaque() {
 
 /// The warning fires only for a stream that can be shown to have stopped early.
 ///
-/// This is the operator-facing half of issue #255: 19 warnings in 25 minutes,
-/// every one of them a successful turn, made `grep -i warn` useless for finding
-/// the real thing.
+/// This is the operator-facing half of issue #255: warnings on successful turns
+/// made `grep -i warn` useless for finding a demonstrably truncated stream.
 #[test]
 fn only_a_demonstrable_cut_warrants_a_warning() {
     let base = StreamOutcome {

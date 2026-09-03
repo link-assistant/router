@@ -33,9 +33,9 @@ pub struct BinaryTokenStore {
     ///
     /// Re-reading the file on every mutation is what a second router process
     /// requires -- its writes have to become visible here -- but it costs a
-    /// full parse of the doublets links network, 1.8 s for 306 records, on a path
-    /// usually finds nothing changed. The fingerprint answers "has anyone else
-    /// written?" without paying for the answer (issues #356, #357).
+    /// full parse of the doublets links network on a path that usually finds
+    /// nothing changed. The fingerprint answers "has anyone else written?"
+    /// without paying for the full parse (issues #356, #357).
     pub(super) loaded: Arc<RwLock<Option<FileFingerprint>>>,
     /// How many times the file has been parsed, for tests to assert against.
     ///
@@ -87,8 +87,8 @@ impl BinaryTokenStore {
         }
         let store = associative::PersistentStore::open(&path)?;
         // Opening does not parse the links network. Decoding every record walks
-        // link per byte of every string, which at 306 records is ~1.9 s -- and
-        // a process that only writes never needs the result. `loaded` is left
+        // one link per byte of every string, and a process that only writes
+        // never needs the result. `loaded` is left
         // unset so the first *read* fills it, and `refresh` treats "never
         // loaded" as "changed" (issue #357).
         let map: HashMap<_, _> = legacy_records
@@ -181,8 +181,8 @@ impl BinaryTokenStore {
     /// A shared lock and a fingerprint check, so a read that finds nothing
     /// changed costs a `stat` rather than a full parse of the links network. This
     /// called by `list`, which the dual store calls on every write through
-    /// `merged_records` -- so an unguarded reload here cost 1.9 s of the 2.9 s
-    /// a `put` took at 306 records (issues #356, #357).
+    /// `merged_records`, so an unguarded reload here made a write pay for a full
+    /// parse before changing anything (issues #356, #357).
     fn refresh(&self) -> Result<(), StorageError> {
         crate::durable_file::with_shared_lock(&self.lock_path, || {
             let current = FileFingerprint::read(&self.path);
@@ -229,10 +229,10 @@ impl BinaryTokenStore {
     ///
     /// Rebuilding is the expensive half of a write: `write_binary` stores each
     /// string as one link per byte, and every field key is a per-record path,
-    /// so persisting 306 records costs about 780,000 `create_link` calls. The
+    /// so persisting a non-trivial store requires many `create_link` calls. The
     /// dual store calls this for both projections on every mutation, including
     /// mutations that leave the binary projection identical -- a `put` of one
-    /// token rebuilds the other 305 unchanged ones (issues #356, #357).
+    /// token rebuilds every unchanged record as well (issues #356, #357).
     pub(super) fn replace_all_if_changed(
         &self,
         records: &[TokenRecord],

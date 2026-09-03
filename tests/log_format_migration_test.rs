@@ -10,18 +10,20 @@
 //! | v0.122.0 – v0.123.3 | `((:"phase" "stream_end"))` |
 //! | since | `(#o ("phase" "stream_end"))` |
 //!
-//! — and a file can hold all three at once. These tests read fixtures written
-//! by the real encoders of each generation and require the decoded value to
-//! equal the original record exactly, so a format change cannot quietly drop
+//! — and a file can hold all three at once. These tests read fully synthetic
+//! fixtures written by the historical encoders and require each generation to
+//! decode to the same record exactly, so a format change cannot quietly drop
 //! or reshape history (issues #336, #346, #350).
 
+use base64::Engine as _;
 use std::io::BufRead;
 
-/// The original records, one JSON object per line.
+/// Synthetic source records, one JSON object per line.
 ///
-/// Taken from a real production log and extended with the shapes that break
-/// encoders: two-element arrays whose first element is a scalar, empty
-/// containers, empty keys, nulls, embedded newlines and quotes.
+/// Compatibility records covering the shapes that break encoders: two-element
+/// arrays whose first element is a scalar, empty containers, empty keys, nulls,
+/// embedded newlines and quotes. All payloads and deployment identifiers are
+/// synthetic.
 const RECORDS: &str = include_str!("fixtures/log_generations/records.json");
 
 /// The same records as v0.122.0 through v0.123.3 wrote them, produced by that
@@ -55,6 +57,120 @@ fn the_fixtures_are_two_encodings_of_one_set_of_records() {
         "the generations must hold the same records"
     );
     assert!(records().len() >= 50, "the corpus must be worth reading");
+}
+
+/// Synthetic binary bodies must still be records the production writer could
+/// emit: valid base64, non-UTF-8 bytes, and an exact declared byte count.
+#[test]
+fn synthetic_binary_payload_lengths_are_consistent() {
+    let mut payload_count = 0;
+
+    for (index, record) in records().into_iter().enumerate() {
+        let Some(body) = record.get("body").and_then(serde_json::Value::as_object) else {
+            continue;
+        };
+        let Some(encoded) = body.get("base64").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let declared_bytes = body
+            .get("bytes")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or_else(|| panic!("record {index} has base64 without a byte count"));
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(encoded)
+            .unwrap_or_else(|error| panic!("record {index} has invalid base64: {error}"));
+
+        assert_eq!(
+            u64::try_from(decoded.len()).expect("fixture payload length fits u64"),
+            declared_bytes,
+            "record {index} must declare its exact decoded length"
+        );
+        assert!(
+            std::str::from_utf8(&decoded).is_err(),
+            "record {index} must represent a binary body"
+        );
+        payload_count += 1;
+    }
+
+    assert!(payload_count > 0, "the corpus must exercise binary bodies");
+}
+
+/// Compatibility fixtures must never become a copy of production telemetry.
+#[test]
+fn compatibility_fixture_telemetry_is_synthetic() {
+    const SYNTHETIC_RESET_5H: &str = "1893456000";
+    const SYNTHETIC_RESET_7D: &str = "1893459600";
+    const SYNTHETIC_TIME_PREFIX: &str = "2030-01-01T00:00:";
+
+    let mut latency_count = 0;
+    let mut rate_limit_count = 0;
+    let mut summary_count = 0;
+    let mut timestamp_count = 0;
+
+    for (index, record) in records().into_iter().enumerate() {
+        if let Some(time) = record.get("time").and_then(serde_json::Value::as_str) {
+            assert!(
+                time.starts_with(SYNTHETIC_TIME_PREFIX),
+                "record {index} must use a synthetic timestamp: {time}"
+            );
+            timestamp_count += 1;
+        }
+
+        if let Some(latency) = record.get("latency_ms").and_then(serde_json::Value::as_u64) {
+            assert!(
+                matches!(latency, 100 | 125),
+                "record {index} must use a synthetic latency: {latency}"
+            );
+            latency_count += 1;
+        }
+
+        if let Some(headers) = record
+            .get("headers")
+            .and_then(serde_json::Value::as_object)
+            .filter(|headers| headers.contains_key("anthropic-ratelimit-unified-5h-reset"))
+        {
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-5h-reset"],
+                SYNTHETIC_RESET_5H
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-7d-reset"],
+                SYNTHETIC_RESET_7D
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-5h-status"],
+                "synthetic-allowed"
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-7d-status"],
+                "synthetic-warning"
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-5h-utilization"],
+                "0.50"
+            );
+            rate_limit_count += 1;
+        }
+
+        if record.get("duration_ms").is_some() {
+            assert_eq!(record["bytes"], 4096);
+            assert_eq!(record["duration_ms"], 500);
+            assert_eq!(record["frames"], 20);
+            assert_eq!(record["complete"], true);
+            summary_count += 1;
+        }
+    }
+
+    assert!(timestamp_count > 0, "the corpus must exercise timestamps");
+    assert!(latency_count > 0, "the corpus must exercise latencies");
+    assert!(
+        rate_limit_count > 0,
+        "the corpus must exercise rate-limit metadata"
+    );
+    assert!(
+        summary_count > 0,
+        "the corpus must exercise stream summaries"
+    );
 }
 
 /// JSON Lines, as written up to v0.121.0.
@@ -123,9 +239,8 @@ fn the_current_generation_is_real_links_notation() {
 ///
 /// `lino-objects-codec` 0.4.1 decodes a two-element group whose first element
 /// is a scalar as an *object*, so `["a","b"]` and `{"a":"b"}` collide unless
-/// containers say what they are. A production log holds 779 of these, mostly
-/// `enum` arrays out of tool schemas, so this is measured rather than
-/// theoretical (issue #350).
+/// containers say what they are. Tool schemas commonly contain these `enum`
+/// arrays, so this remains a practical compatibility boundary (issue #350).
 #[test]
 fn a_two_element_array_is_never_confused_with_a_field() {
     let array = serde_json::json!({"enum": ["worktree", "remote"]});

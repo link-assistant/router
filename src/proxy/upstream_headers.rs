@@ -39,10 +39,9 @@ pub const fn router_user_agent() -> &'static str {
 /// The proxy opens the upstream connection itself, so the vendor sees the
 /// deployment's address rather than the caller's. Copying every other header
 /// through undid that at the layer above: `x-stainless-os`, `-arch`,
-/// `-runtime` and the client `user-agent` described the operator's laptop —
-/// `MacOS`/`arm64` from a deployment running on Linux — and `accept-language`
-/// carried their locale. An operator who checks the egress IP, the obvious
-/// check, concluded they were private (issue #332).
+/// `-runtime`, the client `user-agent`, and `accept-language` disclosed client
+/// platform and locale details even though those values are not part of the
+/// upstream protocol (issue #332).
 ///
 /// An allowlist rather than a denylist, matching the git and GitHub proxies:
 /// a header nobody considered is then dropped rather than disclosed, so a new
@@ -50,11 +49,11 @@ pub const fn router_user_agent() -> &'static str {
 /// `accept-encoding` is deliberately absent.
 ///
 /// The client's compression preference was relayed untouched, so it silently
-/// decided whether the proxy could read its own traffic — and on real traffic
-/// the answer was no. Relaying a request must not cost the router its own
+/// decided whether the proxy could inspect compressed responses. Relaying a
+/// request must not cost the router its own
 /// observability, so the deployment's hop is negotiated separately from the
 /// client's: without the header the upstream answers uncompressed, which makes
-/// every stream inspectable for a terminator instead of leaving 1163 of ~1600
+/// every stream inspectable for a terminator instead of leaving compressed
 /// exchanges unknowable (issues #328, #332).
 ///
 /// The cost is bandwidth on the upstream hop. Restoring compression means

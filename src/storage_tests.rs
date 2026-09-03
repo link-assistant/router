@@ -463,9 +463,8 @@ fn dual_store_recovers_a_links_notation_journal() {
 /// A listing does not write the store.
 ///
 /// `list()` went through the same helper as `put()`, which commits
-/// unconditionally, so answering a read re-serialised and fsynced a 64 MB
-/// `tokens.bin` and a 171 KB `tokens.lino`. On a 290-token deployment that
-/// took 8-13 seconds and made `router with` fail at its 10-second budget
+/// unconditionally, so answering a read re-serialised and fsynced both store
+/// projections and could exceed the client budget even though nothing changed
 /// (issue #351).
 ///
 /// The mtime is the assertion because it is what identified the defect: `stat`
@@ -575,18 +574,18 @@ fn a_read_sees_the_latest_write() {
 
 /// A listing does not scale with the size of `tokens.bin`.
 ///
-/// `tokens.bin` is preallocated -- 64 MB for 290 records on the deployment in
-/// issue #351 -- so a listing that re-serialised and fsynced it cost time
-/// proportional to the file rather than to the answer. At 290 tokens that was
-/// 8-13 seconds, past the 10-second budget `router with` allows.
+/// `tokens.bin` is preallocated, so a listing that re-serialised and fsynced it
+/// cost time proportional to the file rather than to the answer. A sufficiently
+/// large synthetic store must remain comfortably inside the client budget.
 #[test]
 fn listing_stays_fast_at_deployment_scale() {
+    const RECORD_COUNT: usize = 300;
+
     let directory = tempdir().expect("temporary directory");
     let store = DurableDualTokenStore::open(directory.path()).expect("open the store");
-    // The deployment that reported this had 290. Seeded in one write: 290
-    // separate `put`s would spend minutes exercising the write path, which is
-    // not what this test is about.
-    let seed: Vec<_> = (0..290)
+    // Seed in one write: hundreds of separate `put`s would spend unnecessary
+    // time exercising the write path, which is not what this test is about.
+    let seed: Vec<_> = (0..RECORD_COUNT)
         .map(|index| sample_record(&format!("id-{index:04}")))
         .collect();
     store.text.replace_all(&seed).expect("seed the text store");
@@ -597,14 +596,14 @@ fn listing_stays_fast_at_deployment_scale() {
 
     let started = std::time::Instant::now();
     for _ in 0..10 {
-        assert_eq!(store.list().expect("list").len(), 290);
+        assert_eq!(store.list().expect("list").len(), RECORD_COUNT);
     }
     let elapsed = started.elapsed();
     // Ten listings, generously bounded. Before the split a single one took
     // seconds, so this fails by orders of magnitude rather than marginally.
     assert!(
         elapsed < std::time::Duration::from_secs(5),
-        "ten listings of 290 tokens took {elapsed:?}; a read must not pay for a write"
+        "ten listings of {RECORD_COUNT} tokens took {elapsed:?}; a read must not pay for a write"
     );
 }
 
@@ -761,8 +760,8 @@ fn a_refused_request_does_not_extend_the_expiry() {
 ///
 /// `refresh` reloaded unconditionally, and the dual store calls `list` on
 /// every write through `merged_records`, so a `put` paid a full parse of the
-/// links network before doing anything else -- 1.9 s of the 2.9 s a write took at 306
-/// records (issues #356, #357).
+/// links network before doing anything else, making reads pay most of the cost
+/// of a write (issues #356, #357).
 #[test]
 fn reading_does_not_reparse_an_unchanged_store() {
     use std::sync::atomic::Ordering;
@@ -852,10 +851,10 @@ fn the_encoded_links_network_contains_no_duplicate_pairs() {
 /// A store carried over from a previous release still accepts writes.
 ///
 /// `FileMapped` starts with a logical capacity of zero however much the file
-/// holds, so a reopened store reads truncated: 91 links from a 64 MB file that
-/// holds 524,766. Schema validation then failed at the first point past the
-/// truncation, and because the dual store answers reads from the text
-/// projection, the store looked healthy while every write failed (issue #374).
+/// holds, so a reopened store reads only a small prefix of its links. Schema
+/// validation then failed at the first point past the truncation, and because
+/// the dual store answers reads from the text projection, the store looked
+/// healthy while every write failed (issue #374).
 ///
 /// The fixture is written and reopened in separate `PersistentStore`
 /// instances, which is what makes it a reopen rather than a continuation.

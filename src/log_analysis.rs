@@ -36,8 +36,8 @@ pub struct Exchange {
     ///
     /// Every response is relayed through the same byte-stream machinery, so the
     /// presence of body records says nothing about whether the exchange was a
-    /// stream. Deciding by default counted 85% of healthy non-streamed traffic
-    /// as streams with an unknown ending (issue #252).
+    /// stream. Deciding by default counted healthy non-streamed traffic as
+    /// streams with an unknown ending (issue #252).
     pub streamed: bool,
     /// Whether anything in the log actually settled the question either way.
     pub stream_evidence: bool,
@@ -56,8 +56,8 @@ pub struct Exchange {
     ///
     /// A compressed stream is relayed and logged as the encoded bytes it was,
     /// so scanning it for `message_stop` searches gzip and always fails.
-    /// Counting that as a missing terminator reported 315 of 400 streams as
-    /// failing on a healthy log (issue #255).
+    /// Counting that as a missing terminator reported many completed streams
+    /// as failing (issue #255).
     pub inspectable: bool,
     /// From the terminal `stream_end` record, when one is present (issue #230).
     pub stream_outcome: Option<String>,
@@ -221,8 +221,8 @@ pub fn read_exchanges(
         let contents = std::fs::read_to_string(&path)?;
         bytes += contents.len() as u64;
         for line in contents.lines().filter(|line| !line.trim().is_empty()) {
-            // Either encoding: the 1.7 GB an earlier release wrote is JSON
-            // Lines, and new records are links notation (issue #336).
+            // Either encoding: earlier releases wrote JSON Lines, and new
+            // records are links notation (issue #336).
             let Some(record) = crate::lino_json::decode_line(line) else {
                 unparsable += 1;
                 continue;
@@ -429,11 +429,10 @@ fn carries_a_stream_error(decoded: &str) -> bool {
 
 /// Decode the response frames of one exchange as the single stream they are.
 ///
-/// An operator reading a single exchange got base64 for every body — on one
-/// deployment, 11,208 of them, with no plain-text body in the file at all — so
+/// An operator reading a single exchange got base64 for every encoded body, so
 /// grepping the log for an error message, a model name or a prompt found
-/// nothing, not because the data was absent but because none of it was
-/// readable as stored (issue #328).
+/// nothing—not because the data was absent, but because it was unreadable as
+/// stored (issue #328).
 ///
 /// The frames must be joined first: only the first carries the codec's header,
 /// so decoding them one at a time reads the opening frame and leaves the rest
@@ -513,9 +512,8 @@ fn note_response_encoding(exchange: &mut Exchange, record: &Value) {
 ///
 /// `stream_not_verifiable` was a refusal to decompress, not a limit: the
 /// stored bytes are ordinary gzip or brotli and decode to readable SSE, yet
-/// 1163 of ~1600 exchanges were declared unknowable, every streamed one among
-/// them. Only an encoding the router genuinely cannot decode is unverifiable
-/// now (issue #328).
+/// compressed exchanges were declared unknowable. Only an encoding the router
+/// genuinely cannot decode is unverifiable now (issue #328).
 fn settle_encoded_frames(exchange: &mut Exchange) {
     let encoding = exchange
         .content_encoding

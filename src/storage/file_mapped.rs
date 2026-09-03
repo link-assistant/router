@@ -17,12 +17,11 @@ const DOUBLETS_BOOTSTRAP_ITEMS: usize = 8 * 1024;
 /// A mapping that keeps the capacity an existing file already represents.
 ///
 /// `FileMapped` starts with a logical capacity of zero however much the file
-/// holds, so `unit::Store::new` reads a truncated store: on a 64 MB file
-/// carrying 307 token records it saw **91** links where this wrapper sees
-/// **524,766**, and schema validation then failed at the first point past the
-/// truncation with "doublets schema contains an invalid point". Reads still
-/// answered -- the dual store falls back to the text projection -- so the
-/// store looked healthy while every write failed (issue #374).
+/// holds, so `unit::Store::new` reads only a small prefix of an existing links
+/// network. Schema validation then fails at the first point past the truncation
+/// with "doublets schema contains an invalid point". Reads still answer -- the
+/// dual store falls back to the text projection -- so the store can look
+/// healthy while every write fails (issue #374).
 ///
 /// Three things are needed, and `PersistentFileMapped` alone provides none of
 /// them:

@@ -101,9 +101,8 @@ impl Router {
 
 /// An idle deployment stops immediately and reports success.
 ///
-/// Measured on the reported deployment: `docker stop -t 30` took 30.4 seconds
-/// with nothing in flight, because the signal was discarded and the container
-/// was `SIGKILL`ed when the grace period expired. Exit code 0 is what
+/// Before the fix, an idle container could consume the entire stop grace period
+/// because the signal was discarded and then be `SIGKILL`ed. Exit code 0 is what
 /// distinguishes "the router stopped" from "the router was killed" — a stop
 /// that ends in 143 or 137 has drained nothing.
 #[test]

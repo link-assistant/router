@@ -559,8 +559,8 @@ async fn post_success_transient_failure_retains_models_but_rejection_removes_the
 }
 
 /// The core of issue #318: a revoked subscription must be visible to a stock
-/// uptime check. `/health` answered `ok` for twelve hours while the router
-/// could not serve half of what it advertised.
+/// uptime check. `/health` previously answered `ok` while the router could not
+/// serve everything it advertised.
 #[tokio::test]
 async fn subscription_health_reports_a_revoked_subscription_a_monitor_can_see() {
     let data = tempdir().unwrap();

@@ -1,20 +1,19 @@
 # Local build settings that bound how much disk `target/` can consume.
 #
-# A debug build of this workspace links 38 integration-test binaries plus three
-# `[[bin]]` targets, each embedding full debug information. Nothing evicts the
-# previous ones, so an ordinary week of edit-build-test cycles accumulated
-# 512,539 files and 61 GB here before anyone noticed.
+# A debug build of this workspace links many test and binary targets, each
+# embedding full debug information. Nothing evicts previous artifacts, so
+# ordinary edit-build-test cycles can grow the directory without bound.
 #
 # CI already sets `CARGO_INCREMENTAL=0`; this matches local builds to it.
 
 [build]
-# The single largest contributor: the incremental cache alone reached 42 GB of
-# that 61 GB. Turning it off costs some rebuild time on small edits and removes
-# the directory that grows without bound.
+# The incremental cache is the single largest contributor. Turning it off costs
+# some rebuild time on small edits and removes the directory that grows without
+# bound.
 incremental = false
 
 [profile.dev]
 # Line tables rather than full DWARF. Backtraces and panic locations still
 # resolve; what is lost is stepping through variables in a debugger, which is
-# a trade worth making across 41 linked binaries.
+# a trade worth making across the many linked binaries.
 debug = 1
