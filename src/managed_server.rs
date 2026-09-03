@@ -15,16 +15,23 @@ use crate::clients::{ClientKind, RouterModel};
 
 mod bootstrap;
 mod catalog;
+mod diagnostics;
 mod discovery;
 mod docker;
+mod origin;
+mod process;
 mod selection;
 
+use diagnostics::compact;
 use discovery::discover_local_router;
 pub use discovery::{discovered_local_router, effective_source};
 use docker::{
     check_docker_output, docker_checked, docker_container_state, docker_subscription_status,
     ensure_docker,
 };
+pub use origin::canonical_server_origin;
+use origin::{normalize_server, same_origin};
+use process::process_alive;
 pub use selection::{
     clear_persisted, configured_source, load_persisted, save_persisted, selected_server,
 };
@@ -959,86 +966,6 @@ fn choose_port() -> u16 {
 
 fn prune_references(state: &mut ManagedState) {
     state.references.retain(|pid| process_alive(*pid));
-}
-
-fn process_alive(pid: u32) -> bool {
-    if pid == std::process::id() {
-        return true;
-    }
-    #[cfg(unix)]
-    {
-        Command::new("kill")
-            .args(["-0", &pid.to_string()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .is_ok_and(|status| status.success())
-    }
-    #[cfg(windows)]
-    {
-        Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-            .output()
-            .is_ok_and(|output| {
-                output.status.success()
-                    && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
-            })
-    }
-}
-
-/// Whether two spellings name the same router.
-///
-/// Compared after normalisation and without a trailing slash, so `--server`
-/// written by hand matches what `server use` stored.
-fn same_origin(one: &str, other: &str) -> bool {
-    match (normalize_server(one), normalize_server(other)) {
-        (Ok(one), Ok(other)) => one == other,
-        _ => false,
-    }
-}
-
-fn normalize_server(server: &str) -> Result<String, AnyError> {
-    let parsed = url::Url::parse(server.trim()).map_err(|_| {
-        "server URL must be an absolute http:// or https:// origin without credentials, path, query, or fragment"
-    })?;
-    if !matches!(parsed.scheme(), "http" | "https")
-        || parsed.cannot_be_a_base()
-        || parsed.host_str().is_none()
-        || !parsed.username().is_empty()
-        || parsed.password().is_some()
-        || parsed.path() != "/"
-        || parsed.query().is_some()
-        || parsed.fragment().is_some()
-    {
-        return Err(
-            "server URL must be an absolute http:// or https:// origin without credentials, path, query, or fragment"
-                .into(),
-        );
-    }
-    let host = match parsed.host().expect("checked above") {
-        url::Host::Ipv6(address) => format!("[{address}]"),
-        host => host.to_string(),
-    };
-    Ok(parsed.port().map_or_else(
-        || format!("{}://{host}", parsed.scheme()),
-        |port| format!("{}://{host}:{port}", parsed.scheme()),
-    ))
-}
-
-/// Validate and canonicalize a public server origin without ever embedding
-/// the rejected input in an error.
-pub fn canonical_server_origin(server: &str) -> Result<String, AnyError> {
-    normalize_server(server)
-}
-
-fn compact(value: &str) -> String {
-    const LIMIT: usize = 240;
-    let compact = value.split_whitespace().collect::<Vec<_>>().join(" ");
-    if compact.chars().count() <= LIMIT {
-        compact
-    } else {
-        format!("{}…", compact.chars().take(LIMIT).collect::<String>())
-    }
 }
 
 #[path = "managed_server_state.rs"]

@@ -915,20 +915,12 @@ exit 0
 }
 
 /// End to end, through a terminal, for the exact command issue #297 reported.
-///
-/// `router with claude --resume <id>` used to reach the client as
-/// `--model <catalog-first> --print --resume <id>`: a session told to answer
-/// once and exit, with no prompt to answer, on a model the user never chose.
-/// The client's own error was correct for that request and named neither
-/// `--print` nor the router, so nothing in it led back to the cause.
-///
-/// A pty is required because the mode also depends on whether anyone is there
-/// to hold a session; piping the launcher's output would answer that question
-/// before the interesting one is reached.
+/// `router with claude --resume <id>` used to add `--model` and `--print`,
+/// making a resumable session answer once and exit on a model nobody chose.
+/// A pty preserves the interactive mode that exposed the regression.
 #[test]
 fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     use portable_pty::{CommandBuilder, PtySize, native_pty_system};
-
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
@@ -937,12 +929,10 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     fs::create_dir_all(&capture).expect("create capture directory");
     fake_claude(&bin);
     let (server, requests) = mock_router();
-
     let inherited_path = std::env::var_os("PATH").unwrap_or_default();
     let path =
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
-
     let pty = native_pty_system()
         .openpty(PtySize::default())
         .expect("allocate a pty");
@@ -978,7 +968,6 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
         status.success(),
         "launcher failed; transcript: {transcript}"
     );
-
     let args = fs::read_to_string(capture.join("args")).expect("captured argv");
     let args: Vec<&str> = args.lines().collect();
     assert!(
