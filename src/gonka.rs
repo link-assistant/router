@@ -44,7 +44,9 @@ impl GonkaConfig {
 /// Ensure an `OpenAI` request body has a model, using `GONKA_MODEL` when omitted.
 #[must_use]
 pub fn with_default_model(mut body: Value, default_model: &str) -> Value {
-    if !matches!(body.get("model").and_then(Value::as_str), Some(s) if !s.is_empty()) {
+    if !default_model.is_empty()
+        && !matches!(body.get("model").and_then(Value::as_str), Some(s) if !s.is_empty())
+    {
         body["model"] = Value::String(default_model.to_string());
     }
     body
@@ -53,15 +55,18 @@ pub fn with_default_model(mut body: Value, default_model: &str) -> Value {
 /// OpenAI-shaped Gonka model list.
 #[must_use]
 pub fn list_models(model: &str) -> Value {
+    let data = if model.is_empty() {
+        Vec::new()
+    } else {
+        vec![json!({
+            "id": model,
+            "object": "model",
+            "owned_by": "gonka"
+        })]
+    };
     json!({
         "object": "list",
-        "data": [
-            {
-                "id": model,
-                "object": "model",
-                "owned_by": "gonka"
-            }
-        ]
+        "data": data
     })
 }
 
@@ -144,6 +149,13 @@ pub(crate) async fn forward_openai(
     crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
 
     let body = with_default_model(body, &gonka.model);
+    if !matches!(body.get("model").and_then(Value::as_str), Some(model) if !model.is_empty()) {
+        return crate::proxy::error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "Gonka requests must name `model` unless the operator explicitly configures GONKA_MODEL",
+        );
+    }
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
         Err(e) => {
@@ -251,6 +263,13 @@ mod tests {
         let models = list_models("gonka-model");
         assert_eq!(models["data"][0]["id"], "gonka-model");
         assert_eq!(models["data"][0]["owned_by"], "gonka");
+    }
+
+    #[test]
+    fn unconfigured_gonka_advertises_no_model_and_injects_no_default() {
+        let body = with_default_model(json!({"messages": []}), "");
+        assert!(body.get("model").is_none());
+        assert_eq!(list_models("")["data"], json!([]));
     }
 
     #[test]

@@ -70,11 +70,10 @@ pub(super) fn parse_catalog_records(
             protocols: provider_protocols(provider),
         })
         .collect::<Vec<_>>();
-    if models.is_empty() {
-        Err("response contained no model identifiers".to_string())
-    } else {
-        Ok(models)
-    }
+    // A successful, structurally valid empty catalog is authoritative: the
+    // provider may have withdrawn every model for this credential. Treating it
+    // as a refresh failure retained and routed the previous non-empty snapshot.
+    Ok(models)
 }
 
 pub(super) fn provider_protocols(

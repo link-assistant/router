@@ -280,7 +280,14 @@ fn production_sources_contain_no_hardcoded_vendor_catalogs() {
     // detection, or protocol constants rather than as routable model catalogs.
     let mut offenders = Vec::new();
 
-    for file in ["model_catalog.rs", "anthropic_bridge.rs"] {
+    for file in [
+        "anthropic_bridge.rs",
+        "cli.rs",
+        "config_defaults.rs",
+        "gonka.rs",
+        "model_catalog.rs",
+        "model_routing.rs",
+    ] {
         let path = root.join(file);
         let source = std::fs::read_to_string(&path).expect("read source");
         // Strip test modules: synthetic fixtures are allowed and expected.
@@ -296,6 +303,7 @@ fn production_sources_contain_no_hardcoded_vendor_catalogs() {
             "gpt-5-codex",
             "qwen3-coder-plus",
             "gemini-2.5-pro",
+            "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8",
         ] {
             if production.contains(needle) {
                 offenders.push(format!("{file} still hardcodes {needle}"));

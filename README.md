@@ -531,9 +531,10 @@ estimated at roughly four characters per token, and hidden reasoning tokens are
 not observable, so the cap bounds visible output rather than billed tokens.
 
 With `UPSTREAM_PROVIDER=gonka`, `/api/services/openai/v1/chat/completions` and
-`/api/services/openai/v1/responses`
-forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
-request omits `model`, the router uses `GONKA_MODEL`.
+`/api/services/openai/v1/responses` forward OpenAI-compatible JSON to Gonka
+without Anthropic translation. Gonka advertises a model only when the operator
+declares it with `GONKA_MODEL`. Without that declaration, each request must name
+its model explicitly.
 
 With `UPSTREAM_PROVIDER=openai-compatible`, the same routes forward JSON to the
 configured provider. This supports LiteLLM proxy deployments by setting the
@@ -976,14 +977,14 @@ TOKEN_SECRET=your-router-token-secret
 UPSTREAM_PROVIDER=gonka
 GONKA_PRIVATE_KEY=your_gonka_private_key
 GONKA_SOURCE_URL=https://node4.gonka.ai
-GONKA_MODEL=Qwen/Qwen3-235B-A22B-Instruct-2507-FP8
+GONKA_MODEL=your-current-gonka-model
 ```
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
 | `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Yes, for Gonka | Private key used to sign Gonka upstream requests |
 | `--gonka-source-url` / `GONKA_SOURCE_URL` | `https://node4.gonka.ai` | No | Gonka source node URL |
-| `--gonka-model` / `GONKA_MODEL` | `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` | No | Default model for Gonka OpenAI-compatible requests |
+| `--gonka-model` / `GONKA_MODEL` | — | No | Operator-declared model to advertise and use when a request omits `model` |
 
 Your Gonka account must be activated for inference, funded, and have a
 published on-chain public key. Participant registration is only needed for
