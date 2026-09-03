@@ -15,6 +15,7 @@
 //! equal the original record exactly, so a format change cannot quietly drop
 //! or reshape history (issues #336, #346, #350).
 
+use base64::Engine as _;
 use std::io::BufRead;
 
 /// The original records, one JSON object per line.
@@ -56,6 +57,42 @@ fn the_fixtures_are_two_encodings_of_one_set_of_records() {
         "the generations must hold the same records"
     );
     assert!(records().len() >= 50, "the corpus must be worth reading");
+}
+
+/// Synthetic binary bodies must still be records the production writer could
+/// emit: valid base64, non-UTF-8 bytes, and an exact declared byte count.
+#[test]
+fn synthetic_binary_payload_lengths_are_consistent() {
+    let mut payload_count = 0;
+
+    for (index, record) in records().into_iter().enumerate() {
+        let Some(body) = record.get("body").and_then(serde_json::Value::as_object) else {
+            continue;
+        };
+        let Some(encoded) = body.get("base64").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        let declared_bytes = body
+            .get("bytes")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or_else(|| panic!("record {index} has base64 without a byte count"));
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(encoded)
+            .unwrap_or_else(|error| panic!("record {index} has invalid base64: {error}"));
+
+        assert_eq!(
+            u64::try_from(decoded.len()).expect("fixture payload length fits u64"),
+            declared_bytes,
+            "record {index} must declare its exact decoded length"
+        );
+        assert!(
+            std::str::from_utf8(&decoded).is_err(),
+            "record {index} must represent a binary body"
+        );
+        payload_count += 1;
+    }
+
+    assert!(payload_count > 0, "the corpus must exercise binary bodies");
 }
 
 /// JSON Lines, as written up to v0.121.0.
@@ -124,9 +161,8 @@ fn the_current_generation_is_real_links_notation() {
 ///
 /// `lino-objects-codec` 0.4.1 decodes a two-element group whose first element
 /// is a scalar as an *object*, so `["a","b"]` and `{"a":"b"}` collide unless
-/// containers say what they are. A production log holds 779 of these, mostly
-/// `enum` arrays out of tool schemas, so this is measured rather than
-/// theoretical (issue #350).
+/// containers say what they are. Tool schemas commonly contain these `enum`
+/// arrays, so this remains a practical compatibility boundary (issue #350).
 #[test]
 fn a_two_element_array_is_never_confused_with_a_field() {
     let array = serde_json::json!({"enum": ["worktree", "remote"]});
