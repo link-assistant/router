@@ -110,10 +110,10 @@ pub fn encode<T: serde::Serialize>(value: &T) -> Result<String, serde_json::Erro
 /// Two properties of the codec govern the form used instead:
 ///
 /// * **A group is an object exactly when it has two elements and the first is
-///   a scalar.** So `("a" "b")` is `{"a": "b"}` *and* `["a", "b"]` — a real
-///   collision, not a theoretical one: a production log holds 779 of these,
-///   mostly `enum` arrays out of tool schemas. Containers are therefore
-///   self-describing, `(#a …)` and `(#o …)`, rather than inferred from arity.
+///   a scalar.** So `("a" "b")` is `{"a": "b"}` *and* `["a", "b"]`. Tool
+///   schemas commonly contain ambiguous two-element `enum` arrays, so
+///   containers are self-describing, `(#a …)` and `(#o …)`, rather than
+///   inferred from arity.
 /// * **Neither library reads a backslash escape.** `"q\"q"` makes the codec
 ///   fail with *unterminated quoted value*, and request bodies are full of
 ///   embedded JSON. Strings are percent-escaped instead, which never puts a
@@ -444,9 +444,8 @@ fn read_quoted(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Opt
 /// Read a quoted string, undoing the backslash escapes the `:` dialect wrote.
 ///
 /// Percent sequences are *not* undone here. A log written before issue #350
-/// holds strings that contain `%XX` as their own text -- 23 of them in a
-/// 400-record sample, mostly `git log --format='%h %ad'` -- and unescaping
-/// those would corrupt records this change exists to preserve.
+/// can contain `%XX` as its own text—for example in a `git log --format`
+/// argument—and unescaping it would corrupt records this change preserves.
 fn read_quoted_raw(characters: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Option<String> {
     if characters.next() != Some('"') {
         return None;

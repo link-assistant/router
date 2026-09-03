@@ -50,11 +50,11 @@ pub const fn router_user_agent() -> &'static str {
 /// `accept-encoding` is deliberately absent.
 ///
 /// The client's compression preference was relayed untouched, so it silently
-/// decided whether the proxy could read its own traffic — and on real traffic
-/// the answer was no. Relaying a request must not cost the router its own
+/// decided whether the proxy could inspect compressed responses. Relaying a
+/// request must not cost the router its own
 /// observability, so the deployment's hop is negotiated separately from the
 /// client's: without the header the upstream answers uncompressed, which makes
-/// every stream inspectable for a terminator instead of leaving 1163 of ~1600
+/// every stream inspectable for a terminator instead of leaving compressed
 /// exchanges unknowable (issues #328, #332).
 ///
 /// The cost is bandwidth on the upstream hop. Restoring compression means

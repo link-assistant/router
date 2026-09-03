@@ -80,10 +80,9 @@ fn build_upstream_headers_strips_client_auth_headers() {
 ///
 /// The proxy opened the upstream connection itself, so the egress IP was the
 /// deployment's — and then copied the caller's `x-stainless-os`, `-arch`,
-/// `-runtime`, `user-agent`, locale and session id through untouched. A
-/// deployment on Linux reported `MacOS`/`arm64` from a developer's laptop, so
-/// network-level and application-level identity disagreed and the vendor could
-/// read the difference (issue #332).
+/// `-runtime`, `user-agent`, locale and session id through untouched. That made
+/// network-level and application-level identity disagree and disclosed caller
+/// metadata to the vendor (issue #332).
 #[test]
 fn upstream_headers_describe_the_deployment_not_the_caller() {
     let mut incoming = HeaderMap::new();

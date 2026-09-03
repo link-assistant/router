@@ -2,9 +2,9 @@
 //!
 //! `stream_not_verifiable` was not a limit of what the log could know — it was
 //! a decision not to decompress. The bytes were already stored, and a
-//! streaming decoder reads them back into plain SSE, yet on a real deployment
-//! 1163 of ~1600 exchanges were declared unknowable, including every streamed
-//! one (issue #328).
+//! streaming decoder reads them back into plain SSE. Without decoding, many
+//! compressed exchanges—including streamed ones—were declared unknowable
+//! (issue #328).
 //!
 //! Two properties of the stored form drive the shape here:
 //!

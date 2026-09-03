@@ -49,11 +49,10 @@ pub const DEFAULT_MAX_BYTES: u64 = 100 * 1024 * 1024;
 ///
 /// The per-token bound is deliberately per-token: it keeps a noisy caller from
 /// evicting a quiet one's history. What it is not is a bound on the store, and
-/// it was documented as "Maximum size of the request log" — so a deployment
-/// that set 500 MB and had issued 84 tokens had a 42 GB ceiling, and no
-/// setting to cap the total. Directory count only ever grows, because every
-/// `with` run mints a token (issue #316), so it is not self-limiting either
-/// (issue #331).
+/// it was documented as "Maximum size of the request log", so deployments with
+/// many token directories could exceed the intended total budget. Directory
+/// count only ever grows, because every `with` run mints a token (issue #316),
+/// so it is not self-limiting either (issue #331).
 pub const DEFAULT_MAX_TOTAL_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const MAX_BUFFERED_REQUEST_BYTES: usize = 10 * 1024 * 1024;
 const REDACTED: &str = "[REDACTED]";

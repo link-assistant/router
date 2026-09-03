@@ -132,10 +132,9 @@ fn oversized_record_placeholder_keeps_token_identity() {
 /// The store has a ceiling, not just each token in it.
 ///
 /// `--request-log-max-bytes` was documented as "Maximum size of the request
-/// log" and enforced per token directory, so a deployment configured for 500
-/// MB with 84 tokens had a 42 GB ceiling — an order of magnitude more disk
-/// than the operator budgeted, derivable from neither the setting nor the docs
-/// (issue #331).
+/// log" and enforced per token directory, so installations with many tokens
+/// could consume far more disk than the operator budgeted, derivable from
+/// neither the setting nor the docs (issue #331).
 #[test]
 fn the_whole_store_stays_within_its_total_bound() {
     let dir = tempfile::tempdir().expect("temporary directory");
@@ -217,9 +216,9 @@ fn a_store_inside_its_bound_is_not_rescanned_into_slowness() {
     let dir = tempfile::tempdir().expect("temporary directory");
     let log =
         RequestLog::new(dir.path().join("requests"), 1_000_000).with_total_limit(1_000_000_000);
-    // The deployment this was reported from had 84 token directories, which is
-    // what the per-record check has to walk.
-    for token in 0..84 {
+    // A substantial directory count exercises the per-record scan cost without
+    // relying on any deployment-specific measurements.
+    for token in 0..100 {
         let correlation = format!("seed-{token}");
         log.route_request(
             &correlation,

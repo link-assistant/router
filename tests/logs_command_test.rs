@@ -207,9 +207,8 @@ fn a_single_token_can_be_analysed_alone() {
 /// A complete non-streamed exchange must produce no anomalies at the CLI, and
 /// must not be counted as a stream.
 ///
-/// This is issue #252's reproduction: 85% of a real log's "streamed" exchanges
-/// were ordinary JSON replies reported as streams with an unknown ending, so an
-/// operator hunting a real truncation had to wade through ~1000 false entries.
+/// This is issue #252's reproduction: ordinary JSON replies were reported as
+/// streams with an unknown ending, obscuring genuine truncation signals.
 /// Exercised through the binary because the exit code is what gates a health
 /// check.
 #[test]

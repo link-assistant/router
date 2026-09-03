@@ -207,8 +207,8 @@ fn a_newline_in_a_body_does_not_break_the_record() {
 
 /// A line written by an earlier release still reads.
 ///
-/// There is 1.7 GB of `requests.jsonl` on a real deployment; it keeps reading
-/// and migrates record by record as new ones are appended.
+/// Existing `requests.jsonl` files must keep reading and migrate record by
+/// record as new entries are appended.
 #[test]
 fn a_json_line_from_an_earlier_release_still_reads() {
     let record = serde_json::json!({"phase": "client_request", "uri": "/v1/messages"});
@@ -226,8 +226,8 @@ fn a_json_line_from_an_earlier_release_still_reads() {
 /// An array of objects round-trips.
 ///
 /// `messages` and `tools` in a request body are arrays of objects, and reading
-/// the inner group as a malformed pair rejected every record that carried one —
-/// which is most real traffic (issue #336).
+/// the inner group as a malformed pair rejected records that carried one
+/// (issue #336).
 #[test]
 fn an_array_of_objects_round_trips() {
     let record = serde_json::json!({

@@ -45,14 +45,14 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 ///
 /// Newer clients expose `claude auth status`, which looks strictly better —
 /// it bills no inference and does not depend on a model name staying valid.
-/// It was measured against a credential expired by ~42 hours (issue #275):
+/// Testing with an expired credential showed the following behavior (issue #275):
 ///
 /// | probe | result | credential file |
 /// | --- | --- | --- |
 /// | `claude auth status` | `{"loggedIn": true, …}`, exit 0 | unchanged |
 /// | `-p ok` | `OAuth session expired and could not be refreshed` | removed |
 ///
-/// `auth status` reported a 42-hour-dead credential as logged in, and the
+/// `auth status` reported the expired credential as logged in, and the
 /// account-derived fields (`email`, `orgId`, `subscriptionType`) all came back
 /// `null` — it answers from local state without reaching the account. It
 /// therefore cannot force a refresh, and adopting it would have disabled this
