@@ -261,22 +261,17 @@ async fn repair_one(
     }
 
     let server = crate::managed_server::resolve(None, None, None, false).await?;
-    let candidate = crate::managed_server::prepare_run_credential(
+    let candidate = crate::managed_server::prepare_repair_credential(
         &server,
         client,
         &format!("client-repair-{client}"),
         24,
-        false,
     )
     .await?;
-    let source = if candidate.was_minted() {
-        TokenSource::Minted
-    } else {
-        TokenSource::Supplied
-    };
+    debug_assert!(candidate.was_minted());
     let metadata = ManagedCredential {
         client: client.to_string(),
-        source,
+        source: TokenSource::Minted,
         token_id: candidate.id(),
         label: candidate
             .was_minted()
@@ -300,19 +295,34 @@ async fn repair_one(
     let result = match applied {
         Ok(result) => result,
         Err(error) => {
-            let _ = crate::managed_server::cleanup_run_credential(candidate).await;
-            return Err(error.into());
+            return match crate::managed_server::cleanup_run_credential(candidate).await {
+                Ok(()) => Err(error.into()),
+                Err(cleanup) => Err(format!(
+                    "{error}; the unused minted repair credential could not be revoked: {cleanup}"
+                )
+                .into()),
+            };
         }
     };
     if let Err(error) = manager
         .catalog(client, &server.base_url, &candidate.token)
         .await
     {
-        if let Some(id) = result.backup_id.as_deref() {
-            manager.rollback_repair(client, id)?;
+        let rollback = result
+            .backup_id
+            .as_deref()
+            .map_or(Ok(()), |id| manager.rollback_repair(client, id).map(|_| ()));
+        let cleanup = crate::managed_server::cleanup_run_credential(candidate).await;
+        let mut message = format!("post-repair catalog validation failed: {error}");
+        if let Err(rollback) = rollback {
+            message.push_str(&format!("; automatic rollback also failed: {rollback}"));
         }
-        let _ = crate::managed_server::cleanup_run_credential(candidate).await;
-        return Err(format!("post-repair catalog validation failed: {error}").into());
+        if let Err(cleanup) = cleanup {
+            message.push_str(&format!(
+                "; the unused minted repair credential could not be revoked: {cleanup}"
+            ));
+        }
+        return Err(message.into());
     }
     if candidate.was_minted()
         && let (Some(old), Some(old_id), Some(new_id), Some(admin_token)) = (

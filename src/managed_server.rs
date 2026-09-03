@@ -254,6 +254,31 @@ pub async fn prepare_run_credential(
     ttl_hours: i64,
     sliding: bool,
 ) -> Result<RunCredential, AnyError> {
+    prepare_credential(server, client_kind, label, ttl_hours, sliding, true).await
+}
+
+/// Mint the client-bound credential used by a permanent repair.
+///
+/// Repair is a trust takeover, not a one-shot launch. It must never persist a
+/// supplied ordinary token merely because the selected listener cannot mint a
+/// replacement: only a candidate minted for this exact client is eligible.
+pub async fn prepare_repair_credential(
+    server: &ResolvedServer,
+    client_kind: ClientKind,
+    label: &str,
+    ttl_hours: i64,
+) -> Result<RunCredential, AnyError> {
+    prepare_credential(server, client_kind, label, ttl_hours, false, false).await
+}
+
+async fn prepare_credential(
+    server: &ResolvedServer,
+    client_kind: ClientKind,
+    label: &str,
+    ttl_hours: i64,
+    sliding: bool,
+    allow_supplied: bool,
+) -> Result<RunCredential, AnyError> {
     let token = server.token.as_deref().ok_or_else(|| {
         if server.source == "managed local container" {
             format!(
@@ -340,13 +365,47 @@ pub async fn prepare_run_credential(
                     credential.available_models = models;
                     Ok(credential)
                 }
-                Err(error) => {
-                    let _ = cleanup_run_credential(credential).await;
-                    Err(error)
-                }
+                Err(error) => match cleanup_run_credential(credential).await {
+                    Ok(()) => Err(error),
+                    Err(cleanup) => Err(format!(
+                        "{error}; the unused minted credential could not be revoked: {cleanup}"
+                    )
+                    .into()),
+                },
             }
         }
         Ok(response) if response.status().as_u16() == 401 || response.status().as_u16() == 403 => {
+            if !allow_supplied {
+                return Err(format!(
+                    "client repair requires an administrator credential that can mint a token bound to `{}`; the selected credential is inference-only",
+                    client_kind.canonical_name()
+                )
+                .into());
+            }
+            let available_models =
+                fetch_models(&client, client_kind, &server.base_url, token).await?;
+            Ok(RunCredential {
+                token: token.to_string(),
+                available_models,
+                revocation: None,
+            })
+        }
+        Ok(response) if response.status().as_u16() == 404 => {
+            if !allow_supplied {
+                return Err(format!(
+                    "client repair requires the administrator listener so Router can mint a token bound to `{}`; the selected listener exposes inference only",
+                    client_kind.canonical_name()
+                )
+                .into());
+            }
+            let bound = token_client_kind(token)?;
+            if bound.as_deref() != Some(client_kind.canonical_name()) {
+                return Err(format!(
+                    "the selected listener exposes inference only, so its supplied token must be bound to `{}`; use the matching client token or select the administrator listener",
+                    client_kind.canonical_name()
+                )
+                .into());
+            }
             let available_models =
                 fetch_models(&client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
@@ -468,6 +527,21 @@ fn http_client() -> Result<reqwest::Client, reqwest::Error> {
 }
 
 fn token_subject(token: &str) -> Result<String, AnyError> {
+    token_claim(token)?
+        .get("sub")
+        .and_then(Value::as_str)
+        .map(str::to_string)
+        .ok_or_else(|| "router run token has no subject to revoke".into())
+}
+
+fn token_client_kind(token: &str) -> Result<Option<String>, AnyError> {
+    Ok(token_claim(token)?
+        .get("client_kind")
+        .and_then(Value::as_str)
+        .map(str::to_string))
+}
+
+fn token_claim(token: &str) -> Result<Value, AnyError> {
     let payload = token
         .split('.')
         .nth(1)
@@ -475,12 +549,7 @@ fn token_subject(token: &str) -> Result<String, AnyError> {
     let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(payload)
         .map_err(|error| format!("router returned an invalid JWT payload: {error}"))?;
-    let claims: Value = serde_json::from_slice(&decoded)?;
-    claims
-        .get("sub")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| "router run token has no subject to revoke".into())
+    serde_json::from_slice(&decoded).map_err(Into::into)
 }
 
 pub fn managed_status() -> Result<String, AnyError> {

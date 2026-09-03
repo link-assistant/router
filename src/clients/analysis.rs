@@ -156,7 +156,8 @@ pub(super) fn analyze_client(
         .clone()
         .or_else(|| public_base.clone())
         .or_else(|| managed_base.clone())
-        .or_else(|| expected_origin.clone());
+        .or_else(|| expected_origin.clone())
+        .and_then(|value| sanitize_origin(&value));
     let effective_source = if ambient_base.is_some() {
         Some(ConfigSource::AmbientEnvironment)
     } else if public_base.is_some() {
@@ -189,10 +190,17 @@ pub(super) fn analyze_client(
         && managed_token.is_some()
         && (!requires_config || config_exists)
         && (!requires_marker || marker_valid);
+    let ambient_critical = client == ClientKind::ClaudeCode
+        && CLAUDE_PRECEDENCE_ENV.iter().any(|key| {
+            manager
+                .environment_var(key)
+                .is_some_and(|value| !value.is_empty())
+        });
     let any_configuration = config_exists
         || public_base.is_some()
         || managed_base.is_some()
         || ambient_base.is_some()
+        || ambient_critical
         || any_managed;
     let state = if raw.unreadable.is_some()
         || conflicts.iter().any(|key| key.ends_with(":invalid"))
@@ -351,6 +359,48 @@ fn critical_conflicts(
                 conflicts.push(format!("managed-environment:{key}"));
             }
         }
+        for key in [
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "CLAUDE_CODE_SUBAGENT_MODEL",
+        ] {
+            if read_environment_value(&environment, key)
+                .ok()
+                .flatten()
+                .is_some_and(|value| !value.is_empty())
+            {
+                conflicts.push(format!("managed-environment:{key}"));
+            }
+        }
+        for key in [
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "CLAUDE_CODE_SUBAGENT_MODEL",
+        ] {
+            if manager
+                .environment_var(key)
+                .is_some_and(|value| !value.is_empty())
+            {
+                conflicts.push(format!("ambient:{key}"));
+            }
+        }
+        for (key, wanted) in [
+            ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1"),
+            ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0"),
+        ] {
+            if manager
+                .environment_var(key)
+                .is_some_and(|value| !value.is_empty() && value != wanted)
+            {
+                conflicts.push(format!("ambient:{key}"));
+            }
+        }
     }
 
     match client {
@@ -362,6 +412,23 @@ fn critical_conflicts(
         ClientKind::QwenCode => qwen_conflicts(config_path, expected_endpoint, conflicts),
         ClientKind::Cursor | ClientKind::GeminiCli | ClientKind::GrokCli => {}
     }
+}
+
+const CLAUDE_PRECEDENCE_ENV: [&str; 9] = [
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "CLAUDE_CODE_SUBAGENT_MODEL",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+];
+
+fn sanitize_origin(value: &str) -> Option<String> {
+    let parsed = reqwest::Url::parse(value).ok()?;
+    matches!(parsed.scheme(), "http" | "https").then(|| parsed.origin().ascii_serialization())
 }
 
 fn claude_conflicts(path: &Path, expected: Option<&str>, conflicts: &mut Vec<String>) {
@@ -520,5 +587,24 @@ fn observe(path: &Path) -> Result<ObservedFile, ClientError> {
             "could not inspect {}: {error}",
             path.display()
         ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_origin;
+
+    #[test]
+    fn reported_origins_drop_credentials_and_request_details() {
+        assert_eq!(
+            sanitize_origin("https://operator:secret@router.example:8443/private?q=token#fragment")
+                .as_deref(),
+            Some("https://router.example:8443")
+        );
+        assert_eq!(
+            sanitize_origin("http://router.example:80/api/services/openai").as_deref(),
+            Some("http://router.example")
+        );
+        assert_eq!(sanitize_origin("file:///private/config"), None);
     }
 }
