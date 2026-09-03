@@ -10,15 +10,15 @@
 //! | v0.122.0 – v0.123.3 | `((:"phase" "stream_end"))` |
 //! | since | `(#o ("phase" "stream_end"))` |
 //!
-//! — and a file can hold all three at once. These tests read fixtures written
-//! by the real encoders of each generation and require the decoded value to
-//! equal the original record exactly, so a format change cannot quietly drop
+//! — and a file can hold all three at once. These tests read fully synthetic
+//! fixtures written by the historical encoders and require each generation to
+//! decode to the same record exactly, so a format change cannot quietly drop
 //! or reshape history (issues #336, #346, #350).
 
 use base64::Engine as _;
 use std::io::BufRead;
 
-/// The original records, one JSON object per line.
+/// Synthetic source records, one JSON object per line.
 ///
 /// Compatibility records covering the shapes that break encoders: two-element
 /// arrays whose first element is a scalar, empty containers, empty keys, nulls,
@@ -93,6 +93,84 @@ fn synthetic_binary_payload_lengths_are_consistent() {
     }
 
     assert!(payload_count > 0, "the corpus must exercise binary bodies");
+}
+
+/// Compatibility fixtures must never become a copy of production telemetry.
+#[test]
+fn compatibility_fixture_telemetry_is_synthetic() {
+    const SYNTHETIC_RESET_5H: &str = "1893456000";
+    const SYNTHETIC_RESET_7D: &str = "1893459600";
+    const SYNTHETIC_TIME_PREFIX: &str = "2030-01-01T00:00:";
+
+    let mut latency_count = 0;
+    let mut rate_limit_count = 0;
+    let mut summary_count = 0;
+    let mut timestamp_count = 0;
+
+    for (index, record) in records().into_iter().enumerate() {
+        if let Some(time) = record.get("time").and_then(serde_json::Value::as_str) {
+            assert!(
+                time.starts_with(SYNTHETIC_TIME_PREFIX),
+                "record {index} must use a synthetic timestamp: {time}"
+            );
+            timestamp_count += 1;
+        }
+
+        if let Some(latency) = record.get("latency_ms").and_then(serde_json::Value::as_u64) {
+            assert!(
+                matches!(latency, 100 | 125),
+                "record {index} must use a synthetic latency: {latency}"
+            );
+            latency_count += 1;
+        }
+
+        if let Some(headers) = record
+            .get("headers")
+            .and_then(serde_json::Value::as_object)
+            .filter(|headers| headers.contains_key("anthropic-ratelimit-unified-5h-reset"))
+        {
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-5h-reset"],
+                SYNTHETIC_RESET_5H
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-7d-reset"],
+                SYNTHETIC_RESET_7D
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-5h-status"],
+                "synthetic-allowed"
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-7d-status"],
+                "synthetic-warning"
+            );
+            assert_eq!(
+                headers["anthropic-ratelimit-unified-5h-utilization"],
+                "0.50"
+            );
+            rate_limit_count += 1;
+        }
+
+        if record.get("duration_ms").is_some() {
+            assert_eq!(record["bytes"], 4096);
+            assert_eq!(record["duration_ms"], 500);
+            assert_eq!(record["frames"], 20);
+            assert_eq!(record["complete"], true);
+            summary_count += 1;
+        }
+    }
+
+    assert!(timestamp_count > 0, "the corpus must exercise timestamps");
+    assert!(latency_count > 0, "the corpus must exercise latencies");
+    assert!(
+        rate_limit_count > 0,
+        "the corpus must exercise rate-limit metadata"
+    );
+    assert!(
+        summary_count > 0,
+        "the corpus must exercise stream summaries"
+    );
 }
 
 /// JSON Lines, as written up to v0.121.0.
