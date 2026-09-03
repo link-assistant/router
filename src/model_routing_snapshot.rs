@@ -351,6 +351,13 @@ async fn subscription_candidate(
         .iter()
         .find(|reader| reader.provider() == provider)
         .cloned()
+        .or_else(|| {
+            state
+                .subscription_reader
+                .as_ref()
+                .filter(|reader| reader.provider() == provider)
+                .cloned()
+        })
         .ok_or_else(|| format!("no {provider} credential reader is configured"))?;
     let mut subscription = subscription_snapshot_for_account(
         state,
@@ -500,6 +507,10 @@ pub async fn route_pinned_subscription(
             .subscription_readers
             .iter()
             .any(|reader| reader.provider() == provider)
+        && !state
+            .subscription_reader
+            .as_ref()
+            .is_some_and(|reader| reader.provider() == provider)
     {
         if catalog.discovered && catalog.account.is_some() {
             return Err(ModelRouteError::NotFound(format!(

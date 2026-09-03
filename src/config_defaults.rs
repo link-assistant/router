@@ -17,7 +17,7 @@ pub fn default_gonka_source_url() -> String {
 /// accepts requests that name a model explicitly and advertises no model of
 /// its own.
 #[must_use]
-pub fn default_gonka_model() -> String {
+pub const fn default_gonka_model() -> String {
     String::new()
 }
 

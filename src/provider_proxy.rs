@@ -139,10 +139,12 @@ pub async fn forward_openai_compatible(
         headers,
         body,
         &routing_body,
-        path,
-        path,
-        surface,
-        false,
+        ProviderForwardOptions {
+            path,
+            upstream_path: path,
+            surface,
+            copy_anthropic_headers: false,
+        },
     )
     .await
 }
@@ -160,12 +162,21 @@ pub(crate) async fn forward_openai_compatible_routed(
         headers,
         body,
         routing_body,
-        path,
-        path,
-        surface,
-        false,
+        ProviderForwardOptions {
+            path,
+            upstream_path: path,
+            surface,
+            copy_anthropic_headers: false,
+        },
     )
     .await
+}
+
+pub(crate) struct ProviderForwardOptions<'a> {
+    pub path: &'a str,
+    pub upstream_path: &'a str,
+    pub surface: Surface,
+    pub copy_anthropic_headers: bool,
 }
 
 pub(crate) async fn forward_provider_at_routed(
@@ -173,11 +184,14 @@ pub(crate) async fn forward_provider_at_routed(
     headers: &HeaderMap,
     mut body: serde_json::Value,
     routing_body: &serde_json::Value,
-    path: &str,
-    upstream_path: &str,
-    surface: Surface,
-    copy_anthropic_headers: bool,
+    options: ProviderForwardOptions<'_>,
 ) -> Response {
+    let ProviderForwardOptions {
+        path,
+        upstream_path,
+        surface,
+        copy_anthropic_headers,
+    } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
     }
@@ -309,7 +323,7 @@ pub(crate) async fn forward_provider_at_routed(
             correlation_id,
             state.logger.clone(),
             usage.take(),
-            Some(requested_model.clone()),
+            Some(requested_model.as_str()),
         );
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
@@ -435,8 +449,8 @@ fn settled_relay_stream(
     correlation_id: String,
     logger: log_lazy::LogLazy,
     mut usage: Option<crate::usage::UsageTracker>,
-    requested_model: Option<String>,
-) -> impl futures_util::Stream<Item = Result<bytes::Bytes, std::io::Error>> {
+    requested_model: Option<&str>,
+) -> impl futures_util::Stream<Item = Result<bytes::Bytes, std::io::Error>> + use<> {
     let started = std::time::Instant::now();
     let outcome = std::sync::Arc::new(std::sync::Mutex::new(new_stream_outcome(
         upstream.headers(),
@@ -445,7 +459,7 @@ fn settled_relay_stream(
     let end_log = std::sync::Arc::clone(&response_log);
     let end_id = correlation_id.clone();
     let mut identity = crate::output_limit::ResponsesStreamRewriter::new(
-        requested_model.as_deref().unwrap_or_default(),
+        requested_model.unwrap_or_default(),
         None,
     );
     upstream

@@ -162,7 +162,7 @@ async fn inference_only_listener_rejects_an_unbound_or_foreign_client_token() {
             Some(bound_token(bound)),
             "test inference listener",
         );
-        let error = match prepare_run_credential(
+        let Err(error) = prepare_run_credential(
             &selected,
             ClientKind::ClaudeCode,
             "inference-only-test",
@@ -170,9 +170,8 @@ async fn inference_only_listener_rejects_an_unbound_or_foreign_client_token() {
             false,
         )
         .await
-        {
-            Ok(_) => panic!("non-matching token must fail closed"),
-            Err(error) => error,
+        else {
+            panic!("non-matching token must fail closed");
         };
         assert!(error.to_string().contains("must be bound to `claude`"));
         server.join().expect("probe server");
@@ -187,11 +186,10 @@ async fn permanent_repair_refuses_a_supplied_ordinary_token() {
         Some(bound_token(Some("claude"))),
         "test ordinary token",
     );
-    let error = match prepare_repair_credential(&selected, ClientKind::ClaudeCode, "repair-test", 1)
-        .await
-    {
-        Ok(_) => panic!("repair must mint its own bound credential"),
-        Err(error) => error,
+    let Err(error) =
+        prepare_repair_credential(&selected, ClientKind::ClaudeCode, "repair-test", 1).await
+    else {
+        panic!("repair must mint its own bound credential");
     };
     assert!(
         error

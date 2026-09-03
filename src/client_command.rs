@@ -1,5 +1,6 @@
 //! Output and dispatch layer for the `clients` CLI command.
 
+use std::fmt::Write as _;
 use std::path::Path;
 use std::process::ExitCode;
 
@@ -315,12 +316,13 @@ async fn repair_one(
         let cleanup = crate::managed_server::cleanup_run_credential(candidate).await;
         let mut message = format!("post-repair catalog validation failed: {error}");
         if let Err(rollback) = rollback {
-            message.push_str(&format!("; automatic rollback also failed: {rollback}"));
+            let _ = write!(message, "; automatic rollback also failed: {rollback}");
         }
         if let Err(cleanup) = cleanup {
-            message.push_str(&format!(
+            let _ = write!(
+                message,
                 "; the unused minted repair credential could not be revoked: {cleanup}"
-            ));
+            );
         }
         return Err(message.into());
     }

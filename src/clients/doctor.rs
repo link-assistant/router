@@ -59,7 +59,12 @@ impl ClientManager {
             })?;
         let catalog = self.catalog(client, &base_url, &token).await?;
         let model = doctor_model(client, &catalog)?;
-        let (url, body) = probe_request(client, &base_url, model);
+        let endpoint = format!(
+            "{}{}",
+            base_url.trim_end_matches('/'),
+            client.integration().endpoint_suffix
+        );
+        let (url, body) = probe_request(client, &endpoint, model);
         let request = reqwest::Client::new().post(&url).json(&body);
         let request = match client {
             ClientKind::ClaudeCode => request

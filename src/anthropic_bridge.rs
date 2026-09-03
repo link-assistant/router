@@ -20,13 +20,11 @@
 //! superseded by issue #389. Ordinary API-key providers and the separately
 //! policy-gated z.ai Coding Plan retain their own credential rules.
 
-use axum::body::{Body, Bytes};
-use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
-use futures_util::StreamExt;
 use serde_json::{Value, json};
 
-use crate::anthropic_stream::{AnthropicStreamTranslator, map_stop_reason};
+use crate::anthropic_stream::map_stop_reason;
 use crate::app_state::AppState;
 use crate::bridge_selection::{ModelSelectionRequired, SelectionFailure};
 use crate::config::UpstreamProvider;
@@ -948,144 +946,9 @@ async fn forward_anthropic_messages_routed(
     .await
 }
 
-/// Convert the `OpenAI`-dialect response produced by a delegate forwarder into
-/// the Anthropic dialect.
-pub(crate) async fn translate_upstream_response(
-    upstream: Response,
-    requested_model: &str,
-    upstream_model: &str,
-    stream_requested: bool,
-    stop_sequences: &[String],
-) -> Response {
-    let (parts, body) = upstream.into_parts();
-    let status = parts.status;
-
-    if !status.is_success() {
-        let bytes = axum::body::to_bytes(body, 1024 * 1024)
-            .await
-            .unwrap_or_default();
-        let mut response = anthropic_error(status, &bytes);
-        *response.headers_mut() = parts.headers;
-        response
-            .headers_mut()
-            .insert("content-type", HeaderValue::from_static("application/json"));
-        return response;
-    }
-
-    if stream_requested {
-        return anthropic_sse_response(
-            body,
-            requested_model,
-            upstream_model,
-            &parts.headers,
-            stop_sequences.to_vec(),
-        );
-    }
-
-    let bytes = match axum::body::to_bytes(body, 32 * 1024 * 1024).await {
-        Ok(bytes) => bytes,
-        Err(e) => {
-            return anthropic_error(
-                StatusCode::BAD_GATEWAY,
-                format!("failed to read upstream body: {e}").as_bytes(),
-            );
-        }
-    };
-    let Ok(payload) = serde_json::from_slice::<Value>(&bytes) else {
-        return anthropic_error(
-            StatusCode::BAD_GATEWAY,
-            b"Upstream returned a malformed response",
-        );
-    };
-    let served_model = payload
-        .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
-        .or_else(|| payload.get("model"))
-        .and_then(Value::as_str)
-        .unwrap_or(upstream_model);
-    let mut translated = openai_json_to_anthropic_message(&payload, requested_model);
-    if !served_model.is_empty() && served_model != requested_model {
-        translated[crate::output_limit::UPSTREAM_MODEL_FIELD] =
-            Value::String(served_model.to_string());
-    }
-    enforce_anthropic_stop(&mut translated, stop_sequences);
-    let mut response = (StatusCode::OK, axum::Json(translated)).into_response();
-    *response.headers_mut() = parts.headers;
-    response
-        .headers_mut()
-        .insert("content-type", HeaderValue::from_static("application/json"));
-    if !served_model.is_empty()
-        && served_model != requested_model
-        && let Ok(value) = HeaderValue::from_str(served_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
-    response
-}
-
-/// Wrap the upstream stream in an incremental Anthropic SSE translator.
-fn anthropic_sse_response(
-    body: Body,
-    requested_model: &str,
-    upstream_model: &str,
-    upstream: &HeaderMap,
-    stop_sequences: Vec<String>,
-) -> Response {
-    let translator = AnthropicStreamTranslator::new(requested_model)
-        .with_upstream_model(upstream_model)
-        .with_stop_sequences(stop_sequences);
-    let data = body.into_data_stream();
-    let stream = futures_util::stream::unfold(
-        (data, translator, false),
-        |(mut data, mut translator, done)| async move {
-            if done {
-                return None;
-            }
-            loop {
-                match data.next().await {
-                    Some(Ok(chunk)) => {
-                        let frames = translator.push(&chunk);
-                        if frames.is_empty() {
-                            continue;
-                        }
-                        return Some((
-                            Ok::<Bytes, std::io::Error>(Bytes::from(frames.concat())),
-                            (data, translator, false),
-                        ));
-                    }
-                    Some(Err(e)) => {
-                        return Some((Err(std::io::Error::other(e)), (data, translator, true)));
-                    }
-                    None => {
-                        let frames = translator.finish();
-                        return Some((Ok(Bytes::from(frames.concat())), (data, translator, true)));
-                    }
-                }
-            }
-        },
-    );
-
-    let mut response = Response::new(Body::from_stream(stream));
-    *response.status_mut() = StatusCode::OK;
-    *response.headers_mut() = crate::proxy::relay_response_headers(upstream);
-    response.headers_mut().insert(
-        "content-type",
-        HeaderValue::from_static("text/event-stream"),
-    );
-    response
-        .headers_mut()
-        .insert("cache-control", HeaderValue::from_static("no-cache"));
-    if !upstream_model.is_empty()
-        && upstream_model != requested_model
-        && let Ok(value) = HeaderValue::from_str(upstream_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
-    response
-}
+#[path = "anthropic_bridge_response.rs"]
+mod response;
+pub(crate) use response::translate_upstream_response;
 
 /// Re-shape an upstream error body as an Anthropic error envelope.
 #[path = "anthropic_bridge_error.rs"]

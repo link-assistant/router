@@ -427,10 +427,12 @@ pub async fn forward(
         headers,
         body,
         &routing_body,
-        incoming_path,
-        &upstream_path,
-        surface,
-        protocol == ClientProtocol::AnthropicMessages,
+        crate::provider_proxy::ProviderForwardOptions {
+            path: incoming_path,
+            upstream_path: &upstream_path,
+            surface,
+            copy_anthropic_headers: protocol == ClientProtocol::AnthropicMessages,
+        },
     )
     .await
 }

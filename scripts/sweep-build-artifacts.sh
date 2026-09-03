@@ -1,13 +1,27 @@
 #!/usr/bin/env bash
-# Clear this checkout's Rust build output after pre-commit verification.
+# Prune build artifacts the most recent build did not touch, then re-stamp.
 #
-# Worktrees have independent target directories, so cleaning the manifest that
-# owns this script reclaims the exact cache the preceding hooks populated. A
-# configured CARGO_TARGET_DIR remains authoritative, as it is for every Cargo
-# command.
-set -euo pipefail
+# `target/` retains every superseded artifact: this workspace links many test
+# and binary targets, and nothing evicts the previous ones. Left alone it can
+# grow without bound.
+#
+# The stamp/sweep order matters and is easy to get backwards. `cargo sweep
+# --stamp` records "everything older than now is stale"; `--file` then deletes
+# what predates it. Stamping *after* a build therefore marks that build's own
+# output for deletion. This script sweeps against the previous stamp first,
+# then lays down a new one for next time.
+#
+# Exits zero unconditionally: pruning a cache is never a reason to reject a
+# commit, and `cargo-sweep` is optional tooling a contributor may not have.
+set -u
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repository_root="$(cd "${script_dir}/.." && pwd)"
+command -v cargo-sweep >/dev/null 2>&1 || {
+    echo "cargo-sweep not installed; skipping (cargo install cargo-sweep)" >&2
+    exit 0
+}
 
-cargo clean --manifest-path "${repository_root}/Cargo.toml"
+if [ -f sweep.timestamp ]; then
+    cargo sweep --file >/dev/null 2>&1 || true
+fi
+cargo sweep --stamp >/dev/null 2>&1 || true
+exit 0

@@ -1755,13 +1755,25 @@ check, and both are automatic:
 - `.cargo/config.toml` disables the incremental cache and drops debug info to
   line tables. Backtraces still resolve; stepping through variables in a
   debugger does not.
-- The last `pre-commit` hook runs `scripts/sweep-build-artifacts.sh`, which uses
+- The last `pre-commit` hook runs `scripts/clear-build-cache.sh`, which uses
   `cargo clean` to remove the checkout's build output after formatting, lint,
   and tests finish:
 
   ```bash
   pre-commit install
   ```
+
+- An optional `post-commit` hook also runs
+  `scripts/sweep-build-artifacts.sh` to prune superseded artifacts during
+  workflows that bypass the pre-commit checks. It needs `cargo-sweep`:
+
+  ```bash
+  cargo install cargo-sweep
+  pre-commit install --hook-type post-commit
+  ```
+
+  Without `cargo-sweep` the post-commit hook prints a note and does nothing; it
+  never fails a commit. The pre-commit `cargo clean` remains unconditional.
 
 To reclaim space by hand, run `cargo clean`. The next build is intentionally a
 cold build; the hook trades compilation reuse for a predictable disk bound.

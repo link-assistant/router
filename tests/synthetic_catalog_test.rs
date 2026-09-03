@@ -276,8 +276,6 @@ fn the_listing_advertises_only_discovered_models() {
 /// position.
 #[test]
 fn production_sources_contain_no_hardcoded_vendor_catalogs() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-    let mut files = Vec::new();
     fn collect_rust_sources(directory: &std::path::Path, files: &mut Vec<std::path::PathBuf>) {
         for entry in std::fs::read_dir(directory).expect("read source directory") {
             let path = entry.expect("source entry").path();
@@ -293,7 +291,6 @@ fn production_sources_contain_no_hardcoded_vendor_catalogs() {
             }
         }
     }
-    collect_rust_sources(&root, &mut files);
 
     fn concrete_vendor_model(source: &str) -> Option<&'static str> {
         let source = source.to_ascii_lowercase();
@@ -330,6 +327,10 @@ fn production_sources_contain_no_hardcoded_vendor_catalogs() {
         }
         None
     }
+
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files = Vec::new();
+    collect_rust_sources(&root, &mut files);
     let mut offenders = Vec::new();
     for path in files {
         let source = std::fs::read_to_string(&path).expect("read source");

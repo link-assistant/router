@@ -151,10 +151,7 @@ pub fn select_model(client: ClientKind, catalog: &[RouterModel]) -> Option<&str>
 /// subagent pin is mapped to one exact currently advertised z.ai alias. An
 /// explicit z.ai model wins and is propagated to the same subagent boundary.
 #[must_use]
-pub(crate) fn claude_gateway_model(
-    catalog: &[RouterModel],
-    explicit: Option<&str>,
-) -> Option<String> {
+pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> Option<String> {
     if let Some(explicit) = explicit
         && catalog
             .iter()
