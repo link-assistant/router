@@ -66,7 +66,7 @@ fn rewrite_routed_model(
     }
 }
 
-/// Resolve only the model alias owned by this OpenAI request route.
+/// Resolve only the model alias owned by this `OpenAI` request route.
 ///
 /// `bridge_model` configures Anthropic-dialect translation to a non-Anthropic
 /// provider. It is not a native OpenAI-request default. Stored providers use
@@ -365,24 +365,6 @@ async fn openai_chat_completions_with_subscription(
     report_dropped_tools(&state, response, &dropped_tools)
 }
 
-#[cfg(test)]
-mod routed_model_tests {
-    use super::*;
-
-    #[test]
-    fn native_claude_routes_ignore_the_anthropic_bridge_override() {
-        assert_eq!(
-            canonical_openai_model(
-                UpstreamProvider::Anthropic,
-                true,
-                Some("unrelated-codex-bridge-model"),
-                "claude-future-native",
-            ),
-            "claude-future-native"
-        );
-    }
-}
-
 /// `POST /v1/responses` — `OpenAI` Responses API.
 pub async fn openai_responses(
     State(state): State<AppState>,
@@ -570,4 +552,22 @@ pub async fn openai_responses(
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)
+}
+
+#[cfg(test)]
+mod routed_model_tests {
+    use super::*;
+
+    #[test]
+    fn native_claude_routes_ignore_the_anthropic_bridge_override() {
+        assert_eq!(
+            canonical_openai_model(
+                UpstreamProvider::Anthropic,
+                true,
+                Some("unrelated-codex-bridge-model"),
+                "claude-future-native",
+            ),
+            "claude-future-native"
+        );
+    }
 }

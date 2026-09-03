@@ -1,5 +1,6 @@
 //! Transactional, edit-aware client configuration repair.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -28,7 +29,8 @@ fn transaction_checkpoint(stage: &'static str) -> Result<(), ClientError> {
 
 #[cfg(not(test))]
 #[inline]
-fn transaction_checkpoint(_stage: &'static str) -> Result<(), ClientError> {
+#[allow(clippy::unnecessary_wraps)]
+const fn transaction_checkpoint(_stage: &'static str) -> Result<(), ClientError> {
     Ok(())
 }
 
@@ -192,13 +194,13 @@ impl ClientManager {
                     let cleanup_error = fs::remove_dir_all(&snapshot.root).err();
                     let mut message = error.to_string();
                     if let Some(backup) = backup_error {
-                        message.push_str(&format!("; setup-backup cleanup also failed: {backup}"));
+                        let _ = write!(message, "; setup-backup cleanup also failed: {backup}");
                     }
                     if let Some(rollback) = rollback_error {
-                        message.push_str(&format!("; automatic rollback also failed: {rollback}"));
+                        let _ = write!(message, "; automatic rollback also failed: {rollback}");
                     }
                     if let Some(cleanup) = cleanup_error {
-                        message.push_str(&format!("; snapshot cleanup also failed: {cleanup}"));
+                        let _ = write!(message, "; snapshot cleanup also failed: {cleanup}");
                     }
                     Err(ClientError::message(message))
                 }
@@ -247,13 +249,13 @@ impl ClientManager {
                     let cleanup_error = fs::remove_dir_all(&snapshot.root).err();
                     let mut message = error.to_string();
                     if let Some(undo) = undo_error {
-                        message.push_str(&format!("; global undo also failed: {undo}"));
+                        let _ = write!(message, "; global undo also failed: {undo}");
                     }
                     if let Some(rollback) = rollback_error {
-                        message.push_str(&format!("; automatic rollback also failed: {rollback}"));
+                        let _ = write!(message, "; automatic rollback also failed: {rollback}");
                     }
                     if let Some(cleanup) = cleanup_error {
-                        message.push_str(&format!("; snapshot cleanup also failed: {cleanup}"));
+                        let _ = write!(message, "; snapshot cleanup also failed: {cleanup}");
                     }
                     return Err(ClientError::message(message));
                 }
