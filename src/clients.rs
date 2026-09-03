@@ -1,7 +1,7 @@
 //! Safe local configuration for agentic CLI clients.
 //!
-//! The writer deliberately owns only one Codex provider table and one Claude
-//! Code environment key. Unknown settings are parsed and merged, never
+//! The writer deliberately owns only one Codex provider table and a recorded
+//! set of Claude Code gateway environment keys. Unknown settings are parsed and merged, never
 //! replaced wholesale, and every changed existing file is backed up first.
 
 use std::fmt::{self, Write as _};
@@ -26,6 +26,7 @@ pub use repair::{RepairPlan, RepairResult};
 pub use types::{ClientError, ClientStatus, SetupResult};
 
 pub(crate) use catalog::RouterModel;
+pub(crate) use catalog::claude_gateway_model;
 use catalog::doctor_model;
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
@@ -45,6 +46,13 @@ const GROK_TOKEN_ENV: &str = "GROK_API_KEY";
 const GROK_BASE_ENV: &str = "GROK_BASE_URL";
 const ROUTER_PROVIDER: &str = "link-assistant";
 const OWNERSHIP_MARKER: &str = ".link-assistant-router-client.json";
+pub(crate) const CLAUDE_MODEL_ENV: [&str; 5] = [
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "CLAUDE_CODE_SUBAGENT_MODEL",
+];
 
 /// Catalog owner whose models suit an `OpenAI`-dialect client.
 pub const OPENAI_MODEL_OWNER: &str = "openai";
@@ -809,7 +817,7 @@ impl ClientManager {
     fn setup_claude(
         &self,
         base_url: &str,
-        _models: &[RouterModel],
+        models: &[RouterModel],
     ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::ClaudeCode);
         let source = read_or_empty(&path)?;
@@ -838,40 +846,30 @@ impl ClientManager {
             .filter(|previous| previous != base_url);
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
         let mut managed_gateway_env = Vec::new();
-        let mut set_managed = |key: &str, managed: &str| {
-            let recorded_previous = existing_marker.as_ref().and_then(|(_, _, entries)| {
-                entries
-                    .iter()
-                    .find(|(recorded, _, _)| recorded == key)
-                    .map(|(_, _, previous)| previous.clone())
-            });
-            let previous = recorded_previous
+        let mut manage = |key: &str, managed: Option<&str>| {
+            let previous = existing_marker
+                .as_ref()
+                .and_then(|(_, _, entries)| {
+                    entries
+                        .iter()
+                        .find(|(recorded, _, _)| recorded == key)
+                        .map(|(_, _, previous)| previous.clone())
+                })
                 .unwrap_or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
-            env.insert(key.into(), Value::String(managed.into()));
-            managed_gateway_env.push((key.to_string(), Some(managed.to_string()), previous));
+            if let Some(managed) = managed {
+                env.insert(key.into(), Value::String(managed.into()));
+            } else {
+                env.remove(key);
+            }
+            managed_gateway_env.push((key.to_string(), managed.map(str::to_string), previous));
         };
-        set_managed("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
-        set_managed("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
-        let cleared = [
-            "ANTHROPIC_AUTH_TOKEN",
-            "ANTHROPIC_API_KEY",
-            "ANTHROPIC_MODEL",
-            "ANTHROPIC_DEFAULT_OPUS_MODEL",
-            "ANTHROPIC_DEFAULT_SONNET_MODEL",
-            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-            "CLAUDE_CODE_SUBAGENT_MODEL",
-        ];
-        for key in cleared {
-            let recorded_previous = existing_marker.as_ref().and_then(|(_, _, entries)| {
-                entries
-                    .iter()
-                    .find(|(recorded, _, _)| recorded == key)
-                    .and_then(|(_, _, previous)| previous.clone())
-            });
-            let previous = recorded_previous
-                .or_else(|| env.get(key).and_then(Value::as_str).map(str::to_string));
-            env.remove(key);
-            managed_gateway_env.push((key.to_string(), None, previous));
+        manage("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1"));
+        manage("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Some("0"));
+        manage("ANTHROPIC_AUTH_TOKEN", None);
+        manage("ANTHROPIC_API_KEY", None);
+        let gateway_model = claude_gateway_model(models, None);
+        for key in CLAUDE_MODEL_ENV {
+            manage(key, gateway_model.as_deref());
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;

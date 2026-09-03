@@ -152,6 +152,77 @@ fn the_users_configuration_is_kept_by_default() {
     );
 }
 
+#[test]
+fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
+    let models = [
+        RouterModel {
+            id: "claude-zai-future-first".to_string(),
+            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+        },
+        RouterModel {
+            id: "claude-zai-future-explicit".to_string(),
+            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+        },
+    ];
+    let resumed = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        one_shot: false,
+        profile_root: None,
+    })
+    .expect("prepare a resumed z.ai-only Claude session");
+    let resumed_env = resumed
+        .command
+        .get_envs()
+        .filter_map(|(key, value)| {
+            Some((
+                key.to_string_lossy().into_owned(),
+                value?.to_string_lossy().into_owned(),
+            ))
+        })
+        .collect::<std::collections::HashMap<_, _>>();
+    for key in crate::clients::CLAUDE_MODEL_ENV {
+        assert_eq!(
+            resumed_env.get(key).map(String::as_str),
+            Some("claude-zai-future-first"),
+            "{key}"
+        );
+    }
+
+    let explicit = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: Some("claude-zai-future-explicit"),
+        models: &models,
+        isolated_config: false,
+        one_shot: true,
+        profile_root: None,
+    })
+    .expect("prepare an explicit z.ai Claude model");
+    let explicit_env = explicit
+        .command
+        .get_envs()
+        .filter_map(|(key, value)| {
+            Some((
+                key.to_string_lossy().into_owned(),
+                value?.to_string_lossy().into_owned(),
+            ))
+        })
+        .collect::<std::collections::HashMap<_, _>>();
+    for key in crate::clients::CLAUDE_MODEL_ENV {
+        assert_eq!(
+            explicit_env.get(key).map(String::as_str),
+            Some("claude-zai-future-explicit"),
+            "explicit model must win for {key}"
+        );
+    }
+}
+
 /// Issue #379: Codex supports repeatable global `-c` overlays, so routing does
 /// not require replacing `HOME` or `CODEX_HOME`. The overlay must precede the
 /// user's subcommand and arguments; `launch` appends those after preparation.

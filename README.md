@@ -501,7 +501,10 @@ source-code model allowlist filters it. When a
 credential is revoked its last known catalog stays
 visible to administrators but stops being advertised or routed.
 
-Requested model names pass through unchanged. In automatic mode, routing uses
+The client-visible requested model identity is preserved. Reversible qualified
+or provider aliases are mapped back to the canonical id before the upstream
+request; responses and audit records expose the canonical resolved id
+separately. In automatic mode, routing uses
 subscription catalogs **and** the models a stored provider declares, so one
 deployment can serve vendor subscriptions and a local OpenAI-compatible
 endpoint at once. Vendor-shaped IDs prefer their matching vendor if catalogs
@@ -509,8 +512,8 @@ overlap, and an unqualified name advertised by multiple healthy subscriptions â€
 or declared by multiple stored providers â€” is rejected until `UPSTREAM_PROVIDER`
 is pinned or the name is qualified as `<provider>/<model>`. A model nothing
 advertises returns `404 not_found_error` instead of silently selecting a
-default. Successful Anthropic-backed responses report the model that actually
-served the request.
+default. Buffered and streaming responses retain both requested and resolved
+identity consistently.
 
 #### Model identity and output limits
 

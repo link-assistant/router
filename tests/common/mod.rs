@@ -154,6 +154,9 @@ pub fn mock_admin_router(
                     Err(error) => panic!("accept mock admin router request: {error}"),
                 }
             };
+            stream
+                .set_nonblocking(false)
+                .expect("make accepted admin connection blocking");
             let mut bytes = Vec::new();
             let mut buffer = [0_u8; 4096];
             loop {
