@@ -48,6 +48,60 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
 }
 
 #[test]
+fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
+    let home = tempfile::tempdir().expect("temp home");
+    let model = "claude-zai-future-citrine";
+    let (base_url, server) = catalog_server(&[(model, "z.ai")]);
+
+    let setup = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "claude",
+            "--token",
+            "la_sk_catalog",
+            "--server",
+            &base_url,
+        ],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+    let requests = server.join().expect("mock catalog server");
+    assert_eq!(
+        requests.len(),
+        1,
+        "Claude setup must fetch its live catalog"
+    );
+    assert!(
+        requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"),
+        "{}",
+        requests[0]
+    );
+
+    let settings = fs::read_to_string(home.path().join(".claude/settings.json"))
+        .expect("read Claude settings");
+    let settings: serde_json::Value =
+        serde_json::from_str(&settings).expect("valid Claude settings");
+    assert_eq!(
+        settings["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
+        "1"
+    );
+    for key in [
+        "ANTHROPIC_MODEL",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+        "CLAUDE_CODE_SUBAGENT_MODEL",
+    ] {
+        assert_eq!(settings["env"][key], model, "{key}");
+    }
+}
+
+#[test]
 fn opencode_reconfiguration_preserves_user_added_models() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = mock_router(&[("gpt-live", "openai")], 2);
@@ -183,6 +237,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
 #[test]
 fn claude_code_setup_preserves_settings_without_storing_the_token() {
     let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = catalog_server(&[("claude-live", "anthropic")]);
     let claude_dir = home.path().join(".claude");
     fs::create_dir_all(&claude_dir).expect("create claude dir");
     fs::write(
@@ -200,7 +255,7 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
             "--token",
             "la_sk_existing",
             "--base-url",
-            "http://router.test:8080/",
+            &base_url,
         ],
     );
     assert!(
@@ -217,7 +272,7 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     assert_eq!(settings["env"]["KEEP_ME"], "yes");
     assert_eq!(
         settings["env"]["ANTHROPIC_BASE_URL"],
-        "http://router.test:8080/api/services/anthropic"
+        format!("{base_url}/api/services/anthropic")
     );
     assert!(settings["env"].get("ANTHROPIC_AUTH_TOKEN").is_none());
     assert!(!settings.to_string().contains("la_sk_existing"));
@@ -229,11 +284,11 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
     )
     .expect("read Claude credential file");
     assert!(environment.contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'"));
-    assert!(
-        environment
-            .contains("export ANTHROPIC_BASE_URL='http://router.test:8080/api/services/anthropic'")
-    );
-    assert!(!environment.contains("http://router.test:8080/v1"));
+    assert_eq!(server.join().expect("catalog server").len(), 1);
+    assert!(environment.contains(&format!(
+        "export ANTHROPIC_BASE_URL='{base_url}/api/services/anthropic'"
+    )));
+    assert!(!environment.contains(&format!("{base_url}/v1")));
 
     let removed = router(home.path(), &["clients", "remove", "claude-code"]);
     assert!(removed.status.success());
@@ -521,12 +576,13 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
         "agent",
     ] {
         let home = tempfile::tempdir().expect("temp home");
-        let (base_url, server) = if matches!(client, "opencode" | "qwen-code" | "agent") {
-            let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
-            (base_url, Some(server))
-        } else {
-            ("http://router.test:8080".to_string(), None)
-        };
+        let (base_url, server) =
+            if matches!(client, "claude-code" | "opencode" | "qwen-code" | "agent") {
+                let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+                (base_url, Some(server))
+            } else {
+                ("http://router.test:8080".to_string(), None)
+            };
         let configured = router_with_env(
             home.path(),
             &[

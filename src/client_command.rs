@@ -519,7 +519,7 @@ async fn setup(
     };
     let models = if matches!(
         client,
-        ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
+        ClientKind::ClaudeCode | ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
     ) {
         match manager.catalog(client, &base_url, &token).await {
             // Filtered by the same rule `with` and `doctor` use, so a client
