@@ -579,11 +579,12 @@ fn a_read_sees_the_latest_write() {
 /// large synthetic store must remain comfortably inside the client budget.
 #[test]
 fn listing_stays_fast_at_deployment_scale() {
+    const RECORD_COUNT: usize = 300;
+
     let directory = tempdir().expect("temporary directory");
     let store = DurableDualTokenStore::open(directory.path()).expect("open the store");
     // Seed in one write: hundreds of separate `put`s would spend unnecessary
     // time exercising the write path, which is not what this test is about.
-    const RECORD_COUNT: usize = 300;
     let seed: Vec<_> = (0..RECORD_COUNT)
         .map(|index| sample_record(&format!("id-{index:04}")))
         .collect();
