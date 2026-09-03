@@ -2,12 +2,25 @@ use serde_json::Value;
 
 use super::{
     AppState, ModelRouteError, RoutedState, UpstreamProvider, route_stored_provider,
-    route_subscription_model, stored_provider_for_model,
+    route_subscription_model_for_providers, stored_provider_for_model,
 };
 
 pub async fn route_state_with_subscription(
     state: &AppState,
     body: &Value,
+) -> Result<RoutedState, ModelRouteError> {
+    route_state_with_subscription_for_providers(
+        state,
+        body,
+        &crate::subscription::SubscriptionProvider::ALL,
+    )
+    .await
+}
+
+pub async fn route_state_with_subscription_for_providers(
+    state: &AppState,
+    body: &Value,
+    entitled_providers: &[crate::subscription::SubscriptionProvider],
 ) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         if let Some(provider) = state.upstream_provider.subscription_provider() {
@@ -23,13 +36,37 @@ pub async fn route_state_with_subscription(
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
         .ok_or(ModelRouteError::ModelRequired)?;
+    // A provider-qualified identity is explicit and wins immediately. For a
+    // bare identity, the catalog projection owns the decision: when an
+    // entitled subscription advertises the id it is listed bare, while a
+    // colliding stored provider is listed as `<provider>/<model>`. Routing
+    // must preserve that same meaning instead of silently sending the bare id
+    // to a different upstream.
+    if model.contains('/')
+        && let Some(stored) = stored_provider_for_model(state, model)?
+    {
+        return Ok(RoutedState {
+            state: route_stored_provider(state, &stored, model),
+            subscription: None,
+        });
+    }
+    let visible_subscription = entitled_providers.iter().any(|provider| {
+        state
+            .model_catalogs
+            .models(*provider)
+            .iter()
+            .any(|candidate| candidate == model)
+    });
+    if visible_subscription {
+        return route_subscription_model_for_providers(state, model, entitled_providers).await;
+    }
     if let Some(stored) = stored_provider_for_model(state, model)? {
         return Ok(RoutedState {
             state: route_stored_provider(state, &stored, model),
             subscription: None,
         });
     }
-    route_subscription_model(state, model).await
+    route_subscription_model_for_providers(state, model, entitled_providers).await
 }
 
 /// Compatibility wrapper returning only the routed state.

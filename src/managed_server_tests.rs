@@ -15,6 +15,36 @@ fn model(id: &str, owner: &str) -> RouterModel {
 /// through that one rule.
 use crate::clients::{ClientKind, select_model, usable_models};
 
+#[test]
+fn server_urls_are_canonical_origins_and_rejections_never_echo_secrets() {
+    assert_eq!(
+        normalize_server(" HTTPS://[2001:DB8::1]:8443/ ").unwrap(),
+        "https://[2001:db8::1]:8443"
+    );
+    for (unsafe_url, secrets) in [
+        (
+            "https://private-user:private-password@router.example",
+            &["private-user", "private-password"][..],
+        ),
+        (
+            "https://router.example/?access_token=private-query",
+            &["private-query"][..],
+        ),
+        (
+            "https://router.example/#private-fragment",
+            &["private-fragment"][..],
+        ),
+        ("https://router.example/private/path", &["private/path"][..]),
+    ] {
+        let error = normalize_server(unsafe_url)
+            .expect_err("only a secret-free HTTP(S) origin is accepted")
+            .to_string();
+        for secret in secrets {
+            assert!(!error.contains(secret), "secret leaked in: {error}");
+        }
+    }
+}
+
 /// A catalog whose every model belongs to another vendor cannot serve this
 /// client, and the router knows it. Substituting one launched Claude Code
 /// against an `OpenAI` model, so the client reported an unrecognised model name
@@ -129,6 +159,82 @@ fn credential_probe_server(
         seen
     });
     (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn scripted_probe_server(
+    responses: Vec<(&'static str, String)>,
+) -> (String, std::thread::JoinHandle<Vec<String>>) {
+    use std::io::{Read as _, Write as _};
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind scripted server");
+    let port = listener.local_addr().expect("scripted address").port();
+    let handle = std::thread::spawn(move || {
+        let mut seen = Vec::new();
+        for (status, body) in responses {
+            let (mut stream, _) = listener.accept().expect("accept scripted request");
+            let mut bytes = [0_u8; 4096];
+            let count = stream.read(&mut bytes).expect("read scripted request");
+            seen.push(String::from_utf8_lossy(&bytes[..count]).into_owned());
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write scripted response");
+        }
+        seen
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
+#[tokio::test]
+async fn split_origins_never_cross_management_and_inference_routes() {
+    let issued = bound_token(Some("claude"));
+    let (management_url, management) = scripted_probe_server(vec![
+        ("200 OK", r#"{"data":[]}"#.to_string()),
+        ("200 OK", serde_json::json!({"token": issued}).to_string()),
+        ("200 OK", r#"{"revoked":true}"#.to_string()),
+    ]);
+    let (base_url, inference) = scripted_probe_server(vec![(
+        "200 OK",
+        r#"{"object":"list","data":[{"id":"claude-live","owned_by":"anthropic"}]}"#.to_string(),
+    )]);
+    let selected = ResolvedServer::at_origins(
+        base_url,
+        management_url,
+        Some("admin-token".to_string()),
+        "split test",
+    );
+
+    let credential = prepare_repair_credential(&selected, ClientKind::ClaudeCode, "split-test", 1)
+        .await
+        .expect("mint through management and fetch through inference");
+    assert!(credential.was_minted());
+    assert_eq!(credential.models()[0].id, "claude-live");
+    cleanup_run_credential(credential)
+        .await
+        .expect("revoke through management");
+
+    let management = management.join().expect("management probe");
+    let inference = inference.join().expect("inference probe");
+    assert!(management[0].starts_with("GET /api/management/tokens "));
+    assert!(management[1].starts_with("POST /api/management/tokens/client "));
+    assert!(management[2].starts_with("POST /api/management/tokens/revoke "));
+    assert!(
+        inference[0].starts_with("GET /api/services/anthropic/v1/models "),
+        "{}",
+        inference[0]
+    );
+    assert!(
+        management
+            .iter()
+            .all(|request| !request.contains("/api/services/"))
+    );
+    assert!(
+        inference
+            .iter()
+            .all(|request| !request.contains("/api/management/"))
+    );
 }
 
 #[tokio::test]

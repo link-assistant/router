@@ -181,6 +181,7 @@ async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
         target.local,
         target.managed,
         target.server.as_deref(),
+        target.management_server.as_deref(),
     )
     .await
     {

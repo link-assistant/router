@@ -15,16 +15,23 @@ use crate::clients::{ClientKind, RouterModel};
 
 mod bootstrap;
 mod catalog;
+mod diagnostics;
 mod discovery;
 mod docker;
+mod origin;
+mod process;
 mod selection;
 
+use diagnostics::compact;
 use discovery::discover_local_router;
 pub use discovery::{discovered_local_router, effective_source};
 use docker::{
     check_docker_output, docker_checked, docker_container_state, docker_subscription_status,
     ensure_docker,
 };
+pub use origin::canonical_server_origin;
+use origin::{normalize_server, same_origin};
+use process::process_alive;
 pub use selection::{
     clear_persisted, configured_source, load_persisted, save_persisted, selected_server,
 };
@@ -49,6 +56,8 @@ type AnyError = Box<dyn std::error::Error + Send + Sync>;
 pub struct PersistedServer {
     pub server: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub management_server: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub token: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run_max_requests: Option<u64>,
@@ -69,7 +78,10 @@ struct ManagedState {
 
 /// The effective server and the optional lease that controls a managed local one.
 pub struct ResolvedServer {
+    /// Public origin used for health, service catalogs, and generated clients.
     pub base_url: String,
+    /// Private origin used only for management API calls.
+    pub management_url: String,
     pub token: Option<String>,
     pub source: &'static str,
     pub run_max_requests: Option<u64>,
@@ -83,8 +95,29 @@ impl ResolvedServer {
     /// alive — for a router that is simply already running at `base_url`.
     #[must_use]
     pub fn at(base_url: impl Into<String>, token: Option<String>, source: &'static str) -> Self {
+        let base_url = base_url.into();
+        Self {
+            management_url: base_url.clone(),
+            base_url,
+            token,
+            source,
+            run_max_requests: None,
+            _lease: None,
+        }
+    }
+
+    /// A server whose management and inference listeners are intentionally
+    /// disjoint.
+    #[must_use]
+    pub fn at_origins(
+        base_url: impl Into<String>,
+        management_url: impl Into<String>,
+        token: Option<String>,
+        source: &'static str,
+    ) -> Self {
         Self {
             base_url: base_url.into(),
+            management_url: management_url.into(),
             token,
             source,
             run_max_requests: None,
@@ -159,23 +192,54 @@ impl Drop for ManagedLease {
 /// disposable instance on purpose (issue #250).
 pub async fn resolve(
     explicit_server: Option<&str>,
+    explicit_management_server: Option<&str>,
     explicit_token: Option<String>,
     run_max_requests: Option<u64>,
     force_managed: bool,
 ) -> Result<ResolvedServer, AnyError> {
-    let persisted = load_persisted()?;
+    // An explicit origin remains usable even if unrelated saved state is
+    // unreadable. Without an explicit target, persisted state is the target
+    // and must fail closed instead of silently starting or selecting another
+    // deployment.
+    let persisted = if explicit_server.is_some() {
+        load_persisted().ok().flatten()
+    } else {
+        load_persisted()?
+    };
     let environment_server = std::env::var("LINK_ASSISTANT_ROUTER_URL")
         .or_else(|_| std::env::var("ROUTER_URL"))
         .ok();
     let environment_token = std::env::var("LINK_ASSISTANT_ROUTER_TOKEN")
         .or_else(|_| std::env::var("LINK_ASSISTANT_TOKEN"))
         .ok();
-    let (base_url, source) = if let Some(server) = explicit_server {
-        (normalize_server(server)?, "flag")
+    let environment_management_server = std::env::var("LINK_ASSISTANT_ROUTER_MANAGEMENT_URL")
+        .or_else(|_| std::env::var("ROUTER_MANAGEMENT_URL"))
+        .ok();
+    let (base_url, management_url, source) = if let Some(server) = explicit_server {
+        let base_url = normalize_server(server)?;
+        let management_url = explicit_management_server
+            .map(normalize_server)
+            .transpose()?
+            .unwrap_or_else(|| base_url.clone());
+        (base_url, management_url, "flag")
     } else if let Some(server) = environment_server {
-        (normalize_server(&server)?, "environment")
+        let base_url = normalize_server(&server)?;
+        let management_url = if let Some(server) = explicit_management_server {
+            normalize_server(server)?
+        } else if let Some(server) = environment_management_server.as_deref() {
+            normalize_server(server)?
+        } else {
+            base_url.clone()
+        };
+        (base_url, management_url, "environment")
     } else if let Some(config) = persisted.as_ref() {
-        (normalize_server(&config.server)?, "persisted configuration")
+        let base_url = normalize_server(&config.server)?;
+        let management_url = explicit_management_server
+            .map(normalize_server)
+            .transpose()?
+            .or_else(|| config.management_server.clone())
+            .unwrap_or_else(|| base_url.clone());
+        (base_url, management_url, "persisted configuration")
     } else if let Some(discovered) = discover_local_router(force_managed).await {
         // Nothing was selected explicitly and a router is already listening
         // here, so use it rather than starting a second one. Starting one was
@@ -185,7 +249,11 @@ pub async fn resolve(
         // so a subscription authorized through it is invisible to the instance
         // already running (issue #250). Every explicit mechanism above this
         // point still wins, and `--managed` forces a fresh container.
-        (discovered, "already-running local server")
+        let management = explicit_management_server
+            .map(normalize_server)
+            .transpose()?
+            .unwrap_or_else(|| discovered.clone());
+        (discovered, management, "already-running local server")
     } else {
         let (state, lease) = acquire_managed()?;
         let base_url = format!("http://127.0.0.1:{}", state.port);
@@ -196,6 +264,7 @@ pub async fn resolve(
             None => None,
         };
         return Ok(ResolvedServer {
+            management_url: base_url.clone(),
             base_url,
             token,
             source: "managed local container",
@@ -243,6 +312,7 @@ pub async fn resolve(
         })?;
     Ok(ResolvedServer {
         base_url,
+        management_url,
         token,
         source,
         run_max_requests: budget,
@@ -309,14 +379,14 @@ async fn prepare_credential(
     })?;
     let client = http_client()?;
     let list_url = crate::route_contract::management_endpoint(
-        &server.base_url,
+        &server.management_url,
         crate::route_contract::RouteId::Tokens,
     );
     let list = client.get(&list_url).bearer_auth(token).send().await;
     match list {
         Ok(response) if response.status().is_success() => {
             let issue_url = crate::route_contract::management_endpoint(
-                &server.base_url,
+                &server.management_url,
                 crate::route_contract::RouteId::ClientTokens,
             );
             let response = client
@@ -359,7 +429,7 @@ async fn prepare_credential(
                 token: run_token,
                 available_models: Vec::new(),
                 revocation: Some(Revocation {
-                    base_url: server.base_url.clone(),
+                    base_url: server.management_url.clone(),
                     admin_token: token.to_string(),
                     id,
                 }),
@@ -475,8 +545,9 @@ pub async fn cleanup_run_credential(credential: RunCredential) -> Result<(), Any
 /// — deleting the file that holds a live credential and leaving nobody able to
 /// name it is the regression issue #190 exists to prevent.
 pub async fn revoke(base_url: &str, admin_token: &str, id: &str) -> Result<(), AnyError> {
+    let base_url = normalize_server(base_url)?;
     let url = crate::route_contract::management_endpoint(
-        base_url,
+        &base_url,
         crate::route_contract::RouteId::RevokeToken,
     );
     let response = http_client()?
@@ -895,64 +966,6 @@ fn choose_port() -> u16 {
 
 fn prune_references(state: &mut ManagedState) {
     state.references.retain(|pid| process_alive(*pid));
-}
-
-fn process_alive(pid: u32) -> bool {
-    if pid == std::process::id() {
-        return true;
-    }
-    #[cfg(unix)]
-    {
-        Command::new("kill")
-            .args(["-0", &pid.to_string()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .is_ok_and(|status| status.success())
-    }
-    #[cfg(windows)]
-    {
-        Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-            .output()
-            .is_ok_and(|output| {
-                output.status.success()
-                    && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
-            })
-    }
-}
-
-/// Whether two spellings name the same router.
-///
-/// Compared after normalisation and without a trailing slash, so `--server`
-/// written by hand matches what `server use` stored.
-fn same_origin(one: &str, other: &str) -> bool {
-    let canonical = |value: &str| {
-        normalize_server(value)
-            .unwrap_or_else(|_| value.to_string())
-            .trim_end_matches('/')
-            .to_ascii_lowercase()
-    };
-    canonical(one) == canonical(other)
-}
-
-fn normalize_server(server: &str) -> Result<String, AnyError> {
-    let server = server.trim().trim_end_matches('/');
-    if server.starts_with("http://") || server.starts_with("https://") {
-        Ok(server.to_string())
-    } else {
-        Err("server URL must start with http:// or https://".into())
-    }
-}
-
-fn compact(value: &str) -> String {
-    const LIMIT: usize = 240;
-    let compact = value.split_whitespace().collect::<Vec<_>>().join(" ");
-    if compact.chars().count() <= LIMIT {
-        compact
-    } else {
-        format!("{}…", compact.chars().take(LIMIT).collect::<String>())
-    }
 }
 
 #[path = "managed_server_state.rs"]

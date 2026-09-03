@@ -34,6 +34,14 @@ pub(crate) fn undo_state_path(config_path: &Path) -> PathBuf {
     backup_paths(config_path).state
 }
 
+/// Files the reversible global configurator may create beside a client
+/// configuration. Higher-level transactions include all of them in their
+/// rollback allow-list.
+pub(crate) fn transaction_paths(config_path: &Path) -> Vec<PathBuf> {
+    let paths = backup_paths(config_path);
+    vec![paths.config, paths.marker, paths.state]
+}
+
 pub(crate) fn update_post_configure_hash(
     config_path: &Path,
     marker_path: Option<&Path>,
@@ -62,7 +70,8 @@ pub(crate) fn update_post_configure_hash(
 /// knows whether a credential was stored alongside it, and reporting half the
 /// outcome from inside was how `with --global` came to announce success while
 /// telling the user to go set an environment variable themselves (issue #296).
-pub(crate) fn apply(
+pub(crate) fn apply_with_manager(
+    manager: &ClientManager,
     client: ClientKind,
     base_url: &str,
     models: &[RouterModel],
@@ -73,7 +82,6 @@ pub(crate) fn apply(
             .unwrap_or("client cannot be configured globally")
             .into());
     }
-    let manager = ClientManager::from_env()?;
     let config_path = manager.config_path(client);
     let paths = backup_paths(&config_path);
     if paths.state.exists() {
@@ -152,6 +160,13 @@ pub(crate) fn apply(
 /// configuration file to save — `configure grok` stores only a credential.
 pub fn undo(client: ClientKind) -> Result<Option<PathBuf>, AnyError> {
     let manager = ClientManager::from_env()?;
+    undo_with_manager(&manager, client)
+}
+
+pub(crate) fn undo_with_manager(
+    manager: &ClientManager,
+    client: ClientKind,
+) -> Result<Option<PathBuf>, AnyError> {
     let config_path = manager.config_path(client);
     let paths = backup_paths(&config_path);
     let source = match fs::read(&paths.state) {

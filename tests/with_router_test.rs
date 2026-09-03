@@ -127,6 +127,75 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
     (format!("http://127.0.0.1:{port}"), handle)
 }
 
+fn mock_split_management() -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind management listener");
+    let port = listener.local_addr().expect("management address").port();
+    let handle = thread::spawn(move || {
+        let mut requests = Vec::new();
+        for _ in 0..3 {
+            let (mut stream, _) = listener.accept().expect("accept management request");
+            let request = read_request(&mut stream);
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, body) = match path {
+                "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
+                "/api/management/tokens/client" => (
+                    "200 OK",
+                    r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
+                ),
+                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
+                _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
+            };
+            requests.push(request);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write management response");
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn mock_split_inference() -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind inference listener");
+    let port = listener.local_addr().expect("inference address").port();
+    let handle = thread::spawn(move || {
+        let mut requests = Vec::new();
+        for _ in 0..2 {
+            let (mut stream, _) = listener.accept().expect("accept inference request");
+            let request = read_request(&mut stream);
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, body) = match path {
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
+                "/api/services/codex/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
+                ),
+                _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
+            };
+            requests.push(request);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write inference response");
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
 fn mock_health_router() -> (String, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
     let port = listener.local_addr().expect("mock address").port();
@@ -722,6 +791,66 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
 }
 
 #[test]
+fn wrapper_keeps_split_route_classes_on_their_own_listeners() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&home).expect("create home");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_codex(&bin);
+    let (management_url, management) = mock_split_management();
+    let (base_url, inference) = mock_split_inference();
+    let inherited_path = std::env::var_os("PATH").unwrap_or_default();
+    let path =
+        std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
+            .expect("compose PATH");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_with-router"))
+        .args([
+            "--server",
+            &base_url,
+            "--management-server",
+            &management_url,
+            "--token",
+            "admin-secret",
+            "codex",
+            "hello",
+        ])
+        .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
+        .env("PATH", path)
+        .env("FAKE_EXIT", "0")
+        .env("CAPTURE_ARGS", capture.join("args"))
+        .env("CAPTURE_HOME", capture.join("home"))
+        .env("CAPTURE_CONFIG", capture.join("config"))
+        .env("CAPTURE_TOKEN", capture.join("token"))
+        .env_remove("CODEX_HOME")
+        .output()
+        .expect("run wrapper");
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let management = management.join().expect("management listener");
+    let inference = inference.join().expect("inference listener");
+    assert!(
+        management
+            .iter()
+            .all(|request| request.contains("/api/management/"))
+    );
+    assert!(inference[0].starts_with("GET /api/health "));
+    assert!(inference[1].starts_with("GET /api/services/codex/v1/models "));
+    assert!(
+        inference
+            .iter()
+            .all(|request| !request.contains("/api/management/"))
+    );
+}
+
+#[test]
 fn persisted_remote_token_is_private_and_never_echoed() {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
@@ -786,20 +915,12 @@ exit 0
 }
 
 /// End to end, through a terminal, for the exact command issue #297 reported.
-///
-/// `router with claude --resume <id>` used to reach the client as
-/// `--model <catalog-first> --print --resume <id>`: a session told to answer
-/// once and exit, with no prompt to answer, on a model the user never chose.
-/// The client's own error was correct for that request and named neither
-/// `--print` nor the router, so nothing in it led back to the cause.
-///
-/// A pty is required because the mode also depends on whether anyone is there
-/// to hold a session; piping the launcher's output would answer that question
-/// before the interesting one is reached.
+/// `router with claude --resume <id>` used to add `--model` and `--print`,
+/// making a resumable session answer once and exit on a model nobody chose.
+/// A pty preserves the interactive mode that exposed the regression.
 #[test]
 fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     use portable_pty::{CommandBuilder, PtySize, native_pty_system};
-
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
@@ -808,12 +929,10 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     fs::create_dir_all(&capture).expect("create capture directory");
     fake_claude(&bin);
     let (server, requests) = mock_router();
-
     let inherited_path = std::env::var_os("PATH").unwrap_or_default();
     let path =
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
-
     let pty = native_pty_system()
         .openpty(PtySize::default())
         .expect("allocate a pty");
@@ -849,7 +968,6 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
         status.success(),
         "launcher failed; transcript: {transcript}"
     );
-
     let args = fs::read_to_string(capture.join("args")).expect("captured argv");
     let args: Vec<&str> = args.lines().collect();
     assert!(

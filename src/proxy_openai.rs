@@ -22,14 +22,32 @@ struct RequiredChatFields {
 /// header is additive, so a client that ignores it is unaffected.
 pub const DROPPED_TOOLS_HEADER: &str = "x-router-dropped-tools";
 
+async fn route_openai_request(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: &serde_json::Value,
+    protocol: crate::client_policy::ClientProtocol,
+    path: &str,
+) -> Result<crate::model_routing::RoutedState, Response> {
+    if state.upstream_provider != UpstreamProvider::Auto {
+        return crate::model_routing::route_state_with_subscription(state, body)
+            .await
+            .map_err(|error| crate::model_routing::model_route_error_response(&error));
+    }
+    let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+    let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
+        state, &claims, headers, protocol, path,
+    )?;
+    crate::model_routing::route_state_with_subscription_for_providers(state, body, &entitled)
+        .await
+        .map_err(|error| crate::model_routing::model_route_error_response(&error))
+}
+
 fn rewrite_routed_model(
     body: &mut serde_json::Value,
     state: &AppState,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) {
-    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
-        return;
-    }
     let Some(requested) = body
         .get("model")
         .and_then(serde_json::Value::as_str)
@@ -37,14 +55,36 @@ fn rewrite_routed_model(
     else {
         return;
     };
-    let canonical = state.bridge_model.as_deref().or_else(|| {
-        subscription.map(|_| crate::model_routing::subscription_model_identity(&requested).1)
-    });
-    if let Some(canonical) = canonical.filter(|canonical| !canonical.is_empty())
-        && canonical != requested
-    {
+    let canonical = canonical_openai_model(
+        state.upstream_provider,
+        subscription.is_some(),
+        state.bridge_model.as_deref(),
+        &requested,
+    );
+    if !canonical.is_empty() && canonical != requested {
         body["model"] = serde_json::Value::String(canonical.to_string());
     }
+}
+
+/// Resolve only the model alias owned by this `OpenAI` request route.
+///
+/// `bridge_model` configures Anthropic-dialect translation to a non-Anthropic
+/// provider. It is not a native OpenAI-request default. Stored providers use
+/// the same field request-locally for their reversible qualified alias, while
+/// subscription aliases are canonicalized from the selected catalog identity.
+fn canonical_openai_model<'a>(
+    provider: UpstreamProvider,
+    has_subscription: bool,
+    routed_stored_model: Option<&'a str>,
+    requested: &'a str,
+) -> &'a str {
+    if has_subscription {
+        return crate::model_routing::subscription_model_identity(requested).1;
+    }
+    if provider == UpstreamProvider::OpenAICompatible {
+        return routed_stored_model.unwrap_or(requested);
+    }
+    requested
 }
 
 /// Attach the dropped-tool report to a response, and log it.
@@ -131,9 +171,17 @@ async fn openai_chat_completions_with_subscription(
             subscription: Some(subscription),
         }
     } else {
-        match crate::model_routing::route_state_with_subscription(&state, &body).await {
+        match route_openai_request(
+            &state,
+            &headers,
+            &body,
+            crate::client_policy::ClientProtocol::OpenAIChat,
+            "/v1/chat/completions",
+        )
+        .await
+        {
             Ok(routed) => routed,
-            Err(error) => return crate::model_routing::model_route_error_response(&error),
+            Err(response) => return response,
         }
     };
     let state = routed.state;
@@ -333,9 +381,17 @@ pub async fn openai_responses(
         }
     };
     let routing_body = body.clone();
-    let routed = match crate::model_routing::route_state_with_subscription(&state, &body).await {
+    let routed = match route_openai_request(
+        &state,
+        &headers,
+        &body,
+        crate::client_policy::ClientProtocol::OpenAIResponses,
+        "/v1/responses",
+    )
+    .await
+    {
         Ok(routed) => routed,
-        Err(error) => return crate::model_routing::model_route_error_response(&error),
+        Err(response) => return response,
     };
     let state = routed.state;
     let subscription = routed.subscription;
@@ -496,4 +552,22 @@ pub async fn openai_responses(
     )
     .await;
     report_dropped_tools(&state, response, &dropped_tools)
+}
+
+#[cfg(test)]
+mod routed_model_tests {
+    use super::*;
+
+    #[test]
+    fn native_claude_routes_ignore_the_anthropic_bridge_override() {
+        assert_eq!(
+            canonical_openai_model(
+                UpstreamProvider::Anthropic,
+                true,
+                Some("unrelated-codex-bridge-model"),
+                "claude-future-native",
+            ),
+            "claude-future-native"
+        );
+    }
 }

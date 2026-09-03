@@ -57,6 +57,33 @@ router clients repair --all --dry-run
 router clients remove codex
 ```
 
+Deployments may keep management completely off the public listener. Persist
+both canonical origins once and then use the ordinary commands:
+
+```bash
+printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router server use \
+  https://router.example \
+  --management-server https://router-admin.example \
+  --token-stdin
+router configure codex
+router clients repair codex
+```
+
+For one setup without changing the saved selection:
+
+```bash
+printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router clients setup opencode \
+  --server https://router.example \
+  --management-server https://router-admin.example \
+  --token-stdin
+```
+
+Only the public inference origin is written into client configuration. Token
+inspection, minting, and revocation use only the management origin; health and
+model catalogs use only inference. Setup/configure writes are transactional,
+and any newly minted candidate is revoked if validation or a local write
+fails.
+
 `remove` revokes the token before it deletes the local credential file, so a
 copy of that file stops working immediately. When setup minted the token, the
 command prints `revoked managed token <ID>`. When revocation fails, nothing is

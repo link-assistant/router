@@ -54,7 +54,7 @@ pub async fn selected_server(force_managed: bool) -> Result<Option<ResolvedServe
         // somewhere the router in use cannot see (issue #250).
         return Ok(crate::managed_server::discovered_local_router().await);
     }
-    crate::managed_server::resolve(None, None, None, false)
+    crate::managed_server::resolve(None, None, None, None, false)
         .await
         .map(Some)
         .map_err(|error| format!("the selected server is not usable: {error}"))
@@ -71,15 +71,22 @@ pub async fn target_for(
     local: bool,
     managed: bool,
     server: Option<&str>,
+    management_server: Option<&str>,
 ) -> Result<Option<ResolvedServer>, String> {
     if local || managed {
         return Ok(None);
     }
     if let Some(server) = server {
-        return crate::managed_server::resolve(Some(server), None, None, false)
+        return crate::managed_server::resolve(Some(server), management_server, None, None, false)
             .await
             .map(Some)
-            .map_err(|error| format!("{server} is not usable: {error}"));
+            .map_err(|error| format!("the named server is not usable: {error}"));
+    }
+    if management_server.is_some() {
+        return crate::managed_server::resolve(None, management_server, None, None, false)
+            .await
+            .map(Some)
+            .map_err(|error| format!("the selected server is not usable: {error}"));
     }
     selected_server(managed).await
 }
@@ -434,7 +441,7 @@ async fn send<T: serde::de::DeserializeOwned>(
     path: &str,
     body: Option<serde_json::Value>,
 ) -> Result<T, String> {
-    let url = format!("{}{path}", server.base_url.trim_end_matches('/'));
+    let url = format!("{}{path}", server.management_url.trim_end_matches('/'));
     let mut request = client.request(method, &url);
     if let Some(token) = server.token.as_deref() {
         request = request.bearer_auth(token);

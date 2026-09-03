@@ -124,6 +124,21 @@ router server status
 router server use --clear
 ```
 
+When the administrator listener is separate, persist it explicitly while the
+positional URL remains the client-facing inference origin:
+
+```bash
+printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router server use \
+  https://router.example \
+  --management-server https://router-admin.example \
+  --token-stdin
+router with claude
+```
+
+The wrapper checks health and catalogs only on the inference listener, mints
+and revokes only on the management listener, and exposes only the inference
+origin to the launched client.
+
 Passing `--token` is convenient but records the value in shell history. Prefer
 stdin or the environment for a credential. An ordinary token is validated and
 used unchanged. An admin credential is never given to the client: the wrapper

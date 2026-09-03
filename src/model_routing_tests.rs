@@ -709,6 +709,42 @@ async fn automatic_state_never_uses_a_claude_alias_for_an_unadvertised_openai_mo
     assert_eq!(routed.bridge_model.as_deref(), Some("gpt-5"));
 }
 
+#[tokio::test]
+async fn client_entitlement_filters_hidden_providers_before_collision_resolution() {
+    let data = tempdir().unwrap();
+    let claude = tempdir().unwrap();
+    let codex = tempdir().unwrap();
+    fs::write(
+        claude.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"claude-live"}}"#,
+    )
+    .unwrap();
+    fs::write(
+        codex.path().join("auth.json"),
+        r#"{"tokens":{"access_token":"codex-live"}}"#,
+    )
+    .unwrap();
+    let state = auto_state(
+        vec![
+            SubscriptionReader::new(SubscriptionProvider::Claude, claude.path()),
+            SubscriptionReader::new(SubscriptionProvider::Codex, codex.path()),
+        ],
+        data.path(),
+    );
+    let model = "future-shared-by-two-providers";
+    for provider in [SubscriptionProvider::Claude, SubscriptionProvider::Codex] {
+        state
+            .model_catalogs
+            .record_success(provider, vec![model.to_string()]);
+    }
+
+    let routed =
+        route_subscription_model_for_providers(&state, model, &[SubscriptionProvider::Claude])
+            .await
+            .expect("the hidden Codex catalog must not make Claude's visible id ambiguous");
+    assert_eq!(routed.state.upstream_provider, UpstreamProvider::Anthropic);
+}
+
 #[test]
 fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
     let catalogs = ModelCatalogCache::new();

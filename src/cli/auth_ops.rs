@@ -293,6 +293,9 @@ pub struct AuthTarget {
     /// Act on this router instead of the selected one.
     #[arg(long, value_name = "URL", conflicts_with = "local")]
     pub server: Option<String>,
+    /// Private management origin when it differs from the inference origin.
+    #[arg(long, value_name = "URL", conflicts_with = "local")]
+    pub management_server: Option<String>,
     /// Start a disposable managed container even if a router is already
     /// listening locally (issue #250).
     ///
@@ -300,7 +303,7 @@ pub struct AuthTarget {
     /// `auth`. The families that only read or change router state refuse it
     /// and name `--local`, because there it started nothing and quietly meant
     /// `--local` anyway (issue #315).
-    #[arg(long, conflicts_with_all = ["local", "server"])]
+    #[arg(long, conflicts_with_all = ["local", "server", "management_server"])]
     pub managed: bool,
 }
 

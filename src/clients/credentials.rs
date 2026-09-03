@@ -47,6 +47,11 @@ pub struct ManagedCredential {
     /// Non-secret subscriber identity carried by the signed client token.
     #[serde(default)]
     pub principal_id: Option<String>,
+    /// Hash of the complete client config after setup. This contains no
+    /// configuration bytes or credentials; it only distinguishes a genuinely
+    /// identical second setup from a file the user changed afterward.
+    #[serde(default)]
+    pub config_sha256: Option<String>,
 }
 
 impl ManagedCredential {
@@ -117,6 +122,7 @@ mod tests {
             issued_at: None,
             router: None,
             principal_id: Some("primary".into()),
+            config_sha256: None,
         };
         assert!(minted.revocable_by_default());
         let supplied = ManagedCredential {
@@ -138,6 +144,7 @@ mod tests {
             issued_at: Some(7),
             router: Some("http://router.test".into()),
             principal_id: Some("primary".into()),
+            config_sha256: Some("configuration-hash".into()),
         };
         write(&path, &credential).expect("write metadata");
         let contents = fs::read_to_string(&path).expect("read metadata");

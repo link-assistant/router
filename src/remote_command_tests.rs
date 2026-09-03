@@ -216,6 +216,7 @@ async fn an_explicit_local_target_resolves_without_a_server() {
     let target = AuthTarget {
         local: true,
         server: None,
+        management_server: None,
         managed: false,
     };
 
@@ -237,6 +238,7 @@ async fn an_unreachable_named_target_is_an_error() {
     let target = AuthTarget {
         local: false,
         server: Some("http://127.0.0.1:1".to_string()),
+        management_server: None,
         managed: false,
     };
 

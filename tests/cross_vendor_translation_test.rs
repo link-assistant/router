@@ -51,6 +51,10 @@ struct TestRouter {
 
 impl TestRouter {
     async fn start(client_kind: ClientKind) -> Self {
+        Self::start_with_bridge(client_kind, None).await
+    }
+
+    async fn start_with_bridge(client_kind: ClientKind, bridge_model: Option<&str>) -> Self {
         let data = tempfile::tempdir().expect("temporary test data");
         let upstream: Captured = Arc::new(Mutex::new(Vec::new()));
         let captured = Arc::clone(&upstream);
@@ -118,7 +122,7 @@ impl TestRouter {
             upstream_base_url: stub_url,
             upstream_provider: UpstreamProvider::Anthropic,
             gonka: None,
-            bridge_model: None,
+            bridge_model: bridge_model.map(str::to_string),
             bridge_model_policy:
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
             crater: None,
@@ -203,6 +207,40 @@ impl TestRouter {
             .last()
             .cloned()
             .expect("the router forwarded a request upstream")
+    }
+}
+
+#[tokio::test]
+async fn native_claude_catalog_models_ignore_an_unrelated_bridge_default() {
+    let unrelated = "unrelated-codex-default";
+    for (client, path, body) in [
+        (
+            ClientKind::Codex,
+            "/api/services/openai/v1/responses",
+            json!({"model": CLAUDE_MODEL, "input": "test"}),
+        ),
+        (
+            ClientKind::Opencode,
+            "/api/services/openai/v1/chat/completions",
+            json!({
+                "model": CLAUDE_MODEL,
+                "messages": [{"role": "user", "content": "test"}]
+            }),
+        ),
+    ] {
+        for stream in [false, true] {
+            let router = TestRouter::start_with_bridge(client, Some(unrelated)).await;
+            let mut body = body.clone();
+            body["stream"] = Value::Bool(stream);
+            let (status, response) = router.post(path, &body).await;
+            assert_eq!(status, StatusCode::OK, "{client}/{stream}: {response}");
+            let forwarded = router.forwarded();
+            assert_eq!(
+                forwarded["model"], CLAUDE_MODEL,
+                "{client}/{stream} forwarded the unrelated bridge default: {forwarded}"
+            );
+            assert!(!forwarded.to_string().contains(unrelated));
+        }
     }
 }
 

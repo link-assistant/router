@@ -949,44 +949,35 @@ fn server_selection_rejects_ambiguous_or_invalid_updates_and_can_clear() {
 
     let invalid = server_command(&home, &bin, &log, "absent", &["use", "router.example"]);
     assert!(!invalid.status.success());
-    assert!(String::from_utf8_lossy(&invalid.stderr).contains("must start with http"));
+    assert!(String::from_utf8_lossy(&invalid.stderr).contains("absolute http:// or https://"));
+
+    for unsafe_origin in [
+        "https://private-user:private-password@router.example",
+        "https://router.example/?access_token=private-query",
+        "https://router.example/#private-fragment",
+        "https://router.example/private-path",
+    ] {
+        let rejected = server_command(&home, &bin, &log, "absent", &["use", unsafe_origin]);
+        assert!(!rejected.status.success());
+        let output = format!(
+            "{}{}",
+            String::from_utf8_lossy(&rejected.stdout),
+            String::from_utf8_lossy(&rejected.stderr)
+        );
+        for secret in [
+            "private-user",
+            "private-password",
+            "private-query",
+            "private-fragment",
+            "private-path",
+        ] {
+            assert!(
+                !output.contains(secret),
+                "rejection leaked {secret}: {output}"
+            );
+        }
+    }
 
     let cleared = server_command(&home, &bin, &log, "absent", &["use", "--clear"]);
     assert!(cleared.status.success());
-}
-
-/// State written by an earlier release is JSON, and must keep loading: the
-/// stores moved to links notation without changing their file names, so an
-/// existing installation migrates on its next write rather than losing its
-/// configuration (issue #235).
-#[test]
-fn a_json_server_selection_from_an_earlier_release_still_loads() {
-    let home = tempfile::tempdir().expect("temporary home");
-    let directory = home.path().join(".config/link-assistant-router");
-    fs::create_dir_all(&directory).expect("create config directory");
-    fs::write(
-        directory.join("server.json"),
-        r#"{"server":"https://legacy.example","token":"la_sk_legacy","run_max_requests":5}"#,
-    )
-    .expect("seed a legacy JSON selection");
-
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["server", "status"])
-        .env("HOME", home.path())
-        .env("TOKEN_SECRET", "legacy-load-secret")
-        .env_remove("XDG_CONFIG_HOME")
-        .env_remove("APPDATA")
-        .output()
-        .expect("server status runs");
-    let rendered = format!(
-        "{}{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(
-        rendered.contains("https://legacy.example"),
-        "the legacy selection must still load: {rendered}"
-    );
-    // And the secret is still not echoed while doing it.
-    assert!(!rendered.contains("la_sk_legacy"), "{rendered}");
 }

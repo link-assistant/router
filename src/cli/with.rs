@@ -187,16 +187,19 @@ pub struct WithArgs {
     ///
     /// The default reuses a running local router (issue #250); CI and
     /// clean-room reproductions want a fresh instance on purpose.
-    #[arg(long, conflicts_with = "server")]
+    #[arg(long, conflicts_with_all = ["server", "management_server"])]
     pub managed: bool,
     /// Router origin. No local server is started when this is supplied.
     #[arg(long)]
     pub server: Option<String>,
+    /// Private management origin when it differs from `--server`.
+    #[arg(long, value_name = "URL", conflicts_with = "local")]
+    pub management_server: Option<String>,
     /// Use the router running on this machine, not the selected one.
     ///
     /// `with` had `--server` and `--managed` but not `--local`, so it carried
     /// half the target vocabulary every other family has (issue #314).
-    #[arg(long, conflicts_with_all = ["server", "managed"])]
+    #[arg(long, conflicts_with_all = ["server", "management_server", "managed"])]
     pub local: bool,
     /// Router token. Prefer the environment or `--token-stdin` to shell history.
     #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
@@ -278,6 +281,9 @@ pub enum ServerOp {
     Use {
         /// Remote router origin to persist.
         server: Option<String>,
+        /// Private management origin when it differs from the inference origin.
+        #[arg(long, value_name = "URL")]
+        management_server: Option<String>,
         /// Token to persist with owner-only permissions.
         #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
         token: Option<String>,
@@ -325,6 +331,7 @@ impl WithArgs {
             target: crate::cli::AuthTarget {
                 local: self.local,
                 server: self.server.clone(),
+                management_server: self.management_server.clone(),
                 managed: self.managed,
             },
             token: self.token.clone(),

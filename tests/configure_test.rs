@@ -2,6 +2,7 @@
 
 #![cfg(unix)]
 
+use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::os::unix::fs::PermissionsExt as _;
@@ -82,6 +83,73 @@ fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
         paths
     });
     (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn split_listener(
+    management: bool,
+    request_count: usize,
+) -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind split listener");
+    let port = listener.local_addr().expect("split address").port();
+    let handle = thread::spawn(move || {
+        let mut requests = Vec::new();
+        for _ in 0..request_count {
+            let (mut stream, _) = listener.accept().expect("accept split request");
+            let request = read_split_request(&mut stream);
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, body) = if management {
+                match path {
+                    "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
+                    "/api/management/tokens/client" => (
+                        "200 OK",
+                        r#"{"token":"e30.eyJzdWIiOiJjb25maWd1cmUtaWQifQ.signature"}"#,
+                    ),
+                    _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
+                }
+            } else {
+                match path {
+                    "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
+                    "/api/services/codex/v1/models" => (
+                        "200 OK",
+                        r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
+                    ),
+                    _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
+                }
+            };
+            requests.push(request);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write split response");
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn read_split_request(stream: &mut std::net::TcpStream) -> String {
+    stream
+        .set_read_timeout(Some(Duration::from_secs(5)))
+        .expect("set timeout");
+    let mut bytes = Vec::new();
+    let mut buffer = [0_u8; 4096];
+    loop {
+        let count = stream.read(&mut buffer).expect("read request");
+        if count == 0 {
+            break;
+        }
+        bytes.extend_from_slice(&buffer[..count]);
+        if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+            break;
+        }
+    }
+    String::from_utf8_lossy(&bytes).into_owned()
 }
 
 fn router(home: &std::path::Path, args: &[&str]) -> Output {
@@ -166,6 +234,43 @@ fn configure_writes_the_selected_router_and_stores_its_credential() {
         "a stored credential must be owner-only"
     );
     requests.join().expect("mock router thread");
+}
+
+#[test]
+fn configure_keeps_split_route_classes_on_their_own_listeners() {
+    let home = tempfile::tempdir().expect("temporary home");
+    let (management_url, management) = split_listener(true, 2);
+    let (base_url, inference) = split_listener(false, 2);
+
+    let output = router(
+        home.path(),
+        &[
+            "configure",
+            "codex",
+            "--server",
+            &base_url,
+            "--management-server",
+            &management_url,
+            "--token",
+            "la_sk_admin",
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let management = management.join().expect("management listener");
+    let inference = inference.join().expect("inference listener");
+    assert!(management[0].starts_with("GET /api/management/tokens "));
+    assert!(management[1].starts_with("POST /api/management/tokens/client "));
+    assert!(inference[0].starts_with("GET /api/health "));
+    assert!(inference[1].starts_with("GET /api/services/codex/v1/models "));
+    let config =
+        fs::read_to_string(home.path().join(".codex/config.toml")).expect("configured Codex");
+    assert!(config.contains(&base_url));
+    assert!(!config.contains(&management_url));
 }
 
 /// `with --global` is the same command under an older name, so it cannot
