@@ -1751,19 +1751,16 @@ check, and both are automatic:
 - `.cargo/config.toml` disables the incremental cache and drops debug info to
   line tables. Backtraces still resolve; stepping through variables in a
   debugger does not.
-- A `post-commit` hook runs `scripts/sweep-build-artifacts.sh`, which prunes
-  artifacts the commit's build did not touch. It needs `cargo-sweep`:
+- The last `pre-commit` hook runs `scripts/sweep-build-artifacts.sh`, which uses
+  `cargo clean` to remove the checkout's build output after formatting, lint,
+  and tests finish:
 
   ```bash
-  cargo install cargo-sweep
-  pre-commit install --hook-type post-commit
+  pre-commit install
   ```
 
-  Without it the hook prints a note and does nothing — it never fails a commit.
-
-To reclaim space by hand, `cargo sweep --maxsize 10GB` caps the directory and
-`rm -rf target/debug/incremental` is always safe. Prefer either to
-`cargo clean`, which forces a full cold rebuild of all 41 binaries.
+To reclaim space by hand, run `cargo clean`. The next build is intentionally a
+cold build; the hook trades compilation reuse for a predictable disk bound.
 
 CI compiles through [sccache](https://github.com/mozilla/sccache) with the
 GitHub Actions backend. The artifact cache is keyed on `Cargo.lock`, so one

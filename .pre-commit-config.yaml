@@ -36,24 +36,13 @@ repos:
         types: [rust]
         pass_filenames: false
 
-      # Drop build artifacts the commit's own build did not use.
-      #
-      # `target/` keeps superseded test and binary artifacts, re-linked on each
-      # change and never evicted, so it can grow without bound. This prunes what
-      # the build just finished with, so a fresh build's output survives and
-      # everything it superseded goes.
-      #
-      # `post-commit`, not `pre-commit`: `--stamp` must precede the build for
-      # `--file` to spare it, and the hooks above build. Running here means the
-      # stamp written last time bounds the artifacts written this time.
-      #
-      # Never fails a commit: `cargo-sweep` is optional tooling, and a missing
-      # binary or a locked target directory is not a reason to reject work.
-      - id: cargo-sweep
-        name: cargo sweep (drop superseded build artifacts)
+      # Always reclaim the build output produced by the checks above. Keeping
+      # this as the last pre-commit hook bounds disk use even in worktrees and
+      # does not require optional contributor tooling.
+      - id: cargo-clean
+        name: cargo clean (clear build cache)
         entry: scripts/sweep-build-artifacts.sh
         language: system
-        types: [rust]
         pass_filenames: false
-        stages: [post-commit]
+        stages: [pre-commit]
         always_run: true
