@@ -775,11 +775,10 @@ pub async fn refresh_catalogs_for_accounts(
                     .as_deref()
                     == Some(error.as_str())
                 {
-                    // The same failure, restated. A dead subscription produced
-                    // 146 identical WARNs over twelve hours, which is not
-                    // reporting — it is noise that hides the one line saying
-                    // the state changed (issue #321). The condition stays
-                    // visible in `last_error`, on
+                    // The same failure, restated. Recurring identical warnings
+                    // are noise that hides the one line saying the state
+                    // changed (issue #321). The condition stays visible in
+                    // `last_error`, on
                     // `/api/management/health/subscriptions` and
                     // in the `/metrics` gauge.
                     tracing::debug!("{provider} model catalog is still failing: {error}");

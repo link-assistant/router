@@ -266,7 +266,7 @@ async fn openai_surfaces_render_upstream_errors_in_their_own_dialect() {
         assert!(
             body["error"]["message"]
                 .as_str()
-                .is_some_and(|message| message.contains("usage limit")),
+                .is_some_and(|message| message.contains("Synthetic limit reached")),
             "{path} lost the message: {body}"
         );
     }
@@ -317,7 +317,7 @@ async fn the_anthropic_surface_rendering_is_unchanged() {
     assert!(
         body["error"]["message"]
             .as_str()
-            .is_some_and(|message| message.contains("usage limit")),
+            .is_some_and(|message| message.contains("Synthetic limit reached")),
         "the Anthropic surface lost the message: {body}"
     );
     let text = body_text(&body);

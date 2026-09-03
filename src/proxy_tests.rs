@@ -221,8 +221,8 @@ fn two_clients_are_indistinguishable_upstream() {
     };
 
     assert_eq!(
-        client("MacOS", "claude-cli/2.1.237", "d42315d0"),
-        client("Linux", "node", "572a3cf1"),
+        client("ExampleOS-A", "fixture-client/1.0", "fixture-session-a"),
+        client("ExampleOS-B", "fixture-client/2.0", "fixture-session-b"),
         "one deployment must present one identity upstream"
     );
 }

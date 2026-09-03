@@ -48,8 +48,8 @@ cannot, and why:
 ```
 
 Only subscriptions this deployment is actually configured for are reported, so
-"claude was never set up here" and "claude died twelve hours ago" cannot render
-identically. The same state is scrapeable:
+"claude was never set up here" and "claude is currently unavailable" cannot
+render identically. The same state is scrapeable:
 
 ```
 link_assistant_subscription_healthy{provider="claude"} 0
