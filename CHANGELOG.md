@@ -148,6 +148,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.1.0] - 2026-09-03
+
+### Added
+
+- Support separate canonical management and inference origins across server selection, wrappers, client setup, configuration, and repair.
+
+### Fixed
+
+- Keep native subscription model identities independent from unrelated bridge defaults and make catalog/routing collision semantics identical.
+- Make persistent client setup and configuration transactional, idempotent, and able to revoke unused minted credentials after failure.
+
+### Security
+
+- Reject credential-bearing or path/query/fragment server URLs without echoing rejected secrets, and keep management routes off public client origins.
+- Filter automatic routing candidates by the signed client entitlement before resolving provider collisions.
+
+### Fixed
+
+- Keep model-routing validation compatible with the Rust 1.98 lint gate used by release CI.
+- Keep managed-server process checks warning-free on Windows and ratchet the verified coverage baseline.
+
 ## [1.0.2] - 2026-09-03
 
 ### Fixed
