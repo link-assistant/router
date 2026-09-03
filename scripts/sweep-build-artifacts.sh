@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Prune build artifacts the most recent build did not touch, then re-stamp.
 #
-# `target/` retains every superseded artifact: this workspace links 38
-# integration-test binaries plus three `[[bin]]` targets, and nothing evicts
-# the previous ones. Left alone it reached 512,539 files and 61 GB.
+# `target/` retains every superseded artifact: this workspace links many test
+# and binary targets, and nothing evicts the previous ones. Left alone it can
+# grow without bound.
 #
 # The stamp/sweep order matters and is easy to get backwards. `cargo sweep
 # --stamp` records "everything older than now is stale"; `--file` then deletes

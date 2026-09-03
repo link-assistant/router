@@ -1744,14 +1744,13 @@ This demonstrates token issuance, validation, and revocation programmatically.
 
 ### Build cache
 
-A debug build links 38 integration-test binaries plus three `[[bin]]` targets
-and evicts nothing, so `target/` grows without bound — it reached 61 GB across
-512,539 files before this was addressed. Two things keep it in check, and both
-are automatic:
+A debug build links many integration-test binaries plus the `[[bin]]` targets
+and evicts nothing, so `target/` can grow without bound. Two things keep it in
+check, and both are automatic:
 
-- `.cargo/config.toml` disables the incremental cache (42 GB of that 61 GB) and
-  drops debug info to line tables. Backtraces still resolve; stepping through
-  variables in a debugger does not.
+- `.cargo/config.toml` disables the incremental cache and drops debug info to
+  line tables. Backtraces still resolve; stepping through variables in a
+  debugger does not.
 - A `post-commit` hook runs `scripts/sweep-build-artifacts.sh`, which prunes
   artifacts the commit's build did not touch. It needs `cargo-sweep`:
 

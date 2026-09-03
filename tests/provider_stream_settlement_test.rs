@@ -3,8 +3,8 @@
 //! Of the four streaming relays, only the Anthropic path called `settle_stream`.
 //! This one recorded every frame and then simply stopped, so its exchanges
 //! reached the log with no terminal record and `logs anomalies` could only
-//! report the ending as unknown — 248 exchanges on the reported store, of which
-//! the sampled ones had all completed (issue #258).
+//! report the ending as unknown even when the recorded stream had completed
+//! (issue #258).
 
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};

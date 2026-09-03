@@ -4,8 +4,8 @@
 //! and systemd all send -- reached no handler. As PID 1 in a container the
 //! kernel applies no default action either, so the signal was silently
 //! discarded and every stop waited out the full grace period before a
-//! `SIGKILL`: 30 seconds to shut down an idle deployment, and any in-flight
-//! stream severed at the timeout rather than allowed to finish (issue #334).
+//! `SIGKILL`, severing any in-flight stream at the timeout rather than allowing
+//! it to finish (issue #334).
 //!
 //! Split from `main.rs` to keep that file within the repository's 1000-line
 //! limit.

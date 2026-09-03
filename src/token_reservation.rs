@@ -3,7 +3,7 @@
 //! A spend cap cannot be enforced from recorded usage alone. Usage is only known
 //! once a response completes, so checking `used_tokens < max_tokens` at admission
 //! lets a single large answer push the persisted total arbitrarily far past the
-//! cap — the router observed `39273/30000` after one tool loop (issue #195).
+//! cap (issue #195).
 //!
 //! The router therefore reserves budget *before* dispatching. Every protocol
 //! declares, or is given, a maximum output size; that figure plus an estimate of

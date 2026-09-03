@@ -38,11 +38,10 @@ repos:
 
       # Drop build artifacts the commit's own build did not use.
       #
-      # `target/` keeps every superseded artifact forever: 38 test binaries and
-      # three `[[bin]]` targets, re-linked on each change and never evicted,
-      # reached 512,539 files and 61 GB here. This prunes what the build just
-      # finished with, so a fresh build's output survives and everything it
-      # superseded goes.
+      # `target/` keeps superseded test and binary artifacts, re-linked on each
+      # change and never evicted, so it can grow without bound. This prunes what
+      # the build just finished with, so a fresh build's output survives and
+      # everything it superseded goes.
       #
       # `post-commit`, not `pre-commit`: `--stamp` must precede the build for
       # `--file` to spare it, and the hooks above build. Running here means the

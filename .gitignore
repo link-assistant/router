@@ -51,6 +51,10 @@ doc/
 .env.local
 *.local
 
+# Runtime state created when a local data directory is selected. It may contain
+# signed bearer tokens and must never become repository content.
+/link-assistant-router/
+
 # Log files
 *.log
 logs/

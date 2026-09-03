@@ -87,29 +87,29 @@ fn build_upstream_headers_strips_client_auth_headers() {
 fn upstream_headers_describe_the_deployment_not_the_caller() {
     let mut incoming = HeaderMap::new();
     for (name, value) in [
-        ("x-stainless-os", "MacOS"),
-        ("x-stainless-arch", "arm64"),
-        ("x-stainless-runtime", "node"),
-        ("x-stainless-runtime-version", "v26.3.0"),
-        ("x-stainless-package-version", "0.112.1"),
-        ("user-agent", "claude-cli/2.1.237 (external, sdk-cli)"),
-        ("accept-language", "en-GB"),
+        ("x-stainless-os", "ClientOS"),
+        ("x-stainless-arch", "client-arch"),
+        ("x-stainless-runtime", "example-runtime"),
+        ("x-stainless-runtime-version", "v1.2.3"),
+        ("x-stainless-package-version", "9.9.9"),
+        ("user-agent", "example-client/1.0"),
+        ("accept-language", "en-US"),
         ("x-app", "cli"),
         ("originator", "codex_cli_rs"),
         // A stable identifier that correlates requests into sessions no matter
         // which token carried them, defeating per-token separation.
         (
             "x-claude-code-session-id",
-            "d42315d0-0000-0000-0000-000000000000",
+            "11111111-2222-3333-4444-555555555555",
         ),
         // A client-side safety toggle must not be asserted on the operator's
         // behalf, the same principle as issue #310.
         ("anthropic-dangerous-direct-browser-access", "true"),
         // Correct today and guarded here: the router never adds these, and it
         // must not relay one a client sent either.
-        ("x-forwarded-for", "42.114.207.230"),
-        ("x-real-ip", "42.114.207.230"),
-        ("forwarded", "for=42.114.207.230"),
+        ("x-forwarded-for", "203.0.113.10"),
+        ("x-real-ip", "203.0.113.10"),
+        ("forwarded", "for=203.0.113.10"),
     ] {
         incoming.insert(name, HeaderValue::from_static(value));
     }

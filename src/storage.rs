@@ -605,10 +605,9 @@ impl DurableDualTokenStore {
         };
         // Recovery, not a rewrite. `with_records` reads both projections and
         // commits them back, which costs a full parse and a full rebuild on
-        // every open -- ~1.9 s at 306 records, paid by every `router with`
-        // invocation. A journal is only present when a writer crashed, so the
-        // work is done when there is something to recover and skipped when
-        // there is not (issue #357).
+        // every open, paid by every `router with` invocation. A journal is only
+        // present when a writer crashed, so the work is done when there is
+        // something to recover and skipped when there is not (issue #357).
         if store.journal_path.exists() {
             store.with_records(|_| ())?;
         }
@@ -648,12 +647,12 @@ impl DurableDualTokenStore {
     ///
     /// The binary projection is the expensive half. `write_binary` stores each
     /// string as one link per byte -- a 36-character id is 36 `create_link`
-    /// calls -- so persisting 306 records rebuilds roughly 54,000 links, about
-    /// a second, to record a change to one of them (issues #356, #357).
+    /// calls -- so persisting the store rebuilds many links to record a change
+    /// to one of them (issues #356, #357).
     fn install(&self, records: &[TokenRecord]) -> Result<(), StorageError> {
         self.text.replace_all(records)?;
         // Only when it actually differs. The text projection is what reads
-        // consult, and a mutation of one token leaves the other 305 records
+        // consult, and a mutation of one token leaves the other records
         // identical -- rebuilding the links network for them is the bulk of what a
         // write costs (issues #356, #357).
         self.binary.replace_all_if_changed(records)?;
@@ -686,10 +685,10 @@ impl DurableDualTokenStore {
     /// Run `operation` over the records and persist whatever it changed.
     ///
     /// For accessors that actually write. A read must use [`Self::read_records`]
-    /// instead: committing after a listing rewrote a 64 MB `tokens.bin` to
-    /// answer a question that changed nothing, which took 8-13 seconds on a
-    /// 290-token deployment and, because the lock is shared with the request
-    /// path, queued live traffic behind it (issue #351).
+    /// instead: committing after a listing rewrote the preallocated binary
+    /// projection to answer a question that changed nothing and, because the
+    /// lock is shared with the request path, queued live traffic behind it
+    /// (issue #351).
     fn with_records<T>(
         &self,
         operation: impl FnOnce(&mut HashMap<String, TokenRecord>) -> T,
@@ -726,10 +725,10 @@ impl DurableDualTokenStore {
 
     /// The records, read from the projection that can answer quickly.
     ///
-    /// `merged_records` reads both stores, and `tokens.bin` is preallocated --
-    /// 64 MB for 290 records on the deployment in issue #351 -- so scanning it
-    /// took 1.6 s where the same records came out of `tokens.lino` in 6 ms.
-    /// Merging is for reconciling two writers; a read does not need it.
+    /// `merged_records` reads both stores, and `tokens.bin` is preallocated, so
+    /// scanning it is materially more expensive than reading the same records
+    /// from `tokens.lino`. Merging is for reconciling two writers; a read does
+    /// not need it.
     ///
     /// Reading text alone is sound because `install` writes text first and
     /// binary second, so the text projection is never the staler of the two.
