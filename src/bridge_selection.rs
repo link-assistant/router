@@ -92,6 +92,9 @@ pub enum SelectionFailure {
     CredentialUnavailable,
     /// The credential works but advertises no models.
     EmptyCatalog,
+    /// The operator's configured bridge model is absent from this account's
+    /// current live catalog.
+    ConfiguredModelUnavailable,
 }
 
 impl fmt::Display for ModelSelectionRequired {
@@ -114,6 +117,12 @@ impl fmt::Display for ModelSelectionRequired {
                 f,
                 "no model can be selected for {provider}: its live catalog advertises no \
                  models for this account."
+            ),
+            SelectionFailure::ConfiguredModelUnavailable => write!(
+                f,
+                "no model can be selected for {provider}: the configured bridge model is not \
+                 advertised by this account's current live catalog. Choose an advertised model \
+                 or remove the explicit bridge-model setting."
             ),
         }
     }
@@ -199,6 +208,7 @@ mod tests {
             SelectionFailure::NotDiscovered,
             SelectionFailure::CredentialUnavailable,
             SelectionFailure::EmptyCatalog,
+            SelectionFailure::ConfiguredModelUnavailable,
         ] {
             let message = ModelSelectionRequired {
                 provider: "examplecorp".to_string(),

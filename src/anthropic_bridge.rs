@@ -73,22 +73,29 @@ pub const fn is_bridged(provider: UpstreamProvider) -> bool {
 /// Returns [`ModelSelectionRequired`] when the provider's catalog has not been
 /// discovered, its credential is unusable, or it advertises no models.
 pub fn resolve_bridge_model(state: &AppState) -> Result<String, ModelSelectionRequired> {
-    if let Some(model) = state.bridge_model.as_deref()
-        && !model.is_empty()
-    {
-        return Ok(model.to_string());
-    }
+    resolve_bridge_model_for_account(state, None)
+}
+
+fn resolve_bridge_model_for_account(
+    state: &AppState,
+    router_account: Option<&str>,
+) -> Result<String, ModelSelectionRequired> {
     let Some(provider) = state.upstream_provider.subscription_provider() else {
         // Left empty on purpose: `forward_openai_compatible` substitutes the
         // provider record's `default_model` when `model` is absent or empty.
-        return Ok(state
-            .openai_compatible
-            .default_model
-            .clone()
-            .unwrap_or_default());
+        return Ok(state.bridge_model.clone().unwrap_or_else(|| {
+            state
+                .openai_compatible
+                .default_model
+                .clone()
+                .unwrap_or_default()
+        }));
     };
 
-    let status = state.model_catalogs.status(provider);
+    let status = router_account.map_or_else(
+        || state.model_catalogs.status(provider),
+        |account| state.model_catalogs.status_for(provider, account),
+    );
     let fail = |reason| {
         Err(ModelSelectionRequired {
             provider: provider.as_str().to_string(),
@@ -101,10 +108,44 @@ pub fn resolve_bridge_model(state: &AppState) -> Result<String, ModelSelectionRe
     if !status.credential_healthy {
         return fail(SelectionFailure::CredentialUnavailable);
     }
-    state
+    if let Some(model) = state
+        .bridge_model
+        .as_deref()
+        .filter(|model| !model.is_empty())
+    {
+        return catalog_contains_current_generation(&status, model)
+            .then(|| model.to_string())
+            .map_or_else(|| fail(SelectionFailure::ConfiguredModelUnavailable), Ok);
+    }
+    let selected = state
         .bridge_model_policy
         .choose(status.routable_models())
-        .map_or_else(|| fail(SelectionFailure::EmptyCatalog), Ok)
+        .map_or_else(|| fail(SelectionFailure::EmptyCatalog), Ok)?;
+    if catalog_contains_current_generation(&status, &selected) {
+        Ok(selected)
+    } else {
+        fail(SelectionFailure::CredentialUnavailable)
+    }
+}
+
+fn catalog_contains_current_generation(
+    status: &crate::model_catalog::CatalogStatus,
+    model: &str,
+) -> bool {
+    let expected_account = status.account.as_deref();
+    let Some(record) = status
+        .records
+        .iter()
+        .find(|record| record.canonical_id == model)
+    else {
+        return false;
+    };
+    (!record.health_generation.is_empty())
+        && expected_account.is_none_or(|account| record.account == account)
+        && status.records.iter().all(|candidate| {
+            candidate.health_generation == record.health_generation
+                && expected_account.is_none_or(|account| candidate.account == account)
+        })
 }
 
 /// Translate an Anthropic Messages request body into an `OpenAI` Chat
@@ -798,7 +839,46 @@ async fn forward_anthropic_messages_routed(
     let stop_sequences = crate::stop_sequences::from_value(anthropic_body.get("stop_sequences"));
     // No source-code fallback: when the live catalog cannot name a model the
     // request is refused rather than routed to a guess (issue #192).
-    let upstream_model = match resolve_bridge_model(state) {
+    let bound_subscription;
+    let subscription = if let Some(candidate) = subscription.filter(|item| item.uses_account_pool())
+    {
+        let claims = match count_tokens_claims(&state.token_manager, headers) {
+            Ok(claims) => claims,
+            Err(response) => return *response,
+        };
+        let pinned_account = match state.token_manager.account_for(&claims.sub) {
+            Ok(account) => account,
+            Err(error) => {
+                return crate::proxy::error_response(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "api_error",
+                    &format!("failed to resolve token account binding: {error}"),
+                );
+            }
+        };
+        let context = crate::request_routing::request_routing_context(
+            headers,
+            &anthropic_body,
+            pinned_account,
+        );
+        bound_subscription = match candidate.bind_for_context(state, &context).await {
+            Ok(subscription) => Some(subscription),
+            Err(error) => {
+                return crate::proxy::error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "account_unavailable",
+                    &error,
+                );
+            }
+        };
+        bound_subscription.as_ref()
+    } else {
+        subscription
+    };
+    let upstream_model = match resolve_bridge_model_for_account(
+        state,
+        subscription.and_then(|item| item.account_name()),
+    ) {
         Ok(model) => model,
         Err(error) => {
             return crate::proxy::error_response(
@@ -861,6 +941,7 @@ async fn forward_anthropic_messages_routed(
     translate_upstream_response(
         upstream,
         &requested_model,
+        &upstream_model,
         stream_requested,
         &stop_sequences,
     )
@@ -869,9 +950,10 @@ async fn forward_anthropic_messages_routed(
 
 /// Convert the `OpenAI`-dialect response produced by a delegate forwarder into
 /// the Anthropic dialect.
-async fn translate_upstream_response(
+pub(crate) async fn translate_upstream_response(
     upstream: Response,
     requested_model: &str,
+    upstream_model: &str,
     stream_requested: bool,
     stop_sequences: &[String],
 ) -> Response {
@@ -894,6 +976,7 @@ async fn translate_upstream_response(
         return anthropic_sse_response(
             body,
             requested_model,
+            upstream_model,
             &parts.headers,
             stop_sequences.to_vec(),
         );
@@ -915,16 +998,29 @@ async fn translate_upstream_response(
         );
     };
     let served_model = payload
-        .get("model")
+        .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
+        .or_else(|| payload.get("model"))
         .and_then(Value::as_str)
-        .unwrap_or(requested_model);
-    let mut translated = openai_json_to_anthropic_message(&payload, served_model);
+        .unwrap_or(upstream_model);
+    let mut translated = openai_json_to_anthropic_message(&payload, requested_model);
+    if !served_model.is_empty() && served_model != requested_model {
+        translated[crate::output_limit::UPSTREAM_MODEL_FIELD] =
+            Value::String(served_model.to_string());
+    }
     enforce_anthropic_stop(&mut translated, stop_sequences);
     let mut response = (StatusCode::OK, axum::Json(translated)).into_response();
     *response.headers_mut() = parts.headers;
     response
         .headers_mut()
         .insert("content-type", HeaderValue::from_static("application/json"));
+    if !served_model.is_empty()
+        && served_model != requested_model
+        && let Ok(value) = HeaderValue::from_str(served_model)
+    {
+        response
+            .headers_mut()
+            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+    }
     response
 }
 
@@ -932,11 +1028,13 @@ async fn translate_upstream_response(
 fn anthropic_sse_response(
     body: Body,
     requested_model: &str,
+    upstream_model: &str,
     upstream: &HeaderMap,
     stop_sequences: Vec<String>,
 ) -> Response {
-    let translator =
-        AnthropicStreamTranslator::new(requested_model).with_stop_sequences(stop_sequences);
+    let translator = AnthropicStreamTranslator::new(requested_model)
+        .with_upstream_model(upstream_model)
+        .with_stop_sequences(stop_sequences);
     let data = body.into_data_stream();
     let stream = futures_util::stream::unfold(
         (data, translator, false),
@@ -978,6 +1076,14 @@ fn anthropic_sse_response(
     response
         .headers_mut()
         .insert("cache-control", HeaderValue::from_static("no-cache"));
+    if !upstream_model.is_empty()
+        && upstream_model != requested_model
+        && let Ok(value) = HeaderValue::from_str(upstream_model)
+    {
+        response
+            .headers_mut()
+            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+    }
     response
 }
 

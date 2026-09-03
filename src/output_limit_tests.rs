@@ -114,6 +114,23 @@ fn stream_rewriter_restores_the_requested_model_identity() {
 }
 
 #[test]
+fn stream_rewriter_preserves_chat_and_anthropic_aliases() {
+    let mut chat = ResponsesStreamRewriter::new("stored/shared-future", None);
+    let chat_out = chat.push(
+        b"data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"model\":\"shared-future\",\"choices\":[]}\n\n",
+    );
+    assert!(chat_out.contains("\"model\":\"stored/shared-future\""));
+    assert!(chat_out.contains("\"x_router_upstream_model\":\"shared-future\""));
+
+    let mut anthropic = ResponsesStreamRewriter::new("claude-zai-future", None);
+    let anthropic_out = anthropic.push(
+        b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"future\",\"content\":[]}}\n\n",
+    );
+    assert!(anthropic_out.contains("\"model\":\"claude-zai-future\""));
+    assert!(anthropic_out.contains("\"x_router_upstream_model\":\"future\""));
+}
+
+#[test]
 fn stream_rewriter_stops_the_stream_once_the_cap_is_exhausted() {
     let mut rewriter = ResponsesStreamRewriter::new("gpt-5.4-mini", Some(1));
     let stream = sse(&[

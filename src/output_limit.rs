@@ -244,8 +244,16 @@ impl ResponsesStreamRewriter {
         let Ok(mut event) = serde_json::from_str::<Value>(&payload) else {
             return format!("{block}\n\n");
         };
+        if let Some(served) = preserve_model_identity(&mut event, &self.requested_model) {
+            self.upstream_model = Some(served);
+        }
         if let Some(response) = event.get_mut("response")
             && let Some(served) = preserve_model_identity(response, &self.requested_model)
+        {
+            self.upstream_model = Some(served);
+        }
+        if let Some(message) = event.get_mut("message")
+            && let Some(served) = preserve_model_identity(message, &self.requested_model)
         {
             self.upstream_model = Some(served);
         }

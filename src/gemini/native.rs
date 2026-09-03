@@ -398,6 +398,7 @@ async fn forward_native_authorized_after_route(
         state,
         headers,
         &body,
+        &body,
         Surface::OpenAIChat,
         path,
         routed.subscription.as_ref(),

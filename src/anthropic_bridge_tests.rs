@@ -291,6 +291,49 @@ fn responses_object_becomes_anthropic_message() {
     assert_eq!(msg["usage"]["input_tokens"], 5);
 }
 
+#[tokio::test]
+async fn buffered_bridge_preserves_requested_and_reports_upstream_model() {
+    use axum::response::IntoResponse as _;
+    use http_body_util::BodyExt as _;
+
+    let upstream = (
+        StatusCode::OK,
+        axum::Json(json!({
+            "id": "chatcmpl-1",
+            "model": "future-upstream-model",
+            "choices": [{
+                "message": {"role": "assistant", "content": "hello"},
+                "finish_reason": "stop"
+            }],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1}
+        })),
+    )
+        .into_response();
+    let response = translate_upstream_response(
+        upstream,
+        "claude/catalog-alias",
+        "future-upstream-model",
+        false,
+        &[],
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response
+            .headers()
+            .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
+            .unwrap(),
+        "future-upstream-model"
+    );
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(payload["model"], "claude/catalog-alias");
+    assert_eq!(
+        payload[crate::output_limit::UPSTREAM_MODEL_FIELD],
+        "future-upstream-model"
+    );
+}
+
 #[test]
 fn max_tokens_finish_reason_maps_to_anthropic() {
     let payload = json!({

@@ -54,6 +54,9 @@ pub struct AuditEvent {
     /// Model requested by the client, when the body carried one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
+    /// Canonical model sent upstream when it differs from the requested id.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolved_model: Option<String>,
 }
 
 /// Append-only JSONL audit sink.
@@ -140,6 +143,7 @@ pub fn event(
         client_kind: None,
         subscription_override: None,
         model: model.map(String::from),
+        resolved_model: None,
     }
 }
 
@@ -167,6 +171,18 @@ pub fn record_authorised_request(
     path: &str,
     body: Option<&serde_json::Value>,
 ) {
+    record_authorised_request_with_resolved_model(state, claims, surface, path, body, None);
+}
+
+/// Record an authorised request with both client and canonical model identity.
+pub fn record_authorised_request_with_resolved_model(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    surface: crate::metrics::Surface,
+    path: &str,
+    body: Option<&serde_json::Value>,
+    resolved_model: Option<&str>,
+) {
     state
         .metrics
         .record_token_request(&claims.sub, &claims.label);
@@ -184,6 +200,9 @@ pub fn record_authorised_request(
         path,
         model,
     );
+    event.resolved_model = resolved_model
+        .filter(|resolved| Some(*resolved) != model)
+        .map(str::to_string);
     event.client_kind.clone_from(&claims.client_kind);
     if let (Some(client), Some(provider)) = (
         claims
@@ -383,5 +402,38 @@ mod tests {
             serde_json::from_str(&std::fs::read_to_string(file).unwrap()).unwrap();
         assert_eq!(event["client_kind"], "codex");
         assert_eq!(event["subscription_override"], "codex:claude");
+    }
+
+    #[test]
+    fn authorised_events_keep_requested_and_resolved_model_identity() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file = dir.path().join("audit.jsonl");
+        let mut state = crate::app_state::AppState::for_tests(dir.path());
+        state.upstream_provider = crate::config::UpstreamProvider::OpenAICompatible;
+        state.audit = std::sync::Arc::new(AuditLog::to_path(file.to_str()));
+        let claims = crate::token::TokenClaims {
+            sub: "token-id".into(),
+            iat: 1,
+            exp: i64::MAX,
+            label: "managed".into(),
+            scope: String::new(),
+            github_repos: Vec::new(),
+            client_kind: Some("opencode".into()),
+            principal_id: Some("primary".into()),
+        };
+
+        record_authorised_request_with_resolved_model(
+            &state,
+            &claims,
+            crate::metrics::Surface::OpenAIChat,
+            "/v1/chat/completions",
+            Some(&serde_json::json!({"model": "stored/shared-future"})),
+            Some("shared-future"),
+        );
+
+        let event: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(file).unwrap()).unwrap();
+        assert_eq!(event["model"], "stored/shared-future");
+        assert_eq!(event["resolved_model"], "shared-future");
     }
 }

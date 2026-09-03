@@ -90,8 +90,23 @@ impl ValidatedSubscription {
         state: &AppState,
         context: &crate::accounts::RoutingContext,
     ) -> Result<SelectedSubscriptionAccount, String> {
+        self.bind_for_context(state, context)
+            .await?
+            .for_dispatch()
+            .await
+    }
+
+    /// Bind a deferred pool to exactly one account before model selection.
+    ///
+    /// The returned snapshot makes every later dispatch use that same account
+    /// and credential generation; it cannot advance round-robin a second time.
+    pub(crate) async fn bind_for_context(
+        &self,
+        state: &AppState,
+        context: &crate::accounts::RoutingContext,
+    ) -> Result<Self, String> {
         if matches!(self.selection, CredentialSelection::Ready { .. }) {
-            return self.for_dispatch().await;
+            return Ok(self.clone());
         }
         let router = state
             .account_router
@@ -121,8 +136,10 @@ impl ValidatedSubscription {
             )
             .await
             .map_err(|error| error.to_string())?;
-        let snapshot =
+        let mut snapshot =
             subscription_snapshot_for_account(state, self.provider, &selected.name, None).await?;
+        snapshot.requires_live_catalog = self.requires_live_catalog;
+        snapshot.required_model.clone_from(&self.required_model);
         let catalog = state
             .model_catalogs
             .status_for(self.provider, &selected.name);
@@ -141,7 +158,15 @@ impl ValidatedSubscription {
                 self.provider
             ));
         }
-        snapshot.for_dispatch().await
+        Ok(snapshot)
+    }
+
+    /// Router account selected for this request-local credential snapshot.
+    pub(crate) fn account_name(&self) -> Option<&str> {
+        match &self.selection {
+            CredentialSelection::Ready { account, .. } => Some(account),
+            CredentialSelection::AccountPool => None,
+        }
     }
 
     const fn selected_token(&self) -> Option<&SubscriptionToken> {
@@ -151,7 +176,7 @@ impl ValidatedSubscription {
         }
     }
 
-    const fn uses_account_pool(&self) -> bool {
+    pub(crate) const fn uses_account_pool(&self) -> bool {
         matches!(self.selection, CredentialSelection::AccountPool)
     }
 }

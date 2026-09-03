@@ -22,6 +22,31 @@ struct RequiredChatFields {
 /// header is additive, so a client that ignores it is unaffected.
 pub const DROPPED_TOOLS_HEADER: &str = "x-router-dropped-tools";
 
+fn rewrite_routed_model(
+    body: &mut serde_json::Value,
+    state: &AppState,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) {
+    if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
+        return;
+    }
+    let Some(requested) = body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string)
+    else {
+        return;
+    };
+    let canonical = state.bridge_model.as_deref().or_else(|| {
+        subscription.map(|_| crate::model_routing::subscription_model_identity(&requested).1)
+    });
+    if let Some(canonical) = canonical.filter(|canonical| !canonical.is_empty())
+        && canonical != requested
+    {
+        body["model"] = serde_json::Value::String(canonical.to_string());
+    }
+}
+
 /// Attach the dropped-tool report to a response, and log it.
 fn report_dropped_tools(state: &AppState, mut response: Response, dropped: &[String]) -> Response {
     if dropped.is_empty() {
@@ -99,6 +124,7 @@ async fn openai_chat_completions_with_subscription(
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
     }
+    let routing_body = body.clone();
     let routed = if let Some(subscription) = initial_subscription {
         crate::model_routing::RoutedState {
             state,
@@ -112,6 +138,7 @@ async fn openai_chat_completions_with_subscription(
     };
     let state = routed.state;
     let subscription = routed.subscription;
+    rewrite_routed_model(&mut body, &state, subscription.as_ref());
     if !entitlement_already_checked
         && let Some(provider) = state.upstream_provider.subscription_provider()
         && let Err(response) = crate::client_policy::enforce_subscription(
@@ -176,17 +203,17 @@ async fn openai_chat_completions_with_subscription(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
-        return crate::provider_proxy::forward_openai_compatible(
+        return crate::provider_proxy::forward_openai_compatible_routed(
             &state,
             &headers,
             body,
+            &routing_body,
             "/v1/chat/completions",
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
     }
     if state.upstream_provider == UpstreamProvider::Qwen {
-        let routing_body = body.clone();
         return crate::subscription_proxy::forward_subscription_openai_routed(
             &state,
             &headers,
@@ -203,6 +230,7 @@ async fn openai_chat_completions_with_subscription(
             &state,
             &headers,
             body,
+            &routing_body,
             subscription.as_ref(),
         )
         .await;
@@ -215,13 +243,12 @@ async fn openai_chat_completions_with_subscription(
             &state,
             &headers,
             responses_body,
-            &body,
+            &routing_body,
             crate::metrics::Surface::OpenAIChat,
             subscription.as_ref(),
         )
         .await;
     }
-    let routing_body = body.clone();
     let req = match serde_json::from_value::<openai::OpenAIChatCompletionRequest>(body) {
         Ok(req) => req,
         Err(e) => {
@@ -296,7 +323,7 @@ pub async fn openai_responses(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    let body = match body {
+    let mut body = match body {
         Ok(axum::Json(body)) => body,
         Err(error) => {
             return crate::api_error::malformed_json_response_for_surface(
@@ -305,12 +332,14 @@ pub async fn openai_responses(
             );
         }
     };
+    let routing_body = body.clone();
     let routed = match crate::model_routing::route_state_with_subscription(&state, &body).await {
         Ok(routed) => routed,
         Err(error) => return crate::model_routing::model_route_error_response(&error),
     };
     let state = routed.state;
     let subscription = routed.subscription;
+    rewrite_routed_model(&mut body, &state, subscription.as_ref());
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Err(response) = crate::client_policy::enforce_subscription(
             &state,
@@ -366,10 +395,11 @@ pub async fn openai_responses(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
-        return crate::provider_proxy::forward_openai_compatible(
+        return crate::provider_proxy::forward_openai_compatible_routed(
             &state,
             &headers,
             body,
+            &routing_body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
         )
@@ -379,7 +409,6 @@ pub async fn openai_responses(
         state.upstream_provider,
         UpstreamProvider::Codex | UpstreamProvider::Qwen
     ) {
-        let routing_body = body.clone();
         return crate::subscription_proxy::forward_subscription_openai_routed(
             &state,
             &headers,
@@ -396,11 +425,11 @@ pub async fn openai_responses(
             &state,
             &headers,
             body,
+            &routing_body,
             subscription.as_ref(),
         )
         .await;
     }
-    let routing_body = body.clone();
     let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
         Ok(req) => req,
         Err(e) => {

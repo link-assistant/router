@@ -40,8 +40,10 @@ pub fn map_stop_reason(finish_reason: &str) -> &'static str {
 /// [`AnthropicStreamTranslator::finish`] when the upstream stream ends.
 #[derive(Debug, Clone)]
 pub struct AnthropicStreamTranslator {
-    /// Model id reported by the upstream that actually served the request.
+    /// Client-requested model identity preserved in every response shape.
     model: String,
+    /// Concrete upstream model, exposed separately when it differs.
+    upstream_model: Option<String>,
     id: String,
     buffer: String,
     started: bool,
@@ -69,6 +71,7 @@ impl AnthropicStreamTranslator {
     pub fn new(requested_model: &str) -> Self {
         Self {
             model: requested_model.to_string(),
+            upstream_model: None,
             id: format!("msg_{}", uuid::Uuid::new_v4().simple()),
             buffer: String::new(),
             started: false,
@@ -85,6 +88,15 @@ impl AnthropicStreamTranslator {
             output_tokens: 0,
             web_search_requests: 0,
         }
+    }
+
+    /// Attach the concrete model selected for the upstream request.
+    #[must_use]
+    pub fn with_upstream_model(mut self, upstream_model: &str) -> Self {
+        if !upstream_model.is_empty() && upstream_model != self.model {
+            self.upstream_model = Some(upstream_model.to_string());
+        }
+        self
     }
 
     /// Enforce Anthropic `stop_sequences` locally for translated backends.
@@ -146,7 +158,6 @@ impl AnthropicStreamTranslator {
         if self.finished {
             return Vec::new();
         }
-        self.capture_model(event.get("model"));
         let mut frames = self.ensure_started();
         self.absorb_usage(event.get("usage"));
 
@@ -231,11 +242,6 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         let kind = event.get("type").and_then(Value::as_str).unwrap_or("");
-        self.capture_model(
-            event
-                .get("response")
-                .and_then(|response| response.get("model")),
-        );
         let mut frames = self.ensure_started();
         match kind {
             "response.output_text.delta" => {
@@ -368,15 +374,6 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    fn capture_model(&mut self, model: Option<&Value>) {
-        if self.started {
-            return;
-        }
-        if let Some(model) = model.and_then(Value::as_str) {
-            self.model = model.to_string();
-        }
-    }
-
     // ---- shared -------------------------------------------------------
 
     fn absorb_usage(&mut self, usage: Option<&Value>) {
@@ -398,20 +395,25 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         self.started = true;
+        let mut message = json!({
+            "id": self.id,
+            "type": "message",
+            "role": "assistant",
+            "model": self.model,
+            "content": [],
+            "stop_reason": Value::Null,
+            "stop_sequence": Value::Null,
+            "usage": {"input_tokens": self.input_tokens, "output_tokens": 0},
+        });
+        if let Some(upstream_model) = self.upstream_model.as_deref() {
+            message[crate::output_limit::UPSTREAM_MODEL_FIELD] =
+                Value::String(upstream_model.to_string());
+        }
         vec![anthropic_frame(
             "message_start",
             &json!({
                 "type": "message_start",
-                "message": {
-                    "id": self.id,
-                    "type": "message",
-                    "role": "assistant",
-                    "model": self.model,
-                    "content": [],
-                    "stop_reason": Value::Null,
-                    "stop_sequence": Value::Null,
-                    "usage": {"input_tokens": self.input_tokens, "output_tokens": 0},
-                },
+                "message": message,
             }),
         )]
     }
@@ -543,6 +545,18 @@ mod tests {
         assert!(out.contains("event: content_block_stop"));
         assert!(out.contains("\"stop_reason\":\"end_turn\""));
         assert!(out.contains("event: message_stop"));
+    }
+
+    #[test]
+    fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
+        let mut translator = AnthropicStreamTranslator::new("claude/catalog-alias")
+            .with_upstream_model("future-upstream-model");
+        let output = joined(&translator.push(
+            b"data: {\"object\":\"chat.completion.chunk\",\"model\":\"future-upstream-model\",\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        ));
+
+        assert!(output.contains("\"model\":\"claude/catalog-alias\""));
+        assert!(output.contains("\"x_router_upstream_model\":\"future-upstream-model\""));
     }
 
     #[test]

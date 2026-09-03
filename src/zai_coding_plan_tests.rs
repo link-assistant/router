@@ -355,7 +355,7 @@ async fn recording_upstream() -> (
             if path == crate::zai_coding_plan::HEALTH_PATH {
                 (StatusCode::OK, "{}")
             } else {
-                (StatusCode::OK, r#"{"id":"ok"}"#)
+                (StatusCode::OK, r#"{"id":"ok","model":"glm-5"}"#)
             }
         }
     });
@@ -408,6 +408,20 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         )
         .await;
         assert_eq!(response.status(), StatusCode::OK, "{client}");
+        assert_eq!(
+            response
+                .headers()
+                .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
+                .unwrap(),
+            "glm-5"
+        );
+        let response_body = response.into_body().collect().await.unwrap().to_bytes();
+        let response_body: serde_json::Value = serde_json::from_slice(&response_body).unwrap();
+        assert_eq!(response_body["model"], model);
+        assert_eq!(
+            response_body[crate::output_limit::UPSTREAM_MODEL_FIELD],
+            "glm-5"
+        );
         let requests = requests.lock().unwrap();
         assert_eq!(requests.len(), 2, "health then inference for {client}");
         assert_eq!(requests[0].0, crate::zai_coding_plan::HEALTH_PATH);
@@ -770,7 +784,7 @@ async fn streaming_tool_cycle_and_count_tokens_keep_the_exact_model_boundary() {
                 .status(StatusCode::OK)
                 .header("content-type", "text/event-stream")
                 .body(Body::from(
-                    "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"id\":\"call_1\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]}}]}\n\ndata: [DONE]\n\n",
+                    "data: {\"model\":\"glm-5\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"id\":\"call_1\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]}}]}\n\ndata: [DONE]\n\n",
                 ))
                 .unwrap()
         }
@@ -802,7 +816,13 @@ async fn streaming_tool_cycle_and_count_tokens_keep_the_exact_model_boundary() {
         "text/event-stream"
     );
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    assert!(String::from_utf8_lossy(&body).contains("[DONE]"));
+    let body = String::from_utf8_lossy(&body);
+    assert!(body.contains("[DONE]"));
+    assert!(body.contains("\"model\":\"z.ai/glm-5\""), "{body}");
+    assert!(
+        body.contains("\"x_router_upstream_model\":\"glm-5\""),
+        "{body}"
+    );
     let recorded = requests.lock().unwrap();
     assert_eq!(recorded.len(), 2);
     assert!(recorded[1].1.contains(r#""model":"glm-5""#));
