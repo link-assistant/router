@@ -1,6 +1,6 @@
 [package]
 name = "link-assistant-router"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2024"
 description = "Link.Assistant.Router — Claude MAX OAuth proxy and token gateway for Anthropic APIs"
 readme = "README.md"
