@@ -1,6 +1,8 @@
 //! Cross-platform liveness check for managed-server lease owners.
 
-use std::process::{Command, Stdio};
+use std::process::Command;
+#[cfg(unix)]
+use std::process::Stdio;
 
 pub(super) fn process_alive(pid: u32) -> bool {
     if pid == std::process::id() {
