@@ -5,7 +5,7 @@ bump: patch
 ### Security
 
 - Removed organization-specific deployment material from current documentation and pseudonymized
-  production-derived compatibility fixtures.
+  compatibility fixtures with synthetic payloads and identifiers.
 - Removed an accidentally committed development-session transcript.
 
 ### Fixed
