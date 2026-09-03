@@ -497,7 +497,7 @@ pub async fn route_subscription_model_for_providers(
         )));
     }
     let provider = candidates[0];
-    let validated = futures_util::future::join_all(
+    let subscription = futures_util::future::join_all(
         candidates
             .into_iter()
             .map(|provider| validated_catalog_subscription(state, provider, canonical_model)),
@@ -505,17 +505,14 @@ pub async fn route_subscription_model_for_providers(
     .await
     .into_iter()
     .flatten()
-    .collect::<Vec<_>>();
-    let subscription = validated
-        .into_iter()
-        .find(|subscription| subscription.provider == provider)
-        .ok_or_else(|| {
-            let cause = credential_state(provider, &state.model_catalogs)
-                .unwrap_or_else(|| format!("no usable {provider} credential is available"));
-            ModelRouteError::NotFound(format!(
-                "model '{model}' has no healthy {provider} credential: {cause}"
-            ))
-        })?;
+    .find(|subscription| subscription.provider == provider)
+    .ok_or_else(|| {
+        let cause = credential_state(provider, &state.model_catalogs)
+            .unwrap_or_else(|| format!("no usable {provider} credential is available"));
+        ModelRouteError::NotFound(format!(
+            "model '{model}' has no healthy {provider} credential: {cause}"
+        ))
+    })?;
     Ok(routed_subscription_state(
         state,
         subscription,
