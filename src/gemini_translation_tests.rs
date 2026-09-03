@@ -77,3 +77,54 @@ fn message_text_is_extracted_from_both_content_shapes() {
     assert_eq!(extract_message_text(None), "");
     assert_eq!(extract_message_text(Some(&json!(42))), "");
 }
+
+/// The synthetic stream is part of the public OpenAI-compatible contract: it
+/// must retain the alias the caller selected while exposing the model the
+/// upstream actually served in metadata on every emitted chunk.
+#[tokio::test]
+async fn synthetic_chat_stream_preserves_both_model_identities() {
+    use http_body_util::BodyExt as _;
+
+    let response = sse_from_chat_completion(
+        &json!({
+            "id": "chatcmpl-live",
+            "created": 42,
+            "model": "future-upstream-model",
+            "choices": [{"message": {"role": "assistant", "content": "hello"}}]
+        }),
+        "catalog-alias",
+        Some("future-upstream-model"),
+    );
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.headers()[crate::output_limit::UPSTREAM_MODEL_HEADER],
+        "future-upstream-model"
+    );
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+    let payload = String::from_utf8(
+        response
+            .into_body()
+            .collect()
+            .await
+            .expect("synthetic stream body")
+            .to_bytes()
+            .to_vec(),
+    )
+    .expect("UTF-8 SSE");
+    let chunks: Vec<Value> = payload
+        .lines()
+        .filter_map(|line| line.strip_prefix("data: "))
+        .filter(|data| *data != "[DONE]")
+        .map(|data| serde_json::from_str(data).expect("JSON SSE frame"))
+        .collect();
+    assert_eq!(chunks.len(), 3);
+    for chunk in chunks {
+        assert_eq!(chunk["model"], "catalog-alias");
+        assert_eq!(
+            chunk[crate::output_limit::UPSTREAM_MODEL_FIELD],
+            "future-upstream-model"
+        );
+    }
+    assert!(payload.ends_with("data: [DONE]\n\n"));
+}
