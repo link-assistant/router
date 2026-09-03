@@ -501,7 +501,10 @@ source-code model allowlist filters it. When a
 credential is revoked its last known catalog stays
 visible to administrators but stops being advertised or routed.
 
-Requested model names pass through unchanged. In automatic mode, routing uses
+The client-visible requested model identity is preserved. Reversible qualified
+or provider aliases are mapped back to the canonical id before the upstream
+request; responses and audit records expose the canonical resolved id
+separately. In automatic mode, routing uses
 subscription catalogs **and** the models a stored provider declares, so one
 deployment can serve vendor subscriptions and a local OpenAI-compatible
 endpoint at once. Vendor-shaped IDs prefer their matching vendor if catalogs
@@ -509,8 +512,8 @@ overlap, and an unqualified name advertised by multiple healthy subscriptions �
 or declared by multiple stored providers — is rejected until `UPSTREAM_PROVIDER`
 is pinned or the name is qualified as `<provider>/<model>`. A model nothing
 advertises returns `404 not_found_error` instead of silently selecting a
-default. Successful Anthropic-backed responses report the model that actually
-served the request.
+default. Buffered and streaming responses retain both requested and resolved
+identity consistently.
 
 #### Model identity and output limits
 
@@ -531,9 +534,10 @@ estimated at roughly four characters per token, and hidden reasoning tokens are
 not observable, so the cap bounds visible output rather than billed tokens.
 
 With `UPSTREAM_PROVIDER=gonka`, `/api/services/openai/v1/chat/completions` and
-`/api/services/openai/v1/responses`
-forward OpenAI-compatible JSON to Gonka without Anthropic translation. If a
-request omits `model`, the router uses `GONKA_MODEL`.
+`/api/services/openai/v1/responses` forward OpenAI-compatible JSON to Gonka
+without Anthropic translation. Gonka advertises a model only when the operator
+declares it with `GONKA_MODEL`. Without that declaration, each request must name
+its model explicitly.
 
 With `UPSTREAM_PROVIDER=openai-compatible`, the same routes forward JSON to the
 configured provider. This supports LiteLLM proxy deployments by setting the
@@ -976,14 +980,14 @@ TOKEN_SECRET=your-router-token-secret
 UPSTREAM_PROVIDER=gonka
 GONKA_PRIVATE_KEY=your_gonka_private_key
 GONKA_SOURCE_URL=https://node4.gonka.ai
-GONKA_MODEL=Qwen/Qwen3-235B-A22B-Instruct-2507-FP8
+GONKA_MODEL=your-current-gonka-model
 ```
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
 | `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Yes, for Gonka | Private key used to sign Gonka upstream requests |
 | `--gonka-source-url` / `GONKA_SOURCE_URL` | `https://node4.gonka.ai` | No | Gonka source node URL |
-| `--gonka-model` / `GONKA_MODEL` | `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` | No | Default model for Gonka OpenAI-compatible requests |
+| `--gonka-model` / `GONKA_MODEL` | — | No | Operator-declared model to advertise and use when a request omits `model` |
 
 Your Gonka account must be activated for inference, funded, and have a
 published on-chain public key. Participant registration is only needed for
@@ -1751,19 +1755,28 @@ check, and both are automatic:
 - `.cargo/config.toml` disables the incremental cache and drops debug info to
   line tables. Backtraces still resolve; stepping through variables in a
   debugger does not.
-- A `post-commit` hook runs `scripts/sweep-build-artifacts.sh`, which prunes
-  artifacts the commit's build did not touch. It needs `cargo-sweep`:
+- The last `pre-commit` hook runs `scripts/clear-build-cache.sh`, which uses
+  `cargo clean` to remove the checkout's build output after formatting, lint,
+  and tests finish:
+
+  ```bash
+  pre-commit install
+  ```
+
+- An optional `post-commit` hook also runs
+  `scripts/sweep-build-artifacts.sh` to prune superseded artifacts during
+  workflows that bypass the pre-commit checks. It needs `cargo-sweep`:
 
   ```bash
   cargo install cargo-sweep
   pre-commit install --hook-type post-commit
   ```
 
-  Without it the hook prints a note and does nothing — it never fails a commit.
+  Without `cargo-sweep` the post-commit hook prints a note and does nothing; it
+  never fails a commit. The pre-commit `cargo clean` remains unconditional.
 
-To reclaim space by hand, `cargo sweep --maxsize 10GB` caps the directory and
-`rm -rf target/debug/incremental` is always safe. Prefer either to
-`cargo clean`, which forces a full cold rebuild of all 41 binaries.
+To reclaim space by hand, run `cargo clean`. The next build is intentionally a
+cold build; the hook trades compilation reuse for a predictable disk bound.
 
 CI compiles through [sccache](https://github.com/mozilla/sccache) with the
 GitHub Actions backend. The artifact cache is keyed on `Cargo.lock`, so one

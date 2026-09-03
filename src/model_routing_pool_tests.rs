@@ -545,3 +545,110 @@ async fn pinned_native_routing_honors_a_strict_pool_pin() {
         ["Bearer account-1-access"]
     );
 }
+
+#[tokio::test]
+async fn anthropic_bridge_selects_account_before_its_live_model() {
+    let captured = Arc::new(Mutex::new(Vec::<(String, serde_json::Value)>::new()));
+    let recorded = Arc::clone(&captured);
+    let stub =
+        axum::Router::new().fallback(move |request: axum::http::Request<axum::body::Body>| {
+            let recorded = Arc::clone(&recorded);
+            async move {
+                let authorization = request
+                    .headers()
+                    .get("authorization")
+                    .and_then(|value| value.to_str().ok())
+                    .unwrap_or_default()
+                    .to_string();
+                let body = request.into_body().collect().await.unwrap().to_bytes();
+                let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                recorded.lock().unwrap().push((authorization, body));
+                axum::Json(json!({
+                    "id": "resp_pool",
+                    "object": "response",
+                    "model": "secondary-bridge-model",
+                    "status": "completed",
+                    "output": [{
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [{"type": "output_text", "text": "ok"}]
+                    }],
+                    "usage": {"input_tokens": 1, "output_tokens": 1}
+                }))
+            }
+        });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move { axum::serve(listener, stub).await.unwrap() });
+
+    let (mut state, _data, _primary, _additional) =
+        codex_pool_state(crate::accounts::AccountRouterOptions::default());
+    state.upstream_provider = UpstreamProvider::Codex;
+    state.subscription_base_url = Some(base_url);
+    state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "primary",
+        Some("acct-primary".into()),
+        vec!["primary-bridge-model".into()],
+    );
+    state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Codex,
+        "account-1",
+        Some("acct-secondary".into()),
+        vec!["secondary-bridge-model".into()],
+    );
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["claude:codex"]).unwrap(),
+        )
+        .unwrap();
+    let token = state
+        .token_manager
+        .issue_with_id(&crate::token::IssueRequest {
+            ttl_hours: 1,
+            label: "account-bound bridge",
+            account: Some("account-1"),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some(crate::clients::ClientKind::ClaudeCode.canonical_name()),
+            principal_id: Some("account-1"),
+        })
+        .unwrap()
+        .0;
+    let mut headers = HeaderMap::new();
+    headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
+    headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+    let body = json!({
+        "model": "claude/catalog-choice",
+        "max_tokens": 32,
+        "messages": [{"role": "user", "content": "hello"}]
+    });
+    let routed = route_state_with_subscription(&state, &body).await.unwrap();
+    let response = crate::anthropic_bridge::handle_anthropic_surface_routed(
+        &routed.state,
+        &headers,
+        "/v1/messages",
+        body,
+        routed.subscription.as_ref(),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let response = json_body(response).await;
+    assert_eq!(response["model"], "claude/catalog-choice");
+    assert_eq!(
+        response[crate::output_limit::UPSTREAM_MODEL_FIELD],
+        "secondary-bridge-model"
+    );
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), 1);
+    assert_eq!(captured[0].0, "Bearer account-1-access");
+    assert_eq!(captured[0].1["model"], "secondary-bridge-model");
+    drop(captured);
+    task.abort();
+}

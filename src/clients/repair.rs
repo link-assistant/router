@@ -84,6 +84,19 @@ impl ClientManager {
         credential: &ManagedCredential,
         models: &[RouterModel],
     ) -> Result<RepairResult, ClientError> {
+        crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
+            self.apply_repair_locked(client, base_url, token, credential, models)
+        })
+    }
+
+    fn apply_repair_locked(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+        credential: &ManagedCredential,
+        models: &[RouterModel],
+    ) -> Result<RepairResult, ClientError> {
         let before = self.analyze(client)?;
         if before.state == OwnershipState::ManagedIntact {
             return Ok(RepairResult {
@@ -111,14 +124,29 @@ impl ClientManager {
                     .any(|conflict| conflict == "ownership-marker:invalid")
                 && let Some(path) = self.ownership_marker_path(client)
             {
+                snapshot.verify_before_path(&path)?;
                 remove_if_present(&path)?;
+            }
+            snapshot.verify_before_path(&self.config_path(client))?;
+            if let Some(path) = self.ownership_marker_path(client)
+                && !before
+                    .conflicts
+                    .iter()
+                    .any(|conflict| conflict == "ownership-marker:invalid")
+            {
+                snapshot.verify_before_path(&path)?;
             }
             let setup = self.setup(client, base_url, models)?;
             if let Some(path) = setup.backup.as_deref() {
                 remove_if_present(path)?;
             }
+            snapshot.verify_before_path(&self.environment_path(client))?;
             self.write_environment(client, base_url, token)?;
+            snapshot.verify_before_path(&self.credential_metadata_path(client))?;
             self.write_credential_metadata(client, credential)?;
+            snapshot.verify_before_path(&crate::client_global::undo_state_path(
+                &self.config_path(client),
+            ))?;
             crate::client_global::update_post_configure_hash(
                 &self.config_path(client),
                 self.ownership_marker_path(client).as_deref(),
@@ -159,6 +187,16 @@ impl ClientManager {
         client: ClientKind,
         id: &str,
     ) -> Result<RepairResult, ClientError> {
+        crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
+            self.rollback_repair_locked(client, id)
+        })
+    }
+
+    fn rollback_repair_locked(
+        &self,
+        client: ClientKind,
+        id: &str,
+    ) -> Result<RepairResult, ClientError> {
         validate_id(id)?;
         let root = self.repair_root().join(id);
         let source = fs::read(root.join("manifest.json")).map_err(|error| {
@@ -186,6 +224,12 @@ impl ClientManager {
 
     fn repair_root(&self) -> PathBuf {
         self.config_home.join("link-assistant-router/repairs")
+    }
+
+    fn repair_lock_path(&self, client: ClientKind) -> PathBuf {
+        self.config_home
+            .join("link-assistant-router/clients")
+            .join(format!("{}.repair.lock", client.canonical_name()))
     }
 
     fn repair_paths(&self, client: ClientKind) -> Vec<PathBuf> {
@@ -276,6 +320,25 @@ impl Snapshot {
                     entry.path.display()
                 )));
             }
+        }
+        Ok(())
+    }
+
+    fn verify_before_path(&self, path: &Path) -> Result<(), ClientError> {
+        let entry = self
+            .manifest
+            .entries
+            .iter()
+            .find(|entry| entry.path == path)
+            .ok_or_else(|| {
+                ClientError::message("repair path is outside the captured allow-list")
+            })?;
+        let current = current_state(path)?;
+        if current.0 != entry.existed || current.1 != entry.before_sha256 {
+            return Err(ClientError::message(format!(
+                "{} changed immediately before replacement; retry repair",
+                path.display()
+            )));
         }
         Ok(())
     }
@@ -502,6 +565,61 @@ mod tests {
             .rollback_repair(ClientKind::ClaudeCode, result.backup_id.as_deref().unwrap())
             .expect_err("must preserve later edits");
         assert!(error.to_string().contains("changed after repair"));
+    }
+
+    #[test]
+    fn repair_lock_covers_analysis_and_preserves_a_waiting_user_edit() {
+        let home = tempfile::tempdir().expect("home");
+        let path = home.path().join(".claude/settings.json");
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, br#"{"theme":"before"}"#).unwrap();
+
+        let manager = ClientManager::isolated(home.path());
+        let lock_path = manager.repair_lock_path(ClientKind::ClaudeCode);
+        fs::create_dir_all(lock_path.parent().unwrap()).unwrap();
+        let held = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&lock_path)
+            .unwrap();
+        held.lock().unwrap();
+
+        let repair_home = home.path().to_path_buf();
+        let (sent, received) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let manager = ClientManager::isolated(&repair_home);
+            let result = manager.apply_repair(
+                ClientKind::ClaudeCode,
+                "http://router.test:8080",
+                "la_sk_router_secret",
+                &credential(),
+                &[],
+            );
+            sent.send(result).unwrap();
+        });
+
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        assert!(
+            received.try_recv().is_err(),
+            "repair ignored its client lock"
+        );
+        fs::write(&path, br#"{"theme":"edited-while-waiting"}"#).unwrap();
+        drop(held);
+
+        let result = received
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .expect("repair completed after lock release")
+            .expect("repair succeeded");
+        worker.join().unwrap();
+        manager
+            .rollback_repair(ClientKind::ClaudeCode, result.backup_id.as_deref().unwrap())
+            .expect("rollback latest pre-repair bytes");
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            br#"{"theme":"edited-while-waiting"}"#
+        );
     }
 
     #[cfg(unix)]

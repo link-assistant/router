@@ -192,7 +192,7 @@ fn a_strict_client_refuses_another_vendors_model() {
 }
 
 #[test]
-fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
+fn claude_setup_maps_zai_only_default_families_and_subagents() {
     let home = tempfile::tempdir().unwrap();
     let manager = ClientManager::isolated(home.path());
     std::fs::create_dir_all(home.path().join(".claude")).unwrap();
@@ -202,7 +202,7 @@ fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
     )
     .unwrap();
     let models = vec![RouterModel {
-        id: "claude-zai-glm-5".into(),
+        id: "claude-zai-future-saffron".into(),
         owned_by: ZAI_MODEL_OWNER.into(),
     }];
     manager
@@ -220,17 +220,9 @@ fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
         settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
         "0"
     );
-    assert!(
-        settings["env"]
-            .get("ANTHROPIC_DEFAULT_OPUS_MODEL")
-            .is_none()
-    );
-    assert!(settings["env"].get("ANTHROPIC_MODEL").is_none());
-    assert!(
-        settings["env"]
-            .get("ANTHROPIC_DEFAULT_SONNET_MODEL")
-            .is_none()
-    );
+    for key in CLAUDE_MODEL_ENV {
+        assert_eq!(settings["env"][key], "claude-zai-future-saffron", "{key}");
+    }
     let env = manager
         .write_environment(
             ClientKind::ClaudeCode,
@@ -264,6 +256,116 @@ fn claude_setup_enables_live_gateway_discovery_without_pinning_models() {
         restored["env"]
             .get("ANTHROPIC_DEFAULT_SONNET_MODEL")
             .is_none()
+    );
+}
+
+#[test]
+fn claude_setup_leaves_native_anthropic_discovery_unpinned() {
+    let home = tempfile::tempdir().unwrap();
+    let manager = ClientManager::isolated(home.path());
+    let models = vec![
+        RouterModel {
+            id: "claude-future-native".into(),
+            owned_by: ANTHROPIC_MODEL_OWNER.into(),
+        },
+        RouterModel {
+            id: "claude-zai-future-saffron".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+        },
+    ];
+
+    manager
+        .setup(ClientKind::ClaudeCode, "https://router.example", &models)
+        .unwrap();
+    let settings: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(manager.config_path(ClientKind::ClaudeCode)).unwrap(),
+    )
+    .unwrap();
+    for key in CLAUDE_MODEL_ENV {
+        assert!(settings["env"].get(key).is_none(), "{key}");
+    }
+}
+
+#[test]
+fn claude_gateway_model_is_live_and_an_explicit_zai_choice_wins() {
+    let zai = vec![
+        RouterModel {
+            id: "claude-zai-future-first".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+        },
+        RouterModel {
+            id: "claude-zai-future-explicit".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+        },
+    ];
+    assert_eq!(
+        claude_gateway_model(&zai, None).as_deref(),
+        Some("claude-zai-future-first")
+    );
+    assert_eq!(
+        claude_gateway_model(&zai, Some("claude-zai-future-explicit")).as_deref(),
+        Some("claude-zai-future-explicit")
+    );
+
+    let native = vec![RouterModel {
+        id: "claude-future-native".into(),
+        owned_by: ANTHROPIC_MODEL_OWNER.into(),
+    }];
+    assert_eq!(claude_gateway_model(&native, None), None);
+}
+
+#[test]
+fn zai_model_pins_are_owned_configuration_and_drift_is_detected() {
+    let home = tempfile::tempdir().unwrap();
+    let manager = ClientManager::isolated(home.path());
+    let models = vec![RouterModel {
+        id: "claude-zai-future-saffron".into(),
+        owned_by: ZAI_MODEL_OWNER.into(),
+    }];
+    manager
+        .setup(ClientKind::ClaudeCode, "https://router.example", &models)
+        .unwrap();
+    manager
+        .write_environment(
+            ClientKind::ClaudeCode,
+            "https://router.example",
+            "router-token",
+        )
+        .unwrap();
+    manager
+        .write_credential_metadata(
+            ClientKind::ClaudeCode,
+            &ManagedCredential {
+                client: ClientKind::ClaudeCode.to_string(),
+                source: TokenSource::Supplied,
+                token_id: None,
+                label: None,
+                issued_at: None,
+                router: Some("https://router.example".into()),
+                principal_id: Some("primary".into()),
+            },
+        )
+        .unwrap();
+
+    let intact = manager.analyze(ClientKind::ClaudeCode).unwrap();
+    assert_eq!(intact.state, OwnershipState::ManagedIntact);
+    assert!(intact.conflicts.is_empty(), "{:?}", intact.conflicts);
+
+    let settings_path = manager.config_path(ClientKind::ClaudeCode);
+    let mut settings: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&settings_path).unwrap()).unwrap();
+    settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "foreign-future-model".into();
+    std::fs::write(
+        &settings_path,
+        serde_json::to_vec_pretty(&settings).unwrap(),
+    )
+    .unwrap();
+    let drifted = manager.analyze(ClientKind::ClaudeCode).unwrap();
+    assert_eq!(drifted.state, OwnershipState::ManagedDrifted);
+    assert!(
+        drifted
+            .conflicts
+            .contains(&"public-config:ANTHROPIC_DEFAULT_HAIKU_MODEL".to_string())
     );
 }
 

@@ -10,6 +10,9 @@ pub async fn route_state_with_subscription(
     body: &Value,
 ) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
+        if let Some(provider) = state.upstream_provider.subscription_provider() {
+            return super::route_pinned_subscription(state, provider).await;
+        }
         return Ok(RoutedState {
             state: state.clone(),
             subscription: None,

@@ -1,6 +1,5 @@
 //! Server selection, managed Docker lifecycle, and per-run token handling.
 
-use std::ffi::OsStr;
 use std::fs::{self};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
@@ -17,10 +16,15 @@ use crate::clients::{ClientKind, RouterModel};
 mod bootstrap;
 mod catalog;
 mod discovery;
+mod docker;
 mod selection;
 
 use discovery::discover_local_router;
 pub use discovery::{discovered_local_router, effective_source};
+use docker::{
+    check_docker_output, docker_checked, docker_container_state, docker_subscription_status,
+    ensure_docker,
+};
 pub use selection::{
     clear_persisted, configured_source, load_persisted, save_persisted, selected_server,
 };
@@ -254,6 +258,31 @@ pub async fn prepare_run_credential(
     ttl_hours: i64,
     sliding: bool,
 ) -> Result<RunCredential, AnyError> {
+    prepare_credential(server, client_kind, label, ttl_hours, sliding, true).await
+}
+
+/// Mint the client-bound credential used by a permanent repair.
+///
+/// Repair is a trust takeover, not a one-shot launch. It must never persist a
+/// supplied ordinary token merely because the selected listener cannot mint a
+/// replacement: only a candidate minted for this exact client is eligible.
+pub async fn prepare_repair_credential(
+    server: &ResolvedServer,
+    client_kind: ClientKind,
+    label: &str,
+    ttl_hours: i64,
+) -> Result<RunCredential, AnyError> {
+    prepare_credential(server, client_kind, label, ttl_hours, false, false).await
+}
+
+async fn prepare_credential(
+    server: &ResolvedServer,
+    client_kind: ClientKind,
+    label: &str,
+    ttl_hours: i64,
+    sliding: bool,
+    allow_supplied: bool,
+) -> Result<RunCredential, AnyError> {
     let token = server.token.as_deref().ok_or_else(|| {
         if server.source == "managed local container" {
             format!(
@@ -340,13 +369,47 @@ pub async fn prepare_run_credential(
                     credential.available_models = models;
                     Ok(credential)
                 }
-                Err(error) => {
-                    let _ = cleanup_run_credential(credential).await;
-                    Err(error)
-                }
+                Err(error) => match cleanup_run_credential(credential).await {
+                    Ok(()) => Err(error),
+                    Err(cleanup) => Err(format!(
+                        "{error}; the unused minted credential could not be revoked: {cleanup}"
+                    )
+                    .into()),
+                },
             }
         }
         Ok(response) if response.status().as_u16() == 401 || response.status().as_u16() == 403 => {
+            if !allow_supplied {
+                return Err(format!(
+                    "client repair requires an administrator credential that can mint a token bound to `{}`; the selected credential is inference-only",
+                    client_kind.canonical_name()
+                )
+                .into());
+            }
+            let available_models =
+                fetch_models(&client, client_kind, &server.base_url, token).await?;
+            Ok(RunCredential {
+                token: token.to_string(),
+                available_models,
+                revocation: None,
+            })
+        }
+        Ok(response) if response.status().as_u16() == 404 => {
+            if !allow_supplied {
+                return Err(format!(
+                    "client repair requires the administrator listener so Router can mint a token bound to `{}`; the selected listener exposes inference only",
+                    client_kind.canonical_name()
+                )
+                .into());
+            }
+            let bound = token_client_kind(token)?;
+            if bound.as_deref() != Some(client_kind.canonical_name()) {
+                return Err(format!(
+                    "the selected listener exposes inference only, so its supplied token must be bound to `{}`; use the matching client token or select the administrator listener",
+                    client_kind.canonical_name()
+                )
+                .into());
+            }
             let available_models =
                 fetch_models(&client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
@@ -468,6 +531,21 @@ fn http_client() -> Result<reqwest::Client, reqwest::Error> {
 }
 
 fn token_subject(token: &str) -> Result<String, AnyError> {
+    token_claim(token)?
+        .get("sub")
+        .and_then(Value::as_str)
+        .map(str::to_string)
+        .ok_or_else(|| "router run token has no subject to revoke".into())
+}
+
+fn token_client_kind(token: &str) -> Result<Option<String>, AnyError> {
+    Ok(token_claim(token)?
+        .get("client_kind")
+        .and_then(Value::as_str)
+        .map(str::to_string))
+}
+
+fn token_claim(token: &str) -> Result<Value, AnyError> {
     let payload = token
         .split('.')
         .nth(1)
@@ -475,12 +553,7 @@ fn token_subject(token: &str) -> Result<String, AnyError> {
     let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(payload)
         .map_err(|error| format!("router returned an invalid JWT payload: {error}"))?;
-    let claims: Value = serde_json::from_slice(&decoded)?;
-    claims
-        .get("sub")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| "router run token has no subject to revoke".into())
+    serde_json::from_slice(&decoded).map_err(Into::into)
 }
 
 pub fn managed_status() -> Result<String, AnyError> {
@@ -777,109 +850,6 @@ fn tcp_health(port: u16) -> bool {
     stream.read_to_string(&mut response).is_ok()
         && response.starts_with("HTTP/1.1 200")
         && response.ends_with("ok")
-}
-
-fn docker_container_state() -> Result<String, AnyError> {
-    let output = Command::new("docker")
-        .args([
-            "inspect",
-            "--format",
-            "{{if .State.Running}}running{{else}}stopped{{end}} {{index .Config.Labels \"com.link-assistant.router.managed\"}}",
-            CONTAINER,
-        ])
-        .output();
-    let output = match output {
-        Ok(output) => output,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Err("Docker is not installed".into());
-        }
-        Err(error) => return Err(error.into()),
-    };
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        // Case-insensitively: Docker spells this `No such object` and Docker
-        // Desktop `no such object`, and matching only the capitalised form
-        // read "this container does not exist yet" as a hard inspect failure.
-        // The container that should then have been created never was, so
-        // `with` failed in exactly the situation the managed path exists to
-        // handle, naming an internal container the user has never heard of
-        // (issue #333).
-        let lowered = stderr.to_ascii_lowercase();
-        if lowered.contains("no such object") || lowered.contains("no such container") {
-            return Ok("absent".into());
-        }
-        return Err(format!("could not inspect {CONTAINER}: {}", compact(&stderr)).into());
-    }
-    let rendered = String::from_utf8_lossy(&output.stdout);
-    let (state, label) = rendered.trim().split_once(' ').unwrap_or(("", ""));
-    if label != "1" {
-        return Err(format!(
-            "container {CONTAINER} exists but is not owned by this wrapper; rename or remove it before retrying"
-        )
-        .into());
-    }
-    Ok(state.to_string())
-}
-
-fn docker_subscription_status() -> String {
-    let output = Command::new("docker")
-        .args(["exec", CONTAINER, "link-assistant-router", "auth", "status"])
-        .output();
-    match output {
-        Ok(output) if output.status.success() => compact(&String::from_utf8_lossy(&output.stdout)),
-        Ok(output) => format!(
-            "unavailable ({})",
-            compact(&String::from_utf8_lossy(&output.stderr))
-        ),
-        Err(error) => format!("unavailable ({error})"),
-    }
-}
-
-fn ensure_docker() -> Result<(), AnyError> {
-    let output = Command::new("docker")
-        .args(["info", "--format", "{{.ServerVersion}}"])
-        .output();
-    let output = match output {
-        Ok(output) => output,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Err("Docker is not installed; install Docker or pass --server <URL>".into());
-        }
-        Err(error) => return Err(error.into()),
-    };
-    if output.status.success() {
-        return Ok(());
-    }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if stderr.to_ascii_lowercase().contains("permission denied") {
-        Err("permission denied while connecting to Docker; add this user to the Docker group or pass --server <URL>".into())
-    } else {
-        Err(format!(
-            "the Docker daemon is not running or unreachable; start Docker or pass --server <URL>: {}",
-            compact(&stderr)
-        )
-        .into())
-    }
-}
-
-fn docker_checked<I, S>(args: I) -> Result<(), AnyError>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let output = Command::new("docker").args(args).output()?;
-    check_docker_output(&output)
-}
-
-fn check_docker_output(output: &std::process::Output) -> Result<(), AnyError> {
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(format!(
-            "Docker command failed: {}",
-            compact(&String::from_utf8_lossy(&output.stderr))
-        )
-        .into())
-    }
 }
 
 fn new_managed_state() -> ManagedState {

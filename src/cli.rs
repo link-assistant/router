@@ -274,13 +274,8 @@ pub struct Cli {
     )]
     pub gonka_source_url: String,
 
-    /// Default Gonka model for OpenAI-compatible requests without `model`.
-    #[arg(
-        long,
-        env = "GONKA_MODEL",
-        default_value = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8",
-        global = true
-    )]
+    /// Optional Gonka model declared by the operator and used when omitted.
+    #[arg(long, env = "GONKA_MODEL", default_value = "", global = true)]
     pub gonka_model: String,
 
     /// Upstream model used when an Anthropic-dialect request is bridged to a

@@ -193,7 +193,15 @@ async fn forward_subscription_openai_inner(
         claims.sub.clone(),
         reserved,
     );
-    crate::audit::record_authorised_request(state, &claims, surface, path, Some(routing_body));
+    let resolved_model = body.get("model").and_then(serde_json::Value::as_str);
+    crate::audit::record_authorised_request_with_resolved_model(
+        state,
+        &claims,
+        surface,
+        path,
+        Some(routing_body),
+        resolved_model,
+    );
 
     let Some(provider) = state.upstream_provider.subscription_provider() else {
         return error_response(
@@ -495,7 +503,7 @@ async fn forward_subscription_openai_inner(
             emulated_output_limit,
         );
         let rewrite_passthrough =
-            codex && response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
+            response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = status
             .is_success()
@@ -627,6 +635,19 @@ async fn forward_subscription_openai_inner(
         return response;
     }
 
+    if status.is_success()
+        && response_shape == SubscriptionResponseShape::Passthrough
+        && let Ok(mut parsed) = serde_json::from_slice::<serde_json::Value>(&response_body)
+    {
+        let requested_model = routing_body
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        upstream_model = crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+        response_body =
+            bytes::Bytes::from(serde_json::to_vec(&parsed).expect("JSON values always serialize"));
+    }
+
     // An upstream failure is re-shaped into the dialect of the surface the
     // caller used, as the Anthropic and Gemini surfaces already do. Relaying the
     // vendor body verbatim left an OpenAI client unable to classify the error,
@@ -649,6 +670,13 @@ async fn forward_subscription_openai_inner(
     *response.status_mut() = status;
     *response.headers_mut() = response_headers;
     response.headers_mut().insert("content-type", content_type);
+    if let Some(served) = upstream_model.as_deref()
+        && let Ok(value) = HeaderValue::from_str(served)
+    {
+        response
+            .headers_mut()
+            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+    }
     response
 }
 
@@ -781,7 +809,7 @@ fn subscription_headers(
         if responses_mode == CodexResponsesMode::Lite {
             out.push((CODEX_RESPONSES_LITE_HEADER, "true".to_string()));
         }
-        // Codex gates newer models (e.g. gpt-5.6-luna) behind a recent client version
+        // Codex gates some catalog models behind a recent client version
         // advertised via the `version` header; without it the backend replies "Model not
         // found". Mirror the Codex CLI. Overridable via CODEX_CLIENT_VERSION.
         out.push((

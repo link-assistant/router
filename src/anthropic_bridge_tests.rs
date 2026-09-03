@@ -7,7 +7,9 @@ use serde_json::json;
 
 use crate::anthropic_bridge::*;
 use crate::config::UpstreamProvider;
+use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::response::Response;
 
 #[test]
 fn translates_system_and_messages() {
@@ -289,6 +291,100 @@ fn responses_object_becomes_anthropic_message() {
     assert_eq!(msg["content"][1]["input"]["q"], 1);
     assert_eq!(msg["stop_reason"], "tool_use");
     assert_eq!(msg["usage"]["input_tokens"], 5);
+}
+
+#[tokio::test]
+async fn buffered_bridge_preserves_requested_and_reports_upstream_model() {
+    use axum::response::IntoResponse as _;
+    use http_body_util::BodyExt as _;
+
+    let upstream = (
+        StatusCode::OK,
+        axum::Json(json!({
+            "id": "chatcmpl-1",
+            "model": "future-upstream-model",
+            "choices": [{
+                "message": {"role": "assistant", "content": "hello"},
+                "finish_reason": "stop"
+            }],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1}
+        })),
+    )
+        .into_response();
+    let response = translate_upstream_response(
+        upstream,
+        "claude/catalog-alias",
+        "future-upstream-model",
+        false,
+        &[],
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response
+            .headers()
+            .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
+            .unwrap(),
+        "future-upstream-model"
+    );
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(payload["model"], "claude/catalog-alias");
+    assert_eq!(
+        payload[crate::output_limit::UPSTREAM_MODEL_FIELD],
+        "future-upstream-model"
+    );
+}
+
+/// Streaming translation carries the same two model identities as buffered
+/// translation, including the response header used by logs and clients that
+/// do not inspect vendor-specific SSE fields.
+#[tokio::test]
+async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
+    use http_body_util::BodyExt as _;
+
+    let mut upstream = Response::new(Body::from(concat!(
+        "data: {\"id\":\"chatcmpl-1\",\"model\":\"future-upstream-model\",",
+        "\"choices\":[{\"delta\":{\"role\":\"assistant\",\"content\":\"hello\"},",
+        "\"finish_reason\":null}]}\n\n",
+        "data: {\"id\":\"chatcmpl-1\",\"model\":\"future-upstream-model\",",
+        "\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+        "data: [DONE]\n\n"
+    )));
+    upstream.headers_mut().insert(
+        "content-type",
+        HeaderValue::from_static("text/event-stream"),
+    );
+
+    let response = translate_upstream_response(
+        upstream,
+        "claude/catalog-alias",
+        "future-upstream-model",
+        true,
+        &[],
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+    assert_eq!(
+        response.headers()[crate::output_limit::UPSTREAM_MODEL_HEADER],
+        "future-upstream-model"
+    );
+    let payload = String::from_utf8(
+        response
+            .into_body()
+            .collect()
+            .await
+            .expect("translated stream body")
+            .to_bytes()
+            .to_vec(),
+    )
+    .expect("UTF-8 SSE");
+    assert!(payload.contains("message_start"));
+    assert!(payload.contains("content_block_delta"));
+    assert!(payload.contains("message_stop"));
+    assert!(payload.contains("claude/catalog-alias"));
+    assert!(payload.contains("future-upstream-model"));
 }
 
 #[test]

@@ -143,6 +143,34 @@ pub fn select_model(client: ClientKind, catalog: &[RouterModel]) -> Option<&str>
     catalog.first().map(|model| model.id.as_str())
 }
 
+/// Dynamic Claude Code Default/family target for a z.ai-backed catalog.
+///
+/// Native Anthropic discovery remains in charge whenever the live catalog has
+/// an Anthropic model. With z.ai-only compatible access, Claude Code cannot
+/// resolve its built-in Default/family names itself, so every family and
+/// subagent pin is mapped to one exact currently advertised z.ai alias. An
+/// explicit z.ai model wins and is propagated to the same subagent boundary.
+#[must_use]
+pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> Option<String> {
+    if let Some(explicit) = explicit
+        && catalog
+            .iter()
+            .any(|model| model.id == explicit && model.owned_by == super::ZAI_MODEL_OWNER)
+    {
+        return Some(explicit.to_string());
+    }
+    if catalog
+        .iter()
+        .any(|model| model.owned_by == super::ANTHROPIC_MODEL_OWNER)
+    {
+        return None;
+    }
+    catalog
+        .iter()
+        .find(|model| model.owned_by == super::ZAI_MODEL_OWNER)
+        .map(|model| model.id.clone())
+}
+
 /// Every model `client` could be launched on, best owners first.
 ///
 /// What a client config embeds must be what `with` would launch it on, or the

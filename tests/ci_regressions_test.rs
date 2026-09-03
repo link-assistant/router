@@ -133,6 +133,24 @@ fn each_commit_prunes_superseded_build_artifacts() {
     );
 }
 
+/// The checks above populate `target/`; the last pre-commit hook must reclaim
+/// that complete cache even when optional pruning tooling is unavailable.
+#[test]
+fn each_pre_commit_clears_the_rust_build_cache() {
+    let hooks = read_lf(".pre-commit-config.yaml");
+
+    assert!(hooks.contains("cargo-clean"), "{hooks}");
+    assert!(hooks.contains("scripts/clear-build-cache.sh"), "{hooks}");
+    assert!(
+        hooks.contains("stages: [pre-commit]"),
+        "the full cleanup must run as part of every pre-commit pass"
+    );
+    assert!(
+        read_lf("scripts/clear-build-cache.sh").contains("cargo clean"),
+        "the hook must reclaim the complete Cargo build cache"
+    );
+}
+
 /// CI compiles through sccache, which still hits when a dependency moves and
 /// the `Cargo.lock`-keyed artifact cache misses entirely.
 #[test]

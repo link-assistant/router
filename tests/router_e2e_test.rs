@@ -137,6 +137,16 @@ impl TestRouter {
 
         let log_root = data.path().join("requests");
         let model_catalogs = Arc::new(ModelCatalogCache::new());
+        if provider == UpstreamProvider::Codex {
+            // Cross-protocol bridge selection is account-scoped: the model
+            // and the credential used by this fixture must come from the same
+            // authenticated discovery generation.
+            model_catalogs.record_success_for(
+                SubscriptionProvider::Codex,
+                Some("acct_stub".to_string()),
+                vec!["gpt-5".to_string()],
+            );
+        }
         let provider_store =
             link_assistant_router::providers::ProviderStore::open(data.path(), "router-e2e-secret")
                 .expect("provider store");

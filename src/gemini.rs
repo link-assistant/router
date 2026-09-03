@@ -192,10 +192,12 @@ pub async fn forward_chat_completions(
     headers: &HeaderMap,
     body: Value,
 ) -> Response {
+    let routing_body = body.clone();
     forward(
         state,
         headers,
         body,
+        &routing_body,
         Surface::OpenAIChat,
         ShapeIn::Chat,
         None,
@@ -207,12 +209,14 @@ pub(crate) async fn forward_chat_completions_routed(
     state: &AppState,
     headers: &HeaderMap,
     body: Value,
+    routing_body: &Value,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
     forward(
         state,
         headers,
         body,
+        routing_body,
         Surface::OpenAIChat,
         ShapeIn::Chat,
         subscription,
@@ -230,7 +234,17 @@ pub async fn forward_chat_completions_as(
     body: Value,
     surface: Surface,
 ) -> Response {
-    forward(state, headers, body, surface, ShapeIn::Chat, None).await
+    let routing_body = body.clone();
+    forward(
+        state,
+        headers,
+        body,
+        &routing_body,
+        surface,
+        ShapeIn::Chat,
+        None,
+    )
+    .await
 }
 
 pub(crate) async fn forward_chat_completions_as_routed(
@@ -240,15 +254,27 @@ pub(crate) async fn forward_chat_completions_as_routed(
     surface: Surface,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
-    forward(state, headers, body, surface, ShapeIn::Chat, subscription).await
-}
-
-/// `POST /v1/responses` for the Gemini subscription upstream.
-pub async fn forward_responses(state: &AppState, headers: &HeaderMap, body: Value) -> Response {
+    let routing_body = body.clone();
     forward(
         state,
         headers,
         body,
+        &routing_body,
+        surface,
+        ShapeIn::Chat,
+        subscription,
+    )
+    .await
+}
+
+/// `POST /v1/responses` for the Gemini subscription upstream.
+pub async fn forward_responses(state: &AppState, headers: &HeaderMap, body: Value) -> Response {
+    let routing_body = body.clone();
+    forward(
+        state,
+        headers,
+        body,
+        &routing_body,
         Surface::OpenAIResponses,
         ShapeIn::Responses,
         None,
@@ -260,12 +286,14 @@ pub(crate) async fn forward_responses_routed(
     state: &AppState,
     headers: &HeaderMap,
     body: Value,
+    routing_body: &Value,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
     forward(
         state,
         headers,
         body,
+        routing_body,
         Surface::OpenAIResponses,
         ShapeIn::Responses,
         subscription,
@@ -291,6 +319,7 @@ async fn route_gemini_token(
     state: &AppState,
     headers: &HeaderMap,
     body: &Value,
+    routing_body: &Value,
     surface: Surface,
     path: &str,
     validated: Option<&crate::model_routing::ValidatedSubscription>,
@@ -306,7 +335,14 @@ async fn route_gemini_token(
         claims.sub.clone(),
         reserved,
     );
-    crate::audit::record_authorised_request(state, &claims, surface, path, Some(body));
+    crate::audit::record_authorised_request_with_resolved_model(
+        state,
+        &claims,
+        surface,
+        path,
+        Some(routing_body),
+        body.get("model").and_then(Value::as_str),
+    );
     let pinned_account = state
         .token_manager
         .account_for(&claims.sub)
@@ -421,6 +457,7 @@ async fn forward(
     state: &AppState,
     headers: &HeaderMap,
     body: Value,
+    routing_body: &Value,
     surface: Surface,
     shape: ShapeIn,
     validated: Option<&crate::model_routing::ValidatedSubscription>,
@@ -434,6 +471,7 @@ async fn forward(
         state,
         headers,
         &body,
+        routing_body,
         surface,
         "/api/services/openai/v1/chat/completions",
         validated,
@@ -447,6 +485,11 @@ async fn forward(
     let selected_account = Some(routed.account);
     // The reservation carries the token id; usage settles through it.
     let mut reservation = routed.reservation;
+    let requested_model = routing_body
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string();
 
     // Normalize Responses input into the Chat `messages` shape so a single
     // translator handles both surfaces.
@@ -594,10 +637,11 @@ async fn forward(
             );
         }
     };
-    let chat = gemini_response_to_chat(&gemini_json, &model);
+    let mut chat = gemini_response_to_chat(&gemini_json, &model);
+    let upstream_model = crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
 
     if stream_requested {
-        return sse_from_chat_completion(&chat, &model);
+        return sse_from_chat_completion(&chat, &requested_model, upstream_model.as_deref());
     }
     let mut response = Response::new(Body::from(chat.to_string()));
     *response.status_mut() = StatusCode::OK;
@@ -605,12 +649,23 @@ async fn forward(
         "content-type",
         axum::http::HeaderValue::from_static("application/json"),
     );
+    if let Some(upstream_model) = upstream_model.as_deref()
+        && let Ok(value) = axum::http::HeaderValue::from_str(upstream_model)
+    {
+        response
+            .headers_mut()
+            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+    }
     response
 }
 
 /// Re-emit a non-streamed chat completion as an `OpenAI` SSE stream
 /// (`chat.completion.chunk` deltas followed by `[DONE]`).
-fn sse_from_chat_completion(chat: &Value, model: &str) -> Response {
+fn sse_from_chat_completion(
+    chat: &Value,
+    requested_model: &str,
+    upstream_model: Option<&str>,
+) -> Response {
     let id = chat
         .get("id")
         .and_then(Value::as_str)
@@ -627,18 +682,24 @@ fn sse_from_chat_completion(chat: &Value, model: &str) -> Response {
         .and_then(Value::as_i64)
         .unwrap_or_default();
 
-    let role_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": model,
+    let mut role_chunk = json!({
+        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
         "choices": [{ "index": 0, "delta": { "role": "assistant" }, "finish_reason": null }],
     });
-    let content_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": model,
+    let mut content_chunk = json!({
+        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
         "choices": [{ "index": 0, "delta": { "content": content }, "finish_reason": null }],
     });
-    let stop_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": model,
+    let mut stop_chunk = json!({
+        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
         "choices": [{ "index": 0, "delta": {}, "finish_reason": "stop" }],
     });
+    if let Some(upstream_model) = upstream_model {
+        for chunk in [&mut role_chunk, &mut content_chunk, &mut stop_chunk] {
+            chunk[crate::output_limit::UPSTREAM_MODEL_FIELD] =
+                Value::String(upstream_model.to_string());
+        }
+    }
     let payload = format!(
         "data: {role_chunk}\n\ndata: {content_chunk}\n\ndata: {stop_chunk}\n\ndata: [DONE]\n\n"
     );
@@ -648,6 +709,13 @@ fn sse_from_chat_completion(chat: &Value, model: &str) -> Response {
         "content-type",
         axum::http::HeaderValue::from_static("text/event-stream"),
     );
+    if let Some(upstream_model) = upstream_model
+        && let Ok(value) = axum::http::HeaderValue::from_str(upstream_model)
+    {
+        response
+            .headers_mut()
+            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+    }
     response
 }
 
@@ -877,82 +945,8 @@ mod tests {
         assert_eq!(request["generationConfig"]["temperature"], 0.4);
         assert_eq!(request["generationConfig"]["topP"], 0.9);
     }
-
-    #[test]
-    fn a_request_without_knobs_omits_the_generation_config() {
-        let request = chat_to_gemini_request(&json!({"messages": []}));
-        assert!(request.get("generationConfig").is_none());
-        assert!(request.get("systemInstruction").is_none());
-    }
-
-    #[test]
-    fn max_completion_tokens_is_accepted_as_the_output_cap() {
-        let request = chat_to_gemini_request(&json!({
-            "messages": [],
-            "max_completion_tokens": 64
-        }));
-        assert_eq!(request["generationConfig"]["maxOutputTokens"], 64);
-    }
-
-    #[test]
-    fn the_code_assist_envelope_carries_the_model() {
-        let envelope = code_assist_envelope("nimbus-3-flash", &json!({"contents": []}));
-        assert_eq!(envelope["model"], "nimbus-3-flash");
-        assert_eq!(envelope["request"]["contents"], json!([]));
-    }
-
-    /// Responses are translated back into the `OpenAI` completion shape, with
-    /// usage carried across so spend accounting stays truthful.
-    #[test]
-    fn gemini_responses_translate_back_with_usage() {
-        let response = json!({
-            "candidates": [{
-                "content": {"parts": [{"text": "one "}, {"text": "two"}]},
-                "finishReason": "STOP"
-            }],
-            "usageMetadata": {"promptTokenCount": 11, "candidatesTokenCount": 5}
-        });
-        let chat = gemini_response_to_chat(&response, "nimbus-3-flash");
-
-        assert_eq!(chat["model"], "nimbus-3-flash");
-        assert_eq!(chat["choices"][0]["message"]["content"], "one two");
-        assert_eq!(chat["choices"][0]["finish_reason"], "stop");
-        assert_eq!(chat["usage"]["prompt_tokens"], 11);
-        assert_eq!(chat["usage"]["completion_tokens"], 5);
-        assert_eq!(chat["usage"]["total_tokens"], 16);
-    }
-
-    /// Code Assist nests the payload under `response`; both shapes are read.
-    #[test]
-    fn a_nested_code_assist_response_is_unwrapped() {
-        let nested = json!({
-            "response": {
-                "candidates": [{"content": {"parts": [{"text": "inner"}]}}]
-            }
-        });
-        let chat = gemini_response_to_chat(&nested, "nimbus-3-flash");
-        assert_eq!(chat["choices"][0]["message"]["content"], "inner");
-    }
-
-    #[test]
-    fn finish_reasons_map_onto_the_openai_vocabulary() {
-        assert_eq!(map_finish_reason("MAX_TOKENS"), "length");
-        for blocked in ["SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT"] {
-            assert_eq!(map_finish_reason(blocked), "content_filter", "{blocked}");
-        }
-        assert_eq!(map_finish_reason("STOP"), "stop");
-        assert_eq!(map_finish_reason("SOMETHING_NEW"), "stop");
-    }
-
-    #[test]
-    fn message_text_is_extracted_from_both_content_shapes() {
-        assert_eq!(extract_message_text(Some(&json!("plain"))), "plain");
-        assert_eq!(
-            extract_message_text(Some(&json!([{"text": "a"}, {"text": "b"}]))),
-            "ab"
-        );
-        assert_eq!(extract_message_text(Some(&json!(["a", "b"]))), "ab");
-        assert_eq!(extract_message_text(None), "");
-        assert_eq!(extract_message_text(Some(&json!(42))), "");
-    }
 }
+
+#[cfg(test)]
+#[path = "gemini_translation_tests.rs"]
+mod translation_tests;

@@ -11,10 +11,14 @@ pub fn default_gonka_source_url() -> String {
     "https://node4.gonka.ai".to_string()
 }
 
-/// Default Gonka model ID.
+/// Gonka has no synthetic default model.
+///
+/// Operators may declare one with `GONKA_MODEL`; otherwise the provider only
+/// accepts requests that name a model explicitly and advertises no model of
+/// its own.
 #[must_use]
-pub fn default_gonka_model() -> String {
-    "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8".to_string()
+pub const fn default_gonka_model() -> String {
+    String::new()
 }
 
 /// Default OpenAI-compatible provider base URL.

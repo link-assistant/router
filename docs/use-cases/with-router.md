@@ -52,11 +52,13 @@ process, and `LINK_ASSISTANT_TOKEN` carries the credential. Use
 `--isolated-config` when a disposable Codex home is intentionally required.
 
 For Claude, the process overlay wins over persistent helper configuration: it
-sets Router's URL/token, clears the higher-priority API key and family/subagent
-pins, enables gateway discovery, and forces nonessential startup traffic on so
-the catalog request is not suppressed. The real settings, credentials, shell
-startup files, history and gateway cache remain byte-identical. Claude Code
-2.1.255 or newer is required for current aliases.
+sets Router's URL/token, clears the higher-priority API key, enables gateway
+discovery, and forces nonessential startup traffic on so the catalog request is
+not suppressed. Native Anthropic catalogs leave model pins clear. A z.ai-only
+catalog maps Default, every family and subagents to one exact live alias for
+both new and resumed sessions; an explicit z.ai model wins. The real settings,
+credentials, shell startup files, history and gateway cache remain
+byte-identical. Claude Code 2.1.255 or newer is required for current aliases.
 
 ## Arguments, interaction, and models
 

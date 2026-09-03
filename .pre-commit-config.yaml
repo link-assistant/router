@@ -36,7 +36,18 @@ repos:
         types: [rust]
         pass_filenames: false
 
-      # Drop build artifacts the commit's own build did not use.
+      # Always reclaim the build output produced by the checks above. Keeping
+      # this as the last pre-commit hook bounds disk use even in worktrees and
+      # does not require optional contributor tooling.
+      - id: cargo-clean
+        name: cargo clean (clear build cache)
+        entry: scripts/clear-build-cache.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        always_run: true
+
+      # Drop build artifacts the most recent build did not use.
       #
       # `target/` keeps superseded test and binary artifacts, re-linked on each
       # change and never evicted, so it can grow without bound. This prunes what

@@ -44,9 +44,9 @@ The safe allowlist is reviewed code, not z.ai's remote tool list:
 
 | Signed Router client | Default | Exposed identity | Native z.ai protocol |
 | --- | --- | --- | --- |
-| Claude Code | allowed | `claude-zai-glm-*` and `anthropic-zai-glm-*` | Anthropic Messages |
-| Codex | allowed | `z.ai/glm-*` | OpenAI Responses |
-| OpenCode | allowed | `z.ai/glm-*` | OpenAI Chat Completions |
+| Claude Code | allowed | `claude-zai-<model-id>` and `anthropic-zai-<model-id>` | Anthropic Messages |
+| Codex | allowed | `z.ai/<model-id>` | OpenAI Responses |
+| OpenCode | allowed | `z.ai/<model-id>` | OpenAI Chat Completions |
 | Gemini CLI, Grok CLI, Qwen Code | denied | none | available only after one exact second acknowledgement |
 | Agent, Cursor, SDK/curl, unidentified client | always denied | none | no override |
 
@@ -94,8 +94,9 @@ The exact client-visible registry selects the credential and fixed endpoint:
 | OpenCode alias over Chat Completions | `https://api.z.ai/api/coding/paas/v4` |
 | Codex alias over Responses | `https://api.z.ai/api/v1` |
 
-Router sends only the canonical `glm-*` id upstream and records that id in the
-audit event. It never derives ownership by stripping an arbitrary prefix.
+Router sends only the configured canonical model id upstream, preserves the
+requested alias in the response, and records both identities in the audit
+event. It never derives ownership by stripping an arbitrary prefix.
 Streaming and tool calls use the same final authorization. Claude Code
 `/api/services/anthropic/v1/messages/count_tokens` applies the same mapping locally and never calls a
 forbidden provider.
@@ -105,11 +106,15 @@ forbidden provider.
 Claude Code **2.1.255 or newer** is required. `router with claude` and
 `router clients setup claude` set
 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, force nonessential startup
-traffic on for discovery, and clear higher-priority credentials plus
-family/subagent pins in their owned scope. An explicit command-line model is
-preserved. Router validates every selected alias locally against the current
-signed client/provider registry, so a built-in or cached choice cannot silently
-select another credential.
+traffic on for discovery, and clear higher-priority credentials. When z.ai is
+the only compatible live catalog, Router maps Claude Code's Default,
+opus/sonnet/haiku families, subagents, and resumed sessions to one exact
+currently advertised z.ai alias. With a native Anthropic catalog those pins
+stay clear and gateway discovery remains authoritative. An explicit z.ai
+command-line model wins and is propagated to the same subagent boundary.
+Router validates every selected alias locally against the current signed
+client/provider registry, so a built-in or cached choice cannot silently select
+another credential.
 
 Claude Code reads the gateway catalog at startup and may retain
 `~/.claude/cache/gateway-models.json`. Restart Claude Code after changing the

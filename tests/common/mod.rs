@@ -7,6 +7,8 @@ use std::net::TcpListener;
 use std::process::{Command, Output};
 use std::time::Duration;
 
+use base64::Engine as _;
+
 pub fn router(home: &std::path::Path, args: &[&str]) -> Output {
     router_with_env(home, args, &[])
 }
@@ -113,4 +115,82 @@ pub fn mock_router(
 
 pub fn catalog_server(models: &[(&str, &str)]) -> (String, std::thread::JoinHandle<Vec<String>>) {
     mock_router(models, 1)
+}
+
+pub fn mock_admin_router(
+    models: &[(&str, &str)],
+    client: &str,
+    request_count: usize,
+) -> (String, std::thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock admin router");
+    listener
+        .set_nonblocking(true)
+        .expect("nonblocking admin router");
+    let port = listener.local_addr().expect("admin router address").port();
+    let catalog = serde_json::json!({
+        "object": "list",
+        "data": models
+            .iter()
+            .map(|(id, owner)| serde_json::json!({"id": id, "owned_by": owner}))
+            .collect::<Vec<_>>()
+    })
+    .to_string();
+    let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .encode(serde_json::json!({"sub": "repair-run-id", "client_kind": client}).to_string());
+    let issued = format!(r#"{{"token":"la_sk_e30.{payload}.signature"}}"#);
+    let server = std::thread::spawn(move || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let mut requests = Vec::new();
+        while requests.len() < request_count {
+            let mut stream = loop {
+                match listener.accept() {
+                    Ok((stream, _)) => break stream,
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        if std::time::Instant::now() >= deadline {
+                            return requests;
+                        }
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(error) => panic!("accept mock admin router request: {error}"),
+                }
+            };
+            stream
+                .set_nonblocking(false)
+                .expect("make accepted admin connection blocking");
+            let mut bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let count = stream.read(&mut buffer).expect("read admin request");
+                if count == 0 {
+                    break;
+                }
+                bytes.extend_from_slice(&buffer[..count]);
+                if bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let request = String::from_utf8_lossy(&bytes).into_owned();
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, body) = match path {
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
+                "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
+                "/api/management/tokens/client" => ("200 OK", issued.as_str()),
+                _ if request.starts_with("GET ") => ("200 OK", catalog.as_str()),
+                _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
+            };
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write mock admin response");
+            requests.push(request);
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), server)
 }

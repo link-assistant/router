@@ -143,7 +143,11 @@ async fn both_upstream_dialects_serve_all_three_buffered_client_surfaces() {
                 .send()
                 .await
                 .expect("cross-dialect response");
-            assert_eq!(response.status(), StatusCode::OK, "{provider:?} {path}");
+            if response.status() != StatusCode::OK {
+                let status = response.status();
+                let error = response.text().await.expect("error response");
+                panic!("{provider:?} {path}: {status}: {error}");
+            }
             let payload: Value = response.json().await.expect("JSON response");
             assert!(
                 payload[envelope].is_array(),

@@ -133,20 +133,65 @@ pub async fn forward_openai_compatible(
     path: &str,
     surface: Surface,
 ) -> Response {
-    forward_provider_at(state, headers, body, path, path, surface, false).await
+    let routing_body = body.clone();
+    forward_provider_at_routed(
+        state,
+        headers,
+        body,
+        &routing_body,
+        ProviderForwardOptions {
+            path,
+            upstream_path: path,
+            surface,
+            copy_anthropic_headers: false,
+        },
+    )
+    .await
 }
 
-/// Forward through the selected stored provider while keeping the caller path
-/// distinct from a provider's fixed native endpoint.
-pub(crate) async fn forward_provider_at(
+pub(crate) async fn forward_openai_compatible_routed(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    path: &str,
+    surface: Surface,
+) -> Response {
+    forward_provider_at_routed(
+        state,
+        headers,
+        body,
+        routing_body,
+        ProviderForwardOptions {
+            path,
+            upstream_path: path,
+            surface,
+            copy_anthropic_headers: false,
+        },
+    )
+    .await
+}
+
+pub(crate) struct ProviderForwardOptions<'a> {
+    pub path: &'a str,
+    pub upstream_path: &'a str,
+    pub surface: Surface,
+    pub copy_anthropic_headers: bool,
+}
+
+pub(crate) async fn forward_provider_at_routed(
     state: &AppState,
     headers: &HeaderMap,
     mut body: serde_json::Value,
-    path: &str,
-    upstream_path: &str,
-    surface: Surface,
-    copy_anthropic_headers: bool,
+    routing_body: &serde_json::Value,
+    options: ProviderForwardOptions<'_>,
 ) -> Response {
+    let ProviderForwardOptions {
+        path,
+        upstream_path,
+        surface,
+        copy_anthropic_headers,
+    } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
     }
@@ -170,8 +215,6 @@ pub(crate) async fn forward_provider_at(
         claims.sub.clone(),
         reserved,
     );
-    crate::audit::record_authorised_request(state, &claims, surface, path, Some(&body));
-
     let provider = match resolve_openai_compatible_provider(state) {
         Ok(provider) => provider,
         Err(e) => {
@@ -188,6 +231,24 @@ pub(crate) async fn forward_provider_at(
     {
         body["model"] = serde_json::Value::String(model.to_string());
     }
+    let requested_model = routing_body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default()
+        .to_string();
+    let resolved_model = body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default()
+        .to_string();
+    crate::audit::record_authorised_request_with_resolved_model(
+        state,
+        &claims,
+        surface,
+        path,
+        Some(routing_body),
+        (!resolved_model.is_empty()).then_some(resolved_model.as_str()),
+    );
     let stream_requested = body
         .get("stream")
         .and_then(serde_json::Value::as_bool)
@@ -262,10 +323,19 @@ pub(crate) async fn forward_provider_at(
             correlation_id,
             state.logger.clone(),
             usage.take(),
+            Some(requested_model.as_str()),
         );
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         response.headers_mut().insert("content-type", content_type);
+        if !resolved_model.is_empty()
+            && resolved_model != requested_model
+            && let Ok(value) = HeaderValue::from_str(&resolved_model)
+        {
+            response
+                .headers_mut()
+                .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+        }
         return response;
     }
 
@@ -291,9 +361,26 @@ pub(crate) async fn forward_provider_at(
         usage.feed(&upstream_body);
     }
 
-    let mut response = Response::new(Body::from(upstream_body));
+    let mut response_body = upstream_body;
+    let mut served_model = None;
+    if status.is_success()
+        && let Ok(mut payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
+    {
+        served_model = crate::output_limit::preserve_model_identity(&mut payload, &requested_model);
+        response_body =
+            bytes::Bytes::from(serde_json::to_vec(&payload).expect("JSON values always serialize"));
+    }
+
+    let mut response = Response::new(Body::from(response_body));
     *response.status_mut() = status;
     response.headers_mut().insert("content-type", content_type);
+    if let Some(served) = served_model.as_deref()
+        && let Ok(value) = HeaderValue::from_str(served)
+    {
+        response
+            .headers_mut()
+            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
+    }
     response
 }
 
@@ -362,7 +449,8 @@ fn settled_relay_stream(
     correlation_id: String,
     logger: log_lazy::LogLazy,
     mut usage: Option<crate::usage::UsageTracker>,
-) -> impl futures_util::Stream<Item = Result<bytes::Bytes, std::io::Error>> {
+    requested_model: Option<&str>,
+) -> impl futures_util::Stream<Item = Result<bytes::Bytes, std::io::Error>> + use<> {
     let started = std::time::Instant::now();
     let outcome = std::sync::Arc::new(std::sync::Mutex::new(new_stream_outcome(
         upstream.headers(),
@@ -370,6 +458,10 @@ fn settled_relay_stream(
     let end_outcome = std::sync::Arc::clone(&outcome);
     let end_log = std::sync::Arc::clone(&response_log);
     let end_id = correlation_id.clone();
+    let mut identity = crate::output_limit::ResponsesStreamRewriter::new(
+        requested_model.unwrap_or_default(),
+        None,
+    );
     upstream
         .bytes_stream()
         .map(move |chunk| {
@@ -385,7 +477,15 @@ fn settled_relay_stream(
                 Err(error) => settled.detail = Some(error.to_string()),
             }
             drop(settled);
-            chunk.map_err(std::io::Error::other)
+            chunk
+                .map(|bytes| {
+                    if identity.active() {
+                        bytes::Bytes::from(identity.push(&bytes))
+                    } else {
+                        bytes
+                    }
+                })
+                .map_err(std::io::Error::other)
         })
         .chain(futures_util::stream::once(async move {
             crate::request_log::settle_stream(
@@ -664,6 +764,7 @@ mod tests {
             std::sync::Arc::clone(&log),
             "relayed".to_string(),
             log_lazy::LogLazy::default(),
+            None,
             None,
         ));
         let mut relayed = Vec::new();

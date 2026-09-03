@@ -156,7 +156,8 @@ pub(super) fn analyze_client(
         .clone()
         .or_else(|| public_base.clone())
         .or_else(|| managed_base.clone())
-        .or_else(|| expected_origin.clone());
+        .or_else(|| expected_origin.clone())
+        .and_then(|value| sanitize_origin(&value));
     let effective_source = if ambient_base.is_some() {
         Some(ConfigSource::AmbientEnvironment)
     } else if public_base.is_some() {
@@ -189,10 +190,17 @@ pub(super) fn analyze_client(
         && managed_token.is_some()
         && (!requires_config || config_exists)
         && (!requires_marker || marker_valid);
+    let ambient_critical = client == ClientKind::ClaudeCode
+        && CLAUDE_PRECEDENCE_ENV.iter().any(|key| {
+            manager
+                .environment_var(key)
+                .is_some_and(|value| !value.is_empty())
+        });
     let any_configuration = config_exists
         || public_base.is_some()
         || managed_base.is_some()
         || ambient_base.is_some()
+        || ambient_critical
         || any_managed;
     let state = if raw.unreadable.is_some()
         || conflicts.iter().any(|key| key.ends_with(":invalid"))
@@ -251,24 +259,33 @@ fn marker_valid(
     let valid = match client {
         ClientKind::ClaudeCode => super::claude_marker(path).map(|marker| {
             marker.is_some_and(|(managed, _, entries)| {
-                expected_endpoint.is_none_or(|expected| managed == expected)
-                    && [
-                        ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1")),
-                        ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Some("0")),
-                        ("ANTHROPIC_AUTH_TOKEN", None),
-                        ("ANTHROPIC_API_KEY", None),
-                        ("ANTHROPIC_MODEL", None),
-                        ("ANTHROPIC_DEFAULT_OPUS_MODEL", None),
-                        ("ANTHROPIC_DEFAULT_SONNET_MODEL", None),
-                        ("ANTHROPIC_DEFAULT_HAIKU_MODEL", None),
-                        ("CLAUDE_CODE_SUBAGENT_MODEL", None),
-                    ]
+                let fixed = [
+                    ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1")),
+                    ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Some("0")),
+                    ("ANTHROPIC_AUTH_TOKEN", None),
+                    ("ANTHROPIC_API_KEY", None),
+                ]
+                .iter()
+                .all(|(key, wanted)| {
+                    entries
+                        .iter()
+                        .any(|(actual, managed, _)| actual == key && managed.as_deref() == *wanted)
+                });
+                let model_target = entries
                     .iter()
-                    .all(|(key, wanted)| {
-                        entries.iter().any(|(actual, managed, _)| {
-                            actual == key && managed.as_deref() == *wanted
+                    .find(|(key, _, _)| key == super::CLAUDE_MODEL_ENV[0])
+                    .map(|(_, managed, _)| managed.as_deref());
+                let models = model_target.is_some_and(|target| {
+                    target.is_none_or(|model| !model.is_empty())
+                        && super::CLAUDE_MODEL_ENV.iter().all(|key| {
+                            entries
+                                .iter()
+                                .find(|(actual, _, _)| actual == key)
+                                .map(|(_, managed, _)| managed.as_deref())
+                                == Some(target)
                         })
-                    })
+                });
+                expected_endpoint.is_none_or(|expected| managed == expected) && fixed && models
             })
         }),
         ClientKind::Codex => super::read_codex_marker(path).map(|_| true),
@@ -336,6 +353,13 @@ fn critical_conflicts(
     {
         conflicts.push(format!("managed-environment:{key}"));
     }
+    let claude_marker_entries = (client == ClientKind::ClaudeCode)
+        .then(|| manager.ownership_marker_path(client))
+        .flatten()
+        .as_deref()
+        .and_then(|path| super::claude_marker(path).ok().flatten())
+        .map(|(_, _, entries)| entries)
+        .unwrap_or_default();
     if client == ClientKind::ClaudeCode {
         let environment = manager.environment_path(client);
         for (key, expected) in [
@@ -351,10 +375,53 @@ fn critical_conflicts(
                 conflicts.push(format!("managed-environment:{key}"));
             }
         }
+        for key in std::iter::once("ANTHROPIC_API_KEY").chain(super::CLAUDE_MODEL_ENV) {
+            if read_environment_value(&environment, key)
+                .ok()
+                .flatten()
+                .is_some_and(|value| !value.is_empty())
+            {
+                conflicts.push(format!("managed-environment:{key}"));
+            }
+        }
+        if manager
+            .environment_var("ANTHROPIC_API_KEY")
+            .is_some_and(|value| !value.is_empty())
+        {
+            conflicts.push("ambient:ANTHROPIC_API_KEY".to_string());
+        }
+        for key in super::CLAUDE_MODEL_ENV {
+            let expected = claude_marker_entries
+                .iter()
+                .find(|(actual, _, _)| actual == key)
+                .and_then(|(_, managed, _)| managed.as_deref());
+            if manager
+                .environment_var(key)
+                .is_some_and(|value| !value.is_empty() && Some(value.as_str()) != expected)
+            {
+                conflicts.push(format!("ambient:{key}"));
+            }
+        }
+        for (key, wanted) in [
+            ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1"),
+            ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0"),
+        ] {
+            if manager
+                .environment_var(key)
+                .is_some_and(|value| !value.is_empty() && value != wanted)
+            {
+                conflicts.push(format!("ambient:{key}"));
+            }
+        }
     }
 
     match client {
-        ClientKind::ClaudeCode => claude_conflicts(config_path, expected_endpoint, conflicts),
+        ClientKind::ClaudeCode => claude_conflicts(
+            config_path,
+            expected_endpoint,
+            &claude_marker_entries,
+            conflicts,
+        ),
         ClientKind::Codex => codex_conflicts(config_path, expected_endpoint, conflicts),
         ClientKind::Opencode | ClientKind::Agent => {
             json_provider_conflicts(config_path, expected_endpoint, conflicts);
@@ -364,7 +431,29 @@ fn critical_conflicts(
     }
 }
 
-fn claude_conflicts(path: &Path, expected: Option<&str>, conflicts: &mut Vec<String>) {
+const CLAUDE_PRECEDENCE_ENV: [&str; 9] = [
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "CLAUDE_CODE_SUBAGENT_MODEL",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+];
+
+fn sanitize_origin(value: &str) -> Option<String> {
+    let parsed = reqwest::Url::parse(value).ok()?;
+    matches!(parsed.scheme(), "http" | "https").then(|| parsed.origin().ascii_serialization())
+}
+
+fn claude_conflicts(
+    path: &Path,
+    expected: Option<&str>,
+    marker_entries: &super::files::ClaudeEnvOwnership,
+    conflicts: &mut Vec<String>,
+) {
     let Ok(source) = read_or_empty(path) else {
         return;
     };
@@ -384,16 +473,18 @@ fn claude_conflicts(path: &Path, expected: Option<&str>, conflicts: &mut Vec<Str
     }) {
         conflicts.push(format!("public-config:{CLAUDE_BASE_ENV}"));
     }
-    for key in [
-        CLAUDE_TOKEN_ENV,
-        "ANTHROPIC_API_KEY",
-        "ANTHROPIC_MODEL",
-        "ANTHROPIC_DEFAULT_OPUS_MODEL",
-        "ANTHROPIC_DEFAULT_SONNET_MODEL",
-        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-        "CLAUDE_CODE_SUBAGENT_MODEL",
-    ] {
+    for key in [CLAUDE_TOKEN_ENV, "ANTHROPIC_API_KEY"] {
         if env.contains_key(key) {
+            conflicts.push(format!("public-config:{key}"));
+        }
+    }
+    for key in super::CLAUDE_MODEL_ENV {
+        let wanted = marker_entries
+            .iter()
+            .find(|(actual, _, _)| actual == key)
+            .and_then(|(_, managed, _)| managed.as_deref());
+        let actual = env.get(key).and_then(Value::as_str);
+        if actual != wanted {
             conflicts.push(format!("public-config:{key}"));
         }
     }
@@ -520,5 +611,24 @@ fn observe(path: &Path) -> Result<ObservedFile, ClientError> {
             "could not inspect {}: {error}",
             path.display()
         ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_origin;
+
+    #[test]
+    fn reported_origins_drop_credentials_and_request_details() {
+        assert_eq!(
+            sanitize_origin("https://operator:secret@router.example:8443/private?q=token#fragment")
+                .as_deref(),
+            Some("https://router.example:8443")
+        );
+        assert_eq!(
+            sanitize_origin("http://router.example:80/api/services/openai").as_deref(),
+            Some("http://router.example")
+        );
+        assert_eq!(sanitize_origin("file:///private/config"), None);
     }
 }

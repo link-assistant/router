@@ -954,3 +954,7 @@ fn catalog_base_url(provider: SubscriptionProvider, token: &SubscriptionToken) -
 #[cfg(test)]
 #[path = "model_catalog_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "model_catalog_invalidation_tests.rs"]
+mod invalidation_tests;

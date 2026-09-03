@@ -2,7 +2,7 @@
 
 mod common;
 
-use common::{mock_router, router, router_with_env};
+use common::{mock_admin_router, router, router_with_env};
 use link_assistant_router::clients::{ClientKind, ClientManager, OwnershipState};
 use std::fs;
 
@@ -139,7 +139,7 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
     fs::create_dir_all(external.parent().unwrap()).unwrap();
     fs::write(&external, b"external-tool-state").unwrap();
 
-    let (base_url, server) = mock_router(&[("claude-future-2099", "anthropic")], 4);
+    let (base_url, server) = mock_admin_router(&[("claude-future-2099", "anthropic")], "claude", 5);
     let output = router_with_env(
         home.path(),
         &["clients", "repair", "claude", "--json"],
@@ -154,11 +154,12 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
         String::from_utf8_lossy(&output.stderr)
     );
     let requests = server.join().unwrap();
-    assert_eq!(requests.len(), 4, "{requests:?}");
+    assert_eq!(requests.len(), 5, "{requests:?}");
     assert!(requests[0].starts_with("GET /api/health "));
     assert!(requests[1].starts_with("GET /api/management/tokens "));
-    assert!(requests[2].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(requests[2].starts_with("POST /api/management/tokens/client "));
     assert!(requests[3].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(requests[4].starts_with("GET /api/services/anthropic/v1/models "));
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(!stdout.contains("la_sk_selected"));
     assert!(!stdout.contains("z.ai-secret"));
@@ -195,4 +196,57 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
         b"vendor-auth-must-stay-exact"
     );
     assert_eq!(fs::read(&external).unwrap(), b"external-tool-state");
+}
+
+#[test]
+fn ambient_claude_precedence_is_reported_without_leaking_endpoint_details() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let output = router_with_env(
+        home.path(),
+        &["clients", "show", "claude"],
+        &[
+            (
+                "ANTHROPIC_BASE_URL",
+                "https://operator:password@router.example:8443/private/path?token=secret#fragment",
+            ),
+            ("ANTHROPIC_API_KEY", "private-api-key"),
+            ("ANTHROPIC_MODEL", "foreign-model-pin"),
+            ("ANTHROPIC_DEFAULT_OPUS_MODEL", "foreign-family-pin"),
+            ("CLAUDE_CODE_SUBAGENT_MODEL", "foreign-subagent-pin"),
+            ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "0"),
+            ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let report = String::from_utf8_lossy(&output.stdout);
+    assert!(report.contains("https://router.example:8443"), "{report}");
+    for private in [
+        "operator",
+        "password",
+        "/private/path",
+        "token=secret",
+        "private-api-key",
+        "foreign-model-pin",
+        "foreign-family-pin",
+        "foreign-subagent-pin",
+    ] {
+        assert!(
+            !report.contains(private),
+            "report leaked {private}: {report}"
+        );
+    }
+    for conflict in [
+        "ambient:ANTHROPIC_API_KEY",
+        "ambient:ANTHROPIC_MODEL",
+        "ambient:ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ambient:CLAUDE_CODE_SUBAGENT_MODEL",
+        "ambient:CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY",
+        "ambient:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    ] {
+        assert!(report.contains(conflict), "missing {conflict}: {report}");
+    }
 }

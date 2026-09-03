@@ -408,6 +408,7 @@ pub async fn forward(
     if let Err(error) = credential_healthy(&state.client, &provider).await {
         return unavailable_error(surface, &error);
     }
+    let routing_body = body.clone();
     body["model"] = serde_json::Value::String(mapping.canonical_id);
     let upstream_path = match protocol {
         ClientProtocol::AnthropicMessages => {
@@ -421,14 +422,17 @@ pub async fn forward(
             return policy_error(surface, "z.ai Coding Plan protocol adapter is unavailable");
         }
     };
-    crate::provider_proxy::forward_provider_at(
+    crate::provider_proxy::forward_provider_at_routed(
         state,
         headers,
         body,
-        incoming_path,
-        &upstream_path,
-        surface,
-        protocol == ClientProtocol::AnthropicMessages,
+        &routing_body,
+        crate::provider_proxy::ProviderForwardOptions {
+            path: incoming_path,
+            upstream_path: &upstream_path,
+            surface,
+            copy_anthropic_headers: protocol == ClientProtocol::AnthropicMessages,
+        },
     )
     .await
 }

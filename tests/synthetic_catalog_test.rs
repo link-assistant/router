@@ -210,6 +210,7 @@ fn selection_failures_are_explicit() {
         SelectionFailure::NotDiscovered,
         SelectionFailure::CredentialUnavailable,
         SelectionFailure::EmptyCatalog,
+        SelectionFailure::ConfiguredModelUnavailable,
     ] {
         let error = ModelSelectionRequired {
             provider: "zephyr-provider".to_string(),
@@ -275,31 +276,75 @@ fn the_listing_advertises_only_discovered_models() {
 /// position.
 #[test]
 fn production_sources_contain_no_hardcoded_vendor_catalogs() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-    // Files that legitimately mention vendor names in prose, provider
-    // detection, or protocol constants rather than as routable model catalogs.
-    let mut offenders = Vec::new();
+    fn collect_rust_sources(directory: &std::path::Path, files: &mut Vec<std::path::PathBuf>) {
+        for entry in std::fs::read_dir(directory).expect("read source directory") {
+            let path = entry.expect("source entry").path();
+            if path.is_dir() {
+                collect_rust_sources(&path, files);
+            } else if path.extension().and_then(std::ffi::OsStr::to_str) == Some("rs")
+                && !path
+                    .file_stem()
+                    .and_then(std::ffi::OsStr::to_str)
+                    .is_some_and(|name| name.ends_with("_test") || name.ends_with("_tests"))
+            {
+                files.push(path);
+            }
+        }
+    }
 
-    for file in ["model_catalog.rs", "anthropic_bridge.rs"] {
-        let path = root.join(file);
+    fn concrete_vendor_model(source: &str) -> Option<&'static str> {
+        let source = source.to_ascii_lowercase();
+        for prefix in ["gpt-", "gemini-", "glm-", "claude-"] {
+            let mut rest = source.as_str();
+            while let Some(index) = rest.find(prefix) {
+                let suffix = &rest[index + prefix.len()..];
+                if suffix.starts_with(|character: char| character.is_ascii_digit()) {
+                    return Some(prefix);
+                }
+                rest = suffix;
+            }
+        }
+        for family in [
+            "claude-opus-",
+            "claude-sonnet-",
+            "claude-haiku-",
+            "claude-fable-",
+        ] {
+            if source.contains(family) {
+                return Some(family);
+            }
+        }
+        if source.contains("qwen/qwen") {
+            return Some("Qwen/Qwen<model>");
+        }
+        let mut rest = source.as_str();
+        while let Some(index) = rest.find("qwen") {
+            let suffix = &rest[index + "qwen".len()..];
+            if suffix.starts_with(|character: char| character.is_ascii_digit()) {
+                return Some("qwen<version>");
+            }
+            rest = suffix;
+        }
+        None
+    }
+
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files = Vec::new();
+    collect_rust_sources(&root, &mut files);
+    let mut offenders = Vec::new();
+    for path in files {
         let source = std::fs::read_to_string(&path).expect("read source");
         // Strip test modules: synthetic fixtures are allowed and expected.
         let production = source
             .split("#[cfg(test)]")
             .next()
             .expect("production section");
-        for needle in [
-            "claude-opus-4",
-            "claude-sonnet-4",
-            "claude-haiku-4",
-            "claude-3-5-sonnet",
-            "gpt-5-codex",
-            "qwen3-coder-plus",
-            "gemini-2.5-pro",
-        ] {
-            if production.contains(needle) {
-                offenders.push(format!("{file} still hardcodes {needle}"));
-            }
+        if let Some(matched) = concrete_vendor_model(production) {
+            offenders.push(format!(
+                "{} still hardcodes {}",
+                path.strip_prefix(&root).unwrap_or(&path).display(),
+                matched
+            ));
         }
     }
 

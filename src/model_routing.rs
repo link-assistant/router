@@ -88,7 +88,7 @@ fn providers_for_model(model: &str, catalogs: &ModelCatalogCache) -> Vec<Subscri
         .collect()
 }
 
-fn subscription_model_identity(model: &str) -> (Option<SubscriptionProvider>, &str) {
+pub(crate) fn subscription_model_identity(model: &str) -> (Option<SubscriptionProvider>, &str) {
     let Some((prefix, canonical)) = model.split_once('/') else {
         return (None, model);
     };
