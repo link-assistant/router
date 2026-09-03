@@ -146,6 +146,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.0.1] - 2026-09-03
+
+### Security
+
+- Removed organization-specific deployment material from current documentation and pseudonymized
+  compatibility fixtures with synthetic payloads and identifiers.
+- Removed an accidentally committed development-session transcript.
+
+### Fixed
+
+- Updated the version contract test to accept stable releases while still matching Cargo metadata.
+
 ## [1.0.0] - 2026-09-02
 
 ### Added
