@@ -559,7 +559,7 @@ SHA-256, existing durable-file primitives, React/Vite admin UI, GitHub Actions r
 
 **Interfaces:**
 - Produces: a `bump: major` fragment and complete old-to-new route table.
-- Produces: candidate probe instructions usable by the Evirma downstream rollout.
+- Produces: candidate probe instructions usable by downstream deployments.
 
 - [ ] **Step 1: Write the changelog and migration table**
 
@@ -575,7 +575,7 @@ SHA-256, existing durable-file primitives, React/Vite admin UI, GitHub Actions r
 
 - [ ] **Step 3: Record downstream candidate-validation procedure**
 
-  Give Evirma a versioned Router image input, `/api/health` probe, selected canonical service probes,
+  Give downstream consumers a versioned Router image input, `/api/health` probe, selected canonical service probes,
   management non-exposure checks, checksum/provenance verification, and “verify candidate before
   switching running container” order. Do not edit historical raw case-study evidence.
 
@@ -641,5 +641,5 @@ SHA-256, existing durable-file primitives, React/Vite admin UI, GitHub Actions r
 - [ ] **Step 8: Complete the downstream and issue audits**
 
   Re-query open Router issues immediately before merge and after release. Incorporate any newly open
-  issue before completing this delivery. Validate the Evirma rollout against the published candidate
-  through its own repository/workflow before claiming that downstream deployment is switched.
+  issue before completing this delivery. Validate each downstream rollout against the published
+  candidate through the consumer's own repository or workflow before claiming it is switched.

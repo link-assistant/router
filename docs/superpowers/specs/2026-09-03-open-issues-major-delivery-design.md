@@ -214,8 +214,8 @@ The changelog and migration guide provide a complete old-to-new route table, sta
 compatibility aliases remain, and instruct operators to rerun managed client setup or repair.
 Provider credentials and subscription authorization are not rewritten.
 
-Router will ship deploy templates and probe examples using the canonical paths. The Evirma
-orchestrator is a separate repository and cannot be changed by this Router pull request; delivery
-therefore exposes a candidate-validation contract and records Evirma as a coordinated downstream
-rollout gate. Router is not declared deployed to Evirma until that repository consumes the released
-major version and passes its candidate probes before switching the running container.
+Router will ship deploy templates and probe examples using the canonical paths. Downstream
+orchestrators live in separate repositories and cannot be changed by this Router pull request;
+delivery therefore exposes a candidate-validation contract for coordinated rollout gates. A
+downstream deployment is not declared switched until it consumes the released major version and
+passes its candidate probes before switching the running container.

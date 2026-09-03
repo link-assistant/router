@@ -19,9 +19,10 @@ use std::io::BufRead;
 
 /// The original records, one JSON object per line.
 ///
-/// Taken from a real production log and extended with the shapes that break
+/// Pseudonymized from a captured log and extended with the shapes that break
 /// encoders: two-element arrays whose first element is a scalar, empty
-/// containers, empty keys, nulls, embedded newlines and quotes.
+/// containers, empty keys, nulls, embedded newlines and quotes. All payloads
+/// and deployment identifiers are synthetic.
 const RECORDS: &str = include_str!("fixtures/log_generations/records.json");
 
 /// The same records as v0.122.0 through v0.123.3 wrote them, produced by that
