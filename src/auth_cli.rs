@@ -196,11 +196,22 @@ fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Opt
     // way to say "this machine" out loud, so it opts out.
     let selected = if target.local {
         None
+    } else if let Some(server) = target.server.as_deref() {
+        match link_assistant_router::managed_server::canonical_server_origin(server) {
+            Ok(server) => Some(server),
+            Err(error) => {
+                eprintln!("error: {error}");
+                return Some(ExitCode::from(1));
+            }
+        }
     } else {
-        target
-            .server
-            .clone()
-            .or_else(link_assistant_router::managed_server::selected_server)
+        match link_assistant_router::managed_server::selected_server() {
+            Ok(server) => server,
+            Err(error) => {
+                eprintln!("error: {error}");
+                return Some(ExitCode::from(1));
+            }
+        }
     };
     if let Some(server) = selected.as_deref() {
         eprintln!(
@@ -374,6 +385,7 @@ async fn remote_target(
         target.local,
         target.managed,
         target.server.as_deref(),
+        target.management_server.as_deref(),
     )
     .await
 }

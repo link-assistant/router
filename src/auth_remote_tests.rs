@@ -379,7 +379,7 @@ async fn forcing_managed_selects_no_remote_server() {
 /// server is selected — the explicit escape hatch from issue #246.
 #[tokio::test]
 async fn local_selects_no_remote_server() {
-    let target = target_for(true, false, None).await.expect("no error");
+    let target = target_for(true, false, None, None).await.expect("no error");
 
     assert!(target.is_none(), "--local must stay local");
 }
@@ -390,7 +390,7 @@ async fn local_selects_no_remote_server() {
 /// (issue #315).
 #[tokio::test]
 async fn managed_selects_no_remote_server() {
-    let target = target_for(false, true, None).await.expect("no error");
+    let target = target_for(false, true, None, None).await.expect("no error");
 
     assert!(target.is_none(), "--managed must stay off a running router");
 }
@@ -399,7 +399,7 @@ async fn managed_selects_no_remote_server() {
 /// exclusive at the parser, and the resolver must not contact anything.
 #[tokio::test]
 async fn local_beats_a_named_server() {
-    let target = target_for(true, false, Some("http://127.0.0.1:1"))
+    let target = target_for(true, false, Some("http://127.0.0.1:1"), None)
         .await
         .expect("no error");
 
@@ -412,7 +412,7 @@ async fn local_beats_a_named_server() {
 async fn an_unreachable_named_server_is_an_error() {
     // Matched rather than `expect_err`: `ResolvedServer` holds a token and so
     // deliberately does not implement `Debug`.
-    let Err(error) = target_for(false, false, Some("http://127.0.0.1:1")).await else {
+    let Err(error) = target_for(false, false, Some("http://127.0.0.1:1"), None).await else {
         panic!("an unreachable server must be an error");
     };
 
@@ -431,7 +431,7 @@ async fn a_named_server_is_used() {
     let _guard = crate::managed_server::claim_state_root(directory.path().to_path_buf());
     let (origin, _requests, _handle) = serve(vec![r#"{"status":"ok"}"#]).await;
 
-    let target = target_for(false, false, Some(&origin))
+    let target = target_for(false, false, Some(&origin), None)
         .await
         .expect("a reachable server is usable")
         .expect("a server was named");
@@ -665,6 +665,26 @@ async fn the_shared_helpers_carry_the_admin_credential() {
         "the body must reach the deployment: {}",
         seen[1]
     );
+}
+
+#[tokio::test]
+async fn remote_management_helpers_never_use_the_inference_origin() {
+    let (management_url, request_count, handle) = serve(vec![r#"{"ok":true}"#]).await;
+    let server = ResolvedServer::at_origins(
+        "http://127.0.0.1:1",
+        management_url,
+        Some("admin-token".to_string()),
+        "split test",
+    );
+
+    let answer = get(&server, "/api/management/accounts")
+        .await
+        .expect("management listener answers");
+
+    assert_eq!(answer, serde_json::json!({"ok": true}));
+    assert_eq!(request_count.load(Ordering::SeqCst), 1);
+    let seen = handle.await.expect("management task");
+    assert!(seen[0].starts_with("GET /api/management/accounts "));
 }
 
 /// `accounts list` reads the proxy-port route, not the admin-port spelling.

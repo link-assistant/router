@@ -18,19 +18,19 @@ use super::{AnyError, PersistedServer, SERVER_CONFIG, normalize_server};
 /// operator select a deployment?" without probing, starting or pulling
 /// anything. A command that can only act locally uses it to refuse honestly
 /// rather than acting on a router the operator did not name (issue #296).
-#[must_use]
-pub fn selected_server() -> Option<String> {
-    std::env::var("LINK_ASSISTANT_ROUTER_URL")
+pub fn selected_server() -> Result<Option<String>, AnyError> {
+    if let Some(selected) = std::env::var("LINK_ASSISTANT_ROUTER_URL")
         .or_else(|_| std::env::var("ROUTER_URL"))
         .ok()
         .filter(|value| !value.trim().is_empty())
-        .or_else(|| {
-            load_persisted()
-                .ok()
-                .flatten()
-                .map(|persisted| persisted.server)
-                .filter(|value| !value.trim().is_empty())
-        })
+    {
+        return normalize_server(&selected).map(Some);
+    }
+    load_persisted()?
+        .map(|persisted| persisted.server)
+        .filter(|value| !value.trim().is_empty())
+        .map(|value| normalize_server(&value))
+        .transpose()
 }
 
 pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
@@ -39,6 +39,14 @@ pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
     }
     let mut config = config.clone();
     config.server = normalize_server(&config.server)?;
+    config.management_server = config
+        .management_server
+        .as_deref()
+        .map(normalize_server)
+        .transpose()?;
+    if config.management_server.as_deref() == Some(config.server.as_str()) {
+        config.management_server = None;
+    }
     let path = state_directory()?.join(SERVER_CONFIG);
     write_private_json(&path, &config)?;
     Ok(path)
@@ -57,14 +65,22 @@ pub fn clear_persisted() -> Result<PathBuf, AnyError> {
 pub fn load_persisted() -> Result<Option<PersistedServer>, AnyError> {
     let path = state_directory()?.join(SERVER_CONFIG);
     match fs::read_to_string(&path) {
-        Ok(source) => Ok(Some(crate::lino_json::decode(&source).map_err(
-            |error| {
-                format!(
-                    "invalid persisted server configuration {}: {error}",
-                    path.display()
-                )
-            },
-        )?)),
+        Ok(source) => {
+            let mut persisted: PersistedServer =
+                crate::lino_json::decode(&source).map_err(|error| {
+                    format!(
+                        "invalid persisted server configuration {}: {error}",
+                        path.display()
+                    )
+                })?;
+            persisted.server = normalize_server(&persisted.server)?;
+            persisted.management_server = persisted
+                .management_server
+                .as_deref()
+                .map(normalize_server)
+                .transpose()?;
+            Ok(Some(persisted))
+        }
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error.into()),
     }
@@ -80,7 +96,7 @@ pub fn configured_source() -> Result<String, AnyError> {
     if let Some(config) = load_persisted()? {
         return Ok(format!(
             "persisted: {} (token {})",
-            config.server,
+            normalize_server(&config.server)?,
             if config.token.is_some() {
                 "set"
             } else {
@@ -102,6 +118,7 @@ mod tests {
     fn a_selection_must_be_an_absolute_http_url() {
         let empty = PersistedServer {
             server: String::new(),
+            management_server: None,
             token: None,
             run_max_requests: None,
         };
@@ -112,6 +129,7 @@ mod tests {
 
         let schemeless = PersistedServer {
             server: "router.example:8080".into(),
+            management_server: None,
             token: None,
             run_max_requests: None,
         };
@@ -157,6 +175,7 @@ mod tests {
 
         save_persisted(&PersistedServer {
             server: "http://127.0.0.1:18878".to_string(),
+            management_server: None,
             token: Some("la_sk_example".to_string()),
             run_max_requests: None,
         })
@@ -169,5 +188,34 @@ mod tests {
             load_persisted().expect("load").is_none(),
             "the selection is gone after clearing"
         );
+    }
+
+    #[test]
+    fn split_origins_round_trip_canonically_and_legacy_files_still_default() {
+        let directory = tempfile::tempdir().expect("temporary state root");
+        let _guard = super::super::state::claim_state_root(directory.path().to_path_buf());
+
+        let path = save_persisted(&PersistedServer {
+            server: "https://Inference.Example:443/".to_string(),
+            management_server: Some("https://Admin.Example:8443/".to_string()),
+            token: Some("la_sk_example".to_string()),
+            run_max_requests: Some(4),
+        })
+        .expect("save split selection");
+        let loaded = load_persisted().expect("load").expect("selection");
+        assert_eq!(loaded.server, "https://inference.example");
+        assert_eq!(
+            loaded.management_server.as_deref(),
+            Some("https://admin.example:8443")
+        );
+
+        fs::write(
+            path,
+            r#"{"server":"https://legacy.example","token":"la_sk_legacy"}"#,
+        )
+        .expect("seed legacy selection");
+        let legacy = load_persisted().expect("load legacy").expect("selection");
+        assert_eq!(legacy.server, "https://legacy.example");
+        assert_eq!(legacy.management_server, None);
     }
 }

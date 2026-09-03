@@ -127,6 +127,75 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
     (format!("http://127.0.0.1:{port}"), handle)
 }
 
+fn mock_split_management() -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind management listener");
+    let port = listener.local_addr().expect("management address").port();
+    let handle = thread::spawn(move || {
+        let mut requests = Vec::new();
+        for _ in 0..3 {
+            let (mut stream, _) = listener.accept().expect("accept management request");
+            let request = read_request(&mut stream);
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, body) = match path {
+                "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
+                "/api/management/tokens/client" => (
+                    "200 OK",
+                    r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
+                ),
+                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
+                _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
+            };
+            requests.push(request);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write management response");
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn mock_split_inference() -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind inference listener");
+    let port = listener.local_addr().expect("inference address").port();
+    let handle = thread::spawn(move || {
+        let mut requests = Vec::new();
+        for _ in 0..2 {
+            let (mut stream, _) = listener.accept().expect("accept inference request");
+            let request = read_request(&mut stream);
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("");
+            let (status, body) = match path {
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
+                "/api/services/codex/v1/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
+                ),
+                _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
+            };
+            requests.push(request);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write inference response");
+        }
+        requests
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
 fn mock_health_router() -> (String, thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
     let port = listener.local_addr().expect("mock address").port();
@@ -719,6 +788,66 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
     assert!(requests[2].contains(r#""ttl_hours":2"#));
     assert!(requests[2].contains(r#""max_requests":7"#));
     assert!(requests[4].contains(r#""id":"run-id""#));
+}
+
+#[test]
+fn wrapper_keeps_split_route_classes_on_their_own_listeners() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&home).expect("create home");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_codex(&bin);
+    let (management_url, management) = mock_split_management();
+    let (base_url, inference) = mock_split_inference();
+    let inherited_path = std::env::var_os("PATH").unwrap_or_default();
+    let path =
+        std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
+            .expect("compose PATH");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_with-router"))
+        .args([
+            "--server",
+            &base_url,
+            "--management-server",
+            &management_url,
+            "--token",
+            "admin-secret",
+            "codex",
+            "hello",
+        ])
+        .env("HOME", &home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
+        .env("PATH", path)
+        .env("FAKE_EXIT", "0")
+        .env("CAPTURE_ARGS", capture.join("args"))
+        .env("CAPTURE_HOME", capture.join("home"))
+        .env("CAPTURE_CONFIG", capture.join("config"))
+        .env("CAPTURE_TOKEN", capture.join("token"))
+        .env_remove("CODEX_HOME")
+        .output()
+        .expect("run wrapper");
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let management = management.join().expect("management listener");
+    let inference = inference.join().expect("inference listener");
+    assert!(
+        management
+            .iter()
+            .all(|request| request.contains("/api/management/"))
+    );
+    assert!(inference[0].starts_with("GET /api/health "));
+    assert!(inference[1].starts_with("GET /api/services/codex/v1/models "));
+    assert!(
+        inference
+            .iter()
+            .all(|request| !request.contains("/api/management/"))
+    );
 }
 
 #[test]

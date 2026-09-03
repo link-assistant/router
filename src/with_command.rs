@@ -65,6 +65,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         resolve(
             args.server.as_deref(),
+            args.management_server.as_deref(),
             explicit_token,
             args.run_max_requests,
             args.managed,

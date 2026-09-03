@@ -2,7 +2,7 @@
 
 mod common;
 
-use common::{mock_admin_router, router, router_with_env};
+use common::{mock_admin_router, mock_router, router, router_with_env};
 use link_assistant_router::clients::{ClientKind, ClientManager, OwnershipState};
 use std::fs;
 
@@ -45,6 +45,7 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
     let report = serde_json::to_string(&foreign).unwrap();
     assert!(!report.contains("z.ai-secret"), "analysis leaked a secret");
 
+    let (base_url, catalog) = mock_router(&[("claude-future-2099", "anthropic")], 1);
     let setup = router(
         home.path(),
         &[
@@ -54,7 +55,7 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
             "--token",
             "la_sk_managed_secret",
             "--server",
-            "http://router.test:8080",
+            &base_url,
         ],
     );
     assert!(
@@ -62,6 +63,8 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
         "{}",
         String::from_utf8_lossy(&setup.stderr)
     );
+    let requests = catalog.join().expect("catalog server");
+    assert!(requests[0].starts_with("GET /api/services/anthropic/v1/models "));
     assert_eq!(
         manager
             .analyze(ClientKind::ClaudeCode)
@@ -111,8 +114,10 @@ fn repair_dry_run_is_byte_identical_and_needs_no_router() {
     );
     assert!(
         output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
+        "status: {}; stdout: {}; stderr: {}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
     );
     assert_eq!(fs::read(&settings).unwrap(), before);
     assert!(
@@ -150,8 +155,10 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
     );
     assert!(
         output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
+        "status: {}; stdout: {}; stderr: {}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
     );
     let requests = server.join().unwrap();
     assert_eq!(requests.len(), 5, "{requests:?}");
@@ -196,6 +203,46 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
         b"vendor-auth-must-stay-exact"
     );
     assert_eq!(fs::read(&external).unwrap(), b"external-tool-state");
+}
+
+#[test]
+fn repair_uses_disjoint_management_and_inference_origins() {
+    let home = tempfile::tempdir().expect("isolated home");
+    let settings = home.path().join(".config/opencode/opencode.json");
+    fs::create_dir_all(settings.parent().unwrap()).unwrap();
+    fs::write(&settings, r#"{"theme":"preserved"}"#).unwrap();
+    let (management_url, management) =
+        mock_admin_router(&[("gpt-future", "openai")], "opencode", 2);
+    let (base_url, inference) = mock_router(&[("gpt-future", "openai")], 3);
+
+    let output = router_with_env(
+        home.path(),
+        &["clients", "repair", "opencode", "--json"],
+        &[
+            ("LINK_ASSISTANT_ROUTER_URL", &base_url),
+            ("LINK_ASSISTANT_ROUTER_MANAGEMENT_URL", &management_url),
+            ("LINK_ASSISTANT_ROUTER_TOKEN", "la_sk_admin"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let management = management.join().expect("management listener");
+    let inference = inference.join().expect("inference listener");
+    assert!(management[0].starts_with("GET /api/management/tokens "));
+    assert!(management[1].starts_with("POST /api/management/tokens/client "));
+    assert!(inference[0].starts_with("GET /api/health "));
+    assert!(
+        inference[1..]
+            .iter()
+            .all(|request| request.starts_with("GET /api/services/openai/v1/models "))
+    );
+    let rendered = fs::read_to_string(settings).expect("repaired config");
+    assert!(rendered.contains(&base_url));
+    assert!(!rendered.contains(&management_url));
 }
 
 #[test]

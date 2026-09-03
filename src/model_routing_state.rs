@@ -36,6 +36,30 @@ pub async fn route_state_with_subscription_for_providers(
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
         .ok_or(ModelRouteError::ModelRequired)?;
+    // A provider-qualified identity is explicit and wins immediately. For a
+    // bare identity, the catalog projection owns the decision: when an
+    // entitled subscription advertises the id it is listed bare, while a
+    // colliding stored provider is listed as `<provider>/<model>`. Routing
+    // must preserve that same meaning instead of silently sending the bare id
+    // to a different upstream.
+    if model.contains('/')
+        && let Some(stored) = stored_provider_for_model(state, model)?
+    {
+        return Ok(RoutedState {
+            state: route_stored_provider(state, &stored, model),
+            subscription: None,
+        });
+    }
+    let visible_subscription = entitled_providers.iter().any(|provider| {
+        state
+            .model_catalogs
+            .models(*provider)
+            .iter()
+            .any(|candidate| candidate == model)
+    });
+    if visible_subscription {
+        return route_subscription_model_for_providers(state, model, entitled_providers).await;
+    }
     if let Some(stored) = stored_provider_for_model(state, model)? {
         return Ok(RoutedState {
             state: route_stored_provider(state, &stored, model),

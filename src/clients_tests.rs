@@ -343,6 +343,7 @@ fn zai_model_pins_are_owned_configuration_and_drift_is_detected() {
                 issued_at: None,
                 router: Some("https://router.example".into()),
                 principal_id: Some("primary".into()),
+                config_sha256: None,
             },
         )
         .unwrap();

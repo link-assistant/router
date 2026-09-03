@@ -22,7 +22,7 @@ const SUPPORTED: [&str; 6] = ["codex", "claude", "opencode", "qwen", "agent", "g
 
 /// Clients whose setup fetches the model catalog before writing anything.
 fn needs_catalog(client: &str) -> bool {
-    matches!(client, "opencode" | "qwen" | "agent")
+    matches!(client, "claude" | "opencode" | "qwen" | "agent")
 }
 
 const BACKENDS: [&str; 2] = ["text", "binary"];
@@ -102,7 +102,14 @@ fn recorded_token_id(home: &Path, client: &str) -> String {
 
 /// Run `clients setup <client>`, minting a token unless `token` is given.
 fn setup(home: &Path, storage: &str, client: &str, token: Option<&str>) -> Output {
-    let catalog = needs_catalog(client).then(|| mock_router(&[("gpt-test", "openai")], 1));
+    let catalog = needs_catalog(client).then(|| {
+        let model = if client == "claude" {
+            ("claude-future-test", "anthropic")
+        } else {
+            ("gpt-test", "openai")
+        };
+        mock_router(&[model], 1)
+    });
     let base_url = catalog.as_ref().map_or_else(
         || "http://router.test:8080".to_string(),
         |(url, _)| url.clone(),
@@ -174,6 +181,45 @@ fn setup_show_remove_revokes_the_minted_token_for_every_client_and_backend() {
             );
         }
     }
+}
+
+#[test]
+fn repeating_an_identical_setup_does_not_mint_another_token() {
+    let home = tempfile::tempdir().expect("temp home");
+    let home = home.path();
+
+    let first = setup(home, "text", "codex", None);
+    assert!(first.status.success(), "first setup: {}", text(&first));
+    let before = tokens(home, "text");
+    assert_eq!(before.len(), 1);
+
+    let second = setup(home, "text", "codex", None);
+    assert!(second.status.success(), "second setup: {}", text(&second));
+    assert_eq!(
+        tokens(home, "text"),
+        before,
+        "an identical setup must reuse the complete managed configuration"
+    );
+}
+
+#[test]
+fn catalog_failure_revokes_the_candidate_minted_before_validation() {
+    let home = tempfile::tempdir().expect("temp home");
+    let home = home.path();
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve port");
+    let base_url = format!("http://{}", listener.local_addr().expect("address"));
+    drop(listener);
+
+    let failed = router(
+        home,
+        "text",
+        &["clients", "setup", "opencode", "--base-url", &base_url],
+    );
+    assert!(!failed.status.success(), "setup unexpectedly worked");
+    let records = tokens(home, "text");
+    assert_eq!(records.len(), 1, "one candidate should have been minted");
+    assert!(records[0].1, "the unused candidate must be revoked");
+    assert!(!home.join(".config/opencode/opencode.json").exists());
 }
 
 #[test]

@@ -33,6 +33,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             token,
             token_stdin,
             base_url,
+            management_server,
             ttl_hours,
         } => {
             let supplied = match resolve_supplied_token(token.clone(), *token_stdin) {
@@ -45,6 +46,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
                 *client,
                 supplied.as_deref(),
                 base_url.as_deref(),
+                management_server.as_deref(),
                 *ttl_hours,
             )
             .await
@@ -261,7 +263,7 @@ async fn repair_one(
         return Ok(result);
     }
 
-    let server = crate::managed_server::resolve(None, None, None, false).await?;
+    let server = crate::managed_server::resolve(None, None, None, None, false).await?;
     let candidate = crate::managed_server::prepare_repair_credential(
         &server,
         client,
@@ -284,6 +286,7 @@ async fn repair_one(
         principal_id: candidate
             .was_minted()
             .then(|| crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
+        config_sha256: None,
     };
     let models = crate::clients::usable_models(client, candidate.models());
     let applied = manager.apply_repair(
@@ -339,7 +342,7 @@ async fn repair_one(
         && old_id != new_id
         && old.router.as_deref() == Some(server.base_url.as_str())
         && let Err(error) =
-            crate::managed_server::revoke(&server.base_url, admin_token, old_id).await
+            crate::managed_server::revoke(&server.management_url, admin_token, old_id).await
     {
         eprintln!(
             "warning: repaired {client}, but the replaced Router-owned token could not be revoked: {}",
@@ -439,6 +442,7 @@ async fn setup(
     client: ClientKind,
     supplied_token: Option<&str>,
     base_url: Option<&str>,
+    management_server: Option<&str>,
     ttl_hours: i64,
 ) -> ExitCode {
     if supplied_token.is_some_and(|token| !token.starts_with("la_sk_")) {
@@ -447,6 +451,21 @@ async fn setup(
         );
         return ExitCode::from(2);
     }
+    if let Some(management_server) = management_server {
+        let Some(base_url) = base_url else {
+            return failed("--management-server requires --server");
+        };
+        return setup_remote(
+            manager,
+            client,
+            supplied_token,
+            base_url,
+            management_server,
+            ttl_hours,
+        )
+        .await;
+    }
+
     // `setup` mints from *this* deployment's token store, so the credential it
     // writes is only valid here. Defaulting the address to this CLI's own
     // `--host`/`--port` while another router was selected produced a client
@@ -454,9 +473,12 @@ async fn setup(
     // (issue #296). It cannot follow the selection either — a locally signed
     // token would be rejected there — so it says which command can.
     let base_url = match base_url {
-        Some(base_url) => base_url.to_string(),
+        Some(base_url) => match crate::managed_server::canonical_server_origin(base_url) {
+            Ok(base_url) => base_url,
+            Err(error) => return failed(error),
+        },
         None => match crate::managed_server::selected_server() {
-            Some(selected) => {
+            Ok(Some(selected)) => {
                 eprintln!(
                     "error: `clients setup` configures the router it can mint a token for, which \
                      is this machine, but {selected} is selected."
@@ -468,7 +490,8 @@ async fn setup(
                 );
                 return ExitCode::from(1);
             }
-            None => local_client_base_url(config),
+            Ok(None) => local_client_base_url(config),
+            Err(error) => return failed(error),
         },
     };
     if let Some(limitation) = client.setup_limitation() {
@@ -479,6 +502,32 @@ async fn setup(
             "{} has no router token environment",
             client.display_name()
         ));
+    }
+    match manager.managed_target_matches(client, &base_url) {
+        Ok(true)
+            if manager
+                .managed_token(client)
+                .ok()
+                .flatten()
+                .as_deref()
+                .is_some_and(|token| {
+                    local_token_binding(config, token, client)
+                        .is_ok_and(|binding| binding.is_some())
+                }) =>
+        {
+            println!(
+                "{} is already configured in {}",
+                client.display_name(),
+                manager.config_path(client).display()
+            );
+            println!(
+                "credentials: {} (mode 0600)",
+                manager.environment_path(client).display()
+            );
+            return ExitCode::SUCCESS;
+        }
+        Ok(_) => {}
+        Err(error) => return failed(error),
     }
     let (token, credential) = match supplied_token {
         Some(token) => {
@@ -496,6 +545,7 @@ async fn setup(
                     issued_at: None,
                     router: Some(base_url.clone()),
                     principal_id: binding.and_then(|binding| binding.principal_id),
+                    config_sha256: None,
                 },
             )
         }
@@ -512,11 +562,15 @@ async fn setup(
                     principal_id: Some(
                         crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
                     ),
+                    config_sha256: None,
                 },
             ),
             Err(error) => return failed(error),
         },
     };
+    let minted_id = (credential.source == TokenSource::Minted)
+        .then(|| credential.token_id.clone())
+        .flatten();
     let models = if matches!(
         client,
         ClientKind::ClaudeCode | ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
@@ -526,24 +580,21 @@ async fn setup(
             // config cannot embed a model the launcher would refuse to start
             // it on (issue #301).
             Ok(models) => crate::clients::usable_models(client, &models),
-            Err(error) => return failed(error),
+            Err(error) => {
+                return failed_after_local_candidate(config, minted_id.as_deref(), error);
+            }
         }
     } else {
         Vec::new()
     };
-    let result = match manager.setup(client, &base_url, &models) {
-        Ok(result) => result,
-        Err(error) => return failed(error),
-    };
-    let environment_path = match manager.write_environment(client, &base_url, &token) {
-        Ok(path) => path,
-        Err(error) => return failed(error),
-    };
-    // Written after the secret so a recorded token id always describes a
-    // credential that actually exists on disk.
-    if let Err(error) = manager.write_credential_metadata(client, &credential) {
-        return failed(error);
-    }
+    let result =
+        match manager.apply_setup_transaction(client, &base_url, &token, &credential, &models) {
+            Ok(result) => result,
+            Err(error) => {
+                return failed_after_local_candidate(config, minted_id.as_deref(), error);
+            }
+        };
+    let environment_path = manager.environment_path(client);
     if client == ClientKind::GrokCli {
         // A token was minted and two files written, so the operation did
         // change this machine — `SetupResult` describes the client's *own*
@@ -575,6 +626,157 @@ async fn setup(
     );
     println!("The token is not stored in the client config or printed to the terminal.");
     ExitCode::SUCCESS
+}
+
+async fn setup_remote(
+    manager: &ClientManager,
+    client: ClientKind,
+    supplied_token: Option<&str>,
+    base_url: &str,
+    management_server: &str,
+    ttl_hours: i64,
+) -> ExitCode {
+    if let Some(limitation) = client.setup_limitation() {
+        return failed(limitation);
+    }
+    if client.token_env().is_none() {
+        return failed(format!(
+            "{} has no router token environment",
+            client.display_name()
+        ));
+    }
+    let base_url = match crate::managed_server::canonical_server_origin(base_url) {
+        Ok(base_url) => base_url,
+        Err(error) => return failed(error),
+    };
+    if let Err(error) = crate::managed_server::canonical_server_origin(management_server) {
+        return failed(error);
+    }
+    match manager.managed_target_matches(client, &base_url) {
+        Ok(true)
+            if let Some(token) = manager.managed_token(client).ok().flatten()
+                && manager.catalog(client, &base_url, &token).await.is_ok() =>
+        {
+            println!(
+                "{} is already configured in {}",
+                client.display_name(),
+                manager.config_path(client).display()
+            );
+            println!(
+                "credentials: {} (mode 0600)",
+                manager.environment_path(client).display()
+            );
+            return ExitCode::SUCCESS;
+        }
+        Ok(_) => {}
+        Err(error) => return failed(error),
+    }
+    let server = match crate::managed_server::resolve(
+        Some(&base_url),
+        Some(management_server),
+        supplied_token.map(str::to_string),
+        None,
+        false,
+    )
+    .await
+    {
+        Ok(server) => server,
+        Err(error) => return failed(error),
+    };
+    let candidate = match crate::managed_server::prepare_run_credential(
+        &server,
+        client,
+        &format!("client-{client}"),
+        ttl_hours,
+        false,
+    )
+    .await
+    {
+        Ok(candidate) => candidate,
+        Err(error) => return failed(error),
+    };
+    let record = ManagedCredential {
+        client: client.to_string(),
+        source: if candidate.was_minted() {
+            TokenSource::Minted
+        } else {
+            TokenSource::Supplied
+        },
+        token_id: candidate.id(),
+        label: Some(format!("client-{client}")),
+        issued_at: Some(chrono::Utc::now().timestamp()),
+        router: Some(server.base_url.clone()),
+        principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
+        config_sha256: None,
+    };
+    let models = crate::clients::usable_models(client, candidate.models());
+    let result = manager.apply_setup_transaction(
+        client,
+        &server.base_url,
+        &candidate.token,
+        &record,
+        &models,
+    );
+    let result = match result {
+        Ok(result) => result,
+        Err(error) => {
+            return match crate::managed_server::cleanup_run_credential(candidate).await {
+                Ok(()) => failed(error),
+                Err(cleanup) => failed(format!(
+                    "{error}; the unused minted credential could not be revoked: {cleanup}"
+                )),
+            };
+        }
+    };
+    let environment_path = manager.environment_path(client);
+    if client == ClientKind::GrokCli {
+        println!(
+            "configured {} through its environment; its own config file was not changed",
+            client.display_name()
+        );
+    } else if result.changed {
+        println!(
+            "configured {} in {}",
+            client.display_name(),
+            result.path.display()
+        );
+    } else {
+        println!(
+            "{} is already configured in {}",
+            client.display_name(),
+            result.path.display()
+        );
+    }
+    if let Some(backup) = result.backup {
+        println!("backup: {}", backup.display());
+    }
+    println!(
+        "credentials: {} (mode 0600); run: source {}",
+        environment_path.display(),
+        shell_quote(&environment_path.display().to_string())
+    );
+    println!("The token is not stored in the client config or printed to the terminal.");
+    ExitCode::SUCCESS
+}
+
+fn failed_after_local_candidate(
+    config: &Config,
+    minted_id: Option<&str>,
+    error: impl std::fmt::Display,
+) -> ExitCode {
+    let error = error.to_string();
+    if let Some(id) = minted_id
+        && let Err(cleanup) = token_manager(config).and_then(|manager| {
+            manager
+                .revoke_token(id)
+                .map_err(|error| Box::new(error) as Box<dyn std::error::Error>)
+        })
+    {
+        return failed(format!(
+            "{error}; the unused minted credential could not be revoked: {cleanup}"
+        ));
+    }
+    failed(error)
 }
 
 fn show(manager: &ClientManager, client: ClientKind) -> ExitCode {

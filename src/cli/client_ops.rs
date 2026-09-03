@@ -40,6 +40,10 @@ pub enum ClientOp {
         /// family (issue #314). The old spelling is still accepted.
         #[arg(long = "server", alias = "base-url", value_name = "URL")]
         base_url: Option<String>,
+        /// Private management origin when it differs from the client-facing
+        /// inference origin.
+        #[arg(long, value_name = "URL", requires = "base_url")]
+        management_server: Option<String>,
         /// Lifetime of an automatically minted token.
         #[arg(long, default_value_t = 24)]
         ttl_hours: i64,

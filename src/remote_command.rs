@@ -44,8 +44,13 @@ pub enum Target {
 ///
 /// Returns the process exit code when a named target cannot be resolved.
 pub async fn resolve(target: &AuthTarget) -> Result<Target, ExitCode> {
-    match crate::auth_remote::target_for(target.local, target.managed, target.server.as_deref())
-        .await
+    match crate::auth_remote::target_for(
+        target.local,
+        target.managed,
+        target.server.as_deref(),
+        target.management_server.as_deref(),
+    )
+    .await
     {
         Ok(Some(server)) => Ok(Target::Remote(Box::new(server))),
         Ok(None) => Ok(Target::Local),

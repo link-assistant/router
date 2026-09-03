@@ -409,6 +409,21 @@ instead, and `--server <url>` targets one router for a single command. A
 selected server that cannot be reached is an error rather than a silent
 fallback to a local directory.
 
+For a deployment with separate listeners, `<url>` is always the public
+inference origin and `--management-server <admin-url>` names the private
+management origin. Management calls never fall back to the public listener,
+and generated client configuration contains only the inference origin:
+
+```bash
+router server use https://router.example \
+  --management-server https://router-admin.example --token-stdin
+router configure claude
+```
+
+The equivalent one-shot forms accept the same `--management-server` option,
+including `router with`, `router configure`, authentication/provider commands,
+and `router clients setup --server <url> --management-server <admin-url>`.
+
 `with` changes how the client reaches the model and nothing else: the user's
 theme, permissions, MCP servers, `settings.json` and `projects/` are left in
 place, so `/resume` still lists prior sessions and a configured client does not
@@ -429,6 +444,13 @@ endpoint is adopted only after the same `/api/health` check every other branch
 performs, so an unrelated service on port 8080 is not mistaken for the router.
 `router server status` names whichever one the next command will use, and
 `--managed` forces a disposable container for CI and clean-room runs.
+
+Persistent client setup is transactional: the client config, protected
+environment, ownership metadata, and newly minted credential either commit
+together or are rolled back together. A candidate minted before a catalog or
+filesystem failure is revoked; a supplied/shared token is never revoked by a
+failed setup. Repeating an unchanged successful setup reuses it without
+minting another credential.
 
 ### Admin UI surface (`--admin-port` to opt in)
 

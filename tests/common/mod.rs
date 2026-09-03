@@ -30,6 +30,18 @@ pub fn router_with_env(home: &std::path::Path, args: &[&str], env: &[(&str, &str
         .env("TOKEN_SECRET", "clients-cli-test-secret")
         .env("DATA_DIR", home.join("router-data"))
         .env("STORAGE_POLICY", "text");
+    for key in [
+        "ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_BASE_URL",
+        "ANTHROPIC_MODEL",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    ] {
+        command.env_remove(key);
+    }
     for (key, value) in env {
         command.env(key, value);
     }
@@ -179,6 +191,7 @@ pub fn mock_admin_router(
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
                 "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
                 "/api/management/tokens/client" => ("200 OK", issued.as_str()),
+                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":true}"#),
                 _ if request.starts_with("GET ") => ("200 OK", catalog.as_str()),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };

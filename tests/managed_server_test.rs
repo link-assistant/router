@@ -949,10 +949,75 @@ fn server_selection_rejects_ambiguous_or_invalid_updates_and_can_clear() {
 
     let invalid = server_command(&home, &bin, &log, "absent", &["use", "router.example"]);
     assert!(!invalid.status.success());
-    assert!(String::from_utf8_lossy(&invalid.stderr).contains("must start with http"));
+    assert!(String::from_utf8_lossy(&invalid.stderr).contains("absolute http:// or https://"));
+
+    for unsafe_origin in [
+        "https://private-user:private-password@router.example",
+        "https://router.example/?access_token=private-query",
+        "https://router.example/#private-fragment",
+        "https://router.example/private-path",
+    ] {
+        let rejected = server_command(&home, &bin, &log, "absent", &["use", unsafe_origin]);
+        assert!(!rejected.status.success());
+        let output = format!(
+            "{}{}",
+            String::from_utf8_lossy(&rejected.stdout),
+            String::from_utf8_lossy(&rejected.stderr)
+        );
+        for secret in [
+            "private-user",
+            "private-password",
+            "private-query",
+            "private-fragment",
+            "private-path",
+        ] {
+            assert!(
+                !output.contains(secret),
+                "rejection leaked {secret}: {output}"
+            );
+        }
+    }
 
     let cleared = server_command(&home, &bin, &log, "absent", &["use", "--clear"]);
     assert!(cleared.status.success());
+}
+
+#[test]
+fn an_unsafe_legacy_selection_fails_closed_without_echoing_secrets() {
+    let home = tempfile::tempdir().expect("temporary home");
+    let directory = home.path().join(".config/link-assistant-router");
+    fs::create_dir_all(&directory).expect("create config directory");
+    fs::write(
+        directory.join("server.json"),
+        r#"{"server":"https://private-user:private-password@router.example/?token=private-query","token":"la_sk_private"}"#,
+    )
+    .expect("seed unsafe legacy selection");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["server", "status"])
+        .env("HOME", home.path())
+        .env("TOKEN_SECRET", "legacy-load-secret")
+        .env_remove("XDG_CONFIG_HOME")
+        .env_remove("APPDATA")
+        .output()
+        .expect("server status runs");
+    assert!(!output.status.success());
+    let rendered = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    for secret in [
+        "private-user",
+        "private-password",
+        "private-query",
+        "la_sk_private",
+    ] {
+        assert!(
+            !rendered.contains(secret),
+            "legacy rejection leaked {secret}: {rendered}"
+        );
+    }
 }
 
 /// State written by an earlier release is JSON, and must keep loading: the

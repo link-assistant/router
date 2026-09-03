@@ -126,6 +126,7 @@ async fn target(
     }
     let server = resolve(
         args.target.server.as_deref(),
+        args.target.management_server.as_deref(),
         explicit_token,
         None,
         args.target.managed,
@@ -143,6 +144,27 @@ async fn configure_one(
     server: &ResolvedServer,
     client: ClientKind,
 ) -> Result<(), AnyError> {
+    if manager.managed_target_matches(client, &server.base_url)?
+        && (environment_only(client)
+            || crate::client_global::undo_state_path(&manager.config_path(client)).exists())
+        && let Some(token) = manager.managed_token(client)?
+        && manager
+            .catalog(client, &server.base_url, &token)
+            .await
+            .is_ok()
+    {
+        println!(
+            "{} is already configured in {}",
+            client.display_name(),
+            manager.config_path(client).display()
+        );
+        println!(
+            "credentials: {} (mode 0600)",
+            manager.environment_path(client).display()
+        );
+        println!("undo: router configure --undo {client}");
+        return Ok(());
+    }
     // Minted from the target, by the rule `clients setup` already used, and
     // stored outside the client's configuration at 0600. `with --global`
     // stopped short of this and told the user to set a variable themselves,
@@ -177,14 +199,46 @@ async fn configure_one(
         issued_at: Some(chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
         principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
+        config_sha256: None,
     };
-    if !environment_only(client) {
-        let models = crate::clients::usable_models(client, credential.models());
-        let path = crate::client_global::apply(client, &server.base_url, &models)?;
+    let models = crate::clients::usable_models(client, credential.models());
+    let configured = if environment_only(client) {
+        manager
+            .apply_setup_transaction(
+                client,
+                &server.base_url,
+                &credential.token,
+                &record,
+                &models,
+            )
+            .map(|_| None)
+    } else {
+        manager
+            .apply_configure_transaction(
+                client,
+                &server.base_url,
+                &credential.token,
+                &record,
+                &models,
+            )
+            .map(Some)
+    };
+    let configured = match configured {
+        Ok(configured) => configured,
+        Err(error) => {
+            return match crate::managed_server::cleanup_run_credential(credential).await {
+                Ok(()) => Err(error.into()),
+                Err(cleanup) => Err(format!(
+                    "{error}; the unused minted credential could not be revoked: {cleanup}"
+                )
+                .into()),
+            };
+        }
+    };
+    if let Some(path) = configured {
         println!("configured {} in {}", client.display_name(), path.display());
     }
-    let environment = manager.write_environment(client, &server.base_url, &credential.token)?;
-    manager.write_credential_metadata(client, &record)?;
+    let environment = manager.environment_path(client);
     println!("credentials: {} (mode 0600)", environment.display());
     if environment_only(client) {
         println!(
@@ -302,7 +356,8 @@ async fn report_revocation(args: &ConfigureArgs, record: &ManagedCredential) {
         );
         return;
     };
-    match crate::managed_server::revoke(router, &admin, id).await {
+    let management = management_origin_for(args, router);
+    match crate::managed_server::revoke(&management, &admin, id).await {
         Ok(()) => println!("revoked token {id} on {router}"),
         Err(error) => {
             eprintln!("warning: {error}");
@@ -312,6 +367,23 @@ async fn report_revocation(args: &ConfigureArgs, record: &ManagedCredential) {
             );
         }
     }
+}
+
+fn management_origin_for(args: &ConfigureArgs, router: &str) -> String {
+    if let Some(origin) = args.target.management_server.as_deref()
+        && let Ok(origin) = crate::managed_server::canonical_server_origin(origin)
+    {
+        return origin;
+    }
+    crate::managed_server::load_persisted()
+        .ok()
+        .flatten()
+        .filter(|persisted| {
+            crate::managed_server::canonical_server_origin(&persisted.server).ok()
+                == crate::managed_server::canonical_server_origin(router).ok()
+        })
+        .and_then(|persisted| persisted.management_server)
+        .unwrap_or_else(|| router.to_string())
 }
 
 /// A credential able to revoke on `router`, without starting anything.
@@ -330,7 +402,10 @@ fn admin_token_for(args: &ConfigureArgs, router: &str) -> Option<String> {
     crate::managed_server::load_persisted()
         .ok()
         .flatten()
-        .filter(|persisted| persisted.server.trim_end_matches('/') == router.trim_end_matches('/'))
+        .filter(|persisted| {
+            crate::managed_server::canonical_server_origin(&persisted.server).ok()
+                == crate::managed_server::canonical_server_origin(router).ok()
+        })
         .and_then(|persisted| persisted.token)
 }
 

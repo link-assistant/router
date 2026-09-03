@@ -8,8 +8,29 @@ use sha2::{Digest as _, Sha256};
 
 use super::{
     ClientConfigAnalysis, ClientError, ClientKind, ClientManager, ManagedCredential,
-    OwnershipState, RouterModel,
+    OwnershipState, RouterModel, SetupResult,
 };
+
+#[cfg(test)]
+thread_local! {
+    static FAIL_AFTER_WRITE: std::cell::Cell<Option<&'static str>> = const { std::cell::Cell::new(None) };
+}
+
+#[cfg(test)]
+fn transaction_checkpoint(stage: &'static str) -> Result<(), ClientError> {
+    if FAIL_AFTER_WRITE.get() == Some(stage) {
+        return Err(ClientError::message(format!(
+            "injected transaction failure after {stage}"
+        )));
+    }
+    Ok(())
+}
+
+#[cfg(not(test))]
+#[inline]
+fn transaction_checkpoint(_stage: &'static str) -> Result<(), ClientError> {
+    Ok(())
+}
 
 /// A secret-free repair preview. Constructing it performs no writes or I/O to
 /// the selected Router.
@@ -57,6 +78,32 @@ struct SnapshotEntry {
 }
 
 impl ClientManager {
+    /// Whether the complete managed configuration already targets this public
+    /// router origin. This check intentionally does not read or return the
+    /// credential value, so callers can avoid minting a replacement before
+    /// deciding that an identical setup is a no-op.
+    pub(crate) fn managed_target_matches(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+    ) -> Result<bool, ClientError> {
+        if self.analyze(client)?.state != OwnershipState::ManagedIntact {
+            return Ok(false);
+        }
+        let Some(metadata) = self.credential_metadata(client)? else {
+            return Ok(false);
+        };
+        let Some(recorded) = metadata.router else {
+            return Ok(false);
+        };
+        let requested = crate::managed_server::canonical_server_origin(base_url)
+            .map_err(|error| ClientError::message(error.to_string()))?;
+        let recorded = crate::managed_server::canonical_server_origin(&recorded)
+            .map_err(|error| ClientError::message(error.to_string()))?;
+        let current_hash = config_digest(&self.config_path(client))?;
+        Ok(requested == recorded && metadata.config_sha256.as_deref() == Some(&current_hash))
+    }
+
     /// Describe the exact local files repair is allowed to reconcile.
     pub fn repair_plan(&self, client: ClientKind) -> Result<RepairPlan, ClientError> {
         let analysis = self.analyze(client)?;
@@ -89,6 +136,139 @@ impl ClientManager {
         })
     }
 
+    /// Merge ordinary persistent setup as one transaction while preserving
+    /// its permissive merge semantics and user-facing backup.
+    pub(crate) fn apply_setup_transaction(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+        credential: &ManagedCredential,
+        models: &[RouterModel],
+    ) -> Result<SetupResult, ClientError> {
+        crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
+            let before = self.analyze(client)?;
+            let snapshot = self.capture_snapshot(client, &before)?;
+            let mut setup_backup = None;
+            let result: Result<SetupResult, ClientError> = (|| {
+                snapshot.verify_before()?;
+                let setup = self.setup(client, base_url, models)?;
+                setup_backup.clone_from(&setup.backup);
+                transaction_checkpoint("config")?;
+                snapshot.verify_before_path(&self.environment_path(client))?;
+                self.write_environment(client, base_url, token)?;
+                transaction_checkpoint("environment")?;
+                snapshot.verify_before_path(&self.credential_metadata_path(client))?;
+                let mut credential = credential.clone();
+                credential.config_sha256 = Some(config_digest(&self.config_path(client))?);
+                self.write_credential_metadata(client, &credential)?;
+                transaction_checkpoint("metadata")?;
+                crate::client_global::update_post_configure_hash(
+                    &self.config_path(client),
+                    self.ownership_marker_path(client).as_deref(),
+                )
+                .map_err(|error| ClientError::message(error.to_string()))?;
+                transaction_checkpoint("undo-state")?;
+                Ok(setup)
+            })();
+            match result {
+                Ok(setup) => {
+                    if let Err(error) = fs::remove_dir_all(&snapshot.root) {
+                        tracing::warn!(
+                            path = %snapshot.root.display(),
+                            %error,
+                            "setup committed but its owner-only transaction snapshot remains"
+                        );
+                    }
+                    Ok(setup)
+                }
+                Err(error) => {
+                    let backup_error = setup_backup
+                        .as_deref()
+                        .map(remove_if_present)
+                        .transpose()
+                        .err();
+                    let rollback_error = snapshot.restore(false).err();
+                    let cleanup_error = fs::remove_dir_all(&snapshot.root).err();
+                    let mut message = error.to_string();
+                    if let Some(backup) = backup_error {
+                        message.push_str(&format!("; setup-backup cleanup also failed: {backup}"));
+                    }
+                    if let Some(rollback) = rollback_error {
+                        message.push_str(&format!("; automatic rollback also failed: {rollback}"));
+                    }
+                    if let Some(cleanup) = cleanup_error {
+                        message.push_str(&format!("; snapshot cleanup also failed: {cleanup}"));
+                    }
+                    Err(ClientError::message(message))
+                }
+            }
+        })
+    }
+
+    /// Apply the reversible global client configuration and its credential
+    /// files as one transaction. A failure after the public config write
+    /// restores every prior byte and mode and removes the newly-created undo
+    /// artifacts.
+    pub(crate) fn apply_configure_transaction(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+        credential: &ManagedCredential,
+        models: &[RouterModel],
+    ) -> Result<PathBuf, ClientError> {
+        crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
+            let before = self.analyze(client)?;
+            let snapshot = self.capture_snapshot(client, &before)?;
+            let mut global_applied = false;
+            let result: Result<PathBuf, ClientError> = (|| {
+                snapshot.verify_before()?;
+                let path = crate::client_global::apply_with_manager(self, client, base_url, models)
+                    .map_err(|error| ClientError::message(error.to_string()))?;
+                global_applied = true;
+                transaction_checkpoint("config")?;
+                self.write_environment(client, base_url, token)?;
+                transaction_checkpoint("environment")?;
+                let mut credential = credential.clone();
+                credential.config_sha256 = Some(config_digest(&self.config_path(client))?);
+                self.write_credential_metadata(client, &credential)?;
+                transaction_checkpoint("metadata")?;
+                Ok(path)
+            })();
+            let path = match result {
+                Ok(path) => path,
+                Err(error) => {
+                    let undo_error = global_applied
+                        .then(|| crate::client_global::undo_with_manager(self, client))
+                        .transpose()
+                        .err();
+                    let rollback_error = snapshot.restore(false).err();
+                    let cleanup_error = fs::remove_dir_all(&snapshot.root).err();
+                    let mut message = error.to_string();
+                    if let Some(undo) = undo_error {
+                        message.push_str(&format!("; global undo also failed: {undo}"));
+                    }
+                    if let Some(rollback) = rollback_error {
+                        message.push_str(&format!("; automatic rollback also failed: {rollback}"));
+                    }
+                    if let Some(cleanup) = cleanup_error {
+                        message.push_str(&format!("; snapshot cleanup also failed: {cleanup}"));
+                    }
+                    return Err(ClientError::message(message));
+                }
+            };
+            if let Err(error) = fs::remove_dir_all(&snapshot.root) {
+                tracing::warn!(
+                    path = %snapshot.root.display(),
+                    %error,
+                    "configuration committed but its owner-only transaction snapshot remains"
+                );
+            }
+            Ok(path)
+        })
+    }
+
     fn apply_repair_locked(
         &self,
         client: ClientKind,
@@ -98,7 +278,17 @@ impl ClientManager {
         models: &[RouterModel],
     ) -> Result<RepairResult, ClientError> {
         let before = self.analyze(client)?;
-        if before.state == OwnershipState::ManagedIntact {
+        let same_credential = client.token_env().is_some_and(|key| {
+            super::read_environment_value(&self.environment_path(client), key)
+                .ok()
+                .flatten()
+                .as_deref()
+                == Some(token)
+        });
+        if before.state == OwnershipState::ManagedIntact
+            && self.managed_target_matches(client, base_url)?
+            && same_credential
+        {
             return Ok(RepairResult {
                 client,
                 before: before.state,
@@ -140,10 +330,15 @@ impl ClientManager {
             if let Some(path) = setup.backup.as_deref() {
                 remove_if_present(path)?;
             }
+            transaction_checkpoint("config")?;
             snapshot.verify_before_path(&self.environment_path(client))?;
             self.write_environment(client, base_url, token)?;
+            transaction_checkpoint("environment")?;
             snapshot.verify_before_path(&self.credential_metadata_path(client))?;
-            self.write_credential_metadata(client, credential)?;
+            let mut credential = credential.clone();
+            credential.config_sha256 = Some(config_digest(&self.config_path(client))?);
+            self.write_credential_metadata(client, &credential)?;
+            transaction_checkpoint("metadata")?;
             snapshot.verify_before_path(&crate::client_global::undo_state_path(
                 &self.config_path(client),
             ))?;
@@ -152,6 +347,7 @@ impl ClientManager {
                 self.ownership_marker_path(client).as_deref(),
             )
             .map_err(|error| ClientError::message(error.to_string()))?;
+            transaction_checkpoint("undo-state")?;
             let after = self.analyze(client)?;
             if after.state != OwnershipState::ManagedIntact {
                 return Err(ClientError::message(format!(
@@ -241,7 +437,7 @@ impl ClientManager {
         if let Some(marker) = self.ownership_marker_path(client) {
             paths.push(marker);
         }
-        paths.push(crate::client_global::undo_state_path(
+        paths.extend(crate::client_global::transaction_paths(
             &self.config_path(client),
         ));
         paths.sort();
@@ -420,6 +616,16 @@ fn current_state(path: &Path) -> Result<(bool, Option<String>), ClientError> {
     }
 }
 
+fn config_digest(path: &Path) -> Result<String, ClientError> {
+    match fs::read(path) {
+        Ok(bytes) => Ok(hex::encode(Sha256::digest(bytes))),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Ok(hex::encode(Sha256::digest([])))
+        }
+        Err(error) => Err(error.into()),
+    }
+}
+
 fn validate_id(id: &str) -> Result<(), ClientError> {
     if id.is_empty()
         || !id
@@ -484,6 +690,109 @@ mod tests {
         assert!(validate_id("").is_err());
     }
 
+    #[test]
+    fn every_setup_write_is_rolled_back_for_every_supported_client() {
+        let clients = [
+            ClientKind::Codex,
+            ClientKind::ClaudeCode,
+            ClientKind::GrokCli,
+            ClientKind::Opencode,
+            ClientKind::QwenCode,
+            ClientKind::Agent,
+        ];
+        for client in clients {
+            for stage in ["config", "environment", "metadata", "undo-state"] {
+                let home = tempfile::tempdir().expect("home");
+                let manager = ClientManager::isolated(home.path());
+                let credential = ManagedCredential {
+                    client: client.to_string(),
+                    source: TokenSource::Minted,
+                    token_id: Some("candidate-id".into()),
+                    label: Some(format!("client-{client}")),
+                    issued_at: Some(1),
+                    router: Some("http://router.test:8080".into()),
+                    principal_id: Some("primary".into()),
+                    config_sha256: None,
+                };
+                FAIL_AFTER_WRITE.set(Some(stage));
+                let result = manager.apply_repair(
+                    client,
+                    "http://router.test:8080",
+                    "la_sk_candidate",
+                    &credential,
+                    &[RouterModel {
+                        id: "future-model".into(),
+                        owned_by: "future-provider".into(),
+                    }],
+                );
+                FAIL_AFTER_WRITE.set(None);
+                let error = result.expect_err("the injected write must fail");
+                assert!(
+                    error.to_string().contains(stage),
+                    "{client}/{stage}: {error}"
+                );
+                for path in manager.repair_paths(client) {
+                    assert!(
+                        !path.exists(),
+                        "{client}/{stage} left a transaction target at {}",
+                        path.display()
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_configure_write_is_rolled_back_for_every_file_configurable_client() {
+        let clients = [
+            ClientKind::Codex,
+            ClientKind::ClaudeCode,
+            ClientKind::Opencode,
+            ClientKind::QwenCode,
+            ClientKind::Agent,
+        ];
+        for client in clients {
+            for stage in ["config", "environment", "metadata"] {
+                let home = tempfile::tempdir().expect("home");
+                let manager = ClientManager::isolated(home.path());
+                let credential = ManagedCredential {
+                    client: client.to_string(),
+                    source: TokenSource::Minted,
+                    token_id: Some("candidate-id".into()),
+                    label: Some(format!("configure-{client}")),
+                    issued_at: Some(1),
+                    router: Some("http://router.test:8080".into()),
+                    principal_id: Some("primary".into()),
+                    config_sha256: None,
+                };
+                FAIL_AFTER_WRITE.set(Some(stage));
+                let result = manager.apply_configure_transaction(
+                    client,
+                    "http://router.test:8080",
+                    "la_sk_candidate",
+                    &credential,
+                    &[RouterModel {
+                        id: "future-model".into(),
+                        owned_by: "future-provider".into(),
+                    }],
+                );
+                FAIL_AFTER_WRITE.set(None);
+                let error = result.expect_err("the injected write must fail");
+                assert!(
+                    error.to_string().contains(stage),
+                    "{client}/{stage}: {error}"
+                );
+                for path in manager.repair_paths(client) {
+                    assert!(
+                        !path.exists(),
+                        "{client}/{stage} left a transaction target at {}",
+                        path.display()
+                    );
+                }
+            }
+        }
+    }
+
     fn credential() -> ManagedCredential {
         ManagedCredential {
             client: "claude".into(),
@@ -493,6 +802,7 @@ mod tests {
             issued_at: None,
             router: Some("http://router.test:8080".into()),
             principal_id: Some("primary".into()),
+            config_sha256: None,
         }
     }
 

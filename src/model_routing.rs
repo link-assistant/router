@@ -24,12 +24,12 @@ pub enum ModelRouteError {
 
 #[path = "model_routing_snapshot.rs"]
 pub(crate) mod snapshot;
+#[cfg(test)]
+pub(crate) use snapshot::route_subscription_model;
 pub(crate) use snapshot::{
     RoutedState, ValidatedSubscription, route_pinned_subscription,
     route_subscription_model_for_providers,
 };
-#[cfg(test)]
-pub(crate) use snapshot::route_subscription_model;
 
 #[path = "model_routing_catalog_snapshot.rs"]
 mod catalog_snapshot;

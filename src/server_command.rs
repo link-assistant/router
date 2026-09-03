@@ -16,12 +16,14 @@ pub async fn run(op: &ServerOp) -> ExitCode {
     let result = match op {
         ServerOp::Use {
             server,
+            management_server,
             token,
             token_stdin,
             clear,
             run_max_requests,
         } => configure(
             server.as_deref(),
+            management_server.as_deref(),
             token.clone(),
             *token_stdin,
             *clear,
@@ -56,13 +58,19 @@ pub async fn run(op: &ServerOp) -> ExitCode {
 
 fn configure(
     server: Option<&str>,
+    management_server: Option<&str>,
     token: Option<String>,
     token_stdin: bool,
     clear: bool,
     run_max_requests: Option<u64>,
 ) -> Result<(), AnyError> {
     if clear {
-        if server.is_some() || token.is_some() || token_stdin || run_max_requests.is_some() {
+        if server.is_some()
+            || management_server.is_some()
+            || token.is_some()
+            || token_stdin
+            || run_max_requests.is_some()
+        {
             return Err("--clear cannot be combined with a server, token, or run budget".into());
         }
         let path = clear_persisted()?;
@@ -77,6 +85,7 @@ fn configure(
     };
     let path = save_persisted(&PersistedServer {
         server: server.to_string(),
+        management_server: management_server.map(str::to_string),
         token,
         run_max_requests,
     })?;

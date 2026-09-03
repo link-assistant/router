@@ -5,6 +5,7 @@ use axum::extract::{Query, State};
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
+use std::fs;
 use std::sync::{Arc, Mutex};
 
 /// Add a stored OpenAI-compatible provider declaring `models`.
@@ -346,6 +347,47 @@ async fn a_colliding_declared_model_is_listed_qualified() {
         ids.contains(&"formal-ai/shared-id"),
         "the stored provider is reachable by its qualified name: {ids:?}"
     );
+}
+
+#[tokio::test]
+async fn a_bare_subscription_collision_routes_the_catalogs_bare_identity() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let claude = tempfile::tempdir().expect("Claude home");
+    fs::write(
+        claude.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"claude-live"}}"#,
+    )
+    .expect("Claude credential");
+    let state = auto_state(
+        vec![crate::subscription::SubscriptionReader::new(
+            crate::subscription::SubscriptionProvider::Claude,
+            claude.path(),
+        )],
+        data_dir.path(),
+    );
+    state.model_catalogs.record_success(
+        crate::subscription::SubscriptionProvider::Claude,
+        vec!["shared-id".to_string()],
+    );
+    store_provider(&state, "formal-ai", &["shared-id"]);
+
+    let bare =
+        crate::model_routing::route_state(&state, &serde_json::json!({"model": "shared-id"}))
+            .await
+            .expect("the bare catalog identity belongs to the subscription");
+    assert_eq!(bare.upstream_provider, UpstreamProvider::Anthropic);
+
+    let qualified = crate::model_routing::route_state(
+        &state,
+        &serde_json::json!({"model": "formal-ai/shared-id"}),
+    )
+    .await
+    .expect("the stored collision remains explicitly reachable");
+    assert_eq!(
+        qualified.upstream_provider,
+        UpstreamProvider::OpenAICompatible
+    );
+    assert_eq!(qualified.bridge_model.as_deref(), Some("shared-id"));
 }
 
 /// A request with no model is refused before any provider is consulted.
