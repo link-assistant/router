@@ -32,16 +32,41 @@ fn test_app_for_listener(
     github: bool,
     listener: ListenerKind,
 ) -> (axum::Router, String) {
-    test_app_for_listener_with_switches(dir, mpp, github, listener, true, true)
+    test_app_for_listener_with_switches(
+        dir,
+        listener,
+        SurfaceSwitches {
+            features: FeatureSwitches { mpp, github },
+            apis: ApiSwitches {
+                openai: true,
+                anthropic: true,
+            },
+        },
+    )
+}
+
+#[derive(Clone, Copy)]
+struct SurfaceSwitches {
+    features: FeatureSwitches,
+    apis: ApiSwitches,
+}
+
+#[derive(Clone, Copy)]
+struct FeatureSwitches {
+    mpp: bool,
+    github: bool,
+}
+
+#[derive(Clone, Copy)]
+struct ApiSwitches {
+    openai: bool,
+    anthropic: bool,
 }
 
 fn test_app_for_listener_with_switches(
     dir: &std::path::Path,
-    mpp: bool,
-    github: bool,
     listener: ListenerKind,
-    enable_openai: bool,
-    enable_anthropic: bool,
+    switches: SurfaceSwitches,
 ) -> (axum::Router, String) {
     let dir_arg = dir.to_str().expect("UTF-8 test path");
     let mut args = vec![
@@ -55,7 +80,7 @@ fn test_app_for_listener_with_switches(
         "--upstream-base-url",
         "http://127.0.0.1:9",
     ];
-    if mpp {
+    if switches.features.mpp {
         args.extend([
             "--mpp-enable",
             "--mpp-amount",
@@ -66,10 +91,10 @@ fn test_app_for_listener_with_switches(
             "audit-merchant",
         ]);
     }
-    if !enable_openai {
+    if !switches.apis.openai {
         args.push("--disable-openai-api");
     }
-    if !enable_anthropic {
+    if !switches.apis.anthropic {
         args.push("--disable-anthropic-api");
     }
     let config = Cli::try_parse_from(args)
@@ -117,7 +142,7 @@ fn test_app_for_listener_with_switches(
             link_assistant_router::config::default_activitypub_public_key_pem(),
         mpp: config.mpp.clone(),
         login_manager: link_assistant_router::login::LoginManager::new(config.login.clone()),
-        github: if github {
+        github: if switches.features.github {
             link_assistant_router::github_proxy::GitHubProxyConfig::with_credential(
                 "upstream-github-token",
                 "http://127.0.0.1:9",
@@ -138,11 +163,17 @@ async fn service_switches_own_their_complete_namespaces() {
     let directory = tempfile::tempdir().expect("tempdir");
     let (anthropic_only, _) = test_app_for_listener_with_switches(
         directory.path(),
-        false,
-        false,
         ListenerKind::Combined,
-        false,
-        true,
+        SurfaceSwitches {
+            features: FeatureSwitches {
+                mpp: false,
+                github: false,
+            },
+            apis: ApiSwitches {
+                openai: false,
+                anthropic: true,
+            },
+        },
     );
     for (method, path) in [
         (Method::GET, "/api/services/anthropic/v1/models"),
@@ -161,11 +192,17 @@ async fn service_switches_own_their_complete_namespaces() {
 
     let (openai_only, _) = test_app_for_listener_with_switches(
         directory.path(),
-        false,
-        false,
         ListenerKind::Combined,
-        true,
-        false,
+        SurfaceSwitches {
+            features: FeatureSwitches {
+                mpp: false,
+                github: false,
+            },
+            apis: ApiSwitches {
+                openai: true,
+                anthropic: false,
+            },
+        },
     );
     for (method, path) in [
         (Method::GET, "/api/services/anthropic/v1/models"),

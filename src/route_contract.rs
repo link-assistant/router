@@ -78,6 +78,8 @@ impl RouteMethod {
 pub enum RouteId {
     Health,
     AggregateModels,
+    SubscriptionUsage,
+    SubscriptionUsageProvider,
     Tokens,
     ClientTokens,
     RevokeToken,
@@ -252,6 +254,12 @@ const fn github_adapter_service(
 const ROUTES: &[RouteSpec] = &[
     neutral(RouteId::Health, RouteMethod::Get, "/api/health"),
     client_neutral(RouteId::AggregateModels, RouteMethod::Get, "/api/models"),
+    client_neutral(RouteId::SubscriptionUsage, RouteMethod::Get, "/api/usage"),
+    client_neutral(
+        RouteId::SubscriptionUsageProvider,
+        RouteMethod::Get,
+        "/api/usage/{provider}",
+    ),
     management(RouteId::Tokens, RouteMethod::Get, "/api/management/tokens"),
     management(RouteId::Tokens, RouteMethod::Post, "/api/management/tokens"),
     management(

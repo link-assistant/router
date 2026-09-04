@@ -5,6 +5,7 @@ bump: patch
 ### Added
 - Added versioned, secret-free JSON outcomes and opaque transaction resume for credential imports.
 - Added a client-scoped `/api/models` catalogue that merges every compatible healthy service with exact native IDs and only provider-reported normalized metadata.
+- Added `router usage [anthropic|openai|z-ai] [--json]` and a client-scoped `/api/usage` API for cached, secret-free subscription limits gathered without inference requests.
 
 ### Fixed
 - Corrected the canonical-route migration guide to document exact model ownership and explicit cross-provider collision failure without invented aliases.

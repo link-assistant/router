@@ -12,6 +12,25 @@ fn login_cli_defaults_to_bare_tui() {
 }
 
 #[test]
+fn usage_cli_accepts_public_provider_names_and_json() {
+    for (name, expected) in [
+        (
+            "anthropic",
+            crate::subscription_usage::UsageProvider::Anthropic,
+        ),
+        ("openai", crate::subscription_usage::UsageProvider::OpenAi),
+        ("z-ai", crate::subscription_usage::UsageProvider::ZAi),
+    ] {
+        let cli = Cli::try_parse_from(["router", "usage", name, "--json"]).unwrap();
+        let Some(Command::Usage { provider, json, .. }) = cli.command else {
+            panic!("expected usage command for {name}");
+        };
+        assert_eq!(provider, Some(expected));
+        assert!(json);
+    }
+}
+
+#[test]
 fn every_declared_default_is_visible_in_its_long_help() {
     fn check(command: &clap::Command, path: &str) {
         let help = command.clone().render_long_help().to_string();

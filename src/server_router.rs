@@ -145,10 +145,19 @@ pub(crate) fn management_routes(
 }
 
 fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
-    let mut routes = Router::new().route(
-        route_template(RouteId::AggregateModels),
-        get(crate::model_routing::aggregate_models),
-    );
+    let mut routes = Router::new()
+        .route(
+            route_template(RouteId::AggregateModels),
+            get(crate::model_routing::aggregate_models),
+        )
+        .route(
+            route_template(RouteId::SubscriptionUsage),
+            get(crate::subscription_usage::usage),
+        )
+        .route(
+            route_template(RouteId::SubscriptionUsageProvider),
+            get(crate::subscription_usage::usage_provider),
+        );
     if config.enable_anthropic_api {
         routes = routes
             .route(

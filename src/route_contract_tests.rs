@@ -16,14 +16,28 @@ fn every_registered_route_has_one_canonical_class_and_listener_contract() {
 
     for spec in specs {
         assert!(
-            spec.template.starts_with("/api/"),
+            spec.template.starts_with("/api/")
+                || spec.id == RouteId::GitHubAdapterGit && spec.template.starts_with("/git/"),
             "non-canonical route: {}",
             spec.template
         );
         match spec.class {
             RouteClass::Neutral => {
-                assert_eq!(spec.template, "/api/health");
-                assert_eq!(spec.auth, RouteAuth::None);
+                if spec.id == RouteId::Health {
+                    assert_eq!(spec.template, "/api/health");
+                    assert_eq!(spec.auth, RouteAuth::None);
+                } else {
+                    assert!(matches!(
+                        spec.id,
+                        RouteId::AggregateModels
+                            | RouteId::SubscriptionUsage
+                            | RouteId::SubscriptionUsageProvider
+                    ));
+                    assert!(
+                        spec.template == "/api/models" || spec.template.starts_with("/api/usage")
+                    );
+                    assert_eq!(spec.auth, RouteAuth::Client);
+                }
             }
             RouteClass::Management => {
                 assert!(spec.template.starts_with("/api/management/"));
@@ -37,7 +51,21 @@ fn every_registered_route_has_one_canonical_class_and_listener_contract() {
                 }
             }
             RouteClass::Service(service) => {
-                assert!(spec.template.starts_with("/api/services/"));
+                if matches!(
+                    spec.id,
+                    RouteId::GitHubAdapterRest
+                        | RouteId::GitHubAdapterGraphql
+                        | RouteId::GitHubAdapterGit
+                ) {
+                    assert!(
+                        spec.template.starts_with("/api/v3/")
+                            || spec.template == "/api/graphql"
+                            || spec.template.starts_with("/git/")
+                    );
+                    assert_eq!(spec.listeners, &[ListenerKind::GitHubAdapter]);
+                } else {
+                    assert!(spec.template.starts_with("/api/services/"));
+                }
                 if service == ServiceKind::ActivityPub {
                     assert_eq!(spec.auth, RouteAuth::None);
                 } else {
@@ -84,6 +112,19 @@ fn listener_eligibility_is_a_security_boundary() {
     assert!(health.listeners.contains(&ListenerKind::Combined));
     assert!(health.listeners.contains(&ListenerKind::InferenceOnly));
 
+    for path in ["/api/models", "/api/usage", "/api/usage/openai"] {
+        let client_neutral = route_for_path(&http::Method::GET, path).unwrap();
+        assert_eq!(client_neutral.class, RouteClass::Neutral);
+        assert_eq!(client_neutral.auth, RouteAuth::Client);
+        assert!(client_neutral.listeners.contains(&ListenerKind::Combined));
+        assert!(
+            client_neutral
+                .listeners
+                .contains(&ListenerKind::InferenceOnly)
+        );
+        assert!(!client_neutral.listeners.contains(&ListenerKind::Admin));
+    }
+
     let management = route_for_path(&http::Method::GET, "/api/management/tokens").unwrap();
     assert!(management.listeners.contains(&ListenerKind::Combined));
     assert!(management.listeners.contains(&ListenerKind::Admin));
@@ -98,6 +139,15 @@ fn listener_eligibility_is_a_security_boundary() {
     let github = route_for_path(&http::Method::POST, "/api/services/github/api/graphql").unwrap();
     assert_eq!(github.class, RouteClass::Service(ServiceKind::GitHub));
     assert!(!github.listeners.contains(&ListenerKind::InferenceOnly));
+
+    for (method, path) in [
+        (http::Method::GET, "/api/v3/user"),
+        (http::Method::POST, "/api/graphql"),
+        (http::Method::POST, "/git/owner/repo.git/git-upload-pack"),
+    ] {
+        let adapter = route_for_path(&method, path).unwrap();
+        assert_eq!(adapter.listeners, &[ListenerKind::GitHubAdapter]);
+    }
 }
 
 #[test]
@@ -123,10 +173,7 @@ fn removed_paths_have_no_route_contract() {
         (http::Method::POST, "/api/login"),
         (http::Method::GET, "/api/admin/status"),
         (http::Method::GET, "/metrics"),
-        (http::Method::GET, "/api/v3/user"),
-        (http::Method::POST, "/api/graphql"),
         (http::Method::GET, "/user"),
-        (http::Method::POST, "/git/owner/repo.git/git-upload-pack"),
         (http::Method::GET, "/actor/code"),
     ] {
         assert!(

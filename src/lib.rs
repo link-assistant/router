@@ -86,6 +86,8 @@ pub mod storage;
 pub mod subscription;
 pub mod subscription_health;
 pub mod subscription_proxy;
+pub mod subscription_usage;
+pub mod subscription_usage_cli;
 pub mod telegram;
 pub mod tls;
 pub mod tls_cli;

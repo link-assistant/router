@@ -33,7 +33,6 @@ impl ClientManager {
             .get(&url)
             .header("x-link-assistant-client", client.canonical_name());
         let request = match client {
-            ClientKind::ClaudeCode => request.bearer_auth(token),
             ClientKind::GeminiCli => request.header("x-goog-api-key", token),
             _ => request.bearer_auth(token),
         };

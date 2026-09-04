@@ -202,7 +202,7 @@ mod tests {
             {
                 "id": "claude-live",
                 "provider": "claude",
-                "max_input_tokens": 200000,
+                "max_input_tokens": 200_000,
                 "max_tokens": 64000,
                 "modalities": {"input": ["text", "image"], "output": ["text"]},
                 "pricing": {"input_per_mtok": "5", "output_per_mtok": "25", "currency": "USD"}
@@ -211,14 +211,14 @@ mod tests {
                 "id": "gemini-live",
                 "name": "models/gemini-live",
                 "provider": "gemini",
-                "inputTokenLimit": 1000000,
+                "inputTokenLimit": 1_000_000,
                 "outputTokenLimit": 65536
             },
             {"id": "metadata-absent", "owned_by": "configured-provider"}
         ]});
         let projected = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
         assert_eq!(projected["data"][0]["service"], "anthropic");
-        assert_eq!(projected["data"][0]["context_window"], 200000);
+        assert_eq!(projected["data"][0]["context_window"], 200_000);
         assert_eq!(projected["data"][1]["native_id"], "models/gemini-live");
         assert_eq!(projected["data"][1]["max_output_tokens"], 65536);
         assert!(projected["data"][2].get("context_window").is_none());

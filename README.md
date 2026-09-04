@@ -513,6 +513,14 @@ Provider-specific namespaces still enforce the matching signed client,
 principal, protocol evidence, and healthy credential; pinning never grants
 authority.
 
+### Provider-neutral client surface
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/models` | GET | Healthy model catalogue filtered by the signed client kind, principal, and provider entitlement |
+| `/api/usage` | GET | Normalized subscription limits for every configured provider the signed client token may use |
+| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, or `z-ai` subscription without revealing disallowed providers |
+
 `GET /api/models` is the additional provider-neutral catalogue. It accepts the
 same Router client token carrier as that token's native client, then returns
 only healthy models compatible with its signed client kind and principal. Each
@@ -523,6 +531,20 @@ providers returns HTTP 409 rather than choosing or inventing a qualified id.
 Provider-reported context window, output cap, modalities, pricing, and
 deprecation date are normalized when present and omitted when absent. Native
 service catalogues remain in their original protocol shapes.
+
+`GET /api/usage` uses the same signed client binding and provider-entitlement
+matrix. It returns schema version `1` with normalized plan/status, usage
+windows, used and remaining percentages, reset timestamps, named limits,
+credits, and subscription or trial dates only when the vendor actually reports
+them. An authorized configured credential that cannot currently be checked is
+kept visible with an explicit `unavailable` or `unverified` state. Router reads
+only the vendors' non-inference usage/profile endpoints, refreshes OAuth
+credentials through the shared safe refresh path, briefly caches normalized
+results, and honors `429 Retry-After`; checking usage consumes no model tokens.
+The response never includes credentials, account identifiers, email addresses,
+credential documents, or unrestricted vendor response bodies. This client
+surface is separate from the administrator-only `/api/management/usage`, which
+contains Router's own request and token counters.
 
 **Every advertised and routable model comes from current credential evidence.**
 Consumer catalogs exist only after authenticated discovery for that exact
@@ -1278,6 +1300,14 @@ router clients list
 router clients show codex
 router clients doctor codex
 router clients remove codex
+
+# Show subscription limits visible to one signed client token. The environment
+# token takes precedence over a saved server token, and the same command works
+# with a selected server or an explicit `--server`.
+LINK_ASSISTANT_TOKEN=<client-token> router usage
+LINK_ASSISTANT_TOKEN=<client-token> router usage anthropic
+LINK_ASSISTANT_TOKEN=<client-token> router usage openai --json
+LINK_ASSISTANT_TOKEN=<client-token> router usage z-ai
 
 # Print resolved configuration + credential / store probes. Reports on the
 # machine it runs on, so with another router selected it says so and names it.
