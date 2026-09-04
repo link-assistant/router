@@ -1141,7 +1141,10 @@ and `supported_clients`. Missing evidence fails locally before inference.
 Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
 provider API keys are encrypted with AES-GCM using a key derived from
 `TOKEN_SECRET`; API responses and CLI output only show whether a stored key is
-present.
+present. `providers add` replaces the same name by default; `--if-absent`
+atomically keeps an existing record instead. Policy-gated providers are staged,
+validated with their non-inference catalogue, and promoted only after positive
+acceptance, so a rejected candidate cannot displace a working credential.
 
 The personal z.ai Coding Plan is deliberately **not** a generic provider. It is
 experimental, disabled by default, single-subscriber, and requires separate

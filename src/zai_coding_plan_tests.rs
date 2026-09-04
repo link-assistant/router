@@ -300,6 +300,7 @@ fn install_provider_for_subscriber(
                     .map(|value| (*value).to_string())
                     .collect(),
             ),
+            if_absent: false,
         })
         .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::ZaiCodingPlan;
@@ -667,6 +668,7 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
             subscriber_id: Some("owner-a".into()),
             acknowledge_intermediary_risk: Some(true),
             acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent: false,
         })
         .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::Auto;

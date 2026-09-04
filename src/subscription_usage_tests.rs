@@ -223,6 +223,7 @@ async fn zai_probe_uses_official_non_inference_request_shape_and_normalizes_quot
             subscriber_id: Some("primary".into()),
             acknowledge_intermediary_risk: Some(true),
             acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent: false,
         })
         .unwrap();
 

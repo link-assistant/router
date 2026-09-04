@@ -16,6 +16,7 @@ fn upsert() -> ProviderUpsert {
         subscriber_id: None,
         acknowledge_intermediary_risk: None,
         acknowledge_unsupported_clients: None,
+        if_absent: false,
     }
 }
 
@@ -82,6 +83,7 @@ fn zai_upsert(enabled: Option<bool>, acknowledged: bool) -> ProviderUpsert {
         subscriber_id: Some("owner-a".into()),
         acknowledge_intermediary_risk: Some(acknowledged),
         acknowledge_unsupported_clients: Some(Vec::new()),
+        if_absent: false,
     }
 }
 

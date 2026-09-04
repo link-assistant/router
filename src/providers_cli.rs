@@ -10,7 +10,7 @@ use crate::config::Config;
 use crate::providers::{ProviderStore, ProviderUpsert};
 
 #[must_use]
-pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
+pub async fn run(config: &Config, op: &ProviderOp) -> ExitCode {
     let store = match ProviderStore::open(&config.data_dir, &config.token_secret) {
         Ok(store) => store,
         Err(e) => {
@@ -18,7 +18,7 @@ pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    run_with(&store, op)
+    run_with(&store, op).await
 }
 
 /// The same commands against the *selected* router (issue #294).
@@ -123,6 +123,7 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
             acknowledge_intermediary_risk,
             acknowledge_unsupported_client,
             enabled,
+            if_absent,
             ..
         } => Some(Call {
             method: "POST",
@@ -143,6 +144,7 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
                 subscriber_id: subscriber_id.clone(),
                 acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
                 acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
+                if_absent: *if_absent,
             })?),
         }),
         ProviderOp::Import { .. } => None,
@@ -307,8 +309,15 @@ fn print_remote_table(records: &[serde_json::Value]) {
 /// Split from [`run`] so the operations can be exercised without constructing
 /// a whole configuration around them.
 #[must_use]
-pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
+pub async fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
     warn_zai_policy(op);
+    let client = match crate::upstream_client::build_upstream_client() {
+        Ok(client) => client,
+        Err(error) => {
+            eprintln!("error: could not build provider validation client: {error}");
+            return ExitCode::from(1);
+        }
+    };
     match op {
         ProviderOp::List { json, .. } => match store.list_redacted() {
             Ok(records) if *json => {
@@ -354,6 +363,7 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
             acknowledge_intermediary_risk,
             acknowledge_unsupported_client,
             enabled,
+            if_absent,
             ..
         } => {
             let api_key = match supplied_api_key(api_key.as_ref(), *api_key_stdin) {
@@ -377,12 +387,13 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 subscriber_id: subscriber_id.clone(),
                 acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
                 acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
+                if_absent: *if_absent,
             };
-            match store.upsert(input) {
-                Ok(record) => {
+            match crate::provider_acceptance::provision(&client, store, input).await {
+                Ok(result) => {
                     println!(
                         "{}",
-                        serde_json::to_string_pretty(&record.redacted()).unwrap_or_default()
+                        serde_json::to_string_pretty(&result.response()).unwrap_or_default()
                     );
                     ExitCode::SUCCESS
                 }
@@ -423,8 +434,20 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        ProviderOp::Import { path, .. } => match store.import_file(path) {
-            Ok(count) => {
+        ProviderOp::Import { path, .. } => match std::fs::read_to_string(path)
+            .map_err(crate::providers::ProviderError::from)
+            .and_then(|text| crate::providers::parse_provider_import(&text))
+        {
+            Ok(inputs) => {
+                let count = inputs.len();
+                for input in inputs {
+                    if let Err(error) =
+                        crate::provider_acceptance::provision(&client, store, input).await
+                    {
+                        eprintln!("error: {error}");
+                        return ExitCode::from(1);
+                    }
+                }
                 println!("imported {count} provider(s)");
                 ExitCode::SUCCESS
             }

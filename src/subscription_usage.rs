@@ -567,22 +567,14 @@ fn provider_origin(base: &str) -> String {
 }
 
 fn zai_payload(value: Value) -> Result<Value, VendorResponse> {
-    if value.get("success").and_then(Value::as_bool) == Some(false) {
-        return match value.get("code").and_then(Value::as_i64) {
-            Some(401 | 1001) => Err(VendorResponse::AuthenticationRejected),
-            _ => Err(VendorResponse::Unavailable),
-        };
-    }
-    if let Some(code) = value.get("code").and_then(Value::as_i64)
-        && !matches!(code, 0 | 200)
-    {
-        return if matches!(code, 401 | 1001) {
-            Err(VendorResponse::AuthenticationRejected)
-        } else {
-            Err(VendorResponse::Unavailable)
-        };
-    }
-    Ok(value.get("data").cloned().unwrap_or(value))
+    crate::zai_coding_plan::accepted_non_inference_payload(value).map_err(|error| {
+        use crate::zai_coding_plan::ZaiProbeFailureKind as Kind;
+        match error.kind() {
+            Kind::CredentialRejected => VendorResponse::AuthenticationRejected,
+            Kind::RateLimited => VendorResponse::RateLimited(None),
+            Kind::Unverified => VendorResponse::Unavailable,
+        }
+    })
 }
 
 async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {

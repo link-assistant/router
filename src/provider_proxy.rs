@@ -88,13 +88,28 @@ pub async fn upsert_provider(
             "admin Bearer key required",
         );
     }
-    match state.provider_store.upsert(input) {
-        Ok(record) => (StatusCode::OK, axum::Json(record.redacted())).into_response(),
-        Err(e) => error_response(
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            &format!("{e}"),
-        ),
+    match crate::provider_acceptance::provision(&state.client, &state.provider_store, input).await {
+        Ok(result) => (StatusCode::OK, axum::Json(result.response())).into_response(),
+        Err(error) => {
+            use crate::provider_acceptance::ProviderProvisionFailureKind as Kind;
+            let status = match error.kind() {
+                Kind::InvalidCandidate | Kind::CredentialRejected => StatusCode::BAD_REQUEST,
+                Kind::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+                Kind::Unverified | Kind::PersistenceUncertain => StatusCode::SERVICE_UNAVAILABLE,
+            };
+            (
+                status,
+                axum::Json(serde_json::json!({
+                    "type": "error",
+                    "error": {
+                        "type": "provider_acceptance_error",
+                        "outcome": error.kind(),
+                        "message": error.to_string(),
+                    }
+                })),
+            )
+                .into_response()
+        }
     }
 }
 

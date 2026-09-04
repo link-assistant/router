@@ -33,6 +33,14 @@ enabled record is rejected. A JSON/import record which omits `enabled` remains
 disabled. Router permits only one enabled Coding Plan subscriber and encrypts
 the key at rest; list/show/API output is redacted.
 
+Adding or importing an enabled Coding Plan record first validates its key with
+the authenticated model catalogue and only then promotes the staged encrypted
+record under the provider-store lock. HTTP errors, HTTP-200 error bodies,
+malformed replies, timeouts, and uncertain persistence leave the previous
+record byte-for-byte authoritative. Add `--if-absent` to keep an existing name
+instead of replacing it; local and remote commands return the same
+machine-readable `promoted` or `already_present` outcome without key material.
+
 A normal z.ai pay-as-you-go API key is not Coding Plan. Configure it separately
 as `kind=openai-compatible` against its documented standard API endpoint and
 terms. Router never guesses which quota class a key belongs to.

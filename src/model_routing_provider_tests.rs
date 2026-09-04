@@ -92,6 +92,7 @@ fn store_provider_at(state: &AppState, name: &str, base_url: &str, models: &[&st
             subscriber_id: None,
             acknowledge_intermediary_risk: None,
             acknowledge_unsupported_clients: None,
+            if_absent: false,
         })
         .expect("store the provider");
 }
@@ -334,6 +335,7 @@ async fn ordinary_provider_catalog_is_the_exact_supported_client_intersection() 
             subscriber_id: None,
             acknowledge_intermediary_risk: None,
             acknowledge_unsupported_clients: None,
+            if_absent: false,
         })
         .unwrap();
 
@@ -379,6 +381,7 @@ async fn incompatible_direct_request_is_rejected_before_upstream() {
             subscriber_id: None,
             acknowledge_intermediary_risk: None,
             acknowledge_unsupported_clients: None,
+            if_absent: false,
         })
         .unwrap();
     state.upstream_provider = UpstreamProvider::OpenAICompatible;
@@ -510,6 +513,7 @@ async fn a_disabled_provider_advertises_nothing() {
             subscriber_id: None,
             acknowledge_intermediary_risk: None,
             acknowledge_unsupported_clients: None,
+            if_absent: false,
         })
         .expect("disable the provider");
 

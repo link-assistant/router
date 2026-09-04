@@ -18,6 +18,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use crate::provider_acceptance::{ProviderInstallMode, ProviderInstallResult};
+
 /// Supported persisted provider kinds.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -155,11 +157,8 @@ pub struct RedactedProviderRecord {
     pub unsupported_clients: Vec<String>,
 }
 
-/// API / CLI input for creating or replacing a provider.
-///
-/// `Serialize` as well as `Deserialize` so a remote `providers add` sends
-/// exactly the shape the endpoint parses, rather than a hand-built JSON object
-/// that could drift from it (issue #294).
+/// API / CLI input for creating or replacing a provider. Serialization keeps
+/// remote `providers add` identical to the endpoint shape (issue #294).
 #[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct ProviderUpsert {
     pub name: String,
@@ -186,6 +185,9 @@ pub struct ProviderUpsert {
     pub acknowledge_intermediary_risk: Option<bool>,
     #[serde(default, alias = "unsupported_clients")]
     pub acknowledge_unsupported_clients: Option<Vec<String>>,
+    /// Refuse to replace an existing provider with the same name.
+    #[serde(default)]
+    pub if_absent: bool,
 }
 
 /// OpenAI-compatible provider resolved for runtime forwarding.
@@ -349,29 +351,61 @@ impl ProviderStore {
 
     /// Add or replace a provider, encrypting any inline API key.
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
-        let record = self.build_record(input)?;
-        self.mutate(|records| -> Result<(), ProviderError> {
-            if record.enabled
-                && record.kind == ProviderKind::ZaiCodingPlan
-                && records.values().any(|existing| {
-                    existing.enabled
-                        && existing.kind == ProviderKind::ZaiCodingPlan
-                        && existing.name != record.name
-                })
-            {
-                return Err(ProviderError::Invalid(
-                    "only one personal z.ai Coding Plan subscriber may be enabled".into(),
-                ));
-            }
-            records.insert(record.name.clone(), record.clone());
-            Ok(())
-        })??;
-        Ok(record)
+        let record = self.stage(input)?;
+        match self.promote(record, ProviderInstallMode::Replace)? {
+            ProviderInstallResult::Promoted(record)
+            | ProviderInstallResult::AlreadyPresent(record) => Ok(record),
+        }
+    }
+
+    /// Build and encrypt a candidate without changing the active store.
+    pub fn stage(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
+        self.build_record(input)
+    }
+
+    /// Atomically promote a previously validated candidate.
+    pub fn promote(
+        &self,
+        record: ProviderRecord,
+        mode: ProviderInstallMode,
+    ) -> Result<ProviderInstallResult, ProviderError> {
+        self.mutate(
+            |records| -> (Result<ProviderInstallResult, ProviderError>, bool) {
+                if mode == ProviderInstallMode::IfAbsent
+                    && let Some(existing) = records.get(&record.name)
+                {
+                    return (
+                        Ok(ProviderInstallResult::AlreadyPresent(existing.clone())),
+                        false,
+                    );
+                }
+                if record.enabled
+                    && record.kind == ProviderKind::ZaiCodingPlan
+                    && records.values().any(|existing| {
+                        existing.enabled
+                            && existing.kind == ProviderKind::ZaiCodingPlan
+                            && existing.name != record.name
+                    })
+                {
+                    return (
+                        Err(ProviderError::Invalid(
+                            "only one personal z.ai Coding Plan subscriber may be enabled".into(),
+                        )),
+                        false,
+                    );
+                }
+                records.insert(record.name.clone(), record.clone());
+                (Ok(ProviderInstallResult::Promoted(record)), true)
+            },
+        )?
     }
 
     /// Delete a provider by name.
     pub fn delete(&self, name: &str) -> Result<bool, ProviderError> {
-        self.mutate(|records| records.remove(name).is_some())
+        self.mutate(|records| {
+            let removed = records.remove(name).is_some();
+            (removed, removed)
+        })
     }
 
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
@@ -393,6 +427,14 @@ impl ProviderStore {
         if !record.enabled {
             return Ok(None);
         }
+        self.resolve_record(&record).map(Some)
+    }
+
+    /// Resolve a staged record without installing it.
+    pub fn resolve_record(
+        &self,
+        record: &ProviderRecord,
+    ) -> Result<ResolvedProvider, ProviderError> {
         let api_key = record
             .api_key_env
             .as_deref()
@@ -407,18 +449,18 @@ impl ProviderStore {
             })
             .transpose()?;
         let supported_clients = record.effective_supported_clients();
-        Ok(Some(ResolvedProvider {
-            name: record.name,
+        Ok(ResolvedProvider {
+            name: record.name.clone(),
             kind: record.kind,
-            base_url: record.base_url,
-            default_model: record.default_model,
-            models: record.models,
+            base_url: record.base_url.clone(),
+            default_model: record.default_model.clone(),
+            models: record.models.clone(),
             supported_clients,
             api_key,
-            subscriber_id: record.subscriber_id,
+            subscriber_id: record.subscriber_id.clone(),
             intermediary_risk_acknowledged: record.intermediary_risk_acknowledged,
-            unsupported_clients: record.unsupported_clients,
-        }))
+            unsupported_clients: record.unsupported_clients.clone(),
+        })
     }
 
     fn build_record(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
@@ -545,7 +587,7 @@ impl ProviderStore {
 
     fn mutate<T>(
         &self,
-        operation: impl FnOnce(&mut HashMap<String, ProviderRecord>) -> T,
+        operation: impl FnOnce(&mut HashMap<String, ProviderRecord>) -> (T, bool),
     ) -> Result<T, ProviderError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             let mut guard = self
@@ -554,7 +596,10 @@ impl ProviderStore {
                 .map_err(|_| ProviderError::LockPoisoned)?;
             *guard = self.load_map()?;
             let before = guard.clone();
-            let result = operation(&mut guard);
+            let (result, changed) = operation(&mut guard);
+            if !changed {
+                return Ok(result);
+            }
             if let Err(error) = self.flush(&guard) {
                 *guard = before;
                 drop(guard);
@@ -619,6 +664,7 @@ impl OpenAICompatibleConfig {
             subscriber_id: None,
             acknowledge_intermediary_risk: None,
             acknowledge_unsupported_clients: None,
+            if_absent: false,
         }
     }
 }
@@ -857,6 +903,7 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
                 subscriber_id: None,
                 acknowledge_intermediary_risk: None,
                 acknowledge_unsupported_clients: None,
+                if_absent: false,
             });
             continue;
         }

@@ -139,7 +139,9 @@ async fn run() -> ExitCode {
         },
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
-        Some(Command::Providers { op }) => link_assistant_router::providers_cli::run(&config, op),
+        Some(Command::Providers { op }) => {
+            link_assistant_router::providers_cli::run(&config, op).await
+        }
         Some(Command::Clients { op }) => {
             link_assistant_router::client_command::run(&config, cli.home.as_deref(), op).await
         }

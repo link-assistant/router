@@ -68,6 +68,7 @@ pub mod on_demand_cli;
 pub mod openai;
 pub mod output_limit;
 pub mod platform_keychain;
+pub mod provider_acceptance;
 pub mod provider_proxy;
 pub mod providers;
 pub mod providers_cli;

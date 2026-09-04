@@ -26,6 +26,41 @@ pub const CATALOG_PATH: &str = "/api/anthropic/v1/models";
 
 const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
+const MAX_CATALOG_BODY: usize = 1024 * 1024;
+
+/// Stable disposition of a non-inference z.ai credential probe.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ZaiProbeFailureKind {
+    CredentialRejected,
+    RateLimited,
+    Unverified,
+}
+
+/// Secret-free failure from the shared z.ai acceptance rule.
+#[derive(Debug)]
+pub struct ZaiProbeFailure {
+    kind: ZaiProbeFailureKind,
+    message: &'static str,
+}
+
+impl ZaiProbeFailure {
+    const fn new(kind: ZaiProbeFailureKind, message: &'static str) -> Self {
+        Self { kind, message }
+    }
+
+    #[must_use]
+    pub const fn kind(&self) -> ZaiProbeFailureKind {
+        self.kind
+    }
+}
+
+impl std::fmt::Display for ZaiProbeFailure {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(self.message)
+    }
+}
+
+impl std::error::Error for ZaiProbeFailure {}
 
 /// One exact client-visible model mapping.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -251,76 +286,12 @@ pub(crate) async fn live_catalog(
         }
     }
 
-    let key = provider
-        .api_key
-        .as_deref()
-        .filter(|value| !value.is_empty())
-        .ok_or("z.ai Coding Plan API key is unavailable")?;
-    let response = match state
-        .client
-        .get(format!(
-            "{}{}",
-            provider.base_url.trim_end_matches('/'),
-            CATALOG_PATH
-        ))
-        .bearer_auth(key)
-        .send()
-        .await
-    {
-        Ok(response) => response,
+    let models = match fetch_catalog(&state.client, provider).await {
+        Ok(models) => models,
         Err(error) => {
             return cache_failure(state, provider, fingerprint, &error.to_string());
         }
     };
-    if !response.status().is_success() {
-        return cache_failure(
-            state,
-            provider,
-            fingerprint,
-            &format!("non-inference endpoint returned {}", response.status()),
-        );
-    }
-    let payload = match response.json::<serde_json::Value>().await {
-        Ok(payload) => payload,
-        Err(error) => {
-            return cache_failure(state, provider, fingerprint, &error.to_string());
-        }
-    };
-    let Some(entries) = payload.get("data").and_then(serde_json::Value::as_array) else {
-        return cache_failure(state, provider, fingerprint, "response has no data array");
-    };
-    let mut seen = HashSet::new();
-    let mut models = Vec::with_capacity(entries.len());
-    for entry in entries {
-        let Some(raw) = entry.as_object().cloned() else {
-            return cache_failure(
-                state,
-                provider,
-                fingerprint,
-                "model record is not an object",
-            );
-        };
-        let Some(id) = raw
-            .get("id")
-            .and_then(serde_json::Value::as_str)
-            .map(str::trim)
-            .filter(|id| !id.is_empty())
-        else {
-            return cache_failure(state, provider, fingerprint, "model record has no exact id");
-        };
-        if !seen.insert(id.to_string()) {
-            return cache_failure(
-                state,
-                provider,
-                fingerprint,
-                &format!("duplicate exact model id '{id}'"),
-            );
-        }
-        models.push(LiveProviderModel {
-            id: id.to_string(),
-            raw,
-        });
-    }
     let now = Instant::now();
     state
         .provider_store
@@ -336,6 +307,155 @@ pub(crate) async fn live_catalog(
         )
         .map_err(|error| error.to_string())?;
     Ok(models)
+}
+
+/// Validate a z.ai Coding Plan key through the live non-inference catalog.
+pub(crate) async fn fetch_catalog(
+    client: &reqwest::Client,
+    provider: &ResolvedProvider,
+) -> Result<Vec<LiveProviderModel>, ZaiProbeFailure> {
+    let key = provider
+        .api_key
+        .as_deref()
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            ZaiProbeFailure::new(
+                ZaiProbeFailureKind::CredentialRejected,
+                "z.ai Coding Plan API key is unavailable",
+            )
+        })?;
+    let response = client
+        .get(format!(
+            "{}{}",
+            provider.base_url.trim_end_matches('/'),
+            CATALOG_PATH
+        ))
+        .bearer_auth(key)
+        .send()
+        .await
+        .map_err(|_| {
+            ZaiProbeFailure::new(
+                ZaiProbeFailureKind::Unverified,
+                "z.ai Coding Plan catalog could not be verified",
+            )
+        })?;
+    let status = response.status();
+    if matches!(
+        status,
+        reqwest::StatusCode::UNAUTHORIZED | reqwest::StatusCode::FORBIDDEN
+    ) {
+        return Err(ZaiProbeFailure::new(
+            ZaiProbeFailureKind::CredentialRejected,
+            "z.ai Coding Plan credential was rejected",
+        ));
+    }
+    if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+        return Err(ZaiProbeFailure::new(
+            ZaiProbeFailureKind::RateLimited,
+            "z.ai Coding Plan acceptance was rate limited",
+        ));
+    }
+    if !status.is_success() {
+        return Err(ZaiProbeFailure::new(
+            ZaiProbeFailureKind::Unverified,
+            "z.ai Coding Plan catalog could not be verified",
+        ));
+    }
+    let bytes = response.bytes().await.map_err(|_| {
+        ZaiProbeFailure::new(
+            ZaiProbeFailureKind::Unverified,
+            "z.ai Coding Plan catalog could not be read",
+        )
+    })?;
+    if bytes.len() > MAX_CATALOG_BODY {
+        return Err(ZaiProbeFailure::new(
+            ZaiProbeFailureKind::Unverified,
+            "z.ai Coding Plan catalog exceeded the response limit",
+        ));
+    }
+    let payload = serde_json::from_slice(&bytes).map_err(|_| {
+        ZaiProbeFailure::new(
+            ZaiProbeFailureKind::Unverified,
+            "z.ai Coding Plan catalog response was malformed",
+        )
+    })?;
+    let payload = accepted_non_inference_payload(payload)?;
+    let entries = payload.as_array().ok_or_else(|| {
+        ZaiProbeFailure::new(
+            ZaiProbeFailureKind::Unverified,
+            "z.ai Coding Plan catalog response had no model array",
+        )
+    })?;
+    if entries.is_empty() {
+        return Err(ZaiProbeFailure::new(
+            ZaiProbeFailureKind::CredentialRejected,
+            "z.ai Coding Plan catalog did not prove an active subscription",
+        ));
+    }
+    let mut seen = HashSet::new();
+    let mut models = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let raw = entry.as_object().cloned().ok_or_else(|| {
+            ZaiProbeFailure::new(
+                ZaiProbeFailureKind::Unverified,
+                "z.ai Coding Plan catalog contained an invalid model record",
+            )
+        })?;
+        let id = raw
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .map(str::trim)
+            .filter(|id| !id.is_empty())
+            .ok_or_else(|| {
+                ZaiProbeFailure::new(
+                    ZaiProbeFailureKind::Unverified,
+                    "z.ai Coding Plan catalog contained a model without an exact id",
+                )
+            })?;
+        if !seen.insert(id.to_string()) {
+            return Err(ZaiProbeFailure::new(
+                ZaiProbeFailureKind::Unverified,
+                "z.ai Coding Plan catalog contained duplicate model ids",
+            ));
+        }
+        models.push(LiveProviderModel {
+            id: id.to_string(),
+            raw,
+        });
+    }
+    Ok(models)
+}
+
+/// Apply the body-level success contract shared by catalog, health, and usage.
+pub(crate) fn accepted_non_inference_payload(
+    value: serde_json::Value,
+) -> Result<serde_json::Value, ZaiProbeFailure> {
+    let code = value.get("code").and_then(serde_json::Value::as_i64);
+    if value.get("success").and_then(serde_json::Value::as_bool) == Some(false) {
+        let kind = if code == Some(429) {
+            ZaiProbeFailureKind::RateLimited
+        } else {
+            ZaiProbeFailureKind::CredentialRejected
+        };
+        return Err(ZaiProbeFailure::new(
+            kind,
+            "z.ai Coding Plan non-inference response rejected the credential",
+        ));
+    }
+    if code.is_some_and(|code| !matches!(code, 0 | 200)) {
+        let kind = if code == Some(429) {
+            ZaiProbeFailureKind::RateLimited
+        } else if matches!(code, Some(401 | 1001)) {
+            ZaiProbeFailureKind::CredentialRejected
+        } else {
+            ZaiProbeFailureKind::Unverified
+        };
+        return Err(ZaiProbeFailure::new(
+            kind,
+            "z.ai Coding Plan non-inference response was not accepted",
+        ));
+    }
+    Ok(value.get("data").cloned().unwrap_or(value))
 }
 
 pub(crate) fn live_registry_for_client(
@@ -494,29 +614,10 @@ pub async fn credential_healthy(
     client: &reqwest::Client,
     provider: &ResolvedProvider,
 ) -> Result<(), String> {
-    let key = provider
-        .api_key
-        .as_deref()
-        .filter(|value| !value.is_empty())
-        .ok_or("z.ai Coding Plan API key is unavailable")?;
-    let response = client
-        .get(format!(
-            "{}{}",
-            provider.base_url.trim_end_matches('/'),
-            HEALTH_PATH
-        ))
-        .header("authorization", key)
-        .send()
+    fetch_catalog(client, provider)
         .await
-        .map_err(|error| format!("z.ai Coding Plan health check failed: {error}"))?;
-    if response.status().is_success() {
-        Ok(())
-    } else {
-        Err(format!(
-            "z.ai Coding Plan credential rejected by non-inference health check ({})",
-            response.status()
-        ))
-    }
+        .map(|_| ())
+        .map_err(|error| error.to_string())
 }
 
 /// Live health for the enabled personal Coding Plan credential, when present.

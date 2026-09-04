@@ -27,19 +27,20 @@ fn add(name: &str, models: &[&str]) -> ProviderOp {
         acknowledge_intermediary_risk: false,
         acknowledge_unsupported_client: vec![],
         enabled: true,
+        if_absent: false,
         target: AuthTarget::default(),
     }
 }
 
 /// Adding a provider persists exactly what routing later reads: the declared
 /// models are what let it win a route at all.
-#[test]
-fn adding_a_provider_persists_its_declared_models() {
+#[tokio::test]
+async fn adding_a_provider_persists_its_declared_models() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
 
     assert_eq!(
-        run_with(&store, &add("formal-ai", &["formal-ai-mini"])),
+        run_with(&store, &add("formal-ai", &["formal-ai-mini"])).await,
         ExitCode::SUCCESS
     );
 
@@ -53,12 +54,12 @@ fn adding_a_provider_persists_its_declared_models() {
 
 /// Listing and showing a provider succeed, and never print the API key: the
 /// store redacts it, and these commands are the operator-facing view of it.
-#[test]
-fn listing_and_showing_a_provider_succeed() {
+#[tokio::test]
+async fn listing_and_showing_a_provider_succeed() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
     assert_eq!(
-        run_with(&store, &add("formal-ai", &["formal-ai-mini"])),
+        run_with(&store, &add("formal-ai", &["formal-ai-mini"])).await,
         ExitCode::SUCCESS
     );
 
@@ -69,7 +70,8 @@ fn listing_and_showing_a_provider_succeed() {
                 json: false,
                 target: AuthTarget::default()
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
     assert_eq!(
@@ -80,7 +82,8 @@ fn listing_and_showing_a_provider_succeed() {
                 json: false,
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
     let redacted = store.list_redacted().expect("list");
@@ -92,8 +95,8 @@ fn listing_and_showing_a_provider_succeed() {
 
 /// Showing or removing an unknown provider fails rather than reporting success
 /// for something that was never there.
-#[test]
-fn an_unknown_provider_is_not_reported_as_removed() {
+#[tokio::test]
+async fn an_unknown_provider_is_not_reported_as_removed() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
 
@@ -105,7 +108,8 @@ fn an_unknown_provider_is_not_reported_as_removed() {
                 json: false,
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
     assert_ne!(
@@ -115,19 +119,20 @@ fn an_unknown_provider_is_not_reported_as_removed() {
                 name: "absent".to_string(),
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
 }
 
 /// Removing a provider takes its models out of the store, so a decommissioned
 /// endpoint stops being routable.
-#[test]
-fn removing_a_provider_takes_its_models_with_it() {
+#[tokio::test]
+async fn removing_a_provider_takes_its_models_with_it() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
     assert_eq!(
-        run_with(&store, &add("formal-ai", &["formal-ai-mini"])),
+        run_with(&store, &add("formal-ai", &["formal-ai-mini"])).await,
         ExitCode::SUCCESS
     );
 
@@ -138,7 +143,8 @@ fn removing_a_provider_takes_its_models_with_it() {
                 name: "formal-ai".to_string(),
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
 
@@ -152,8 +158,8 @@ fn removing_a_provider_takes_its_models_with_it() {
 
 /// Importing a file that is not there fails with a message rather than
 /// silently leaving the store unchanged.
-#[test]
-fn importing_a_missing_file_fails() {
+#[tokio::test]
+async fn importing_a_missing_file_fails() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
 
@@ -164,7 +170,8 @@ fn importing_a_missing_file_fails() {
                 path: directory.path().join("absent.lenv"),
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
 }
@@ -228,6 +235,7 @@ fn adding_a_provider_sends_what_routing_reads() {
         acknowledge_intermediary_risk: false,
         acknowledge_unsupported_client: vec![],
         enabled: true,
+        if_absent: false,
         target: AuthTarget::default(),
     })
     .expect("encodable")
@@ -322,6 +330,7 @@ async fn a_remote_add_declares_the_provider_on_the_deployment() {
             acknowledge_intermediary_risk: false,
             acknowledge_unsupported_client: vec![],
             enabled: true,
+            if_absent: false,
             target: AuthTarget::default(),
         },
     )

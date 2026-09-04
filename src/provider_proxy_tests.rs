@@ -15,6 +15,7 @@ fn provider_input(base_url: String) -> ProviderUpsert {
         subscriber_id: None,
         acknowledge_intermediary_risk: None,
         acknowledge_unsupported_clients: None,
+        if_absent: false,
     }
 }
 
@@ -154,6 +155,67 @@ async fn provider_management_handlers_cover_the_complete_crud_contract() {
     ] {
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
+}
+
+#[tokio::test]
+async fn rejected_zai_replacement_preserves_the_encrypted_record_byte_for_byte() {
+    use axum::routing::get;
+
+    let app = axum::Router::new().route(
+        crate::zai_coding_plan::CATALOG_PATH,
+        get(|| async {
+            axum::Json(serde_json::json!({
+                "success": false,
+                "code": 401,
+                "message": "invalid authorization"
+            }))
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let data = tempfile::tempdir().expect("provider data");
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.allow_anonymous_admin = true;
+    let mut current = provider_input(base_url.clone());
+    current.name = "z-ai-personal".into();
+    current.kind = Some("z.ai-coding-plan".into());
+    current.supported_clients = None;
+    current.subscriber_id = Some("owner".into());
+    current.acknowledge_intermediary_risk = Some(true);
+    state.provider_store.upsert(current.clone()).unwrap();
+    let store_path = data.path().join("providers.lenv");
+    let original = std::fs::read(&store_path).unwrap();
+    current.api_key = Some("invalid-candidate-secret".into());
+
+    let response = upsert_provider(State(state.clone()), HeaderMap::new(), axum::Json(current))
+        .await
+        .into_response();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let response_body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let response_body = String::from_utf8(response_body.to_vec()).unwrap();
+    assert!(
+        response_body.contains("credential_rejected"),
+        "{response_body}"
+    );
+    assert!(!response_body.contains("invalid-candidate-secret"));
+    assert!(!response_body.contains("upstream-secret"));
+    assert!(!response_body.contains(&data.path().display().to_string()));
+    assert_eq!(std::fs::read(&store_path).unwrap(), original);
+    assert_eq!(
+        state
+            .provider_store
+            .resolve("z-ai-personal")
+            .unwrap()
+            .unwrap()
+            .api_key
+            .as_deref(),
+        Some("upstream-secret")
+    );
+    server.abort();
 }
 
 #[tokio::test]

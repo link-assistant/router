@@ -38,6 +38,7 @@ async fn state_with_zai_health(
             subscriber_id: Some("owner-a".into()),
             acknowledge_intermediary_risk: Some(true),
             acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent: false,
         })
         .unwrap();
     (state, data, handle)
