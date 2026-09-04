@@ -13,6 +13,20 @@ use super::budget::{
 };
 use super::{RequestAdmission, StorageError, TokenRecord, TokenStore, associative, legacy};
 
+/// Decode a current binary projection without mapping the source file writable.
+///
+/// `doublets::Store::new` updates bookkeeping in its memory backend even when
+/// the caller only intends to read. Copying into an owner-only temporary keeps
+/// those writes away from the authoritative token store and its modification
+/// time; the temporary is removed as soon as decoding finishes.
+pub(super) fn load_records_read_only(path: &Path) -> Result<Vec<TokenRecord>, StorageError> {
+    let mut source = fs::File::open(path)?;
+    let mut temporary = tempfile::NamedTempFile::new()?;
+    std::io::copy(&mut source, temporary.as_file_mut())?;
+    let store = associative::PersistentStore::open(temporary.path())?;
+    store.records()
+}
+
 /// Native file-mapped doublets token store.
 ///
 /// Existing `LARTOK01` length-prefixed JSON files are read once and

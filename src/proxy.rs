@@ -16,9 +16,9 @@
 mod upstream_headers;
 pub use upstream_headers::MAX_PROXY_REQUEST_BYTES;
 pub(crate) use upstream_headers::build_upstream_headers;
+pub(crate) use upstream_headers::native_request_headers;
 pub use upstream_headers::{
     DEFAULT_ANTHROPIC_VERSION, OAUTH_BETA_FLAG, forwarded_client_headers, merge_oauth_beta,
-    router_user_agent,
 };
 mod upstream_path;
 
@@ -48,13 +48,10 @@ use crate::subscription::SubscriptionProvider;
 /// The canonical Anthropic service path prefix used by the proxy.
 pub const API_PREFIX: &str = "/api/services/anthropic/";
 
-/// Headers that Claude Code LLM Gateway spec requires to be forwarded.
+/// Required Anthropic protocol headers logged during native forwarding.
 ///
-/// `x-claude-code-session-id` is deliberately absent. It is a stable
-/// identifier minted on the caller's machine that correlates requests into
-/// sessions no matter which token carried them, so relaying it undid the
-/// separation per-token issuance exists to provide (issue #332). The router
-/// still reads it for its own routing; it just does not pass it on.
+/// Other end-to-end official-client fields, including session and version
+/// metadata, are preserved by the reviewed native header policy.
 pub const REQUIRED_FORWARD_HEADERS: &[&str] = &["anthropic-beta", "anthropic-version"];
 
 /// Hop-by-hop headers that must not be forwarded.
@@ -392,22 +389,18 @@ async fn proxy_handler_with_subscription(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    let subscription_entitlement =
-        if let Some(provider) = state.upstream_provider.subscription_provider() {
-            match crate::client_policy::enforce_subscription_for_claims(
-                &state,
-                &claims,
-                &incoming_headers,
-                provider,
-                crate::client_policy::ClientProtocol::AnthropicMessages,
-                &path,
-            ) {
-                Ok(decision) => Some(decision),
-                Err(response) => return response,
-            }
-        } else {
-            None
-        };
+    if let Some(provider) = state.upstream_provider.subscription_provider()
+        && let Err(response) = crate::client_policy::enforce_subscription_for_claims(
+            &state,
+            &claims,
+            &incoming_headers,
+            provider,
+            crate::client_policy::ClientProtocol::AnthropicMessages,
+            &path,
+        )
+    {
+        return response;
+    }
 
     // Log session tracking header if present
     if let Some(session_id) = incoming_headers.get("x-claude-code-session-id") {
@@ -453,7 +446,7 @@ async fn proxy_handler_with_subscription(
     // Read the body before account selection so the router gets a copy of
     // stable request metadata and can preserve conversation affinity. It is
     // also what the spend reservation below is computed from.
-    let mut body_bytes =
+    let body_bytes =
         match axum::body::to_bytes(req.into_body(), state.max_proxy_request_bytes).await {
             Ok(bytes) => bytes,
             Err(e) => {
@@ -528,23 +521,6 @@ async fn proxy_handler_with_subscription(
     let oauth_token = resolved.access_token;
     let selected_account = resolved.account;
     let evidence_token = resolved.evidence_token;
-
-    // Same requirement as above: a client that is not Claude Code would be rejected
-    // by the upstream with a misleading 429. Idempotent for Claude Code itself.
-    let mut upstream_body = routing_body.clone();
-    openai::reconcile_subscription_parameters(SubscriptionProvider::Claude, &mut upstream_body);
-    if upstream_body != routing_body {
-        body_bytes = serde_json::to_vec(&upstream_body)
-            .map(bytes::Bytes::from)
-            .unwrap_or(body_bytes);
-    }
-    let body_bytes = if subscription_entitlement.is_some()
-        && crate::claude_identity::is_oauth_credential(&oauth_token)
-    {
-        crate::claude_identity::ensure_claude_code_system_bytes(&upstream_body, body_bytes)
-    } else {
-        body_bytes
-    };
 
     // Build upstream headers
     let upstream_headers = build_upstream_headers(&incoming_headers, &oauth_token, &state.logger);
@@ -773,7 +749,10 @@ async fn resolve_upstream_credentials(
 pub(crate) mod openai_handlers;
 
 pub(crate) use openai_handlers::openai_chat_completions_routed;
-pub use openai_handlers::{openai_chat_completions, openai_responses};
+pub use openai_handlers::{
+    openai_chat_completions, openai_chat_completions_native, openai_responses,
+    openai_responses_native,
+};
 
 #[path = "proxy_openai_forward.rs"]
 mod openai_forward;

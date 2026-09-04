@@ -892,7 +892,7 @@ async fn gemini_next_page_tokens_are_followed_without_losing_raw_records() {
 }
 
 #[test]
-fn colliding_live_ids_are_reversibly_provider_qualified() {
+fn colliding_live_ids_are_rejected_without_qualified_aliases() {
     let cache = ModelCatalogCache::new();
     cache.record_success(
         SubscriptionProvider::Claude,
@@ -904,20 +904,19 @@ fn colliding_live_ids_are_reversibly_provider_qualified() {
         &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
         &cache,
     );
-    let ids = projected["data"]
+    let has_id = projected["data"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|entry| entry["id"].as_str().unwrap())
-        .collect::<Vec<_>>();
-    assert_eq!(ids, ["claude/future-shared-77", "codex/future-shared-77"]);
+        .any(|entry| entry["id"].as_str().is_some());
+    assert!(!has_id);
     assert_eq!(
         crate::model_routing::provider_for_model("claude/future-shared-77", &cache),
-        Some(SubscriptionProvider::Claude)
+        None
     );
     assert_eq!(
         crate::model_routing::provider_for_model("codex/future-shared-77", &cache),
-        Some(SubscriptionProvider::Codex)
+        None
     );
     assert_eq!(
         crate::model_routing::provider_for_model("future-shared-77", &cache),

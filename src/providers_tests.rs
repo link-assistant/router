@@ -8,6 +8,7 @@ fn upsert() -> ProviderUpsert {
         base_url: "http://localhost:4000/v1/".into(),
         default_model: Some("claude-sonnet".into()),
         models: Some(vec!["claude-sonnet".into()]),
+        supported_clients: Some(vec!["opencode".into()]),
         api_key: Some("sk-test".into()),
         api_key_env: None,
         encrypted_api_key: None,
@@ -73,6 +74,7 @@ fn zai_upsert(enabled: Option<bool>, acknowledged: bool) -> ProviderUpsert {
         base_url: "https://api.z.ai".into(),
         default_model: Some("glm-5".into()),
         models: Some(vec!["glm-5".into()]),
+        supported_clients: None,
         api_key: Some("zai-secret".into()),
         api_key_env: None,
         encrypted_api_key: None,
@@ -156,6 +158,49 @@ litellm
         parsed[0].models.as_ref().unwrap(),
         &vec!["claude-sonnet".to_string(), "gpt-4o".to_string()]
     );
+}
+
+#[test]
+fn indented_import_covers_client_policy_fields_and_rejects_ambiguous_input() {
+    let input = r#"
+ordinary
+  api_base "https://ordinary.example/v1"
+  supported-clients "codex, opencode"
+  api-key-env "ORDINARY_API_KEY"
+  enabled yes
+personal
+  kind "z.ai-coding-plan"
+  base_url "https://api.z.ai"
+  subscriber-id "owner"
+  acknowledge-intermediary-risk true
+  acknowledge-unsupported-clients "cursor, agent"
+"#;
+    let parsed = parse_provider_import(input).expect("parse complete policy fields");
+    assert_eq!(parsed.len(), 2);
+    assert_eq!(
+        parsed[0].supported_clients.as_deref(),
+        Some(&["codex".to_string(), "opencode".to_string()][..])
+    );
+    assert_eq!(parsed[0].api_key_env.as_deref(), Some("ORDINARY_API_KEY"));
+    assert_eq!(parsed[0].enabled, Some(true));
+    assert_eq!(parsed[1].subscriber_id.as_deref(), Some("owner"));
+    assert_eq!(parsed[1].acknowledge_intermediary_risk, Some(true));
+    assert_eq!(
+        parsed[1].acknowledge_unsupported_clients.as_deref(),
+        Some(&["cursor".to_string(), "agent".to_string()][..])
+    );
+
+    for invalid in [
+        "  base-url https://orphan.example",
+        "ordinary\n  future-field value",
+        "ordinary\n  base-url",
+        "# comments only",
+    ] {
+        assert!(
+            parse_provider_import(invalid).is_err(),
+            "ambiguous manifest must fail: {invalid}"
+        );
+    }
 }
 
 #[test]

@@ -275,10 +275,16 @@ impl TestRouter {
             request
                 .header("x-api-key", token)
                 .header("anthropic-version", "2023-06-01")
+                .header("user-agent", "claude-cli/2.1.259")
+                .header("x-claude-code-session-id", "router-e2e-claude")
         } else if path.ends_with("/v1/responses") {
             request
                 .bearer_auth(token)
                 .header("x-openai-internal-codex-responses-lite", "true")
+                .header("user-agent", "codex_exec/0.153.0")
+                .header("x-codex-turn-metadata", "router-e2e-codex")
+                .header("originator", "codex_cli_rs")
+                .header("version", "0.153.0")
         } else {
             request
                 .bearer_auth(token)
@@ -318,7 +324,7 @@ fn test_app(state: AppState) -> Router {
         )
         .route(
             "/api/services/qwen/v1/chat/completions",
-            post(proxy::openai_chat_completions),
+            post(proxy::openai_chat_completions_native),
         )
         .route(
             "/api/services/openai/v1/responses",
@@ -326,7 +332,7 @@ fn test_app(state: AppState) -> Router {
         )
         .route(
             "/api/services/codex/v1/responses",
-            post(proxy::openai_responses),
+            post(proxy::openai_responses_native),
         )
         .route(
             "/api/services/qwen/v1/responses",
@@ -372,6 +378,22 @@ async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
         axum::serve(listener, app).await.expect("serve test app");
     });
     (format!("http://{address}"), task)
+}
+
+async fn response_payload(response: reqwest::Response) -> Value {
+    let bytes = response.bytes().await.expect("response body");
+    if let Ok(payload) = serde_json::from_slice(&bytes) {
+        return payload;
+    }
+    std::str::from_utf8(&bytes)
+        .expect("UTF-8 SSE response")
+        .lines()
+        .filter_map(|line| line.strip_prefix("data: "))
+        .filter(|data| *data != "[DONE]")
+        .filter_map(|data| serde_json::from_str::<Value>(data).ok())
+        .find(|event| event["type"] == "response.completed")
+        .and_then(|event| event.get("response").cloned())
+        .expect("JSON response or completed Responses SSE event")
 }
 
 async fn stub_vendor(State(state): State<StubState>, request: Request) -> Response {

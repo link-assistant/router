@@ -148,7 +148,7 @@ async fn both_upstream_dialects_serve_all_three_buffered_client_surfaces() {
                 let error = response.text().await.expect("error response");
                 panic!("{provider:?} {path}: {status}: {error}");
             }
-            let payload: Value = response.json().await.expect("JSON response");
+            let payload = response_payload(response).await;
             assert!(
                 payload[envelope].is_array(),
                 "{provider:?} {path} must return {envelope}[]"
@@ -206,7 +206,7 @@ async fn every_surface_and_upstream_completes_a_two_turn_tool_loop() {
                 StatusCode::OK,
                 "{provider:?} {surface} first turn"
             );
-            let first: Value = first_response.json().await.expect("first tool-loop JSON");
+            let first = response_payload(first_response).await;
 
             let (call_id, second_body) = match surface {
                 "messages" => {
@@ -281,7 +281,7 @@ async fn every_surface_and_upstream_completes_a_two_turn_tool_loop() {
                 StatusCode::OK,
                 "{provider:?} {surface} second turn"
             );
-            let final_payload: Value = second_response.json().await.expect("final tool-loop JSON");
+            let final_payload = response_payload(second_response).await;
             let final_text = match surface {
                 "messages" => final_payload["content"][0]["text"].as_str(),
                 "chat" => final_payload["choices"][0]["message"]["content"].as_str(),
@@ -469,13 +469,16 @@ async fn native_anthropic_server_tools_and_beta_headers_survive_the_full_route()
     drop(requests);
     let beta = {
         let headers = router.upstream_headers.lock().expect("stub headers");
+        assert_eq!(headers[0]["user-agent"], "claude-cli/2.1.259");
+        assert_eq!(headers[0]["x-claude-code-session-id"], "router-e2e-claude");
+        assert!(headers[0].get("x-router-upstream-model").is_none());
         headers[0]["anthropic-beta"]
             .to_str()
             .expect("ASCII beta header")
             .to_string()
     };
     assert!(beta.contains("web-fetch-2025-09-10"));
-    assert!(beta.contains(proxy::OAUTH_BETA_FLAG));
+    assert!(!beta.contains(proxy::OAUTH_BETA_FLAG));
 }
 
 #[tokio::test]

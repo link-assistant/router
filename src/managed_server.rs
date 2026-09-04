@@ -131,11 +131,16 @@ pub struct RunCredential {
     pub token: String,
     available_models: Vec<RouterModel>,
     revocation: Option<Revocation>,
+    principal_id: String,
 }
 
 impl RunCredential {
     pub(crate) fn models(&self) -> &[RouterModel] {
         &self.available_models
+    }
+
+    pub(crate) fn principal_id(&self) -> &str {
+        &self.principal_id
     }
 
     /// The record id this credential was issued under, when it has one.
@@ -425,6 +430,7 @@ async fn prepare_credential(
                 .ok_or("token endpoint response did not contain a token")?
                 .to_string();
             let id = token_subject(&run_token)?;
+            let principal_id = exact_token_binding(&run_token, client_kind)?;
             let mut credential = RunCredential {
                 token: run_token,
                 available_models: Vec::new(),
@@ -433,6 +439,7 @@ async fn prepare_credential(
                     admin_token: token.to_string(),
                     id,
                 }),
+                principal_id,
             };
             match fetch_models(&client, client_kind, &server.base_url, &credential.token).await {
                 Ok(models) => {
@@ -456,12 +463,14 @@ async fn prepare_credential(
                 )
                 .into());
             }
+            let principal_id = exact_token_binding(token, client_kind)?;
             let available_models =
                 fetch_models(&client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
                 token: token.to_string(),
                 available_models,
                 revocation: None,
+                principal_id,
             })
         }
         Ok(response) if response.status().as_u16() == 404 => {
@@ -472,20 +481,19 @@ async fn prepare_credential(
                 )
                 .into());
             }
-            let bound = token_client_kind(token)?;
-            if bound.as_deref() != Some(client_kind.canonical_name()) {
-                return Err(format!(
-                    "the selected listener exposes inference only, so its supplied token must be bound to `{}`; use the matching client token or select the administrator listener",
+            let principal_id = exact_token_binding(token, client_kind).map_err(|_| {
+                format!(
+                    "the selected listener exposes inference only, so its supplied token must carry the exact `{}` client binding and a subscriber principal; use the matching client token or select the administrator listener",
                     client_kind.canonical_name()
                 )
-                .into());
-            }
+            })?;
             let available_models =
                 fetch_models(&client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
                 token: token.to_string(),
                 available_models,
                 revocation: None,
+                principal_id,
             })
         }
         Ok(response) => Err(format!(
@@ -601,31 +609,10 @@ fn http_client() -> Result<reqwest::Client, reqwest::Error> {
         .build()
 }
 
-fn token_subject(token: &str) -> Result<String, AnyError> {
-    token_claim(token)?
-        .get("sub")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| "router run token has no subject to revoke".into())
-}
-
-fn token_client_kind(token: &str) -> Result<Option<String>, AnyError> {
-    Ok(token_claim(token)?
-        .get("client_kind")
-        .and_then(Value::as_str)
-        .map(str::to_string))
-}
-
-fn token_claim(token: &str) -> Result<Value, AnyError> {
-    let payload = token
-        .split('.')
-        .nth(1)
-        .ok_or("router returned a token without a JWT payload")?;
-    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload)
-        .map_err(|error| format!("router returned an invalid JWT payload: {error}"))?;
-    serde_json::from_slice(&decoded).map_err(Into::into)
-}
+#[path = "managed_server_token.rs"]
+mod token_helpers;
+use token_helpers::exact_token_binding;
+pub(crate) use token_helpers::{token_client_binding, token_subject};
 
 pub fn managed_status() -> Result<String, AnyError> {
     let lock = lock_state()?;

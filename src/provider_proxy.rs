@@ -7,9 +7,15 @@ use axum::extract::{Path, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
+use sha2::{Digest as _, Sha256};
+use std::collections::HashSet;
+use std::time::{Duration, Instant};
 
 use crate::metrics::Surface;
-use crate::providers::{ProviderError, ProviderUpsert, ResolvedProvider};
+use crate::providers::{
+    CachedProviderCatalog, LiveProviderModel, ProviderError, ProviderKind, ProviderUpsert,
+    ResolvedProvider,
+};
 use crate::proxy::{AppState, error_response, is_admin_authorised, maybe_mpp_challenge};
 
 /// List configured upstream providers with secrets redacted.
@@ -144,6 +150,8 @@ pub async fn forward_openai_compatible(
             upstream_path: path,
             surface,
             copy_anthropic_headers: false,
+            protocol: protocol_for_request(surface, path),
+            native_protocol: false,
         },
     )
     .await
@@ -167,6 +175,8 @@ pub(crate) async fn forward_openai_compatible_routed(
             upstream_path: path,
             surface,
             copy_anthropic_headers: false,
+            protocol: protocol_for_request(surface, path),
+            native_protocol: false,
         },
     )
     .await
@@ -177,6 +187,19 @@ pub(crate) struct ProviderForwardOptions<'a> {
     pub upstream_path: &'a str,
     pub surface: Surface,
     pub copy_anthropic_headers: bool,
+    pub protocol: crate::client_policy::ClientProtocol,
+    pub native_protocol: bool,
+}
+
+fn protocol_for_request(surface: Surface, path: &str) -> crate::client_policy::ClientProtocol {
+    if path.contains("/api/services/gemini/") {
+        return crate::client_policy::ClientProtocol::GeminiNative;
+    }
+    match surface {
+        Surface::Anthropic => crate::client_policy::ClientProtocol::AnthropicMessages,
+        Surface::OpenAIChat => crate::client_policy::ClientProtocol::OpenAIChat,
+        Surface::OpenAIResponses => crate::client_policy::ClientProtocol::OpenAIResponses,
+    }
 }
 
 pub(crate) async fn forward_provider_at_routed(
@@ -191,6 +214,8 @@ pub(crate) async fn forward_provider_at_routed(
         upstream_path,
         surface,
         copy_anthropic_headers,
+        protocol,
+        native_protocol,
     } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
@@ -200,6 +225,55 @@ pub(crate) async fn forward_provider_at_routed(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let provider = match resolve_openai_compatible_provider(state) {
+        Ok(provider) => provider,
+        Err(e) => {
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("provider lookup failed: {e}"),
+            );
+        }
+    };
+    let client = match crate::client_policy::bound_client(&claims) {
+        Ok((client, _)) => client,
+        Err(error) => {
+            return error_response(StatusCode::FORBIDDEN, "permission_error", &error);
+        }
+    };
+    if !provider.supports_client(client)
+        || !crate::client_policy::request_evidence(client, protocol, path, headers)
+    {
+        return error_response(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            "the selected provider has no tested compatible adapter for this signed client request",
+        );
+    }
+    if provider.kind == ProviderKind::OpenAICompatible {
+        if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty())
+            && let Some(model) = provider.default_model.as_deref()
+        {
+            body["model"] = serde_json::Value::String(model.to_string());
+        }
+        let model = body
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        let live = match live_openai_compatible_catalog(state, &provider).await {
+            Ok(live) => live,
+            Err(error) => {
+                return error_response(StatusCode::SERVICE_UNAVAILABLE, "api_error", &error);
+            }
+        };
+        if model.is_empty() || !live.iter().any(|candidate| candidate.id == model) {
+            return error_response(
+                StatusCode::NOT_FOUND,
+                "not_found_error",
+                &format!("model '{model}' is not available from the selected provider"),
+            );
+        }
+    }
     // Per-token request budgets apply to every upstream, not just the
     // subscription ones, so a task token cannot escape its cap by being
     // pointed at an OpenAI-compatible gateway.
@@ -215,17 +289,6 @@ pub(crate) async fn forward_provider_at_routed(
         claims.sub.clone(),
         reserved,
     );
-    let provider = match resolve_openai_compatible_provider(state) {
-        Ok(provider) => provider,
-        Err(e) => {
-            return error_response(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "api_error",
-                &format!("provider lookup failed: {e}"),
-            );
-        }
-    };
-
     if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty())
         && let Some(model) = provider.default_model.as_deref()
     {
@@ -266,15 +329,24 @@ pub(crate) async fn forward_provider_at_routed(
     let bytes_sent = serialized.len() as u64;
 
     let upstream_url = join_openai_compatible_url(&provider.base_url, upstream_path);
-    let mut upstream_req = state
-        .client
-        .post(upstream_url)
-        .header("content-type", "application/json")
-        .body(serialized);
-    if let Some(api_key) = provider.api_key.as_deref() {
-        upstream_req = upstream_req.header("authorization", format!("Bearer {api_key}"));
+    let mut upstream_req = state.client.post(upstream_url);
+    if native_protocol {
+        let Some(api_key) = provider.api_key.as_deref() else {
+            return error_response(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "authentication_error",
+                "the selected provider credential is unavailable",
+            );
+        };
+        upstream_req = upstream_req.headers(crate::proxy::native_request_headers(headers, api_key));
+    } else {
+        upstream_req = upstream_req.header("content-type", "application/json");
+        if let Some(api_key) = provider.api_key.as_deref() {
+            upstream_req = upstream_req.header("authorization", format!("Bearer {api_key}"));
+        }
     }
-    if copy_anthropic_headers {
+    upstream_req = upstream_req.body(serialized);
+    if copy_anthropic_headers && !native_protocol {
         for name in ["anthropic-version", "anthropic-beta"] {
             if let Some(value) = headers.get(name) {
                 upstream_req = upstream_req.header(name, value);
@@ -307,6 +379,7 @@ pub(crate) async fn forward_provider_at_routed(
         .get("content-type")
         .cloned()
         .unwrap_or_else(|| HeaderValue::from_static("application/json"));
+    let response_headers = crate::proxy::relay_response_headers(upstream_resp.headers());
 
     if stream_requested || is_event_stream(&content_type) {
         let response_log = std::sync::Arc::clone(&state.request_log);
@@ -323,12 +396,14 @@ pub(crate) async fn forward_provider_at_routed(
             correlation_id,
             state.logger.clone(),
             usage.take(),
-            Some(requested_model.as_str()),
+            (!native_protocol).then_some(requested_model.as_str()),
         );
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert("content-type", content_type);
-        if !resolved_model.is_empty()
+        if !native_protocol
+            && !resolved_model.is_empty()
             && resolved_model != requested_model
             && let Ok(value) = HeaderValue::from_str(&resolved_model)
         {
@@ -363,7 +438,8 @@ pub(crate) async fn forward_provider_at_routed(
 
     let mut response_body = upstream_body;
     let mut served_model = None;
-    if status.is_success()
+    if !native_protocol
+        && status.is_success()
         && let Ok(mut payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
     {
         served_model = crate::output_limit::preserve_model_identity(&mut payload, &requested_model);
@@ -373,6 +449,7 @@ pub(crate) async fn forward_provider_at_routed(
 
     let mut response = Response::new(Body::from(response_body));
     *response.status_mut() = status;
+    *response.headers_mut() = response_headers;
     response.headers_mut().insert("content-type", content_type);
     if let Some(served) = served_model.as_deref()
         && let Ok(value) = HeaderValue::from_str(served)
@@ -382,6 +459,173 @@ pub(crate) async fn forward_provider_at_routed(
             .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
     }
     response
+}
+
+const PROVIDER_CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+const PROVIDER_FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
+
+fn openai_provider_catalog_fingerprint(provider: &ResolvedProvider) -> String {
+    let mut digest = Sha256::new();
+    for value in [
+        provider.name.as_str(),
+        provider.base_url.as_str(),
+        provider.api_key.as_deref().unwrap_or_default(),
+    ] {
+        digest.update(value.as_bytes());
+        digest.update([0]);
+    }
+    for model in &provider.models {
+        digest.update(model.as_bytes());
+        digest.update([0]);
+    }
+    hex::encode(digest.finalize())
+}
+
+fn cache_openai_provider_failure(
+    state: &AppState,
+    provider: &ResolvedProvider,
+    fingerprint: String,
+    detail: &str,
+) -> Result<Vec<LiveProviderModel>, String> {
+    tracing::warn!(provider = %provider.name, "provider catalog refresh failed: {detail}");
+    let previous = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .ok()
+        .flatten()
+        .filter(|entry| entry.fingerprint == fingerprint);
+    let _ = state.provider_store.cache_provider_catalog(
+        &provider.name,
+        CachedProviderCatalog {
+            fingerprint,
+            models: previous
+                .as_ref()
+                .map_or_else(Vec::new, |entry| entry.models.clone()),
+            last_success: previous.and_then(|entry| entry.last_success),
+            last_attempt: Instant::now(),
+            error: Some("provider catalog refresh failed".into()),
+        },
+    );
+    Err("provider live model catalog is unavailable".into())
+}
+
+/// Fetch one ordinary provider's authenticated non-inference `/models`
+/// catalog. Configured model ids are an optional restriction, never a
+/// substitute for current provider evidence.
+pub(crate) async fn live_openai_compatible_catalog(
+    state: &AppState,
+    provider: &ResolvedProvider,
+) -> Result<Vec<LiveProviderModel>, String> {
+    if provider.kind != ProviderKind::OpenAICompatible {
+        return Err("provider does not use the OpenAI-compatible catalog contract".into());
+    }
+    let fingerprint = openai_provider_catalog_fingerprint(provider);
+    if let Some(cached) = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .map_err(|error| error.to_string())?
+        .filter(|entry| entry.fingerprint == fingerprint)
+    {
+        if cached.error.is_none()
+            && cached
+                .last_success
+                .is_some_and(|at| at.elapsed() < PROVIDER_CATALOG_TTL)
+        {
+            return Ok(cached.models);
+        }
+        if cached.error.is_some() && cached.last_attempt.elapsed() < PROVIDER_FAILED_REFRESH_RETRY {
+            return Err("provider live model catalog is unavailable".into());
+        }
+    }
+
+    let url = join_openai_compatible_url(&provider.base_url, "/v1/models");
+    let mut request = state.client.get(url);
+    if let Some(key) = provider.api_key.as_deref().filter(|key| !key.is_empty()) {
+        request = request.bearer_auth(key);
+    }
+    let response = match request.send().await {
+        Ok(response) => response,
+        Err(error) => {
+            return cache_openai_provider_failure(state, provider, fingerprint, &error.to_string());
+        }
+    };
+    if !response.status().is_success() {
+        return cache_openai_provider_failure(
+            state,
+            provider,
+            fingerprint,
+            &format!("non-inference endpoint returned {}", response.status()),
+        );
+    }
+    let payload = match response.json::<serde_json::Value>().await {
+        Ok(payload) => payload,
+        Err(error) => {
+            return cache_openai_provider_failure(state, provider, fingerprint, &error.to_string());
+        }
+    };
+    let Some(entries) = payload.get("data").and_then(serde_json::Value::as_array) else {
+        return cache_openai_provider_failure(
+            state,
+            provider,
+            fingerprint,
+            "response has no data array",
+        );
+    };
+    let restrictions = &provider.models;
+    let mut seen = HashSet::new();
+    let mut models = Vec::new();
+    for entry in entries {
+        let Some(raw) = entry.as_object().cloned() else {
+            return cache_openai_provider_failure(
+                state,
+                provider,
+                fingerprint,
+                "model record is not an object",
+            );
+        };
+        let Some(id) = raw
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .map(str::trim)
+            .filter(|id| !id.is_empty())
+        else {
+            return cache_openai_provider_failure(
+                state,
+                provider,
+                fingerprint,
+                "model record has no exact id",
+            );
+        };
+        if !seen.insert(id.to_string()) {
+            return cache_openai_provider_failure(
+                state,
+                provider,
+                fingerprint,
+                &format!("duplicate exact model id '{id}'"),
+            );
+        }
+        if restrictions.is_empty() || restrictions.iter().any(|allowed| allowed == id) {
+            models.push(LiveProviderModel {
+                id: id.to_string(),
+                raw,
+            });
+        }
+    }
+    let now = Instant::now();
+    state
+        .provider_store
+        .cache_provider_catalog(
+            &provider.name,
+            CachedProviderCatalog {
+                fingerprint,
+                models: models.clone(),
+                last_success: Some(now),
+                last_attempt: now,
+                error: None,
+            },
+        )
+        .map_err(|error| error.to_string())?;
+    Ok(models)
 }
 
 /// Return OpenAI-shaped model data for the selected OpenAI-compatible provider.
@@ -544,258 +788,5 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn an_unconfigured_openai_compatible_catalog_is_empty() {
-        let data = tempfile::tempdir().expect("provider data");
-        let mut state = crate::app_state::AppState::for_tests(data.path());
-        state.upstream_provider = crate::config::UpstreamProvider::OpenAICompatible;
-        state.openai_compatible.default_model = None;
-        state.openai_compatible.models.clear();
-
-        let catalog = openai_compatible_models(&state);
-        assert_eq!(catalog["data"], serde_json::json!([]));
-        assert!(
-            !catalog.to_string().contains("default"),
-            "Router must not invent a model absent from live or operator configuration"
-        );
-    }
-
-    /// `/v1` in the configured base URL must not be duplicated by the request
-    /// path, and a base without it keeps the path verbatim.
-    #[test]
-    fn base_urls_are_joined_without_duplicating_the_version_segment() {
-        assert_eq!(
-            join_openai_compatible_url("https://api.example/v1", "/v1/chat/completions"),
-            "https://api.example/v1/chat/completions"
-        );
-        assert_eq!(
-            join_openai_compatible_url("https://api.example/v1/", "/v1/chat/completions"),
-            "https://api.example/v1/chat/completions"
-        );
-        assert_eq!(
-            join_openai_compatible_url("https://api.example", "/v1/chat/completions"),
-            "https://api.example/v1/chat/completions"
-        );
-        // A path that does not start with /v1 is appended as-is.
-        assert_eq!(
-            join_openai_compatible_url("https://api.example/v1", "/responses"),
-            "https://api.example/v1/responses"
-        );
-        assert_eq!(
-            join_openai_compatible_url("https://api.example/", "/responses"),
-            "https://api.example/responses"
-        );
-    }
-
-    #[test]
-    fn event_stream_content_types_are_detected_case_insensitively() {
-        for value in [
-            "text/event-stream",
-            "text/event-stream; charset=utf-8",
-            "TEXT/EVENT-STREAM",
-        ] {
-            assert!(
-                is_event_stream(&HeaderValue::from_str(value).expect("header")),
-                "{value} should be recognised as a stream"
-            );
-        }
-        for value in ["application/json", "text/plain"] {
-            assert!(
-                !is_event_stream(&HeaderValue::from_str(value).expect("header")),
-                "{value} should not be recognised as a stream"
-            );
-        }
-    }
-
-    /// A stream this relay forwards starts as a stream it will settle.
-    ///
-    /// Before issue #258 this path recorded every frame and then simply
-    /// stopped, so its exchanges reached the log with no terminal record and
-    /// were reported as ending in an unknown state.
-    #[test]
-    fn a_forwarded_stream_starts_settled_as_a_stream() {
-        let outcome = new_stream_outcome(&reqwest::header::HeaderMap::new());
-
-        assert!(outcome.streamed, "this path only handles streams");
-        assert!(
-            outcome.inspectable,
-            "an unencoded body can be scanned for a terminator"
-        );
-        assert!(!outcome.terminated, "nothing has been seen yet");
-        assert_eq!(outcome.frames, 0);
-        assert_eq!(outcome.bytes, 0);
-        assert!(outcome.detail.is_none());
-    }
-
-    /// A compressed stream is marked unreadable up front, so its frames are
-    /// never mistaken for evidence of a truncation (issue #255).
-    #[test]
-    fn a_compressed_stream_starts_uninspectable() {
-        let mut headers = reqwest::header::HeaderMap::new();
-        headers.insert(
-            reqwest::header::CONTENT_ENCODING,
-            reqwest::header::HeaderValue::from_static("gzip"),
-        );
-
-        let outcome = new_stream_outcome(&headers);
-
-        assert!(outcome.streamed);
-        assert!(!outcome.inspectable);
-        assert_eq!(outcome.label(), "encoded_not_verifiable");
-    }
-
-    /// An event-stream content type is recognised however it is spelled, since
-    /// it is what routes a response into the streaming path at all.
-    #[test]
-    fn an_event_stream_content_type_is_recognised() {
-        for value in [
-            "text/event-stream",
-            "text/event-stream; charset=utf-8",
-            "TEXT/EVENT-STREAM",
-        ] {
-            assert!(
-                is_event_stream(&HeaderValue::from_str(value).unwrap()),
-                "{value} should route into the streaming path"
-            );
-        }
-        assert!(!is_event_stream(&HeaderValue::from_static(
-            "application/json"
-        )));
-    }
-
-    /// Relaying a finished stream must leave an outcome that says so.
-    ///
-    /// The terminal record is derived from this accumulation, so a terminator
-    /// missed here becomes an exchange whose ending the log cannot account for.
-    #[test]
-    fn a_terminating_frame_completes_the_outcome() {
-        let mut outcome = new_stream_outcome(&reqwest::header::HeaderMap::new());
-
-        account_for_frame(&mut outcome, b"data: {\"choices\":[{\"delta\":{}}]}\n\n");
-        assert!(!outcome.terminated, "an ordinary frame ends nothing");
-        assert_eq!(outcome.frames, 1);
-
-        account_for_frame(&mut outcome, b"data: [DONE]\n\n");
-        assert!(outcome.terminated, "[DONE] ends an OpenAI stream");
-        assert_eq!(outcome.frames, 2);
-        assert!(outcome.is_complete());
-        assert_eq!(outcome.label(), "completed");
-    }
-
-    /// Every dialect this relay can carry must be recognised, including Gemini,
-    /// which names no terminating event and marks a finished turn with
-    /// `finishReason` on its last chunk.
-    #[test]
-    fn every_dialect_terminator_completes_the_outcome() {
-        for frame in [
-            &b"data: [DONE]\n\n"[..],
-            b"event: message_stop\ndata: {}\n\n",
-            b"event: response.completed\ndata: {}\n\n",
-            b"data: {\"candidates\":[{\"finishReason\":\"STOP\"}]}\n\n",
-        ] {
-            let mut outcome = new_stream_outcome(&reqwest::header::HeaderMap::new());
-            account_for_frame(&mut outcome, frame);
-            assert!(
-                outcome.terminated,
-                "unrecognised terminator: {}",
-                String::from_utf8_lossy(frame)
-            );
-        }
-    }
-
-    /// A stream that stops without a terminator must stay incomplete, so a real
-    /// truncation is still reported (issue #230).
-    #[test]
-    fn a_stream_without_a_terminator_stays_incomplete() {
-        let mut outcome = new_stream_outcome(&reqwest::header::HeaderMap::new());
-
-        account_for_frame(&mut outcome, b"data: {\"choices\":[{\"delta\":{}}]}\n\n");
-
-        assert!(!outcome.is_complete());
-        assert_eq!(outcome.label(), "ended_without_terminator");
-        assert_eq!(outcome.bytes, 34);
-    }
-
-    /// Relaying a real stream must record every frame and settle the turn.
-    ///
-    /// Driven through an actual HTTP response rather than a constructed value:
-    /// the defect in issue #258 was that this path forwarded bytes and then
-    /// simply stopped, which only shows up when the stream is consumed to its
-    /// end.
-    #[tokio::test]
-    async fn relaying_a_stream_records_frames_and_settles_the_turn() {
-        use futures_util::StreamExt as _;
-
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let port = listener.local_addr().unwrap().port();
-        tokio::spawn(async move {
-            if let Ok((mut socket, _)) = listener.accept().await {
-                use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
-                let mut scratch = [0; 1024];
-                let _ = socket.read(&mut scratch).await;
-                let body = "data: {\"choices\":[{\"delta\":{}}]}\n\ndata: [DONE]\n\n";
-                let _ = socket
-                    .write_all(
-                        format!(
-                            "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\n\
-                             content-length: {}\r\nconnection: close\r\n\r\n{body}",
-                            body.len()
-                        )
-                        .as_bytes(),
-                    )
-                    .await;
-            }
-        });
-
-        let directory = tempfile::tempdir().expect("temporary log directory");
-        let log = std::sync::Arc::new(crate::request_log::RequestLog::new(
-            directory.path().to_path_buf(),
-            1024 * 1024,
-        ));
-        let upstream = reqwest::get(format!("http://127.0.0.1:{port}/"))
-            .await
-            .expect("reach the upstream");
-
-        let mut stream = Box::pin(settled_relay_stream(
-            upstream,
-            std::sync::Arc::clone(&log),
-            "relayed".to_string(),
-            log_lazy::LogLazy::default(),
-            None,
-            None,
-        ));
-        let mut relayed = Vec::new();
-        while let Some(chunk) = stream.next().await {
-            relayed.extend_from_slice(&chunk.expect("the relay must forward its bytes"));
-        }
-
-        // The client sees the body unchanged: the terminal marker is filtered
-        // out, never forwarded.
-        let forwarded = String::from_utf8_lossy(&relayed);
-        assert!(forwarded.contains("[DONE]"), "{forwarded}");
-        assert!(
-            !forwarded.contains(crate::request_log::STREAM_END_MARKER),
-            "the sentinel must not reach the client: {forwarded}"
-        );
-
-        let written =
-            std::fs::read_to_string(directory.path().join("unauthenticated/requests.lino"))
-                .expect("read the log");
-        let settled: serde_json::Value = written
-            .lines()
-            .filter_map(crate::lino_json::decode_line)
-            .find(|record| record.get("phase").and_then(|p| p.as_str()) == Some("stream_end"))
-            .expect("the relay must settle the stream it forwarded");
-
-        assert_eq!(settled["outcome"], "completed", "{settled}");
-        assert_eq!(settled["complete"], serde_json::Value::Bool(true));
-        assert_eq!(settled["streamed"], serde_json::Value::Bool(true));
-        assert!(
-            settled["frames"].as_u64().unwrap_or(0) >= 1,
-            "every frame is counted: {settled}"
-        );
-    }
-}
+#[path = "provider_proxy_tests.rs"]
+mod tests;

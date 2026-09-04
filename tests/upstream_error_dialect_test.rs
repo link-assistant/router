@@ -184,9 +184,11 @@ impl TestRouter {
             request
                 .header("x-api-key", &self.claude_token)
                 .header("anthropic-version", "2023-06-01")
+                .header("user-agent", "claude-cli/2.1.260")
         } else if path.ends_with("/v1/responses") {
             request
                 .bearer_auth(&self.codex_token)
+                .header("user-agent", "codex_cli_rs/0.153.2")
                 .header("x-openai-internal-codex-responses-lite", "true")
         } else {
             request

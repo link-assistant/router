@@ -69,6 +69,8 @@ pub async fn forward_subscription_openai(
             surface,
             response_shape: SubscriptionResponseShape::Passthrough,
             validated: None,
+            entitlement: None,
+            native_route: false,
         },
     )
     .await
@@ -76,6 +78,13 @@ pub async fn forward_subscription_openai(
 
 /// Internal automatic-routing entry point carrying the credential snapshot
 /// whose account was validated against the selected catalog.
+#[derive(Clone, Copy)]
+pub(crate) struct RoutedSubscriptionContext<'a> {
+    pub(crate) validated: Option<&'a crate::model_routing::ValidatedSubscription>,
+    pub(crate) entitlement: Option<crate::client_policy::EntitlementDecision>,
+    pub(crate) native_route: bool,
+}
+
 pub(crate) async fn forward_subscription_openai_routed(
     state: &AppState,
     headers: &HeaderMap,
@@ -83,7 +92,7 @@ pub(crate) async fn forward_subscription_openai_routed(
     routing_body: &serde_json::Value,
     path: &str,
     surface: Surface,
-    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+    context: RoutedSubscriptionContext<'_>,
 ) -> Response {
     forward_subscription_openai_inner(
         state,
@@ -94,7 +103,9 @@ pub(crate) async fn forward_subscription_openai_routed(
             path,
             surface,
             response_shape: SubscriptionResponseShape::Passthrough,
-            validated: subscription,
+            validated: context.validated,
+            entitlement: context.entitlement,
+            native_route: context.native_route,
         },
     )
     .await
@@ -119,6 +130,8 @@ pub async fn forward_codex_chat_completions(
             surface,
             response_shape: SubscriptionResponseShape::ChatCompletion,
             validated: None,
+            entitlement: None,
+            native_route: false,
         },
     )
     .await
@@ -130,7 +143,7 @@ pub(crate) async fn forward_codex_chat_completions_routed(
     body: serde_json::Value,
     routing_body: &serde_json::Value,
     surface: Surface,
-    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+    context: RoutedSubscriptionContext<'_>,
 ) -> Response {
     forward_subscription_openai_inner(
         state,
@@ -141,7 +154,9 @@ pub(crate) async fn forward_codex_chat_completions_routed(
             path: "/v1/responses",
             surface,
             response_shape: SubscriptionResponseShape::ChatCompletion,
-            validated: subscription,
+            validated: context.validated,
+            entitlement: context.entitlement,
+            native_route: context.native_route,
         },
     )
     .await
@@ -158,6 +173,8 @@ struct ForwardOptions<'a> {
     surface: Surface,
     response_shape: SubscriptionResponseShape,
     validated: Option<&'a crate::model_routing::ValidatedSubscription>,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
+    native_route: bool,
 }
 
 async fn forward_subscription_openai_inner(
@@ -172,6 +189,8 @@ async fn forward_subscription_openai_inner(
         surface,
         response_shape,
         validated,
+        entitlement,
+        native_route,
     } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
@@ -181,6 +200,44 @@ async fn forward_subscription_openai_inner(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let Some(provider) = state.upstream_provider.subscription_provider() else {
+        return error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            "active upstream is not a subscription provider",
+        );
+    };
+    let protocol = match surface {
+        Surface::Anthropic => crate::client_policy::ClientProtocol::AnthropicMessages,
+        Surface::OpenAIChat => crate::client_policy::ClientProtocol::OpenAIChat,
+        Surface::OpenAIResponses => crate::client_policy::ClientProtocol::OpenAIResponses,
+    };
+    // `path` names the provider endpoint after protocol translation. Request
+    // evidence must instead be checked against the client-facing protocol;
+    // otherwise a legitimate Claude request bridged to Codex is compared with
+    // `/v1/responses` and denied before dispatch.
+    let client_path = match surface {
+        Surface::Anthropic => "/v1/messages",
+        Surface::OpenAIChat => "/v1/chat/completions",
+        Surface::OpenAIResponses => "/v1/responses",
+    };
+    let entitlement = match entitlement {
+        Some(entitlement) => entitlement,
+        None => match crate::client_policy::enforce_subscription_for_claims(
+            state,
+            &claims,
+            headers,
+            provider,
+            protocol,
+            client_path,
+        ) {
+            Ok(decision) => decision,
+            Err(response) => return response,
+        },
+    };
+    let native_protocol = native_route
+        && response_shape == SubscriptionResponseShape::Passthrough
+        && entitlement == crate::client_policy::EntitlementDecision::Native;
     let reserved = crate::token_reservation::estimate(routing_body).total();
     if let Err(e) = state
         .token_manager
@@ -203,13 +260,6 @@ async fn forward_subscription_openai_inner(
         resolved_model,
     );
 
-    let Some(provider) = state.upstream_provider.subscription_provider() else {
-        return error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            "active upstream is not a subscription provider",
-        );
-    };
     let responses_mode = codex_responses_mode(provider, headers);
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
@@ -325,9 +375,9 @@ async fn forward_subscription_openai_inner(
     // The Codex backend rejects every explicit output cap, so the field is
     // stripped below and enforced locally instead of refusing the request
     // (see `crate::output_limit`). Providers that accept the field keep it.
-    let emulated_output_limit = (crate::capabilities::subscription(provider, None)
-        .output_token_limit
-        == crate::capabilities::Capability::Emulated)
+    let emulated_output_limit = (!native_protocol
+        && crate::capabilities::subscription(provider, None).output_token_limit
+            == crate::capabilities::Capability::Emulated)
         .then(|| {
             body.get("max_output_tokens")
                 .and_then(serde_json::Value::as_u64)
@@ -341,7 +391,9 @@ async fn forward_subscription_openai_inner(
 
     // The ChatGPT Codex backend is stricter than the generic Responses API, so
     // reshape the body before forwarding (see `normalize_codex_responses_body`).
-    normalize_subscription_request(provider, &mut body, responses_mode);
+    if !native_protocol {
+        normalize_subscription_request(provider, &mut body, responses_mode);
+    }
 
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
@@ -362,16 +414,26 @@ async fn forward_subscription_openai_inner(
     let upstream_url = join_subscription_url(provider, &base_url, path);
 
     let build_request = |token: &crate::subscription::SubscriptionToken| {
-        let mut request = state
-            .client
-            .post(upstream_url.clone())
-            .header("content-type", "application/json")
-            .header("authorization", format!("Bearer {}", token.access_token))
-            .body(serialized.clone());
-        for (name, value) in subscription_headers(provider, token, responses_mode) {
-            request = request.header(name, value);
+        let mut request = state.client.post(upstream_url.clone());
+        if native_protocol {
+            let mut native_headers =
+                crate::proxy::native_request_headers(headers, &token.access_token);
+            if provider == SubscriptionProvider::Codex
+                && let Some(account_id) = token.account_id.as_deref()
+                && let Ok(value) = HeaderValue::from_str(account_id)
+            {
+                native_headers.insert("chatgpt-account-id", value);
+            }
+            request = request.headers(native_headers);
+        } else {
+            request = request
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", token.access_token));
+            for (name, value) in subscription_headers(provider, token, responses_mode) {
+                request = request.header(name, value);
+            }
         }
-        request
+        request.body(serialized.clone())
     };
 
     let correlation_id = crate::request_log::correlation_id(headers);
@@ -477,10 +539,10 @@ async fn forward_subscription_openai_inner(
     let response_headers = relay_response_headers(upstream_resp.headers());
 
     let codex = provider == SubscriptionProvider::Codex;
-    if stream_requested || (!codex && is_event_stream(&content_type)) {
+    if stream_requested || ((!codex || native_protocol) && is_event_stream(&content_type)) {
         // The Codex backend streams SSE but labels it `application/json`; re-label
         // so SSE-aware clients treat the body as the stream it is.
-        let stream_content_type = if codex {
+        let stream_content_type = if codex && !native_protocol {
             HeaderValue::from_static("text/event-stream")
         } else {
             content_type
@@ -502,8 +564,9 @@ async fn forward_subscription_openai_inner(
             requested_model,
             emulated_output_limit,
         );
-        let rewrite_passthrough =
-            response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
+        let rewrite_passthrough = !native_protocol
+            && response_shape == SubscriptionResponseShape::Passthrough
+            && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = status
             .is_success()
@@ -557,6 +620,13 @@ async fn forward_subscription_openai_inner(
     if status.is_success() {
         let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
+    }
+
+    if native_protocol {
+        let mut response = Response::new(Body::from(upstream_body));
+        *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
+        return response;
     }
 
     // The Codex backend always streams Server-Sent Events even when the client
@@ -858,100 +928,11 @@ fn is_event_stream(content_type: &HeaderValue) -> bool {
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
 }
 
-/// Extract the concatenated text from a Responses `input` message item.
-fn input_item_text(item: &serde_json::Value) -> Option<String> {
-    match item.get("content") {
-        Some(serde_json::Value::String(s)) => Some(s.clone()),
-        Some(serde_json::Value::Array(parts)) => {
-            let text: String = parts
-                .iter()
-                .filter_map(|p| p.get("text").and_then(serde_json::Value::as_str))
-                .collect::<Vec<_>>()
-                .join("");
-            (!text.is_empty()).then_some(text)
-        }
-        _ => None,
-    }
-}
-
-/// Apply provider capability rules, then any provider-specific body shaping.
-fn normalize_subscription_request(
-    provider: SubscriptionProvider,
-    body: &mut serde_json::Value,
-    responses_mode: CodexResponsesMode,
-) {
-    crate::openai::reconcile_subscription_parameters(provider, body);
-    if provider == SubscriptionProvider::Codex {
-        normalize_codex_responses_body(body, responses_mode);
-    }
-}
-
-/// Shape a Responses-API request body for the `ChatGPT` Codex backend.
-///
-/// The Codex backend is stricter than the generic `OpenAI` Responses API: it
-/// always streams and rejects `max_output_tokens`. Standard Responses requests
-/// also reject system/developer input messages and require non-empty top-level
-/// `instructions`, so those turns are hoisted and a default is used when
-/// nothing remains. Responses Lite deliberately keeps its protocol envelope:
-/// Codex places `additional_tools` in a developer input item and keeps
-/// `instructions` empty.
-fn normalize_codex_responses_body(body: &mut serde_json::Value, mode: CodexResponsesMode) {
-    let Some(obj) = body.as_object_mut() else {
-        return;
-    };
-    obj.entry("reasoning").or_insert_with(
-        || serde_json::json!({"effort": crate::clients::DEFAULT_OPENAI_REASONING_EFFORT}),
-    );
-    // Codex always streams from the ChatGPT backend.
-    obj.insert("stream".to_string(), serde_json::Value::Bool(true));
-    // ChatGPT subscription inference does not permit stored responses.
-    obj.insert("store".to_string(), serde_json::Value::Bool(false));
-    // `max_output_tokens` is not accepted by the Codex backend.
-    obj.remove("max_output_tokens");
-    if mode == CodexResponsesMode::Lite {
-        return;
-    }
-    // The backend rejects a bare-string `input` ("Input must be a list"), so
-    // normalise both documented forms to the typed list shape.
-    if let Some(input) = obj.get("input") {
-        let normalized = crate::responses::normalize_input_items(input);
-        obj.insert("input".to_string(), normalized);
-    }
-
-    // Hoist system/developer turns out of `input` (Codex forbids them there).
-    let mut hoisted: Vec<String> = Vec::new();
-    if let Some(serde_json::Value::Array(items)) = obj.get_mut("input") {
-        items.retain(
-            |item| match item.get("role").and_then(serde_json::Value::as_str) {
-                Some("system" | "developer") => {
-                    if let Some(text) = input_item_text(item) {
-                        hoisted.push(text);
-                    }
-                    false
-                }
-                _ => true,
-            },
-        );
-    }
-
-    // Merge existing instructions + hoisted system turns; fall back to a default.
-    let mut parts: Vec<String> = Vec::new();
-    if let Some(existing) = obj.get("instructions").and_then(serde_json::Value::as_str)
-        && !existing.trim().is_empty()
-    {
-        parts.push(existing.to_string());
-    }
-    parts.extend(hoisted);
-    let instructions = if parts.is_empty() {
-        "You are a helpful assistant.".to_string()
-    } else {
-        parts.join("\n\n")
-    };
-    obj.insert(
-        "instructions".to_string(),
-        serde_json::Value::String(instructions),
-    );
-}
+#[path = "subscription_proxy_normalize.rs"]
+mod normalize;
+#[cfg(test)]
+use normalize::normalize_codex_responses_body;
+use normalize::normalize_subscription_request;
 
 #[cfg(test)]
 #[path = "subscription_proxy_tests.rs"]

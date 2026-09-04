@@ -485,11 +485,11 @@ fn coverage_tool_install_is_idempotent_after_cache_restore() {
 
     assert!(
         coverage
-            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.8.7'"),
+            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.0'"),
         "a restored coverage binary at the pinned version should not be reinstalled"
     );
     assert!(
-        coverage.contains("cargo install cargo-llvm-cov --version 0.8.7 --locked --force"),
+        coverage.contains("cargo install cargo-llvm-cov --version 0.9.0 --locked --force"),
         "a stale cached coverage binary should be replaced"
     );
 }

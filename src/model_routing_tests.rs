@@ -699,14 +699,11 @@ async fn automatic_state_never_uses_a_claude_alias_for_an_unadvertised_openai_mo
         vec!["gpt-5".to_string(), "gpt-5.6-sol".to_string()],
     );
     let Err(error) = route_state(&state, &json!({"model": "gpt-5"})).await else {
-        panic!("a familiar-looking unqualified collision must stay ambiguous");
+        panic!("an exact-id collision must fail explicitly");
     };
     assert!(error.to_string().contains("multiple subscriptions"));
-    let routed = route_state(&state, &json!({"model": "codex/gpt-5"}))
-        .await
-        .expect("the explicit provider-qualified identity routes to Codex");
-    assert_eq!(routed.upstream_provider, UpstreamProvider::Codex);
-    assert_eq!(routed.bridge_model.as_deref(), Some("gpt-5"));
+    let alias = route_state(&state, &json!({"model": "codex/gpt-5"})).await;
+    assert!(alias.is_err(), "Router must not invent qualified aliases");
 }
 
 #[tokio::test]
@@ -746,7 +743,7 @@ async fn client_entitlement_filters_hidden_providers_before_collision_resolution
 }
 
 #[test]
-fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
+fn catalog_collisions_fail_without_inventing_vendor_namespaces() {
     let catalogs = ModelCatalogCache::new();
     catalogs.record_success(
         SubscriptionProvider::Claude,
@@ -769,11 +766,11 @@ fn catalog_collisions_use_vendor_namespaces_and_reject_ambiguous_names() {
         &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
         &catalogs,
     )
-    .expect_err("an unqualified collision must require disambiguation");
+    .expect_err("an exact-id collision must fail explicitly");
     assert!(error.to_string().contains("multiple subscriptions"));
     assert!(matches!(
         available_provider_for_model("shared-model", &[SubscriptionProvider::Codex], &catalogs),
-        Err(ModelRouteError::Ambiguous(_))
+        Err(ModelRouteError::Conflict(_))
     ));
 }
 

@@ -142,6 +142,7 @@ async fn concurrent_requests_cannot_overshoot_the_cap_together() {
                 .post(format!("{url}/api/services/anthropic/v1/messages"))
                 .header("x-api-key", token)
                 .header("anthropic-version", "2023-06-01")
+                .header("user-agent", "claude-cli/2.1.259")
                 .json(&body)
                 .send()
                 .await

@@ -518,21 +518,18 @@ account, and are recorded with the account identity, the fetch time and an
 explicit health flag. Before the first discovery a provider advertises nothing;
 the canonical client catalog reports it under `degraded_providers` rather than
 filling the gap from source. The experimental z.ai Coding Plan uses its
-explicit operator catalog because z.ai documents no free model catalog; no
-source-code model allowlist filters it. When a
-credential is revoked its last known catalog stays
+authenticated non-inference `/api/anthropic/v1/models` response as its live
+source of truth; no source-code model allowlist filters it. When a credential
+is revoked its last known catalog stays
 visible to administrators but stops being advertised or routed.
 
-The client-visible requested model identity is preserved. Reversible qualified
-or provider aliases are mapped back to the canonical id before the upstream
-request; responses and audit records expose the canonical resolved id
-separately. In automatic mode, routing uses
-subscription catalogs **and** the models a stored provider declares, so one
-deployment can serve vendor subscriptions and a local OpenAI-compatible
-endpoint at once. Vendor-shaped IDs prefer their matching vendor if catalogs
-overlap, and an unqualified name advertised by multiple healthy subscriptions —
-or declared by multiple stored providers — is rejected until `UPSTREAM_PROVIDER`
-is pinned or the name is qualified as `<provider>/<model>`. A model nothing
+The exact client-visible model identity is sent upstream unchanged. Automatic
+routing uses current subscription/provider catalog records and the explicit
+client compatibility attached to each owner, so one deployment can serve
+vendor subscriptions and an ordinary OpenAI-compatible endpoint at once. A
+same-ID collision between healthy owners fails explicitly with HTTP 409; Router
+does not resolve it by provider order, model-name prefix, or a manufactured
+`<provider>/<model>` alias. A model nothing
 advertises returns `404 not_found_error` instead of silently selecting a
 default. Buffered and streaming responses retain both requested and resolved
 identity consistently.
@@ -646,11 +643,16 @@ vendor API paths. Unknown routes and methods are
 rejected locally rather than forwarded. The proxy:
 
 - Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
-- Replaces it with the real OAuth token
-- Forwards only the headers the upstream protocol needs (`accept`, `content-type`, `anthropic-version`, `anthropic-beta`), and reports the deployment's own `user-agent`. Client environment headers — `x-stainless-*`, the client `user-agent`, `accept-language`, `x-claude-code-session-id` — are not relayed, so the vendor sees one machine per deployment rather than each caller's ([issue #332](https://github.com/link-assistant/router/issues/332))
-- Passes through the request body unmodified
-- Streams back the response (SSE-compatible)
-- Preserves the upstream status code and response headers
+- Replaces it with the selected upstream credential
+- On a native route, preserves the signed official client's end-to-end headers, real `user-agent`, version/session metadata, request JSON semantics, response bytes, and SSE sequence
+- Removes authentication, hop-by-hop/framing, forwarding-IP, cookie, and Router-internal headers; it never identifies itself upstream or synthesizes a missing official-client identity
+- Restricts request/response transformations to an explicitly authorized cross-protocol bridge
+- Preserves safe upstream status, request IDs, rate-limit fields, and other end-to-end response metadata
+
+A reverse proxy necessarily changes the destination authority, source IP,
+TLS/HTTP connection fingerprint, and transport framing such as
+`content-length`. Native transparency is therefore application-protocol
+transparency, not transport-level invisibility.
 
 **Error responses** follow the Anthropic API error format:
 
@@ -683,6 +685,7 @@ OPENAI_COMPATIBLE_PROVIDER_NAME: litellm
 OPENAI_COMPATIBLE_BASE_URL: http://litellm:4000/v1
 OPENAI_COMPATIBLE_MODEL: claude-sonnet
 OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
+OPENAI_COMPATIBLE_SUPPORTED_CLIENTS: opencode
 ```
 
 Every flag listed in `--help` has an env-var alias and can be configured from
@@ -1052,6 +1055,7 @@ OPENAI_COMPATIBLE_BASE_URL: http://litellm:4000/v1
 OPENAI_COMPATIBLE_API_KEY_ENV: LITELLM_MASTER_KEY
 OPENAI_COMPATIBLE_MODEL: claude-sonnet
 OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
+OPENAI_COMPATIBLE_SUPPORTED_CLIENTS: opencode
 ```
 
 | Flag / env | Default | Required | Description |
@@ -1062,6 +1066,14 @@ OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
 | `--openai-compatible-api-key-env` / `OPENAI_COMPATIBLE_API_KEY_ENV` | — | No | Environment variable containing the upstream key |
 | `--openai-compatible-model` / `OPENAI_COMPATIBLE_MODEL` | — | No | Default model injected when requests omit `model` |
 | `--openai-compatible-models` / `OPENAI_COMPATIBLE_MODELS` | — | No | Comma-separated models exposed from the authenticated service catalog |
+| `--openai-compatible-supported-clients` / `OPENAI_COMPATIBLE_SUPPORTED_CLIENTS` | — | Yes for client access | Canonical clients whose reviewed adapter may use this ordinary provider; missing compatibility exposes no models and dispatch fails closed |
+
+An ordinary provider is healthy only after its authenticated, non-inference
+`GET /v1/models` succeeds. Router preserves those exact IDs and vendor metadata;
+configured `models` can narrow that live result but cannot invent availability.
+Catalog listing and dispatch therefore use the same intersection of live
+provider health, live models, configured restrictions, signed client binding,
+and `supported_clients`. Missing evidence fails locally before inference.
 
 Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
 provider API keys are encrypted with AES-GCM using a key derived from
@@ -1072,7 +1084,7 @@ The personal z.ai Coding Plan is deliberately **not** a generic provider. It is
 experimental, disabled by default, single-subscriber, and requires separate
 provider/client policy acknowledgements. See
 [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) for the exact setup,
-health check, explicit operator catalog, aliases, endpoints, and account-ban warning.
+live catalog, exact model IDs, endpoints, and account-ban warning.
 
 ```bash
 router providers add \
@@ -1080,6 +1092,7 @@ router providers add \
   --base-url http://litellm:4000/v1 \
   --model claude-sonnet \
   --models claude-sonnet,gpt-4o \
+  --supported-client opencode \
   --api-key "$LITELLM_MASTER_KEY"
 
 router providers list
@@ -1096,6 +1109,7 @@ litellm
   base-url "http://litellm:4000/v1"
   model "claude-sonnet"
   models "claude-sonnet,gpt-4o"
+  supported-clients "opencode"
   api-key-env "LITELLM_MASTER_KEY"
 ```
 
@@ -1108,6 +1122,7 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
   "base_url": "http://litellm:4000/v1",
   "default_model": "claude-sonnet",
   "models": ["claude-sonnet", "gpt-4o"],
+  "supported_clients": ["opencode"],
   "api_key_env": "LITELLM_MASTER_KEY"
 }
 ```

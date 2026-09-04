@@ -38,9 +38,22 @@ async fn route_openai_request(
     let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
         state, &claims, headers, protocol, path,
     )?;
-    crate::model_routing::route_state_with_subscription_for_providers(state, body, &entitled)
-        .await
-        .map_err(|error| crate::model_routing::model_route_error_response(&error))
+    let client = crate::client_policy::bound_client(&claims)
+        .map(|(client, _)| client)
+        .map_err(|error| {
+            crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
+        })?;
+    crate::model_routing::route_state_with_subscription_for_client(
+        state,
+        body,
+        &entitled,
+        Some(client),
+        crate::zai_coding_plan::authorize_automatic_discovery(
+            state, &claims, headers, protocol, path,
+        ),
+    )
+    .await
+    .map_err(|error| crate::model_routing::model_route_error_response(&error))
 }
 
 fn rewrite_routed_model(
@@ -111,7 +124,18 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None, false).await
+    openai_chat_completions_with_subscription(state, query, headers, body, None, None, false).await
+}
+
+/// Native Qwen Chat Completions route. A matching signed Qwen client keeps
+/// application-protocol transparency through its own subscription upstream.
+pub async fn openai_chat_completions_native(
+    State(state): State<AppState>,
+    Query(query): Query<BTreeMap<String, String>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    openai_chat_completions_with_subscription(state, query, headers, body, None, None, true).await
 }
 
 pub async fn openai_chat_completions_routed(
@@ -119,6 +143,7 @@ pub async fn openai_chat_completions_routed(
     headers: HeaderMap,
     body: serde_json::Value,
     subscription: Option<crate::model_routing::ValidatedSubscription>,
+    entitlement: crate::client_policy::EntitlementDecision,
 ) -> Response {
     openai_chat_completions_with_subscription(
         state,
@@ -126,7 +151,8 @@ pub async fn openai_chat_completions_routed(
         headers,
         Ok(axum::Json(body)),
         subscription,
-        true,
+        Some(entitlement),
+        false,
     )
     .await
 }
@@ -137,7 +163,8 @@ async fn openai_chat_completions_with_subscription(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
     initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
-    entitlement_already_checked: bool,
+    initial_entitlement: Option<crate::client_policy::EntitlementDecision>,
+    native_route: bool,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -187,18 +214,23 @@ async fn openai_chat_completions_with_subscription(
     let state = routed.state;
     let subscription = routed.subscription;
     rewrite_routed_model(&mut body, &state, subscription.as_ref());
-    if !entitlement_already_checked
-        && let Some(provider) = state.upstream_provider.subscription_provider()
-        && let Err(response) = crate::client_policy::enforce_subscription(
-            &state,
-            &headers,
-            provider,
-            crate::client_policy::ClientProtocol::OpenAIChat,
-            "/v1/chat/completions",
-        )
-    {
-        return response;
-    }
+    let entitlement = if let Some(provider) = state.upstream_provider.subscription_provider() {
+        match initial_entitlement {
+            Some(entitlement) => Some(entitlement),
+            None => match crate::client_policy::enforce_subscription(
+                &state,
+                &headers,
+                provider,
+                crate::client_policy::ClientProtocol::OpenAIChat,
+                "/v1/chat/completions",
+            ) {
+                Ok(entitlement) => Some(entitlement),
+                Err(response) => return response,
+            },
+        }
+    } else {
+        None
+    };
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -269,7 +301,11 @@ async fn openai_chat_completions_with_subscription(
             &routing_body,
             "/v1/chat/completions",
             crate::metrics::Surface::OpenAIChat,
-            subscription.as_ref(),
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: subscription.as_ref(),
+                entitlement,
+                native_route,
+            },
         )
         .await;
     }
@@ -293,7 +329,11 @@ async fn openai_chat_completions_with_subscription(
             responses_body,
             &routing_body,
             crate::metrics::Surface::OpenAIChat,
-            subscription.as_ref(),
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: subscription.as_ref(),
+                entitlement,
+                native_route,
+            },
         )
         .await;
     }
@@ -370,6 +410,25 @@ pub async fn openai_responses(
     State(state): State<AppState>,
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    openai_responses_with_route(state, headers, body, false).await
+}
+
+/// Native Codex Responses route. A matching signed Codex client keeps the
+/// exact request and upstream response semantics on this dedicated namespace.
+pub async fn openai_responses_native(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    openai_responses_with_route(state, headers, body, true).await
+}
+
+async fn openai_responses_with_route(
+    state: AppState,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+    native_route: bool,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -472,7 +531,11 @@ pub async fn openai_responses(
             &routing_body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
-            subscription.as_ref(),
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: subscription.as_ref(),
+                entitlement: None,
+                native_route,
+            },
         )
         .await;
     }

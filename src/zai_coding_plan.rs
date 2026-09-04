@@ -7,7 +7,11 @@
 
 use crate::client_policy::ClientProtocol;
 use crate::clients::ClientKind;
+use crate::providers::{CachedProviderCatalog, LiveProviderModel};
 use crate::providers::{ProviderKind, ResolvedProvider};
+use sha2::{Digest as _, Sha256};
+use std::collections::HashSet;
+use std::time::{Duration, Instant};
 
 /// Documented base path for native Anthropic Messages traffic.
 pub const ANTHROPIC_BASE_PATH: &str = "/api/anthropic";
@@ -17,6 +21,11 @@ pub const CHAT_BASE_PATH: &str = "/api/coding/paas/v4";
 pub const RESPONSES_BASE_PATH: &str = "/api/v1";
 /// Documented, non-inference quota operation used for health checks.
 pub const HEALTH_PATH: &str = "/api/monitor/usage/quota/limit";
+/// Authenticated non-inference catalog used as the model source of truth.
+pub const CATALOG_PATH: &str = "/api/anthropic/v1/models";
+
+const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
 
 /// One exact client-visible model mapping.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -71,6 +80,11 @@ impl ZaiCodingPlanPolicy {
                 parsed.push(client);
             }
         }
+        if parsed.len() > 1 {
+            return Err(
+                "z.ai Coding Plan permits at most one risk-accepted unsupported client".into(),
+            );
+        }
         Ok(Self {
             subscriber_id: subscriber_id.to_string(),
             intermediary_risk_acknowledged,
@@ -107,7 +121,7 @@ impl ZaiCodingPlanPolicy {
     }
 }
 
-/// Construct the exact registry for a recognized adapter.
+/// Construct an exact-id registry for a recognized adapter.
 pub fn registry_for_client(
     client: ClientKind,
     configured_models: &[impl AsRef<str>],
@@ -132,25 +146,13 @@ pub fn registry_for_client(
         if canonical.is_empty() {
             return Err("z.ai Coding Plan model identifiers cannot be empty".into());
         }
-        if client == ClientKind::ClaudeCode {
-            for prefix in ["claude-zai-", "anthropic-zai-"] {
-                registry.push(RegistryEntry {
-                    exposed_id: format!("{prefix}{canonical}"),
-                    canonical_id: canonical.to_string(),
-                    owner: "z.ai",
-                    display_name: Some(format!("z.ai Coding Plan — {canonical}")),
-                    protocol,
-                });
-            }
-        } else {
-            registry.push(RegistryEntry {
-                exposed_id: format!("z.ai/{canonical}"),
-                canonical_id: canonical.to_string(),
-                owner: "z.ai",
-                display_name: Some(format!("z.ai Coding Plan — {canonical}")),
-                protocol,
-            });
-        }
+        registry.push(RegistryEntry {
+            exposed_id: canonical.to_string(),
+            canonical_id: canonical.to_string(),
+            owner: "z.ai",
+            display_name: Some(format!("z.ai Coding Plan — {canonical}")),
+            protocol,
+        });
     }
     Ok(registry)
 }
@@ -187,6 +189,216 @@ pub fn canonical_for_any_client(models: &[String], exposed_id: &str) -> Option<S
     .map(|entry| entry.canonical_id)
 }
 
+fn catalog_fingerprint(provider: &ResolvedProvider) -> String {
+    let mut digest = Sha256::new();
+    digest.update(provider.name.as_bytes());
+    digest.update([0]);
+    digest.update(provider.base_url.as_bytes());
+    digest.update([0]);
+    digest.update(provider.api_key.as_deref().unwrap_or_default().as_bytes());
+    hex::encode(digest.finalize())
+}
+
+fn cache_failure(
+    state: &crate::app_state::AppState,
+    provider: &ResolvedProvider,
+    fingerprint: String,
+    detail: &str,
+) -> Result<Vec<LiveProviderModel>, String> {
+    tracing::warn!(provider = %provider.name, "z.ai catalog refresh failed: {detail}");
+    let previous = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .ok()
+        .flatten()
+        .filter(|entry| entry.fingerprint == fingerprint);
+    let _ = state.provider_store.cache_provider_catalog(
+        &provider.name,
+        CachedProviderCatalog {
+            fingerprint,
+            models: previous
+                .as_ref()
+                .map_or_else(Vec::new, |entry| entry.models.clone()),
+            last_success: previous.and_then(|entry| entry.last_success),
+            last_attempt: Instant::now(),
+            error: Some("z.ai catalog refresh failed".into()),
+        },
+    );
+    Err("z.ai catalog refresh failed".into())
+}
+
+/// Fetch the exact current z.ai catalog without calling an inference endpoint.
+pub(crate) async fn live_catalog(
+    state: &crate::app_state::AppState,
+    provider: &ResolvedProvider,
+) -> Result<Vec<LiveProviderModel>, String> {
+    let fingerprint = catalog_fingerprint(provider);
+    if let Some(cached) = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .map_err(|error| error.to_string())?
+        .filter(|entry| entry.fingerprint == fingerprint)
+    {
+        if cached.error.is_none()
+            && cached
+                .last_success
+                .is_some_and(|at| at.elapsed() < CATALOG_TTL)
+        {
+            return Ok(cached.models);
+        }
+        if cached.error.is_some() && cached.last_attempt.elapsed() < FAILED_REFRESH_RETRY {
+            return Err("z.ai catalog refresh failed".into());
+        }
+    }
+
+    let key = provider
+        .api_key
+        .as_deref()
+        .filter(|value| !value.is_empty())
+        .ok_or("z.ai Coding Plan API key is unavailable")?;
+    let response = match state
+        .client
+        .get(format!(
+            "{}{}",
+            provider.base_url.trim_end_matches('/'),
+            CATALOG_PATH
+        ))
+        .bearer_auth(key)
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(error) => {
+            return cache_failure(state, provider, fingerprint, &error.to_string());
+        }
+    };
+    if !response.status().is_success() {
+        return cache_failure(
+            state,
+            provider,
+            fingerprint,
+            &format!("non-inference endpoint returned {}", response.status()),
+        );
+    }
+    let payload = match response.json::<serde_json::Value>().await {
+        Ok(payload) => payload,
+        Err(error) => {
+            return cache_failure(state, provider, fingerprint, &error.to_string());
+        }
+    };
+    let Some(entries) = payload.get("data").and_then(serde_json::Value::as_array) else {
+        return cache_failure(state, provider, fingerprint, "response has no data array");
+    };
+    let mut seen = HashSet::new();
+    let mut models = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let Some(raw) = entry.as_object().cloned() else {
+            return cache_failure(
+                state,
+                provider,
+                fingerprint,
+                "model record is not an object",
+            );
+        };
+        let Some(id) = raw
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .map(str::trim)
+            .filter(|id| !id.is_empty())
+        else {
+            return cache_failure(state, provider, fingerprint, "model record has no exact id");
+        };
+        if !seen.insert(id.to_string()) {
+            return cache_failure(
+                state,
+                provider,
+                fingerprint,
+                &format!("duplicate exact model id '{id}'"),
+            );
+        }
+        models.push(LiveProviderModel {
+            id: id.to_string(),
+            raw,
+        });
+    }
+    let now = Instant::now();
+    state
+        .provider_store
+        .cache_provider_catalog(
+            &provider.name,
+            CachedProviderCatalog {
+                fingerprint,
+                models: models.clone(),
+                last_success: Some(now),
+                last_attempt: now,
+                error: None,
+            },
+        )
+        .map_err(|error| error.to_string())?;
+    Ok(models)
+}
+
+pub(crate) fn live_registry_for_client(
+    client: ClientKind,
+    models: &[LiveProviderModel],
+) -> Result<Vec<RegistryEntry>, String> {
+    let mut registry = registry_for_client(
+        client,
+        &models.iter().map(|model| &model.id).collect::<Vec<_>>(),
+    )?;
+    for (entry, model) in registry.iter_mut().zip(models) {
+        entry.display_name = model
+            .raw
+            .get("display_name")
+            .or_else(|| model.raw.get("name"))
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_string);
+    }
+    Ok(registry)
+}
+
+/// Resolve one exact current z.ai id for automatic routing.
+pub(crate) async fn live_provider_for_model(
+    state: &crate::app_state::AppState,
+    model: &str,
+    client: Option<ClientKind>,
+    authorized: bool,
+) -> Result<Option<ResolvedProvider>, crate::model_routing::ModelRouteError> {
+    if !authorized {
+        return Ok(None);
+    }
+    let provider = resolve(state).map_err(crate::model_routing::ModelRouteError::NotFound)?;
+    let Some(provider) = provider else {
+        return Ok(None);
+    };
+    if client.is_some_and(|client| !provider.supports_client(client)) {
+        return Ok(None);
+    }
+    let Ok(models) = live_catalog(state, &provider).await else {
+        return Ok(None);
+    };
+    Ok(models
+        .iter()
+        .any(|candidate| candidate.id == model)
+        .then_some(provider))
+}
+
+/// Decide whether an automatic request may consult the z.ai catalog.
+///
+/// This is intentionally local-only: subscriber, client, protocol, and real
+/// request evidence are checked before catalog discovery can contact z.ai.
+pub(crate) fn authorize_automatic_discovery(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &axum::http::HeaderMap,
+    protocol: ClientProtocol,
+    path: &str,
+) -> bool {
+    resolve(state).ok().flatten().is_some_and(|provider| {
+        authorize_client_request(&provider, claims, headers, protocol, path).is_ok()
+    })
+}
+
 /// Resolve the selected enabled Coding Plan provider from runtime state.
 pub fn resolve(state: &crate::app_state::AppState) -> Result<Option<ResolvedProvider>, String> {
     let providers = state
@@ -209,24 +421,7 @@ pub fn resolve(state: &crate::app_state::AppState) -> Result<Option<ResolvedProv
 }
 
 fn client_claims(claims: &crate::token::TokenClaims) -> Result<(ClientKind, &str), String> {
-    if claims.is_admin() {
-        return Err("administrative credentials cannot spend z.ai Coding Plan quota".into());
-    }
-    let client_name = claims
-        .client_kind
-        .as_deref()
-        .ok_or("the token has no managed-client binding")?;
-    let client = ClientKind::from_str_opt(client_name)
-        .ok_or("the token contains an unknown managed-client binding")?;
-    if client_name != client.canonical_name() {
-        return Err("the token's managed-client binding is not canonical".into());
-    }
-    let principal = claims
-        .principal_id
-        .as_deref()
-        .filter(|value| !value.trim().is_empty())
-        .ok_or("the token has no subscriber principal")?;
-    Ok((client, principal))
+    crate::client_policy::bound_client(claims)
 }
 
 fn provider_policy(provider: &ResolvedProvider) -> Result<ZaiCodingPlanPolicy, String> {
@@ -243,39 +438,13 @@ fn provider_policy(provider: &ResolvedProvider) -> Result<ZaiCodingPlanPolicy, S
     )
 }
 
-/// Authorize catalog discovery, returning the caller-specific exact registry.
-pub fn authorize_catalog(
+fn authorize_client_request<'a>(
     provider: &ResolvedProvider,
-    claims: &crate::token::TokenClaims,
-    headers: &axum::http::HeaderMap,
-    path: &str,
-) -> Result<(ClientKind, Vec<RegistryEntry>, bool), String> {
-    let (client, principal) = client_claims(claims)?;
-    if !crate::client_policy::request_evidence(client, ClientProtocol::Catalog, path, headers) {
-        return Err(format!(
-            "request evidence does not match the token's {} client binding",
-            client.canonical_name()
-        ));
-    }
-    let policy = provider_policy(provider)?;
-    policy.authorize(client, principal)?;
-    let overridden = policy.is_unsupported_override(client);
-    Ok((
-        client,
-        registry_for_client(client, &provider.models)?,
-        overridden,
-    ))
-}
-
-/// Authorize final dispatch and map the exact exposed id to its canonical id.
-pub fn authorize_model(
-    provider: &ResolvedProvider,
-    claims: &crate::token::TokenClaims,
+    claims: &'a crate::token::TokenClaims,
     headers: &axum::http::HeaderMap,
     protocol: ClientProtocol,
     path: &str,
-    exposed_id: &str,
-) -> Result<(ClientKind, RegistryEntry, bool), String> {
+) -> Result<(ClientKind, &'a str, bool), String> {
     let (client, principal) = client_claims(claims)?;
     if !crate::client_policy::request_evidence(client, protocol, path, headers) {
         return Err(format!(
@@ -285,9 +454,38 @@ pub fn authorize_model(
     }
     let policy = provider_policy(provider)?;
     policy.authorize(client, principal)?;
-    let mapping = mapping_for_client(client, &provider.models, exposed_id, protocol)
-        .ok_or_else(|| format!("model '{exposed_id}' is not permitted for {client}"))?;
     let overridden = policy.is_unsupported_override(client);
+    Ok((client, principal, overridden))
+}
+
+/// Authorize catalog discovery, returning the caller-specific exact registry.
+pub fn authorize_catalog(
+    provider: &ResolvedProvider,
+    claims: &crate::token::TokenClaims,
+    headers: &axum::http::HeaderMap,
+    path: &str,
+) -> Result<(ClientKind, bool), String> {
+    let (client, _, overridden) =
+        authorize_client_request(provider, claims, headers, ClientProtocol::Catalog, path)?;
+    Ok((client, overridden))
+}
+
+/// Authorize final dispatch and map the exact exposed id to its canonical id.
+pub(crate) fn authorize_model(
+    provider: &ResolvedProvider,
+    live_models: &[LiveProviderModel],
+    claims: &crate::token::TokenClaims,
+    headers: &axum::http::HeaderMap,
+    protocol: ClientProtocol,
+    path: &str,
+    exposed_id: &str,
+) -> Result<(ClientKind, RegistryEntry, bool), String> {
+    let (client, _, overridden) =
+        authorize_client_request(provider, claims, headers, protocol, path)?;
+    let mapping = live_registry_for_client(client, live_models)?
+        .into_iter()
+        .find(|entry| entry.exposed_id == exposed_id && entry.protocol == protocol)
+        .ok_or_else(|| format!("model '{exposed_id}' is not permitted for {client}"))?;
     Ok((client, mapping, overridden))
 }
 
@@ -323,10 +521,8 @@ pub async fn credential_healthy(
 
 /// Live health for the enabled personal Coding Plan credential, when present.
 ///
-/// The same documented non-inference quota operation gates catalogs and
-/// dispatch. Keeping the public health surfaces on that operation means a
-/// rejected key cannot remain green merely because no client has refreshed its
-/// model picker yet.
+/// The same authenticated non-inference live catalog gates catalogs and
+/// dispatch, so every health surface reports the routing source of truth.
 pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> Option<bool> {
     let configured = match state.provider_store.list() {
         Ok(providers) => providers
@@ -343,7 +539,7 @@ pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> Opt
     let Ok(Some(provider)) = resolve(state) else {
         return Some(false);
     };
-    Some(credential_healthy(&state.client, &provider).await.is_ok())
+    Some(live_catalog(state, &provider).await.is_ok())
 }
 
 fn policy_error(surface: crate::metrics::Surface, message: &str) -> axum::response::Response {
@@ -394,8 +590,18 @@ pub async fn forward(
         Ok(None) => return unavailable_error(surface, "z.ai Coding Plan is not enabled"),
         Err(error) => return unavailable_error(surface, &error),
     };
+    if let Err(error) =
+        authorize_client_request(&provider, &claims, headers, protocol, incoming_path)
+    {
+        return policy_error(surface, &error);
+    }
+    let live_models = match live_catalog(state, &provider).await {
+        Ok(models) => models,
+        Err(error) => return unavailable_error(surface, &error),
+    };
     let (_, mapping, _) = match authorize_model(
         &provider,
+        &live_models,
         &claims,
         headers,
         protocol,
@@ -405,9 +611,6 @@ pub async fn forward(
         Ok(decision) => decision,
         Err(error) => return policy_error(surface, &error),
     };
-    if let Err(error) = credential_healthy(&state.client, &provider).await {
-        return unavailable_error(surface, &error);
-    }
     let routing_body = body.clone();
     body["model"] = serde_json::Value::String(mapping.canonical_id);
     let upstream_path = match protocol {
@@ -432,6 +635,11 @@ pub async fn forward(
             upstream_path: &upstream_path,
             surface,
             copy_anthropic_headers: protocol == ClientProtocol::AnthropicMessages,
+            protocol,
+            native_protocol: !matches!(
+                protocol,
+                ClientProtocol::GeminiNative | ClientProtocol::Catalog
+            ),
         },
     )
     .await
@@ -467,8 +675,28 @@ pub fn count_tokens(
         }
         Err(error) => return unavailable_error(crate::metrics::Surface::Anthropic, &error),
     };
+    let Some(live_models) = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .ok()
+        .flatten()
+        .filter(|cached| {
+            cached.fingerprint == catalog_fingerprint(&provider)
+                && cached.error.is_none()
+                && cached
+                    .last_success
+                    .is_some_and(|at| at.elapsed() < CATALOG_TTL)
+        })
+        .map(|cached| cached.models)
+    else {
+        return unavailable_error(
+            crate::metrics::Surface::Anthropic,
+            "z.ai model catalog must be refreshed before token counting",
+        );
+    };
     if let Err(error) = authorize_model(
         &provider,
+        &live_models,
         &claims,
         headers,
         ClientProtocol::AnthropicMessages,

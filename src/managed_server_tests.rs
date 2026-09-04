@@ -118,6 +118,7 @@ fn bound_token(client: Option<&str>) -> String {
     let payload = serde_json::json!({
         "sub": "inference-listener-token",
         "client_kind": client,
+        "principal_id": client.map(|_| "primary"),
     });
     format!(
         "la_sk_e30.{}.signature",
@@ -279,7 +280,7 @@ async fn inference_only_listener_rejects_an_unbound_or_foreign_client_token() {
         else {
             panic!("non-matching token must fail closed");
         };
-        assert!(error.to_string().contains("must be bound to `claude`"));
+        assert!(error.to_string().contains("exact `claude` client binding"));
         server.join().expect("probe server");
     }
 }

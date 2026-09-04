@@ -76,15 +76,9 @@ fn build_upstream_headers_strips_client_auth_headers() {
     );
 }
 
-/// The vendor learns the deployment, never the caller's machine.
-///
-/// The proxy opened the upstream connection itself, so the egress IP was the
-/// deployment's — and then copied the caller's `x-stainless-os`, `-arch`,
-/// `-runtime`, `user-agent`, locale and session id through untouched. That made
-/// network-level and application-level identity disagree and disclosed caller
-/// metadata to the vendor (issue #332).
+/// A native upstream sees the real official client's application identity.
 #[test]
-fn upstream_headers_describe_the_deployment_not_the_caller() {
+fn upstream_headers_preserve_client_identity_but_not_router_or_transport_fields() {
     let mut incoming = HeaderMap::new();
     for (name, value) in [
         ("x-stainless-os", "ClientOS"),
@@ -118,7 +112,7 @@ fn upstream_headers_describe_the_deployment_not_the_caller() {
     let upstream =
         build_upstream_headers(&incoming, "oauth-token", &LogLazy::with_level(levels::NONE));
 
-    for disclosed in [
+    for preserved in [
         "x-stainless-os",
         "x-stainless-arch",
         "x-stainless-runtime",
@@ -129,32 +123,20 @@ fn upstream_headers_describe_the_deployment_not_the_caller() {
         "originator",
         "x-claude-code-session-id",
         "anthropic-dangerous-direct-browser-access",
-        "x-forwarded-for",
-        "x-real-ip",
-        "forwarded",
     ] {
         assert!(
-            upstream.get(disclosed).is_none(),
-            "{disclosed} describes the caller and must not reach the vendor"
+            upstream.get(preserved).is_some(),
+            "{preserved} is end-to-end official-client identity"
         );
     }
-
-    // Normalised rather than dropped: the vendor expects a value, and one
-    // deployment should look like one machine, which is what it is.
-    let agent = upstream
-        .get("user-agent")
-        .and_then(|value| value.to_str().ok())
-        .expect("upstream requests carry a user-agent");
-    assert!(
-        agent.starts_with("link-assistant-router/"),
-        "the deployment names itself, not the client: {agent}"
-    );
-    // What the protocol actually needs still arrives.
-    assert_eq!(
-        upstream.get("content-type").and_then(|v| v.to_str().ok()),
-        Some("application/json")
-    );
-    assert!(upstream.get("anthropic-version").is_some());
+    for removed in ["x-forwarded-for", "x-real-ip", "forwarded"] {
+        assert!(
+            upstream.get(removed).is_none(),
+            "{removed} is proxy routing metadata"
+        );
+    }
+    assert_eq!(upstream["user-agent"], "example-client/1.0");
+    assert!(upstream.get("anthropic-version").is_none());
 }
 
 /// The router negotiates its own hop, so the log can read its own traffic.
@@ -195,12 +177,9 @@ fn the_clients_compression_preference_does_not_reach_the_upstream() {
     );
 }
 
-/// Two different clients behind one deployment look alike upstream.
-///
-/// The property the issue asks for stated directly: if any client-supplied
-/// header still described its sender, this comparison would separate them.
+/// Different signed clients retain their own identity upstream.
 #[test]
-fn two_clients_are_indistinguishable_upstream() {
+fn two_clients_remain_distinguishable_upstream() {
     let client = |os: &'static str, agent: &'static str, session: &'static str| {
         let mut incoming = HeaderMap::new();
         incoming.insert("x-stainless-os", HeaderValue::from_static(os));
@@ -220,36 +199,26 @@ fn two_clients_are_indistinguishable_upstream() {
         rendered
     };
 
-    assert_eq!(
+    assert_ne!(
         client("ExampleOS-A", "fixture-client/1.0", "fixture-session-a"),
         client("ExampleOS-B", "fixture-client/2.0", "fixture-session-b"),
-        "one deployment must present one identity upstream"
+        "native proxying must not replace client identity with Router identity"
     );
 }
 
 #[test]
-fn build_upstream_headers_injects_required_oauth_headers_when_missing() {
-    // A plain Anthropic SDK client that does not send anthropic-version or the
-    // OAuth beta flag must still produce a request upstream accepts.
+fn build_upstream_headers_does_not_invent_official_client_headers() {
     let incoming = HeaderMap::new();
     let logger = LogLazy::with_level(levels::NONE);
 
     let upstream = build_upstream_headers(&incoming, "oauth-token", &logger);
 
-    assert_eq!(
-        upstream
-            .get("anthropic-version")
-            .and_then(|v| v.to_str().ok()),
-        Some("2023-06-01")
-    );
-    assert_eq!(
-        upstream.get("anthropic-beta").and_then(|v| v.to_str().ok()),
-        Some(OAUTH_BETA_FLAG)
-    );
+    assert!(upstream.get("anthropic-version").is_none());
+    assert!(upstream.get("anthropic-beta").is_none());
 }
 
 #[test]
-fn build_upstream_headers_preserves_and_merges_client_beta() {
+fn build_upstream_headers_preserves_client_beta_exactly() {
     let mut incoming = HeaderMap::new();
     incoming.insert(
         "anthropic-beta",
@@ -262,8 +231,7 @@ fn build_upstream_headers_preserves_and_merges_client_beta() {
         .get("anthropic-beta")
         .and_then(|v| v.to_str().ok())
         .unwrap();
-    assert!(beta.contains("interleaved-thinking-2025-05-14"));
-    assert!(beta.contains(OAUTH_BETA_FLAG));
+    assert_eq!(beta, "interleaved-thinking-2025-05-14");
 }
 
 #[test]

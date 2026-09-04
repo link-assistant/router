@@ -9,6 +9,7 @@ use crate::zai_coding_plan::{
 use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt as _;
+use std::fs;
 use std::sync::{Arc, Mutex};
 
 #[test]
@@ -81,6 +82,14 @@ fn invalid_policy_and_registry_configuration_fails_closed() {
     }
 }
 
+#[test]
+fn only_one_unsupported_zai_client_can_be_risk_accepted() {
+    let error =
+        ZaiCodingPlanPolicy::new("primary", true, &["gemini".to_string(), "qwen".to_string()])
+            .expect_err("two unsupported client overrides must fail closed");
+    assert!(error.contains("at most one"), "{error}");
+}
+
 fn resolved_zai_provider() -> crate::providers::ResolvedProvider {
     crate::providers::ResolvedProvider {
         name: "z-ai-personal".into(),
@@ -88,6 +97,7 @@ fn resolved_zai_provider() -> crate::providers::ResolvedProvider {
         base_url: "http://127.0.0.1:9".into(),
         default_model: Some("glm-5".into()),
         models: vec!["glm-5".into()],
+        supported_clients: vec!["claude".into(), "codex".into(), "opencode".into()],
         api_key: Some("zai-secret-key".into()),
         subscriber_id: Some("owner-a".into()),
         intermediary_risk_acknowledged: true,
@@ -108,6 +118,13 @@ fn claims(client: Option<&str>, principal: Option<&str>, scope: &str) -> crate::
     }
 }
 
+fn live_model(id: &str) -> crate::providers::LiveProviderModel {
+    crate::providers::LiveProviderModel {
+        id: id.into(),
+        raw: serde_json::json!({"id": id}).as_object().unwrap().clone(),
+    }
+}
+
 #[test]
 fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
     let provider = resolved_zai_provider();
@@ -119,11 +136,12 @@ fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
                      provider: &crate::providers::ResolvedProvider| {
         crate::zai_coding_plan::authorize_model(
             provider,
+            &[live_model("glm-5")],
             claims,
             headers,
             ClientProtocol::OpenAIResponses,
             "/v1/responses",
-            "z.ai/glm-5",
+            "glm-5",
         )
     };
 
@@ -211,7 +229,7 @@ fn coding_plan_is_single_subscriber_only() {
 fn registries_are_explicit_client_specific_and_canonical() {
     let claude = registry_for_client(ClientKind::ClaudeCode, &["glm-5", "glm-4.7"]).unwrap();
     assert!(claude.iter().all(|entry| {
-        (entry.exposed_id.starts_with("claude") || entry.exposed_id.starts_with("anthropic"))
+        entry.exposed_id == entry.canonical_id
             && entry.owner == "z.ai"
             && entry.protocol == ClientProtocol::AnthropicMessages
             && entry.canonical_id.starts_with("glm-")
@@ -219,7 +237,7 @@ fn registries_are_explicit_client_specific_and_canonical() {
     assert!(claude.iter().all(|entry| entry.display_name.is_some()));
 
     let codex = registry_for_client(ClientKind::Codex, &["glm-5"]).unwrap();
-    assert_eq!(codex[0].exposed_id, "z.ai/glm-5");
+    assert_eq!(codex[0].exposed_id, "glm-5");
     assert_eq!(codex[0].canonical_id, "glm-5");
     assert_eq!(codex[0].protocol, ClientProtocol::OpenAIResponses);
 
@@ -227,25 +245,20 @@ fn registries_are_explicit_client_specific_and_canonical() {
     assert_eq!(opencode[0].protocol, ClientProtocol::OpenAIChat);
 
     let future = registry_for_client(ClientKind::Codex, &["future-saffron-91"]).unwrap();
-    assert_eq!(future[0].exposed_id, "z.ai/future-saffron-91");
+    assert_eq!(future[0].exposed_id, "future-saffron-91");
     assert_eq!(future[0].canonical_id, "future-saffron-91");
 }
 
 #[test]
-fn aliases_are_exact_and_never_prefix_stripped() {
+fn exact_ids_are_preserved_and_router_aliases_are_never_invented() {
     let registry = registry_for_client(ClientKind::ClaudeCode, &["glm-5"]).unwrap();
-    assert_eq!(
-        registry
-            .iter()
-            .find(|entry| entry.exposed_id == "claude-zai-glm-5")
-            .unwrap()
-            .canonical_id,
-        "glm-5"
-    );
+    assert_eq!(registry.len(), 1);
+    assert_eq!(registry[0].exposed_id, "glm-5");
+    assert_eq!(registry[0].canonical_id, "glm-5");
     assert!(
         registry
             .iter()
-            .all(|entry| entry.exposed_id != "claude-glm-unknown")
+            .all(|entry| !entry.exposed_id.contains("zai-"))
     );
 }
 
@@ -257,6 +270,15 @@ fn protocol_endpoints_are_fixed_to_coding_plan_roots() {
 }
 
 fn install_provider(state: &mut crate::app_state::AppState, base_url: &str, unsupported: &[&str]) {
+    install_provider_for_subscriber(state, base_url, unsupported, "owner-a");
+}
+
+fn install_provider_for_subscriber(
+    state: &mut crate::app_state::AppState,
+    base_url: &str,
+    unsupported: &[&str],
+    subscriber: &str,
+) {
     state
         .provider_store
         .upsert(crate::providers::ProviderUpsert {
@@ -265,11 +287,12 @@ fn install_provider(state: &mut crate::app_state::AppState, base_url: &str, unsu
             base_url: base_url.into(),
             default_model: Some("glm-5".into()),
             models: Some(vec!["glm-5".into()]),
+            supported_clients: None,
             api_key: Some("zai-secret-key".into()),
             api_key_env: None,
             encrypted_api_key: None,
             enabled: Some(true),
-            subscriber_id: Some("owner-a".into()),
+            subscriber_id: Some(subscriber.into()),
             acknowledge_intermediary_risk: Some(true),
             acknowledge_unsupported_clients: Some(
                 unsupported
@@ -294,6 +317,7 @@ fn client_headers(
         ClientKind::ClaudeCode => {
             headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
             headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.259"));
         }
         ClientKind::Codex => {
             headers.insert(
@@ -301,6 +325,7 @@ fn client_headers(
                 HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
             );
             headers.insert("x-codex-turn-metadata", HeaderValue::from_static("fixture"));
+            headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.0"));
         }
         ClientKind::Opencode => {
             headers.insert(
@@ -331,7 +356,7 @@ fn client_headers(
 
 async fn recording_upstream() -> (
     String,
-    Arc<Mutex<Vec<(String, String, String)>>>,
+    Arc<Mutex<Vec<(String, String, String, HeaderMap)>>>,
     tokio::task::JoinHandle<()>,
 ) {
     let requests = Arc::new(Mutex::new(Vec::new()));
@@ -346,14 +371,21 @@ async fn recording_upstream() -> (
                 .and_then(|value| value.to_str().ok())
                 .unwrap_or_default()
                 .to_string();
+            let headers = request.headers().clone();
             let body = request.into_body().collect().await.unwrap().to_bytes();
             recorded.lock().unwrap().push((
                 path.clone(),
                 authorization,
                 String::from_utf8_lossy(&body).into_owned(),
+                headers,
             ));
             if path == crate::zai_coding_plan::HEALTH_PATH {
                 (StatusCode::OK, "{}")
+            } else if path == crate::zai_coding_plan::CATALOG_PATH {
+                (
+                    StatusCode::OK,
+                    r#"{"object":"list","data":[{"id":"glm-5","display_name":"GLM 5"},{"id":"future-saffron-91","display_name":"Future Saffron"}]}"#,
+                )
             } else {
                 (StatusCode::OK, r#"{"id":"ok","model":"glm-5"}"#)
             }
@@ -372,7 +404,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
             ClientKind::ClaudeCode,
             ClientProtocol::AnthropicMessages,
             "/api/services/anthropic/v1/messages",
-            "claude-zai-glm-5",
+            "glm-5",
             "/api/anthropic/v1/messages",
             crate::metrics::Surface::Anthropic,
         ),
@@ -380,7 +412,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
             ClientKind::Codex,
             ClientProtocol::OpenAIResponses,
             "/api/services/codex/v1/responses",
-            "z.ai/glm-5",
+            "glm-5",
             "/api/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
         ),
@@ -388,7 +420,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
             ClientKind::Opencode,
             ClientProtocol::OpenAIChat,
             "/api/services/openai/v1/chat/completions",
-            "z.ai/glm-5",
+            "glm-5",
             "/api/coding/paas/v4/chat/completions",
             crate::metrics::Surface::OpenAIChat,
         ),
@@ -398,38 +430,65 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         let data = tempfile::tempdir().unwrap();
         let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
         install_provider(&mut state, &base_url, &[]);
+        let request_body =
+            serde_json::json!({"model": model, "messages": [{"role":"user","content":"hi"}]});
         let response = crate::zai_coding_plan::forward(
             &state,
             &client_headers(&state, client, "owner-a"),
-            serde_json::json!({"model": model, "messages": [{"role":"user","content":"hi"}]}),
+            request_body.clone(),
             incoming,
             protocol,
             surface,
         )
         .await;
         assert_eq!(response.status(), StatusCode::OK, "{client}");
-        assert_eq!(
+        assert!(
             response
                 .headers()
                 .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-                .unwrap(),
-            "glm-5"
+                .is_none()
         );
         let response_body = response.into_body().collect().await.unwrap().to_bytes();
+        assert_eq!(response_body.as_ref(), br#"{"id":"ok","model":"glm-5"}"#);
         let response_body: serde_json::Value = serde_json::from_slice(&response_body).unwrap();
         assert_eq!(response_body["model"], model);
-        assert_eq!(
-            response_body[crate::output_limit::UPSTREAM_MODEL_FIELD],
-            "glm-5"
+        assert!(
+            response_body
+                .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
+                .is_none()
         );
         let requests = requests.lock().unwrap();
-        assert_eq!(requests.len(), 2, "health then inference for {client}");
-        assert_eq!(requests[0].0, crate::zai_coding_plan::HEALTH_PATH);
-        assert_eq!(requests[0].1, "zai-secret-key", "health uses raw key");
+        assert_eq!(requests.len(), 2, "catalog then inference for {client}");
+        assert_eq!(requests[0].0, crate::zai_coding_plan::CATALOG_PATH);
+        assert_eq!(requests[0].1, "Bearer zai-secret-key");
         assert_eq!(requests[1].0, expected);
         assert_eq!(requests[1].1, "Bearer zai-secret-key");
-        assert!(requests[1].2.contains(r#""model":"glm-5""#));
-        assert!(!requests[1].2.contains(model));
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&requests[1].2).unwrap(),
+            request_body
+        );
+        let forwarded = &requests[1].3;
+        match client {
+            ClientKind::ClaudeCode => {
+                assert_eq!(forwarded["user-agent"], "claude-cli/2.1.259");
+                assert_eq!(forwarded["anthropic-version"], "2023-06-01");
+            }
+            ClientKind::Codex => {
+                assert_eq!(forwarded["user-agent"], "codex_exec/0.153.0");
+                assert_eq!(forwarded["x-codex-turn-metadata"], "fixture");
+            }
+            ClientKind::Opencode => {
+                assert_eq!(forwarded["user-agent"], "opencode/fixture");
+                assert_eq!(forwarded["x-session-id"], "fixture");
+            }
+            _ => unreachable!(),
+        }
+        assert!(
+            forwarded
+                .keys()
+                .all(|name| !name.as_str().starts_with("x-router-")
+                    && !name.as_str().starts_with("x-link-assistant-"))
+        );
         drop(requests);
         handle.abort();
     }
@@ -445,6 +504,7 @@ async fn denied_principal_and_unacknowledged_client_make_zero_upstream_requests(
         let data = tempfile::tempdir().unwrap();
         let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
         install_provider(&mut state, &base_url, &unsupported);
+        state.upstream_provider = crate::config::UpstreamProvider::Auto;
         let protocol = if client == ClientKind::Codex {
             ClientProtocol::OpenAIResponses
         } else {
@@ -455,10 +515,40 @@ async fn denied_principal_and_unacknowledged_client_make_zero_upstream_requests(
         } else {
             "/v1/chat/completions"
         };
+        let automatic_path = if client == ClientKind::Codex {
+            "/api/services/codex/v1/responses"
+        } else {
+            "/api/services/openai/v1/chat/completions"
+        };
+        let headers = client_headers(&state, client, principal);
+        let claims = crate::proxy::authenticate_client(&state, &headers).unwrap();
+        let authorized = crate::zai_coding_plan::authorize_automatic_discovery(
+            &state,
+            &claims,
+            &headers,
+            protocol,
+            automatic_path,
+        );
+        assert!(!authorized);
+        assert!(
+            crate::model_routing::route_state_with_subscription_for_client(
+                &state,
+                &serde_json::json!({"model":"glm-5"}),
+                &crate::subscription::SubscriptionProvider::ALL,
+                Some(client),
+                authorized,
+            )
+            .await
+            .is_err()
+        );
+        assert!(
+            requests.lock().unwrap().is_empty(),
+            "automatic discovery must fail locally before catalog access"
+        );
         let response = crate::zai_coding_plan::forward(
             &state,
-            &client_headers(&state, client, principal),
-            serde_json::json!({"model":"z.ai/glm-5","messages":[]}),
+            &headers,
+            serde_json::json!({"model":"glm-5","messages":[]}),
             path,
             protocol,
             crate::metrics::Surface::OpenAIResponses,
@@ -480,7 +570,7 @@ async fn local_input_authentication_and_health_failures_are_stable() {
     let unauthenticated = crate::zai_coding_plan::forward(
         &state,
         &HeaderMap::new(),
-        serde_json::json!({"model":"z.ai/glm-5","input":"hi"}),
+        serde_json::json!({"model":"glm-5","input":"hi"}),
         "/v1/responses",
         ClientProtocol::OpenAIResponses,
         surface,
@@ -502,7 +592,7 @@ async fn local_input_authentication_and_health_failures_are_stable() {
     let unavailable = crate::zai_coding_plan::forward(
         &state,
         &headers,
-        serde_json::json!({"model":"z.ai/glm-5","input":"hi"}),
+        serde_json::json!({"model":"glm-5","input":"hi"}),
         "/v1/responses",
         ClientProtocol::OpenAIResponses,
         surface,
@@ -514,7 +604,7 @@ async fn local_input_authentication_and_health_failures_are_stable() {
         &state,
         &HeaderMap::new(),
         "/v1/messages/count_tokens",
-        &serde_json::json!({"model":"claude-zai-glm-5"}),
+        &serde_json::json!({"model":"glm-5"}),
     );
     assert_eq!(unauthenticated_count.status(), StatusCode::UNAUTHORIZED);
 
@@ -530,7 +620,7 @@ async fn local_input_authentication_and_health_failures_are_stable() {
         &state,
         &claude_headers,
         "/v1/messages/count_tokens",
-        &serde_json::json!({"model":"claude-zai-glm-5","messages":[]}),
+        &serde_json::json!({"model":"glm-5","messages":[]}),
     );
     assert_eq!(unavailable_count.status(), StatusCode::SERVICE_UNAVAILABLE);
 
@@ -538,7 +628,7 @@ async fn local_input_authentication_and_health_failures_are_stable() {
     let unhealthy = crate::zai_coding_plan::forward(
         &state,
         &headers,
-        serde_json::json!({"model":"z.ai/glm-5","input":"hi"}),
+        serde_json::json!({"model":"glm-5","input":"hi"}),
         "/v1/responses",
         ClientProtocol::OpenAIResponses,
         surface,
@@ -556,11 +646,11 @@ async fn local_input_authentication_and_health_failures_are_stable() {
 }
 
 #[tokio::test]
-async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases() {
+async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
     let (base_url, requests, handle) = recording_upstream().await;
     let data = tempfile::tempdir().unwrap();
     let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
-    install_provider(&mut state, &base_url, &[]);
+    install_provider_for_subscriber(&mut state, &base_url, &[], "primary");
     state
         .provider_store
         .upsert(crate::providers::ProviderUpsert {
@@ -569,6 +659,7 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
             base_url: base_url.clone(),
             default_model: Some("future-saffron-91".into()),
             models: Some(vec!["future-saffron-91".into()]),
+            supported_clients: None,
             api_key: Some("zai-secret-key".into()),
             api_key_env: None,
             encrypted_api_key: None,
@@ -580,22 +671,10 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
         .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::Auto;
 
-    for (client, expected, forbidden) in [
-        (
-            ClientKind::ClaudeCode,
-            "claude-zai-future-saffron-91",
-            "z.ai/future-saffron-91",
-        ),
-        (
-            ClientKind::Codex,
-            "z.ai/future-saffron-91",
-            "claude-zai-future-saffron-91",
-        ),
-        (
-            ClientKind::Opencode,
-            "z.ai/future-saffron-91",
-            "claude-zai-future-saffron-91",
-        ),
+    for client in [
+        ClientKind::ClaudeCode,
+        ClientKind::Codex,
+        ClientKind::Opencode,
     ] {
         let headers = client_headers(&state, client, "owner-a");
         let path = match client {
@@ -612,32 +691,42 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
         assert_eq!(response.status(), StatusCode::OK);
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let body = String::from_utf8_lossy(&body);
-        assert!(body.contains(expected), "{client}: {body}");
-        assert!(!body.contains(forbidden), "{client}: {body}");
+        assert!(body.contains("future-saffron-91"), "{client}: {body}");
+        assert!(!body.contains("claude-zai-"), "{client}: {body}");
+        assert!(!body.contains("z.ai/future"), "{client}: {body}");
         assert!(body.contains(r#""owned_by":"z.ai""#));
         assert!(body.contains("display_name"));
     }
     assert_eq!(
         requests.lock().unwrap().len(),
-        3,
-        "one free health check per catalog"
+        1,
+        "the non-inference live catalog is shared until its refresh deadline"
     );
 
-    let routed = crate::model_routing::route_state(
+    let routed = crate::model_routing::route_state_with_subscription_for_client(
         &state,
-        &serde_json::json!({"model":"claude-zai-future-saffron-91"}),
+        &serde_json::json!({"model":"future-saffron-91"}),
+        &crate::subscription::SubscriptionProvider::ALL,
+        Some(ClientKind::Opencode),
+        true,
     )
     .await
     .unwrap();
     assert_eq!(
-        routed.upstream_provider,
+        routed.state.upstream_provider,
         crate::config::UpstreamProvider::ZaiCodingPlan
     );
-    assert_eq!(routed.bridge_model.as_deref(), Some("future-saffron-91"));
+    assert_eq!(
+        routed.state.bridge_model.as_deref(),
+        Some("future-saffron-91")
+    );
     assert!(
-        crate::model_routing::route_state(
+        crate::model_routing::route_state_with_subscription_for_client(
             &state,
-            &serde_json::json!({"model":"claude-zai-glm-unknown"}),
+            &serde_json::json!({"model":"glm-unknown"}),
+            &crate::subscription::SubscriptionProvider::ALL,
+            Some(ClientKind::Opencode),
+            true,
         )
         .await
         .is_err()
@@ -645,214 +734,5 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_aliases
     handle.abort();
 }
 
-#[tokio::test]
-async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other_providers() {
-    let requests = Arc::new(Mutex::new(Vec::<String>::new()));
-    let recorded = Arc::clone(&requests);
-    let app = axum::Router::new().fallback(move |request: Request<Body>| {
-        let recorded = Arc::clone(&recorded);
-        async move {
-            recorded
-                .lock()
-                .unwrap()
-                .push(request.uri().path().to_string());
-            (StatusCode::UNAUTHORIZED, "rejected")
-        }
-    });
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let base_url = format!("http://{}", listener.local_addr().unwrap());
-    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-    let data = tempfile::tempdir().unwrap();
-    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
-    install_provider(&mut state, &base_url, &[]);
-    state
-        .provider_store
-        .upsert(crate::providers::ProviderUpsert {
-            name: "ordinary-api".into(),
-            kind: Some("openai-compatible".into()),
-            base_url: "https://ordinary.example/v1".into(),
-            default_model: None,
-            models: Some(vec!["ordinary-model".into()]),
-            api_key: None,
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(true),
-            subscriber_id: None,
-            acknowledge_intermediary_risk: None,
-            acknowledge_unsupported_clients: None,
-        })
-        .unwrap();
-    state.upstream_provider = crate::config::UpstreamProvider::Auto;
-    let mut headers = client_headers(&state, ClientKind::Codex, "owner-a");
-    headers.insert("x-link-assistant-client", HeaderValue::from_static("codex"));
-    let response = crate::model_routing::models(
-        axum::extract::State(state),
-        axum::extract::OriginalUri("/api/services/codex/v1/models".parse().unwrap()),
-        headers,
-    )
-    .await;
-    assert_eq!(response.status(), StatusCode::OK);
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let body = String::from_utf8_lossy(&body);
-    assert!(body.contains("ordinary-model"), "{body}");
-    assert!(!body.contains("z.ai/glm-5"), "{body}");
-    assert!(
-        body.contains("z.ai"),
-        "degraded provider remains diagnosable: {body}"
-    );
-    assert_eq!(requests.lock().unwrap().len(), 1);
-    handle.abort();
-}
-
-#[tokio::test]
-async fn one_unsupported_gemini_override_reuses_translation_and_revocation_is_immediate() {
-    let (base_url, requests, handle) = recording_upstream().await;
-    let data = tempfile::tempdir().unwrap();
-    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
-    install_provider(&mut state, &base_url, &["gemini"]);
-    state.upstream_provider = crate::config::UpstreamProvider::Auto;
-    let headers = client_headers(&state, ClientKind::GeminiCli, "owner-a");
-    let response = Box::pin(crate::gemini::forward_native_gemini(
-        axum::extract::State(state.clone()),
-        axum::extract::Path("v1beta/models/z.ai/glm-5:generateContent".to_string()),
-        headers,
-        Ok(axum::Json(serde_json::json!({
-            "contents": [{"role":"user","parts":[{"text":"hi"}]}]
-        }))),
-    ))
-    .await;
-    assert_eq!(response.status(), StatusCode::OK);
-    let recorded = requests.lock().unwrap().clone();
-    assert_eq!(recorded.len(), 2);
-    assert_eq!(recorded[1].0, "/api/coding/paas/v4/chat/completions");
-    assert!(recorded[1].2.contains(r#""model":"glm-5""#));
-
-    state
-        .provider_store
-        .upsert(crate::providers::ProviderUpsert {
-            name: "z-ai-personal".into(),
-            kind: Some("z.ai-coding-plan".into()),
-            base_url,
-            default_model: Some("glm-5".into()),
-            models: Some(vec!["glm-5".into()]),
-            api_key: Some("zai-secret-key".into()),
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(true),
-            subscriber_id: Some("owner-a".into()),
-            acknowledge_intermediary_risk: Some(true),
-            acknowledge_unsupported_clients: Some(Vec::new()),
-        })
-        .unwrap();
-    let before = requests.lock().unwrap().len();
-    let response = Box::pin(crate::gemini::forward_native_gemini(
-        axum::extract::State(state.clone()),
-        axum::extract::Path("v1beta/models/z.ai/glm-5:generateContent".to_string()),
-        client_headers(&state, ClientKind::GeminiCli, "owner-a"),
-        Ok(axum::Json(serde_json::json!({"contents": []}))),
-    ))
-    .await;
-    assert_eq!(response.status(), StatusCode::FORBIDDEN);
-    assert_eq!(
-        requests.lock().unwrap().len(),
-        before,
-        "revocation is pre-upstream"
-    );
-    handle.abort();
-}
-
-#[tokio::test]
-async fn streaming_tool_cycle_and_count_tokens_keep_the_exact_model_boundary() {
-    let requests = Arc::new(Mutex::new(Vec::<(String, String)>::new()));
-    let recorded = Arc::clone(&requests);
-    let app = axum::Router::new().fallback(move |request: Request<Body>| {
-        let recorded = Arc::clone(&recorded);
-        async move {
-            let path = request.uri().path().to_string();
-            let body = request.into_body().collect().await.unwrap().to_bytes();
-            recorded
-                .lock()
-                .unwrap()
-                .push((path.clone(), String::from_utf8_lossy(&body).into_owned()));
-            if path == crate::zai_coding_plan::HEALTH_PATH {
-                return axum::response::Response::builder()
-                    .status(StatusCode::OK)
-                    .body(Body::from("{}"))
-                    .unwrap();
-            }
-            axum::response::Response::builder()
-                .status(StatusCode::OK)
-                .header("content-type", "text/event-stream")
-                .body(Body::from(
-                    "data: {\"model\":\"glm-5\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"id\":\"call_1\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]}}]}\n\ndata: [DONE]\n\n",
-                ))
-                .unwrap()
-        }
-    });
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let base_url = format!("http://{}", listener.local_addr().unwrap());
-    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-    let data = tempfile::tempdir().unwrap();
-    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
-    install_provider(&mut state, &base_url, &[]);
-    let headers = client_headers(&state, ClientKind::Opencode, "owner-a");
-    let response = crate::zai_coding_plan::forward(
-        &state,
-        &headers,
-        serde_json::json!({
-            "model":"z.ai/glm-5",
-            "stream":true,
-            "messages":[{"role":"user","content":"look up"}],
-            "tools":[{"type":"function","function":{"name":"lookup","parameters":{"type":"object"}}}]
-        }),
-        "/v1/chat/completions",
-        ClientProtocol::OpenAIChat,
-        crate::metrics::Surface::OpenAIChat,
-    )
-    .await;
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response.headers().get("content-type").unwrap(),
-        "text/event-stream"
-    );
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let body = String::from_utf8_lossy(&body);
-    assert!(body.contains("[DONE]"));
-    assert!(body.contains("\"model\":\"z.ai/glm-5\""), "{body}");
-    assert!(
-        body.contains("\"x_router_upstream_model\":\"glm-5\""),
-        "{body}"
-    );
-    let recorded = requests.lock().unwrap();
-    assert_eq!(recorded.len(), 2);
-    assert!(recorded[1].1.contains(r#""model":"glm-5""#));
-    assert!(recorded[1].1.contains(r#""tools""#));
-    drop(recorded);
-
-    let claude_headers = client_headers(&state, ClientKind::ClaudeCode, "owner-a");
-    let before = requests.lock().unwrap().len();
-    let response = crate::zai_coding_plan::count_tokens(
-        &state,
-        &claude_headers,
-        "/v1/messages/count_tokens",
-        &serde_json::json!({
-            "model":"claude-zai-glm-5",
-            "messages":[{"role":"user","content":"hello"}]
-        }),
-    );
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(requests.lock().unwrap().len(), before, "counting is local");
-    let ghost_response = crate::zai_coding_plan::count_tokens(
-        &state,
-        &claude_headers,
-        "/v1/messages/count_tokens",
-        &serde_json::json!({"model":"claude-sonnet-built-in","messages":[]}),
-    );
-    assert_eq!(ghost_response.status(), StatusCode::FORBIDDEN);
-    assert_eq!(
-        requests.lock().unwrap().len(),
-        before,
-        "ghost model is local denial"
-    );
-    handle.abort();
-}
+#[path = "zai_coding_plan_catalog_tests.rs"]
+mod catalog_tests;

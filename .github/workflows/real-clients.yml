@@ -1,20 +1,22 @@
-# The real-client tier: run the actual vendor CLIs against a live router.
-#
-# `tests/real_clients_test.rs` is opt-in behind ROUTER_REAL_CLIENT_TESTS=1 and
-# was referenced by no workflow, so it never ran (issue #211). It cannot run on
-# pull requests — it needs vendor subscriptions and takes minutes — but "never"
-# is not the right cadence either. This runs it nightly, where credentials can
-# live, and leaves the fast fixture tier (tests/client_fixture_test.rs) to cover
-# every pull request offline.
-name: Real Clients
+# Exercise the current vendor binaries against a loopback-only Router mock.
+# No vendor credential or paid inference is involved: the mock serves the live
+# catalog contract, captures one native request, and returns synthetic output.
+name: Real Client Capture
 
 on:
+  pull_request:
+  push:
+    branches: [main]
   schedule:
     - cron: '41 4 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: real-client-capture-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,37 +25,36 @@ env:
   GIT_CONFIG_VALUE_0: main
 
 jobs:
-  real-clients:
-    name: Real Client Single Turn
+  real-client-capture:
+    name: Claude Code, Codex, and OpenCode
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
-          toolchain: 1.98.0
+          toolchain: 1.98.1
 
-      # The tier needs a running router and a task token. Without them there is
-      # nothing to test against, and a run that quietly asserts nothing is the
-      # problem this workflow exists to fix — so say so and stop.
-      - name: Check for a configured router
-        id: configured
-        env:
-          ROUTER_REAL_SERVER: ${{ secrets.ROUTER_REAL_SERVER }}
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install pinned real clients
         run: |
-          if [ -z "$ROUTER_REAL_SERVER" ]; then
-            echo "::notice::ROUTER_REAL_SERVER is not configured; the real-client tier cannot run."
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
+          npm install --global \
+            @anthropic-ai/claude-code@2.1.260 \
+            @openai/codex@0.153.2 \
+            opencode-ai@1.18.27
+          claude --version | grep -F '2.1.260'
+          codex --version | grep -F '0.153.2'
+          opencode --version | grep -Fx '1.18.27'
 
-      - name: Run the real-client tier
-        if: steps.configured.outputs.run == 'true'
+      - name: Capture native requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-          ROUTER_REAL_SERVER: ${{ secrets.ROUTER_REAL_SERVER }}
-          ROUTER_REAL_TOKEN: ${{ secrets.ROUTER_REAL_TOKEN }}
-        run: cargo test --locked --test real_clients_test -- --nocapture
+        run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1

@@ -43,16 +43,8 @@ pub enum EntitlementDecision {
     Denied,
 }
 
-/// Validate the signed binding, reviewed matrix cell, and request fixture
-/// evidence as one indivisible authorization decision.
-pub fn authorize_subscription(
-    policy: &SubscriptionEntitlementPolicy,
-    claims: &crate::token::TokenClaims,
-    provider: SubscriptionProvider,
-    protocol: ClientProtocol,
-    path: &str,
-    headers: &HeaderMap,
-) -> Result<EntitlementDecision, String> {
+/// Exact immutable managed-client identity carried by a Router token.
+pub fn bound_client(claims: &crate::token::TokenClaims) -> Result<(ClientKind, &str), String> {
     if claims.is_admin() {
         return Err("administrative credentials do not imply consumer-subscription access".into());
     }
@@ -65,13 +57,25 @@ pub fn authorize_subscription(
     if client_name != client.canonical_name() {
         return Err("the token's managed-client binding is not canonical".into());
     }
-    if claims
+    let principal = claims
         .principal_id
         .as_deref()
-        .is_none_or(|principal| principal.trim().is_empty())
-    {
-        return Err("the token has no subscriber principal".into());
-    }
+        .filter(|principal| !principal.trim().is_empty())
+        .ok_or("the token has no subscriber principal")?;
+    Ok((client, principal))
+}
+
+/// Validate the signed binding, reviewed matrix cell, and request fixture
+/// evidence as one indivisible authorization decision.
+pub fn authorize_subscription(
+    policy: &SubscriptionEntitlementPolicy,
+    claims: &crate::token::TokenClaims,
+    provider: SubscriptionProvider,
+    protocol: ClientProtocol,
+    path: &str,
+    headers: &HeaderMap,
+) -> Result<EntitlementDecision, String> {
+    let (client, _) = bound_client(claims)?;
     if !request_evidence(client, protocol, path, headers) {
         return Err(format!(
             "request evidence does not match the token's {} client binding",
@@ -313,10 +317,12 @@ pub fn request_evidence(
             (path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens"))
                 && header_present(headers, "x-api-key")
                 && header_present(headers, "anthropic-version")
+                && header_starts_with(headers, "user-agent", "claude")
         }
         ClientKind::Codex => {
             path.contains("/v1/responses")
                 && header_present(headers, "authorization")
+                && header_starts_with(headers, "user-agent", "codex")
                 && (header_present(headers, "x-openai-internal-codex-responses-lite")
                     || header_present(headers, "x-codex-turn-metadata"))
         }

@@ -2,14 +2,26 @@
 
 mod common;
 
-use common::{catalog_server, mock_router, router, router_with_env};
+use common::{bound_client_token, catalog_server, mock_router, router, router_with_env};
 use std::fs;
 use std::net::TcpListener;
+
+fn test_token(client: &str) -> String {
+    let canonical = match client {
+        "claude-code" => "claude",
+        "gemini-cli" => "gemini",
+        "grok-cli" => "grok",
+        "qwen-code" => "qwen",
+        other => other,
+    };
+    bound_client_token(canonical, "cli-test-principal")
+}
 
 #[test]
 fn opencode_setup_populates_models_from_the_live_catalog() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = catalog_server(&[("gpt-live-only", "openai")]);
+    let token = test_token("opencode");
 
     let setup = router(
         home.path(),
@@ -18,7 +30,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
             "setup",
             "opencode",
             "--token",
-            "la_sk_catalog",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -31,11 +43,10 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
     let requests = server.join().expect("mock catalog server");
     let request = &requests[0];
     assert!(request.starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
-    assert!(
-        request
-            .to_ascii_lowercase()
-            .contains("authorization: bearer la_sk_catalog")
-    );
+    assert!(request.to_ascii_lowercase().contains(&format!(
+        "authorization: bearer {}",
+        token.to_ascii_lowercase()
+    )));
     let configured = fs::read_to_string(home.path().join(".config/opencode/opencode.json"))
         .expect("read OpenCode config");
     let configured: serde_json::Value =
@@ -50,19 +61,14 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
 #[test]
 fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
     let home = tempfile::tempdir().expect("temp home");
-    let model = "claude-zai-future-citrine";
+    let model = "future-citrine-2099";
     let (base_url, server) = catalog_server(&[(model, "z.ai")]);
+    let token = test_token("claude");
 
     let setup = router(
         home.path(),
         &[
-            "clients",
-            "setup",
-            "claude",
-            "--token",
-            "la_sk_catalog",
-            "--server",
-            &base_url,
+            "clients", "setup", "claude", "--token", &token, "--server", &base_url,
         ],
     );
     assert!(
@@ -105,12 +111,13 @@ fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
 fn opencode_reconfiguration_preserves_user_added_models() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = mock_router(&[("gpt-live", "openai")], 2);
+    let token = test_token("opencode");
     let args = [
         "clients",
         "setup",
         "opencode",
         "--token",
-        "la_sk_catalog",
+        &token,
         "--base-url",
         &base_url,
     ];
@@ -155,6 +162,7 @@ fn catalog_dependent_setup_fails_before_writing_when_router_is_unreachable() {
         listener.local_addr().expect("listener address")
     );
     drop(listener);
+    let token = test_token("opencode");
     let setup = router(
         home.path(),
         &[
@@ -162,7 +170,7 @@ fn catalog_dependent_setup_fails_before_writing_when_router_is_unreachable() {
             "setup",
             "opencode",
             "--token",
-            "la_sk_catalog",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -175,6 +183,7 @@ fn catalog_dependent_setup_fails_before_writing_when_router_is_unreachable() {
 #[test]
 fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = mock_router(&[("gpt-live", "openai")], 2);
     let codex_dir = home.path().join(".codex");
     fs::create_dir_all(&codex_dir).expect("create codex dir");
     fs::write(
@@ -182,15 +191,16 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
         "model = \"user-model\"\nmodel_provider = \"user-provider\"\napproval_policy = \"never\"\n\n[model_providers.user-provider]\nname = \"Mine\"\nbase_url = \"http://mine.test/v1\"\n\n[custom]\nkeep = true\n",
     )
     .expect("seed config");
+    let token = test_token("codex");
 
     let args = [
         "clients",
         "setup",
         "codex",
         "--token",
-        "la_sk_existing",
+        &token,
         "--base-url",
-        "http://router.test:8080",
+        &base_url,
     ];
     let first = router(home.path(), &args);
     assert!(
@@ -204,12 +214,9 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     assert!(configured.contains("[model_providers.link-assistant]"));
     assert!(configured.contains("wire_api = \"responses\""));
     assert!(configured.contains("env_key = \"LINK_ASSISTANT_TOKEN\""));
-    assert!(
-        !configured.contains("la_sk_existing"),
-        "secret leaked into config"
-    );
+    assert!(!configured.contains(&token), "secret leaked into config");
     assert!(String::from_utf8_lossy(&first.stdout).contains("credentials:"));
-    assert!(!String::from_utf8_lossy(&first.stdout).contains("la_sk_existing"));
+    assert!(!String::from_utf8_lossy(&first.stdout).contains(&token));
     assert!(
         fs::read_dir(&codex_dir)
             .expect("list codex dir")
@@ -220,6 +227,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
 
     let second = router(home.path(), &args);
     assert!(second.status.success());
+    assert_eq!(server.join().expect("catalog server").len(), 2);
     let configured_again = fs::read_to_string(codex_dir.join("config.toml")).expect("read config");
     assert_eq!(configured, configured_again, "setup must be idempotent");
 
@@ -238,6 +246,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
 fn claude_code_setup_preserves_settings_without_storing_the_token() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = catalog_server(&[("claude-live", "anthropic")]);
+    let token = test_token("claude");
     let claude_dir = home.path().join(".claude");
     fs::create_dir_all(&claude_dir).expect("create claude dir");
     fs::write(
@@ -253,7 +262,7 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
             "setup",
             "claude-code",
             "--token",
-            "la_sk_existing",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -275,15 +284,15 @@ fn claude_code_setup_preserves_settings_without_storing_the_token() {
         format!("{base_url}/api/services/anthropic")
     );
     assert!(settings["env"].get("ANTHROPIC_AUTH_TOKEN").is_none());
-    assert!(!settings.to_string().contains("la_sk_existing"));
+    assert!(!settings.to_string().contains(&token));
     assert!(String::from_utf8_lossy(&setup.stdout).contains("credentials:"));
-    assert!(!String::from_utf8_lossy(&setup.stdout).contains("la_sk_existing"));
+    assert!(!String::from_utf8_lossy(&setup.stdout).contains(&token));
     let environment = fs::read_to_string(
         home.path()
             .join(".config/link-assistant-router/clients/claude.env"),
     )
     .expect("read Claude credential file");
-    assert!(environment.contains("export ANTHROPIC_AUTH_TOKEN='la_sk_existing'"));
+    assert!(environment.contains(&format!("export ANTHROPIC_AUTH_TOKEN='{token}'")));
     assert_eq!(server.join().expect("catalog server").len(), 1);
     assert!(environment.contains(&format!(
         "export ANTHROPIC_BASE_URL='{base_url}/api/services/anthropic'"
@@ -417,7 +426,8 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
 #[test]
 fn doctor_uses_the_configured_codex_path_and_token_variable() {
     let home = tempfile::tempdir().expect("temp home");
-    let (base_url, server) = mock_router(&[("gpt-codex-live", "openai")], 2);
+    let (base_url, server) = mock_router(&[("gpt-codex-live", "openai")], 3);
+    let token = test_token("codex");
     let setup = router(
         home.path(),
         &[
@@ -425,7 +435,7 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
             "setup",
             "codex",
             "--token",
-            "la_sk_doctor",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -435,7 +445,7 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
     let doctor = router_with_env(
         home.path(),
         &["clients", "doctor", "codex"],
-        &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
+        &[("LINK_ASSISTANT_TOKEN", &token)],
     );
     assert!(
         doctor.status.success(),
@@ -448,20 +458,21 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
         requests[0].starts_with("GET /api/services/codex/v1/models HTTP/1.1"),
         "unexpected requests: {requests:?}"
     );
-    let request = &requests[1];
+    assert!(requests[1].starts_with("GET /api/services/codex/v1/models HTTP/1.1"));
+    let request = &requests[2];
     assert!(request.starts_with("POST /api/services/codex/v1/responses HTTP/1.1"));
     assert!(request.contains("gpt-codex-live"));
-    assert!(
-        request
-            .to_ascii_lowercase()
-            .contains("authorization: bearer la_sk_doctor")
-    );
+    assert!(request.to_ascii_lowercase().contains(&format!(
+        "authorization: bearer {}",
+        token.to_ascii_lowercase()
+    )));
 }
 
 #[test]
 fn codex_doctor_requires_an_openai_owned_catalog_model() {
     let home = tempfile::tempdir().expect("temp home");
-    let (base_url, server) = catalog_server(&[("claude-live", "anthropic")]);
+    let (base_url, server) = mock_router(&[("claude-live", "anthropic")], 2);
+    let token = test_token("codex");
     assert!(
         router(
             home.path(),
@@ -470,7 +481,7 @@ fn codex_doctor_requires_an_openai_owned_catalog_model() {
                 "setup",
                 "codex",
                 "--token",
-                "la_sk_doctor",
+                &token,
                 "--base-url",
                 &base_url,
             ],
@@ -481,7 +492,7 @@ fn codex_doctor_requires_an_openai_owned_catalog_model() {
     let doctor = router_with_env(
         home.path(),
         &["clients", "doctor", "codex"],
-        &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
+        &[("LINK_ASSISTANT_TOKEN", &token)],
     );
     assert!(!doctor.status.success());
     let stderr = String::from_utf8_lossy(&doctor.stderr);
@@ -492,13 +503,14 @@ fn codex_doctor_requires_an_openai_owned_catalog_model() {
     // The refusal points at the way out rather than leaving the reader to
     // guess that an explicit model is still allowed (issue #301).
     assert!(stderr.contains("--model"), "{stderr}");
-    assert_eq!(server.join().expect("catalog server").len(), 1);
+    assert_eq!(server.join().expect("catalog server").len(), 2);
 }
 
 #[test]
 fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = mock_router(&[("gpt-chat-live", "openai")], 3);
+    let token = test_token("opencode");
     let setup = router(
         home.path(),
         &[
@@ -506,7 +518,7 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
             "setup",
             "opencode",
             "--token",
-            "la_sk_doctor",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -516,7 +528,7 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
     let doctor = router_with_env(
         home.path(),
         &["clients", "doctor", "opencode"],
-        &[("LINK_ASSISTANT_TOKEN", "la_sk_doctor")],
+        &[("LINK_ASSISTANT_TOKEN", &token)],
     );
     assert!(
         doctor.status.success(),
@@ -529,11 +541,10 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
     let request = &requests[2];
     assert!(request.starts_with("POST /api/services/openai/v1/chat/completions HTTP/1.1"));
     assert!(request.contains("gpt-chat-live"));
-    assert!(
-        request
-            .to_ascii_lowercase()
-            .contains("authorization: bearer la_sk_doctor")
-    );
+    assert!(request.to_ascii_lowercase().contains(&format!(
+        "authorization: bearer {}",
+        token.to_ascii_lowercase()
+    )));
 }
 
 #[test]
@@ -576,13 +587,13 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
         "agent",
     ] {
         let home = tempfile::tempdir().expect("temp home");
-        let (base_url, server) =
-            if matches!(client, "claude-code" | "opencode" | "qwen-code" | "agent") {
-                let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
-                (base_url, Some(server))
-            } else {
-                ("http://router.test:8080".to_string(), None)
-            };
+        let model = if client == "claude-code" {
+            ("claude-live", "anthropic")
+        } else {
+            ("gpt-live", "openai")
+        };
+        let (base_url, server) = catalog_server(&[model]);
+        let token = test_token(client);
         let configured = router_with_env(
             home.path(),
             &[
@@ -590,7 +601,7 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
                 "setup",
                 client,
                 "--token",
-                "la_sk_existing",
+                &token,
                 "--base-url",
                 &base_url,
             ],
@@ -601,9 +612,7 @@ fn setup_for_every_supported_client_needs_no_preinstalled_vendor_binary() {
             "{client} setup unexpectedly required its executable: {}",
             String::from_utf8_lossy(&configured.stderr)
         );
-        if let Some(server) = server {
-            assert_eq!(server.join().expect("catalog server").len(), 1);
-        }
+        assert_eq!(server.join().expect("catalog server").len(), 1);
     }
 }
 
@@ -622,12 +631,13 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
         )
         .expect("seed config");
         let (base_url, server) = mock_router(&[("gpt-live", "openai")], 2);
+        let token = test_token(client);
         let args = [
             "clients",
             "setup",
             client,
             "--token",
-            "la_sk_existing",
+            &token,
             "--base-url",
             &base_url,
         ];
@@ -650,7 +660,7 @@ fn opencode_and_agent_setup_merge_owned_provider_without_storing_token() {
             document["provider"]["link-assistant"]["options"]["apiKey"],
             "{env:LINK_ASSISTANT_TOKEN}"
         );
-        assert!(!configured.contains("la_sk_existing"));
+        assert!(!configured.contains(&token));
 
         let second = router(home.path(), &args);
         assert!(second.status.success());
@@ -682,6 +692,7 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
     )
     .expect("seed settings");
     let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+    let token = test_token("qwen");
 
     let setup = router(
         home.path(),
@@ -690,7 +701,7 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
             "setup",
             "qwen-code",
             "--token",
-            "la_sk_existing",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -712,7 +723,7 @@ fn qwen_setup_uses_current_model_providers_shape_and_removes_only_its_entry() {
             && model["envKey"] == "LINK_ASSISTANT_TOKEN"
     }));
     assert_eq!(server.join().expect("catalog server").len(), 1);
-    assert!(!configured.contains("la_sk_existing"));
+    assert!(!configured.contains(&token));
 
     let removed = router(home.path(), &["clients", "remove", "qwen-code"]);
     assert!(removed.status.success());
@@ -732,12 +743,13 @@ fn qwen_keeps_stable_ownership_when_the_user_changes_the_model() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) =
         mock_router(&[("gpt-live", "openai"), ("gpt-user-choice", "openai")], 2);
+    let token = test_token("qwen");
     let args = [
         "clients",
         "setup",
         "qwen-code",
         "--token",
-        "la_sk_existing",
+        &token,
         "--base-url",
         &base_url,
     ];
@@ -789,6 +801,8 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
     let settings_path = grok_dir.join("user-settings.json");
     let original = r#"{"recapsEnabled":true}"#;
     fs::write(&settings_path, original).expect("seed Grok settings");
+    let token = test_token("grok");
+    let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
 
     let setup = router(
         home.path(),
@@ -797,9 +811,9 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
             "setup",
             "grok-cli",
             "--token",
-            "la_sk_existing",
+            &token,
             "--base-url",
-            "http://router.test:8080",
+            &base_url,
         ],
     );
     assert!(
@@ -809,17 +823,17 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
     );
     let output = String::from_utf8_lossy(&setup.stdout);
     assert!(output.contains("credentials:"));
-    assert!(!output.contains("la_sk_existing"));
+    assert!(!output.contains(&token));
     let environment = fs::read_to_string(
         home.path()
             .join(".config/link-assistant-router/clients/grok.env"),
     )
     .expect("read Grok credential file");
-    assert!(
-        environment
-            .contains("export GROK_BASE_URL='http://router.test:8080/api/services/openai/v1'")
-    );
-    assert!(environment.contains("export GROK_API_KEY='la_sk_existing'"));
+    assert!(environment.contains(&format!(
+        "export GROK_BASE_URL='{base_url}/api/services/openai/v1'"
+    )));
+    assert!(environment.contains(&format!("export GROK_API_KEY='{token}'")));
+    assert_eq!(server.join().expect("catalog server").len(), 1);
     assert_eq!(
         fs::read_to_string(settings_path).expect("read Grok settings"),
         original,
@@ -863,6 +877,7 @@ fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
     )
     .expect("seed legacy settings");
     let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+    let token = test_token("qwen");
     let setup = router(
         home.path(),
         &[
@@ -870,7 +885,7 @@ fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
             "setup",
             "qwen-code",
             "--token",
-            "la_sk_existing",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -904,6 +919,7 @@ fn opencode_remove_restores_a_provider_that_setup_replaced() {
     )
     .expect("seed provider");
     let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+    let token = test_token("opencode");
     let setup = router(
         home.path(),
         &[
@@ -911,7 +927,7 @@ fn opencode_remove_restores_a_provider_that_setup_replaced() {
             "setup",
             "opencode",
             "--token",
-            "la_sk_existing",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -932,6 +948,7 @@ fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
         let home = tempfile::tempdir().expect("temp home");
         for _ in 0..2 {
             let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+            let token = test_token(client);
             let setup = router(
                 home.path(),
                 &[
@@ -939,7 +956,7 @@ fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
                     "setup",
                     client,
                     "--token",
-                    "la_sk_existing",
+                    &token,
                     "--base-url",
                     &base_url,
                 ],

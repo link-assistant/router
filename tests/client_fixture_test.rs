@@ -23,6 +23,7 @@ use http_body_util::BodyExt as _;
 use link_assistant_router::admin::AdminClaim;
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::cli::Cli;
+use link_assistant_router::clients::ClientKind;
 use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::providers::ProviderStore;
@@ -112,7 +113,7 @@ fn replace_model(body: &Value) -> Value {
 
 /// A router with no reachable upstream. These tests assert on authentication
 /// and dispatch, both of which are decided before any upstream is contacted.
-fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
+fn test_app(dir: &std::path::Path, client: ClientKind) -> (axum::Router, String) {
     let dir_arg = dir.to_str().expect("UTF-8 test path");
     let config = Cli::try_parse_from(vec![
         "router",
@@ -128,8 +129,26 @@ fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
     .expect("test config is valid");
     let token_manager = TokenManager::new("fixture-secret");
     let token = token_manager
-        .issue_token(1, "fixture client")
-        .expect("issue client token");
+        .issue(&link_assistant_router::token::IssueRequest {
+            ttl_hours: 1,
+            label: "fixture client",
+            account: Some("primary"),
+            client_kind: Some(client.canonical_name()),
+            principal_id: Some("primary"),
+            ..link_assistant_router::token::IssueRequest::default()
+        })
+        .expect("issue bound client token");
+    let provider_store = ProviderStore::open(dir, "fixture-secret").expect("provider store");
+    provider_store
+        .set_subscription_entitlement_policy(
+            link_assistant_router::client_policy::SubscriptionEntitlementPolicy::parse([
+                "opencode:claude",
+                "qwen:claude",
+                "gemini:claude",
+            ])
+            .expect("fixture bridge policy"),
+        )
+        .expect("install fixture bridge policy");
     let state = AppState {
         client: reqwest::Client::new(),
         token_manager,
@@ -147,7 +166,7 @@ fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
         bridge_model_policy: link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
         crater: None,
         openai_compatible: config.openai_compatible.clone(),
-        provider_store: ProviderStore::open(dir, "fixture-secret").expect("provider store"),
+        provider_store,
         logger: log_lazy::LogLazy::new(),
         admin: Arc::new(AdminClaim::load(
             Some("fixture-admin".to_string()),
@@ -179,7 +198,8 @@ fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
 /// Replay a fixture, optionally overriding the credential it presents.
 async fn replay(fixture: &Fixture, credential: Option<&str>) -> (StatusCode, Value) {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (app, token) = test_app(dir.path());
+    let client = ClientKind::from_str_opt(&fixture.client).expect("known fixture client");
+    let (app, token) = test_app(dir.path(), client);
     let credential = credential.map_or(token, str::to_string);
     let mut request = Request::builder()
         .method(Method::from_bytes(fixture.method.as_bytes()).expect("method"))

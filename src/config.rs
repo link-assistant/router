@@ -393,6 +393,10 @@ impl Config {
                 .ok()
                 .map(|raw| parse_csv(&raw))
                 .unwrap_or_default(),
+            supported_clients: env::var("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS")
+                .ok()
+                .map(|raw| parse_csv(&raw))
+                .unwrap_or_default(),
         };
         let activitypub_public_key_pem = env::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
             .unwrap_or_else(|_| default_activitypub_public_key_pem());

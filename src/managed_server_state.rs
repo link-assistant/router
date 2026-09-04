@@ -57,6 +57,11 @@ pub(super) fn state_directory() -> Result<PathBuf, AnyError> {
     Ok(path)
 }
 
+/// Resolve a state file for a read without creating its parent directory.
+pub(super) fn state_file_for_read(name: &str) -> Result<PathBuf, AnyError> {
+    Ok(resolved_root()?.join(CONFIG_DIRECTORY).join(name))
+}
+
 /// The directory router state lives under, outside tests.
 ///
 /// An empty variable is unset, not configured: taking `Some("")` as a root

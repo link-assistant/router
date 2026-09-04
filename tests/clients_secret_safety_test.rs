@@ -3,12 +3,29 @@
 
 mod common;
 
+use base64::Engine as _;
 use common::{catalog_server, router, router_with_env};
 use std::fs;
 use std::io::{Read as _, Write as _};
 use std::net::TcpListener;
 use std::process::{Command, Output};
 use std::time::Duration;
+
+fn foreign_token(id: &str, client: Option<&str>, principal: Option<&str>) -> String {
+    let payload = serde_json::json!({
+        "sub": id,
+        "client_kind": client,
+        "principal_id": principal,
+    });
+    format!(
+        "la_sk_e30.{}.foreign-signature",
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload.to_string())
+    )
+}
+
+fn bound_foreign_token(id: &str) -> String {
+    foreign_token(id, Some("opencode"), Some("primary"))
+}
 
 /// Parse the JSON status `show` prints after the startup log lines.
 fn parse_status(stdout: &[u8]) -> serde_json::Value {
@@ -58,6 +75,7 @@ fn router_with_stdin(
 fn setup_accepts_an_existing_token_on_standard_input() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+    let token = bound_foreign_token("from-stdin");
 
     let setup = router_with_stdin(
         home.path(),
@@ -70,7 +88,7 @@ fn setup_accepts_an_existing_token_on_standard_input() {
             &base_url,
         ],
         &[],
-        "la_sk_from_stdin\n",
+        &format!("{token}\n"),
     );
 
     assert!(
@@ -78,30 +96,30 @@ fn setup_accepts_an_existing_token_on_standard_input() {
         "{}",
         String::from_utf8_lossy(&setup.stderr)
     );
-    assert!(!String::from_utf8_lossy(&setup.stdout).contains("la_sk_from_stdin"));
+    assert!(!String::from_utf8_lossy(&setup.stdout).contains(&token));
     let environment = fs::read_to_string(
         home.path()
             .join(".config/link-assistant-router/clients/opencode.env"),
     )
     .expect("managed credential file");
-    assert!(environment.contains("export LINK_ASSISTANT_TOKEN='la_sk_from_stdin'"));
+    assert!(environment.contains(&format!("export LINK_ASSISTANT_TOKEN='{token}'")));
     let requests = server.join().expect("catalog server");
-    assert!(
-        requests[0]
-            .to_ascii_lowercase()
-            .contains("authorization: bearer la_sk_from_stdin")
-    );
+    assert!(requests[0].to_ascii_lowercase().contains(&format!(
+        "authorization: bearer {}",
+        token.to_ascii_lowercase()
+    )));
 }
 
 #[test]
 fn setup_accepts_an_existing_token_from_the_documented_environment_variable() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+    let token = bound_foreign_token("from-environment");
 
     let setup = router_with_env(
         home.path(),
         &["clients", "setup", "opencode", "--base-url", &base_url],
-        &[("LINK_ASSISTANT_ROUTER_TOKEN", "la_sk_from_environment")],
+        &[("LINK_ASSISTANT_ROUTER_TOKEN", &token)],
     );
 
     assert!(
@@ -114,13 +132,12 @@ fn setup_accepts_an_existing_token_from_the_documented_environment_variable() {
             .join(".config/link-assistant-router/clients/opencode.env"),
     )
     .expect("managed credential file");
-    assert!(environment.contains("export LINK_ASSISTANT_TOKEN='la_sk_from_environment'"));
+    assert!(environment.contains(&format!("export LINK_ASSISTANT_TOKEN='{token}'")));
     let requests = server.join().expect("catalog server");
-    assert!(
-        requests[0]
-            .to_ascii_lowercase()
-            .contains("authorization: bearer la_sk_from_environment")
-    );
+    assert!(requests[0].to_ascii_lowercase().contains(&format!(
+        "authorization: bearer {}",
+        token.to_ascii_lowercase()
+    )));
 }
 
 #[test]
@@ -148,11 +165,76 @@ fn a_non_router_token_is_rejected_from_every_input_without_echoing_it() {
 }
 
 #[test]
+fn rejected_managed_bindings_leave_no_files_or_token_store() {
+    for (name, token) in [
+        ("generic", foreign_token("generic", None, None)),
+        (
+            "missing-principal",
+            foreign_token("partial", Some("codex"), None),
+        ),
+        (
+            "foreign-client",
+            foreign_token("foreign", Some("claude"), Some("primary")),
+        ),
+        (
+            "unknown-client",
+            foreign_token("unknown", Some("future-client"), Some("primary")),
+        ),
+    ] {
+        let home = tempfile::tempdir().expect("temp home");
+        let output = router(
+            home.path(),
+            &["clients", "setup", "codex", "--token", &token],
+        );
+        assert!(!output.status.success(), "{name} binding was accepted");
+        assert!(
+            !home.path().join("router-data").exists(),
+            "{name} rejection created the token store"
+        );
+        assert!(
+            !home.path().join(".config").exists(),
+            "{name} rejection created managed-client files: {:?}",
+            fs::read_dir(home.path().join(".config"))
+                .into_iter()
+                .flatten()
+                .filter_map(Result::ok)
+                .map(|entry| entry.path())
+                .collect::<Vec<_>>()
+        );
+    }
+}
+
+#[test]
+fn an_unprovable_foreign_binding_writes_nothing() {
+    let home = tempfile::tempdir().expect("temp home");
+    let listener = TcpListener::bind("127.0.0.1:0").expect("reserve port");
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    drop(listener);
+    let token = foreign_token("unprovable", Some("codex"), Some("external-principal"));
+    let output = router(
+        home.path(),
+        &[
+            "clients",
+            "setup",
+            "codex",
+            "--token",
+            &token,
+            "--base-url",
+            &base_url,
+        ],
+    );
+    assert!(!output.status.success(), "unreachable issuer was trusted");
+    assert!(!home.path().join("router-data").exists());
+    assert!(!home.path().join(".config").exists());
+}
+
+#[test]
 fn an_isolated_home_keeps_the_whole_lifecycle_out_of_the_real_configuration() {
     let real_home = tempfile::tempdir().expect("temp real home");
     let isolated = tempfile::tempdir().expect("temp isolated home");
     let isolated_path = isolated.path().to_string_lossy().into_owned();
     let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
+    let token = bound_foreign_token("isolated");
 
     let setup = router_with_stdin(
         real_home.path(),
@@ -167,7 +249,7 @@ fn an_isolated_home_keeps_the_whole_lifecycle_out_of_the_real_configuration() {
             &base_url,
         ],
         &[],
-        "la_sk_isolated\n",
+        &format!("{token}\n"),
     );
     assert!(
         setup.status.success(),
@@ -240,7 +322,8 @@ fn an_isolated_home_ignores_a_token_variable_exported_in_the_calling_shell() {
 #[test]
 fn a_router_error_body_that_echoes_the_token_is_redacted_from_diagnostics() {
     let home = tempfile::tempdir().expect("temp home");
-    let (base_url, server) = echoing_error_router("la_sk_leaky");
+    let token = bound_foreign_token("leaky");
+    let (base_url, server) = echoing_error_router(&token);
 
     let setup = router(
         home.path(),
@@ -249,7 +332,7 @@ fn a_router_error_body_that_echoes_the_token_is_redacted_from_diagnostics() {
             "setup",
             "opencode",
             "--token",
-            "la_sk_leaky",
+            &token,
             "--base-url",
             &base_url,
         ],
@@ -258,7 +341,7 @@ fn a_router_error_body_that_echoes_the_token_is_redacted_from_diagnostics() {
     assert!(!setup.status.success());
     let diagnostic = String::from_utf8_lossy(&setup.stderr);
     assert!(
-        !diagnostic.contains("la_sk_leaky"),
+        !diagnostic.contains(&token),
         "the token must not survive in a diagnostic: {diagnostic}"
     );
     assert!(diagnostic.contains("la_sk_[redacted]"), "{diagnostic}");

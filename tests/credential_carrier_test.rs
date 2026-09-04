@@ -25,7 +25,7 @@ use link_assistant_router::model_catalog::ModelCatalogCache;
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::providers::ProviderStore;
 use link_assistant_router::refresh::TokenCache;
-use link_assistant_router::token::TokenManager;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use lino_arguments::Parser as _;
 use serde_json::Value;
 use tower::ServiceExt as _;
@@ -48,8 +48,20 @@ fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
     .expect("test config is valid");
     let token_manager = TokenManager::new("carrier-secret");
     let token = token_manager
-        .issue_token(1, "carrier client")
-        .expect("issue client token");
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "carrier client",
+            account: Some("carrier-principal"),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some("gemini"),
+            principal_id: Some("carrier-principal"),
+        })
+        .expect("issue bound Gemini client token");
     let state = AppState {
         client: reqwest::Client::new(),
         token_manager,
@@ -99,11 +111,10 @@ fn test_app(dir: &std::path::Path) -> (axum::Router, String) {
 /// Issue the request the Gemini CLI issues, varying only the credential
 /// carrier.
 async fn carrier_status(
-    dir: &std::path::Path,
+    app: axum::Router,
     path: &str,
     header: Option<(&str, String)>,
 ) -> (StatusCode, Value) {
-    let (app, _) = test_app(dir);
     let mut request = Request::builder()
         .method(Method::GET)
         .uri(path)
@@ -126,14 +137,9 @@ async fn carrier_status(
     (status, body)
 }
 
-fn token_for(dir: &std::path::Path) -> String {
-    test_app(dir).1
-}
-
 /// `POST` the request Gemini CLI actually issues, with the credential in
 /// `x-goog-api-key`, and report only how far authentication got.
-async fn post_carrier_status(dir: &std::path::Path, path: &str, token: &str) -> StatusCode {
-    let (app, _) = test_app(dir);
+async fn post_carrier_status(app: axum::Router, path: &str, token: &str) -> StatusCode {
     let request = Request::builder()
         .method(Method::POST)
         .uri(path)
@@ -154,9 +160,9 @@ async fn post_carrier_status(dir: &std::path::Path, path: &str, token: &str) -> 
 #[tokio::test]
 async fn gemini_cli_key_header_authenticates() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let token = token_for(dir.path());
+    let (app, token) = test_app(dir.path());
     let (status, body) = carrier_status(
-        dir.path(),
+        app,
         "/api/services/gemini/v1beta/models",
         Some(("x-goog-api-key", token)),
     )
@@ -168,8 +174,9 @@ async fn gemini_cli_key_header_authenticates() {
 #[tokio::test]
 async fn an_invalid_gemini_key_is_still_rejected() {
     let dir = tempfile::tempdir().expect("tempdir");
+    let (app, _) = test_app(dir.path());
     let (status, _) = carrier_status(
-        dir.path(),
+        app,
         "/api/services/gemini/v1beta/models",
         Some(("x-goog-api-key", "la_sk_not_a_real_token".to_string())),
     )
@@ -182,11 +189,12 @@ async fn an_invalid_gemini_key_is_still_rejected() {
 #[tokio::test]
 async fn a_foreign_token_in_the_gemini_carrier_is_rejected() {
     let dir = tempfile::tempdir().expect("tempdir");
+    let (app, _) = test_app(dir.path());
     let foreign = TokenManager::new("some-other-routers-secret")
         .issue_token(1, "foreign client")
         .expect("issue foreign token");
     let (status, _) = carrier_status(
-        dir.path(),
+        app,
         "/api/services/gemini/v1beta/models",
         Some(("x-goog-api-key", foreign)),
     )
@@ -198,13 +206,13 @@ async fn a_foreign_token_in_the_gemini_carrier_is_rejected() {
 #[tokio::test]
 async fn bearer_and_x_api_key_still_authenticate() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let token = token_for(dir.path());
+    let (app, token) = test_app(dir.path());
     for (name, value) in [
         ("authorization", format!("Bearer {token}")),
         ("x-api-key", token.clone()),
     ] {
         let (status, body) = carrier_status(
-            dir.path(),
+            app.clone(),
             "/api/services/gemini/v1beta/models",
             Some((name, value)),
         )
@@ -217,7 +225,8 @@ async fn bearer_and_x_api_key_still_authenticate() {
 #[tokio::test]
 async fn a_missing_credential_is_refused() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (status, _) = carrier_status(dir.path(), "/api/services/gemini/v1beta/models", None).await;
+    let (app, _) = test_app(dir.path());
+    let (status, _) = carrier_status(app, "/api/services/gemini/v1beta/models", None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
 }
 
@@ -227,8 +236,8 @@ async fn a_missing_credential_is_refused() {
 #[tokio::test]
 async fn the_refusal_is_rendered_in_the_surfaces_own_dialect() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (status, body) =
-        carrier_status(dir.path(), "/api/services/gemini/v1beta/models", None).await;
+    let (app, _) = test_app(dir.path());
+    let (status, body) = carrier_status(app, "/api/services/gemini/v1beta/models", None).await;
     assert_eq!(status, StatusCode::UNAUTHORIZED);
     assert_eq!(body["error"]["code"], 401, "{body}");
     assert_eq!(body["error"]["status"], "UNAUTHENTICATED", "{body}");
@@ -240,7 +249,8 @@ async fn the_refusal_is_rendered_in_the_surfaces_own_dialect() {
 #[tokio::test]
 async fn the_refusal_names_every_accepted_carrier() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let (_, body) = carrier_status(dir.path(), "/api/services/gemini/v1beta/models", None).await;
+    let (app, _) = test_app(dir.path());
+    let (_, body) = carrier_status(app, "/api/services/gemini/v1beta/models", None).await;
     let message = body["error"]["message"].as_str().expect("message");
     for carrier in ["Authorization: Bearer", "x-api-key", "x-goog-api-key"] {
         assert!(
@@ -256,9 +266,9 @@ async fn the_refusal_names_every_accepted_carrier() {
 #[tokio::test]
 async fn the_key_query_parameter_is_refused_and_explains_itself() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let token = token_for(dir.path());
+    let (app, token) = test_app(dir.path());
     let (status, body) = carrier_status(
-        dir.path(),
+        app,
         &format!("/api/services/gemini/v1beta/models?key={token}"),
         None,
     )
@@ -275,13 +285,13 @@ async fn the_key_query_parameter_is_refused_and_explains_itself() {
 #[tokio::test]
 async fn generate_and_stream_pass_authentication_with_the_gemini_carrier() {
     let dir = tempfile::tempdir().expect("tempdir");
-    let token = token_for(dir.path());
+    let (app, token) = test_app(dir.path());
     for path in [
         "/api/services/gemini/v1beta/models/gemini-2.5-pro:generateContent",
         "/api/services/gemini/v1beta/models/gemini-2.5-pro:streamGenerateContent?alt=sse",
         "/api/services/vertex/v1/projects/p/locations/l/publishers/google/models/gemini-2.5-pro:generateContent",
     ] {
-        let status = post_carrier_status(dir.path(), path, &token).await;
+        let status = post_carrier_status(app.clone(), path, &token).await;
         assert!(
             status != StatusCode::UNAUTHORIZED && status != StatusCode::FORBIDDEN,
             "{path} was refused at the credential check: {status}"
@@ -293,11 +303,12 @@ async fn generate_and_stream_pass_authentication_with_the_gemini_carrier() {
 #[tokio::test]
 async fn generate_and_stream_still_refuse_an_invalid_gemini_carrier() {
     let dir = tempfile::tempdir().expect("tempdir");
+    let (app, _) = test_app(dir.path());
     for path in [
         "/api/services/gemini/v1beta/models/gemini-2.5-pro:generateContent",
         "/api/services/gemini/v1beta/models/gemini-2.5-pro:streamGenerateContent?alt=sse",
     ] {
-        let status = post_carrier_status(dir.path(), path, "la_sk_not_a_real_token").await;
+        let status = post_carrier_status(app.clone(), path, "la_sk_not_a_real_token").await;
         assert_eq!(status, StatusCode::UNAUTHORIZED, "{path}");
     }
 }

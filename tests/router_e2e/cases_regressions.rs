@@ -43,7 +43,7 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert_eq!(response.status(), StatusCode::OK);
     assert!(response.headers().get("x-codex-active-limit").is_none());
     assert_eq!(response.headers()["x-ratelimit-remaining-requests"], "41");
-    let responses: Value = response.json().await.expect("Responses JSON");
+    let responses = response_payload(response).await;
     assert_eq!(responses["object"], "response");
     assert!(responses["output"].is_array());
 
@@ -106,6 +106,48 @@ async fn codex_upstream_is_translated_and_relays_vendor_headers() {
     assert!(rendered.contains("Bearer la_"));
     assert!(rendered.contains("***"));
     assert!(!rendered.contains(client_token));
+}
+
+#[tokio::test]
+async fn native_codex_request_identity_body_and_sse_are_transparent() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    let body = json!({
+        "model":"gpt-5",
+        "input":[{"role":"user","content":[{"type":"input_text","text":"hi"}]}],
+        "instructions":"keep this exact native field",
+        "reasoning":{"effort":"xhigh"},
+        "store":false,
+        "stream":true
+    });
+
+    let response = router
+        .post("/api/services/codex/v1/responses", &body)
+        .send()
+        .await
+        .expect("native Responses response");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert!(response.headers().get("x-router-upstream-model").is_none());
+    assert_eq!(response.headers()["x-oai-request-id"], "req_stub_123");
+    let relayed = response.text().await.expect("native SSE body");
+    assert_eq!(relayed, codex_stream_for_request(&body));
+
+    let requests = router.requests.lock().expect("stub requests");
+    assert_eq!(requests.as_slice(), &[body]);
+    drop(requests);
+    let headers = router.upstream_headers.lock().expect("stub headers");
+    assert_eq!(headers.len(), 1);
+    assert_eq!(headers[0]["user-agent"], "codex_exec/0.153.0");
+    assert_eq!(headers[0]["x-codex-turn-metadata"], "router-e2e-codex");
+    assert_eq!(headers[0]["originator"], "codex_cli_rs");
+    assert_eq!(headers[0]["version"], "0.153.0");
+    assert_eq!(headers[0]["authorization"], "Bearer stub-codex-oauth-token");
+    assert_eq!(headers[0]["chatgpt-account-id"], "acct_stub");
+    assert!(
+        headers[0]
+            .keys()
+            .all(|name| !name.as_str().starts_with("x-router-"))
+    );
+    drop(headers);
 }
 
 /// Issue #380: Codex 0.151 moved its tool declaration into an
@@ -442,22 +484,25 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
             .is_some_and(|message| message.contains("max_tokens is required"))
     );
 
-    // Native Responses caps are honoured locally: the field is stripped from
-    // the upstream request (the backend rejects it) and the router truncates
-    // the answer instead of refusing an ordinary client request.
+    // Native Responses is protocol-transparent: Router neither strips the
+    // client's field nor rewrites the provider's SSE response.
     let capped = codex
         .post(
-            "/api/services/openai/v1/responses",
+            "/api/services/codex/v1/responses",
             &json!({"model":"gpt-5","input":"hi","max_output_tokens":1}),
         )
         .send()
         .await
         .expect("capped Codex Responses response");
     assert_eq!(capped.status(), StatusCode::OK);
-    let payload: Value = capped.json().await.expect("Responses JSON payload");
-    assert_eq!(payload["status"], "incomplete");
-    assert_eq!(payload["incomplete_details"]["reason"], "max_output_tokens");
-    assert_eq!(payload["output"][0]["content"][0]["text"], "stub");
+    assert_eq!(
+        capped.headers()["content-type"],
+        "text/event-stream",
+        "the native upstream response metadata is preserved"
+    );
+    let payload = response_payload(capped).await;
+    assert_eq!(payload["status"], "completed");
+    assert_eq!(payload["output"][0]["content"][0]["text"], "stub answer");
 
     // Chat caps are honoured the same way, under either spelling.
     for body in [
@@ -485,11 +530,13 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
 
     let requests = codex.requests.lock().expect("stub requests");
     assert_eq!(requests.len(), 4, "capped requests still reach upstream");
+    assert!(requests[0].get("max_output_tokens").is_none());
+    assert_eq!(requests[1]["max_output_tokens"], 1);
     assert!(
-        requests
+        requests[2..]
             .iter()
             .all(|request| request.get("max_output_tokens").is_none()),
-        "the unsupported field must never be forwarded"
+        "only the native Codex request keeps the exact client field"
     );
     drop(requests);
 }
@@ -766,20 +813,13 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         .json()
         .await
         .expect("model catalog JSON");
-    let mut ids = catalog["data"]
+    let ids = catalog["data"]
         .as_array()
         .expect("catalog data array")
         .iter()
         .filter_map(|model| model["id"].as_str().map(str::to_string))
         .collect::<Vec<_>>();
-    // The stub never refreshes a live catalog, so cover the two shapes issue
-    // #186 cares about explicitly: a concrete id the upstream also serves, and
-    // a service alias the upstream resolves to a different concrete model.
-    for id in ["gpt-5", "codex-auto-review"] {
-        if !ids.iter().any(|known| known == id) {
-            ids.push(id.to_string());
-        }
-    }
+    assert!(ids.iter().any(|id| id == "gpt-5"));
 
     for id in &ids {
         // Buffered Chat Completions.
@@ -820,7 +860,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
             assert_eq!(chunk["model"], id.as_str(), "streamed chat identity");
         }
 
-        // Buffered Responses, including the upstream-model header.
+        // Native Responses preserves the exact upstream stream and model id.
         let response = codex
             .post(
                 "/api/services/openai/v1/responses",
@@ -829,17 +869,10 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
             .send()
             .await
             .expect("buffered responses response");
-        let upstream_header = response
-            .headers()
-            .get("x-router-upstream-model")
-            .and_then(|value| value.to_str().ok())
-            .map(str::to_string);
-        let payload: Value = response.json().await.expect("responses JSON");
+        assert!(response.headers().get("x-router-upstream-model").is_none());
+        let payload = response_payload(response).await;
         assert_eq!(payload["model"], id.as_str(), "buffered responses identity");
-        if id != "gpt-5" {
-            assert_eq!(upstream_header.as_deref(), Some("gpt-5"));
-            assert_eq!(payload["x_router_upstream_model"], "gpt-5");
-        }
+        assert!(payload.get("x_router_upstream_model").is_none());
 
         // Streaming Responses.
         let stream = codex
@@ -929,63 +962,5 @@ async fn an_admin_credential_manages_tokens_without_inheriting_subscription_acce
     }
 }
 
-/// Issue #187 (comment): an Anthropic `web_search_20250305` request with
-/// `tool_choice: {"type":"any"}` against a Codex model returned nothing for
-/// more than eighty seconds. `any` demands a function call, but the only tool
-/// offered is executed by the backend and never surfaces as one, so the
-/// upstream had no way to comply. Every input protocol must answer such a
-/// request promptly instead of stalling, and must not reach the vendor.
-#[tokio::test]
-async fn a_forced_call_on_server_tools_only_fails_fast_on_every_surface() {
-    let router = TestRouter::start(UpstreamProvider::Codex).await;
-    let cases = [
-        (
-            "/api/services/anthropic/v1/messages",
-            json!({
-                "model":"gpt-5",
-                "max_tokens":256,
-                "messages":[{"role":"user","content":"research Rust"}],
-                "tools":[{"type":"web_search_20250305","name":"web_search","max_uses":1}],
-                "tool_choice":{"type":"any"}
-            }),
-        ),
-        (
-            "/api/services/openai/v1/chat/completions",
-            json!({
-                "model":"gpt-5",
-                "messages":[{"role":"user","content":"research Rust"}],
-                "tools":[{"type":"web_search"}],
-                "tool_choice":"required"
-            }),
-        ),
-        (
-            "/api/services/openai/v1/responses",
-            json!({
-                "model":"gpt-5",
-                "input":"research Rust",
-                "tools":[{"type":"web_search"}],
-                "tool_choice":"required"
-            }),
-        ),
-    ];
-
-    for (path, body) in cases {
-        let started = std::time::Instant::now();
-        let response = tokio::time::timeout(
-            std::time::Duration::from_secs(10),
-            router.post(path, &body).send(),
-        )
-        .await
-        .unwrap_or_else(|_| panic!("{path} never answered"))
-        .expect("server-tool response");
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
-        assert!(started.elapsed() < std::time::Duration::from_secs(10));
-        let payload: Value = response.json().await.expect("error JSON");
-        let message = payload
-            .pointer("/error/message")
-            .and_then(Value::as_str)
-            .expect("error message");
-        assert!(message.contains("server-side tools"), "{path}: {message}");
-    }
-    assert!(router.requests.lock().expect("stub requests").is_empty());
-}
+#[path = "cases_regressions_server_tools.rs"]
+mod server_tools;

@@ -16,6 +16,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
+use std::time::Instant;
 
 /// Supported persisted provider kinds.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -67,6 +68,11 @@ pub struct ProviderRecord {
     /// Models exposed by `/v1/models` for this provider.
     #[serde(default)]
     pub models: Vec<String>,
+    /// Canonical managed clients explicitly tested and allowed for an
+    /// ordinary API provider. Coding Plan derives this from its reviewed
+    /// policy and per-client risk acknowledgements.
+    #[serde(default)]
+    pub supported_clients: Vec<String>,
     /// Optional environment variable to read the upstream API key from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_key_env: Option<String>,
@@ -101,6 +107,7 @@ impl ProviderRecord {
             base_url: self.base_url.clone(),
             default_model: self.default_model.clone(),
             models: self.models.clone(),
+            supported_clients: self.effective_supported_clients(),
             api_key_env: self.api_key_env.clone(),
             has_encrypted_api_key: self.encrypted_api_key.is_some(),
             enabled: self.enabled,
@@ -108,6 +115,23 @@ impl ProviderRecord {
             intermediary_risk_acknowledged: self.intermediary_risk_acknowledged,
             unsupported_clients: self.unsupported_clients.clone(),
         }
+    }
+
+    /// Effective canonical client compatibility used by management, catalogs,
+    /// and dispatch.
+    #[must_use]
+    pub fn effective_supported_clients(&self) -> Vec<String> {
+        let mut clients = if self.kind == ProviderKind::ZaiCodingPlan {
+            vec!["claude".into(), "codex".into(), "opencode".into()]
+        } else {
+            self.supported_clients.clone()
+        };
+        if self.kind == ProviderKind::ZaiCodingPlan {
+            clients.extend(self.unsupported_clients.iter().cloned());
+        }
+        clients.sort();
+        clients.dedup();
+        clients
     }
 }
 
@@ -120,6 +144,7 @@ pub struct RedactedProviderRecord {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_model: Option<String>,
     pub models: Vec<String>,
+    pub supported_clients: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub api_key_env: Option<String>,
     pub has_encrypted_api_key: bool,
@@ -146,6 +171,8 @@ pub struct ProviderUpsert {
     #[serde(default)]
     pub models: Option<Vec<String>>,
     #[serde(default)]
+    pub supported_clients: Option<Vec<String>>,
+    #[serde(default)]
     pub api_key: Option<String>,
     #[serde(default)]
     pub api_key_env: Option<String>,
@@ -169,10 +196,29 @@ pub struct ResolvedProvider {
     pub base_url: String,
     pub default_model: Option<String>,
     pub models: Vec<String>,
+    pub supported_clients: Vec<String>,
     pub api_key: Option<String>,
     pub subscriber_id: Option<String>,
     pub intermediary_risk_acknowledged: bool,
     pub unsupported_clients: Vec<String>,
+}
+
+/// One exact model document returned by a provider's live catalog.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct LiveProviderModel {
+    pub id: String,
+    pub raw: serde_json::Map<String, serde_json::Value>,
+}
+
+/// In-memory live catalog state. Provider configuration remains file-backed;
+/// discovery results are deliberately process-local and refreshed by identity.
+#[derive(Debug, Clone)]
+pub(crate) struct CachedProviderCatalog {
+    pub fingerprint: String,
+    pub models: Vec<LiveProviderModel>,
+    pub last_success: Option<Instant>,
+    pub last_attempt: Instant,
+    pub error: Option<String>,
 }
 
 impl ResolvedProvider {
@@ -185,6 +231,14 @@ impl ResolvedProvider {
     pub fn declares(&self, model: &str) -> bool {
         self.models.iter().any(|id| id == model)
     }
+
+    /// Whether this provider's reviewed adapter supports the exact client.
+    #[must_use]
+    pub fn supports_client(&self, client: crate::clients::ClientKind) -> bool {
+        self.supported_clients
+            .iter()
+            .any(|value| value == client.canonical_name())
+    }
 }
 
 /// File-backed provider store.
@@ -195,6 +249,7 @@ pub struct ProviderStore {
     token_secret: Arc<String>,
     inner: Arc<RwLock<HashMap<String, ProviderRecord>>>,
     entitlement_policy: Arc<RwLock<crate::client_policy::SubscriptionEntitlementPolicy>>,
+    provider_catalogs: Arc<RwLock<HashMap<String, CachedProviderCatalog>>>,
 }
 
 impl ProviderStore {
@@ -221,6 +276,7 @@ impl ProviderStore {
             entitlement_policy: Arc::new(RwLock::new(
                 crate::client_policy::SubscriptionEntitlementPolicy::default(),
             )),
+            provider_catalogs: Arc::new(RwLock::new(HashMap::new())),
         })
     }
 
@@ -244,6 +300,28 @@ impl ProviderStore {
             .read()
             .map_err(|_| ProviderError::LockPoisoned)
             .map(|policy| policy.clone())
+    }
+
+    pub(crate) fn cached_provider_catalog(
+        &self,
+        name: &str,
+    ) -> Result<Option<CachedProviderCatalog>, ProviderError> {
+        self.provider_catalogs
+            .read()
+            .map_err(|_| ProviderError::LockPoisoned)
+            .map(|catalogs| catalogs.get(name).cloned())
+    }
+
+    pub(crate) fn cache_provider_catalog(
+        &self,
+        name: &str,
+        catalog: CachedProviderCatalog,
+    ) -> Result<(), ProviderError> {
+        self.provider_catalogs
+            .write()
+            .map_err(|_| ProviderError::LockPoisoned)?
+            .insert(name.to_string(), catalog);
+        Ok(())
     }
 
     /// Return all providers sorted by name.
@@ -328,12 +406,14 @@ impl ProviderStore {
                     .map(|encrypted| decrypt_api_key(encrypted, &self.token_secret))
             })
             .transpose()?;
+        let supported_clients = record.effective_supported_clients();
         Ok(Some(ResolvedProvider {
             name: record.name,
             kind: record.kind,
             base_url: record.base_url,
             default_model: record.default_model,
             models: record.models,
+            supported_clients,
             api_key,
             subscriber_id: record.subscriber_id,
             intermediary_risk_acknowledged: record.intermediary_risk_acknowledged,
@@ -362,11 +442,30 @@ impl ProviderStore {
             None => input.encrypted_api_key.filter(|s| !s.is_empty()),
         };
         let models = input.models.unwrap_or_default();
+        let mut supported_clients = input.supported_clients.unwrap_or_default();
+        for value in &supported_clients {
+            let client = crate::clients::ClientKind::from_str_opt(value).ok_or_else(|| {
+                ProviderError::Invalid(format!("unknown supported client: {value}"))
+            })?;
+            if value != client.canonical_name() {
+                return Err(ProviderError::Invalid(format!(
+                    "supported client must use canonical name '{}'",
+                    client.canonical_name()
+                )));
+            }
+        }
+        supported_clients.sort();
+        supported_clients.dedup();
         let subscriber_id = input.subscriber_id.filter(|value| !value.trim().is_empty());
         let intermediary_risk_acknowledged = input.acknowledge_intermediary_risk.unwrap_or(false);
         let unsupported_clients = input.acknowledge_unsupported_clients.unwrap_or_default();
         let enabled = input.enabled.unwrap_or(kind != ProviderKind::ZaiCodingPlan);
         if kind == ProviderKind::ZaiCodingPlan {
+            if !supported_clients.is_empty() {
+                return Err(ProviderError::Invalid(
+                    "z.ai Coding Plan client compatibility is derived from its reviewed policy; use --acknowledge-unsupported-client for a risk-accepted client".into(),
+                ));
+            }
             if base_url != "https://api.z.ai" && !cfg!(test) {
                 return Err(ProviderError::Invalid(
                     "z.ai Coding Plan base_url must be https://api.z.ai".into(),
@@ -405,6 +504,7 @@ impl ProviderStore {
             base_url,
             default_model: input.default_model.filter(|s| !s.is_empty()),
             models,
+            supported_clients,
             api_key_env: input.api_key_env.filter(|s| !s.is_empty()),
             encrypted_api_key,
             enabled,
@@ -475,6 +575,7 @@ pub struct OpenAICompatibleConfig {
     pub api_key_env: Option<String>,
     pub default_model: Option<String>,
     pub models: Vec<String>,
+    pub supported_clients: Vec<String>,
 }
 
 impl OpenAICompatibleConfig {
@@ -493,6 +594,7 @@ impl OpenAICompatibleConfig {
             base_url: self.base_url.trim_end_matches('/').to_string(),
             default_model: self.default_model.clone(),
             models: self.models.clone(),
+            supported_clients: self.supported_clients.clone(),
             api_key,
             subscriber_id: None,
             intermediary_risk_acknowledged: false,
@@ -509,6 +611,7 @@ impl OpenAICompatibleConfig {
             base_url: self.base_url.clone(),
             default_model: self.default_model.clone(),
             models: Some(self.models.clone()),
+            supported_clients: Some(self.supported_clients.clone()),
             api_key: self.api_key.clone(),
             api_key_env: self.api_key_env.clone(),
             encrypted_api_key: None,
@@ -746,6 +849,7 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
                 base_url: String::new(),
                 default_model: None,
                 models: Some(Vec::new()),
+                supported_clients: Some(Vec::new()),
                 api_key: None,
                 api_key_env: None,
                 encrypted_api_key: None,
@@ -772,6 +876,16 @@ fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, Pr
                         .split(',')
                         .map(str::trim)
                         .filter(|s| !s.is_empty())
+                        .map(ToString::to_string)
+                        .collect(),
+                );
+            }
+            "supported_clients" | "supported-clients" => {
+                provider.supported_clients = Some(
+                    value
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|entry| !entry.is_empty())
                         .map(ToString::to_string)
                         .collect(),
                 );

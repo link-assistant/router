@@ -18,8 +18,8 @@ pub enum ModelRouteError {
     ModelRequired,
     /// The requested model is unknown or its owning provider is unavailable.
     NotFound(String),
-    /// More than one healthy subscription advertises an unqualified model id.
-    Ambiguous(String),
+    /// A live exact model id has more than one owning provider.
+    Conflict(String),
 }
 
 #[path = "model_routing_snapshot.rs"]
@@ -41,7 +41,7 @@ impl std::fmt::Display for ModelRouteError {
             Self::ModelRequired => {
                 formatter.write_str("model is required when UPSTREAM_PROVIDER=auto")
             }
-            Self::NotFound(message) | Self::Ambiguous(message) => formatter.write_str(message),
+            Self::NotFound(message) | Self::Conflict(message) => formatter.write_str(message),
         }
     }
 }
@@ -49,9 +49,8 @@ impl std::fmt::Display for ModelRouteError {
 /// Convert an automatic-routing failure into the public API error shape.
 pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
     let (status, error_type) = match error {
-        ModelRouteError::ModelRequired | ModelRouteError::Ambiguous(_) => {
-            (StatusCode::BAD_REQUEST, "invalid_request_error")
-        }
+        ModelRouteError::ModelRequired => (StatusCode::BAD_REQUEST, "invalid_request_error"),
+        ModelRouteError::Conflict(_) => (StatusCode::CONFLICT, "invalid_provider_state"),
         ModelRouteError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found_error"),
     };
     crate::proxy::error_response(status, error_type, &error.to_string())
@@ -83,22 +82,21 @@ const fn provider_owner(provider: SubscriptionProvider) -> &'static str {
 }
 
 fn providers_for_model(model: &str, catalogs: &ModelCatalogCache) -> Vec<SubscriptionProvider> {
-    let (qualified, canonical) = subscription_model_identity(model);
     SubscriptionProvider::ALL
         .into_iter()
-        .filter(|provider| qualified.is_none_or(|qualified| qualified == *provider))
-        .filter(|provider| catalogs.models(*provider).iter().any(|id| id == canonical))
+        .filter(|provider| catalogs.models(*provider).iter().any(|id| id == model))
         .collect()
 }
 
-pub(crate) fn subscription_model_identity(model: &str) -> (Option<SubscriptionProvider>, &str) {
-    let Some((prefix, canonical)) = model.split_once('/') else {
-        return (None, model);
-    };
-    let provider = SubscriptionProvider::ALL
-        .into_iter()
-        .find(|provider| provider.as_str() == prefix);
-    provider.map_or((None, model), |provider| (Some(provider), canonical))
+/// Preserve one exact live model id.
+///
+/// Provider-qualified strings were formerly interpreted as Router aliases.
+/// They now remain ordinary exact ids and resolve only when a provider's live
+/// catalog returned that exact string.
+pub(crate) const fn subscription_model_identity(
+    model: &str,
+) -> (Option<SubscriptionProvider>, &str) {
+    (None, model)
 }
 
 /// Return the unambiguous provider whose last known live catalog owns a model id.
@@ -217,9 +215,8 @@ pub fn available_provider_for_model(
                 .map(ToString::to_string)
                 .collect::<Vec<_>>()
                 .join(", ");
-            ModelRouteError::Ambiguous(format!(
-                "model '{model}' is advertised by multiple subscriptions ({providers}); pin \
-                 UPSTREAM_PROVIDER to disambiguate"
+            ModelRouteError::Conflict(format!(
+                "exact model id '{model}' is advertised by multiple subscriptions ({providers})"
             ))
         })?;
     available
@@ -629,16 +626,19 @@ fn model_catalog_with(
     for record in &records {
         *counts.entry(record.canonical_id.clone()).or_insert(0_usize) += 1;
     }
+    let mut conflicts = counts
+        .iter()
+        .filter(|(_, count)| **count > 1)
+        .map(|(id, _)| id.clone())
+        .collect::<Vec<_>>();
+    conflicts.sort();
     let data = records
         .into_iter()
+        .filter(|record| counts.get(&record.canonical_id).copied() == Some(1))
         .map(|record| {
-            let exposed_id = if counts.get(&record.canonical_id).copied().unwrap_or(0) > 1 {
-                format!("{}/{}", record.provider.as_str(), record.canonical_id)
-            } else {
-                record.canonical_id.clone()
-            };
+            let exposed_id = record.canonical_id.clone();
             let mut projected = record.raw;
-            projected.insert("id".into(), Value::String(exposed_id.clone()));
+            projected.insert("id".into(), Value::String(exposed_id));
             projected.insert(
                 "canonical_id".into(),
                 Value::String(record.canonical_id.clone()),
@@ -656,9 +656,6 @@ fn model_catalog_with(
             projected
                 .entry("owned_by")
                 .or_insert_with(|| Value::String(provider_owner(record.provider).to_string()));
-            if exposed_id != record.canonical_id {
-                projected.insert("client_alias".into(), Value::String(exposed_id));
-            }
             Value::Object(projected)
         })
         .collect::<Vec<_>>();
@@ -670,7 +667,22 @@ fn model_catalog_with(
         "using_fallback": false,
         "degraded_providers": degraded,
         "healthy_providers": healthy_providers,
+        "catalog_conflicts": conflicts,
     })
+}
+
+fn catalog_conflict(catalog: &Value) -> Option<ModelRouteError> {
+    let ids = catalog
+        .get("catalog_conflicts")
+        .and_then(Value::as_array)
+        .filter(|ids| !ids.is_empty())?;
+    Some(ModelRouteError::Conflict(format!(
+        "exact model id collision across healthy providers: {}",
+        ids.iter()
+            .filter_map(Value::as_str)
+            .collect::<Vec<_>>()
+            .join(", ")
+    )))
 }
 
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.
@@ -742,114 +754,9 @@ fn principal_catalog_records(
     }
 }
 
-/// Canonical `GET /api/services/*/v1/models` catalogs across automatic or
-/// explicitly pinned providers.
-pub async fn models(
-    State(state): State<AppState>,
-    OriginalUri(uri): OriginalUri,
-    headers: HeaderMap,
-) -> Response {
-    let claims = match crate::proxy::authenticate_client(&state, &headers) {
-        Ok(claims) => claims,
-        Err(response) => return *response,
-    };
-    let path = uri.path();
-    let principal_accounts = claims.principal_id.clone().into_iter().collect::<Vec<_>>();
-
-    let entitled = |provider| {
-        crate::client_policy::enforce_subscription_for_claims(
-            &state,
-            &claims,
-            &headers,
-            provider,
-            crate::client_policy::ClientProtocol::Catalog,
-            path,
-        )
-    };
-
-    let models = match state.upstream_provider {
-        UpstreamProvider::Auto => {
-            let snapshot = configured_catalog_snapshot(&state).await;
-            let healthy = snapshot
-                .healthy_providers()
-                .into_iter()
-                .filter(|provider| entitled(*provider).is_ok())
-                .collect::<Vec<_>>();
-            let mut catalog = model_catalog_with(&healthy, &state.model_catalogs, |provider| {
-                principal_catalog_records(&state, provider, &principal_accounts)
-            });
-            // A revoked subscription is filtered out before `model_catalog`
-            // ever sees it, so it could never reach `degraded_providers` and
-            // simply vanished from `data`. Absence is not an alert: a monitor
-            // cannot tell it from a provider that was never configured here
-            // (issue #318).
-            let visible_health = snapshot
-                .health()
-                .iter()
-                .filter(|entry| entitled(entry.provider).is_ok())
-                .cloned()
-                .collect::<Vec<_>>();
-            merge_configured_degradation(&visible_health, &mut catalog);
-            append_stored_provider_models(&state, &mut catalog);
-            append_zai_models(&state, &claims, &headers, path, &mut catalog).await;
-            catalog
-        }
-        UpstreamProvider::Anthropic => {
-            if let Err(response) = entitled(SubscriptionProvider::Claude) {
-                return response;
-            }
-            model_catalog_with(
-                &[SubscriptionProvider::Claude],
-                &state.model_catalogs,
-                |provider| principal_catalog_records(&state, provider, &principal_accounts),
-            )
-        }
-        UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
-            || crate::gonka::list_models(&crate::config::default_gonka_model()),
-            |gonka| crate::gonka::list_models(&gonka.model),
-        ),
-        UpstreamProvider::Crater => crate::crater::list_models(),
-        UpstreamProvider::Codex => {
-            if let Err(response) = entitled(SubscriptionProvider::Codex) {
-                return response;
-            }
-            model_catalog_with(
-                &[SubscriptionProvider::Codex],
-                &state.model_catalogs,
-                |provider| principal_catalog_records(&state, provider, &principal_accounts),
-            )
-        }
-        UpstreamProvider::Qwen => {
-            if let Err(response) = entitled(SubscriptionProvider::Qwen) {
-                return response;
-            }
-            model_catalog_with(
-                &[SubscriptionProvider::Qwen],
-                &state.model_catalogs,
-                |provider| principal_catalog_records(&state, provider, &principal_accounts),
-            )
-        }
-        UpstreamProvider::Gemini => {
-            if let Err(response) = entitled(SubscriptionProvider::Gemini) {
-                return response;
-            }
-            model_catalog_with(
-                &[SubscriptionProvider::Gemini],
-                &state.model_catalogs,
-                |provider| principal_catalog_records(&state, provider, &principal_accounts),
-            )
-        }
-        UpstreamProvider::OpenAICompatible => {
-            crate::provider_proxy::openai_compatible_models(&state)
-        }
-        UpstreamProvider::ZaiCodingPlan => {
-            let mut catalog = json!({"object": "list", "data": []});
-            append_zai_models(&state, &claims, &headers, path, &mut catalog).await;
-            catalog
-        }
-    };
-    (StatusCode::OK, axum::Json(models)).into_response()
-}
+#[path = "model_routing_models.rs"]
+mod models_handler;
+pub use models_handler::models;
 
 /// Consume an automatic Anthropic-surface request and return its concrete state.
 pub async fn route_anthropic_request(
@@ -900,9 +807,28 @@ pub(crate) async fn route_anthropic_request_with_subscription_for_providers(
         )
     })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        route_state_with_subscription_for_providers(state, &routing_body, entitled_providers)
-            .await
-            .map_err(|error| model_route_error_response(&error))?
+        let claims = crate::proxy::authenticate_client(state, &parts.headers)
+            .map_err(|response| *response)?;
+        let client = crate::client_policy::bound_client(&claims)
+            .map(|(client, _)| client)
+            .map_err(|error| {
+                crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
+            })?;
+        route_state_with_subscription_for_client(
+            state,
+            &routing_body,
+            entitled_providers,
+            Some(client),
+            crate::zai_coding_plan::authorize_automatic_discovery(
+                state,
+                &claims,
+                &parts.headers,
+                crate::client_policy::ClientProtocol::AnthropicMessages,
+                &path,
+            ),
+        )
+        .await
+        .map_err(|error| model_route_error_response(&error))?
     } else {
         route_pinned_subscription(state, SubscriptionProvider::Claude)
             .await
@@ -970,8 +896,10 @@ use stored::{
 #[path = "model_routing_state.rs"]
 mod state_routing;
 pub use state_routing::route_state;
+#[allow(unused_imports)]
 pub(crate) use state_routing::{
-    route_state_with_subscription, route_state_with_subscription_for_providers,
+    route_state_with_subscription, route_state_with_subscription_for_client,
+    route_state_with_subscription_for_providers,
 };
 
 #[cfg(test)]

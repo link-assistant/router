@@ -37,6 +37,7 @@ pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleC
         api_key_env: None,
         default_model: None,
         models: Vec::new(),
+        supported_clients: Vec::new(),
     }
 }
 

@@ -8,7 +8,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use super::state::{state_directory, write_private_json};
+use super::state::{state_directory, state_file_for_read, write_private_json};
 use super::{AnyError, PersistedServer, SERVER_CONFIG, normalize_server};
 
 /// The router this machine has explicitly been pointed at, if any.
@@ -63,7 +63,7 @@ pub fn clear_persisted() -> Result<PathBuf, AnyError> {
 }
 
 pub fn load_persisted() -> Result<Option<PersistedServer>, AnyError> {
-    let path = state_directory()?.join(SERVER_CONFIG);
+    let path = state_file_for_read(SERVER_CONFIG)?;
     match fs::read_to_string(&path) {
         Ok(source) => {
             let mut persisted: PersistedServer =

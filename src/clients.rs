@@ -14,6 +14,8 @@ use toml_edit::{DocumentMut, Item, Table, value};
 
 mod analysis;
 mod catalog;
+#[path = "clients/codex_catalog_constraint.rs"]
+mod codex_catalog_constraint;
 pub mod credentials;
 pub(crate) mod doctor;
 mod files;

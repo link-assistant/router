@@ -9,6 +9,19 @@ use std::time::Duration;
 
 use base64::Engine as _;
 
+/// Self-describing token issued by a foreign Router for offline CLI tests.
+pub fn bound_client_token(client: &str, principal: &str) -> String {
+    let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
+        serde_json::json!({
+            "sub": format!("{client}-{principal}"),
+            "client_kind": client,
+            "principal_id": principal,
+        })
+        .to_string(),
+    );
+    format!("la_sk_e30.{payload}.signature")
+}
+
 pub fn router(home: &std::path::Path, args: &[&str]) -> Output {
     router_with_env(home, args, &[])
 }
@@ -147,9 +160,8 @@ pub fn mock_admin_router(
             .collect::<Vec<_>>()
     })
     .to_string();
-    let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .encode(serde_json::json!({"sub": "repair-run-id", "client_kind": client}).to_string());
-    let issued = format!(r#"{{"token":"la_sk_e30.{payload}.signature"}}"#);
+    let token = bound_client_token(client, "repair-principal");
+    let issued = serde_json::json!({"token": token}).to_string();
     let server = std::thread::spawn(move || {
         let deadline = std::time::Instant::now() + Duration::from_secs(10);
         let mut requests = Vec::new();

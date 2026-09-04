@@ -193,7 +193,7 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::CodexResponses),
-                post(proxy::openai_responses),
+                post(proxy::openai_responses_native),
             )
             .route(
                 route_template(RouteId::CodexModels),
@@ -201,7 +201,7 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::QwenChatCompletions),
-                post(proxy::openai_chat_completions),
+                post(proxy::openai_chat_completions_native),
             )
             .route(
                 route_template(RouteId::QwenResponses),

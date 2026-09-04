@@ -442,7 +442,8 @@ impl TemporaryClient {
             }
             ClientKind::Codex => {
                 if !isolated_config {
-                    append_codex_router_overrides(&mut command, base_url)?;
+                    let catalog = write_codex_model_catalog(directory.path(), models)?;
+                    append_codex_router_overrides(&mut command, base_url, &catalog)?;
                 }
             }
             ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent | ClientKind::Cursor => {
@@ -486,9 +487,14 @@ impl TemporaryClient {
 /// Codex parses every value after `-c` as TOML. JSON string literals are also
 /// valid TOML basic strings and safely quote URLs and names without ever
 /// embedding the token, which remains in `LINK_ASSISTANT_TOKEN`.
-fn append_codex_router_overrides(command: &mut Command, base_url: &str) -> Result<(), AnyError> {
+fn append_codex_router_overrides(
+    command: &mut Command,
+    base_url: &str,
+    catalog: &Path,
+) -> Result<(), AnyError> {
     for (key, value) in [
         ("model_provider", "link-assistant".to_string()),
+        ("model_catalog_json", catalog.to_string_lossy().into_owned()),
         (
             "model_providers.link-assistant.name",
             "Link.Assistant.Router".to_string(),
@@ -514,6 +520,50 @@ fn append_codex_router_overrides(command: &mut Command, base_url: &str) -> Resul
             .arg(format!("{key}={}", serde_json::to_string(&value)?));
     }
     Ok(())
+}
+
+/// Write the exact live Router catalog in Codex's process-local override shape.
+///
+/// Codex treats a user `model_catalog_json` as a complete replacement for its
+/// bundled catalog. A higher-precedence, disposable catalog prevents that file
+/// from authorizing foreign model ids without modifying the user's config or
+/// hiding their sessions, MCP servers, or ordinary preferences.
+fn write_codex_model_catalog(root: &Path, models: &[RouterModel]) -> Result<PathBuf, AnyError> {
+    if models.is_empty() {
+        return Err("the Router advertised no models for Codex".into());
+    }
+    let entries = models
+        .iter()
+        .enumerate()
+        .map(|(index, model)| {
+            json!({
+                "slug": model.id,
+                "display_name": model.id,
+                "description": format!("{} via Link.Assistant.Router", model.owned_by),
+                "default_reasoning_level": null,
+                "supported_reasoning_levels": [],
+                "shell_type": "unified_exec",
+                "visibility": "list",
+                "supported_in_api": true,
+                "priority": i32::try_from(index).unwrap_or(i32::MAX),
+                "availability_nux": null,
+                "upgrade": null,
+                "support_verbosity": false,
+                "default_verbosity": null,
+                "apply_patch_tool_type": "freeform",
+                "truncation_policy": {"mode": "tokens", "limit": 10_000},
+                "experimental_supported_tools": [],
+                "base_instructions": ""
+            })
+        })
+        .collect::<Vec<_>>();
+    let path = root.join("router-codex-models.json");
+    let rendered = format!(
+        "{}\n",
+        serde_json::to_string_pretty(&json!({"models": entries}))?
+    );
+    crate::durable_file::atomic_write_owner_only(&path, rendered.as_bytes())?;
+    Ok(path)
 }
 
 async fn interrupt_child(

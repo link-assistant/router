@@ -7,7 +7,7 @@ The long-term absolute floor is 80%. The canonical Ubuntu CI measurement is 76.8
 Run the same check locally with:
 
 ```bash
-cargo install cargo-llvm-cov --version 0.8.7 --locked
+cargo install cargo-llvm-cov --version 0.9.0 --locked
 cargo llvm-cov clean --workspace
 cargo llvm-cov --locked --all-features --workspace --no-report
 cargo llvm-cov report --json --summary-only --output-path coverage-summary.json
