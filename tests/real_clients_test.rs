@@ -29,6 +29,7 @@ const CODEX_VERSION: &str = "0.153.3";
 const OPENCODE_VERSION: &str = "1.18.28";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const ANSWER: &str = "ROUTER_CAPTURE_OK";
+const CODEX_ALTERNATE_MODEL: &str = "future-codex-switch-model";
 
 #[derive(Clone, Copy)]
 struct ClientCase {
@@ -143,6 +144,16 @@ impl MockRouter {
             .iter()
             .find(|request| request.path == path)
             .cloned()
+    }
+
+    fn inference_requests(&self, path: &str) -> Vec<CapturedRequest> {
+        self.requests
+            .lock()
+            .expect("read captured requests")
+            .iter()
+            .filter(|request| request.path == path)
+            .cloned()
+            .collect()
     }
 }
 
@@ -272,18 +283,49 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
             http_response("200 OK", "application/json", r#"{"revoked":"offline-run"}"#)
         }
         ("GET", path) if path.ends_with("/models") => {
-            let body = json!({
-                "object": "list",
-                "data": [{
+            let models = if case.client == "codex" {
+                vec![
+                    json!({
+                        "id": case.model,
+                        "type": "model",
+                        "display_name": case.model,
+                        "created_at": "2026-09-04T00:00:00Z",
+                        "owned_by": case.owner,
+                        "default_reasoning_level": "medium",
+                        "supported_reasoning_levels": [
+                            {"effort": "medium", "description": "Balanced reasoning"},
+                            {"effort": "high", "description": "Deep reasoning"},
+                            {"effort": "xhigh", "description": "Deepest reasoning"}
+                        ]
+                    }),
+                    json!({
+                        "id": CODEX_ALTERNATE_MODEL,
+                        "type": "model",
+                        "display_name": CODEX_ALTERNATE_MODEL,
+                        "created_at": "2026-09-04T00:00:00Z",
+                        "owned_by": case.owner,
+                        "default_reasoning_level": "high",
+                        "supported_reasoning_levels": [
+                            {"effort": "high", "description": "Default reasoning"},
+                            {"effort": "xhigh", "description": "Maximum reasoning"}
+                        ]
+                    }),
+                ]
+            } else {
+                vec![json!({
                     "id": case.model,
                     "type": "model",
                     "display_name": case.model,
                     "created_at": "2026-09-04T00:00:00Z",
                     "owned_by": case.owner
-                }],
+                })]
+            };
+            let body = json!({
+                "object": "list",
+                "data": models,
                 "has_more": false,
                 "first_id": case.model,
-                "last_id": case.model
+                "last_id": if case.client == "codex" { CODEX_ALTERNATE_MODEL } else { case.model }
             });
             http_response("200 OK", "application/json", &body.to_string())
         }
@@ -292,7 +334,17 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
         }
         ("POST", path) if path == case.inference_path => match case.client {
             "claude" => anthropic_answer(),
-            "codex" => responses_answer(case.model),
+            "codex" => {
+                let model = serde_json::from_slice::<Value>(&request.body)
+                    .ok()
+                    .and_then(|body| {
+                        body.get("model")
+                            .and_then(Value::as_str)
+                            .map(str::to_string)
+                    })
+                    .unwrap_or_else(|| case.model.to_string());
+                responses_answer(&model)
+            }
             "opencode" => chat_answer(case.model, &request.body),
             other => panic!("no offline answer for {other}"),
         },
@@ -421,6 +473,16 @@ fn version_output(case: ClientCase, home: &Path) -> Output {
 }
 
 fn run_wrapper(case: ClientCase, working_directory: &Path, home: &Path, server: &str) -> Output {
+    run_wrapper_with_model(case, working_directory, home, server, case.model)
+}
+
+fn run_wrapper_with_model(
+    case: ClientCase,
+    working_directory: &Path,
+    home: &Path,
+    server: &str,
+    model: &str,
+) -> Output {
     let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
         .args([
             "--server",
@@ -428,7 +490,7 @@ fn run_wrapper(case: ClientCase, working_directory: &Path, home: &Path, server: 
             "--token",
             "offline-admin",
             "--model",
-            case.model,
+            model,
             "--non-interactive",
             case.client,
             PROMPT,
@@ -536,6 +598,21 @@ fn assert_real_client_capture(case: ClientCase) {
         case.client,
         String::from_utf8_lossy(&output.stdout)
     );
+    if case.client == "codex" {
+        let switched = run_wrapper_with_model(
+            case,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            directory.path(),
+            &router.origin,
+            CODEX_ALTERNATE_MODEL,
+        );
+        assert!(
+            switched.status.success(),
+            "Codex model switch failed against the offline mock; stdout: {}; stderr: {}",
+            String::from_utf8_lossy(&switched.stdout),
+            String::from_utf8_lossy(&switched.stderr)
+        );
+    }
     if let Some((config, before)) = foreign_codex_config {
         assert_eq!(
             std::fs::read(config).expect("read Codex config after run"),
@@ -603,6 +680,24 @@ fn assert_real_client_capture(case: ClientCase) {
         "codex" => {
             assert_eq!(request.header("originator"), Some("codex_exec"));
             assert!(request.header("x-codex-turn-metadata").is_some());
+            let requests = router.inference_requests(case.inference_path);
+            assert_eq!(
+                requests.len(),
+                2,
+                "expected one request for each live model"
+            );
+            let bodies = requests
+                .iter()
+                .map(|request| serde_json::from_slice::<Value>(&request.body).unwrap())
+                .collect::<Vec<_>>();
+            assert_eq!(bodies[0]["model"], case.model);
+            assert_eq!(bodies[1]["model"], CODEX_ALTERNATE_MODEL);
+            for body in bodies {
+                assert_eq!(
+                    body["reasoning"]["effort"], "xhigh",
+                    "model selection must preserve the user's explicit reasoning effort"
+                );
+            }
         }
         "opencode" => {
             assert!(request.header("x-session-id").is_some());

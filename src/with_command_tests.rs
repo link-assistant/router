@@ -62,6 +62,7 @@ fn the_users_configuration_is_kept_by_default() {
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
+        ..RouterModel::default()
     }];
     let extended = TemporaryClient::prepare(&Preparation {
         client: ClientKind::ClaudeCode,
@@ -72,6 +73,7 @@ fn the_users_configuration_is_kept_by_default() {
         isolated_config: false,
         one_shot: true,
         profile_root: None,
+        codex_reasoning_effort: None,
     })
     .expect("prepare with the default configuration handling");
     let names: Vec<String> = extended
@@ -141,6 +143,7 @@ fn the_users_configuration_is_kept_by_default() {
         isolated_config: true,
         one_shot: true,
         profile_root: None,
+        codex_reasoning_effort: None,
     })
     .expect("prepare isolated");
     assert!(
@@ -158,10 +161,12 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
         RouterModel {
             id: "future-first-2099".to_string(),
             owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
         },
         RouterModel {
             id: "future-explicit-2099".to_string(),
             owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
         },
     ];
     let resumed = TemporaryClient::prepare(&Preparation {
@@ -173,6 +178,7 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
         isolated_config: false,
         one_shot: false,
         profile_root: None,
+        codex_reasoning_effort: None,
     })
     .expect("prepare a resumed z.ai-only Claude session");
     let resumed_env = resumed
@@ -202,6 +208,7 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
         isolated_config: false,
         one_shot: true,
         profile_root: None,
+        codex_reasoning_effort: None,
     })
     .expect("prepare an explicit z.ai Claude model");
     let explicit_env = explicit
@@ -231,6 +238,11 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     let models = [RouterModel {
         id: "gpt-5.6-sol".to_string(),
         owned_by: "codex".to_string(),
+        default_reasoning_level: Some("high".to_string()),
+        supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
+            effort: "high".to_string(),
+            description: "Deep reasoning".to_string(),
+        }]),
     }];
     assert!(
         extends_user_configuration(ClientKind::Codex, false),
@@ -250,6 +262,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         isolated_config: false,
         one_shot: true,
         profile_root: None,
+        codex_reasoning_effort: None,
     })
     .expect("prepare Codex overlay");
 
@@ -287,6 +300,11 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     )
     .expect("parse process-local model catalog");
     assert_eq!(catalog["models"][0]["slug"], "gpt-5.6-sol");
+    assert_eq!(catalog["models"][0]["default_reasoning_level"], "high");
+    assert_eq!(
+        catalog["models"][0]["supported_reasoning_levels"],
+        json!([{"effort": "high", "description": "Deep reasoning"}])
+    );
     assert_eq!(catalog["models"].as_array().unwrap().len(), 1);
     assert_eq!(
         arguments[4..],
@@ -311,6 +329,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         isolated_config: true,
         one_shot: true,
         profile_root: None,
+        codex_reasoning_effort: None,
     })
     .expect("prepare isolated Codex");
     let isolated_home = isolated
@@ -336,6 +355,140 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     );
 }
 
+/// Issue #423: the disposable catalog is a projection of the live Codex
+/// catalog, not a model capability table maintained by Router. Different live
+/// entries must therefore keep their different defaults and supported levels.
+#[test]
+fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
+    let root = tempfile::tempdir().expect("temporary catalog directory");
+    let models = [
+        RouterModel {
+            id: "future-reasoning-a".to_string(),
+            owned_by: "openai".to_string(),
+            default_reasoning_level: Some("medium".to_string()),
+            supported_reasoning_levels: Some(vec![
+                crate::clients::RouterReasoningLevel {
+                    effort: "low".to_string(),
+                    description: "Faster answers".to_string(),
+                },
+                crate::clients::RouterReasoningLevel {
+                    effort: "medium".to_string(),
+                    description: "Balanced reasoning".to_string(),
+                },
+                crate::clients::RouterReasoningLevel {
+                    effort: "xhigh".to_string(),
+                    description: "Deepest reasoning".to_string(),
+                },
+            ]),
+        },
+        RouterModel {
+            id: "future-reasoning-b".to_string(),
+            owned_by: "openai".to_string(),
+            default_reasoning_level: Some("xhigh".to_string()),
+            supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
+                effort: "xhigh".to_string(),
+                description: "Only supported level".to_string(),
+            }]),
+        },
+    ];
+
+    let path =
+        write_codex_model_catalog(root.path(), &models, None, None).expect("write live catalog");
+    let catalog: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(path).expect("read generated catalog"))
+            .expect("parse generated catalog");
+
+    assert_eq!(
+        catalog["models"][0]["supported_reasoning_levels"],
+        json!([
+            {"effort": "low", "description": "Faster answers"},
+            {"effort": "medium", "description": "Balanced reasoning"},
+            {"effort": "xhigh", "description": "Deepest reasoning"}
+        ])
+    );
+    assert_eq!(
+        catalog["models"][1]["supported_reasoning_levels"],
+        json!([{"effort": "xhigh", "description": "Only supported level"}])
+    );
+    assert_eq!(catalog["models"][0]["default_reasoning_level"], "medium");
+    assert_eq!(catalog["models"][1]["default_reasoning_level"], "xhigh");
+}
+
+/// Missing capability metadata is different from an authoritative empty list:
+/// launching with unknown metadata would make Codex silently discard an
+/// explicit user effort after `/model`, so Router must stop with a useful error.
+#[test]
+fn codex_catalog_rejects_unknown_reasoning_metadata() {
+    let root = tempfile::tempdir().expect("temporary catalog directory");
+    let models = [RouterModel {
+        id: "future-reasoning-unknown".to_string(),
+        owned_by: "openai".to_string(),
+        default_reasoning_level: None,
+        supported_reasoning_levels: None,
+    }];
+
+    let error = write_codex_model_catalog(root.path(), &models, None, None)
+        .expect_err("unknown reasoning metadata must not silently reset the user's setting")
+        .to_string();
+    assert!(error.contains("future-reasoning-unknown"), "{error}");
+    assert!(error.contains("reasoning metadata"), "{error}");
+}
+
+#[test]
+fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
+    let root = tempfile::tempdir().expect("temporary catalog directory");
+    let models = [
+        RouterModel {
+            id: "future-supports-xhigh".to_string(),
+            owned_by: "openai".to_string(),
+            default_reasoning_level: Some("medium".to_string()),
+            supported_reasoning_levels: Some(vec![
+                crate::clients::RouterReasoningLevel {
+                    effort: "medium".to_string(),
+                    description: "Balanced reasoning".to_string(),
+                },
+                crate::clients::RouterReasoningLevel {
+                    effort: "xhigh".to_string(),
+                    description: "Deepest reasoning".to_string(),
+                },
+            ]),
+        },
+        RouterModel {
+            id: "future-medium-only".to_string(),
+            owned_by: "openai".to_string(),
+            default_reasoning_level: Some("medium".to_string()),
+            supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
+                effort: "medium".to_string(),
+                description: "Only supported level".to_string(),
+            }]),
+        },
+    ];
+
+    let path = write_codex_model_catalog(root.path(), &models, Some("xhigh"), None)
+        .expect("write compatibility catalog");
+    let catalog: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(path).expect("read generated catalog"))
+            .expect("parse generated catalog");
+    let slugs = catalog["models"]
+        .as_array()
+        .expect("models array")
+        .iter()
+        .filter_map(|model| model["slug"].as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(slugs, ["future-supports-xhigh"]);
+
+    let error = write_codex_model_catalog(
+        root.path(),
+        &models,
+        Some("xhigh"),
+        Some("future-medium-only"),
+    )
+    .expect_err("an explicit unsupported model must be rejected")
+    .to_string();
+    assert!(error.contains("future-medium-only"), "{error}");
+    assert!(error.contains("xhigh"), "{error}");
+}
+
 /// A client configured through a file is isolated even though extending is
 /// the default, because there is nothing to layer short of rewriting that
 /// file.
@@ -350,6 +503,7 @@ fn a_file_configured_client_is_isolated_even_by_default() {
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
+        ..RouterModel::default()
     }];
     assert!(
         !extends_user_configuration(ClientKind::Opencode, false),
@@ -375,6 +529,7 @@ fn a_file_configured_client_is_isolated_even_by_default() {
         isolated_config: false,
         one_shot: true,
         profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
     })
     .expect("a file-configured client must still run");
 }
@@ -404,6 +559,7 @@ fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
+        ..RouterModel::default()
     }];
     let profiles = tempfile::tempdir().expect("profile root");
     let temporary = TemporaryClient::prepare(&Preparation {
@@ -415,6 +571,7 @@ fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
         isolated_config: false,
         one_shot: true,
         profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
     })
     .expect("prepare gemini");
     let root = temporary.directory.path();
@@ -487,6 +644,11 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
+        default_reasoning_level: Some("medium".to_string()),
+        supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
+            effort: "medium".to_string(),
+            description: "Test reasoning".to_string(),
+        }]),
     }];
     let profiles = tempfile::tempdir().expect("profile root");
     for client in ClientKind::ALL {
@@ -501,6 +663,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
                     isolated_config: false,
                     one_shot: true,
                     profile_root: Some(profiles.path()),
+                    codex_reasoning_effort: None,
                 })
                 .is_err()
             );
@@ -515,6 +678,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             isolated_config: false,
             one_shot: true,
             profile_root: Some(profiles.path()),
+            codex_reasoning_effort: None,
         })
         .unwrap_or_else(|error| panic!("{client} failed setup: {error}"));
         let root = temporary.directory.path().to_path_buf();

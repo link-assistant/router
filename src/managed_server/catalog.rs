@@ -34,16 +34,8 @@ pub(super) async fn fetch_models(
             .and_then(Value::as_array)
             .ok_or("router model catalog did not contain a data array")?
             .iter()
-            .filter_map(|model| {
-                Some(RouterModel {
-                    id: model.get("id")?.as_str()?.to_string(),
-                    owned_by: model
-                        .get("owned_by")
-                        .and_then(Value::as_str)
-                        .unwrap_or_default()
-                        .to_string(),
-                })
-            })
+            .filter_map(|model| serde_json::from_value::<RouterModel>(model.clone()).ok())
+            .filter(|model| !model.id.trim().is_empty())
             .collect();
         if models.is_empty() {
             return Err(

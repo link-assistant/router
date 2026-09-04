@@ -28,6 +28,8 @@ pub use repair::{RepairPlan, RepairResult};
 pub use types::{ClientError, ClientStatus, SetupResult};
 
 pub(crate) use catalog::RouterModel;
+#[cfg(test)]
+pub(crate) use catalog::RouterReasoningLevel;
 pub(crate) use catalog::claude_gateway_model;
 use catalog::doctor_model;
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};

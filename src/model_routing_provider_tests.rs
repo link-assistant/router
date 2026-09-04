@@ -249,6 +249,7 @@ async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].0, "/v1/chat/completions");
     assert_eq!(requests[0].1["model"], "shared-future");
+    drop(requests);
     task.abort();
 }
 

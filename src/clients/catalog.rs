@@ -2,16 +2,35 @@
 
 use std::time::Duration;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::{ClientError, ClientKind, ClientManager, compact_body, normalize_base_url};
 
 /// One model advertised by the configured router.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq)]
 pub struct RouterModel {
     pub id: String,
     #[serde(default)]
     pub owned_by: String,
+    /// The model's live default, if the provider supplied one.
+    #[serde(default)]
+    pub default_reasoning_level: Option<String>,
+    /// `None` means the provider did not supply capability metadata. An empty
+    /// list is different: it authoritatively says this model has no selectable
+    /// reasoning effort.
+    #[serde(default)]
+    pub supported_reasoning_levels: Option<Vec<RouterReasoningLevel>>,
+}
+
+/// One reasoning option retained verbatim from a live Codex catalog.
+///
+/// Strings are intentionally not an enum: Codex accepts provider-defined
+/// future values, and Router must forward rather than freeze that vocabulary.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct RouterReasoningLevel {
+    pub effort: String,
+    #[serde(default)]
+    pub description: String,
 }
 
 #[derive(Deserialize)]

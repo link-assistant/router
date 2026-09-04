@@ -119,6 +119,11 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if let Some(note) = plan.note {
         eprintln!("{note}");
     }
+    let codex_reasoning_effort = if args.client == ClientKind::Codex && !args.isolated_config {
+        configured_codex_reasoning_effort()?
+    } else {
+        None
+    };
     let temporary = match TemporaryClient::prepare(&Preparation {
         client: args.client,
         base_url: &server.base_url,
@@ -128,6 +133,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         isolated_config: args.isolated_config,
         one_shot: plan.one_shot,
         profile_root: None,
+        codex_reasoning_effort: codex_reasoning_effort.as_deref(),
     }) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -321,6 +327,7 @@ struct Preparation<'a> {
     isolated_config: bool,
     one_shot: bool,
     profile_root: Option<&'a Path>,
+    codex_reasoning_effort: Option<&'a str>,
 }
 
 impl TemporaryClient {
@@ -334,6 +341,7 @@ impl TemporaryClient {
             isolated_config,
             one_shot,
             profile_root,
+            codex_reasoning_effort,
         } = request;
         // A client that can be extended never reads this directory — the
         // router's whole contribution is two environment variables — so it is
@@ -442,7 +450,12 @@ impl TemporaryClient {
             }
             ClientKind::Codex => {
                 if !isolated_config {
-                    let catalog = write_codex_model_catalog(directory.path(), models)?;
+                    let catalog = write_codex_model_catalog(
+                        directory.path(),
+                        models,
+                        codex_reasoning_effort,
+                        model_override,
+                    )?;
                     append_codex_router_overrides(&mut command, base_url, &catalog)?;
                 }
             }
@@ -528,20 +541,59 @@ fn append_codex_router_overrides(
 /// bundled catalog. A higher-precedence, disposable catalog prevents that file
 /// from authorizing foreign model ids without modifying the user's config or
 /// hiding their sessions, MCP servers, or ordinary preferences.
-fn write_codex_model_catalog(root: &Path, models: &[RouterModel]) -> Result<PathBuf, AnyError> {
+fn write_codex_model_catalog(
+    root: &Path,
+    models: &[RouterModel],
+    configured_effort: Option<&str>,
+    selected_model: Option<&str>,
+) -> Result<PathBuf, AnyError> {
     if models.is_empty() {
         return Err("the Router advertised no models for Codex".into());
     }
-    let entries = models
+    for model in models {
+        validate_codex_reasoning_metadata(model)?;
+    }
+    if let (Some(effort), Some(selected)) = (configured_effort, selected_model) {
+        let model = models
+            .iter()
+            .find(|model| model.id == selected)
+            .ok_or_else(|| format!("the Router advertised no Codex model named `{selected}`"))?;
+        if !model_supports_reasoning_effort(model, effort) {
+            return Err(format!(
+                "Codex model `{selected}` does not support configured reasoning effort \
+                 `{effort}`; choose a supported model or change `model_reasoning_effort`"
+            )
+            .into());
+        }
+    }
+    let compatible = models
+        .iter()
+        .filter(|model| {
+            configured_effort.is_none_or(|effort| model_supports_reasoning_effort(model, effort))
+        })
+        .collect::<Vec<_>>();
+    if compatible.is_empty() {
+        let effort = configured_effort.expect("an unfiltered non-empty catalog stays non-empty");
+        return Err(format!(
+            "the live Codex catalog has no model supporting configured reasoning effort \
+             `{effort}`; change `model_reasoning_effort` and retry"
+        )
+        .into());
+    }
+    let entries = compatible
         .iter()
         .enumerate()
-        .map(|(index, model)| {
-            json!({
+        .map(|(index, model)| -> Result<serde_json::Value, AnyError> {
+            let supported = model
+                .supported_reasoning_levels
+                .as_ref()
+                .expect("metadata was validated before projection");
+            Ok(json!({
                 "slug": model.id,
                 "display_name": model.id,
                 "description": format!("{} via Link.Assistant.Router", model.owned_by),
-                "default_reasoning_level": null,
-                "supported_reasoning_levels": [],
+                "default_reasoning_level": model.default_reasoning_level,
+                "supported_reasoning_levels": supported,
                 "shell_type": "unified_exec",
                 "visibility": "list",
                 "supported_in_api": true,
@@ -554,9 +606,9 @@ fn write_codex_model_catalog(root: &Path, models: &[RouterModel]) -> Result<Path
                 "truncation_policy": {"mode": "tokens", "limit": 10_000},
                 "experimental_supported_tools": [],
                 "base_instructions": ""
-            })
+            }))
         })
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>, _>>()?;
     let path = root.join("router-codex-models.json");
     let rendered = format!(
         "{}\n",
@@ -564,6 +616,68 @@ fn write_codex_model_catalog(root: &Path, models: &[RouterModel]) -> Result<Path
     );
     crate::durable_file::atomic_write_owner_only(&path, rendered.as_bytes())?;
     Ok(path)
+}
+
+fn validate_codex_reasoning_metadata(model: &RouterModel) -> Result<(), AnyError> {
+    let supported = model.supported_reasoning_levels.as_ref().ok_or_else(|| {
+        format!(
+            "the live Codex catalog omitted reasoning metadata for model `{}`; refusing to \
+             launch because model selection could silently replace the user's configured \
+             reasoning effort",
+            model.id
+        )
+    })?;
+    if let Some(default) = model.default_reasoning_level.as_deref()
+        && !supported.iter().any(|level| level.effort == default)
+    {
+        return Err(format!(
+            "the live Codex catalog reports unsupported default reasoning level `{default}` \
+             for model `{}`",
+            model.id
+        )
+        .into());
+    }
+    Ok(())
+}
+
+fn model_supports_reasoning_effort(model: &RouterModel, effort: &str) -> bool {
+    model
+        .supported_reasoning_levels
+        .as_ref()
+        .is_some_and(|levels| levels.iter().any(|level| level.effort == effort))
+}
+
+/// Read only the preference needed to keep Codex's process-local model picker
+/// compatible. The real file remains the source of every other setting and is
+/// never rewritten by `with`.
+fn configured_codex_reasoning_effort() -> Result<Option<String>, AnyError> {
+    let path = ClientManager::from_env()?.config_path(ClientKind::Codex);
+    let source = match fs::read_to_string(&path) {
+        Ok(source) => source,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(format!("could not read Codex config {}: {error}", path.display()).into());
+        }
+    };
+    let document = source.parse::<toml_edit::DocumentMut>().map_err(|error| {
+        format!(
+            "could not read `model_reasoning_effort` from Codex config {}: {error}",
+            path.display()
+        )
+    })?;
+    let Some(item) = document.get("model_reasoning_effort") else {
+        return Ok(None);
+    };
+    let effort = item
+        .as_str()
+        .filter(|effort| !effort.trim().is_empty())
+        .ok_or_else(|| {
+            format!(
+                "Codex config {} has a non-string or empty `model_reasoning_effort`",
+                path.display()
+            )
+        })?;
+    Ok(Some(effort.to_string()))
 }
 
 async fn interrupt_child(

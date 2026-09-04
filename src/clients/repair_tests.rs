@@ -42,6 +42,7 @@ fn every_setup_write_is_rolled_back_for_every_supported_client() {
                 &[RouterModel {
                     id: "future-model".into(),
                     owned_by: "future-provider".into(),
+                    ..RouterModel::default()
                 }],
             );
             FAIL_AFTER_WRITE.set(None);
@@ -93,6 +94,7 @@ fn every_configure_write_is_rolled_back_for_every_file_configurable_client() {
                 &[RouterModel {
                     id: "future-model".into(),
                     owned_by: "future-provider".into(),
+                    ..RouterModel::default()
                 }],
             );
             FAIL_AFTER_WRITE.set(None);

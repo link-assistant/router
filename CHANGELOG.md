@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
+- Preserve live per-model Codex reasoning capabilities in `router with codex`, keep an explicit configured effort across compatible model selections, and reject unknown or incompatible metadata instead of silently lowering the effort ([#423](https://github.com/link-assistant/router/issues/423)).
+
 
 
 
