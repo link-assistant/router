@@ -419,7 +419,8 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
 }
 
 /// A synthetic credential cannot be adopted merely because it parses and says
-/// it has not expired. Import now proves the refresh chain at the vendor first.
+/// it has not expired. Import now proves the live access token at the vendor
+/// without spending the source refresh link.
 #[test]
 fn an_unverified_claude_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
@@ -454,7 +455,11 @@ fn an_unverified_claude_login_is_not_adopted() {
         "an unverified credential reached the destination"
     );
     let seen = String::from_utf8_lossy(&output.stderr);
-    assert!(seen.contains("candidate refresh chain"), "{seen}");
+    assert!(
+        seen.contains("candidate was rejected by the vendor catalog")
+            && seen.contains("refresh token was not spent"),
+        "{seen}"
+    );
 }
 
 /// Codex follows the same fail-closed public path; preservation of its complete
@@ -487,7 +492,8 @@ fn an_unverified_codex_login_is_not_adopted() {
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join("auth.json").exists());
     assert!(
-        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        String::from_utf8_lossy(&output.stderr)
+            .contains("candidate was rejected by the vendor catalog"),
         "{output:?}"
     );
 }
@@ -808,7 +814,8 @@ fn the_import_subcommand_cannot_bypass_validation() {
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join(".credentials.json").exists());
     assert!(
-        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        String::from_utf8_lossy(&output.stderr)
+            .contains("candidate was rejected by the vendor catalog"),
         "{output:?}"
     );
 }
@@ -844,7 +851,10 @@ fn an_unqualified_import_reads_the_vendors_own_home() {
         "an unverified credential must not reach the router's home"
     );
     let error = String::from_utf8_lossy(&output.stderr);
-    assert!(error.contains("candidate refresh chain"), "{error}");
+    assert!(
+        error.contains("candidate was rejected by the vendor catalog"),
+        "{error}"
+    );
     assert!(
         !error.contains("no claude credential"),
         "the vendor home was not read: {error}"
@@ -889,7 +899,8 @@ fn importing_everything_adopts_what_exists_and_reports_what_does_not() {
     let seen = String::from_utf8_lossy(&output.stdout);
     assert!(seen.contains("nothing to adopt"), "{seen}");
     assert!(
-        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        String::from_utf8_lossy(&output.stderr)
+            .contains("candidate was rejected by the vendor catalog"),
         "{output:?}"
     );
 }
