@@ -16,6 +16,7 @@ bump: patch
 - Stopped mapping one z.ai model onto Claude Code's three Anthropic family overrides; z.ai-only setup now pins only the dynamic main and subagent boundaries.
 - Removed ingress forwarding and client-IP headers from every shared native upstream path while preserving official client protocol headers unchanged.
 - Replaced the obsolete unbound Anthropic curl example with the current Claude-bound token and transparent-header contract.
+- Added full-stack denial logging coverage and bounded capture of small rejected JSON bodies, proving client request/response correlation without any upstream or stream-end record.
 
 ### Changed
 - Updated the pinned Codex and OpenCode real-client validation dependencies to 0.153.3 and 1.18.28.

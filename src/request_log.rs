@@ -57,6 +57,10 @@ pub const DEFAULT_MAX_BYTES: u64 = 100 * 1024 * 1024;
 /// so it is not self-limiting either (issue #331).
 pub const DEFAULT_MAX_TOTAL_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const MAX_BUFFERED_REQUEST_BYTES: usize = 10 * 1024 * 1024;
+/// Small JSON requests are captured before policy evaluation so a local denial
+/// retains diagnostic content. Larger or streaming bodies stay lazy to bound
+/// unauthenticated memory pressure.
+const MAX_EAGER_REQUEST_BYTES: usize = 64 * 1024;
 const REDACTED: &str = "[REDACTED]";
 const UNAUTHENTICATED: &str = "unauthenticated";
 const TOKEN_HASH_HEX_LENGTH: usize = 32;
@@ -606,6 +610,13 @@ impl ClientRequestCapture {
             .map(str::to_string)
     }
 
+    fn complete(&mut self) {
+        if let Ok(mut model) = self.model.lock() {
+            *model = self.extract_model();
+        }
+        self.record();
+    }
+
     fn record(&mut self) {
         if self.recorded {
             return;
@@ -644,6 +655,19 @@ impl ClientRequestCapture {
         );
         self.recorded = true;
     }
+}
+
+fn eagerly_capture_json(headers: &HeaderMap) -> bool {
+    let json = headers
+        .get("content-type")
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value.to_ascii_lowercase().starts_with("application/json"));
+    let bounded_length = headers
+        .get("content-length")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.parse::<usize>().ok())
+        .is_some_and(|length| length > 0 && length <= MAX_EAGER_REQUEST_BYTES);
+    json && bounded_length
 }
 
 impl Drop for ClientRequestCapture {
@@ -708,33 +732,53 @@ pub async fn log_http_exchange(
         recorded: false,
         model: Arc::clone(&requested_model),
     };
-    let stream = futures_util::stream::unfold(
-        (body.into_data_stream(), capture),
-        |(mut stream, mut capture)| async move {
-            match stream.next().await {
-                Some(Ok(bytes)) => {
-                    capture.push(&bytes);
-                    Some((Ok::<_, axum::Error>(bytes), (stream, capture)))
-                }
-                Some(Err(error)) => {
-                    capture.omitted = true;
-                    Some((Err(error), (stream, capture)))
-                }
-                None => {
-                    if let Ok(mut model) = capture.model.lock() {
-                        *model = capture.extract_model();
+    let (request_body, early_response) = if eagerly_capture_json(&parts.headers) {
+        if let Ok(bytes) = axum::body::to_bytes(body, MAX_EAGER_REQUEST_BYTES).await {
+            let mut capture = capture;
+            capture.push(&bytes);
+            capture.complete();
+            (Body::from(bytes), None)
+        } else {
+            let mut capture = capture;
+            capture.omitted = true;
+            capture.record();
+            (
+                Body::empty(),
+                Some(crate::proxy::error_response(
+                    axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    "invalid_request_error",
+                    "request body exceeds the bounded logging limit declared by Content-Length",
+                )),
+            )
+        }
+    } else {
+        let stream = futures_util::stream::unfold(
+            (body.into_data_stream(), capture),
+            |(mut stream, mut capture)| async move {
+                match stream.next().await {
+                    Some(Ok(bytes)) => {
+                        capture.push(&bytes);
+                        Some((Ok::<_, axum::Error>(bytes), (stream, capture)))
                     }
-                    capture.record();
-                    None
+                    Some(Err(error)) => {
+                        capture.omitted = true;
+                        Some((Err(error), (stream, capture)))
+                    }
+                    None => {
+                        capture.complete();
+                        None
+                    }
                 }
-            }
-        },
-    );
+            },
+        );
+        (Body::from_stream(stream), None)
+    };
     let method = parts.method.clone();
     let started = Instant::now();
-    let response = next
-        .run(Request::from_parts(parts, Body::from_stream(stream)))
-        .await;
+    let response = match early_response {
+        Some(response) => response,
+        None => next.run(Request::from_parts(parts, request_body)).await,
+    };
     // Written after the handler has run, because that is when the body has
     // streamed through the capture above and the model is known. Emitting it
     // on arrival is what left the field unfillable: the middleware sits
