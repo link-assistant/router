@@ -150,6 +150,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.2.0] - 2026-09-04
+
+### Changed
+
+- Update every active Rust, UI, workflow, toolchain, and container dependency to the latest verified release.
+
+### Fixed
+
+- Require exact, complete signed client bindings when adopting local managed-client tokens.
+- Make the live Router catalog authoritative for managed Codex launches without replacing user configuration.
+
+### Added
+
+- Discover z.ai Coding Plan models from its authenticated non-inference catalog and merge exact vendor records into every authorized client catalog.
+- Expose and enforce explicit `supported_clients` compatibility for ordinary API providers.
+
+### Fixed
+
+- Preserve healthy subscription catalogs when providers are added at runtime, fail explicitly on exact model-ID collisions, and reject incompatible direct requests before upstream dispatch.
+
+### Changed
+
+- Preserve native Claude Code, Codex, and OpenCode request identity, response metadata, JSON semantics, and SSE bytes while replacing only credentials and unavoidable proxy transport fields.
+
 ## [1.1.1] - 2026-09-04
 
 ### Changed
