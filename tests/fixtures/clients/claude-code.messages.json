@@ -1,6 +1,6 @@
 {
   "client": "claude-code",
-  "version": "unpinned",
+  "version": "2.1.259",
   "source": "the Anthropic Messages shape Claude Code sends; the router's primary surface",
   "method": "POST",
   "path": "/api/services/anthropic/v1/messages",
@@ -8,7 +8,8 @@
   "expected_surface": "anthropic",
   "headers": {
     "content-type": "application/json",
-    "anthropic-version": "2023-06-01"
+    "anthropic-version": "2023-06-01",
+    "user-agent": "claude-cli/2.1.259"
   },
   "body": {
     "model": "{model}",

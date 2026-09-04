@@ -202,7 +202,7 @@ fn claude_setup_maps_zai_only_default_families_and_subagents() {
     )
     .unwrap();
     let models = vec![RouterModel {
-        id: "claude-zai-future-saffron".into(),
+        id: "future-saffron-2099".into(),
         owned_by: ZAI_MODEL_OWNER.into(),
     }];
     manager
@@ -221,7 +221,7 @@ fn claude_setup_maps_zai_only_default_families_and_subagents() {
         "0"
     );
     for key in CLAUDE_MODEL_ENV {
-        assert_eq!(settings["env"][key], "claude-zai-future-saffron", "{key}");
+        assert_eq!(settings["env"][key], "future-saffron-2099", "{key}");
     }
     let env = manager
         .write_environment(
@@ -269,7 +269,7 @@ fn claude_setup_leaves_native_anthropic_discovery_unpinned() {
             owned_by: ANTHROPIC_MODEL_OWNER.into(),
         },
         RouterModel {
-            id: "claude-zai-future-saffron".into(),
+            id: "future-saffron-2099".into(),
             owned_by: ZAI_MODEL_OWNER.into(),
         },
     ];
@@ -290,21 +290,21 @@ fn claude_setup_leaves_native_anthropic_discovery_unpinned() {
 fn claude_gateway_model_is_live_and_an_explicit_zai_choice_wins() {
     let zai = vec![
         RouterModel {
-            id: "claude-zai-future-first".into(),
+            id: "future-first-2099".into(),
             owned_by: ZAI_MODEL_OWNER.into(),
         },
         RouterModel {
-            id: "claude-zai-future-explicit".into(),
+            id: "future-explicit-2099".into(),
             owned_by: ZAI_MODEL_OWNER.into(),
         },
     ];
     assert_eq!(
         claude_gateway_model(&zai, None).as_deref(),
-        Some("claude-zai-future-first")
+        Some("future-first-2099")
     );
     assert_eq!(
-        claude_gateway_model(&zai, Some("claude-zai-future-explicit")).as_deref(),
-        Some("claude-zai-future-explicit")
+        claude_gateway_model(&zai, Some("future-explicit-2099")).as_deref(),
+        Some("future-explicit-2099")
     );
 
     let native = vec![RouterModel {
@@ -319,7 +319,7 @@ fn zai_model_pins_are_owned_configuration_and_drift_is_detected() {
     let home = tempfile::tempdir().unwrap();
     let manager = ClientManager::isolated(home.path());
     let models = vec![RouterModel {
-        id: "claude-zai-future-saffron".into(),
+        id: "future-saffron-2099".into(),
         owned_by: ZAI_MODEL_OWNER.into(),
     }];
     manager

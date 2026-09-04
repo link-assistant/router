@@ -1,29 +1,47 @@
 use super::{AppState, HeaderMap, ModelRouteError, UpstreamProvider, Value, json};
 
-pub(super) fn append_stored_provider_models(state: &AppState, catalog: &mut Value) {
+pub(super) fn append_stored_provider_models(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &HeaderMap,
+    path: &str,
+    catalog: &mut Value,
+) -> Result<(), ModelRouteError> {
+    let Ok((client, _)) = crate::client_policy::bound_client(claims) else {
+        return Ok(());
+    };
+    if !crate::client_policy::request_evidence(
+        client,
+        crate::client_policy::ClientProtocol::Catalog,
+        path,
+        headers,
+    ) {
+        return Ok(());
+    }
     let Ok(providers) = state.provider_store.list() else {
-        return;
+        return Ok(());
     };
     let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
-        return;
+        return Ok(());
     };
     for provider in providers.iter().filter(|record| {
-        record.enabled && record.kind != crate::providers::ProviderKind::ZaiCodingPlan
+        record.enabled
+            && record.kind != crate::providers::ProviderKind::ZaiCodingPlan
+            && (state.upstream_provider == UpstreamProvider::Auto
+                || record.name == state.openai_compatible.provider_name)
+            && record
+                .effective_supported_clients()
+                .iter()
+                .any(|supported| supported == client.canonical_name())
     }) {
         for model in &provider.models {
             if data
                 .iter()
                 .any(|entry| entry.get("id").and_then(Value::as_str) == Some(model.as_str()))
             {
-                // The id is already listed by a subscription, so name this one
-                // in its qualified form: both remain reachable, and the
-                // unqualified id stays ambiguous rather than silently bound.
-                data.push(json!({
-                    "id": format!("{}/{}", provider.name, model),
-                    "object": "model",
-                    "owned_by": provider.name,
-                }));
-                continue;
+                return Err(ModelRouteError::Conflict(format!(
+                    "exact model id '{model}' is advertised by more than one healthy provider"
+                )));
             }
             data.push(json!({
                 "id": model,
@@ -32,6 +50,7 @@ pub(super) fn append_stored_provider_models(state: &AppState, catalog: &mut Valu
             }));
         }
     }
+    Ok(())
 }
 
 /// Add only the healthy Coding Plan aliases authorized for this signed client.
@@ -41,52 +60,73 @@ pub(super) async fn append_zai_models(
     headers: &HeaderMap,
     path: &str,
     catalog: &mut Value,
-) {
+) -> Result<(), ModelRouteError> {
     let Ok(Some(provider)) = crate::zai_coding_plan::resolve(state) else {
-        return;
+        return Ok(());
     };
-    let Ok((_, registry, _)) =
+    let Ok((client, _)) =
         crate::zai_coding_plan::authorize_catalog(&provider, claims, headers, path)
     else {
-        return;
+        return Ok(());
     };
-    if let Err(reason) = crate::zai_coding_plan::credential_healthy(&state.client, &provider).await
-    {
-        if let Some(object) = catalog.as_object_mut() {
-            let degraded = object
-                .entry("degraded_providers")
-                .or_insert_with(|| Value::Array(Vec::new()));
-            if let Some(entries) = degraded.as_array_mut()
-                && !entries.iter().any(|entry| entry == "z.ai")
-            {
-                entries.push(Value::String("z.ai".into()));
+    let live_models = match crate::zai_coding_plan::live_catalog(state, &provider).await {
+        Ok(models) => models,
+        Err(_) => {
+            if let Some(object) = catalog.as_object_mut() {
+                let degraded = object
+                    .entry("degraded_providers")
+                    .or_insert_with(|| Value::Array(Vec::new()));
+                if let Some(entries) = degraded.as_array_mut()
+                    && !entries.iter().any(|entry| entry == "z.ai")
+                {
+                    entries.push(Value::String("z.ai".into()));
+                }
+                let reasons = object
+                    .entry("degraded_reasons")
+                    .or_insert_with(|| Value::Object(serde_json::Map::new()));
+                if let Some(reasons) = reasons.as_object_mut() {
+                    reasons.insert(
+                        "z.ai".into(),
+                        Value::String("live z.ai catalog refresh failed".into()),
+                    );
+                }
             }
-            let reasons = object
-                .entry("degraded_reasons")
-                .or_insert_with(|| Value::Object(serde_json::Map::new()));
-            if let Some(reasons) = reasons.as_object_mut() {
-                reasons.insert("z.ai".into(), Value::String(reason));
-            }
+            return Ok(());
         }
-        return;
-    }
-    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
-        return;
     };
-    for entry in registry {
+    let registry = crate::zai_coding_plan::live_registry_for_client(client, &live_models)
+        .map_err(ModelRouteError::NotFound)?;
+    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
+        return Ok(());
+    };
+    for (entry, live) in registry.into_iter().zip(live_models) {
         if data
             .iter()
             .any(|model| model.get("id").and_then(Value::as_str) == Some(&entry.exposed_id))
         {
-            continue;
+            return Err(ModelRouteError::Conflict(format!(
+                "exact model id '{}' is advertised by more than one healthy provider",
+                entry.exposed_id
+            )));
         }
-        data.push(json!({
-            "id": entry.exposed_id,
-            "object": "model",
-            "owned_by": entry.owner,
-            "display_name": entry.display_name,
-        }));
+        let mut projected = live.raw;
+        projected.insert("id".into(), Value::String(entry.exposed_id));
+        projected
+            .entry("object")
+            .or_insert_with(|| Value::String("model".into()));
+        projected
+            .entry("owned_by")
+            .or_insert_with(|| Value::String(entry.owner.into()));
+        data.push(Value::Object(projected));
     }
+    if let Some(healthy) = catalog
+        .get_mut("healthy_providers")
+        .and_then(Value::as_array_mut)
+        && !healthy.iter().any(|entry| entry == "z.ai")
+    {
+        healthy.push(Value::String("z.ai".into()));
+    }
+    Ok(())
 }
 
 /// The stored provider that declares `model`, when exactly one does.
@@ -97,28 +137,11 @@ pub(super) async fn append_zai_models(
 /// #260). A provider that declares its models can now win a route in automatic
 /// mode on the strength of that declaration.
 ///
-/// `<provider>/<model>` names one explicitly, which is how an operator resolves
-/// a collision that automatic routing refuses to guess at.
 pub(super) fn stored_provider_for_model(
     state: &AppState,
     model: &str,
+    client: Option<crate::clients::ClientKind>,
 ) -> Result<Option<crate::providers::ResolvedProvider>, ModelRouteError> {
-    if let Some((name, bare)) = model.split_once('/')
-        && state
-            .provider_store
-            .get(name)
-            .is_ok_and(|provider| provider.is_some())
-    {
-        // An explicitly qualified name addresses one provider and must not
-        // silently fall through to a subscription of the same model id.
-        return match state.provider_store.resolve(name) {
-            Ok(Some(provider)) if provider.declares(bare) => Ok(Some(provider)),
-            Ok(Some(_)) => Err(ModelRouteError::NotFound(format!(
-                "provider '{name}' does not advertise model '{bare}'"
-            ))),
-            _ => Ok(None),
-        };
-    }
     let Ok(providers) = state.provider_store.list() else {
         return Ok(None);
     };
@@ -126,12 +149,14 @@ pub(super) fn stored_provider_for_model(
         .into_iter()
         .filter(|record| {
             record.enabled
-                && if record.kind == crate::providers::ProviderKind::ZaiCodingPlan {
-                    crate::zai_coding_plan::canonical_for_any_client(&record.models, model)
-                        .is_some()
-                } else {
-                    record.models.iter().any(|id| id == model)
-                }
+                && record.kind != crate::providers::ProviderKind::ZaiCodingPlan
+                && record.models.iter().any(|id| id == model)
+                && client.is_none_or(|client| {
+                    record
+                        .effective_supported_clients()
+                        .iter()
+                        .any(|supported| supported == client.canonical_name())
+                })
         })
         .map(|record| record.name);
     let Some(first) = declaring.next() else {
@@ -140,9 +165,8 @@ pub(super) fn stored_provider_for_model(
     if let Some(second) = declaring.next() {
         // The same rule subscriptions already follow: an ambiguous unqualified
         // name is refused rather than resolved by declaration order.
-        return Err(ModelRouteError::Ambiguous(format!(
-            "model '{model}' is declared by multiple stored providers ({first}, {second}); name \
-             one as '<provider>/{model}' to disambiguate"
+        return Err(ModelRouteError::Conflict(format!(
+            "exact model id '{model}' is declared by multiple stored providers ({first}, {second})"
         )));
     }
     Ok(state.provider_store.resolve(&first).ok().flatten())
@@ -164,22 +188,12 @@ pub(super) fn route_stored_provider(
         .openai_compatible
         .provider_name
         .clone_from(&provider.name);
-    // A qualified name addressed the provider; the upstream only knows the
-    // bare id, so forward what it will recognise.
-    routed.bridge_model = Some(
-        if provider.kind == crate::providers::ProviderKind::ZaiCodingPlan {
-            crate::zai_coding_plan::canonical_for_any_client(&provider.models, model)
-                .unwrap_or_else(|| model.to_string())
-        } else {
-            bare_model_id(model).to_string()
-        },
-    );
+    routed.bridge_model = Some(model.to_string());
     routed
 }
 
-/// The model id an upstream will recognise, with any `<provider>/` prefix
-/// removed.
+/// Preserve the exact model id returned by the provider catalog.
 #[must_use]
 pub fn bare_model_id(model: &str) -> &str {
-    model.split_once('/').map_or(model, |(_, bare)| bare)
+    model
 }

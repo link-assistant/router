@@ -406,6 +406,15 @@ pub struct Cli {
     )]
     pub openai_compatible_models: Vec<String>,
 
+    /// Canonical managed clients supported by this provider adapter.
+    #[arg(
+        long,
+        env = "OPENAI_COMPATIBLE_SUPPORTED_CLIENTS",
+        value_delimiter = ',',
+        global = true
+    )]
+    pub openai_compatible_supported_clients: Vec<String>,
+
     /// Public base URL for the `ActivityPub` actor.
     #[arg(long, env = "ACTIVITYPUB_ACTOR_BASE_URL", global = true)]
     pub activitypub_actor_base_url: Option<String>,
@@ -890,6 +899,7 @@ impl Cli {
                 .clone()
                 .filter(|s| !s.is_empty()),
             models: self.openai_compatible_models.clone(),
+            supported_clients: self.openai_compatible_supported_clients.clone(),
         };
         Config::build(BuildArgs {
             host: &self.host,

@@ -100,19 +100,6 @@ fn state_for(
     state
 }
 
-fn client_headers(state: &AppState) -> HeaderMap {
-    let token = state
-        .token_manager
-        .issue_token(8, "inference evidence")
-        .unwrap();
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "authorization",
-        HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
-    );
-    headers
-}
-
 fn managed_headers(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
     let token = super::tests::bound_client_token(state, client, None);
     let mut headers = HeaderMap::new();
@@ -120,6 +107,15 @@ fn managed_headers(state: &AppState, client: crate::clients::ClientKind) -> Head
         crate::clients::ClientKind::ClaudeCode => {
             headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
             headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.259"));
+        }
+        crate::clients::ClientKind::Codex => {
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
+            headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.0"));
+            headers.insert("x-codex-turn-metadata", HeaderValue::from_static("fixture"));
         }
         crate::clients::ClientKind::GeminiCli => {
             headers.insert("x-goog-api-key", HeaderValue::from_str(&token).unwrap());
@@ -211,23 +207,18 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
         Some("account-a".into()),
         vec!["account-a-model".into()],
     );
-    let client_token = state.token_manager.issue_token(1, "401 race").unwrap();
+    let client_headers = managed_headers(&state, crate::clients::ClientKind::Codex);
     let body = json!({"model": "account-a-model", "input": "hello"});
     let routed = route_state_with_subscription(&state, &body)
         .await
         .expect("account A owns the selected catalog");
     let post_race_state = routed.state.clone();
     let request_body = body.clone();
-    let request_client_token = client_token.clone();
+    let request_headers = client_headers.clone();
     let request = tokio::spawn(async move {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "authorization",
-            HeaderValue::from_str(&format!("Bearer {request_client_token}")).unwrap(),
-        );
         crate::subscription_proxy::forward_subscription_openai_routed(
             &routed.state,
-            &headers,
+            &request_headers,
             request_body.clone(),
             &request_body,
             "/v1/responses",
@@ -274,14 +265,9 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
     let second_routed = route_state_with_subscription(&post_race_state, &second_body)
         .await
         .expect("account B remains eligible after A's delayed rejection");
-    let mut second_headers = HeaderMap::new();
-    second_headers.insert(
-        "authorization",
-        HeaderValue::from_str(&format!("Bearer {client_token}")).unwrap(),
-    );
     let second_response = crate::subscription_proxy::forward_subscription_openai_routed(
         &second_routed.state,
-        &second_headers,
+        &client_headers,
         second_body.clone(),
         &second_body,
         "/v1/responses",
@@ -319,6 +305,7 @@ async fn raw_anthropic_records_the_current_claude_credential_rejection() {
                 .unwrap(),
         )
         .header("anthropic-version", "2023-06-01")
+        .header("user-agent", "claude-cli/2.1.259")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))
         .unwrap();
@@ -360,50 +347,36 @@ async fn openai_anthropic_bridge_records_the_current_claude_credential_rejection
 }
 
 #[tokio::test]
-async fn subscription_openai_records_codex_and_qwen_credential_rejections() {
+async fn subscription_openai_records_the_codex_credential_rejection() {
     let (base_url, task) = rejecting_upstream().await;
-    for provider in [SubscriptionProvider::Codex, SubscriptionProvider::Qwen] {
-        let data = tempfile::tempdir().unwrap();
-        let home = tempfile::tempdir().unwrap();
-        let state = state_for(provider, &data, &home, &base_url);
-        let body = if provider == SubscriptionProvider::Codex {
-            json!({"model": MODEL, "input": "hello"})
-        } else {
-            json!({
-                "model": MODEL,
-                "messages": [{"role": "user", "content": "hello"}]
-            })
-        };
-        let path = if provider == SubscriptionProvider::Codex {
-            "/v1/responses"
-        } else {
-            "/v1/chat/completions"
-        };
-        let response = crate::subscription_proxy::forward_subscription_openai(
-            &state,
-            &client_headers(&state),
-            body.clone(),
-            &body,
-            path,
-            crate::metrics::Surface::OpenAIChat,
-        )
-        .await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    let body = json!({"model": MODEL, "input": "hello"});
+    let response = crate::subscription_proxy::forward_subscription_openai(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Codex),
+        body.clone(),
+        &body,
+        "/v1/responses",
+        crate::metrics::Surface::OpenAIResponses,
+    )
+    .await;
 
-        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-        assert_rejected(&state, provider);
-    }
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    assert_rejected(&state, SubscriptionProvider::Codex);
     task.abort();
 }
 
 #[tokio::test]
-async fn gemini_openai_and_native_surfaces_record_the_current_credential_rejection() {
+async fn gemini_openai_bridge_is_denied_but_native_records_the_credential_rejection() {
     let (base_url, task) = rejecting_upstream().await;
     let data = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
     let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
     let response = crate::gemini::forward_chat_completions_as(
         &state,
-        &client_headers(&state),
+        &managed_headers(&state, crate::clients::ClientKind::Opencode),
         json!({
             "model": MODEL,
             "messages": [{"role": "user", "content": "hello"}]
@@ -422,7 +395,7 @@ async fn gemini_openai_and_native_surfaces_record_the_current_credential_rejecti
         &native_home,
         &base_url,
     );
-    let native_headers = client_headers(&native_state);
+    let native_headers = managed_headers(&native_state, crate::clients::ClientKind::GeminiCli);
     let native = Box::pin(crate::gemini::forward_native_gemini_authorized(
         &native_state,
         &format!("models/{MODEL}:generateContent"),
@@ -459,7 +432,7 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
                 .unwrap_or_default()
                 .to_string();
             authorizations.lock().unwrap().push(authorization.clone());
-            if authorization == "Bearer qwen-access-a" {
+            if authorization == "Bearer codex-access-a" {
                 reached.wait().await;
                 release.wait().await;
                 (StatusCode::UNAUTHORIZED, "{}")
@@ -476,53 +449,51 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
 
     let data = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
-    let state = state_for(SubscriptionProvider::Qwen, &data, &home, &base_url);
-    let body = json!({
-        "model": MODEL,
-        "messages": [{"role": "user", "content": "hello"}]
-    });
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    let body = json!({"model": MODEL, "input": "hello"});
     let request_state = state.clone();
     let request_body = body.clone();
-    let request_headers = client_headers(&state);
+    let request_headers = managed_headers(&state, crate::clients::ClientKind::Codex);
     let request = tokio::spawn(async move {
         crate::subscription_proxy::forward_subscription_openai(
             &request_state,
             &request_headers,
             request_body.clone(),
             &request_body,
-            "/v1/chat/completions",
-            crate::metrics::Surface::OpenAIChat,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
         )
         .await
     });
 
     reached_a.wait().await;
     fs::write(
-        home.path().join("oauth_creds.json"),
+        home.path().join("auth.json"),
         json!({
-            "access_token": "qwen-access-b",
-            "expiry_date": 9_999_999_999_999_i64,
-            "account_id": "account-a",
-            "resource_url": base_url
+            "tokens": {
+                "access_token": "codex-access-b",
+                "account_id": "account-a"
+            },
+            "expiry_date": 9_999_999_999_999_i64
         })
         .to_string(),
     )
     .unwrap();
     let credential_b = state
         .subscription_cache
-        .load_authoritative(SubscriptionProvider::Qwen, "primary")
+        .load_authoritative(SubscriptionProvider::Codex, "primary")
         .await
         .unwrap()
         .expect("replacement B is authoritative");
     crate::refresh::test_support::seed_cached_token(
         &state.subscription_cache,
-        SubscriptionProvider::Qwen,
+        SubscriptionProvider::Codex,
         "primary",
         credential_b.clone(),
     );
     state
         .subscription_cache
-        .record_status_for_credential(SubscriptionProvider::Qwen, "primary", &credential_b, 403)
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &credential_b, 403)
         .await;
     release_a.wait().await;
 
@@ -531,17 +502,17 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
     assert_eq!(
         state
             .subscription_cache
-            .evidence_for(SubscriptionProvider::Qwen, "primary"),
+            .evidence_for(SubscriptionProvider::Codex, "primary"),
         Some(crate::refresh::CredentialEvidence::Working),
         "the successful retry with B must replace B's earlier rejection"
     );
     assert_eq!(
         authorizations.lock().unwrap().as_slice(),
-        ["Bearer qwen-access-a", "Bearer qwen-access-b"]
+        ["Bearer codex-access-a", "Bearer codex-access-b"]
     );
     let response_body = response.into_body().collect().await.unwrap().to_bytes();
     let public_body = String::from_utf8_lossy(&response_body);
-    assert!(!public_body.contains("qwen-access"), "{public_body}");
+    assert!(!public_body.contains("codex-access"), "{public_body}");
     assert!(!public_body.contains("account-a"), "{public_body}");
     task.abort();
 }
@@ -564,7 +535,7 @@ async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_min
         let read = socket.read(&mut request).await.unwrap();
         assert!(
             String::from_utf8_lossy(&request[..read])
-                .contains("authorization: Bearer qwen-access-a")
+                .contains("authorization: Bearer codex-access-a")
         );
         reached_for_stub.wait().await;
         release_for_stub.wait().await;
@@ -580,13 +551,10 @@ async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_min
 
     let data = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
-    let state = state_for(SubscriptionProvider::Qwen, &data, &home, &base_url);
-    let body = json!({
-        "model": MODEL,
-        "messages": [{"role": "user", "content": "hello"}]
-    });
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    let body = json!({"model": MODEL, "input": "hello"});
     let request_state = state.clone();
-    let request_headers = client_headers(&state);
+    let request_headers = managed_headers(&state, crate::clients::ClientKind::Codex);
     let request_body = body.clone();
     let request = tokio::spawn(async move {
         crate::subscription_proxy::forward_subscription_openai(
@@ -594,43 +562,41 @@ async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_min
             &request_headers,
             request_body.clone(),
             &request_body,
-            "/v1/chat/completions",
-            crate::metrics::Surface::OpenAIChat,
+            "/v1/responses",
+            crate::metrics::Surface::OpenAIResponses,
         )
         .await
     });
 
     reached_a.wait().await;
-    let token_a = state
+    fs::write(
+        home.path().join("auth.json"),
+        json!({
+            "tokens": {
+                "access_token": "codex-access-b",
+                "account_id": "account-a"
+            },
+            "expiry_date": 9_999_999_999_999_i64
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let token_b = state
         .subscription_cache
-        .load_authoritative(SubscriptionProvider::Qwen, "primary")
+        .load_authoritative(SubscriptionProvider::Codex, "primary")
         .await
         .unwrap()
-        .expect("generation A is registered");
-    let token_endpoint = axum::Router::new().fallback(|| async {
-        axum::Json(json!({
-            "access_token": "qwen-access-b",
-            "refresh_token": "qwen-refresh-b",
-            "expires_in": 3600
-        }))
-    });
-    let token_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let token_url = format!("http://{}/token", token_listener.local_addr().unwrap());
-    let token_server = tokio::spawn(async move {
-        axum::serve(token_listener, token_endpoint).await.unwrap();
-    });
-    let token_b = crate::refresh::test_support::refresh_against(
+        .expect("replacement B is authoritative");
+    crate::refresh::test_support::seed_cached_token(
         &state.subscription_cache,
-        &state.client,
-        &token_url,
-        SubscriptionProvider::Qwen,
+        SubscriptionProvider::Codex,
         "primary",
-        token_a,
-        10_000_000_000_000,
-    )
-    .await;
-    token_server.abort();
-    assert_eq!(token_b.access_token, "qwen-access-b");
+        token_b.clone(),
+    );
+    state
+        .subscription_cache
+        .record_status_for_credential(SubscriptionProvider::Codex, "primary", &token_b, 200)
+        .await;
     release_a.wait().await;
 
     let response = request.await.unwrap();
@@ -639,13 +605,13 @@ async fn retry_transport_failure_does_not_attribute_the_old_response_to_self_min
     assert_eq!(
         state
             .subscription_cache
-            .evidence_for(SubscriptionProvider::Qwen, "primary"),
+            .evidence_for(SubscriptionProvider::Codex, "primary"),
         Some(crate::refresh::CredentialEvidence::Working),
         "a transport failure for B must not commit A's superseded 401"
     );
     let response_body = response.into_body().collect().await.unwrap().to_bytes();
     let public_body = String::from_utf8_lossy(&response_body);
-    assert!(!public_body.contains("qwen-access"), "{public_body}");
+    assert!(!public_body.contains("codex-access"), "{public_body}");
     assert!(!public_body.contains("account-a"), "{public_body}");
 }
 
@@ -673,7 +639,7 @@ async fn native_gemini_records_401_before_an_incomplete_body_fails() {
     let data = tempfile::tempdir().unwrap();
     let home = tempfile::tempdir().unwrap();
     let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
-    let headers = client_headers(&state);
+    let headers = managed_headers(&state, crate::clients::ClientKind::GeminiCli);
     let response = Box::pin(crate::gemini::forward_native_gemini_authorized(
         &state,
         &format!("models/{MODEL}:generateContent"),

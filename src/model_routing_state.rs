@@ -22,6 +22,15 @@ pub async fn route_state_with_subscription_for_providers(
     body: &Value,
     entitled_providers: &[crate::subscription::SubscriptionProvider],
 ) -> Result<RoutedState, ModelRouteError> {
+    route_state_with_subscription_for_client(state, body, entitled_providers, None).await
+}
+
+pub(crate) async fn route_state_with_subscription_for_client(
+    state: &AppState,
+    body: &Value,
+    entitled_providers: &[crate::subscription::SubscriptionProvider],
+    client: Option<crate::clients::ClientKind>,
+) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         if let Some(provider) = state.upstream_provider.subscription_provider() {
             return super::route_pinned_subscription(state, provider).await;
@@ -36,20 +45,6 @@ pub async fn route_state_with_subscription_for_providers(
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
         .ok_or(ModelRouteError::ModelRequired)?;
-    // A provider-qualified identity is explicit and wins immediately. For a
-    // bare identity, the catalog projection owns the decision: when an
-    // entitled subscription advertises the id it is listed bare, while a
-    // colliding stored provider is listed as `<provider>/<model>`. Routing
-    // must preserve that same meaning instead of silently sending the bare id
-    // to a different upstream.
-    if model.contains('/')
-        && let Some(stored) = stored_provider_for_model(state, model)?
-    {
-        return Ok(RoutedState {
-            state: route_stored_provider(state, &stored, model),
-            subscription: None,
-        });
-    }
     let visible_subscription = entitled_providers.iter().any(|provider| {
         state
             .model_catalogs
@@ -57,10 +52,20 @@ pub async fn route_state_with_subscription_for_providers(
             .iter()
             .any(|candidate| candidate == model)
     });
+    let stored = stored_provider_for_model(state, model, client)?;
+    let zai = crate::zai_coding_plan::live_provider_for_model(state, model, client).await?;
+    let owner_count = usize::from(visible_subscription)
+        + usize::from(stored.is_some())
+        + usize::from(zai.is_some());
+    if owner_count > 1 {
+        return Err(ModelRouteError::Conflict(format!(
+            "exact model id '{model}' is advertised by more than one healthy provider"
+        )));
+    }
     if visible_subscription {
         return route_subscription_model_for_providers(state, model, entitled_providers).await;
     }
-    if let Some(stored) = stored_provider_for_model(state, model)? {
+    if let Some(stored) = stored.or(zai) {
         return Ok(RoutedState {
             state: route_stored_provider(state, &stored, model),
             subscription: None,

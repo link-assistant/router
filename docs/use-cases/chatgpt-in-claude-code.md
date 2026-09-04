@@ -169,13 +169,11 @@ an approximation for budgeting, not as a billing figure.
   there is no OpenAI equivalent. Extended-thinking output will not appear.
 - **Prompt caching** (`cache_control`) has no counterpart upstream and is
   ignored.
-- **Codex cannot enforce `max_tokens`.** The field remains required by the
-  Anthropic Messages protocol, but the ChatGPT backend rejects its Responses
-  equivalent. The translated response stays a canonical Anthropic response and
-  carries no router-specific warning header. Callers that require a hard
-  per-request output cap must select a provider that supports one; optional
-  OpenAI Chat/Responses caps on Codex are rejected explicitly rather than
-  silently dropped.
+- **The Claude-to-Codex bridge emulates `max_tokens`.** The field remains
+  required by Anthropic Messages, while the ChatGPT backend rejects its
+  Responses equivalent. Router strips only the translated bridge field and
+  applies a best-effort local output bound. Native Codex Responses requests are
+  untouched and the upstream decides whether a supplied cap is valid.
 - **`stop_sequences` is enforced locally for Codex**, including a sequence
   split across SSE chunks. The matched sequence is withheld from the client.
 - Anthropic-only beta features and vendor-specific fields are not emulated.

@@ -452,13 +452,12 @@ pub async fn route_subscription_model_for_providers(
     model: &str,
     entitled_providers: &[SubscriptionProvider],
 ) -> Result<RoutedState, ModelRouteError> {
-    let (qualified_provider, canonical_model) = super::subscription_model_identity(model);
+    let (_, canonical_model) = super::subscription_model_identity(model);
     // Consult catalogs before credential stores. Vendor-shaped and unique ids
-    // need exactly one provider; only a genuinely ambiguous unqualified id
-    // needs multiple independent snapshots, which run concurrently.
+    // need exactly one provider. Colliding exact ids fail instead of gaining
+    // Router-invented provider-qualified aliases.
     let all_candidates = SubscriptionProvider::ALL
         .into_iter()
-        .filter(|provider| qualified_provider.is_none_or(|qualified| qualified == *provider))
         .filter(|provider| {
             state
                 .model_catalogs
@@ -485,15 +484,14 @@ pub async fn route_subscription_model_for_providers(
             Ok(_) => unreachable!("a model absent from the complete catalog appeared locally"),
         };
     }
-    if qualified_provider.is_none() && candidates.len() > 1 {
+    if candidates.len() > 1 {
         let providers = candidates
             .iter()
             .map(ToString::to_string)
             .collect::<Vec<_>>()
             .join(", ");
-        return Err(ModelRouteError::Ambiguous(format!(
-            "model '{model}' is advertised by multiple subscriptions ({providers}); pin \
-             UPSTREAM_PROVIDER to disambiguate"
+        return Err(ModelRouteError::Conflict(format!(
+            "exact model id '{model}' is advertised by multiple subscriptions ({providers})"
         )));
     }
     let provider = candidates[0];

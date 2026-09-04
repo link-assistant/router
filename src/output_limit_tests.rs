@@ -122,11 +122,11 @@ fn stream_rewriter_preserves_chat_and_anthropic_aliases() {
     assert!(chat_out.contains("\"model\":\"stored/shared-future\""));
     assert!(chat_out.contains("\"x_router_upstream_model\":\"shared-future\""));
 
-    let mut anthropic = ResponsesStreamRewriter::new("claude-zai-future", None);
+    let mut anthropic = ResponsesStreamRewriter::new("future-saffron-2099", None);
     let anthropic_out = anthropic.push(
         b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"future\",\"content\":[]}}\n\n",
     );
-    assert!(anthropic_out.contains("\"model\":\"claude-zai-future\""));
+    assert!(anthropic_out.contains("\"model\":\"future-saffron-2099\""));
     assert!(anthropic_out.contains("\"x_router_upstream_model\":\"future\""));
 }
 

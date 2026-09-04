@@ -63,17 +63,15 @@ pub fn forwarded_header_report() -> Vec<String> {
         crate::proxy::forwarded_client_headers().join(", ")
     )];
     report.push(format!(
-        "{:<23}: {}",
-        "upstream_user_agent",
-        crate::proxy::router_user_agent()
+        "{:<23}: preserved from signed client",
+        "upstream_user_agent"
     ));
     report.push(format!(
         "{:<23}: {}",
         "upstream_dropped",
         concat!(
-            "every other client header, including x-stainless-*, ",
-            "the client user-agent, accept-language, ",
-            "x-claude-code-session-id and any x-forwarded-for"
+            "Router authentication/internal headers, cookies, authority, ",
+            "hop-by-hop transport fields, framing, and accept-encoding"
         )
     ));
     report
@@ -735,17 +733,9 @@ mod tests {
                 "the report must name {forwarded}: {report}"
             );
         }
-        assert!(
-            report.contains(crate::proxy::router_user_agent()),
-            "the report must name the identity sent upstream: {report}"
-        );
+        assert!(report.contains("preserved from signed client"), "{report}");
         // And what does not, named explicitly rather than left to inference.
-        for dropped in [
-            "x-stainless",
-            "accept-language",
-            "x-claude-code-session-id",
-            "x-forwarded-for",
-        ] {
+        for dropped in ["Router authentication", "cookies", "hop-by-hop", "framing"] {
             assert!(
                 report.contains(dropped),
                 "the report must say {dropped} is dropped: {report}"

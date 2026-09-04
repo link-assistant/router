@@ -38,9 +38,19 @@ async fn route_openai_request(
     let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
         state, &claims, headers, protocol, path,
     )?;
-    crate::model_routing::route_state_with_subscription_for_providers(state, body, &entitled)
-        .await
-        .map_err(|error| crate::model_routing::model_route_error_response(&error))
+    let client = crate::client_policy::bound_client(&claims)
+        .map(|(client, _)| client)
+        .map_err(|error| {
+            crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
+        })?;
+    crate::model_routing::route_state_with_subscription_for_client(
+        state,
+        body,
+        &entitled,
+        Some(client),
+    )
+    .await
+    .map_err(|error| crate::model_routing::model_route_error_response(&error))
 }
 
 fn rewrite_routed_model(

@@ -181,6 +181,40 @@ async fn forward_subscription_openai_inner(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let Some(provider) = state.upstream_provider.subscription_provider() else {
+        return error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            "active upstream is not a subscription provider",
+        );
+    };
+    let protocol = match surface {
+        Surface::Anthropic => crate::client_policy::ClientProtocol::AnthropicMessages,
+        Surface::OpenAIChat => crate::client_policy::ClientProtocol::OpenAIChat,
+        Surface::OpenAIResponses => crate::client_policy::ClientProtocol::OpenAIResponses,
+    };
+    // `path` names the provider endpoint after protocol translation. Request
+    // evidence must instead be checked against the client-facing protocol;
+    // otherwise a legitimate Claude request bridged to Codex is compared with
+    // `/v1/responses` and denied before dispatch.
+    let client_path = match surface {
+        Surface::Anthropic => "/v1/messages",
+        Surface::OpenAIChat => "/v1/chat/completions",
+        Surface::OpenAIResponses => "/v1/responses",
+    };
+    let entitlement = match crate::client_policy::enforce_subscription_for_claims(
+        state,
+        &claims,
+        headers,
+        provider,
+        protocol,
+        client_path,
+    ) {
+        Ok(decision) => decision,
+        Err(response) => return response,
+    };
+    let native_protocol = response_shape == SubscriptionResponseShape::Passthrough
+        && entitlement == crate::client_policy::EntitlementDecision::Native;
     let reserved = crate::token_reservation::estimate(routing_body).total();
     if let Err(e) = state
         .token_manager
@@ -203,13 +237,6 @@ async fn forward_subscription_openai_inner(
         resolved_model,
     );
 
-    let Some(provider) = state.upstream_provider.subscription_provider() else {
-        return error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "api_error",
-            "active upstream is not a subscription provider",
-        );
-    };
     let responses_mode = codex_responses_mode(provider, headers);
     let pinned_account = match state.token_manager.account_for(&claims.sub) {
         Ok(account) => account,
@@ -325,9 +352,9 @@ async fn forward_subscription_openai_inner(
     // The Codex backend rejects every explicit output cap, so the field is
     // stripped below and enforced locally instead of refusing the request
     // (see `crate::output_limit`). Providers that accept the field keep it.
-    let emulated_output_limit = (crate::capabilities::subscription(provider, None)
-        .output_token_limit
-        == crate::capabilities::Capability::Emulated)
+    let emulated_output_limit = (!native_protocol
+        && crate::capabilities::subscription(provider, None).output_token_limit
+            == crate::capabilities::Capability::Emulated)
         .then(|| {
             body.get("max_output_tokens")
                 .and_then(serde_json::Value::as_u64)
@@ -341,7 +368,9 @@ async fn forward_subscription_openai_inner(
 
     // The ChatGPT Codex backend is stricter than the generic Responses API, so
     // reshape the body before forwarding (see `normalize_codex_responses_body`).
-    normalize_subscription_request(provider, &mut body, responses_mode);
+    if !native_protocol {
+        normalize_subscription_request(provider, &mut body, responses_mode);
+    }
 
     let serialized = match serde_json::to_vec(&body) {
         Ok(v) => v,
@@ -362,16 +391,26 @@ async fn forward_subscription_openai_inner(
     let upstream_url = join_subscription_url(provider, &base_url, path);
 
     let build_request = |token: &crate::subscription::SubscriptionToken| {
-        let mut request = state
-            .client
-            .post(upstream_url.clone())
-            .header("content-type", "application/json")
-            .header("authorization", format!("Bearer {}", token.access_token))
-            .body(serialized.clone());
-        for (name, value) in subscription_headers(provider, token, responses_mode) {
-            request = request.header(name, value);
+        let mut request = state.client.post(upstream_url.clone());
+        if native_protocol {
+            let mut native_headers =
+                crate::proxy::native_request_headers(headers, &token.access_token);
+            if provider == SubscriptionProvider::Codex
+                && let Some(account_id) = token.account_id.as_deref()
+                && let Ok(value) = HeaderValue::from_str(account_id)
+            {
+                native_headers.insert("chatgpt-account-id", value);
+            }
+            request = request.headers(native_headers);
+        } else {
+            request = request
+                .header("content-type", "application/json")
+                .header("authorization", format!("Bearer {}", token.access_token));
+            for (name, value) in subscription_headers(provider, token, responses_mode) {
+                request = request.header(name, value);
+            }
         }
-        request
+        request.body(serialized.clone())
     };
 
     let correlation_id = crate::request_log::correlation_id(headers);
@@ -477,10 +516,10 @@ async fn forward_subscription_openai_inner(
     let response_headers = relay_response_headers(upstream_resp.headers());
 
     let codex = provider == SubscriptionProvider::Codex;
-    if stream_requested || (!codex && is_event_stream(&content_type)) {
+    if stream_requested || ((!codex || native_protocol) && is_event_stream(&content_type)) {
         // The Codex backend streams SSE but labels it `application/json`; re-label
         // so SSE-aware clients treat the body as the stream it is.
-        let stream_content_type = if codex {
+        let stream_content_type = if codex && !native_protocol {
             HeaderValue::from_static("text/event-stream")
         } else {
             content_type
@@ -502,8 +541,9 @@ async fn forward_subscription_openai_inner(
             requested_model,
             emulated_output_limit,
         );
-        let rewrite_passthrough =
-            response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
+        let rewrite_passthrough = !native_protocol
+            && response_shape == SubscriptionResponseShape::Passthrough
+            && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = status
             .is_success()
@@ -557,6 +597,13 @@ async fn forward_subscription_openai_inner(
     if status.is_success() {
         let mut usage = reservation.take().into_tracker();
         usage.feed(&upstream_body);
+    }
+
+    if native_protocol {
+        let mut response = Response::new(Body::from(upstream_body));
+        *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
+        return response;
     }
 
     // The Codex backend always streams Server-Sent Events even when the client

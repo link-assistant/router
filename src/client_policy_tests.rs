@@ -142,6 +142,7 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
     let mut claude = HeaderMap::new();
     claude.insert("x-api-key", "redacted".parse().unwrap());
     claude.insert("anthropic-version", "2023-06-01".parse().unwrap());
+    claude.insert("user-agent", "claude-cli/2.1.259".parse().unwrap());
     assert!(request_evidence(
         ClientKind::ClaudeCode,
         ClientProtocol::AnthropicMessages,
@@ -151,6 +152,7 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
 
     let mut codex = HeaderMap::new();
     codex.insert("authorization", "Bearer redacted".parse().unwrap());
+    codex.insert("user-agent", "codex_exec/0.153.0".parse().unwrap());
     codex.insert(
         "x-openai-internal-codex-responses-lite",
         "true".parse().unwrap(),
@@ -177,6 +179,7 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
 fn catalog_probe_evidence_is_client_specific_and_not_authority_by_itself() {
     let mut headers = HeaderMap::new();
     headers.insert("authorization", "Bearer redacted".parse().unwrap());
+    headers.insert("user-agent", "codex_exec/0.153.0".parse().unwrap());
     assert!(request_evidence(
         ClientKind::Codex,
         ClientProtocol::Catalog,
@@ -216,6 +219,7 @@ fn signed_binding_and_fixture_evidence_are_both_required() {
     let policy = SubscriptionEntitlementPolicy::default();
     let mut headers = HeaderMap::new();
     headers.insert("authorization", "Bearer redacted".parse().unwrap());
+    headers.insert("user-agent", "codex_exec/0.153.0".parse().unwrap());
     headers.insert(
         "x-openai-internal-codex-responses-lite",
         "true".parse().unwrap(),

@@ -156,11 +156,11 @@ fn the_users_configuration_is_kept_by_default() {
 fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
     let models = [
         RouterModel {
-            id: "claude-zai-future-first".to_string(),
+            id: "future-first-2099".to_string(),
             owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
         },
         RouterModel {
-            id: "claude-zai-future-explicit".to_string(),
+            id: "future-explicit-2099".to_string(),
             owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
         },
     ];
@@ -188,7 +188,7 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
     for key in crate::clients::CLAUDE_MODEL_ENV {
         assert_eq!(
             resumed_env.get(key).map(String::as_str),
-            Some("claude-zai-future-first"),
+            Some("future-first-2099"),
             "{key}"
         );
     }
@@ -197,7 +197,7 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
         client: ClientKind::ClaudeCode,
         base_url: "http://router.test",
         token: "task-token",
-        model_override: Some("claude-zai-future-explicit"),
+        model_override: Some("future-explicit-2099"),
         models: &models,
         isolated_config: false,
         one_shot: true,
@@ -217,7 +217,7 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
     for key in crate::clients::CLAUDE_MODEL_ENV {
         assert_eq!(
             explicit_env.get(key).map(String::as_str),
-            Some("claude-zai-future-explicit"),
+            Some("future-explicit-2099"),
             "explicit model must win for {key}"
         );
     }

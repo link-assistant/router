@@ -50,7 +50,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
 #[test]
 fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
     let home = tempfile::tempdir().expect("temp home");
-    let model = "claude-zai-future-citrine";
+    let model = "future-citrine-2099";
     let (base_url, server) = catalog_server(&[(model, "z.ai")]);
 
     let setup = router(

@@ -115,18 +115,27 @@ pub async fn native_models(
         .map(|(provider, model)| native_model_document(&model, provider.as_str()))
         .collect::<Vec<_>>();
     if let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
-        && let Ok((client, registry, _)) =
+        && let Ok((client, _)) =
             crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
         && client == crate::clients::ClientKind::GeminiCli
-        && crate::zai_coding_plan::credential_healthy(&state.client, &provider)
-            .await
-            .is_ok()
+        && let Ok(live) = crate::zai_coding_plan::live_catalog(&state, &provider).await
+        && let Ok(registry) = crate::zai_coding_plan::live_registry_for_client(client, &live)
     {
-        models.extend(
-            registry
-                .into_iter()
-                .map(|entry| native_model_document(&entry.exposed_id, entry.owner)),
-        );
+        for entry in registry {
+            if models.iter().any(|model| {
+                model.get("name").and_then(Value::as_str)
+                    == Some(&format!("models/{}", entry.exposed_id))
+            }) {
+                return native_error(
+                    StatusCode::CONFLICT,
+                    &format!(
+                        "exact model id '{}' is advertised by more than one healthy provider",
+                        entry.exposed_id
+                    ),
+                );
+            }
+            models.push(native_model_document(&entry.exposed_id, entry.owner));
+        }
     }
     (StatusCode::OK, axum::Json(json!({"models": models}))).into_response()
 }
@@ -161,13 +170,11 @@ pub async fn native_model(
         });
     if owner.is_none()
         && let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
-        && let Ok((client, registry, _)) =
+        && let Ok((client, _)) =
             crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
         && client == crate::clients::ClientKind::GeminiCli
-        && registry.iter().any(|entry| entry.exposed_id == model)
-        && crate::zai_coding_plan::credential_healthy(&state.client, &provider)
-            .await
-            .is_ok()
+        && let Ok(live) = crate::zai_coding_plan::live_catalog(&state, &provider).await
+        && live.iter().any(|entry| entry.id == model)
     {
         return (
             StatusCode::OK,
@@ -276,10 +283,22 @@ fn native_error(status: StatusCode, message: &str) -> Response {
 /// The subscription that must serve a native Gemini request for `model`.
 async fn native_owner(
     state: &AppState,
+    headers: &HeaderMap,
     model: &str,
 ) -> Result<crate::model_routing::RoutedState, Response> {
     let routed = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
-        crate::model_routing::route_state_with_subscription(state, &json!({"model": model})).await
+        let claims =
+            crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+        let client = crate::client_policy::bound_client(&claims)
+            .map(|(client, _)| client)
+            .map_err(|error| native_error(StatusCode::FORBIDDEN, &error))?;
+        crate::model_routing::route_state_with_subscription_for_client(
+            state,
+            &json!({"model": model}),
+            &crate::subscription::SubscriptionProvider::ALL,
+            Some(client),
+        )
+        .await
     } else if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
         Ok(crate::model_routing::RoutedState {
             state: state.clone(),
@@ -321,7 +340,7 @@ async fn forward_native(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let routed = match native_owner(state, &model).await {
+    let routed = match native_owner(state, headers, &model).await {
         Ok(routed) => routed,
         Err(response) => return response,
     };
@@ -361,7 +380,7 @@ async fn forward_native_authorized(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let routed = match native_owner(state, &model).await {
+    let routed = match native_owner(state, headers, &model).await {
         Ok(routed) => routed,
         Err(response) => return response,
     };

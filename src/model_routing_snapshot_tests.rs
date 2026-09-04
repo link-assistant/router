@@ -13,6 +13,18 @@ use std::time::Duration;
 use tempfile::tempdir;
 use tokio::sync::Barrier;
 
+fn codex_headers(state: &AppState) -> HeaderMap {
+    let token = super::tests::bound_client_token(state, crate::clients::ClientKind::Codex, None);
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+    );
+    headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.0"));
+    headers.insert("x-codex-turn-metadata", HeaderValue::from_static("fixture"));
+    headers
+}
+
 #[derive(Debug)]
 struct LockCheckingStore {
     token: crate::subscription::SubscriptionToken,
@@ -122,7 +134,7 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
         Some("account-a".into()),
         vec!["account-a-model".into()],
     );
-    let client_token = state.token_manager.issue_token(1, "rotation race").unwrap();
+    let client_headers = codex_headers(&state);
     let selected = Arc::new(Barrier::new(2));
     let rotated = Arc::new(Barrier::new(2));
     let selected_in_request = Arc::clone(&selected);
@@ -136,14 +148,9 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
         selected_in_request.wait().await;
         rotated_in_request.wait().await;
 
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "authorization",
-            HeaderValue::from_str(&format!("Bearer {client_token}")).unwrap(),
-        );
         crate::subscription_proxy::forward_subscription_openai_routed(
             &routed.state,
-            &headers,
+            &client_headers,
             body,
             &routing_body,
             "/v1/responses",
@@ -300,15 +307,7 @@ async fn pinned_serving_uses_a_recovery_only_authoritative_token() {
         crate::credential_recovery_store::PRIMARY_ACCOUNT,
         recoverable,
     );
-    let client_token = state
-        .token_manager
-        .issue_token(1, "recovery serving")
-        .unwrap();
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "authorization",
-        HeaderValue::from_str(&format!("Bearer {client_token}")).unwrap(),
-    );
+    let headers = codex_headers(&state);
     let body = json!({"model": "recovered-model", "input": "hello"});
 
     let response = crate::subscription_proxy::forward_subscription_openai_routed(
@@ -755,12 +754,7 @@ async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
     )
     .await
     .expect("hold credential lock");
-    let client_token = state.token_manager.issue_token(1, "lock failure").unwrap();
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "authorization",
-        HeaderValue::from_str(&format!("Bearer {client_token}")).unwrap(),
-    );
+    let headers = codex_headers(&state);
 
     let response = crate::subscription_proxy::forward_subscription_openai_routed(
         &routed.state,

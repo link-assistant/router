@@ -623,6 +623,7 @@ async fn anthropic_bridge_selects_account_before_its_live_model() {
     let mut headers = HeaderMap::new();
     headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
     headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.259"));
     let body = json!({
         "model": "claude/catalog-choice",
         "max_tokens": 32,

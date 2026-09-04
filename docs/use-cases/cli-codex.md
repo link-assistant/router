@@ -77,7 +77,7 @@ codex "explain this repository"
 | `codex` | native: forwarded to the ChatGPT backend Responses API with the `~/.codex/auth.json` OAuth token |
 | `qwen`, `gemini` | consumer subscription denied pending recorded terms |
 | `openai-compatible`, `gonka`, `crater` | ordinary provider credential/transport rules apply |
-| `z.ai-coding-plan` | experimental `z.ai/glm-*` Responses route — see [zai-coding-plan.md](zai-coding-plan.md) |
+| `z.ai-coding-plan` | experimental exact-ID live-catalog Responses route — see [zai-coding-plan.md](zai-coding-plan.md) |
 
 ### Tools that do not cross to another vendor
 

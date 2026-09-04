@@ -15,7 +15,8 @@ use tower::ServiceExt;
 async fn state_with_zai_health(
     status: StatusCode,
 ) -> (AppState, tempfile::TempDir, tokio::task::JoinHandle<()>) {
-    let app = axum::Router::new().fallback(move || async move { (status, "{}") });
+    let app = axum::Router::new()
+        .fallback(move || async move { (status, r#"{"object":"list","data":[{"id":"glm-5"}]}"#) });
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let base_url = format!("http://{}", listener.local_addr().unwrap());
     let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
@@ -29,6 +30,7 @@ async fn state_with_zai_health(
             base_url,
             default_model: Some("glm-5".into()),
             models: Some(vec!["glm-5".into()]),
+            supported_clients: None,
             api_key: Some("zai-secret-key".into()),
             api_key_env: None,
             encrypted_api_key: None,
