@@ -273,6 +273,57 @@ fn codex_repair_refuses_missing_and_invalid_catalogs_without_touching_user_files
     }
 }
 
+#[test]
+fn codex_catalog_constraint_validation_rejects_every_non_file_shape() {
+    let home = tempfile::tempdir().expect("home");
+    let manager = ClientManager::isolated(home.path());
+    let config = manager.config_path(ClientKind::Codex);
+    fs::create_dir_all(config.parent().unwrap()).unwrap();
+
+    fs::write(&config, b"not = [valid").unwrap();
+    assert!(manager.validate_codex_catalog_constraint().is_err());
+    assert!(manager.remove_codex_catalog_constraint().is_err());
+
+    fs::write(&config, b"model_catalog_json = 7\n").unwrap();
+    assert!(
+        manager
+            .validate_codex_catalog_constraint()
+            .unwrap_err()
+            .to_string()
+            .contains("file path string")
+    );
+
+    let directory = home.path().join("catalog-directory");
+    fs::create_dir(&directory).unwrap();
+    fs::write(
+        &config,
+        format!("model_catalog_json = {:?}\n", directory.to_string_lossy()),
+    )
+    .unwrap();
+    assert!(
+        manager
+            .validate_codex_catalog_constraint()
+            .unwrap_err()
+            .to_string()
+            .contains("not a regular file")
+    );
+
+    let catalog = home.path().join("catalog.json");
+    fs::write(&catalog, br#"{"data":[]}"#).unwrap();
+    fs::write(
+        &config,
+        format!("model_catalog_json = {:?}\n", catalog.to_string_lossy()),
+    )
+    .unwrap();
+    assert!(
+        manager
+            .validate_codex_catalog_constraint()
+            .unwrap_err()
+            .to_string()
+            .contains("models array")
+    );
+}
+
 #[cfg(unix)]
 #[test]
 fn codex_repair_refuses_a_symlinked_catalog_without_touching_user_files() {

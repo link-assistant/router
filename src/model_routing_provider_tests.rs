@@ -1,7 +1,7 @@
 use super::tests::auto_state;
 use super::*;
 use axum::body::Body;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
@@ -219,6 +219,59 @@ async fn a_stored_providers_declared_model_routes_in_automatic_mode() {
     // The deployment itself is untouched: this routed one request.
     assert_eq!(state.upstream_provider, UpstreamProvider::Auto);
     task.abort();
+}
+
+#[tokio::test]
+async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
+    let (base_url, requests, task) = captured_model_upstream().await;
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    store_provider_at(&state, "formal-ai", &base_url, &["shared-future"]);
+
+    let response = crate::proxy::openai_chat_completions(
+        State(state.clone()),
+        Query(BTreeMap::new()),
+        bearer(&state),
+        Ok(axum::Json(serde_json::json!({
+            "model": "shared-future",
+            "messages": [{"role": "user", "content": "hello"}]
+        }))),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(payload["model"], "shared-future");
+    assert_eq!(payload["choices"][0]["message"]["content"], "ok");
+
+    let requests = requests.lock().unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].0, "/v1/chat/completions");
+    assert_eq!(requests[0].1["model"], "shared-future");
+    task.abort();
+}
+
+#[tokio::test]
+async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
+    for provider in [UpstreamProvider::Gonka, UpstreamProvider::Crater] {
+        let data_dir = tempfile::tempdir().expect("data dir");
+        let mut state = auto_state(Vec::new(), data_dir.path());
+        state.upstream_provider = provider;
+        let response = models(
+            State(state.clone()),
+            OriginalUri("/api/services/openai/v1/models".parse().unwrap()),
+            bearer(&state),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK, "{provider:?}");
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let catalog: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let data = catalog["data"].as_array().expect("OpenAI model list");
+        if provider == UpstreamProvider::Crater {
+            assert!(!data.is_empty(), "{provider:?}");
+        }
+    }
 }
 
 /// A declared model appears in `/v1/models`, so one token reaches every model

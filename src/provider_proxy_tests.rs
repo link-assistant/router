@@ -1,5 +1,310 @@
 use super::*;
 
+fn provider_input(base_url: String) -> ProviderUpsert {
+    ProviderUpsert {
+        name: "fixture".into(),
+        kind: Some("openai-compatible".into()),
+        base_url,
+        default_model: Some("beta".into()),
+        models: Some(vec!["beta".into()]),
+        supported_clients: Some(vec!["codex".into()]),
+        api_key: Some("upstream-secret".into()),
+        api_key_env: None,
+        encrypted_api_key: None,
+        enabled: Some(true),
+        subscriber_id: None,
+        acknowledge_intermediary_risk: None,
+        acknowledge_unsupported_clients: None,
+    }
+}
+
+#[tokio::test]
+async fn forwarding_entrypoints_authenticate_before_provider_or_network_work() {
+    let data = tempfile::tempdir().expect("provider data");
+    let state = crate::app_state::AppState::for_tests(data.path());
+    let headers = HeaderMap::new();
+    let body = serde_json::json!({"model": "never-routed"});
+
+    let anthropic = forward_openai_compatible(
+        &state,
+        &headers,
+        body.clone(),
+        "/v1/messages",
+        Surface::Anthropic,
+    )
+    .await;
+    assert_eq!(anthropic.status(), StatusCode::UNAUTHORIZED);
+
+    let responses = forward_openai_compatible_routed(
+        &state,
+        &headers,
+        body.clone(),
+        &body,
+        "/v1/responses",
+        Surface::OpenAIResponses,
+    )
+    .await;
+    assert_eq!(responses.status(), StatusCode::UNAUTHORIZED);
+
+    let gemini = forward_openai_compatible(
+        &state,
+        &headers,
+        body,
+        "/api/services/gemini/v1beta/models/gemini:generateContent",
+        Surface::OpenAIChat,
+    )
+    .await;
+    assert_eq!(gemini.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn provider_management_handlers_cover_the_complete_crud_contract() {
+    use axum::response::IntoResponse as _;
+
+    let data = tempfile::tempdir().expect("provider data");
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+
+    for response in [
+        list_providers(State(state.clone()), HeaderMap::new())
+            .await
+            .into_response(),
+        show_provider(
+            State(state.clone()),
+            HeaderMap::new(),
+            Path("fixture".into()),
+        )
+        .await
+        .into_response(),
+        upsert_provider(
+            State(state.clone()),
+            HeaderMap::new(),
+            axum::Json(provider_input("https://provider.example/v1".into())),
+        )
+        .await
+        .into_response(),
+        delete_provider(
+            State(state.clone()),
+            HeaderMap::new(),
+            Path("fixture".into()),
+        )
+        .await
+        .into_response(),
+    ] {
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    state.allow_anonymous_admin = true;
+    let empty = list_providers(State(state.clone()), HeaderMap::new())
+        .await
+        .into_response();
+    assert_eq!(empty.status(), StatusCode::OK);
+
+    let invalid = upsert_provider(
+        State(state.clone()),
+        HeaderMap::new(),
+        axum::Json(provider_input(String::new())),
+    )
+    .await
+    .into_response();
+    assert_eq!(invalid.status(), StatusCode::BAD_REQUEST);
+
+    let added = upsert_provider(
+        State(state.clone()),
+        HeaderMap::new(),
+        axum::Json(provider_input("https://provider.example/v1".into())),
+    )
+    .await
+    .into_response();
+    assert_eq!(added.status(), StatusCode::OK);
+
+    let shown = show_provider(
+        State(state.clone()),
+        HeaderMap::new(),
+        Path("fixture".into()),
+    )
+    .await
+    .into_response();
+    assert_eq!(shown.status(), StatusCode::OK);
+
+    let listed = list_providers(State(state.clone()), HeaderMap::new())
+        .await
+        .into_response();
+    assert_eq!(listed.status(), StatusCode::OK);
+
+    let deleted = delete_provider(
+        State(state.clone()),
+        HeaderMap::new(),
+        Path("fixture".into()),
+    )
+    .await
+    .into_response();
+    assert_eq!(deleted.status(), StatusCode::OK);
+
+    for response in [
+        show_provider(
+            State(state.clone()),
+            HeaderMap::new(),
+            Path("fixture".into()),
+        )
+        .await
+        .into_response(),
+        delete_provider(State(state), HeaderMap::new(), Path("fixture".into()))
+            .await
+            .into_response(),
+    ] {
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
+}
+
+#[tokio::test]
+async fn ordinary_provider_catalog_is_authenticated_exact_filtered_and_cached() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("catalog listener");
+    let port = listener.local_addr().expect("catalog address").port();
+    let requests = Arc::new(AtomicUsize::new(0));
+    let observed = Arc::clone(&requests);
+    let upstream = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("catalog request");
+        let mut request = vec![0_u8; 4096];
+        let read = socket.read(&mut request).await.expect("read request");
+        let request = String::from_utf8_lossy(&request[..read]);
+        assert!(request.starts_with("GET /v1/models HTTP/1.1"), "{request}");
+        assert!(
+            request
+                .to_ascii_lowercase()
+                .contains("authorization: bearer upstream-secret"),
+            "{request}"
+        );
+        observed.fetch_add(1, Ordering::SeqCst);
+
+        let body = r#"{"data":[{"id":"alpha","tier":"preview"},{"id":"beta","tier":"stable"}]}"#;
+        socket
+            .write_all(
+                format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
+            )
+            .await
+            .expect("write catalog");
+    });
+
+    let data = tempfile::tempdir().expect("provider data");
+    let state = crate::app_state::AppState::for_tests(data.path());
+    let provider = ResolvedProvider {
+        name: "fixture".into(),
+        kind: ProviderKind::OpenAICompatible,
+        base_url: format!("http://127.0.0.1:{port}/v1"),
+        default_model: Some("beta".into()),
+        models: vec!["beta".into()],
+        supported_clients: vec!["codex".into()],
+        api_key: Some("upstream-secret".into()),
+        subscriber_id: None,
+        intermediary_risk_acknowledged: false,
+        unsupported_clients: Vec::new(),
+    };
+
+    let first = live_openai_compatible_catalog(&state, &provider)
+        .await
+        .expect("live catalog");
+    assert_eq!(first.len(), 1);
+    assert_eq!(first[0].id, "beta");
+    assert_eq!(first[0].raw["tier"], "stable");
+    upstream.await.expect("catalog server");
+
+    let cached = live_openai_compatible_catalog(&state, &provider)
+        .await
+        .expect("cached catalog");
+    assert_eq!(cached, first);
+    assert_eq!(requests.load(Ordering::SeqCst), 1);
+}
+
+async fn raw_catalog_upstream(status: &str, body: &str) -> (String, tokio::task::JoinHandle<()>) {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("catalog listener");
+    let port = listener.local_addr().expect("catalog address").port();
+    let status = status.to_string();
+    let body = body.to_string();
+    let task = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.expect("catalog request");
+        let mut request = [0_u8; 2048];
+        let _ = socket.read(&mut request).await.expect("read request");
+        socket
+            .write_all(
+                format!(
+                    "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
+            )
+            .await
+            .expect("write catalog");
+    });
+    (format!("http://127.0.0.1:{port}/v1"), task)
+}
+
+fn resolved_catalog_provider(name: &str, base_url: String) -> ResolvedProvider {
+    ResolvedProvider {
+        name: name.into(),
+        kind: ProviderKind::OpenAICompatible,
+        base_url,
+        default_model: None,
+        models: Vec::new(),
+        supported_clients: vec!["codex".into()],
+        api_key: None,
+        subscriber_id: None,
+        intermediary_risk_acknowledged: false,
+        unsupported_clients: Vec::new(),
+    }
+}
+
+#[tokio::test]
+async fn ordinary_provider_catalog_fails_closed_for_every_invalid_shape() {
+    let data = tempfile::tempdir().expect("provider data");
+    let state = crate::app_state::AppState::for_tests(data.path());
+    let cases = [
+        ("500 Broken", r#"{"data":[]}"#),
+        ("200 OK", "not-json"),
+        ("200 OK", r#"{"models":[]}"#),
+        ("200 OK", r#"{"data":[7]}"#),
+        ("200 OK", r#"{"data":[{"id":""}]}"#),
+        ("200 OK", r#"{"data":[{"id":"same"},{"id":"same"}]}"#),
+    ];
+
+    for (index, (status, body)) in cases.into_iter().enumerate() {
+        let (base_url, task) = raw_catalog_upstream(status, body).await;
+        let provider = resolved_catalog_provider(&format!("invalid-{index}"), base_url);
+        let error = live_openai_compatible_catalog(&state, &provider)
+            .await
+            .expect_err("invalid catalogs must fail closed");
+        assert_eq!(error, "provider live model catalog is unavailable");
+        task.await.expect("catalog server");
+
+        let cached = live_openai_compatible_catalog(&state, &provider)
+            .await
+            .expect_err("a recent failed refresh must not hammer the provider");
+        assert_eq!(cached, error);
+    }
+
+    let mut wrong_kind = resolved_catalog_provider("wrong-kind", "https://unused.example".into());
+    wrong_kind.kind = ProviderKind::ZaiCodingPlan;
+    assert_eq!(
+        live_openai_compatible_catalog(&state, &wrong_kind)
+            .await
+            .expect_err("the catalog contract is kind-specific"),
+        "provider does not use the OpenAI-compatible catalog contract"
+    );
+}
+
 #[test]
 fn an_unconfigured_openai_compatible_catalog_is_empty() {
     let data = tempfile::tempdir().expect("provider data");
