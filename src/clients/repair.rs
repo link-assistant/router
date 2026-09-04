@@ -320,6 +320,9 @@ impl ClientManager {
                 remove_if_present(&path)?;
             }
             snapshot.verify_before_path(&self.config_path(client))?;
+            if client == ClientKind::Codex {
+                self.remove_codex_catalog_constraint()?;
+            }
             if let Some(path) = self.ownership_marker_path(client)
                 && !before
                     .conflicts
@@ -853,6 +856,61 @@ mod tests {
                 .credential_metadata_path(ClientKind::ClaudeCode)
                 .exists()
         );
+    }
+
+    #[test]
+    fn codex_repair_removes_only_the_foreign_catalog_constraint_and_rolls_back_exactly() {
+        let home = tempfile::tempdir().expect("home");
+        let manager = ClientManager::isolated(home.path());
+        let path = manager.config_path(ClientKind::Codex);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let original = br#"model_provider = "foreign"
+model_catalog_json = "/private/foreign-models.json"
+model_reasoning_effort = "high"
+
+[mcp_servers.keep]
+command = "kept-mcp"
+"#;
+        fs::write(&path, original).unwrap();
+        set_mode(&path, 0o640).unwrap();
+        let auth = path.parent().unwrap().join("auth.json");
+        fs::write(&auth, br#"{"auth":"untouched"}"#).unwrap();
+        let credential = ManagedCredential {
+            client: "codex".into(),
+            source: TokenSource::Supplied,
+            token_id: Some("record-id-not-a-secret".into()),
+            label: None,
+            issued_at: None,
+            router: Some("http://router.test:8080".into()),
+            principal_id: Some("primary".into()),
+            config_sha256: None,
+        };
+
+        let result = manager
+            .apply_repair(
+                ClientKind::Codex,
+                "http://router.test:8080",
+                "la_sk_router_secret",
+                &credential,
+                &[],
+            )
+            .expect("repair");
+        let repaired = fs::read_to_string(&path).unwrap();
+        assert!(!repaired.contains("model_catalog_json"));
+        assert!(repaired.contains("model_reasoning_effort = \"high\""));
+        assert!(repaired.contains("command = \"kept-mcp\""));
+        assert_eq!(fs::read(&auth).unwrap(), br#"{"auth":"untouched"}"#);
+
+        manager
+            .rollback_repair(
+                ClientKind::Codex,
+                result.backup_id.as_deref().expect("snapshot id"),
+            )
+            .expect("rollback");
+        assert_eq!(fs::read(&path).unwrap(), original);
+        #[cfg(unix)]
+        assert_eq!(file_mode(&path), Some(0o640));
+        assert_eq!(fs::read(&auth).unwrap(), br#"{"auth":"untouched"}"#);
     }
 
     #[test]

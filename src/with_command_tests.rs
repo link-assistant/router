@@ -274,10 +274,23 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         .map(|argument| argument.to_string_lossy().into_owned())
         .collect::<Vec<_>>();
     assert_eq!(
-        arguments,
+        arguments[0..3],
+        ["-c", "model_provider=\"link-assistant\"", "-c"]
+    );
+    let catalog_path = arguments[3]
+        .strip_prefix("model_catalog_json=")
+        .and_then(|value| serde_json::from_str::<String>(value).ok())
+        .expect("process-local model catalog argument");
+    assert!(Path::new(&catalog_path).starts_with(prepared.directory.path()));
+    let catalog: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(&catalog_path).expect("read process-local model catalog"),
+    )
+    .expect("parse process-local model catalog");
+    assert_eq!(catalog["models"][0]["slug"], "gpt-5.6-sol");
+    assert_eq!(catalog["models"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        arguments[4..],
         [
-            "-c",
-            "model_provider=\"link-assistant\"",
             "-c",
             "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
             "-c",

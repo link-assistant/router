@@ -472,10 +472,14 @@ async fn prepare_credential(
                 )
                 .into());
             }
-            let bound = token_client_kind(token)?;
-            if bound.as_deref() != Some(client_kind.canonical_name()) {
+            let (bound, principal) = token_client_binding(token)?;
+            if bound.as_deref() != Some(client_kind.canonical_name())
+                || principal
+                    .as_deref()
+                    .is_none_or(|value| value.trim().is_empty())
+            {
                 return Err(format!(
-                    "the selected listener exposes inference only, so its supplied token must be bound to `{}`; use the matching client token or select the administrator listener",
+                    "the selected listener exposes inference only, so its supplied token must carry the exact `{}` client binding and a subscriber principal; use the matching client token or select the administrator listener",
                     client_kind.canonical_name()
                 )
                 .into());
@@ -609,11 +613,18 @@ fn token_subject(token: &str) -> Result<String, AnyError> {
         .ok_or_else(|| "router run token has no subject to revoke".into())
 }
 
-fn token_client_kind(token: &str) -> Result<Option<String>, AnyError> {
-    Ok(token_claim(token)?
-        .get("client_kind")
-        .and_then(Value::as_str)
-        .map(str::to_string))
+fn token_client_binding(token: &str) -> Result<(Option<String>, Option<String>), AnyError> {
+    let claims = token_claim(token)?;
+    Ok((
+        claims
+            .get("client_kind")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        claims
+            .get("principal_id")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+    ))
 }
 
 fn token_claim(token: &str) -> Result<Value, AnyError> {

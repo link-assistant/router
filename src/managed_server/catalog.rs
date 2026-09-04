@@ -29,7 +29,7 @@ pub(super) async fn fetch_models(
     if status.is_success() {
         let value: Value = serde_json::from_str(&body)
             .map_err(|error| format!("router model catalog returned invalid JSON: {error}"))?;
-        let models = value
+        let models: Vec<RouterModel> = value
             .get("data")
             .and_then(Value::as_array)
             .ok_or("router model catalog did not contain a data array")?
@@ -45,6 +45,11 @@ pub(super) async fn fetch_models(
                 })
             })
             .collect();
+        if models.is_empty() {
+            return Err(
+                "router catalog contains no models authorized for this client token".into(),
+            );
+        }
         return Ok(models);
     }
     if status.as_u16() == 401 || status.as_u16() == 403 {

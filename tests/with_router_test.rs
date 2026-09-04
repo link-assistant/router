@@ -264,6 +264,18 @@ if [ "${{{wait}}}" = 1 ]; then
   trap 'exit 42' INT TERM
 fi
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
+for arg in "$@"; do
+  case "$arg" in
+    model_catalog_json=*)
+      catalog_path=${{arg#model_catalog_json=}}
+      catalog_path=${{catalog_path#\"}}
+      catalog_path=${{catalog_path%\"}}
+      if [ -n "$CAPTURE_MODEL_CATALOG" ]; then
+        cp "$catalog_path" "$CAPTURE_MODEL_CATALOG"
+      fi
+      ;;
+  esac
+done
 printf '%s\n' "$HOME" > "$CAPTURE_HOME"
 if [ -n "$CAPTURE_CODEX_HOME" ]; then
   printf '%s\n' "${{CODEX_HOME:-}}" > "$CAPTURE_CODEX_HOME"
@@ -324,6 +336,7 @@ fn run_with(
         .env("CAPTURE_ARGS", capture.join("args"))
         .env("CAPTURE_HOME", capture.join("home"))
         .env("CAPTURE_CONFIG", capture.join("config"))
+        .env("CAPTURE_MODEL_CATALOG", capture.join("model-catalog.json"))
         .env("CAPTURE_CODEX_HOME", capture.join("codex-home"))
         .env("CAPTURE_TOKEN", capture.join("token"))
         .env("CODEX_HOME", home.join("codex-state"))
@@ -350,6 +363,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
     fs::create_dir_all(&stale).expect("create stale wrapper directory");
     let original = concat!(
         "model_provider = \"user-owned\"\n",
+        "model_catalog_json = \"/private/foreign-models.json\"\n",
         "model_reasoning_effort = \"xhigh\"\n",
         "personality = \"pragmatic\"\n",
         "\n[mcp_servers.memory]\n",
@@ -395,6 +409,17 @@ fn assert_codex_overlay_launch(standalone: bool) {
             "-c".to_string(),
             "model_provider=\"link-assistant\"".to_string(),
             "-c".to_string(),
+            format!(
+                "model_catalog_json={}",
+                serde_json::to_string(
+                    &args[3]
+                        .strip_prefix("model_catalog_json=")
+                        .and_then(|value| serde_json::from_str::<String>(value).ok())
+                        .expect("managed catalog argument")
+                )
+                .expect("catalog path JSON")
+            ),
+            "-c".to_string(),
             "model_providers.link-assistant.name=\"Link.Assistant.Router\"".to_string(),
             "-c".to_string(),
             format!("model_providers.link-assistant.base_url=\"{server}/api/services/codex/v1\""),
@@ -407,6 +432,12 @@ fn assert_codex_overlay_launch(standalone: bool) {
             "hi".to_string(),
         ]
     );
+    let managed_catalog: serde_json::Value = serde_json::from_slice(
+        &fs::read(capture.join("model-catalog.json")).expect("captured managed catalog"),
+    )
+    .expect("valid managed catalog");
+    assert_eq!(managed_catalog["models"][0]["slug"], "gpt-5.6-sol");
+    assert_eq!(managed_catalog["models"].as_array().unwrap().len(), 1);
     assert_eq!(
         fs::read_to_string(capture.join("config")).expect("captured real config"),
         original,

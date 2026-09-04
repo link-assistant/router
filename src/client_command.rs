@@ -544,7 +544,7 @@ async fn setup(
                     label: None,
                     issued_at: None,
                     router: Some(base_url.clone()),
-                    principal_id: binding.and_then(|binding| binding.principal_id),
+                    principal_id: binding.map(|binding| binding.principal_id),
                     config_sha256: None,
                 },
             )
@@ -884,7 +884,40 @@ fn revoke_managed_credential(
 /// Validate that a supplied local token is bound to exactly this adapter.
 struct LocalTokenBinding {
     token_id: String,
-    principal_id: Option<String>,
+    principal_id: String,
+}
+
+fn exact_local_token_binding(
+    claims: crate::token::TokenClaims,
+    client: ClientKind,
+) -> Result<LocalTokenBinding, Box<dyn std::error::Error>> {
+    let client_name = claims
+        .client_kind
+        .as_deref()
+        .ok_or("the supplied token has no managed-client binding")?;
+    if client_name != client.canonical_name() {
+        if ClientKind::ALL
+            .iter()
+            .any(|candidate| client_name == candidate.canonical_name())
+        {
+            return Err(format!(
+                "the supplied token is bound to {client_name}, not {}",
+                client.canonical_name()
+            )
+            .into());
+        }
+        return Err(
+            "the supplied token has an unknown or non-canonical managed-client binding".into(),
+        );
+    }
+    let principal_id = claims
+        .principal_id
+        .filter(|value| !value.trim().is_empty())
+        .ok_or("the supplied token has no subscriber principal")?;
+    Ok(LocalTokenBinding {
+        token_id: claims.sub,
+        principal_id,
+    })
 }
 
 fn local_token_binding(
@@ -900,37 +933,7 @@ fn local_token_binding(
         // revoked from this data directory.
         return Ok(None);
     };
-    let Some(client_name) = claims.client_kind.as_deref() else {
-        if claims.principal_id.is_some() {
-            return Err("the supplied token has an incomplete managed-client binding".into());
-        }
-        // Legacy and deliberately generic tokens remain usable with ordinary
-        // API-key providers. The server still denies them access to every
-        // consumer subscription because they carry no signed client/principal
-        // entitlement.
-        return Ok(Some(LocalTokenBinding {
-            token_id: claims.sub,
-            principal_id: None,
-        }));
-    };
-    let bound_client = ClientKind::from_str_opt(client_name)
-        .ok_or("the supplied token has an unknown managed-client binding")?;
-    if bound_client != client {
-        return Err(format!(
-            "the supplied token is bound to {}, not {}",
-            bound_client.display_name(),
-            client.display_name()
-        )
-        .into());
-    }
-    let principal = claims
-        .principal_id
-        .filter(|value| !value.is_empty())
-        .ok_or("the supplied token has no subscriber principal")?;
-    Ok(Some(LocalTokenBinding {
-        token_id: claims.sub,
-        principal_id: Some(principal),
-    }))
+    exact_local_token_binding(claims, client).map(Some)
 }
 
 fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Error>> {
@@ -982,4 +985,46 @@ fn failed(error: impl std::fmt::Display) -> ExitCode {
         crate::login_url::redact_secrets(&error.to_string())
     );
     ExitCode::from(1)
+}
+
+#[cfg(test)]
+mod binding_tests {
+    use super::*;
+
+    fn claims(client_kind: Option<&str>, principal_id: Option<&str>) -> crate::token::TokenClaims {
+        crate::token::TokenClaims {
+            sub: "token-id".into(),
+            iat: 1,
+            exp: i64::MAX,
+            label: String::new(),
+            scope: String::new(),
+            github_repos: Vec::new(),
+            client_kind: client_kind.map(str::to_string),
+            principal_id: principal_id.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn adopted_local_tokens_require_the_exact_complete_binding() {
+        let accepted =
+            exact_local_token_binding(claims(Some("codex"), Some("primary")), ClientKind::Codex)
+                .expect("canonical complete binding");
+        assert_eq!(accepted.token_id, "token-id");
+        assert_eq!(accepted.principal_id, "primary");
+
+        for rejected in [
+            claims(None, None),
+            claims(None, Some("primary")),
+            claims(Some("codex"), None),
+            claims(Some("codex"), Some("  ")),
+            claims(Some("claude-code"), Some("primary")),
+            claims(Some("future-client"), Some("primary")),
+            claims(Some("claude"), Some("primary")),
+        ] {
+            assert!(
+                exact_local_token_binding(rejected, ClientKind::Codex).is_err(),
+                "generic, partial, non-canonical and foreign bindings must fail closed"
+            );
+        }
+    }
 }
