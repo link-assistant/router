@@ -341,6 +341,41 @@ fn rejected_generic_token_leaves_every_store_byte_and_mtime_unchanged() {
 }
 
 #[test]
+fn read_only_generic_token_validation_does_not_touch_a_binary_projection() {
+    let home = tempfile::tempdir().expect("temp home");
+    let issued = router(
+        home.path(),
+        "binary",
+        &["tokens", "issue", "--label", "binary-generic"],
+    );
+    assert!(issued.status.success(), "{}", text(&issued));
+    let token = String::from_utf8_lossy(&issued.stdout)
+        .lines()
+        .find(|line| line.trim().starts_with("la_sk_"))
+        .expect("issued token")
+        .trim()
+        .to_string();
+    let path = home.path().join("router-data/tokens.bin");
+    let before = fs::read(&path).expect("binary token projection");
+    let modified = fs::metadata(&path)
+        .expect("binary token metadata")
+        .modified()
+        .expect("binary token mtime");
+
+    let rejected = setup(home.path(), "binary", "codex", Some(&token));
+    assert!(!rejected.status.success(), "generic token was adopted");
+    assert_eq!(fs::read(&path).expect("binary token projection"), before);
+    assert_eq!(
+        fs::metadata(&path)
+            .expect("binary token metadata")
+            .modified()
+            .expect("binary token mtime"),
+        modified,
+        "read-only validation changed the binary projection mtime"
+    );
+}
+
+#[test]
 fn failed_revocation_keeps_the_credential_and_exits_nonzero() {
     let home = tempfile::tempdir().expect("temp home");
     let home = home.path();

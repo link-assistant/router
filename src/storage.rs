@@ -842,10 +842,7 @@ pub fn build_token_store_read_only(
             let loaded = if legacy::is_binary(&path)? {
                 legacy::decode_binary(&path)?
             } else {
-                BinaryTokenStore::open(&path)?
-                    .load_map()?
-                    .into_values()
-                    .collect()
+                binary::load_records_read_only(&path)?
             };
             loaded.into_iter().for_each(&mut merge);
         }
