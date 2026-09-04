@@ -149,6 +149,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.1.1] - 2026-09-04
+
+### Changed
+
+- Update the pinned Bun runtime container image to its latest reviewed digest.
+
+### Changed
+
+- Update tower-http to 0.7.1.
+
 ## [1.1.0] - 2026-09-03
 
 ### Added
