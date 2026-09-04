@@ -228,6 +228,51 @@ pub enum RefreshError {
     Storage(String),
 }
 
+/// Machine-relevant classification of a failed import refresh-chain check.
+///
+/// Import callers must know whether the vendor definitely refused the
+/// candidate or might already have advanced a rotating chain. The diagnostic
+/// text deliberately remains separate so no caller has to parse English to
+/// make that availability decision.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ImportRefreshFailureKind {
+    /// No request that could advance the refresh chain was attempted.
+    NotAttempted,
+    /// The provider explicitly rejected the refresh token.
+    ExchangeRejected,
+    /// The request or response was inconclusive after an exchange was attempted.
+    ExchangeUncertain,
+    /// The provider answered successfully, but durable persistence or reread failed.
+    PersistenceUncertain,
+}
+
+/// Secret-free failure returned by classified import validation.
+#[derive(Debug)]
+pub struct ImportRefreshFailure {
+    kind: ImportRefreshFailureKind,
+    message: String,
+}
+
+impl ImportRefreshFailure {
+    pub(super) const fn new(kind: ImportRefreshFailureKind, message: String) -> Self {
+        Self { kind, message }
+    }
+
+    /// Stable classification for machine-readable import recovery output.
+    #[must_use]
+    pub const fn kind(&self) -> ImportRefreshFailureKind {
+        self.kind
+    }
+}
+
+impl std::fmt::Display for ImportRefreshFailure {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.message)
+    }
+}
+
+impl std::error::Error for ImportRefreshFailure {}
+
 /// OAuth error codes that mean the refresh token itself will never work again.
 ///
 /// Deliberately an allowlist rather than a substring search: only these codes,

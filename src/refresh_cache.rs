@@ -9,8 +9,18 @@ use super::{
 fn safe_import_refresh_error(
     provider: SubscriptionProvider,
     error: &super::RefreshError,
-) -> String {
-    match error {
+) -> super::ImportRefreshFailure {
+    let kind = match error {
+        super::RefreshError::NoRefreshToken | super::RefreshError::Unsupported => {
+            super::ImportRefreshFailureKind::NotAttempted
+        }
+        error if error.is_invalid_grant() => super::ImportRefreshFailureKind::ExchangeRejected,
+        super::RefreshError::Storage(_) => super::ImportRefreshFailureKind::PersistenceUncertain,
+        super::RefreshError::Request(_)
+        | super::RefreshError::Status(_, _, _)
+        | super::RefreshError::Parse(_) => super::ImportRefreshFailureKind::ExchangeUncertain,
+    };
+    let message = match error {
         super::RefreshError::NoRefreshToken => {
             format!("the {provider} candidate is not refreshable and was not accepted")
         }
@@ -32,7 +42,8 @@ fn safe_import_refresh_error(
         super::RefreshError::Unsupported => {
             format!("the {provider} candidate refresh chain cannot be validated")
         }
-    }
+    };
+    super::ImportRefreshFailure::new(kind, message)
 }
 
 impl TokenCache {
@@ -127,7 +138,20 @@ impl TokenCache {
         account: &str,
         now_ms: i64,
     ) -> Result<SubscriptionToken, String> {
-        self.validate_refresh_chain_registered_at(
+        self.validate_refresh_chain_registered_classified(client, provider, account, now_ms)
+            .await
+            .map_err(|error| error.to_string())
+    }
+
+    /// Classified variant used by machine-readable credential import.
+    pub async fn validate_refresh_chain_registered_classified(
+        &self,
+        client: &reqwest::Client,
+        provider: SubscriptionProvider,
+        account: &str,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, super::ImportRefreshFailure> {
+        self.validate_refresh_chain_registered_at_classified(
             client,
             refresh_config(provider).token_url,
             provider,
@@ -147,14 +171,43 @@ impl TokenCache {
         account: &str,
         now_ms: i64,
     ) -> Result<SubscriptionToken, String> {
+        self.validate_refresh_chain_registered_at_classified(
+            client, token_url, provider, account, now_ms,
+        )
+        .await
+        .map_err(|error| error.to_string())
+    }
+
+    /// Endpoint-overridable classified variant used by import contract tests.
+    #[doc(hidden)]
+    pub async fn validate_refresh_chain_registered_at_classified(
+        &self,
+        client: &reqwest::Client,
+        token_url: &str,
+        provider: SubscriptionProvider,
+        account: &str,
+        now_ms: i64,
+    ) -> Result<SubscriptionToken, super::ImportRefreshFailure> {
+        let not_attempted = |message| {
+            super::ImportRefreshFailure::new(super::ImportRefreshFailureKind::NotAttempted, message)
+        };
+        let persistence_uncertain = |message| {
+            super::ImportRefreshFailure::new(
+                super::ImportRefreshFailureKind::PersistenceUncertain,
+                message,
+            )
+        };
         let baseline = self
             .load_authoritative(provider, account)
-            .await?
-            .ok_or_else(|| format!("the {provider} candidate credential is absent"))?;
+            .await
+            .map_err(not_attempted)?
+            .ok_or_else(|| {
+                not_attempted(format!("the {provider} candidate credential is absent"))
+            })?;
         if baseline.refresh_token.as_deref().is_none_or(str::is_empty) {
-            return Err(format!(
+            return Err(not_attempted(format!(
                 "the {provider} candidate is not refreshable and was not accepted"
-            ));
+            )));
         }
         let attempt = self.attempts.for_subscription(provider, account, &baseline);
         let mut attempt = attempt.lock().await;
@@ -163,7 +216,11 @@ impl TokenCache {
         }
         let store = self
             .store_for_subscription(provider, account)
-            .ok_or_else(|| format!("no durable {provider} candidate store is registered"))?;
+            .ok_or_else(|| {
+                not_attempted(format!(
+                    "no durable {provider} candidate store is registered"
+                ))
+            })?;
         let exchange = Exchange {
             client,
             token_url,
@@ -183,14 +240,19 @@ impl TokenCache {
         // and promoted.
         let durable = self
             .load_authoritative(provider, account)
-            .await?
-            .ok_or_else(|| format!("the durable {provider} candidate disappeared after refresh"))?;
+            .await
+            .map_err(persistence_uncertain)?
+            .ok_or_else(|| {
+                persistence_uncertain(format!(
+                    "the durable {provider} candidate disappeared after refresh"
+                ))
+            })?;
         if fresh.access_token != durable.access_token
             || fresh.refresh_token != durable.refresh_token
         {
-            return Err(format!(
+            return Err(persistence_uncertain(format!(
                 "the durable {provider} candidate did not retain the validated refresh result"
-            ));
+            )));
         }
         Ok(durable)
     }
@@ -664,21 +726,44 @@ mod import_error_tests {
     #[test]
     fn import_refresh_errors_are_complete_and_secret_free() {
         let cases = [
-            super::super::RefreshError::NoRefreshToken,
-            super::super::RefreshError::Status(
-                400,
-                r#"{"error":"invalid_grant","secret":"must-not-leak"}"#.into(),
-                None,
+            (
+                super::super::RefreshError::NoRefreshToken,
+                super::super::ImportRefreshFailureKind::NotAttempted,
             ),
-            super::super::RefreshError::Status(503, "upstream body must-not-leak".into(), None),
-            super::super::RefreshError::Request("request detail must-not-leak".into()),
-            super::super::RefreshError::Parse("parse detail must-not-leak".into()),
-            super::super::RefreshError::Storage("storage detail must-not-leak".into()),
-            super::super::RefreshError::Unsupported,
+            (
+                super::super::RefreshError::Status(
+                    400,
+                    r#"{"error":"invalid_grant","secret":"must-not-leak"}"#.into(),
+                    None,
+                ),
+                super::super::ImportRefreshFailureKind::ExchangeRejected,
+            ),
+            (
+                super::super::RefreshError::Status(503, "upstream body must-not-leak".into(), None),
+                super::super::ImportRefreshFailureKind::ExchangeUncertain,
+            ),
+            (
+                super::super::RefreshError::Request("request detail must-not-leak".into()),
+                super::super::ImportRefreshFailureKind::ExchangeUncertain,
+            ),
+            (
+                super::super::RefreshError::Parse("parse detail must-not-leak".into()),
+                super::super::ImportRefreshFailureKind::ExchangeUncertain,
+            ),
+            (
+                super::super::RefreshError::Storage("storage detail must-not-leak".into()),
+                super::super::ImportRefreshFailureKind::PersistenceUncertain,
+            ),
+            (
+                super::super::RefreshError::Unsupported,
+                super::super::ImportRefreshFailureKind::NotAttempted,
+            ),
         ];
 
-        for error in cases {
-            let message = safe_import_refresh_error(SubscriptionProvider::Claude, &error);
+        for (error, expected) in cases {
+            let failure = safe_import_refresh_error(SubscriptionProvider::Claude, &error);
+            let message = failure.to_string();
+            assert_eq!(failure.kind(), expected, "{message}");
             assert!(message.contains("claude"), "{message}");
             assert!(!message.contains("must-not-leak"), "{message}");
         }

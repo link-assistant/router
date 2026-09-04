@@ -827,6 +827,8 @@ router auth import claude /path  # or name the source, read exactly as given
 router auth import --all         # every login this machine has, in one step
 router auth import codex --if-absent # install only while the destination is empty
 router auth import codex --safe-refresh-chain-import-v1 # assert the safe contract
+router auth import codex --json  # stable machine-readable recovery outcome
+router auth import --resume <transaction-id> --json --local # retry retained state
 ```
 
 Importing is a different operation from authorizing, not a variation of it:
@@ -841,12 +843,26 @@ the directory it reads from, rather than quietly acting here (issue #291). To
 authorize a remote deployment from this machine, use `router auth claude` or
 `router auth codex`, which do follow the selection.
 
-The import reports what it adopted — where it came from, when it expires, and
-whether it carries a refresh token. Before anything reaches the destination it
-forces a direct OAuth refresh in a private Router staging store, persists and
-rereads the result, then proves that fresh access token at the vendor's
-non-inference model catalog. A rejected, malformed, timed-out, unreachable, or
-non-refreshable candidate is never installed.
+The human report says what Router adopted — where it came from, when it expires,
+and whether it carries a refresh token. `--json` instead emits one versioned
+envelope whose `results` have stable `provider`, `outcome`, `phase`,
+`previous_credential_safe`, and `transaction_id` fields. Outcomes are
+`not_attempted`, `exchange_rejected`, `successor_retained`, `promoted`, and
+`already_present`; phases are `preflight`, `exchange`, `persistence`, `catalog`,
+and `promotion`. The JSON never includes diagnostic prose, credential documents,
+access tokens, refresh tokens, or secret file contents. Operational failures
+still use a non-zero process status.
+
+Before anything reaches the destination, import forces a direct OAuth refresh
+in a private Router staging store, persists and rereads the result, then proves
+that fresh access token at the vendor's non-inference model catalog. A rejected,
+malformed, timed-out, unreachable, or non-refreshable candidate is never
+installed. A definite OAuth rejection reports `exchange_rejected` with
+`previous_credential_safe: true`. Any exchange, persistence, catalog, or
+promotion uncertainty after the provider may have advanced the rotating chain
+reports `successor_retained`, sets `previous_credential_safe: false`, and
+includes its opaque recovery transaction ID. Conditional provisioning that
+finds a destination before candidate validation reports `already_present`.
 
 Gemini's installed-app refresh grant also requires
 `GEMINI_OAUTH_CLIENT_SECRET`, set to the OAuth client secret shipped with the
@@ -877,12 +893,10 @@ source copy may contain the spent predecessor after a successful import. If a
 concurrent credential wins the conditional race or catalog validation fails
 after refresh, Router retains the advanced candidate under a non-secret
 transaction identifier instead of deleting the only current chain link. The
-directory is
-`DATA_DIR/auth-import-candidates/<transaction-id>-<random>/<provider>`; locate
-the prefix Router reported and resume through the same safe command, for
-example `router auth import qwen <that-directory>/qwen --local`. Do not copy the
-file around the import command, because that would bypass validation and locked
-promotion. To withdraw an installed credential:
+candidate remains private under Router's data directory. Resume it with
+`router auth import --resume <transaction-id> --local`; callers do not discover
+or construct an internal path, and the same refresh-chain validation and locked
+promotion run again. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh

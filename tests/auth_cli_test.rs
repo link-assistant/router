@@ -584,7 +584,12 @@ fn import_is_a_verb_listed_in_the_auth_command_list() {
     for provider in ["claude", "codex", "gemini", "qwen", "gh"] {
         assert!(seen.contains(provider), "{provider} missing: {seen}");
     }
-    for flag in ["--if-absent", "--safe-refresh-chain-import-v1"] {
+    for flag in [
+        "--if-absent",
+        "--safe-refresh-chain-import-v1",
+        "--json",
+        "--resume",
+    ] {
         assert!(seen.contains(flag), "{flag} missing: {seen}");
     }
     assert!(
@@ -636,6 +641,89 @@ fn conditional_import_reports_already_present_without_replacement() {
         !stdout.contains("share one rotating chain"),
         "no adoption occurred, so the shared-chain note is false: {stdout}"
     );
+}
+
+#[test]
+fn conditional_import_json_reports_already_present_without_credential_material() {
+    let root = tempfile::tempdir().expect("root");
+    let source = root.path().join("source");
+    let destination = root.path().join("destination");
+    let data = root.path().join("data");
+    std::fs::create_dir_all(&source).expect("source");
+    std::fs::create_dir_all(&destination).expect("destination");
+    std::fs::write(
+        source.join("oauth_creds.json"),
+        r#"{"access_token":"candidate-secret","refresh_token":"candidate-refresh"}"#,
+    )
+    .expect("candidate");
+    let current = br#"{"access_token":"current-secret","refresh_token":"current-refresh"}"#;
+    std::fs::write(destination.join("oauth_creds.json"), current).expect("current");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "qwen",
+            source.to_str().expect("source path"),
+            "--if-absent",
+            "--json",
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", root.path())
+        .env("QWEN_HOME", &destination)
+        .env("DATA_DIR", &data)
+        .output()
+        .expect("router CLI should run");
+
+    assert!(output.status.success(), "{output:?}");
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("JSON result");
+    assert_eq!(result["schema_version"], 1);
+    assert_eq!(result["results"][0]["provider"], "qwen");
+    assert_eq!(result["results"][0]["outcome"], "already_present");
+    assert_eq!(result["results"][0]["phase"], "preflight");
+    assert_eq!(result["results"][0]["previous_credential_safe"], true);
+    assert!(result["results"][0]["transaction_id"].is_null());
+    let json = String::from_utf8_lossy(&output.stdout);
+    for secret in [
+        "candidate-secret",
+        "candidate-refresh",
+        "current-secret",
+        "current-refresh",
+    ] {
+        assert!(!json.contains(secret), "JSON leaked {secret}: {json}");
+        assert!(
+            !String::from_utf8_lossy(&output.stderr).contains(secret),
+            "stderr leaked {secret}: {output:?}"
+        );
+    }
+}
+
+#[test]
+fn missing_resume_transaction_is_a_structured_failure() {
+    let root = tempfile::tempdir().expect("root");
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "--resume",
+            "00000000000000000000000000000000",
+            "--json",
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", root.path())
+        .env("DATA_DIR", root.path().join("data"))
+        .output()
+        .expect("router CLI should run");
+
+    assert!(!output.status.success(), "{output:?}");
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("JSON result");
+    assert_eq!(result["results"][0]["provider"], serde_json::Value::Null);
+    assert_eq!(result["results"][0]["outcome"], "not_attempted");
+    assert_eq!(result["results"][0]["phase"], "preflight");
+    assert_eq!(result["results"][0]["previous_credential_safe"], true);
+    assert!(result["results"][0]["transaction_id"].is_null());
 }
 
 #[test]

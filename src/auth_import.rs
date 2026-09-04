@@ -16,6 +16,13 @@ use link_assistant_router::subscription::{
     ImportSource, InstallDocumentResult, InstallMode, SubscriptionProvider, SubscriptionReader,
 };
 
+#[path = "auth_import_result.rs"]
+mod import_result;
+#[path = "auth_import_resume.rs"]
+mod import_resume;
+
+use import_result::{ImportExecution, ImportFailure, ImportOutcome, ImportPhase, finish};
+
 /// Vendor evidence gathered before an import may touch its destination.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -73,12 +80,13 @@ pub async fn run_import(
     config: &link_assistant_router::config::Config,
     op: &AuthOp,
 ) -> Option<ExitCode> {
+    let json = matches!(op, AuthOp::Import { json: true, .. });
     // Import writes this machine's credential home. When another router is the
     // target, doing that anyway produced an error naming the *local* home as
     // though it were the one asked about — a wrong-target action wearing an
     // answer that looks coherent (issue #291). Refuse before any local work.
-    if let Some(exit) = refuse_a_remote_import(op).await {
-        return Some(exit);
+    if let Some(failure) = refuse_a_remote_import(op).await {
+        return Some(finish(&[ImportExecution::failed(None, failure)], json));
     }
     let policy = match op {
         AuthOp::Import {
@@ -89,15 +97,32 @@ pub async fn run_import(
         },
         _ => ImportPolicy::default(),
     };
-    let requested: Vec<(ImportProvider, String)> = match op {
+    let requested: Vec<(
+        ImportProvider,
+        String,
+        Option<import_resume::ResumeCandidate>,
+    )> = match op {
         AuthOp::Claude {
             from_claude_home: Some(source),
             ..
-        } => vec![(ImportProvider::Claude, source.clone())],
+        } => vec![(ImportProvider::Claude, source.clone(), None)],
         AuthOp::Codex {
             from_codex_home: Some(source),
             ..
-        } => vec![(ImportProvider::Codex, source.clone())],
+        } => vec![(ImportProvider::Codex, source.clone(), None)],
+        AuthOp::Import {
+            resume: Some(transaction_id),
+            ..
+        } => match import_resume::resolve(&config.data_dir, transaction_id) {
+            Ok(candidate) => vec![(
+                candidate.provider,
+                candidate.source.clone(),
+                Some(candidate),
+            )],
+            Err(failure) => {
+                return Some(finish(&[ImportExecution::failed(None, failure)], json));
+            }
+        },
         AuthOp::Import { all: true, .. } => [
             ImportProvider::Claude,
             ImportProvider::Codex,
@@ -106,26 +131,28 @@ pub async fn run_import(
             ImportProvider::Gh,
         ]
         .into_iter()
-        .map(|provider| (provider, String::new()))
+        .map(|provider| (provider, String::new(), None))
         .collect(),
         AuthOp::Import {
             provider: Some(provider),
             dir,
             ..
-        } => vec![(*provider, dir.clone().unwrap_or_default())],
+        } => vec![(*provider, dir.clone().unwrap_or_default(), None)],
         _ => return None,
     };
     // `--all` adopts what is there and reports what is not, rather than failing
     // on the first provider this machine never logged in to: a workstation with
     // two of five logins is the ordinary case, not an error.
     let adopting_everything = matches!(op, AuthOp::Import { all: true, .. });
-    let mut failed = false;
-    for (provider, source) in requested {
+    let mut executions = Vec::with_capacity(requested.len());
+    for (provider, source, resumed) in requested {
         let outcome = match provider {
-            ImportProvider::Gh if policy.if_absent => Err(String::from(
+            ImportProvider::Gh if policy.if_absent => Err(ImportFailure::not_attempted(
                 "--if-absent is supported only for Claude, Codex, Gemini, and Qwen; GitHub import keeps its existing replacement behavior",
             )),
-            ImportProvider::Gh => import_github(&config.data_dir, &source),
+            ImportProvider::Gh => import_github(&config.data_dir, &source)
+                .map(|messages| ImportExecution::promoted("github", messages))
+                .map_err(ImportFailure::not_attempted),
             other => {
                 let Some(subscription) = subscription_of(other) else {
                     continue;
@@ -133,20 +160,70 @@ pub async fn run_import(
                 import_provider(config, subscription, &source, policy).await
             }
         };
-        if let Err(error) = outcome {
-            if adopting_everything && error.starts_with("no ") {
-                println!("{}: nothing to adopt ({error})", provider_label(provider));
-                continue;
+        let outcome = if let Some(candidate) = resumed.as_ref() {
+            reconcile_resumed_import(candidate, outcome)
+        } else {
+            outcome
+        };
+        let execution = match outcome {
+            Ok(execution) => execution,
+            Err(failure) => {
+                let absent = adopting_everything && failure.error.starts_with("no ");
+                let message = absent.then(|| {
+                    format!(
+                        "{}: nothing to adopt ({})",
+                        provider_label(provider),
+                        failure.error
+                    )
+                });
+                let execution = ImportExecution::failed(Some(provider_label(provider)), failure);
+                if let Some(message) = message {
+                    execution.ignore_failure(message)
+                } else {
+                    execution
+                }
             }
-            eprintln!("error: {error}");
-            failed = true;
-        }
+        };
+        executions.push(execution);
     }
-    Some(if failed {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    })
+    Some(finish(&executions, json))
+}
+
+/// A resume begins with an already uncertain transaction. Only promotion can
+/// retire that uncertainty. A fresh uncertain retry replaces the predecessor
+/// transaction; every other result keeps the original recovery ID authoritative.
+fn reconcile_resumed_import(
+    candidate: &import_resume::ResumeCandidate,
+    outcome: Result<ImportExecution, ImportFailure>,
+) -> Result<ImportExecution, ImportFailure> {
+    match outcome {
+        Ok(mut execution) if execution.is_promoted() => {
+            if let Err(warning) = import_resume::retire(candidate) {
+                execution.add_message(format!("note: {warning}"));
+            }
+            Ok(execution)
+        }
+        Ok(_) => Err(ImportFailure::retained(
+            ImportPhase::Preflight,
+            candidate.transaction_id.clone(),
+            format!(
+                "the destination is already present; retained import transaction {} still requires recovery",
+                candidate.transaction_id
+            ),
+        )),
+        Err(failure) if failure.outcome == ImportOutcome::SuccessorRetained => {
+            let _retired_predecessor = import_resume::retire(candidate);
+            Err(failure)
+        }
+        Err(failure) => Err(ImportFailure::retained(
+            failure.phase,
+            candidate.transaction_id.clone(),
+            format!(
+                "{}; retained import transaction {} still requires recovery",
+                failure.error, candidate.transaction_id
+            ),
+        )),
+    }
 }
 
 /// Refuse an import aimed at a router other than this machine.
@@ -166,7 +243,7 @@ pub async fn run_import(
 ///
 /// `--local` is the way to ask for this machine, and `--managed` is a local
 /// disposable container, so both keep the ordinary path.
-async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
+async fn refuse_a_remote_import(op: &AuthOp) -> Option<ImportFailure> {
     // Decided from the flags alone, so `--local` never contacts a server and
     // never fails because one is unreachable. The per-provider
     // `--from-*-home` flags carry no target and stay local, as they always
@@ -190,8 +267,7 @@ async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
         Err(error) => {
             // An unreachable *named* target is an error in its own right;
             // falling back to a local import is the surprise being fixed.
-            eprintln!("error: {error}");
-            return Some(ExitCode::from(1));
+            return Some(ImportFailure::not_attempted(error));
         }
     };
     // Name the directory the credential would have to land in, when the router
@@ -207,13 +283,12 @@ async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
         }
         _ => None,
     };
-    for line in link_assistant_router::auth_remote::remote_import_refusal(
+    let error = link_assistant_router::auth_remote::remote_import_refusal(
         &server.base_url,
         destination.as_deref(),
-    ) {
-        eprintln!("{line}");
-    }
-    Some(ExitCode::from(1))
+    )
+    .join("\n");
+    Some(ImportFailure::not_attempted(error))
 }
 
 /// The subscription an import target names, when it names one.
@@ -242,7 +317,7 @@ const fn provider_label(provider: ImportProvider) -> &'static str {
 ///
 /// Shares `run_gh`'s reader so the two spellings cannot drift, and reports in
 /// the same column format the subscription imports use.
-fn import_github(data_dir: &std::path::Path, source: &str) -> Result<(), String> {
+fn import_github(data_dir: &std::path::Path, source: &str) -> Result<Vec<String>, String> {
     use link_assistant_router::github_proxy;
 
     let directory = Some(source)
@@ -259,15 +334,18 @@ fn import_github(data_dir: &std::path::Path, source: &str) -> Result<(), String>
         )
     })?;
     let path = github_proxy::store_credential(data_dir, &token)?;
-    println!(
+    let mut messages = vec![format!(
         "github   imported {} from {}",
         path.display(),
         directory.display()
-    );
+    )];
     // The GitHub routes are decided at startup from whether a credential
     // exists, so adopting one mid-run does not mount them.
-    println!("github   note: the GitHub routes are mounted at startup; restart to serve them");
-    Ok(())
+    messages.push(
+        "github   note: the GitHub routes are mounted at startup; restart to serve them"
+            .to_string(),
+    );
+    Ok(messages)
 }
 
 /// Copy a vendor credential into this deployment's home, and say what it is.
@@ -281,7 +359,7 @@ async fn import_provider(
     provider: SubscriptionProvider,
     source: &str,
     policy: ImportPolicy,
-) -> Result<(), String> {
+) -> Result<ImportExecution, ImportFailure> {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     // An empty value asks for the vendor's own default location.
     //
@@ -300,24 +378,24 @@ async fn import_provider(
         // A deployment that reads the vendor's own home already holds whatever
         // is there; there is nothing to copy, and copying a file onto itself
         // would truncate it.
-        return Err(format!(
+        return Err(ImportFailure::not_attempted(format!(
             "{provider} is already read from {}, so there is nothing to adopt",
             destination_home.display()
-        ));
+        )));
     }
 
     let from = SubscriptionReader::new(provider, &source_home);
     // One selection yields the bytes, their verdict, and their origin. Reading
     // the source a second time to describe it is what let the report and the
     // installed credential name different things (issue #280).
-    let source_credential = from
-        .read_document_for_import()
-        .map_err(|error| match error {
+    let source_credential = from.read_document_for_import().map_err(|error| {
+        ImportFailure::not_attempted(match error {
             link_assistant_router::subscription::SubscriptionError::NoCredentials(message) => {
                 format!("no {provider} credential to import: {message}")
             }
             other => format!("invalid {provider} candidate credential: {other}"),
-        })?;
+        })
+    })?;
     let ImportSource {
         document,
         token: _,
@@ -343,10 +421,12 @@ async fn import_provider(
     // already has a winner. Installation repeats this check after validation,
     // under the same lock, so a concurrent login/refresh still wins the race.
     if policy.if_absent && destination.has_platform_store_credential() {
-        println!(
-            "{provider:<8} already present in the platform credential store; candidate from {where_from} was not validated or installed"
-        );
-        return Ok(());
+        return Ok(ImportExecution::already_present(
+            provider.to_string(),
+            vec![format!(
+                "{provider:<8} already present in the platform credential store; candidate from {where_from} was not validated or installed"
+            )],
+        ));
     }
     if policy.if_absent
         && let Some(path) = destination
@@ -354,13 +434,16 @@ async fn import_provider(
                 &config.data_dir,
                 link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
             )
-            .await?
+            .await
+            .map_err(ImportFailure::not_attempted)?
     {
-        println!(
-            "{provider:<8} already present at {}; candidate from {where_from} was not validated or installed",
-            path.display()
-        );
-        return Ok(());
+        return Ok(ImportExecution::already_present(
+            provider.to_string(),
+            vec![format!(
+                "{provider:<8} already present at {}; candidate from {where_from} was not validated or installed",
+                path.display()
+            )],
+        ));
     }
 
     // A working access token can be paired with a stale, already-spent refresh
@@ -374,8 +457,12 @@ async fn import_provider(
             && destination.candidate_is_shadowed_by_platform_store(&validated.token))
     {
         let transaction_id = validated.retain();
-        return Err(format!(
-            "the {provider} platform credential remains authoritative; validated candidate retained as transaction {transaction_id}"
+        return Err(ImportFailure::retained(
+            ImportPhase::Promotion,
+            transaction_id.clone(),
+            format!(
+                "the {provider} platform credential remains authoritative; validated candidate retained as transaction {transaction_id}"
+            ),
         ));
     }
     let promotion = install_candidate(
@@ -390,49 +477,58 @@ async fn import_provider(
         Ok(installed) => installed,
         Err(error) => {
             let transaction_id = validated.retain();
-            return Err(format!(
-                "{error}; validated candidate retained as transaction {transaction_id}"
+            return Err(ImportFailure::retained(
+                ImportPhase::Promotion,
+                transaction_id.clone(),
+                format!("{error}; validated candidate retained as transaction {transaction_id}"),
             ));
         }
     };
-    match installed {
+    let execution = match installed {
         InstallDocumentResult::Installed(path) => {
-            println!(
-                "{provider:<8} imported {} from {where_from}",
-                path.display()
-            );
-            println!(
-                "{provider:<8} note: refresh-chain validation advanced the candidate before \
-                 installation; the source copy may now contain the spent predecessor"
-            );
+            let messages = vec![
+                format!(
+                    "{provider:<8} imported {} from {where_from}",
+                    path.display()
+                ),
+                format!(
+                    "{provider:<8} note: refresh-chain validation advanced the candidate before \
+                     installation; the source copy may now contain the spent predecessor"
+                ),
+                format!(
+                    "{provider:<8} candidate {report}, accepted by the vendor after refresh-chain validation"
+                ),
+            ];
             // Dropping a successfully promoted candidate removes its isolated
             // staging directory. The complete bytes now live at `path`.
             drop(validated);
+            ImportExecution::promoted(provider.to_string(), messages)
         }
         InstallDocumentResult::AlreadyPresent(path) => {
             // A login or refresh won the race after the preflight. Its bytes
             // remain authoritative, while the advanced candidate must stay
             // durable because its source now holds a spent predecessor.
             let transaction_id = validated.retain();
-            println!(
-                "{provider:<8} already present at {}; candidate from {where_from} was not installed",
-                path.display()
-            );
-            println!("{provider:<8} validated candidate retained as transaction {transaction_id}");
+            return Err(ImportFailure::retained(
+                ImportPhase::Promotion,
+                transaction_id.clone(),
+                format!(
+                    "{provider:<8} already present at {}; candidate from {where_from} was not installed; validated candidate retained as transaction {transaction_id}",
+                    path.display()
+                ),
+            ));
         }
-    }
-    println!(
-        "{provider:<8} candidate {report}, accepted by the vendor after refresh-chain validation"
-    );
-    Ok(())
+    };
+    Ok(execution)
 }
 
 async fn validate_candidate(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,
     document: &str,
-) -> Result<ValidatedCandidate, String> {
-    import_refresh_prerequisite(provider, |key| std::env::var(key).ok())?;
+) -> Result<ValidatedCandidate, ImportFailure> {
+    import_refresh_prerequisite(provider, |key| std::env::var(key).ok())
+        .map_err(ImportFailure::not_attempted)?;
     validate_candidate_with(data_dir, provider, document, None, None).await
 }
 
@@ -479,35 +575,44 @@ async fn validate_candidate_with(
     document: &str,
     token_url_override: Option<&str>,
     catalog_base_url_override: Option<&str>,
-) -> Result<ValidatedCandidate, String> {
+) -> Result<ValidatedCandidate, ImportFailure> {
     let staging_root = data_dir.join("auth-import-candidates");
-    std::fs::create_dir_all(&staging_root)
-        .map_err(|_| "could not create the private credential-import staging area".to_string())?;
+    std::fs::create_dir_all(&staging_root).map_err(|_| {
+        ImportFailure::not_attempted("could not create the private credential-import staging area")
+    })?;
     let transaction_id = uuid::Uuid::new_v4().simple().to_string();
     let stage = tempfile::Builder::new()
         .prefix(&format!("{transaction_id}-"))
         .tempdir_in(&staging_root)
-        .map_err(|_| "could not create a private credential-import transaction".to_string())?;
+        .map_err(|_| {
+            ImportFailure::not_attempted("could not create a private credential-import transaction")
+        })?;
     let candidate_home = stage.path().join(provider.as_str());
-    std::fs::create_dir(&candidate_home)
-        .map_err(|_| "could not create the isolated candidate store".to_string())?;
+    std::fs::create_dir(&candidate_home).map_err(|_| {
+        ImportFailure::not_attempted("could not create the isolated candidate store")
+    })?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&candidate_home, std::fs::Permissions::from_mode(0o700))
-            .map_err(|_| "could not protect the isolated candidate store".to_string())?;
+        std::fs::set_permissions(&candidate_home, std::fs::Permissions::from_mode(0o700)).map_err(
+            |_| ImportFailure::not_attempted("could not protect the isolated candidate store"),
+        )?;
     }
     let reader = SubscriptionReader::new(provider, &candidate_home);
-    reader
-        .install_document(document)
-        .map_err(|_| format!("the {provider} candidate could not be staged durably"))?;
+    reader.install_document(document).map_err(|_| {
+        ImportFailure::not_attempted(format!(
+            "the {provider} candidate could not be staged durably"
+        ))
+    })?;
     let catalog_base = if let Some(base) = catalog_base_url_override {
         base.trim_end_matches('/').to_string()
     } else {
         let staged = reader.read_document_for_import().map_err(|_| {
-            format!("the staged {provider} candidate could not be read for validation")
+            ImportFailure::not_attempted(format!(
+                "the staged {provider} candidate could not be read for validation"
+            ))
         })?;
-        catalog_base_for_candidate(provider, &staged.token)?
+        catalog_base_for_candidate(provider, &staged.token).map_err(ImportFailure::not_attempted)?
     };
 
     let candidate_data = stage.path().join("router-state");
@@ -519,12 +624,12 @@ async fn validate_candidate_with(
         .timeout(std::time::Duration::from_secs(20))
         .redirect(reqwest::redirect::Policy::none())
         .build()
-        .map_err(|_| "could not initialize candidate validation".to_string())?;
+        .map_err(|_| ImportFailure::not_attempted("could not initialize candidate validation"))?;
     let now_ms = chrono::Utc::now().timestamp_millis();
     let refresh_result = match token_url_override {
         Some(token_url) => {
             cache
-                .validate_refresh_chain_registered_at(
+                .validate_refresh_chain_registered_at_classified(
                     &client,
                     token_url,
                     provider,
@@ -535,7 +640,7 @@ async fn validate_candidate_with(
         }
         None => {
             cache
-                .validate_refresh_chain_registered(
+                .validate_refresh_chain_registered_classified(
                     &client,
                     provider,
                     link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
@@ -551,10 +656,15 @@ async fn validate_candidate_with(
             // response, persistence, or authoritative reread failed. Retain
             // the isolated store conservatively; dropping it here could
             // delete the only durable successor.
-            let _retained_path = stage.keep();
-            return Err(format!(
-                "{error}; isolated candidate retained as transaction {transaction_id}"
-            ));
+            let mut failure = ImportFailure::from_refresh(&error, &transaction_id);
+            if failure.outcome == ImportOutcome::SuccessorRetained {
+                let _retained_path = stage.keep();
+                failure.error = format!(
+                    "{}; isolated candidate retained as transaction {transaction_id}",
+                    failure.error
+                );
+            }
+            return Err(failure);
         }
     };
 
@@ -574,23 +684,35 @@ async fn validate_candidate_with(
             "was not positively accepted by the vendor catalog"
         };
         let _retained_path = stage.keep();
-        return Err(format!(
-            "the {provider} candidate {reason}; refreshed candidate retained as transaction {transaction_id}"
+        return Err(ImportFailure::retained(
+            ImportPhase::Catalog,
+            transaction_id.clone(),
+            format!(
+                "the {provider} candidate {reason}; refreshed candidate retained as transaction {transaction_id}"
+            ),
         ));
     }
 
     let Ok(durable) = reader.read_document_for_import() else {
         let _retained_path = stage.keep();
-        return Err(format!(
-            "the durable {provider} candidate could not be reread; refreshed candidate retained as transaction {transaction_id}"
+        return Err(ImportFailure::retained(
+            ImportPhase::Persistence,
+            transaction_id.clone(),
+            format!(
+                "the durable {provider} candidate could not be reread; refreshed candidate retained as transaction {transaction_id}"
+            ),
         ));
     };
     if durable.token.access_token != refreshed.access_token
         || durable.token.refresh_token != refreshed.refresh_token
     {
         let _retained_path = stage.keep();
-        return Err(format!(
-            "the durable {provider} candidate changed after validation; refreshed candidate retained as transaction {transaction_id}"
+        return Err(ImportFailure::retained(
+            ImportPhase::Persistence,
+            transaction_id.clone(),
+            format!(
+                "the durable {provider} candidate changed after validation; refreshed candidate retained as transaction {transaction_id}"
+            ),
         ));
     }
     Ok(ValidatedCandidate {

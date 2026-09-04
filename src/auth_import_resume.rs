@@ -1,0 +1,91 @@
+//! Resolve opaque credential-import transaction IDs without exposing paths.
+
+use std::path::{Path, PathBuf};
+
+use link_assistant_router::cli::ImportProvider;
+use link_assistant_router::subscription::SubscriptionProvider;
+
+use super::import_result::ImportFailure;
+
+#[derive(Debug)]
+pub(super) struct ResumeCandidate {
+    pub(super) provider: ImportProvider,
+    pub(super) source: String,
+    pub(super) transaction_root: PathBuf,
+    pub(super) transaction_id: String,
+}
+
+/// Find exactly one owner-only candidate transaction by its reported opaque ID.
+pub(super) fn resolve(
+    data_dir: &Path,
+    transaction_id: &str,
+) -> Result<ResumeCandidate, ImportFailure> {
+    if transaction_id.is_empty()
+        || transaction_id.len() > 128
+        || !transaction_id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+    {
+        return Err(ImportFailure::not_attempted(
+            "the retained import transaction ID is invalid",
+        ));
+    }
+    let root = data_dir.join("auth-import-candidates");
+    let entries = std::fs::read_dir(&root).map_err(|_| {
+        ImportFailure::not_attempted("the retained import transaction was not found")
+    })?;
+    let prefix = format!("{transaction_id}-");
+    let mut matches = entries
+        .filter_map(Result::ok)
+        .filter(|entry| {
+            entry
+                .file_type()
+                .is_ok_and(|file_type| file_type.is_dir() && !file_type.is_symlink())
+                && entry.file_name().to_string_lossy().starts_with(&prefix)
+        })
+        .map(|entry| entry.path())
+        .collect::<Vec<_>>();
+    if matches.len() != 1 {
+        return Err(ImportFailure::not_attempted(if matches.is_empty() {
+            "the retained import transaction was not found"
+        } else {
+            "the retained import transaction ID is ambiguous"
+        }));
+    }
+    let transaction_root = matches.pop().expect("one transaction was checked");
+    let providers = SubscriptionProvider::ALL
+        .into_iter()
+        .filter(|provider| {
+            std::fs::symlink_metadata(transaction_root.join(provider.as_str()))
+                .is_ok_and(|metadata| metadata.file_type().is_dir())
+        })
+        .collect::<Vec<_>>();
+    let [subscription] = providers.as_slice() else {
+        return Err(ImportFailure::not_attempted(
+            "the retained import transaction has no unique provider candidate",
+        ));
+    };
+    let provider = match subscription {
+        SubscriptionProvider::Claude => ImportProvider::Claude,
+        SubscriptionProvider::Codex => ImportProvider::Codex,
+        SubscriptionProvider::Gemini => ImportProvider::Gemini,
+        SubscriptionProvider::Qwen => ImportProvider::Qwen,
+    };
+    let source = transaction_root
+        .join(subscription.as_str())
+        .to_string_lossy()
+        .into_owned();
+    Ok(ResumeCandidate {
+        provider,
+        source,
+        transaction_root,
+        transaction_id: transaction_id.to_string(),
+    })
+}
+
+/// Remove the predecessor transaction after a newer durable candidate replaces
+/// it. A failed cleanup never changes the already reported credential outcome.
+pub(super) fn retire(candidate: &ResumeCandidate) -> Result<(), String> {
+    std::fs::remove_dir_all(&candidate.transaction_root)
+        .map_err(|_| "could not retire the resumed import transaction".to_string())
+}

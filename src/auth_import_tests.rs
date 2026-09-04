@@ -313,20 +313,16 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
         .expect_err("spent refresh chain must be rejected");
 
         assert!(error.contains("invalid_grant"), "{provider}: {error}");
-        assert!(
-            error.contains("retained as transaction"),
-            "validation uncertainty discarded the isolated candidate: {provider}: {error}"
-        );
+        assert_eq!(error.outcome, ImportOutcome::ExchangeRejected);
+        assert_eq!(error.phase, ImportPhase::Exchange);
+        assert!(error.previous_credential_safe);
+        assert_eq!(error.transaction_id, None);
+        assert!(!error.contains("retained as transaction"), "{error}");
         let transactions = std::fs::read_dir(root.path().join("auth-import-candidates"))
             .expect("retained staging root")
             .collect::<Result<Vec<_>, _>>()
             .expect("retained transactions");
-        assert_eq!(transactions.len(), 1, "{provider}: {error}");
-        let retained = transactions[0]
-            .path()
-            .join(provider.as_str())
-            .join(provider.canonical_credential_filename());
-        assert!(retained.is_file(), "{provider}: retained candidate missing");
+        assert!(transactions.is_empty(), "{provider}: {error}");
         assert_eq!(
             std::fs::read_to_string(destination_path).unwrap(),
             current,
@@ -342,6 +338,32 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
         drop(seen);
         server.abort();
     }
+}
+
+/// A transport failure cannot prove whether the provider advanced a rotating
+/// chain before the connection disappeared, so the candidate stays recoverable.
+#[tokio::test]
+async fn an_inconclusive_exchange_reports_a_retained_successor() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve dead endpoint");
+    let token_url = format!("http://{}/token", listener.local_addr().unwrap());
+    drop(listener);
+    let root = tempfile::tempdir().expect("import root");
+
+    let error = validate_candidate_with(
+        root.path(),
+        SubscriptionProvider::Claude,
+        &candidate_document(SubscriptionProvider::Claude),
+        Some(&token_url),
+        Some("http://127.0.0.1:1"),
+    )
+    .await
+    .expect_err("connection loss must remain uncertain");
+
+    assert_eq!(error.outcome, ImportOutcome::SuccessorRetained);
+    assert_eq!(error.phase, ImportPhase::Exchange);
+    assert!(!error.previous_credential_safe);
+    assert!(error.transaction_id.is_some());
+    assert!(error.contains("retained as transaction"), "{error}");
 }
 
 /// Qwen Code issues a per-credential service origin. Safe import must use that
@@ -450,6 +472,89 @@ fn validated_candidate_diagnostics_are_redacted_and_retention_is_durable() {
 
     assert_eq!(candidate.retain(), "visible-transaction-id");
     assert!(retained_path.join("credential").is_file());
+}
+
+/// Machine output contains only the stable contract fields. Human diagnostics
+/// can carry arbitrary failure context without ever entering serialized JSON.
+#[test]
+fn machine_results_are_stable_and_credential_free() {
+    let retained = ImportExecution::failed(
+        Some("codex"),
+        ImportFailure::retained(
+            ImportPhase::Catalog,
+            "opaque-transaction".to_string(),
+            "must-not-leak access-token refresh-token credential document",
+        ),
+    );
+    let promoted = ImportExecution::promoted(
+        "qwen",
+        vec!["human output may name must-not-leak".to_string()],
+    );
+    let rejected = ImportExecution::failed(
+        Some("claude"),
+        ImportFailure::from_refresh_kind_for_test(
+            link_assistant_router::refresh::ImportRefreshFailureKind::ExchangeRejected,
+            "unused-transaction",
+        ),
+    );
+    let already_present = ImportExecution::already_present("gemini", Vec::new());
+    let value = import_result::json_value(&[retained, promoted, rejected, already_present]);
+    let serialized = value.to_string();
+
+    assert_eq!(value["schema_version"], 1);
+    assert_eq!(value["results"][0]["provider"], "codex");
+    assert_eq!(value["results"][0]["outcome"], "successor_retained");
+    assert_eq!(value["results"][0]["phase"], "catalog");
+    assert_eq!(value["results"][0]["previous_credential_safe"], false);
+    assert_eq!(value["results"][0]["transaction_id"], "opaque-transaction");
+    assert_eq!(value["results"][1]["outcome"], "promoted");
+    assert_eq!(value["results"][2]["outcome"], "exchange_rejected");
+    assert_eq!(value["results"][2]["previous_credential_safe"], true);
+    assert!(value["results"][2]["transaction_id"].is_null());
+    assert_eq!(value["results"][3]["outcome"], "already_present");
+    assert!(!serialized.contains("must-not-leak"), "{serialized}");
+    assert!(!serialized.contains("access-token"), "{serialized}");
+    assert!(!serialized.contains("refresh-token"), "{serialized}");
+}
+
+/// Persistence and authoritative reread failures happen after a provider may
+/// have rotated the chain, and therefore always require retained recovery.
+#[test]
+fn persistence_uncertainty_maps_to_a_retained_successor() {
+    let failure = ImportFailure::from_refresh_kind_for_test(
+        link_assistant_router::refresh::ImportRefreshFailureKind::PersistenceUncertain,
+        "persistence-transaction",
+    );
+    assert_eq!(failure.outcome, ImportOutcome::SuccessorRetained);
+    assert_eq!(failure.phase, ImportPhase::Persistence);
+    assert!(!failure.previous_credential_safe);
+    assert_eq!(
+        failure.transaction_id.as_deref(),
+        Some("persistence-transaction")
+    );
+}
+
+/// Resume resolves an opaque identifier to one owner-only provider directory,
+/// while traversal-like identifiers never become filesystem paths.
+#[test]
+fn retained_transactions_resolve_by_opaque_id_only() {
+    let root = tempfile::tempdir().expect("router data");
+    let transaction_id = "opaque-transaction";
+    let transaction = root
+        .path()
+        .join("auth-import-candidates")
+        .join(format!("{transaction_id}-random"));
+    let provider = transaction.join("qwen");
+    std::fs::create_dir_all(&provider).expect("retained provider");
+
+    let resolved = import_resume::resolve(root.path(), transaction_id).expect("resume candidate");
+    assert_eq!(resolved.provider, ImportProvider::Qwen);
+    assert_eq!(resolved.source, provider.to_string_lossy());
+    assert_eq!(resolved.transaction_id, transaction_id);
+
+    let error = import_resume::resolve(root.path(), "../opaque-transaction")
+        .expect_err("path syntax must not be accepted as an opaque ID");
+    assert_eq!(error.outcome, ImportOutcome::NotAttempted);
 }
 
 /// The CLI spelling, report label, and subscription implementation must remain
@@ -588,6 +693,10 @@ async fn an_unverified_catalog_retains_the_fresh_chain_for_every_provider() {
         .await
         .expect_err("unverified catalog must fail closed");
 
+        assert_eq!(error.outcome, ImportOutcome::SuccessorRetained);
+        assert_eq!(error.phase, ImportPhase::Catalog);
+        assert!(!error.previous_credential_safe);
+        assert!(error.transaction_id.is_some());
         assert!(
             error.contains("retained as transaction"),
             "{provider}: {error}"
