@@ -365,6 +365,9 @@ fn credential_carrier_matches(client: ClientKind, headers: &HeaderMap) -> bool {
 }
 
 fn path_belongs_to_client(client: ClientKind, path: &str) -> bool {
+    if path == "/api/models" {
+        return !matches!(client, ClientKind::Cursor | ClientKind::Agent);
+    }
     match client {
         ClientKind::Codex => path == "/api/services/codex/v1/models",
         ClientKind::GeminiCli => {

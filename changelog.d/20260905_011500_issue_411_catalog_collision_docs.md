@@ -4,6 +4,7 @@ bump: patch
 
 ### Added
 - Added versioned, secret-free JSON outcomes and opaque transaction resume for credential imports.
+- Added a client-scoped `/api/models` catalogue that merges every compatible healthy service with exact native IDs and only provider-reported normalized metadata.
 
 ### Fixed
 - Corrected the canonical-route migration guide to document exact model ownership and explicit cross-provider collision failure without invented aliases.

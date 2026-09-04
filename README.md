@@ -487,6 +487,7 @@ in a browser *or* in a chat. See
 
 | Endpoint | Method | Description |
 |---|---|---|
+| `/api/services/anthropic/v1/models` | GET | Native client catalogue filtered by the signed Claude client policy |
 | `/api/services/anthropic/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
 | `/api/services/anthropic/v1/messages/count_tokens` | POST | Token-count helper |
 | `/api/services/bedrock/invoke` | POST | Bedrock-format invoke |
@@ -511,6 +512,17 @@ in a browser *or* in a chat. See
 Provider-specific namespaces still enforce the matching signed client,
 principal, protocol evidence, and healthy credential; pinning never grants
 authority.
+
+`GET /api/models` is the additional provider-neutral catalogue. It accepts the
+same Router client token carrier as that token's native client, then returns
+only healthy models compatible with its signed client kind and principal. Each
+entry carries the exact `id`, the canonical Router `service` path segment, and
+the lossless vendor `native_id` (including Gemini's `models/` prefix). Repeated
+entries from one provider are deduplicated; the same exact id claimed by two
+providers returns HTTP 409 rather than choosing or inventing a qualified id.
+Provider-reported context window, output cap, modalities, pricing, and
+deprecation date are normalized when present and omitted when absent. Native
+service catalogues remain in their original protocol shapes.
 
 **Every advertised and routable model comes from current credential evidence.**
 Consumer catalogs exist only after authenticated discovery for that exact

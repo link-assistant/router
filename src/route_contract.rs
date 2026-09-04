@@ -77,6 +77,7 @@ impl RouteMethod {
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum RouteId {
     Health,
+    AggregateModels,
     Tokens,
     ClientTokens,
     RevokeToken,
@@ -153,6 +154,13 @@ const fn neutral(id: RouteId, method: RouteMethod, template: &'static str) -> Ro
         auth: RouteAuth::None,
         dialect: ApiDialect::Anthropic,
         listeners: COMBINED_AND_INFERENCE,
+    }
+}
+
+const fn client_neutral(id: RouteId, method: RouteMethod, template: &'static str) -> RouteSpec {
+    RouteSpec {
+        auth: RouteAuth::Client,
+        ..neutral(id, method, template)
     }
 }
 
@@ -243,6 +251,7 @@ const fn github_adapter_service(
 
 const ROUTES: &[RouteSpec] = &[
     neutral(RouteId::Health, RouteMethod::Get, "/api/health"),
+    client_neutral(RouteId::AggregateModels, RouteMethod::Get, "/api/models"),
     management(RouteId::Tokens, RouteMethod::Get, "/api/management/tokens"),
     management(RouteId::Tokens, RouteMethod::Post, "/api/management/tokens"),
     management(

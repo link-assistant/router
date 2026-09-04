@@ -756,7 +756,10 @@ fn principal_catalog_records(
 
 #[path = "model_routing_models.rs"]
 mod models_handler;
-pub use models_handler::models;
+pub use models_handler::{aggregate_models, models};
+
+#[path = "model_routing_aggregate.rs"]
+mod aggregate;
 
 /// Consume an automatic Anthropic-surface request and return its concrete state.
 pub async fn route_anthropic_request(
