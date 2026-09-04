@@ -329,7 +329,61 @@ async fn accepted_live_catalog_promotes_without_an_inference_request() {
         .unwrap();
     assert_eq!(live[0].id, "glm-live");
     assert_eq!(calls.load(Ordering::SeqCst), 2);
+    let public = serde_json::to_string(&result.response()).unwrap();
+    assert!(public.contains(r#""outcome":"promoted""#), "{public}");
+    assert!(!public.contains("owner"), "{public}");
+    assert!(!public.contains("accepted-secret"), "{public}");
+    assert!(!public.contains("subscriber_id"), "{public}");
     server.abort();
+}
+
+#[tokio::test]
+async fn disabled_candidates_are_validated_before_they_can_replace_a_working_provider() {
+    for kind in [ProviderKind::ZaiCodingPlan, ProviderKind::Lefine] {
+        let path = if kind == ProviderKind::ZaiCodingPlan {
+            crate::zai_coding_plan::CATALOG_PATH
+        } else {
+            "/v1/models"
+        };
+        let (base_url, calls, server) = provider_catalog_server(
+            path,
+            StatusCode::UNAUTHORIZED,
+            r#"{"error":"candidate rejected"}"#,
+            Duration::ZERO,
+        )
+        .await;
+        let data = tempfile::tempdir().unwrap();
+        let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+        let mut original = if kind == ProviderKind::ZaiCodingPlan {
+            zai_input(&base_url, "working-secret")
+        } else {
+            lefine_input(&base_url, "working-secret")
+        };
+        original.enabled = Some(true);
+        store.upsert(original).unwrap();
+        let before = std::fs::read(data.path().join("providers.lenv")).unwrap();
+        let mut candidate = if kind == ProviderKind::ZaiCodingPlan {
+            zai_input(&base_url, "unverified-secret")
+        } else {
+            lefine_input(&base_url, "unverified-secret")
+        };
+        candidate.enabled = Some(false);
+
+        let error = provision(&reqwest::Client::new(), &store, candidate)
+            .await
+            .unwrap_err();
+
+        assert_eq!(
+            error.kind(),
+            ProviderProvisionFailureKind::CredentialRejected
+        );
+        assert_eq!(
+            std::fs::read(data.path().join("providers.lenv")).unwrap(),
+            before
+        );
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        server.abort();
+    }
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

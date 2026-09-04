@@ -271,9 +271,13 @@ async fn remote_result(
             println!("removed {name}");
             Ok(ExitCode::SUCCESS)
         }
-        ProviderOp::Add { name, .. } => {
-            answer?;
-            println!("saved {name}");
+        ProviderOp::Add { .. } => {
+            let answer = answer?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&answer)
+                    .map_err(|error| format!("could not encode provider outcome: {error}"))?
+            );
             Ok(ExitCode::SUCCESS)
         }
         // Returned above.

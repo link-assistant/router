@@ -5,7 +5,7 @@ bump: patch
 ### Added
 - Added versioned, secret-free JSON outcomes and opaque transaction resume for credential imports.
 - Added a client-scoped `/api/models` catalogue that merges every compatible healthy service with exact native IDs and only provider-reported normalized metadata.
-- Added `router usage [anthropic|openai|z-ai] [--json]` and a client-scoped `/api/usage` API for cached, secret-free subscription limits gathered without inference requests.
+- Added `router usage [anthropic|openai|z-ai|lefine] [--json]` and a client-scoped `/api/usage` API for cached, secret-free subscription limits gathered without inference requests.
 
 ### Fixed
 - Corrected the canonical-route migration guide to document exact model ownership and explicit cross-provider collision failure without invented aliases.
@@ -17,6 +17,9 @@ bump: patch
 - Removed ingress forwarding and client-IP headers from every shared native upstream path while preserving official client protocol headers unchanged.
 - Replaced the obsolete unbound Anthropic curl example with the current Claude-bound token and transparent-header contract.
 - Added full-stack denial logging coverage and bounded capture of small rejected JSON bodies, proving client request/response correlation without any upstream or stream-end record.
+- Bound cached usage evidence to the current credential/provider configuration, retried one rejected native usage request through the shared refresh transaction, and matched the official Claude Code and Codex usage-request identities.
+- Redacted OAuth refresh failures at ingestion so response bodies and headers cannot reach errors, health, doctor, recovery diagnostics, or logs.
+- Required positive live validation even for disabled z.ai and Lefine replacement candidates, rejected plaintext Lefine keys in imports, selected a stored Lefine usage provider independently of the routing default, and made remote provider provisioning return the same secret- and identity-free outcome as the API.
 
 ### Changed
 - Updated the pinned Claude Code, Codex, and OpenCode real-client validation dependencies to 2.1.261, 0.153.3, and 1.18.28, respectively.

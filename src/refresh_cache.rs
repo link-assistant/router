@@ -25,7 +25,10 @@ fn safe_import_refresh_error(
             format!("the {provider} candidate is not refreshable and was not accepted")
         }
         error if error.is_invalid_grant() => {
-            format!("the {provider} candidate refresh chain was rejected (invalid_grant)")
+            let class = error
+                .status_class()
+                .map_or("terminal_oauth_error", super::RefreshStatusClass::label);
+            format!("the {provider} candidate refresh chain was rejected ({class})")
         }
         super::RefreshError::Status(code, _, _) => format!(
             "the {provider} candidate refresh chain was not verified (token endpoint HTTP {code})"
@@ -333,7 +336,7 @@ impl TokenCache {
         .await
     }
 
-    pub(super) async fn refresh_rejected_at(
+    pub(crate) async fn refresh_rejected_at(
         &self,
         client: &reqwest::Client,
         token_url: &str,
@@ -731,15 +734,15 @@ mod import_error_tests {
                 super::super::ImportRefreshFailureKind::NotAttempted,
             ),
             (
-                super::super::RefreshError::Status(
+                super::super::RefreshError::from_status(
                     400,
-                    r#"{"error":"invalid_grant","secret":"must-not-leak"}"#.into(),
+                    r#"{"error":"invalid_grant","secret":"must-not-leak"}"#,
                     None,
                 ),
                 super::super::ImportRefreshFailureKind::ExchangeRejected,
             ),
             (
-                super::super::RefreshError::Status(503, "upstream body must-not-leak".into(), None),
+                super::super::RefreshError::from_status(503, "upstream body must-not-leak", None),
                 super::super::ImportRefreshFailureKind::ExchangeUncertain,
             ),
             (

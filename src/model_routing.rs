@@ -311,8 +311,9 @@ pub struct ProviderHealth {
     pub healthy: bool,
     /// Operator-facing reason, when it cannot.
     ///
-    /// May name a credential path or an upstream body, so it belongs in a log
-    /// or behind an admin credential — never on an unauthenticated endpoint.
+    /// May name a credential path, so it belongs in a log or behind an admin
+    /// credential — never on an unauthenticated endpoint. OAuth response bodies
+    /// are discarded before a reason reaches this report (issue #430).
     pub reason: Option<String>,
     /// The same verdict, safe to hand an unauthenticated caller.
     pub summary: Option<&'static str>,

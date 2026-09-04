@@ -218,6 +218,8 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
 #[tokio::test]
 async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
     const SENTINEL: &str = "raw-account-sentinel@example.invalid";
+    const RESPONSE_SENTINEL: &str = "raw-oauth-response-sentinel@example.invalid";
+    const REDACTED_INVALID_GRANT: &str = r#"{"error":{"type":"invalid_grant","description":"raw-oauth-response-sentinel@example.invalid"},"access_token":"raw-oauth-response-sentinel@example.invalid"}"#;
     let directory = tempfile::tempdir().expect("lock directory");
     let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
     let store = Arc::new(ControlledStore {
@@ -226,7 +228,7 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
         persist_error: None,
     });
     let (url, received, server) =
-        scripted_endpoint(vec![Answer::new(400, INVALID_GRANT)], |_| {}).await;
+        scripted_endpoint(vec![Answer::new(400, REDACTED_INVALID_GRANT)], |_| {}).await;
     let cache = TokenCache::new();
     cache.register_store(
         SubscriptionProvider::Claude,
@@ -260,8 +262,27 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
     assert!(diagnostic.contains("invalid_grant"), "{diagnostic}");
     assert!(!reported.contains(SENTINEL), "{reported}");
     assert!(!diagnostic.contains(SENTINEL), "{diagnostic}");
+    assert!(!reported.contains(RESPONSE_SENTINEL), "{reported}");
+    assert!(!diagnostic.contains(RESPONSE_SENTINEL), "{diagnostic}");
 
-    let endpoint_error = RefreshError::Status(400, INVALID_GRANT.into(), None);
+    // The legacy provider-wide health view reads the primary cache slot. Feed
+    // the already-redacted account diagnostic through that compatibility path
+    // and verify its operator-facing reason remains safe too.
+    cache.record_refresh_error(SubscriptionProvider::Claude, &reported);
+    cache.record_credential_rejected(SubscriptionProvider::Claude);
+    let health = crate::model_routing::configured_provider_health(
+        &[SubscriptionReader::new(
+            SubscriptionProvider::Claude,
+            directory.path(),
+        )],
+        &cache,
+        &crate::model_catalog::ModelCatalogCache::new(),
+    );
+    let health_text = format!("{health:?}");
+    assert!(health_text.contains("invalid_grant"), "{health_text}");
+    assert!(!health_text.contains(RESPONSE_SENTINEL), "{health_text}");
+
+    let endpoint_error = RefreshError::from_status(400, REDACTED_INVALID_GRANT, None);
     for retried_with_newer_link in [false, true] {
         let message = terminal_message(
             SubscriptionProvider::Claude,
@@ -275,6 +296,7 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
             "{message}"
         );
         assert!(!message.contains(SENTINEL), "{message}");
+        assert!(!message.contains(RESPONSE_SENTINEL), "{message}");
     }
 }
 

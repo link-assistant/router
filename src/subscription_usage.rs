@@ -1,9 +1,5 @@
 //! Client-scoped, non-inference provider usage probes.
 
-use std::collections::HashMap;
-use std::sync::{Mutex, OnceLock};
-use std::time::{Duration, Instant};
-
 use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -16,9 +12,9 @@ use crate::client_policy::ClientProtocol;
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 const SCHEMA_VERSION: u8 = 1;
-const STANDARD_CACHE_TTL: Duration = Duration::from_secs(3 * 60);
-const ANTHROPIC_CACHE_TTL: Duration = Duration::from_secs(13 * 60);
 const MAX_VENDOR_BODY: usize = 2 * 1024 * 1024;
+const CLAUDE_CODE_VERSION: &str = "2.1.261";
+const CODEX_USAGE_USER_AGENT: &str = "codex-cli";
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, clap::ValueEnum)]
 pub enum UsageProvider {
@@ -129,19 +125,11 @@ pub struct Credits {
     pub overage_limit_reached: Option<bool>,
 }
 
-#[derive(Clone)]
-struct CacheEntry {
-    value: SubscriptionUsage,
-    expires: Instant,
-}
-
 #[derive(Default)]
 struct SafeCredentialMetadata {
     plan: Option<String>,
     subscription_end: Option<String>,
 }
-
-static CACHE: OnceLock<Mutex<HashMap<(String, UsageProvider), CacheEntry>>> = OnceLock::new();
 
 enum ProbeResult {
     Usage(Box<SubscriptionUsage>),
@@ -224,7 +212,7 @@ async fn usage_impl(
             }
             continue;
         }
-        match cached_or_probe(&state, &claims.sub, principal, provider).await {
+        match cache::cached_or_probe(&state, &claims.sub, principal, provider).await {
             ProbeResult::Usage(usage) => subscriptions.push(*usage),
             ProbeResult::NotConfigured if selected.is_some() => {
                 return error(
@@ -275,54 +263,7 @@ fn authorized(
     crate::zai_coding_plan::authorize_catalog(&configured, claims, headers, path).is_ok()
 }
 
-async fn cached_or_probe(
-    state: &AppState,
-    subject: &str,
-    principal: &str,
-    provider: UsageProvider,
-) -> ProbeResult {
-    let key = (subject.to_string(), provider);
-    if let Some(value) = CACHE
-        .get_or_init(Default::default)
-        .lock()
-        .ok()
-        .and_then(|mut cache| {
-            cache.retain(|_, entry| entry.expires > Instant::now());
-            cache.get(&key).map(|entry| entry.value.clone())
-        })
-    {
-        return ProbeResult::Usage(Box::new(value));
-    }
-    let result = match provider {
-        UsageProvider::Anthropic | UsageProvider::OpenAi => {
-            probe_oauth_subscription(state, principal, provider).await
-        }
-        UsageProvider::ZAi => probe_zai(state).await,
-        UsageProvider::Lefine => probe_lefine(state),
-    };
-    if let ProbeResult::Usage(value) = &result {
-        let ttl = value.retry_after_seconds.map_or_else(
-            || match provider {
-                UsageProvider::Anthropic => ANTHROPIC_CACHE_TTL,
-                UsageProvider::OpenAi | UsageProvider::ZAi | UsageProvider::Lefine => {
-                    STANDARD_CACHE_TTL
-                }
-            },
-            Duration::from_secs,
-        );
-        if let Ok(mut cache) = CACHE.get_or_init(Default::default).lock() {
-            cache.insert(
-                key,
-                CacheEntry {
-                    value: value.as_ref().clone(),
-                    expires: Instant::now() + ttl.max(Duration::from_secs(30)),
-                },
-            );
-        }
-    }
-    result
-}
-
+#[cfg(test)]
 async fn probe_oauth_subscription(
     state: &AppState,
     principal: &str,
@@ -336,31 +277,73 @@ async fn probe_oauth_subscription(
     {
         return ProbeResult::NotConfigured;
     }
+    let loaded = match state
+        .subscription_cache
+        .load_authoritative(subscription, principal)
+        .await
+    {
+        Ok(Some(token)) => token,
+        Ok(None) => return ProbeResult::NotConfigured,
+        Err(_) => return ProbeResult::Usage(Box::new(credential_unavailable(provider))),
+    };
+    probe_oauth_loaded_at(state, principal, provider, subscription, loaded, None).await
+}
+
+async fn probe_oauth_loaded_at(
+    state: &AppState,
+    principal: &str,
+    provider: UsageProvider,
+    subscription: SubscriptionProvider,
+    loaded: SubscriptionToken,
+    refresh_url_override: Option<&str>,
+) -> ProbeResult {
+    let now_ms = chrono::Utc::now().timestamp_millis();
     let Ok(token) = state
         .subscription_cache
-        .get_fresh_registered(
-            &state.client,
-            subscription,
-            principal,
-            chrono::Utc::now().timestamp_millis(),
-        )
+        .get_fresh_loaded(&state.client, subscription, principal, loaded, now_ms)
         .await
     else {
-        let mut usage = empty_usage(provider);
-        usage.state = UsageState::Unavailable;
-        usage.status = "credential_unavailable".into();
-        return ProbeResult::Usage(Box::new(usage));
+        return ProbeResult::Usage(Box::new(credential_unavailable(provider)));
     };
     let metadata = safe_credential_metadata(state, subscription, principal);
-    match provider {
-        UsageProvider::Anthropic => {
-            ProbeResult::Usage(Box::new(probe_anthropic(state, &token, &metadata).await))
-        }
-        UsageProvider::OpenAi => {
-            ProbeResult::Usage(Box::new(probe_openai(state, &token, &metadata).await))
-        }
+    let probe = async |token: &SubscriptionToken| match provider {
+        UsageProvider::Anthropic => probe_anthropic(state, token, &metadata).await,
+        UsageProvider::OpenAi => probe_openai(state, token, &metadata).await,
         UsageProvider::ZAi | UsageProvider::Lefine => unreachable!(),
+    };
+    let first = probe(&token).await;
+    if first.status != "authentication_rejected" {
+        return ProbeResult::Usage(Box::new(first));
     }
+    let refreshed = if let Some(token_url) = refresh_url_override {
+        state
+            .subscription_cache
+            .refresh_rejected_at(
+                &state.client,
+                token_url,
+                subscription,
+                principal,
+                token,
+                now_ms,
+            )
+            .await
+    } else {
+        state
+            .subscription_cache
+            .refresh_rejected(&state.client, subscription, principal, token, now_ms)
+            .await
+    };
+    let Some(refreshed) = refreshed else {
+        return ProbeResult::Usage(Box::new(first));
+    };
+    ProbeResult::Usage(Box::new(probe(&refreshed).await))
+}
+
+fn credential_unavailable(provider: UsageProvider) -> SubscriptionUsage {
+    let mut usage = empty_usage(provider);
+    usage.state = UsageState::Unavailable;
+    usage.status = "credential_unavailable".into();
+    usage
 }
 
 fn safe_credential_metadata(
@@ -464,9 +447,10 @@ async fn send_anthropic(state: &AppState, url: &str, token: &str) -> VendorRespo
             .get(url)
             .bearer_auth(token)
             .header("anthropic-beta", "oauth-2025-04-20")
+            .header("content-type", "application/json")
             .header(
                 "user-agent",
-                format!("link-assistant-router/{}", crate::VERSION),
+                format!("claude-cli/{CLAUDE_CODE_VERSION} (external, cli)"),
             ),
     )
     .await
@@ -488,10 +472,17 @@ async fn probe_openai(
             .client
             .get(format!("{base}/wham/usage"))
             .bearer_auth(&token.access_token)
-            .header(
-                "user-agent",
-                format!("link-assistant-router/{}", crate::VERSION),
-            ),
+            .header("user-agent", CODEX_USAGE_USER_AGENT)
+            .headers(token.account_id.as_deref().map_or_else(
+                reqwest::header::HeaderMap::new,
+                |account_id| {
+                    let mut headers = reqwest::header::HeaderMap::new();
+                    if let Ok(value) = reqwest::header::HeaderValue::from_str(account_id) {
+                        headers.insert("chatgpt-account-id", value);
+                    }
+                    headers
+                },
+            )),
     )
     .await;
     match response {
@@ -511,10 +502,18 @@ async fn probe_openai(
     }
 }
 
+#[cfg(test)]
 async fn probe_zai(state: &AppState) -> ProbeResult {
     let Ok(Some(provider)) = crate::zai_coding_plan::resolve(state) else {
         return ProbeResult::NotConfigured;
     };
+    probe_zai_provider(state, &provider).await
+}
+
+async fn probe_zai_provider(
+    state: &AppState,
+    provider: &crate::providers::ResolvedProvider,
+) -> ProbeResult {
     let Some(key) = provider.api_key.as_deref().filter(|key| !key.is_empty()) else {
         return ProbeResult::NotConfigured;
     };
@@ -561,22 +560,47 @@ async fn probe_zai(state: &AppState) -> ProbeResult {
 }
 
 fn selected_lefine(state: &AppState) -> Option<crate::providers::ResolvedProvider> {
-    state
+    let named = state.provider_store.resolve("lefine").ok().flatten();
+    if named
+        .as_ref()
+        .is_some_and(|provider| provider.kind == crate::providers::ProviderKind::Lefine)
+    {
+        return named;
+    }
+    let selected = state
         .provider_store
         .resolve(&state.openai_compatible.provider_name)
         .ok()
         .flatten()
-        .filter(|provider| provider.kind == crate::providers::ProviderKind::Lefine)
+        .filter(|provider| provider.kind == crate::providers::ProviderKind::Lefine);
+    if selected.is_some() {
+        return selected;
+    }
+    let candidates = state
+        .provider_store
+        .list()
+        .ok()?
+        .into_iter()
+        .filter(|record| record.enabled && record.kind == crate::providers::ProviderKind::Lefine)
+        .collect::<Vec<_>>();
+    (candidates.len() == 1)
+        .then(|| state.provider_store.resolve_record(&candidates[0]).ok())
+        .flatten()
 }
 
+#[cfg(test)]
 fn probe_lefine(state: &AppState) -> ProbeResult {
     if selected_lefine(state).is_none() {
         return ProbeResult::NotConfigured;
     }
+    ProbeResult::Usage(Box::new(unavailable_lefine_usage()))
+}
+
+fn unavailable_lefine_usage() -> SubscriptionUsage {
     let mut usage = empty_usage(UsageProvider::Lefine);
     usage.state = UsageState::Unavailable;
     usage.status = "usage_source_unavailable".into();
-    ProbeResult::Usage(Box::new(usage))
+    usage
 }
 
 fn zai_request(state: &AppState, url: &str, key: &str) -> reqwest::RequestBuilder {
@@ -839,7 +863,7 @@ fn window_from(
     resets_at: Option<String>,
     window_seconds: Option<u64>,
 ) -> UsageWindow {
-    let used = used.filter(|value| value.is_finite());
+    let used = used.filter(|value| value.is_finite() && (0.0..=100.0).contains(value));
     UsageWindow {
         name: name.to_string(),
         used_percentage: used,
@@ -890,6 +914,9 @@ fn vendor_failure(provider: UsageProvider, failure: &VendorResponse) -> Subscrip
 fn error(status: StatusCode, message: &str) -> Response {
     crate::proxy::error_response(status, "subscription_usage_error", message)
 }
+
+#[path = "subscription_usage_cache.rs"]
+mod cache;
 
 #[cfg(test)]
 #[path = "subscription_usage_tests.rs"]

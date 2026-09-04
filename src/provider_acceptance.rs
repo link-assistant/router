@@ -4,7 +4,6 @@ use serde::Serialize;
 
 use crate::providers::{
     ProviderError, ProviderKind, ProviderRecord, ProviderStore, ProviderUpsert,
-    RedactedProviderRecord,
 };
 
 /// Atomic installation policy for a staged provider record.
@@ -36,20 +35,42 @@ pub struct ProviderProvision {
     pub record: ProviderRecord,
 }
 
-/// Public response with the existing provider fields kept at the top level.
+/// Public response with provider configuration but no credential or subscriber identity.
 #[derive(Debug, Serialize)]
 pub struct ProviderProvisionResponse {
     pub outcome: ProviderProvisionOutcome,
-    #[serde(flatten)]
-    pub record: RedactedProviderRecord,
+    pub name: String,
+    pub kind: ProviderKind,
+    pub base_url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_model: Option<String>,
+    pub models: Vec<String>,
+    pub supported_clients: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key_env: Option<String>,
+    pub has_encrypted_api_key: bool,
+    pub enabled: bool,
+    pub intermediary_risk_acknowledged: bool,
+    pub unsupported_clients: Vec<String>,
 }
 
 impl ProviderProvision {
     #[must_use]
     pub fn response(&self) -> ProviderProvisionResponse {
+        let redacted = self.record.redacted();
         ProviderProvisionResponse {
             outcome: self.outcome,
-            record: self.record.redacted(),
+            name: redacted.name,
+            kind: redacted.kind,
+            base_url: redacted.base_url,
+            default_model: redacted.default_model,
+            models: redacted.models,
+            supported_clients: redacted.supported_clients,
+            api_key_env: redacted.api_key_env,
+            has_encrypted_api_key: redacted.has_encrypted_api_key,
+            enabled: redacted.enabled,
+            intermediary_risk_acknowledged: redacted.intermediary_risk_acknowledged,
+            unsupported_clients: redacted.unsupported_clients,
         }
     }
 }
@@ -111,7 +132,7 @@ pub async fn provision(
             record,
         });
     }
-    if candidate.enabled && candidate.kind == ProviderKind::ZaiCodingPlan {
+    if candidate.kind == ProviderKind::ZaiCodingPlan {
         let resolved = store.resolve_record(&candidate).map_err(stage_failure)?;
         crate::zai_coding_plan::fetch_catalog(client, &resolved)
             .await
@@ -125,7 +146,7 @@ pub async fn provision(
                 ProviderProvisionFailure::new(kind, "provider candidate was not accepted")
             })?;
     }
-    if candidate.enabled && candidate.kind == ProviderKind::Lefine {
+    if candidate.kind == ProviderKind::Lefine {
         let resolved = store.resolve_record(&candidate).map_err(stage_failure)?;
         crate::lefine::fetch_catalog(client, &resolved)
             .await

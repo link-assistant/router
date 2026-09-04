@@ -217,15 +217,67 @@ pub enum RefreshError {
     Request(String),
     /// The token endpoint returned a non-success status.
     ///
-    /// Carries the `Retry-After` delay in seconds when the endpoint sent one,
-    /// so a rate-limited refresh can honour the vendor's own pacing instead of
-    /// guessing.
-    Status(u16, String, Option<i64>),
+    /// Carries only a secret-free classification and the `Retry-After` delay
+    /// in seconds. The response body is discarded immediately after it is
+    /// classified and can never reach errors, health, doctor, or logs.
+    Status(u16, RefreshStatusClass, Option<i64>),
     /// The response body could not be parsed or lacked an access token.
     Parse(String),
     /// The refresh transaction could not acquire or durably update its
     /// credential store.
     Storage(String),
+}
+
+/// Secret-free classification of an OAuth refresh endpoint failure.
+///
+/// The endpoint body is used only to recognize the small OAuth terminal-error
+/// allowlist. Unknown codes, descriptions, and all other response content are
+/// deliberately discarded (issue #430).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RefreshStatusClass {
+    /// The refresh grant is no longer usable.
+    InvalidGrant,
+    /// The public OAuth client was rejected.
+    InvalidClient,
+    /// The OAuth client is not authorized for this grant.
+    UnauthorizedClient,
+    /// The endpoint does not support this refresh grant.
+    UnsupportedGrantType,
+    /// The endpoint asked the client to retry later.
+    RateLimited,
+    /// Another client-side rejection whose body is not safe to retain.
+    ClientRejected,
+    /// A server-side failure that should be retried.
+    Transient,
+    /// A non-success response outside the usual client/server ranges.
+    UnexpectedStatus,
+}
+
+impl RefreshStatusClass {
+    /// Stable, secret-free identifier for diagnostics and machine assertions.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::InvalidGrant => "invalid_grant",
+            Self::InvalidClient => "invalid_client",
+            Self::UnauthorizedClient => "unauthorized_client",
+            Self::UnsupportedGrantType => "unsupported_grant_type",
+            Self::RateLimited => "rate_limited",
+            Self::ClientRejected => "client_rejected",
+            Self::Transient => "transient",
+            Self::UnexpectedStatus => "unexpected_status",
+        }
+    }
+
+    const fn is_terminal(self) -> bool {
+        matches!(
+            self,
+            Self::InvalidGrant
+                | Self::InvalidClient
+                | Self::UnauthorizedClient
+                | Self::UnsupportedGrantType
+        )
+    }
 }
 
 /// Machine-relevant classification of a failed import refresh-chain check.
@@ -278,13 +330,6 @@ impl std::error::Error for ImportRefreshFailure {}
 /// Deliberately an allowlist rather than a substring search: only these codes,
 /// and only under a client-error status, justify telling an operator to
 /// re-authenticate (issue #203).
-const TERMINAL_OAUTH_ERRORS: [&str; 4] = [
-    "invalid_grant",
-    "invalid_client",
-    "unauthorized_client",
-    "unsupported_grant_type",
-];
-
 /// The `error` field of an OAuth error response, when the body is one.
 ///
 /// Parsed rather than matched textually so a proxy error page or a success body
@@ -305,6 +350,35 @@ fn oauth_error_code(body: &str) -> Option<String> {
 }
 
 impl RefreshError {
+    /// Classify a non-success response, retaining no response content.
+    fn from_status(code: u16, body: &str, retry_after: Option<i64>) -> Self {
+        let oauth_code = oauth_error_code(body);
+        let class = match (code, oauth_code.as_deref()) {
+            (400 | 401 | 403, Some("invalid_grant")) => RefreshStatusClass::InvalidGrant,
+            (400 | 401 | 403, Some("invalid_client")) => RefreshStatusClass::InvalidClient,
+            (400 | 401 | 403, Some("unauthorized_client")) => {
+                RefreshStatusClass::UnauthorizedClient
+            }
+            (400 | 401 | 403, Some("unsupported_grant_type")) => {
+                RefreshStatusClass::UnsupportedGrantType
+            }
+            (429, _) => RefreshStatusClass::RateLimited,
+            (400..=499, _) => RefreshStatusClass::ClientRejected,
+            (500..=599, _) => RefreshStatusClass::Transient,
+            _ => RefreshStatusClass::UnexpectedStatus,
+        };
+        Self::Status(code, class, retry_after)
+    }
+
+    /// Stable failure class for a token-endpoint response.
+    #[must_use]
+    pub const fn status_class(&self) -> Option<RefreshStatusClass> {
+        match self {
+            Self::Status(_, class, _) => Some(*class),
+            _ => None,
+        }
+    }
+
     /// Whether the token endpoint rejected the *refresh token itself*.
     ///
     /// True only when a client-error status (`400`, `401`, `403`) is paired
@@ -316,14 +390,8 @@ impl RefreshError {
     /// body that merely contains the text `invalid_grant` under an unrelated
     /// status — is retryable (issue #203).
     #[must_use]
-    pub fn is_invalid_grant(&self) -> bool {
-        let Self::Status(code, body, _) = self else {
-            return false;
-        };
-        if !matches!(code, 400 | 401 | 403) {
-            return false;
-        }
-        oauth_error_code(body).is_some_and(|code| TERMINAL_OAUTH_ERRORS.contains(&code.as_str()))
+    pub const fn is_invalid_grant(&self) -> bool {
+        matches!(self, Self::Status(_, class, _) if class.is_terminal())
     }
 
     /// Whether the endpoint rate-limited this refresh.
@@ -352,20 +420,34 @@ impl std::fmt::Display for RefreshError {
             Self::Unsupported => write!(f, "provider does not support router-driven refresh"),
             Self::NoRefreshToken => write!(f, "no refresh token available"),
             Self::Request(m) => write!(f, "refresh request failed: {m}"),
-            Self::Status(_, m, _) if self.is_invalid_grant() => write!(
+            Self::Status(code, class, _) if class.is_terminal() => write!(
                 f,
-                "refresh token is no longer valid (invalid_grant) — re-authenticate this \
+                "refresh credential was rejected (HTTP {code}, class {}) — re-authenticate this \
                  subscription with `link-assistant-router auth <provider>`; waiting will not \
-                 help: {m}"
+                 help",
+                class.label()
             ),
             // Say plainly that this one *is* recoverable, so the operator is
             // not told to re-authenticate over a transient rate limit.
-            Self::Status(429, m, _) => write!(
+            Self::Status(429, _, retry_after) => write!(
                 f,
-                "refresh endpoint rate-limited this request (429); it will be retried \
-                 automatically and the subscription remains usable: {m}"
+                "refresh endpoint rate-limited this request (HTTP 429, class rate_limited{}); it \
+                 will be retried automatically and the subscription remains usable",
+                retry_after.map_or_else(String::new, |seconds| format!(", retry after {seconds}s"))
             ),
-            Self::Status(code, m, _) => write!(f, "refresh endpoint returned {code}: {m}"),
+            Self::Status(code, RefreshStatusClass::Transient, retry_after) => write!(
+                f,
+                "refresh endpoint is temporarily unavailable (HTTP {code}, class transient{}); \
+                 it will be retried automatically",
+                retry_after.map_or_else(String::new, |seconds| format!(", retry after {seconds}s"))
+            ),
+            Self::Status(code, class, retry_after) => write!(
+                f,
+                "refresh endpoint rejected the request (HTTP {code}, class {}{}); verify the \
+                 provider configuration",
+                class.label(),
+                retry_after.map_or_else(String::new, |seconds| format!(", retry after {seconds}s"))
+            ),
             Self::Parse(m) => write!(f, "refresh response parse error: {m}"),
             Self::Storage(m) => write!(f, "refresh credential storage failed: {m}"),
         }
@@ -520,12 +602,15 @@ async fn refresh_at(
         let retry_after = crate::request_routing::retry_after_duration(response.headers())
             .and_then(|delay| i64::try_from(delay.as_secs()).ok());
         let body = response.text().await.unwrap_or_default();
+        let error = RefreshError::from_status(status.as_u16(), &body, retry_after);
         tracing::debug!(
-            "{provider} token exchange answered HTTP {} (error `{}`)",
+            "{provider} token exchange answered HTTP {} (class {})",
             status.as_u16(),
-            oauth_error_code(&body).unwrap_or_else(|| "unparsed".to_string())
+            error
+                .status_class()
+                .map_or("unexpected_status", RefreshStatusClass::label)
         );
-        return Err(RefreshError::Status(status.as_u16(), body, retry_after));
+        return Err(error);
     }
     let body = response
         .text()
@@ -622,6 +707,10 @@ pub(crate) mod test_support;
 #[cfg(test)]
 #[path = "refresh_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "refresh_redaction_tests.rs"]
+mod redaction_tests;
 
 #[cfg(test)]
 #[path = "refresh_inference_evidence_tests.rs"]

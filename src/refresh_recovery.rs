@@ -236,16 +236,18 @@ fn persist_rotation(
     Ok(())
 }
 
-/// What the endpoint actually answered.
+/// Secret-free summary of what the endpoint answered.
 ///
-/// [`RefreshError`]'s own `Display` appends generic "waiting will not help"
-/// advice to every `invalid_grant`, which is exactly the sentence issue #239
-/// calls misleading for a rotated token. By the time the ladder builds a
-/// terminal message it has established which advice applies, so it quotes the
-/// endpoint and gives the advice itself.
+/// By the time the ladder builds a terminal message it has established which
+/// advice applies. The raw endpoint body has already been discarded, so this
+/// formatter can report only the status, stable class, and safe retry hint.
 fn endpoint_answer(error: &RefreshError) -> String {
     match error {
-        RefreshError::Status(code, body, _) => format!("the endpoint answered HTTP {code}: {body}"),
+        RefreshError::Status(code, class, retry_after) => format!(
+            "the endpoint answered HTTP {code} (class {}{})",
+            class.label(),
+            retry_after.map_or_else(String::new, |seconds| format!(", retry after {seconds}s"))
+        ),
         other => other.to_string(),
     }
 }
@@ -268,9 +270,12 @@ fn terminal_message(
     if store.is_none() {
         return error.to_string();
     }
+    let class = error
+        .status_class()
+        .map_or("terminal_oauth_error", super::RefreshStatusClass::label);
     if retried_with_newer_link {
         return format!(
-            "refresh token is no longer valid (invalid_grant): a newer refresh token found in \
+            "refresh credential was rejected ({class}): a newer refresh token found in \
              the registered {provider} credential store was rejected as well, so the whole token \
              family has been revoked — re-authenticate this subscription with \
              `link-assistant-router auth {provider}` ({})",
@@ -278,7 +283,7 @@ fn terminal_message(
         );
     }
     format!(
-        "refresh token is no longer valid (invalid_grant): the registered {provider} credential \
+        "refresh credential was rejected ({class}): the registered {provider} credential \
          store still holds the same refresh token that was just rejected, so it was revoked or \
          already spent elsewhere rather than rotated past — re-authenticate this subscription \
          with `link-assistant-router auth {provider}` ({})",

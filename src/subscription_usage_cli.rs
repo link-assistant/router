@@ -115,7 +115,16 @@ fn print_subscription(usage: &SubscriptionUsage) {
             let used = window
                 .used_percentage
                 .map_or_else(|| "unavailable".into(), |value| format!("{value:.1}% used"));
-            println!("    {}: {used}", window.name);
+            let remaining = window
+                .remaining_percentage
+                .map(|value| format!(", {value:.1}% remaining"))
+                .unwrap_or_default();
+            let reset = window
+                .resets_at
+                .as_deref()
+                .map(|value| format!(", resets {value}"))
+                .unwrap_or_default();
+            println!("    {}: {used}{remaining}{reset}", window.name);
         }
         if limit.used.is_some() || limit.limit.is_some() {
             println!(
@@ -134,6 +143,8 @@ fn print_subscription(usage: &SubscriptionUsage) {
             println!("  credits: unlimited");
         } else if let Some(balance) = &credits.balance {
             println!("  credits: {balance}");
+        } else if credits.overage_limit_reached == Some(true) {
+            println!("  credits: overage limit reached");
         }
     }
     if let Some(end) = &usage.subscription_end {

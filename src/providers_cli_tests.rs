@@ -277,6 +277,34 @@ fn lefine_keys_are_never_accepted_from_argv() {
     assert!(!error.contains("argv-secret"), "{error}");
 }
 
+#[test]
+fn lefine_imports_reject_plaintext_keys_but_allow_secret_references() {
+    let plaintext = serde_json::json!({
+        "name": "lefine",
+        "kind": "lefine",
+        "base_url": crate::lefine::BASE_URL,
+        "models": ["configured/exact-id"],
+        "api_key": "manifest-secret"
+    })
+    .to_string();
+    let error = crate::providers::parse_provider_import(&plaintext).unwrap_err();
+    let message = error.to_string();
+    assert!(message.contains("cannot contain plaintext"), "{message}");
+    assert!(!message.contains("manifest-secret"), "{message}");
+
+    let referenced = serde_json::json!({
+        "name": "lefine",
+        "kind": "lefine",
+        "base_url": crate::lefine::BASE_URL,
+        "models": ["configured/exact-id"],
+        "api_key_env": "LEFINE_API_KEY"
+    })
+    .to_string();
+    let imported = crate::providers::parse_provider_import(&referenced).unwrap();
+    assert_eq!(imported[0].api_key_env.as_deref(), Some("LEFINE_API_KEY"));
+    assert!(imported[0].api_key.is_none());
+}
+
 /// `import` has no single call: it declares one provider per manifest entry.
 #[test]
 fn importing_has_no_call_of_its_own() {
