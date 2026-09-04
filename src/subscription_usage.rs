@@ -921,3 +921,7 @@ mod cache;
 #[cfg(test)]
 #[path = "subscription_usage_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "subscription_usage_http_tests.rs"]
+mod http_tests;

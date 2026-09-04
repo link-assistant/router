@@ -54,6 +54,7 @@ fn request(
         .uri(path)
         .header("authorization", format!("Bearer {token}"))
         .header("x-test-marker", marker)
+        .header("x-request-id", format!("client-controlled-{marker}"))
         .header("content-type", "application/json");
     if path.contains("anthropic") {
         builder = builder
@@ -252,32 +253,21 @@ async fn every_denial_has_one_client_exchange_and_zero_upstream_phases() {
             })
             .unwrap_or_else(|| panic!("missing client_request for {marker}: {records:#?}"));
         let correlation = request["correlation_id"].as_str().unwrap();
+        assert_ne!(correlation, format!("client-controlled-{marker}"));
         let exchange = records
             .iter()
             .filter(|record| record["correlation_id"] == correlation)
             .collect::<Vec<_>>();
+        let mut phases = exchange
+            .iter()
+            .filter_map(|record| record["phase"].as_str())
+            .collect::<Vec<_>>();
+        phases.sort_unstable();
         assert_eq!(
-            exchange
-                .iter()
-                .filter(|record| record["phase"] == "client_request")
-                .count(),
-            1,
+            phases,
+            ["client_request", "client_response"],
             "{marker}: {exchange:#?}"
         );
-        assert_eq!(
-            exchange
-                .iter()
-                .filter(|record| record["phase"] == "client_response")
-                .count(),
-            1,
-            "{marker}: {exchange:#?}"
-        );
-        for forbidden in ["upstream_request", "upstream_response", "stream_end"] {
-            assert!(
-                exchange.iter().all(|record| record["phase"] != forbidden),
-                "{marker} wrote {forbidden}: {exchange:#?}"
-            );
-        }
         if has_body {
             let rendered = request["body"].to_string();
             assert!(rendered.contains("diagnostic-"), "{marker}: {request}");

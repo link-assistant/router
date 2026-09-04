@@ -270,6 +270,88 @@ async fn process_death_before_promotion_leaves_primary_whole_and_candidate_recov
     }
 }
 
+#[tokio::test]
+async fn external_credentials_are_catalog_checked_without_spending_their_refresh_link() {
+    for provider in [SubscriptionProvider::Claude, SubscriptionProvider::Codex] {
+        let (url, requests, server) = start_vendor(provider, CatalogReply::Accepted).await;
+        let root = tempfile::tempdir().unwrap();
+
+        let accepted =
+            accept_external_candidate(root.path(), provider, &document(provider), Some(&url))
+                .await
+                .expect("live external access token is accepted");
+
+        assert_eq!(
+            accepted.token().refresh_token.as_deref(),
+            Some("native-secret-refresh")
+        );
+        assert_eq!(
+            requests.lock().unwrap().as_slice(),
+            &[("GET".into(), catalog_path(provider).into())]
+        );
+        drop(accepted);
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn rejected_external_credentials_leave_no_successor_transaction() {
+    for provider in [SubscriptionProvider::Claude, SubscriptionProvider::Codex] {
+        let (url, requests, server) = start_vendor(provider, CatalogReply::Unauthorized).await;
+        let root = tempfile::tempdir().unwrap();
+
+        let error =
+            accept_external_candidate(root.path(), provider, &document(provider), Some(&url))
+                .await
+                .expect_err("rejected external credential");
+
+        assert_eq!(error.kind(), AcceptanceFailureKind::NotAttempted);
+        assert_eq!(error.phase(), AcceptancePhase::Catalog);
+        assert!(error.transaction_id().is_none());
+        assert!(error.to_string().contains("was not spent"));
+        assert_eq!(
+            requests.lock().unwrap().as_slice(),
+            &[("GET".into(), catalog_path(provider).into())]
+        );
+        assert_eq!(
+            std::fs::read_dir(root.path().join(STAGING_DIRECTORY))
+                .unwrap()
+                .count(),
+            0
+        );
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn near_expiry_external_credential_is_refused_without_any_vendor_request() {
+    let (url, requests, server) =
+        start_vendor(SubscriptionProvider::Claude, CatalogReply::Accepted).await;
+    let root = tempfile::tempdir().unwrap();
+    let expiring = serde_json::json!({
+        "claudeAiOauth": {
+            "accessToken":"native-secret-access",
+            "refreshToken":"native-secret-refresh",
+            "expiresAt": chrono::Utc::now().timestamp_millis()
+        }
+    })
+    .to_string();
+
+    let error = accept_external_candidate(
+        root.path(),
+        SubscriptionProvider::Claude,
+        &expiring,
+        Some(&url),
+    )
+    .await
+    .expect_err("the owning vendor client must renew it");
+
+    assert_eq!(error.kind(), AcceptanceFailureKind::NotAttempted);
+    assert!(error.to_string().contains("owning vendor client"));
+    assert!(requests.lock().unwrap().is_empty());
+    server.abort();
+}
+
 fn catalog_path(provider: SubscriptionProvider) -> &'static str {
     match provider {
         SubscriptionProvider::Claude => "/v1/models",

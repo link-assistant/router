@@ -397,6 +397,10 @@ fn a_live_keychain_credential_beats_an_expired_file() {
 
     assert_eq!(origin, crate::platform_keychain::Origin::Keychain);
     assert_eq!(token.access_token, "keychain-access");
+    assert!(
+        crate::credential_store::ensure_refreshable_origin(reader.provider(), origin).is_err(),
+        "an injected Keychain winner must be read-only to Router refresh"
+    );
 }
 
 /// The file must keep winning when it is the newer credential, so a stale

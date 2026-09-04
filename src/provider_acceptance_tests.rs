@@ -555,3 +555,87 @@ async fn persistence_uncertainty_restores_the_old_record_bytes() {
     );
     server.abort();
 }
+
+#[tokio::test]
+async fn late_provider_rename_and_commit_failures_restore_the_old_primary() {
+    for failed_path in ["providers.lenv", ".providers.lenv.router-commit"] {
+        let (base_url, _calls, server) = catalog_server(
+            StatusCode::OK,
+            r#"{"data":[{"id":"glm-live"}]}"#,
+            Duration::ZERO,
+        )
+        .await;
+        let data = tempfile::tempdir().unwrap();
+        let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+        store.upsert(zai_input(&base_url, "old-secret")).unwrap();
+        let path = data.path().join("providers.lenv");
+        let before = std::fs::read(&path).unwrap();
+        let _fault = crate::durable_file::inject_fault(
+            &data.path().join(failed_path),
+            crate::durable_file::FaultPoint::AfterRename,
+        );
+
+        let error = provision(
+            &reqwest::Client::new(),
+            &store,
+            zai_input(&base_url, "candidate-secret"),
+        )
+        .await
+        .unwrap_err();
+
+        assert_eq!(
+            error.kind(),
+            ProviderProvisionFailureKind::PersistenceUncertain
+        );
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+        assert_eq!(
+            ProviderStore::open(data.path(), "test-secret")
+                .unwrap()
+                .resolve("z-ai-personal")
+                .unwrap()
+                .unwrap()
+                .api_key
+                .as_deref(),
+            Some("old-secret")
+        );
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn late_provider_unlock_failure_reports_the_committed_candidate() {
+    let (base_url, _calls, server) = catalog_server(
+        StatusCode::OK,
+        r#"{"data":[{"id":"glm-live"}]}"#,
+        Duration::ZERO,
+    )
+    .await;
+    let data = tempfile::tempdir().unwrap();
+    let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+    store.upsert(zai_input(&base_url, "old-secret")).unwrap();
+    let _fault = crate::durable_file::inject_fault(
+        &data.path().join("providers.lock"),
+        crate::durable_file::FaultPoint::Unlock,
+    );
+
+    let result = provision(
+        &reqwest::Client::new(),
+        &store,
+        zai_input(&base_url, "candidate-secret"),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(result.outcome, ProviderProvisionOutcome::Promoted);
+    assert_eq!(
+        ProviderStore::open(data.path(), "test-secret")
+            .unwrap()
+            .resolve("z-ai-personal")
+            .unwrap()
+            .unwrap()
+            .api_key
+            .as_deref(),
+        Some("candidate-secret")
+    );
+    server.abort();
+}

@@ -236,6 +236,18 @@ fn persist_rotation(
     Ok(())
 }
 
+fn require_writable_authority(
+    store: &Arc<dyn CredentialStore>,
+    token: &SubscriptionToken,
+    provider: SubscriptionProvider,
+) -> Result<(), Rejected> {
+    store.prepare_refresh(token).map_err(|_| {
+        storage_rejection(format!(
+            "refusing to exchange the {provider} refresh token because its authoritative external store cannot be durably advanced"
+        ))
+    })
+}
+
 /// Secret-free summary of what the endpoint answered.
 ///
 /// By the time the ladder builds a terminal message it has established which
@@ -345,6 +357,7 @@ pub(super) async fn exchange_with_recovery(
     let baseline = stored;
 
     // Rung 2: exchange the newest link we hold.
+    require_writable_authority(store, &candidate, provider)?;
     let error = match refresh_at(client, token_url, provider, &candidate, now_ms).await {
         Ok(fresh) => {
             persist_rotation(store, &baseline, &fresh, provider)?;
@@ -380,6 +393,7 @@ pub(super) async fn exchange_with_recovery(
             "{provider} rejected a refresh token that the registered credential store has \
              already rotated past; retrying once with the newer one"
         );
+        require_writable_authority(store, &reread, provider)?;
         match refresh_at(client, token_url, provider, &reread, now_ms).await {
             Ok(fresh) => {
                 persist_rotation(store, &reread, &fresh, provider)?;
@@ -488,6 +502,7 @@ async fn vendor_cli_or_reject(
     if !has_newer_refresh_link(tried.newest, &rotated) {
         return Err(reject(error));
     }
+    require_writable_authority(store, &rotated, provider)?;
     match refresh_at(client, token_url, provider, &rotated, now_ms).await {
         Ok(fresh) => {
             persist_rotation(store, &rotated, &fresh, provider)?;

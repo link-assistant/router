@@ -176,12 +176,12 @@ async fn captured_model_upstream() -> (
 }
 
 #[derive(Clone, Debug)]
-struct CapturedLefineRequest {
-    headers: HeaderMap,
-    body: Vec<u8>,
+pub(super) struct CapturedLefineRequest {
+    pub(super) headers: HeaderMap,
+    pub(super) body: Vec<u8>,
 }
 
-async fn lefine_upstream(
+pub(super) async fn lefine_upstream(
     response_status: StatusCode,
     response_content_type: &'static str,
     response_body: &'static str,
@@ -222,7 +222,7 @@ async fn lefine_upstream(
     (base_url, requests, task)
 }
 
-fn store_lefine(state: &AppState, base_url: String) {
+pub(super) fn store_lefine(state: &AppState, base_url: String) {
     state
         .provider_store
         .upsert(crate::providers::ProviderUpsert {
@@ -245,21 +245,35 @@ fn store_lefine(state: &AppState, base_url: String) {
 }
 
 fn bearer(state: &AppState) -> HeaderMap {
-    let token = crate::model_routing::tests::bound_client_token(
-        state,
-        crate::clients::ClientKind::Opencode,
-        None,
-    );
+    bearer_for(state, crate::clients::ClientKind::Opencode)
+}
+
+pub(super) fn bearer_for(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
+    let token = crate::model_routing::tests::bound_client_token(state, client, None);
     let mut headers = HeaderMap::new();
     headers.insert(
         "authorization",
         HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
     );
-    headers.insert(
-        "user-agent",
-        HeaderValue::from_static("opencode/test-fixture"),
-    );
-    headers.insert("x-session-id", HeaderValue::from_static("provider-test"));
+    match client {
+        crate::clients::ClientKind::Opencode => {
+            headers.insert(
+                "user-agent",
+                HeaderValue::from_static("opencode/test-fixture"),
+            );
+            headers.insert("x-session-id", HeaderValue::from_static("provider-test"));
+        }
+        crate::clients::ClientKind::GrokCli => {
+            headers.insert("user-agent", HeaderValue::from_static("grok/test-fixture"));
+        }
+        crate::clients::ClientKind::QwenCode => {
+            headers.insert(
+                "x-stainless-package-version",
+                HeaderValue::from_static("qwen-test-fixture"),
+            );
+        }
+        _ => {}
+    }
     headers
 }
 

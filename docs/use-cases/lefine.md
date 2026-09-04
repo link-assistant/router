@@ -27,7 +27,7 @@ the command with the provider's current exact IDs if catalog fallback is
 required.
 
 Adding the same name replaces it by default. Add `--if-absent` to keep an
-existing record. In either mode an enabled candidate remains staged until its
+existing record. In either mode every candidate remains staged until its
 Bearer key positively passes `GET /v1/models`; rejection, rate limiting,
 malformed data, timeout, or uncertain persistence cannot displace the active
 encrypted record.
@@ -61,5 +61,5 @@ LINK_ASSISTANT_TOKEN=<opencode-client-token> router usage lefine --json
 ```
 
 A real catalog smoke test runs only when `LEFINE_API_KEY` is explicitly present
-in the test environment. It performs no inference request and never prints the
-key.
+in the test environment. It performs no inference request, verifies the log
+projection redacts the key, and never prints the key.

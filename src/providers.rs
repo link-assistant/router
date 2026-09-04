@@ -266,20 +266,24 @@ impl ProviderStore {
     /// Open a provider store at `<data_dir>/providers.lenv`.
     pub fn open(data_dir: &Path, token_secret: &str) -> Result<Self, ProviderError> {
         let path = data_dir.join("providers.lenv");
+        let lock_path = path.with_extension("lock");
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let records = if path.exists() {
-            decode_provider_lenv(&fs::read_to_string(&path)?)?
-        } else {
-            Vec::new()
-        };
+        let records = crate::durable_file::with_exclusive_lock(&lock_path, || {
+            crate::durable_file::recover_transactional_write(&path)?;
+            if path.exists() {
+                decode_provider_lenv(&fs::read_to_string(&path)?)
+            } else {
+                Ok(Vec::new())
+            }
+        })?;
         let inner = records
             .into_iter()
             .map(|record| (record.name.clone(), record))
             .collect();
         Ok(Self {
-            lock_path: path.with_extension("lock"),
+            lock_path,
             path,
             token_secret: Arc::new(token_secret.to_string()),
             inner: Arc::new(RwLock::new(inner)),
@@ -594,6 +598,7 @@ impl ProviderStore {
 
     fn refresh(&self) -> Result<(), ProviderError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            crate::durable_file::recover_transactional_write(&self.path)?;
             let records = self.load_map()?;
             *self
                 .inner
@@ -837,7 +842,7 @@ mod provider_import;
 pub use provider_import::parse_provider_import;
 
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ProviderError> {
-    crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
+    crate::durable_file::transactional_write_owner_only(path, contents).map_err(Into::into)
 }
 
 #[cfg(test)]

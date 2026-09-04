@@ -260,7 +260,7 @@ impl SubscriptionReader {
     }
 
     fn install_document_at(path: &Path, document: &str) -> Result<PathBuf, String> {
-        crate::durable_file::atomic_write_owner_only(path, document.as_bytes())
+        crate::durable_file::transactional_write_owner_only(path, document.as_bytes())
             .map_err(|error| crate::durable_file::describe_write_failure(path, &error))?;
         Ok(path.to_path_buf())
     }
@@ -348,17 +348,21 @@ impl SubscriptionReader {
         let authoritative = (mode == InstallMode::Replace)
             .then(|| self.discover_credential_path())
             .flatten();
+        // Invalidation is fallible and therefore belongs before the primary
+        // replacement. If it fails, the working credential stays byte-for-byte
+        // authoritative instead of a new credential being active behind an
+        // error result (issue #424).
+        crate::model_catalog::ModelCatalogCache::invalidate_persisted(
+            data_dir,
+            self.provider,
+            account,
+        )?;
         let installed = authoritative
             .map_or_else(
                 || self.install_document(document),
                 |path| Self::install_document_at(&path, document),
             )
             .map(InstallDocumentResult::Installed)?;
-        crate::model_catalog::ModelCatalogCache::invalidate_persisted(
-            data_dir,
-            self.provider,
-            account,
-        )?;
         Ok(installed)
     }
 
@@ -558,6 +562,12 @@ impl SubscriptionReader {
     fn read_token_from_file(&self) -> Result<SubscriptionToken, SubscriptionError> {
         let mut last_err: Option<SubscriptionError> = None;
         for path in self.credential_paths() {
+            crate::durable_file::recover_transactional_write(&path).map_err(|error| {
+                SubscriptionError::ReadError(format!(
+                    "Failed to recover {}: {error}",
+                    path.display()
+                ))
+            })?;
             if !path.exists() {
                 continue;
             }
@@ -625,7 +635,7 @@ impl SubscriptionReader {
         let serialized = serde_json::to_vec_pretty(&document).map_err(|e| {
             SubscriptionError::ParseError(format!("Failed to serialize {}: {e}", path.display()))
         })?;
-        crate::durable_file::atomic_write_owner_only(&path, &serialized).map_err(|e| {
+        crate::durable_file::transactional_write_owner_only(&path, &serialized).map_err(|e| {
             SubscriptionError::ReadError(crate::durable_file::describe_write_failure(&path, &e))
         })
     }

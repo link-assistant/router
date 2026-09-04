@@ -4,7 +4,9 @@
 //! identity. Only authentication, routing/transport framing, hop-by-hop
 //! fields, and Router-internal metadata may change.
 
-use axum::http::{HeaderMap, HeaderValue};
+use std::collections::HashSet;
+
+use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use log_lazy::LogLazy;
 
 use super::REQUIRED_FORWARD_HEADERS;
@@ -77,6 +79,7 @@ fn replaced_or_transport_header(name: &str) -> bool {
             | "fastly-client-ip"
             | "fly-client-ip"
             | "x-envoy-external-address"
+            | "x-forwarded-client-cert"
             | "x-azure-clientip"
             | "x-appengine-user-ip"
             | "cloudfront-viewer-address"
@@ -85,9 +88,16 @@ fn replaced_or_transport_header(name: &str) -> bool {
 }
 
 pub fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> HeaderMap {
+    let connection_nominated: HashSet<HeaderName> = incoming
+        .get_all("connection")
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .filter_map(|name| HeaderName::from_bytes(name.trim().as_bytes()).ok())
+        .collect();
     let mut headers = HeaderMap::new();
     for (name, value) in incoming {
-        if !replaced_or_transport_header(name.as_str()) {
+        if !replaced_or_transport_header(name.as_str()) && !connection_nominated.contains(name) {
             headers.append(name.clone(), value.clone());
         }
     }

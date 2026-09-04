@@ -20,6 +20,18 @@ use std::path::{Path, PathBuf};
 
 use crate::subscription::{SubscriptionReader, SubscriptionToken};
 
+pub(crate) fn ensure_refreshable_origin(
+    provider: crate::subscription::SubscriptionProvider,
+    origin: crate::platform_keychain::Origin,
+) -> Result<(), String> {
+    if origin == crate::platform_keychain::Origin::Keychain {
+        return Err(format!(
+            "refusing to spend the authoritative {provider} platform-keychain refresh token because Router cannot durably advance that external store"
+        ));
+    }
+    Ok(())
+}
+
 /// Suffix of the sidecar lock file guarding a credential's read → refresh →
 /// write cycle.
 ///
@@ -47,6 +59,15 @@ pub trait CredentialStore: std::fmt::Debug + Send + Sync {
     /// corrupt sidecar cannot be confused with an absent one.
     fn try_reload(&self) -> Result<Option<SubscriptionToken>, String> {
         Ok(self.reload())
+    }
+
+    /// Refuse an exchange that this store cannot durably advance.
+    ///
+    /// The default applies to ordinary writable stores. Readers backed by an
+    /// external authoritative store override it so the refresh token is never
+    /// spent before a successor can be written where the owning client reads.
+    fn prepare_refresh(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        Ok(())
     }
 
     /// Write a refreshed credential back, preserving vendor fields this crate
@@ -91,7 +112,16 @@ impl CredentialStore for SubscriptionReader {
     }
 
     fn persist(&self, token: &SubscriptionToken) -> Result<(), String> {
+        if let Ok((_, origin)) = self.read_token_from() {
+            ensure_refreshable_origin(self.provider(), origin)?;
+        }
         self.write_token(token).map_err(|error| error.to_string())
+    }
+
+    fn prepare_refresh(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        self.read_token_from().map_or(Ok(()), |(_, origin)| {
+            ensure_refreshable_origin(self.provider(), origin)
+        })
     }
 
     fn lock_path(&self) -> Option<PathBuf> {

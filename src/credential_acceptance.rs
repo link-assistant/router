@@ -45,9 +45,13 @@ pub struct AcceptanceFailure {
 
 impl AcceptanceFailure {
     fn not_attempted(message: impl Into<String>) -> Self {
+        Self::not_attempted_at(AcceptancePhase::Preflight, message)
+    }
+
+    fn not_attempted_at(phase: AcceptancePhase, message: impl Into<String>) -> Self {
         Self {
             kind: AcceptanceFailureKind::NotAttempted,
-            phase: AcceptancePhase::Preflight,
+            phase,
             transaction_id: None,
             message: message.into(),
         }
@@ -218,6 +222,31 @@ pub async fn accept_candidate(
     .await
 }
 
+/// Stage and positively validate a credential copied from an external owner.
+///
+/// Unlike a fresh native-login response, an imported refresh link is still
+/// authoritative for the vendor client that owns the source store. This path
+/// therefore validates only a currently live access token and never spends
+/// that external rotating link. An expired/near-expiry source must first be
+/// advanced by its owning client (issue #424).
+pub async fn accept_external_candidate(
+    data_dir: &Path,
+    provider: SubscriptionProvider,
+    document: &str,
+    catalog_base_url_override: Option<&str>,
+) -> Result<AcceptedCredential, AcceptanceFailure> {
+    accept_candidate_with_timeout_mode(
+        data_dir,
+        provider,
+        document,
+        None,
+        catalog_base_url_override,
+        ACCEPTANCE_TIMEOUT,
+        false,
+    )
+    .await
+}
+
 /// Timeout-overridable form for deterministic transaction contract tests.
 #[doc(hidden)]
 pub async fn accept_candidate_with_timeout(
@@ -227,6 +256,27 @@ pub async fn accept_candidate_with_timeout(
     token_url_override: Option<&str>,
     catalog_base_url_override: Option<&str>,
     timeout: Duration,
+) -> Result<AcceptedCredential, AcceptanceFailure> {
+    accept_candidate_with_timeout_mode(
+        data_dir,
+        provider,
+        document,
+        token_url_override,
+        catalog_base_url_override,
+        timeout,
+        true,
+    )
+    .await
+}
+
+async fn accept_candidate_with_timeout_mode(
+    data_dir: &Path,
+    provider: SubscriptionProvider,
+    document: &str,
+    token_url_override: Option<&str>,
+    catalog_base_url_override: Option<&str>,
+    timeout: Duration,
+    rotate_candidate: bool,
 ) -> Result<AcceptedCredential, AcceptanceFailure> {
     let staging_root = data_dir.join(STAGING_DIRECTORY);
     std::fs::create_dir_all(&staging_root).map_err(|_| {
@@ -276,42 +326,56 @@ pub async fn accept_candidate_with_timeout(
             AcceptanceFailure::not_attempted("could not initialize candidate validation")
         })?;
     let now_ms = chrono::Utc::now().timestamp_millis();
-    let refresh_result = match token_url_override {
-        Some(token_url) => {
-            cache
-                .validate_refresh_chain_registered_at_classified(
-                    &client,
-                    token_url,
-                    provider,
-                    crate::credential_recovery_store::PRIMARY_ACCOUNT,
-                    now_ms,
-                )
-                .await
-        }
-        None => {
-            cache
-                .validate_refresh_chain_registered_classified(
-                    &client,
-                    provider,
-                    crate::credential_recovery_store::PRIMARY_ACCOUNT,
-                    now_ms,
-                )
-                .await
-        }
-    };
-    let refreshed = match refresh_result {
-        Ok(refreshed) => refreshed,
-        Err(error) => {
-            let mut failure = AcceptanceFailure::from_refresh(&error, &transaction_id);
-            if failure.kind == AcceptanceFailureKind::SuccessorRetained {
-                let _retained_path = stage.keep();
-                failure.message = format!(
-                    "{}; isolated candidate retained as transaction {transaction_id}",
-                    failure.message
-                );
+    let refreshed = if rotate_candidate {
+        let refresh_result = match token_url_override {
+            Some(token_url) => {
+                cache
+                    .validate_refresh_chain_registered_at_classified(
+                        &client,
+                        token_url,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now_ms,
+                    )
+                    .await
             }
-            return Err(failure);
+            None => {
+                cache
+                    .validate_refresh_chain_registered_classified(
+                        &client,
+                        provider,
+                        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                        now_ms,
+                    )
+                    .await
+            }
+        };
+        match refresh_result {
+            Ok(refreshed) => refreshed,
+            Err(error) => {
+                let mut failure = AcceptanceFailure::from_refresh(&error, &transaction_id);
+                if failure.kind == AcceptanceFailureKind::SuccessorRetained {
+                    let _retained_path = stage.keep();
+                    failure.message = format!(
+                        "{}; isolated candidate retained as transaction {transaction_id}",
+                        failure.message
+                    );
+                }
+                return Err(failure);
+            }
         }
+    } else {
+        let staged = reader.read_document_for_import().map_err(|_| {
+            AcceptanceFailure::not_attempted(format!(
+                "the staged {provider} external candidate could not be read"
+            ))
+        })?;
+        if staged.token.is_expired(now_ms.saturating_add(5 * 60_000)) {
+            return Err(AcceptanceFailure::not_attempted(format!(
+                "the external {provider} credential is expired or near expiry; let its owning vendor client renew it before import"
+            )));
+        }
+        staged.token
     };
 
     let catalog = crate::model_catalog::fetch_provider_catalog(
@@ -334,6 +398,14 @@ pub async fn accept_candidate_with_timeout(
         }
     };
     if let Some(reason) = catalog_failure {
+        if !rotate_candidate {
+            return Err(AcceptanceFailure::not_attempted_at(
+                AcceptancePhase::Catalog,
+                format!(
+                    "the external {provider} candidate {reason}; its refresh token was not spent"
+                ),
+            ));
+        }
         let _retained_path = stage.keep();
         return Err(AcceptanceFailure::retained(
             AcceptancePhase::Catalog,

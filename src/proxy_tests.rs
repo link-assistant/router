@@ -157,6 +157,7 @@ fn every_reviewed_ingress_network_header_is_removed_without_touching_native_head
         "fastly-client-ip",
         "fly-client-ip",
         "x-envoy-external-address",
+        "x-forwarded-client-cert",
         "x-azure-clientip",
         "x-appengine-user-ip",
         "cloudfront-viewer-address",
@@ -196,6 +197,40 @@ fn every_reviewed_ingress_network_header_is_removed_without_touching_native_head
     ] {
         assert_eq!(upstream.get_all(name).iter().count(), 1, "{name}");
     }
+}
+
+#[test]
+fn connection_nominated_request_headers_never_reach_the_upstream() {
+    let mut incoming = HeaderMap::new();
+    incoming.append(
+        "connection",
+        HeaderValue::from_static("keep-alive, x-hop-secret"),
+    );
+    incoming.append(
+        "connection",
+        HeaderValue::from_static(" X-Second-Hop , x-third-hop"),
+    );
+    incoming.append("x-hop-secret", HeaderValue::from_static("one"));
+    incoming.append("x-second-hop", HeaderValue::from_static("two"));
+    incoming.append("x-third-hop", HeaderValue::from_static("three"));
+    incoming.append("x-native-end-to-end", HeaderValue::from_static("preserved"));
+
+    let upstream = build_upstream_headers(
+        &incoming,
+        "upstream-secret",
+        &LogLazy::with_level(levels::NONE),
+    );
+
+    for removed in [
+        "connection",
+        "keep-alive",
+        "x-hop-secret",
+        "x-second-hop",
+        "x-third-hop",
+    ] {
+        assert!(upstream.get(removed).is_none(), "{removed} leaked upstream");
+    }
+    assert_eq!(upstream["x-native-end-to-end"], "preserved");
 }
 
 /// The router negotiates its own hop, so the log can read its own traffic.

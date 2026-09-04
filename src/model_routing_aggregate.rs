@@ -41,17 +41,9 @@ pub(super) fn project_catalog(
 
 fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<String, Value> {
     let service = service(raw, client);
-    let native_id = raw
-        .get("name")
-        .and_then(Value::as_str)
-        .filter(|name| name.starts_with("models/"))
-        .or_else(|| raw.get("slug").and_then(Value::as_str))
-        .or_else(|| raw.get("id").and_then(Value::as_str))
-        .unwrap_or(id);
     let mut projected = Map::from_iter([
         ("id".into(), Value::String(id.to_string())),
         ("service".into(), Value::String(service.to_string())),
-        ("native_id".into(), Value::String(native_id.to_string())),
     ]);
 
     copy_first_number(
@@ -90,7 +82,7 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
     {
         projected.insert("deprecation_date".into(), value.clone());
     }
-    if projected.len() > 3 {
+    if projected.len() > 2 {
         projected.insert(
             "metadata_source".into(),
             Value::String(format!("provider:{service}")),
@@ -208,7 +200,7 @@ mod tests {
                 "pricing": {"input_per_mtok": "5", "output_per_mtok": "25", "currency": "USD"}
             },
             {
-                "id": "gemini-live",
+                "id": "models/gemini-live",
                 "name": "models/gemini-live",
                 "provider": "gemini",
                 "inputTokenLimit": 1_000_000,
@@ -217,12 +209,25 @@ mod tests {
             {"id": "metadata-absent", "owned_by": "configured-provider"}
         ]});
         let projected = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
-        assert_eq!(projected["data"][0]["service"], "anthropic");
-        assert_eq!(projected["data"][0]["context_window"], 200_000);
-        assert_eq!(projected["data"][1]["native_id"], "models/gemini-live");
-        assert_eq!(projected["data"][1]["max_output_tokens"], 65536);
-        assert!(projected["data"][2].get("context_window").is_none());
-        assert!(projected["data"][2].get("pricing").is_none());
+        let entries = projected["data"].as_array().unwrap();
+        let claude = entries
+            .iter()
+            .find(|entry| entry["id"] == "claude-live")
+            .unwrap();
+        let gemini = entries
+            .iter()
+            .find(|entry| entry["id"] == "models/gemini-live")
+            .unwrap();
+        let absent = entries
+            .iter()
+            .find(|entry| entry["id"] == "metadata-absent")
+            .unwrap();
+        assert_eq!(claude["service"], "anthropic");
+        assert_eq!(claude["context_window"], 200_000);
+        assert!(gemini.get("native_id").is_none());
+        assert_eq!(gemini["max_output_tokens"], 65536);
+        assert!(absent.get("context_window").is_none());
+        assert!(absent.get("pricing").is_none());
     }
 
     #[test]

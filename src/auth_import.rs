@@ -427,12 +427,11 @@ async fn import_provider(
         || (!policy.if_absent
             && destination.candidate_is_shadowed_by_platform_store(validated.token()))
     {
-        let transaction_id = validated.retain();
-        return Err(ImportFailure::retained(
+        drop(validated);
+        return Err(ImportFailure::safe_failure(
             ImportPhase::Promotion,
-            transaction_id.clone(),
             format!(
-                "the {provider} platform credential remains authoritative; validated candidate retained as transaction {transaction_id}"
+                "the {provider} platform credential remains authoritative; the external refresh token was not spent"
             ),
         ));
     }
@@ -447,12 +446,8 @@ async fn import_provider(
     let installed = match promotion {
         Ok(installed) => installed,
         Err(error) => {
-            let transaction_id = validated.retain();
-            return Err(ImportFailure::retained(
-                ImportPhase::Promotion,
-                transaction_id.clone(),
-                format!("{error}; validated candidate retained as transaction {transaction_id}"),
-            ));
+            drop(validated);
+            return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
         }
     };
     let execution = match installed {
@@ -463,11 +458,7 @@ async fn import_provider(
                     path.display()
                 ),
                 format!(
-                    "{provider:<8} note: refresh-chain validation advanced the candidate before \
-                     installation; the source copy may now contain the spent predecessor"
-                ),
-                format!(
-                    "{provider:<8} candidate {report}, accepted by the vendor after refresh-chain validation"
+                    "{provider:<8} candidate {report}, accepted by the vendor without spending the source refresh token"
                 ),
             ];
             // Dropping a successfully promoted candidate removes its isolated
@@ -476,18 +467,17 @@ async fn import_provider(
             ImportExecution::promoted(provider.to_string(), messages)
         }
         InstallDocumentResult::AlreadyPresent(path) => {
-            // A login or refresh won the race after the preflight. Its bytes
-            // remain authoritative, while the advanced candidate must stay
-            // durable because its source now holds a spent predecessor.
-            let transaction_id = validated.retain();
-            return Err(ImportFailure::retained(
-                ImportPhase::Promotion,
-                transaction_id.clone(),
-                format!(
-                    "{provider:<8} already present at {}; candidate from {where_from} was not installed; validated candidate retained as transaction {transaction_id}",
+            // A login or refresh won the race after the preflight. The source
+            // refresh token was never spent, so no recovery transaction is
+            // needed for the discarded duplicate.
+            drop(validated);
+            ImportExecution::already_present(
+                provider.to_string(),
+                vec![format!(
+                    "{provider:<8} already present at {}; candidate from {where_from} was not installed",
                     path.display()
-                ),
-            ));
+                )],
+            )
         }
     };
     Ok(execution)
@@ -498,11 +488,14 @@ async fn validate_candidate(
     provider: SubscriptionProvider,
     document: &str,
 ) -> Result<ValidatedCandidate, ImportFailure> {
-    import_refresh_prerequisite(provider, |key| std::env::var(key).ok())
-        .map_err(ImportFailure::not_attempted)?;
-    validate_candidate_with(data_dir, provider, document, None, None).await
+    link_assistant_router::credential_acceptance::accept_external_candidate(
+        data_dir, provider, document, None,
+    )
+    .await
+    .map_err(|failure| ImportFailure::from_acceptance(&failure))
 }
 
+#[cfg(test)]
 fn import_refresh_prerequisite(
     provider: SubscriptionProvider,
     lookup: impl FnOnce(&str) -> Option<String>,
@@ -540,6 +533,7 @@ fn same_credential_home(source: &std::path::Path, destination: &std::path::Path)
 /// always uses the provider's public OAuth endpoint and a Router-validated
 /// catalog origin; a candidate-controlled `resource_url` can therefore never
 /// send the refreshed bearer token outside the vendor allowlist.
+#[cfg(test)]
 async fn validate_candidate_with(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,

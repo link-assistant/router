@@ -75,6 +75,12 @@ struct LogIdentity {
     label: Option<String>,
 }
 
+#[derive(Clone, Debug)]
+struct LogRoute {
+    identity: LogIdentity,
+    upstream_seen: bool,
+}
+
 impl LogIdentity {
     fn unauthenticated() -> Self {
         Self {
@@ -97,7 +103,7 @@ pub struct RequestLog {
     /// Bound across every token directory, or `None` when uncapped.
     max_total_bytes: Option<u64>,
     write_lock: Mutex<()>,
-    routes: Mutex<HashMap<String, LogIdentity>>,
+    routes: Mutex<HashMap<String, LogRoute>>,
 }
 
 impl RequestLog {
@@ -159,6 +165,18 @@ impl RequestLog {
 
     /// Append one structured event, removing credentials before serialization.
     pub fn record(&self, correlation_id: &str, phase: &str, fields: Value) {
+        if matches!(
+            phase,
+            "upstream_request"
+                | "upstream_response"
+                | "upstream_error"
+                | "upstream_response_body"
+                | "stream_end"
+        ) && let Ok(mut routes) = self.routes.lock()
+            && let Some(route) = routes.get_mut(correlation_id)
+        {
+            route.upstream_seen = true;
+        }
         let identity = self.identity(correlation_id);
         let mut event = Map::new();
         event.insert(
@@ -213,13 +231,31 @@ impl RequestLog {
         self.routes
             .lock()
             .ok()
-            .and_then(|routes| routes.get(correlation_id).cloned())
+            .and_then(|routes| {
+                routes
+                    .get(correlation_id)
+                    .map(|route| route.identity.clone())
+            })
             .unwrap_or_else(LogIdentity::unauthenticated)
+    }
+
+    fn upstream_seen(&self, correlation_id: &str) -> bool {
+        self.routes
+            .lock()
+            .ok()
+            .and_then(|routes| routes.get(correlation_id).map(|route| route.upstream_seen))
+            .unwrap_or(false)
     }
 
     fn route_request(&self, correlation_id: &str, identity: LogIdentity) {
         if let Ok(mut routes) = self.routes.lock() {
-            routes.insert(correlation_id.to_string(), identity);
+            routes.insert(
+                correlation_id.to_string(),
+                LogRoute {
+                    identity,
+                    upstream_seen: false,
+                },
+            );
         }
     }
 
@@ -856,9 +892,10 @@ pub async fn log_http_exchange(
     let (parts, body) = response.into_parts();
     let logger = std::sync::Arc::clone(&state.request_log);
     let response_id = correlation_id;
+    let capture_response_body = logger.upstream_seen(&response_id) || parts.status.is_success();
     let stream = body.into_data_stream().map(move |chunk| {
         let _keep_route_until_response_body_finishes = &route_guard;
-        if let Ok(bytes) = &chunk {
+        if capture_response_body && let Ok(bytes) = &chunk {
             logger.record(
                 &response_id,
                 "client_response_body",

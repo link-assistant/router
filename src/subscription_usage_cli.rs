@@ -1,5 +1,6 @@
 //! Formatter and HTTP client shared by local and selected-remote usage commands.
 
+use std::fmt::Write as _;
 use std::process::ExitCode;
 
 use crate::subscription_usage::{SubscriptionUsage, UsageEnvelope, UsageProvider};
@@ -67,32 +68,44 @@ pub async fn run(
             return ExitCode::from(1);
         }
     };
-    if json {
-        match serde_json::to_string_pretty(&envelope) {
-            Ok(output) => println!("{output}"),
-            Err(error) => {
-                eprintln!("error: could not encode subscription usage: {error}");
-                return ExitCode::from(1);
-            }
+    let output = match format_envelope(&envelope, json) {
+        Ok(output) => output,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
         }
-    } else if envelope.subscriptions.is_empty() {
-        println!("No authorized configured subscriptions.");
-    } else {
-        for (index, subscription) in envelope.subscriptions.iter().enumerate() {
-            if index > 0 {
-                println!();
-            }
-            print_subscription(subscription);
-        }
-    }
+    };
+    print!("{output}");
     ExitCode::SUCCESS
 }
 
-fn print_subscription(usage: &SubscriptionUsage) {
-    println!("{}", usage.provider.as_str());
-    println!("  status: {}", usage.status);
+fn format_envelope(envelope: &UsageEnvelope, json: bool) -> Result<String, String> {
+    if json {
+        return serde_json::to_string_pretty(envelope)
+            .map(|mut output| {
+                output.push('\n');
+                output
+            })
+            .map_err(|error| format!("could not encode subscription usage: {error}"));
+    }
+    if envelope.subscriptions.is_empty() {
+        return Ok("No authorized configured subscriptions.\n".into());
+    }
+    let mut output = String::new();
+    for (index, subscription) in envelope.subscriptions.iter().enumerate() {
+        if index > 0 {
+            output.push('\n');
+        }
+        format_subscription(&mut output, subscription);
+    }
+    Ok(output)
+}
+
+fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
+    let _ = writeln!(output, "{}", usage.provider.as_str());
+    let _ = writeln!(output, "  status: {}", usage.status);
     if let Some(plan) = &usage.plan {
-        println!("  plan: {plan}");
+        let _ = writeln!(output, "  plan: {plan}");
     }
     for window in &usage.windows {
         let used = window
@@ -107,10 +120,10 @@ fn print_subscription(usage: &SubscriptionUsage) {
             .as_deref()
             .map(|value| format!(", resets {value}"))
             .unwrap_or_default();
-        println!("  {}: {used}{remaining}{reset}", window.name);
+        let _ = writeln!(output, "  {}: {used}{remaining}{reset}", window.name);
     }
     for limit in &usage.additional_limits {
-        println!("  limit {}:", limit.name);
+        let _ = writeln!(output, "  limit {}:", limit.name);
         for window in &limit.windows {
             let used = window
                 .used_percentage
@@ -124,10 +137,11 @@ fn print_subscription(usage: &SubscriptionUsage) {
                 .as_deref()
                 .map(|value| format!(", resets {value}"))
                 .unwrap_or_default();
-            println!("    {}: {used}{remaining}{reset}", window.name);
+            let _ = writeln!(output, "    {}: {used}{remaining}{reset}", window.name);
         }
         if limit.used.is_some() || limit.limit.is_some() {
-            println!(
+            let _ = writeln!(
+                output,
                 "    amount: {} / {}",
                 limit
                     .used
@@ -140,20 +154,24 @@ fn print_subscription(usage: &SubscriptionUsage) {
     }
     if let Some(credits) = &usage.credits {
         if credits.unlimited == Some(true) {
-            println!("  credits: unlimited");
+            let _ = writeln!(output, "  credits: unlimited");
         } else if let Some(balance) = &credits.balance {
-            println!("  credits: {balance}");
+            let _ = writeln!(output, "  credits: {balance}");
         } else if credits.overage_limit_reached == Some(true) {
-            println!("  credits: overage limit reached");
+            let _ = writeln!(output, "  credits: overage limit reached");
         }
     }
     if let Some(end) = &usage.subscription_end {
-        println!("  subscription ends: {end}");
+        let _ = writeln!(output, "  subscription ends: {end}");
     }
     if let Some(end) = &usage.trial_end {
-        println!("  trial ends: {end}");
+        let _ = writeln!(output, "  trial ends: {end}");
     }
     if let Some(retry) = usage.retry_after_seconds {
-        println!("  retry after: {retry}s");
+        let _ = writeln!(output, "  retry after: {retry}s");
     }
 }
+
+#[cfg(test)]
+#[path = "subscription_usage_cli_tests.rs"]
+mod tests;

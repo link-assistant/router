@@ -14,10 +14,16 @@ use super::{AppState, code_assist_envelope, route_gemini_token};
 use crate::metrics::Surface;
 use crate::proxy::{error_response, retry_after_duration};
 
-fn native_model_document(model: &str, owner: &str) -> Value {
+fn native_model_name(model: &str) -> String {
     let model = model.trim_start_matches("models/");
+    format!("models/{model}")
+}
+
+fn native_model_document(model: &str, owner: &str) -> Value {
+    let name = native_model_name(model);
+    let model = name.trim_start_matches("models/");
     json!({
-        "name": format!("models/{model}"),
+        "name": name,
         "displayName": model,
         "description": format!(
             "{owner} model routed by Link.Assistant.Router over the native Gemini \
@@ -110,6 +116,18 @@ pub async fn native_models(
     {
         return response;
     }
+    let mut seen = std::collections::HashSet::new();
+    for (_, model) in &advertised {
+        let name = native_model_name(model);
+        if !seen.insert(name.clone()) {
+            return native_error(
+                StatusCode::CONFLICT,
+                &format!(
+                    "exact native model id '{name}' is advertised by more than one healthy provider"
+                ),
+            );
+        }
+    }
     let mut models = advertised
         .into_iter()
         .map(|(provider, model)| native_model_document(&model, provider.as_str()))
@@ -151,12 +169,12 @@ pub async fn native_model(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    let model = model.trim_start_matches("models/").to_string();
-    let owner = advertised_models(&state, claims.principal_id.as_deref())
+    let requested_name = native_model_name(&model);
+    let mut owners = advertised_models(&state, claims.principal_id.as_deref())
         .await
         .into_iter()
-        .find_map(|(owner, candidate)| {
-            (candidate == model
+        .filter_map(|(owner, candidate)| {
+            (native_model_name(&candidate) == requested_name
                 && crate::client_policy::enforce_subscription_for_claims(
                     &state,
                     &claims,
@@ -166,37 +184,51 @@ pub async fn native_model(
                     uri.path(),
                 )
                 .is_ok())
-            .then_some(owner)
-        });
-    if owner.is_none()
+            .then_some((owner, candidate))
+        })
+        .collect::<Vec<_>>();
+    owners.sort_by(|left, right| left.0.as_str().cmp(right.0.as_str()));
+    owners.dedup();
+    if owners.len() > 1 {
+        return native_error(
+            StatusCode::CONFLICT,
+            &format!(
+                "exact native model id '{requested_name}' is advertised by more than one healthy provider"
+            ),
+        );
+    }
+    if owners.is_empty()
         && let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
         && let Ok((client, _)) =
             crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
         && client == crate::clients::ClientKind::GeminiCli
         && let Ok(live) = crate::zai_coding_plan::live_catalog(&state, &provider).await
-        && live.iter().any(|entry| entry.id == model)
+        && live
+            .iter()
+            .any(|entry| native_model_name(&entry.id) == requested_name)
     {
         return (
             StatusCode::OK,
-            axum::Json(native_model_document(&model, "z.ai")),
+            axum::Json(native_model_document(&requested_name, "z.ai")),
         )
             .into_response();
     }
-    owner
+    owners
+        .pop()
         .map_or_else(
             || {
                 (
                     StatusCode::NOT_FOUND,
                     axum::Json(crate::gemini_bridge::openai_error_to_gemini(
                         404,
-                        &json!({"error": {"message": format!("model '{model}' is not available")}}),
+                        &json!({"error": {"message": format!("model '{requested_name}' is not available")}}),
                     )),
                 )
             },
-            |owner| {
+            |(owner, candidate)| {
                 (
                     StatusCode::OK,
-                    axum::Json(native_model_document(&model, owner.as_str())),
+                    axum::Json(native_model_document(&candidate, owner.as_str())),
                 )
             },
         )
@@ -293,10 +325,44 @@ async fn native_owner(
         let client = crate::client_policy::bound_client(&claims)
             .map(|(client, _)| client)
             .map_err(|error| native_error(StatusCode::FORBIDDEN, &error))?;
+        let entitled = crate::subscription::SubscriptionProvider::ALL
+            .into_iter()
+            .filter(|provider| {
+                crate::client_policy::enforce_subscription_for_claims(
+                    state,
+                    &claims,
+                    headers,
+                    *provider,
+                    crate::client_policy::ClientProtocol::GeminiNative,
+                    path,
+                )
+                .is_ok()
+            })
+            .collect::<Vec<_>>();
+        let requested_name = native_model_name(model);
+        let mut exact_candidates = advertised_models(state, claims.principal_id.as_deref())
+            .await
+            .into_iter()
+            .filter(|(provider, candidate)| {
+                entitled.contains(provider) && native_model_name(candidate) == requested_name
+            })
+            .map(|(_, candidate)| candidate)
+            .collect::<Vec<_>>();
+        exact_candidates.sort();
+        exact_candidates.dedup();
+        if exact_candidates.len() > 1 {
+            return Err(native_error(
+                StatusCode::CONFLICT,
+                &format!(
+                    "exact native model id '{requested_name}' is advertised by more than one healthy provider"
+                ),
+            ));
+        }
+        let routing_model = exact_candidates.first().map_or(model, String::as_str);
         crate::model_routing::route_state_with_subscription_for_client(
             state,
-            &json!({"model": model}),
-            &crate::subscription::SubscriptionProvider::ALL,
+            &json!({"model": routing_model}),
+            &entitled,
             Some(client),
             crate::zai_coding_plan::authorize_automatic_discovery(
                 state,
@@ -330,6 +396,7 @@ async fn native_owner(
     routed.map_err(|error| {
         let status = match error {
             crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
+            crate::model_routing::ModelRouteError::Conflict(_) => StatusCode::CONFLICT,
             _ => StatusCode::BAD_REQUEST,
         };
         native_error(status, &error.to_string())

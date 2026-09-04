@@ -79,9 +79,18 @@ async fn real_catalog_smoke_uses_only_an_explicit_secret_environment_variable() 
         return;
     }
     let mut provider = provider(&[]);
-    provider.api_key = Some(api_key);
+    provider.api_key = Some(api_key.clone());
     let models = fetch_catalog(&reqwest::Client::new(), &provider)
         .await
         .expect("explicit Lefine smoke credential must reach the non-inference catalog");
     assert!(!models.is_empty());
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        "authorization",
+        axum::http::HeaderValue::from_str(&format!("Bearer {api_key}"))
+            .expect("Lefine key is an HTTP bearer value"),
+    );
+    let log_projection = serde_json::to_string(&crate::request_log::redacted_headers(&headers))
+        .expect("redacted log projection");
+    assert!(!log_projection.contains(&api_key));
 }

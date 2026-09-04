@@ -15,6 +15,34 @@ struct ControlledStore {
     persist_error: Option<&'static str>,
 }
 
+#[derive(Debug)]
+struct ExternalAuthoritativeStore {
+    credential: SubscriptionToken,
+    lock_path: PathBuf,
+}
+
+impl CredentialStore for ExternalAuthoritativeStore {
+    fn reload(&self) -> Option<SubscriptionToken> {
+        Some(self.credential.clone())
+    }
+
+    fn prepare_refresh(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        Err("external authoritative store is not writable".into())
+    }
+
+    fn persist(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        panic!("a refused external refresh must never reach persistence")
+    }
+
+    fn lock_path(&self) -> Option<PathBuf> {
+        Some(self.lock_path.clone())
+    }
+
+    fn describe(&self) -> String {
+        "injected external authoritative store".into()
+    }
+}
+
 impl CredentialStore for ControlledStore {
     fn reload(&self) -> Option<SubscriptionToken> {
         self.credential.clone()
@@ -106,6 +134,21 @@ async fn a_store_without_a_lock_path_fails_closed_before_the_token_endpoint() {
     assert_refresh_is_refused_without_endpoint_request(
         Some(store as Arc<dyn CredentialStore>),
         "lock path",
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn an_external_authoritative_store_is_not_spent_without_a_writer() {
+    let directory = tempfile::tempdir().expect("lock directory");
+    let store = Arc::new(ExternalAuthoritativeStore {
+        credential: token("safe-old-access", "safe-old-refresh", NOW_MS - 1),
+        lock_path: directory.path().join("credential.lock"),
+    });
+
+    assert_refresh_is_refused_without_endpoint_request(
+        Some(store as Arc<dyn CredentialStore>),
+        "external store cannot be durably advanced",
     )
     .await;
 }

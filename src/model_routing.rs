@@ -929,3 +929,7 @@ mod evidence_tests;
 #[cfg(test)]
 #[path = "model_routing_provider_tests.rs"]
 mod provider_tests;
+
+#[cfg(test)]
+#[path = "model_routing_lefine_client_tests.rs"]
+mod lefine_client_tests;

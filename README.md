@@ -540,8 +540,8 @@ authority.
 `GET /api/models` is the additional provider-neutral catalogue. It accepts the
 same Router client token carrier as that token's native client, then returns
 only healthy models compatible with its signed client kind and principal. Each
-entry carries the exact `id`, the canonical Router `service` path segment, and
-the lossless vendor `native_id` (including Gemini's `models/` prefix). Repeated
+entry carries the one lossless vendor `id` (including Gemini's `models/`
+prefix) and the canonical Router `service` path segment. Repeated
 entries from one provider are deduplicated; the same exact id claimed by two
 providers returns HTTP 409 rather than choosing or inventing a qualified id.
 Provider-reported context window, output cap, modalities, pricing, and

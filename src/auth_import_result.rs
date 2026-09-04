@@ -58,9 +58,13 @@ pub(super) struct ImportFailure {
 
 impl ImportFailure {
     pub(super) fn not_attempted(error: impl Into<String>) -> Self {
+        Self::safe_failure(ImportPhase::Preflight, error)
+    }
+
+    pub(super) fn safe_failure(phase: ImportPhase, error: impl Into<String>) -> Self {
         Self {
             outcome: ImportOutcome::NotAttempted,
-            phase: ImportPhase::Preflight,
+            phase,
             previous_credential_safe: true,
             transaction_id: None,
             error: error.into(),
