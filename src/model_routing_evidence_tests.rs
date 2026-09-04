@@ -223,9 +223,11 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
             &request_body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
-            routed.subscription.as_ref(),
-            None,
-            false,
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: routed.subscription.as_ref(),
+                entitlement: None,
+                native_route: false,
+            },
         )
         .await
     });
@@ -274,9 +276,11 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
         &second_body,
         "/v1/responses",
         crate::metrics::Surface::OpenAIResponses,
-        second_routed.subscription.as_ref(),
-        None,
-        false,
+        crate::subscription_proxy::RoutedSubscriptionContext {
+            validated: second_routed.subscription.as_ref(),
+            entitlement: None,
+            native_route: false,
+        },
     )
     .await;
     assert_eq!(second_response.status(), StatusCode::OK);

@@ -301,9 +301,11 @@ async fn openai_chat_completions_with_subscription(
             &routing_body,
             "/v1/chat/completions",
             crate::metrics::Surface::OpenAIChat,
-            subscription.as_ref(),
-            entitlement,
-            native_route,
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: subscription.as_ref(),
+                entitlement,
+                native_route,
+            },
         )
         .await;
     }
@@ -327,9 +329,11 @@ async fn openai_chat_completions_with_subscription(
             responses_body,
             &routing_body,
             crate::metrics::Surface::OpenAIChat,
-            subscription.as_ref(),
-            entitlement,
-            native_route,
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: subscription.as_ref(),
+                entitlement,
+                native_route,
+            },
         )
         .await;
     }
@@ -527,9 +531,11 @@ async fn openai_responses_with_route(
             &routing_body,
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
-            subscription.as_ref(),
-            None,
-            native_route,
+            crate::subscription_proxy::RoutedSubscriptionContext {
+                validated: subscription.as_ref(),
+                entitlement: None,
+                native_route,
+            },
         )
         .await;
     }

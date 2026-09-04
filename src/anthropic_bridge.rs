@@ -898,9 +898,11 @@ async fn forward_anthropic_messages_routed(
                 &chat_body,
                 "/v1/responses",
                 Surface::Anthropic,
-                subscription,
-                None,
-                false,
+                crate::subscription_proxy::RoutedSubscriptionContext {
+                    validated: subscription,
+                    entitlement: None,
+                    native_route: false,
+                },
             )
             .await
         }
@@ -912,9 +914,11 @@ async fn forward_anthropic_messages_routed(
                 &chat_body,
                 "/v1/chat/completions",
                 Surface::Anthropic,
-                subscription,
-                None,
-                false,
+                crate::subscription_proxy::RoutedSubscriptionContext {
+                    validated: subscription,
+                    entitlement: None,
+                    native_route: false,
+                },
             )
             .await
         }
