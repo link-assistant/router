@@ -25,8 +25,8 @@ use serde_json::{Value, json};
 use wait_timeout::ChildExt as _;
 
 const CLAUDE_VERSION: &str = "2.1.260";
-const CODEX_VERSION: &str = "0.153.2";
-const OPENCODE_VERSION: &str = "1.18.27";
+const CODEX_VERSION: &str = "0.153.3";
+const OPENCODE_VERSION: &str = "1.18.28";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const ANSWER: &str = "ROUTER_CAPTURE_OK";
 
@@ -60,7 +60,7 @@ const CODEX: ClientCase = ClientCase {
     model: "gpt-5.6-codex",
     owner: "openai",
     inference_path: "/api/services/codex/v1/responses",
-    user_agent_prefix: "codex_exec/0.153.2",
+    user_agent_prefix: "codex_exec/0.153.3",
     credential_header: "authorization",
 };
 
@@ -71,7 +71,7 @@ const OPENCODE: ClientCase = ClientCase {
     model: "future-chat-model",
     owner: "openai-compatible",
     inference_path: "/api/services/openai/v1/chat/completions",
-    user_agent_prefix: "opencode/1.18.27",
+    user_agent_prefix: "opencode/1.18.28",
     credential_header: "authorization",
 };
 

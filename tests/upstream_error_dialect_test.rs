@@ -188,7 +188,7 @@ impl TestRouter {
         } else if path.ends_with("/v1/responses") {
             request
                 .bearer_auth(&self.codex_token)
-                .header("user-agent", "codex_cli_rs/0.153.2")
+                .header("user-agent", "codex_cli_rs/0.153.3")
                 .header("x-openai-internal-codex-responses-lite", "true")
         } else {
             request
