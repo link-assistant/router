@@ -324,7 +324,7 @@ fn test_app(state: AppState) -> Router {
         )
         .route(
             "/api/services/qwen/v1/chat/completions",
-            post(proxy::openai_chat_completions),
+            post(proxy::openai_chat_completions_native),
         )
         .route(
             "/api/services/openai/v1/responses",
@@ -332,7 +332,7 @@ fn test_app(state: AppState) -> Router {
         )
         .route(
             "/api/services/codex/v1/responses",
-            post(proxy::openai_responses),
+            post(proxy::openai_responses_native),
         )
         .route(
             "/api/services/qwen/v1/responses",

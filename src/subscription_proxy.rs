@@ -70,6 +70,7 @@ pub async fn forward_subscription_openai(
             response_shape: SubscriptionResponseShape::Passthrough,
             validated: None,
             entitlement: None,
+            native_route: false,
         },
     )
     .await
@@ -86,6 +87,7 @@ pub(crate) async fn forward_subscription_openai_routed(
     surface: Surface,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
     entitlement: Option<crate::client_policy::EntitlementDecision>,
+    native_route: bool,
 ) -> Response {
     forward_subscription_openai_inner(
         state,
@@ -98,6 +100,7 @@ pub(crate) async fn forward_subscription_openai_routed(
             response_shape: SubscriptionResponseShape::Passthrough,
             validated: subscription,
             entitlement,
+            native_route,
         },
     )
     .await
@@ -123,6 +126,7 @@ pub async fn forward_codex_chat_completions(
             response_shape: SubscriptionResponseShape::ChatCompletion,
             validated: None,
             entitlement: None,
+            native_route: false,
         },
     )
     .await
@@ -136,6 +140,7 @@ pub(crate) async fn forward_codex_chat_completions_routed(
     surface: Surface,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
     entitlement: Option<crate::client_policy::EntitlementDecision>,
+    native_route: bool,
 ) -> Response {
     forward_subscription_openai_inner(
         state,
@@ -148,6 +153,7 @@ pub(crate) async fn forward_codex_chat_completions_routed(
             response_shape: SubscriptionResponseShape::ChatCompletion,
             validated: subscription,
             entitlement,
+            native_route,
         },
     )
     .await
@@ -165,6 +171,7 @@ struct ForwardOptions<'a> {
     response_shape: SubscriptionResponseShape,
     validated: Option<&'a crate::model_routing::ValidatedSubscription>,
     entitlement: Option<crate::client_policy::EntitlementDecision>,
+    native_route: bool,
 }
 
 async fn forward_subscription_openai_inner(
@@ -180,6 +187,7 @@ async fn forward_subscription_openai_inner(
         response_shape,
         validated,
         entitlement,
+        native_route,
     } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
@@ -224,7 +232,8 @@ async fn forward_subscription_openai_inner(
             Err(response) => return response,
         },
     };
-    let native_protocol = response_shape == SubscriptionResponseShape::Passthrough
+    let native_protocol = native_route
+        && response_shape == SubscriptionResponseShape::Passthrough
         && entitlement == crate::client_policy::EntitlementDecision::Native;
     let reserved = crate::token_reservation::estimate(routing_body).total();
     if let Err(e) = state

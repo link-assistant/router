@@ -900,6 +900,7 @@ async fn forward_anthropic_messages_routed(
                 Surface::Anthropic,
                 subscription,
                 None,
+                false,
             )
             .await
         }
@@ -913,6 +914,7 @@ async fn forward_anthropic_messages_routed(
                 Surface::Anthropic,
                 subscription,
                 None,
+                false,
             )
             .await
         }

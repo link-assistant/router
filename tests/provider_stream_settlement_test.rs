@@ -11,22 +11,37 @@ use std::net::{TcpListener, TcpStream};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
+use link_assistant_router::config::StoragePolicy;
+use link_assistant_router::storage::build_token_store;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use serde_json::Value;
 
-/// An upstream that answers one chat completion as a complete SSE stream.
+/// An upstream that advertises the requested model, then answers one chat
+/// completion as a complete SSE stream.
 fn spawn_upstream() -> (u16, std::thread::JoinHandle<()>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind upstream");
     let port = listener.local_addr().expect("upstream address").port();
     let handle = std::thread::spawn(move || {
-        for stream in listener.incoming().take(1) {
+        for stream in listener.incoming().take(2) {
             let Ok(mut stream) = stream else { continue };
             let mut scratch = [0; 8192];
-            let _ = stream.read(&mut scratch);
-            let body = "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n\
-                        data: [DONE]\n\n";
+            let read = stream.read(&mut scratch).unwrap_or_default();
+            let request = String::from_utf8_lossy(&scratch[..read]);
+            let (content_type, body) = if request.starts_with("GET /v1/models ") {
+                (
+                    "application/json",
+                    "{\"object\":\"list\",\"data\":[{\"id\":\"test-model\"}]}",
+                )
+            } else {
+                (
+                    "text/event-stream",
+                    "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n\
+                     data: [DONE]\n\n",
+                )
+            };
             let _ = stream.write_all(
                 format!(
-                    "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\n\
+                    "HTTP/1.1 200 OK\r\ncontent-type: {content_type}\r\n\
                      content-length: {}\r\nconnection: close\r\n\r\n{body}",
                     body.len()
                 )
@@ -123,6 +138,7 @@ impl Router {
             )
             .env("OPENAI_COMPATIBLE_MODEL", "test-model")
             .env("OPENAI_COMPATIBLE_API_KEY", "upstream-key")
+            .env("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS", "opencode")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
@@ -160,21 +176,17 @@ fn an_openai_compatible_stream_is_settled_in_the_log() {
     let log = tempfile::tempdir().expect("log dir");
     let router = Router::start(upstream, data.path(), log.path());
 
-    let token = String::from_utf8_lossy(
-        &Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-            .args(["tokens", "issue", "--ttl-hours", "1", "--label", "t"])
-            .env("TOKEN_SECRET", "provider-stream-test-secret")
-            .env("DATA_DIR", data.path())
-            .env("STORAGE_POLICY", "text")
-            .output()
-            .expect("issue a token")
-            .stdout,
-    )
-    .lines()
-    .last()
-    .unwrap_or_default()
-    .trim()
-    .to_string();
+    let store = build_token_store(StoragePolicy::Text, data.path()).expect("token store");
+    let token = TokenManager::with_store("provider-stream-test-secret", store)
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "streaming OpenCode client",
+            account: Some("primary"),
+            client_kind: Some("opencode"),
+            principal_id: Some("primary"),
+            ..IssueRequest::default()
+        })
+        .expect("issue a bound OpenCode token");
     assert!(!token.is_empty(), "a token is needed to reach the proxy");
 
     let body =
@@ -183,7 +195,8 @@ fn an_openai_compatible_stream_is_settled_in_the_log() {
         router.port,
         &format!(
             "POST /api/services/openai/v1/chat/completions HTTP/1.1\r\nHost: x\r\n\
-             authorization: Bearer {token}\r\ncontent-type: application/json\r\n\
+             authorization: Bearer {token}\r\nuser-agent: opencode/1.18.27\r\n\
+             x-session-id: provider-stream-test\r\ncontent-type: application/json\r\n\
              content-length: {}\r\nConnection: close\r\n\r\n{body}",
             body.len()
         ),

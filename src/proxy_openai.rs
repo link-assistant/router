@@ -124,7 +124,18 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None, None).await
+    openai_chat_completions_with_subscription(state, query, headers, body, None, None, false).await
+}
+
+/// Native Qwen Chat Completions route. A matching signed Qwen client keeps
+/// application-protocol transparency through its own subscription upstream.
+pub async fn openai_chat_completions_native(
+    State(state): State<AppState>,
+    Query(query): Query<BTreeMap<String, String>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    openai_chat_completions_with_subscription(state, query, headers, body, None, None, true).await
 }
 
 pub async fn openai_chat_completions_routed(
@@ -141,6 +152,7 @@ pub async fn openai_chat_completions_routed(
         Ok(axum::Json(body)),
         subscription,
         Some(entitlement),
+        false,
     )
     .await
 }
@@ -152,6 +164,7 @@ async fn openai_chat_completions_with_subscription(
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
     initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
     initial_entitlement: Option<crate::client_policy::EntitlementDecision>,
+    native_route: bool,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -290,6 +303,7 @@ async fn openai_chat_completions_with_subscription(
             crate::metrics::Surface::OpenAIChat,
             subscription.as_ref(),
             entitlement,
+            native_route,
         )
         .await;
     }
@@ -315,6 +329,7 @@ async fn openai_chat_completions_with_subscription(
             crate::metrics::Surface::OpenAIChat,
             subscription.as_ref(),
             entitlement,
+            native_route,
         )
         .await;
     }
@@ -391,6 +406,25 @@ pub async fn openai_responses(
     State(state): State<AppState>,
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    openai_responses_with_route(state, headers, body, false).await
+}
+
+/// Native Codex Responses route. A matching signed Codex client keeps the
+/// exact request and upstream response semantics on this dedicated namespace.
+pub async fn openai_responses_native(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    openai_responses_with_route(state, headers, body, true).await
+}
+
+async fn openai_responses_with_route(
+    state: AppState,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+    native_route: bool,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -495,6 +529,7 @@ pub async fn openai_responses(
             crate::metrics::Surface::OpenAIResponses,
             subscription.as_ref(),
             None,
+            native_route,
         )
         .await;
     }

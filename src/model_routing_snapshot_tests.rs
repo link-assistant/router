@@ -157,6 +157,7 @@ async fn rotation_between_catalog_validation_and_dispatch_reaches_no_upstream() 
             crate::metrics::Surface::OpenAIResponses,
             routed.subscription.as_ref(),
             None,
+            false,
         )
         .await
     });
@@ -320,6 +321,7 @@ async fn pinned_serving_uses_a_recovery_only_authoritative_token() {
         crate::metrics::Surface::OpenAIResponses,
         None,
         None,
+        false,
     )
     .await;
 
@@ -767,6 +769,7 @@ async fn public_lock_failure_omits_credential_paths_and_reaches_no_upstream() {
         crate::metrics::Surface::OpenAIResponses,
         routed.subscription.as_ref(),
         None,
+        false,
     )
     .await;
 

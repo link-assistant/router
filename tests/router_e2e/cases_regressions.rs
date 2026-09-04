@@ -488,7 +488,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     // client's field nor rewrites the provider's SSE response.
     let capped = codex
         .post(
-            "/api/services/openai/v1/responses",
+            "/api/services/codex/v1/responses",
             &json!({"model":"gpt-5","input":"hi","max_output_tokens":1}),
         )
         .send()

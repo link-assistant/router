@@ -749,7 +749,10 @@ async fn resolve_upstream_credentials(
 pub(crate) mod openai_handlers;
 
 pub(crate) use openai_handlers::openai_chat_completions_routed;
-pub use openai_handlers::{openai_chat_completions, openai_responses};
+pub use openai_handlers::{
+    openai_chat_completions, openai_chat_completions_native, openai_responses,
+    openai_responses_native,
+};
 
 #[path = "proxy_openai_forward.rs"]
 mod openai_forward;
