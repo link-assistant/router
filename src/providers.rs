@@ -19,6 +19,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
 use crate::provider_acceptance::{ProviderInstallMode, ProviderInstallResult};
+pub use crate::provider_config::OpenAICompatibleConfig;
 
 /// Supported persisted provider kinds.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
@@ -27,6 +28,8 @@ pub enum ProviderKind {
     /// Generic OpenAI-compatible upstream such as `LiteLLM`.
     #[default]
     OpenAICompatible,
+    /// Lefine `OpenAI` Chat Completions API with live catalog validation.
+    Lefine,
     /// Personal z.ai GLM Coding Plan with client/subscriber policy gates.
     ZaiCodingPlan,
 }
@@ -39,6 +42,7 @@ impl ProviderKind {
             "openai" | "openai-compatible" | "open-a-i-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
+            "lefine" => Some(Self::Lefine),
             "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
             _ => None,
         }
@@ -49,6 +53,7 @@ impl ProviderKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::OpenAICompatible => "openai-compatible",
+            Self::Lefine => "lefine",
             Self::ZaiCodingPlan => "z.ai-coding-plan",
         }
     }
@@ -123,10 +128,13 @@ impl ProviderRecord {
     /// and dispatch.
     #[must_use]
     pub fn effective_supported_clients(&self) -> Vec<String> {
-        let mut clients = if self.kind == ProviderKind::ZaiCodingPlan {
-            vec!["claude".into(), "codex".into(), "opencode".into()]
-        } else {
-            self.supported_clients.clone()
+        let mut clients = match self.kind {
+            ProviderKind::ZaiCodingPlan => vec!["claude".into(), "codex".into(), "opencode".into()],
+            ProviderKind::Lefine => crate::lefine::COMPATIBLE_CLIENTS
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            ProviderKind::OpenAICompatible => self.supported_clients.clone(),
         };
         if self.kind == ProviderKind::ZaiCodingPlan {
             clients.extend(self.unsupported_clients.iter().cloned());
@@ -532,13 +540,23 @@ impl ProviderStore {
                     "enabling z.ai Coding Plan requires --acknowledge-intermediary-risk".into(),
                 ));
             }
-        } else if subscriber_id.is_some()
-            || intermediary_risk_acknowledged
-            || !unsupported_clients.is_empty()
-        {
-            return Err(ProviderError::Invalid(
-                "Coding Plan subscriber/risk settings require kind z.ai-coding-plan".into(),
-            ));
+        } else {
+            if kind == ProviderKind::Lefine {
+                validate_lefine_config(
+                    &base_url,
+                    &models,
+                    &supported_clients,
+                    input.default_model.as_deref(),
+                )?;
+            }
+            if subscriber_id.is_some()
+                || intermediary_risk_acknowledged
+                || !unsupported_clients.is_empty()
+            {
+                return Err(ProviderError::Invalid(
+                    "Coding Plan subscriber/risk settings require kind z.ai-coding-plan".into(),
+                ));
+            }
         }
         Ok(ProviderRecord {
             name,
@@ -611,64 +629,6 @@ impl ProviderStore {
     }
 }
 
-/// Runtime provider config supplied by CLI/env/.lenv.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct OpenAICompatibleConfig {
-    pub provider_name: String,
-    pub base_url: String,
-    pub api_key: Option<String>,
-    pub api_key_env: Option<String>,
-    pub default_model: Option<String>,
-    pub models: Vec<String>,
-    pub supported_clients: Vec<String>,
-}
-
-impl OpenAICompatibleConfig {
-    /// Convert this boot config to a resolved provider without writing it.
-    #[must_use]
-    pub fn resolve(&self) -> ResolvedProvider {
-        let api_key = self.api_key.clone().or_else(|| {
-            self.api_key_env
-                .as_deref()
-                .and_then(|name| std::env::var(name).ok())
-                .filter(|value| !value.is_empty())
-        });
-        ResolvedProvider {
-            name: self.provider_name.clone(),
-            kind: ProviderKind::OpenAICompatible,
-            base_url: self.base_url.trim_end_matches('/').to_string(),
-            default_model: self.default_model.clone(),
-            models: self.models.clone(),
-            supported_clients: self.supported_clients.clone(),
-            api_key,
-            subscriber_id: None,
-            intermediary_risk_acknowledged: false,
-            unsupported_clients: Vec::new(),
-        }
-    }
-
-    /// Convert this config into an upsert record for persistent import.
-    #[must_use]
-    pub fn as_upsert(&self) -> ProviderUpsert {
-        ProviderUpsert {
-            name: self.provider_name.clone(),
-            kind: Some(ProviderKind::OpenAICompatible.as_str().to_string()),
-            base_url: self.base_url.clone(),
-            default_model: self.default_model.clone(),
-            models: Some(self.models.clone()),
-            supported_clients: Some(self.supported_clients.clone()),
-            api_key: self.api_key.clone(),
-            api_key_env: self.api_key_env.clone(),
-            encrypted_api_key: None,
-            enabled: Some(true),
-            subscriber_id: None,
-            acknowledge_intermediary_risk: None,
-            acknowledge_unsupported_clients: None,
-            if_absent: false,
-        }
-    }
-}
-
 /// Errors returned by provider storage and encryption.
 #[derive(Debug)]
 pub enum ProviderError {
@@ -711,6 +671,46 @@ impl From<base64::DecodeError> for ProviderError {
     fn from(value: base64::DecodeError) -> Self {
         Self::Base64(value)
     }
+}
+
+fn validate_lefine_config(
+    base_url: &str,
+    models: &[String],
+    supported_clients: &[String],
+    default_model: Option<&str>,
+) -> Result<(), ProviderError> {
+    if base_url != crate::lefine::BASE_URL && !cfg!(test) {
+        return Err(ProviderError::Invalid(format!(
+            "Lefine base_url must be {}",
+            crate::lefine::BASE_URL
+        )));
+    }
+    if !supported_clients.is_empty() {
+        return Err(ProviderError::Invalid(
+            "Lefine client compatibility is fixed by its native Chat Completions adapter".into(),
+        ));
+    }
+    let mut seen = std::collections::HashSet::new();
+    for model in models {
+        if model.is_empty() || model != model.trim() || !seen.insert(model) {
+            return Err(ProviderError::Invalid(
+                "Lefine fallback models must be unique non-empty exact ids".into(),
+            ));
+        }
+    }
+    if let Some(default) = default_model {
+        if default.is_empty() || default != default.trim() {
+            return Err(ProviderError::Invalid(
+                "Lefine default_model must be a non-empty exact id".into(),
+            ));
+        }
+        if !models.is_empty() && !models.iter().any(|model| model == default) {
+            return Err(ProviderError::Invalid(
+                "Lefine default_model must occur in configured fallback models".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn normalize_name(name: &str) -> Result<String, ProviderError> {

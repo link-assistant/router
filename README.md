@@ -324,6 +324,7 @@ need:
 | [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | Historical Claude MAX → Codex bridge, disabled by default behind one exact risk acceptance |
 | [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | Historical subscription bridge defaults superseded; API-key adapters remain separate |
 | [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) | Experimental, subscriber-bound z.ai GLM Coding Plan routing with explicit policy acknowledgements |
+| [lefine.md](docs/use-cases/lefine.md) | Lefine API-key provider with native Chat Completions/SSE, live exact IDs, and atomic credential acceptance |
 | [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |
 | [cli-codex.md](docs/use-cases/cli-codex.md) | Codex CLI configuration |
 | [cli-qwen-code.md](docs/use-cases/cli-qwen-code.md) | Qwen Code configuration |
@@ -534,7 +535,7 @@ authority.
 |---|---|---|
 | `/api/models` | GET | Healthy model catalogue filtered by the signed client kind, principal, and provider entitlement |
 | `/api/usage` | GET | Normalized subscription limits for every configured provider the signed client token may use |
-| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, or `z-ai` subscription without revealing disallowed providers |
+| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, or `lefine` usage/status record without revealing disallowed providers |
 
 `GET /api/models` is the additional provider-neutral catalogue. It accepts the
 same Router client token carrier as that token's native client, then returns
@@ -1152,6 +1153,12 @@ provider/client policy acknowledgements. See
 [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) for the exact setup,
 live catalog, exact model IDs, endpoints, and account-ban warning.
 
+Lefine is a dedicated encrypted API-key kind for native OpenAI Chat
+Completions clients. It validates new keys through the live non-inference
+catalog, preserves native JSON/SSE behavior, and falls back only to exact
+operator-configured IDs after a later catalog outage. See
+[lefine.md](docs/use-cases/lefine.md).
+
 ```bash
 router providers add \
   --name litellm \
@@ -1326,6 +1333,7 @@ LINK_ASSISTANT_TOKEN=<client-token> router usage
 LINK_ASSISTANT_TOKEN=<client-token> router usage anthropic
 LINK_ASSISTANT_TOKEN=<client-token> router usage openai --json
 LINK_ASSISTANT_TOKEN=<client-token> router usage z-ai
+LINK_ASSISTANT_TOKEN=<client-token> router usage lefine --json
 
 # Print resolved configuration + credential / store probes. Reports on the
 # machine it runs on, so with another router selected it says so and names it.

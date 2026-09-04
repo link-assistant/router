@@ -367,6 +367,39 @@ async fn ordinary_provider_catalog_fails_closed_for_every_invalid_shape() {
     );
 }
 
+#[tokio::test]
+async fn lefine_catalog_uses_only_configured_exact_ids_when_live_discovery_is_unavailable() {
+    let data = tempfile::tempdir().expect("provider data");
+    let state = crate::app_state::AppState::for_tests(data.path());
+    let (base_url, task) = raw_catalog_upstream("404 Not Found", r#"{"error":"absent"}"#).await;
+    let mut provider = resolved_catalog_provider("lefine", base_url);
+    provider.kind = ProviderKind::Lefine;
+    provider.models = vec!["configured/exact-a".into(), "configured/exact-b".into()];
+    provider.supported_clients = crate::lefine::COMPATIBLE_CLIENTS
+        .into_iter()
+        .map(str::to_string)
+        .collect();
+    provider.api_key = Some("lefine-secret".into());
+
+    let models = live_openai_compatible_catalog(&state, &provider)
+        .await
+        .expect("configured Lefine fallback");
+
+    assert_eq!(
+        models
+            .iter()
+            .map(|model| model.id.as_str())
+            .collect::<Vec<_>>(),
+        ["configured/exact-a", "configured/exact-b"]
+    );
+    assert!(
+        models
+            .iter()
+            .all(|model| model.raw["catalog_source"] == "configured_fallback")
+    );
+    task.await.unwrap();
+}
+
 #[test]
 fn an_unconfigured_openai_compatible_catalog_is_empty() {
     let data = tempfile::tempdir().expect("provider data");

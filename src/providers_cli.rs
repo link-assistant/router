@@ -125,28 +125,33 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
             enabled,
             if_absent,
             ..
-        } => Some(Call {
-            method: "POST",
-            path: crate::route_contract::route_template(crate::route_contract::RouteId::Providers)
+        } => {
+            reject_lefine_argv_key(kind, api_key.as_ref())?;
+            Some(Call {
+                method: "POST",
+                path: crate::route_contract::route_template(
+                    crate::route_contract::RouteId::Providers,
+                )
                 .to_string(),
-            body: Some(upsert_body(&ProviderUpsert {
-                name: name.clone(),
-                kind: Some(kind.clone()),
-                base_url: base_url.clone(),
-                default_model: model.clone(),
-                models: Some(models.clone()),
-                supported_clients: Some(supported_clients.clone()),
-                api_key: supplied_api_key(api_key.as_ref(), *api_key_stdin)
-                    .map_err(|error| error.to_string())?,
-                api_key_env: api_key_env.clone(),
-                encrypted_api_key: None,
-                enabled: Some(*enabled),
-                subscriber_id: subscriber_id.clone(),
-                acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
-                acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
-                if_absent: *if_absent,
-            })?),
-        }),
+                body: Some(upsert_body(&ProviderUpsert {
+                    name: name.clone(),
+                    kind: Some(kind.clone()),
+                    base_url: base_url.clone(),
+                    default_model: model.clone(),
+                    models: Some(models.clone()),
+                    supported_clients: Some(supported_clients.clone()),
+                    api_key: supplied_api_key(api_key.as_ref(), *api_key_stdin)
+                        .map_err(|error| error.to_string())?,
+                    api_key_env: api_key_env.clone(),
+                    encrypted_api_key: None,
+                    enabled: Some(*enabled),
+                    subscriber_id: subscriber_id.clone(),
+                    acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
+                    acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
+                    if_absent: *if_absent,
+                })?),
+            })
+        }
         ProviderOp::Import { .. } => None,
     })
 }
@@ -164,6 +169,16 @@ fn supplied_api_key(
         return crate::server_command::read_token().map(Some);
     }
     Ok(api_key.cloned())
+}
+
+fn reject_lefine_argv_key(kind: &str, api_key: Option<&String>) -> Result<(), String> {
+    if crate::providers::ProviderKind::from_str_opt(kind)
+        == Some(crate::providers::ProviderKind::Lefine)
+        && api_key.is_some()
+    {
+        return Err("Lefine API keys must use --api-key-stdin or --api-key-env".into());
+    }
+    Ok(())
 }
 
 /// One provider as the endpoint's own request type encodes it.
@@ -366,6 +381,10 @@ pub async fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
             if_absent,
             ..
         } => {
+            if let Err(error) = reject_lefine_argv_key(kind, api_key.as_ref()) {
+                eprintln!("error: {error}");
+                return ExitCode::from(2);
+            }
             let api_key = match supplied_api_key(api_key.as_ref(), *api_key_stdin) {
                 Ok(api_key) => api_key,
                 Err(error) => {

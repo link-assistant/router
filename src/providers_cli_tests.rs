@@ -251,6 +251,32 @@ fn adding_a_provider_sends_what_routing_reads() {
     assert_eq!(body["enabled"], true, "{body}");
 }
 
+#[test]
+fn lefine_keys_are_never_accepted_from_argv() {
+    let operation = ProviderOp::Add {
+        api_key_stdin: false,
+        name: "lefine".into(),
+        kind: "lefine".into(),
+        base_url: crate::lefine::BASE_URL.into(),
+        model: None,
+        models: vec!["configured/exact-id".into()],
+        supported_clients: vec![],
+        api_key: Some("argv-secret".into()),
+        api_key_env: None,
+        subscriber_id: None,
+        acknowledge_intermediary_risk: false,
+        acknowledge_unsupported_client: vec![],
+        enabled: true,
+        if_absent: false,
+        target: AuthTarget::default(),
+    };
+
+    let error = call_for(&operation).unwrap_err();
+
+    assert!(error.contains("--api-key-stdin"), "{error}");
+    assert!(!error.contains("argv-secret"), "{error}");
+}
+
 /// `import` has no single call: it declares one provider per manifest entry.
 #[test]
 fn importing_has_no_call_of_its_own() {

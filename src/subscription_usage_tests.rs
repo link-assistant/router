@@ -172,6 +172,126 @@ async fn configured_but_unreadable_oauth_subscription_is_reported_unavailable() 
     assert_eq!(usage.status, "credential_unavailable");
 }
 
+#[test]
+fn configured_lefine_usage_is_explicitly_unavailable_without_guessing() {
+    let directory = tempfile::tempdir().unwrap();
+    let mut state = AppState::for_tests(directory.path());
+    state.openai_compatible.provider_name = "lefine".into();
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "lefine".into(),
+            kind: Some("lefine".into()),
+            base_url: crate::lefine::BASE_URL.into(),
+            default_model: None,
+            models: Some(vec!["configured/exact-id".into()]),
+            supported_clients: None,
+            api_key: Some("lefine-secret".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
+            if_absent: false,
+        })
+        .unwrap();
+
+    let ProbeResult::Usage(usage) = probe_lefine(&state) else {
+        panic!("configured Lefine provider must have an explicit usage result");
+    };
+    assert!(matches!(usage.state, UsageState::Unavailable));
+    assert_eq!(usage.status, "usage_source_unavailable");
+    assert!(
+        !serde_json::to_string(&usage)
+            .unwrap()
+            .contains("lefine-secret")
+    );
+}
+
+#[tokio::test]
+async fn lefine_usage_route_reports_unavailable_only_to_compatible_clients() {
+    let directory = tempfile::tempdir().unwrap();
+    let mut state = AppState::for_tests(directory.path());
+    state.openai_compatible.provider_name = "lefine".into();
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "lefine".into(),
+            kind: Some("lefine".into()),
+            base_url: crate::lefine::BASE_URL.into(),
+            default_model: None,
+            models: Some(vec!["configured/exact-id".into()]),
+            supported_clients: None,
+            api_key: Some("lefine-secret".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
+            if_absent: false,
+        })
+        .unwrap();
+    let issue = |client: crate::clients::ClientKind| {
+        state
+            .token_manager
+            .issue(&crate::token::IssueRequest {
+                ttl_hours: 1,
+                label: "Lefine usage test",
+                account: Some("primary"),
+                max_requests: None,
+                max_tokens: None,
+                rate_limit_per_minute: None,
+                scope: "",
+                github_repos: Vec::new(),
+                sliding_window_seconds: None,
+                client_kind: Some(client.canonical_name()),
+                principal_id: Some("primary"),
+            })
+            .unwrap()
+    };
+    let opencode = issue(crate::clients::ClientKind::Opencode);
+    let claude = issue(crate::clients::ClientKind::ClaudeCode);
+    let app = axum::Router::new()
+        .route("/api/usage/{provider}", get(usage_provider))
+        .with_state(state);
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/api/usage/lefine")
+                .header("authorization", format!("Bearer {opencode}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["subscriptions"][0]["provider"], "lefine");
+    assert_eq!(body["subscriptions"][0]["state"], "unavailable");
+    assert_eq!(
+        body["subscriptions"][0]["status"],
+        "usage_source_unavailable"
+    );
+    assert!(!body.to_string().contains("lefine-secret"));
+
+    let denied = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/usage/lefine")
+                .header("authorization", format!("Bearer {claude}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(denied.status(), StatusCode::FORBIDDEN);
+}
+
 #[tokio::test]
 async fn zai_probe_uses_official_non_inference_request_shape_and_normalizes_quota() {
     let hits = Arc::new(Mutex::new(Vec::new()));

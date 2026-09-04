@@ -24,7 +24,35 @@ fn zai_input(base_url: &str, api_key: &str) -> ProviderUpsert {
     }
 }
 
+fn lefine_input(base_url: &str, api_key: &str) -> ProviderUpsert {
+    ProviderUpsert {
+        name: "lefine".into(),
+        kind: Some("lefine".into()),
+        base_url: base_url.into(),
+        default_model: None,
+        models: Some(vec!["configured/exact-id".into()]),
+        supported_clients: None,
+        api_key: Some(api_key.into()),
+        api_key_env: None,
+        encrypted_api_key: None,
+        enabled: Some(true),
+        subscriber_id: None,
+        acknowledge_intermediary_risk: None,
+        acknowledge_unsupported_clients: None,
+        if_absent: false,
+    }
+}
+
 async fn catalog_server(
+    status: StatusCode,
+    body: &'static str,
+    delay: Duration,
+) -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
+    provider_catalog_server(crate::zai_coding_plan::CATALOG_PATH, status, body, delay).await
+}
+
+async fn provider_catalog_server(
+    path: &'static str,
     status: StatusCode,
     body: &'static str,
     delay: Duration,
@@ -32,7 +60,7 @@ async fn catalog_server(
     let calls = Arc::new(AtomicUsize::new(0));
     let observed = Arc::clone(&calls);
     let app = axum::Router::new().route(
-        crate::zai_coding_plan::CATALOG_PATH,
+        path,
         get(move || {
             let observed = Arc::clone(&observed);
             async move {
@@ -103,6 +131,145 @@ async fn every_unaccepted_zai_probe_preserves_the_old_encrypted_record() {
         );
         server.abort();
     }
+}
+
+#[tokio::test]
+async fn rejected_lefine_replacement_keeps_the_working_provider() {
+    let (base_url, calls, server) = provider_catalog_server(
+        "/v1/models",
+        StatusCode::UNAUTHORIZED,
+        r#"{"error":{"code":"invalid_api_key"}}"#,
+        Duration::ZERO,
+    )
+    .await;
+    let data = tempfile::tempdir().unwrap();
+    let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+    store.upsert(lefine_input(&base_url, "old-secret")).unwrap();
+    let path = data.path().join("providers.lenv");
+    let before = std::fs::read(&path).unwrap();
+
+    let error = provision(
+        &reqwest::Client::new(),
+        &store,
+        lefine_input(&base_url, "candidate-secret"),
+    )
+    .await
+    .unwrap_err();
+
+    assert_eq!(
+        error.kind(),
+        ProviderProvisionFailureKind::CredentialRejected
+    );
+    assert_eq!(std::fs::read(path).unwrap(), before);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    server.abort();
+}
+
+#[tokio::test]
+async fn lefine_failure_matrix_preserves_the_encrypted_primary() {
+    let cases = [
+        (
+            StatusCode::OK,
+            r#"{"error":{"code":"invalid_api_key","message":"bad"}}"#,
+            ProviderProvisionFailureKind::CredentialRejected,
+        ),
+        (
+            StatusCode::TOO_MANY_REQUESTS,
+            r#"{"error":{"code":"rate_limit"}}"#,
+            ProviderProvisionFailureKind::RateLimited,
+        ),
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            r#"{"error":"down"}"#,
+            ProviderProvisionFailureKind::Unverified,
+        ),
+        (
+            StatusCode::OK,
+            "not-json",
+            ProviderProvisionFailureKind::Unverified,
+        ),
+    ];
+    for (status, body, expected) in cases {
+        let (base_url, calls, server) =
+            provider_catalog_server("/v1/models", status, body, Duration::ZERO).await;
+        let data = tempfile::tempdir().unwrap();
+        let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+        store.upsert(lefine_input(&base_url, "old-secret")).unwrap();
+        let path = data.path().join("providers.lenv");
+        let before = std::fs::read(&path).unwrap();
+
+        let error = provision(
+            &reqwest::Client::new(),
+            &store,
+            lefine_input(&base_url, "candidate-secret"),
+        )
+        .await
+        .unwrap_err();
+
+        assert_eq!(error.kind(), expected);
+        assert_eq!(std::fs::read(path).unwrap(), before);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn lefine_timeout_preserves_the_encrypted_primary() {
+    let (base_url, calls, server) = provider_catalog_server(
+        "/v1/models",
+        StatusCode::OK,
+        r#"{"data":[{"id":"vendor/exact-id"}]}"#,
+        Duration::from_millis(100),
+    )
+    .await;
+    let data = tempfile::tempdir().unwrap();
+    let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+    store.upsert(lefine_input(&base_url, "old-secret")).unwrap();
+    let path = data.path().join("providers.lenv");
+    let before = std::fs::read(&path).unwrap();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_millis(20))
+        .build()
+        .unwrap();
+
+    let error = provision(&client, &store, lefine_input(&base_url, "candidate-secret"))
+        .await
+        .unwrap_err();
+
+    assert_eq!(error.kind(), ProviderProvisionFailureKind::Unverified);
+    assert_eq!(std::fs::read(path).unwrap(), before);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    server.abort();
+}
+
+#[tokio::test]
+async fn accepted_lefine_candidate_is_encrypted_promoted_and_live() {
+    let (base_url, calls, server) = provider_catalog_server(
+        "/v1/models",
+        StatusCode::OK,
+        r#"{"data":[{"id":"vendor/live-exact"}]}"#,
+        Duration::ZERO,
+    )
+    .await;
+    let data = tempfile::tempdir().unwrap();
+    let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+
+    let result = provision(
+        &reqwest::Client::new(),
+        &store,
+        lefine_input(&base_url, "accepted-secret"),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(result.outcome, ProviderProvisionOutcome::Promoted);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    let persisted = std::fs::read_to_string(data.path().join("providers.lenv")).unwrap();
+    assert!(!persisted.contains("accepted-secret"));
+    let resolved = store.resolve("lefine").unwrap().unwrap();
+    assert_eq!(resolved.api_key.as_deref(), Some("accepted-secret"));
+    assert_eq!(resolved.kind, ProviderKind::Lefine);
+    server.abort();
 }
 
 #[tokio::test]
@@ -187,6 +354,55 @@ async fn concurrent_if_absent_has_exactly_one_winner() {
     let mut first = zai_input(&base_url, "first-secret");
     first.if_absent = true;
     let mut second = zai_input(&base_url, "second-secret");
+    second.if_absent = true;
+    let client = reqwest::Client::new();
+
+    let (first, second) = tokio::join!(
+        provision(&client, &store, first),
+        provision(&client, &store, second)
+    );
+    let results = [first.unwrap(), second.unwrap()];
+
+    assert_eq!(
+        results
+            .iter()
+            .filter(|result| result.outcome == ProviderProvisionOutcome::Promoted)
+            .count(),
+        1
+    );
+    assert_eq!(
+        results
+            .iter()
+            .filter(|result| result.outcome == ProviderProvisionOutcome::AlreadyPresent)
+            .count(),
+        1
+    );
+    assert_eq!(results[0].record, results[1].record);
+    server.abort();
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn concurrent_lefine_if_absent_has_exactly_one_winner() {
+    let barrier = Arc::new(tokio::sync::Barrier::new(2));
+    let waiting = Arc::clone(&barrier);
+    let app = axum::Router::new().route(
+        "/v1/models",
+        get(move || {
+            let waiting = Arc::clone(&waiting);
+            async move {
+                waiting.wait().await;
+                axum::Json(serde_json::json!({"data":[{"id":"vendor/exact-id"}]}))
+            }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let data = tempfile::tempdir().unwrap();
+    let store = ProviderStore::open(data.path(), "test-secret").unwrap();
+    let mut first = lefine_input(&base_url, "first-secret");
+    first.if_absent = true;
+    let mut second = lefine_input(&base_url, "second-secret");
     second.if_absent = true;
     let client = reqwest::Client::new();
 

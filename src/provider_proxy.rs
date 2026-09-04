@@ -250,6 +250,9 @@ pub(crate) async fn forward_provider_at_routed(
             );
         }
     };
+    let native_protocol = native_protocol
+        || (provider.kind == ProviderKind::Lefine
+            && protocol == crate::client_policy::ClientProtocol::OpenAIChat);
     let client = match crate::client_policy::bound_client(&claims) {
         Ok((client, _)) => client,
         Err(error) => {
@@ -265,7 +268,10 @@ pub(crate) async fn forward_provider_at_routed(
             "the selected provider has no tested compatible adapter for this signed client request",
         );
     }
-    if provider.kind == ProviderKind::OpenAICompatible {
+    if matches!(
+        provider.kind,
+        ProviderKind::OpenAICompatible | ProviderKind::Lefine
+    ) {
         if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty())
             && let Some(model) = provider.default_model.as_deref()
         {
@@ -524,14 +530,17 @@ fn cache_openai_provider_failure(
     Err("provider live model catalog is unavailable".into())
 }
 
-/// Fetch one ordinary provider's authenticated non-inference `/models`
-/// catalog. Configured model ids are an optional restriction, never a
-/// substitute for current provider evidence.
+/// Fetch one API provider's authenticated non-inference `/models` catalog.
+/// Generic configured IDs restrict live results; Lefine uses them only as an
+/// outage fallback after provisioning has already established the key.
 pub(crate) async fn live_openai_compatible_catalog(
     state: &AppState,
     provider: &ResolvedProvider,
 ) -> Result<Vec<LiveProviderModel>, String> {
-    if provider.kind != ProviderKind::OpenAICompatible {
+    if !matches!(
+        provider.kind,
+        ProviderKind::OpenAICompatible | ProviderKind::Lefine
+    ) {
         return Err("provider does not use the OpenAI-compatible catalog contract".into());
     }
     let fingerprint = openai_provider_catalog_fingerprint(provider);
@@ -551,6 +560,49 @@ pub(crate) async fn live_openai_compatible_catalog(
         if cached.error.is_some() && cached.last_attempt.elapsed() < PROVIDER_FAILED_REFRESH_RETRY {
             return Err("provider live model catalog is unavailable".into());
         }
+    }
+
+    if provider.kind == ProviderKind::Lefine {
+        let models = match crate::lefine::fetch_catalog(&state.client, provider).await {
+            Ok(models) => models,
+            Err(error) if error.kind() != crate::lefine::CatalogFailureKind::CredentialRejected => {
+                tracing::warn!(provider = %provider.name, "live Lefine catalog unavailable; using configured exact ids");
+                match crate::lefine::configured_catalog(provider) {
+                    Ok(models) => models,
+                    Err(_) => {
+                        return cache_openai_provider_failure(
+                            state,
+                            provider,
+                            fingerprint,
+                            &error.to_string(),
+                        );
+                    }
+                }
+            }
+            Err(error) => {
+                return cache_openai_provider_failure(
+                    state,
+                    provider,
+                    fingerprint,
+                    &error.to_string(),
+                );
+            }
+        };
+        let now = Instant::now();
+        state
+            .provider_store
+            .cache_provider_catalog(
+                &provider.name,
+                CachedProviderCatalog {
+                    fingerprint,
+                    models: models.clone(),
+                    last_success: Some(now),
+                    last_attempt: now,
+                    error: None,
+                },
+            )
+            .map_err(|error| error.to_string())?;
+        return Ok(models);
     }
 
     let url = join_openai_compatible_url(&provider.base_url, "/v1/models");

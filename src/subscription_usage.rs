@@ -1,4 +1,4 @@
-//! Client-scoped, non-inference subscription usage probes.
+//! Client-scoped, non-inference provider usage probes.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
@@ -31,10 +31,13 @@ pub enum UsageProvider {
     #[value(name = "z-ai")]
     #[serde(rename = "z-ai")]
     ZAi,
+    #[value(name = "lefine")]
+    #[serde(rename = "lefine")]
+    Lefine,
 }
 
 impl UsageProvider {
-    pub const ALL: [Self; 3] = [Self::Anthropic, Self::OpenAi, Self::ZAi];
+    pub const ALL: [Self; 4] = [Self::Anthropic, Self::OpenAi, Self::ZAi, Self::Lefine];
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -42,6 +45,7 @@ impl UsageProvider {
             Self::Anthropic => "anthropic",
             Self::OpenAi => "openai",
             Self::ZAi => "z-ai",
+            Self::Lefine => "lefine",
         }
     }
 
@@ -49,7 +53,7 @@ impl UsageProvider {
         match self {
             Self::Anthropic => Some(SubscriptionProvider::Claude),
             Self::OpenAi => Some(SubscriptionProvider::Codex),
-            Self::ZAi => None,
+            Self::ZAi | Self::Lefine => None,
         }
     }
 }
@@ -170,7 +174,7 @@ pub async fn usage_provider(
     headers: HeaderMap,
 ) -> Response {
     let Some(provider) = parse_provider(&provider) else {
-        return error(StatusCode::NOT_FOUND, "unknown subscription usage provider");
+        return error(StatusCode::NOT_FOUND, "unknown usage provider");
     };
     usage_impl(state, uri.path(), headers, Some(provider)).await
 }
@@ -180,6 +184,7 @@ fn parse_provider(provider: &str) -> Option<UsageProvider> {
         "anthropic" => Some(UsageProvider::Anthropic),
         "openai" => Some(UsageProvider::OpenAi),
         "z-ai" => Some(UsageProvider::ZAi),
+        "lefine" => Some(UsageProvider::Lefine),
         _ => None,
     }
 }
@@ -224,7 +229,7 @@ async fn usage_impl(
             ProbeResult::NotConfigured if selected.is_some() => {
                 return error(
                     StatusCode::NOT_FOUND,
-                    "the authorized subscription provider is not configured",
+                    "the authorized usage provider is not configured",
                 );
             }
             ProbeResult::NotConfigured => {}
@@ -258,6 +263,12 @@ fn authorized(
         )
         .is_ok();
     }
+    if provider == UsageProvider::Lefine {
+        let Ok((client, _)) = crate::client_policy::bound_client(claims) else {
+            return false;
+        };
+        return selected_lefine(state).is_some_and(|provider| provider.supports_client(client));
+    }
     let Ok(Some(configured)) = crate::zai_coding_plan::resolve(state) else {
         return false;
     };
@@ -287,12 +298,15 @@ async fn cached_or_probe(
             probe_oauth_subscription(state, principal, provider).await
         }
         UsageProvider::ZAi => probe_zai(state).await,
+        UsageProvider::Lefine => probe_lefine(state),
     };
     if let ProbeResult::Usage(value) = &result {
         let ttl = value.retry_after_seconds.map_or_else(
             || match provider {
                 UsageProvider::Anthropic => ANTHROPIC_CACHE_TTL,
-                UsageProvider::OpenAi | UsageProvider::ZAi => STANDARD_CACHE_TTL,
+                UsageProvider::OpenAi | UsageProvider::ZAi | UsageProvider::Lefine => {
+                    STANDARD_CACHE_TTL
+                }
             },
             Duration::from_secs,
         );
@@ -345,7 +359,7 @@ async fn probe_oauth_subscription(
         UsageProvider::OpenAi => {
             ProbeResult::Usage(Box::new(probe_openai(state, &token, &metadata).await))
         }
-        UsageProvider::ZAi => unreachable!(),
+        UsageProvider::ZAi | UsageProvider::Lefine => unreachable!(),
     }
 }
 
@@ -544,6 +558,25 @@ async fn probe_zai(state: &AppState) -> ProbeResult {
         }
     }
     ProbeResult::Usage(Box::new(normalize_zai(&quota, partial)))
+}
+
+fn selected_lefine(state: &AppState) -> Option<crate::providers::ResolvedProvider> {
+    state
+        .provider_store
+        .resolve(&state.openai_compatible.provider_name)
+        .ok()
+        .flatten()
+        .filter(|provider| provider.kind == crate::providers::ProviderKind::Lefine)
+}
+
+fn probe_lefine(state: &AppState) -> ProbeResult {
+    if selected_lefine(state).is_none() {
+        return ProbeResult::NotConfigured;
+    }
+    let mut usage = empty_usage(UsageProvider::Lefine);
+    usage.state = UsageState::Unavailable;
+    usage.status = "usage_source_unavailable".into();
+    ProbeResult::Usage(Box::new(usage))
 }
 
 fn zai_request(state: &AppState, url: &str, key: &str) -> reqwest::RequestBuilder {

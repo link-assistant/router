@@ -55,6 +55,10 @@ fn persisted_provider_kind_spellings_round_trip_through_import() {
         ProviderKind::from_str_opt("zai-coding-plan"),
         Some(ProviderKind::ZaiCodingPlan)
     );
+    assert_eq!(
+        ProviderKind::from_str_opt("lefine"),
+        Some(ProviderKind::Lefine)
+    );
     assert_eq!(ProviderKind::from_str_opt("future-provider"), None);
 }
 
@@ -104,6 +108,27 @@ fn coding_plan_defaults_disabled_and_requires_explicit_risk_acknowledgement() {
         !serde_json::to_string(&enabled.redacted())
             .unwrap()
             .contains("zai-secret")
+    );
+}
+
+#[test]
+fn lefine_kind_derives_only_native_chat_completion_clients() {
+    let dir = tempdir().unwrap();
+    let store = ProviderStore::open(dir.path(), "secret").unwrap();
+    let mut input = upsert();
+    input.name = "lefine".into();
+    input.kind = Some("lefine".into());
+    input.base_url = "https://lefine.pro/v1".into();
+    input.default_model = None;
+    input.supported_clients = None;
+    input.models = Some(vec!["configured/exact-id".into()]);
+
+    let record = store.upsert(input).unwrap();
+
+    assert_eq!(record.kind.as_str(), "lefine");
+    assert_eq!(
+        record.effective_supported_clients(),
+        vec!["grok", "opencode", "qwen"]
     );
 }
 

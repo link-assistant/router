@@ -21,6 +21,7 @@ come first; the per-CLI documents follow.
 | [claude-max-in-codex.md](claude-max-in-codex.md) | Historical Claude MAX → Codex bridge, disabled by default behind exact risk acceptance |
 | [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md) | Historical cross-client adapters with deny-by-default subscription policy |
 | [zai-coding-plan.md](zai-coding-plan.md) | Experimental, subscriber-bound **z.ai GLM Coding Plan** routing for explicitly recognized tools |
+| [lefine.md](lefine.md) | Encrypted Lefine API-key routing with native OpenAI Chat Completions, exact live models, and safe replacement |
 
 ## Per-CLI configuration
 

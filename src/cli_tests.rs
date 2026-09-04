@@ -20,6 +20,7 @@ fn usage_cli_accepts_public_provider_names_and_json() {
         ),
         ("openai", crate::subscription_usage::UsageProvider::OpenAi),
         ("z-ai", crate::subscription_usage::UsageProvider::ZAi),
+        ("lefine", crate::subscription_usage::UsageProvider::Lefine),
     ] {
         let cli = Cli::try_parse_from(["router", "usage", name, "--json"]).unwrap();
         let Some(Command::Usage { provider, json, .. }) = cli.command else {

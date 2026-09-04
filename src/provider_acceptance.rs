@@ -125,6 +125,20 @@ pub async fn provision(
                 ProviderProvisionFailure::new(kind, "provider candidate was not accepted")
             })?;
     }
+    if candidate.enabled && candidate.kind == ProviderKind::Lefine {
+        let resolved = store.resolve_record(&candidate).map_err(stage_failure)?;
+        crate::lefine::fetch_catalog(client, &resolved)
+            .await
+            .map_err(|error| {
+                use crate::lefine::CatalogFailureKind as Kind;
+                let kind = match error.kind() {
+                    Kind::CredentialRejected => ProviderProvisionFailureKind::CredentialRejected,
+                    Kind::RateLimited => ProviderProvisionFailureKind::RateLimited,
+                    Kind::Unavailable => ProviderProvisionFailureKind::Unverified,
+                };
+                ProviderProvisionFailure::new(kind, "provider candidate was not accepted")
+            })?;
+    }
     let installed = store.promote(candidate, mode).map_err(promotion_failure)?;
     let (outcome, record) = match installed {
         ProviderInstallResult::Promoted(record) => (ProviderProvisionOutcome::Promoted, record),

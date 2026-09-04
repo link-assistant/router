@@ -3,6 +3,7 @@ use super::*;
 use axum::body::Body;
 use axum::extract::{OriginalUri, Query, State};
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
+use axum::response::Response;
 use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
 use std::fs;
@@ -174,6 +175,75 @@ async fn captured_model_upstream() -> (
     (base_url, requests, task)
 }
 
+#[derive(Clone, Debug)]
+struct CapturedLefineRequest {
+    headers: HeaderMap,
+    body: Vec<u8>,
+}
+
+async fn lefine_upstream(
+    response_status: StatusCode,
+    response_content_type: &'static str,
+    response_body: &'static str,
+) -> (
+    String,
+    Arc<Mutex<Vec<CapturedLefineRequest>>>,
+    tokio::task::JoinHandle<()>,
+) {
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let captured = Arc::clone(&requests);
+    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+        let captured = Arc::clone(&captured);
+        async move {
+            if request.method() == axum::http::Method::GET && request.uri().path() == "/v1/models" {
+                return Response::builder()
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"data":[{"id":"vendor/live-exact"}]}"#))
+                    .unwrap();
+            }
+            let headers = request.headers().clone();
+            let body = request.into_body().collect().await.unwrap().to_bytes();
+            captured.lock().unwrap().push(CapturedLefineRequest {
+                headers,
+                body: body.to_vec(),
+            });
+            Response::builder()
+                .status(response_status)
+                .header("content-type", response_content_type)
+                .header("x-request-id", "lefine-response-id")
+                .header("x-provider-meta", "preserved")
+                .body(Body::from(response_body))
+                .unwrap()
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}/v1", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (base_url, requests, task)
+}
+
+fn store_lefine(state: &AppState, base_url: String) {
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "lefine".into(),
+            kind: Some("lefine".into()),
+            base_url,
+            default_model: None,
+            models: Some(vec!["configured/fallback".into()]),
+            supported_clients: None,
+            api_key: Some("lefine-secret".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
+            if_absent: false,
+        })
+        .unwrap();
+}
+
 fn bearer(state: &AppState) -> HeaderMap {
     let token = crate::model_routing::tests::bound_client_token(
         state,
@@ -255,6 +325,136 @@ async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
 }
 
 #[tokio::test]
+async fn lefine_chat_completions_preserve_native_body_headers_tools_usage_and_errors() {
+    const SUCCESS: &str = r#"{"id":"chat-native","object":"chat.completion","model":"provider/native-id","choices":[{"index":0,"message":{"role":"assistant","content":null,"tool_calls":[{"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{\"q\":\"x\"}"}}]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":7,"completion_tokens":3,"total_tokens":10}}"#;
+    const ERROR: &str = r#"{"error":{"message":"model refused","type":"invalid_request_error","code":"model_not_found"}}"#;
+    let (base_url, requests, task) =
+        lefine_upstream(StatusCode::OK, "application/json", SUCCESS).await;
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    store_lefine(&state, base_url);
+    let mut headers = bearer(&state);
+    headers.insert("content-type", HeaderValue::from_static("application/json"));
+    headers.insert("x-native-required", HeaderValue::from_static("preserved"));
+    headers.insert(
+        "x-request-id",
+        HeaderValue::from_static("client-request-id"),
+    );
+    headers.insert("x-forwarded-for", HeaderValue::from_static("203.0.113.1"));
+    headers.insert(
+        "x-link-assistant-internal",
+        HeaderValue::from_static("private"),
+    );
+    let request_body = serde_json::json!({
+        "model": "vendor/live-exact",
+        "messages": [
+            {"role": "system", "content": "be exact"},
+            {"role": "user", "content": "use a tool"}
+        ],
+        "tools": [{"type":"function","function":{"name":"lookup","parameters":{"type":"object"}}}],
+        "tool_choice": "auto"
+    });
+
+    let response = crate::proxy::openai_chat_completions(
+        State(state),
+        Query(BTreeMap::new()),
+        headers,
+        Ok(axum::Json(request_body.clone())),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["x-request-id"], "lefine-response-id");
+    assert_eq!(response.headers()["x-provider-meta"], "preserved");
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(body.as_ref(), SUCCESS.as_bytes());
+    {
+        let captured = requests.lock().unwrap();
+        assert_eq!(captured.len(), 1);
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&captured[0].body).unwrap(),
+            request_body
+        );
+        assert_eq!(captured[0].headers["authorization"], "Bearer lefine-secret");
+        assert_eq!(captured[0].headers["user-agent"], "opencode/test-fixture");
+        assert_eq!(captured[0].headers["x-session-id"], "provider-test");
+        assert_eq!(captured[0].headers["x-native-required"], "preserved");
+        assert_eq!(captured[0].headers["x-request-id"], "client-request-id");
+        assert!(!captured[0].headers.contains_key("x-forwarded-for"));
+        assert!(
+            !captured[0]
+                .headers
+                .contains_key("x-link-assistant-internal")
+        );
+        drop(captured);
+    }
+    task.abort();
+
+    let (base_url, _requests, task) =
+        lefine_upstream(StatusCode::BAD_REQUEST, "application/json", ERROR).await;
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    store_lefine(&state, base_url);
+    let response = crate::proxy::openai_chat_completions(
+        State(state.clone()),
+        Query(BTreeMap::new()),
+        bearer(&state),
+        Ok(axum::Json(serde_json::json!({
+            "model": "vendor/live-exact",
+            "messages": [{"role":"user","content":"hello"}]
+        }))),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        response
+            .into_body()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes()
+            .as_ref(),
+        ERROR.as_bytes()
+    );
+    task.abort();
+}
+
+#[tokio::test]
+async fn lefine_streaming_chat_completion_is_relayed_byte_for_byte() {
+    const STREAM: &str = "data: {\"id\":\"chat-native\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chat-native\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{}\"}}]},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":2,\"completion_tokens\":1,\"total_tokens\":3}}\n\ndata: [DONE]\n\n";
+    let (base_url, requests, task) =
+        lefine_upstream(StatusCode::OK, "text/event-stream", STREAM).await;
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    store_lefine(&state, base_url);
+
+    let response = crate::proxy::openai_chat_completions(
+        State(state.clone()),
+        Query(BTreeMap::new()),
+        bearer(&state),
+        Ok(axum::Json(serde_json::json!({
+            "model": "vendor/live-exact",
+            "messages": [{"role":"user","content":"stream"}],
+            "stream": true
+        }))),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(body.as_ref(), STREAM.as_bytes());
+    let captured = requests.lock().unwrap();
+    assert_eq!(captured.len(), 1);
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&captured[0].body).unwrap()["stream"],
+        true
+    );
+    drop(captured);
+    task.abort();
+}
+
+#[tokio::test]
 async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
     for provider in [UpstreamProvider::Gonka, UpstreamProvider::Crater] {
         let data_dir = tempfile::tempdir().expect("data dir");
@@ -311,6 +511,62 @@ async fn declared_models_are_listed_alongside_subscription_catalogs() {
     assert!(ids.contains(&"formal-ai-mini"), "{ids:?}");
     assert!(ids.contains(&"formal-ai-large"), "{ids:?}");
     assert_eq!(catalog["data"][0]["vendor_metadata"]["live"], true);
+    task.abort();
+}
+
+#[tokio::test]
+async fn lefine_catalog_is_visible_only_to_native_chat_completion_clients() {
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    let (base_url, task) = live_catalog_upstream(&["vendor/live-exact"]).await;
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "lefine".into(),
+            kind: Some("lefine".into()),
+            base_url,
+            default_model: None,
+            models: Some(vec!["configured/fallback".into()]),
+            supported_clients: None,
+            api_key: Some("lefine-secret".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
+            if_absent: false,
+        })
+        .unwrap();
+
+    for client in crate::clients::ClientKind::ALL {
+        let (claims, headers, path) = catalog_identity_for(client);
+        let mut catalog = serde_json::json!({"object":"list","data":[]});
+        crate::model_routing::append_stored_provider_models(
+            &state,
+            &claims,
+            &headers,
+            path,
+            &mut catalog,
+        )
+        .await
+        .unwrap();
+        let visible = catalog["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|model| model["id"] == "vendor/live-exact");
+        assert_eq!(
+            visible,
+            matches!(
+                client,
+                crate::clients::ClientKind::GrokCli
+                    | crate::clients::ClientKind::Opencode
+                    | crate::clients::ClientKind::QwenCode
+            ),
+            "unexpected Lefine visibility for {client}"
+        );
+    }
     task.abort();
 }
 
