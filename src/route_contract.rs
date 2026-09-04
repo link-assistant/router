@@ -117,6 +117,9 @@ pub enum RouteId {
     GitHubRest,
     GitHubGraphql,
     Git,
+    GitHubAdapterRest,
+    GitHubAdapterGraphql,
+    GitHubAdapterGit,
     ActivityPubActor,
     ActivityPubInbox,
     ActivityPubOutbox,
@@ -139,6 +142,7 @@ const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
 const COMBINED_AND_ADMIN: &[ListenerKind] = &[ListenerKind::Combined, ListenerKind::Admin];
 const COMBINED_ONLY: &[ListenerKind] = &[ListenerKind::Combined];
+const GITHUB_ADAPTER_ONLY: &[ListenerKind] = &[ListenerKind::GitHubAdapter];
 
 const fn neutral(id: RouteId, method: RouteMethod, template: &'static str) -> RouteSpec {
     RouteSpec {
@@ -217,6 +221,23 @@ const fn public_private_service(
     RouteSpec {
         auth: RouteAuth::None,
         ..private_service(id, method, template, service, dialect)
+    }
+}
+
+const fn github_adapter_service(
+    id: RouteId,
+    method: RouteMethod,
+    template: &'static str,
+    service: ServiceKind,
+) -> RouteSpec {
+    RouteSpec {
+        id,
+        method,
+        template,
+        class: RouteClass::Service(service),
+        auth: RouteAuth::Client,
+        dialect: ApiDialect::GitHub,
+        listeners: GITHUB_ADAPTER_ONLY,
     }
 }
 
@@ -474,6 +495,24 @@ const ROUTES: &[RouteSpec] = &[
         "/api/services/github/git/{*path}",
         ServiceKind::Git,
         ApiDialect::GitHub,
+    ),
+    github_adapter_service(
+        RouteId::GitHubAdapterRest,
+        RouteMethod::Any,
+        "/api/v3/{*path}",
+        ServiceKind::GitHub,
+    ),
+    github_adapter_service(
+        RouteId::GitHubAdapterGraphql,
+        RouteMethod::Post,
+        "/api/graphql",
+        ServiceKind::GitHub,
+    ),
+    github_adapter_service(
+        RouteId::GitHubAdapterGit,
+        RouteMethod::Any,
+        "/git/{*path}",
+        ServiceKind::Git,
     ),
     public_private_service(
         RouteId::ActivityPubActor,

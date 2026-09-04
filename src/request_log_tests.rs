@@ -30,6 +30,68 @@ fn phases(text: &str) -> Vec<String> {
 }
 use proptest::prelude::*;
 
+#[tokio::test]
+async fn correlation_ids_stay_in_logs_and_http_request_ids_stay_end_to_end() {
+    use axum::Router;
+    use axum::middleware::from_fn_with_state;
+    use axum::routing::get;
+    use tower::ServiceExt as _;
+
+    async fn upstream(request: Request) -> Response {
+        let observed = request
+            .headers()
+            .get("x-request-id")
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("absent")
+            .to_string();
+        let mut response = Response::new(Body::from(observed));
+        response.headers_mut().insert(
+            "x-request-id",
+            HeaderValue::from_static("provider-request-id"),
+        );
+        response
+    }
+
+    let directory = tempfile::tempdir().expect("tempdir");
+    let state = AppState::for_tests(directory.path());
+    let app = Router::new()
+        .route("/", get(upstream))
+        .layer(from_fn_with_state(state, log_http_exchange));
+
+    let without = app
+        .clone()
+        .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(without.headers()["x-request-id"], "provider-request-id");
+    assert_eq!(
+        http_body_util::BodyExt::collect(without.into_body())
+            .await
+            .unwrap()
+            .to_bytes(),
+        "absent"
+    );
+
+    let supplied = app
+        .oneshot(
+            Request::builder()
+                .uri("/")
+                .header("x-request-id", "client-request-id")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(supplied.headers()["x-request-id"], "provider-request-id");
+    assert_eq!(
+        http_body_util::BodyExt::collect(supplied.into_body())
+            .await
+            .unwrap()
+            .to_bytes(),
+        "client-request-id"
+    );
+}
+
 #[test]
 fn long_credentials_are_partially_redacted_and_short_ones_are_fully_masked() {
     let long = "la_sk_abcdefghijklmnop_last";

@@ -167,14 +167,14 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             .route(
                 route_template(RouteId::AnthropicVertex),
                 post(vertex_proxy_handler),
+            )
+            .route(
+                route_template(RouteId::AnthropicModels),
+                get(proxy::openai_models),
             );
     }
     if config.enable_openai_api {
         routes = routes
-            .route(
-                route_template(RouteId::AnthropicModels),
-                get(proxy::openai_models),
-            )
             .route(
                 route_template(RouteId::OpenAiChatCompletions),
                 post(proxy::openai_chat_completions),
@@ -274,8 +274,18 @@ fn github_adapter_routes(state: AppState) -> Router<AppState> {
         return Router::new();
     }
     Router::new()
-        .route("/api/v3/{*path}", any(crate::github_proxy::proxy))
-        .route("/api/graphql", post(crate::github_proxy::proxy))
+        .route(
+            route_template(RouteId::GitHubAdapterRest),
+            any(crate::github_proxy::proxy),
+        )
+        .route(
+            route_template(RouteId::GitHubAdapterGraphql),
+            post(crate::github_proxy::proxy),
+        )
+        .route(
+            route_template(RouteId::GitHubAdapterGit),
+            any(crate::git_proxy::proxy),
+        )
         .route_layer(from_fn_with_state(state, authenticate_client_route))
 }
 

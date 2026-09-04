@@ -68,8 +68,13 @@ impl ClientManager {
         let request = reqwest::Client::new().post(&url).json(&body);
         let request = match client {
             ClientKind::ClaudeCode => request
-                .header("x-api-key", &token)
-                .header("anthropic-version", "2023-06-01"),
+                .bearer_auth(&token)
+                .header("anthropic-version", "2023-06-01")
+                // A Router-owned reachability check is not a native Claude
+                // process and must not forge Claude's User-Agent. The signed
+                // client binding remains authoritative; this marker only
+                // selects the deliberately narrow doctor evidence path.
+                .header("x-link-assistant-client-check", "reachability"),
             ClientKind::GeminiCli => request
                 .header("x-goog-api-key", &token)
                 .header("x-goog-api-client", "link-assistant-router-doctor"),

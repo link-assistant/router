@@ -18,7 +18,9 @@ use std::time::Instant;
 
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::{HeaderMap, HeaderValue};
+use axum::http::HeaderMap;
+#[cfg(test)]
+use axum::http::HeaderValue;
 use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
@@ -668,7 +670,7 @@ pub async fn log_http_exchange(
     next: Next,
 ) -> Response {
     let correlation_id = uuid::Uuid::new_v4().to_string();
-    let (mut parts, body) = request.into_parts();
+    let (parts, body) = request.into_parts();
     let identity = crate::proxy::extract_client_token(&parts.headers)
         .and_then(|token| {
             state
@@ -692,10 +694,6 @@ pub async fn log_http_exchange(
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
     };
-    parts.headers.insert(
-        "x-request-id",
-        HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
-    );
     let logged_uri = redacted_uri(&parts.uri.to_string());
     let requested_model = Arc::new(Mutex::new(None));
     let capture = ClientRequestCapture {
@@ -734,7 +732,7 @@ pub async fn log_http_exchange(
     );
     let method = parts.method.clone();
     let started = Instant::now();
-    let mut response = next
+    let response = next
         .run(Request::from_parts(parts, Body::from_stream(stream)))
         .await;
     // Written after the handler has run, because that is when the body has
@@ -751,10 +749,6 @@ pub async fn log_http_exchange(
         model = %logged_model,
         token_label = %token_label,
         "request"
-    );
-    response.headers_mut().insert(
-        "x-request-id",
-        HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
     );
     state.request_log.record(
         &correlation_id,

@@ -32,6 +32,17 @@ fn test_app_for_listener(
     github: bool,
     listener: ListenerKind,
 ) -> (axum::Router, String) {
+    test_app_for_listener_with_switches(dir, mpp, github, listener, true, true)
+}
+
+fn test_app_for_listener_with_switches(
+    dir: &std::path::Path,
+    mpp: bool,
+    github: bool,
+    listener: ListenerKind,
+    enable_openai: bool,
+    enable_anthropic: bool,
+) -> (axum::Router, String) {
     let dir_arg = dir.to_str().expect("UTF-8 test path");
     let mut args = vec![
         "router",
@@ -54,6 +65,12 @@ fn test_app_for_listener(
             "--mpp-recipient",
             "audit-merchant",
         ]);
+    }
+    if !enable_openai {
+        args.push("--disable-openai-api");
+    }
+    if !enable_anthropic {
+        args.push("--disable-anthropic-api");
     }
     let config = Cli::try_parse_from(args)
         .expect("test CLI parses")
@@ -114,6 +131,56 @@ fn test_app_for_listener(
         link_assistant_router::server_router::router_for_listener(state, &config, listener),
         token,
     )
+}
+
+#[tokio::test]
+async fn service_switches_own_their_complete_namespaces() {
+    let directory = tempfile::tempdir().expect("tempdir");
+    let (anthropic_only, _) = test_app_for_listener_with_switches(
+        directory.path(),
+        false,
+        false,
+        ListenerKind::Combined,
+        false,
+        true,
+    );
+    for (method, path) in [
+        (Method::GET, "/api/services/anthropic/v1/models"),
+        (Method::POST, "/api/services/anthropic/v1/messages"),
+    ] {
+        let mounted = response(anthropic_only.clone(), method, path, None, "{}").await;
+        assert_eq!(mounted.status(), StatusCode::UNAUTHORIZED, "{path}");
+    }
+    for path in [
+        "/api/services/openai/v1/models",
+        "/api/services/openai/v1/chat/completions",
+    ] {
+        let absent = response(anthropic_only.clone(), Method::GET, path, None, "").await;
+        assert_eq!(absent.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+
+    let (openai_only, _) = test_app_for_listener_with_switches(
+        directory.path(),
+        false,
+        false,
+        ListenerKind::Combined,
+        true,
+        false,
+    );
+    for (method, path) in [
+        (Method::GET, "/api/services/anthropic/v1/models"),
+        (Method::POST, "/api/services/anthropic/v1/messages"),
+    ] {
+        let absent = response(openai_only.clone(), method, path, None, "{}").await;
+        assert_eq!(absent.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+    for (method, path) in [
+        (Method::GET, "/api/services/openai/v1/models"),
+        (Method::POST, "/api/services/openai/v1/chat/completions"),
+    ] {
+        let mounted = response(openai_only.clone(), method, path, None, "{}").await;
+        assert_eq!(mounted.status(), StatusCode::UNAUTHORIZED, "{path}");
+    }
 }
 
 async fn response(
@@ -280,6 +347,7 @@ async fn github_cli_aliases_exist_only_on_the_private_adapter_listener() {
     for (method, path) in [
         (Method::GET, "/api/v3/user"),
         (Method::POST, "/api/graphql"),
+        (Method::GET, "/git/owner/repo.git/info/refs"),
     ] {
         let anonymous = response(adapter.clone(), method.clone(), path, None, "{}").await;
         assert_eq!(anonymous.status(), StatusCode::UNAUTHORIZED, "{path}");

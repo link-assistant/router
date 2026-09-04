@@ -315,9 +315,10 @@ pub fn request_evidence(
     match client {
         ClientKind::ClaudeCode => {
             (path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens"))
-                && header_present(headers, "x-api-key")
+                && credential_carrier_matches(client, headers)
                 && header_present(headers, "anthropic-version")
-                && header_starts_with(headers, "user-agent", "claude")
+                && (header_starts_with(headers, "user-agent", "claude")
+                    || header_starts_with(headers, "x-link-assistant-client-check", "reachability"))
         }
         ClientKind::Codex => {
             path.contains("/v1/responses")
@@ -352,7 +353,12 @@ pub fn request_evidence(
 
 fn credential_carrier_matches(client: ClientKind, headers: &HeaderMap) -> bool {
     match client {
-        ClientKind::ClaudeCode => header_present(headers, "x-api-key"),
+        // Current Claude Code releases carry their gateway credential as a
+        // Bearer token. Keep the older x-api-key spelling compatible, and use
+        // this one rule for both discovery and inference (issue #414).
+        ClientKind::ClaudeCode => {
+            header_present(headers, "authorization") || header_present(headers, "x-api-key")
+        }
         ClientKind::GeminiCli => header_present(headers, "x-goog-api-key"),
         _ => header_present(headers, "authorization"),
     }
