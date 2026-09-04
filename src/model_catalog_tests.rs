@@ -904,13 +904,12 @@ fn colliding_live_ids_are_rejected_without_qualified_aliases() {
         &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
         &cache,
     );
-    let ids = projected["data"]
+    let has_id = projected["data"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|entry| entry["id"].as_str().unwrap())
-        .collect::<Vec<_>>();
-    assert!(ids.is_empty());
+        .any(|entry| entry["id"].as_str().is_some());
+    assert!(!has_id);
     assert_eq!(
         crate::model_routing::provider_for_model("claude/future-shared-77", &cache),
         None

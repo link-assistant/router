@@ -130,6 +130,10 @@ pub enum AccountOp {
 }
 
 #[derive(Debug, Subcommand)]
+// Keeping `AuthTarget` flattened preserves clap's public flag layout. Boxing
+// only the largest variant would leak an implementation detail into every
+// constructor and test for a command enum created once per process.
+#[allow(clippy::large_enum_variant)]
 pub enum ProviderOp {
     /// List configured upstream providers.
     List {

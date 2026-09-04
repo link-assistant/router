@@ -49,6 +49,7 @@ use crate::subscription::SubscriptionProvider;
 pub const API_PREFIX: &str = "/api/services/anthropic/";
 
 /// Required Anthropic protocol headers logged during native forwarding.
+///
 /// Other end-to-end official-client fields, including session and version
 /// metadata, are preserved by the reviewed native header policy.
 pub const REQUIRED_FORWARD_HEADERS: &[&str] = &["anthropic-beta", "anthropic-version"];

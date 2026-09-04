@@ -71,7 +71,7 @@ fn replaced_or_transport_header(name: &str) -> bool {
         || name.starts_with("x-router-")
 }
 
-pub(crate) fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> HeaderMap {
+pub fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> HeaderMap {
     let mut headers = HeaderMap::new();
     for (name, value) in incoming {
         if !replaced_or_transport_header(name.as_str()) {

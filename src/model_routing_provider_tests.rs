@@ -55,11 +55,10 @@ fn catalog_identity_for(
             headers.insert("authorization", HeaderValue::from_static("Bearer redacted"));
             "/api/services/codex/v1/models"
         }
-        crate::clients::ClientKind::Opencode | crate::clients::ClientKind::GrokCli => {
-            headers.insert("authorization", HeaderValue::from_static("Bearer redacted"));
-            "/api/services/openai/v1/models"
-        }
-        crate::clients::ClientKind::Cursor | crate::clients::ClientKind::Agent => {
+        crate::clients::ClientKind::Opencode
+        | crate::clients::ClientKind::GrokCli
+        | crate::clients::ClientKind::Cursor
+        | crate::clients::ClientKind::Agent => {
             headers.insert("authorization", HeaderValue::from_static("Bearer redacted"));
             "/api/services/openai/v1/models"
         }
@@ -97,6 +96,33 @@ fn store_provider_at(state: &AppState, name: &str, base_url: &str, models: &[&st
         .expect("store the provider");
 }
 
+async fn live_catalog_upstream(models: &[&str]) -> (String, tokio::task::JoinHandle<()>) {
+    let models = models
+        .iter()
+        .map(std::string::ToString::to_string)
+        .collect::<Vec<_>>();
+    let app = axum::Router::new().route(
+        "/v1/models",
+        axum::routing::get(move || {
+            let models = models.clone();
+            async move {
+                axum::Json(serde_json::json!({
+                    "object": "list",
+                    "data": models.into_iter().map(|id| serde_json::json!({
+                        "id": id,
+                        "object": "model",
+                        "vendor_metadata": {"live": true}
+                    })).collect::<Vec<_>>()
+                }))
+            }
+        }),
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}/v1", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (base_url, task)
+}
+
 async fn captured_model_upstream() -> (
     String,
     Arc<Mutex<Vec<(String, serde_json::Value)>>>,
@@ -108,6 +134,12 @@ async fn captured_model_upstream() -> (
         let captured = Arc::clone(&captured);
         async move {
             let path = request.uri().path().to_string();
+            if request.method() == axum::http::Method::GET && path.ends_with("/models") {
+                return axum::Json(serde_json::json!({
+                    "object": "list",
+                    "data": [{"id": "shared-future", "object": "model"}]
+                }));
+            }
             let bytes = request.into_body().collect().await.unwrap().to_bytes();
             let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
             captured.lock().unwrap().push((path.clone(), payload));
@@ -167,18 +199,26 @@ fn bearer(state: &AppState) -> HeaderMap {
 async fn a_stored_providers_declared_model_routes_in_automatic_mode() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
+    let (base_url, task) = live_catalog_upstream(&["formal-ai-mini"]).await;
+    store_provider_at(&state, "formal-ai", &base_url, &["formal-ai-mini"]);
 
-    let routed =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "formal-ai-mini"}))
-            .await
-            .expect("a declared model must route");
+    let routed = crate::model_routing::route_state_with_subscription_for_client(
+        &state,
+        &serde_json::json!({"model": "formal-ai-mini"}),
+        &[],
+        Some(crate::clients::ClientKind::Opencode),
+        false,
+    )
+    .await
+    .expect("a live model must route")
+    .state;
 
     assert_eq!(routed.upstream_provider, UpstreamProvider::OpenAICompatible);
     assert_eq!(routed.openai_compatible.provider_name, "formal-ai");
     assert_eq!(routed.bridge_model.as_deref(), Some("formal-ai-mini"));
     // The deployment itself is untouched: this routed one request.
     assert_eq!(state.upstream_provider, UpstreamProvider::Auto);
+    task.abort();
 }
 
 /// A declared model appears in `/v1/models`, so one token reaches every model
@@ -187,7 +227,13 @@ async fn a_stored_providers_declared_model_routes_in_automatic_mode() {
 async fn declared_models_are_listed_alongside_subscription_catalogs() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini", "formal-ai-large"]);
+    let (base_url, task) = live_catalog_upstream(&["formal-ai-mini", "formal-ai-large"]).await;
+    store_provider_at(
+        &state,
+        "formal-ai",
+        &base_url,
+        &["formal-ai-mini", "formal-ai-large"],
+    );
 
     let mut catalog = crate::model_routing::model_catalog(&[], &state.model_catalogs);
     let (claims, headers) = opencode_catalog_identity();
@@ -198,6 +244,7 @@ async fn declared_models_are_listed_alongside_subscription_catalogs() {
         "/api/services/openai/v1/models",
         &mut catalog,
     )
+    .await
     .unwrap();
 
     let ids: Vec<&str> = catalog["data"]
@@ -208,18 +255,21 @@ async fn declared_models_are_listed_alongside_subscription_catalogs() {
         .collect();
     assert!(ids.contains(&"formal-ai-mini"), "{ids:?}");
     assert!(ids.contains(&"formal-ai-large"), "{ids:?}");
+    assert_eq!(catalog["data"][0]["vendor_metadata"]["live"], true);
+    task.abort();
 }
 
-#[test]
-fn ordinary_provider_catalog_is_the_exact_supported_client_intersection() {
+#[tokio::test]
+async fn ordinary_provider_catalog_is_the_exact_supported_client_intersection() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
+    let (base_url, task) = live_catalog_upstream(&["future-provider-model"]).await;
     state
         .provider_store
         .upsert(crate::providers::ProviderUpsert {
             name: "codex-only".into(),
             kind: None,
-            base_url: "https://provider.example/v1".into(),
+            base_url,
             default_model: None,
             models: Some(vec!["future-provider-model".into()]),
             supported_clients: Some(vec!["codex".into()]),
@@ -243,6 +293,7 @@ fn ordinary_provider_catalog_is_the_exact_supported_client_intersection() {
             path,
             &mut catalog,
         )
+        .await
         .unwrap();
         assert_eq!(
             catalog["data"].as_array().unwrap().len(),
@@ -250,6 +301,7 @@ fn ordinary_provider_catalog_is_the_exact_supported_client_intersection() {
             "{client}"
         );
     }
+    task.abort();
 }
 
 #[tokio::test]
@@ -309,14 +361,20 @@ async fn incompatible_direct_request_is_rejected_before_upstream() {
 async fn a_model_declared_twice_is_an_explicit_conflict_without_router_aliases() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "alpha", &["shared-model"]);
-    store_provider(&state, "beta", &["shared-model"]);
+    let (base_url, task) = live_catalog_upstream(&["shared-model"]).await;
+    store_provider_at(&state, "alpha", &base_url, &["shared-model"]);
+    store_provider_at(&state, "beta", &base_url, &["shared-model"]);
 
     // Matched rather than `expect_err`: `AppState` holds credentials and so
     // deliberately does not implement `Debug`.
-    let Err(error) =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "shared-model"}))
-            .await
+    let Err(error) = crate::model_routing::route_state_with_subscription_for_client(
+        &state,
+        &serde_json::json!({"model": "shared-model"}),
+        &[],
+        Some(crate::clients::ClientKind::Opencode),
+        false,
+    )
+    .await
     else {
         panic!("an ambiguous name must be refused");
     };
@@ -325,15 +383,19 @@ async fn a_model_declared_twice_is_an_explicit_conflict_without_router_aliases()
         "{error:?}"
     );
 
-    let qualified = crate::model_routing::route_state(
+    let qualified = crate::model_routing::route_state_with_subscription_for_client(
         &state,
         &serde_json::json!({"model": "beta/shared-model"}),
+        &[],
+        Some(crate::clients::ClientKind::Opencode),
+        false,
     )
     .await;
     assert!(
         qualified.is_err(),
         "Router must not invent qualified aliases"
     );
+    task.abort();
 }
 
 #[tokio::test]
@@ -409,17 +471,20 @@ async fn a_disabled_provider_advertises_nothing() {
     );
 }
 
-/// A qualified name that the provider does not advertise is an error naming
-/// the provider, rather than a silent fall through to a subscription.
+/// A provider-looking name is still an exact id, never a Router alias.
 #[tokio::test]
-async fn a_qualified_name_the_provider_lacks_is_reported() {
+async fn a_provider_looking_name_is_not_interpreted_as_an_alias() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
+    let (base_url, task) = live_catalog_upstream(&["formal-ai-mini"]).await;
+    store_provider_at(&state, "formal-ai", &base_url, &["formal-ai-mini"]);
 
-    let Err(error) = crate::model_routing::route_state(
+    let Err(error) = crate::model_routing::route_state_with_subscription_for_client(
         &state,
         &serde_json::json!({"model": "formal-ai/not-declared"}),
+        &[],
+        Some(crate::clients::ClientKind::Opencode),
+        false,
     )
     .await
     else {
@@ -430,7 +495,7 @@ async fn a_qualified_name_the_provider_lacks_is_reported() {
         matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
         "{error:?}"
     );
-    assert!(format!("{error:?}").contains("formal-ai"), "{error:?}");
+    task.abort();
 }
 
 /// A qualified name for a provider that does not exist falls through to
@@ -458,7 +523,8 @@ async fn an_unknown_provider_prefix_is_not_a_provider_reference() {
 async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["shared-id"]);
+    let (base_url, task) = live_catalog_upstream(&["shared-id"]).await;
+    store_provider_at(&state, "formal-ai", &base_url, &["shared-id"]);
 
     let mut catalog = serde_json::json!({
         "object": "list",
@@ -471,7 +537,8 @@ async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
         &headers,
         "/api/services/openai/v1/models",
         &mut catalog,
-    );
+    )
+    .await;
     assert!(matches!(
         result,
         Err(crate::model_routing::ModelRouteError::Conflict(_))
@@ -488,6 +555,7 @@ async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
         "the subscription keeps its id: {ids:?}"
     );
     assert!(!ids.contains(&"formal-ai/shared-id"), "no aliases: {ids:?}");
+    task.abort();
 }
 
 #[tokio::test]
@@ -510,21 +578,32 @@ async fn a_subscription_collision_fails_instead_of_selecting_by_merge_order() {
         crate::subscription::SubscriptionProvider::Claude,
         vec!["shared-id".to_string()],
     );
-    store_provider(&state, "formal-ai", &["shared-id"]);
+    let (base_url, task) = live_catalog_upstream(&["shared-id"]).await;
+    store_provider_at(&state, "formal-ai", &base_url, &["shared-id"]);
 
-    let bare =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "shared-id"})).await;
+    let bare = crate::model_routing::route_state_with_subscription_for_client(
+        &state,
+        &serde_json::json!({"model": "shared-id"}),
+        &[crate::subscription::SubscriptionProvider::Claude],
+        Some(crate::clients::ClientKind::Opencode),
+        false,
+    )
+    .await;
     assert!(matches!(
         bare,
         Err(crate::model_routing::ModelRouteError::Conflict(_))
     ));
 
-    let qualified = crate::model_routing::route_state(
+    let qualified = crate::model_routing::route_state_with_subscription_for_client(
         &state,
         &serde_json::json!({"model": "formal-ai/shared-id"}),
+        &[crate::subscription::SubscriptionProvider::Claude],
+        Some(crate::clients::ClientKind::Opencode),
+        false,
     )
     .await;
     assert!(qualified.is_err(), "qualified aliases are not exposed");
+    task.abort();
 }
 
 /// A request with no model is refused before any provider is consulted.

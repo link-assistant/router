@@ -80,6 +80,11 @@ impl ZaiCodingPlanPolicy {
                 parsed.push(client);
             }
         }
+        if parsed.len() > 1 {
+            return Err(
+                "z.ai Coding Plan permits at most one risk-accepted unsupported client".into(),
+            );
+        }
         Ok(Self {
             subscriber_id: subscriber_id.to_string(),
             intermediary_risk_acknowledged,
@@ -357,7 +362,11 @@ pub(crate) async fn live_provider_for_model(
     state: &crate::app_state::AppState,
     model: &str,
     client: Option<ClientKind>,
+    authorized: bool,
 ) -> Result<Option<ResolvedProvider>, crate::model_routing::ModelRouteError> {
+    if !authorized {
+        return Ok(None);
+    }
     let provider = resolve(state).map_err(crate::model_routing::ModelRouteError::NotFound)?;
     let Some(provider) = provider else {
         return Ok(None);
@@ -365,14 +374,29 @@ pub(crate) async fn live_provider_for_model(
     if client.is_some_and(|client| !provider.supports_client(client)) {
         return Ok(None);
     }
-    let models = match live_catalog(state, &provider).await {
-        Ok(models) => models,
-        Err(_) => return Ok(None),
+    let Ok(models) = live_catalog(state, &provider).await else {
+        return Ok(None);
     };
     Ok(models
         .iter()
         .any(|candidate| candidate.id == model)
         .then_some(provider))
+}
+
+/// Decide whether an automatic request may consult the z.ai catalog.
+///
+/// This is intentionally local-only: subscriber, client, protocol, and real
+/// request evidence are checked before catalog discovery can contact z.ai.
+pub(crate) fn authorize_automatic_discovery(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &axum::http::HeaderMap,
+    protocol: ClientProtocol,
+    path: &str,
+) -> bool {
+    resolve(state).ok().flatten().is_some_and(|provider| {
+        authorize_client_request(&provider, claims, headers, protocol, path).is_ok()
+    })
 }
 
 /// Resolve the selected enabled Coding Plan provider from runtime state.
@@ -651,7 +675,7 @@ pub fn count_tokens(
         }
         Err(error) => return unavailable_error(crate::metrics::Surface::Anthropic, &error),
     };
-    let live_models = match state
+    let Some(live_models) = state
         .provider_store
         .cached_provider_catalog(&provider.name)
         .ok()
@@ -664,14 +688,11 @@ pub fn count_tokens(
                     .is_some_and(|at| at.elapsed() < CATALOG_TTL)
         })
         .map(|cached| cached.models)
-    {
-        Some(models) => models,
-        None => {
-            return unavailable_error(
-                crate::metrics::Surface::Anthropic,
-                "z.ai model catalog must be refreshed before token counting",
-            );
-        }
+    else {
+        return unavailable_error(
+            crate::metrics::Surface::Anthropic,
+            "z.ai model catalog must be refreshed before token counting",
+        );
     };
     if let Err(error) = authorize_model(
         &provider,

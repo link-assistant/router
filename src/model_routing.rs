@@ -93,7 +93,9 @@ fn providers_for_model(model: &str, catalogs: &ModelCatalogCache) -> Vec<Subscri
 /// Provider-qualified strings were formerly interpreted as Router aliases.
 /// They now remain ordinary exact ids and resolve only when a provider's live
 /// catalog returned that exact string.
-pub(crate) fn subscription_model_identity(model: &str) -> (Option<SubscriptionProvider>, &str) {
+pub(crate) const fn subscription_model_identity(
+    model: &str,
+) -> (Option<SubscriptionProvider>, &str) {
     (None, model)
 }
 
@@ -636,7 +638,7 @@ fn model_catalog_with(
         .map(|record| {
             let exposed_id = record.canonical_id.clone();
             let mut projected = record.raw;
-            projected.insert("id".into(), Value::String(exposed_id.clone()));
+            projected.insert("id".into(), Value::String(exposed_id));
             projected.insert(
                 "canonical_id".into(),
                 Value::String(record.canonical_id.clone()),
@@ -804,7 +806,7 @@ pub async fn models(
                 return model_route_error_response(&error);
             }
             if let Err(error) =
-                append_stored_provider_models(&state, &claims, &headers, path, &mut catalog)
+                append_stored_provider_models(&state, &claims, &headers, path, &mut catalog).await
             {
                 return model_route_error_response(&error);
             }
@@ -863,7 +865,7 @@ pub async fn models(
         UpstreamProvider::OpenAICompatible => {
             let mut catalog = json!({"object": "list", "data": []});
             if let Err(error) =
-                append_stored_provider_models(&state, &claims, &headers, path, &mut catalog)
+                append_stored_provider_models(&state, &claims, &headers, path, &mut catalog).await
             {
                 return model_route_error_response(&error);
             }
@@ -931,19 +933,25 @@ pub(crate) async fn route_anthropic_request_with_subscription_for_providers(
         )
     })?;
     let routed = if path.ends_with("/messages") || path.ends_with("/messages/count_tokens") {
-        let client = crate::client_policy::bound_client(
-            &crate::proxy::authenticate_client(state, &parts.headers)
-                .map_err(|response| *response)?,
-        )
-        .map(|(client, _)| client)
-        .map_err(|error| {
-            crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
-        })?;
+        let claims = crate::proxy::authenticate_client(state, &parts.headers)
+            .map_err(|response| *response)?;
+        let client = crate::client_policy::bound_client(&claims)
+            .map(|(client, _)| client)
+            .map_err(|error| {
+                crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
+            })?;
         route_state_with_subscription_for_client(
             state,
             &routing_body,
             entitled_providers,
             Some(client),
+            crate::zai_coding_plan::authorize_automatic_discovery(
+                state,
+                &claims,
+                &parts.headers,
+                crate::client_policy::ClientProtocol::AnthropicMessages,
+                &path,
+            ),
         )
         .await
         .map_err(|error| model_route_error_response(&error))?

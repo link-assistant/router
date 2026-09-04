@@ -810,6 +810,54 @@ pub fn build_token_store(
     }
 }
 
+/// Load the durable token projection without creating, locking, migrating, or
+/// rewriting any storage path.
+///
+/// Managed-client adoption calls this before it has accepted a supplied
+/// credential. A rejected token must not leave a new data directory, lock
+/// file, migrated store, or changed mtime behind.
+pub fn build_token_store_read_only(
+    policy: StoragePolicy,
+    data_dir: &Path,
+) -> Result<Arc<dyn TokenStore>, StorageError> {
+    let mut records = HashMap::<String, TokenRecord>::new();
+    let mut merge = |record: TokenRecord| {
+        records
+            .entry(record.id.clone())
+            .and_modify(|current| merge_safer_record(current, &record))
+            .or_insert(record);
+    };
+
+    if matches!(policy, StoragePolicy::Text | StoragePolicy::Both) {
+        let path = data_dir.join("tokens.lino");
+        if path.is_file() {
+            let contents = fs::read_to_string(path)?;
+            let (loaded, _) = decode_text_records(&contents).map_err(StorageError::Codec)?;
+            loaded.into_iter().for_each(&mut merge);
+        }
+    }
+    if matches!(policy, StoragePolicy::Binary | StoragePolicy::Both) {
+        let path = data_dir.join("tokens.bin");
+        if path.is_file() {
+            let loaded = if legacy::is_binary(&path)? {
+                legacy::decode_binary(&path)?
+            } else {
+                BinaryTokenStore::open(&path)?
+                    .load_map()?
+                    .into_values()
+                    .collect()
+            };
+            loaded.into_iter().for_each(&mut merge);
+        }
+    }
+
+    let store = MemoryTokenStore::new();
+    for record in records.into_values() {
+        store.put(record)?;
+    }
+    Ok(Arc::new(store))
+}
+
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), StorageError> {
     crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
 }

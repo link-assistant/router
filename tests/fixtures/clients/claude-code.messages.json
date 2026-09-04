@@ -4,7 +4,7 @@
   "source": "the Anthropic Messages shape Claude Code sends; the router's primary surface",
   "method": "POST",
   "path": "/api/services/anthropic/v1/messages",
-  "credential_carrier": "x-api-key",
+  "credential_carrier": "authorization",
   "expected_surface": "anthropic",
   "headers": {
     "content-type": "application/json",

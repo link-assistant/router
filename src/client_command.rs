@@ -9,7 +9,7 @@ use crate::clients::{
     ClientKind, ClientManager, ManagedCredential, OwnershipState, RepairResult, TokenSource,
 };
 use crate::config::Config;
-use crate::storage::build_token_store;
+use crate::storage::{build_token_store, build_token_store_read_only};
 use crate::token::{IssueRequest, TokenManager};
 
 /// Environment variable holding an existing router token for `clients setup`.
@@ -285,7 +285,7 @@ async fn repair_one(
         router: Some(server.base_url.clone()),
         principal_id: candidate
             .was_minted()
-            .then(|| crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
+            .then(|| candidate.principal_id().to_string()),
         config_sha256: None,
     };
     let models = crate::clients::usable_models(client, candidate.models());
@@ -529,24 +529,38 @@ async fn setup(
         Ok(_) => {}
         Err(error) => return failed(error),
     }
-    let (token, credential) = match supplied_token {
+    let (token, credential, verified_models) = match supplied_token {
         Some(token) => {
             let binding = match local_token_binding(config, token, client) {
                 Ok(binding) => binding,
                 Err(error) => return failed(error),
+            };
+            let (binding, verified_models) = if let Some(binding) = binding {
+                (binding, None)
+            } else {
+                let binding = match decoded_token_binding(token, client) {
+                    Ok(binding) => binding,
+                    Err(error) => return failed(error),
+                };
+                let models = match manager.catalog(client, &base_url, token).await {
+                    Ok(models) => models,
+                    Err(error) => return failed(error),
+                };
+                (binding, Some(models))
             };
             (
                 token.to_string(),
                 ManagedCredential {
                     client: client.to_string(),
                     source: TokenSource::Supplied,
-                    token_id: binding.as_ref().map(|binding| binding.token_id.clone()),
+                    token_id: Some(binding.token_id),
                     label: None,
                     issued_at: None,
                     router: Some(base_url.clone()),
-                    principal_id: binding.map(|binding| binding.principal_id),
+                    principal_id: Some(binding.principal_id),
                     config_sha256: None,
                 },
+                verified_models,
             )
         }
         None => match issue_client_token(config, client, ttl_hours) {
@@ -564,6 +578,7 @@ async fn setup(
                     ),
                     config_sha256: None,
                 },
+                None,
             ),
             Err(error) => return failed(error),
         },
@@ -571,7 +586,9 @@ async fn setup(
     let minted_id = (credential.source == TokenSource::Minted)
         .then(|| credential.token_id.clone())
         .flatten();
-    let models = if matches!(
+    let models = if let Some(models) = verified_models {
+        crate::clients::usable_models(client, &models)
+    } else if matches!(
         client,
         ClientKind::ClaudeCode | ClientKind::Opencode | ClientKind::QwenCode | ClientKind::Agent
     ) {
@@ -706,7 +723,7 @@ async fn setup_remote(
         label: Some(format!("client-{client}")),
         issued_at: Some(chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
-        principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
+        principal_id: Some(candidate.principal_id().to_string()),
         config_sha256: None,
     };
     let models = crate::clients::usable_models(client, candidate.models());
@@ -925,7 +942,9 @@ fn local_token_binding(
     token: &str,
     client: ClientKind,
 ) -> Result<Option<LocalTokenBinding>, Box<dyn std::error::Error>> {
-    let manager = token_manager(config)?;
+    crate::token_secret::ensure_real(&config.token_secret)?;
+    let store = build_token_store_read_only(config.storage_policy, &config.data_dir)?;
+    let manager = TokenManager::with_store(&config.token_secret, store);
     let Ok(claims) = manager.validate_token(token) else {
         // The supplied credential can belong to a remote Router with a
         // different signing key. Its catalog endpoint is the authority for
@@ -934,6 +953,31 @@ fn local_token_binding(
         return Ok(None);
     };
     exact_local_token_binding(claims, client).map(Some)
+}
+
+/// Read the self-describing binding from a foreign token before asking its
+/// issuing Router to authenticate it through the client's non-inference
+/// catalog. The payload is not trusted until that catalog succeeds.
+fn decoded_token_binding(
+    token: &str,
+    client: ClientKind,
+) -> Result<LocalTokenBinding, Box<dyn std::error::Error + Send + Sync>> {
+    let (client_kind, principal_id) = crate::managed_server::token_client_binding(token)?;
+    let client_kind = client_kind.ok_or("the supplied token has no managed-client binding")?;
+    if client_kind != client.canonical_name() {
+        return Err(format!(
+            "the supplied token is bound to {client_kind}, not {}",
+            client.canonical_name()
+        )
+        .into());
+    }
+    let principal_id = principal_id
+        .filter(|value| !value.trim().is_empty())
+        .ok_or("the supplied token has no subscriber principal")?;
+    Ok(LocalTokenBinding {
+        token_id: crate::managed_server::token_subject(token)?,
+        principal_id,
+    })
 }
 
 fn token_manager(config: &Config) -> Result<TokenManager, Box<dyn std::error::Error>> {

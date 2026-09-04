@@ -22,14 +22,15 @@ pub async fn route_state_with_subscription_for_providers(
     body: &Value,
     entitled_providers: &[crate::subscription::SubscriptionProvider],
 ) -> Result<RoutedState, ModelRouteError> {
-    route_state_with_subscription_for_client(state, body, entitled_providers, None).await
+    route_state_with_subscription_for_client(state, body, entitled_providers, None, false).await
 }
 
-pub(crate) async fn route_state_with_subscription_for_client(
+pub async fn route_state_with_subscription_for_client(
     state: &AppState,
     body: &Value,
     entitled_providers: &[crate::subscription::SubscriptionProvider],
     client: Option<crate::clients::ClientKind>,
+    zai_authorized: bool,
 ) -> Result<RoutedState, ModelRouteError> {
     if state.upstream_provider != UpstreamProvider::Auto {
         if let Some(provider) = state.upstream_provider.subscription_provider() {
@@ -52,8 +53,9 @@ pub(crate) async fn route_state_with_subscription_for_client(
             .iter()
             .any(|candidate| candidate == model)
     });
-    let stored = stored_provider_for_model(state, model, client)?;
-    let zai = crate::zai_coding_plan::live_provider_for_model(state, model, client).await?;
+    let stored = stored_provider_for_model(state, model, client).await?;
+    let zai = crate::zai_coding_plan::live_provider_for_model(state, model, client, zai_authorized)
+        .await?;
     let owner_count = usize::from(visible_subscription)
         + usize::from(stored.is_some())
         + usize::from(zai.is_some());

@@ -1068,6 +1068,13 @@ OPENAI_COMPATIBLE_SUPPORTED_CLIENTS: opencode
 | `--openai-compatible-models` / `OPENAI_COMPATIBLE_MODELS` | — | No | Comma-separated models exposed from the authenticated service catalog |
 | `--openai-compatible-supported-clients` / `OPENAI_COMPATIBLE_SUPPORTED_CLIENTS` | — | Yes for client access | Canonical clients whose reviewed adapter may use this ordinary provider; missing compatibility exposes no models and dispatch fails closed |
 
+An ordinary provider is healthy only after its authenticated, non-inference
+`GET /v1/models` succeeds. Router preserves those exact IDs and vendor metadata;
+configured `models` can narrow that live result but cannot invent availability.
+Catalog listing and dispatch therefore use the same intersection of live
+provider health, live models, configured restrictions, signed client binding,
+and `supported_clients`. Missing evidence fails locally before inference.
+
 Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
 provider API keys are encrypted with AES-GCM using a key derived from
 `TOKEN_SECRET`; API responses and CLI output only show whether a stored key is

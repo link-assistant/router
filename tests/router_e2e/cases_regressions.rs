@@ -147,6 +147,7 @@ async fn native_codex_request_identity_body_and_sse_are_transparent() {
             .keys()
             .all(|name| !name.as_str().starts_with("x-router-"))
     );
+    drop(headers);
 }
 
 /// Issue #380: Codex 0.151 moved its tool declaration into an

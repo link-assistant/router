@@ -82,6 +82,14 @@ fn invalid_policy_and_registry_configuration_fails_closed() {
     }
 }
 
+#[test]
+fn only_one_unsupported_zai_client_can_be_risk_accepted() {
+    let error =
+        ZaiCodingPlanPolicy::new("primary", true, &["gemini".to_string(), "qwen".to_string()])
+            .expect_err("two unsupported client overrides must fail closed");
+    assert!(error.contains("at most one"), "{error}");
+}
+
 fn resolved_zai_provider() -> crate::providers::ResolvedProvider {
     crate::providers::ResolvedProvider {
         name: "z-ai-personal".into(),
@@ -496,6 +504,7 @@ async fn denied_principal_and_unacknowledged_client_make_zero_upstream_requests(
         let data = tempfile::tempdir().unwrap();
         let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
         install_provider(&mut state, &base_url, &unsupported);
+        state.upstream_provider = crate::config::UpstreamProvider::Auto;
         let protocol = if client == ClientKind::Codex {
             ClientProtocol::OpenAIResponses
         } else {
@@ -506,9 +515,39 @@ async fn denied_principal_and_unacknowledged_client_make_zero_upstream_requests(
         } else {
             "/v1/chat/completions"
         };
+        let automatic_path = if client == ClientKind::Codex {
+            "/api/services/codex/v1/responses"
+        } else {
+            "/api/services/openai/v1/chat/completions"
+        };
+        let headers = client_headers(&state, client, principal);
+        let claims = crate::proxy::authenticate_client(&state, &headers).unwrap();
+        let authorized = crate::zai_coding_plan::authorize_automatic_discovery(
+            &state,
+            &claims,
+            &headers,
+            protocol,
+            automatic_path,
+        );
+        assert!(!authorized);
+        assert!(
+            crate::model_routing::route_state_with_subscription_for_client(
+                &state,
+                &serde_json::json!({"model":"glm-5"}),
+                &crate::subscription::SubscriptionProvider::ALL,
+                Some(client),
+                authorized,
+            )
+            .await
+            .is_err()
+        );
+        assert!(
+            requests.lock().unwrap().is_empty(),
+            "automatic discovery must fail locally before catalog access"
+        );
         let response = crate::zai_coding_plan::forward(
             &state,
-            &client_headers(&state, client, principal),
+            &headers,
             serde_json::json!({"model":"glm-5","messages":[]}),
             path,
             protocol,
@@ -664,21 +703,33 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
         "the non-inference live catalog is shared until its refresh deadline"
     );
 
-    let routed = crate::model_routing::route_state(
+    let routed = crate::model_routing::route_state_with_subscription_for_client(
         &state,
         &serde_json::json!({"model":"future-saffron-91"}),
+        &crate::subscription::SubscriptionProvider::ALL,
+        Some(ClientKind::Opencode),
+        true,
     )
     .await
     .unwrap();
     assert_eq!(
-        routed.upstream_provider,
+        routed.state.upstream_provider,
         crate::config::UpstreamProvider::ZaiCodingPlan
     );
-    assert_eq!(routed.bridge_model.as_deref(), Some("future-saffron-91"));
+    assert_eq!(
+        routed.state.bridge_model.as_deref(),
+        Some("future-saffron-91")
+    );
     assert!(
-        crate::model_routing::route_state(&state, &serde_json::json!({"model":"glm-unknown"}),)
-            .await
-            .is_err()
+        crate::model_routing::route_state_with_subscription_for_client(
+            &state,
+            &serde_json::json!({"model":"glm-unknown"}),
+            &crate::subscription::SubscriptionProvider::ALL,
+            Some(ClientKind::Opencode),
+            true,
+        )
+        .await
+        .is_err()
     );
     handle.abort();
 }
@@ -806,11 +857,16 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
     let app = axum::Router::new().fallback(move |request: Request<Body>| {
         let recorded = Arc::clone(&recorded);
         async move {
-            recorded
-                .lock()
-                .unwrap()
-                .push(request.uri().path().to_string());
-            (StatusCode::UNAUTHORIZED, "rejected")
+            let path = request.uri().path().to_string();
+            recorded.lock().unwrap().push(path.clone());
+            if path == "/v1/models" {
+                (
+                    StatusCode::OK,
+                    r#"{"data":[{"id":"ordinary-model","object":"model"}]}"#,
+                )
+            } else {
+                (StatusCode::UNAUTHORIZED, "rejected")
+            }
         }
     });
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -824,7 +880,7 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
         .upsert(crate::providers::ProviderUpsert {
             name: "ordinary-api".into(),
             kind: Some("openai-compatible".into()),
-            base_url: "https://ordinary.example/v1".into(),
+            base_url: format!("{base_url}/v1"),
             default_model: None,
             models: Some(vec!["ordinary-model".into()]),
             supported_clients: Some(vec!["codex".into()]),
@@ -855,7 +911,7 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
         body.contains("z.ai"),
         "degraded provider remains diagnosable: {body}"
     );
-    assert_eq!(requests.lock().unwrap().len(), 1);
+    assert_eq!(requests.lock().unwrap().len(), 2);
     handle.abort();
 }
 

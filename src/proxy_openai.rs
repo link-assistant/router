@@ -48,6 +48,9 @@ async fn route_openai_request(
         body,
         &entitled,
         Some(client),
+        crate::zai_coding_plan::authorize_automatic_discovery(
+            state, &claims, headers, protocol, path,
+        ),
     )
     .await
     .map_err(|error| crate::model_routing::model_route_error_response(&error))

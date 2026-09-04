@@ -284,6 +284,7 @@ fn native_error(status: StatusCode, message: &str) -> Response {
 async fn native_owner(
     state: &AppState,
     headers: &HeaderMap,
+    path: &str,
     model: &str,
 ) -> Result<crate::model_routing::RoutedState, Response> {
     let routed = if state.upstream_provider == crate::config::UpstreamProvider::Auto {
@@ -297,6 +298,13 @@ async fn native_owner(
             &json!({"model": model}),
             &crate::subscription::SubscriptionProvider::ALL,
             Some(client),
+            crate::zai_coding_plan::authorize_automatic_discovery(
+                state,
+                &claims,
+                headers,
+                crate::client_policy::ClientProtocol::GeminiNative,
+                path,
+            ),
         )
         .await
     } else if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
@@ -340,11 +348,11 @@ async fn forward_native(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let routed = match native_owner(state, headers, &model).await {
+    let full_path = format!("/api/services/gemini/{path}");
+    let routed = match native_owner(state, headers, &full_path, &model).await {
         Ok(routed) => routed,
         Err(response) => return response,
     };
-    let full_path = format!("/api/services/gemini/{path}");
     if let Some(owner) = routed.state.upstream_provider.subscription_provider() {
         if let Err(response) = crate::client_policy::enforce_subscription(
             &routed.state,
@@ -380,7 +388,7 @@ async fn forward_native_authorized(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
-    let routed = match native_owner(state, headers, &model).await {
+    let routed = match native_owner(state, headers, path, &model).await {
         Ok(routed) => routed,
         Err(response) => return response,
     };

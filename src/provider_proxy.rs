@@ -7,9 +7,15 @@ use axum::extract::{Path, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
+use sha2::{Digest as _, Sha256};
+use std::collections::HashSet;
+use std::time::{Duration, Instant};
 
 use crate::metrics::Surface;
-use crate::providers::{ProviderError, ProviderUpsert, ResolvedProvider};
+use crate::providers::{
+    CachedProviderCatalog, LiveProviderModel, ProviderError, ProviderKind, ProviderUpsert,
+    ResolvedProvider,
+};
 use crate::proxy::{AppState, error_response, is_admin_authorised, maybe_mpp_challenge};
 
 /// List configured upstream providers with secrets redacted.
@@ -244,6 +250,30 @@ pub(crate) async fn forward_provider_at_routed(
             "the selected provider has no tested compatible adapter for this signed client request",
         );
     }
+    if provider.kind == ProviderKind::OpenAICompatible {
+        if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty())
+            && let Some(model) = provider.default_model.as_deref()
+        {
+            body["model"] = serde_json::Value::String(model.to_string());
+        }
+        let model = body
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        let live = match live_openai_compatible_catalog(state, &provider).await {
+            Ok(live) => live,
+            Err(error) => {
+                return error_response(StatusCode::SERVICE_UNAVAILABLE, "api_error", &error);
+            }
+        };
+        if model.is_empty() || !live.iter().any(|candidate| candidate.id == model) {
+            return error_response(
+                StatusCode::NOT_FOUND,
+                "not_found_error",
+                &format!("model '{model}' is not available from the selected provider"),
+            );
+        }
+    }
     // Per-token request budgets apply to every upstream, not just the
     // subscription ones, so a task token cannot escape its cap by being
     // pointed at an OpenAI-compatible gateway.
@@ -429,6 +459,173 @@ pub(crate) async fn forward_provider_at_routed(
             .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
     }
     response
+}
+
+const PROVIDER_CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
+const PROVIDER_FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
+
+fn openai_provider_catalog_fingerprint(provider: &ResolvedProvider) -> String {
+    let mut digest = Sha256::new();
+    for value in [
+        provider.name.as_str(),
+        provider.base_url.as_str(),
+        provider.api_key.as_deref().unwrap_or_default(),
+    ] {
+        digest.update(value.as_bytes());
+        digest.update([0]);
+    }
+    for model in &provider.models {
+        digest.update(model.as_bytes());
+        digest.update([0]);
+    }
+    hex::encode(digest.finalize())
+}
+
+fn cache_openai_provider_failure(
+    state: &AppState,
+    provider: &ResolvedProvider,
+    fingerprint: String,
+    detail: &str,
+) -> Result<Vec<LiveProviderModel>, String> {
+    tracing::warn!(provider = %provider.name, "provider catalog refresh failed: {detail}");
+    let previous = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .ok()
+        .flatten()
+        .filter(|entry| entry.fingerprint == fingerprint);
+    let _ = state.provider_store.cache_provider_catalog(
+        &provider.name,
+        CachedProviderCatalog {
+            fingerprint,
+            models: previous
+                .as_ref()
+                .map_or_else(Vec::new, |entry| entry.models.clone()),
+            last_success: previous.and_then(|entry| entry.last_success),
+            last_attempt: Instant::now(),
+            error: Some("provider catalog refresh failed".into()),
+        },
+    );
+    Err("provider live model catalog is unavailable".into())
+}
+
+/// Fetch one ordinary provider's authenticated non-inference `/models`
+/// catalog. Configured model ids are an optional restriction, never a
+/// substitute for current provider evidence.
+pub(crate) async fn live_openai_compatible_catalog(
+    state: &AppState,
+    provider: &ResolvedProvider,
+) -> Result<Vec<LiveProviderModel>, String> {
+    if provider.kind != ProviderKind::OpenAICompatible {
+        return Err("provider does not use the OpenAI-compatible catalog contract".into());
+    }
+    let fingerprint = openai_provider_catalog_fingerprint(provider);
+    if let Some(cached) = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .map_err(|error| error.to_string())?
+        .filter(|entry| entry.fingerprint == fingerprint)
+    {
+        if cached.error.is_none()
+            && cached
+                .last_success
+                .is_some_and(|at| at.elapsed() < PROVIDER_CATALOG_TTL)
+        {
+            return Ok(cached.models);
+        }
+        if cached.error.is_some() && cached.last_attempt.elapsed() < PROVIDER_FAILED_REFRESH_RETRY {
+            return Err("provider live model catalog is unavailable".into());
+        }
+    }
+
+    let url = join_openai_compatible_url(&provider.base_url, "/v1/models");
+    let mut request = state.client.get(url);
+    if let Some(key) = provider.api_key.as_deref().filter(|key| !key.is_empty()) {
+        request = request.bearer_auth(key);
+    }
+    let response = match request.send().await {
+        Ok(response) => response,
+        Err(error) => {
+            return cache_openai_provider_failure(state, provider, fingerprint, &error.to_string());
+        }
+    };
+    if !response.status().is_success() {
+        return cache_openai_provider_failure(
+            state,
+            provider,
+            fingerprint,
+            &format!("non-inference endpoint returned {}", response.status()),
+        );
+    }
+    let payload = match response.json::<serde_json::Value>().await {
+        Ok(payload) => payload,
+        Err(error) => {
+            return cache_openai_provider_failure(state, provider, fingerprint, &error.to_string());
+        }
+    };
+    let Some(entries) = payload.get("data").and_then(serde_json::Value::as_array) else {
+        return cache_openai_provider_failure(
+            state,
+            provider,
+            fingerprint,
+            "response has no data array",
+        );
+    };
+    let restrictions = &provider.models;
+    let mut seen = HashSet::new();
+    let mut models = Vec::new();
+    for entry in entries {
+        let Some(raw) = entry.as_object().cloned() else {
+            return cache_openai_provider_failure(
+                state,
+                provider,
+                fingerprint,
+                "model record is not an object",
+            );
+        };
+        let Some(id) = raw
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .map(str::trim)
+            .filter(|id| !id.is_empty())
+        else {
+            return cache_openai_provider_failure(
+                state,
+                provider,
+                fingerprint,
+                "model record has no exact id",
+            );
+        };
+        if !seen.insert(id.to_string()) {
+            return cache_openai_provider_failure(
+                state,
+                provider,
+                fingerprint,
+                &format!("duplicate exact model id '{id}'"),
+            );
+        }
+        if restrictions.is_empty() || restrictions.iter().any(|allowed| allowed == id) {
+            models.push(LiveProviderModel {
+                id: id.to_string(),
+                raw,
+            });
+        }
+    }
+    let now = Instant::now();
+    state
+        .provider_store
+        .cache_provider_catalog(
+            &provider.name,
+            CachedProviderCatalog {
+                fingerprint,
+                models: models.clone(),
+                last_success: Some(now),
+                last_attempt: now,
+                error: None,
+            },
+        )
+        .map_err(|error| error.to_string())?;
+    Ok(models)
 }
 
 /// Return OpenAI-shaped model data for the selected OpenAI-compatible provider.

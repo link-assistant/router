@@ -11,6 +11,9 @@
 mod common;
 
 use common::mock_router;
+use link_assistant_router::config::StoragePolicy;
+use link_assistant_router::storage::build_token_store;
+use link_assistant_router::token::{IssueRequest, TokenManager};
 use std::fs;
 use std::path::Path;
 use std::process::{Command, Output};
@@ -79,6 +82,28 @@ fn revoked_state(home: &Path, storage: &str, id: &str) -> Option<bool> {
         .into_iter()
         .find(|(listed, _, _)| listed == id)
         .map(|(_, revoked, _)| revoked)
+}
+
+/// Issue the operator-owned credential through the same durable store as the
+/// CLI while retaining the complete immutable managed-client binding.
+fn supplied_client_token(home: &Path, storage: &str, client: &str) -> String {
+    let policy = StoragePolicy::from_str_opt(storage).expect("test storage policy");
+    let store = build_token_store(policy, &home.join("router-data")).expect("token store");
+    TokenManager::with_store("clients-revocation-test-secret", store)
+        .issue(&IssueRequest {
+            ttl_hours: 24,
+            label: "operator-owned",
+            account: Some("primary"),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some(client),
+            principal_id: Some("primary"),
+        })
+        .expect("issue bound operator-owned token")
 }
 
 fn credential_path(home: &Path, client: &str) -> std::path::PathBuf {
@@ -227,20 +252,7 @@ fn supplied_tokens_survive_remove_unless_revocation_is_requested() {
     for storage in BACKENDS {
         let home = tempfile::tempdir().expect("temp home");
         let home = home.path();
-        let issued = router(
-            home,
-            storage,
-            &["tokens", "issue", "--label", "operator-owned"],
-        );
-        assert!(issued.status.success(), "{}", text(&issued));
-        let token = String::from_utf8_lossy(&issued.stdout)
-            .lines()
-            .find_map(|line| {
-                line.trim()
-                    .starts_with("la_sk_")
-                    .then(|| line.trim().to_string())
-            })
-            .expect("issued token on stdout");
+        let token = supplied_client_token(home, storage, "codex");
         let id = tokens(home, storage)
             .into_iter()
             .find(|(_, _, label)| label == "operator-owned")
@@ -274,6 +286,57 @@ fn supplied_tokens_survive_remove_unless_revocation_is_requested() {
             Some(true),
             "{storage}: --revoke-supplied must revoke the operator's token"
         );
+    }
+}
+
+#[test]
+fn rejected_generic_token_leaves_every_store_byte_and_mtime_unchanged() {
+    for storage in ["text", "binary", "both"] {
+        let home = tempfile::tempdir().expect("temp home");
+        let issued = router(
+            home.path(),
+            storage,
+            &["tokens", "issue", "--label", "generic-not-managed"],
+        );
+        assert!(issued.status.success(), "{}", text(&issued));
+        let token = String::from_utf8_lossy(&issued.stdout)
+            .lines()
+            .find(|line| line.trim().starts_with("la_sk_"))
+            .expect("issued token")
+            .trim()
+            .to_string();
+        let data = home.path().join("router-data");
+        let before = fs::read_dir(&data)
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_file()))
+            .map(|entry| {
+                let path = entry.path();
+                let bytes = fs::read(&path).unwrap();
+                let modified = fs::metadata(&path).unwrap().modified().unwrap();
+                (path, bytes, modified)
+            })
+            .collect::<Vec<_>>();
+
+        let rejected = setup(home.path(), storage, "codex", Some(&token));
+        assert!(!rejected.status.success(), "generic token was adopted");
+        for (path, bytes, modified) in before {
+            assert_eq!(
+                fs::read(&path).unwrap(),
+                bytes,
+                "{} changed",
+                path.display()
+            );
+            assert_eq!(
+                fs::metadata(&path).unwrap().modified().unwrap(),
+                modified,
+                "{} mtime changed",
+                path.display()
+            );
+        }
+        assert!(!credential_path(home.path(), "codex").exists());
+        assert!(!environment_path(home.path(), "codex").exists());
+        assert!(!home.path().join(".codex").exists());
     }
 }
 

@@ -304,6 +304,10 @@ impl ClientManager {
             return Err(ClientError::message(limitation));
         }
 
+        if client == ClientKind::Codex {
+            self.validate_codex_catalog_constraint()?;
+        }
+
         let mut snapshot = self.capture_snapshot(client, &before)?;
         let id = snapshot.manifest.id.clone();
         let result = (|| {
@@ -864,14 +868,19 @@ mod tests {
         let manager = ClientManager::isolated(home.path());
         let path = manager.config_path(ClientKind::Codex);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
-        let original = br#"model_provider = "foreign"
-model_catalog_json = "/private/foreign-models.json"
+        let catalog = home.path().join("foreign-models.json");
+        fs::write(&catalog, br#"{"models":[{"slug":"foreign-only"}]}"#).unwrap();
+        let original = format!(
+            r#"model_provider = "foreign"
+model_catalog_json = {:?}
 model_reasoning_effort = "high"
 
 [mcp_servers.keep]
 command = "kept-mcp"
-"#;
-        fs::write(&path, original).unwrap();
+"#,
+            catalog.to_string_lossy()
+        );
+        fs::write(&path, original.as_bytes()).unwrap();
         set_mode(&path, 0o640).unwrap();
         let auth = path.parent().unwrap().join("auth.json");
         fs::write(&auth, br#"{"auth":"untouched"}"#).unwrap();
@@ -907,10 +916,86 @@ command = "kept-mcp"
                 result.backup_id.as_deref().expect("snapshot id"),
             )
             .expect("rollback");
-        assert_eq!(fs::read(&path).unwrap(), original);
+        assert_eq!(fs::read(&path).unwrap(), original.as_bytes());
         #[cfg(unix)]
         assert_eq!(file_mode(&path), Some(0o640));
         assert_eq!(fs::read(&auth).unwrap(), br#"{"auth":"untouched"}"#);
+    }
+
+    #[test]
+    fn codex_repair_refuses_missing_and_invalid_catalogs_without_touching_user_files() {
+        for invalid_json in [false, true] {
+            let home = tempfile::tempdir().expect("home");
+            let manager = ClientManager::isolated(home.path());
+            let path = manager.config_path(ClientKind::Codex);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            let catalog = home.path().join("foreign-models.json");
+            if invalid_json {
+                fs::write(&catalog, b"not-json").unwrap();
+            }
+            let original = format!("model_catalog_json = {:?}\n", catalog.to_string_lossy());
+            fs::write(&path, original.as_bytes()).unwrap();
+            set_mode(&path, 0o640).unwrap();
+            let auth = path.parent().unwrap().join("auth.json");
+            fs::write(&auth, br#"{"auth":"untouched"}"#).unwrap();
+            let config_mtime = fs::metadata(&path).unwrap().modified().unwrap();
+            let auth_mtime = fs::metadata(&auth).unwrap().modified().unwrap();
+
+            manager
+                .apply_repair(
+                    ClientKind::Codex,
+                    "http://router.test:8080",
+                    "la_sk_router_secret",
+                    &credential(),
+                    &[],
+                )
+                .expect_err("unsafe catalog target must be refused");
+
+            assert_eq!(fs::read(&path).unwrap(), original.as_bytes());
+            assert_eq!(
+                fs::metadata(&path).unwrap().modified().unwrap(),
+                config_mtime
+            );
+            assert_eq!(fs::read(&auth).unwrap(), br#"{"auth":"untouched"}"#);
+            assert_eq!(fs::metadata(&auth).unwrap().modified().unwrap(), auth_mtime);
+            assert!(!manager.environment_path(ClientKind::Codex).exists());
+            assert!(!manager.credential_metadata_path(ClientKind::Codex).exists());
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn codex_repair_refuses_a_symlinked_catalog_without_touching_user_files() {
+        use std::os::unix::fs::symlink;
+
+        let home = tempfile::tempdir().expect("home");
+        let manager = ClientManager::isolated(home.path());
+        let path = manager.config_path(ClientKind::Codex);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let target = home.path().join("target-models.json");
+        fs::write(&target, br#"{"models":[]}"#).unwrap();
+        let catalog = home.path().join("foreign-models.json");
+        symlink(&target, &catalog).unwrap();
+        let original = format!("model_catalog_json = {:?}\n", catalog.to_string_lossy());
+        fs::write(&path, original.as_bytes()).unwrap();
+        let auth = path.parent().unwrap().join("auth.json");
+        fs::write(&auth, br#"{"auth":"untouched"}"#).unwrap();
+
+        let error = manager
+            .apply_repair(
+                ClientKind::Codex,
+                "http://router.test:8080",
+                "la_sk_router_secret",
+                &credential(),
+                &[],
+            )
+            .expect_err("symlinked catalog must be refused");
+
+        assert!(error.to_string().contains("symlink"), "{error}");
+        assert_eq!(fs::read(&path).unwrap(), original.as_bytes());
+        assert_eq!(fs::read(&auth).unwrap(), br#"{"auth":"untouched"}"#);
+        assert_eq!(fs::read_link(&catalog).unwrap(), target);
+        assert!(!manager.environment_path(ClientKind::Codex).exists());
     }
 
     #[test]
