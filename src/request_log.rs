@@ -525,12 +525,21 @@ impl RequestLog {
     }
 }
 
-/// Correlation id injected by [`log_http_exchange`]. Direct handler tests that
-/// bypass middleware receive a fresh id instead of sharing an ambiguous value.
+/// Private request-header carrier used only between Router middleware and its
+/// handlers. Every upstream header policy rejects the `x-link-assistant-*`
+/// namespace, so this value cannot replace or escape as a vendor request ID.
+const INTERNAL_CORRELATION_HEADER: &str = "x-link-assistant-correlation-id";
+
+/// Correlation id injected privately by [`log_http_exchange`]. Direct handler
+/// tests that bypass middleware receive a fresh id instead of sharing an
+/// ambiguous value.
+///
+/// A caller's `x-request-id` remains ordinary end-to-end protocol data and is
+/// never repurposed as Router's internal log identity.
 #[must_use]
 pub fn correlation_id(headers: &HeaderMap) -> String {
     headers
-        .get("x-request-id")
+        .get(INTERNAL_CORRELATION_HEADER)
         .and_then(|value| value.to_str().ok())
         .filter(|value| !value.is_empty())
         .map_or_else(|| uuid::Uuid::new_v4().to_string(), str::to_string)
@@ -694,7 +703,7 @@ pub async fn log_http_exchange(
     next: Next,
 ) -> Response {
     let correlation_id = uuid::Uuid::new_v4().to_string();
-    let (parts, body) = request.into_parts();
+    let (mut parts, body) = request.into_parts();
     let identity = crate::proxy::extract_client_token(&parts.headers)
         .and_then(|token| {
             state
@@ -732,6 +741,10 @@ pub async fn log_http_exchange(
         recorded: false,
         model: Arc::clone(&requested_model),
     };
+    parts.headers.insert(
+        INTERNAL_CORRELATION_HEADER,
+        axum::http::HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
+    );
     let (request_body, early_response) = if eagerly_capture_json(&parts.headers) {
         if let Ok(bytes) = axum::body::to_bytes(body, MAX_EAGER_REQUEST_BYTES).await {
             let mut capture = capture;

@@ -884,7 +884,7 @@ fn subscription_headers(
         // found". Mirror the Codex CLI. Overridable via CODEX_CLIENT_VERSION.
         out.push((
             "version",
-            std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.144.1".to_string()),
+            std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.153.3".to_string()),
         ));
     }
     out

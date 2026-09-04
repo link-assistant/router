@@ -73,7 +73,7 @@ axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 rcgen = "0.14.9"
 flate2 = "1.1.10"
 brotli = "9.0.0"
-zstd = "0.13.3"
+zstd = "0.14.0"
 
 [dev-dependencies]
 proptest = "1"

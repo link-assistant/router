@@ -869,7 +869,7 @@ pub async fn fetch_provider_catalog_records(
         |value| value.trim_end_matches('/').to_string(),
     );
     let client_version =
-        std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.144.1".to_string());
+        std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.153.3".to_string());
     let url = match provider {
         SubscriptionProvider::Claude => format!("{base}/v1/models"),
         SubscriptionProvider::Codex | SubscriptionProvider::Qwen => format!("{base}/models"),

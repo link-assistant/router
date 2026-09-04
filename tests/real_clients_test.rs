@@ -24,7 +24,7 @@ use base64::Engine as _;
 use serde_json::{Value, json};
 use wait_timeout::ChildExt as _;
 
-const CLAUDE_VERSION: &str = "2.1.260";
+const CLAUDE_VERSION: &str = "2.1.261";
 const CODEX_VERSION: &str = "0.153.3";
 const OPENCODE_VERSION: &str = "1.18.28";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
@@ -50,7 +50,7 @@ const CLAUDE: ClientCase = ClientCase {
     model: "claude-sonnet-4-5-20250929",
     owner: "anthropic",
     inference_path: "/api/services/anthropic/v1/messages",
-    user_agent_prefix: "claude-cli/2.1.260",
+    user_agent_prefix: "claude-cli/2.1.261",
     credential_header: "authorization",
 };
 

@@ -59,7 +59,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
 }
 
 #[test]
-fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
+fn claude_setup_pins_only_dynamic_boundaries_to_a_live_zai_only_catalog_model() {
     let home = tempfile::tempdir().expect("temp home");
     let model = "future-citrine-2099";
     let (base_url, server) = catalog_server(&[(model, "z.ai")]);
@@ -96,14 +96,15 @@ fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
         settings["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
         "1"
     );
+    for key in ["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"] {
+        assert_eq!(settings["env"][key], model, "{key}");
+    }
     for key in [
-        "ANTHROPIC_MODEL",
         "ANTHROPIC_DEFAULT_OPUS_MODEL",
         "ANTHROPIC_DEFAULT_SONNET_MODEL",
         "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-        "CLAUDE_CODE_SUBAGENT_MODEL",
     ] {
-        assert_eq!(settings["env"][key], model, "{key}");
+        assert!(settings["env"].get(key).is_none(), "{key}");
     }
 }
 

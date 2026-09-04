@@ -83,7 +83,7 @@ fn mock_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 ),
                 "/api/services/anthropic/v1/models" | "/api/services/codex/v1/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"},{"effort":"xhigh","description":"Extra deep reasoning"}]}]}"#,
                 ),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -120,7 +120,7 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 "/api/management/tokens/client" => ("200 OK", issued.as_str()),
                 "/api/services/codex/v1/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"},{"effort":"xhigh","description":"Extra deep reasoning"}]}]}"#,
                 ),
                 "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
@@ -188,7 +188,7 @@ fn mock_split_inference() -> (String, thread::JoinHandle<Vec<String>>) {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
                 "/api/services/codex/v1/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
+                    r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"},{"effort":"xhigh","description":"Extra deep reasoning"}]}]}"#,
                 ),
                 _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
             };

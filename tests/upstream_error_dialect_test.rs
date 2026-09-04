@@ -184,7 +184,7 @@ impl TestRouter {
             request
                 .header("x-api-key", &self.claude_token)
                 .header("anthropic-version", "2023-06-01")
-                .header("user-agent", "claude-cli/2.1.260")
+                .header("user-agent", "claude-cli/2.1.261")
         } else if path.ends_with("/v1/responses") {
             request
                 .bearer_auth(&self.codex_token)

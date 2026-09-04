@@ -20,7 +20,7 @@
 
 use axum::Router;
 use axum::extract::State;
-use axum::routing::post;
+use axum::routing::{get, post};
 use base64::Engine as _;
 use link_assistant_router::login::{LoginConfig, LoginManager, LoginStatus};
 use link_assistant_router::oauth::OAuthProvider;
@@ -562,6 +562,7 @@ async fn codex_login_defaults_to_device_auth_without_a_callback_listener() {
 struct AdminCodexStub {
     polls: AtomicUsize,
     exchanges: AtomicUsize,
+    catalogs: AtomicUsize,
 }
 
 async fn admin_device_code() -> axum::Json<serde_json::Value> {
@@ -601,6 +602,11 @@ async fn admin_exchange(State(state): State<Arc<AdminCodexStub>>) -> axum::Json<
     }))
 }
 
+async fn admin_catalog(State(state): State<Arc<AdminCodexStub>>) -> axum::Json<serde_json::Value> {
+    state.catalogs.fetch_add(1, Ordering::SeqCst);
+    axum::Json(serde_json::json!({"models": [{"slug": "gpt-live"}]}))
+}
+
 /// The admin `LoginManager` passes the resolved data directory into native Codex
 /// and contends on the exact primary refresh lock during installation.
 #[tokio::test]
@@ -610,6 +616,7 @@ async fn admin_native_codex_writer_contends_on_the_refresh_lock() {
         .route("/api/accounts/deviceauth/usercode", post(admin_device_code))
         .route("/api/accounts/deviceauth/token", post(admin_poll_device))
         .route("/oauth/token", post(admin_exchange))
+        .route("/models", get(admin_catalog))
         .with_state(Arc::clone(&state));
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let issuer = format!("http://{}", listener.local_addr().unwrap());
@@ -643,12 +650,13 @@ async fn admin_native_codex_writer_contends_on_the_refresh_lock() {
         .await
         .expect("begin admin Codex login");
     for _ in 0..100 {
-        if state.exchanges.load(Ordering::SeqCst) > 0 {
+        if state.catalogs.load(Ordering::SeqCst) > 0 {
             break;
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
     }
-    assert_eq!(state.exchanges.load(Ordering::SeqCst), 1);
+    assert!(state.exchanges.load(Ordering::SeqCst) >= 1);
+    assert_eq!(state.catalogs.load(Ordering::SeqCst), 1);
     assert_eq!(
         manager.status(&begun.login_id).unwrap().status,
         LoginStatus::AwaitingDevice
@@ -662,9 +670,12 @@ async fn admin_native_codex_writer_contends_on_the_refresh_lock() {
         }
         tokio::time::sleep(Duration::from_millis(10)).await;
     }
+    let final_view = manager.status(&begun.login_id).unwrap();
     assert_eq!(
-        manager.status(&begun.login_id).unwrap().status,
-        LoginStatus::Authorized
+        final_view.status,
+        LoginStatus::Authorized,
+        "{}",
+        final_view.error.as_deref().unwrap_or("no login error")
     );
     assert!(codex_home.join("auth.json").is_file());
     server.abort();

@@ -19,4 +19,5 @@ bump: patch
 - Added full-stack denial logging coverage and bounded capture of small rejected JSON bodies, proving client request/response correlation without any upstream or stream-end record.
 
 ### Changed
-- Updated the pinned Codex and OpenCode real-client validation dependencies to 0.153.3 and 1.18.28.
+- Updated the pinned Claude Code, Codex, and OpenCode real-client validation dependencies to 2.1.261, 0.153.3, and 1.18.28, respectively.
+- Updated every active Cargo dependency and tracked lockfile to the newest resolvable release, including zstd 0.14.0.
