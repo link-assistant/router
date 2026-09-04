@@ -273,17 +273,26 @@ fn marker_valid(
                 });
                 let model_target = entries
                     .iter()
-                    .find(|(key, _, _)| key == super::CLAUDE_MODEL_ENV[0])
+                    .find(|(key, _, _)| key == super::CLAUDE_GATEWAY_TARGET_ENV[0])
                     .map(|(_, managed, _)| managed.as_deref());
                 let models = model_target.is_some_and(|target| {
                     target.is_none_or(|model| !model.is_empty())
-                        && super::CLAUDE_MODEL_ENV.iter().all(|key| {
+                        && super::CLAUDE_GATEWAY_TARGET_ENV.iter().all(|key| {
                             entries
                                 .iter()
                                 .find(|(actual, _, _)| actual == key)
                                 .map(|(_, managed, _)| managed.as_deref())
                                 == Some(target)
                         })
+                        && super::CLAUDE_MODEL_ENV
+                            .iter()
+                            .filter(|key| !super::CLAUDE_GATEWAY_TARGET_ENV.contains(key))
+                            .all(|key| {
+                                entries
+                                    .iter()
+                                    .find(|(actual, _, _)| actual == key)
+                                    .is_some_and(|(_, managed, _)| managed.is_none())
+                            })
                 });
                 expected_endpoint.is_none_or(|expected| managed == expected) && fixed && models
             })

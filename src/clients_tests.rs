@@ -192,7 +192,7 @@ fn a_strict_client_refuses_another_vendors_model() {
 }
 
 #[test]
-fn claude_setup_maps_zai_only_default_families_and_subagents() {
+fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
     let home = tempfile::tempdir().unwrap();
     let manager = ClientManager::isolated(home.path());
     std::fs::create_dir_all(home.path().join(".claude")).unwrap();
@@ -220,8 +220,15 @@ fn claude_setup_maps_zai_only_default_families_and_subagents() {
         settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
         "0"
     );
-    for key in CLAUDE_MODEL_ENV {
+    for key in CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(settings["env"][key], "future-saffron-2099", "{key}");
+    }
+    for key in [
+        "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    ] {
+        assert!(settings["env"].get(key).is_none(), "{key}");
     }
     let env = manager
         .write_environment(

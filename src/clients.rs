@@ -55,6 +55,11 @@ pub(crate) const CLAUDE_MODEL_ENV: [&str; 5] = [
     "ANTHROPIC_DEFAULT_HAIKU_MODEL",
     "CLAUDE_CODE_SUBAGENT_MODEL",
 ];
+/// The smallest pair Claude Code needs when its only compatible live catalog
+/// is supplied by z.ai. Family overrides deliberately stay unset: assigning
+/// one GLM id to Opus, Sonnet, and Haiku creates three fake selectable rows.
+pub(crate) const CLAUDE_GATEWAY_TARGET_ENV: [&str; 2] =
+    ["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"];
 
 /// Catalog owner whose models suit an `OpenAI`-dialect client.
 pub const OPENAI_MODEL_OWNER: &str = "openai";
@@ -871,7 +876,11 @@ impl ClientManager {
         manage("ANTHROPIC_API_KEY", None);
         let gateway_model = claude_gateway_model(models, None);
         for key in CLAUDE_MODEL_ENV {
-            manage(key, gateway_model.as_deref());
+            let managed = CLAUDE_GATEWAY_TARGET_ENV
+                .contains(&key)
+                .then_some(gateway_model.as_deref())
+                .flatten();
+            manage(key, managed);
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;

@@ -143,13 +143,14 @@ pub fn select_model(client: ClientKind, catalog: &[RouterModel]) -> Option<&str>
     catalog.first().map(|model| model.id.as_str())
 }
 
-/// Dynamic Claude Code Default/family target for a z.ai-backed catalog.
+/// Dynamic Claude Code main/subagent target for a z.ai-backed catalog.
 ///
 /// Native Anthropic discovery remains in charge whenever the live catalog has
 /// an Anthropic model. With z.ai-only compatible access, Claude Code cannot
-/// resolve its built-in Default/family names itself, so every family and
-/// subagent pin is mapped to one exact currently advertised z.ai alias. An
-/// explicit z.ai model wins and is propagated to the same subagent boundary.
+/// resolve its built-in Default and subagent fallback itself, so the smallest
+/// supported pair of pins targets one exact currently advertised z.ai model.
+/// The family pins stay absent so one GLM model is not presented as three fake
+/// Anthropic families. An explicit z.ai model wins at both real boundaries.
 #[must_use]
 pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> Option<String> {
     if let Some(explicit) = explicit
