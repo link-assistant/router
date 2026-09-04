@@ -10,6 +10,12 @@ use std::process::{Command, Output, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
+const BOUND_CODEX_TOKEN: &str = concat!(
+    "e30.",
+    "eyJzdWIiOiJtYW5hZ2VkLXJ1biIsImNsaWVudF9raW5kIjoiY29kZXgiLCJwcmluY2lwYWxfaWQiOiJwcmltYXJ5In0",
+    ".signature"
+);
+
 fn read_request(stream: &mut std::net::TcpStream) -> String {
     stream
         .set_read_timeout(Some(Duration::from_secs(5)))
@@ -82,22 +88,26 @@ fn mock_managed_router(
                 .to_string();
             paths.push(path.clone());
             let (status, body) = match path.as_str() {
-                "/api/health" => ("200 OK", "ok"),
-                "/api/management/tokens" if admin => ("200 OK", r#"{"data":[]}"#),
+                "/api/health" => ("200 OK", "ok".to_string()),
+                "/api/management/tokens" if admin => ("200 OK", r#"{"data":[]}"#.to_string()),
                 "/api/management/tokens" => (
                     "401 Unauthorized",
-                    r#"{"error":{"message":"ordinary token"}}"#,
+                    r#"{"error":{"message":"ordinary token"}}"#.to_string(),
                 ),
-                "/api/management/tokens/client" => (
-                    "200 OK",
-                    r#"{"token":"e30.eyJzdWIiOiJtYW5hZ2VkLXJ1biJ9.signature"}"#,
-                ),
+                "/api/management/tokens/client" => {
+                    ("200 OK", format!(r#"{{"token":"{BOUND_CODEX_TOKEN}"}}"#))
+                }
                 "/api/services/codex/v1/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#.to_string(),
                 ),
-                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"managed-run"}"#),
-                _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
+                "/api/management/tokens/revoke" => {
+                    ("200 OK", r#"{"revoked":"managed-run"}"#.to_string())
+                }
+                _ => (
+                    "404 Not Found",
+                    r#"{"error":"unexpected path"}"#.to_string(),
+                ),
             };
             write!(
                 stream,
@@ -413,7 +423,7 @@ fn managed_admin_is_used_only_for_unclaimed_per_run_minting() {
     );
     assert_eq!(
         fs::read_to_string(capture.join("token")).expect("captured run token"),
-        "e30.eyJzdWIiOiJtYW5hZ2VkLXJ1biJ9.signature\n"
+        format!("{BOUND_CODEX_TOKEN}\n")
     );
     assert_eq!(
         router.join().expect("managed router thread"),
@@ -716,7 +726,7 @@ fn claimed_managed_router_accepts_an_explicit_ordinary_token() {
             .expect("compose PATH");
 
     let output = with_router_command(&home)
-        .args(["--token", "ordinary-after-claim", "codex", "hello"])
+        .args(["--token", BOUND_CODEX_TOKEN, "codex", "hello"])
         .env("PATH", path)
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_STATE", "running")
@@ -735,7 +745,7 @@ fn claimed_managed_router_accepts_an_explicit_ordinary_token() {
     );
     assert_eq!(
         fs::read_to_string(capture.join("token")).expect("captured ordinary token"),
-        "ordinary-after-claim\n"
+        format!("{BOUND_CODEX_TOKEN}\n")
     );
     assert_eq!(
         router.join().expect("managed router thread"),

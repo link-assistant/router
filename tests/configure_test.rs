@@ -2,6 +2,7 @@
 
 #![cfg(unix)]
 
+use base64::Engine as _;
 use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -10,12 +11,23 @@ use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
 
+fn bound_client_token(client: &str) -> String {
+    let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
+        serde_json::json!({
+            "sub": "configure-id",
+            "client_kind": client,
+            "principal_id": "configure-principal",
+        })
+        .to_string(),
+    );
+    format!("la_sk_e30.{payload}.signature")
+}
+
 /// A router that answers the three probes permanent setup makes: is it there,
 /// is this credential an admin one, and what does it serve?
 ///
-/// `/api/management/tokens` answers 401 so the supplied token is treated as an
-/// ordinary one and used as-is — the same shape as a real ordinary token, and
-/// it keeps the test from having to mint a signed JWT.
+/// `/api/management/tokens` answers 401 so the supplied bound client token is
+/// treated as an ordinary managed credential and validated by the catalog.
 fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
     listener
@@ -91,6 +103,7 @@ fn split_listener(
 ) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind split listener");
     let port = listener.local_addr().expect("split address").port();
+    let issued = serde_json::json!({"token": bound_client_token("codex")}).to_string();
     let handle = thread::spawn(move || {
         let mut requests = Vec::new();
         for _ in 0..request_count {
@@ -104,10 +117,7 @@ fn split_listener(
             let (status, body) = if management {
                 match path {
                     "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
-                    "/api/management/tokens/client" => (
-                        "200 OK",
-                        r#"{"token":"e30.eyJzdWIiOiJjb25maWd1cmUtaWQifQ.signature"}"#,
-                    ),
+                    "/api/management/tokens/client" => ("200 OK", issued.as_str()),
                     _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
                 }
             } else {
@@ -171,10 +181,8 @@ fn router(home: &std::path::Path, args: &[&str]) -> Output {
 }
 
 fn select(home: &std::path::Path, server: &str) {
-    let selected = router(
-        home,
-        &["server", "use", server, "--token", "la_sk_selected"],
-    );
+    let token = bound_client_token("claude");
+    let selected = router(home, &["server", "use", server, "--token", &token]);
     assert!(
         selected.status.success(),
         "server use failed: {}{}",
@@ -222,7 +230,7 @@ fn configure_writes_the_selected_router_and_stores_its_credential() {
     // stored none and told the user to go set a variable themselves.
     let environment = home.join(".config/link-assistant-router/clients/claude.env");
     let stored = std::fs::read_to_string(&environment).expect("read stored credential");
-    assert!(stored.contains("la_sk_selected"), "{stored}");
+    assert!(stored.contains(&bound_client_token("claude")), "{stored}");
     assert!(stored.contains(&server), "{stored}");
     assert_eq!(
         std::fs::metadata(&environment)

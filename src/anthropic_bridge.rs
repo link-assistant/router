@@ -899,6 +899,7 @@ async fn forward_anthropic_messages_routed(
                 "/v1/responses",
                 Surface::Anthropic,
                 subscription,
+                None,
             )
             .await
         }
@@ -911,6 +912,7 @@ async fn forward_anthropic_messages_routed(
                 "/v1/chat/completions",
                 Surface::Anthropic,
                 subscription,
+                None,
             )
             .await
         }

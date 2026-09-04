@@ -187,6 +187,7 @@ impl TestRouter {
         match self.client_kind {
             ClientKind::Codex => request
                 .bearer_auth(&self.token)
+                .header("user-agent", "codex_exec/0.153.2")
                 .header("x-openai-internal-codex-responses-lite", "true"),
             ClientKind::GeminiCli => request
                 .header("x-goog-api-key", &self.token)

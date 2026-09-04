@@ -224,6 +224,7 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
             routed.subscription.as_ref(),
+            None,
         )
         .await
     });
@@ -273,6 +274,7 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
         "/v1/responses",
         crate::metrics::Surface::OpenAIResponses,
         second_routed.subscription.as_ref(),
+        None,
     )
     .await;
     assert_eq!(second_response.status(), StatusCode::OK);

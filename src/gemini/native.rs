@@ -353,24 +353,33 @@ async fn forward_native(
         Ok(routed) => routed,
         Err(response) => return response,
     };
-    if let Some(owner) = routed.state.upstream_provider.subscription_provider() {
-        if let Err(response) = crate::client_policy::enforce_subscription(
+    let entitlement = if let Some(owner) = routed.state.upstream_provider.subscription_provider() {
+        match crate::client_policy::enforce_subscription(
             &routed.state,
             headers,
             owner,
             crate::client_policy::ClientProtocol::GeminiNative,
             &full_path,
         ) {
-            return response;
+            Ok(entitlement) => Some(entitlement),
+            Err(response) => return response,
         }
     } else if routed.state.upstream_provider != crate::config::UpstreamProvider::ZaiCodingPlan {
         return native_error(
             StatusCode::BAD_REQUEST,
             "selected provider has no Gemini adapter",
         );
-    }
+    } else {
+        None
+    };
     Box::pin(forward_native_authorized_after_route(
-        routed, headers, path, model, streaming, body,
+        routed,
+        headers,
+        path,
+        model,
+        streaming,
+        body,
+        entitlement,
     ))
     .await
 }
@@ -393,7 +402,7 @@ async fn forward_native_authorized(
         Err(response) => return response,
     };
     Box::pin(forward_native_authorized_after_route(
-        routed, headers, path, model, streaming, body,
+        routed, headers, path, model, streaming, body, None,
     ))
     .await
 }
@@ -405,6 +414,7 @@ async fn forward_native_authorized_after_route(
     model: String,
     streaming: bool,
     body: Value,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
 ) -> Response {
     if routed.state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
         return forward_native_via_zai(routed.state, headers, path, &model, streaming, &body).await;
@@ -418,7 +428,15 @@ async fn forward_native_authorized_after_route(
         // Codex, Claude and Qwen have no `generateContent` surface, so the
         // request crosses through the shared OpenAI Chat Completions path and
         // the response is translated back into Gemini's native shape.
-        return forward_native_via_chat(routed, headers, &model, streaming, &body).await;
+        return forward_native_via_chat(
+            routed,
+            headers,
+            &model,
+            streaming,
+            &body,
+            entitlement.expect("subscription ingress always records an entitlement"),
+        )
+        .await;
     }
     let state = &routed.state;
     let routed = match route_gemini_token(
@@ -594,6 +612,7 @@ async fn forward_native_via_chat(
     model: &str,
     streaming: bool,
     body: &Value,
+    entitlement: crate::client_policy::EntitlementDecision,
 ) -> Response {
     let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
     let state = routed.state;
@@ -602,6 +621,7 @@ async fn forward_native_via_chat(
         headers.clone(),
         chat_request,
         routed.subscription,
+        entitlement,
     )
     .await;
 

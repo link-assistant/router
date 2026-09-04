@@ -69,6 +69,7 @@ pub async fn forward_subscription_openai(
             surface,
             response_shape: SubscriptionResponseShape::Passthrough,
             validated: None,
+            entitlement: None,
         },
     )
     .await
@@ -84,6 +85,7 @@ pub(crate) async fn forward_subscription_openai_routed(
     path: &str,
     surface: Surface,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
 ) -> Response {
     forward_subscription_openai_inner(
         state,
@@ -95,6 +97,7 @@ pub(crate) async fn forward_subscription_openai_routed(
             surface,
             response_shape: SubscriptionResponseShape::Passthrough,
             validated: subscription,
+            entitlement,
         },
     )
     .await
@@ -119,6 +122,7 @@ pub async fn forward_codex_chat_completions(
             surface,
             response_shape: SubscriptionResponseShape::ChatCompletion,
             validated: None,
+            entitlement: None,
         },
     )
     .await
@@ -131,6 +135,7 @@ pub(crate) async fn forward_codex_chat_completions_routed(
     routing_body: &serde_json::Value,
     surface: Surface,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
 ) -> Response {
     forward_subscription_openai_inner(
         state,
@@ -142,6 +147,7 @@ pub(crate) async fn forward_codex_chat_completions_routed(
             surface,
             response_shape: SubscriptionResponseShape::ChatCompletion,
             validated: subscription,
+            entitlement,
         },
     )
     .await
@@ -158,6 +164,7 @@ struct ForwardOptions<'a> {
     surface: Surface,
     response_shape: SubscriptionResponseShape,
     validated: Option<&'a crate::model_routing::ValidatedSubscription>,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
 }
 
 async fn forward_subscription_openai_inner(
@@ -172,6 +179,7 @@ async fn forward_subscription_openai_inner(
         surface,
         response_shape,
         validated,
+        entitlement,
     } = options;
     if let Some(resp) = maybe_mpp_challenge(state, headers, path) {
         return resp;
@@ -202,16 +210,19 @@ async fn forward_subscription_openai_inner(
         Surface::OpenAIChat => "/v1/chat/completions",
         Surface::OpenAIResponses => "/v1/responses",
     };
-    let entitlement = match crate::client_policy::enforce_subscription_for_claims(
-        state,
-        &claims,
-        headers,
-        provider,
-        protocol,
-        client_path,
-    ) {
-        Ok(decision) => decision,
-        Err(response) => return response,
+    let entitlement = match entitlement {
+        Some(entitlement) => entitlement,
+        None => match crate::client_policy::enforce_subscription_for_claims(
+            state,
+            &claims,
+            headers,
+            provider,
+            protocol,
+            client_path,
+        ) {
+            Ok(decision) => decision,
+            Err(response) => return response,
+        },
     };
     let native_protocol = response_shape == SubscriptionResponseShape::Passthrough
         && entitlement == crate::client_policy::EntitlementDecision::Native;

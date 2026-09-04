@@ -2,7 +2,7 @@
 
 mod common;
 
-use common::{mock_admin_router, mock_router, router, router_with_env};
+use common::{bound_client_token, mock_admin_router, mock_router, router, router_with_env};
 use link_assistant_router::clients::{ClientKind, ClientManager, OwnershipState};
 use std::fs;
 
@@ -46,16 +46,11 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
     assert!(!report.contains("z.ai-secret"), "analysis leaked a secret");
 
     let (base_url, catalog) = mock_router(&[("claude-future-2099", "anthropic")], 1);
+    let token = bound_client_token("claude", "ownership-principal");
     let setup = router(
         home.path(),
         &[
-            "clients",
-            "setup",
-            "claude",
-            "--token",
-            "la_sk_managed_secret",
-            "--server",
-            &base_url,
+            "clients", "setup", "claude", "--token", &token, "--server", &base_url,
         ],
     );
     assert!(

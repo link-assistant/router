@@ -124,7 +124,7 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None, false).await
+    openai_chat_completions_with_subscription(state, query, headers, body, None, None).await
 }
 
 pub async fn openai_chat_completions_routed(
@@ -132,6 +132,7 @@ pub async fn openai_chat_completions_routed(
     headers: HeaderMap,
     body: serde_json::Value,
     subscription: Option<crate::model_routing::ValidatedSubscription>,
+    entitlement: crate::client_policy::EntitlementDecision,
 ) -> Response {
     openai_chat_completions_with_subscription(
         state,
@@ -139,7 +140,7 @@ pub async fn openai_chat_completions_routed(
         headers,
         Ok(axum::Json(body)),
         subscription,
-        true,
+        Some(entitlement),
     )
     .await
 }
@@ -150,7 +151,7 @@ async fn openai_chat_completions_with_subscription(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
     initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
-    entitlement_already_checked: bool,
+    initial_entitlement: Option<crate::client_policy::EntitlementDecision>,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -200,18 +201,23 @@ async fn openai_chat_completions_with_subscription(
     let state = routed.state;
     let subscription = routed.subscription;
     rewrite_routed_model(&mut body, &state, subscription.as_ref());
-    if !entitlement_already_checked
-        && let Some(provider) = state.upstream_provider.subscription_provider()
-        && let Err(response) = crate::client_policy::enforce_subscription(
-            &state,
-            &headers,
-            provider,
-            crate::client_policy::ClientProtocol::OpenAIChat,
-            "/v1/chat/completions",
-        )
-    {
-        return response;
-    }
+    let entitlement = if let Some(provider) = state.upstream_provider.subscription_provider() {
+        match initial_entitlement {
+            Some(entitlement) => Some(entitlement),
+            None => match crate::client_policy::enforce_subscription(
+                &state,
+                &headers,
+                provider,
+                crate::client_policy::ClientProtocol::OpenAIChat,
+                "/v1/chat/completions",
+            ) {
+                Ok(entitlement) => Some(entitlement),
+                Err(response) => return response,
+            },
+        }
+    } else {
+        None
+    };
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Some(kind) =
             crate::capabilities::unsupported_server_tool_type(provider, body.get("tools"))
@@ -283,6 +289,7 @@ async fn openai_chat_completions_with_subscription(
             "/v1/chat/completions",
             crate::metrics::Surface::OpenAIChat,
             subscription.as_ref(),
+            entitlement,
         )
         .await;
     }
@@ -307,6 +314,7 @@ async fn openai_chat_completions_with_subscription(
             &routing_body,
             crate::metrics::Surface::OpenAIChat,
             subscription.as_ref(),
+            entitlement,
         )
         .await;
     }
@@ -486,6 +494,7 @@ pub async fn openai_responses(
             "/v1/responses",
             crate::metrics::Surface::OpenAIResponses,
             subscription.as_ref(),
+            None,
         )
         .await;
     }

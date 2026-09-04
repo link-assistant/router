@@ -2,6 +2,7 @@
 
 #![cfg(unix)]
 
+use base64::Engine as _;
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -10,6 +11,18 @@ use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
 use wait_timeout::ChildExt as _;
+
+fn bound_client_token(client: &str) -> String {
+    let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
+        serde_json::json!({
+            "sub": "run-id",
+            "client_kind": client,
+            "principal_id": "run-principal",
+        })
+        .to_string(),
+    );
+    format!("la_sk_e30.{payload}.signature")
+}
 
 fn read_request(stream: &mut std::net::TcpStream) -> String {
     stream
@@ -90,6 +103,7 @@ fn mock_router() -> (String, thread::JoinHandle<Vec<String>>) {
 fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock router");
     let port = listener.local_addr().expect("mock address").port();
+    let issued = serde_json::json!({"token": bound_client_token("codex")}).to_string();
     let handle = thread::spawn(move || {
         let mut requests = Vec::new();
         for _ in 0..5 {
@@ -103,10 +117,7 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
             let (status, body) = match path {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
                 "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
-                "/api/management/tokens/client" => (
-                    "200 OK",
-                    r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
-                ),
+                "/api/management/tokens/client" => ("200 OK", issued.as_str()),
                 "/api/services/codex/v1/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#,
@@ -130,6 +141,7 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
 fn mock_split_management() -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind management listener");
     let port = listener.local_addr().expect("management address").port();
+    let issued = serde_json::json!({"token": bound_client_token("codex")}).to_string();
     let handle = thread::spawn(move || {
         let mut requests = Vec::new();
         for _ in 0..3 {
@@ -142,10 +154,7 @@ fn mock_split_management() -> (String, thread::JoinHandle<Vec<String>>) {
                 .unwrap_or("");
             let (status, body) = match path {
                 "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
-                "/api/management/tokens/client" => (
-                    "200 OK",
-                    r#"{"token":"e30.eyJzdWIiOiJydW4taWQifQ.signature"}"#,
-                ),
+                "/api/management/tokens/client" => ("200 OK", issued.as_str()),
                 "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
                 _ => ("404 Not Found", r#"{"error":"route class crossed"}"#),
             };
@@ -310,6 +319,7 @@ fn run_with(
     server: &str,
     standalone: bool,
 ) -> Output {
+    let token = bound_client_token("codex");
     let inherited_path = std::env::var_os("PATH").unwrap_or_default();
     let path = std::env::join_paths(
         std::iter::once(bin_dir.to_path_buf()).chain(std::env::split_paths(&inherited_path)),
@@ -321,14 +331,7 @@ fn run_with(
     }
     command
         .args([
-            "--server",
-            server,
-            "--token",
-            "la_sk_ordinary",
-            "codex",
-            "--",
-            "--global",
-            "hi",
+            "--server", server, "--token", &token, "codex", "--", "--global", "hi",
         ])
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -445,7 +448,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
     );
     assert_eq!(
         fs::read_to_string(capture.join("token")).expect("captured token"),
-        "la_sk_ordinary\n"
+        format!("{}\n", bound_client_token("codex"))
     );
     let captured_home = fs::read_to_string(capture.join("home")).expect("captured HOME");
     assert_eq!(captured_home.trim(), home.to_string_lossy());
@@ -479,19 +482,13 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
     fs::create_dir_all(&capture).expect("create capture directory");
     fake_codex(&bin);
     let (server, requests) = mock_router();
+    let token = bound_client_token("codex");
     let inherited_path = std::env::var_os("PATH").unwrap_or_default();
     let path =
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
             .expect("compose PATH");
     let mut wrapper = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args([
-            "--server",
-            &server,
-            "--token",
-            "la_sk_ordinary",
-            "codex",
-            "wait",
-        ])
+        .args(["--server", &server, "--token", &token, "codex", "wait"])
         .env("HOME", &home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
         .env("PATH", path)
@@ -546,16 +543,11 @@ fn global_undo_restores_exact_config_and_permissions() {
     fs::write(&config, original).expect("seed config");
     fs::set_permissions(&config, fs::Permissions::from_mode(0o640)).expect("set original mode");
     let (server, health) = mock_router();
+    let token = bound_client_token("codex");
 
     let configured = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .args([
-            "with",
-            "--server",
-            &server,
-            "--token",
-            "la_sk_ordinary",
-            "--global",
-            "codex",
+            "with", "--server", &server, "--token", &token, "--global", "codex",
         ])
         .env("HOME", &home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -608,15 +600,9 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
     fs::create_dir_all(config.parent().expect("config parent")).expect("create Codex home");
     fs::write(&config, "model_provider = 'personal'\n").expect("seed config");
     let (server, health) = mock_router();
+    let token = bound_client_token("codex");
     let configured = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args([
-            "--server",
-            &server,
-            "--token",
-            "la_sk_ordinary",
-            "--global",
-            "codex",
-        ])
+        .args(["--server", &server, "--token", &token, "--global", "codex"])
         .env("HOME", &home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
         .env_remove("CODEX_HOME")
@@ -655,16 +641,11 @@ fn global_undo_removes_a_config_that_did_not_exist_before_setup() {
     fs::create_dir_all(&home).expect("create home");
     let config = home.join(".codex/config.toml");
     let (server, health) = mock_router();
+    let token = bound_client_token("codex");
 
     let configured = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .args([
-            "with",
-            "--server",
-            &server,
-            "--token",
-            "la_sk_ordinary",
-            "--global",
-            "codex",
+            "with", "--server", &server, "--token", &token, "--global", "codex",
         ])
         .env("HOME", &home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -710,8 +691,9 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         ("invalid token", "supplied token as invalid"),
     ] {
         let (server, router) = mock_rejected_token_router(message);
+        let token = bound_client_token("codex");
         let rejected = Command::new(env!("CARGO_BIN_EXE_with-router"))
-            .args(["--server", &server, "--token", "rejected", "codex"])
+            .args(["--server", &server, "--token", &token, "codex"])
             .env("HOME", &home)
             .env("XDG_CONFIG_HOME", home.join(".config"))
             .output()
@@ -726,12 +708,13 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
     }
 
     let (server, requests) = mock_router();
+    let token = bound_client_token("codex");
     let unavailable = Command::new(env!("CARGO_BIN_EXE_with-router"))
         .args([
             "--server",
             &server,
             "--token",
-            "ordinary",
+            &token,
             "--model",
             "not-in-catalog",
             "codex",
@@ -792,7 +775,7 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
     );
     assert_eq!(
         fs::read_to_string(capture.join("token")).expect("captured token"),
-        "e30.eyJzdWIiOiJydW4taWQifQ.signature\n"
+        format!("{}\n", bound_client_token("codex"))
     );
     let requests = router.join().expect("mock router thread");
     let paths = requests
@@ -960,6 +943,7 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     fs::create_dir_all(&capture).expect("create capture directory");
     fake_claude(&bin);
     let (server, requests) = mock_router();
+    let token = bound_client_token("claude");
     let inherited_path = std::env::var_os("PATH").unwrap_or_default();
     let path =
         std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
@@ -972,7 +956,7 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
         "--server",
         &server,
         "--token",
-        "la_sk_ordinary",
+        &token,
         "claude",
         "--resume",
         "2a42a73e-19de-459a-8c24-c5e75abf9a65",
