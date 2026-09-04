@@ -75,11 +75,14 @@ fn fail_if_injected(path: &Path, point: FaultPoint) -> io::Result<()> {
     let mut slot = fault_slot()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    if slot
+    let injected = slot
         .as_ref()
-        .is_some_and(|fault| fault.path == path && fault.point == point)
-    {
+        .is_some_and(|fault| fault.path == path && fault.point == point);
+    if injected {
         *slot = None;
+    }
+    drop(slot);
+    if injected {
         return Err(io::Error::other(format!(
             "injected durable-file failure at {point:?}"
         )));
@@ -278,8 +281,7 @@ where
         // Closing the descriptor releases the lock as well. A late explicit
         // unlock failure cannot undo a completed durable operation and must
         // not turn its public result into an ambiguous failure.
-        (Ok(value), Err(_)) => Ok(value),
-        (Ok(value), Ok(())) => Ok(value),
+        (Ok(value), _) => Ok(value),
     }
 }
 

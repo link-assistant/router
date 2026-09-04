@@ -101,8 +101,7 @@ async fn selected_provider_request_carries_the_router_token_in_all_supported_car
     .await;
 
     assert_eq!(exit, ExitCode::SUCCESS);
-    let captured = captured.lock().unwrap();
-    let (path, headers) = captured.as_ref().unwrap();
+    let (path, headers) = captured.lock().unwrap().clone().unwrap();
     assert_eq!(path, "/api/usage/openai");
     assert_eq!(headers["authorization"], "Bearer router-client-token");
     assert_eq!(headers["x-api-key"], "router-client-token");

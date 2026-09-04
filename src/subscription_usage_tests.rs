@@ -793,10 +793,11 @@ async fn rejected_usage_token_is_refreshed_and_retried_once() {
         reader.read_token().unwrap().access_token,
         "refreshed-access"
     );
-    let hits = hits.lock().unwrap();
     let paths = hits
+        .lock()
+        .unwrap()
         .iter()
-        .map(|(path, _)| path.as_str())
+        .map(|(path, _)| path.clone())
         .collect::<Vec<_>>();
     assert_eq!(
         paths,
