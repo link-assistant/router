@@ -139,6 +139,65 @@ fn upstream_headers_preserve_client_identity_but_not_router_or_transport_fields(
     assert!(upstream.get("anthropic-version").is_none());
 }
 
+#[test]
+fn every_reviewed_ingress_network_header_is_removed_without_touching_native_headers() {
+    let ingress = [
+        "forwarded",
+        "x-forwarded-for",
+        "x-forwarded-host",
+        "x-forwarded-proto",
+        "x-forwarded-port",
+        "x-forwarded-server",
+        "x-original-forwarded-for",
+        "x-real-ip",
+        "x-client-ip",
+        "x-cluster-client-ip",
+        "cf-connecting-ip",
+        "true-client-ip",
+        "fastly-client-ip",
+        "fly-client-ip",
+        "x-envoy-external-address",
+        "x-azure-clientip",
+        "x-appengine-user-ip",
+        "cloudfront-viewer-address",
+    ];
+    let mut incoming = HeaderMap::new();
+    for name in ingress {
+        let name = axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap();
+        incoming.append(name.clone(), HeaderValue::from_static("192.0.2.10"));
+        incoming.append(name, HeaderValue::from_static("198.51.100.20"));
+    }
+    for (name, value) in [
+        ("anthropic-version", "2023-06-01"),
+        ("anthropic-beta", "interleaved-thinking-2025-05-14"),
+        ("x-codex-turn-metadata", "synthetic-turn"),
+        ("x-stainless-package-version", "1.2.3"),
+        ("x-session-id", "synthetic-session"),
+        ("user-agent", "synthetic-client/1.0"),
+    ] {
+        incoming.insert(name, HeaderValue::from_static(value));
+    }
+
+    let upstream = build_upstream_headers(
+        &incoming,
+        "upstream-secret",
+        &LogLazy::with_level(levels::NONE),
+    );
+    for name in ingress {
+        assert!(upstream.get(name).is_none(), "{name} leaked upstream");
+    }
+    for name in [
+        "anthropic-version",
+        "anthropic-beta",
+        "x-codex-turn-metadata",
+        "x-stainless-package-version",
+        "x-session-id",
+        "user-agent",
+    ] {
+        assert_eq!(upstream.get_all(name).iter().count(), 1, "{name}");
+    }
+}
+
 /// The router negotiates its own hop, so the log can read its own traffic.
 ///
 /// The client's `accept-encoding` was relayed untouched, so the caller's

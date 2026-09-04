@@ -14,6 +14,8 @@ bump: patch
 - Made the Anthropic API switch own the complete Anthropic namespace, including its model catalogue.
 - Kept Router correlation IDs internal to logs so client and provider `x-request-id` headers remain transparent end to end.
 - Stopped mapping one z.ai model onto Claude Code's three Anthropic family overrides; z.ai-only setup now pins only the dynamic main and subagent boundaries.
+- Removed ingress forwarding and client-IP headers from every shared native upstream path while preserving official client protocol headers unchanged.
+- Replaced the obsolete unbound Anthropic curl example with the current Claude-bound token and transparent-header contract.
 
 ### Changed
 - Updated the pinned Codex and OpenCode real-client validation dependencies to 0.153.3 and 1.18.28.

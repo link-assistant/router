@@ -246,54 +246,63 @@ INFO Claude Code home: /home/user/.claude
 INFO Listening on 0.0.0.0:8080
 ```
 
-### 5. Issue a custom token
+### 5. Issue a Claude-bound client token
 
 ```bash
-curl -s -X POST http://localhost:8080/api/management/tokens \
+export ROUTER_ADMIN_TOKEN='<admin-token>'
+export ROUTER_CLIENT_TOKEN="$(curl -fsS -X POST \
+  http://localhost:8080/api/management/tokens/client \
+  -H "Authorization: Bearer ${ROUTER_ADMIN_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"ttl_hours": 24, "label": "my-dev-token"}' | jq .
+  -d '{"client_kind":"claude","ttl_hours":24,"label":"manual-claude"}' \
+  | jq -er .token)"
 ```
 
-Response:
+The response contains the canonical binding and subscriber principal alongside
+the one-time token value:
 
 ```json
 {
-  "token": "la_sk_eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token": "<client-token>",
   "ttl_hours": 24,
-  "label": "my-dev-token"
+  "label": "manual-claude",
+  "client_kind": "claude",
+  "principal_id": "primary"
 }
 ```
 
-Save the `token` value for use in API requests.
+An unbound token, a different client kind, or a provider the bound client is not
+entitled to use is rejected before Router contacts an upstream.
 
 ### 6. Use the router as an Anthropic API proxy
 
 ```bash
-# Use the custom token to make requests through the router
-curl -s http://localhost:8080/api/services/anthropic/v1/messages \
-  -H "Authorization: Bearer la_sk_eyJ0eXAi..." \
+# Select an exact model advertised to this same bound token.
+MODEL="$(curl -fsS http://localhost:8080/api/services/anthropic/v1/models \
+  -H "Authorization: Bearer ${ROUTER_CLIENT_TOKEN}" | jq -er '.data[0].id')"
+
+curl -fsS http://localhost:8080/api/services/anthropic/v1/messages \
+  -H "Authorization: Bearer ${ROUTER_CLIENT_TOKEN}" \
   -H "Content-Type: application/json" \
   -H "anthropic-version: 2023-06-01" \
+  -H "User-Agent: claude-cli/2.1.259" \
   -d '{
-    "model": "claude-sonnet-4-20250514",
+    "model": "'"${MODEL}"'",
     "max_tokens": 100,
     "messages": [{"role": "user", "content": "Hello!"}]
   }' | jq .
 ```
 
 The router will:
-1. Validate the `la_sk_...` token
-2. Replace it with the real OAuth token from the Claude Code session
-3. Inject the upstream headers Claude MAX OAuth requires — `anthropic-version`
-   (default `2023-06-01` when the client omits it) and the
-   `anthropic-beta: oauth-2025-04-20` flag (merged with any betas the client
-   already sent)
-4. Forward the request to `https://api.anthropic.com/v1/messages`
-5. Stream the response back to the client
 
-Because the router injects these headers itself, a client only needs to send the
-`la_sk_...` token — it never needs the real OAuth token, the OAuth beta flag, or
-even an `anthropic-version` header.
+1. Validate the signed `claude` client binding, principal, request evidence,
+   model ownership, and provider entitlement.
+2. Replace only the Router authentication material with the upstream OAuth
+   credential.
+3. Strip ingress forwarding and client-IP metadata.
+4. Preserve the other native client headers and body unchanged, without
+   inventing a missing `anthropic-version` or `anthropic-beta` value.
+5. Forward to the native Anthropic Messages resource and relay the response.
 
 ## Use-case documentation
 

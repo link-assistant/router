@@ -66,7 +66,20 @@ fn replaced_or_transport_header(name: &str) -> bool {
             | "x-forwarded-for"
             | "x-forwarded-host"
             | "x-forwarded-proto"
+            | "x-forwarded-port"
+            | "x-forwarded-server"
+            | "x-original-forwarded-for"
             | "x-real-ip"
+            | "x-client-ip"
+            | "x-cluster-client-ip"
+            | "cf-connecting-ip"
+            | "true-client-ip"
+            | "fastly-client-ip"
+            | "fly-client-ip"
+            | "x-envoy-external-address"
+            | "x-azure-clientip"
+            | "x-appengine-user-ip"
+            | "cloudfront-viewer-address"
     ) || name.starts_with("x-link-assistant-")
         || name.starts_with("x-router-")
 }

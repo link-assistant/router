@@ -51,14 +51,19 @@ claude
 Pre-1.0.0 prefixes are not accepted. See the
 [canonical-route migration](../migrations/1.0.0-canonical-routes.md).
 
-## What the router supplies
+## What the router changes
 
-The client sends only its `la_sk_…` token. The router adds, per request:
+The client sends its `la_sk_…` token plus its native protocol headers. Per
+request, the router:
 
-- the real upstream credential (Claude MAX OAuth, or the bridged provider's),
-- `anthropic-version: 2023-06-01` when the client omitted it,
-- `anthropic-beta: oauth-2025-04-20`, merged with any betas the client already
-  sent.
+- replaces only that Router credential with the real upstream credential
+  (Claude OAuth, or an explicitly permitted provider's credential),
+- removes ingress forwarding and client-IP metadata, and
+- preserves other native client headers exactly as sent.
+
+It does not synthesize a missing `anthropic-version` or `anthropic-beta`
+header. A request missing evidence required by the supported Claude client
+contract is rejected before upstream.
 
 ## Which subscription answers
 
