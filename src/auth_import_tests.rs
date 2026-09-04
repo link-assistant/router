@@ -249,13 +249,13 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
         .expect("refresh chain and catalog must validate");
 
         let staged: serde_json::Value =
-            serde_json::from_str(&validated.document).expect("staged document");
+            serde_json::from_str(validated.document()).expect("staged document");
         assert_eq!(staged["vendor_marker"], "preserved", "{provider}");
         assert!(
-            validated.document.contains("fresh-access")
-                && validated.document.contains("fresh-refresh"),
+            validated.document().contains("fresh-access")
+                && validated.document().contains("fresh-refresh"),
             "{provider} did not return the durably rotated candidate: {}",
-            validated.document
+            validated.document()
         );
         assert_eq!(
             std::fs::read_to_string(&destination_path).unwrap(),
@@ -266,7 +266,7 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
         install_candidate(
             &destination,
             root.path(),
-            &validated.document,
+            validated.document(),
             CredentialProbe::Accepted,
             ImportPolicy::default(),
         )
@@ -274,7 +274,7 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
         .expect("validated candidate promotion");
         assert_eq!(
             std::fs::read_to_string(&destination_path).unwrap(),
-            validated.document,
+            validated.document(),
             "{provider} did not promote the staged bytes"
         );
 
@@ -441,37 +441,40 @@ fn catalog_validation_uses_only_provider_owned_defaults() {
 /// Diagnostics for an advanced refresh chain must identify the transaction
 /// without retaining credential material in formatted output. Explicit
 /// retention must leave that transaction available for operator recovery.
-#[test]
-fn validated_candidate_diagnostics_are_redacted_and_retention_is_durable() {
+#[tokio::test]
+async fn validated_candidate_diagnostics_are_redacted_and_retention_is_durable() {
+    let provider = SubscriptionProvider::Claude;
+    let (url, _requests, server) = start_candidate_vendor(provider, false, false).await;
     let root = tempfile::tempdir().expect("staging root");
-    let stage = tempfile::Builder::new()
-        .prefix("transaction-")
-        .tempdir_in(root.path())
-        .expect("candidate transaction");
-    let retained_path = stage.path().to_path_buf();
-    std::fs::write(stage.path().join("credential"), "secret-document").expect("candidate bytes");
-    let candidate = ValidatedCandidate {
-        document: "secret-document".into(),
-        token: link_assistant_router::subscription::SubscriptionToken {
-            access_token: "secret-access".into(),
-            refresh_token: Some("secret-refresh".into()),
-            expires_at_ms: None,
-            account_id: None,
-            resource_url: None,
-        },
-        stage,
-        transaction_id: "visible-transaction-id".into(),
-    };
+    let candidate = validate_candidate_with(
+        root.path(),
+        provider,
+        &candidate_document(provider),
+        Some(&format!("{url}/token")),
+        Some(&url),
+    )
+    .await
+    .expect("candidate acceptance");
+    let transaction_id = candidate.transaction_id().to_string();
 
     let diagnostic = format!("{candidate:?}");
-    assert!(
-        diagnostic.contains("visible-transaction-id"),
-        "{diagnostic}"
-    );
+    assert!(diagnostic.contains(&transaction_id), "{diagnostic}");
     assert!(!diagnostic.contains("secret"), "{diagnostic}");
 
-    assert_eq!(candidate.retain(), "visible-transaction-id");
-    assert!(retained_path.join("credential").is_file());
+    assert_eq!(candidate.retain(), transaction_id);
+    let retained = std::fs::read_dir(root.path().join("auth-import-candidates"))
+        .expect("retained root")
+        .next()
+        .expect("retained transaction")
+        .expect("retained entry")
+        .path();
+    assert!(
+        retained
+            .join(provider.as_str())
+            .join(provider.canonical_credential_filename())
+            .is_file()
+    );
+    server.abort();
 }
 
 /// Machine output contains only the stable contract fields. Human diagnostics

@@ -2,7 +2,8 @@
 
 use std::process::ExitCode;
 
-use link_assistant_router::refresh::{ImportRefreshFailure, ImportRefreshFailureKind};
+#[cfg(test)]
+use link_assistant_router::refresh::ImportRefreshFailureKind;
 use serde::Serialize;
 
 /// Public import outcomes. These serialized spellings are a compatibility
@@ -80,12 +81,42 @@ impl ImportFailure {
         }
     }
 
-    /// Convert the refresh layer's typed classification without parsing its
+    /// Convert the shared acceptance classification without parsing its
     /// redacted human diagnostic. Only uncertain failures retain a transaction.
-    pub(super) fn from_refresh(failure: &ImportRefreshFailure, transaction_id: &str) -> Self {
-        Self::from_refresh_kind(failure.kind(), failure.to_string(), transaction_id)
+    pub(super) fn from_acceptance(
+        failure: &link_assistant_router::credential_acceptance::AcceptanceFailure,
+    ) -> Self {
+        use link_assistant_router::credential_acceptance::{
+            AcceptanceFailureKind, AcceptancePhase,
+        };
+        let phase = match failure.phase() {
+            AcceptancePhase::Preflight => ImportPhase::Preflight,
+            AcceptancePhase::Exchange => ImportPhase::Exchange,
+            AcceptancePhase::Persistence => ImportPhase::Persistence,
+            AcceptancePhase::Catalog => ImportPhase::Catalog,
+            AcceptancePhase::Promotion => ImportPhase::Promotion,
+        };
+        let error = failure.to_string();
+        match failure.kind() {
+            AcceptanceFailureKind::NotAttempted => Self::not_attempted(error),
+            AcceptanceFailureKind::ExchangeRejected => Self {
+                outcome: ImportOutcome::ExchangeRejected,
+                phase,
+                previous_credential_safe: true,
+                transaction_id: None,
+                error,
+            },
+            AcceptanceFailureKind::SuccessorRetained => Self {
+                outcome: ImportOutcome::SuccessorRetained,
+                phase,
+                previous_credential_safe: false,
+                transaction_id: failure.transaction_id().map(str::to_string),
+                error,
+            },
+        }
     }
 
+    #[cfg(test)]
     fn from_refresh_kind(
         kind: ImportRefreshFailureKind,
         error: String,

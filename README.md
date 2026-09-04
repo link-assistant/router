@@ -103,9 +103,15 @@ before using it. If that home is read-only, an owner-only recovery record under
 `DATA_DIR/refresh-recovery` keeps the rotation durable and is reconciled later.
 Refresh, native login, and import share one provider/account transaction lock;
 if the lock or every durable destination is unavailable, the request fails
-closed instead of serving a token whose rotation could be lost. An access-token
-refresh that leaves the refresh link unchanged remains an in-memory cache entry,
-avoiding an unnecessary write. Secrets are never logged. The canonical OpenAI
+closed instead of serving a token whose rotation could be lost. Native Claude
+and Codex login also keep a newly exchanged credential outside the primary,
+durably advance its refresh chain, and require at least one model from the
+vendor's non-inference catalog before atomic promotion. A `401`, empty or
+malformed catalog, outage, or timeout leaves the previous primary bytes intact
+and keeps the staged recovery evidence while exposing only an opaque transaction
+identifier. `auth status` uses the same catalog-acceptance rule. An access-token refresh that leaves the
+refresh link unchanged remains an in-memory cache entry, avoiding an unnecessary
+write. Secrets are never logged. The canonical OpenAI
 Chat Completions and Responses service routes are
 translated to each backend's dialect (Codex uses the OpenAI Responses API;
 Gemini uses the Code Assist envelope with synthesized SSE for streaming; Qwen is

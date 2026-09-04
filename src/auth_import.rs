@@ -12,6 +12,9 @@
 use std::process::ExitCode;
 
 use link_assistant_router::cli::{AuthOp, ImportProvider};
+use link_assistant_router::credential_acceptance::AcceptedCredential as ValidatedCandidate;
+#[cfg(test)]
+use link_assistant_router::credential_acceptance::catalog_base_for_candidate;
 use link_assistant_router::subscription::{
     ImportSource, InstallDocumentResult, InstallMode, SubscriptionProvider, SubscriptionReader,
 };
@@ -39,38 +42,6 @@ struct ImportPolicy {
     /// Whether the caller explicitly asserted the safe-flow capability. This
     /// is diagnostic only and never bypasses candidate validation.
     capability_asserted: bool,
-}
-
-/// A refresh-proven, catalog-accepted document living in an isolated store.
-struct ValidatedCandidate {
-    document: String,
-    token: link_assistant_router::subscription::SubscriptionToken,
-    stage: tempfile::TempDir,
-    transaction_id: String,
-}
-
-impl std::fmt::Debug for ValidatedCandidate {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter
-            .debug_struct("ValidatedCandidate")
-            .field("provider", &"redacted")
-            .field("transaction_id", &self.transaction_id)
-            .finish_non_exhaustive()
-    }
-}
-
-impl ValidatedCandidate {
-    /// Keep the only durable copy of a newly advanced refresh chain when it
-    /// cannot be promoted. Returns a non-secret transaction identifier.
-    fn retain(self) -> String {
-        let Self {
-            stage,
-            transaction_id,
-            ..
-        } = self;
-        let _retained_path = stage.keep();
-        transaction_id
-    }
 }
 
 /// Adopt an existing vendor login, when this invocation asked to.
@@ -451,10 +422,10 @@ async fn import_provider(
     // durable store, then ask the non-inference catalog with the persisted
     // result. The destination remains untouched throughout both network calls.
     let validated = validate_candidate(&config.data_dir, provider, document).await?;
-    let report = describe_credential(&validated.token);
+    let report = describe_credential(validated.token());
     if (policy.if_absent && destination.has_platform_store_credential())
         || (!policy.if_absent
-            && destination.candidate_is_shadowed_by_platform_store(&validated.token))
+            && destination.candidate_is_shadowed_by_platform_store(validated.token()))
     {
         let transaction_id = validated.retain();
         return Err(ImportFailure::retained(
@@ -468,7 +439,7 @@ async fn import_provider(
     let promotion = install_candidate(
         &destination,
         &config.data_dir,
-        &validated.document,
+        validated.document(),
         CredentialProbe::Accepted,
         policy,
     )
@@ -576,187 +547,15 @@ async fn validate_candidate_with(
     token_url_override: Option<&str>,
     catalog_base_url_override: Option<&str>,
 ) -> Result<ValidatedCandidate, ImportFailure> {
-    let staging_root = data_dir.join("auth-import-candidates");
-    std::fs::create_dir_all(&staging_root).map_err(|_| {
-        ImportFailure::not_attempted("could not create the private credential-import staging area")
-    })?;
-    let transaction_id = uuid::Uuid::new_v4().simple().to_string();
-    let stage = tempfile::Builder::new()
-        .prefix(&format!("{transaction_id}-"))
-        .tempdir_in(&staging_root)
-        .map_err(|_| {
-            ImportFailure::not_attempted("could not create a private credential-import transaction")
-        })?;
-    let candidate_home = stage.path().join(provider.as_str());
-    std::fs::create_dir(&candidate_home).map_err(|_| {
-        ImportFailure::not_attempted("could not create the isolated candidate store")
-    })?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&candidate_home, std::fs::Permissions::from_mode(0o700)).map_err(
-            |_| ImportFailure::not_attempted("could not protect the isolated candidate store"),
-        )?;
-    }
-    let reader = SubscriptionReader::new(provider, &candidate_home);
-    reader.install_document(document).map_err(|_| {
-        ImportFailure::not_attempted(format!(
-            "the {provider} candidate could not be staged durably"
-        ))
-    })?;
-    let catalog_base = if let Some(base) = catalog_base_url_override {
-        base.trim_end_matches('/').to_string()
-    } else {
-        let staged = reader.read_document_for_import().map_err(|_| {
-            ImportFailure::not_attempted(format!(
-                "the staged {provider} candidate could not be read for validation"
-            ))
-        })?;
-        catalog_base_for_candidate(provider, &staged.token).map_err(ImportFailure::not_attempted)?
-    };
-
-    let candidate_data = stage.path().join("router-state");
-    let cache = link_assistant_router::refresh::TokenCache::registered_for(
-        std::slice::from_ref(&reader),
-        &candidate_data,
-    );
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(20))
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|_| ImportFailure::not_attempted("could not initialize candidate validation"))?;
-    let now_ms = chrono::Utc::now().timestamp_millis();
-    let refresh_result = match token_url_override {
-        Some(token_url) => {
-            cache
-                .validate_refresh_chain_registered_at_classified(
-                    &client,
-                    token_url,
-                    provider,
-                    link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-                    now_ms,
-                )
-                .await
-        }
-        None => {
-            cache
-                .validate_refresh_chain_registered_classified(
-                    &client,
-                    provider,
-                    link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-                    now_ms,
-                )
-                .await
-        }
-    };
-    let refreshed = match refresh_result {
-        Ok(refreshed) => refreshed,
-        Err(error) => {
-            // The endpoint may have advanced a rotating chain before a
-            // response, persistence, or authoritative reread failed. Retain
-            // the isolated store conservatively; dropping it here could
-            // delete the only durable successor.
-            let mut failure = ImportFailure::from_refresh(&error, &transaction_id);
-            if failure.outcome == ImportOutcome::SuccessorRetained {
-                let _retained_path = stage.keep();
-                failure.error = format!(
-                    "{}; isolated candidate retained as transaction {transaction_id}",
-                    failure.error
-                );
-            }
-            return Err(failure);
-        }
-    };
-
-    // The refresh has advanced the source's rotating chain. From this point on,
-    // a failed catalog or promotion must retain the staged durable successor.
-    if let Err(error) = link_assistant_router::model_catalog::fetch_provider_catalog(
-        &client,
+    link_assistant_router::credential_acceptance::accept_candidate(
+        data_dir,
         provider,
-        &refreshed,
-        Some(&catalog_base),
+        document,
+        token_url_override,
+        catalog_base_url_override,
     )
     .await
-    {
-        let reason = if link_assistant_router::model_catalog::is_credential_rejection(&error) {
-            "was rejected by the vendor catalog"
-        } else {
-            "was not positively accepted by the vendor catalog"
-        };
-        let _retained_path = stage.keep();
-        return Err(ImportFailure::retained(
-            ImportPhase::Catalog,
-            transaction_id.clone(),
-            format!(
-                "the {provider} candidate {reason}; refreshed candidate retained as transaction {transaction_id}"
-            ),
-        ));
-    }
-
-    let Ok(durable) = reader.read_document_for_import() else {
-        let _retained_path = stage.keep();
-        return Err(ImportFailure::retained(
-            ImportPhase::Persistence,
-            transaction_id.clone(),
-            format!(
-                "the durable {provider} candidate could not be reread; refreshed candidate retained as transaction {transaction_id}"
-            ),
-        ));
-    };
-    if durable.token.access_token != refreshed.access_token
-        || durable.token.refresh_token != refreshed.refresh_token
-    {
-        let _retained_path = stage.keep();
-        return Err(ImportFailure::retained(
-            ImportPhase::Persistence,
-            transaction_id.clone(),
-            format!(
-                "the durable {provider} candidate changed after validation; refreshed candidate retained as transaction {transaction_id}"
-            ),
-        ));
-    }
-    Ok(ValidatedCandidate {
-        document: durable.document,
-        token: durable.token,
-        stage,
-        transaction_id,
-    })
-}
-
-/// Select the catalog origin without trusting arbitrary credential input.
-///
-/// Qwen Code binds a token to `portal.qwen.ai` through `resource_url`, while
-/// credentials without that field use the public `DashScope` endpoint. Only
-/// those exact HTTPS origins on the default port are eligible to receive the
-/// refreshed bearer token.
-fn catalog_base_for_candidate(
-    provider: SubscriptionProvider,
-    token: &link_assistant_router::subscription::SubscriptionToken,
-) -> Result<String, String> {
-    if provider == SubscriptionProvider::Gemini {
-        return Ok("https://generativelanguage.googleapis.com".to_string());
-    }
-    if provider != SubscriptionProvider::Qwen {
-        return Ok(provider.default_base_url().to_string());
-    }
-
-    let base = token.base_url(provider);
-    let parsed = reqwest::Url::parse(&base)
-        .map_err(|_| "the Qwen candidate names an invalid catalog origin".to_string())?;
-    let trusted_host = matches!(
-        parsed.host_str(),
-        Some("portal.qwen.ai" | "dashscope.aliyuncs.com")
-    );
-    let safe_authority = parsed.scheme() == "https"
-        && parsed.username().is_empty()
-        && parsed.password().is_none()
-        && parsed.port_or_known_default() == Some(443)
-        && parsed.query().is_none()
-        && parsed.fragment().is_none();
-    if !trusted_host || !safe_authority {
-        return Err("the Qwen candidate catalog origin is not trusted".to_string());
-    }
-    Ok(base.trim_end_matches('/').to_string())
+    .map_err(|failure| ImportFailure::from_acceptance(&failure))
 }
 
 /// Enforce candidate acceptance policy, then enter the shared writer boundary.

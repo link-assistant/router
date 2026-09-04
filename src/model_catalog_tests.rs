@@ -1,4 +1,24 @@
 use super::*;
+
+#[test]
+fn catalog_acceptance_requires_at_least_one_provider_parsed_model() {
+    assert_eq!(
+        classify_catalog_acceptance(&Ok(vec!["live-model".to_string()])),
+        CatalogAcceptance::Accepted
+    );
+    assert_eq!(
+        classify_catalog_acceptance(&Ok(Vec::new())),
+        CatalogAcceptance::MissingSubscription
+    );
+    assert_eq!(
+        classify_catalog_acceptance(&Err("HTTP 401 Unauthorized".to_string())),
+        CatalogAcceptance::CredentialRejected
+    );
+    assert_eq!(
+        classify_catalog_acceptance(&Err("request failed: timeout".to_string())),
+        CatalogAcceptance::Unverified
+    );
+}
 use axum::Router;
 use axum::extract::State;
 use axum::http::{HeaderMap, Uri};

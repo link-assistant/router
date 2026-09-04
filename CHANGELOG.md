@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
+- Stage native Claude and Codex OAuth credentials outside the active primary, durably validate refresh-token rotation, require positive non-inference catalog acceptance, and promote only under the primary writer lock. Rejection, missing subscription, malformed responses, outages, timeouts, and interrupted promotion now preserve the previous credential byte-for-byte and expose only an opaque recovery transaction; `auth status` applies the same acceptance rule ([#424](https://github.com/link-assistant/router/issues/424)).
+
 - Preserve live per-model Codex reasoning capabilities in `router with codex`, keep an explicit configured effort across compatible model selections, and reject unknown or incompatible metadata instead of silently lowering the effort ([#423](https://github.com/link-assistant/router/issues/423)).
 
 
