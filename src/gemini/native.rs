@@ -695,7 +695,10 @@ async fn forward_native_via_zai(
     streaming: bool,
     body: &Value,
 ) -> Response {
-    let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
+    let chat_request = match crate::gemini_bridge::gemini_request_to_chat_checked(model, body) {
+        Ok(request) => request,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
+    };
     let full_path = format!("/api/services/gemini/{path}");
     let response = crate::zai_coding_plan::forward(
         &state,
@@ -724,7 +727,10 @@ async fn forward_native_via_chat(
     body: &Value,
     entitlement: crate::client_policy::EntitlementDecision,
 ) -> Response {
-    let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
+    let chat_request = match crate::gemini_bridge::gemini_request_to_chat_checked(model, body) {
+        Ok(request) => request,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
+    };
     let state = routed.state;
     let response = crate::proxy::openai_chat_completions_routed(
         state.clone(),

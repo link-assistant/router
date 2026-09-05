@@ -10,208 +10,17 @@
 //! uses: system instruction, multi-turn text, client function declarations,
 //! function calls, function results, generation config and usage metadata.
 
-use serde_json::{Map, Value, json};
+use serde_json::{Value, json};
 
 /// Gemini part-role for assistant turns.
 const MODEL_ROLE: &str = "model";
 
-/// Translate a native Gemini `GenerateContentRequest` into an `OpenAI` Chat
-/// Completions body for `model`.
-#[must_use]
-pub fn gemini_request_to_chat(model: &str, request: &Value) -> Value {
-    let mut messages: Vec<Value> = Vec::new();
-
-    if let Some(text) = system_instruction_text(request)
-        && !text.is_empty()
-    {
-        messages.push(json!({ "role": "system", "content": text }));
-    }
-
-    // Gemini identifies a tool result only by function name, while OpenAI
-    // requires the id of the call it answers. Track the calls we emitted so a
-    // later `functionResponse` can be paired with the newest matching id.
-    let mut pending_calls: Vec<(String, String)> = Vec::new();
-    let mut call_counter = 0_usize;
-
-    for content in request
-        .get("contents")
-        .and_then(Value::as_array)
-        .map_or(&[][..], Vec::as_slice)
-    {
-        let role = content
-            .get("role")
-            .and_then(Value::as_str)
-            .unwrap_or("user");
-        let parts = content
-            .get("parts")
-            .and_then(Value::as_array)
-            .map_or(&[][..], Vec::as_slice);
-
-        let mut text = String::new();
-        let mut tool_calls: Vec<Value> = Vec::new();
-
-        for part in parts {
-            if let Some(chunk) = part.get("text").and_then(Value::as_str) {
-                text.push_str(chunk);
-            } else if let Some(call) = part.get("functionCall") {
-                let name = call
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default()
-                    .to_string();
-                let id = call
-                    .get("id")
-                    .and_then(Value::as_str)
-                    .map_or_else(|| format!("call_{call_counter}"), ToString::to_string);
-                call_counter += 1;
-                let arguments = call
-                    .get("args")
-                    .map_or_else(|| "{}".to_string(), ToString::to_string);
-                pending_calls.push((name.clone(), id.clone()));
-                tool_calls.push(json!({
-                    "id": id,
-                    "type": "function",
-                    "function": { "name": name, "arguments": arguments },
-                }));
-            } else if let Some(response) = part.get("functionResponse") {
-                let name = response
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default();
-                let id = take_call_id(&mut pending_calls, name)
-                    .unwrap_or_else(|| format!("call_{name}"));
-                let content = response
-                    .get("response")
-                    .map_or_else(String::new, ToString::to_string);
-                messages.push(json!({
-                    "role": "tool",
-                    "tool_call_id": id,
-                    "content": content,
-                }));
-            }
-        }
-
-        if role == MODEL_ROLE {
-            if !text.is_empty() || !tool_calls.is_empty() {
-                let mut message = Map::new();
-                message.insert("role".into(), json!("assistant"));
-                message.insert("content".into(), json!(text));
-                if !tool_calls.is_empty() {
-                    message.insert("tool_calls".into(), Value::Array(tool_calls));
-                }
-                messages.push(Value::Object(message));
-            }
-        } else if !text.is_empty() {
-            messages.push(json!({ "role": "user", "content": text }));
-        }
-    }
-
-    let mut chat = json!({ "model": model, "messages": messages });
-
-    if let Some(config) = request.get("generationConfig") {
-        for (gemini_key, openai_key) in [
-            ("maxOutputTokens", "max_tokens"),
-            ("temperature", "temperature"),
-            ("topP", "top_p"),
-            ("stopSequences", "stop"),
-        ] {
-            if let Some(value) = config.get(gemini_key) {
-                chat[openai_key] = value.clone();
-            }
-        }
-    }
-
-    let tools = translate_tools(request.get("tools"));
-    if !tools.is_empty() {
-        chat["tools"] = Value::Array(tools);
-    }
-    if let Some(choice) = translate_tool_choice(request.get("toolConfig")) {
-        chat["tool_choice"] = choice;
-    }
-    chat
-}
-
-/// Remove and return the newest pending call id emitted for `name`.
-fn take_call_id(pending: &mut Vec<(String, String)>, name: &str) -> Option<String> {
-    let index = pending.iter().rposition(|(call, _)| call == name)?;
-    Some(pending.remove(index).1)
-}
-
-fn system_instruction_text(request: &Value) -> Option<String> {
-    let instruction = request
-        .get("systemInstruction")
-        .or_else(|| request.get("system_instruction"))?;
-    let mut text = String::new();
-    if let Some(parts) = instruction.get("parts").and_then(Value::as_array) {
-        for part in parts {
-            if let Some(chunk) = part.get("text").and_then(Value::as_str) {
-                text.push_str(chunk);
-            }
-        }
-    } else if let Some(chunk) = instruction.as_str() {
-        text.push_str(chunk);
-    }
-    Some(text)
-}
-
-/// Translate Gemini tool declarations into `OpenAI` tool definitions.
-///
-/// Client tools arrive as `functionDeclarations`; Google's server-side search
-/// tool arrives as an empty `googleSearch`/`google_search_retrieval` object and
-/// maps onto the router's provider-agnostic `web_search` server tool, which
-/// [`crate::capabilities`] gates per provider.
-fn translate_tools(tools: Option<&Value>) -> Vec<Value> {
-    let mut translated = Vec::new();
-    for entry in tools
-        .and_then(Value::as_array)
-        .map_or(&[][..], Vec::as_slice)
-    {
-        if let Some(declarations) = entry
-            .get("functionDeclarations")
-            .or_else(|| entry.get("function_declarations"))
-            .and_then(Value::as_array)
-        {
-            for declaration in declarations {
-                let mut function = Map::new();
-                for key in ["name", "description"] {
-                    if let Some(value) = declaration.get(key) {
-                        function.insert(key.into(), value.clone());
-                    }
-                }
-                if let Some(parameters) = declaration
-                    .get("parameters")
-                    .or_else(|| declaration.get("parametersJsonSchema"))
-                {
-                    function.insert("parameters".into(), parameters.clone());
-                }
-                translated.push(json!({ "type": "function", "function": function }));
-            }
-        }
-        if entry.get("googleSearch").is_some()
-            || entry.get("google_search").is_some()
-            || entry.get("googleSearchRetrieval").is_some()
-            || entry.get("google_search_retrieval").is_some()
-        {
-            translated.push(json!({ "type": "web_search" }));
-        }
-    }
-    translated
-}
-
-fn translate_tool_choice(config: Option<&Value>) -> Option<Value> {
-    let config = config?;
-    let mode = config
-        .get("functionCallingConfig")
-        .or_else(|| config.get("function_calling_config"))?
-        .get("mode")
-        .and_then(Value::as_str)?;
-    match mode.to_ascii_uppercase().as_str() {
-        "ANY" => Some(json!("required")),
-        "NONE" => Some(json!("none")),
-        "AUTO" => Some(json!("auto")),
-        _ => None,
-    }
-}
+#[path = "gemini_bridge_request.rs"]
+mod request;
+pub use request::{chat_to_gemini_request, gemini_request_to_chat};
+pub(crate) use request::{
+    chat_to_gemini_request_checked, gemini_request_to_chat_checked, responses_to_chat_checked,
+};
 
 /// Translate an `OpenAI` Chat Completion into a native Gemini
 /// `GenerateContentResponse`.
@@ -349,14 +158,14 @@ mod tests {
                 "name": "get_weather",
                 "description": "look up weather",
                 "parameters": {"type": "object", "properties": {"city": {"type": "string"}}}
-            }]}, {"googleSearch": {}}],
+            }]}],
             "toolConfig": {"functionCallingConfig": {"mode": "ANY"}}
         });
         let chat = gemini_request_to_chat("claude-opus-4-7", &request);
         let tools = chat["tools"].as_array().unwrap();
         assert_eq!(tools[0]["function"]["name"], "get_weather");
         assert_eq!(tools[0]["function"]["parameters"]["type"], "object");
-        assert_eq!(tools[1]["type"], "web_search");
+        assert_eq!(tools.len(), 1);
         assert_eq!(chat["tool_choice"], "required");
     }
 

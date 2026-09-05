@@ -195,7 +195,12 @@ async fn one_unsupported_gemini_override_reuses_translation_and_revocation_is_im
         axum::extract::Path("v1beta/models/glm-5:generateContent".to_string()),
         headers,
         Ok(axum::Json(serde_json::json!({
-            "contents": [{"role":"user","parts":[{"text":"hi"}]}]
+            "contents": [{"role":"user","parts":[
+                {"text":"before"},
+                {"inlineData":{"mimeType":"image/png","data":"QUJD"}},
+                {"fileData":{"mimeType":"image/webp","fileUri":"https://images.test/a.webp"}},
+                {"text":"after"}
+            ]}]
         }))),
     ))
     .await;
@@ -204,6 +209,16 @@ async fn one_unsupported_gemini_override_reuses_translation_and_revocation_is_im
     assert_eq!(recorded.len(), 2);
     assert_eq!(recorded[1].0, "/api/coding/paas/v4/chat/completions");
     assert!(recorded[1].2.contains(r#""model":"glm-5""#));
+    let sent: serde_json::Value = serde_json::from_str(&recorded[1].2).unwrap();
+    assert_eq!(
+        sent["messages"][0]["content"],
+        serde_json::json!([
+            {"type": "text", "text": "before"},
+            {"type": "image_url", "image_url": {"url": "data:image/png;base64,QUJD"}},
+            {"type": "image_url", "image_url": {"url": "https://images.test/a.webp"}},
+            {"type": "text", "text": "after"}
+        ])
+    );
 
     state
         .provider_store

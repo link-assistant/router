@@ -322,13 +322,8 @@ fn validate_anthropic_block(
                 BridgeTarget::Responses => {
                     image_to_responses(block, path)?;
                 }
-                BridgeTarget::Chat => {
+                BridgeTarget::Chat | BridgeTarget::Gemini => {
                     image_to_chat(block, path)?;
-                }
-                BridgeTarget::Gemini => {
-                    return Err(format!(
-                        "{path} image cannot be represented by the selected provider"
-                    ));
                 }
             }
         }

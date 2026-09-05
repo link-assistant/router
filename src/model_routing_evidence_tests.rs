@@ -8,6 +8,7 @@ use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
 use std::fs;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use tempfile::{TempDir, tempdir};
 use tokio::sync::Barrier;
@@ -37,6 +38,19 @@ async fn rejecting_upstream() -> (String, tokio::task::JoinHandle<()>) {
         axum::serve(listener, app).await.unwrap();
     });
     (base_url, task)
+}
+
+async fn counting_upstream() -> (String, Arc<AtomicUsize>, tokio::task::JoinHandle<()>) {
+    let requests = Arc::new(AtomicUsize::new(0));
+    let seen = Arc::clone(&requests);
+    let app = axum::Router::new().fallback(move || {
+        seen.fetch_add(1, Ordering::SeqCst);
+        async { (StatusCode::OK, "{}") }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (base_url, requests, task)
 }
 
 fn write_credential(provider: SubscriptionProvider, home: &TempDir, base_url: &str) {
@@ -108,6 +122,47 @@ fn state_for(
         vec![MODEL.to_string()],
     );
     state
+}
+
+#[tokio::test]
+async fn gemini_translated_surfaces_reject_lossy_fields_without_inference() {
+    let (base_url, requests, task) = counting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+
+    let chat = crate::gemini::forward_chat_completions_as(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Opencode),
+        json!({
+            "model": MODEL,
+            "messages": [{"role": "user", "content": "hello"}],
+            "future_field": true
+        }),
+        crate::metrics::Surface::OpenAIChat,
+    )
+    .await;
+    assert_eq!(chat.status(), StatusCode::BAD_REQUEST);
+    let chat_body = chat.into_body().collect().await.unwrap().to_bytes();
+    let chat_body: Value = serde_json::from_slice(&chat_body).unwrap();
+    assert_eq!(chat_body["error"]["type"], "invalid_request_error");
+
+    let responses = crate::gemini::forward_responses(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Codex),
+        json!({
+            "model": MODEL,
+            "input": "hello",
+            "tools": [{"type": "web_search"}]
+        }),
+    )
+    .await;
+    assert_eq!(responses.status(), StatusCode::BAD_REQUEST);
+    let body = responses.into_body().collect().await.unwrap().to_bytes();
+    let body: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["error"]["type"], "invalid_request_error");
+    assert_eq!(requests.load(Ordering::SeqCst), 0);
+    task.abort();
 }
 
 /// A Code Assist SSE upstream whose final event is held behind a channel.
