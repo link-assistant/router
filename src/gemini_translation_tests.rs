@@ -65,7 +65,56 @@ fn finish_reasons_map_onto_the_openai_vocabulary() {
         assert_eq!(map_finish_reason(blocked), "content_filter", "{blocked}");
     }
     assert_eq!(map_finish_reason("STOP"), "stop");
-    assert_eq!(map_finish_reason("SOMETHING_NEW"), "stop");
+    assert_eq!(map_finish_reason("SOMETHING_NEW"), "content_filter");
+}
+
+#[test]
+fn buffered_tool_calls_preserve_identity_arguments_finish_and_usage_on_both_surfaces() {
+    let gemini = json!({
+        "candidates": [{
+            "content": {"parts": [{"functionCall": {
+                "id": "call_7", "name": "lookup", "args": {"key": "value"}
+            }}]},
+            "finishReason": "STOP"
+        }],
+        "usageMetadata": {"promptTokenCount": 2, "candidatesTokenCount": 3}
+    });
+    let chat = gemini_response_to_chat(&gemini, "served-model");
+    assert_eq!(chat["choices"][0]["finish_reason"], "tool_calls");
+    let call = &chat["choices"][0]["message"]["tool_calls"][0];
+    assert_eq!(call["id"], "call_7");
+    assert_eq!(call["function"]["name"], "lookup");
+    assert_eq!(call["function"]["arguments"], "{\"key\":\"value\"}");
+    assert_eq!(chat["usage"]["total_tokens"], 5);
+
+    let response = responses::from_chat(
+        &chat,
+        "requested-model",
+        responses::Finish::from_gemini(gemini_finish_reason(&gemini).unwrap()),
+    );
+    assert_eq!(response["status"], "completed");
+    assert_eq!(response["output"][0]["type"], "function_call");
+    assert_eq!(response["output"][0]["call_id"], "call_7");
+    assert_eq!(response["output"][0]["name"], "lookup");
+    assert_eq!(response["output"][0]["arguments"], "{\"key\":\"value\"}");
+    assert_eq!(response["usage"]["total_tokens"], 5);
+}
+
+#[test]
+fn buffered_prompt_blocks_do_not_become_successful_empty_responses() {
+    let gemini = json!({"promptFeedback": {"blockReason": "SAFETY"}});
+    let chat = gemini_response_to_chat(&gemini, "served-model");
+    assert_eq!(chat["choices"][0]["finish_reason"], "content_filter");
+    let response = responses::from_chat(
+        &chat,
+        "requested-model",
+        responses::Finish::from_gemini(gemini_finish_reason(&gemini).unwrap()),
+    );
+    assert_eq!(response["status"], "incomplete");
+    assert_eq!(
+        response["incomplete_details"],
+        json!({"reason": "content_filter"})
+    );
 }
 
 #[test]

@@ -19,6 +19,7 @@ use futures_util::StreamExt as _;
 use serde_json::{Value, json};
 
 mod native;
+mod responses;
 mod stream;
 #[cfg(test)]
 pub(crate) use native::forward_native_gemini_authorized;
@@ -35,58 +36,7 @@ pub const PROJECT_ENV: &str = "GEMINI_PROJECT";
 /// Model owner reported for Gemini catalog entries.
 pub const MODEL_OWNER: &str = "google";
 
-/// Translate an `OpenAI` Chat Completions request body to a Gemini
-/// `GenerateContentRequest`.
-#[must_use]
-pub fn chat_to_gemini_request(body: &Value) -> Value {
-    let mut contents: Vec<Value> = Vec::new();
-    let mut system_parts: Vec<Value> = Vec::new();
-
-    if let Some(messages) = body.get("messages").and_then(Value::as_array) {
-        for msg in messages {
-            let role = msg.get("role").and_then(Value::as_str).unwrap_or("user");
-            let text = extract_message_text(msg.get("content"));
-            match role {
-                "system" | "developer" => {
-                    system_parts.push(json!({ "text": text }));
-                }
-                "assistant" => contents.push(json!({
-                    "role": "model",
-                    "parts": [{ "text": text }],
-                })),
-                // user, tool, and anything else map to a user turn.
-                _ => contents.push(json!({
-                    "role": "user",
-                    "parts": [{ "text": text }],
-                })),
-            }
-        }
-    }
-
-    let mut generation_config = json!({});
-    if let Some(max) = body
-        .get("max_completion_tokens")
-        .or_else(|| body.get("max_tokens"))
-        .and_then(Value::as_u64)
-    {
-        generation_config["maxOutputTokens"] = json!(max);
-    }
-    if let Some(t) = body.get("temperature").and_then(Value::as_f64) {
-        generation_config["temperature"] = json!(t);
-    }
-    if let Some(t) = body.get("top_p").and_then(Value::as_f64) {
-        generation_config["topP"] = json!(t);
-    }
-
-    let mut request = json!({ "contents": contents });
-    if !system_parts.is_empty() {
-        request["systemInstruction"] = json!({ "parts": system_parts });
-    }
-    if generation_config.as_object().is_some_and(|o| !o.is_empty()) {
-        request["generationConfig"] = generation_config;
-    }
-    request
-}
+pub use crate::gemini_bridge::chat_to_gemini_request;
 
 /// Wrap a `GenerateContentRequest` in the Code Assist envelope.
 #[must_use]
@@ -111,26 +61,35 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
     // returns it at the top level. Accept both.
     let inner = resp.get("response").unwrap_or(resp);
     let mut text = String::new();
+    let mut tool_calls = Vec::new();
     let mut finish_reason = "stop";
-    if let Some(candidate) = inner
-        .get("candidates")
+    if let Some(parts) = inner
+        .pointer("/candidates/0/content/parts")
         .and_then(Value::as_array)
-        .and_then(|c| c.first())
     {
-        if let Some(parts) = candidate
-            .get("content")
-            .and_then(|c| c.get("parts"))
-            .and_then(Value::as_array)
-        {
-            for part in parts {
-                if let Some(t) = part.get("text").and_then(Value::as_str) {
-                    text.push_str(t);
-                }
+        for part in parts {
+            if let Some(t) = part.get("text").and_then(Value::as_str) {
+                text.push_str(t);
+            } else if let Some(call) = part.get("functionCall") {
+                let id = call
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .filter(|id| !id.is_empty())
+                    .map_or_else(|| format!("call_{}", uuid::Uuid::new_v4()), str::to_string);
+                tool_calls.push(json!({
+                    "id": id,
+                    "type": "function",
+                    "function": {
+                        "name": call.get("name").and_then(Value::as_str).unwrap_or_default(),
+                        "arguments": call.get("args").cloned()
+                            .unwrap_or_else(|| json!({})).to_string(),
+                    }
+                }));
             }
         }
-        if let Some(reason) = candidate.get("finishReason").and_then(Value::as_str) {
-            finish_reason = map_finish_reason(reason);
-        }
+    }
+    if let Some(reason) = gemini_finish_reason(resp) {
+        finish_reason = map_finish_reason(reason);
     }
 
     let usage = inner.get("usageMetadata");
@@ -143,6 +102,17 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
         .and_then(Value::as_u64)
         .unwrap_or(0);
 
+    let mut message = json!({"role": "assistant", "content": text});
+    if !tool_calls.is_empty() {
+        message["tool_calls"] = Value::Array(tool_calls);
+        if message["content"].as_str().is_some_and(str::is_empty) {
+            message["content"] = Value::Null;
+        }
+        if finish_reason == "stop" {
+            finish_reason = "tool_calls";
+        }
+    }
+
     json!({
         "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         "object": "chat.completion",
@@ -150,7 +120,7 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
         "model": model,
         "choices": [{
             "index": 0,
-            "message": { "role": "assistant", "content": text },
+            "message": message,
             "finish_reason": finish_reason,
         }],
         "usage": {
@@ -163,12 +133,21 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
 
 fn map_finish_reason(gemini: &str) -> &'static str {
     match gemini {
+        "STOP" => "stop",
         "MAX_TOKENS" => "length",
-        "SAFETY" | "RECITATION" | "BLOCKLIST" | "PROHIBITED_CONTENT" => "content_filter",
-        _ => "stop",
+        _ => "content_filter",
     }
 }
 
+fn gemini_finish_reason(response: &Value) -> Option<&str> {
+    let inner = response.get("response").unwrap_or(response);
+    inner
+        .pointer("/candidates/0/finishReason")
+        .or_else(|| inner.pointer("/promptFeedback/blockReason"))
+        .and_then(Value::as_str)
+}
+
+#[cfg(test)]
 fn extract_message_text(content: Option<&Value>) -> String {
     match content {
         Some(Value::String(s)) => s.clone(),
@@ -302,7 +281,7 @@ pub(crate) async fn forward_responses_routed(
     .await
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 enum ShapeIn {
     Chat,
     Responses,
@@ -496,7 +475,10 @@ async fn forward(
     // translator handles both surfaces.
     let chat_body = match shape {
         ShapeIn::Chat => body,
-        ShapeIn::Responses => responses_to_chat(&body),
+        ShapeIn::Responses => match crate::gemini_bridge::responses_to_chat_checked(&body) {
+            Ok(chat) => chat,
+            Err(reason) => return bridge_request_error(surface, &reason),
+        },
     };
 
     let catalog = state
@@ -518,7 +500,10 @@ async fn forward(
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    let gemini_request = chat_to_gemini_request(&chat_body);
+    let gemini_request = match crate::gemini_bridge::chat_to_gemini_request_checked(&chat_body) {
+        Ok(request) => request,
+        Err(reason) => return bridge_request_error(surface, &reason),
+    };
     let envelope = code_assist_envelope(&model, &gemini_request);
     let serialized = match serde_json::to_vec(&envelope) {
         Ok(v) => v,
@@ -615,16 +600,20 @@ async fn forward(
             requested_model.clone()
         };
         let mut translator = stream::OpenAiStreamTranslator::new(response_model);
-        let stream = upstream_resp.bytes_stream().map(move |chunk| {
-            chunk.map_or_else(
-                |error| Err(std::io::Error::other(error)),
-                |bytes| {
-                    response_log.record_upstream_body(&correlation_id, &bytes);
-                    metrics.record_bytes(0, bytes.len() as u64);
-                    usage.feed(&bytes);
+        let mut responses_translator =
+            stream::ResponsesStreamTranslator::new(requested_model.clone());
+        let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
+            Err(error) => Err(std::io::Error::other(error)),
+            Ok(bytes) => {
+                response_log.record_upstream_body(&correlation_id, &bytes);
+                metrics.record_bytes(0, bytes.len() as u64);
+                usage.feed(&bytes);
+                if shape == ShapeIn::Responses {
+                    responses_translator.push(&bytes)
+                } else {
                     translator.push(&bytes)
-                },
-            )
+                }
+            }
         });
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
@@ -657,8 +646,14 @@ async fn forward(
         .record_bytes(bytes_sent, upstream_body.len() as u64);
 
     if !status.is_success() {
-        // Pass upstream errors through verbatim for diagnosability.
-        let mut response = Response::new(Body::from(upstream_body));
+        let body: Vec<u8> = if surface == Surface::Anthropic {
+            upstream_body.to_vec()
+        } else {
+            crate::api_error::openai_error_body(status.as_u16(), &upstream_body)
+                .to_string()
+                .into_bytes()
+        };
+        let mut response = Response::new(Body::from(body));
         *response.status_mut() = status;
         response.headers_mut().insert(
             "content-type",
@@ -681,8 +676,15 @@ async fn forward(
     };
     let mut chat = gemini_response_to_chat(&gemini_json, &model);
     crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
+    let output = if shape == ShapeIn::Responses {
+        let finish = gemini_finish_reason(&gemini_json)
+            .map_or(responses::Finish::Completed, responses::Finish::from_gemini);
+        responses::from_chat(&chat, &requested_model, finish)
+    } else {
+        chat
+    };
 
-    let mut response = Response::new(Body::from(chat.to_string()));
+    let mut response = Response::new(Body::from(output.to_string()));
     *response.status_mut() = StatusCode::OK;
     response.headers_mut().insert(
         "content-type",
@@ -692,43 +694,13 @@ async fn forward(
 }
 
 /// Project an `OpenAI` Responses request onto the Chat Completions shape.
-fn responses_to_chat(body: &Value) -> Value {
-    let mut messages: Vec<Value> = Vec::new();
-    if let Some(instructions) = body.get("instructions").and_then(Value::as_str) {
-        messages.push(json!({ "role": "system", "content": instructions }));
-    }
-    match body.get("input") {
-        Some(Value::String(s)) => messages.push(json!({ "role": "user", "content": s })),
-        Some(Value::Array(items)) => {
-            for item in items {
-                if let Some(role) = item.get("role").and_then(Value::as_str) {
-                    let content = item.get("content").cloned().unwrap_or(Value::Null);
-                    messages.push(json!({ "role": role, "content": content }));
-                } else if let Some(text) = item.as_str() {
-                    messages.push(json!({ "role": "user", "content": text }));
-                }
-            }
-        }
-        _ => {}
-    }
-    let mut out = json!({ "messages": messages });
-    for key in [
-        "model",
-        "max_output_tokens",
-        "temperature",
-        "top_p",
-        "stream",
-    ] {
-        if let Some(v) = body.get(key) {
-            let mapped = if key == "max_output_tokens" {
-                "max_tokens"
-            } else {
-                key
-            };
-            out[mapped] = v.clone();
-        }
-    }
-    out
+fn bridge_request_error(surface: Surface, reason: &str) -> Response {
+    crate::api_error::error_response_for_surface(
+        surface,
+        StatusCode::BAD_REQUEST,
+        "invalid_request_error",
+        reason,
+    )
 }
 
 /// Choose the Gemini model to serve a request with.
@@ -823,7 +795,7 @@ mod tests {
             "input": [{"role": "user", "content": "hi"}],
             "max_output_tokens": 100
         });
-        let chat = responses_to_chat(&body);
+        let chat = crate::gemini_bridge::responses_to_chat_checked(&body).unwrap();
         let messages = chat["messages"].as_array().unwrap();
         assert_eq!(messages[0]["role"], "system");
         assert_eq!(messages[1]["role"], "user");
@@ -895,8 +867,11 @@ mod tests {
             "messages": [
                 {"role": "system", "content": "be brief"},
                 {"role": "user", "content": "hello"},
-                {"role": "assistant", "content": "hi"},
-                {"role": "tool", "content": "result"}
+                {"role": "assistant", "content": "hi", "tool_calls": [{
+                    "id": "call_1", "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"}
+                }]},
+                {"role": "tool", "tool_call_id": "call_1", "content": "result"}
             ],
             "max_tokens": 128,
             "temperature": 0.4,
