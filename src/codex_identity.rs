@@ -232,6 +232,49 @@ mod tests {
             ),
             "xterm-256color"
         );
+        assert_eq!(
+            detected(
+                &[("ITERM_PROFILE_NAME", "Default")],
+                TmuxClientInfo::default()
+            ),
+            "iTerm.app"
+        );
+        assert_eq!(
+            detected(&[("TERM_SESSION_ID", "session")], TmuxClientInfo::default()),
+            "Apple_Terminal"
+        );
+        assert_eq!(
+            detected(&[("TERM", "xterm-kitty")], TmuxClientInfo::default()),
+            "kitty"
+        );
+        assert_eq!(
+            detected(&[("ALACRITTY_SOCKET", "socket")], TmuxClientInfo::default()),
+            "Alacritty"
+        );
+        assert_eq!(
+            detected(&[("KONSOLE_VERSION", "2408")], TmuxClientInfo::default()),
+            "Konsole/2408"
+        );
+        assert_eq!(
+            detected(
+                &[("GNOME_TERMINAL_SCREEN", "screen")],
+                TmuxClientInfo::default()
+            ),
+            "gnome-terminal"
+        );
+        assert_eq!(
+            detected(&[("VTE_VERSION", "7800")], TmuxClientInfo::default()),
+            "VTE/7800"
+        );
+        assert_eq!(
+            detected(&[("WT_SESSION", "session")], TmuxClientInfo::default()),
+            "WindowsTerminal"
+        );
+        assert_eq!(detected(&[], TmuxClientInfo::default()), "unknown");
+        assert_eq!(
+            detected(&[("TERM", "vendor terminal")], TmuxClientInfo::default()),
+            "vendor_terminal"
+        );
     }
 
     #[test]
@@ -261,5 +304,20 @@ mod tests {
             ),
             "tmux/3.6"
         );
+        assert_eq!(
+            detected(
+                &[("TERM_PROGRAM", "tmux"), ("TMUX", "/tmp/tmux.sock")],
+                TmuxClientInfo {
+                    termtype: None,
+                    termname: Some("xterm ghostty".into()),
+                },
+            ),
+            "xterm_ghostty"
+        );
+    }
+
+    #[test]
+    fn process_tmux_probe_is_best_effort_outside_tmux() {
+        let _ = process_tmux_client_info();
     }
 }

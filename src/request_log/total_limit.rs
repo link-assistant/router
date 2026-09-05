@@ -138,3 +138,50 @@ pub(super) fn enforce(root: &Path, max_total: u64, active: &str, cached: &Mutex<
     }
     state.root_modified = root_modified(root);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+
+    #[test]
+    fn unavailable_roots_and_non_file_logs_are_ignored() {
+        let temporary = tempfile::tempdir().unwrap();
+        let missing = temporary.path().join("missing");
+        let cached = Mutex::new(None);
+        enforce(&missing, 0, "active", &cached);
+        assert!(cached.lock().unwrap().is_none());
+
+        let token = temporary.path().join("token");
+        std::fs::create_dir(&token).unwrap();
+        std::fs::create_dir(token.join(LOG_FILE)).unwrap();
+        assert!(usage(&token).is_none());
+    }
+
+    #[test]
+    fn the_active_log_is_never_its_own_eviction_candidate() {
+        let temporary = tempfile::tempdir().unwrap();
+        let token = temporary.path().join("active");
+        std::fs::create_dir(&token).unwrap();
+        std::fs::write(token.join(LOG_FILE), b"over the zero-byte limit").unwrap();
+        let cached = Mutex::new(None);
+
+        enforce(temporary.path(), 0, "active", &cached);
+
+        assert!(token.join(LOG_FILE).is_file());
+    }
+
+    #[test]
+    fn poisoned_accounting_fails_open_without_touching_logs() {
+        let cached = Arc::new(Mutex::new(None));
+        let poison = Arc::clone(&cached);
+        let _ = std::thread::spawn(move || {
+            let _guard = poison.lock().unwrap();
+            panic!("poison cached accounting");
+        })
+        .join();
+        let temporary = tempfile::tempdir().unwrap();
+
+        enforce(temporary.path(), 0, "active", &cached);
+    }
+}
