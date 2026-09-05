@@ -395,8 +395,7 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
     let status = StatusCode::from_u16(response.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let headers = crate::proxy::relay_response_headers(response.headers());
-    let payload = response.bytes().await.unwrap_or_default();
-    let mut relayed = Response::new(Body::from(payload));
+    let mut relayed = Response::new(Body::from_stream(response.bytes_stream()));
     *relayed.status_mut() = status;
     *relayed.headers_mut() = headers;
     relayed

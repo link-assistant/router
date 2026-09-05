@@ -12,3 +12,4 @@ bump: minor
 - Cap untrusted `Retry-After` cooldowns at 24 hours and use checked instant arithmetic.
 - Coalesce concurrent usage requests by token, provider, principal, and credential generation.
 - Keep the normal Lefine live credential gate catalog-only, with explicit run/skip output and a separate inference opt-in.
+- Stream GitHub REST, GraphQL, and Git smart-HTTP response bodies without whole-response buffering, preserving mid-stream failures.

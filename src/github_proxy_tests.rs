@@ -5,7 +5,57 @@
 
 use super::*;
 use axum::http::Request as HttpRequest;
+use http_body_util::BodyExt as _;
+use std::time::Duration;
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+async fn controlled_chunked_upstream(
+    truncate: bool,
+) -> (
+    std::net::SocketAddr,
+    tokio::sync::oneshot::Receiver<()>,
+    tokio::sync::oneshot::Sender<()>,
+) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let (first_tx, first_rx) = tokio::sync::oneshot::channel();
+    let (release_tx, release_rx) = tokio::sync::oneshot::channel();
+    tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0_u8; 8192];
+        let _ = socket.read(&mut request).await.unwrap();
+        socket
+            .write_all(
+                b"HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nx-stream-fixture: preserved\r\ntransfer-encoding: chunked\r\nconnection: close\r\n\r\n1\r\nx\r\n",
+            )
+            .await
+            .unwrap();
+        socket.flush().await.unwrap();
+        let _ = first_tx.send(());
+        let _ = release_rx.await;
+        if !truncate {
+            socket.write_all(b"1\r\ny\r\n0\r\n\r\n").await.unwrap();
+        }
+        let _ = socket.shutdown().await;
+    });
+    (address, first_rx, release_tx)
+}
+
+fn canonical_request(path: &str) -> HttpRequest<Body> {
+    HttpRequest::builder()
+        .method(if path.ends_with("graphql") {
+            "POST"
+        } else {
+            "GET"
+        })
+        .uri(path)
+        .body(if path.ends_with("graphql") {
+            Body::from(r#"{"query":"query { viewer { login } }"}"#)
+        } else {
+            Body::empty()
+        })
+        .unwrap()
+}
 
 #[test]
 fn enterprise_and_bare_paths_normalize_to_github_rest() {
@@ -292,6 +342,83 @@ async fn forwarding_contains_credentials_and_preserves_rate_limits() {
     assert!(!response.headers().contains_key("set-cookie"));
     assert!(forwarded.contains("authorization: bearer operator-secret"));
     assert!(!forwarded.contains("caller-placeholder"));
+}
+
+#[tokio::test]
+async fn canonical_rest_and_graphql_stream_before_upstream_completion() {
+    for path in [
+        "/api/services/github/api/v3/rate_limit",
+        "/api/services/github/api/graphql",
+    ] {
+        let (address, first_chunk, release) = controlled_chunked_upstream(false).await;
+        let config =
+            GitHubProxyConfig::with_credential("operator-secret", &format!("http://{address}"));
+        let request = canonical_request(path);
+        let task = tokio::spawn(async move {
+            forward(
+                &reqwest::Client::new(),
+                &config,
+                crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+                &[],
+                request,
+            )
+            .await
+        });
+        first_chunk.await.unwrap();
+        let response = tokio::time::timeout(Duration::from_secs(1), task)
+            .await
+            .expect("response headers must not wait for the final upstream chunk")
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert_eq!(response.headers()["x-stream-fixture"], "preserved");
+        let mut body = response.into_body();
+        let first = tokio::time::timeout(Duration::from_secs(1), body.frame())
+            .await
+            .expect("first body chunk must be visible while upstream is paused")
+            .unwrap()
+            .unwrap()
+            .into_data()
+            .unwrap();
+        assert_eq!(first.as_ref(), b"x");
+        release.send(()).unwrap();
+        assert_eq!(body.collect().await.unwrap().to_bytes().as_ref(), b"y");
+    }
+}
+
+#[tokio::test]
+async fn canonical_rest_and_graphql_keep_midstream_failures_observable() {
+    for path in [
+        "/api/services/github/api/v3/rate_limit",
+        "/api/services/github/api/graphql",
+    ] {
+        let (address, first_chunk, release) = controlled_chunked_upstream(true).await;
+        let config =
+            GitHubProxyConfig::with_credential("operator-secret", &format!("http://{address}"));
+        let request = canonical_request(path);
+        let task = tokio::spawn(async move {
+            forward(
+                &reqwest::Client::new(),
+                &config,
+                crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+                &[],
+                request,
+            )
+            .await
+        });
+        first_chunk.await.unwrap();
+        let response = tokio::time::timeout(Duration::from_secs(1), task)
+            .await
+            .expect("response headers must not wait for stream completion")
+            .unwrap();
+        let mut body = response.into_body();
+        let first = body.frame().await.unwrap().unwrap().into_data().unwrap();
+        assert_eq!(first.as_ref(), b"x");
+        release.send(()).unwrap();
+        assert!(
+            body.collect().await.is_err(),
+            "{path}: truncation became clean EOF"
+        );
+    }
 }
 
 /// A scoped token reaches only its own repositories.

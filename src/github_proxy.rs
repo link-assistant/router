@@ -726,16 +726,7 @@ async fn forward(
     };
     let status = response.status();
     let headers = crate::proxy::relay_response_headers(response.headers());
-    let bytes = match response.bytes().await {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            return github_error(
-                StatusCode::BAD_GATEWAY,
-                &format!("GitHub upstream response failed: {error}"),
-            );
-        }
-    };
-    let mut result = Response::new(Body::from(bytes));
+    let mut result = Response::new(Body::from_stream(response.bytes_stream()));
     *result.status_mut() = status;
     *result.headers_mut() = headers;
     result
