@@ -117,14 +117,14 @@ impl ImportFailure {
                 outcome: ImportOutcome::ExchangeUncertain,
                 phase,
                 previous_credential_safe: false,
-                transaction_id: failure.transaction_id().map(str::to_string),
+                transaction_id: None,
                 error,
             },
             AcceptanceFailureKind::PersistenceUncertain => Self {
                 outcome: ImportOutcome::PersistenceUncertain,
                 phase,
                 previous_credential_safe: false,
-                transaction_id: failure.transaction_id().map(str::to_string),
+                transaction_id: None,
                 error,
             },
             AcceptanceFailureKind::SuccessorRetained => Self {
@@ -141,7 +141,7 @@ impl ImportFailure {
     fn from_refresh_kind(
         kind: ImportRefreshFailureKind,
         error: String,
-        transaction_id: &str,
+        _transaction_id: &str,
     ) -> Self {
         match kind {
             ImportRefreshFailureKind::NotAttempted => Self::not_attempted(error),
@@ -156,14 +156,14 @@ impl ImportFailure {
                 outcome: ImportOutcome::ExchangeUncertain,
                 phase: ImportPhase::Exchange,
                 previous_credential_safe: false,
-                transaction_id: Some(transaction_id.to_string()),
+                transaction_id: None,
                 error,
             },
             ImportRefreshFailureKind::PersistenceUncertain => Self {
                 outcome: ImportOutcome::PersistenceUncertain,
                 phase: ImportPhase::Persistence,
                 previous_credential_safe: false,
-                transaction_id: Some(transaction_id.to_string()),
+                transaction_id: None,
                 error,
             },
         }

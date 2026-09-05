@@ -72,7 +72,7 @@ impl AcceptanceFailure {
         }
     }
 
-    fn from_refresh(failure: &ImportRefreshFailure, transaction_id: &str) -> Self {
+    fn from_refresh(failure: &ImportRefreshFailure, _transaction_id: &str) -> Self {
         match failure.kind() {
             ImportRefreshFailureKind::NotAttempted => Self::not_attempted(failure.to_string()),
             ImportRefreshFailureKind::ExchangeRejected => Self {
@@ -84,13 +84,13 @@ impl AcceptanceFailure {
             ImportRefreshFailureKind::ExchangeUncertain => Self {
                 kind: AcceptanceFailureKind::ExchangeUncertain,
                 phase: AcceptancePhase::Exchange,
-                transaction_id: Some(transaction_id.to_string()),
+                transaction_id: None,
                 message: failure.to_string(),
             },
             ImportRefreshFailureKind::PersistenceUncertain => Self {
                 kind: AcceptanceFailureKind::PersistenceUncertain,
                 phase: AcceptancePhase::Persistence,
-                transaction_id: Some(transaction_id.to_string()),
+                transaction_id: None,
                 message: failure.to_string(),
             },
         }
@@ -172,11 +172,14 @@ impl AcceptedCredential {
         destination: &SubscriptionReader,
         data_dir: &Path,
     ) -> Result<PathBuf, AcceptanceFailure> {
+        let document =
+            crate::subscription::mark_promotion_receipt(&self.document, &self.transaction_id)
+                .map_err(AcceptanceFailure::not_attempted)?;
         let promotion = destination
             .install_document_locked(
                 data_dir,
                 crate::credential_recovery_store::PRIMARY_ACCOUNT,
-                &self.document,
+                &document,
                 InstallMode::Replace,
             )
             .await;
@@ -196,6 +199,23 @@ impl AcceptedCredential {
                 ))
             }
             Err(error) => {
+                if destination
+                    .discover_credential_path()
+                    .and_then(|path| {
+                        std::fs::read_to_string(&path)
+                            .ok()
+                            .map(|document| (path, document))
+                    })
+                    .is_some_and(|(_, document)| {
+                        crate::subscription::has_promotion_receipt(&document, &self.transaction_id)
+                    })
+                {
+                    let path = destination
+                        .discover_credential_path()
+                        .expect("the matching receipt was read from this destination");
+                    drop(self);
+                    return Ok(path);
+                }
                 let transaction_id = self.retain();
                 Err(AcceptanceFailure::retained(
                     AcceptancePhase::Promotion,
@@ -358,12 +378,7 @@ async fn accept_candidate_with_timeout_mode(
             Ok(refreshed) => refreshed,
             Err(error) => {
                 let mut failure = AcceptanceFailure::from_refresh(&error, &transaction_id);
-                if matches!(
-                    failure.kind,
-                    AcceptanceFailureKind::ExchangeUncertain
-                        | AcceptanceFailureKind::PersistenceUncertain
-                        | AcceptanceFailureKind::SuccessorRetained
-                ) {
+                if failure.kind == AcceptanceFailureKind::SuccessorRetained {
                     let _retained_path = stage.keep();
                     failure.message = format!(
                         "{}; isolated candidate state retained as transaction {transaction_id}",

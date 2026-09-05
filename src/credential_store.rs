@@ -25,7 +25,9 @@ pub(crate) fn ensure_refreshable_origin(
     origin: crate::platform_keychain::Origin,
 ) -> Result<(), String> {
     match origin {
-        crate::platform_keychain::Origin::File => Ok(()),
+        crate::platform_keychain::Origin::File | crate::platform_keychain::Origin::AdoptedFile => {
+            Ok(())
+        }
         crate::platform_keychain::Origin::ExternalFile => Err(format!(
             "refusing to spend the externally owned {provider} refresh token because Router cannot durably advance the owning vendor store"
         )),

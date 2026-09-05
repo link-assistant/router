@@ -208,7 +208,9 @@ async fn accepted_rotated_successor_is_promoted_as_one_atomic_document() {
         .await
         .expect("positive catalog acceptance");
         assert_eq!(std::fs::read(&primary).unwrap(), original);
-        let accepted_bytes = accepted.document().as_bytes().to_vec();
+        let transaction_id = accepted.transaction_id().to_string();
+        let accepted_value: serde_json::Value =
+            serde_json::from_str(accepted.document()).expect("accepted JSON document");
         assert!(accepted.document().contains("rotated-secret-access"));
         assert!(accepted.document().contains("rotated-secret-refresh"));
 
@@ -217,7 +219,18 @@ async fn accepted_rotated_successor_is_promoted_as_one_atomic_document() {
             .await
             .expect("atomic promotion");
         assert_eq!(installed, primary);
-        assert_eq!(std::fs::read(&primary).unwrap(), accepted_bytes);
+        let promoted = std::fs::read_to_string(&primary).unwrap();
+        assert!(crate::subscription::has_promotion_receipt(
+            &promoted,
+            &transaction_id
+        ));
+        let mut promoted_value: serde_json::Value =
+            serde_json::from_str(&promoted).expect("promoted JSON document");
+        promoted_value
+            .as_object_mut()
+            .unwrap()
+            .remove("_link_assistant_router");
+        assert_eq!(promoted_value, accepted_value);
         let requests = requests.lock().unwrap();
         assert!(requests.iter().all(|(_, path)| !is_inference_path(path)));
         drop(requests);

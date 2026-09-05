@@ -545,7 +545,7 @@ async fn forward_native_authorized_after_route(
     // non-streaming upstream call lets us unwrap the native response reliably;
     // stream callers receive that response as a valid Gemini SSE data event.
     let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
-    let upstream_request = state
+    let mut upstream_request = state
         .client
         .post(upstream_url)
         .header("content-type", "application/json")
@@ -554,6 +554,9 @@ async fn forward_native_authorized_after_route(
             format!("Bearer {}", routed.token.access_token),
         )
         .body(serialized.clone());
+    if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+        upstream_request = upstream_request.header("x-request-id", request_id);
+    }
     let correlation_id = crate::request_log::correlation_id(headers);
     let upstream = match state
         .request_log

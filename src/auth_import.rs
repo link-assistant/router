@@ -135,7 +135,27 @@ pub async fn run_import(
                 };
                 let mut provider_policy = policy;
                 provider_policy.external_refresh_owner = resumed.is_none();
-                import_provider(config, subscription, &source, provider_policy).await
+                if resumed.as_ref().is_some_and(|candidate| {
+                    destination_has_receipt(config, subscription, &candidate.transaction_id)
+                }) {
+                    Ok(ImportExecution::promoted(
+                        subscription.to_string(),
+                        vec![format!(
+                            "{subscription:<8} promotion was already committed; completing retained transaction cleanup"
+                        )],
+                    ))
+                } else {
+                    import_provider(
+                        config,
+                        subscription,
+                        &source,
+                        provider_policy,
+                        resumed
+                            .as_ref()
+                            .map(|candidate| candidate.transaction_id.as_str()),
+                    )
+                    .await
+                }
             }
         };
         let outcome = if let Some(candidate) = resumed.as_ref() {
@@ -347,6 +367,7 @@ async fn import_provider(
     provider: SubscriptionProvider,
     source: &str,
     policy: ImportPolicy,
+    resumed_transaction_id: Option<&str>,
 ) -> Result<ImportExecution, ImportFailure> {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     // An empty value asks for the vendor's own default location.
@@ -388,6 +409,7 @@ async fn import_provider(
         document,
         token: _,
         origin,
+        path: source_path,
     } = &source_credential;
     let where_from = match origin {
         link_assistant_router::platform_keychain::Origin::Keychain => {
@@ -397,7 +419,8 @@ async fn import_provider(
             )
         }
         link_assistant_router::platform_keychain::Origin::File
-        | link_assistant_router::platform_keychain::Origin::ExternalFile => {
+        | link_assistant_router::platform_keychain::Origin::ExternalFile
+        | link_assistant_router::platform_keychain::Origin::AdoptedFile => {
             from.discover_credential_path().map_or_else(
                 || source_home.display().to_string(),
                 |path| path.display().to_string(),
@@ -406,6 +429,16 @@ async fn import_provider(
     };
 
     let destination = SubscriptionReader::new(provider, &destination_home);
+    if policy.external_refresh_owner
+        && !matches!(
+            origin,
+            link_assistant_router::platform_keychain::Origin::File
+        )
+    {
+        return Err(ImportFailure::not_attempted(format!(
+            "the {provider} credential is owned by {where_from}, which Router cannot durably advance; its refresh token was not spent"
+        )));
+    }
     // Do not spend a rotating candidate chain when conditional provisioning
     // already has a winner. Installation repeats this check after validation,
     // under the same lock, so a concurrent login/refresh still wins the race.
@@ -453,16 +486,44 @@ async fn import_provider(
             ),
         ));
     }
+    let receipt_id = resumed_transaction_id.unwrap_or_else(|| validated.transaction_id());
+    let promotion_document = if policy.external_refresh_owner {
+        let source_path = source_path.as_deref().ok_or_else(|| {
+            ImportFailure::not_attempted(format!(
+                "the {provider} external credential has no writable source; its refresh token was not spent"
+            ))
+        })?;
+        link_assistant_router::subscription::reference_external_credential(source_path, receipt_id)
+            .map_err(ImportFailure::not_attempted)?
+    } else {
+        link_assistant_router::subscription::mark_promotion_receipt(
+            validated.document(),
+            receipt_id,
+        )
+        .map_err(ImportFailure::not_attempted)?
+    };
     let promotion = install_candidate(
         &destination,
         &config.data_dir,
-        validated.document(),
+        &promotion_document,
         CredentialProbe::Accepted,
-        policy,
+        ImportPolicy {
+            external_refresh_owner: false,
+            ..policy
+        },
     )
     .await;
     let installed = match promotion {
         Ok(installed) => installed,
+        Err(_error) if destination_has_receipt(config, provider, receipt_id) => {
+            let path = destination.discover_credential_path().ok_or_else(|| {
+                ImportFailure::safe_failure(
+                    ImportPhase::Promotion,
+                    format!("the committed {provider} credential could not be located"),
+                )
+            })?;
+            InstallDocumentResult::Installed(path)
+        }
         Err(error) => {
             drop(validated);
             return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
@@ -499,6 +560,22 @@ async fn import_provider(
         }
     };
     Ok(execution)
+}
+
+fn destination_has_receipt(
+    config: &link_assistant_router::config::Config,
+    provider: SubscriptionProvider,
+    transaction_id: &str,
+) -> bool {
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let destination =
+        SubscriptionReader::new(provider, provider_home(config, provider, &user_home));
+    destination
+        .discover_credential_path()
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .is_some_and(|document| {
+            link_assistant_router::subscription::has_promotion_receipt(&document, transaction_id)
+        })
 }
 
 async fn validate_candidate(
@@ -596,13 +673,6 @@ async fn install_candidate(
         InstallMode::IfAbsent
     } else {
         InstallMode::Replace
-    };
-    let marked;
-    let document = if policy.external_refresh_owner {
-        marked = link_assistant_router::subscription::mark_external_refresh_owner(document)?;
-        &marked
-    } else {
-        document
     };
     destination
         .install_document_locked_with_refusal(

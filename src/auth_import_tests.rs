@@ -341,7 +341,8 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
 }
 
 /// A transport failure cannot prove whether the provider advanced a rotating
-/// chain before the connection disappeared, so the candidate stays recoverable.
+/// chain before the connection disappeared. No staged bytes are a proven
+/// successor, so automation receives no resumable transaction ID.
 #[tokio::test]
 async fn an_inconclusive_exchange_reports_uncertain_retained_state() {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve dead endpoint");
@@ -362,8 +363,14 @@ async fn an_inconclusive_exchange_reports_uncertain_retained_state() {
     assert_eq!(error.outcome, ImportOutcome::ExchangeUncertain);
     assert_eq!(error.phase, ImportPhase::Exchange);
     assert!(!error.previous_credential_safe);
-    assert!(error.transaction_id.is_some());
-    assert!(error.contains("retained as transaction"), "{error}");
+    assert!(error.transaction_id.is_none());
+    assert!(!error.contains("retained as transaction"), "{error}");
+    assert_eq!(
+        std::fs::read_dir(root.path().join("auth-import-candidates"))
+            .expect("staging root")
+            .count(),
+        0
+    );
 }
 
 /// Qwen Code issues a per-credential service origin. Safe import must use that
@@ -537,12 +544,10 @@ fn machine_results_are_stable_and_credential_free() {
     assert!(value["results"][2]["transaction_id"].is_null());
     assert_eq!(value["results"][3]["outcome"], "exchange_uncertain");
     assert_eq!(value["results"][3]["phase"], "exchange");
-    assert_eq!(
-        value["results"][3]["transaction_id"],
-        "exchange-transaction"
-    );
+    assert!(value["results"][3]["transaction_id"].is_null());
     assert_eq!(value["results"][4]["outcome"], "persistence_uncertain");
     assert_eq!(value["results"][4]["phase"], "persistence");
+    assert!(value["results"][4]["transaction_id"].is_null());
     assert_eq!(value["results"][5]["outcome"], "already_present");
     assert!(!serialized.contains("must-not-leak"), "{serialized}");
     assert!(!serialized.contains("access-token"), "{serialized}");
@@ -560,10 +565,7 @@ fn persistence_uncertainty_does_not_claim_an_unproven_successor() {
     assert_eq!(failure.outcome, ImportOutcome::PersistenceUncertain);
     assert_eq!(failure.phase, ImportPhase::Persistence);
     assert!(!failure.previous_credential_safe);
-    assert_eq!(
-        failure.transaction_id.as_deref(),
-        Some("persistence-transaction")
-    );
+    assert!(failure.transaction_id.is_none());
 }
 
 /// Resume resolves an opaque identifier to one owner-only provider directory,
@@ -619,45 +621,40 @@ async fn retained_transaction_has_one_exclusive_resume_claim() {
 }
 
 #[tokio::test]
-async fn ordinary_import_marks_external_ownership_but_router_successor_does_not() {
-    let external_home = tempfile::tempdir().expect("external destination");
+async fn invalid_resume_id_is_rejected_before_any_lock_path_is_created() {
+    let root = tempfile::tempdir().expect("router data");
+
+    let error = import_resume::resolve_claimed(root.path(), "x/../../../outside")
+        .await
+        .expect_err("path syntax must be rejected before lock creation");
+
+    assert_eq!(error.outcome, ImportOutcome::NotAttempted);
+    assert!(!root.path().join("auth-import-candidates").exists());
+    assert!(!root.path().parent().unwrap().join("outside.lock").exists());
+}
+
+#[tokio::test]
+async fn candidate_install_does_not_invent_external_ownership() {
     let router_home = tempfile::tempdir().expect("Router destination");
     let data = tempfile::tempdir().expect("router data");
     let document = r#"{"access_token":"accepted","refresh_token":"rotating"}"#;
-
-    for (home, external_refresh_owner, expected_origin) in [
-        (
-            external_home.path(),
-            true,
-            link_assistant_router::platform_keychain::Origin::ExternalFile,
-        ),
-        (
-            router_home.path(),
-            false,
-            link_assistant_router::platform_keychain::Origin::File,
-        ),
-    ] {
-        let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, home);
-        install_candidate(
-            &reader,
-            data.path(),
-            document,
-            CredentialProbe::Accepted,
-            ImportPolicy {
-                external_refresh_owner,
-                ..ImportPolicy::default()
-            },
-        )
-        .await
-        .expect("accepted candidate install");
-        assert_eq!(
-            reader
-                .read_document_for_import()
-                .expect("installed document")
-                .origin,
-            expected_origin
-        );
-    }
+    let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, router_home.path());
+    install_candidate(
+        &reader,
+        data.path(),
+        document,
+        CredentialProbe::Accepted,
+        ImportPolicy::default(),
+    )
+    .await
+    .expect("accepted candidate install");
+    assert_eq!(
+        reader
+            .read_document_for_import()
+            .expect("installed document")
+            .origin,
+        link_assistant_router::platform_keychain::Origin::File
+    );
 }
 
 #[test]

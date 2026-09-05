@@ -766,11 +766,12 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 ### GitHub API credential proxy
 
 The opt-in GitHub proxy lets an agent authenticate with its router-issued task
-token while the real GitHub credential remains inside the router. It supports
-bare REST paths, GitHub CLI's custom-host `/api/v3/*` rewrite, and GraphQL at
-`/api/graphql` and `/graphql`. The `/github/*` namespace exposes arbitrary REST
-paths without colliding with inference/admin routes. Git over HTTPS is mediated
-too, at `/git/{owner}/{repo}.git` — see **Git transport** below.
+token while the real GitHub credential remains inside the router. The ordinary
+HTTP/TLS listener serves REST, GraphQL, and git under the canonical
+`/api/services/github/api/*`, `/api/services/github/graphql`, and
+`/api/services/github/git/*` routes. GitHub CLI's fixed `/api/v3/*` and
+`/api/graphql` paths, plus root `/git/*`, are aliases on the dedicated Unix
+adapter only — see **GitHub CLI** below.
 
 ```env
 GITHUB_PROXY_TOKEN_FILE=/run/secrets/github-token
@@ -817,7 +818,7 @@ updates over both the API and the git transport.
 Point a client at the router and its pushes answer to the same policy:
 
 ```bash
-git config --global url."https://router.example.internal/git/".insteadOf "https://github.com/"
+git config --global url."https://router.example.internal/api/services/github/git/".insteadOf "https://github.com/"
 ```
 
 Ref deletions and forced updates to existing branches are **refused by
@@ -828,7 +829,7 @@ deliberately, add an allow rule naming it, which is a change only an operator
 with access to the router can make:
 
 ```json
-{"rules": [{"effect": "allow", "path": "/git/acme/demo/refs/heads/scratch"}]}
+{"rules": [{"effect": "allow", "path": "/api/services/github/git/acme/demo/refs/heads/scratch"}]}
 ```
 
 #### Scoping a token to repositories

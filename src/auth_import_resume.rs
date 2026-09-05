@@ -7,6 +7,20 @@ use link_assistant_router::subscription::SubscriptionProvider;
 
 use super::import_result::ImportFailure;
 
+fn validate_transaction_id(transaction_id: &str) -> Result<(), ImportFailure> {
+    if transaction_id.is_empty()
+        || transaction_id.len() > 128
+        || !transaction_id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+    {
+        return Err(ImportFailure::not_attempted(
+            "the retained import transaction ID is invalid",
+        ));
+    }
+    Ok(())
+}
+
 #[derive(Debug)]
 pub(super) struct ResumeCandidate {
     pub(super) provider: ImportProvider,
@@ -21,16 +35,7 @@ pub(super) fn resolve(
     data_dir: &Path,
     transaction_id: &str,
 ) -> Result<ResumeCandidate, ImportFailure> {
-    if transaction_id.is_empty()
-        || transaction_id.len() > 128
-        || !transaction_id
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
-    {
-        return Err(ImportFailure::not_attempted(
-            "the retained import transaction ID is invalid",
-        ));
-    }
+    validate_transaction_id(transaction_id)?;
     let root = data_dir.join("auth-import-candidates");
     let entries = std::fs::read_dir(&root).map_err(|_| {
         ImportFailure::not_attempted("the retained import transaction was not found")
@@ -92,6 +97,10 @@ pub(super) async fn resolve_claimed(
     data_dir: &Path,
     transaction_id: &str,
 ) -> Result<ResumeCandidate, ImportFailure> {
+    // Validate before interpolating caller input into a path. Otherwise a
+    // traversal-shaped ID creates a lock outside the private transaction root
+    // even though resolution later rejects it (issues #413, #424).
+    validate_transaction_id(transaction_id)?;
     let lock_path = data_dir
         .join("auth-import-candidates")
         .join(format!(".resume-{transaction_id}.lock"));

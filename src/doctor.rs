@@ -129,6 +129,9 @@ fn credential_location(
             )
         }
         crate::platform_keychain::Origin::File => path.display().to_string(),
+        crate::platform_keychain::Origin::AdoptedFile => {
+            format!("{} (adopted vendor credential)", path.display())
+        }
         crate::platform_keychain::Origin::ExternalFile => {
             format!("{} (external refresh owner)", path.display())
         }

@@ -3,6 +3,7 @@
 mod owner_only;
 mod redaction;
 mod stream_outcome;
+mod total_limit;
 
 pub use stream_outcome::{
     STREAM_END_MARKER, StreamOutcome, body_is_inspectable, frame_terminates_stream,
@@ -103,6 +104,7 @@ pub struct RequestLog {
     /// Bound across every token directory, or `None` when uncapped.
     max_total_bytes: Option<u64>,
     write_lock: Mutex<()>,
+    total_limit_state: Mutex<Option<total_limit::State>>,
     routes: Mutex<HashMap<String, LogRoute>>,
 }
 
@@ -147,6 +149,7 @@ impl RequestLog {
             max_bytes: max_bytes.max(1),
             max_total_bytes: None,
             write_lock: Mutex::new(()),
+            total_limit_state: Mutex::new(None),
             routes: Mutex::new(HashMap::new()),
         }
     }
@@ -341,98 +344,8 @@ impl RequestLog {
         if let Err(error) = result {
             tracing::warn!("request log write failed ({}): {error}", path.display());
         }
-        self.enforce_total_limit(token_hash);
-    }
-
-    /// Whether any token's log is still under the pre-rename name.
-    ///
-    /// Cheap next to the eviction scan it guards -- a file-name check per
-    /// directory, no metadata read -- and it stops being true for good once
-    /// every token has been written to since the upgrade.
-    fn holds_a_legacy_log(&self) -> bool {
-        fs::read_dir(&self.root).is_ok_and(|entries| {
-            entries
-                .flatten()
-                .any(|entry| entry.path().join(LEGACY_LOG_FILE).is_file())
-        })
-    }
-
-    /// Keep the whole store inside its total bound.
-    ///
-    /// The per-token bound stays exactly as it was — a noisy token still
-    /// cannot evict a quiet one's records — so this evicts whole directories
-    /// rather than trimming within them, oldest-written first, and never the
-    /// one being written. That makes the unit of loss a token nobody has used
-    /// recently instead of the beginning of an active session (issue #331).
-    fn enforce_total_limit(&self, active: &str) {
-        let Some(max_total) = self.max_total_bytes else {
-            return;
-        };
-        // The store cannot have crossed the bound while every directory in it
-        // is under its own share of it, so the common case skips the scan
-        // rather than walking every token directory on every record written.
-        //
-        // That reasoning holds only while every log was written under the
-        // bound now in force. A log left under the old name predates the
-        // rename, so it may have been written under a larger bound -- or
-        // under none -- and the active token being small says nothing about
-        // it. Until the store has no legacy logs left, the scan runs
-        // (issue #346).
-        if let Ok(count) = fs::read_dir(&self.root).map(Iterator::count)
-            && let Ok(metadata) = fs::metadata(self.log_path(active))
-            && metadata.len() < max_total / (count.max(1) as u64)
-            && !self.holds_a_legacy_log()
-        {
-            return;
-        }
-        let Ok(entries) = fs::read_dir(&self.root) else {
-            return;
-        };
-        let mut directories: Vec<(std::time::SystemTime, u64, PathBuf, String)> = entries
-            .flatten()
-            .filter(|entry| entry.path().is_dir())
-            .filter_map(|entry| {
-                let name = entry.file_name().to_string_lossy().into_owned();
-                // Either name: a token that has not been written since the
-                // rename still occupies the disk this bound is about.
-                let metadata = fs::metadata(entry.path().join(LOG_FILE))
-                    .or_else(|_| fs::metadata(entry.path().join(LEGACY_LOG_FILE)))
-                    .ok()?;
-                Some((
-                    metadata.modified().ok()?,
-                    metadata.len(),
-                    entry.path(),
-                    name,
-                ))
-            })
-            .collect();
-        let mut total: u64 = directories.iter().map(|(_, size, _, _)| *size).sum();
-        if total <= max_total {
-            return;
-        }
-        directories.sort_by_key(|(modified, _, _, _)| *modified);
-        for (_, size, path, name) in directories {
-            if total <= max_total {
-                break;
-            }
-            // Never the directory just written: evicting it would lose the
-            // record that prompted the eviction, and a caller with traffic
-            // would see its own history vanish mid-session.
-            if name == active {
-                continue;
-            }
-            if let Err(error) = fs::remove_dir_all(&path) {
-                tracing::warn!("request log eviction failed ({}): {error}", path.display());
-                continue;
-            }
-            total = total.saturating_sub(size);
-            // Dropping data under a bound is defensible; dropping it invisibly
-            // is what turns a bounded log into an unreliable one (issue #322).
-            tracing::info!(
-                token_hash = %name,
-                bytes = size,
-                "request log evicted a token directory to stay within the total limit"
-            );
+        if let Some(max_total) = self.max_total_bytes {
+            total_limit::enforce(&self.root, max_total, token_hash, &self.total_limit_state);
         }
     }
 

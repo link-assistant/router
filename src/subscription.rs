@@ -9,9 +9,7 @@
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
-const ROUTER_METADATA_KEY: &str = "_link_assistant_router";
-const REFRESH_OWNER_KEY: &str = "refresh_owner";
-const EXTERNAL_REFRESH_OWNER: &str = "external";
+mod external;
 
 mod types;
 pub use types::{SubscriptionProvider, SubscriptionToken};
@@ -53,29 +51,10 @@ impl From<std::io::Error> for SubscriptionError {
 ///
 /// The marker lives in the same atomically replaced JSON document, so it
 /// cannot be committed independently of the credential it protects.
-pub fn mark_external_refresh_owner(document: &str) -> Result<String, String> {
-    let mut value: serde_json::Value = serde_json::from_str(document)
-        .map_err(|_| "external credential document is not valid JSON".to_string())?;
-    let object = value
-        .as_object_mut()
-        .ok_or_else(|| "external credential document must be a JSON object".to_string())?;
-    let metadata = object
-        .entry(ROUTER_METADATA_KEY)
-        .or_insert_with(|| serde_json::json!({}));
-    let metadata = metadata
-        .as_object_mut()
-        .ok_or_else(|| "Router credential metadata must be a JSON object".to_string())?;
-    metadata.insert(REFRESH_OWNER_KEY.into(), EXTERNAL_REFRESH_OWNER.into());
-    serde_json::to_string_pretty(&value)
-        .map_err(|_| "external credential ownership could not be encoded".to_string())
-}
-
-fn has_external_refresh_owner(document: &serde_json::Value) -> bool {
-    document
-        .pointer(&format!("/{ROUTER_METADATA_KEY}/{REFRESH_OWNER_KEY}"))
-        .and_then(serde_json::Value::as_str)
-        == Some(EXTERNAL_REFRESH_OWNER)
-}
+pub use external::{
+    has_promotion_receipt, mark_external_refresh_owner, mark_promotion_receipt,
+    reference_external_credential,
+};
 
 fn credential_file_lock_path(path: &Path) -> PathBuf {
     let mut lock = path.as_os_str().to_os_string();
@@ -101,6 +80,8 @@ pub struct ImportSource {
     pub token: SubscriptionToken,
     /// Which store `document` came from, for naming it in the report.
     pub origin: crate::platform_keychain::Origin,
+    /// Writable file holding the selected document, when it has one.
+    pub path: Option<PathBuf>,
 }
 
 /// Replacement policy for a Router-owned credential install.
@@ -223,17 +204,19 @@ impl SubscriptionReader {
         // never disagree about which store is live.
         let (token, origin) =
             self.select_store(from_keychain.and_then(|raw| self.parse_store_credential(raw)))?;
-        let document = match origin {
+        let (document, path) = match origin {
             crate::platform_keychain::Origin::Keychain => {
-                from_keychain.map(str::to_owned).ok_or_else(|| {
+                let document = from_keychain.map(str::to_owned).ok_or_else(|| {
                     SubscriptionError::NoCredentials(format!(
                         "No {} credential in the platform store",
                         self.provider
                     ))
-                })
+                })?;
+                (document, None)
             }
             crate::platform_keychain::Origin::File
-            | crate::platform_keychain::Origin::ExternalFile => {
+            | crate::platform_keychain::Origin::ExternalFile
+            | crate::platform_keychain::Origin::AdoptedFile => {
                 let path = self.discover_credential_path().ok_or_else(|| {
                     SubscriptionError::NoCredentials(format!(
                         "No {} credential file in {}",
@@ -241,18 +224,15 @@ impl SubscriptionReader {
                         self.home.display()
                     ))
                 })?;
-                std::fs::read_to_string(&path).map_err(|error| {
-                    SubscriptionError::ReadError(format!(
-                        "Failed to read {}: {error}",
-                        path.display()
-                    ))
-                })
+                let stored = external::read_document(&path)?;
+                (stored.raw, Some(stored.path))
             }
-        }?;
+        };
         Ok(ImportSource {
             document,
             token,
             origin,
+            path,
         })
     }
 
@@ -626,30 +606,15 @@ impl SubscriptionReader {
                     if !path.exists() {
                         return Ok(None);
                     }
-                    let content = std::fs::read_to_string(&path).map_err(|e| {
-                        SubscriptionError::ReadError(format!(
-                            "Failed to read {}: {e}",
-                            path.display()
-                        ))
-                    })?;
-                    let document: serde_json::Value =
-                        serde_json::from_str(&content).map_err(|e| {
+                    let stored = external::read_document(&path)?;
+                    let origin = stored.origin;
+                    let raw: RawCredentials =
+                        serde_json::from_value(stored.value).map_err(|e| {
                             SubscriptionError::ParseError(format!(
                                 "Failed to parse {}: {e}",
                                 path.display()
                             ))
                         })?;
-                    let origin = if has_external_refresh_owner(&document) {
-                        crate::platform_keychain::Origin::ExternalFile
-                    } else {
-                        crate::platform_keychain::Origin::File
-                    };
-                    let raw: RawCredentials = serde_json::from_value(document).map_err(|e| {
-                        SubscriptionError::ParseError(format!(
-                            "Failed to parse {}: {e}",
-                            path.display()
-                        ))
-                    })?;
                     Ok(raw.into_token(self.provider).map(|token| (token, origin)))
                 },
             )?;
@@ -701,33 +666,7 @@ impl SubscriptionReader {
                 self.home.display()
             ))
         })?;
-        let lock_path = credential_file_lock_path(&path);
-        crate::durable_file::with_exclusive_lock(&lock_path, || {
-            let content = std::fs::read_to_string(&path).map_err(|e| {
-                SubscriptionError::ReadError(format!("Failed to read {}: {e}", path.display()))
-            })?;
-            let mut document: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-                SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
-            })?;
-            if has_external_refresh_owner(&document) {
-                return Err(SubscriptionError::ReadError(format!(
-                    "refusing to rotate the externally owned {} credential",
-                    self.provider
-                )));
-            }
-
-            merge_refreshed_token(&mut document, self.provider, token);
-
-            let serialized = serde_json::to_vec_pretty(&document).map_err(|e| {
-                SubscriptionError::ParseError(format!(
-                    "Failed to serialize {}: {e}",
-                    path.display()
-                ))
-            })?;
-            crate::durable_file::transactional_write_owner_only(&path, &serialized).map_err(|e| {
-                SubscriptionError::ReadError(crate::durable_file::describe_write_failure(&path, &e))
-            })
-        })
+        external::write_refreshed_token(&path, self.provider, token)
     }
 }
 
@@ -983,6 +922,9 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
         .map(ToString::to_string)
 }
 
+#[cfg(test)]
+#[path = "subscription_adopted_tests.rs"]
+mod adopted_tests;
 #[cfg(test)]
 #[path = "subscription_install_tests.rs"]
 mod install_tests;
