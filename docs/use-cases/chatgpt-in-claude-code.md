@@ -151,9 +151,12 @@ Expect the Anthropic SSE vocabulary, in order: `message_start`,
 | --- | --- |
 | `system` (string or block list) | leading `system` message |
 | `messages[].content` text blocks | message text |
-| `image` blocks | OpenAI image parts |
-| `tools` / `tool_choice` | OpenAI function tools |
-| `tool_use` / `tool_result` blocks | assistant `tool_calls` / `tool` messages |
+| `image` / `document` blocks | Responses image/file parts when the selected target can carry them losslessly |
+| `tools` / `tool_choice` | OpenAI function tools, including `strict` and the parallel-call policy |
+| `tool_use` / `tool_result` blocks | native Responses call/output items for Codex, preserving mixed text/image/file results and order |
+| web search/fetch call and result history | native Responses server-tool items with IDs and result metadata |
+| `output_config.effort` | compatible Responses reasoning effort (`max` maps to `xhigh`) |
+| `metadata.user_id` | Responses `safety_identifier`, subject to the target's 64-character limit |
 | `temperature`, `top_p`, `stop_sequences`, `stream` | direct equivalents, except that `temperature` and `top_p` are never sent **together** to an Anthropic upstream — it rejects the pair, so an explicit `temperature` wins and `top_p` is dropped |
 | `max_tokens` | forwarded when supported; see the Codex caveat below |
 | `stop_reason` | mapped from the OpenAI `finish_reason` |
@@ -165,8 +168,13 @@ an approximation for budgeting, not as a billing figure.
 
 ## Limits and caveats
 
-- **`thinking` / `redacted_thinking` blocks are dropped**, not guessed at —
-  there is no OpenAI equivalent. Extended-thinking output will not appear.
+- **`thinking` / `redacted_thinking` history is rejected before a translated
+  upstream request**, rather than being dropped or exposed as visible text.
+  Native Anthropic requests remain untouched.
+- Provider-owned file identifiers, unsupported document sources, non-text
+  Chat tool results, and other history that cannot cross the selected protocol
+  losslessly are rejected before inference. Use a self-contained continuation
+  with URL/base64 content, or continue on the history's native provider.
 - **Prompt caching** (`cache_control`) has no counterpart upstream and is
   ignored.
 - **The Claude-to-Codex bridge emulates `max_tokens`.** The field remains

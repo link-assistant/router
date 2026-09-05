@@ -200,16 +200,19 @@ fn codex_projection_uses_native_responses_tool_items() {
 }
 
 #[test]
-fn drops_thinking_blocks() {
+fn translated_routes_reject_thinking_blocks_without_exposing_them() {
     let body = json!({
         "messages": [{"role": "assistant", "content": [
             {"type": "thinking", "thinking": "secret"},
             {"type": "text", "text": "visible"}
         ]}]
     });
-    let chat = anthropic_to_chat_request(&body, "m");
-    assert_eq!(chat["messages"][0]["content"], "visible");
-    assert!(!chat.to_string().contains("secret"));
+    let error = crate::bridge_request::validate_anthropic_request(
+        &body,
+        crate::bridge_request::BridgeTarget::Chat,
+    )
+    .unwrap_err();
+    assert!(!error.contains("secret"));
 }
 
 #[test]

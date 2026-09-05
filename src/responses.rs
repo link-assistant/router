@@ -11,9 +11,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::openai::{
-    extract_text, map_model, reconcile_subscription_parameters_with_limit_origin, translate_parts,
-    translate_tools,
+    extract_text, map_model, reconcile_subscription_parameters_with_limit_origin, translate_tools,
 };
+
+#[path = "responses_input.rs"]
+mod request_input;
+pub use request_input::{normalize_input_items, untranslatable_tool_history};
 
 /// `OpenAI` `POST /v1/responses` request body. We accept the superset and
 /// project to Anthropic Messages, so unknown keys are ignored.
@@ -29,6 +32,8 @@ pub struct OpenAIResponseRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_p: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tools: Option<Value>,
@@ -36,6 +41,22 @@ pub struct OpenAIResponseRequest {
     pub tool_choice: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reasoning: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parallel_tool_calls: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub background: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_tool_calls: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub truncation: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub store: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream_options: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub safety_identifier: Option<String>,
 }
 
 /// Translate an `OpenAI` Responses-API request to Anthropic Messages.
@@ -58,10 +79,17 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
                             }
                         }
                         "user" | "assistant" => {
-                            let anthropic_content = match content {
-                                Value::String(text) => Value::String(text),
-                                Value::Array(parts) => Value::Array(translate_parts(&parts)),
-                                other => Value::String(extract_text(&other).unwrap_or_default()),
+                            let anthropic_content = match &content {
+                                Value::String(text) => Value::String(text.clone()),
+                                Value::Array(_) => {
+                                    crate::bridge_request::responses_message_content_to_anthropic(
+                                        &content,
+                                        role,
+                                        "input message",
+                                    )
+                                    .unwrap_or_else(|_| content.clone())
+                                }
+                                other => Value::String(extract_text(other).unwrap_or_default()),
                             };
                             messages.push(json!({
                                 "role": role,
@@ -86,12 +114,17 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
                         }]
                     }));
                 } else if item.get("type").and_then(Value::as_str) == Some("function_call_output") {
+                    let content = crate::bridge_request::responses_output_to_anthropic(
+                        item.get("output"),
+                        "function_call_output.output",
+                    )
+                    .unwrap_or_else(|_| item.get("output").cloned().unwrap_or(Value::Null));
                     messages.push(json!({
                         "role": "user",
                         "content": [{
                             "type": "tool_result",
                             "tool_use_id": item.get("call_id").and_then(Value::as_str).unwrap_or_default(),
-                            "content": item.get("output").and_then(Value::as_str).unwrap_or_default(),
+                            "content": content,
                         }]
                     }));
                 } else if let Some(text) = item.as_str() {
@@ -111,8 +144,13 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     if !system_chunks.is_empty() {
         body["system"] = Value::String(system_chunks.join("\n\n"));
     }
-    if let Some(t) = req.temperature {
-        body["temperature"] = json!(t);
+    match (req.temperature, req.top_p) {
+        (Some(temperature), _) => body["temperature"] = json!(temperature),
+        (None, Some(top_p)) => body["top_p"] = json!(top_p),
+        (None, None) => {}
+    }
+    if let Some(identifier) = &req.safety_identifier {
+        body["metadata"] = json!({"user_id": identifier});
     }
     if req.stream == Some(true) {
         body["stream"] = json!(true);
@@ -120,9 +158,24 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
     if let Some(tools) = &req.tools {
         body["tools"] = translate_tools(tools);
     }
+    crate::bridge_controls::install_max_tool_calls(&mut body, req.max_tool_calls);
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = crate::openai::translate_tool_choice(choice);
     }
+    crate::structured_output::install_parallel_tool_policy(
+        &mut body,
+        req.parallel_tool_calls,
+        req.tools
+            .as_ref()
+            .and_then(Value::as_array)
+            .is_some_and(|tools| !tools.is_empty()),
+    );
+    crate::structured_output::install_format(
+        &mut body,
+        crate::structured_output::responses_format(req.text.as_ref())
+            .ok()
+            .flatten(),
+    );
     if let Some(reasoning) = &req.reasoning {
         body["reasoning"] = reasoning.clone();
     }
@@ -132,78 +185,6 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
         req.max_output_tokens.is_some(),
     );
     body
-}
-
-/// Normalise a Responses-API `input` field to the typed list shape.
-///
-/// The documented Responses API accepts either a bare string or a list of
-/// input items, but the `ChatGPT` backend accepts only the list form and
-/// answers a string with `{"detail":"Input must be a list"}` (HTTP 400). Both
-/// documented forms therefore have to be normalised here before forwarding:
-/// a string becomes a single user turn, and bare strings inside the list get
-/// the same treatment. Anything already typed is passed through untouched.
-#[must_use]
-pub fn normalize_input_items(input: &Value) -> Value {
-    fn user_turn(text: &str) -> Value {
-        json!({
-            "type": "message",
-            "role": "user",
-            "content": [{"type": "input_text", "text": text}],
-        })
-    }
-    match input {
-        Value::String(text) => json!([user_turn(text)]),
-        Value::Array(items) => Value::Array(
-            items
-                .iter()
-                .map(|item| item.as_str().map_or_else(|| item.clone(), user_turn))
-                .collect(),
-        ),
-        other => other.clone(),
-    }
-}
-
-/// Validate prior Responses tool items before conversion to Anthropic.
-#[must_use]
-pub fn untranslatable_tool_history(input: &Value) -> Option<String> {
-    let items = input.as_array()?;
-    for item in items {
-        match item.get("type").and_then(Value::as_str) {
-            Some("function_call") => {
-                if item
-                    .get("call_id")
-                    .or_else(|| item.get("id"))
-                    .and_then(Value::as_str)
-                    .is_none_or(str::is_empty)
-                {
-                    return Some("function_call is missing call_id".into());
-                }
-                if item
-                    .get("name")
-                    .and_then(Value::as_str)
-                    .is_none_or(str::is_empty)
-                {
-                    return Some("function_call is missing name".into());
-                }
-                let Some(arguments) = item.get("arguments").and_then(Value::as_str) else {
-                    return Some("function_call is missing string arguments".into());
-                };
-                if serde_json::from_str::<Value>(arguments).is_err() {
-                    return Some("function_call arguments is not valid JSON".into());
-                }
-            }
-            Some("function_call_output")
-                if item
-                    .get("call_id")
-                    .and_then(Value::as_str)
-                    .is_none_or(str::is_empty) =>
-            {
-                return Some("function_call_output is missing call_id".into());
-            }
-            _ => {}
-        }
-    }
-    None
 }
 
 /// Translate an `OpenAI` Chat Completions request body to an `OpenAI`
@@ -296,6 +277,9 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
     }
     if let Some(t) = body.get("top_p").and_then(Value::as_f64) {
         out["top_p"] = json!(t);
+    }
+    if let Some(identifier) = body.get("safety_identifier") {
+        out["safety_identifier"] = identifier.clone();
     }
     if let Some(tools) = body.get("tools") {
         out["tools"] = chat_tools_to_responses(tools);

@@ -1,6 +1,124 @@
 use super::*;
 
 #[test]
+fn responses_safety_identifier_and_top_p_reach_anthropic_losslessly() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "input": "answer",
+        "safety_identifier": "synthetic-user-42",
+        "top_p": 0.25
+    }))
+    .unwrap();
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["metadata"]["user_id"], "synthetic-user-42");
+    assert_eq!(translated["top_p"], 0.25);
+
+    for top_p in [0.0, 1.0] {
+        let request: OpenAIResponseRequest = serde_json::from_value(json!({
+            "model": "claude-test", "input": "answer", "top_p": top_p
+        }))
+        .unwrap();
+        assert!(crate::bridge_controls::validate_responses(&request).is_ok());
+    }
+    for body in [
+        json!({"model": "claude-test", "input": "answer", "top_p": -0.1}),
+        json!({"model": "claude-test", "input": "answer", "top_p": 1.1}),
+        json!({"model": "claude-test", "input": "answer", "temperature": 0.5, "top_p": 0.5}),
+    ] {
+        let request: OpenAIResponseRequest = serde_json::from_value(body).unwrap();
+        assert!(crate::bridge_controls::validate_responses(&request).is_err());
+    }
+    assert!(
+        serde_json::from_value::<OpenAIResponseRequest>(json!({
+            "model": "claude-test", "input": "answer", "top_p": "high"
+        }))
+        .is_err()
+    );
+}
+
+#[test]
+fn responses_structured_output_and_parallel_tool_policy_reach_anthropic() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "input": "answer",
+        "text": {"format": {
+            "type": "json_schema", "name": "answer", "strict": true,
+            "schema": {"type": "object", "required": ["answer"]}
+        }},
+        "parallel_tool_calls": false,
+        "tools": [{"type": "function", "name": "lookup", "parameters": {"type": "object"}}],
+        "tool_choice": {"type": "function", "name": "lookup"}
+    }))
+    .unwrap();
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["output_config"]["format"]["type"], "json_schema");
+    assert_eq!(
+        translated["output_config"]["format"]["schema"],
+        json!({"type": "object", "required": ["answer"]})
+    );
+    assert_eq!(translated["tool_choice"]["type"], "tool");
+    assert_eq!(translated["tool_choice"]["name"], "lookup");
+    assert_eq!(translated["tool_choice"]["disable_parallel_tool_use"], true);
+}
+
+#[test]
+fn responses_flat_function_tool_strictness_is_preserved() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "input": "use tools",
+        "tools": [
+            {"type": "function", "name": "strict_tool", "strict": true, "parameters": {"type": "object"}},
+            {"type": "function", "name": "loose_tool", "strict": false, "parameters": {"type": "object"}},
+            {"type": "function", "name": "default_tool", "parameters": {"type": "object"}}
+        ]
+    }))
+    .unwrap();
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["tools"][0]["strict"], true);
+    assert_eq!(translated["tools"][1]["strict"], false);
+    assert!(translated["tools"][2].get("strict").is_none());
+}
+
+#[test]
+fn responses_execution_controls_are_retained_mapped_or_rejected() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "search",
+        "background": false, "max_tool_calls": 1, "truncation": "disabled",
+        "store": false, "stream": true, "stream_options": {},
+        "tools": [{"type": "web_search"}]
+    }))
+    .unwrap();
+    let retained = serde_json::to_value(&request).unwrap();
+    for field in [
+        "background",
+        "max_tool_calls",
+        "truncation",
+        "store",
+        "stream_options",
+    ] {
+        assert!(retained.get(field).is_some(), "discarded {field}");
+    }
+    assert_eq!(crate::bridge_controls::validate_responses(&request), Ok(()));
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["tools"][0]["max_uses"], 1);
+
+    for fields in [
+        json!({"background": true}),
+        json!({"store": true}),
+        json!({"truncation": "auto"}),
+        json!({"stream": true, "stream_options": {"include_obfuscation": true}}),
+        json!({"max_tool_calls": 2, "tools": [{"type": "web_search"}, {"type": "web_fetch"}]}),
+    ] {
+        let mut body = json!({"model": "claude-test", "input": "answer"});
+        body.as_object_mut()
+            .unwrap()
+            .extend(fields.as_object().unwrap().clone());
+        let request: OpenAIResponseRequest = serde_json::from_value(body).unwrap();
+        assert!(crate::bridge_controls::validate_responses(&request).is_err());
+    }
+}
+
+#[test]
 fn responses_api_translation() {
     let req = OpenAIResponseRequest {
         model: "gpt-4o".into(),
@@ -8,10 +126,19 @@ fn responses_api_translation() {
         instructions: Some("be poetic".into()),
         max_output_tokens: Some(128),
         temperature: Some(0.9),
+        top_p: None,
         stream: None,
         tools: None,
         tool_choice: None,
         reasoning: None,
+        text: None,
+        parallel_tool_calls: None,
+        background: None,
+        max_tool_calls: None,
+        truncation: None,
+        store: None,
+        stream_options: None,
+        safety_identifier: None,
     };
     let body = response_to_anthropic(&req);
     // The requested model is preserved verbatim (issue #192).
@@ -112,10 +239,19 @@ fn responses_structured_input_translates_to_anthropic() {
         instructions: Some("follow policy".into()),
         max_output_tokens: None,
         temperature: None,
+        top_p: None,
         stream: None,
         tools: None,
         tool_choice: None,
         reasoning: None,
+        text: None,
+        parallel_tool_calls: None,
+        background: None,
+        max_tool_calls: None,
+        truncation: None,
+        store: None,
+        stream_options: None,
+        safety_identifier: None,
     };
 
     let body = response_to_anthropic(&req);
@@ -399,10 +535,19 @@ fn drops_temperature_for_claude_5_models() {
         instructions: None,
         max_output_tokens: None,
         temperature: Some(0.7),
+        top_p: None,
         stream: None,
         tools: None,
         tool_choice: None,
         reasoning: None,
+        text: None,
+        parallel_tool_calls: None,
+        background: None,
+        max_tool_calls: None,
+        truncation: None,
+        store: None,
+        stream_options: None,
+        safety_identifier: None,
     };
     let body = response_to_anthropic(&req);
     assert!(body.get("temperature").is_none());

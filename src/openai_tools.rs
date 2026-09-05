@@ -163,11 +163,15 @@ pub fn translate_tools(tools: &Value) -> Value {
                         .cloned()
                         .unwrap_or(Value::String(String::new()));
                     let parameters = func.get("parameters").cloned().unwrap_or_else(|| json!({}));
-                    json!({
+                    let mut mapped = json!({
                         "name": name,
                         "description": description,
                         "input_schema": parameters,
-                    })
+                    });
+                    if let Some(strict) = func.get("strict") {
+                        mapped["strict"] = strict.clone();
+                    }
+                    mapped
                 })
                 .collect();
             Value::Array(mapped)
@@ -176,12 +180,60 @@ pub fn translate_tools(tools: &Value) -> Value {
     }
 }
 
+/// Validate function-tool fields that must survive an Anthropic bridge.
+#[must_use]
+pub fn invalid_anthropic_tool_definition(tools: &Value) -> Option<String> {
+    let Some(tools) = tools.as_array() else {
+        return Some("tools must be an array".into());
+    };
+    for (index, tool) in tools.iter().enumerate() {
+        let kind = tool
+            .get("type")
+            .and_then(Value::as_str)
+            .unwrap_or("function");
+        if kind != "function" {
+            continue;
+        }
+        let function = tool.get("function").unwrap_or(tool);
+        if function
+            .get("name")
+            .and_then(Value::as_str)
+            .is_none_or(str::is_empty)
+        {
+            return Some(format!("tools[{index}] is missing function name"));
+        }
+        if function
+            .get("parameters")
+            .is_some_and(|schema| !schema.is_object())
+        {
+            return Some(format!("tools[{index}].parameters must be an object"));
+        }
+        if function
+            .get("strict")
+            .is_some_and(|strict| !strict.is_boolean())
+        {
+            return Some(format!("tools[{index}].strict must be a boolean"));
+        }
+    }
+    None
+}
+
 /// Validate prior Chat tool turns before translating them to Anthropic. Empty
 /// identifiers or malformed JSON arguments cannot be repaired without losing
 /// the caller's tool protocol state.
 #[must_use]
 pub fn untranslatable_chat_tool_history(messages: &[ChatMessage]) -> Option<String> {
     for message in messages {
+        if message.content.as_array().is_some_and(|parts| {
+            parts
+                .iter()
+                .any(|part| part.get("type").and_then(Value::as_str) == Some("input_audio"))
+        }) {
+            return Some(
+                "input_audio content cannot be represented by the selected Anthropic provider"
+                    .into(),
+            );
+        }
         if message.role == "tool" && message.tool_call_id.as_deref().is_none_or(str::is_empty) {
             return Some("role=tool message is missing tool_call_id".into());
         }

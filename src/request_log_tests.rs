@@ -181,6 +181,20 @@ fn credentials_are_redacted_from_headers_and_json_bodies() {
 }
 
 #[test]
+fn provider_safety_identifiers_are_redacted_from_request_bodies() {
+    let logged = redacted_body(
+        br#"{
+            "safety_identifier":"synthetic-user-42",
+            "metadata":{"user_id":"anthropic-user-42"}
+        }"#,
+    );
+    let rendered = logged.to_string();
+    assert!(!rendered.contains("synthetic-user-42"));
+    assert!(!rendered.contains("anthropic-user-42"));
+    assert!(rendered.contains(REDACTED));
+}
+
+#[test]
 fn credentials_are_redacted_from_uri_queries() {
     let dir = tempfile::tempdir().expect("temporary directory");
     let root = dir.path().join("requests");

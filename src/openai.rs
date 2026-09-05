@@ -58,6 +58,14 @@ pub struct OpenAIChatCompletionRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frequency_penalty: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presence_penalty: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logit_bias: Option<BTreeMap<String, f32>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seed: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stop: Option<Value>,
@@ -69,6 +77,22 @@ pub struct OpenAIChatCompletionRequest {
     pub reasoning_effort: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reasoning: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parallel_tool_calls: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub n: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modalities: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logprobs: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_logprobs: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub safety_identifier: Option<String>,
 }
 
 /// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
@@ -153,6 +177,9 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if !system_chunks.is_empty() {
         body["system"] = Value::String(system_chunks.join("\n\n"));
     }
+    if let Some(identifier) = &req.safety_identifier {
+        body["metadata"] = json!({"user_id": identifier});
+    }
     // Anthropic rejects a request specifying both, and Gemini CLI sends both by
     // default with no way to suppress either — so a valid Gemini request and a
     // reachable Claude model combined into a permanent `400` (issue #216).
@@ -180,6 +207,20 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
     }
+    crate::structured_output::install_parallel_tool_policy(
+        &mut body,
+        req.parallel_tool_calls,
+        req.tools
+            .as_ref()
+            .and_then(Value::as_array)
+            .is_some_and(|tools| !tools.is_empty()),
+    );
+    crate::structured_output::install_format(
+        &mut body,
+        crate::structured_output::chat_format(req.response_format.as_ref())
+            .ok()
+            .flatten(),
+    );
     if let Some(reasoning) = &req.reasoning {
         body["reasoning"] = reasoning.clone();
     } else if let Some(effort) = &req.reasoning_effort {
@@ -274,7 +315,10 @@ fn reconcile_claude_thinking(
         let requested_budget = reasoning_budget(effort);
         if adaptive_thinking {
             body["thinking"] = json!({"type": "adaptive"});
-            body["output_config"] = json!({"effort": adaptive_effort(effort)});
+            if !body.get("output_config").is_some_and(Value::is_object) {
+                body["output_config"] = json!({});
+            }
+            body["output_config"]["effort"] = json!(adaptive_effort(effort));
             if !output_limit_was_explicit {
                 body["max_tokens"] = json!(
                     CLAUDE_DEFAULT_MAX_TOKENS
@@ -553,8 +597,8 @@ pub use stream::{OpenAIStreamShape, OpenAIStreamTranslator};
 
 pub(crate) use tools::{extract_text, translate_parts, translate_tool_choice, translate_tools};
 pub use tools::{
-    untranslatable_anthropic_tool_choice, untranslatable_anthropic_tools,
-    untranslatable_chat_tool_history,
+    invalid_anthropic_tool_definition, untranslatable_anthropic_tool_choice,
+    untranslatable_anthropic_tools, untranslatable_chat_tool_history,
 };
 
 #[cfg(test)]

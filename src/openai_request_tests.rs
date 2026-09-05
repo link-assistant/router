@@ -1,6 +1,258 @@
 use super::*;
 
 #[test]
+fn chat_safety_identifier_maps_to_anthropic_metadata_and_rejects_bad_values() {
+    let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "safety_identifier": "synthetic-user-42"
+    }))
+    .unwrap();
+    assert_eq!(
+        chat_completion_to_anthropic(&request)["metadata"]["user_id"],
+        "synthetic-user-42"
+    );
+    assert!(
+        crate::safety_identifier::validate_openai(request.safety_identifier.as_deref()).is_ok()
+    );
+
+    let too_long = "x".repeat(65);
+    assert!(crate::safety_identifier::validate_openai(Some(&too_long)).is_err());
+    assert!(
+        serde_json::from_value::<OpenAIChatCompletionRequest>(json!({
+            "model": "claude-test",
+            "messages": [{"role": "user", "content": "answer"}],
+            "safety_identifier": 42
+        }))
+        .is_err()
+    );
+}
+
+#[test]
+fn chat_structured_output_and_parallel_tool_policy_reach_anthropic() {
+    for (response_format, expected_schema) in [
+        (
+            json!({"type": "json_schema", "json_schema": {
+                "name": "answer", "strict": true,
+                "schema": {"type": "object", "required": ["answer"]}
+            }}),
+            json!({"type": "object", "required": ["answer"]}),
+        ),
+        (
+            json!({"type": "json_object"}),
+            json!({"type": "object", "additionalProperties": true}),
+        ),
+    ] {
+        let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+            "model": "claude-test",
+            "messages": [{"role": "user", "content": "answer"}],
+            "response_format": response_format,
+            "parallel_tool_calls": false,
+            "tools": [{"type": "function", "function": {
+                "name": "lookup", "parameters": {"type": "object"}
+            }}],
+            "tool_choice": "required"
+        }))
+        .unwrap();
+        let translated = chat_completion_to_anthropic(&request);
+        assert_eq!(translated["output_config"]["format"]["type"], "json_schema");
+        assert_eq!(
+            translated["output_config"]["format"]["schema"],
+            expected_schema
+        );
+        assert_eq!(translated["tool_choice"]["type"], "any");
+        assert_eq!(translated["tool_choice"]["disable_parallel_tool_use"], true);
+    }
+}
+
+#[test]
+fn anthropic_bridge_rejects_audio_content_in_every_chat_shape() {
+    for content in [
+        json!([{"type": "input_audio", "input_audio": {"data": "AAA", "format": "wav"}}]),
+        json!([{"type": "text", "text": "listen"}, {"type": "input_audio", "input_audio": {"data": "AAA", "format": "mp3"}}]),
+        json!([{"type": "input_audio", "input_audio": {}}]),
+    ] {
+        let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+            "model": "claude-test",
+            "messages": [{"role": "user", "content": content}],
+            "stream": true
+        }))
+        .unwrap();
+        assert!(
+            untranslatable_chat_tool_history(&request.messages)
+                .is_some_and(|reason| reason.contains("input_audio"))
+        );
+    }
+}
+
+#[test]
+fn chat_output_contract_fields_are_retained_and_fail_closed_on_bridge() {
+    let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "n": 2,
+        "modalities": ["audio"],
+        "audio": {"format": "wav", "voice": "alloy"},
+        "logprobs": true,
+        "top_logprobs": 5
+    }))
+    .unwrap();
+    let retained = serde_json::to_value(&request).unwrap();
+    for field in ["n", "modalities", "audio", "logprobs", "top_logprobs"] {
+        assert!(retained.get(field).is_some(), "discarded {field}");
+    }
+    assert!(crate::structured_output::unsupported_chat_output_contract(&request).is_some());
+
+    let supported: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "n": 1,
+        "modalities": ["text"],
+        "audio": null,
+        "logprobs": false,
+        "top_logprobs": 0
+    }))
+    .unwrap();
+    assert_eq!(
+        crate::structured_output::unsupported_chat_output_contract(&supported),
+        None
+    );
+}
+
+#[test]
+fn chat_generation_controls_are_retained_and_only_neutral_values_bridge() {
+    let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "frequency_penalty": 1.25,
+        "presence_penalty": -0.5,
+        "logit_bias": {"42": 10},
+        "seed": 1234
+    }))
+    .unwrap();
+    let retained = serde_json::to_value(&request).unwrap();
+    assert_eq!(retained["frequency_penalty"], 1.25);
+    assert_eq!(retained["presence_penalty"], -0.5);
+    assert_eq!(retained["logit_bias"], json!({"42": 10.0}));
+    assert_eq!(retained["seed"], 1234);
+    assert!(crate::structured_output::unsupported_chat_generation_control(&request).is_some());
+
+    let neutral: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "frequency_penalty": 0,
+        "presence_penalty": -0.0,
+        "logit_bias": {}
+    }))
+    .unwrap();
+    assert_eq!(
+        crate::structured_output::unsupported_chat_generation_control(&neutral),
+        None
+    );
+
+    for value in [-2.1, 2.1] {
+        let invalid: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+            "model": "claude-test",
+            "messages": [{"role": "user", "content": "answer"}],
+            "frequency_penalty": value
+        }))
+        .unwrap();
+        assert!(
+            crate::structured_output::unsupported_chat_generation_control(&invalid)
+                .is_some_and(|reason| reason.contains("between -2 and 2"))
+        );
+    }
+}
+
+#[test]
+fn chat_function_tool_strictness_is_preserved_and_malformed_values_fail() {
+    let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "use tools"}],
+        "tools": [
+            {"type": "function", "function": {"name": "strict_tool", "strict": true, "parameters": {"type": "object"}}},
+            {"type": "function", "function": {"name": "loose_tool", "strict": false, "parameters": {"type": "object"}}},
+            {"type": "function", "function": {"name": "default_tool", "parameters": {"type": "object"}}}
+        ]
+    }))
+    .unwrap();
+    let translated = chat_completion_to_anthropic(&request);
+    assert_eq!(translated["tools"][0]["strict"], true);
+    assert_eq!(translated["tools"][1]["strict"], false);
+    assert!(translated["tools"][2].get("strict").is_none());
+
+    for tools in [
+        json!([{"type": "function", "function": {"name": "bad", "strict": "yes", "parameters": {"type": "object"}}}]),
+        json!([{"type": "function", "function": {"name": "bad", "parameters": "object"}}]),
+    ] {
+        assert!(invalid_anthropic_tool_definition(&tools).is_some());
+    }
+}
+
+#[test]
+fn parallel_tool_policy_combines_with_every_chat_tool_choice() {
+    let cases = [
+        (None, None, Value::Null, Value::Null),
+        (Some(true), Some(json!("auto")), json!("auto"), Value::Null),
+        (
+            Some(false),
+            Some(json!("required")),
+            json!("any"),
+            json!(true),
+        ),
+        (Some(false), Some(json!("none")), json!("none"), json!(true)),
+        (
+            Some(false),
+            Some(json!({"type": "function", "function": {"name": "lookup"}})),
+            json!("tool"),
+            json!(true),
+        ),
+    ];
+    for (parallel, choice, expected_type, expected_disabled) in cases {
+        let request = OpenAIChatCompletionRequest {
+            model: "claude-test".into(),
+            messages: vec![ChatMessage {
+                role: "user".into(),
+                content: json!("use tools"),
+                name: None,
+                tool_call_id: None,
+                tool_calls: None,
+            }],
+            max_tokens: None,
+            max_completion_tokens: None,
+            temperature: None,
+            top_p: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            logit_bias: None,
+            seed: None,
+            stream: None,
+            stop: None,
+            tools: Some(
+                json!([{"type": "function", "function": {"name": "lookup", "parameters": {"type": "object"}}}]),
+            ),
+            tool_choice: choice,
+            reasoning_effort: None,
+            reasoning: None,
+            response_format: None,
+            parallel_tool_calls: parallel,
+            n: None,
+            modalities: None,
+            audio: None,
+            logprobs: None,
+            top_logprobs: None,
+            safety_identifier: None,
+        };
+        let translated = chat_completion_to_anthropic(&request);
+        assert_eq!(translated["tool_choice"]["type"], expected_type);
+        assert_eq!(
+            translated["tool_choice"]["disable_parallel_tool_use"],
+            expected_disabled
+        );
+    }
+}
+
+#[test]
 fn translates_anthropic_text_stream_to_openai_chat_chunks() {
     let mut translator = OpenAIStreamTranslator::new(OpenAIStreamShape::ChatCompletion, "gpt-4o");
     let frames = translator.push(
@@ -100,12 +352,24 @@ fn translates_basic_chat_completion() {
         max_completion_tokens: None,
         temperature: Some(0.5),
         top_p: None,
+        frequency_penalty: None,
+        presence_penalty: None,
+        logit_bias: None,
+        seed: None,
         stream: None,
         stop: None,
         tools: None,
         tool_choice: None,
         reasoning_effort: None,
         reasoning: None,
+        response_format: None,
+        parallel_tool_calls: None,
+        n: None,
+        modalities: None,
+        audio: None,
+        logprobs: None,
+        top_logprobs: None,
+        safety_identifier: None,
     };
     let body = chat_completion_to_anthropic(&req);
     // The requested model is preserved verbatim; nothing rewrites it.
@@ -134,12 +398,24 @@ fn preserves_claude_native_model_id() {
         max_completion_tokens: None,
         temperature: None,
         top_p: None,
+        frequency_penalty: None,
+        presence_penalty: None,
+        logit_bias: None,
+        seed: None,
         stream: None,
         stop: None,
         tools: None,
         tool_choice: None,
         reasoning_effort: None,
         reasoning: None,
+        response_format: None,
+        parallel_tool_calls: None,
+        n: None,
+        modalities: None,
+        audio: None,
+        logprobs: None,
+        top_logprobs: None,
+        safety_identifier: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert_eq!(body["model"], "claude-opus-4-7");
@@ -161,12 +437,24 @@ fn drops_temperature_for_claude_5_models() {
         max_completion_tokens: None,
         temperature: Some(0.7),
         top_p: None,
+        frequency_penalty: None,
+        presence_penalty: None,
+        logit_bias: None,
+        seed: None,
         stream: None,
         stop: None,
         tools: None,
         tool_choice: None,
         reasoning_effort: None,
         reasoning: None,
+        response_format: None,
+        parallel_tool_calls: None,
+        n: None,
+        modalities: None,
+        audio: None,
+        logprobs: None,
+        top_logprobs: None,
+        safety_identifier: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert!(body.get("temperature").is_none());
@@ -279,12 +567,24 @@ fn translates_multipart_user_content() {
         max_completion_tokens: None,
         temperature: None,
         top_p: None,
+        frequency_penalty: None,
+        presence_penalty: None,
+        logit_bias: None,
+        seed: None,
         stream: None,
         stop: None,
         tools: None,
         tool_choice: None,
         reasoning_effort: None,
         reasoning: None,
+        response_format: None,
+        parallel_tool_calls: None,
+        n: None,
+        modalities: None,
+        audio: None,
+        logprobs: None,
+        top_logprobs: None,
+        safety_identifier: None,
     };
     let body = chat_completion_to_anthropic(&req);
     let parts = body["messages"][0]["content"].as_array().unwrap();
@@ -367,12 +667,24 @@ fn anthropic_never_receives_both_temperature_and_top_p() {
             max_completion_tokens: None,
             temperature,
             top_p,
+            frequency_penalty: None,
+            presence_penalty: None,
+            logit_bias: None,
+            seed: None,
             stream: None,
             stop: None,
             tools: None,
             tool_choice: None,
             reasoning_effort: None,
             reasoning: None,
+            response_format: None,
+            parallel_tool_calls: None,
+            n: None,
+            modalities: None,
+            audio: None,
+            logprobs: None,
+            top_logprobs: None,
+            safety_identifier: None,
         };
         chat_completion_to_anthropic(&req)
     };

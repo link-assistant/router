@@ -161,7 +161,7 @@ impl TestRouter {
                 .expect("router e2e bridge policy"),
             )
             .expect("install router e2e bridge policy");
-        let state = AppState {
+        let mut state = AppState {
             client: reqwest::Client::new(),
             token_manager: token_manager.clone(),
             oauth_provider,
@@ -204,6 +204,13 @@ impl TestRouter {
             github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
             max_proxy_request_bytes,
         };
+        if provider == UpstreamProvider::OpenAICompatible {
+            state.openai_compatible.base_url = state.upstream_base_url.clone();
+            state.openai_compatible.api_key = Some("stub-openai-compatible-key".into());
+            state.openai_compatible.default_model = Some("gpt-5".into());
+            state.openai_compatible.models = vec!["gpt-5".into()];
+            state.openai_compatible.supported_clients = vec!["opencode".into()];
+        }
         let app = test_app(state);
         let (url, router_task) = spawn(app).await;
 
@@ -402,6 +409,16 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         .lock()
         .expect("stub header lock")
         .push(request.headers().clone());
+    if request.method() == axum::http::Method::GET && request.uri().path().ends_with("/v1/models") {
+        let mut response = Response::new(Body::from(
+            serde_json::to_vec(&json!({"data": [{"id": "gpt-5"}]}))
+                .expect("serialize model catalog"),
+        ));
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+        return response;
+    }
     let body = to_bytes(request.into_body(), 1024 * 1024)
         .await
         .expect("read stub request");
@@ -695,3 +712,6 @@ mod cases_server_tools;
 
 #[path = "router_e2e/chat_validation.rs"]
 mod chat_validation;
+
+#[path = "router_e2e/bridge_history.rs"]
+mod bridge_history;

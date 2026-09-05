@@ -19,6 +19,8 @@ pub mod app_state;
 pub mod audit;
 pub mod auth;
 pub mod auth_remote;
+mod bridge_controls;
+mod bridge_request;
 pub mod bridge_selection;
 pub mod capabilities;
 pub mod chat_admin;
@@ -86,12 +88,14 @@ pub mod request_log;
 mod request_routing;
 pub mod responses;
 pub mod route_contract;
+mod safety_identifier;
 pub mod security_headers;
 pub mod server_command;
 pub mod server_router;
 mod sse;
 pub mod stop_sequences;
 pub mod storage;
+mod structured_output;
 pub mod subscription;
 pub mod subscription_health;
 pub mod subscription_proxy;
@@ -120,6 +124,8 @@ pub mod zai_coding_plan;
 
 #[cfg(test)]
 mod anthropic_bridge_tests;
+#[cfg(test)]
+mod bridge_request_tests;
 #[cfg(test)]
 mod client_policy_tests;
 #[cfg(test)]

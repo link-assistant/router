@@ -156,11 +156,24 @@ events, then `response.completed`.
 - **Anthropic Terms apply.** A Claude MAX subscription is a personal
   subscription. The override is an explicit policy/account-restriction risk;
   never share or resell it. Removing `codex:claude` restores the safe default.
-- **Tool calls** are translated in both directions, but vendor-specific
-  extensions that have no Anthropic equivalent are dropped rather than guessed.
+- **Tool calls** are translated in both directions. Function outputs retain
+  compatible text, image, and file parts; provider-specific reasoning/custom
+  tool history and provider-owned file identifiers are rejected before the
+  upstream request instead of being silently removed.
 - **Codex-specific features** that assume the ChatGPT backend (for example
-  server-side conversation state) are not emulated; each request is
-  self-contained.
+  `previous_response_id` or `conversation`) are not emulated. Non-null state
+  handles are rejected; send the complete self-contained history instead.
+- Compatible JSON Schema output formats, function-tool `strict`, and disabled
+  parallel tool calls are preserved. Unsupported audio, multiple-choice, and
+  log-probability response contracts fail with a Responses/Chat-shaped `400`.
+- Caller-provided `safety_identifier` values are forwarded as Anthropic
+  `metadata.user_id` and redacted from Router request logs. Responses `top_p`
+  is preserved; requests that also set `temperature` are rejected because the
+  Anthropic target cannot honor both sampling controls together.
+- Responses execution controls are fail-closed: `background: true`,
+  `store: true`, automatic truncation, and non-empty `stream_options` are
+  rejected because Anthropic cannot honor them exactly. `max_tool_calls` is
+  forwarded as `max_uses` only when exactly one server tool is present.
 - The reverse direction — a ChatGPT subscription inside Claude Code — is
   documented separately in
   [chatgpt-in-claude-code.md](chatgpt-in-claude-code.md).

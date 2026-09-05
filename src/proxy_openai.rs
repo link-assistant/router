@@ -320,6 +320,16 @@ async fn openai_chat_completions_with_subscription(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::Codex {
+        if let Err(reason) =
+            crate::safety_identifier::validate_openai_value(body.get("safety_identifier"))
+        {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
         // The ChatGPT backend speaks only the Responses API; translate the
         // Chat Completions request before forwarding.
         let responses_body = responses::chat_completion_to_responses(&body);
@@ -349,6 +359,39 @@ async fn openai_chat_completions_with_subscription(
         }
     };
     let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
+    if let Err(reason) = crate::safety_identifier::validate_openai(req.safety_identifier.as_deref())
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Err(reason) = crate::structured_output::chat_format(req.response_format.as_ref()) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Some(reason) = crate::structured_output::unsupported_chat_output_contract(&req) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Some(reason) = crate::structured_output::unsupported_chat_generation_control(&req) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     // Validate against the account's live catalog rather than a built-in alias
     // table (issue #192). An account that has discovered nothing cannot judge
     // the name, so the upstream is left to decide.
@@ -368,6 +411,18 @@ async fn openai_chat_completions_with_subscription(
         .as_ref()
         .map(openai::untranslatable_anthropic_tools)
         .unwrap_or_default();
+    if let Some(reason) = req
+        .tools
+        .as_ref()
+        .and_then(openai::invalid_anthropic_tool_definition)
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     if let Some(reason) = req
         .tool_choice
         .as_ref()
@@ -549,6 +604,14 @@ async fn openai_responses_with_route(
         )
         .await;
     }
+    if let Some(reason) = crate::bridge_request::untranslatable_responses_state(&body) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     let req = match serde_json::from_value::<responses::OpenAIResponseRequest>(body) {
         Ok(req) => req,
         Err(e) => {
@@ -561,6 +624,22 @@ async fn openai_responses_with_route(
         }
     };
     let stream_requested = req.stream.unwrap_or(false);
+    if let Err(reason) = crate::structured_output::responses_format(req.text.as_ref()) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Err(reason) = crate::bridge_controls::validate_responses(&req) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     // Validate against the account's live catalog rather than a built-in alias
     // table (issue #192). An account that has discovered nothing cannot judge
     // the name, so the upstream is left to decide.
@@ -580,6 +659,18 @@ async fn openai_responses_with_route(
         .as_ref()
         .map(openai::untranslatable_anthropic_tools)
         .unwrap_or_default();
+    if let Some(reason) = req
+        .tools
+        .as_ref()
+        .and_then(openai::invalid_anthropic_tool_definition)
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     if let Some(reason) = req
         .tool_choice
         .as_ref()

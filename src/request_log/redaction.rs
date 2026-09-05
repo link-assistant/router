@@ -110,7 +110,9 @@ pub(super) fn redact_value(mut value: Value) -> Value {
     match &mut value {
         Value::Object(object) => {
             for (key, child) in object {
-                if is_secret_name(key) {
+                if is_safety_identifier_name(key) {
+                    *child = Value::String(REDACTED.to_string());
+                } else if is_secret_name(key) {
                     *child = child.as_str().map_or_else(
                         || Value::String(REDACTED.to_string()),
                         |secret| Value::String(redact_secret(secret)),
@@ -135,6 +137,13 @@ pub(super) fn redact_value(mut value: Value) -> Value {
         _ => {}
     }
     value
+}
+
+fn is_safety_identifier_name(name: &str) -> bool {
+    matches!(
+        normalize_name(name).as_str(),
+        "safety_identifier" | "user_id"
+    )
 }
 
 fn is_secret_name(name: &str) -> bool {
