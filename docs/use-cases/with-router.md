@@ -55,10 +55,15 @@ For Claude, the process overlay wins over persistent helper configuration: it
 sets Router's URL/token, clears the higher-priority API key, enables gateway
 discovery, and forces nonessential startup traffic on so the catalog request is
 not suppressed. Native Anthropic catalogs leave model pins clear. A z.ai-only
-catalog maps Default, every family and subagents to one exact live alias for
-both new and resumed sessions; an explicit z.ai model wins. The real settings,
-credentials, shell startup files, history and gateway cache remain
-byte-identical. Claude Code 2.1.255 or newer is required for current aliases.
+catalog maps only Default/main turns and subagents to the first exact live
+model; an explicit z.ai `--model` wins. Opus, Sonnet, and Haiku remain Claude
+Code's native families instead of becoming duplicate labels for one GLM model.
+Current Claude Code exposes only that one custom default in `/model`; select
+another advertised z.ai ID explicitly with `--model`. With mixed Anthropic and
+z.ai catalogs Router leaves every family/default pin clear, so native family
+behavior stays intact; z.ai IDs remain available through explicit `--model`.
+The real settings, credentials, shell startup files, history and gateway cache
+remain byte-identical. Claude Code 2.1.255 or newer is required.
 
 ## Arguments, interaction, and models
 

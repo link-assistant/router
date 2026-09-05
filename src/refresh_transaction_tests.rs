@@ -15,6 +15,34 @@ struct ControlledStore {
     persist_error: Option<&'static str>,
 }
 
+#[derive(Debug)]
+struct ExternalAuthoritativeStore {
+    credential: SubscriptionToken,
+    lock_path: PathBuf,
+}
+
+impl CredentialStore for ExternalAuthoritativeStore {
+    fn reload(&self) -> Option<SubscriptionToken> {
+        Some(self.credential.clone())
+    }
+
+    fn prepare_refresh(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        Err("external authoritative store is not writable".into())
+    }
+
+    fn persist(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        panic!("a refused external refresh must never reach persistence")
+    }
+
+    fn lock_path(&self) -> Option<PathBuf> {
+        Some(self.lock_path.clone())
+    }
+
+    fn describe(&self) -> String {
+        "injected external authoritative store".into()
+    }
+}
+
 impl CredentialStore for ControlledStore {
     fn reload(&self) -> Option<SubscriptionToken> {
         self.credential.clone()
@@ -50,7 +78,6 @@ fn request_refresh_link(body: &str) -> String {
 
 async fn assert_refresh_is_refused_without_endpoint_request(
     store: Option<Arc<dyn CredentialStore>>,
-    expected_error: &str,
 ) {
     let (url, received, server) = scripted_endpoint(
         vec![Answer::new(
@@ -85,7 +112,7 @@ async fn assert_refresh_is_refused_without_endpoint_request(
     let reported = cache
         .last_refresh_error(SubscriptionProvider::Claude)
         .expect("storage failure is operator-visible");
-    assert!(reported.contains(expected_error), "{reported}");
+    assert!(reported.contains("persistence_failure"), "{reported}");
     assert!(!reported.contains("safe-old-access"), "{reported}");
     assert!(!reported.contains("safe-old-refresh"), "{reported}");
     server.abort();
@@ -93,7 +120,7 @@ async fn assert_refresh_is_refused_without_endpoint_request(
 
 #[tokio::test]
 async fn a_missing_store_fails_closed_before_the_token_endpoint() {
-    assert_refresh_is_refused_without_endpoint_request(None, "not registered").await;
+    assert_refresh_is_refused_without_endpoint_request(None).await;
 }
 
 #[tokio::test]
@@ -103,11 +130,20 @@ async fn a_store_without_a_lock_path_fails_closed_before_the_token_endpoint() {
         lock_path: None,
         persist_error: None,
     });
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "lock path",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
+}
+
+#[tokio::test]
+async fn an_external_authoritative_store_is_not_spent_without_a_writer() {
+    let directory = tempfile::tempdir().expect("lock directory");
+    let store = Arc::new(ExternalAuthoritativeStore {
+        credential: token("safe-old-access", "safe-old-refresh", NOW_MS - 1),
+        lock_path: directory.path().join("credential.lock"),
+    });
+
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -120,11 +156,8 @@ async fn a_lock_open_error_fails_closed_before_the_token_endpoint() {
         lock_path: Some(blocking_file.join("credential.lock")),
         persist_error: None,
     });
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "could not acquire",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -145,11 +178,8 @@ async fn a_lock_timeout_fails_closed_before_the_token_endpoint() {
         persist_error: None,
     });
 
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "timed out",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -160,11 +190,8 @@ async fn a_failed_post_lock_reload_fails_closed_before_the_token_endpoint() {
         lock_path: Some(directory.path().join("credential.lock")),
         persist_error: None,
     });
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "re-read",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -205,10 +232,10 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
         .last_refresh_error_for(SubscriptionProvider::Claude, SENTINEL)
         .expect("storage failure is operator-visible");
     let diagnostic = refresh_failure_diagnostic(SubscriptionProvider::Claude, &reported);
-    assert!(reported.contains("re-read"), "{reported}");
+    assert!(reported.contains("persistence_failure"), "{reported}");
     assert!(
-        diagnostic.contains("could not re-read the registered claude credential"),
-        "the log formatter must retain the provider-scoped cause: {diagnostic}"
+        diagnostic.contains("refresh credential storage failed (class persistence_failure)"),
+        "the log formatter must retain the safe failure class: {diagnostic}"
     );
     assert!(!reported.contains(SENTINEL), "{reported}");
     assert!(!diagnostic.contains(SENTINEL), "{diagnostic}");
@@ -218,6 +245,8 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
 #[tokio::test]
 async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
     const SENTINEL: &str = "raw-account-sentinel@example.invalid";
+    const RESPONSE_SENTINEL: &str = "raw-oauth-response-sentinel@example.invalid";
+    const REDACTED_INVALID_GRANT: &str = r#"{"error":{"type":"invalid_grant","description":"raw-oauth-response-sentinel@example.invalid"},"access_token":"raw-oauth-response-sentinel@example.invalid"}"#;
     let directory = tempfile::tempdir().expect("lock directory");
     let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
     let store = Arc::new(ControlledStore {
@@ -226,7 +255,7 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
         persist_error: None,
     });
     let (url, received, server) =
-        scripted_endpoint(vec![Answer::new(400, INVALID_GRANT)], |_| {}).await;
+        scripted_endpoint(vec![Answer::new(400, REDACTED_INVALID_GRANT)], |_| {}).await;
     let cache = TokenCache::new();
     cache.register_store(
         SubscriptionProvider::Claude,
@@ -260,8 +289,27 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
     assert!(diagnostic.contains("invalid_grant"), "{diagnostic}");
     assert!(!reported.contains(SENTINEL), "{reported}");
     assert!(!diagnostic.contains(SENTINEL), "{diagnostic}");
+    assert!(!reported.contains(RESPONSE_SENTINEL), "{reported}");
+    assert!(!diagnostic.contains(RESPONSE_SENTINEL), "{diagnostic}");
 
-    let endpoint_error = RefreshError::Status(400, INVALID_GRANT.into(), None);
+    // The legacy provider-wide health view reads the primary cache slot. Feed
+    // the already-redacted account diagnostic through that compatibility path
+    // and verify its operator-facing reason remains safe too.
+    cache.record_refresh_error(SubscriptionProvider::Claude, &reported);
+    cache.record_credential_rejected(SubscriptionProvider::Claude);
+    let health = crate::model_routing::configured_provider_health(
+        &[SubscriptionReader::new(
+            SubscriptionProvider::Claude,
+            directory.path(),
+        )],
+        &cache,
+        &crate::model_catalog::ModelCatalogCache::new(),
+    );
+    let health_text = format!("{health:?}");
+    assert!(health_text.contains("invalid_grant"), "{health_text}");
+    assert!(!health_text.contains(RESPONSE_SENTINEL), "{health_text}");
+
+    let endpoint_error = RefreshError::from_status(400, REDACTED_INVALID_GRANT, None);
     for retried_with_newer_link in [false, true] {
         let message = terminal_message(
             SubscriptionProvider::Claude,
@@ -275,6 +323,7 @@ async fn terminal_invalid_grant_hides_account_paths_from_errors_and_logs() {
             "{message}"
         );
         assert!(!message.contains(SENTINEL), "{message}");
+        assert!(!message.contains(RESPONSE_SENTINEL), "{message}");
     }
 }
 
@@ -328,8 +377,7 @@ async fn a_rotation_is_rejected_when_no_durable_write_succeeds() {
     let reported = cache
         .last_refresh_error(SubscriptionProvider::Claude)
         .expect("storage failure is operator-visible");
-    assert!(reported.contains("durably persist"), "{reported}");
-    assert!(reported.contains("primary and recovery"), "{reported}");
+    assert!(reported.contains("persistence_failure"), "{reported}");
     assert!(!reported.contains("unsafe-fresh-access"), "{reported}");
     assert!(!reported.contains("unsafe-fresh-refresh"), "{reported}");
 }

@@ -20,6 +20,26 @@ mod errors;
 use errors::resource_error_code;
 pub use errors::{is_credential_rejection, is_permission_refusal};
 
+/// Provider-catalog verdict shared by status reporting and credential promotion.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CatalogAcceptance {
+    Accepted,
+    MissingSubscription,
+    CredentialRejected,
+    Unverified,
+}
+
+/// Interpret a provider-specific parsed catalog as subscription evidence.
+#[must_use]
+pub fn classify_catalog_acceptance(result: &Result<Vec<String>, String>) -> CatalogAcceptance {
+    match result {
+        Ok(models) if !models.is_empty() => CatalogAcceptance::Accepted,
+        Ok(_) => CatalogAcceptance::MissingSubscription,
+        Err(error) if is_credential_rejection(error) => CatalogAcceptance::CredentialRejected,
+        Err(_) => CatalogAcceptance::Unverified,
+    }
+}
+
 /// How often live provider catalogs are refreshed.
 pub const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const FETCH_TIMEOUT: Duration = Duration::from_secs(15);
@@ -848,8 +868,7 @@ pub async fn fetch_provider_catalog_records(
         || catalog_base_url(provider, token),
         |value| value.trim_end_matches('/').to_string(),
     );
-    let client_version =
-        std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.144.1".to_string());
+    let client_version = crate::codex_identity::client_version();
     let url = match provider {
         SubscriptionProvider::Claude => format!("{base}/v1/models"),
         SubscriptionProvider::Codex | SubscriptionProvider::Qwen => format!("{base}/models"),
@@ -900,9 +919,8 @@ pub async fn fetch_provider_catalog_records(
                     .header("anthropic-beta", "oauth-2025-04-20");
             }
             SubscriptionProvider::Codex => {
-                if let Some(account_id) = token.account_id.as_deref() {
-                    request = request.header("chatgpt-account-id", account_id);
-                }
+                request =
+                    request.headers(crate::codex_identity::headers(token.account_id.as_deref()));
             }
             SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {}
         }

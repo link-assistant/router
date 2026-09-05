@@ -77,6 +77,9 @@ impl RouteMethod {
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum RouteId {
     Health,
+    AggregateModels,
+    SubscriptionUsage,
+    SubscriptionUsageProvider,
     Tokens,
     ClientTokens,
     RevokeToken,
@@ -117,6 +120,9 @@ pub enum RouteId {
     GitHubRest,
     GitHubGraphql,
     Git,
+    GitHubAdapterRest,
+    GitHubAdapterGraphql,
+    GitHubAdapterGit,
     ActivityPubActor,
     ActivityPubInbox,
     ActivityPubOutbox,
@@ -139,6 +145,7 @@ const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
 const COMBINED_AND_ADMIN: &[ListenerKind] = &[ListenerKind::Combined, ListenerKind::Admin];
 const COMBINED_ONLY: &[ListenerKind] = &[ListenerKind::Combined];
+const GITHUB_ADAPTER_ONLY: &[ListenerKind] = &[ListenerKind::GitHubAdapter];
 
 const fn neutral(id: RouteId, method: RouteMethod, template: &'static str) -> RouteSpec {
     RouteSpec {
@@ -149,6 +156,13 @@ const fn neutral(id: RouteId, method: RouteMethod, template: &'static str) -> Ro
         auth: RouteAuth::None,
         dialect: ApiDialect::Anthropic,
         listeners: COMBINED_AND_INFERENCE,
+    }
+}
+
+const fn client_neutral(id: RouteId, method: RouteMethod, template: &'static str) -> RouteSpec {
+    RouteSpec {
+        auth: RouteAuth::Client,
+        ..neutral(id, method, template)
     }
 }
 
@@ -220,8 +234,32 @@ const fn public_private_service(
     }
 }
 
+const fn github_adapter_service(
+    id: RouteId,
+    method: RouteMethod,
+    template: &'static str,
+    service: ServiceKind,
+) -> RouteSpec {
+    RouteSpec {
+        id,
+        method,
+        template,
+        class: RouteClass::Service(service),
+        auth: RouteAuth::Client,
+        dialect: ApiDialect::GitHub,
+        listeners: GITHUB_ADAPTER_ONLY,
+    }
+}
+
 const ROUTES: &[RouteSpec] = &[
     neutral(RouteId::Health, RouteMethod::Get, "/api/health"),
+    client_neutral(RouteId::AggregateModels, RouteMethod::Get, "/api/models"),
+    client_neutral(RouteId::SubscriptionUsage, RouteMethod::Get, "/api/usage"),
+    client_neutral(
+        RouteId::SubscriptionUsageProvider,
+        RouteMethod::Get,
+        "/api/usage/{provider}",
+    ),
     management(RouteId::Tokens, RouteMethod::Get, "/api/management/tokens"),
     management(RouteId::Tokens, RouteMethod::Post, "/api/management/tokens"),
     management(
@@ -474,6 +512,24 @@ const ROUTES: &[RouteSpec] = &[
         "/api/services/github/git/{*path}",
         ServiceKind::Git,
         ApiDialect::GitHub,
+    ),
+    github_adapter_service(
+        RouteId::GitHubAdapterRest,
+        RouteMethod::Any,
+        "/api/v3/{*path}",
+        ServiceKind::GitHub,
+    ),
+    github_adapter_service(
+        RouteId::GitHubAdapterGraphql,
+        RouteMethod::Post,
+        "/api/graphql",
+        ServiceKind::GitHub,
+    ),
+    github_adapter_service(
+        RouteId::GitHubAdapterGit,
+        RouteMethod::Any,
+        "/git/{*path}",
+        ServiceKind::Git,
     ),
     public_private_service(
         RouteId::ActivityPubActor,

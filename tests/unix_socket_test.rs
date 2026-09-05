@@ -14,6 +14,9 @@ use std::io::{Read as _, Write as _};
 use std::net::TcpListener;
 use std::os::unix::net::UnixStream;
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 fn free_port() -> u16 {
@@ -50,12 +53,19 @@ struct Router {
     _directory: tempfile::TempDir,
     data: tempfile::TempDir,
     log: std::path::PathBuf,
+    upstream_requests: Arc<Mutex<Vec<String>>>,
+    upstream_stop: Arc<AtomicBool>,
+    upstream_thread: Option<JoinHandle<()>>,
 }
 
 impl Drop for Router {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
+        self.upstream_stop.store(true, Ordering::Release);
+        if let Some(thread) = self.upstream_thread.take() {
+            let _ = thread.join();
+        }
     }
 }
 
@@ -64,6 +74,59 @@ impl Router {
         let directory = tempfile::tempdir().expect("socket directory");
         let data = tempfile::tempdir().expect("data dir");
         let socket = directory.path().join("router.sock");
+        let upstream = TcpListener::bind("127.0.0.1:0").expect("bind GitHub stub");
+        upstream.set_nonblocking(true).expect("nonblocking stub");
+        let upstream_origin = format!("http://{}", upstream.local_addr().unwrap());
+        let upstream_requests = Arc::new(Mutex::new(Vec::new()));
+        let requests_for_thread = Arc::clone(&upstream_requests);
+        let upstream_stop = Arc::new(AtomicBool::new(false));
+        let stop_for_thread = Arc::clone(&upstream_stop);
+        let upstream_thread = std::thread::spawn(move || {
+            while !stop_for_thread.load(Ordering::Acquire) {
+                match upstream.accept() {
+                    Ok((mut stream, _)) => {
+                        stream.set_nonblocking(false).unwrap();
+                        stream
+                            .set_read_timeout(Some(Duration::from_secs(2)))
+                            .unwrap();
+                        let mut bytes = vec![0_u8; 32 * 1024].into_boxed_slice();
+                        let read = stream.read(&mut bytes).unwrap_or_default();
+                        let request = String::from_utf8_lossy(&bytes[..read]).into_owned();
+                        requests_for_thread.lock().unwrap().push(request.clone());
+                        let (content_type, body) = if request.starts_with("GET /user ") {
+                            ("application/json", r#"{"login":"router-test"}"#)
+                        } else if request.starts_with("POST /graphql ") {
+                            (
+                                "application/json",
+                                r#"{"data":{"viewer":{"login":"router-test"}}}"#,
+                            )
+                        } else if request.contains(".git/info/refs") {
+                            (
+                                "application/x-git-upload-pack-advertisement",
+                                "001e# service=git-upload-pack\n0000",
+                            )
+                        } else {
+                            ("application/json", r#"{"message":"not found"}"#)
+                        };
+                        let status = if body.contains("not found") {
+                            "404 Not Found"
+                        } else {
+                            "200 OK"
+                        };
+                        write!(
+                            stream,
+                            "HTTP/1.1 {status}\r\ncontent-type: {content_type}\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                            body.len()
+                        )
+                        .expect("answer GitHub stub");
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(error) => panic!("GitHub stub accept: {error}"),
+                }
+            }
+        });
         // The router reports why it could not start on stderr, so it is kept
         // rather than discarded: a startup failure here used to surface only
         // as "never answered", with the reason thrown away, which left a CI
@@ -79,7 +142,7 @@ impl Router {
             .env("DATA_DIR", data.path())
             .env("DISABLE_LOGIN_API", "true")
             .env("GITHUB_PROXY_TOKEN", "unix-socket-upstream-token")
-            .env("GITHUB_PROXY_BASE_URL", "http://127.0.0.1:9")
+            .env("GITHUB_PROXY_BASE_URL", upstream_origin)
             .env("LISTEN_UNIX_SOCKET", &socket)
             .stdout(Stdio::null())
             .stderr(Stdio::from(stderr))
@@ -91,6 +154,9 @@ impl Router {
             _directory: directory,
             data,
             log,
+            upstream_requests,
+            upstream_stop,
+            upstream_thread: Some(upstream_thread),
         };
         let deadline = Instant::now() + Duration::from_secs(40);
         while Instant::now() < deadline {
@@ -129,12 +195,25 @@ impl Router {
 
     /// One plain-HTTP request over the socket — no TLS anywhere.
     fn request(&self, line: &str) -> String {
+        self.request_with(line, &[], "")
+    }
+
+    fn request_with(&self, line: &str, headers: &[(&str, &str)], body: &str) -> String {
         let Ok(mut stream) = UnixStream::connect(&self.socket) else {
             return String::new();
         };
+        let mut rendered_headers = String::new();
+        for (name, value) in headers {
+            std::fmt::Write::write_fmt(&mut rendered_headers, format_args!("{name}: {value}\r\n"))
+                .expect("render request header");
+        }
         if stream
             .write_all(
-                format!("{line}\r\nHost: router.internal\r\nConnection: close\r\n\r\n").as_bytes(),
+                format!(
+                    "{line}\r\nHost: router.internal\r\n{rendered_headers}content-length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                )
+                .as_bytes(),
             )
             .is_err()
         {
@@ -143,6 +222,10 @@ impl Router {
         let mut response = String::new();
         let _ = stream.read_to_string(&mut response);
         response
+    }
+
+    fn upstream_requests(&self) -> Vec<String> {
+        self.upstream_requests.lock().unwrap().clone()
     }
 
     fn token(&self) -> String {
@@ -222,5 +305,96 @@ fn the_socket_still_requires_a_token() {
     assert!(
         !accepted.contains(" 401 ") && !accepted.contains(" 403 ") && !accepted.contains(" 404 "),
         "an authenticated request must reach the configured upstream: {accepted}"
+    );
+}
+
+#[test]
+fn real_gh_api_uses_the_adapter_socket_and_router_token() {
+    if Command::new("gh").arg("--version").output().is_err() {
+        return;
+    }
+    let router = Router::start();
+    let token = router.token();
+    let config = tempfile::tempdir().expect("isolated gh config");
+    let configured = Command::new("gh")
+        .args([
+            "config",
+            "set",
+            "http_unix_socket",
+            router.socket.to_str().unwrap(),
+        ])
+        .env("GH_CONFIG_DIR", config.path())
+        .output()
+        .expect("configure gh socket");
+    assert!(
+        configured.status.success(),
+        "gh config failed: {}",
+        String::from_utf8_lossy(&configured.stderr)
+    );
+
+    let output = Command::new("gh")
+        .args(["api", "user", "--hostname", "router.internal"])
+        .env("GH_CONFIG_DIR", config.path())
+        .env("GH_ENTERPRISE_TOKEN", &token)
+        .env("GH_HOST", "router.internal")
+        .env("NO_PROXY", "*")
+        .env("no_proxy", "*")
+        .output()
+        .expect("run gh api through Router");
+    assert!(
+        output.status.success(),
+        "gh api failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("router-test"),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let upstream = router.upstream_requests();
+    assert!(upstream.iter().any(|request| {
+        request.starts_with("GET /user ")
+            && request
+                .to_ascii_lowercase()
+                .contains("authorization: bearer unix-socket-upstream-token")
+    }));
+}
+
+#[test]
+fn adapter_socket_routes_graphql_and_git_transport() {
+    let router = Router::start();
+    let token = router.token();
+    let authorization = format!("Bearer {token}");
+    let graphql = router.request_with(
+        "POST /api/graphql HTTP/1.1",
+        &[
+            ("authorization", &authorization),
+            ("content-type", "application/json"),
+        ],
+        r#"{"query":"query { viewer { login } }"}"#,
+    );
+    assert!(graphql.contains(" 200 "), "{graphql}");
+    assert!(graphql.contains("router-test"), "{graphql}");
+
+    let git = router.request_with(
+        "GET /git/acme/demo.git/info/refs?service=git-upload-pack HTTP/1.1",
+        &[("authorization", &authorization)],
+        "",
+    );
+    assert!(git.contains(" 200 "), "{git}");
+    assert!(git.contains("service=git-upload-pack"), "{git}");
+
+    let upstream = router.upstream_requests();
+    assert!(
+        upstream
+            .iter()
+            .any(|request| request.starts_with("POST /graphql ")),
+        "{upstream:?}"
+    );
+    assert!(
+        upstream
+            .iter()
+            .any(|request| request.contains(".git/info/refs?service=git-upload-pack")),
+        "{upstream:?}"
     );
 }

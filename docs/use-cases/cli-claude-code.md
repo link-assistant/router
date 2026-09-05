@@ -9,10 +9,11 @@
 router with claude "hi"
 ```
 
-The wrapper points a disposable `CLAUDE_CONFIG_DIR` at the router and supplies
-`ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN`; the normal Claude settings are
-not changed. It also enables gateway discovery; Claude Code >= 2.1.255 is
-required. See [with-router.md](with-router.md) for server and token options.
+The wrapper supplies `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN` while
+preserving the normal Claude settings. Add `--isolated-config` when a disposable
+`CLAUDE_CONFIG_DIR` is required for CI or a clean-room reproduction. It also
+enables gateway discovery; Claude Code >= 2.1.255 is required. See
+[with-router.md](with-router.md) for server and token options.
 
 Wrapper flags may appear before or after `claude`; an explicit `--`
 forwards every later token verbatim. See
@@ -51,14 +52,19 @@ claude
 Pre-1.0.0 prefixes are not accepted. See the
 [canonical-route migration](../migrations/1.0.0-canonical-routes.md).
 
-## What the router supplies
+## What the router changes
 
-The client sends only its `la_sk_…` token. The router adds, per request:
+The client sends its `la_sk_…` token plus its native protocol headers. Per
+request, the router:
 
-- the real upstream credential (Claude MAX OAuth, or the bridged provider's),
-- `anthropic-version: 2023-06-01` when the client omitted it,
-- `anthropic-beta: oauth-2025-04-20`, merged with any betas the client already
-  sent.
+- replaces only that Router credential with the real upstream credential
+  (Claude OAuth, or an explicitly permitted provider's credential),
+- removes ingress forwarding and client-IP metadata, and
+- preserves other native client headers exactly as sent.
+
+It does not synthesize a missing `anthropic-version` or `anthropic-beta`
+header. A request missing evidence required by the supported Claude client
+contract is rejected before upstream.
 
 ## Which subscription answers
 
@@ -94,6 +100,8 @@ See [per-task-tokens.md](per-task-tokens.md).
 curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $ANTHROPIC_AUTH_TOKEN" \
   -H "Content-Type: application/json" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "User-Agent: claude-cli/2.1.261" \
   -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":32,
        "messages":[{"role":"user","content":"ping"}]}' | jq -r '.content[0].text'
 ```

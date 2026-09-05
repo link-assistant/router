@@ -1,9 +1,9 @@
-//! Black-box safety boundaries for refresh-chain credential import.
+//! Black-box safety boundaries for external credential import.
 
 use std::process::Command;
 
 #[test]
-fn gemini_import_names_the_missing_secret_before_staging() {
+fn gemini_external_import_neither_requires_a_refresh_secret_nor_stages_the_source() {
     let root = tempfile::tempdir().expect("root");
     let source = root.path().join("source");
     let destination = root.path().join("destination");
@@ -33,8 +33,13 @@ fn gemini_import_names_the_missing_secret_before_staging() {
 
     assert!(!output.status.success(), "{output:?}");
     let error = String::from_utf8_lossy(&output.stderr);
-    assert!(error.contains("GEMINI_OAUTH_CLIENT_SECRET"), "{error}");
-    assert!(!data.join("auth-import-candidates").exists());
+    assert!(error.contains("refresh token was not spent"), "{error}");
+    assert!(!error.contains("GEMINI_OAUTH_CLIENT_SECRET"), "{error}");
+    let candidates = data.join("auth-import-candidates");
+    assert!(
+        !candidates.exists() || candidates.read_dir().unwrap().next().is_none(),
+        "external validation retained a successor transaction"
+    );
     assert!(!destination.join("oauth_creds.json").exists());
 }
 

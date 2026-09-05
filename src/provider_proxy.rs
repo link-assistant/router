@@ -88,13 +88,28 @@ pub async fn upsert_provider(
             "admin Bearer key required",
         );
     }
-    match state.provider_store.upsert(input) {
-        Ok(record) => (StatusCode::OK, axum::Json(record.redacted())).into_response(),
-        Err(e) => error_response(
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            &format!("{e}"),
-        ),
+    match crate::provider_acceptance::provision(&state.client, &state.provider_store, input).await {
+        Ok(result) => (StatusCode::OK, axum::Json(result.response())).into_response(),
+        Err(error) => {
+            use crate::provider_acceptance::ProviderProvisionFailureKind as Kind;
+            let status = match error.kind() {
+                Kind::InvalidCandidate | Kind::CredentialRejected => StatusCode::BAD_REQUEST,
+                Kind::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+                Kind::Unverified | Kind::PersistenceUncertain => StatusCode::SERVICE_UNAVAILABLE,
+            };
+            (
+                status,
+                axum::Json(serde_json::json!({
+                    "type": "error",
+                    "error": {
+                        "type": "provider_acceptance_error",
+                        "outcome": error.kind(),
+                        "message": error.to_string(),
+                    }
+                })),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -235,6 +250,9 @@ pub(crate) async fn forward_provider_at_routed(
             );
         }
     };
+    let native_protocol = native_protocol
+        || (provider.kind == ProviderKind::Lefine
+            && protocol == crate::client_policy::ClientProtocol::OpenAIChat);
     let client = match crate::client_policy::bound_client(&claims) {
         Ok((client, _)) => client,
         Err(error) => {
@@ -250,7 +268,10 @@ pub(crate) async fn forward_provider_at_routed(
             "the selected provider has no tested compatible adapter for this signed client request",
         );
     }
-    if provider.kind == ProviderKind::OpenAICompatible {
+    if matches!(
+        provider.kind,
+        ProviderKind::OpenAICompatible | ProviderKind::Lefine
+    ) {
         if !matches!(body.get("model").and_then(serde_json::Value::as_str), Some(s) if !s.is_empty())
             && let Some(model) = provider.default_model.as_deref()
         {
@@ -341,6 +362,9 @@ pub(crate) async fn forward_provider_at_routed(
         upstream_req = upstream_req.headers(crate::proxy::native_request_headers(headers, api_key));
     } else {
         upstream_req = upstream_req.header("content-type", "application/json");
+        if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+            upstream_req = upstream_req.header("x-request-id", request_id);
+        }
         if let Some(api_key) = provider.api_key.as_deref() {
             upstream_req = upstream_req.header("authorization", format!("Bearer {api_key}"));
         }
@@ -509,14 +533,17 @@ fn cache_openai_provider_failure(
     Err("provider live model catalog is unavailable".into())
 }
 
-/// Fetch one ordinary provider's authenticated non-inference `/models`
-/// catalog. Configured model ids are an optional restriction, never a
-/// substitute for current provider evidence.
+/// Fetch one API provider's authenticated non-inference `/models` catalog.
+/// Generic configured IDs restrict live results; Lefine uses them only as an
+/// outage fallback after provisioning has already established the key.
 pub(crate) async fn live_openai_compatible_catalog(
     state: &AppState,
     provider: &ResolvedProvider,
 ) -> Result<Vec<LiveProviderModel>, String> {
-    if provider.kind != ProviderKind::OpenAICompatible {
+    if !matches!(
+        provider.kind,
+        ProviderKind::OpenAICompatible | ProviderKind::Lefine
+    ) {
         return Err("provider does not use the OpenAI-compatible catalog contract".into());
     }
     let fingerprint = openai_provider_catalog_fingerprint(provider);
@@ -536,6 +563,49 @@ pub(crate) async fn live_openai_compatible_catalog(
         if cached.error.is_some() && cached.last_attempt.elapsed() < PROVIDER_FAILED_REFRESH_RETRY {
             return Err("provider live model catalog is unavailable".into());
         }
+    }
+
+    if provider.kind == ProviderKind::Lefine {
+        let models = match crate::lefine::fetch_catalog(&state.client, provider).await {
+            Ok(models) => models,
+            Err(error) if error.kind() != crate::lefine::CatalogFailureKind::CredentialRejected => {
+                tracing::warn!(provider = %provider.name, "live Lefine catalog unavailable; using configured exact ids");
+                match crate::lefine::configured_catalog(provider) {
+                    Ok(models) => models,
+                    Err(_) => {
+                        return cache_openai_provider_failure(
+                            state,
+                            provider,
+                            fingerprint,
+                            &error.to_string(),
+                        );
+                    }
+                }
+            }
+            Err(error) => {
+                return cache_openai_provider_failure(
+                    state,
+                    provider,
+                    fingerprint,
+                    &error.to_string(),
+                );
+            }
+        };
+        let now = Instant::now();
+        state
+            .provider_store
+            .cache_provider_catalog(
+                &provider.name,
+                CachedProviderCatalog {
+                    fingerprint,
+                    models: models.clone(),
+                    last_success: Some(now),
+                    last_attempt: now,
+                    error: None,
+                },
+            )
+            .map_err(|error| error.to_string())?;
+        return Ok(models);
     }
 
     let url = join_openai_compatible_url(&provider.base_url, "/v1/models");

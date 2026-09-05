@@ -6,6 +6,7 @@ fn model(id: &str, owner: &str) -> RouterModel {
     RouterModel {
         id: id.to_string(),
         owned_by: owner.to_string(),
+        ..RouterModel::default()
     }
 }
 

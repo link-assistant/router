@@ -46,7 +46,11 @@ pub enum AuthOp {
     /// The per-provider flags on the authorize commands keep working.
     Import {
         /// Which login to adopt. Omit with `--all`.
-        #[arg(value_enum, required_unless_present = "all")]
+        #[arg(
+            value_enum,
+            required_unless_present_any = ["all", "resume"],
+            conflicts_with = "resume"
+        )]
         provider: Option<ImportProvider>,
         /// Where to read it from. A named directory is read exactly as given.
         ///
@@ -61,6 +65,7 @@ pub enum AuthOp {
         /// directory — the destination — so reading the source through them
         /// would make every unqualified import refuse itself (issue #307). Pass
         /// the directory to read from another location.
+        #[arg(requires = "provider", conflicts_with = "resume")]
         dir: Option<String>,
         /// Adopt every login this machine has.
         ///
@@ -68,7 +73,7 @@ pub enum AuthOp {
         /// machine already logged in to several providers, without knowing each
         /// flag name and default path. Run it on that deployment — import
         /// writes the executing machine's credential home (issue #291).
-        #[arg(long, conflicts_with = "provider")]
+        #[arg(long, conflicts_with_all = ["provider", "resume"])]
         all: bool,
         /// Install only if no recognized credential exists after taking the
         /// shared refresh/login lock.
@@ -82,6 +87,21 @@ pub enum AuthOp {
         /// compatibility; this flag never bypasses positive validation.
         #[arg(long = "safe-refresh-chain-import-v1")]
         force: bool,
+        /// Emit one stable JSON result envelope instead of human-readable
+        /// progress. Operational failures are represented in the envelope and
+        /// still produce a non-zero exit status.
+        #[arg(long)]
+        json: bool,
+        /// Retry one retained refresh-chain transaction by its opaque ID.
+        ///
+        /// Router resolves the private candidate directory; callers never need
+        /// to discover or construct an internal filesystem path.
+        #[arg(
+            long,
+            value_name = "TRANSACTION_ID",
+            conflicts_with_all = ["provider", "dir", "all"]
+        )]
+        resume: Option<String>,
         #[command(flatten)]
         target: AuthTarget,
     },

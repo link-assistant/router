@@ -429,6 +429,9 @@ async fn forward_subscription_openai_inner(
             request = request
                 .header("content-type", "application/json")
                 .header("authorization", format!("Bearer {}", token.access_token));
+            if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+                request = request.header("x-request-id", request_id);
+            }
             for (name, value) in subscription_headers(provider, token, responses_mode) {
                 request = request.header(name, value);
             }
@@ -869,23 +872,22 @@ fn subscription_headers(
 ) -> Vec<(&'static str, String)> {
     let mut out = Vec::new();
     if provider == SubscriptionProvider::Codex {
-        if let Some(account_id) = token.account_id.as_deref() {
-            out.push(("chatgpt-account-id", account_id.to_string()));
+        let identity = crate::codex_identity::headers(token.account_id.as_deref());
+        for name in ["user-agent", "originator", "chatgpt-account-id"] {
+            if let Some(value) = identity.get(name).and_then(|value| value.to_str().ok()) {
+                out.push((name, value.to_string()));
+            }
         }
         // The Codex backend gates the Responses API behind a beta opt-in and
         // identifies the originating client.
         out.push(("openai-beta", "responses=experimental".to_string()));
-        out.push(("originator", "codex_cli_rs".to_string()));
         if responses_mode == CodexResponsesMode::Lite {
             out.push((CODEX_RESPONSES_LITE_HEADER, "true".to_string()));
         }
         // Codex gates some catalog models behind a recent client version
         // advertised via the `version` header; without it the backend replies "Model not
         // found". Mirror the Codex CLI. Overridable via CODEX_CLIENT_VERSION.
-        out.push((
-            "version",
-            std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.144.1".to_string()),
-        ));
+        out.push(("version", crate::codex_identity::client_version()));
     }
     out
 }

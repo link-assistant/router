@@ -134,3 +134,68 @@ pub async fn models(
     };
     (StatusCode::OK, axum::Json(models)).into_response()
 }
+
+/// Client-scoped normalized union of every currently routable model.
+pub async fn aggregate_models(
+    State(state): State<AppState>,
+    OriginalUri(uri): OriginalUri,
+    headers: HeaderMap,
+) -> Response {
+    let claims = match crate::proxy::authenticate_client(&state, &headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    let Ok((client, _)) = crate::client_policy::bound_client(&claims) else {
+        return crate::proxy::error_response(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            "the token has no supported managed-client binding",
+        );
+    };
+
+    let path = uri.path();
+    if !crate::client_policy::request_evidence(
+        client,
+        crate::client_policy::ClientProtocol::Catalog,
+        path,
+        &headers,
+    ) {
+        return crate::proxy::error_response(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            "request evidence does not match the token's managed-client binding",
+        );
+    }
+
+    // Reuse the same authorization, health, principal, configured-provider,
+    // and exact-ID collision pipeline as the native OpenAI-shaped catalog.
+    let response = models(State(state), OriginalUri(uri), headers).await;
+    if response.status() != StatusCode::OK {
+        return response;
+    }
+    let (parts, body) = response.into_parts();
+    let bytes = match axum::body::to_bytes(body, 16 * 1024 * 1024).await {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            return crate::proxy::error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("could not read aggregate catalog: {error}"),
+            );
+        }
+    };
+    let catalog: serde_json::Value = match serde_json::from_slice(&bytes) {
+        Ok(catalog) => catalog,
+        Err(error) => {
+            return crate::proxy::error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("could not normalize aggregate catalog: {error}"),
+            );
+        }
+    };
+    match super::aggregate::project_catalog(&catalog, client) {
+        Ok(catalog) => (parts.status, axum::Json(catalog)).into_response(),
+        Err(error) => model_route_error_response(&error),
+    }
+}

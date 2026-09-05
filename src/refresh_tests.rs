@@ -616,10 +616,9 @@ async fn get_fresh_prefers_cached_valid_token() {
 /// so the two must not read the same.
 #[test]
 fn invalid_grant_is_reported_as_a_re_authentication_prompt() {
-    let dead = RefreshError::Status(
+    let dead = RefreshError::from_status(
         400,
-        r#"{"error":"invalid_grant","error_description":"Refresh token not found or invalid"}"#
-            .to_string(),
+        r#"{"error":"invalid_grant","error_description":"Refresh token not found or invalid"}"#,
         None,
     );
     assert!(dead.is_invalid_grant());
@@ -629,7 +628,7 @@ fn invalid_grant_is_reported_as_a_re_authentication_prompt() {
     // The remedy must name the command, not just describe the problem.
     assert!(message.contains("auth"), "{message}");
 
-    let transient = RefreshError::Status(503, "upstream busy".to_string(), None);
+    let transient = RefreshError::from_status(503, "upstream busy", None);
     assert!(!transient.is_invalid_grant());
     assert!(!transient.to_string().contains("re-authenticate"));
 }
@@ -639,9 +638,9 @@ fn invalid_grant_is_reported_as_a_re_authentication_prompt() {
 /// operator that waiting would not help.
 #[test]
 fn a_rate_limit_is_never_terminal() {
-    let limited = RefreshError::Status(
+    let limited = RefreshError::from_status(
         429,
-        r#"{"type":"error","error":{"type":"rate_limit_error"}}"#.to_string(),
+        r#"{"type":"error","error":{"type":"rate_limit_error"}}"#,
         Some(30),
     );
     assert!(!limited.is_invalid_grant(), "429 must not be terminal");
@@ -662,28 +661,28 @@ fn a_rate_limit_is_never_terminal() {
 #[test]
 fn invalid_grant_text_outside_a_client_error_is_not_terminal() {
     // A proxy error page quoting the code.
-    let proxy_page = RefreshError::Status(
+    let proxy_page = RefreshError::from_status(
         502,
-        "<html><body>upstream said invalid_grant</body></html>".to_string(),
+        "<html><body>upstream said invalid_grant</body></html>",
         None,
     );
     assert!(!proxy_page.is_invalid_grant());
 
     // A rate limit whose body happens to mention it.
-    let limited = RefreshError::Status(
+    let limited = RefreshError::from_status(
         429,
-        r#"{"error":"rate_limited","hint":"not invalid_grant"}"#.to_string(),
+        r#"{"error":"rate_limited","hint":"not invalid_grant"}"#,
         None,
     );
     assert!(!limited.is_invalid_grant());
 
     // A success-shaped body carrying the string.
-    let odd = RefreshError::Status(200, r#"{"note":"invalid_grant"}"#.to_string(), None);
+    let odd = RefreshError::from_status(200, r#"{"note":"invalid_grant"}"#, None);
     assert!(!odd.is_invalid_grant());
 
     // A 5xx that *does* parse to the code is still not terminal: only a
     // client error means the grant itself was rejected.
-    let server_error = RefreshError::Status(500, r#"{"error":"invalid_grant"}"#.to_string(), None);
+    let server_error = RefreshError::from_status(500, r#"{"error":"invalid_grant"}"#, None);
     assert!(!server_error.is_invalid_grant());
 }
 
@@ -691,17 +690,13 @@ fn invalid_grant_text_outside_a_client_error_is_not_terminal() {
 #[test]
 fn terminal_classification_requires_status_and_parsed_code() {
     for status in [400, 401, 403] {
-        let error = RefreshError::Status(status, r#"{"error":"invalid_grant"}"#.to_string(), None);
+        let error = RefreshError::from_status(status, r#"{"error":"invalid_grant"}"#, None);
         assert!(error.is_invalid_grant(), "{status} + invalid_grant");
     }
     // The nested vendor shape is understood too.
     assert!(
-        RefreshError::Status(
-            400,
-            r#"{"error":{"type":"invalid_grant"}}"#.to_string(),
-            None
-        )
-        .is_invalid_grant()
+        RefreshError::from_status(400, r#"{"error":{"type":"invalid_grant"}}"#, None)
+            .is_invalid_grant()
     );
     // A client error with a *different* OAuth code is not terminal.
     for code in [
@@ -711,12 +706,12 @@ fn terminal_classification_requires_status_and_parsed_code() {
     ] {
         let body = format!(r#"{{"error":"{code}"}}"#);
         assert!(
-            !RefreshError::Status(400, body, None).is_invalid_grant(),
+            !RefreshError::from_status(400, &body, None).is_invalid_grant(),
             "{code} must not be terminal"
         );
     }
     // A client error with an unparseable body is not terminal either.
-    assert!(!RefreshError::Status(400, "Bad Request".to_string(), None).is_invalid_grant());
+    assert!(!RefreshError::from_status(400, "Bad Request", None).is_invalid_grant());
 }
 
 /// Failures without a terminal endpoint verdict are always retryable.
@@ -816,7 +811,7 @@ fn every_refresh_error_variant_renders_a_message() {
         RefreshError::Request("connection refused".into()),
         RefreshError::Parse("expected value".into()),
         RefreshError::Storage("durable lock unavailable".into()),
-        RefreshError::Status(500, "boom".into(), None),
+        RefreshError::from_status(500, "boom", None),
     ]
     .iter()
     .map(ToString::to_string)
@@ -829,11 +824,7 @@ fn every_refresh_error_variant_renders_a_message() {
     }
     assert!(rendered[0].contains("does not support"), "{}", rendered[0]);
     assert!(rendered[1].contains("no refresh token"), "{}", rendered[1]);
-    assert!(
-        rendered[2].contains("connection refused"),
-        "{}",
-        rendered[2]
-    );
+    assert!(rendered[2].contains("transport"), "{}", rendered[2]);
     assert!(rendered[3].contains("parse error"), "{}", rendered[3]);
     assert!(rendered[4].contains("storage"), "{}", rendered[4]);
     assert!(rendered[5].contains("500"), "{}", rendered[5]);

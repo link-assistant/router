@@ -103,9 +103,15 @@ before using it. If that home is read-only, an owner-only recovery record under
 `DATA_DIR/refresh-recovery` keeps the rotation durable and is reconciled later.
 Refresh, native login, and import share one provider/account transaction lock;
 if the lock or every durable destination is unavailable, the request fails
-closed instead of serving a token whose rotation could be lost. An access-token
-refresh that leaves the refresh link unchanged remains an in-memory cache entry,
-avoiding an unnecessary write. Secrets are never logged. The canonical OpenAI
+closed instead of serving a token whose rotation could be lost. Native Claude
+and Codex login also keep a newly exchanged credential outside the primary,
+durably advance its refresh chain, and require at least one model from the
+vendor's non-inference catalog before atomic promotion. A `401`, empty or
+malformed catalog, outage, or timeout leaves the previous primary bytes intact
+and keeps the staged recovery evidence while exposing only an opaque transaction
+identifier. `auth status` uses the same catalog-acceptance rule. An access-token refresh that leaves the
+refresh link unchanged remains an in-memory cache entry, avoiding an unnecessary
+write. Secrets are never logged. The canonical OpenAI
 Chat Completions and Responses service routes are
 translated to each backend's dialect (Codex uses the OpenAI Responses API;
 Gemini uses the Code Assist envelope with synthesized SSE for streaming; Qwen is
@@ -246,54 +252,63 @@ INFO Claude Code home: /home/user/.claude
 INFO Listening on 0.0.0.0:8080
 ```
 
-### 5. Issue a custom token
+### 5. Issue a Claude-bound client token
 
 ```bash
-curl -s -X POST http://localhost:8080/api/management/tokens \
+export ROUTER_ADMIN_TOKEN='<admin-token>'
+export ROUTER_CLIENT_TOKEN="$(curl -fsS -X POST \
+  http://localhost:8080/api/management/tokens/client \
+  -H "Authorization: Bearer ${ROUTER_ADMIN_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"ttl_hours": 24, "label": "my-dev-token"}' | jq .
+  -d '{"client_kind":"claude","ttl_hours":24,"label":"manual-claude"}' \
+  | jq -er .token)"
 ```
 
-Response:
+The response contains the canonical binding and subscriber principal alongside
+the one-time token value:
 
 ```json
 {
-  "token": "la_sk_eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token": "<client-token>",
   "ttl_hours": 24,
-  "label": "my-dev-token"
+  "label": "manual-claude",
+  "client_kind": "claude",
+  "principal_id": "primary"
 }
 ```
 
-Save the `token` value for use in API requests.
+An unbound token, a different client kind, or a provider the bound client is not
+entitled to use is rejected before Router contacts an upstream.
 
 ### 6. Use the router as an Anthropic API proxy
 
 ```bash
-# Use the custom token to make requests through the router
-curl -s http://localhost:8080/api/services/anthropic/v1/messages \
-  -H "Authorization: Bearer la_sk_eyJ0eXAi..." \
+# Select an exact model advertised to this same bound token.
+MODEL="$(curl -fsS http://localhost:8080/api/services/anthropic/v1/models \
+  -H "Authorization: Bearer ${ROUTER_CLIENT_TOKEN}" | jq -er '.data[0].id')"
+
+curl -fsS http://localhost:8080/api/services/anthropic/v1/messages \
+  -H "Authorization: Bearer ${ROUTER_CLIENT_TOKEN}" \
   -H "Content-Type: application/json" \
   -H "anthropic-version: 2023-06-01" \
+  -H "User-Agent: claude-cli/2.1.259" \
   -d '{
-    "model": "claude-sonnet-4-20250514",
+    "model": "'"${MODEL}"'",
     "max_tokens": 100,
     "messages": [{"role": "user", "content": "Hello!"}]
   }' | jq .
 ```
 
 The router will:
-1. Validate the `la_sk_...` token
-2. Replace it with the real OAuth token from the Claude Code session
-3. Inject the upstream headers Claude MAX OAuth requires — `anthropic-version`
-   (default `2023-06-01` when the client omits it) and the
-   `anthropic-beta: oauth-2025-04-20` flag (merged with any betas the client
-   already sent)
-4. Forward the request to `https://api.anthropic.com/v1/messages`
-5. Stream the response back to the client
 
-Because the router injects these headers itself, a client only needs to send the
-`la_sk_...` token — it never needs the real OAuth token, the OAuth beta flag, or
-even an `anthropic-version` header.
+1. Validate the signed `claude` client binding, principal, request evidence,
+   model ownership, and provider entitlement.
+2. Replace only the Router authentication material with the upstream OAuth
+   credential.
+3. Strip ingress forwarding and client-IP metadata.
+4. Preserve the other native client headers and body unchanged, without
+   inventing a missing `anthropic-version` or `anthropic-beta` value.
+5. Forward to the native Anthropic Messages resource and relay the response.
 
 ## Use-case documentation
 
@@ -309,6 +324,7 @@ need:
 | [claude-max-in-codex.md](docs/use-cases/claude-max-in-codex.md) | Historical Claude MAX → Codex bridge, disabled by default behind one exact risk acceptance |
 | [chatgpt-in-claude-code.md](docs/use-cases/chatgpt-in-claude-code.md) | Historical subscription bridge defaults superseded; API-key adapters remain separate |
 | [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) | Experimental, subscriber-bound z.ai GLM Coding Plan routing with explicit policy acknowledgements |
+| [lefine.md](docs/use-cases/lefine.md) | Lefine API-key provider with native Chat Completions/SSE, live exact IDs, and atomic credential acceptance |
 | [cli-claude-code.md](docs/use-cases/cli-claude-code.md) | Claude Code configuration |
 | [cli-codex.md](docs/use-cases/cli-codex.md) | Codex CLI configuration |
 | [cli-qwen-code.md](docs/use-cases/cli-qwen-code.md) | Qwen Code configuration |
@@ -487,6 +503,7 @@ in a browser *or* in a chat. See
 
 | Endpoint | Method | Description |
 |---|---|---|
+| `/api/services/anthropic/v1/models` | GET | Native client catalogue filtered by the signed Claude client policy |
 | `/api/services/anthropic/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
 | `/api/services/anthropic/v1/messages/count_tokens` | POST | Token-count helper |
 | `/api/services/bedrock/invoke` | POST | Bedrock-format invoke |
@@ -511,6 +528,39 @@ in a browser *or* in a chat. See
 Provider-specific namespaces still enforce the matching signed client,
 principal, protocol evidence, and healthy credential; pinning never grants
 authority.
+
+### Provider-neutral client surface
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/models` | GET | Healthy model catalogue filtered by the signed client kind, principal, and provider entitlement |
+| `/api/usage` | GET | Normalized subscription limits for every configured provider the signed client token may use |
+| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, or `lefine` usage/status record without revealing disallowed providers |
+
+`GET /api/models` is the additional provider-neutral catalogue. It accepts the
+same Router client token carrier as that token's native client, then returns
+only healthy models compatible with its signed client kind and principal. Each
+entry carries the one lossless vendor `id` (including Gemini's `models/`
+prefix) and the canonical Router `service` path segment. Repeated
+entries from one provider are deduplicated; the same exact id claimed by two
+providers returns HTTP 409 rather than choosing or inventing a qualified id.
+Provider-reported context window, output cap, modalities, pricing, and
+deprecation date are normalized when present and omitted when absent. Native
+service catalogues remain in their original protocol shapes.
+
+`GET /api/usage` uses the same signed client binding and provider-entitlement
+matrix. It returns schema version `1` with normalized plan/status, usage
+windows, used and remaining percentages, reset timestamps, named limits,
+credits, and subscription or trial dates only when the vendor actually reports
+them. An authorized configured credential that cannot currently be checked is
+kept visible with an explicit `unavailable` or `unverified` state. Router reads
+only the vendors' non-inference usage/profile endpoints, refreshes OAuth
+credentials through the shared safe refresh path, briefly caches normalized
+results, and honors `429 Retry-After`; checking usage consumes no model tokens.
+The response never includes credentials, account identifiers, email addresses,
+credential documents, or unrestricted vendor response bodies. This client
+surface is separate from the administrator-only `/api/management/usage`, which
+contains Router's own request and token counters.
 
 **Every advertised and routable model comes from current credential evidence.**
 Consumer catalogs exist only after authenticated discovery for that exact
@@ -716,11 +766,12 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 ### GitHub API credential proxy
 
 The opt-in GitHub proxy lets an agent authenticate with its router-issued task
-token while the real GitHub credential remains inside the router. It supports
-bare REST paths, GitHub CLI's custom-host `/api/v3/*` rewrite, and GraphQL at
-`/api/graphql` and `/graphql`. The `/github/*` namespace exposes arbitrary REST
-paths without colliding with inference/admin routes. Git over HTTPS is mediated
-too, at `/git/{owner}/{repo}.git` — see **Git transport** below.
+token while the real GitHub credential remains inside the router. The ordinary
+HTTP/TLS listener serves REST, GraphQL, and git under the canonical
+`/api/services/github/api/*`, `/api/services/github/graphql`, and
+`/api/services/github/git/*` routes. GitHub CLI's fixed `/api/v3/*` and
+`/api/graphql` paths, plus root `/git/*`, are aliases on the dedicated Unix
+adapter only — see **GitHub CLI** below.
 
 ```env
 GITHUB_PROXY_TOKEN_FILE=/run/secrets/github-token
@@ -767,7 +818,7 @@ updates over both the API and the git transport.
 Point a client at the router and its pushes answer to the same policy:
 
 ```bash
-git config --global url."https://router.example.internal/git/".insteadOf "https://github.com/"
+git config --global url."https://router.example.internal/api/services/github/git/".insteadOf "https://github.com/"
 ```
 
 Ref deletions and forced updates to existing branches are **refused by
@@ -778,7 +829,7 @@ deliberately, add an allow rule naming it, which is a change only an operator
 with access to the router can make:
 
 ```json
-{"rules": [{"effect": "allow", "path": "/git/acme/demo/refs/heads/scratch"}]}
+{"rules": [{"effect": "allow", "path": "/api/services/github/git/acme/demo/refs/heads/scratch"}]}
 ```
 
 #### Scoping a token to repositories
@@ -797,15 +848,27 @@ further is an opt-in. Rotation preserves the scope.
 #### GitHub CLI
 
 `gh` builds a custom host's REST base as `https://<host>/api/v3/` and will not
-talk plaintext, so the router must serve HTTPS — either behind a terminator or
-with its own listener (see **TLS**). Then:
+use Router's canonical `/api/services/github/...` prefix. Its compatibility
+routes therefore live on the dedicated GitHub adapter socket, not on the
+ordinary HTTP/TLS listener. Configure the socket and point `gh` at it:
+
+```env
+LISTEN_UNIX_SOCKET=/run/router/router.sock
+```
 
 ```bash
+gh config set http_unix_socket /run/router/router.sock
 export GH_HOST=router.example.internal
 export GH_ENTERPRISE_TOKEN="$LINK_ASSISTANT_TOKEN"
 gh api rate_limit
 gh issue list -R acme/demo
 ```
+
+The host is only a routing label when `http_unix_socket` is set; traffic is
+plain HTTP over the owner-only local socket. An ordinary Router TLS port does
+not expose root `/api/v3`, `/api/graphql`, or `/git/*` aliases. Remote clients
+should reach the adapter socket through a local sidecar or an explicitly
+configured reverse proxy that maps those exact adapter routes.
 
 The credential the proxy presents upstream can be taken from an existing `gh`
 login instead of a separately minted token:
@@ -827,6 +890,8 @@ router auth import claude /path  # or name the source, read exactly as given
 router auth import --all         # every login this machine has, in one step
 router auth import codex --if-absent # install only while the destination is empty
 router auth import codex --safe-refresh-chain-import-v1 # assert the safe contract
+router auth import codex --json  # stable machine-readable recovery outcome
+router auth import --resume <transaction-id> --json --local # retry retained state
 ```
 
 Importing is a different operation from authorizing, not a variation of it:
@@ -841,12 +906,26 @@ the directory it reads from, rather than quietly acting here (issue #291). To
 authorize a remote deployment from this machine, use `router auth claude` or
 `router auth codex`, which do follow the selection.
 
-The import reports what it adopted — where it came from, when it expires, and
-whether it carries a refresh token. Before anything reaches the destination it
-forces a direct OAuth refresh in a private Router staging store, persists and
-rereads the result, then proves that fresh access token at the vendor's
-non-inference model catalog. A rejected, malformed, timed-out, unreachable, or
-non-refreshable candidate is never installed.
+The human report says what Router adopted — where it came from, when it expires,
+and whether it carries a refresh token. `--json` instead emits one versioned
+envelope whose `results` have stable `provider`, `outcome`, `phase`,
+`previous_credential_safe`, and `transaction_id` fields. Outcomes are
+`not_attempted`, `exchange_rejected`, `successor_retained`, `promoted`, and
+`already_present`; phases are `preflight`, `exchange`, `persistence`, `catalog`,
+and `promotion`. The JSON never includes diagnostic prose, credential documents,
+access tokens, refresh tokens, or secret file contents. Operational failures
+still use a non-zero process status.
+
+Before anything reaches the destination, import forces a direct OAuth refresh
+in a private Router staging store, persists and rereads the result, then proves
+that fresh access token at the vendor's non-inference model catalog. A rejected,
+malformed, timed-out, unreachable, or non-refreshable candidate is never
+installed. A definite OAuth rejection reports `exchange_rejected` with
+`previous_credential_safe: true`. Any exchange, persistence, catalog, or
+promotion uncertainty after the provider may have advanced the rotating chain
+reports `successor_retained`, sets `previous_credential_safe: false`, and
+includes its opaque recovery transaction ID. Conditional provisioning that
+finds a destination before candidate validation reports `already_present`.
 
 Gemini's installed-app refresh grant also requires
 `GEMINI_OAUTH_CLIENT_SECRET`, set to the OAuth client secret shipped with the
@@ -877,12 +956,10 @@ source copy may contain the spent predecessor after a successful import. If a
 concurrent credential wins the conditional race or catalog validation fails
 after refresh, Router retains the advanced candidate under a non-secret
 transaction identifier instead of deleting the only current chain link. The
-directory is
-`DATA_DIR/auth-import-candidates/<transaction-id>-<random>/<provider>`; locate
-the prefix Router reported and resume through the same safe command, for
-example `router auth import qwen <that-directory>/qwen --local`. Do not copy the
-file around the import command, because that would bypass validation and locked
-promotion. To withdraw an installed credential:
+candidate remains private under Router's data directory. Resume it with
+`router auth import --resume <transaction-id> --local`; callers do not discover
+or construct an internal path, and the same refresh-chain validation and locked
+promotion run again. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh
@@ -1078,13 +1155,22 @@ and `supported_clients`. Missing evidence fails locally before inference.
 Persistent provider records live in `<DATA_DIR>/providers.lenv`. Inline
 provider API keys are encrypted with AES-GCM using a key derived from
 `TOKEN_SECRET`; API responses and CLI output only show whether a stored key is
-present.
+present. `providers add` replaces the same name by default; `--if-absent`
+atomically keeps an existing record instead. Policy-gated providers are staged,
+validated with their non-inference catalogue, and promoted only after positive
+acceptance, so a rejected candidate cannot displace a working credential.
 
 The personal z.ai Coding Plan is deliberately **not** a generic provider. It is
 experimental, disabled by default, single-subscriber, and requires separate
 provider/client policy acknowledgements. See
 [zai-coding-plan.md](docs/use-cases/zai-coding-plan.md) for the exact setup,
 live catalog, exact model IDs, endpoints, and account-ban warning.
+
+Lefine is a dedicated encrypted API-key kind for native OpenAI Chat
+Completions clients. It validates new keys through the live non-inference
+catalog, preserves native JSON/SSE behavior, and falls back only to exact
+operator-configured IDs after a later catalog outage. See
+[lefine.md](docs/use-cases/lefine.md).
 
 ```bash
 router providers add \
@@ -1252,6 +1338,15 @@ router clients list
 router clients show codex
 router clients doctor codex
 router clients remove codex
+
+# Show subscription limits visible to one signed client token. The environment
+# token takes precedence over a saved server token, and the same command works
+# with a selected server or an explicit `--server`.
+LINK_ASSISTANT_TOKEN=<client-token> router usage
+LINK_ASSISTANT_TOKEN=<client-token> router usage anthropic
+LINK_ASSISTANT_TOKEN=<client-token> router usage openai --json
+LINK_ASSISTANT_TOKEN=<client-token> router usage z-ai
+LINK_ASSISTANT_TOKEN=<client-token> router usage lefine --json
 
 # Print resolved configuration + credential / store probes. Reports on the
 # machine it runs on, so with another router selected it says so and names it.

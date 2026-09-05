@@ -157,6 +157,7 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
             subscriber_id: None,
             acknowledge_intermediary_risk: None,
             acknowledge_unsupported_clients: None,
+            if_absent: false,
         })
         .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::Auto;
@@ -220,6 +221,7 @@ async fn one_unsupported_gemini_override_reuses_translation_and_revocation_is_im
             subscriber_id: Some("owner-a".into()),
             acknowledge_intermediary_risk: Some(true),
             acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent: false,
         })
         .unwrap();
     let before = requests.lock().unwrap().len();

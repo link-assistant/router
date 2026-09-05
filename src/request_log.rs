@@ -3,6 +3,7 @@
 mod owner_only;
 mod redaction;
 mod stream_outcome;
+mod total_limit;
 
 pub use stream_outcome::{
     STREAM_END_MARKER, StreamOutcome, body_is_inspectable, frame_terminates_stream,
@@ -18,7 +19,9 @@ use std::time::Instant;
 
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::{HeaderMap, HeaderValue};
+use axum::http::HeaderMap;
+#[cfg(test)]
+use axum::http::HeaderValue;
 use axum::middleware::Next;
 use axum::response::Response;
 use futures_util::StreamExt as _;
@@ -55,6 +58,10 @@ pub const DEFAULT_MAX_BYTES: u64 = 100 * 1024 * 1024;
 /// so it is not self-limiting either (issue #331).
 pub const DEFAULT_MAX_TOTAL_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const MAX_BUFFERED_REQUEST_BYTES: usize = 10 * 1024 * 1024;
+/// Small JSON requests are captured before policy evaluation so a local denial
+/// retains diagnostic content. Larger or streaming bodies stay lazy to bound
+/// unauthenticated memory pressure.
+const MAX_EAGER_REQUEST_BYTES: usize = 64 * 1024;
 const REDACTED: &str = "[REDACTED]";
 const UNAUTHENTICATED: &str = "unauthenticated";
 const TOKEN_HASH_HEX_LENGTH: usize = 32;
@@ -67,6 +74,12 @@ struct LogIdentity {
     hash: String,
     id: Option<String>,
     label: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+struct LogRoute {
+    identity: LogIdentity,
+    upstream_seen: bool,
 }
 
 impl LogIdentity {
@@ -91,7 +104,8 @@ pub struct RequestLog {
     /// Bound across every token directory, or `None` when uncapped.
     max_total_bytes: Option<u64>,
     write_lock: Mutex<()>,
-    routes: Mutex<HashMap<String, LogIdentity>>,
+    total_limit_state: Mutex<Option<total_limit::State>>,
+    routes: Mutex<HashMap<String, LogRoute>>,
 }
 
 impl RequestLog {
@@ -135,6 +149,7 @@ impl RequestLog {
             max_bytes: max_bytes.max(1),
             max_total_bytes: None,
             write_lock: Mutex::new(()),
+            total_limit_state: Mutex::new(None),
             routes: Mutex::new(HashMap::new()),
         }
     }
@@ -153,6 +168,18 @@ impl RequestLog {
 
     /// Append one structured event, removing credentials before serialization.
     pub fn record(&self, correlation_id: &str, phase: &str, fields: Value) {
+        if matches!(
+            phase,
+            "upstream_request"
+                | "upstream_response"
+                | "upstream_error"
+                | "upstream_response_body"
+                | "stream_end"
+        ) && let Ok(mut routes) = self.routes.lock()
+            && let Some(route) = routes.get_mut(correlation_id)
+        {
+            route.upstream_seen = true;
+        }
         let identity = self.identity(correlation_id);
         let mut event = Map::new();
         event.insert(
@@ -207,13 +234,31 @@ impl RequestLog {
         self.routes
             .lock()
             .ok()
-            .and_then(|routes| routes.get(correlation_id).cloned())
+            .and_then(|routes| {
+                routes
+                    .get(correlation_id)
+                    .map(|route| route.identity.clone())
+            })
             .unwrap_or_else(LogIdentity::unauthenticated)
+    }
+
+    fn upstream_seen(&self, correlation_id: &str) -> bool {
+        self.routes
+            .lock()
+            .ok()
+            .and_then(|routes| routes.get(correlation_id).map(|route| route.upstream_seen))
+            .unwrap_or(false)
     }
 
     fn route_request(&self, correlation_id: &str, identity: LogIdentity) {
         if let Ok(mut routes) = self.routes.lock() {
-            routes.insert(correlation_id.to_string(), identity);
+            routes.insert(
+                correlation_id.to_string(),
+                LogRoute {
+                    identity,
+                    upstream_seen: false,
+                },
+            );
         }
     }
 
@@ -299,98 +344,8 @@ impl RequestLog {
         if let Err(error) = result {
             tracing::warn!("request log write failed ({}): {error}", path.display());
         }
-        self.enforce_total_limit(token_hash);
-    }
-
-    /// Whether any token's log is still under the pre-rename name.
-    ///
-    /// Cheap next to the eviction scan it guards -- a file-name check per
-    /// directory, no metadata read -- and it stops being true for good once
-    /// every token has been written to since the upgrade.
-    fn holds_a_legacy_log(&self) -> bool {
-        fs::read_dir(&self.root).is_ok_and(|entries| {
-            entries
-                .flatten()
-                .any(|entry| entry.path().join(LEGACY_LOG_FILE).is_file())
-        })
-    }
-
-    /// Keep the whole store inside its total bound.
-    ///
-    /// The per-token bound stays exactly as it was — a noisy token still
-    /// cannot evict a quiet one's records — so this evicts whole directories
-    /// rather than trimming within them, oldest-written first, and never the
-    /// one being written. That makes the unit of loss a token nobody has used
-    /// recently instead of the beginning of an active session (issue #331).
-    fn enforce_total_limit(&self, active: &str) {
-        let Some(max_total) = self.max_total_bytes else {
-            return;
-        };
-        // The store cannot have crossed the bound while every directory in it
-        // is under its own share of it, so the common case skips the scan
-        // rather than walking every token directory on every record written.
-        //
-        // That reasoning holds only while every log was written under the
-        // bound now in force. A log left under the old name predates the
-        // rename, so it may have been written under a larger bound -- or
-        // under none -- and the active token being small says nothing about
-        // it. Until the store has no legacy logs left, the scan runs
-        // (issue #346).
-        if let Ok(count) = fs::read_dir(&self.root).map(Iterator::count)
-            && let Ok(metadata) = fs::metadata(self.log_path(active))
-            && metadata.len() < max_total / (count.max(1) as u64)
-            && !self.holds_a_legacy_log()
-        {
-            return;
-        }
-        let Ok(entries) = fs::read_dir(&self.root) else {
-            return;
-        };
-        let mut directories: Vec<(std::time::SystemTime, u64, PathBuf, String)> = entries
-            .flatten()
-            .filter(|entry| entry.path().is_dir())
-            .filter_map(|entry| {
-                let name = entry.file_name().to_string_lossy().into_owned();
-                // Either name: a token that has not been written since the
-                // rename still occupies the disk this bound is about.
-                let metadata = fs::metadata(entry.path().join(LOG_FILE))
-                    .or_else(|_| fs::metadata(entry.path().join(LEGACY_LOG_FILE)))
-                    .ok()?;
-                Some((
-                    metadata.modified().ok()?,
-                    metadata.len(),
-                    entry.path(),
-                    name,
-                ))
-            })
-            .collect();
-        let mut total: u64 = directories.iter().map(|(_, size, _, _)| *size).sum();
-        if total <= max_total {
-            return;
-        }
-        directories.sort_by_key(|(modified, _, _, _)| *modified);
-        for (_, size, path, name) in directories {
-            if total <= max_total {
-                break;
-            }
-            // Never the directory just written: evicting it would lose the
-            // record that prompted the eviction, and a caller with traffic
-            // would see its own history vanish mid-session.
-            if name == active {
-                continue;
-            }
-            if let Err(error) = fs::remove_dir_all(&path) {
-                tracing::warn!("request log eviction failed ({}): {error}", path.display());
-                continue;
-            }
-            total = total.saturating_sub(size);
-            // Dropping data under a bound is defensible; dropping it invisibly
-            // is what turns a bounded log into an unreliable one (issue #322).
-            tracing::info!(
-                token_hash = %name,
-                bytes = size,
-                "request log evicted a token directory to stay within the total limit"
-            );
+        if let Some(max_total) = self.max_total_bytes {
+            total_limit::enforce(&self.root, max_total, token_hash, &self.total_limit_state);
         }
     }
 
@@ -519,15 +474,24 @@ impl RequestLog {
     }
 }
 
-/// Correlation id injected by [`log_http_exchange`]. Direct handler tests that
-/// bypass middleware receive a fresh id instead of sharing an ambiguous value.
+#[derive(Clone)]
+struct RequestCorrelationId(String);
+
+tokio::task_local! {
+    static ACTIVE_CORRELATION_ID: String;
+}
+
+/// Correlation id carried by [`log_http_exchange`] in request extensions and
+/// the request task. Direct handler tests that bypass middleware receive a
+/// fresh id instead of sharing an ambiguous value.
+///
+/// A caller's `x-request-id` remains ordinary end-to-end protocol data and is
+/// never repurposed as Router's internal log identity.
 #[must_use]
-pub fn correlation_id(headers: &HeaderMap) -> String {
-    headers
-        .get("x-request-id")
-        .and_then(|value| value.to_str().ok())
-        .filter(|value| !value.is_empty())
-        .map_or_else(|| uuid::Uuid::new_v4().to_string(), str::to_string)
+pub fn correlation_id(_headers: &HeaderMap) -> String {
+    ACTIVE_CORRELATION_ID
+        .try_with(Clone::clone)
+        .unwrap_or_else(|_| uuid::Uuid::new_v4().to_string())
 }
 
 /// Stable, non-reversible directory key for one router token.
@@ -604,6 +568,13 @@ impl ClientRequestCapture {
             .map(str::to_string)
     }
 
+    fn complete(&mut self) {
+        if let Ok(mut model) = self.model.lock() {
+            *model = self.extract_model();
+        }
+        self.record();
+    }
+
     fn record(&mut self) {
         if self.recorded {
             return;
@@ -642,6 +613,19 @@ impl ClientRequestCapture {
         );
         self.recorded = true;
     }
+}
+
+fn eagerly_capture_json(headers: &HeaderMap) -> bool {
+    let json = headers
+        .get("content-type")
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value.to_ascii_lowercase().starts_with("application/json"));
+    let bounded_length = headers
+        .get("content-length")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.parse::<usize>().ok())
+        .is_some_and(|length| length > 0 && length <= MAX_EAGER_REQUEST_BYTES);
+    json && bounded_length
 }
 
 impl Drop for ClientRequestCapture {
@@ -692,10 +676,6 @@ pub async fn log_http_exchange(
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
     };
-    parts.headers.insert(
-        "x-request-id",
-        HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
-    );
     let logged_uri = redacted_uri(&parts.uri.to_string());
     let requested_model = Arc::new(Mutex::new(None));
     let capture = ClientRequestCapture {
@@ -710,32 +690,63 @@ pub async fn log_http_exchange(
         recorded: false,
         model: Arc::clone(&requested_model),
     };
-    let stream = futures_util::stream::unfold(
-        (body.into_data_stream(), capture),
-        |(mut stream, mut capture)| async move {
-            match stream.next().await {
-                Some(Ok(bytes)) => {
-                    capture.push(&bytes);
-                    Some((Ok::<_, axum::Error>(bytes), (stream, capture)))
-                }
-                Some(Err(error)) => {
-                    capture.omitted = true;
-                    Some((Err(error), (stream, capture)))
-                }
-                None => {
-                    if let Ok(mut model) = capture.model.lock() {
-                        *model = capture.extract_model();
+    parts
+        .extensions
+        .insert(RequestCorrelationId(correlation_id.clone()));
+    let (request_body, early_response) = if eagerly_capture_json(&parts.headers) {
+        if let Ok(bytes) = axum::body::to_bytes(body, MAX_EAGER_REQUEST_BYTES).await {
+            let mut capture = capture;
+            capture.push(&bytes);
+            capture.complete();
+            (Body::from(bytes), None)
+        } else {
+            let mut capture = capture;
+            capture.omitted = true;
+            capture.record();
+            (
+                Body::empty(),
+                Some(crate::proxy::error_response(
+                    axum::http::StatusCode::PAYLOAD_TOO_LARGE,
+                    "invalid_request_error",
+                    "request body exceeds the bounded logging limit declared by Content-Length",
+                )),
+            )
+        }
+    } else {
+        let stream = futures_util::stream::unfold(
+            (body.into_data_stream(), capture),
+            |(mut stream, mut capture)| async move {
+                match stream.next().await {
+                    Some(Ok(bytes)) => {
+                        capture.push(&bytes);
+                        Some((Ok::<_, axum::Error>(bytes), (stream, capture)))
                     }
-                    capture.record();
-                    None
+                    Some(Err(error)) => {
+                        capture.omitted = true;
+                        Some((Err(error), (stream, capture)))
+                    }
+                    None => {
+                        capture.complete();
+                        None
+                    }
                 }
-            }
-        },
-    );
+            },
+        );
+        (Body::from_stream(stream), None)
+    };
     let method = parts.method.clone();
     let started = Instant::now();
-    let mut response = next
-        .run(Request::from_parts(parts, Body::from_stream(stream)))
+    let routed_correlation_id = parts
+        .extensions
+        .get::<RequestCorrelationId>()
+        .map_or_else(|| correlation_id.clone(), |value| value.0.clone());
+    let response = ACTIVE_CORRELATION_ID
+        .scope(routed_correlation_id, async move {
+            match early_response {
+                Some(response) => response,
+                None => next.run(Request::from_parts(parts, request_body)).await,
+            }
+        })
         .await;
     // Written after the handler has run, because that is when the body has
     // streamed through the capture above and the model is known. Emitting it
@@ -751,10 +762,6 @@ pub async fn log_http_exchange(
         model = %logged_model,
         token_label = %token_label,
         "request"
-    );
-    response.headers_mut().insert(
-        "x-request-id",
-        HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
     );
     state.request_log.record(
         &correlation_id,
@@ -805,9 +812,10 @@ pub async fn log_http_exchange(
     let (parts, body) = response.into_parts();
     let logger = std::sync::Arc::clone(&state.request_log);
     let response_id = correlation_id;
+    let capture_response_body = logger.upstream_seen(&response_id) || parts.status.is_success();
     let stream = body.into_data_stream().map(move |chunk| {
         let _keep_route_until_response_body_finishes = &route_guard;
-        if let Ok(bytes) = &chunk {
+        if capture_response_body && let Ok(bytes) = &chunk {
             logger.record(
                 &response_id,
                 "client_response_body",

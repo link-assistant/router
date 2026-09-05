@@ -7,10 +7,118 @@ use std::process::ExitCode;
 
 use crate::cli::ProviderOp;
 use crate::config::Config;
+use crate::provider_acceptance::{ProviderProvisionFailureKind, ProviderProvisionResponse};
 use crate::providers::{ProviderStore, ProviderUpsert};
 
+#[derive(Debug, PartialEq, serde::Serialize)]
+struct ProviderImportReport {
+    complete: bool,
+    results: Vec<serde_json::Value>,
+}
+
+fn import_failure(name: &str, outcome: ProviderProvisionFailureKind) -> serde_json::Value {
+    serde_json::json!({"name": name, "outcome": outcome})
+}
+
+fn remote_failure(body: &serde_json::Value) -> ProviderProvisionFailureKind {
+    let outcome = body.pointer("/error/outcome").cloned();
+    outcome
+        .and_then(|value| serde_json::from_value(value).ok())
+        .unwrap_or(ProviderProvisionFailureKind::Unverified)
+}
+
+fn print_import_report(report: &ProviderImportReport) {
+    println!(
+        "{}",
+        serde_json::to_string_pretty(report)
+            .unwrap_or_else(|_| { r#"{"complete":false,"results":[]}"#.to_string() })
+    );
+}
+
+async fn local_import_report(
+    client: &reqwest::Client,
+    store: &ProviderStore,
+    inputs: Vec<ProviderUpsert>,
+) -> ProviderImportReport {
+    let mut report = ProviderImportReport {
+        complete: true,
+        results: Vec::with_capacity(inputs.len()),
+    };
+    for input in inputs {
+        let name = input.name.clone();
+        match crate::provider_acceptance::provision(client, store, input).await {
+            Ok(result) => {
+                report
+                    .results
+                    .push(serde_json::to_value(result.response()).unwrap_or_else(|_| {
+                        import_failure(&name, ProviderProvisionFailureKind::PersistenceUncertain)
+                    }));
+            }
+            Err(error) => {
+                report.complete = false;
+                report.results.push(import_failure(&name, error.kind()));
+                break;
+            }
+        }
+    }
+    report
+}
+
+async fn remote_import_report(
+    server: &crate::managed_server::ResolvedServer,
+    imported: &[ProviderUpsert],
+) -> Result<ProviderImportReport, String> {
+    let mut report = ProviderImportReport {
+        complete: true,
+        results: Vec::with_capacity(imported.len()),
+    };
+    for record in imported {
+        let name = record.name.clone();
+        let response = crate::auth_remote::post_response(
+            server,
+            crate::route_contract::route_template(crate::route_contract::RouteId::Providers),
+            upsert_body(record)?,
+        )
+        .await;
+        match response {
+            Ok((status, body)) if status.is_success() => {
+                if let Ok(safe) = serde_json::from_value::<ProviderProvisionResponse>(body) {
+                    report
+                        .results
+                        .push(serde_json::to_value(safe).unwrap_or_else(|_| {
+                            import_failure(&name, ProviderProvisionFailureKind::Unverified)
+                        }));
+                } else {
+                    report.complete = false;
+                    report.results.push(import_failure(
+                        &name,
+                        ProviderProvisionFailureKind::Unverified,
+                    ));
+                    break;
+                }
+            }
+            Ok((_, body)) => {
+                report.complete = false;
+                report
+                    .results
+                    .push(import_failure(&name, remote_failure(&body)));
+                break;
+            }
+            Err(_) => {
+                report.complete = false;
+                report.results.push(import_failure(
+                    &name,
+                    ProviderProvisionFailureKind::Unverified,
+                ));
+                break;
+            }
+        }
+    }
+    Ok(report)
+}
+
 #[must_use]
-pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
+pub async fn run(config: &Config, op: &ProviderOp) -> ExitCode {
     let store = match ProviderStore::open(&config.data_dir, &config.token_secret) {
         Ok(store) => store,
         Err(e) => {
@@ -18,7 +126,7 @@ pub fn run(config: &Config, op: &ProviderOp) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    run_with(&store, op)
+    run_with(&store, op).await
 }
 
 /// The same commands against the *selected* router (issue #294).
@@ -123,28 +231,35 @@ pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
             acknowledge_intermediary_risk,
             acknowledge_unsupported_client,
             enabled,
+            if_absent,
             ..
-        } => Some(Call {
-            method: "POST",
-            path: crate::route_contract::route_template(crate::route_contract::RouteId::Providers)
+        } => {
+            reject_lefine_argv_key(kind, api_key.as_ref())?;
+            Some(Call {
+                method: "POST",
+                path: crate::route_contract::route_template(
+                    crate::route_contract::RouteId::Providers,
+                )
                 .to_string(),
-            body: Some(upsert_body(&ProviderUpsert {
-                name: name.clone(),
-                kind: Some(kind.clone()),
-                base_url: base_url.clone(),
-                default_model: model.clone(),
-                models: Some(models.clone()),
-                supported_clients: Some(supported_clients.clone()),
-                api_key: supplied_api_key(api_key.as_ref(), *api_key_stdin)
-                    .map_err(|error| error.to_string())?,
-                api_key_env: api_key_env.clone(),
-                encrypted_api_key: None,
-                enabled: Some(*enabled),
-                subscriber_id: subscriber_id.clone(),
-                acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
-                acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
-            })?),
-        }),
+                body: Some(upsert_body(&ProviderUpsert {
+                    name: name.clone(),
+                    kind: Some(kind.clone()),
+                    base_url: base_url.clone(),
+                    default_model: model.clone(),
+                    models: Some(models.clone()),
+                    supported_clients: Some(supported_clients.clone()),
+                    api_key: supplied_api_key(api_key.as_ref(), *api_key_stdin)
+                        .map_err(|error| error.to_string())?,
+                    api_key_env: api_key_env.clone(),
+                    encrypted_api_key: None,
+                    enabled: Some(*enabled),
+                    subscriber_id: subscriber_id.clone(),
+                    acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
+                    acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
+                    if_absent: *if_absent,
+                })?),
+            })
+        }
         ProviderOp::Import { .. } => None,
     })
 }
@@ -162,6 +277,16 @@ fn supplied_api_key(
         return crate::server_command::read_token().map(Some);
     }
     Ok(api_key.cloned())
+}
+
+fn reject_lefine_argv_key(kind: &str, api_key: Option<&String>) -> Result<(), String> {
+    if crate::providers::ProviderKind::from_str_opt(kind)
+        == Some(crate::providers::ProviderKind::Lefine)
+        && api_key.is_some()
+    {
+        return Err("Lefine API keys must use --api-key-stdin or --api-key-env".into());
+    }
+    Ok(())
 }
 
 /// One provider as the endpoint's own request type encodes it.
@@ -198,17 +323,13 @@ async fn remote_result(
             .map_err(|error| format!("could not read {}: {error}", path.display()))?;
         let imported = crate::providers::parse_provider_import(&text)
             .map_err(|error| format!("could not parse {}: {error}", path.display()))?;
-        let count = imported.len();
-        for record in &imported {
-            crate::auth_remote::post(
-                server,
-                crate::route_contract::route_template(crate::route_contract::RouteId::Providers),
-                upsert_body(record)?,
-            )
-            .await?;
-        }
-        println!("imported {count} providers into {}", server.base_url);
-        return Ok(ExitCode::SUCCESS);
+        let report = remote_import_report(server, &imported).await?;
+        print_import_report(&report);
+        return Ok(if report.complete {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::from(1)
+        });
     }
 
     let Some(call) = call_for(op)? else {
@@ -254,9 +375,13 @@ async fn remote_result(
             println!("removed {name}");
             Ok(ExitCode::SUCCESS)
         }
-        ProviderOp::Add { name, .. } => {
-            answer?;
-            println!("saved {name}");
+        ProviderOp::Add { .. } => {
+            let answer = answer?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&answer)
+                    .map_err(|error| format!("could not encode provider outcome: {error}"))?
+            );
             Ok(ExitCode::SUCCESS)
         }
         // Returned above.
@@ -270,9 +395,8 @@ async fn remote_result(
 /// has no way to tell which machine answered, so a column that differs between
 /// them would be worse than no column at all.
 ///
-/// `kind` is taken through [`ProviderKind::as_str`] rather than its serde
-/// encoding, which renders `OpenAICompatible` as `open-a-i-compatible` under
-/// `kebab-case` and would have shown a spelling no operator ever types.
+/// `kind` is taken through [`ProviderKind::as_str`] so table output stays
+/// aligned with the accepted CLI spelling.
 fn print_remote_table(records: &[serde_json::Value]) {
     println!(
         "{:<20}  {:<18}  {:<32}  {:<10}  default_model",
@@ -307,8 +431,15 @@ fn print_remote_table(records: &[serde_json::Value]) {
 /// Split from [`run`] so the operations can be exercised without constructing
 /// a whole configuration around them.
 #[must_use]
-pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
+pub async fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
     warn_zai_policy(op);
+    let client = match crate::upstream_client::build_upstream_client() {
+        Ok(client) => client,
+        Err(error) => {
+            eprintln!("error: could not build provider validation client: {error}");
+            return ExitCode::from(1);
+        }
+    };
     match op {
         ProviderOp::List { json, .. } => match store.list_redacted() {
             Ok(records) if *json => {
@@ -354,8 +485,13 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
             acknowledge_intermediary_risk,
             acknowledge_unsupported_client,
             enabled,
+            if_absent,
             ..
         } => {
+            if let Err(error) = reject_lefine_argv_key(kind, api_key.as_ref()) {
+                eprintln!("error: {error}");
+                return ExitCode::from(2);
+            }
             let api_key = match supplied_api_key(api_key.as_ref(), *api_key_stdin) {
                 Ok(api_key) => api_key,
                 Err(error) => {
@@ -377,12 +513,13 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 subscriber_id: subscriber_id.clone(),
                 acknowledge_intermediary_risk: Some(*acknowledge_intermediary_risk),
                 acknowledge_unsupported_clients: Some(acknowledge_unsupported_client.clone()),
+                if_absent: *if_absent,
             };
-            match store.upsert(input) {
-                Ok(record) => {
+            match crate::provider_acceptance::provision(&client, store, input).await {
+                Ok(result) => {
                     println!(
                         "{}",
-                        serde_json::to_string_pretty(&record.redacted()).unwrap_or_default()
+                        serde_json::to_string_pretty(&result.response()).unwrap_or_default()
                     );
                     ExitCode::SUCCESS
                 }
@@ -423,10 +560,18 @@ pub fn run_with(store: &ProviderStore, op: &ProviderOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        ProviderOp::Import { path, .. } => match store.import_file(path) {
-            Ok(count) => {
-                println!("imported {count} provider(s)");
-                ExitCode::SUCCESS
+        ProviderOp::Import { path, .. } => match std::fs::read_to_string(path)
+            .map_err(crate::providers::ProviderError::from)
+            .and_then(|text| crate::providers::parse_provider_import(&text))
+        {
+            Ok(inputs) => {
+                let report = local_import_report(&client, store, inputs).await;
+                print_import_report(&report);
+                if report.complete {
+                    ExitCode::SUCCESS
+                } else {
+                    ExitCode::from(1)
+                }
             }
             Err(e) => {
                 eprintln!("error: {e}");

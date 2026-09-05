@@ -236,11 +236,7 @@ impl ClaudeLogin {
             .map_err(|error| format!("Claude authorization request failed: {error}"))?;
         let status = response.status();
         if !status.is_success() {
-            let detail = response.text().await.unwrap_or_default();
-            return Err(format!(
-                "Claude token endpoint returned {status}{}",
-                response_detail(&detail)
-            ));
+            return Err(format!("Claude token endpoint returned {status}"));
         }
         let token: TokenResponse = response
             .json()
@@ -335,39 +331,25 @@ async fn persist(
         crate::subscription::SubscriptionProvider::Claude,
         &config.claude_home,
     );
-    match reader
-        .install_document_locked(
-            data_dir,
-            crate::credential_recovery_store::PRIMARY_ACCOUNT,
-            &document,
-            crate::subscription::InstallMode::Replace,
-        )
-        .await?
-    {
-        crate::subscription::InstallDocumentResult::Installed(path) => Ok(path),
-        crate::subscription::InstallDocumentResult::AlreadyPresent(_) => {
-            Err("native Claude replacement unexpectedly became conditional".to_string())
-        }
-    }
+    let catalog_base = crate::credential_acceptance::loopback_origin(&config.token_url);
+    crate::credential_acceptance::accept_candidate(
+        data_dir,
+        crate::subscription::SubscriptionProvider::Claude,
+        &document,
+        Some(&config.token_url),
+        catalog_base.as_deref(),
+    )
+    .await
+    .map_err(|error| error.to_string())?
+    .promote_replacement(&reader, data_dir)
+    .await
+    .map_err(|error| error.to_string())
 }
 
 fn random_urlsafe() -> String {
     let mut bytes = [0_u8; 32];
     getrandom::fill(&mut bytes).expect("operating system randomness is available");
     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
-}
-
-fn response_detail(body: &str) -> String {
-    let detail = body.trim();
-    if detail.is_empty() {
-        String::new()
-    } else {
-        let end = detail
-            .char_indices()
-            .nth(500)
-            .map_or(detail.len(), |(i, _)| i);
-        format!(": {}", &detail[..end])
-    }
 }
 
 #[cfg(unix)]

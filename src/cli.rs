@@ -730,6 +730,17 @@ pub enum Command {
         #[command(subcommand)]
         op: AuthOp,
     },
+    /// Show remaining limits for subscriptions available to a client token.
+    Usage {
+        /// Public subscription provider name.
+        #[arg(value_enum)]
+        provider: Option<crate::subscription_usage::UsageProvider>,
+        /// Emit the stable machine-readable Router response.
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
     /// Print environment + config diagnostics.
     ///
     /// Reports on the machine it runs on, so it stays local: the files, config

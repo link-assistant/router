@@ -138,10 +138,9 @@ fn successful_request_is_logged_by_default() {
     );
 }
 
-/// A request refused at authentication is logged with an empty body even though
-/// the client sent one, so the record asserts `content-length: N` and
-/// `"body": ""` at the same time. The body is captured lazily as a handler
-/// reads the stream, and a rejected request is never read (issue #210).
+/// A small JSON request refused at authentication retains its redacted body.
+/// This keeps the diagnostic content without letting an unauthenticated caller
+/// force large or streaming bodies into memory (issues #210 and #429).
 #[test]
 fn a_rejected_request_does_not_claim_an_empty_body() {
     let router = Router::start();
@@ -161,15 +160,9 @@ fn a_rejected_request_does_not_claim_an_empty_body() {
     let record = router.await_client_request("issue-210-rejected");
     let record =
         link_assistant_router::lino_json::decode_line(&record).expect("record is readable");
-    let body = record["body"].as_str().expect("body field is a string");
-    assert_ne!(
-        body, "",
-        "a request that declared a body must not be logged as empty: {record}"
-    );
-    assert!(
-        body.contains("MARKER-210") || body.contains("NOT READ"),
-        "body must be the content or an explicit marker, got {body:?}"
-    );
+    let body = &record["body"];
+    assert_ne!(body, "", "declared body must not be empty: {record}");
+    assert_eq!(body["messages"][0]["content"], "MARKER-210");
 }
 
 /// The marker must not swallow the genuinely bodiless case: a `GET` with no

@@ -27,19 +27,20 @@ fn add(name: &str, models: &[&str]) -> ProviderOp {
         acknowledge_intermediary_risk: false,
         acknowledge_unsupported_client: vec![],
         enabled: true,
+        if_absent: false,
         target: AuthTarget::default(),
     }
 }
 
 /// Adding a provider persists exactly what routing later reads: the declared
 /// models are what let it win a route at all.
-#[test]
-fn adding_a_provider_persists_its_declared_models() {
+#[tokio::test]
+async fn adding_a_provider_persists_its_declared_models() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
 
     assert_eq!(
-        run_with(&store, &add("formal-ai", &["formal-ai-mini"])),
+        run_with(&store, &add("formal-ai", &["formal-ai-mini"])).await,
         ExitCode::SUCCESS
     );
 
@@ -53,12 +54,12 @@ fn adding_a_provider_persists_its_declared_models() {
 
 /// Listing and showing a provider succeed, and never print the API key: the
 /// store redacts it, and these commands are the operator-facing view of it.
-#[test]
-fn listing_and_showing_a_provider_succeed() {
+#[tokio::test]
+async fn listing_and_showing_a_provider_succeed() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
     assert_eq!(
-        run_with(&store, &add("formal-ai", &["formal-ai-mini"])),
+        run_with(&store, &add("formal-ai", &["formal-ai-mini"])).await,
         ExitCode::SUCCESS
     );
 
@@ -69,7 +70,8 @@ fn listing_and_showing_a_provider_succeed() {
                 json: false,
                 target: AuthTarget::default()
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
     assert_eq!(
@@ -80,7 +82,8 @@ fn listing_and_showing_a_provider_succeed() {
                 json: false,
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
     let redacted = store.list_redacted().expect("list");
@@ -92,8 +95,8 @@ fn listing_and_showing_a_provider_succeed() {
 
 /// Showing or removing an unknown provider fails rather than reporting success
 /// for something that was never there.
-#[test]
-fn an_unknown_provider_is_not_reported_as_removed() {
+#[tokio::test]
+async fn an_unknown_provider_is_not_reported_as_removed() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
 
@@ -105,7 +108,8 @@ fn an_unknown_provider_is_not_reported_as_removed() {
                 json: false,
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
     assert_ne!(
@@ -115,19 +119,20 @@ fn an_unknown_provider_is_not_reported_as_removed() {
                 name: "absent".to_string(),
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
 }
 
 /// Removing a provider takes its models out of the store, so a decommissioned
 /// endpoint stops being routable.
-#[test]
-fn removing_a_provider_takes_its_models_with_it() {
+#[tokio::test]
+async fn removing_a_provider_takes_its_models_with_it() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
     assert_eq!(
-        run_with(&store, &add("formal-ai", &["formal-ai-mini"])),
+        run_with(&store, &add("formal-ai", &["formal-ai-mini"])).await,
         ExitCode::SUCCESS
     );
 
@@ -138,7 +143,8 @@ fn removing_a_provider_takes_its_models_with_it() {
                 name: "formal-ai".to_string(),
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
     );
 
@@ -152,8 +158,8 @@ fn removing_a_provider_takes_its_models_with_it() {
 
 /// Importing a file that is not there fails with a message rather than
 /// silently leaving the store unchanged.
-#[test]
-fn importing_a_missing_file_fails() {
+#[tokio::test]
+async fn importing_a_missing_file_fails() {
     let directory = tempfile::tempdir().expect("data dir");
     let store = store(directory.path());
 
@@ -164,8 +170,199 @@ fn importing_a_missing_file_fails() {
                 path: directory.path().join("absent.lenv"),
                 target: AuthTarget::default(),
             }
-        ),
+        )
+        .await,
         ExitCode::SUCCESS
+    );
+}
+
+#[tokio::test]
+async fn batch_import_reports_created_replaced_present_and_later_failure_with_remote_parity() {
+    fn input(name: &str, base_url: &str, secret: &str, if_absent: bool) -> ProviderUpsert {
+        ProviderUpsert {
+            name: name.to_string(),
+            kind: Some("openai-compatible".into()),
+            base_url: base_url.to_string(),
+            default_model: Some("exact-model".into()),
+            models: Some(vec!["exact-model".into()]),
+            supported_clients: Some(vec!["opencode".into()]),
+            api_key: Some(secret.into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: Some(false),
+            acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent,
+        }
+    }
+
+    let directory = tempfile::tempdir().unwrap();
+    let store = store(directory.path());
+    store
+        .upsert(input(
+            "existing",
+            "https://old.example/v1",
+            "old-secret",
+            false,
+        ))
+        .unwrap();
+    let mut invalid = input("invalid", "https://invalid.example/v1", "bad-secret", false);
+    invalid.kind = Some("not-a-provider-kind".into());
+    let inputs = vec![
+        input(
+            "created",
+            "https://created.example/v1",
+            "created-secret",
+            false,
+        ),
+        input(
+            "existing",
+            "https://new.example/v1",
+            "replacement-secret",
+            false,
+        ),
+        input(
+            "existing",
+            "https://ignored.example/v1",
+            "ignored-secret",
+            true,
+        ),
+        invalid,
+    ];
+
+    let local = local_import_report(&reqwest::Client::new(), &store, inputs.clone()).await;
+    assert!(!local.complete);
+    assert_eq!(local.results.len(), 4);
+    assert_eq!(local.results[0]["outcome"], "created");
+    assert_eq!(local.results[1]["outcome"], "replaced");
+    assert_eq!(local.results[2]["outcome"], "already_present");
+    assert_eq!(local.results[3]["outcome"], "invalid_candidate");
+    let rendered = serde_json::to_string(&local).unwrap();
+    for secret in [
+        "old-secret",
+        "created-secret",
+        "replacement-secret",
+        "ignored-secret",
+        "bad-secret",
+    ] {
+        assert!(!rendered.contains(secret), "{rendered}");
+    }
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let bodies = vec![
+        local.results[0].to_string(),
+        local.results[1].to_string(),
+        local.results[2].to_string(),
+        serde_json::json!({"error": {"outcome": "invalid_candidate"}}).to_string(),
+    ];
+    let server_task = tokio::spawn(async move {
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+        for (index, body) in bodies.into_iter().enumerate() {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0; 8192];
+            let _ = socket.read(&mut request).await.unwrap();
+            let status = if index == 3 {
+                "400 Bad Request"
+            } else {
+                "200 OK"
+            };
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        }
+    });
+    let server = crate::managed_server::ResolvedServer::at(origin, Some("admin".into()), "test");
+    let remote = remote_import_report(&server, &inputs).await.unwrap();
+    server_task.await.unwrap();
+
+    assert_eq!(remote, local);
+}
+
+#[tokio::test]
+async fn remote_batch_retains_prior_outcomes_when_a_success_schema_is_malformed() {
+    let input = |name: &str| ProviderUpsert {
+        name: name.to_string(),
+        kind: Some("openai-compatible".into()),
+        base_url: "https://provider.example/v1".into(),
+        default_model: Some("exact-model".into()),
+        models: Some(vec!["exact-model".into()]),
+        supported_clients: Some(vec!["opencode".into()]),
+        api_key: Some("never-render-this-secret".into()),
+        api_key_env: None,
+        encrypted_api_key: None,
+        enabled: Some(true),
+        subscriber_id: None,
+        acknowledge_intermediary_risk: Some(false),
+        acknowledge_unsupported_clients: Some(Vec::new()),
+        if_absent: false,
+    };
+    let inputs = vec![
+        input("accepted"),
+        input("malformed"),
+        input("must-not-send"),
+    ];
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let requests = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let requests_for_server = std::sync::Arc::clone(&requests);
+    let server_task = tokio::spawn(async move {
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+        for body in [
+            serde_json::json!({
+                "outcome": "created",
+                "name": "accepted",
+                "kind": "openai-compatible",
+                "base_url": "https://provider.example/v1",
+                "default_model": "exact-model",
+                "models": ["exact-model"],
+                "supported_clients": ["opencode"],
+                "has_encrypted_api_key": true,
+                "enabled": true,
+                "intermediary_risk_acknowledged": false,
+                "unsupported_clients": []
+            })
+            .to_string(),
+            serde_json::json!({"unexpected": "success"}).to_string(),
+        ] {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            requests_for_server.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            let mut request = [0; 8192];
+            let _ = socket.read(&mut request).await.unwrap();
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        }
+    });
+    let server = crate::managed_server::ResolvedServer::at(origin, Some("admin".into()), "test");
+    let report = remote_import_report(&server, &inputs).await.unwrap();
+    server_task.await.unwrap();
+
+    assert!(!report.complete);
+    assert_eq!(report.results.len(), 2);
+    assert_eq!(report.results[0]["outcome"], "created");
+    assert_eq!(report.results[1]["name"], "malformed");
+    assert_eq!(report.results[1]["outcome"], "unverified");
+    assert_eq!(requests.load(std::sync::atomic::Ordering::SeqCst), 2);
+    assert!(
+        !serde_json::to_string(&report)
+            .unwrap()
+            .contains("never-render-this-secret")
     );
 }
 
@@ -228,6 +425,7 @@ fn adding_a_provider_sends_what_routing_reads() {
         acknowledge_intermediary_risk: false,
         acknowledge_unsupported_client: vec![],
         enabled: true,
+        if_absent: false,
         target: AuthTarget::default(),
     })
     .expect("encodable")
@@ -241,6 +439,60 @@ fn adding_a_provider_sends_what_routing_reads() {
     assert_eq!(body["default_model"], "m1", "{body}");
     assert_eq!(body["models"][1], "m2", "every declared model: {body}");
     assert_eq!(body["enabled"], true, "{body}");
+}
+
+#[test]
+fn lefine_keys_are_never_accepted_from_argv() {
+    let operation = ProviderOp::Add {
+        api_key_stdin: false,
+        name: "lefine".into(),
+        kind: "lefine".into(),
+        base_url: crate::lefine::BASE_URL.into(),
+        model: None,
+        models: vec!["configured/exact-id".into()],
+        supported_clients: vec![],
+        api_key: Some("argv-secret".into()),
+        api_key_env: None,
+        subscriber_id: None,
+        acknowledge_intermediary_risk: false,
+        acknowledge_unsupported_client: vec![],
+        enabled: true,
+        if_absent: false,
+        target: AuthTarget::default(),
+    };
+
+    let error = call_for(&operation).unwrap_err();
+
+    assert!(error.contains("--api-key-stdin"), "{error}");
+    assert!(!error.contains("argv-secret"), "{error}");
+}
+
+#[test]
+fn lefine_imports_reject_plaintext_keys_but_allow_secret_references() {
+    let plaintext = serde_json::json!({
+        "name": "lefine",
+        "kind": "lefine",
+        "base_url": crate::lefine::BASE_URL,
+        "models": ["configured/exact-id"],
+        "api_key": "manifest-secret"
+    })
+    .to_string();
+    let error = crate::providers::parse_provider_import(&plaintext).unwrap_err();
+    let message = error.to_string();
+    assert!(message.contains("cannot contain plaintext"), "{message}");
+    assert!(!message.contains("manifest-secret"), "{message}");
+
+    let referenced = serde_json::json!({
+        "name": "lefine",
+        "kind": "lefine",
+        "base_url": crate::lefine::BASE_URL,
+        "models": ["configured/exact-id"],
+        "api_key_env": "LEFINE_API_KEY"
+    })
+    .to_string();
+    let imported = crate::providers::parse_provider_import(&referenced).unwrap();
+    assert_eq!(imported[0].api_key_env.as_deref(), Some("LEFINE_API_KEY"));
+    assert!(imported[0].api_key.is_none());
 }
 
 /// `import` has no single call: it declares one provider per manifest entry.
@@ -322,6 +574,7 @@ async fn a_remote_add_declares_the_provider_on_the_deployment() {
             acknowledge_intermediary_risk: false,
             acknowledge_unsupported_client: vec![],
             enabled: true,
+            if_absent: false,
             target: AuthTarget::default(),
         },
     )
@@ -401,14 +654,26 @@ async fn a_remote_import_declares_each_provider_on_the_deployment() {
     let handle = tokio::spawn(async move {
         use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
         let mut seen = Vec::new();
-        for _ in 0..2 {
+        for name in ["one", "two"] {
             let Ok((mut socket, _)) = listener.accept().await else {
                 break;
             };
             let mut buffer = [0; 4096];
             let read = socket.read(&mut buffer).await.unwrap_or(0);
             seen.push(String::from_utf8_lossy(&buffer[..read]).to_string());
-            let body = r#"{"ok":true}"#;
+            let body = serde_json::json!({
+                "outcome": "created",
+                "name": name,
+                "kind": "openai-compatible",
+                "base_url": format!("https://{name}.example/v1"),
+                "models": [],
+                "supported_clients": [],
+                "has_encrypted_api_key": false,
+                "enabled": true,
+                "intermediary_risk_acknowledged": false,
+                "unsupported_clients": []
+            })
+            .to_string();
             let _ = socket
                 .write_all(
                     format!(

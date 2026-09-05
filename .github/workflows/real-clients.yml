@@ -47,14 +47,24 @@ jobs:
       - name: Install pinned real clients
         run: |
           npm install --global \
-            @anthropic-ai/claude-code@2.1.260 \
-            @openai/codex@0.153.2 \
-            opencode-ai@1.18.27
-          claude --version | grep -F '2.1.260'
-          codex --version | grep -F '0.153.2'
-          opencode --version | grep -Fx '1.18.27'
+            @anthropic-ai/claude-code@2.1.261 \
+            @openai/codex@0.153.4 \
+            opencode-ai@1.18.29
+          claude --version | grep -F '2.1.261'
+          codex --version | grep -F '0.153.4'
+          opencode --version | grep -Fx '1.18.29'
 
       - name: Capture native requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
         run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1
+
+      - name: Probe real providers when protected credentials are configured
+        env:
+          ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON: ${{ secrets.ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON }}
+          ROUTER_LIVE_CODEX_CREDENTIAL_JSON: ${{ secrets.ROUTER_LIVE_CODEX_CREDENTIAL_JSON }}
+          ROUTER_LIVE_ZAI_API_KEY: ${{ secrets.ROUTER_LIVE_ZAI_API_KEY }}
+          LEFINE_API_KEY: ${{ secrets.LEFINE_API_KEY }}
+        run: |
+          cargo test --locked --test subscription_usage_live_test -- --test-threads=1
+          cargo test --locked --test lefine_live_test -- --test-threads=1

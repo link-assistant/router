@@ -170,6 +170,16 @@ async fn gemini_cli_key_header_authenticates() {
     assert_eq!(status, StatusCode::OK, "{body}");
 }
 
+#[tokio::test]
+async fn aggregate_catalog_uses_the_bound_clients_native_carrier() {
+    let dir = tempfile::tempdir().expect("tempdir");
+    let (app, token) = test_app(dir.path());
+    let (status, body) = carrier_status(app, "/api/models", Some(("x-goog-api-key", token))).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["object"], "list");
+    assert_eq!(body["data"], serde_json::json!([]));
+}
+
 /// The fix must not degrade into accepting anything presented in that header.
 #[tokio::test]
 async fn an_invalid_gemini_key_is_still_rejected() {

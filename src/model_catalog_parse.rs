@@ -55,7 +55,10 @@ pub(super) fn parse_catalog_records(
         .filter_map(Value::as_object)
         .filter_map(|raw| {
             let id = raw.get(id_key).and_then(Value::as_str)?;
-            let canonical_id = id.strip_prefix("models/").unwrap_or(id).to_string();
+            // Provider identifiers are routing identities, not display names.
+            // In particular, Gemini's `models/` prefix is part of the exact
+            // identifier returned by ListModels and must survive discovery.
+            let canonical_id = id.to_string();
             (!canonical_id.is_empty()).then_some((raw, canonical_id))
         })
         .enumerate()

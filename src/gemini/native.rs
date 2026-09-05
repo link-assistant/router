@@ -14,10 +14,16 @@ use super::{AppState, code_assist_envelope, route_gemini_token};
 use crate::metrics::Surface;
 use crate::proxy::{error_response, retry_after_duration};
 
-fn native_model_document(model: &str, owner: &str) -> Value {
+fn native_model_name(model: &str) -> String {
     let model = model.trim_start_matches("models/");
+    format!("models/{model}")
+}
+
+fn native_model_document(model: &str, owner: &str) -> Value {
+    let name = native_model_name(model);
+    let model = name.trim_start_matches("models/");
     json!({
-        "name": format!("models/{model}"),
+        "name": name,
         "displayName": model,
         "description": format!(
             "{owner} model routed by Link.Assistant.Router over the native Gemini \
@@ -110,6 +116,18 @@ pub async fn native_models(
     {
         return response;
     }
+    let mut seen = std::collections::HashSet::new();
+    for (_, model) in &advertised {
+        let name = native_model_name(model);
+        if !seen.insert(name.clone()) {
+            return native_error(
+                StatusCode::CONFLICT,
+                &format!(
+                    "exact native model id '{name}' is advertised by more than one healthy provider"
+                ),
+            );
+        }
+    }
     let mut models = advertised
         .into_iter()
         .map(|(provider, model)| native_model_document(&model, provider.as_str()))
@@ -151,12 +169,12 @@ pub async fn native_model(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    let model = model.trim_start_matches("models/").to_string();
-    let owner = advertised_models(&state, claims.principal_id.as_deref())
+    let requested_name = native_model_name(&model);
+    let mut owners = advertised_models(&state, claims.principal_id.as_deref())
         .await
         .into_iter()
-        .find_map(|(owner, candidate)| {
-            (candidate == model
+        .filter_map(|(owner, candidate)| {
+            (native_model_name(&candidate) == requested_name
                 && crate::client_policy::enforce_subscription_for_claims(
                     &state,
                     &claims,
@@ -166,37 +184,51 @@ pub async fn native_model(
                     uri.path(),
                 )
                 .is_ok())
-            .then_some(owner)
-        });
-    if owner.is_none()
+            .then_some((owner, candidate))
+        })
+        .collect::<Vec<_>>();
+    owners.sort_by(|left, right| left.0.as_str().cmp(right.0.as_str()));
+    owners.dedup();
+    if owners.len() > 1 {
+        return native_error(
+            StatusCode::CONFLICT,
+            &format!(
+                "exact native model id '{requested_name}' is advertised by more than one healthy provider"
+            ),
+        );
+    }
+    if owners.is_empty()
         && let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
         && let Ok((client, _)) =
             crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
         && client == crate::clients::ClientKind::GeminiCli
         && let Ok(live) = crate::zai_coding_plan::live_catalog(&state, &provider).await
-        && live.iter().any(|entry| entry.id == model)
+        && live
+            .iter()
+            .any(|entry| native_model_name(&entry.id) == requested_name)
     {
         return (
             StatusCode::OK,
-            axum::Json(native_model_document(&model, "z.ai")),
+            axum::Json(native_model_document(&requested_name, "z.ai")),
         )
             .into_response();
     }
-    owner
+    owners
+        .pop()
         .map_or_else(
             || {
                 (
                     StatusCode::NOT_FOUND,
                     axum::Json(crate::gemini_bridge::openai_error_to_gemini(
                         404,
-                        &json!({"error": {"message": format!("model '{model}' is not available")}}),
+                        &json!({"error": {"message": format!("model '{requested_name}' is not available")}}),
                     )),
                 )
             },
-            |owner| {
+            |(owner, candidate)| {
                 (
                     StatusCode::OK,
-                    axum::Json(native_model_document(&model, owner.as_str())),
+                    axum::Json(native_model_document(&candidate, owner.as_str())),
                 )
             },
         )
@@ -259,6 +291,13 @@ pub async fn forward_native_vertex(
     headers: HeaderMap,
     body: Result<axum::Json<Value>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    if path
+        .split('/')
+        .zip(path.split('/').skip(1))
+        .any(|segments| segments == ("publishers", "anthropic"))
+    {
+        return native_error(StatusCode::NOT_FOUND, "route not found");
+    }
     let body = match body {
         Ok(axum::Json(body)) => body,
         Err(error) => {
@@ -293,10 +332,44 @@ async fn native_owner(
         let client = crate::client_policy::bound_client(&claims)
             .map(|(client, _)| client)
             .map_err(|error| native_error(StatusCode::FORBIDDEN, &error))?;
+        let entitled = crate::subscription::SubscriptionProvider::ALL
+            .into_iter()
+            .filter(|provider| {
+                crate::client_policy::enforce_subscription_for_claims(
+                    state,
+                    &claims,
+                    headers,
+                    *provider,
+                    crate::client_policy::ClientProtocol::GeminiNative,
+                    path,
+                )
+                .is_ok()
+            })
+            .collect::<Vec<_>>();
+        let requested_name = native_model_name(model);
+        let mut exact_candidates = advertised_models(state, claims.principal_id.as_deref())
+            .await
+            .into_iter()
+            .filter(|(provider, candidate)| {
+                entitled.contains(provider) && native_model_name(candidate) == requested_name
+            })
+            .map(|(_, candidate)| candidate)
+            .collect::<Vec<_>>();
+        exact_candidates.sort();
+        exact_candidates.dedup();
+        if exact_candidates.len() > 1 {
+            return Err(native_error(
+                StatusCode::CONFLICT,
+                &format!(
+                    "exact native model id '{requested_name}' is advertised by more than one healthy provider"
+                ),
+            ));
+        }
+        let routing_model = exact_candidates.first().map_or(model, String::as_str);
         crate::model_routing::route_state_with_subscription_for_client(
             state,
-            &json!({"model": model}),
-            &crate::subscription::SubscriptionProvider::ALL,
+            &json!({"model": routing_model}),
+            &entitled,
             Some(client),
             crate::zai_coding_plan::authorize_automatic_discovery(
                 state,
@@ -330,7 +403,8 @@ async fn native_owner(
     routed.map_err(|error| {
         let status = match error {
             crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
-            _ => StatusCode::BAD_REQUEST,
+            crate::model_routing::ModelRouteError::Conflict(_) => StatusCode::CONFLICT,
+            crate::model_routing::ModelRouteError::ModelRequired => StatusCode::BAD_REQUEST,
         };
         native_error(status, &error.to_string())
     })
@@ -471,7 +545,7 @@ async fn forward_native_authorized_after_route(
     // non-streaming upstream call lets us unwrap the native response reliably;
     // stream callers receive that response as a valid Gemini SSE data event.
     let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
-    let upstream_request = state
+    let mut upstream_request = state
         .client
         .post(upstream_url)
         .header("content-type", "application/json")
@@ -480,6 +554,9 @@ async fn forward_native_authorized_after_route(
             format!("Bearer {}", routed.token.access_token),
         )
         .body(serialized.clone());
+    if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+        upstream_request = upstream_request.header("x-request-id", request_id);
+    }
     let correlation_id = crate::request_log::correlation_id(headers);
     let upstream = match state
         .request_log
@@ -501,7 +578,7 @@ async fn forward_native_authorized_after_route(
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream.headers());
-    let retry_header = upstream.headers().get("retry-after").cloned();
+    let response_headers = crate::proxy::relay_response_headers(upstream.headers());
     // The response status is already authoritative even if the peer closes
     // before its declared body is complete. Record it while the response still
     // carries the exact credential generation that produced it.
@@ -545,13 +622,11 @@ async fn forward_native_authorized_after_route(
     if !status.is_success() {
         let mut response = Response::new(Body::from(response_body));
         *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             axum::http::HeaderValue::from_static("application/json"),
         );
-        if let Some(value) = retry_header {
-            response.headers_mut().insert("retry-after", value);
-        }
         return response;
     }
     let parsed: Value = match serde_json::from_slice(&response_body) {
@@ -568,13 +643,20 @@ async fn forward_native_authorized_after_route(
     if streaming {
         let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
         *response.status_mut() = StatusCode::OK;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             axum::http::HeaderValue::from_static("text/event-stream"),
         );
         return response;
     }
-    (StatusCode::OK, axum::Json(native)).into_response()
+    let mut response = (StatusCode::OK, axum::Json(native)).into_response();
+    *response.headers_mut() = response_headers;
+    response.headers_mut().insert(
+        "content-type",
+        axum::http::HeaderValue::from_static("application/json"),
+    );
+    response
 }
 
 async fn forward_native_via_zai(
@@ -634,22 +716,23 @@ async fn translated_chat_response(
     model: &str,
     streaming: bool,
 ) -> Response {
-    let status = response.status();
-    let bytes =
-        match axum::body::to_bytes(response.into_body(), state.max_proxy_request_bytes).await {
-            Ok(bytes) => bytes,
-            Err(error) => {
-                return native_error(
-                    StatusCode::BAD_GATEWAY,
-                    &format!("failed to read the translated upstream response: {error}"),
-                );
-            }
-        };
+    let (parts, body) = response.into_parts();
+    let status = parts.status;
+    let response_headers = crate::proxy::relay_response_headers(&parts.headers);
+    let bytes = match axum::body::to_bytes(body, state.max_proxy_request_bytes).await {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            return native_error(
+                StatusCode::BAD_GATEWAY,
+                &format!("failed to read the translated upstream response: {error}"),
+            );
+        }
+    };
     let parsed = serde_json::from_slice::<Value>(&bytes).unwrap_or_else(|error| {
         json!({"error": {"message": format!("failed to parse the translated response: {error}")}})
     });
     if !status.is_success() {
-        return (
+        let mut response = (
             status,
             axum::Json(crate::gemini_bridge::openai_error_to_gemini(
                 status.as_u16(),
@@ -657,16 +740,29 @@ async fn translated_chat_response(
             )),
         )
             .into_response();
+        *response.headers_mut() = response_headers;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("application/json"),
+        );
+        return response;
     }
     let native = crate::gemini_bridge::chat_to_gemini_response(&parsed, model);
     if streaming {
         let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
         *response.status_mut() = StatusCode::OK;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             axum::http::HeaderValue::from_static("text/event-stream"),
         );
         return response;
     }
-    (StatusCode::OK, axum::Json(native)).into_response()
+    let mut response = (StatusCode::OK, axum::Json(native)).into_response();
+    *response.headers_mut() = response_headers;
+    response.headers_mut().insert(
+        "content-type",
+        axum::http::HeaderValue::from_static("application/json"),
+    );
+    response
 }

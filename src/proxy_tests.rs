@@ -3,8 +3,8 @@ use http_body_util::BodyExt;
 use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
-    OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token, merge_oauth_beta,
-    request_routing_context, retry_after_duration,
+    INGRESS_NETWORK_HEADERS, OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token,
+    merge_oauth_beta, request_routing_context, retry_after_duration,
 };
 
 #[test]
@@ -137,6 +137,178 @@ fn upstream_headers_preserve_client_identity_but_not_router_or_transport_fields(
     }
     assert_eq!(upstream["user-agent"], "example-client/1.0");
     assert!(upstream.get("anthropic-version").is_none());
+}
+
+#[test]
+fn every_reviewed_ingress_network_header_is_removed_without_touching_native_headers() {
+    let mut incoming = HeaderMap::new();
+    for &name in INGRESS_NETWORK_HEADERS {
+        let name = axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap();
+        incoming.append(name.clone(), HeaderValue::from_static("192.0.2.10"));
+        incoming.append(name, HeaderValue::from_static("198.51.100.20"));
+    }
+    for (name, value) in [
+        ("anthropic-version", "2023-06-01"),
+        ("anthropic-beta", "interleaved-thinking-2025-05-14"),
+        ("x-codex-turn-metadata", "synthetic-turn"),
+        ("x-stainless-package-version", "1.2.3"),
+        ("x-session-id", "synthetic-session"),
+        ("user-agent", "synthetic-client/1.0"),
+    ] {
+        incoming.insert(name, HeaderValue::from_static(value));
+    }
+
+    let upstream = build_upstream_headers(
+        &incoming,
+        "upstream-secret",
+        &LogLazy::with_level(levels::NONE),
+    );
+    for name in INGRESS_NETWORK_HEADERS {
+        assert!(upstream.get(*name).is_none(), "{name} leaked upstream");
+    }
+    for name in [
+        "anthropic-version",
+        "anthropic-beta",
+        "x-codex-turn-metadata",
+        "x-stainless-package-version",
+        "x-session-id",
+        "user-agent",
+    ] {
+        assert_eq!(upstream.get_all(name).iter().count(), 1, "{name}");
+    }
+}
+
+#[test]
+fn connection_nominated_request_headers_never_reach_the_upstream() {
+    let mut incoming = HeaderMap::new();
+    incoming.append(
+        "connection",
+        HeaderValue::from_static("keep-alive, x-hop-secret"),
+    );
+    incoming.append(
+        "connection",
+        HeaderValue::from_static(" X-Second-Hop , x-third-hop"),
+    );
+    incoming.append("x-hop-secret", HeaderValue::from_static("one"));
+    incoming.append("x-second-hop", HeaderValue::from_static("two"));
+    incoming.append("x-third-hop", HeaderValue::from_static("three"));
+    incoming.append("x-native-end-to-end", HeaderValue::from_static("preserved"));
+
+    let upstream = build_upstream_headers(
+        &incoming,
+        "upstream-secret",
+        &LogLazy::with_level(levels::NONE),
+    );
+
+    for removed in [
+        "connection",
+        "keep-alive",
+        "x-hop-secret",
+        "x-second-hop",
+        "x-third-hop",
+    ] {
+        assert!(upstream.get(removed).is_none(), "{removed} leaked upstream");
+    }
+    assert_eq!(upstream["x-native-end-to-end"], "preserved");
+}
+
+#[tokio::test]
+async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream() {
+    use axum::body::Body;
+    use axum::extract::State;
+    use axum::http::Request;
+    use std::sync::{Arc, Mutex};
+
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let captured_for_server = Arc::clone(&captured);
+    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+        let captured = Arc::clone(&captured_for_server);
+        async move {
+            captured.lock().unwrap().push(request.headers().clone());
+            (
+                StatusCode::OK,
+                [
+                    ("content-type", "application/json"),
+                    ("x-request-id", "provider-anthropic-request"),
+                ],
+                "{}",
+            )
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let upstream_task = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+    let data = tempfile::tempdir().unwrap();
+    std::fs::write(
+        data.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-upstream"}}"#,
+    )
+    .unwrap();
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+    state.upstream_base_url = base_url;
+    let token = crate::model_routing::tests::bound_client_token(
+        &state,
+        crate::clients::ClientKind::ClaudeCode,
+        None,
+    );
+    let mut request = Request::builder()
+        .method("POST")
+        .uri("/v1/messages")
+        .header("authorization", format!("Bearer {token}"))
+        .header("user-agent", "claude-cli/2.1.261")
+        .header("anthropic-version", "2023-06-01")
+        .header("x-request-id", "client-anthropic-request")
+        .header("connection", "x-hop-secret")
+        .header("x-hop-secret", "private-hop")
+        .header(
+            "x-forwarded-client-cert",
+            "By=spiffe://private;Subject=client",
+        )
+        .header("x-native-end-to-end", "preserved")
+        .header("content-type", "application/json")
+        .body(Body::from(
+            r#"{"model":"claude-live","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+        ))
+        .unwrap();
+    for &name in INGRESS_NETWORK_HEADERS {
+        request.headers_mut().append(
+            axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
+            HeaderValue::from_static("192.0.2.10"),
+        );
+        request.headers_mut().append(
+            axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap(),
+            HeaderValue::from_static("198.51.100.20"),
+        );
+    }
+    let response = crate::proxy::proxy_handler(State(state), request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.headers()["x-request-id"],
+        "provider-anthropic-request"
+    );
+    let _ = response.into_body().collect().await.unwrap();
+
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), 1);
+    let headers = &captured[0];
+    assert_eq!(headers["authorization"], "Bearer sk-ant-oat-upstream");
+    assert_eq!(headers["x-native-end-to-end"], "preserved");
+    assert_eq!(headers["x-request-id"], "client-anthropic-request");
+    for removed in [
+        "connection",
+        "x-hop-secret",
+        "x-api-key",
+        "anthropic-auth-token",
+    ] {
+        assert!(!headers.contains_key(removed), "{removed} leaked upstream");
+    }
+    for name in INGRESS_NETWORK_HEADERS {
+        assert!(!headers.contains_key(*name), "{name} leaked upstream");
+    }
+    drop(captured);
+    upstream_task.abort();
 }
 
 /// The router negotiates its own hop, so the log can read its own traffic.

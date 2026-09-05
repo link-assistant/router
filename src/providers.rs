@@ -18,13 +18,19 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use crate::provider_acceptance::{ProviderInstallMode, ProviderInstallResult};
+pub use crate::provider_config::OpenAICompatibleConfig;
+
 /// Supported persisted provider kinds.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum ProviderKind {
     /// Generic OpenAI-compatible upstream such as `LiteLLM`.
     #[default]
+    #[serde(rename = "openai-compatible", alias = "open-a-i-compatible")]
     OpenAICompatible,
+    /// Lefine `OpenAI` Chat Completions API with live catalog validation.
+    Lefine,
     /// Personal z.ai GLM Coding Plan with client/subscriber policy gates.
     ZaiCodingPlan,
 }
@@ -37,6 +43,7 @@ impl ProviderKind {
             "openai" | "openai-compatible" | "open-a-i-compatible" | "openai_like" | "litellm" => {
                 Some(Self::OpenAICompatible)
             }
+            "lefine" => Some(Self::Lefine),
             "z.ai-coding-plan" | "zai-coding-plan" => Some(Self::ZaiCodingPlan),
             _ => None,
         }
@@ -47,6 +54,7 @@ impl ProviderKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::OpenAICompatible => "openai-compatible",
+            Self::Lefine => "lefine",
             Self::ZaiCodingPlan => "z.ai-coding-plan",
         }
     }
@@ -121,10 +129,13 @@ impl ProviderRecord {
     /// and dispatch.
     #[must_use]
     pub fn effective_supported_clients(&self) -> Vec<String> {
-        let mut clients = if self.kind == ProviderKind::ZaiCodingPlan {
-            vec!["claude".into(), "codex".into(), "opencode".into()]
-        } else {
-            self.supported_clients.clone()
+        let mut clients = match self.kind {
+            ProviderKind::ZaiCodingPlan => vec!["claude".into(), "codex".into(), "opencode".into()],
+            ProviderKind::Lefine => crate::lefine::COMPATIBLE_CLIENTS
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            ProviderKind::OpenAICompatible => self.supported_clients.clone(),
         };
         if self.kind == ProviderKind::ZaiCodingPlan {
             clients.extend(self.unsupported_clients.iter().cloned());
@@ -155,11 +166,8 @@ pub struct RedactedProviderRecord {
     pub unsupported_clients: Vec<String>,
 }
 
-/// API / CLI input for creating or replacing a provider.
-///
-/// `Serialize` as well as `Deserialize` so a remote `providers add` sends
-/// exactly the shape the endpoint parses, rather than a hand-built JSON object
-/// that could drift from it (issue #294).
+/// API / CLI input for creating or replacing a provider. Serialization keeps
+/// remote `providers add` identical to the endpoint shape (issue #294).
 #[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct ProviderUpsert {
     pub name: String,
@@ -186,6 +194,9 @@ pub struct ProviderUpsert {
     pub acknowledge_intermediary_risk: Option<bool>,
     #[serde(default, alias = "unsupported_clients")]
     pub acknowledge_unsupported_clients: Option<Vec<String>>,
+    /// Refuse to replace an existing provider with the same name.
+    #[serde(default)]
+    pub if_absent: bool,
 }
 
 /// OpenAI-compatible provider resolved for runtime forwarding.
@@ -256,20 +267,24 @@ impl ProviderStore {
     /// Open a provider store at `<data_dir>/providers.lenv`.
     pub fn open(data_dir: &Path, token_secret: &str) -> Result<Self, ProviderError> {
         let path = data_dir.join("providers.lenv");
+        let lock_path = path.with_extension("lock");
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let records = if path.exists() {
-            decode_provider_lenv(&fs::read_to_string(&path)?)?
-        } else {
-            Vec::new()
-        };
+        let records = crate::durable_file::with_exclusive_lock(&lock_path, || {
+            crate::durable_file::recover_transactional_write(&path)?;
+            if path.exists() {
+                decode_provider_lenv(&fs::read_to_string(&path)?)
+            } else {
+                Ok(Vec::new())
+            }
+        })?;
         let inner = records
             .into_iter()
             .map(|record| (record.name.clone(), record))
             .collect();
         Ok(Self {
-            lock_path: path.with_extension("lock"),
+            lock_path,
             path,
             token_secret: Arc::new(token_secret.to_string()),
             inner: Arc::new(RwLock::new(inner)),
@@ -349,29 +364,68 @@ impl ProviderStore {
 
     /// Add or replace a provider, encrypting any inline API key.
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
-        let record = self.build_record(input)?;
-        self.mutate(|records| -> Result<(), ProviderError> {
-            if record.enabled
-                && record.kind == ProviderKind::ZaiCodingPlan
-                && records.values().any(|existing| {
-                    existing.enabled
-                        && existing.kind == ProviderKind::ZaiCodingPlan
-                        && existing.name != record.name
-                })
-            {
-                return Err(ProviderError::Invalid(
-                    "only one personal z.ai Coding Plan subscriber may be enabled".into(),
-                ));
-            }
-            records.insert(record.name.clone(), record.clone());
-            Ok(())
-        })??;
-        Ok(record)
+        let record = self.stage(input)?;
+        match self.promote(record, ProviderInstallMode::Replace)? {
+            ProviderInstallResult::Created(record)
+            | ProviderInstallResult::Replaced(record)
+            | ProviderInstallResult::AlreadyPresent(record) => Ok(record),
+        }
+    }
+
+    /// Build and encrypt a candidate without changing the active store.
+    pub fn stage(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
+        self.build_record(input)
+    }
+
+    /// Atomically promote a previously validated candidate.
+    pub fn promote(
+        &self,
+        record: ProviderRecord,
+        mode: ProviderInstallMode,
+    ) -> Result<ProviderInstallResult, ProviderError> {
+        self.mutate(
+            |records| -> (Result<ProviderInstallResult, ProviderError>, bool) {
+                if mode == ProviderInstallMode::IfAbsent
+                    && let Some(existing) = records.get(&record.name)
+                {
+                    return (
+                        Ok(ProviderInstallResult::AlreadyPresent(existing.clone())),
+                        false,
+                    );
+                }
+                if record.enabled
+                    && record.kind == ProviderKind::ZaiCodingPlan
+                    && records.values().any(|existing| {
+                        existing.enabled
+                            && existing.kind == ProviderKind::ZaiCodingPlan
+                            && existing.name != record.name
+                    })
+                {
+                    return (
+                        Err(ProviderError::Invalid(
+                            "only one personal z.ai Coding Plan subscriber may be enabled".into(),
+                        )),
+                        false,
+                    );
+                }
+                let replaced = records.contains_key(&record.name);
+                records.insert(record.name.clone(), record.clone());
+                let result = if replaced {
+                    ProviderInstallResult::Replaced(record)
+                } else {
+                    ProviderInstallResult::Created(record)
+                };
+                (Ok(result), true)
+            },
+        )?
     }
 
     /// Delete a provider by name.
     pub fn delete(&self, name: &str) -> Result<bool, ProviderError> {
-        self.mutate(|records| records.remove(name).is_some())
+        self.mutate(|records| {
+            let removed = records.remove(name).is_some();
+            (removed, removed)
+        })
     }
 
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
@@ -393,6 +447,14 @@ impl ProviderStore {
         if !record.enabled {
             return Ok(None);
         }
+        self.resolve_record(&record).map(Some)
+    }
+
+    /// Resolve a staged record without installing it.
+    pub fn resolve_record(
+        &self,
+        record: &ProviderRecord,
+    ) -> Result<ResolvedProvider, ProviderError> {
         let api_key = record
             .api_key_env
             .as_deref()
@@ -407,18 +469,18 @@ impl ProviderStore {
             })
             .transpose()?;
         let supported_clients = record.effective_supported_clients();
-        Ok(Some(ResolvedProvider {
-            name: record.name,
+        Ok(ResolvedProvider {
+            name: record.name.clone(),
             kind: record.kind,
-            base_url: record.base_url,
-            default_model: record.default_model,
-            models: record.models,
+            base_url: record.base_url.clone(),
+            default_model: record.default_model.clone(),
+            models: record.models.clone(),
             supported_clients,
             api_key,
-            subscriber_id: record.subscriber_id,
+            subscriber_id: record.subscriber_id.clone(),
             intermediary_risk_acknowledged: record.intermediary_risk_acknowledged,
-            unsupported_clients: record.unsupported_clients,
-        }))
+            unsupported_clients: record.unsupported_clients.clone(),
+        })
     }
 
     fn build_record(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
@@ -490,13 +552,23 @@ impl ProviderStore {
                     "enabling z.ai Coding Plan requires --acknowledge-intermediary-risk".into(),
                 ));
             }
-        } else if subscriber_id.is_some()
-            || intermediary_risk_acknowledged
-            || !unsupported_clients.is_empty()
-        {
-            return Err(ProviderError::Invalid(
-                "Coding Plan subscriber/risk settings require kind z.ai-coding-plan".into(),
-            ));
+        } else {
+            if kind == ProviderKind::Lefine {
+                validate_lefine_config(
+                    &base_url,
+                    &models,
+                    &supported_clients,
+                    input.default_model.as_deref(),
+                )?;
+            }
+            if subscriber_id.is_some()
+                || intermediary_risk_acknowledged
+                || !unsupported_clients.is_empty()
+            {
+                return Err(ProviderError::Invalid(
+                    "Coding Plan subscriber/risk settings require kind z.ai-coding-plan".into(),
+                ));
+            }
         }
         Ok(ProviderRecord {
             name,
@@ -534,6 +606,7 @@ impl ProviderStore {
 
     fn refresh(&self) -> Result<(), ProviderError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            crate::durable_file::recover_transactional_write(&self.path)?;
             let records = self.load_map()?;
             *self
                 .inner
@@ -545,16 +618,20 @@ impl ProviderStore {
 
     fn mutate<T>(
         &self,
-        operation: impl FnOnce(&mut HashMap<String, ProviderRecord>) -> T,
+        operation: impl FnOnce(&mut HashMap<String, ProviderRecord>) -> (T, bool),
     ) -> Result<T, ProviderError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            crate::durable_file::recover_transactional_write(&self.path)?;
             let mut guard = self
                 .inner
                 .write()
                 .map_err(|_| ProviderError::LockPoisoned)?;
             *guard = self.load_map()?;
             let before = guard.clone();
-            let result = operation(&mut guard);
+            let (result, changed) = operation(&mut guard);
+            if !changed {
+                return Ok(result);
+            }
             if let Err(error) = self.flush(&guard) {
                 *guard = before;
                 drop(guard);
@@ -563,63 +640,6 @@ impl ProviderStore {
             drop(guard);
             Ok(result)
         })
-    }
-}
-
-/// Runtime provider config supplied by CLI/env/.lenv.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct OpenAICompatibleConfig {
-    pub provider_name: String,
-    pub base_url: String,
-    pub api_key: Option<String>,
-    pub api_key_env: Option<String>,
-    pub default_model: Option<String>,
-    pub models: Vec<String>,
-    pub supported_clients: Vec<String>,
-}
-
-impl OpenAICompatibleConfig {
-    /// Convert this boot config to a resolved provider without writing it.
-    #[must_use]
-    pub fn resolve(&self) -> ResolvedProvider {
-        let api_key = self.api_key.clone().or_else(|| {
-            self.api_key_env
-                .as_deref()
-                .and_then(|name| std::env::var(name).ok())
-                .filter(|value| !value.is_empty())
-        });
-        ResolvedProvider {
-            name: self.provider_name.clone(),
-            kind: ProviderKind::OpenAICompatible,
-            base_url: self.base_url.trim_end_matches('/').to_string(),
-            default_model: self.default_model.clone(),
-            models: self.models.clone(),
-            supported_clients: self.supported_clients.clone(),
-            api_key,
-            subscriber_id: None,
-            intermediary_risk_acknowledged: false,
-            unsupported_clients: Vec::new(),
-        }
-    }
-
-    /// Convert this config into an upsert record for persistent import.
-    #[must_use]
-    pub fn as_upsert(&self) -> ProviderUpsert {
-        ProviderUpsert {
-            name: self.provider_name.clone(),
-            kind: Some(ProviderKind::OpenAICompatible.as_str().to_string()),
-            base_url: self.base_url.clone(),
-            default_model: self.default_model.clone(),
-            models: Some(self.models.clone()),
-            supported_clients: Some(self.supported_clients.clone()),
-            api_key: self.api_key.clone(),
-            api_key_env: self.api_key_env.clone(),
-            encrypted_api_key: None,
-            enabled: Some(true),
-            subscriber_id: None,
-            acknowledge_intermediary_risk: None,
-            acknowledge_unsupported_clients: None,
-        }
     }
 }
 
@@ -665,6 +685,46 @@ impl From<base64::DecodeError> for ProviderError {
     fn from(value: base64::DecodeError) -> Self {
         Self::Base64(value)
     }
+}
+
+fn validate_lefine_config(
+    base_url: &str,
+    models: &[String],
+    supported_clients: &[String],
+    default_model: Option<&str>,
+) -> Result<(), ProviderError> {
+    if base_url != crate::lefine::BASE_URL && !cfg!(test) {
+        return Err(ProviderError::Invalid(format!(
+            "Lefine base_url must be {}",
+            crate::lefine::BASE_URL
+        )));
+    }
+    if !supported_clients.is_empty() {
+        return Err(ProviderError::Invalid(
+            "Lefine client compatibility is fixed by its native Chat Completions adapter".into(),
+        ));
+    }
+    let mut seen = std::collections::HashSet::new();
+    for model in models {
+        if model.is_empty() || model != model.trim() || !seen.insert(model) {
+            return Err(ProviderError::Invalid(
+                "Lefine fallback models must be unique non-empty exact ids".into(),
+            ));
+        }
+    }
+    if let Some(default) = default_model {
+        if default.is_empty() || default != default.trim() {
+            return Err(ProviderError::Invalid(
+                "Lefine default_model must be a non-empty exact id".into(),
+            ));
+        }
+        if !models.is_empty() && !models.iter().any(|model| model == default) {
+            return Err(ProviderError::Invalid(
+                "Lefine default_model must occur in configured fallback models".into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn normalize_name(name: &str) -> Result<String, ProviderError> {
@@ -786,166 +846,12 @@ fn decode_provider_lenv(input: &str) -> Result<Vec<ProviderRecord>, ProviderErro
     Ok(records)
 }
 
-/// Parse a provider manifest without a store to write it into.
-///
-/// Public so a remote `providers import` can read the manifest on *this*
-/// machine and declare each provider on the selected deployment, which is what
-/// importing into another router means (issue #294).
-///
-/// # Errors
-///
-/// Returns the parse error when the manifest is not readable as provider
-/// declarations.
-pub fn parse_provider_import(input: &str) -> Result<Vec<ProviderUpsert>, ProviderError> {
-    let trimmed = input.trim_start();
-    if trimmed.starts_with('{') {
-        let doc: serde_json::Value = serde_json::from_str(input)?;
-        if let Some(providers) = doc.get("providers").and_then(serde_json::Value::as_array) {
-            return providers
-                .iter()
-                .cloned()
-                .map(serde_json::from_value)
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(ProviderError::Json);
-        }
-        return serde_json::from_value(doc)
-            .map(|provider| vec![provider])
-            .map_err(ProviderError::Json);
-    }
-    if trimmed.starts_with('[') {
-        return serde_json::from_str(input).map_err(ProviderError::Json);
-    }
-    parse_lenv_or_indented(input)
-}
-
-fn parse_lenv_or_indented(input: &str) -> Result<Vec<ProviderUpsert>, ProviderError> {
-    if input.lines().any(|line| line.starts_with("PROVIDER: ")) {
-        let mut providers = Vec::new();
-        for raw in input.lines() {
-            if let Some(json) = raw.trim().strip_prefix("PROVIDER: ") {
-                providers.push(serde_json::from_str(json)?);
-            }
-        }
-        return Ok(providers);
-    }
-    parse_indented_provider_config(input)
-}
-
-fn parse_indented_provider_config(input: &str) -> Result<Vec<ProviderUpsert>, ProviderError> {
-    let mut providers = Vec::new();
-    let mut current: Option<ProviderUpsert> = None;
-    for raw in input.lines() {
-        let line = raw.trim_end();
-        if line.trim().is_empty() || line.trim_start().starts_with('#') {
-            continue;
-        }
-        if !line.starts_with(' ') && !line.starts_with('\t') {
-            if let Some(provider) = current.take() {
-                providers.push(provider);
-            }
-            current = Some(ProviderUpsert {
-                name: line.trim().to_string(),
-                kind: Some("openai-compatible".into()),
-                base_url: String::new(),
-                default_model: None,
-                models: Some(Vec::new()),
-                supported_clients: Some(Vec::new()),
-                api_key: None,
-                api_key_env: None,
-                encrypted_api_key: None,
-                enabled: Some(true),
-                subscriber_id: None,
-                acknowledge_intermediary_risk: None,
-                acknowledge_unsupported_clients: None,
-            });
-            continue;
-        }
-        let Some(provider) = current.as_mut() else {
-            return Err(ProviderError::Invalid(
-                "indented provider field without provider name".into(),
-            ));
-        };
-        let (key, value) = split_indented_field(line.trim())?;
-        match key {
-            "kind" => provider.kind = Some(value),
-            "base_url" | "base-url" | "api_base" | "api-base" => provider.base_url = value,
-            "model" | "default_model" | "default-model" => provider.default_model = Some(value),
-            "models" => {
-                provider.models = Some(
-                    value
-                        .split(',')
-                        .map(str::trim)
-                        .filter(|s| !s.is_empty())
-                        .map(ToString::to_string)
-                        .collect(),
-                );
-            }
-            "supported_clients" | "supported-clients" => {
-                provider.supported_clients = Some(
-                    value
-                        .split(',')
-                        .map(str::trim)
-                        .filter(|entry| !entry.is_empty())
-                        .map(ToString::to_string)
-                        .collect(),
-                );
-            }
-            "api_key" | "api-key" => provider.api_key = Some(value),
-            "api_key_env" | "api-key-env" => provider.api_key_env = Some(value),
-            "enabled" => provider.enabled = Some(matches!(value.as_str(), "true" | "1" | "yes")),
-            "subscriber_id" | "subscriber-id" => provider.subscriber_id = Some(value),
-            "acknowledge_intermediary_risk" | "acknowledge-intermediary-risk" => {
-                provider.acknowledge_intermediary_risk =
-                    Some(matches!(value.as_str(), "true" | "1" | "yes"));
-            }
-            "acknowledge_unsupported_clients" | "acknowledge-unsupported-clients" => {
-                provider.acknowledge_unsupported_clients = Some(
-                    value
-                        .split(',')
-                        .map(str::trim)
-                        .filter(|entry| !entry.is_empty())
-                        .map(ToString::to_string)
-                        .collect(),
-                );
-            }
-            other => {
-                return Err(ProviderError::Invalid(format!(
-                    "unknown provider field: {other}"
-                )));
-            }
-        }
-    }
-    if let Some(provider) = current {
-        providers.push(provider);
-    }
-    if providers.is_empty() {
-        return Err(ProviderError::Invalid(
-            "provider import did not contain any providers".into(),
-        ));
-    }
-    Ok(providers)
-}
-
-fn split_indented_field(line: &str) -> Result<(&str, String), ProviderError> {
-    let Some((key, raw_value)) = line.split_once(char::is_whitespace) else {
-        return Err(ProviderError::Invalid(format!(
-            "provider field must be key value: {line}"
-        )));
-    };
-    let value = raw_value.trim();
-    Ok((key, unquote(value)))
-}
-
-fn unquote(value: &str) -> String {
-    value
-        .strip_prefix('"')
-        .and_then(|v| v.strip_suffix('"'))
-        .unwrap_or(value)
-        .to_string()
-}
+#[path = "provider_import.rs"]
+mod provider_import;
+pub use provider_import::parse_provider_import;
 
 fn atomic_write(path: &Path, contents: &[u8]) -> Result<(), ProviderError> {
-    crate::durable_file::atomic_write_owner_only(path, contents).map_err(Into::into)
+    crate::durable_file::transactional_write_owner_only(path, contents).map_err(Into::into)
 }
 
 #[cfg(test)]

@@ -124,6 +124,9 @@ pub(super) async fn forward_openai(
         .header("content-type", "application/json")
         .header("anthropic-version", DEFAULT_ANTHROPIC_VERSION)
         .body(serialized);
+    if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+        req_builder = req_builder.header("x-request-id", request_id);
+    }
     // Ensure the Claude MAX OAuth beta flag is present, merging any value the
     // caller supplied (OpenAI clients rarely send one).
     let merged_beta = merge_oauth_beta(headers.get("anthropic-beta").and_then(|v| v.to_str().ok()));

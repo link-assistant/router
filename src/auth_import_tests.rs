@@ -249,13 +249,13 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
         .expect("refresh chain and catalog must validate");
 
         let staged: serde_json::Value =
-            serde_json::from_str(&validated.document).expect("staged document");
+            serde_json::from_str(validated.document()).expect("staged document");
         assert_eq!(staged["vendor_marker"], "preserved", "{provider}");
         assert!(
-            validated.document.contains("fresh-access")
-                && validated.document.contains("fresh-refresh"),
+            validated.document().contains("fresh-access")
+                && validated.document().contains("fresh-refresh"),
             "{provider} did not return the durably rotated candidate: {}",
-            validated.document
+            validated.document()
         );
         assert_eq!(
             std::fs::read_to_string(&destination_path).unwrap(),
@@ -266,7 +266,7 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
         install_candidate(
             &destination,
             root.path(),
-            &validated.document,
+            validated.document(),
             CredentialProbe::Accepted,
             ImportPolicy::default(),
         )
@@ -274,7 +274,7 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
         .expect("validated candidate promotion");
         assert_eq!(
             std::fs::read_to_string(&destination_path).unwrap(),
-            validated.document,
+            validated.document(),
             "{provider} did not promote the staged bytes"
         );
 
@@ -313,20 +313,16 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
         .expect_err("spent refresh chain must be rejected");
 
         assert!(error.contains("invalid_grant"), "{provider}: {error}");
-        assert!(
-            error.contains("retained as transaction"),
-            "validation uncertainty discarded the isolated candidate: {provider}: {error}"
-        );
+        assert_eq!(error.outcome, ImportOutcome::ExchangeRejected);
+        assert_eq!(error.phase, ImportPhase::Exchange);
+        assert!(error.previous_credential_safe);
+        assert_eq!(error.transaction_id, None);
+        assert!(!error.contains("retained as transaction"), "{error}");
         let transactions = std::fs::read_dir(root.path().join("auth-import-candidates"))
             .expect("retained staging root")
             .collect::<Result<Vec<_>, _>>()
             .expect("retained transactions");
-        assert_eq!(transactions.len(), 1, "{provider}: {error}");
-        let retained = transactions[0]
-            .path()
-            .join(provider.as_str())
-            .join(provider.canonical_credential_filename());
-        assert!(retained.is_file(), "{provider}: retained candidate missing");
+        assert!(transactions.is_empty(), "{provider}: {error}");
         assert_eq!(
             std::fs::read_to_string(destination_path).unwrap(),
             current,
@@ -342,6 +338,39 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
         drop(seen);
         server.abort();
     }
+}
+
+/// A transport failure cannot prove whether the provider advanced a rotating
+/// chain before the connection disappeared. No staged bytes are a proven
+/// successor, so automation receives no resumable transaction ID.
+#[tokio::test]
+async fn an_inconclusive_exchange_reports_uncertain_retained_state() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve dead endpoint");
+    let token_url = format!("http://{}/token", listener.local_addr().unwrap());
+    drop(listener);
+    let root = tempfile::tempdir().expect("import root");
+
+    let error = validate_candidate_with(
+        root.path(),
+        SubscriptionProvider::Claude,
+        &candidate_document(SubscriptionProvider::Claude),
+        Some(&token_url),
+        Some("http://127.0.0.1:1"),
+    )
+    .await
+    .expect_err("connection loss must remain uncertain");
+
+    assert_eq!(error.outcome, ImportOutcome::ExchangeUncertain);
+    assert_eq!(error.phase, ImportPhase::Exchange);
+    assert!(!error.previous_credential_safe);
+    assert!(error.transaction_id.is_none());
+    assert!(!error.contains("retained as transaction"), "{error}");
+    assert_eq!(
+        std::fs::read_dir(root.path().join("auth-import-candidates"))
+            .expect("staging root")
+            .count(),
+        0
+    );
 }
 
 /// Qwen Code issues a per-credential service origin. Safe import must use that
@@ -419,37 +448,226 @@ fn catalog_validation_uses_only_provider_owned_defaults() {
 /// Diagnostics for an advanced refresh chain must identify the transaction
 /// without retaining credential material in formatted output. Explicit
 /// retention must leave that transaction available for operator recovery.
-#[test]
-fn validated_candidate_diagnostics_are_redacted_and_retention_is_durable() {
+#[tokio::test]
+async fn validated_candidate_diagnostics_are_redacted_and_retention_is_durable() {
+    let provider = SubscriptionProvider::Claude;
+    let (url, _requests, server) = start_candidate_vendor(provider, false, false).await;
     let root = tempfile::tempdir().expect("staging root");
-    let stage = tempfile::Builder::new()
-        .prefix("transaction-")
-        .tempdir_in(root.path())
-        .expect("candidate transaction");
-    let retained_path = stage.path().to_path_buf();
-    std::fs::write(stage.path().join("credential"), "secret-document").expect("candidate bytes");
-    let candidate = ValidatedCandidate {
-        document: "secret-document".into(),
-        token: link_assistant_router::subscription::SubscriptionToken {
-            access_token: "secret-access".into(),
-            refresh_token: Some("secret-refresh".into()),
-            expires_at_ms: None,
-            account_id: None,
-            resource_url: None,
-        },
-        stage,
-        transaction_id: "visible-transaction-id".into(),
-    };
+    let candidate = validate_candidate_with(
+        root.path(),
+        provider,
+        &candidate_document(provider),
+        Some(&format!("{url}/token")),
+        Some(&url),
+    )
+    .await
+    .expect("candidate acceptance");
+    let transaction_id = candidate.transaction_id().to_string();
 
     let diagnostic = format!("{candidate:?}");
-    assert!(
-        diagnostic.contains("visible-transaction-id"),
-        "{diagnostic}"
-    );
+    assert!(diagnostic.contains(&transaction_id), "{diagnostic}");
     assert!(!diagnostic.contains("secret"), "{diagnostic}");
 
-    assert_eq!(candidate.retain(), "visible-transaction-id");
-    assert!(retained_path.join("credential").is_file());
+    assert_eq!(candidate.retain(), transaction_id);
+    let retained = std::fs::read_dir(root.path().join("auth-import-candidates"))
+        .expect("retained root")
+        .next()
+        .expect("retained transaction")
+        .expect("retained entry")
+        .path();
+    assert!(
+        retained
+            .join(provider.as_str())
+            .join(provider.canonical_credential_filename())
+            .is_file()
+    );
+    server.abort();
+}
+
+/// Machine output contains only the stable contract fields. Human diagnostics
+/// can carry arbitrary failure context without ever entering serialized JSON.
+#[test]
+fn machine_results_are_stable_and_credential_free() {
+    let retained = ImportExecution::failed(
+        Some("codex"),
+        ImportFailure::retained(
+            ImportPhase::Catalog,
+            "opaque-transaction".to_string(),
+            "must-not-leak access-token refresh-token credential document",
+        ),
+    );
+    let promoted = ImportExecution::promoted(
+        "qwen",
+        vec!["human output may name must-not-leak".to_string()],
+    );
+    let rejected = ImportExecution::failed(
+        Some("claude"),
+        ImportFailure::from_refresh_kind_for_test(
+            link_assistant_router::refresh::ImportRefreshFailureKind::ExchangeRejected,
+            "unused-transaction",
+        ),
+    );
+    let exchange_uncertain = ImportExecution::failed(
+        Some("claude"),
+        ImportFailure::from_refresh_kind_for_test(
+            link_assistant_router::refresh::ImportRefreshFailureKind::ExchangeUncertain,
+            "exchange-transaction",
+        ),
+    );
+    let persistence_uncertain = ImportExecution::failed(
+        Some("codex"),
+        ImportFailure::from_refresh_kind_for_test(
+            link_assistant_router::refresh::ImportRefreshFailureKind::PersistenceUncertain,
+            "persistence-transaction",
+        ),
+    );
+    let already_present = ImportExecution::already_present("gemini", Vec::new());
+    let value = import_result::json_value(&[
+        retained,
+        promoted,
+        rejected,
+        exchange_uncertain,
+        persistence_uncertain,
+        already_present,
+    ]);
+    let serialized = value.to_string();
+
+    assert_eq!(value["schema_version"], 1);
+    assert_eq!(value["results"][0]["provider"], "codex");
+    assert_eq!(value["results"][0]["outcome"], "successor_retained");
+    assert_eq!(value["results"][0]["phase"], "catalog");
+    assert_eq!(value["results"][0]["previous_credential_safe"], false);
+    assert_eq!(value["results"][0]["transaction_id"], "opaque-transaction");
+    assert_eq!(value["results"][1]["outcome"], "promoted");
+    assert_eq!(value["results"][2]["outcome"], "exchange_rejected");
+    assert_eq!(value["results"][2]["previous_credential_safe"], true);
+    assert!(value["results"][2]["transaction_id"].is_null());
+    assert_eq!(value["results"][3]["outcome"], "exchange_uncertain");
+    assert_eq!(value["results"][3]["phase"], "exchange");
+    assert!(value["results"][3]["transaction_id"].is_null());
+    assert_eq!(value["results"][4]["outcome"], "persistence_uncertain");
+    assert_eq!(value["results"][4]["phase"], "persistence");
+    assert!(value["results"][4]["transaction_id"].is_null());
+    assert_eq!(value["results"][5]["outcome"], "already_present");
+    assert!(!serialized.contains("must-not-leak"), "{serialized}");
+    assert!(!serialized.contains("access-token"), "{serialized}");
+    assert!(!serialized.contains("refresh-token"), "{serialized}");
+}
+
+/// Persistence and authoritative reread failures happen after a provider may
+/// have rotated the chain, and therefore always require retained recovery.
+#[test]
+fn persistence_uncertainty_does_not_claim_an_unproven_successor() {
+    let failure = ImportFailure::from_refresh_kind_for_test(
+        link_assistant_router::refresh::ImportRefreshFailureKind::PersistenceUncertain,
+        "persistence-transaction",
+    );
+    assert_eq!(failure.outcome, ImportOutcome::PersistenceUncertain);
+    assert_eq!(failure.phase, ImportPhase::Persistence);
+    assert!(!failure.previous_credential_safe);
+    assert!(failure.transaction_id.is_none());
+}
+
+/// Resume resolves an opaque identifier to one owner-only provider directory,
+/// while traversal-like identifiers never become filesystem paths.
+#[test]
+fn retained_transactions_resolve_by_opaque_id_only() {
+    let root = tempfile::tempdir().expect("router data");
+    let transaction_id = "opaque-transaction";
+    let transaction = root
+        .path()
+        .join("auth-import-candidates")
+        .join(format!("{transaction_id}-random"));
+    let provider = transaction.join("qwen");
+    std::fs::create_dir_all(&provider).expect("retained provider");
+
+    let resolved = import_resume::resolve(root.path(), transaction_id).expect("resume candidate");
+    assert_eq!(resolved.provider, ImportProvider::Qwen);
+    assert_eq!(resolved.source, provider.to_string_lossy());
+    assert_eq!(resolved.transaction_id, transaction_id);
+
+    let error = import_resume::resolve(root.path(), "../opaque-transaction")
+        .expect_err("path syntax must not be accepted as an opaque ID");
+    assert_eq!(error.outcome, ImportOutcome::NotAttempted);
+}
+
+#[tokio::test]
+async fn retained_transaction_has_one_exclusive_resume_claim() {
+    let root = tempfile::tempdir().expect("router data");
+    let transaction_id = "exclusive-transaction";
+    let provider = root
+        .path()
+        .join("auth-import-candidates")
+        .join(format!("{transaction_id}-random"))
+        .join("qwen");
+    std::fs::create_dir_all(&provider).expect("retained provider");
+
+    let first = import_resume::resolve_claimed(root.path(), transaction_id)
+        .await
+        .expect("first resume claim");
+    let second = import_resume::resolve_claimed(root.path(), transaction_id)
+        .await
+        .expect_err("a transaction must have only one active resume");
+    assert_eq!(second.outcome, ImportOutcome::NotAttempted);
+    assert!(second.contains("already being resumed"), "{second}");
+
+    drop(first);
+    assert!(
+        import_resume::resolve_claimed(root.path(), transaction_id)
+            .await
+            .is_ok(),
+        "a failed attempt must release the durable claim for recovery"
+    );
+}
+
+#[tokio::test]
+async fn invalid_resume_id_is_rejected_before_any_lock_path_is_created() {
+    let root = tempfile::tempdir().expect("router data");
+
+    let error = import_resume::resolve_claimed(root.path(), "x/../../../outside")
+        .await
+        .expect_err("path syntax must be rejected before lock creation");
+
+    assert_eq!(error.outcome, ImportOutcome::NotAttempted);
+    assert!(!root.path().join("auth-import-candidates").exists());
+    assert!(!root.path().parent().unwrap().join("outside.lock").exists());
+}
+
+#[tokio::test]
+async fn candidate_install_does_not_invent_external_ownership() {
+    let router_home = tempfile::tempdir().expect("Router destination");
+    let data = tempfile::tempdir().expect("router data");
+    let document = r#"{"access_token":"accepted","refresh_token":"rotating"}"#;
+    let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, router_home.path());
+    install_candidate(
+        &reader,
+        data.path(),
+        document,
+        CredentialProbe::Accepted,
+        ImportPolicy::default(),
+    )
+    .await
+    .expect("accepted candidate install");
+    assert_eq!(
+        reader
+            .read_document_for_import()
+            .expect("installed document")
+            .origin,
+        link_assistant_router::platform_keychain::Origin::File
+    );
+}
+
+#[test]
+fn cleanup_failure_is_machine_readable_and_keeps_the_transaction_id() {
+    let mut execution = ImportExecution::promoted("qwen", Vec::new());
+    execution.mark_cleanup_pending(
+        "cleanup-transaction".into(),
+        "redacted cleanup failure".into(),
+    );
+    let value = import_result::json_value(&[execution]);
+    assert_eq!(value["results"][0]["outcome"], "promotion_cleanup_pending");
+    assert_eq!(value["results"][0]["phase"], "promotion");
+    assert_eq!(value["results"][0]["transaction_id"], "cleanup-transaction");
 }
 
 /// The CLI spelling, report label, and subscription implementation must remain
@@ -588,6 +806,10 @@ async fn an_unverified_catalog_retains_the_fresh_chain_for_every_provider() {
         .await
         .expect_err("unverified catalog must fail closed");
 
+        assert_eq!(error.outcome, ImportOutcome::SuccessorRetained);
+        assert_eq!(error.phase, ImportPhase::Catalog);
+        assert!(!error.previous_credential_safe);
+        assert!(error.transaction_id.is_some());
         assert!(
             error.contains("retained as transaction"),
             "{provider}: {error}"
@@ -638,6 +860,7 @@ async fn rejected_conditional_candidate_has_no_bypass() {
         ImportPolicy {
             if_absent: true,
             capability_asserted: false,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -669,6 +892,7 @@ async fn rejected_candidate_without_force_reports_existing_destination_as_presen
         ImportPolicy {
             if_absent: true,
             capability_asserted: false,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -681,137 +905,5 @@ async fn rejected_candidate_without_force_reports_existing_destination_as_presen
     assert_eq!(std::fs::read_to_string(existing).unwrap(), current);
 }
 
-/// An unverified candidate is not a live credential. A timeout, malformed
-/// catalog response, or network failure must therefore leave even an empty
-/// conditional destination empty.
-#[tokio::test]
-async fn conditional_import_refuses_an_unverified_candidate() {
-    let home = tempfile::tempdir().expect("credential home");
-    let data = tempfile::tempdir().expect("router data");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Gemini, home.path());
-    let error = install_candidate(
-        &reader,
-        data.path(),
-        r#"{"access_token":"unverified","refresh_token":"unknown"}"#,
-        CredentialProbe::Unverified,
-        ImportPolicy {
-            if_absent: true,
-            capability_asserted: false,
-        },
-    )
-    .await
-    .expect_err("unverified candidate must be refused");
-
-    assert!(error.contains("not accepted"), "{error}");
-    assert!(!home.path().join("oauth_creds.json").exists());
-}
-
-/// The positive capability assertion is not a bypass: rejection still wins.
-#[tokio::test]
-async fn capability_assertion_cannot_install_a_rejected_candidate() {
-    let home = tempfile::tempdir().expect("credential home");
-    let data = tempfile::tempdir().expect("router data");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
-    let candidate = r#"{"auth_mode":"chatgpt","tokens":{"access_token":"rejected","refresh_token":"explicit"}}"#;
-
-    let error = install_candidate(
-        &reader,
-        data.path(),
-        candidate,
-        CredentialProbe::Rejected,
-        ImportPolicy {
-            if_absent: true,
-            capability_asserted: true,
-        },
-    )
-    .await
-    .expect_err("capability assertion must not bypass positive vendor acceptance");
-
-    let destination = home.path().join("auth.json");
-    assert!(error.contains("not accepted"), "{error}");
-    assert!(!destination.exists());
-}
-
-/// Replacement is allowed only for a positively accepted candidate. A stale
-/// or revoked local copy must never replace a working rotating chain.
-#[tokio::test]
-async fn ordinary_import_preserves_the_destination_when_candidate_is_rejected() {
-    let home = tempfile::tempdir().expect("credential home");
-    let data = tempfile::tempdir().expect("router data");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Gemini, home.path());
-    std::fs::write(
-        home.path().join("oauth_creds.json"),
-        r#"{"access_token":"current"}"#,
-    )
-    .expect("current credential");
-    let candidate = r#"{"access_token":"rejected","scope":"preserved"}"#;
-
-    let current = r#"{"access_token":"current","refresh_token":"rotated"}"#;
-    std::fs::write(home.path().join("oauth_creds.json"), current).expect("current credential");
-    let error = install_candidate(
-        &reader,
-        data.path(),
-        candidate,
-        CredentialProbe::Rejected,
-        ImportPolicy {
-            if_absent: false,
-            capability_asserted: false,
-        },
-    )
-    .await
-    .expect_err("replacement must require positive vendor acceptance");
-
-    assert!(error.contains("not accepted"), "{error}");
-    assert_eq!(
-        std::fs::read_to_string(home.path().join("oauth_creds.json")).unwrap(),
-        current
-    );
-}
-
-/// The same positive-acceptance gate applies to every subscription provider
-/// and to both installation modes (issue #385).
-#[tokio::test]
-async fn rejected_and_unverified_candidates_never_change_any_provider_destination() {
-    for provider in SubscriptionProvider::ALL {
-        for if_absent in [false, true] {
-            for probe in [CredentialProbe::Rejected, CredentialProbe::Unverified] {
-                let root = tempfile::tempdir().expect("credential root");
-                let home = root.path().join("home");
-                let data = root.path().join("data");
-                std::fs::create_dir_all(&home).expect("credential home");
-                let reader = SubscriptionReader::new(provider, &home);
-                let path = home.join(provider.canonical_credential_filename());
-                let current = b"existing credential bytes";
-                if !if_absent {
-                    std::fs::write(&path, current).expect("existing credential");
-                }
-
-                let result = install_candidate(
-                    &reader,
-                    &data,
-                    r#"{"access_token":"candidate","refresh_token":"candidate-refresh"}"#,
-                    probe,
-                    ImportPolicy {
-                        if_absent,
-                        capability_asserted: false,
-                    },
-                )
-                .await;
-
-                assert!(
-                    result.is_err(),
-                    "{provider} if_absent={if_absent} {probe:?}"
-                );
-                if if_absent {
-                    assert!(!path.exists(), "{provider} installed {probe:?}");
-                } else {
-                    assert_eq!(
-                        std::fs::read(&path).unwrap(),
-                        current,
-                        "{provider} replaced destination after {probe:?}"
-                    );
-                }
-            }
-        }
-    }
-}
+#[path = "auth_import_rejection_tests.rs"]
+mod rejection_tests;

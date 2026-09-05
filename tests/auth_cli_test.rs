@@ -419,7 +419,8 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
 }
 
 /// A synthetic credential cannot be adopted merely because it parses and says
-/// it has not expired. Import now proves the refresh chain at the vendor first.
+/// it has not expired. Import now proves the live access token at the vendor
+/// without spending the source refresh link.
 #[test]
 fn an_unverified_claude_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
@@ -454,7 +455,11 @@ fn an_unverified_claude_login_is_not_adopted() {
         "an unverified credential reached the destination"
     );
     let seen = String::from_utf8_lossy(&output.stderr);
-    assert!(seen.contains("candidate refresh chain"), "{seen}");
+    assert!(
+        seen.contains("candidate was rejected by the vendor catalog")
+            && seen.contains("refresh token was not spent"),
+        "{seen}"
+    );
 }
 
 /// Codex follows the same fail-closed public path; preservation of its complete
@@ -487,7 +492,8 @@ fn an_unverified_codex_login_is_not_adopted() {
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join("auth.json").exists());
     assert!(
-        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        String::from_utf8_lossy(&output.stderr)
+            .contains("candidate was rejected by the vendor catalog"),
         "{output:?}"
     );
 }
@@ -584,7 +590,12 @@ fn import_is_a_verb_listed_in_the_auth_command_list() {
     for provider in ["claude", "codex", "gemini", "qwen", "gh"] {
         assert!(seen.contains(provider), "{provider} missing: {seen}");
     }
-    for flag in ["--if-absent", "--safe-refresh-chain-import-v1"] {
+    for flag in [
+        "--if-absent",
+        "--safe-refresh-chain-import-v1",
+        "--json",
+        "--resume",
+    ] {
         assert!(seen.contains(flag), "{flag} missing: {seen}");
     }
     assert!(
@@ -636,6 +647,89 @@ fn conditional_import_reports_already_present_without_replacement() {
         !stdout.contains("share one rotating chain"),
         "no adoption occurred, so the shared-chain note is false: {stdout}"
     );
+}
+
+#[test]
+fn conditional_import_json_reports_already_present_without_credential_material() {
+    let root = tempfile::tempdir().expect("root");
+    let source = root.path().join("source");
+    let destination = root.path().join("destination");
+    let data = root.path().join("data");
+    std::fs::create_dir_all(&source).expect("source");
+    std::fs::create_dir_all(&destination).expect("destination");
+    std::fs::write(
+        source.join("oauth_creds.json"),
+        r#"{"access_token":"candidate-secret","refresh_token":"candidate-refresh"}"#,
+    )
+    .expect("candidate");
+    let current = br#"{"access_token":"current-secret","refresh_token":"current-refresh"}"#;
+    std::fs::write(destination.join("oauth_creds.json"), current).expect("current");
+
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "qwen",
+            source.to_str().expect("source path"),
+            "--if-absent",
+            "--json",
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", root.path())
+        .env("QWEN_HOME", &destination)
+        .env("DATA_DIR", &data)
+        .output()
+        .expect("router CLI should run");
+
+    assert!(output.status.success(), "{output:?}");
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("JSON result");
+    assert_eq!(result["schema_version"], 1);
+    assert_eq!(result["results"][0]["provider"], "qwen");
+    assert_eq!(result["results"][0]["outcome"], "already_present");
+    assert_eq!(result["results"][0]["phase"], "preflight");
+    assert_eq!(result["results"][0]["previous_credential_safe"], true);
+    assert!(result["results"][0]["transaction_id"].is_null());
+    let json = String::from_utf8_lossy(&output.stdout);
+    for secret in [
+        "candidate-secret",
+        "candidate-refresh",
+        "current-secret",
+        "current-refresh",
+    ] {
+        assert!(!json.contains(secret), "JSON leaked {secret}: {json}");
+        assert!(
+            !String::from_utf8_lossy(&output.stderr).contains(secret),
+            "stderr leaked {secret}: {output:?}"
+        );
+    }
+}
+
+#[test]
+fn missing_resume_transaction_is_a_structured_failure() {
+    let root = tempfile::tempdir().expect("root");
+    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args([
+            "auth",
+            "import",
+            "--resume",
+            "00000000000000000000000000000000",
+            "--json",
+            "--local",
+        ])
+        .env("TOKEN_SECRET", "auth-cli-test-secret")
+        .env("HOME", root.path())
+        .env("DATA_DIR", root.path().join("data"))
+        .output()
+        .expect("router CLI should run");
+
+    assert!(!output.status.success(), "{output:?}");
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("JSON result");
+    assert_eq!(result["results"][0]["provider"], serde_json::Value::Null);
+    assert_eq!(result["results"][0]["outcome"], "not_attempted");
+    assert_eq!(result["results"][0]["phase"], "preflight");
+    assert_eq!(result["results"][0]["previous_credential_safe"], true);
+    assert!(result["results"][0]["transaction_id"].is_null());
 }
 
 #[test]
@@ -720,7 +814,8 @@ fn the_import_subcommand_cannot_bypass_validation() {
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join(".credentials.json").exists());
     assert!(
-        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        String::from_utf8_lossy(&output.stderr)
+            .contains("candidate was rejected by the vendor catalog"),
         "{output:?}"
     );
 }
@@ -756,7 +851,10 @@ fn an_unqualified_import_reads_the_vendors_own_home() {
         "an unverified credential must not reach the router's home"
     );
     let error = String::from_utf8_lossy(&output.stderr);
-    assert!(error.contains("candidate refresh chain"), "{error}");
+    assert!(
+        error.contains("candidate was rejected by the vendor catalog"),
+        "{error}"
+    );
     assert!(
         !error.contains("no claude credential"),
         "the vendor home was not read: {error}"
@@ -801,7 +899,8 @@ fn importing_everything_adopts_what_exists_and_reports_what_does_not() {
     let seen = String::from_utf8_lossy(&output.stdout);
     assert!(seen.contains("nothing to adopt"), "{seen}");
     assert!(
-        String::from_utf8_lossy(&output.stderr).contains("candidate refresh chain"),
+        String::from_utf8_lossy(&output.stderr)
+            .contains("candidate was rejected by the vendor catalog"),
         "{output:?}"
     );
 }
@@ -886,106 +985,5 @@ fn storing_a_gh_credential_for_a_selected_server_refuses_rather_than_acting_loca
     );
 }
 
-/// An import aimed at another router refuses and names it (issue #291).
-///
-/// `--server` parsed and was then discarded, so the command answered about the
-/// *local* credential home: `claude is already read from /Users/me/.claude`
-/// reads as a coherent reply to a question about the selected server, and an
-/// operator cannot tell the target was never consulted. A wrong-target action
-/// wearing a plausible answer is worse than a plain refusal.
-#[test]
-fn an_import_aimed_at_a_server_refuses_instead_of_answering_about_the_local_home() {
-    let home = tempfile::tempdir().expect("temp home");
-    let config = tempfile::tempdir().expect("config home");
-    let claude_home = home.path().join(".claude");
-    std::fs::create_dir_all(&claude_home).expect("source home");
-    std::fs::write(
-        claude_home.join(".credentials.json"),
-        r#"{"claudeAiOauth":{"accessToken":"workstation","refreshToken":"r","expiresAt":4102444800000}}"#,
-    )
-    .expect("plant a login");
-
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        // Unreachable on purpose: the refusal must not depend on contacting the
-        // router, and it must not silently fall back to a local import.
-        .args(["auth", "import", "claude", "--server", "http://127.0.0.1:1"])
-        .env("XDG_CONFIG_HOME", config.path())
-        .env("HOME", home.path())
-        .env("TOKEN_SECRET", "auth-cli-test-secret")
-        .output()
-        .expect("router CLI should run");
-
-    assert!(
-        !output.status.success(),
-        "an import that could not reach its target must not report success"
-    );
-    let seen = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        seen.contains("127.0.0.1:1"),
-        "the refusal must name the target that was asked for: {seen}"
-    );
-    assert!(
-        !seen.contains("is already read from"),
-        "the local home must not be described as though it were the target: {seen}"
-    );
-}
-
-/// A selection persisted in configuration is honoured the same way.
-///
-/// Three spellings produced one behaviour — `--server URL`, a persisted
-/// selection, and `--local` — which made the flags actively misleading rather
-/// than merely inert. Only `--local` may act locally.
-#[test]
-fn a_persisted_selection_also_refuses_a_local_import() {
-    let home = tempfile::tempdir().expect("temp home");
-    let config = tempfile::tempdir().expect("config home");
-    let claude_home = home.path().join(".claude");
-    std::fs::create_dir_all(&claude_home).expect("source home");
-    std::fs::write(
-        claude_home.join(".credentials.json"),
-        r#"{"claudeAiOauth":{"accessToken":"workstation","refreshToken":"r","expiresAt":4102444800000}}"#,
-    )
-    .expect("plant a login");
-    let destination = tempfile::tempdir().expect("destination");
-
-    let run = |args: &[&str], select: bool| {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
-        command
-            .args(args)
-            .env("XDG_CONFIG_HOME", config.path())
-            .env("HOME", home.path())
-            .env("CLAUDE_CODE_HOME", destination.path())
-            .env("TOKEN_SECRET", "auth-cli-test-secret");
-        if select {
-            command.env("ROUTER_URL", "http://127.0.0.1:1");
-        }
-        command.output().expect("router CLI should run")
-    };
-
-    let selected = run(&["auth", "import", "claude"], true);
-    assert!(
-        !selected.status.success(),
-        "a selection must not be silently redirected to the local machine"
-    );
-    assert!(
-        !destination.path().join(".credentials.json").exists(),
-        "nothing may be installed locally while another router is the target"
-    );
-
-    // `--local` requests the local action, but it does not bypass safe
-    // refresh-chain validation.
-    let local = run(&["auth", "import", "claude", "--local"], true);
-    assert!(
-        !local.status.success(),
-        "an unverified local candidate was imported: {}",
-        String::from_utf8_lossy(&local.stderr)
-    );
-    assert!(
-        !destination.path().join(".credentials.json").exists(),
-        "--local bypassed refresh-chain validation"
-    );
-    assert!(
-        String::from_utf8_lossy(&local.stderr).contains("candidate refresh chain"),
-        "{local:?}"
-    );
-}
+#[path = "auth_cli_test/remote_import.rs"]
+mod remote_import_tests;

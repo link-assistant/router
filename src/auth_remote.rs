@@ -363,6 +363,38 @@ pub async fn post(
     send(&client, server, reqwest::Method::POST, path, Some(body)).await
 }
 
+/// `POST path` while preserving a structured non-success response.
+///
+/// Batch operations use this to report the safe outcome of every completed
+/// item instead of discarding earlier successes when a later item is rejected.
+/// The response body must be valid JSON and is never included in parse or
+/// transport errors.
+pub async fn post_response(
+    server: &ResolvedServer,
+    path: &str,
+    body: serde_json::Value,
+) -> Result<(reqwest::StatusCode, serde_json::Value), String> {
+    let client = http_client()?;
+    let url = format!("{}{path}", server.management_url.trim_end_matches('/'));
+    let mut request = client.post(&url);
+    if let Some(token) = server.token.as_deref() {
+        request = request.bearer_auth(token);
+    }
+    let response = request
+        .json(&body)
+        .send()
+        .await
+        .map_err(|error| format!("could not reach {url}: {error}"))?;
+    let status = response.status();
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|_| format!("could not read the reply from {url}"))?;
+    let body = serde_json::from_slice(&bytes)
+        .map_err(|_| format!("could not read the JSON reply from {url}"))?;
+    Ok((status, body))
+}
+
 /// `DELETE path` on the selected router.
 ///
 /// # Errors

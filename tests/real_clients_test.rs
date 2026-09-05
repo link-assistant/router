@@ -21,14 +21,22 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
+use link_assistant_router::login_pty::{Key, PtySession};
+use portable_pty::CommandBuilder;
 use serde_json::{Value, json};
 use wait_timeout::ChildExt as _;
 
-const CLAUDE_VERSION: &str = "2.1.260";
-const CODEX_VERSION: &str = "0.153.2";
-const OPENCODE_VERSION: &str = "1.18.27";
+#[path = "real_clients/anthropic_mock.rs"]
+mod anthropic_mock;
+use anthropic_mock::anthropic_answer;
+
+const CLAUDE_VERSION: &str = "2.1.261";
+const CODEX_VERSION: &str = "0.153.4";
+const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
+const SUBAGENT_PROMPT: &str = "Use the Agent tool once, then reply ROUTER_CAPTURE_OK.";
 const ANSWER: &str = "ROUTER_CAPTURE_OK";
+const CODEX_ALTERNATE_MODEL: &str = "future-codex-switch-model";
 
 #[derive(Clone, Copy)]
 struct ClientCase {
@@ -37,6 +45,7 @@ struct ClientCase {
     version: &'static str,
     model: &'static str,
     owner: &'static str,
+    catalog_path: &'static str,
     inference_path: &'static str,
     user_agent_prefix: &'static str,
     credential_header: &'static str,
@@ -48,8 +57,9 @@ const CLAUDE: ClientCase = ClientCase {
     version: CLAUDE_VERSION,
     model: "claude-sonnet-4-5-20250929",
     owner: "anthropic",
+    catalog_path: "/api/services/anthropic/v1/models",
     inference_path: "/api/services/anthropic/v1/messages",
-    user_agent_prefix: "claude-cli/2.1.260",
+    user_agent_prefix: "claude-cli/2.1.261",
     credential_header: "authorization",
 };
 
@@ -59,8 +69,9 @@ const CODEX: ClientCase = ClientCase {
     version: CODEX_VERSION,
     model: "gpt-5.6-codex",
     owner: "openai",
+    catalog_path: "/api/services/codex/v1/models",
     inference_path: "/api/services/codex/v1/responses",
-    user_agent_prefix: "codex_exec/0.153.2",
+    user_agent_prefix: "codex_exec/0.153.4",
     credential_header: "authorization",
 };
 
@@ -70,8 +81,9 @@ const OPENCODE: ClientCase = ClientCase {
     version: OPENCODE_VERSION,
     model: "future-chat-model",
     owner: "openai-compatible",
+    catalog_path: "/api/services/openai/v1/models",
     inference_path: "/api/services/openai/v1/chat/completions",
-    user_agent_prefix: "opencode/1.18.27",
+    user_agent_prefix: "opencode/1.18.29",
     credential_header: "authorization",
 };
 
@@ -101,6 +113,10 @@ struct MockRouter {
 
 impl MockRouter {
     fn start(case: ClientCase) -> Self {
+        Self::start_with_models(case, default_models(case))
+    }
+
+    fn start_with_models(case: ClientCase, models: Vec<Value>) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind offline Router mock");
         listener
             .set_nonblocking(true)
@@ -110,12 +126,13 @@ impl MockRouter {
         let captured = Arc::clone(&requests);
         let stop = Arc::new(AtomicBool::new(false));
         let stopped = Arc::clone(&stop);
+        let models = Arc::new(models);
         let thread = thread::spawn(move || {
             while !stopped.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
                         let request = read_request(&mut stream);
-                        let response = mock_response(case, &request);
+                        let response = mock_response(case, &models, &request);
                         captured.lock().expect("capture request").push(request);
                         stream
                             .write_all(&response)
@@ -143,6 +160,16 @@ impl MockRouter {
             .iter()
             .find(|request| request.path == path)
             .cloned()
+    }
+
+    fn inference_requests(&self, path: &str) -> Vec<CapturedRequest> {
+        self.requests
+            .lock()
+            .expect("read captured requests")
+            .iter()
+            .filter(|request| request.path == path)
+            .cloned()
+            .collect()
     }
 }
 
@@ -257,7 +284,47 @@ fn run_token(case: ClientCase) -> String {
     format!("e30.{encoded}.offline-signature")
 }
 
-fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
+fn default_models(case: ClientCase) -> Vec<Value> {
+    if case.client == "codex" {
+        vec![
+            json!({
+                "id": case.model,
+                "type": "model",
+                "display_name": case.model,
+                "created_at": "2026-09-04T00:00:00Z",
+                "owned_by": case.owner,
+                "default_reasoning_level": "medium",
+                "supported_reasoning_levels": [
+                    {"effort": "medium", "description": "Balanced reasoning"},
+                    {"effort": "high", "description": "Deep reasoning"},
+                    {"effort": "xhigh", "description": "Deepest reasoning"}
+                ]
+            }),
+            json!({
+                "id": CODEX_ALTERNATE_MODEL,
+                "type": "model",
+                "display_name": CODEX_ALTERNATE_MODEL,
+                "created_at": "2026-09-04T00:00:00Z",
+                "owned_by": case.owner,
+                "default_reasoning_level": "high",
+                "supported_reasoning_levels": [
+                    {"effort": "high", "description": "Default reasoning"},
+                    {"effort": "xhigh", "description": "Maximum reasoning"}
+                ]
+            }),
+        ]
+    } else {
+        vec![json!({
+            "id": case.model,
+            "type": "model",
+            "display_name": case.model,
+            "created_at": "2026-09-04T00:00:00Z",
+            "owned_by": case.owner
+        })]
+    }
+}
+
+fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) -> Vec<u8> {
     match (request.method.as_str(), request.path.as_str()) {
         ("GET", "/api/health") => http_response("200 OK", "application/json", r#"{"status":"ok"}"#),
         ("GET", "/api/management/tokens") => {
@@ -271,19 +338,13 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
         ("POST", "/api/management/tokens/revoke") => {
             http_response("200 OK", "application/json", r#"{"revoked":"offline-run"}"#)
         }
-        ("GET", path) if path.ends_with("/models") => {
+        ("GET", path) if path == case.catalog_path => {
             let body = json!({
                 "object": "list",
-                "data": [{
-                    "id": case.model,
-                    "type": "model",
-                    "display_name": case.model,
-                    "created_at": "2026-09-04T00:00:00Z",
-                    "owned_by": case.owner
-                }],
+                "data": models,
                 "has_more": false,
-                "first_id": case.model,
-                "last_id": case.model
+                "first_id": models.first().and_then(|model| model["id"].as_str()),
+                "last_id": models.last().and_then(|model| model["id"].as_str())
             });
             http_response("200 OK", "application/json", &body.to_string())
         }
@@ -291,8 +352,24 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
             http_response("200 OK", "application/json", r#"{"input_tokens":1}"#)
         }
         ("POST", path) if path == case.inference_path => match case.client {
-            "claude" => anthropic_answer(),
-            "codex" => responses_answer(case.model),
+            "claude" => {
+                let model = serde_json::from_slice::<Value>(&request.body)
+                    .ok()
+                    .and_then(|body| body["model"].as_str().map(str::to_string))
+                    .unwrap_or_else(|| case.model.to_string());
+                anthropic_answer(&model, &request.body)
+            }
+            "codex" => {
+                let model = serde_json::from_slice::<Value>(&request.body)
+                    .ok()
+                    .and_then(|body| {
+                        body.get("model")
+                            .and_then(Value::as_str)
+                            .map(str::to_string)
+                    })
+                    .unwrap_or_else(|| case.model.to_string());
+                responses_answer(&model)
+            }
             "opencode" => chat_answer(case.model, &request.body),
             other => panic!("no offline answer for {other}"),
         },
@@ -303,47 +380,6 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
                 .to_string(),
         ),
     }
-}
-
-fn anthropic_answer() -> Vec<u8> {
-    let message = json!({
-        "id": "msg_offline",
-        "type": "message",
-        "role": "assistant",
-        "model": CLAUDE.model,
-        "content": [],
-        "stop_reason": null,
-        "stop_sequence": null,
-        "usage": {"input_tokens": 1, "output_tokens": 0}
-    });
-    let events = [
-        (
-            "message_start",
-            json!({"type":"message_start", "message":message}),
-        ),
-        (
-            "content_block_start",
-            json!({"type":"content_block_start", "index":0, "content_block":{"type":"text", "text":""}}),
-        ),
-        (
-            "content_block_delta",
-            json!({"type":"content_block_delta", "index":0, "delta":{"type":"text_delta", "text":ANSWER}}),
-        ),
-        (
-            "content_block_stop",
-            json!({"type":"content_block_stop", "index":0}),
-        ),
-        (
-            "message_delta",
-            json!({"type":"message_delta", "delta":{"stop_reason":"end_turn", "stop_sequence":null}, "usage":{"output_tokens":1}}),
-        ),
-        ("message_stop", json!({"type":"message_stop"})),
-    ];
-    let mut body = String::new();
-    for (event, value) in events {
-        write!(&mut body, "event: {event}\ndata: {value}\n\n").expect("write event stream");
-    }
-    http_response("200 OK", "text/event-stream", &body)
 }
 
 fn responses_answer(model: &str) -> Vec<u8> {
@@ -421,18 +457,42 @@ fn version_output(case: ClientCase, home: &Path) -> Output {
 }
 
 fn run_wrapper(case: ClientCase, working_directory: &Path, home: &Path, server: &str) -> Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args([
-            "--server",
-            server,
-            "--token",
-            "offline-admin",
-            "--model",
-            case.model,
-            "--non-interactive",
-            case.client,
-            PROMPT,
-        ])
+    run_wrapper_with_model(case, working_directory, home, server, case.model)
+}
+
+fn run_wrapper_with_model(
+    case: ClientCase,
+    working_directory: &Path,
+    home: &Path,
+    server: &str,
+    model: &str,
+) -> Output {
+    run_wrapper_with_options(
+        case,
+        working_directory,
+        home,
+        server,
+        Some(model),
+        &[PROMPT],
+    )
+}
+
+fn run_wrapper_with_options(
+    case: ClientCase,
+    working_directory: &Path,
+    home: &Path,
+    server: &str,
+    model: Option<&str>,
+    forwarded: &[&str],
+) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    command.args(["--server", server, "--token", "offline-admin"]);
+    if let Some(model) = model {
+        command.args(["--model", model]);
+    }
+    command.args(["--non-interactive", case.client]);
+    command.args(forwarded);
+    let mut child = command
         .current_dir(working_directory)
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -536,6 +596,39 @@ fn assert_real_client_capture(case: ClientCase) {
         case.client,
         String::from_utf8_lossy(&output.stdout)
     );
+    let catalogs = {
+        let requests = router.requests.lock().expect("read catalog requests");
+        requests
+            .iter()
+            .filter(|request| request.method == "GET" && request.path.ends_with("/models"))
+            .map(|request| request.path.clone())
+            .collect::<Vec<_>>()
+    };
+    assert!(
+        catalogs.iter().any(|path| path == case.catalog_path),
+        "{} did not discover its enabled native catalog: {catalogs:?}",
+        case.client
+    );
+    assert!(
+        catalogs.iter().all(|path| path == case.catalog_path),
+        "{} crossed into a different protocol catalog: {catalogs:?}",
+        case.client
+    );
+    if case.client == "codex" {
+        let switched = run_wrapper_with_model(
+            case,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            directory.path(),
+            &router.origin,
+            CODEX_ALTERNATE_MODEL,
+        );
+        assert!(
+            switched.status.success(),
+            "Codex model switch failed against the offline mock; stdout: {}; stderr: {}",
+            String::from_utf8_lossy(&switched.stdout),
+            String::from_utf8_lossy(&switched.stderr)
+        );
+    }
     if let Some((config, before)) = foreign_codex_config {
         assert_eq!(
             std::fs::read(config).expect("read Codex config after run"),
@@ -603,6 +696,24 @@ fn assert_real_client_capture(case: ClientCase) {
         "codex" => {
             assert_eq!(request.header("originator"), Some("codex_exec"));
             assert!(request.header("x-codex-turn-metadata").is_some());
+            let requests = router.inference_requests(case.inference_path);
+            assert_eq!(
+                requests.len(),
+                2,
+                "expected one request for each live model"
+            );
+            let bodies = requests
+                .iter()
+                .map(|request| serde_json::from_slice::<Value>(&request.body).unwrap())
+                .collect::<Vec<_>>();
+            assert_eq!(bodies[0]["model"], case.model);
+            assert_eq!(bodies[1]["model"], CODEX_ALTERNATE_MODEL);
+            for body in bodies {
+                assert_eq!(
+                    body["reasoning"]["effort"], "xhigh",
+                    "model selection must preserve the user's explicit reasoning effort"
+                );
+            }
         }
         "opencode" => {
             assert!(request.header("x-session-id").is_some());
@@ -617,9 +728,157 @@ fn current_claude_code_reaches_the_native_anthropic_surface_offline() {
     assert_real_client_capture(CLAUDE);
 }
 
+#[path = "real_clients/claude_selector.rs"]
+mod claude_selector;
+
 #[test]
 fn current_codex_reaches_the_native_responses_surface_offline() {
     assert_real_client_capture(CODEX);
+}
+
+#[test]
+fn current_codex_tui_model_selector_preserves_reasoning_effort() {
+    if !enabled() {
+        return;
+    }
+    assert!(
+        command_exists("codex"),
+        "codex is required for the real-client gate"
+    );
+    let home = tempfile::tempdir().expect("temporary Codex home");
+    let codex_home = home.path().join(".codex");
+    std::fs::create_dir_all(&codex_home).expect("create Codex home");
+    let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
+    std::fs::write(
+        codex_home.join("config.toml"),
+        format!(
+            "model = {:?}\nmodel_reasoning_effort = \"xhigh\"\n\n[projects.{:?}]\ntrust_level = \"trusted\"\n",
+            CODEX.model,
+            working_directory.to_string_lossy()
+        ),
+    )
+    .expect("seed Codex settings");
+
+    let router = MockRouter::start(CODEX);
+    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    command.args([
+        "--server",
+        &router.origin,
+        "--token",
+        "offline-admin",
+        "codex",
+    ]);
+    command.cwd(working_directory);
+    command.env("HOME", home.path());
+    command.env("XDG_CONFIG_HOME", home.path().join(".config"));
+    command.env("CODEX_HOME", &codex_home);
+    command.env("TERM", "xterm-256color");
+    command.env("NO_COLOR", "1");
+    command.env("NO_PROXY", "127.0.0.1,localhost");
+    command.env("no_proxy", "127.0.0.1,localhost");
+    command.env("HTTP_PROXY", "http://127.0.0.1:9");
+    command.env("HTTPS_PROXY", "http://127.0.0.1:9");
+    command.env("ALL_PROXY", "http://127.0.0.1:9");
+    let session = PtySession::spawn(command).expect("start Codex TUI through Router");
+    session
+        .wait_for(
+            |text| text.contains(CODEX.model),
+            Duration::from_millis(250),
+            Duration::from_secs(30),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex TUI did not become ready: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+
+    session.send_text("/model").expect("type /model");
+    session
+        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .expect("settle /model input");
+    session.send_key(Key::Enter).expect("open model selector");
+    session
+        .wait_for(
+            |text| text.contains(CODEX_ALTERNATE_MODEL),
+            Duration::from_millis(250),
+            Duration::from_secs(15),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex /model did not show the live alternate: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+    session
+        .send_text("\x1b[B")
+        .expect("select the next live model");
+    session.send_key(Key::Enter).expect("choose selected model");
+    session
+        .wait_for(
+            |text| {
+                text.contains(&format!(
+                    "Select Reasoning Level for {CODEX_ALTERNATE_MODEL}"
+                )) && text.contains("Extra high")
+            },
+            Duration::from_millis(250),
+            Duration::from_secs(10),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex did not expose the alternate model's live effort metadata: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+    session
+        .send_text("\x1b[B")
+        .expect("retain the configured extra-high effort");
+    session
+        .send_key(Key::Enter)
+        .expect("confirm model and effort");
+    session
+        .wait_for(
+            |text| text.contains(&format!("Model changed to {CODEX_ALTERNATE_MODEL} xhigh")),
+            Duration::from_millis(250),
+            Duration::from_secs(10),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex did not retain xhigh for the selected model: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+    session.send_text(PROMPT).expect("type inference prompt");
+    session
+        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .expect("settle inference prompt");
+    session
+        .send_key(Key::Enter)
+        .expect("submit inference prompt");
+
+    let deadline = Instant::now() + Duration::from_secs(30);
+    let request = loop {
+        if let Some(request) = router
+            .inference_requests(CODEX.inference_path)
+            .into_iter()
+            .last()
+        {
+            break request;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "Codex TUI never sent the selected-model request; transcript: {}",
+            session.transcript_tail(2_000)
+        );
+        thread::sleep(Duration::from_millis(50));
+    };
+    let body: Value = serde_json::from_slice(&request.body).expect("Codex request JSON");
+    assert_eq!(body["model"], CODEX_ALTERNATE_MODEL);
+    assert_eq!(
+        body["reasoning"]["effort"], "xhigh",
+        "the /model selector must not reset the configured reasoning effort"
+    );
+    session.kill();
 }
 
 #[test]

@@ -145,7 +145,19 @@ pub(crate) fn management_routes(
 }
 
 fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
-    let mut routes = Router::new();
+    let mut routes = Router::new()
+        .route(
+            route_template(RouteId::AggregateModels),
+            get(crate::model_routing::aggregate_models),
+        )
+        .route(
+            route_template(RouteId::SubscriptionUsage),
+            get(crate::subscription_usage::usage),
+        )
+        .route(
+            route_template(RouteId::SubscriptionUsageProvider),
+            get(crate::subscription_usage::usage_provider),
+        );
     if config.enable_anthropic_api {
         routes = routes
             .route(
@@ -167,14 +179,14 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             .route(
                 route_template(RouteId::AnthropicVertex),
                 post(vertex_proxy_handler),
+            )
+            .route(
+                route_template(RouteId::AnthropicModels),
+                get(proxy::openai_models),
             );
     }
     if config.enable_openai_api {
         routes = routes
-            .route(
-                route_template(RouteId::AnthropicModels),
-                get(proxy::openai_models),
-            )
             .route(
                 route_template(RouteId::OpenAiChatCompletions),
                 post(proxy::openai_chat_completions),
@@ -224,7 +236,10 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 post(gemini::forward_native_vertex),
             );
     }
-    routes.route_layer(from_fn_with_state(state, authenticate_client_route))
+    routes.route_layer(from_fn_with_state(
+        (state, config.enable_anthropic_api),
+        authenticate_inference_route,
+    ))
 }
 
 fn private_service_routes(state: AppState) -> Router<AppState> {
@@ -274,8 +289,18 @@ fn github_adapter_routes(state: AppState) -> Router<AppState> {
         return Router::new();
     }
     Router::new()
-        .route("/api/v3/{*path}", any(crate::github_proxy::proxy))
-        .route("/api/graphql", post(crate::github_proxy::proxy))
+        .route(
+            route_template(RouteId::GitHubAdapterRest),
+            any(crate::github_proxy::proxy),
+        )
+        .route(
+            route_template(RouteId::GitHubAdapterGraphql),
+            post(crate::github_proxy::proxy),
+        )
+        .route(
+            route_template(RouteId::GitHubAdapterGit),
+            any(crate::git_proxy::proxy),
+        )
         .route_layer(from_fn_with_state(state, authenticate_client_route))
 }
 
@@ -301,6 +326,21 @@ async fn authenticate_client_route(
         return error.render(crate::api_error::dialect_for_path(path));
     }
     next.run(request).await
+}
+
+async fn authenticate_inference_route(
+    State((state, anthropic_enabled)): State<(AppState, bool)>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let path = request.uri().path();
+    if !anthropic_enabled
+        && route_for_path(request.method(), path)
+            .is_some_and(|route| route.id == RouteId::AnthropicVertex)
+    {
+        return not_found().await;
+    }
+    authenticate_client_route(State(state), request, next).await
 }
 
 async fn authenticate_admin_route(

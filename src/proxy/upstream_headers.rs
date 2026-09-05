@@ -4,7 +4,9 @@
 //! identity. Only authentication, routing/transport framing, hop-by-hop
 //! fields, and Router-internal metadata may change.
 
-use axum::http::{HeaderMap, HeaderValue};
+use std::collections::HashSet;
+
+use axum::http::{HeaderMap, HeaderName, HeaderValue};
 use log_lazy::LogLazy;
 
 use super::REQUIRED_FORWARD_HEADERS;
@@ -32,6 +34,31 @@ pub const OAUTH_BETA_FLAG: &str = "oauth-2025-04-20";
 /// Deliberate proxy request-body ceiling.
 pub const MAX_PROXY_REQUEST_BYTES: usize = crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES;
 
+/// Reviewed ingress/network-origin metadata that never belongs on a native
+/// provider request. Header names are case-insensitive after `HeaderMap`
+/// parsing, and every repeated value is removed by the shared classifier.
+pub const INGRESS_NETWORK_HEADERS: &[&str] = &[
+    "forwarded",
+    "x-forwarded-for",
+    "x-forwarded-host",
+    "x-forwarded-proto",
+    "x-forwarded-port",
+    "x-forwarded-server",
+    "x-original-forwarded-for",
+    "x-real-ip",
+    "x-client-ip",
+    "x-cluster-client-ip",
+    "cf-connecting-ip",
+    "true-client-ip",
+    "fastly-client-ip",
+    "fly-client-ip",
+    "x-envoy-external-address",
+    "x-forwarded-client-cert",
+    "x-azure-clientip",
+    "x-appengine-user-ip",
+    "cloudfront-viewer-address",
+];
+
 /// Merge the OAuth bridge beta flag for explicit protocol conversion paths.
 #[must_use]
 pub fn merge_oauth_beta(existing: Option<&str>) -> String {
@@ -43,38 +70,42 @@ pub fn merge_oauth_beta(existing: Option<&str>) -> String {
 }
 
 fn replaced_or_transport_header(name: &str) -> bool {
-    matches!(
-        name,
-        "authorization"
-            | "x-api-key"
-            | "x-goog-api-key"
-            | "proxy-authorization"
-            | "proxy-authenticate"
-            | "host"
-            | "connection"
-            | "proxy-connection"
-            | "keep-alive"
-            | "transfer-encoding"
-            | "upgrade"
-            | "te"
-            | "trailer"
-            | "content-length"
-            | "accept-encoding"
-            | "cookie"
-            | "chatgpt-account-id"
-            | "forwarded"
-            | "x-forwarded-for"
-            | "x-forwarded-host"
-            | "x-forwarded-proto"
-            | "x-real-ip"
-    ) || name.starts_with("x-link-assistant-")
+    INGRESS_NETWORK_HEADERS.contains(&name)
+        || matches!(
+            name,
+            "authorization"
+                | "x-api-key"
+                | "x-goog-api-key"
+                | "proxy-authorization"
+                | "proxy-authenticate"
+                | "host"
+                | "connection"
+                | "proxy-connection"
+                | "keep-alive"
+                | "transfer-encoding"
+                | "upgrade"
+                | "te"
+                | "trailer"
+                | "content-length"
+                | "accept-encoding"
+                | "cookie"
+                | "chatgpt-account-id"
+        )
+        || name.starts_with("x-link-assistant-")
         || name.starts_with("x-router-")
 }
 
 pub fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> HeaderMap {
+    let connection_nominated: HashSet<HeaderName> = incoming
+        .get_all("connection")
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .filter_map(|name| HeaderName::from_bytes(name.trim().as_bytes()).ok())
+        .collect();
     let mut headers = HeaderMap::new();
     for (name, value) in incoming {
-        if !replaced_or_transport_header(name.as_str()) {
+        if !replaced_or_transport_header(name.as_str()) && !connection_nominated.contains(name) {
             headers.append(name.clone(), value.clone());
         }
     }
@@ -82,6 +113,15 @@ pub fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> Heade
         headers.insert("authorization", auth_val);
     }
     headers
+}
+
+/// Preserve the caller's end-to-end request identifier across a protocol
+/// translation. Translated requests intentionally rebuild protocol headers,
+/// but correlation remains the caller's application-level metadata; Router's
+/// own correlation id stays exclusively in request-log state.
+#[must_use]
+pub fn translated_request_id(incoming: &HeaderMap) -> Option<HeaderValue> {
+    incoming.get("x-request-id").cloned()
 }
 
 /// Preserve native end-to-end headers and replace only the Router credential.

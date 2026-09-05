@@ -195,7 +195,7 @@ fn an_openai_compatible_stream_is_settled_in_the_log() {
         router.port,
         &format!(
             "POST /api/services/openai/v1/chat/completions HTTP/1.1\r\nHost: x\r\n\
-             authorization: Bearer {token}\r\nuser-agent: opencode/1.18.27\r\n\
+             authorization: Bearer {token}\r\nuser-agent: opencode/1.18.28\r\n\
              x-session-id: provider-stream-test\r\ncontent-type: application/json\r\n\
              content-length: {}\r\nConnection: close\r\n\r\n{body}",
             body.len()

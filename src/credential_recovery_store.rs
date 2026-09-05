@@ -228,6 +228,10 @@ impl CredentialStore for RecoverableCredentialStore {
         }
     }
 
+    fn prepare_refresh(&self, token: &SubscriptionToken) -> Result<(), String> {
+        self.primary.prepare_refresh(token)
+    }
+
     fn lock_path(&self) -> Option<PathBuf> {
         Some(self.lock_path.clone())
     }

@@ -94,8 +94,6 @@ struct DeviceAuthorizationResponse {
 struct DeviceErrorResponse {
     #[serde(default)]
     error: String,
-    #[serde(default)]
-    error_description: String,
 }
 
 enum DevicePoll {
@@ -128,15 +126,13 @@ impl CodexDeviceLogin {
             .map_err(|error| format!("Codex device-code request failed: {error}"))?;
         let status = response.status();
         if !status.is_success() {
-            let detail = response.text().await.unwrap_or_default();
             let hint = if status == StatusCode::NOT_FOUND {
                 "device authorization is not enabled; use --flow loopback"
             } else {
                 "device authorization could not be started"
             };
             return Err(format!(
-                "Codex device-code endpoint returned {status}: {hint}{}",
-                response_detail(&detail)
+                "Codex device-code endpoint returned {status}: {hint}"
             ));
         }
         let device: DeviceCodeResponse = response
@@ -264,12 +260,7 @@ fn classify_device_error(status: StatusCode, body: &str) -> Result<DevicePoll, S
         return Ok(DevicePoll::SlowDown);
     }
     if matches!(error.as_str(), "expired_token" | "access_denied") {
-        let detail = if provider_error.error_description.is_empty() {
-            error
-        } else {
-            provider_error.error_description
-        };
-        return Err(format!("Codex device authorization failed: {detail}"));
+        return Err(format!("Codex device authorization failed: {error}"));
     }
     if matches!(status, StatusCode::FORBIDDEN | StatusCode::NOT_FOUND)
         || error == "authorization_pending"
@@ -277,22 +268,8 @@ fn classify_device_error(status: StatusCode, body: &str) -> Result<DevicePoll, S
         return Ok(DevicePoll::Pending);
     }
     Err(format!(
-        "Codex device authorization endpoint returned {status}{}",
-        response_detail(body)
+        "Codex device authorization endpoint returned {status}"
     ))
-}
-
-fn response_detail(body: &str) -> String {
-    let detail = body.trim();
-    if detail.is_empty() {
-        String::new()
-    } else {
-        let safe_end = detail
-            .char_indices()
-            .nth(500)
-            .map_or(detail.len(), |(index, _)| index);
-        format!(": {}", &detail[..safe_end])
-    }
 }
 
 #[derive(Debug)]
@@ -458,7 +435,15 @@ async fn callback(
                 .cloned()
                 .ok_or_else(|| "Codex callback contained no authorization code".to_string())
         },
-        |error| Err(format!("Codex authorization failed: {error}")),
+        |error| {
+            let reason = match error.as_str() {
+                "access_denied" => "access_denied",
+                "server_error" => "server_error",
+                "temporarily_unavailable" => "temporarily_unavailable",
+                _ => "provider_error",
+            };
+            Err(format!("Codex authorization failed: {reason}"))
+        },
     );
     let success = outcome.is_ok();
     if state.outcome_tx.try_send(outcome).is_ok() {
@@ -549,8 +534,7 @@ async fn exchange_and_store(
         .map_err(|error| format!("Codex token exchange failed: {error}"))?;
     let status = response.status();
     if !status.is_success() {
-        let detail = response.text().await.unwrap_or_default();
-        return Err(format!("Codex token endpoint returned {status}: {detail}"));
+        return Err(format!("Codex token endpoint returned {status}"));
     }
     let tokens: TokenResponse = response
         .json()
@@ -578,20 +562,20 @@ async fn persist_codex_auth(
         crate::subscription::SubscriptionProvider::Codex,
         &config.codex_home,
     );
-    match reader
-        .install_document_locked(
-            data_dir,
-            crate::credential_recovery_store::PRIMARY_ACCOUNT,
-            &document,
-            crate::subscription::InstallMode::Replace,
-        )
-        .await?
-    {
-        crate::subscription::InstallDocumentResult::Installed(path) => Ok(path),
-        crate::subscription::InstallDocumentResult::AlreadyPresent(_) => {
-            Err("native Codex replacement unexpectedly became conditional".to_string())
-        }
-    }
+    let token_url = format!("{}/oauth/token", config.issuer.trim_end_matches('/'));
+    let catalog_base = crate::credential_acceptance::loopback_origin(&config.issuer);
+    crate::credential_acceptance::accept_candidate(
+        data_dir,
+        crate::subscription::SubscriptionProvider::Codex,
+        &document,
+        Some(&token_url),
+        catalog_base.as_deref(),
+    )
+    .await
+    .map_err(|error| error.to_string())?
+    .promote_replacement(&reader, data_dir)
+    .await
+    .map_err(|error| error.to_string())
 }
 
 fn form_encode(pairs: &[(&str, &str)]) -> String {
@@ -616,12 +600,17 @@ fn percent_encode(value: &str) -> String {
 }
 
 #[cfg(test)]
+#[path = "auth_native_acceptance_tests.rs"]
+mod native_acceptance_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use axum::Json;
     use axum::body::Bytes;
     use axum::response::{IntoResponse as _, Response};
-    use axum::routing::post;
+    use axum::routing::{get, post};
+    use std::sync::Mutex;
     use std::sync::atomic::AtomicUsize;
     use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
 
@@ -629,6 +618,8 @@ mod tests {
     struct DeviceStubState {
         polls: AtomicUsize,
         exchanges: AtomicUsize,
+        catalogs: AtomicUsize,
+        token_bodies: Mutex<Vec<String>>,
     }
 
     async fn issue_device_code(Json(body): Json<serde_json::Value>) -> Json<serde_json::Value> {
@@ -668,17 +659,38 @@ mod tests {
         State(state): State<Arc<DeviceStubState>>,
         body: Bytes,
     ) -> Json<serde_json::Value> {
-        state.exchanges.fetch_add(1, Ordering::SeqCst);
+        let exchange = state.exchanges.fetch_add(1, Ordering::SeqCst);
         let body = String::from_utf8(body.to_vec()).unwrap();
-        assert!(body.contains("code=device-authorization-code"));
-        assert!(body.contains("code_verifier=device-verifier"));
-        assert!(body.contains("redirect_uri=http%3A%2F%2F"));
-        assert!(body.contains("%2Fdeviceauth%2Fcallback"));
-        Json(serde_json::json!({
-            "id_token": "header.payload.sig",
-            "access_token": "device-access",
-            "refresh_token": "device-refresh",
-        }))
+        state.token_bodies.lock().unwrap().push(body.clone());
+        if exchange == 0 {
+            assert!(
+                body.contains("code=device-authorization-code") || body.contains("code=good-code")
+            );
+            assert!(body.contains("code_verifier="));
+            if body.contains("code=device-authorization-code") {
+                assert!(body.contains("code_verifier=device-verifier"));
+                assert!(body.contains("redirect_uri=http%3A%2F%2F"));
+                assert!(body.contains("%2Fdeviceauth%2Fcallback"));
+            }
+            Json(serde_json::json!({
+                "id_token": "header.payload.sig",
+                "access_token": "device-access",
+                "refresh_token": "device-refresh",
+            }))
+        } else {
+            assert!(body.contains("refresh_token"));
+            Json(serde_json::json!({
+                "id_token": "header.payload.sig",
+                "access_token": "device-access-rotated",
+                "refresh_token": "device-refresh-rotated",
+                "expires_in": 3600,
+            }))
+        }
+    }
+
+    async fn codex_catalog(State(state): State<Arc<DeviceStubState>>) -> Json<serde_json::Value> {
+        state.catalogs.fetch_add(1, Ordering::SeqCst);
+        Json(serde_json::json!({"models":[{"slug":"gpt-live"}]}))
     }
 
     async fn device_stub() -> (String, Arc<DeviceStubState>, tokio::task::JoinHandle<()>) {
@@ -687,6 +699,7 @@ mod tests {
             .route("/api/accounts/deviceauth/usercode", post(issue_device_code))
             .route("/api/accounts/deviceauth/token", post(poll_device_code))
             .route("/oauth/token", post(exchange_device_code))
+            .route("/models", get(codex_catalog))
             .with_state(Arc::clone(&state));
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let issuer = format!("http://{}", listener.local_addr().unwrap());
@@ -760,8 +773,11 @@ mod tests {
         let saved: serde_json::Value =
             serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
         assert_eq!(saved["auth_mode"], "chatgpt");
-        assert_eq!(saved["tokens"]["access_token"], "device-access");
+        assert_eq!(saved["tokens"]["access_token"], "device-access-rotated");
+        assert_eq!(saved["tokens"]["refresh_token"], "device-refresh-rotated");
         assert_eq!(state.polls.load(Ordering::SeqCst), 2);
+        assert_eq!(state.exchanges.load(Ordering::SeqCst), 2);
+        assert_eq!(state.catalogs.load(Ordering::SeqCst), 1);
         server.abort();
     }
 
@@ -792,13 +808,14 @@ mod tests {
         let data_path = data.path().to_path_buf();
         let completion = tokio::spawn(login.complete_with_data_dir(data_path));
         for _ in 0..100 {
-            if state.exchanges.load(Ordering::SeqCst) > 0 {
+            if state.catalogs.load(Ordering::SeqCst) > 0 {
                 break;
             }
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
 
-        assert_eq!(state.exchanges.load(Ordering::SeqCst), 1);
+        assert_eq!(state.exchanges.load(Ordering::SeqCst), 2);
+        assert_eq!(state.catalogs.load(Ordering::SeqCst), 1);
         assert!(
             !completion.is_finished(),
             "Codex install bypassed refresh lock"
@@ -810,49 +827,9 @@ mod tests {
         server.abort();
     }
 
-    #[test]
-    fn device_polling_handles_pending_slow_down_and_expiry() {
-        assert!(matches!(
-            classify_device_error(StatusCode::FORBIDDEN, ""),
-            Ok(DevicePoll::Pending)
-        ));
-        assert!(matches!(
-            classify_device_error(StatusCode::BAD_REQUEST, r#"{"error":"slow_down"}"#),
-            Ok(DevicePoll::SlowDown)
-        ));
-        let expired = classify_device_error(
-            StatusCode::FORBIDDEN,
-            r#"{"error":"expired_token","error_description":"code expired"}"#,
-        )
-        .err()
-        .unwrap();
-        assert!(expired.contains("code expired"));
-    }
-
-    async fn token_stub() -> (String, tokio::task::JoinHandle<String>) {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let issuer = format!("http://{}", listener.local_addr().unwrap());
-        let task = tokio::spawn(async move {
-            let (mut socket, _) = listener.accept().await.unwrap();
-            let mut bytes = Vec::new();
-            let mut buf = [0_u8; 2048];
-            loop {
-                let read = socket.read(&mut buf).await.unwrap();
-                bytes.extend_from_slice(&buf[..read]);
-                if read == 0 || String::from_utf8_lossy(&bytes).contains("code_verifier=") {
-                    break;
-                }
-            }
-            let body = r#"{"id_token":"header.payload.sig","access_token":"access","refresh_token":"refresh"}"#;
-            socket.write_all(format!("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len()).as_bytes()).await.unwrap();
-            String::from_utf8(bytes).unwrap()
-        });
-        (issuer, task)
-    }
-
     #[tokio::test]
     async fn mismatched_state_is_rejected_and_listener_closes_after_valid_callback() {
-        let (issuer, token_request) = token_stub().await;
+        let (issuer, stub_state, server) = device_stub().await;
         let home = tempfile::tempdir().unwrap();
         let login = CodexLogin::bind(CodexAuthConfig {
             issuer,
@@ -866,7 +843,7 @@ mod tests {
         .unwrap();
         let port = login.port();
         let auth_url = login.authorization_url().to_string();
-        let state = auth_url
+        let callback_state = auth_url
             .split("state=")
             .nth(1)
             .unwrap()
@@ -886,7 +863,7 @@ mod tests {
         let completion = tokio::spawn(login.complete());
         let good = client
             .get(format!(
-                "http://127.0.0.1:{port}{CODEX_CALLBACK_PATH}?code=good-code&state={state}"
+                "http://127.0.0.1:{port}{CODEX_CALLBACK_PATH}?code=good-code&state={callback_state}"
             ))
             .send()
             .await
@@ -895,10 +872,17 @@ mod tests {
         let path = completion.await.unwrap().unwrap();
         let saved: serde_json::Value =
             serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
-        assert_eq!(saved["tokens"]["access_token"], "access");
-        let request = token_request.await.unwrap();
+        assert_eq!(saved["tokens"]["access_token"], "device-access-rotated");
+        let request = {
+            let requests = stub_state.token_bodies.lock().unwrap();
+            assert_eq!(requests.len(), 2);
+            let request = requests[0].clone();
+            drop(requests);
+            request
+        };
         assert!(request.contains("code=good-code"));
         assert!(request.contains("code_verifier="));
+        server.abort();
         assert!(
             tokio::net::TcpListener::bind(("127.0.0.1", port))
                 .await

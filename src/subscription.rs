@@ -9,6 +9,8 @@
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
+mod external;
+
 mod types;
 pub use types::{SubscriptionProvider, SubscriptionToken};
 
@@ -38,6 +40,28 @@ impl std::fmt::Display for SubscriptionError {
 
 impl std::error::Error for SubscriptionError {}
 
+impl From<std::io::Error> for SubscriptionError {
+    fn from(_error: std::io::Error) -> Self {
+        Self::ReadError("credential transaction lock failed".into())
+    }
+}
+
+/// Mark a copied credential as belonging to an external rotating refresh
+/// chain.
+///
+/// The marker lives in the same atomically replaced JSON document, so it
+/// cannot be committed independently of the credential it protects.
+pub use external::{
+    has_promotion_receipt, mark_external_refresh_owner, mark_promotion_receipt,
+    reference_external_credential,
+};
+
+fn credential_file_lock_path(path: &Path) -> PathBuf {
+    let mut lock = path.as_os_str().to_os_string();
+    lock.push(".router-transaction.lock");
+    PathBuf::from(lock)
+}
+
 /// One credential selected for adoption: the bytes, and what they say.
 ///
 /// A single selection produces all three, so a report about the credential and
@@ -56,6 +80,8 @@ pub struct ImportSource {
     pub token: SubscriptionToken,
     /// Which store `document` came from, for naming it in the report.
     pub origin: crate::platform_keychain::Origin,
+    /// Writable file holding the selected document, when it has one.
+    pub path: Option<PathBuf>,
 }
 
 /// Replacement policy for a Router-owned credential install.
@@ -178,16 +204,19 @@ impl SubscriptionReader {
         // never disagree about which store is live.
         let (token, origin) =
             self.select_store(from_keychain.and_then(|raw| self.parse_store_credential(raw)))?;
-        let document = match origin {
+        let (document, path) = match origin {
             crate::platform_keychain::Origin::Keychain => {
-                from_keychain.map(str::to_owned).ok_or_else(|| {
+                let document = from_keychain.map(str::to_owned).ok_or_else(|| {
                     SubscriptionError::NoCredentials(format!(
                         "No {} credential in the platform store",
                         self.provider
                     ))
-                })
+                })?;
+                (document, None)
             }
-            crate::platform_keychain::Origin::File => {
+            crate::platform_keychain::Origin::File
+            | crate::platform_keychain::Origin::ExternalFile
+            | crate::platform_keychain::Origin::AdoptedFile => {
                 let path = self.discover_credential_path().ok_or_else(|| {
                     SubscriptionError::NoCredentials(format!(
                         "No {} credential file in {}",
@@ -195,18 +224,15 @@ impl SubscriptionReader {
                         self.home.display()
                     ))
                 })?;
-                std::fs::read_to_string(&path).map_err(|error| {
-                    SubscriptionError::ReadError(format!(
-                        "Failed to read {}: {error}",
-                        path.display()
-                    ))
-                })
+                let stored = external::read_document(&path)?;
+                (stored.raw, Some(stored.path))
             }
-        }?;
+        };
         Ok(ImportSource {
             document,
             token,
             origin,
+            path,
         })
     }
 
@@ -260,8 +286,11 @@ impl SubscriptionReader {
     }
 
     fn install_document_at(path: &Path, document: &str) -> Result<PathBuf, String> {
-        crate::durable_file::atomic_write_owner_only(path, document.as_bytes())
-            .map_err(|error| crate::durable_file::describe_write_failure(path, &error))?;
+        let lock_path = credential_file_lock_path(path);
+        crate::durable_file::with_exclusive_lock::<_, std::io::Error>(&lock_path, || {
+            crate::durable_file::transactional_write_owner_only(path, document.as_bytes())
+        })
+        .map_err(|error| crate::durable_file::describe_write_failure(path, &error))?;
         Ok(path.to_path_buf())
     }
 
@@ -348,17 +377,21 @@ impl SubscriptionReader {
         let authoritative = (mode == InstallMode::Replace)
             .then(|| self.discover_credential_path())
             .flatten();
+        // Invalidation is fallible and therefore belongs before the primary
+        // replacement. If it fails, the working credential stays byte-for-byte
+        // authoritative instead of a new credential being active behind an
+        // error result (issue #424).
+        crate::model_catalog::ModelCatalogCache::invalidate_persisted(
+            data_dir,
+            self.provider,
+            account,
+        )?;
         let installed = authoritative
             .map_or_else(
                 || self.install_document(document),
                 |path| Self::install_document_at(&path, document),
             )
             .map(InstallDocumentResult::Installed)?;
-        crate::model_catalog::ModelCatalogCache::invalidate_persisted(
-            data_dir,
-            self.provider,
-            account,
-        )?;
         Ok(installed)
     }
 
@@ -465,17 +498,17 @@ impl SubscriptionReader {
     ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
         let from_file = self.read_token_from_file();
         match (from_file, from_keychain) {
-            (Ok(file), Some(keychain)) => {
+            (Ok((file, file_origin)), Some(keychain)) => {
                 // Only a strictly later expiry displaces the file, so a store
                 // that merely mirrors it changes nothing an operator sees.
                 if keychain.expires_at_ms > file.expires_at_ms {
                     Ok((keychain, crate::platform_keychain::Origin::Keychain))
                 } else {
-                    Ok((file, crate::platform_keychain::Origin::File))
+                    Ok((file, file_origin))
                 }
             }
             (Err(_), Some(keychain)) => Ok((keychain, crate::platform_keychain::Origin::Keychain)),
-            (file, None) => file.map(|token| (token, crate::platform_keychain::Origin::File)),
+            (file, None) => file,
         }
     }
 
@@ -555,26 +588,46 @@ impl SubscriptionReader {
     }
 
     /// Read and normalize the subscription token from the credential file.
-    fn read_token_from_file(&self) -> Result<SubscriptionToken, SubscriptionError> {
+    fn read_token_from_file(
+        &self,
+    ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
         let mut last_err: Option<SubscriptionError> = None;
         for path in self.credential_paths() {
-            if !path.exists() {
-                continue;
-            }
-            let content = std::fs::read_to_string(&path).map_err(|e| {
-                SubscriptionError::ReadError(format!("Failed to read {}: {e}", path.display()))
-            })?;
-            let raw: RawCredentials = serde_json::from_str(&content).map_err(|e| {
-                SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
-            })?;
-            match raw.into_token(self.provider) {
+            let lock_path = credential_file_lock_path(&path);
+            let parsed = crate::durable_file::with_exclusive_lock::<_, SubscriptionError>(
+                &lock_path,
+                || {
+                    crate::durable_file::recover_transactional_write(&path).map_err(|error| {
+                        SubscriptionError::ReadError(format!(
+                            "Failed to recover {}: {error}",
+                            path.display()
+                        ))
+                    })?;
+                    if !path.exists() {
+                        return Ok(None);
+                    }
+                    let stored = external::read_document(&path)?;
+                    let origin = stored.origin;
+                    let raw: RawCredentials =
+                        serde_json::from_value(stored.value).map_err(|e| {
+                            SubscriptionError::ParseError(format!(
+                                "Failed to parse {}: {e}",
+                                path.display()
+                            ))
+                        })?;
+                    Ok(raw.into_token(self.provider).map(|token| (token, origin)))
+                },
+            )?;
+            match parsed {
                 Some(token) => return Ok(token),
                 None => {
-                    last_err = Some(SubscriptionError::NoToken(format!(
-                        "No {} access token in {}",
-                        self.provider,
-                        path.display()
-                    )));
+                    if path.exists() {
+                        last_err = Some(SubscriptionError::NoToken(format!(
+                            "No {} access token in {}",
+                            self.provider,
+                            path.display()
+                        )));
+                    }
                 }
             }
         }
@@ -613,21 +666,7 @@ impl SubscriptionReader {
                 self.home.display()
             ))
         })?;
-        let content = std::fs::read_to_string(&path).map_err(|e| {
-            SubscriptionError::ReadError(format!("Failed to read {}: {e}", path.display()))
-        })?;
-        let mut document: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-            SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
-        })?;
-
-        merge_refreshed_token(&mut document, self.provider, token);
-
-        let serialized = serde_json::to_vec_pretty(&document).map_err(|e| {
-            SubscriptionError::ParseError(format!("Failed to serialize {}: {e}", path.display()))
-        })?;
-        crate::durable_file::atomic_write_owner_only(&path, &serialized).map_err(|e| {
-            SubscriptionError::ReadError(crate::durable_file::describe_write_failure(&path, &e))
-        })
+        external::write_refreshed_token(&path, self.provider, token)
     }
 }
 
@@ -883,6 +922,9 @@ fn account_id_from_id_token(id_token: &str) -> Option<String> {
         .map(ToString::to_string)
 }
 
+#[cfg(test)]
+#[path = "subscription_adopted_tests.rs"]
+mod adopted_tests;
 #[cfg(test)]
 #[path = "subscription_install_tests.rs"]
 mod install_tests;

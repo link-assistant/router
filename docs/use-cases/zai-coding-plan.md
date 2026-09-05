@@ -33,6 +33,14 @@ enabled record is rejected. A JSON/import record which omits `enabled` remains
 disabled. Router permits only one enabled Coding Plan subscriber and encrypts
 the key at rest; list/show/API output is redacted.
 
+Adding or importing an enabled Coding Plan record first validates its key with
+the authenticated model catalogue and only then promotes the staged encrypted
+record under the provider-store lock. HTTP errors, HTTP-200 error bodies,
+malformed replies, timeouts, and uncertain persistence leave the previous
+record byte-for-byte authoritative. Add `--if-absent` to keep an existing name
+instead of replacing it; local and remote commands return the same
+machine-readable `promoted` or `already_present` outcome without key material.
+
 A normal z.ai pay-as-you-go API key is not Coding Plan. Configure it separately
 as `kind=openai-compatible` against its documented standard API endpoint and
 terms. Router never guesses which quota class a key belongs to.
@@ -110,11 +118,15 @@ Claude Code **2.1.255 or newer** is required. `router with claude` and
 `router clients setup claude` set
 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, force nonessential startup
 traffic on for discovery, and clear higher-priority credentials. When z.ai is
-the only compatible live catalog, Router maps Claude Code's Default,
-opus/sonnet/haiku families, subagents, and resumed sessions to one exact
-currently advertised z.ai model. With a native Anthropic catalog those pins
-stay clear and gateway discovery remains authoritative. An explicit z.ai
-command-line model wins and is propagated to the same subagent boundary.
+the only compatible live catalog, Router maps only Claude Code's Default/main
+turn and subagent boundary to the first exact currently advertised z.ai model.
+It does not map that model onto Opus, Sonnet, or Haiku, because doing so creates
+three duplicate, misleading family rows. Current Claude Code can show only the
+selected custom default in `/model`; use `router with --model <exact-id> claude`
+for another ID from a multi-model z.ai catalog. With a native Anthropic catalog
+all family/default pins stay clear, preserving native family behavior; select a
+z.ai ID explicitly when required. An explicit z.ai command-line model is also
+propagated to the subagent boundary.
 Router validates every selected exact ID locally against the current signed
 client/provider registry, so a built-in or cached choice cannot silently select
 another credential.

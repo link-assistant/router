@@ -4,6 +4,96 @@ use std::fs::{self, OpenOptions, TryLockError};
 use std::io::{self, Write};
 use std::path::Path;
 
+const ROLLBACK_SUFFIX: &str = ".router-rollback";
+const COMMIT_SUFFIX: &str = ".router-commit";
+
+fn sibling_with_suffix(path: &Path, suffix: &str) -> io::Result<std::path::PathBuf> {
+    let name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| io::Error::other("durable file name is not valid UTF-8"))?;
+    Ok(path.with_file_name(format!(".{name}{suffix}")))
+}
+
+#[cfg(test)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum FaultPoint {
+    AfterRename,
+    RemoveRollback,
+    SyncAfterRollbackRemoval,
+    RemoveCommit,
+    SyncAfterCommitRemoval,
+    Unlock,
+}
+
+#[cfg(test)]
+#[derive(Debug)]
+struct InjectedFault {
+    path: std::path::PathBuf,
+    point: FaultPoint,
+}
+
+#[cfg(test)]
+fn fault_slot() -> &'static std::sync::Mutex<Option<InjectedFault>> {
+    static SLOT: std::sync::OnceLock<std::sync::Mutex<Option<InjectedFault>>> =
+        std::sync::OnceLock::new();
+    SLOT.get_or_init(|| std::sync::Mutex::new(None))
+}
+
+#[cfg(test)]
+fn fault_serial() -> &'static std::sync::Mutex<()> {
+    static SERIAL: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    SERIAL.get_or_init(|| std::sync::Mutex::new(()))
+}
+
+#[cfg(test)]
+pub(crate) struct FaultGuard {
+    _serial: std::sync::MutexGuard<'static, ()>,
+}
+
+#[cfg(test)]
+impl Drop for FaultGuard {
+    fn drop(&mut self) {
+        *fault_slot()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn inject_fault(path: &Path, point: FaultPoint) -> FaultGuard {
+    let serial = fault_serial()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    *fault_slot()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(InjectedFault {
+        path: path.to_path_buf(),
+        point,
+    });
+    FaultGuard { _serial: serial }
+}
+
+#[cfg(test)]
+fn fail_if_injected(path: &Path, point: FaultPoint) -> io::Result<()> {
+    let mut slot = fault_slot()
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let injected = slot
+        .as_ref()
+        .is_some_and(|fault| fault.path == path && fault.point == point);
+    if injected {
+        *slot = None;
+    }
+    drop(slot);
+    if injected {
+        return Err(io::Error::other(format!(
+            "injected durable-file failure at {point:?}"
+        )));
+    }
+    Ok(())
+}
+
 /// Describe a credential-write failure in terms an operator can act on.
 ///
 /// A read-only mount is the common case — the deployment docs tell you to mount
@@ -57,12 +147,135 @@ pub fn atomic_write_owner_only(path: &Path, contents: &[u8]) -> io::Result<()> {
         }
         drop(file);
         fs::rename(&temporary, path)?;
+        #[cfg(test)]
+        fail_if_injected(path, FaultPoint::AfterRename)?;
         sync_directory(parent)
     })();
     if result.is_err() {
         let _ = fs::remove_file(&temporary);
     }
     result
+}
+
+/// Recover an interrupted transactional replacement of `path`.
+///
+/// A surviving commit marker makes the current primary authoritative. A
+/// rollback document without that marker means the replacement had not
+/// committed, so the prior bytes are restored before callers read the file.
+pub fn recover_transactional_write(path: &Path) -> io::Result<()> {
+    let rollback = sibling_with_suffix(path, ROLLBACK_SUFFIX)?;
+    let commit = sibling_with_suffix(path, COMMIT_SUFFIX)?;
+    if commit.exists() {
+        return cleanup_committed_transaction(path, &rollback, &commit);
+    }
+    let rollback_document = match fs::read(&rollback) {
+        Ok(prior) => prior,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error),
+    };
+    match rollback_document.split_first() {
+        Some((0, _)) => match fs::remove_file(path) {
+            Ok(()) => {}
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error),
+        },
+        Some((1, prior)) => atomic_write_owner_only(path, prior)?,
+        _ => return Err(io::Error::other("invalid transactional rollback document")),
+    }
+    fs::remove_file(&rollback)?;
+    if let Some(parent) = path.parent() {
+        sync_directory(parent)?;
+    }
+    Ok(())
+}
+
+fn remove_file_if_present(path: &Path) -> io::Result<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+/// Remove committed transaction sidecars without ever making the rollback
+/// document authoritative again.
+///
+/// The rollback is removed and that removal is made durable before the commit
+/// marker can be removed. Every failure before that point therefore leaves the
+/// commit marker in place, so another recovery pass still keeps the new
+/// primary. A failure syncing the final marker removal is safe too: either the
+/// marker reappears after a crash and cleanup repeats, or both sidecars stay
+/// absent and the primary remains authoritative.
+fn cleanup_committed_transaction(path: &Path, rollback: &Path, commit: &Path) -> io::Result<()> {
+    #[cfg(test)]
+    fail_if_injected(path, FaultPoint::RemoveRollback)?;
+    remove_file_if_present(rollback)?;
+    if let Some(parent) = path.parent() {
+        #[cfg(test)]
+        fail_if_injected(path, FaultPoint::SyncAfterRollbackRemoval)?;
+        sync_directory(parent)?;
+    }
+
+    #[cfg(test)]
+    fail_if_injected(path, FaultPoint::RemoveCommit)?;
+    remove_file_if_present(commit)?;
+    if let Some(parent) = path.parent() {
+        #[cfg(test)]
+        fail_if_injected(path, FaultPoint::SyncAfterCommitRemoval)?;
+        sync_directory(parent)?;
+    }
+    Ok(())
+}
+
+/// Replace `path` as a recoverable transaction.
+///
+/// The prior bytes are made durable before the new primary is written. A
+/// durable commit marker is then the boundary between rollback and commit, so
+/// a crash or a late directory-sync error never leaves callers guessing which
+/// document is authoritative.
+pub fn transactional_write_owner_only(path: &Path, contents: &[u8]) -> io::Result<()> {
+    recover_transactional_write(path)?;
+    let rollback = sibling_with_suffix(path, ROLLBACK_SUFFIX)?;
+    let commit = sibling_with_suffix(path, COMMIT_SUFFIX)?;
+    let rollback_document = match fs::read(path) {
+        Ok(prior) => {
+            let mut rollback = Vec::with_capacity(prior.len() + 1);
+            rollback.push(1);
+            rollback.extend(prior);
+            rollback
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => vec![0],
+        Err(error) => return Err(error),
+    };
+    atomic_write_owner_only(&rollback, &rollback_document)?;
+    if let Err(error) = atomic_write_owner_only(path, contents) {
+        return match recover_transactional_write(path) {
+            Ok(()) => Err(error),
+            Err(recovery) => Err(io::Error::other(format!(
+                "replacement failed ({error}); rollback remains recoverable but immediate restore failed ({recovery})"
+            ))),
+        };
+    }
+    if let Err(error) = atomic_write_owner_only(&commit, b"committed\n") {
+        // The marker may already have been renamed before its directory sync
+        // failed. It did not cross the durable commit boundary, so remove it
+        // before invoking ordinary rollback recovery.
+        let _ = fs::remove_file(&commit);
+        if let Some(parent) = path.parent() {
+            let _ = sync_directory(parent);
+        }
+        return match recover_transactional_write(path) {
+            Ok(()) => Err(error),
+            Err(recovery) => Err(io::Error::other(format!(
+                "commit failed ({error}); rollback remains recoverable but immediate restore failed ({recovery})"
+            ))),
+        };
+    }
+
+    // Once the marker is durable, cleanup is not part of the commit result.
+    // A restart seeing it keeps the new primary and finishes the same cleanup.
+    let _ = cleanup_committed_transaction(path, &rollback, &commit);
+    Ok(())
 }
 
 /// Execute a state mutation while holding an owner-only advisory lock shared
@@ -94,10 +307,14 @@ where
     lock.lock().map_err(E::from)?;
     let result = operation();
     let unlock = lock.unlock();
+    #[cfg(test)]
+    let unlock = unlock.and_then(|()| fail_if_injected(path, FaultPoint::Unlock));
     match (result, unlock) {
         (Err(error), _) => Err(error),
-        (Ok(_), Err(error)) => Err(E::from(error)),
-        (Ok(value), Ok(())) => Ok(value),
+        // Closing the descriptor releases the lock as well. A late explicit
+        // unlock failure cannot undo a completed durable operation and must
+        // not turn its public result into an ambiguous failure.
+        (Ok(value), _) => Ok(value),
     }
 }
 
@@ -259,6 +476,115 @@ mod tests {
                 0o600
             );
         }
+    }
+
+    #[test]
+    fn transactional_failure_after_primary_rename_restores_previous_bytes() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("state.json");
+        atomic_write_owner_only(&path, b"old").unwrap();
+        let _fault = inject_fault(&path, FaultPoint::AfterRename);
+
+        transactional_write_owner_only(&path, b"new").expect_err("late write must fail");
+
+        assert_eq!(fs::read(&path).unwrap(), b"old");
+        assert!(
+            !sibling_with_suffix(&path, ROLLBACK_SUFFIX)
+                .unwrap()
+                .exists()
+        );
+        assert!(!sibling_with_suffix(&path, COMMIT_SUFFIX).unwrap().exists());
+    }
+
+    #[test]
+    fn transactional_failure_while_committing_restores_previous_bytes() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("state.json");
+        atomic_write_owner_only(&path, b"old").unwrap();
+        let commit = sibling_with_suffix(&path, COMMIT_SUFFIX).unwrap();
+        let _fault = inject_fault(&commit, FaultPoint::AfterRename);
+
+        transactional_write_owner_only(&path, b"new").expect_err("commit must fail");
+
+        assert_eq!(fs::read(&path).unwrap(), b"old");
+        assert!(
+            !sibling_with_suffix(&path, ROLLBACK_SUFFIX)
+                .unwrap()
+                .exists()
+        );
+        assert!(!commit.exists());
+    }
+
+    #[test]
+    fn restart_recovery_obeys_the_durable_commit_marker() {
+        for committed in [false, true] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("state.json");
+            let rollback = sibling_with_suffix(&path, ROLLBACK_SUFFIX).unwrap();
+            let commit = sibling_with_suffix(&path, COMMIT_SUFFIX).unwrap();
+            atomic_write_owner_only(&path, b"new").unwrap();
+            atomic_write_owner_only(&rollback, b"\x01old").unwrap();
+            if committed {
+                atomic_write_owner_only(&commit, b"committed\n").unwrap();
+            }
+
+            recover_transactional_write(&path).unwrap();
+
+            assert_eq!(
+                fs::read(&path).unwrap(),
+                if committed { b"new" } else { b"old" }
+            );
+            assert!(!rollback.exists());
+            assert!(!commit.exists());
+        }
+    }
+
+    #[test]
+    fn committed_cleanup_failures_never_make_rollback_authoritative() {
+        for point in [
+            FaultPoint::RemoveRollback,
+            FaultPoint::SyncAfterRollbackRemoval,
+            FaultPoint::RemoveCommit,
+            FaultPoint::SyncAfterCommitRemoval,
+        ] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("state.json");
+            let rollback = sibling_with_suffix(&path, ROLLBACK_SUFFIX).unwrap();
+            let commit = sibling_with_suffix(&path, COMMIT_SUFFIX).unwrap();
+            atomic_write_owner_only(&path, b"new").unwrap();
+            atomic_write_owner_only(&rollback, b"\x01old").unwrap();
+            atomic_write_owner_only(&commit, b"committed\n").unwrap();
+            let fault = inject_fault(&path, point);
+
+            recover_transactional_write(&path).expect_err("cleanup fault must be reported");
+            assert_eq!(fs::read(&path).unwrap(), b"new", "fault at {point:?}");
+            if matches!(
+                point,
+                FaultPoint::RemoveRollback
+                    | FaultPoint::SyncAfterRollbackRemoval
+                    | FaultPoint::RemoveCommit
+            ) {
+                assert!(commit.exists(), "fault at {point:?}");
+            }
+            drop(fault);
+
+            recover_transactional_write(&path).unwrap();
+            recover_transactional_write(&path).unwrap();
+            assert_eq!(fs::read(&path).unwrap(), b"new", "fault at {point:?}");
+            assert!(!rollback.exists(), "fault at {point:?}");
+            assert!(!commit.exists(), "fault at {point:?}");
+        }
+    }
+
+    #[test]
+    fn late_unlock_failure_does_not_reclassify_a_completed_operation() {
+        let directory = tempfile::tempdir().unwrap();
+        let lock_path = directory.path().join("state.lock");
+        let _fault = inject_fault(&lock_path, FaultPoint::Unlock);
+
+        let result = with_exclusive_lock::<_, io::Error>(&lock_path, || Ok(7)).unwrap();
+
+        assert_eq!(result, 7);
     }
 
     /// Contention has to be recognised on every platform, not only where it

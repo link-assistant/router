@@ -126,6 +126,76 @@ fn reads_gemini_oauth_creds() {
 }
 
 #[test]
+fn external_owner_marker_survives_read_and_blocks_rotation() {
+    let dir = tempfile::tempdir().unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
+    let document = mark_external_refresh_owner(
+        r#"{"claudeAiOauth":{"accessToken":"external-access","refreshToken":"external-refresh","expiresAt":9999999999999}}"#,
+    )
+    .unwrap();
+    reader.install_document(&document).unwrap();
+
+    let (token, origin) = reader.read_token_from().unwrap();
+    assert_eq!(origin, crate::platform_keychain::Origin::ExternalFile);
+    assert_eq!(token.refresh_token.as_deref(), Some("external-refresh"));
+    let error =
+        crate::credential_store::CredentialStore::prepare_refresh(&reader, &token).unwrap_err();
+    assert!(error.contains("externally owned"), "{error}");
+    let mut successor = token;
+    successor.access_token = "router-successor".into();
+    successor.refresh_token = Some("router-spent-external-link".into());
+    let error = reader.write_token(&successor).unwrap_err().to_string();
+    assert!(error.contains("externally owned"), "{error}");
+    let unchanged = reader.read_token().unwrap();
+    assert_eq!(unchanged.access_token, "external-access");
+    assert_eq!(unchanged.refresh_token.as_deref(), Some("external-refresh"));
+}
+
+#[test]
+fn direct_reader_waits_for_the_file_transaction_commit_boundary() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join(".credentials.json");
+    let old = br#"{"claudeAiOauth":{"accessToken":"old"}}"#;
+    let new = br#"{"claudeAiOauth":{"accessToken":"new"}}"#;
+    std::fs::write(&path, old).unwrap();
+    let lock_path = credential_file_lock_path(&path);
+    let lock = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&lock_path)
+        .unwrap();
+    lock.lock().unwrap();
+    let rollback_path = dir.path().join("..credentials.json.router-rollback");
+    let commit_path = dir.path().join("..credentials.json.router-commit");
+    let mut rollback = vec![1];
+    rollback.extend_from_slice(old);
+    crate::durable_file::atomic_write_owner_only(&rollback_path, &rollback).unwrap();
+    crate::durable_file::atomic_write_owner_only(&path, new).unwrap();
+
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let handle = std::thread::spawn(move || sender.send(reader.read_token()).unwrap());
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    assert!(matches!(
+        receiver.try_recv(),
+        Err(std::sync::mpsc::TryRecvError::Empty)
+    ));
+
+    crate::durable_file::atomic_write_owner_only(&commit_path, b"committed\n").unwrap();
+    lock.unlock().unwrap();
+    let token = receiver
+        .recv_timeout(std::time::Duration::from_secs(2))
+        .unwrap()
+        .unwrap();
+    handle.join().unwrap();
+    assert_eq!(token.access_token, "new");
+    assert!(!rollback_path.exists());
+    assert!(!commit_path.exists());
+}
+
+#[test]
 fn reads_qwen_oauth_creds_with_resource_url() {
     let dir = tempdir();
     fs::write(
@@ -397,6 +467,10 @@ fn a_live_keychain_credential_beats_an_expired_file() {
 
     assert_eq!(origin, crate::platform_keychain::Origin::Keychain);
     assert_eq!(token.access_token, "keychain-access");
+    assert!(
+        crate::credential_store::ensure_refreshable_origin(reader.provider(), origin).is_err(),
+        "an injected Keychain winner must be read-only to Router refresh"
+    );
 }
 
 /// The file must keep winning when it is the newer credential, so a stale
@@ -866,91 +940,5 @@ fn write_token_refuses_to_replace_a_malformed_vendor_document() {
     );
 }
 
-/// Hand-written Claude credentials may use the legacy flat `snake_case` shape.
-/// Refresh must preserve that shape instead of introducing a second dialect.
-#[test]
-fn write_token_preserves_the_flat_snake_case_claude_layout() {
-    let dir = tempfile::tempdir().expect("credential home");
-    let path = dir.path().join(".credentials.json");
-    std::fs::write(
-        &path,
-        r#"{"access_token":"old","refresh_token":"old-r","expires_at":1,"marker":true}"#,
-    )
-    .expect("credential file");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
-
-    reader
-        .write_token(&SubscriptionToken {
-            access_token: "fresh".into(),
-            refresh_token: Some("fresh-r".into()),
-            expires_at_ms: Some(9_000),
-            account_id: None,
-            resource_url: None,
-        })
-        .expect("flat Claude refresh");
-
-    let written: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-    assert_eq!(written["access_token"], "fresh");
-    assert_eq!(written["refresh_token"], "fresh-r");
-    assert_eq!(written["expires_at"], 9_000);
-    assert_eq!(written["marker"], true);
-    assert!(written.get("accessToken").is_none());
-}
-
-/// A named account home cannot be shadowed by the machine-wide platform store;
-/// only the vendor's default home is eligible to consult that store.
-#[test]
-fn a_named_home_candidate_is_never_shadowed_by_the_platform_store() {
-    let dir = tempfile::tempdir().expect("named account home");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
-    let candidate = SubscriptionToken {
-        access_token: "candidate".into(),
-        refresh_token: Some("candidate-refresh".into()),
-        expires_at_ms: Some(1),
-        account_id: None,
-        resource_url: None,
-    };
-
-    assert!(!reader.candidate_is_shadowed_by_platform_store(&candidate));
-}
-
-/// A directory occupying the credential filename is an I/O failure, not an
-/// absent credential that refresh may replace.
-#[test]
-fn write_token_reports_an_unreadable_credential_path() {
-    let dir = tempfile::tempdir().expect("credential home");
-    let path = dir.path().join("oauth_creds.json");
-    std::fs::create_dir(&path).expect("blocking directory");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Gemini, dir.path());
-    let fresh = SubscriptionToken {
-        access_token: "fresh".into(),
-        refresh_token: Some("fresh-refresh".into()),
-        expires_at_ms: Some(1_000),
-        account_id: None,
-        resource_url: None,
-    };
-
-    assert!(matches!(
-        reader.write_token(&fresh),
-        Err(SubscriptionError::ReadError(_))
-    ));
-    assert!(path.is_dir());
-}
-
-/// Withdrawal must surface an occupied credential path it cannot remove rather
-/// than report success while the reader still finds that path.
-#[test]
-fn clearing_credentials_reports_an_unremovable_credential_path() {
-    let dir = tempfile::tempdir().expect("credential home");
-    let path = dir.path().join("oauth_creds.json");
-    std::fs::create_dir(&path).expect("blocking directory");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, dir.path());
-
-    let error = reader
-        .clear_credentials()
-        .expect_err("an occupied credential path must be reported");
-
-    assert!(error.contains(&path.display().to_string()), "{error}");
-    assert!(path.is_dir());
-}
+#[path = "subscription_write_error_tests.rs"]
+mod write_error_tests;

@@ -143,6 +143,7 @@ metadata only and deliberately excludes prompt and completion content.
   Keep it out of the environment of the tasks themselves.
 - **Revocation is by token id, not by label.** Labels are not unique on purpose
   — you may want `ci` on fifty tokens.
-- **Tokens are opaque to the client.** No client ever needs the vendor OAuth
-  token, the `anthropic-beta` flag, or an `anthropic-version` header; the router
-  injects those itself.
+- **Tokens are opaque credentials, not protocol shims.** A supported native
+  client sends its normal `anthropic-beta` and `anthropic-version` headers.
+  Router replaces only the authentication material and never invents missing
+  native protocol or feature headers.

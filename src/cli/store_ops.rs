@@ -205,6 +205,9 @@ pub enum ProviderOp {
             default_missing_value = "true"
         )]
         enabled: bool,
+        /// Create only when the provider name is absent; never replace it.
+        #[arg(long)]
+        if_absent: bool,
         #[command(flatten)]
         target: AuthTarget,
     },

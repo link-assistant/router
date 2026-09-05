@@ -176,6 +176,47 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
 }
 
 #[test]
+fn claude_accepts_current_bearer_and_router_doctor_without_forging_identity() {
+    let mut native = HeaderMap::new();
+    native.insert("authorization", "Bearer redacted".parse().unwrap());
+    native.insert("anthropic-version", "2023-06-01".parse().unwrap());
+    native.insert("user-agent", "claude-cli/2.1.259".parse().unwrap());
+    assert!(request_evidence(
+        ClientKind::ClaudeCode,
+        ClientProtocol::AnthropicMessages,
+        "/api/services/anthropic/v1/messages",
+        &native,
+    ));
+    assert!(request_evidence(
+        ClientKind::ClaudeCode,
+        ClientProtocol::Catalog,
+        "/api/services/anthropic/v1/models",
+        &native,
+    ));
+
+    let mut doctor = HeaderMap::new();
+    doctor.insert("authorization", "Bearer redacted".parse().unwrap());
+    doctor.insert("anthropic-version", "2023-06-01".parse().unwrap());
+    doctor.insert(
+        "x-link-assistant-client-check",
+        "reachability".parse().unwrap(),
+    );
+    assert!(request_evidence(
+        ClientKind::ClaudeCode,
+        ClientProtocol::AnthropicMessages,
+        "/api/services/anthropic/v1/messages",
+        &doctor,
+    ));
+    doctor.remove("authorization");
+    assert!(!request_evidence(
+        ClientKind::ClaudeCode,
+        ClientProtocol::AnthropicMessages,
+        "/api/services/anthropic/v1/messages",
+        &doctor,
+    ));
+}
+
+#[test]
 fn catalog_probe_evidence_is_client_specific_and_not_authority_by_itself() {
     let mut headers = HeaderMap::new();
     headers.insert("authorization", "Bearer redacted".parse().unwrap());

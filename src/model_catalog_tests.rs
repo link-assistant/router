@@ -1,4 +1,24 @@
 use super::*;
+
+#[test]
+fn catalog_acceptance_requires_at_least_one_provider_parsed_model() {
+    assert_eq!(
+        classify_catalog_acceptance(&Ok(vec!["live-model".to_string()])),
+        CatalogAcceptance::Accepted
+    );
+    assert_eq!(
+        classify_catalog_acceptance(&Ok(Vec::new())),
+        CatalogAcceptance::MissingSubscription
+    );
+    assert_eq!(
+        classify_catalog_acceptance(&Err("HTTP 401 Unauthorized".to_string())),
+        CatalogAcceptance::CredentialRejected
+    );
+    assert_eq!(
+        classify_catalog_acceptance(&Err("request failed: timeout".to_string())),
+        CatalogAcceptance::Unverified
+    );
+}
 use axum::Router;
 use axum::extract::State;
 use axum::http::{HeaderMap, Uri};
@@ -89,7 +109,7 @@ fn parses_each_vendor_response_shape() {
         (
             SubscriptionProvider::Gemini,
             serde_json::json!({"models":[{"name":"models/gemini-live"}]}),
-            "gemini-live",
+            "models/gemini-live",
         ),
         (
             SubscriptionProvider::Qwen,
@@ -885,7 +905,7 @@ async fn gemini_next_page_tokens_are_followed_without_losing_raw_records() {
             .iter()
             .map(|record| record.canonical_id.as_str())
             .collect::<Vec<_>>(),
-        ["future-jade-17", "future-amber-18"]
+        ["models/future-jade-17", "models/future-amber-18"]
     );
     assert_eq!(records[0].raw["newCapability"]["window"], 123_456);
     assert_eq!(records[1].source_order, 1);

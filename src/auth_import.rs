@@ -12,9 +12,19 @@
 use std::process::ExitCode;
 
 use link_assistant_router::cli::{AuthOp, ImportProvider};
+use link_assistant_router::credential_acceptance::AcceptedCredential as ValidatedCandidate;
+#[cfg(test)]
+use link_assistant_router::credential_acceptance::catalog_base_for_candidate;
 use link_assistant_router::subscription::{
     ImportSource, InstallDocumentResult, InstallMode, SubscriptionProvider, SubscriptionReader,
 };
+
+#[path = "auth_import_result.rs"]
+mod import_result;
+#[path = "auth_import_resume.rs"]
+mod import_resume;
+
+use import_result::{ImportExecution, ImportFailure, ImportOutcome, ImportPhase, finish};
 
 /// Vendor evidence gathered before an import may touch its destination.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,38 +42,10 @@ struct ImportPolicy {
     /// Whether the caller explicitly asserted the safe-flow capability. This
     /// is diagnostic only and never bypasses candidate validation.
     capability_asserted: bool,
-}
-
-/// A refresh-proven, catalog-accepted document living in an isolated store.
-struct ValidatedCandidate {
-    document: String,
-    token: link_assistant_router::subscription::SubscriptionToken,
-    stage: tempfile::TempDir,
-    transaction_id: String,
-}
-
-impl std::fmt::Debug for ValidatedCandidate {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter
-            .debug_struct("ValidatedCandidate")
-            .field("provider", &"redacted")
-            .field("transaction_id", &self.transaction_id)
-            .finish_non_exhaustive()
-    }
-}
-
-impl ValidatedCandidate {
-    /// Keep the only durable copy of a newly advanced refresh chain when it
-    /// cannot be promoted. Returns a non-secret transaction identifier.
-    fn retain(self) -> String {
-        let Self {
-            stage,
-            transaction_id,
-            ..
-        } = self;
-        let _retained_path = stage.keep();
-        transaction_id
-    }
+    /// Fresh imports copy an externally owned rotation chain. A resumed
+    /// acceptance transaction contains a Router-owned successor and must keep
+    /// that provenance when promoted.
+    external_refresh_owner: bool,
 }
 
 /// Adopt an existing vendor login, when this invocation asked to.
@@ -73,12 +55,13 @@ pub async fn run_import(
     config: &link_assistant_router::config::Config,
     op: &AuthOp,
 ) -> Option<ExitCode> {
+    let json = matches!(op, AuthOp::Import { json: true, .. });
     // Import writes this machine's credential home. When another router is the
     // target, doing that anyway produced an error naming the *local* home as
     // though it were the one asked about — a wrong-target action wearing an
     // answer that looks coherent (issue #291). Refuse before any local work.
-    if let Some(exit) = refuse_a_remote_import(op).await {
-        return Some(exit);
+    if let Some(failure) = refuse_a_remote_import(op).await {
+        return Some(finish(&[ImportExecution::failed(None, failure)], json));
     }
     let policy = match op {
         AuthOp::Import {
@@ -86,18 +69,36 @@ pub async fn run_import(
         } => ImportPolicy {
             if_absent: *if_absent,
             capability_asserted: *force,
+            external_refresh_owner: true,
         },
         _ => ImportPolicy::default(),
     };
-    let requested: Vec<(ImportProvider, String)> = match op {
+    let requested: Vec<(
+        ImportProvider,
+        String,
+        Option<import_resume::ResumeCandidate>,
+    )> = match op {
         AuthOp::Claude {
             from_claude_home: Some(source),
             ..
-        } => vec![(ImportProvider::Claude, source.clone())],
+        } => vec![(ImportProvider::Claude, source.clone(), None)],
         AuthOp::Codex {
             from_codex_home: Some(source),
             ..
-        } => vec![(ImportProvider::Codex, source.clone())],
+        } => vec![(ImportProvider::Codex, source.clone(), None)],
+        AuthOp::Import {
+            resume: Some(transaction_id),
+            ..
+        } => match import_resume::resolve_claimed(&config.data_dir, transaction_id).await {
+            Ok(candidate) => vec![(
+                candidate.provider,
+                candidate.source.clone(),
+                Some(candidate),
+            )],
+            Err(failure) => {
+                return Some(finish(&[ImportExecution::failed(None, failure)], json));
+            }
+        },
         AuthOp::Import { all: true, .. } => [
             ImportProvider::Claude,
             ImportProvider::Codex,
@@ -106,47 +107,131 @@ pub async fn run_import(
             ImportProvider::Gh,
         ]
         .into_iter()
-        .map(|provider| (provider, String::new()))
+        .map(|provider| (provider, String::new(), None))
         .collect(),
         AuthOp::Import {
             provider: Some(provider),
             dir,
             ..
-        } => vec![(*provider, dir.clone().unwrap_or_default())],
+        } => vec![(*provider, dir.clone().unwrap_or_default(), None)],
         _ => return None,
     };
     // `--all` adopts what is there and reports what is not, rather than failing
     // on the first provider this machine never logged in to: a workstation with
     // two of five logins is the ordinary case, not an error.
     let adopting_everything = matches!(op, AuthOp::Import { all: true, .. });
-    let mut failed = false;
-    for (provider, source) in requested {
+    let mut executions = Vec::with_capacity(requested.len());
+    for (provider, source, resumed) in requested {
         let outcome = match provider {
-            ImportProvider::Gh if policy.if_absent => Err(String::from(
+            ImportProvider::Gh if policy.if_absent => Err(ImportFailure::not_attempted(
                 "--if-absent is supported only for Claude, Codex, Gemini, and Qwen; GitHub import keeps its existing replacement behavior",
             )),
-            ImportProvider::Gh => import_github(&config.data_dir, &source),
+            ImportProvider::Gh => import_github(&config.data_dir, &source)
+                .map(|messages| ImportExecution::promoted("github", messages))
+                .map_err(ImportFailure::not_attempted),
             other => {
                 let Some(subscription) = subscription_of(other) else {
                     continue;
                 };
-                import_provider(config, subscription, &source, policy).await
+                let mut provider_policy = policy;
+                provider_policy.external_refresh_owner = resumed.is_none();
+                if resumed.as_ref().is_some_and(|candidate| {
+                    destination_has_receipt(config, subscription, &candidate.transaction_id)
+                }) {
+                    Ok(ImportExecution::promoted(
+                        subscription.to_string(),
+                        vec![format!(
+                            "{subscription:<8} promotion was already committed; completing retained transaction cleanup"
+                        )],
+                    ))
+                } else {
+                    import_provider(
+                        config,
+                        subscription,
+                        &source,
+                        provider_policy,
+                        resumed
+                            .as_ref()
+                            .map(|candidate| candidate.transaction_id.as_str()),
+                    )
+                    .await
+                }
             }
         };
-        if let Err(error) = outcome {
-            if adopting_everything && error.starts_with("no ") {
-                println!("{}: nothing to adopt ({error})", provider_label(provider));
-                continue;
+        let outcome = if let Some(candidate) = resumed.as_ref() {
+            reconcile_resumed_import(candidate, outcome)
+        } else {
+            outcome
+        };
+        let execution = match outcome {
+            Ok(execution) => execution,
+            Err(failure) => {
+                let absent = adopting_everything && failure.error.starts_with("no ");
+                let message = absent.then(|| {
+                    format!(
+                        "{}: nothing to adopt ({})",
+                        provider_label(provider),
+                        failure.error
+                    )
+                });
+                let execution = ImportExecution::failed(Some(provider_label(provider)), failure);
+                if let Some(message) = message {
+                    execution.ignore_failure(message)
+                } else {
+                    execution
+                }
             }
-            eprintln!("error: {error}");
-            failed = true;
-        }
+        };
+        executions.push(execution);
     }
-    Some(if failed {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    })
+    Some(finish(&executions, json))
+}
+
+/// A resume begins with an already uncertain transaction. Only promotion can
+/// retire that uncertainty. A fresh uncertain retry replaces the predecessor
+/// transaction; every other result keeps the original recovery ID authoritative.
+fn reconcile_resumed_import(
+    candidate: &import_resume::ResumeCandidate,
+    outcome: Result<ImportExecution, ImportFailure>,
+) -> Result<ImportExecution, ImportFailure> {
+    match outcome {
+        Ok(mut execution) if execution.is_promoted() => {
+            if let Err(warning) = import_resume::retire(candidate) {
+                execution.mark_cleanup_pending(
+                    candidate.transaction_id.clone(),
+                    format!("{warning}; retry this transaction ID to complete cleanup"),
+                );
+            }
+            Ok(execution)
+        }
+        Ok(_) => Err(ImportFailure::retained(
+            ImportPhase::Preflight,
+            candidate.transaction_id.clone(),
+            format!(
+                "the destination is already present; retained import transaction {} still requires recovery",
+                candidate.transaction_id
+            ),
+        )),
+        Err(failure)
+            if matches!(
+                failure.outcome,
+                ImportOutcome::ExchangeUncertain
+                    | ImportOutcome::PersistenceUncertain
+                    | ImportOutcome::SuccessorRetained
+            ) =>
+        {
+            let _retired_predecessor = import_resume::retire(candidate);
+            Err(failure)
+        }
+        Err(failure) => Err(ImportFailure::retained(
+            failure.phase,
+            candidate.transaction_id.clone(),
+            format!(
+                "{}; retained import transaction {} still requires recovery",
+                failure.error, candidate.transaction_id
+            ),
+        )),
+    }
 }
 
 /// Refuse an import aimed at a router other than this machine.
@@ -166,7 +251,7 @@ pub async fn run_import(
 ///
 /// `--local` is the way to ask for this machine, and `--managed` is a local
 /// disposable container, so both keep the ordinary path.
-async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
+async fn refuse_a_remote_import(op: &AuthOp) -> Option<ImportFailure> {
     // Decided from the flags alone, so `--local` never contacts a server and
     // never fails because one is unreachable. The per-provider
     // `--from-*-home` flags carry no target and stay local, as they always
@@ -190,8 +275,7 @@ async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
         Err(error) => {
             // An unreachable *named* target is an error in its own right;
             // falling back to a local import is the surprise being fixed.
-            eprintln!("error: {error}");
-            return Some(ExitCode::from(1));
+            return Some(ImportFailure::not_attempted(error));
         }
     };
     // Name the directory the credential would have to land in, when the router
@@ -207,13 +291,12 @@ async fn refuse_a_remote_import(op: &AuthOp) -> Option<ExitCode> {
         }
         _ => None,
     };
-    for line in link_assistant_router::auth_remote::remote_import_refusal(
+    let error = link_assistant_router::auth_remote::remote_import_refusal(
         &server.base_url,
         destination.as_deref(),
-    ) {
-        eprintln!("{line}");
-    }
-    Some(ExitCode::from(1))
+    )
+    .join("\n");
+    Some(ImportFailure::not_attempted(error))
 }
 
 /// The subscription an import target names, when it names one.
@@ -242,7 +325,7 @@ const fn provider_label(provider: ImportProvider) -> &'static str {
 ///
 /// Shares `run_gh`'s reader so the two spellings cannot drift, and reports in
 /// the same column format the subscription imports use.
-fn import_github(data_dir: &std::path::Path, source: &str) -> Result<(), String> {
+fn import_github(data_dir: &std::path::Path, source: &str) -> Result<Vec<String>, String> {
     use link_assistant_router::github_proxy;
 
     let directory = Some(source)
@@ -259,15 +342,18 @@ fn import_github(data_dir: &std::path::Path, source: &str) -> Result<(), String>
         )
     })?;
     let path = github_proxy::store_credential(data_dir, &token)?;
-    println!(
+    let mut messages = vec![format!(
         "github   imported {} from {}",
         path.display(),
         directory.display()
-    );
+    )];
     // The GitHub routes are decided at startup from whether a credential
     // exists, so adopting one mid-run does not mount them.
-    println!("github   note: the GitHub routes are mounted at startup; restart to serve them");
-    Ok(())
+    messages.push(
+        "github   note: the GitHub routes are mounted at startup; restart to serve them"
+            .to_string(),
+    );
+    Ok(messages)
 }
 
 /// Copy a vendor credential into this deployment's home, and say what it is.
@@ -281,7 +367,8 @@ async fn import_provider(
     provider: SubscriptionProvider,
     source: &str,
     policy: ImportPolicy,
-) -> Result<(), String> {
+    resumed_transaction_id: Option<&str>,
+) -> Result<ImportExecution, ImportFailure> {
     let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
     // An empty value asks for the vendor's own default location.
     //
@@ -300,28 +387,29 @@ async fn import_provider(
         // A deployment that reads the vendor's own home already holds whatever
         // is there; there is nothing to copy, and copying a file onto itself
         // would truncate it.
-        return Err(format!(
+        return Err(ImportFailure::not_attempted(format!(
             "{provider} is already read from {}, so there is nothing to adopt",
             destination_home.display()
-        ));
+        )));
     }
 
     let from = SubscriptionReader::new(provider, &source_home);
     // One selection yields the bytes, their verdict, and their origin. Reading
     // the source a second time to describe it is what let the report and the
     // installed credential name different things (issue #280).
-    let source_credential = from
-        .read_document_for_import()
-        .map_err(|error| match error {
+    let source_credential = from.read_document_for_import().map_err(|error| {
+        ImportFailure::not_attempted(match error {
             link_assistant_router::subscription::SubscriptionError::NoCredentials(message) => {
                 format!("no {provider} credential to import: {message}")
             }
             other => format!("invalid {provider} candidate credential: {other}"),
-        })?;
+        })
+    })?;
     let ImportSource {
         document,
         token: _,
         origin,
+        path: source_path,
     } = &source_credential;
     let where_from = match origin {
         link_assistant_router::platform_keychain::Origin::Keychain => {
@@ -330,7 +418,9 @@ async fn import_provider(
                 |service| format!("keychain {service:?}"),
             )
         }
-        link_assistant_router::platform_keychain::Origin::File => {
+        link_assistant_router::platform_keychain::Origin::File
+        | link_assistant_router::platform_keychain::Origin::ExternalFile
+        | link_assistant_router::platform_keychain::Origin::AdoptedFile => {
             from.discover_credential_path().map_or_else(
                 || source_home.display().to_string(),
                 |path| path.display().to_string(),
@@ -339,14 +429,26 @@ async fn import_provider(
     };
 
     let destination = SubscriptionReader::new(provider, &destination_home);
+    if policy.external_refresh_owner
+        && !matches!(
+            origin,
+            link_assistant_router::platform_keychain::Origin::File
+        )
+    {
+        return Err(ImportFailure::not_attempted(format!(
+            "the {provider} credential is owned by {where_from}, which Router cannot durably advance; its refresh token was not spent"
+        )));
+    }
     // Do not spend a rotating candidate chain when conditional provisioning
     // already has a winner. Installation repeats this check after validation,
     // under the same lock, so a concurrent login/refresh still wins the race.
     if policy.if_absent && destination.has_platform_store_credential() {
-        println!(
-            "{provider:<8} already present in the platform credential store; candidate from {where_from} was not validated or installed"
-        );
-        return Ok(());
+        return Ok(ImportExecution::already_present(
+            provider.to_string(),
+            vec![format!(
+                "{provider:<8} already present in the platform credential store; candidate from {where_from} was not validated or installed"
+            )],
+        ));
     }
     if policy.if_absent
         && let Some(path) = destination
@@ -354,13 +456,16 @@ async fn import_provider(
                 &config.data_dir,
                 link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
             )
-            .await?
+            .await
+            .map_err(ImportFailure::not_attempted)?
     {
-        println!(
-            "{provider:<8} already present at {}; candidate from {where_from} was not validated or installed",
-            path.display()
-        );
-        return Ok(());
+        return Ok(ImportExecution::already_present(
+            provider.to_string(),
+            vec![format!(
+                "{provider:<8} already present at {}; candidate from {where_from} was not validated or installed",
+                path.display()
+            )],
+        ));
     }
 
     // A working access token can be paired with a stale, already-spent refresh
@@ -368,74 +473,124 @@ async fn import_provider(
     // durable store, then ask the non-inference catalog with the persisted
     // result. The destination remains untouched throughout both network calls.
     let validated = validate_candidate(&config.data_dir, provider, document).await?;
-    let report = describe_credential(&validated.token);
+    let report = describe_credential(validated.token());
     if (policy.if_absent && destination.has_platform_store_credential())
         || (!policy.if_absent
-            && destination.candidate_is_shadowed_by_platform_store(&validated.token))
+            && destination.candidate_is_shadowed_by_platform_store(validated.token()))
     {
-        let transaction_id = validated.retain();
-        return Err(format!(
-            "the {provider} platform credential remains authoritative; validated candidate retained as transaction {transaction_id}"
+        drop(validated);
+        return Err(ImportFailure::safe_failure(
+            ImportPhase::Promotion,
+            format!(
+                "the {provider} platform credential remains authoritative; the external refresh token was not spent"
+            ),
         ));
     }
+    let receipt_id = resumed_transaction_id.unwrap_or_else(|| validated.transaction_id());
+    let promotion_document = if policy.external_refresh_owner {
+        let source_path = source_path.as_deref().ok_or_else(|| {
+            ImportFailure::not_attempted(format!(
+                "the {provider} external credential has no writable source; its refresh token was not spent"
+            ))
+        })?;
+        link_assistant_router::subscription::reference_external_credential(source_path, receipt_id)
+            .map_err(ImportFailure::not_attempted)?
+    } else {
+        link_assistant_router::subscription::mark_promotion_receipt(
+            validated.document(),
+            receipt_id,
+        )
+        .map_err(ImportFailure::not_attempted)?
+    };
     let promotion = install_candidate(
         &destination,
         &config.data_dir,
-        &validated.document,
+        &promotion_document,
         CredentialProbe::Accepted,
-        policy,
+        ImportPolicy {
+            external_refresh_owner: false,
+            ..policy
+        },
     )
     .await;
     let installed = match promotion {
         Ok(installed) => installed,
+        Err(_error) if destination_has_receipt(config, provider, receipt_id) => {
+            let path = destination.discover_credential_path().ok_or_else(|| {
+                ImportFailure::safe_failure(
+                    ImportPhase::Promotion,
+                    format!("the committed {provider} credential could not be located"),
+                )
+            })?;
+            InstallDocumentResult::Installed(path)
+        }
         Err(error) => {
-            let transaction_id = validated.retain();
-            return Err(format!(
-                "{error}; validated candidate retained as transaction {transaction_id}"
-            ));
+            drop(validated);
+            return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
         }
     };
-    match installed {
+    let execution = match installed {
         InstallDocumentResult::Installed(path) => {
-            println!(
-                "{provider:<8} imported {} from {where_from}",
-                path.display()
-            );
-            println!(
-                "{provider:<8} note: refresh-chain validation advanced the candidate before \
-                 installation; the source copy may now contain the spent predecessor"
-            );
+            let messages = vec![
+                format!(
+                    "{provider:<8} imported {} from {where_from}",
+                    path.display()
+                ),
+                format!(
+                    "{provider:<8} candidate {report}, accepted by the vendor without spending the source refresh token"
+                ),
+            ];
             // Dropping a successfully promoted candidate removes its isolated
             // staging directory. The complete bytes now live at `path`.
             drop(validated);
+            ImportExecution::promoted(provider.to_string(), messages)
         }
         InstallDocumentResult::AlreadyPresent(path) => {
-            // A login or refresh won the race after the preflight. Its bytes
-            // remain authoritative, while the advanced candidate must stay
-            // durable because its source now holds a spent predecessor.
-            let transaction_id = validated.retain();
-            println!(
-                "{provider:<8} already present at {}; candidate from {where_from} was not installed",
-                path.display()
-            );
-            println!("{provider:<8} validated candidate retained as transaction {transaction_id}");
+            // A login or refresh won the race after the preflight. The source
+            // refresh token was never spent, so no recovery transaction is
+            // needed for the discarded duplicate.
+            drop(validated);
+            ImportExecution::already_present(
+                provider.to_string(),
+                vec![format!(
+                    "{provider:<8} already present at {}; candidate from {where_from} was not installed",
+                    path.display()
+                )],
+            )
         }
-    }
-    println!(
-        "{provider:<8} candidate {report}, accepted by the vendor after refresh-chain validation"
-    );
-    Ok(())
+    };
+    Ok(execution)
+}
+
+fn destination_has_receipt(
+    config: &link_assistant_router::config::Config,
+    provider: SubscriptionProvider,
+    transaction_id: &str,
+) -> bool {
+    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let destination =
+        SubscriptionReader::new(provider, provider_home(config, provider, &user_home));
+    destination
+        .discover_credential_path()
+        .and_then(|path| std::fs::read_to_string(path).ok())
+        .is_some_and(|document| {
+            link_assistant_router::subscription::has_promotion_receipt(&document, transaction_id)
+        })
 }
 
 async fn validate_candidate(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,
     document: &str,
-) -> Result<ValidatedCandidate, String> {
-    import_refresh_prerequisite(provider, |key| std::env::var(key).ok())?;
-    validate_candidate_with(data_dir, provider, document, None, None).await
+) -> Result<ValidatedCandidate, ImportFailure> {
+    link_assistant_router::credential_acceptance::accept_external_candidate(
+        data_dir, provider, document, None,
+    )
+    .await
+    .map_err(|failure| ImportFailure::from_acceptance(&failure))
 }
 
+#[cfg(test)]
 fn import_refresh_prerequisite(
     provider: SubscriptionProvider,
     lookup: impl FnOnce(&str) -> Option<String>,
@@ -473,168 +628,23 @@ fn same_credential_home(source: &std::path::Path, destination: &std::path::Path)
 /// always uses the provider's public OAuth endpoint and a Router-validated
 /// catalog origin; a candidate-controlled `resource_url` can therefore never
 /// send the refreshed bearer token outside the vendor allowlist.
+#[cfg(test)]
 async fn validate_candidate_with(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,
     document: &str,
     token_url_override: Option<&str>,
     catalog_base_url_override: Option<&str>,
-) -> Result<ValidatedCandidate, String> {
-    let staging_root = data_dir.join("auth-import-candidates");
-    std::fs::create_dir_all(&staging_root)
-        .map_err(|_| "could not create the private credential-import staging area".to_string())?;
-    let transaction_id = uuid::Uuid::new_v4().simple().to_string();
-    let stage = tempfile::Builder::new()
-        .prefix(&format!("{transaction_id}-"))
-        .tempdir_in(&staging_root)
-        .map_err(|_| "could not create a private credential-import transaction".to_string())?;
-    let candidate_home = stage.path().join(provider.as_str());
-    std::fs::create_dir(&candidate_home)
-        .map_err(|_| "could not create the isolated candidate store".to_string())?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&candidate_home, std::fs::Permissions::from_mode(0o700))
-            .map_err(|_| "could not protect the isolated candidate store".to_string())?;
-    }
-    let reader = SubscriptionReader::new(provider, &candidate_home);
-    reader
-        .install_document(document)
-        .map_err(|_| format!("the {provider} candidate could not be staged durably"))?;
-    let catalog_base = if let Some(base) = catalog_base_url_override {
-        base.trim_end_matches('/').to_string()
-    } else {
-        let staged = reader.read_document_for_import().map_err(|_| {
-            format!("the staged {provider} candidate could not be read for validation")
-        })?;
-        catalog_base_for_candidate(provider, &staged.token)?
-    };
-
-    let candidate_data = stage.path().join("router-state");
-    let cache = link_assistant_router::refresh::TokenCache::registered_for(
-        std::slice::from_ref(&reader),
-        &candidate_data,
-    );
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(20))
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|_| "could not initialize candidate validation".to_string())?;
-    let now_ms = chrono::Utc::now().timestamp_millis();
-    let refresh_result = match token_url_override {
-        Some(token_url) => {
-            cache
-                .validate_refresh_chain_registered_at(
-                    &client,
-                    token_url,
-                    provider,
-                    link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-                    now_ms,
-                )
-                .await
-        }
-        None => {
-            cache
-                .validate_refresh_chain_registered(
-                    &client,
-                    provider,
-                    link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-                    now_ms,
-                )
-                .await
-        }
-    };
-    let refreshed = match refresh_result {
-        Ok(refreshed) => refreshed,
-        Err(error) => {
-            // The endpoint may have advanced a rotating chain before a
-            // response, persistence, or authoritative reread failed. Retain
-            // the isolated store conservatively; dropping it here could
-            // delete the only durable successor.
-            let _retained_path = stage.keep();
-            return Err(format!(
-                "{error}; isolated candidate retained as transaction {transaction_id}"
-            ));
-        }
-    };
-
-    // The refresh has advanced the source's rotating chain. From this point on,
-    // a failed catalog or promotion must retain the staged durable successor.
-    if let Err(error) = link_assistant_router::model_catalog::fetch_provider_catalog(
-        &client,
+) -> Result<ValidatedCandidate, ImportFailure> {
+    link_assistant_router::credential_acceptance::accept_candidate(
+        data_dir,
         provider,
-        &refreshed,
-        Some(&catalog_base),
+        document,
+        token_url_override,
+        catalog_base_url_override,
     )
     .await
-    {
-        let reason = if link_assistant_router::model_catalog::is_credential_rejection(&error) {
-            "was rejected by the vendor catalog"
-        } else {
-            "was not positively accepted by the vendor catalog"
-        };
-        let _retained_path = stage.keep();
-        return Err(format!(
-            "the {provider} candidate {reason}; refreshed candidate retained as transaction {transaction_id}"
-        ));
-    }
-
-    let Ok(durable) = reader.read_document_for_import() else {
-        let _retained_path = stage.keep();
-        return Err(format!(
-            "the durable {provider} candidate could not be reread; refreshed candidate retained as transaction {transaction_id}"
-        ));
-    };
-    if durable.token.access_token != refreshed.access_token
-        || durable.token.refresh_token != refreshed.refresh_token
-    {
-        let _retained_path = stage.keep();
-        return Err(format!(
-            "the durable {provider} candidate changed after validation; refreshed candidate retained as transaction {transaction_id}"
-        ));
-    }
-    Ok(ValidatedCandidate {
-        document: durable.document,
-        token: durable.token,
-        stage,
-        transaction_id,
-    })
-}
-
-/// Select the catalog origin without trusting arbitrary credential input.
-///
-/// Qwen Code binds a token to `portal.qwen.ai` through `resource_url`, while
-/// credentials without that field use the public `DashScope` endpoint. Only
-/// those exact HTTPS origins on the default port are eligible to receive the
-/// refreshed bearer token.
-fn catalog_base_for_candidate(
-    provider: SubscriptionProvider,
-    token: &link_assistant_router::subscription::SubscriptionToken,
-) -> Result<String, String> {
-    if provider == SubscriptionProvider::Gemini {
-        return Ok("https://generativelanguage.googleapis.com".to_string());
-    }
-    if provider != SubscriptionProvider::Qwen {
-        return Ok(provider.default_base_url().to_string());
-    }
-
-    let base = token.base_url(provider);
-    let parsed = reqwest::Url::parse(&base)
-        .map_err(|_| "the Qwen candidate names an invalid catalog origin".to_string())?;
-    let trusted_host = matches!(
-        parsed.host_str(),
-        Some("portal.qwen.ai" | "dashscope.aliyuncs.com")
-    );
-    let safe_authority = parsed.scheme() == "https"
-        && parsed.username().is_empty()
-        && parsed.password().is_none()
-        && parsed.port_or_known_default() == Some(443)
-        && parsed.query().is_none()
-        && parsed.fragment().is_none();
-    if !trusted_host || !safe_authority {
-        return Err("the Qwen candidate catalog origin is not trusted".to_string());
-    }
-    Ok(base.trim_end_matches('/').to_string())
+    .map_err(|failure| ImportFailure::from_acceptance(&failure))
 }
 
 /// Enforce candidate acceptance policy, then enter the shared writer boundary.

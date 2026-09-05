@@ -300,6 +300,7 @@ fn install_provider_for_subscriber(
                     .map(|value| (*value).to_string())
                     .collect(),
             ),
+            if_absent: false,
         })
         .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::ZaiCodingPlan;
@@ -315,7 +316,10 @@ fn client_headers(
     let mut headers = HeaderMap::new();
     match client {
         ClientKind::ClaudeCode => {
-            headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+            );
             headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
             headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.259"));
         }
@@ -432,9 +436,17 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         install_provider(&mut state, &base_url, &[]);
         let request_body =
             serde_json::json!({"model": model, "messages": [{"role":"user","content":"hi"}]});
+        let mut client_headers = client_headers(&state, client, "owner-a");
+        client_headers.insert("connection", HeaderValue::from_static("x-hop-secret"));
+        client_headers.insert("x-hop-secret", HeaderValue::from_static("private-hop"));
+        client_headers.insert(
+            "x-forwarded-client-cert",
+            HeaderValue::from_static("By=spiffe://private;Subject=client"),
+        );
+        client_headers.insert("x-native-end-to-end", HeaderValue::from_static("preserved"));
         let response = crate::zai_coding_plan::forward(
             &state,
-            &client_headers(&state, client, "owner-a"),
+            &client_headers,
             request_body.clone(),
             incoming,
             protocol,
@@ -489,6 +501,13 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
                 .all(|name| !name.as_str().starts_with("x-router-")
                     && !name.as_str().starts_with("x-link-assistant-"))
         );
+        for removed in ["connection", "x-hop-secret", "x-forwarded-client-cert"] {
+            assert!(
+                !forwarded.contains_key(removed),
+                "{removed} leaked for {client}"
+            );
+        }
+        assert_eq!(forwarded["x-native-end-to-end"], "preserved");
         drop(requests);
         handle.abort();
     }
@@ -667,6 +686,7 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
             subscriber_id: Some("owner-a".into()),
             acknowledge_intermediary_risk: Some(true),
             acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent: false,
         })
         .unwrap();
     state.upstream_provider = crate::config::UpstreamProvider::Auto;

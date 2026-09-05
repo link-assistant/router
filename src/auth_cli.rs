@@ -719,25 +719,31 @@ async fn status(config: &Config) -> ExitCode {
                 if let Ok(token) = token
                     && token_cache.last_refresh_error(provider).is_none()
                 {
-                    match link_assistant_router::model_catalog::fetch_provider_catalog(
+                    let catalog = link_assistant_router::model_catalog::fetch_provider_catalog(
                         &client, provider, &token, None,
                     )
-                    .await
-                    {
-                        Ok(_) => "usable",
-                        Err(error)
-                            if link_assistant_router::model_catalog::is_credential_rejection(
-                                &error,
-                            ) =>
-                        {
+                    .await;
+                    match link_assistant_router::model_catalog::classify_catalog_acceptance(
+                        &catalog,
+                    ) {
+                        link_assistant_router::model_catalog::CatalogAcceptance::Accepted => {
+                            "usable"
+                        }
+                        link_assistant_router::model_catalog::CatalogAcceptance::MissingSubscription
+                        | link_assistant_router::model_catalog::CatalogAcceptance::CredentialRejected => {
                             "rejected"
                         }
                         // The credential may well be fine; the probe could not say.
-                        Err(_) => "unverified",
+                        link_assistant_router::model_catalog::CatalogAcceptance::Unverified => {
+                            "unverified"
+                        }
                     }
                 } else {
+                    let detail = token_cache.last_refresh_error(provider).unwrap_or_else(|| {
+                        "refresh failed before the credential could be checked".into()
+                    });
                     eprintln!(
-                        "error: {provider} refresh failed; credential state was not reported usable"
+                        "error: {provider} refresh failed: {detail}; credential state was not reported usable"
                     );
                     refresh_failed = true;
                     "refresh-failed"

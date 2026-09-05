@@ -32,6 +32,42 @@ fn test_app_for_listener(
     github: bool,
     listener: ListenerKind,
 ) -> (axum::Router, String) {
+    test_app_for_listener_with_switches(
+        dir,
+        listener,
+        SurfaceSwitches {
+            features: FeatureSwitches { mpp, github },
+            apis: ApiSwitches {
+                openai: true,
+                anthropic: true,
+            },
+        },
+    )
+}
+
+#[derive(Clone, Copy)]
+struct SurfaceSwitches {
+    features: FeatureSwitches,
+    apis: ApiSwitches,
+}
+
+#[derive(Clone, Copy)]
+struct FeatureSwitches {
+    mpp: bool,
+    github: bool,
+}
+
+#[derive(Clone, Copy)]
+struct ApiSwitches {
+    openai: bool,
+    anthropic: bool,
+}
+
+fn test_app_for_listener_with_switches(
+    dir: &std::path::Path,
+    listener: ListenerKind,
+    switches: SurfaceSwitches,
+) -> (axum::Router, String) {
     let dir_arg = dir.to_str().expect("UTF-8 test path");
     let mut args = vec![
         "router",
@@ -44,7 +80,7 @@ fn test_app_for_listener(
         "--upstream-base-url",
         "http://127.0.0.1:9",
     ];
-    if mpp {
+    if switches.features.mpp {
         args.extend([
             "--mpp-enable",
             "--mpp-amount",
@@ -54,6 +90,12 @@ fn test_app_for_listener(
             "--mpp-recipient",
             "audit-merchant",
         ]);
+    }
+    if !switches.apis.openai {
+        args.push("--disable-openai-api");
+    }
+    if !switches.apis.anthropic {
+        args.push("--disable-anthropic-api");
     }
     let config = Cli::try_parse_from(args)
         .expect("test CLI parses")
@@ -100,7 +142,7 @@ fn test_app_for_listener(
             link_assistant_router::config::default_activitypub_public_key_pem(),
         mpp: config.mpp.clone(),
         login_manager: link_assistant_router::login::LoginManager::new(config.login.clone()),
-        github: if github {
+        github: if switches.features.github {
             link_assistant_router::github_proxy::GitHubProxyConfig::with_credential(
                 "upstream-github-token",
                 "http://127.0.0.1:9",
@@ -114,6 +156,97 @@ fn test_app_for_listener(
         link_assistant_router::server_router::router_for_listener(state, &config, listener),
         token,
     )
+}
+
+#[tokio::test]
+async fn service_switches_own_their_complete_namespaces() {
+    let anthropic_routes = [
+        (Method::GET, "/api/services/anthropic/v1/models"),
+        (Method::POST, "/api/services/anthropic/v1/messages"),
+        (
+            Method::POST,
+            "/api/services/anthropic/v1/messages/count_tokens",
+        ),
+        (Method::POST, "/api/services/bedrock/invoke"),
+        (
+            Method::POST,
+            "/api/services/bedrock/invoke-with-response-stream",
+        ),
+        (
+            Method::POST,
+            "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/claude-live:rawPredict",
+        ),
+    ];
+    let openai_routes = [
+        (Method::GET, "/api/services/openai/v1/models"),
+        (Method::POST, "/api/services/openai/v1/chat/completions"),
+        (Method::POST, "/api/services/openai/v1/responses"),
+        (Method::GET, "/api/services/codex/v1/models"),
+        (Method::POST, "/api/services/codex/v1/chat/completions"),
+        (Method::POST, "/api/services/codex/v1/responses"),
+        (Method::GET, "/api/services/qwen/v1/models"),
+        (Method::POST, "/api/services/qwen/v1/chat/completions"),
+        (Method::POST, "/api/services/qwen/v1/responses"),
+        (Method::GET, "/api/services/gemini/v1beta/models"),
+        (
+            Method::GET,
+            "/api/services/gemini/v1beta/models/gemini-live",
+        ),
+        (
+            Method::POST,
+            "/api/services/gemini/v1beta/models/gemini-live:generateContent",
+        ),
+        (
+            Method::POST,
+            "/api/services/vertex/v1/projects/p/locations/l/models/gemini-live:generateContent",
+        ),
+    ];
+    let directory = tempfile::tempdir().expect("tempdir");
+    let (anthropic_only, _) = test_app_for_listener_with_switches(
+        directory.path(),
+        ListenerKind::Combined,
+        SurfaceSwitches {
+            features: FeatureSwitches {
+                mpp: false,
+                github: false,
+            },
+            apis: ApiSwitches {
+                openai: false,
+                anthropic: true,
+            },
+        },
+    );
+    for (method, path) in &anthropic_routes {
+        let mounted = response(anthropic_only.clone(), method.clone(), path, None, "{}").await;
+        assert_eq!(mounted.status(), StatusCode::UNAUTHORIZED, "{path}");
+    }
+    for (method, path) in &openai_routes {
+        let absent = response(anthropic_only.clone(), method.clone(), path, None, "{}").await;
+        assert_eq!(absent.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+
+    let (openai_only, _) = test_app_for_listener_with_switches(
+        directory.path(),
+        ListenerKind::Combined,
+        SurfaceSwitches {
+            features: FeatureSwitches {
+                mpp: false,
+                github: false,
+            },
+            apis: ApiSwitches {
+                openai: true,
+                anthropic: false,
+            },
+        },
+    );
+    for (method, path) in &anthropic_routes {
+        let absent = response(openai_only.clone(), method.clone(), path, None, "{}").await;
+        assert_eq!(absent.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+    for (method, path) in &openai_routes {
+        let mounted = response(openai_only.clone(), method.clone(), path, None, "{}").await;
+        assert_eq!(mounted.status(), StatusCode::UNAUTHORIZED, "{path}");
+    }
 }
 
 async fn response(
@@ -280,6 +413,7 @@ async fn github_cli_aliases_exist_only_on_the_private_adapter_listener() {
     for (method, path) in [
         (Method::GET, "/api/v3/user"),
         (Method::POST, "/api/graphql"),
+        (Method::GET, "/git/owner/repo.git/info/refs"),
     ] {
         let anonymous = response(adapter.clone(), method.clone(), path, None, "{}").await;
         assert_eq!(anonymous.status(), StatusCode::UNAUTHORIZED, "{path}");

@@ -4,7 +4,7 @@
 //!
 //! 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
 //! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `providers`, `clients`,
-//!    `auth`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
+//!    `auth`, `usage`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
 //!    binding a port. Those that read or change router state act on the router
 //!    this machine is pointed at, which may be a remote deployment (issue
 //!    #294); `configure`, `clients` and `auth --local` act here.
@@ -139,7 +139,9 @@ async fn run() -> ExitCode {
         },
         Some(Command::Tokens { op }) => run_tokens(&config, op),
         Some(Command::Accounts { op }) => run_accounts(&config, op),
-        Some(Command::Providers { op }) => link_assistant_router::providers_cli::run(&config, op),
+        Some(Command::Providers { op }) => {
+            link_assistant_router::providers_cli::run(&config, op).await
+        }
         Some(Command::Clients { op }) => {
             link_assistant_router::client_command::run(&config, cli.home.as_deref(), op).await
         }
@@ -151,6 +153,19 @@ async fn run() -> ExitCode {
                 &config,
                 op,
                 link_assistant_router::remote_command::names_local_state(&cli),
+            )
+            .await
+        }
+        Some(Command::Usage { provider, json, .. }) => {
+            let token = std::env::var("LINK_ASSISTANT_ROUTER_TOKEN")
+                .or_else(|_| std::env::var("LINK_ASSISTANT_TOKEN"))
+                .ok();
+            let base_url = format!("http://{}", config.listen_addr);
+            link_assistant_router::subscription_usage_cli::run(
+                &base_url,
+                token.as_deref(),
+                *provider,
+                *json,
             )
             .await
         }
@@ -615,6 +630,15 @@ async fn run_remote_command(
         Command::Accounts { .. } => link_assistant_router::auth_remote::accounts(server).await,
         Command::Providers { op } => {
             link_assistant_router::providers_cli::run_remote(server, op).await
+        }
+        Command::Usage { provider, json, .. } => {
+            link_assistant_router::subscription_usage_cli::run(
+                &server.base_url,
+                server.token.as_deref(),
+                *provider,
+                *json,
+            )
+            .await
         }
         // The request log is written to the deployment's own disk and no
         // endpoint serves it back, so there is nothing to ask for. Saying that

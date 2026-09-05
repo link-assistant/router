@@ -52,6 +52,8 @@ fn a_provider_without_a_store_looks_up_nothing() {
 #[test]
 fn each_origin_names_itself_distinctly() {
     assert_eq!(Origin::File.label(), "file");
+    assert_eq!(Origin::ExternalFile.label(), "external file");
+    assert_eq!(Origin::AdoptedFile.label(), "adopted file");
     assert_eq!(Origin::Keychain.label(), "keychain");
     assert_ne!(Origin::File.label(), Origin::Keychain.label());
 }

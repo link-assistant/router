@@ -99,7 +99,7 @@ fn mock_managed_router(
                 }
                 "/api/services/codex/v1/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol"}]}"#.to_string(),
+                    r#"{"object":"list","data":[{"id":"gpt-5.6-sol","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"}]}]}"#.to_string(),
                 ),
                 "/api/management/tokens/revoke" => {
                     ("200 OK", r#"{"revoked":"managed-run"}"#.to_string())

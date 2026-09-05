@@ -1,0 +1,320 @@
+//! Stable machine-readable results for `router auth import`.
+
+use std::process::ExitCode;
+
+#[cfg(test)]
+use link_assistant_router::refresh::ImportRefreshFailureKind;
+use serde::Serialize;
+
+/// Public import outcomes. These serialized spellings are a compatibility
+/// contract for automation and must not be inferred from diagnostic prose.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub(super) enum ImportOutcome {
+    NotAttempted,
+    ExchangeRejected,
+    ExchangeUncertain,
+    PersistenceUncertain,
+    SuccessorRetained,
+    Promoted,
+    PromotionCleanupPending,
+    AlreadyPresent,
+}
+
+/// The last import phase reached before the reported outcome.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub(super) enum ImportPhase {
+    Preflight,
+    Exchange,
+    Persistence,
+    Catalog,
+    Promotion,
+}
+
+/// The only fields emitted as JSON. Deliberately excludes diagnostic strings,
+/// paths, source documents, and tokens.
+#[derive(Debug, PartialEq, Eq, Serialize)]
+pub(super) struct ImportReport {
+    pub(super) provider: Option<String>,
+    pub(super) outcome: ImportOutcome,
+    pub(super) phase: ImportPhase,
+    pub(super) previous_credential_safe: bool,
+    pub(super) transaction_id: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ImportEnvelope<'a> {
+    schema_version: u8,
+    results: Vec<&'a ImportReport>,
+}
+
+/// Internal failure with human diagnostic text kept outside the JSON report.
+#[derive(Debug)]
+pub(super) struct ImportFailure {
+    pub(super) outcome: ImportOutcome,
+    pub(super) phase: ImportPhase,
+    pub(super) previous_credential_safe: bool,
+    pub(super) transaction_id: Option<String>,
+    pub(super) error: String,
+}
+
+impl ImportFailure {
+    pub(super) fn not_attempted(error: impl Into<String>) -> Self {
+        Self::safe_failure(ImportPhase::Preflight, error)
+    }
+
+    pub(super) fn safe_failure(phase: ImportPhase, error: impl Into<String>) -> Self {
+        Self {
+            outcome: ImportOutcome::NotAttempted,
+            phase,
+            previous_credential_safe: true,
+            transaction_id: None,
+            error: error.into(),
+        }
+    }
+
+    pub(super) fn retained(
+        phase: ImportPhase,
+        transaction_id: String,
+        error: impl Into<String>,
+    ) -> Self {
+        Self {
+            outcome: ImportOutcome::SuccessorRetained,
+            phase,
+            previous_credential_safe: false,
+            transaction_id: Some(transaction_id),
+            error: error.into(),
+        }
+    }
+
+    /// Convert the shared acceptance classification without parsing its
+    /// redacted human diagnostic. Only uncertain failures retain a transaction.
+    pub(super) fn from_acceptance(
+        failure: &link_assistant_router::credential_acceptance::AcceptanceFailure,
+    ) -> Self {
+        use link_assistant_router::credential_acceptance::{
+            AcceptanceFailureKind, AcceptancePhase,
+        };
+        let phase = match failure.phase() {
+            AcceptancePhase::Preflight => ImportPhase::Preflight,
+            AcceptancePhase::Exchange => ImportPhase::Exchange,
+            AcceptancePhase::Persistence => ImportPhase::Persistence,
+            AcceptancePhase::Catalog => ImportPhase::Catalog,
+            AcceptancePhase::Promotion => ImportPhase::Promotion,
+        };
+        let error = failure.to_string();
+        match failure.kind() {
+            AcceptanceFailureKind::NotAttempted => Self::safe_failure(phase, error),
+            AcceptanceFailureKind::ExchangeRejected => Self {
+                outcome: ImportOutcome::ExchangeRejected,
+                phase,
+                previous_credential_safe: true,
+                transaction_id: None,
+                error,
+            },
+            AcceptanceFailureKind::ExchangeUncertain => Self {
+                outcome: ImportOutcome::ExchangeUncertain,
+                phase,
+                previous_credential_safe: false,
+                transaction_id: None,
+                error,
+            },
+            AcceptanceFailureKind::PersistenceUncertain => Self {
+                outcome: ImportOutcome::PersistenceUncertain,
+                phase,
+                previous_credential_safe: false,
+                transaction_id: None,
+                error,
+            },
+            AcceptanceFailureKind::SuccessorRetained => Self {
+                outcome: ImportOutcome::SuccessorRetained,
+                phase,
+                previous_credential_safe: false,
+                transaction_id: failure.transaction_id().map(str::to_string),
+                error,
+            },
+        }
+    }
+
+    #[cfg(test)]
+    fn from_refresh_kind(
+        kind: ImportRefreshFailureKind,
+        error: String,
+        _transaction_id: &str,
+    ) -> Self {
+        match kind {
+            ImportRefreshFailureKind::NotAttempted => Self::not_attempted(error),
+            ImportRefreshFailureKind::ExchangeRejected => Self {
+                outcome: ImportOutcome::ExchangeRejected,
+                phase: ImportPhase::Exchange,
+                previous_credential_safe: true,
+                transaction_id: None,
+                error,
+            },
+            ImportRefreshFailureKind::ExchangeUncertain => Self {
+                outcome: ImportOutcome::ExchangeUncertain,
+                phase: ImportPhase::Exchange,
+                previous_credential_safe: false,
+                transaction_id: None,
+                error,
+            },
+            ImportRefreshFailureKind::PersistenceUncertain => Self {
+                outcome: ImportOutcome::PersistenceUncertain,
+                phase: ImportPhase::Persistence,
+                previous_credential_safe: false,
+                transaction_id: None,
+                error,
+            },
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn from_refresh_kind_for_test(
+        kind: ImportRefreshFailureKind,
+        transaction_id: &str,
+    ) -> Self {
+        Self::from_refresh_kind(kind, "redacted failure".to_string(), transaction_id)
+    }
+
+    #[cfg(test)]
+    pub(super) fn contains(&self, pattern: &str) -> bool {
+        self.error.contains(pattern)
+    }
+}
+
+impl std::fmt::Display for ImportFailure {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.error)
+    }
+}
+
+/// One provider's structured result plus human-only presentation details.
+pub(super) struct ImportExecution {
+    report: ImportReport,
+    messages: Vec<String>,
+    error: Option<String>,
+    failed: bool,
+}
+
+impl ImportExecution {
+    pub(super) fn promoted(provider: impl Into<String>, messages: Vec<String>) -> Self {
+        Self::success(
+            provider,
+            ImportOutcome::Promoted,
+            ImportPhase::Promotion,
+            false,
+            messages,
+        )
+    }
+
+    pub(super) fn already_present(provider: impl Into<String>, messages: Vec<String>) -> Self {
+        Self::success(
+            provider,
+            ImportOutcome::AlreadyPresent,
+            ImportPhase::Preflight,
+            true,
+            messages,
+        )
+    }
+
+    fn success(
+        provider: impl Into<String>,
+        outcome: ImportOutcome,
+        phase: ImportPhase,
+        previous_credential_safe: bool,
+        messages: Vec<String>,
+    ) -> Self {
+        Self {
+            report: ImportReport {
+                provider: Some(provider.into()),
+                outcome,
+                phase,
+                previous_credential_safe,
+                transaction_id: None,
+            },
+            messages,
+            error: None,
+            failed: false,
+        }
+    }
+
+    pub(super) fn failed(provider: Option<&str>, failure: ImportFailure) -> Self {
+        Self {
+            report: ImportReport {
+                provider: provider.map(str::to_string),
+                outcome: failure.outcome,
+                phase: failure.phase,
+                previous_credential_safe: failure.previous_credential_safe,
+                transaction_id: failure.transaction_id,
+            },
+            messages: Vec::new(),
+            error: Some(failure.error),
+            failed: true,
+        }
+    }
+
+    pub(super) fn ignore_failure(mut self, message: String) -> Self {
+        self.messages.push(message);
+        self.error = None;
+        self.failed = false;
+        self
+    }
+
+    pub(super) const fn is_promoted(&self) -> bool {
+        matches!(self.report.outcome, ImportOutcome::Promoted)
+    }
+
+    pub(super) fn mark_cleanup_pending(&mut self, transaction_id: String, error: String) {
+        self.report.outcome = ImportOutcome::PromotionCleanupPending;
+        self.report.phase = ImportPhase::Promotion;
+        self.report.transaction_id = Some(transaction_id);
+        self.error = Some(error);
+        self.failed = true;
+    }
+}
+
+/// Render all providers exactly once and return the aggregate process status.
+pub(super) fn finish(executions: &[ImportExecution], json: bool) -> ExitCode {
+    if json {
+        let reports = executions
+            .iter()
+            .map(|execution| &execution.report)
+            .collect::<Vec<_>>();
+        let envelope = ImportEnvelope {
+            schema_version: 1,
+            results: reports,
+        };
+        println!(
+            "{}",
+            serde_json::to_string(&envelope).expect("fixed import result schema must serialize")
+        );
+    } else {
+        for execution in executions {
+            for message in &execution.messages {
+                println!("{message}");
+            }
+            if let Some(error) = &execution.error {
+                eprintln!("error: {error}");
+            }
+        }
+    }
+    if executions.iter().any(|execution| execution.failed) {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
+}
+
+#[cfg(test)]
+pub(super) fn json_value(executions: &[ImportExecution]) -> serde_json::Value {
+    let reports = executions
+        .iter()
+        .map(|execution| &execution.report)
+        .collect::<Vec<_>>();
+    serde_json::to_value(ImportEnvelope {
+        schema_version: 1,
+        results: reports,
+    })
+    .expect("fixed import result schema must serialize")
+}

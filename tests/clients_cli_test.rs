@@ -59,7 +59,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
 }
 
 #[test]
-fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
+fn claude_setup_pins_only_dynamic_boundaries_to_a_live_zai_only_catalog_model() {
     let home = tempfile::tempdir().expect("temp home");
     let model = "future-citrine-2099";
     let (base_url, server) = catalog_server(&[(model, "z.ai")]);
@@ -96,14 +96,15 @@ fn claude_setup_pins_every_default_to_a_live_zai_only_catalog_model() {
         settings["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
         "1"
     );
+    for key in ["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"] {
+        assert_eq!(settings["env"][key], model, "{key}");
+    }
     for key in [
-        "ANTHROPIC_MODEL",
         "ANTHROPIC_DEFAULT_OPUS_MODEL",
         "ANTHROPIC_DEFAULT_SONNET_MODEL",
         "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-        "CLAUDE_CODE_SUBAGENT_MODEL",
     ] {
-        assert_eq!(settings["env"][key], model, "{key}");
+        assert!(settings["env"].get(key).is_none(), "{key}");
     }
 }
 
@@ -466,6 +467,60 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
         "authorization: bearer {}",
         token.to_ascii_lowercase()
     )));
+}
+
+#[test]
+fn claude_doctor_uses_bearer_for_catalog_and_successful_inference() {
+    let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = mock_router(&[("claude-live", "anthropic")], 3);
+    let token = test_token("claude");
+    let setup = router(
+        home.path(),
+        &[
+            "clients", "setup", "claude", "--token", &token, "--server", &base_url,
+        ],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+
+    let doctor = router_with_env(
+        home.path(),
+        &["clients", "doctor", "claude"],
+        &[("ANTHROPIC_AUTH_TOKEN", &token)],
+    );
+    assert!(
+        doctor.status.success(),
+        "{}",
+        String::from_utf8_lossy(&doctor.stderr)
+    );
+    assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
+    let requests = server.join().expect("mock server thread");
+    assert_eq!(requests.len(), 3, "{requests:?}");
+    for request in &requests {
+        assert!(
+            request.to_ascii_lowercase().contains(&format!(
+                "authorization: bearer {}",
+                token.to_ascii_lowercase()
+            )),
+            "{request}"
+        );
+        assert!(
+            !request.to_ascii_lowercase().contains("x-api-key:"),
+            "Claude's recorded bearer carrier must remain bearer: {request}"
+        );
+    }
+    assert!(requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
+    assert!(requests[2].starts_with("POST /api/services/anthropic/v1/messages HTTP/1.1"));
+    assert!(requests[2].contains("claude-live"));
+    assert!(
+        requests[2]
+            .to_ascii_lowercase()
+            .contains("anthropic-version: 2023-06-01")
+    );
 }
 
 #[test]
@@ -841,138 +896,5 @@ fn grok_setup_stores_both_required_exports_without_persisting_in_client_config()
     );
 }
 
-#[test]
-fn vendor_gated_clients_fail_before_minting_tokens_or_writing_configs() {
-    for (client, expected) in [
-        ("cursor", "speaks Connect-RPC"),
-        ("gemini-cli", "IneligibleTierError"),
-    ] {
-        let home = tempfile::tempdir().expect("temp home");
-        let setup = router(home.path(), &["clients", "setup", client]);
-        assert!(!setup.status.success());
-        assert!(
-            String::from_utf8_lossy(&setup.stderr).contains(expected),
-            "unexpected diagnostic: {}",
-            String::from_utf8_lossy(&setup.stderr)
-        );
-        assert!(
-            !home.path().join("router-data/tokens.json").exists(),
-            "unsupported setup must not mint a token"
-        );
-
-        let doctor = router(home.path(), &["clients", "doctor", client]);
-        assert!(!doctor.status.success());
-        assert!(String::from_utf8_lossy(&doctor.stderr).contains(expected));
-    }
-}
-
-#[test]
-fn qwen_setup_remains_compatible_with_legacy_wrapped_models() {
-    let home = tempfile::tempdir().expect("temp home");
-    let qwen_dir = home.path().join(".qwen");
-    fs::create_dir_all(&qwen_dir).expect("create qwen dir");
-    fs::write(
-        qwen_dir.join("settings.json"),
-        r#"{"modelProviders":{"openai":{"models":[{"id":"mine"}]}}}"#,
-    )
-    .expect("seed legacy settings");
-    let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
-    let token = test_token("qwen");
-    let setup = router(
-        home.path(),
-        &[
-            "clients",
-            "setup",
-            "qwen-code",
-            "--token",
-            &token,
-            "--base-url",
-            &base_url,
-        ],
-    );
-    assert!(
-        setup.status.success(),
-        "{}",
-        String::from_utf8_lossy(&setup.stderr)
-    );
-    let document: serde_json::Value = serde_json::from_str(
-        &fs::read_to_string(qwen_dir.join("settings.json")).expect("read settings"),
-    )
-    .expect("valid JSON");
-    let models = document["modelProviders"]["openai"]["models"]
-        .as_array()
-        .expect("legacy models remain wrapped");
-    assert_eq!(models.len(), 2);
-    assert_eq!(models[0]["id"], "mine");
-    assert_eq!(server.join().expect("catalog server").len(), 1);
-}
-
-#[test]
-fn opencode_remove_restores_a_provider_that_setup_replaced() {
-    let home = tempfile::tempdir().expect("temp home");
-    let directory = home.path().join(".config/opencode");
-    fs::create_dir_all(&directory).expect("create config dir");
-    let path = directory.join("opencode.json");
-    fs::write(
-        &path,
-        r#"{"provider":{"link-assistant":{"name":"User-owned"}}}"#,
-    )
-    .expect("seed provider");
-    let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
-    let token = test_token("opencode");
-    let setup = router(
-        home.path(),
-        &[
-            "clients",
-            "setup",
-            "opencode",
-            "--token",
-            &token,
-            "--base-url",
-            &base_url,
-        ],
-    );
-    assert!(setup.status.success());
-    assert_eq!(server.join().expect("catalog server").len(), 1);
-    let removed = router(home.path(), &["clients", "remove", "opencode"]);
-    assert!(removed.status.success());
-    let document: serde_json::Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("read restored config"))
-            .expect("valid JSON");
-    assert_eq!(document["provider"]["link-assistant"]["name"], "User-owned");
-}
-
-#[test]
-fn reconfiguration_updates_owned_entries_so_remove_stays_surgical() {
-    for client in ["opencode", "qwen-code"] {
-        let home = tempfile::tempdir().expect("temp home");
-        for _ in 0..2 {
-            let (base_url, server) = catalog_server(&[("gpt-live", "openai")]);
-            let token = test_token(client);
-            let setup = router(
-                home.path(),
-                &[
-                    "clients",
-                    "setup",
-                    client,
-                    "--token",
-                    &token,
-                    "--base-url",
-                    &base_url,
-                ],
-            );
-            assert!(
-                setup.status.success(),
-                "{}",
-                String::from_utf8_lossy(&setup.stderr)
-            );
-            assert_eq!(server.join().expect("catalog server").len(), 1);
-        }
-
-        let removed = router(home.path(), &["clients", "remove", client]);
-        assert!(removed.status.success());
-        let shown = router(home.path(), &["clients", "show", client]);
-        assert!(shown.status.success());
-        assert!(String::from_utf8_lossy(&shown.stdout).contains("\"configured\": false"));
-    }
-}
+#[path = "clients_cli/tail.rs"]
+mod tail;

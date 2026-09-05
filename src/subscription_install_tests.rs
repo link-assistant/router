@@ -494,3 +494,58 @@ async fn conditional_install_lock_timeout_changes_nothing() {
     assert!(error.contains("claude credential lock"), "{error}");
     assert!(!home.path().join(".credentials.json").exists());
 }
+
+#[tokio::test]
+async fn replacement_failures_after_rename_or_during_commit_restore_old_credentials() {
+    for failed_name in [".credentials.json", "..credentials.json.router-commit"] {
+        let home = tempfile::tempdir().expect("credential home");
+        let data = tempfile::tempdir().expect("router data");
+        let primary = home.path().join(".credentials.json");
+        let old = r#"{"claudeAiOauth":{"accessToken":"old","refreshToken":"old-r"}}"#;
+        let candidate = r#"{"claudeAiOauth":{"accessToken":"new","refreshToken":"new-r"}}"#;
+        std::fs::write(&primary, old).expect("seed old credential");
+        let reader = SubscriptionReader::new(SubscriptionProvider::Claude, home.path());
+        let _fault = crate::durable_file::inject_fault(
+            &home.path().join(failed_name),
+            crate::durable_file::FaultPoint::AfterRename,
+        );
+
+        reader
+            .install_document_locked(
+                data.path(),
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                candidate,
+                InstallMode::Replace,
+            )
+            .await
+            .expect_err("late persistence failure");
+
+        assert_eq!(std::fs::read_to_string(&primary).unwrap(), old);
+        assert_eq!(reader.read_token().unwrap().access_token, "old");
+    }
+}
+
+#[tokio::test]
+async fn catalog_invalidation_failure_happens_before_primary_replacement() {
+    let home = tempfile::tempdir().expect("credential home");
+    let data = tempfile::tempdir().expect("router data");
+    let primary = home.path().join("auth.json");
+    let old = r#"{"tokens":{"access_token":"old","refresh_token":"old-r"}}"#;
+    std::fs::write(&primary, old).expect("seed old credential");
+    std::fs::write(data.path().join("model-catalog-invalidations"), b"blocked")
+        .expect("block invalidation directory");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
+
+    reader
+        .install_document_locked(
+            data.path(),
+            crate::credential_recovery_store::PRIMARY_ACCOUNT,
+            r#"{"tokens":{"access_token":"new","refresh_token":"new-r"}}"#,
+            InstallMode::Replace,
+        )
+        .await
+        .expect_err("invalidation must fail before replacement");
+
+    assert_eq!(std::fs::read_to_string(&primary).unwrap(), old);
+    assert_eq!(reader.read_token().unwrap().access_token, "old");
+}

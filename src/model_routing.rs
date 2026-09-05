@@ -311,8 +311,9 @@ pub struct ProviderHealth {
     pub healthy: bool,
     /// Operator-facing reason, when it cannot.
     ///
-    /// May name a credential path or an upstream body, so it belongs in a log
-    /// or behind an admin credential — never on an unauthenticated endpoint.
+    /// May name a credential path, so it belongs in a log or behind an admin
+    /// credential — never on an unauthenticated endpoint. OAuth response bodies
+    /// are discarded before a reason reaches this report (issue #430).
     pub reason: Option<String>,
     /// The same verdict, safe to hand an unauthenticated caller.
     pub summary: Option<&'static str>,
@@ -650,9 +651,7 @@ fn model_catalog_with(
             projected
                 .entry("object")
                 .or_insert_with(|| Value::String("model".into()));
-            projected
-                .entry("created")
-                .or_insert_with(|| Value::from(record.fetched_at));
+            projected.insert("router_fetched_at".into(), Value::from(record.fetched_at));
             projected
                 .entry("owned_by")
                 .or_insert_with(|| Value::String(provider_owner(record.provider).to_string()));
@@ -756,7 +755,10 @@ fn principal_catalog_records(
 
 #[path = "model_routing_models.rs"]
 mod models_handler;
-pub use models_handler::models;
+pub use models_handler::{aggregate_models, models};
+
+#[path = "model_routing_aggregate.rs"]
+mod aggregate;
 
 /// Consume an automatic Anthropic-surface request and return its concrete state.
 pub async fn route_anthropic_request(
@@ -925,3 +927,7 @@ mod evidence_tests;
 #[cfg(test)]
 #[path = "model_routing_provider_tests.rs"]
 mod provider_tests;
+
+#[cfg(test)]
+#[path = "model_routing_lefine_client_tests.rs"]
+mod lefine_client_tests;

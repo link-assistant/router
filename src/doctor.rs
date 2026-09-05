@@ -2,7 +2,9 @@
 
 use crate::claude_auth::ClaudeAuthMode;
 use crate::login::LoginConfig;
-use crate::model_catalog::{fetch_provider_catalog, is_credential_rejection};
+use crate::model_catalog::{
+    CatalogAcceptance, classify_catalog_acceptance, fetch_provider_catalog,
+};
 use crate::subscription::{SubscriptionProvider, all_subscription_readers};
 
 /// One line per Claude login mode, saying whether it can run here and which
@@ -127,6 +129,12 @@ fn credential_location(
             )
         }
         crate::platform_keychain::Origin::File => path.display().to_string(),
+        crate::platform_keychain::Origin::AdoptedFile => {
+            format!("{} (adopted vendor credential)", path.display())
+        }
+        crate::platform_keychain::Origin::ExternalFile => {
+            format!("{} (external refresh owner)", path.display())
+        }
     }
 }
 
@@ -227,14 +235,14 @@ async fn subscription_catalog_diagnostics_with_token_url(
         };
         let Ok(token) = refreshed else {
             let location = credential_location(provider, origin, &path);
+            let detail = token_cache
+                .last_refresh_error_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+                .unwrap_or_else(|| "refresh failed before the credential could be checked".into());
             println!(
                 "{label:<23}: {location} (found, refresh FAILED, store: {})",
                 origin.label()
             );
-            println!(
-                "{:<23}: ERROR (credential refresh failed)",
-                format!("{provider} refresh")
-            );
+            println!("{:<23}: ERROR ({detail})", format!("{provider} refresh"));
             println!(
                 "{:<23}: ERROR (credential refresh failed before catalog probe)",
                 format!("{provider} catalog")
@@ -242,19 +250,15 @@ async fn subscription_catalog_diagnostics_with_token_url(
             catalog_error = true;
             continue;
         };
-        if token_cache
+        if let Some(detail) = token_cache
             .last_refresh_error_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
-            .is_some()
         {
             let location = credential_location(provider, origin, &path);
             println!(
                 "{label:<23}: {location} (found, refresh FAILED, store: {})",
                 origin.label()
             );
-            println!(
-                "{:<23}: ERROR (credential refresh transaction failed)",
-                format!("{provider} refresh")
-            );
+            println!("{:<23}: ERROR ({detail})", format!("{provider} refresh"));
             println!(
                 "{:<23}: ERROR (credential refresh failed before catalog probe)",
                 format!("{provider} catalog")
@@ -266,25 +270,35 @@ async fn subscription_catalog_diagnostics_with_token_url(
         // declared dead: the catalog endpoint is what actually knows.
         let still_expired = token.is_expired(now_ms);
         let catalog = fetch_provider_catalog(&client, provider, &token, None).await;
-        let rejected = catalog
-            .as_ref()
-            .is_err_and(|error| is_credential_rejection(error));
+        let acceptance = classify_catalog_acceptance(&catalog);
+        let rejected = matches!(
+            acceptance,
+            CatalogAcceptance::MissingSubscription | CatalogAcceptance::CredentialRejected
+        );
         let status = credential_status(was_expired, still_expired, rejected);
         let location = credential_location(provider, origin, &path);
         println!(
             "{label:<23}: {location} ({status}, store: {})",
             origin.label()
         );
-        match catalog {
-            Ok(models) => println!(
+        match (acceptance, catalog) {
+            (CatalogAcceptance::Accepted, Ok(models)) => println!(
                 "{:<23}: OK ({} live model(s))",
                 format!("{provider} catalog"),
                 models.len()
             ),
-            Err(error) => {
+            (CatalogAcceptance::MissingSubscription, Ok(_)) => {
+                println!(
+                    "{:<23}: ERROR (no live models; active subscription was not proven)",
+                    format!("{provider} catalog")
+                );
+                catalog_error = true;
+            }
+            (_, Err(error)) => {
                 println!("{:<23}: ERROR ({error})", format!("{provider} catalog"));
                 catalog_error = true;
             }
+            _ => unreachable!("catalog classification matches its result"),
         }
     }
     catalog_error

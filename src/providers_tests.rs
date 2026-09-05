@@ -16,6 +16,7 @@ fn upsert() -> ProviderUpsert {
         subscriber_id: None,
         acknowledge_intermediary_risk: None,
         acknowledge_unsupported_clients: None,
+        if_absent: false,
     }
 }
 
@@ -54,6 +55,10 @@ fn persisted_provider_kind_spellings_round_trip_through_import() {
         ProviderKind::from_str_opt("zai-coding-plan"),
         Some(ProviderKind::ZaiCodingPlan)
     );
+    assert_eq!(
+        ProviderKind::from_str_opt("lefine"),
+        Some(ProviderKind::Lefine)
+    );
     assert_eq!(ProviderKind::from_str_opt("future-provider"), None);
 }
 
@@ -82,6 +87,7 @@ fn zai_upsert(enabled: Option<bool>, acknowledged: bool) -> ProviderUpsert {
         subscriber_id: Some("owner-a".into()),
         acknowledge_intermediary_risk: Some(acknowledged),
         acknowledge_unsupported_clients: Some(Vec::new()),
+        if_absent: false,
     }
 }
 
@@ -102,6 +108,27 @@ fn coding_plan_defaults_disabled_and_requires_explicit_risk_acknowledgement() {
         !serde_json::to_string(&enabled.redacted())
             .unwrap()
             .contains("zai-secret")
+    );
+}
+
+#[test]
+fn lefine_kind_derives_only_native_chat_completion_clients() {
+    let dir = tempdir().unwrap();
+    let store = ProviderStore::open(dir.path(), "secret").unwrap();
+    let mut input = upsert();
+    input.name = "lefine".into();
+    input.kind = Some("lefine".into());
+    input.base_url = "https://lefine.pro/v1".into();
+    input.default_model = None;
+    input.supported_clients = None;
+    input.models = Some(vec!["configured/exact-id".into()]);
+
+    let record = store.upsert(input).unwrap();
+
+    assert_eq!(record.kind.as_str(), "lefine");
+    assert_eq!(
+        record.effective_supported_clients(),
+        vec!["grok", "opencode", "qwen"]
     );
 }
 
@@ -208,6 +235,39 @@ fn import_json_provider_config() {
     let input = r#"{"providers":[{"name":"litellm","base_url":"http://litellm:4000/v1"}]}"#;
     let parsed = parse_provider_import(input).unwrap();
     assert_eq!(parsed[0].name, "litellm");
+}
+
+#[test]
+fn a_mutation_recovers_an_uncommitted_predecessor_before_loading_it() {
+    let dir = tempdir().unwrap();
+    let store = ProviderStore::open(dir.path(), "secret").unwrap();
+    let mut original = upsert();
+    original.name = "original".into();
+    store.upsert(original).unwrap();
+    let path = dir.path().join("providers.lenv");
+    let prior = std::fs::read(&path).unwrap();
+
+    let mut interrupted = upsert();
+    interrupted.name = "uncommitted".into();
+    store.upsert(interrupted).unwrap();
+    let rollback = dir.path().join(".providers.lenv.router-rollback");
+    let mut rollback_document = vec![1];
+    rollback_document.extend_from_slice(&prior);
+    crate::durable_file::atomic_write_owner_only(&rollback, &rollback_document).unwrap();
+
+    let mut later = upsert();
+    later.name = "later".into();
+    store.upsert(later).unwrap();
+
+    let names = ProviderStore::open(dir.path(), "secret")
+        .unwrap()
+        .list()
+        .unwrap()
+        .into_iter()
+        .map(|record| record.name)
+        .collect::<Vec<_>>();
+    assert_eq!(names, ["later", "original"]);
+    assert!(!rollback.exists());
 }
 
 #[test]

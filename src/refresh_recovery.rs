@@ -236,16 +236,30 @@ fn persist_rotation(
     Ok(())
 }
 
-/// What the endpoint actually answered.
+fn require_writable_authority(
+    store: &Arc<dyn CredentialStore>,
+    token: &SubscriptionToken,
+    provider: SubscriptionProvider,
+) -> Result<(), Rejected> {
+    store.prepare_refresh(token).map_err(|_| {
+        storage_rejection(format!(
+            "refusing to exchange the {provider} refresh token because its authoritative external store cannot be durably advanced"
+        ))
+    })
+}
+
+/// Secret-free summary of what the endpoint answered.
 ///
-/// [`RefreshError`]'s own `Display` appends generic "waiting will not help"
-/// advice to every `invalid_grant`, which is exactly the sentence issue #239
-/// calls misleading for a rotated token. By the time the ladder builds a
-/// terminal message it has established which advice applies, so it quotes the
-/// endpoint and gives the advice itself.
+/// By the time the ladder builds a terminal message it has established which
+/// advice applies. The raw endpoint body has already been discarded, so this
+/// formatter can report only the status, stable class, and safe retry hint.
 fn endpoint_answer(error: &RefreshError) -> String {
     match error {
-        RefreshError::Status(code, body, _) => format!("the endpoint answered HTTP {code}: {body}"),
+        RefreshError::Status(code, class, retry_after) => format!(
+            "the endpoint answered HTTP {code} (class {}{})",
+            class.label(),
+            retry_after.map_or_else(String::new, |seconds| format!(", retry after {seconds}s"))
+        ),
         other => other.to_string(),
     }
 }
@@ -268,9 +282,12 @@ fn terminal_message(
     if store.is_none() {
         return error.to_string();
     }
+    let class = error
+        .status_class()
+        .map_or("terminal_oauth_error", super::RefreshStatusClass::label);
     if retried_with_newer_link {
         return format!(
-            "refresh token is no longer valid (invalid_grant): a newer refresh token found in \
+            "refresh credential was rejected ({class}): a newer refresh token found in \
              the registered {provider} credential store was rejected as well, so the whole token \
              family has been revoked — re-authenticate this subscription with \
              `link-assistant-router auth {provider}` ({})",
@@ -278,7 +295,7 @@ fn terminal_message(
         );
     }
     format!(
-        "refresh token is no longer valid (invalid_grant): the registered {provider} credential \
+        "refresh credential was rejected ({class}): the registered {provider} credential \
          store still holds the same refresh token that was just rejected, so it was revoked or \
          already spent elsewhere rather than rotated past — re-authenticate this subscription \
          with `link-assistant-router auth {provider}` ({})",
@@ -340,6 +357,7 @@ pub(super) async fn exchange_with_recovery(
     let baseline = stored;
 
     // Rung 2: exchange the newest link we hold.
+    require_writable_authority(store, &candidate, provider)?;
     let error = match refresh_at(client, token_url, provider, &candidate, now_ms).await {
         Ok(fresh) => {
             persist_rotation(store, &baseline, &fresh, provider)?;
@@ -375,6 +393,7 @@ pub(super) async fn exchange_with_recovery(
             "{provider} rejected a refresh token that the registered credential store has \
              already rotated past; retrying once with the newer one"
         );
+        require_writable_authority(store, &reread, provider)?;
         match refresh_at(client, token_url, provider, &reread, now_ms).await {
             Ok(fresh) => {
                 persist_rotation(store, &reread, &fresh, provider)?;
@@ -483,6 +502,7 @@ async fn vendor_cli_or_reject(
     if !has_newer_refresh_link(tried.newest, &rotated) {
         return Err(reject(error));
     }
+    require_writable_authority(store, &rotated, provider)?;
     match refresh_at(client, token_url, provider, &rotated, now_ms).await {
         Ok(fresh) => {
             persist_rotation(store, &rotated, &fresh, provider)?;

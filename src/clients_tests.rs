@@ -130,6 +130,7 @@ fn each_client_can_select_its_own_vendors_models() {
         .map(|owner| RouterModel {
             id: format!("{owner}-flagship"),
             owned_by: (*owner).to_string(),
+            ..RouterModel::default()
         })
         .collect();
     for (client, owner) in [
@@ -154,6 +155,7 @@ fn a_single_vendor_deployment_serves_its_own_client() {
     let google = vec![RouterModel {
         id: "gemini-flagship".to_string(),
         owned_by: "google".to_string(),
+        ..RouterModel::default()
     }];
     assert_eq!(
         crate::clients::select_model(ClientKind::GeminiCli, &google),
@@ -175,6 +177,7 @@ fn a_strict_client_refuses_another_vendors_model() {
     let openai = vec![RouterModel {
         id: "gpt-test".to_string(),
         owned_by: "openai".to_string(),
+        ..RouterModel::default()
     }];
     assert_eq!(
         crate::clients::select_model(ClientKind::ClaudeCode, &openai),
@@ -192,7 +195,7 @@ fn a_strict_client_refuses_another_vendors_model() {
 }
 
 #[test]
-fn claude_setup_maps_zai_only_default_families_and_subagents() {
+fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
     let home = tempfile::tempdir().unwrap();
     let manager = ClientManager::isolated(home.path());
     std::fs::create_dir_all(home.path().join(".claude")).unwrap();
@@ -204,6 +207,7 @@ fn claude_setup_maps_zai_only_default_families_and_subagents() {
     let models = vec![RouterModel {
         id: "future-saffron-2099".into(),
         owned_by: ZAI_MODEL_OWNER.into(),
+        ..RouterModel::default()
     }];
     manager
         .setup(ClientKind::ClaudeCode, "https://router.example", &models)
@@ -220,8 +224,15 @@ fn claude_setup_maps_zai_only_default_families_and_subagents() {
         settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
         "0"
     );
-    for key in CLAUDE_MODEL_ENV {
+    for key in CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(settings["env"][key], "future-saffron-2099", "{key}");
+    }
+    for key in [
+        "ANTHROPIC_DEFAULT_OPUS_MODEL",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    ] {
+        assert!(settings["env"].get(key).is_none(), "{key}");
     }
     let env = manager
         .write_environment(
@@ -267,10 +278,12 @@ fn claude_setup_leaves_native_anthropic_discovery_unpinned() {
         RouterModel {
             id: "claude-future-native".into(),
             owned_by: ANTHROPIC_MODEL_OWNER.into(),
+            ..RouterModel::default()
         },
         RouterModel {
             id: "future-saffron-2099".into(),
             owned_by: ZAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
         },
     ];
 
@@ -292,10 +305,12 @@ fn claude_gateway_model_is_live_and_an_explicit_zai_choice_wins() {
         RouterModel {
             id: "future-first-2099".into(),
             owned_by: ZAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
         },
         RouterModel {
             id: "future-explicit-2099".into(),
             owned_by: ZAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
         },
     ];
     assert_eq!(
@@ -310,6 +325,7 @@ fn claude_gateway_model_is_live_and_an_explicit_zai_choice_wins() {
     let native = vec![RouterModel {
         id: "claude-future-native".into(),
         owned_by: ANTHROPIC_MODEL_OWNER.into(),
+        ..RouterModel::default()
     }];
     assert_eq!(claude_gateway_model(&native, None), None);
 }
@@ -321,6 +337,7 @@ fn zai_model_pins_are_owned_configuration_and_drift_is_detected() {
     let models = vec![RouterModel {
         id: "future-saffron-2099".into(),
         owned_by: ZAI_MODEL_OWNER.into(),
+        ..RouterModel::default()
     }];
     manager
         .setup(ClientKind::ClaudeCode, "https://router.example", &models)
@@ -379,10 +396,12 @@ fn the_written_catalog_agrees_with_the_launcher() {
         RouterModel {
             id: "claude-x".to_string(),
             owned_by: "anthropic".to_string(),
+            ..RouterModel::default()
         },
         RouterModel {
             id: "qwen-x".to_string(),
             owned_by: "qwen".to_string(),
+            ..RouterModel::default()
         },
     ];
     for client in ClientKind::ALL {

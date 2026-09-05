@@ -72,7 +72,7 @@ pub const fn target_of(command: &Command) -> Option<&AuthTarget> {
         Command::Accounts { op } => Some(op.target()),
         Command::Providers { op } => Some(op.target()),
         Command::Logs { op } => Some(op.target()),
-        Command::Doctor { target } => Some(target),
+        Command::Doctor { target } | Command::Usage { target, .. } => Some(target),
         Command::Tls { op } => Some(op.target()),
         _ => None,
     }
@@ -107,6 +107,7 @@ pub fn refuse_managed(command: &Command) -> Option<ExitCode> {
         Command::Logs { .. } => "logs",
         Command::Doctor { .. } => "doctor",
         Command::Tls { .. } => "tls",
+        Command::Usage { .. } => "usage",
         // `auth` was exempt and did exactly what #315 condemned: nothing on
         // the auth path ever starts a container, so `--managed` silently meant
         // `--local` while its own help listed `auth` as a command that uses
