@@ -78,7 +78,6 @@ fn request_refresh_link(body: &str) -> String {
 
 async fn assert_refresh_is_refused_without_endpoint_request(
     store: Option<Arc<dyn CredentialStore>>,
-    expected_error: &str,
 ) {
     let (url, received, server) = scripted_endpoint(
         vec![Answer::new(
@@ -113,7 +112,7 @@ async fn assert_refresh_is_refused_without_endpoint_request(
     let reported = cache
         .last_refresh_error(SubscriptionProvider::Claude)
         .expect("storage failure is operator-visible");
-    assert!(reported.contains(expected_error), "{reported}");
+    assert!(reported.contains("persistence_failure"), "{reported}");
     assert!(!reported.contains("safe-old-access"), "{reported}");
     assert!(!reported.contains("safe-old-refresh"), "{reported}");
     server.abort();
@@ -121,7 +120,7 @@ async fn assert_refresh_is_refused_without_endpoint_request(
 
 #[tokio::test]
 async fn a_missing_store_fails_closed_before_the_token_endpoint() {
-    assert_refresh_is_refused_without_endpoint_request(None, "not registered").await;
+    assert_refresh_is_refused_without_endpoint_request(None).await;
 }
 
 #[tokio::test]
@@ -131,11 +130,8 @@ async fn a_store_without_a_lock_path_fails_closed_before_the_token_endpoint() {
         lock_path: None,
         persist_error: None,
     });
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "lock path",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -146,11 +142,8 @@ async fn an_external_authoritative_store_is_not_spent_without_a_writer() {
         lock_path: directory.path().join("credential.lock"),
     });
 
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "external store cannot be durably advanced",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -163,11 +156,8 @@ async fn a_lock_open_error_fails_closed_before_the_token_endpoint() {
         lock_path: Some(blocking_file.join("credential.lock")),
         persist_error: None,
     });
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "could not acquire",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -188,11 +178,8 @@ async fn a_lock_timeout_fails_closed_before_the_token_endpoint() {
         persist_error: None,
     });
 
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "timed out",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -203,11 +190,8 @@ async fn a_failed_post_lock_reload_fails_closed_before_the_token_endpoint() {
         lock_path: Some(directory.path().join("credential.lock")),
         persist_error: None,
     });
-    assert_refresh_is_refused_without_endpoint_request(
-        Some(store as Arc<dyn CredentialStore>),
-        "re-read",
-    )
-    .await;
+    assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
+        .await;
 }
 
 #[tokio::test]
@@ -248,10 +232,10 @@ async fn post_lock_reload_failure_hides_account_paths_from_errors_and_logs() {
         .last_refresh_error_for(SubscriptionProvider::Claude, SENTINEL)
         .expect("storage failure is operator-visible");
     let diagnostic = refresh_failure_diagnostic(SubscriptionProvider::Claude, &reported);
-    assert!(reported.contains("re-read"), "{reported}");
+    assert!(reported.contains("persistence_failure"), "{reported}");
     assert!(
-        diagnostic.contains("could not re-read the registered claude credential"),
-        "the log formatter must retain the provider-scoped cause: {diagnostic}"
+        diagnostic.contains("refresh credential storage failed (class persistence_failure)"),
+        "the log formatter must retain the safe failure class: {diagnostic}"
     );
     assert!(!reported.contains(SENTINEL), "{reported}");
     assert!(!diagnostic.contains(SENTINEL), "{diagnostic}");
@@ -393,8 +377,7 @@ async fn a_rotation_is_rejected_when_no_durable_write_succeeds() {
     let reported = cache
         .last_refresh_error(SubscriptionProvider::Claude)
         .expect("storage failure is operator-visible");
-    assert!(reported.contains("durably persist"), "{reported}");
-    assert!(reported.contains("primary and recovery"), "{reported}");
+    assert!(reported.contains("persistence_failure"), "{reported}");
     assert!(!reported.contains("unsafe-fresh-access"), "{reported}");
     assert!(!reported.contains("unsafe-fresh-refresh"), "{reported}");
 }

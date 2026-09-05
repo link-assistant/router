@@ -40,6 +40,7 @@ struct ClientCase {
     version: &'static str,
     model: &'static str,
     owner: &'static str,
+    catalog_path: &'static str,
     inference_path: &'static str,
     user_agent_prefix: &'static str,
     credential_header: &'static str,
@@ -51,6 +52,7 @@ const CLAUDE: ClientCase = ClientCase {
     version: CLAUDE_VERSION,
     model: "claude-sonnet-4-5-20250929",
     owner: "anthropic",
+    catalog_path: "/api/services/anthropic/v1/models",
     inference_path: "/api/services/anthropic/v1/messages",
     user_agent_prefix: "claude-cli/2.1.261",
     credential_header: "authorization",
@@ -62,6 +64,7 @@ const CODEX: ClientCase = ClientCase {
     version: CODEX_VERSION,
     model: "gpt-5.6-codex",
     owner: "openai",
+    catalog_path: "/api/services/codex/v1/models",
     inference_path: "/api/services/codex/v1/responses",
     user_agent_prefix: "codex_exec/0.153.4",
     credential_header: "authorization",
@@ -73,6 +76,7 @@ const OPENCODE: ClientCase = ClientCase {
     version: OPENCODE_VERSION,
     model: "future-chat-model",
     owner: "openai-compatible",
+    catalog_path: "/api/services/openai/v1/models",
     inference_path: "/api/services/openai/v1/chat/completions",
     user_agent_prefix: "opencode/1.18.29",
     credential_header: "authorization",
@@ -104,6 +108,10 @@ struct MockRouter {
 
 impl MockRouter {
     fn start(case: ClientCase) -> Self {
+        Self::start_with_models(case, default_models(case))
+    }
+
+    fn start_with_models(case: ClientCase, models: Vec<Value>) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind offline Router mock");
         listener
             .set_nonblocking(true)
@@ -113,12 +121,13 @@ impl MockRouter {
         let captured = Arc::clone(&requests);
         let stop = Arc::new(AtomicBool::new(false));
         let stopped = Arc::clone(&stop);
+        let models = Arc::new(models);
         let thread = thread::spawn(move || {
             while !stopped.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
                         let request = read_request(&mut stream);
-                        let response = mock_response(case, &request);
+                        let response = mock_response(case, &models, &request);
                         captured.lock().expect("capture request").push(request);
                         stream
                             .write_all(&response)
@@ -270,7 +279,47 @@ fn run_token(case: ClientCase) -> String {
     format!("e30.{encoded}.offline-signature")
 }
 
-fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
+fn default_models(case: ClientCase) -> Vec<Value> {
+    if case.client == "codex" {
+        vec![
+            json!({
+                "id": case.model,
+                "type": "model",
+                "display_name": case.model,
+                "created_at": "2026-09-04T00:00:00Z",
+                "owned_by": case.owner,
+                "default_reasoning_level": "medium",
+                "supported_reasoning_levels": [
+                    {"effort": "medium", "description": "Balanced reasoning"},
+                    {"effort": "high", "description": "Deep reasoning"},
+                    {"effort": "xhigh", "description": "Deepest reasoning"}
+                ]
+            }),
+            json!({
+                "id": CODEX_ALTERNATE_MODEL,
+                "type": "model",
+                "display_name": CODEX_ALTERNATE_MODEL,
+                "created_at": "2026-09-04T00:00:00Z",
+                "owned_by": case.owner,
+                "default_reasoning_level": "high",
+                "supported_reasoning_levels": [
+                    {"effort": "high", "description": "Default reasoning"},
+                    {"effort": "xhigh", "description": "Maximum reasoning"}
+                ]
+            }),
+        ]
+    } else {
+        vec![json!({
+            "id": case.model,
+            "type": "model",
+            "display_name": case.model,
+            "created_at": "2026-09-04T00:00:00Z",
+            "owned_by": case.owner
+        })]
+    }
+}
+
+fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) -> Vec<u8> {
     match (request.method.as_str(), request.path.as_str()) {
         ("GET", "/api/health") => http_response("200 OK", "application/json", r#"{"status":"ok"}"#),
         ("GET", "/api/management/tokens") => {
@@ -284,50 +333,13 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
         ("POST", "/api/management/tokens/revoke") => {
             http_response("200 OK", "application/json", r#"{"revoked":"offline-run"}"#)
         }
-        ("GET", path) if path.ends_with("/models") => {
-            let models = if case.client == "codex" {
-                vec![
-                    json!({
-                        "id": case.model,
-                        "type": "model",
-                        "display_name": case.model,
-                        "created_at": "2026-09-04T00:00:00Z",
-                        "owned_by": case.owner,
-                        "default_reasoning_level": "medium",
-                        "supported_reasoning_levels": [
-                            {"effort": "medium", "description": "Balanced reasoning"},
-                            {"effort": "high", "description": "Deep reasoning"},
-                            {"effort": "xhigh", "description": "Deepest reasoning"}
-                        ]
-                    }),
-                    json!({
-                        "id": CODEX_ALTERNATE_MODEL,
-                        "type": "model",
-                        "display_name": CODEX_ALTERNATE_MODEL,
-                        "created_at": "2026-09-04T00:00:00Z",
-                        "owned_by": case.owner,
-                        "default_reasoning_level": "high",
-                        "supported_reasoning_levels": [
-                            {"effort": "high", "description": "Default reasoning"},
-                            {"effort": "xhigh", "description": "Maximum reasoning"}
-                        ]
-                    }),
-                ]
-            } else {
-                vec![json!({
-                    "id": case.model,
-                    "type": "model",
-                    "display_name": case.model,
-                    "created_at": "2026-09-04T00:00:00Z",
-                    "owned_by": case.owner
-                })]
-            };
+        ("GET", path) if path == case.catalog_path => {
             let body = json!({
                 "object": "list",
                 "data": models,
                 "has_more": false,
-                "first_id": case.model,
-                "last_id": if case.client == "codex" { CODEX_ALTERNATE_MODEL } else { case.model }
+                "first_id": models.first().and_then(|model| model["id"].as_str()),
+                "last_id": models.last().and_then(|model| model["id"].as_str())
             });
             http_response("200 OK", "application/json", &body.to_string())
         }
@@ -335,7 +347,13 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
             http_response("200 OK", "application/json", r#"{"input_tokens":1}"#)
         }
         ("POST", path) if path == case.inference_path => match case.client {
-            "claude" => anthropic_answer(),
+            "claude" => {
+                let model = serde_json::from_slice::<Value>(&request.body)
+                    .ok()
+                    .and_then(|body| body["model"].as_str().map(str::to_string))
+                    .unwrap_or_else(|| case.model.to_string());
+                anthropic_answer(&model)
+            }
             "codex" => {
                 let model = serde_json::from_slice::<Value>(&request.body)
                     .ok()
@@ -359,12 +377,12 @@ fn mock_response(case: ClientCase, request: &CapturedRequest) -> Vec<u8> {
     }
 }
 
-fn anthropic_answer() -> Vec<u8> {
+fn anthropic_answer(model: &str) -> Vec<u8> {
     let message = json!({
         "id": "msg_offline",
         "type": "message",
         "role": "assistant",
-        "model": CLAUDE.model,
+        "model": model,
         "content": [],
         "stop_reason": null,
         "stop_sequence": null,
@@ -600,6 +618,24 @@ fn assert_real_client_capture(case: ClientCase) {
         case.client,
         String::from_utf8_lossy(&output.stdout)
     );
+    let catalogs = {
+        let requests = router.requests.lock().expect("read catalog requests");
+        requests
+            .iter()
+            .filter(|request| request.method == "GET" && request.path.ends_with("/models"))
+            .map(|request| request.path.clone())
+            .collect::<Vec<_>>()
+    };
+    assert!(
+        catalogs.iter().any(|path| path == case.catalog_path),
+        "{} did not discover its enabled native catalog: {catalogs:?}",
+        case.client
+    );
+    assert!(
+        catalogs.iter().all(|path| path == case.catalog_path),
+        "{} crossed into a different protocol catalog: {catalogs:?}",
+        case.client
+    );
     if case.client == "codex" {
         let switched = run_wrapper_with_model(
             case,
@@ -713,6 +749,9 @@ fn assert_real_client_capture(case: ClientCase) {
 fn current_claude_code_reaches_the_native_anthropic_surface_offline() {
     assert_real_client_capture(CLAUDE);
 }
+
+#[path = "real_clients/claude_selector.rs"]
+mod claude_selector;
 
 #[test]
 fn current_codex_reaches_the_native_responses_surface_offline() {
