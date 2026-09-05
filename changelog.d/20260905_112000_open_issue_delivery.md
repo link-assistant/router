@@ -11,3 +11,4 @@ bump: minor
 - Bound vendor and Router usage bodies while reading their streams, and reject empty or error-shaped 200 responses as unverified.
 - Cap untrusted `Retry-After` cooldowns at 24 hours and use checked instant arithmetic.
 - Coalesce concurrent usage requests by token, provider, principal, and credential generation.
+- Keep the normal Lefine live credential gate catalog-only, with explicit run/skip output and a separate inference opt-in.

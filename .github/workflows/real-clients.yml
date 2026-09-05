@@ -65,6 +65,7 @@ jobs:
           ROUTER_LIVE_CODEX_CREDENTIAL_JSON: ${{ secrets.ROUTER_LIVE_CODEX_CREDENTIAL_JSON }}
           ROUTER_LIVE_ZAI_API_KEY: ${{ secrets.ROUTER_LIVE_ZAI_API_KEY }}
           LEFINE_API_KEY: ${{ secrets.LEFINE_API_KEY }}
+          LEFINE_INFERENCE_ACCEPTANCE: ${{ vars.LEFINE_INFERENCE_ACCEPTANCE }}
         run: |
           cargo test --locked --test subscription_usage_live_test -- --test-threads=1
-          cargo test --locked --test lefine_live_test -- --test-threads=1
+          cargo test --locked --test lefine_live_test -- --test-threads=1 --nocapture
