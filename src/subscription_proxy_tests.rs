@@ -344,6 +344,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
                 [
                     ("content-type", "application/json"),
                     ("x-request-id", "provider-codex-request"),
+                    ("anthropic-auth-token", "provider-anthropic-secret"),
                 ],
                 r#"{"id":"resp_1","status":"completed","output":[]}"#,
             )
@@ -392,6 +393,14 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
         HeaderValue::from_static("By=spiffe://private;Subject=client"),
     );
     headers.insert("x-native-end-to-end", HeaderValue::from_static("preserved"));
+    headers.append(
+        axum::http::HeaderName::from_bytes(b"AnThRoPiC-AuTh-ToKeN").unwrap(),
+        HeaderValue::from_static("incoming-anthropic-secret-a"),
+    );
+    headers.append(
+        axum::http::HeaderName::from_static("anthropic-auth-token"),
+        HeaderValue::from_static("incoming-anthropic-secret-b"),
+    );
     for &name in crate::proxy::INGRESS_NETWORK_HEADERS {
         headers.append(
             axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
@@ -413,6 +422,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     .await;
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()["x-request-id"], "provider-codex-request");
+    assert!(!response.headers().contains_key("anthropic-auth-token"));
     let _ = response.into_body().collect().await.unwrap();
 
     let captured = captured.lock().unwrap();
@@ -422,7 +432,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     assert_eq!(headers["x-native-end-to-end"], "preserved");
     assert_eq!(headers.get_all("originator").iter().count(), 1);
     assert!(!headers.contains_key("x-request-id"));
-    for removed in ["connection", "x-hop-secret"] {
+    for removed in ["connection", "x-hop-secret", "anthropic-auth-token"] {
         assert!(!headers.contains_key(removed), "{removed} leaked upstream");
     }
     for name in crate::proxy::INGRESS_NETWORK_HEADERS {

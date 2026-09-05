@@ -230,6 +230,7 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
                 [
                     ("content-type", "application/json"),
                     ("x-request-id", "provider-anthropic-request"),
+                    ("anthropic-auth-token", "provider-anthropic-secret"),
                 ],
                 "{}",
             )
@@ -272,6 +273,14 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
             r#"{"model":"claude-live","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
         ))
         .unwrap();
+    request.headers_mut().append(
+        axum::http::HeaderName::from_bytes(b"AnThRoPiC-AuTh-ToKeN").unwrap(),
+        HeaderValue::from_static("incoming-anthropic-secret-a"),
+    );
+    request.headers_mut().append(
+        axum::http::HeaderName::from_static("anthropic-auth-token"),
+        HeaderValue::from_static("incoming-anthropic-secret-b"),
+    );
     for &name in INGRESS_NETWORK_HEADERS {
         request.headers_mut().append(
             axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
@@ -288,6 +297,7 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
         response.headers()["x-request-id"],
         "provider-anthropic-request"
     );
+    assert!(!response.headers().contains_key("anthropic-auth-token"));
     let _ = response.into_body().collect().await.unwrap();
 
     let captured = captured.lock().unwrap();

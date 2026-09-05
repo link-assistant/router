@@ -78,6 +78,7 @@ const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
     "set-cookie2",
     "x-api-key",
     "x-goog-api-key",
+    "anthropic-auth-token",
 ];
 
 /// Select end-to-end upstream response headers that are safe to relay to a client.

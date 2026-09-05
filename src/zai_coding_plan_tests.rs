@@ -125,6 +125,29 @@ fn live_model(id: &str) -> crate::providers::LiveProviderModel {
     }
 }
 
+#[tokio::test]
+async fn repeated_exact_catalog_ids_collapse_to_the_first_stable_record() {
+    let app = axum::Router::new().fallback(|| async {
+        (
+            StatusCode::OK,
+            r#"{"object":"list","data":[{"id":"glm-5","label":"first"},{"id":"glm-5","label":"second"}]}"#,
+        )
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let mut provider = resolved_zai_provider();
+    provider.base_url = base_url;
+
+    let models = crate::zai_coding_plan::fetch_catalog(&reqwest::Client::new(), &provider)
+        .await
+        .expect("duplicate exact ids are valid provider repetition");
+    assert_eq!(models.len(), 1);
+    assert_eq!(models[0].id, "glm-5");
+    assert_eq!(models[0].raw["label"], "first");
+    handle.abort();
+}
+
 #[test]
 fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
     let provider = resolved_zai_provider();

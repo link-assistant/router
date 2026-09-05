@@ -413,10 +413,10 @@ pub(crate) async fn fetch_catalog(
                 )
             })?;
         if !seen.insert(id.to_string()) {
-            return Err(ZaiProbeFailure::new(
-                ZaiProbeFailureKind::Unverified,
-                "z.ai Coding Plan catalog contained duplicate model ids",
-            ));
+            // A provider can repeat an exact record across catalog pages or
+            // compatibility families. Preserve the first record so metadata
+            // selection is stable while publishing the exact id only once.
+            continue;
         }
         models.push(LiveProviderModel {
             id: id.to_string(),

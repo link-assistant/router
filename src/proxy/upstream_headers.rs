@@ -76,6 +76,7 @@ fn replaced_or_transport_header(name: &str) -> bool {
             "authorization"
                 | "x-api-key"
                 | "x-goog-api-key"
+                | "anthropic-auth-token"
                 | "proxy-authorization"
                 | "proxy-authenticate"
                 | "host"
