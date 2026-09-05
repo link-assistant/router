@@ -401,6 +401,13 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::OpenAi,
     ),
     ai_service(
+        RouteId::OpenAiResponses,
+        RouteMethod::Get,
+        "/api/services/openai/v1/responses",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
         RouteId::OpenAiModels,
         RouteMethod::Get,
         "/api/services/openai/v1/models",
@@ -422,6 +429,13 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::OpenAi,
     ),
     ai_service(
+        RouteId::CodexResponses,
+        RouteMethod::Get,
+        "/api/services/codex/v1/responses",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
         RouteId::CodexModels,
         RouteMethod::Get,
         "/api/services/codex/v1/models",
@@ -438,6 +452,13 @@ const ROUTES: &[RouteSpec] = &[
     ai_service(
         RouteId::QwenResponses,
         RouteMethod::Post,
+        "/api/services/qwen/v1/responses",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenResponses,
+        RouteMethod::Get,
         "/api/services/qwen/v1/responses",
         ServiceKind::Qwen,
         ApiDialect::OpenAi,

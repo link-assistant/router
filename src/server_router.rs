@@ -197,7 +197,7 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::OpenAiResponses),
-                post(proxy::openai_responses),
+                post(proxy::openai_responses).get(crate::responses_websocket::openai),
             )
             .route(
                 route_template(RouteId::OpenAiModels),
@@ -209,7 +209,7 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::CodexResponses),
-                post(proxy::openai_responses_native),
+                post(proxy::openai_responses_native).get(crate::responses_websocket::codex),
             )
             .route(
                 route_template(RouteId::CodexModels),
@@ -221,7 +221,7 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::QwenResponses),
-                post(proxy::openai_responses),
+                post(proxy::openai_responses).get(crate::responses_websocket::unsupported_qwen),
             )
             .route(
                 route_template(RouteId::QwenModels),

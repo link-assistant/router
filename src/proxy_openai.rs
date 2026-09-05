@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_pub_crate)]
+
 use super::{
     AppState, BTreeMap, HeaderMap, JsonRejection, OpenAIForwardContext, OpenAIShape, Query,
     Response, State, StatusCode, UpstreamProvider, forward_openai, openai, responses,
@@ -15,7 +17,7 @@ struct RequiredChatFields {
     messages: Vec<openai::ChatMessage>,
 }
 
-async fn route_openai_request(
+pub(crate) async fn route_openai_request(
     state: &AppState,
     headers: &HeaderMap,
     body: &serde_json::Value,
@@ -49,7 +51,7 @@ async fn route_openai_request(
     .map_err(|error| crate::model_routing::model_route_error_response(&error))
 }
 
-fn rewrite_routed_model(
+pub(crate) fn rewrite_routed_model(
     body: &mut serde_json::Value,
     state: &AppState,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,

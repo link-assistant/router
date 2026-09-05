@@ -9,11 +9,13 @@ use std::time::Duration;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
+use axum::extract::ws::{Message as AxumWebSocketMessage, WebSocketUpgrade};
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::from_fn_with_state;
 use axum::response::Response;
 use axum::routing::{get, post};
+use futures_util::StreamExt;
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
@@ -27,6 +29,8 @@ use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
 
+#[path = "router_e2e/responses_websocket.rs"]
+mod responses_websocket;
 #[path = "router_e2e/token_budget.rs"]
 mod token_budget;
 #[path = "router_e2e/token_surfaces.rs"]
@@ -103,7 +107,17 @@ impl TestRouter {
             headers: Arc::clone(&upstream_headers),
             invalid_body,
         };
-        let stub = Router::new().fallback(stub_vendor).with_state(stub_state);
+        let stub = Router::new()
+            .route(
+                "/v1/responses",
+                get(stub_responses_websocket).post(stub_vendor),
+            )
+            .route(
+                "/responses",
+                get(stub_responses_websocket).post(stub_vendor),
+            )
+            .fallback(stub_vendor)
+            .with_state(stub_state);
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("router-e2e-secret");
@@ -209,7 +223,7 @@ impl TestRouter {
             state.openai_compatible.api_key = Some("stub-openai-compatible-key".into());
             state.openai_compatible.default_model = Some("gpt-5".into());
             state.openai_compatible.models = vec!["gpt-5".into()];
-            state.openai_compatible.supported_clients = vec!["opencode".into()];
+            state.openai_compatible.supported_clients = vec!["opencode".into(), "codex".into()];
         }
         let app = test_app(state);
         let (url, router_task) = spawn(app).await;
@@ -339,15 +353,17 @@ fn test_app(state: AppState) -> Router {
         )
         .route(
             "/api/services/openai/v1/responses",
-            post(proxy::openai_responses),
+            post(proxy::openai_responses).get(link_assistant_router::responses_websocket::openai),
         )
         .route(
             "/api/services/codex/v1/responses",
-            post(proxy::openai_responses_native),
+            post(proxy::openai_responses_native)
+                .get(link_assistant_router::responses_websocket::codex),
         )
         .route(
             "/api/services/qwen/v1/responses",
-            post(proxy::openai_responses),
+            post(proxy::openai_responses)
+                .get(link_assistant_router::responses_websocket::unsupported_qwen),
         )
         .route("/api/services/openai/v1/models", get(proxy::openai_models))
         .route(
@@ -482,6 +498,79 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         .headers_mut()
         .insert("x-oai-request-id", HeaderValue::from_static("req_stub_123"));
     response
+}
+
+async fn stub_responses_websocket(
+    State(state): State<StubState>,
+    headers: HeaderMap,
+    upgrade: WebSocketUpgrade,
+) -> Response {
+    state
+        .headers
+        .lock()
+        .expect("stub header lock")
+        .push(headers);
+    upgrade.on_upgrade(move |mut socket| async move {
+        while let Some(message) = socket.next().await {
+            let Ok(message) = message else { break };
+            match message {
+                AxumWebSocketMessage::Text(text) => {
+                    let Ok(event) = serde_json::from_slice::<Value>(text.as_bytes()) else {
+                        break;
+                    };
+                    state
+                        .requests
+                        .lock()
+                        .expect("stub request lock")
+                        .push(event.clone());
+                    let stream_id = event.get("stream_id").cloned();
+                    let mut progress = json!({
+                        "type": "response.in_progress",
+                        "response": {"id": "resp_ws_stub", "status": "in_progress"},
+                        "vendor_extension": {"preserved": true}
+                    });
+                    let mut completed = json!({
+                        "type": "response.completed",
+                        "response": {
+                            "id": "resp_ws_stub",
+                            "status": "completed",
+                            "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
+                        },
+                        "vendor_extension": {"preserved": true}
+                    });
+                    if let Some(stream_id) = stream_id {
+                        progress["stream_id"] = stream_id.clone();
+                        completed["stream_id"] = stream_id;
+                    }
+                    if socket
+                        .send(AxumWebSocketMessage::Text(progress.to_string().into()))
+                        .await
+                        .is_err()
+                        || socket
+                            .send(AxumWebSocketMessage::Text(completed.to_string().into()))
+                            .await
+                            .is_err()
+                    {
+                        break;
+                    }
+                }
+                AxumWebSocketMessage::Ping(bytes) => {
+                    if socket
+                        .send(AxumWebSocketMessage::Pong(bytes))
+                        .await
+                        .is_err()
+                    {
+                        break;
+                    }
+                }
+                AxumWebSocketMessage::Close(frame) => {
+                    let _ = socket.send(AxumWebSocketMessage::Close(frame)).await;
+                    break;
+                }
+                AxumWebSocketMessage::Binary(_) | AxumWebSocketMessage::Pong(_) => {}
+            }
+        }
+    })
 }
 
 fn anthropic_message() -> Value {

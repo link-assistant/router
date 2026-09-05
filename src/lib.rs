@@ -90,6 +90,7 @@ pub mod remote_command;
 pub mod request_log;
 mod request_routing;
 pub mod responses;
+pub mod responses_websocket;
 pub mod route_contract;
 mod safety_identifier;
 pub mod security_headers;

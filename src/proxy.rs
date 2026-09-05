@@ -761,6 +761,7 @@ pub use openai_handlers::{
     openai_chat_completions, openai_chat_completions_native, openai_responses,
     openai_responses_native,
 };
+pub(crate) use openai_handlers::{rewrite_routed_model, route_openai_request};
 
 #[path = "proxy_openai_forward.rs"]
 mod openai_forward;

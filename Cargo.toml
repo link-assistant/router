@@ -33,7 +33,7 @@ name = "with-router"
 path = "src/bin/with-router.rs"
 
 [dependencies]
-axum = { version = "0.8", features = ["macros"] }
+axum = { version = "0.8", features = ["macros", "ws"] }
 hyper = { version = "1.11", features = ["full"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
 reqwest = { version = "0.13", features = ["stream", "json", "form", "query"] }
@@ -53,6 +53,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 log-lazy = "0.2"
 bytes = "1.12"
 futures-util = "0.3"
+tokio-tungstenite = { version = "0.30", features = ["rustls-tls-webpki-roots"] }
 http = "1.5"
 http-body-util = "0.1"
 lino-arguments = "0.3"
