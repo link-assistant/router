@@ -370,6 +370,9 @@ fn chat_tool_choice_to_responses(choice: &Value) -> Value {
 /// Translate a completed Responses object into a Chat Completions object.
 #[must_use]
 pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> Value {
+    if response.get("status").and_then(Value::as_str) == Some("failed") {
+        return response_failed_error(&json!({"response": response}));
+    }
     let response_id = response
         .get("id")
         .and_then(Value::as_str)
@@ -392,6 +395,7 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
         .unwrap_or_else(|| chrono::Utc::now().timestamp());
 
     let mut content = String::new();
+    let mut refusal = String::new();
     let mut tool_calls = Vec::new();
     if let Some(output) = response.get("output").and_then(Value::as_array) {
         for item in output {
@@ -399,12 +403,19 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
                 Some("message") => {
                     if let Some(parts) = item.get("content").and_then(Value::as_array) {
                         for part in parts {
-                            if matches!(
-                                part.get("type").and_then(Value::as_str),
-                                Some("output_text" | "text")
-                            ) && let Some(text) = part.get("text").and_then(Value::as_str)
-                            {
-                                content.push_str(text);
+                            match part.get("type").and_then(Value::as_str) {
+                                Some("output_text" | "text") => {
+                                    if let Some(text) = part.get("text").and_then(Value::as_str) {
+                                        content.push_str(text);
+                                    }
+                                }
+                                Some("refusal") => {
+                                    if let Some(text) = part.get("refusal").and_then(Value::as_str)
+                                    {
+                                        refusal.push_str(text);
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                     }
@@ -436,12 +447,16 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
     } else {
         "stop"
     };
+    let null_content = content.is_empty() && (!tool_calls.is_empty() || !refusal.is_empty());
     let mut message = json!({"role": "assistant", "content": content});
+    if !refusal.is_empty() {
+        message["refusal"] = Value::String(refusal);
+    }
     if !tool_calls.is_empty() {
         message["tool_calls"] = Value::Array(tool_calls);
-        if content.is_empty() {
-            message["content"] = Value::Null;
-        }
+    }
+    if null_content {
+        message["content"] = Value::Null;
     }
 
     let input_tokens = response
@@ -518,6 +533,7 @@ pub struct ResponsesChatStreamTranslator {
     output_tokens: u64,
     total_tokens: u64,
     tool_indices: std::collections::BTreeSet<u64>,
+    refusal_indices: std::collections::BTreeSet<(u64, u64)>,
     stop_filter: crate::stop_sequences::StopSequenceFilter,
     output_limiter: crate::output_limit::OutputTokenLimiter,
 }
@@ -538,6 +554,7 @@ impl ResponsesChatStreamTranslator {
             output_tokens: 0,
             total_tokens: 0,
             tool_indices: std::collections::BTreeSet::new(),
+            refusal_indices: std::collections::BTreeSet::new(),
             stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
             output_limiter: crate::output_limit::OutputTokenLimiter::default(),
         }
@@ -626,6 +643,32 @@ impl ResponsesChatStreamTranslator {
                 }
                 frames
             }
+            Some("response.refusal.delta") => {
+                let text = event
+                    .get("delta")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                self.refusal_indices.insert(stream_content_key(event));
+                let mut frames = self.role_frame();
+                if !text.is_empty() {
+                    frames.push(self.chat_frame(&json!({"refusal": text}), None));
+                }
+                frames
+            }
+            Some("response.refusal.done") => {
+                if !self.refusal_indices.insert(stream_content_key(event)) {
+                    return Vec::new();
+                }
+                let text = event
+                    .get("refusal")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let mut frames = self.role_frame();
+                if !text.is_empty() {
+                    frames.push(self.chat_frame(&json!({"refusal": text}), None));
+                }
+                frames
+            }
             Some("response.output_item.added" | "response.output_item.done") => {
                 self.translate_function_call(event)
             }
@@ -646,7 +689,7 @@ impl ResponsesChatStreamTranslator {
                     None,
                 )]
             }
-            Some("response.failed") => {
+            Some("error" | "response.failed") => {
                 if let Some(response) = event.get("response") {
                     self.capture_identity(response);
                     self.capture_usage(response);
@@ -803,10 +846,12 @@ pub(crate) fn response_failed_error(event: &Value) -> Value {
         .unwrap_or(&Value::Null);
     let message = upstream
         .get("message")
+        .or_else(|| event.get("message"))
         .and_then(Value::as_str)
         .unwrap_or("upstream response failed");
     let error_type = upstream
         .get("type")
+        .or_else(|| event.get("error_type"))
         .and_then(Value::as_str)
         .unwrap_or("api_error");
     let mut error = serde_json::Map::from_iter([
@@ -815,6 +860,7 @@ pub(crate) fn response_failed_error(event: &Value) -> Value {
     ]);
     if let Some(value) = upstream
         .get("code")
+        .or_else(|| event.get("code"))
         .filter(|value| value.is_string() || value.is_number() || value.is_null())
     {
         error.insert("code".to_string(), value.clone());
@@ -822,11 +868,26 @@ pub(crate) fn response_failed_error(event: &Value) -> Value {
     if let Some(value) = upstream
         .get("param")
         .or_else(|| upstream.get("parameter"))
+        .or_else(|| event.get("param"))
+        .or_else(|| event.get("parameter"))
         .filter(|value| value.is_string() || value.is_number() || value.is_null())
     {
         error.insert("param".to_string(), value.clone());
     }
     json!({"error": error})
+}
+
+fn stream_content_key(event: &Value) -> (u64, u64) {
+    (
+        event
+            .get("output_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0),
+        event
+            .get("content_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0),
+    )
 }
 
 fn extract_sse_data(block: &str) -> String {

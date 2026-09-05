@@ -284,6 +284,71 @@ fn codex_response_converts_to_chat_completion() {
 }
 
 #[test]
+fn failed_codex_response_converts_to_openai_error() {
+    let response = json!({
+        "id": "resp_failed",
+        "status": "failed",
+        "error": {
+            "message": "buffered boom",
+            "type": "server_error",
+            "code": "upstream_failed",
+            "param": "input",
+            "private_account": "secret"
+        },
+        "output": [{"type": "message", "content": [{"type": "output_text", "text": "partial"}]}]
+    });
+
+    let out = response_to_chat_completion(&response, "gpt-5.6-sol");
+
+    assert_eq!(out["error"]["message"], "buffered boom");
+    assert_eq!(out["error"]["type"], "server_error");
+    assert_eq!(out["error"]["code"], "upstream_failed");
+    assert_eq!(out["error"]["param"], "input");
+    assert!(out.get("choices").is_none());
+    assert!(!out.to_string().contains("private_account"));
+}
+
+#[test]
+fn refusal_only_codex_response_uses_the_chat_refusal_field() {
+    let response = json!({
+        "id": "resp_refusal",
+        "status": "completed",
+        "output": [{"type": "message", "content": [
+            {"type": "refusal", "refusal": "cannot comply"}
+        ]}]
+    });
+
+    let out = response_to_chat_completion(&response, "gpt-5.6-sol");
+
+    assert!(out["choices"][0]["message"]["content"].is_null());
+    assert_eq!(out["choices"][0]["message"]["refusal"], "cannot comply");
+    assert_eq!(out["choices"][0]["finish_reason"], "stop");
+}
+
+#[test]
+fn mixed_codex_response_preserves_text_and_refusal_order_within_each_field() {
+    let response = json!({
+        "id": "resp_mixed",
+        "status": "completed",
+        "output": [
+            {"type": "message", "content": [
+                {"type": "output_text", "text": "before "},
+                {"type": "refusal", "refusal": "cannot "},
+                {"type": "output_text", "text": "after"}
+            ]},
+            {"type": "message", "content": [
+                {"type": "refusal", "refusal": "comply"}
+            ]}
+        ]
+    });
+
+    let out = response_to_chat_completion(&response, "gpt-5.6-sol");
+
+    assert_eq!(out["choices"][0]["message"]["content"], "before after");
+    assert_eq!(out["choices"][0]["message"]["refusal"], "cannot comply");
+}
+
+#[test]
 fn codex_function_calls_convert_to_chat_tool_calls() {
     let response = json!({
         "id": "resp_tools",

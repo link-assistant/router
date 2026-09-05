@@ -550,12 +550,46 @@ fn anthropic_stream() -> String {
 }
 
 fn codex_stream_for_request(request: &Value) -> String {
-    if request.to_string().contains("response-failure-e2e") {
+    let request_text = request.to_string();
+    if request_text.contains("terminal-incomplete-e2e") {
+        return codex_fixture_stream(&[
+            json!({"type":"response.output_text.delta","item_id":"msg_partial","output_index":0,"content_index":0,"delta":"partial"}),
+            json!({"type":"response.output_item.added","output_index":1,"item":{"id":"fc_partial","type":"function_call","call_id":"call_partial","name":"lookup","arguments":"{}"}}),
+            json!({"type":"response.incomplete","response":{"id":"resp_incomplete","model":"gpt-5","status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"usage":{"input_tokens":3,"output_tokens":4,"total_tokens":7},"output":[]}}),
+        ]);
+    }
+    if request_text.contains("refusal-only-e2e") || request_text.contains("refusal-mixed-e2e") {
+        let mixed = request_text.contains("refusal-mixed-e2e");
+        let mut events = vec![
+            json!({"type":"response.output_item.added","output_index":0,"item":{"id":"msg_refusal","type":"message","status":"in_progress","role":"assistant","content":[]}}),
+        ];
+        if mixed {
+            events.push(json!({"type":"response.output_text.delta","item_id":"msg_refusal","output_index":0,"content_index":0,"delta":"before "}));
+        }
+        let refusal_index = u8::from(mixed);
+        if mixed {
+            events.push(json!({"type":"response.refusal.delta","item_id":"msg_refusal","output_index":0,"content_index":refusal_index,"delta":"cannot comply"}));
+        }
+        events.push(json!({"type":"response.refusal.done","item_id":"msg_refusal","output_index":0,"content_index":refusal_index,"refusal":"cannot comply"}));
+        if mixed {
+            events.push(json!({"type":"response.output_text.delta","item_id":"msg_refusal","output_index":0,"content_index":2,"delta":" after"}));
+        }
+        events.push(json!({"type":"response.completed","response":{"id":"resp_refusal","model":"gpt-5","status":"completed","usage":{"input_tokens":3,"output_tokens":3,"total_tokens":6},"output":[]}}));
+        return codex_fixture_stream(&events);
+    }
+    if request_text.contains("response-failure-e2e")
+        || request_text.contains("standalone-error-e2e")
+    {
+        let terminal = if request_text.contains("standalone-error-e2e") {
+            "data: {\"type\":\"error\",\"message\":\"synthetic stream failure\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}\n\n"
+        } else {
+            "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"status\":\"failed\",\"error\":{\"message\":\"synthetic stream failure\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}}}\n\n"
+        };
         return [
             "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n",
             "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\n",
             "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
-            "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"error\":{\"message\":\"synthetic stream failure\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}}}\n\n",
+            terminal,
             "data: [DONE]\n\n",
         ]
         .concat();
@@ -633,6 +667,10 @@ fn codex_stream_for_request(request: &Value) -> String {
         ]);
     }
     events.push(json!({"type":"response.completed","response":response}));
+    codex_fixture_stream(&events)
+}
+
+fn codex_fixture_stream(events: &[Value]) -> String {
     let mut stream = String::new();
     for event in events {
         write!(

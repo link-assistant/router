@@ -460,7 +460,13 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                     .map(|parts| {
                         parts
                             .iter()
-                            .filter_map(|p| p.get("text").and_then(Value::as_str))
+                            .filter_map(|part| match part.get("type").and_then(Value::as_str) {
+                                Some("output_text" | "text") => {
+                                    part.get("text").and_then(Value::as_str)
+                                }
+                                Some("refusal") => part.get("refusal").and_then(Value::as_str),
+                                _ => None,
+                            })
                             .collect::<Vec<_>>()
                             .join("")
                     })

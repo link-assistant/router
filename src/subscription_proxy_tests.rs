@@ -264,9 +264,47 @@ fn codex_sse_collapses_to_completed_response() {
 }
 
 #[test]
+fn codex_sse_collapses_incomplete_with_indexed_partial_output_and_metadata() {
+    let sse = concat!(
+        "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"partial\"}\n\n",
+        "data: {\"type\":\"response.refusal.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":1,\"delta\":\"cannot comply\"}\n\n",
+        "data: {\"type\":\"response.refusal.done\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":1,\"refusal\":\"cannot comply\"}\n\n",
+        "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"msg_1\",\"type\":\"message\",\"status\":\"incomplete\",\"role\":\"assistant\",\"content\":[]}}\n\n",
+        "data: {\"type\":\"response.output_item.added\",\"output_index\":1,\"item\":{\"id\":\"fc_1\",\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\",\"arguments\":\"{}\"}}\n\n",
+        "data: {\"type\":\"response.incomplete\",\"response\":{\"id\":\"resp_incomplete\",\"model\":\"exact-model\",\"status\":\"incomplete\",\"incomplete_details\":{\"reason\":\"max_output_tokens\"},\"usage\":{\"input_tokens\":3,\"output_tokens\":4,\"total_tokens\":7},\"output\":[]}}\n\n"
+    );
+    let out = codex_sse_to_response_json(sse.as_bytes()).expect("incomplete payload");
+    let value: serde_json::Value = serde_json::from_slice(&out).unwrap();
+
+    assert_eq!(value["id"], "resp_incomplete");
+    assert_eq!(value["model"], "exact-model");
+    assert_eq!(value["status"], "incomplete");
+    assert_eq!(value["incomplete_details"]["reason"], "max_output_tokens");
+    assert_eq!(value["usage"]["total_tokens"], 7);
+    assert_eq!(value["output"][0]["content"][0]["text"], "partial");
+    assert_eq!(value["output"][0]["content"][1]["refusal"], "cannot comply");
+    assert_eq!(value["output"][1]["call_id"], "call_1");
+}
+
+#[test]
 fn codex_sse_without_completed_returns_none() {
     let sse = "event: response.created\ndata: {\"type\":\"response.created\"}\n\n";
     assert!(codex_sse_to_response_json(sse.as_bytes()).is_none());
+}
+
+#[test]
+fn codex_sse_collapses_to_failed_response_without_losing_the_error() {
+    let sse = concat!(
+        "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"partial\"}\n\n",
+        "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"status\":\"failed\",\"error\":{\"message\":\"buffered boom\",\"code\":\"server_error\"}}}\n\n",
+        "data: [DONE]\n\n"
+    );
+    let out = codex_sse_to_response_json(sse.as_bytes()).expect("failed payload");
+    let value: serde_json::Value = serde_json::from_slice(&out).unwrap();
+
+    assert_eq!(value["id"], "resp_failed");
+    assert_eq!(value["status"], "failed");
+    assert_eq!(value["error"]["message"], "buffered boom");
 }
 
 #[test]

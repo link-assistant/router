@@ -293,6 +293,51 @@ fn responses_object_becomes_anthropic_message() {
     assert_eq!(msg["usage"]["input_tokens"], 5);
 }
 
+#[test]
+fn refusal_only_response_becomes_visible_anthropic_text() {
+    let payload = json!({
+        "id": "resp_refusal",
+        "object": "response",
+        "status": "completed",
+        "output": [{"type": "message", "content": [
+            {"type": "refusal", "refusal": "cannot comply"}
+        ]}]
+    });
+
+    let msg = openai_json_to_anthropic_message(&payload, "claude-opus-4-7");
+
+    assert_eq!(
+        msg["content"][0],
+        json!({"type":"text","text":"cannot comply"})
+    );
+    assert_eq!(msg["stop_reason"], "end_turn");
+}
+
+#[test]
+fn mixed_response_keeps_text_and_refusal_in_display_order() {
+    let payload = json!({
+        "id": "resp_mixed",
+        "object": "response",
+        "status": "completed",
+        "output": [
+            {"type": "message", "content": [
+                {"type": "output_text", "text": "before "},
+                {"type": "refusal", "refusal": "cannot comply"},
+                {"type": "output_text", "text": " after"}
+            ]},
+            {"type": "message", "content": [
+                {"type": "refusal", "refusal": "second refusal"}
+            ]}
+        ]
+    });
+
+    let msg = openai_json_to_anthropic_message(&payload, "claude-opus-4-7");
+
+    assert_eq!(msg["content"][0]["text"], "before cannot comply after");
+    assert_eq!(msg["content"][1]["text"], "second refusal");
+    assert_eq!(msg["stop_reason"], "end_turn");
+}
+
 #[tokio::test]
 async fn buffered_bridge_preserves_requested_without_private_metadata() {
     use axum::response::IntoResponse as _;

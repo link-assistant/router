@@ -606,37 +606,151 @@ async fn responses_stream_has_complete_named_lifecycle() {
 #[tokio::test]
 async fn codex_http_200_response_failure_stays_failed_on_client_streams() {
     let router = TestRouter::start(UpstreamProvider::Codex).await;
-    for (path, body) in [
-        (
+    for marker in ["response-failure-e2e", "standalone-error-e2e"] {
+        for path in [
             "/api/services/openai/v1/chat/completions",
-            json!({"model":"gpt-5","messages":[{"role":"user","content":"response-failure-e2e"}],"stream":true}),
-        ),
-        (
             "/api/services/anthropic/v1/messages",
-            json!({"model":"gpt-5","max_tokens":64,"messages":[{"role":"user","content":"response-failure-e2e"}],"stream":true}),
-        ),
+        ] {
+            let body = if path.ends_with("/v1/messages") {
+                json!({"model":"gpt-5","max_tokens":64,"messages":[{"role":"user","content":marker}],"stream":true})
+            } else {
+                json!({"model":"gpt-5","messages":[{"role":"user","content":marker}],"stream":true})
+            };
+            let response = router
+                .post(path, &body)
+                .send()
+                .await
+                .expect("failed stream");
+            assert_eq!(response.status(), StatusCode::OK, "{marker} {path}");
+            let stream = response.text().await.expect("failed stream body");
+            assert!(
+                stream.contains("synthetic stream failure"),
+                "{marker} {path}: {stream}"
+            );
+            assert!(stream.contains("upstream_failed"), "{path}: {stream}");
+            assert!(!stream.contains("private_account"), "{path}: {stream}");
+            assert!(!stream.contains("data: [DONE]"), "{path}: {stream}");
+            if path.ends_with("/v1/messages") {
+                assert!(stream.contains("event: error"), "{stream}");
+                assert!(!stream.contains("event: message_stop"), "{stream}");
+                assert!(!stream.contains("\"stop_reason\":\""), "{stream}");
+            } else {
+                assert!(stream.contains("\"error\":"), "{stream}");
+                assert!(!stream.contains("\"finish_reason\":\""), "{stream}");
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn nonstream_codex_terminals_are_json_with_their_true_status() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    for (marker, status) in [
+        ("terminal-completed-e2e", "completed"),
+        ("terminal-incomplete-e2e", "incomplete"),
+        ("response-failure-e2e", "failed"),
     ] {
         let response = router
-            .post(path, &body)
+            .post(
+                "/api/services/openai/v1/responses",
+                &json!({"model":"gpt-5","input":marker,"stream":false}),
+            )
             .send()
             .await
-            .expect("failed stream");
-        assert_eq!(response.status(), StatusCode::OK, "{path}");
-        let stream = response.text().await.expect("failed stream body");
+            .expect("non-streaming terminal response");
+        assert_eq!(response.status(), StatusCode::OK, "{marker}");
         assert!(
-            stream.contains("synthetic stream failure"),
-            "{path}: {stream}"
+            response.headers()["content-type"]
+                .to_str()
+                .is_ok_and(|value| value.starts_with("application/json")),
+            "{marker}"
         );
-        assert!(stream.contains("upstream_failed"), "{path}: {stream}");
-        assert!(!stream.contains("private_account"), "{path}: {stream}");
-        assert!(!stream.contains("data: [DONE]"), "{path}: {stream}");
-        if path.ends_with("/v1/messages") {
-            assert!(stream.contains("event: error"), "{stream}");
-            assert!(!stream.contains("event: message_stop"), "{stream}");
-            assert!(!stream.contains("\"stop_reason\":\""), "{stream}");
+        let payload: Value = response.json().await.expect("terminal JSON");
+        assert_eq!(payload["status"], status, "{marker}: {payload}");
+        if status == "incomplete" {
+            assert_eq!(payload["id"], "resp_incomplete");
+            assert_eq!(payload["model"], "gpt-5");
+            assert_eq!(payload["incomplete_details"]["reason"], "max_output_tokens");
+            assert_eq!(payload["usage"]["total_tokens"], 7);
+            assert_eq!(payload["output"][0]["content"][0]["text"], "partial");
+            assert_eq!(payload["output"][1]["call_id"], "call_partial");
+        } else if status == "failed" {
+            assert_eq!(payload["error"]["message"], "synthetic stream failure");
+            assert!(!payload.to_string().contains("private_account"));
+        }
+    }
+}
+
+#[tokio::test]
+async fn buffered_refusals_survive_both_client_surfaces() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    for mixed in [false, true] {
+        let marker = if mixed {
+            "refusal-mixed-e2e"
         } else {
-            assert!(stream.contains("\"error\":"), "{stream}");
-            assert!(!stream.contains("\"finish_reason\":\""), "{stream}");
+            "refusal-only-e2e"
+        };
+        for path in [
+            "/api/services/openai/v1/chat/completions",
+            "/api/services/anthropic/v1/messages",
+        ] {
+            let body = json!({"model":"gpt-5","messages":[{"role":"user","content":marker}],"max_tokens":64,"stream":false});
+            let response = router.post(path, &body).send().await.expect("refusal JSON");
+            assert_eq!(response.status(), StatusCode::OK, "{path}");
+            let payload: Value = response.json().await.expect("refusal response JSON");
+            if path.ends_with("/v1/messages") {
+                let text = payload["content"][0]["text"].as_str().unwrap();
+                assert_eq!(
+                    text,
+                    if mixed {
+                        "before cannot comply after"
+                    } else {
+                        "cannot comply"
+                    }
+                );
+                assert_eq!(payload["stop_reason"], "end_turn");
+            } else {
+                assert_eq!(payload["choices"][0]["message"]["refusal"], "cannot comply");
+                assert_eq!(payload["choices"][0]["finish_reason"], "stop");
+                if mixed {
+                    assert_eq!(payload["choices"][0]["message"]["content"], "before  after");
+                } else {
+                    assert!(payload["choices"][0]["message"]["content"].is_null());
+                }
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn streamed_refusals_survive_both_client_surfaces_in_order() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    for marker in ["refusal-only-e2e", "refusal-mixed-e2e"] {
+        for path in [
+            "/api/services/openai/v1/chat/completions",
+            "/api/services/anthropic/v1/messages",
+        ] {
+            let body = json!({"model":"gpt-5","messages":[{"role":"user","content":marker}],"max_tokens":64,"stream":true});
+            let response = router.post(path, &body).send().await.expect("refusal SSE");
+            assert_eq!(response.status(), StatusCode::OK, "{path}");
+            let stream = response.text().await.expect("refusal stream");
+            if path.ends_with("/v1/messages") {
+                assert!(stream.contains("\"text\":\"cannot comply\""), "{stream}");
+                assert!(stream.contains("\"stop_reason\":\"end_turn\""), "{stream}");
+            } else {
+                assert!(stream.contains("\"refusal\":\"cannot comply\""), "{stream}");
+                assert!(
+                    !stream.contains("\"content\":\"cannot comply\""),
+                    "{stream}"
+                );
+                assert!(stream.contains("\"finish_reason\":\"stop\""), "{stream}");
+            }
+            if marker.contains("mixed") {
+                let before = stream.find("before ").unwrap();
+                let refusal = stream.find("cannot comply").unwrap();
+                let after = stream.find(" after").unwrap();
+                assert!(before < refusal && refusal < after, "{stream}");
+            }
         }
     }
 }

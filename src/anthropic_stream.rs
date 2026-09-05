@@ -12,7 +12,7 @@
 //! front, because a single provider may emit either one depending on which
 //! endpoint the request was routed to.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{Value, json};
 
@@ -54,6 +54,7 @@ pub struct AnthropicStreamTranslator {
     /// the Anthropic content-block index.
     tool_indices: BTreeMap<i64, usize>,
     server_tool_indices: BTreeMap<i64, (usize, String)>,
+    refusal_indices: BTreeSet<(u64, u64)>,
     next_index: usize,
     stop_reason: Option<String>,
     stop_sequence: Option<String>,
@@ -77,6 +78,7 @@ impl AnthropicStreamTranslator {
             text_index: None,
             tool_indices: BTreeMap::new(),
             server_tool_indices: BTreeMap::new(),
+            refusal_indices: BTreeSet::new(),
             next_index: 0,
             stop_reason: None,
             stop_sequence: None,
@@ -129,7 +131,7 @@ impl AnthropicStreamTranslator {
         if event
             .get("type")
             .and_then(Value::as_str)
-            .is_some_and(|t| t.starts_with("response."))
+            .is_some_and(|t| t.starts_with("response.") || t == "error")
         {
             self.translate_response_event(&event)
         } else {
@@ -236,6 +238,22 @@ impl AnthropicStreamTranslator {
                     frames.extend(self.text_delta(text));
                 }
             }
+            "response.refusal.delta" => {
+                self.refusal_indices.insert(response_content_key(event));
+                if let Some(text) = event.get("delta").and_then(Value::as_str)
+                    && !text.is_empty()
+                {
+                    frames.extend(self.text_delta(text));
+                }
+            }
+            "response.refusal.done" => {
+                if self.refusal_indices.insert(response_content_key(event))
+                    && let Some(text) = event.get("refusal").and_then(Value::as_str)
+                    && !text.is_empty()
+                {
+                    frames.extend(self.text_delta(text));
+                }
+            }
             "response.output_item.added" | "response.output_item.done" => {
                 let item = event.get("item").unwrap_or(&Value::Null);
                 if item.get("type").and_then(Value::as_str) == Some("function_call") {
@@ -272,7 +290,7 @@ impl AnthropicStreamTranslator {
                     })));
                 }
             }
-            "response.failed" => {
+            "error" | "response.failed" => {
                 let error = crate::responses::response_failed_error(event)["error"].clone();
                 self.finished = true;
                 frames.push(anthropic_frame(
@@ -502,6 +520,19 @@ impl AnthropicStreamTranslator {
     }
 }
 
+fn response_content_key(event: &Value) -> (u64, u64) {
+    (
+        event
+            .get("output_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0),
+        event
+            .get("content_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -612,6 +643,36 @@ mod tests {
         assert!(out.contains("\"code\":\"upstream_failed\""), "{out}");
         assert!(!out.contains("\"stop_reason\":\""), "{out}");
         assert!(!out.contains("event: message_stop"), "{out}");
+    }
+
+    #[test]
+    fn standalone_error_after_deltas_emits_anthropic_error() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let mut out = joined(&t.push(
+            b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
+        ));
+        out.push_str(&joined(&t.push(b"data: {\"type\":\"error\",\"message\":\"standalone boom\",\"code\":\"server_error\",\"param\":\"input\",\"private_account\":\"secret\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{}}\n\ndata: [DONE]\n\n")));
+
+        assert!(out.contains("partial"), "{out}");
+        assert!(out.contains("event: error"), "{out}");
+        assert!(out.contains("\"message\":\"standalone boom\""), "{out}");
+        assert!(out.contains("\"code\":\"server_error\""), "{out}");
+        assert!(!out.contains("private_account"), "{out}");
+        assert!(!out.contains("\"stop_reason\":\""), "{out}");
+        assert!(!out.contains("event: message_stop"), "{out}");
+    }
+
+    #[test]
+    fn streamed_refusal_is_displayed_in_source_order_without_duplication() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let out = joined(&t.push(b"data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"content_index\":0,\"delta\":\"before \"}\n\ndata: {\"type\":\"response.refusal.delta\",\"output_index\":0,\"content_index\":1,\"delta\":\"cannot comply\"}\n\ndata: {\"type\":\"response.refusal.done\",\"output_index\":0,\"content_index\":1,\"refusal\":\"cannot comply\"}\n\ndata: {\"type\":\"response.output_text.delta\",\"output_index\":1,\"content_index\":0,\"delta\":\" after\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{}}\n\n"));
+
+        let before = out.find("\"text\":\"before \"").unwrap();
+        let refusal = out.find("\"text\":\"cannot comply\"").unwrap();
+        let after = out.find("\"text\":\" after\"").unwrap();
+        assert!(before < refusal && refusal < after, "{out}");
+        assert_eq!(out.matches("\"text\":\"cannot comply\"").count(), 1);
+        assert!(out.contains("\"stop_reason\":\"end_turn\""), "{out}");
     }
 
     #[test]
