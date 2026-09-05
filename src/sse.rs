@@ -6,7 +6,7 @@
 /// tail as bytes ensures conversion happens only after a complete SSE block is
 /// available, so a valid event cannot acquire replacement characters merely
 /// because of a network boundary.
-pub(crate) fn push_blocks(buffer: &mut Vec<u8>, chunk: &[u8]) -> Vec<String> {
+pub fn push_blocks(buffer: &mut Vec<u8>, chunk: &[u8]) -> Vec<String> {
     buffer.extend_from_slice(chunk);
     let mut blocks = Vec::new();
     while let Some((index, separator_len)) = find_separator(buffer) {

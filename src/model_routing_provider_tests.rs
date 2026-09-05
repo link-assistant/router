@@ -558,6 +558,17 @@ async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
         let data_dir = tempfile::tempdir().expect("data dir");
         let mut state = auto_state(Vec::new(), data_dir.path());
         state.upstream_provider = provider;
+        let gonka_task = if provider == UpstreamProvider::Gonka {
+            let (base_url, task) = live_catalog_upstream(&["gonka-live"]).await;
+            state.gonka = crate::gonka::GonkaConfig::new(
+                Some("broker-secret".into()),
+                Some(base_url.trim_end_matches("/v1")),
+                String::new(),
+            );
+            Some(task)
+        } else {
+            None
+        };
         let response = models(
             State(state.clone()),
             OriginalUri("/api/services/openai/v1/models".parse().unwrap()),
@@ -568,8 +579,9 @@ async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let catalog: serde_json::Value = serde_json::from_slice(&body).unwrap();
         let data = catalog["data"].as_array().expect("OpenAI model list");
-        if provider == UpstreamProvider::Crater {
-            assert!(!data.is_empty(), "{provider:?}");
+        assert!(!data.is_empty(), "{provider:?}");
+        if let Some(task) = gonka_task {
+            task.abort();
         }
     }
 }

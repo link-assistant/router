@@ -771,13 +771,13 @@ fn codex_sse_to_response_json(body: &[u8]) -> Option<Vec<u8>> {
                 }
             }
             Some("response.output_text.delta") => {
-                update_codex_output_text(&mut output, &event, false)
+                update_codex_output_text(&mut output, &event, false);
             }
             Some("response.output_text.done") => {
-                update_codex_output_text(&mut output, &event, true)
+                update_codex_output_text(&mut output, &event, true);
             }
             Some("response.refusal.delta") => {
-                update_codex_output_refusal(&mut output, &event, false)
+                update_codex_output_refusal(&mut output, &event, false);
             }
             Some("response.refusal.done") => update_codex_output_refusal(&mut output, &event, true),
             Some("response.completed" | "response.incomplete") => {

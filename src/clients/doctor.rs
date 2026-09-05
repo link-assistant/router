@@ -13,8 +13,8 @@ use super::{
     doctor_model,
 };
 
-pub(crate) const DOCTOR_EVIDENCE_HEADER: &str = "x-link-assistant-client-check";
-pub(crate) const DOCTOR_EVIDENCE_VALUE: &str = "reachability";
+pub const DOCTOR_EVIDENCE_HEADER: &str = "x-link-assistant-client-check";
+pub const DOCTOR_EVIDENCE_VALUE: &str = "reachability";
 
 impl ClientManager {
     /// Exercise the same URL and token variable configured for the client.
@@ -114,7 +114,7 @@ impl ClientManager {
 /// Minimal Router-owned probe headers. Client fingerprints are deliberately
 /// absent: the exact internal marker is accepted only with the signed client
 /// binding and is stripped before any native provider request.
-pub(crate) fn probe_headers(
+pub fn probe_headers(
     client: ClientKind,
     token: &str,
 ) -> Result<reqwest::header::HeaderMap, ClientError> {
@@ -193,7 +193,7 @@ pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
 /// the price; this is the price.
 ///
 /// Pure, so the price is assertable without spending it.
-pub(crate) fn probe_request(
+pub fn probe_request(
     client: ClientKind,
     base_url: &str,
     model: &str,

@@ -174,12 +174,9 @@ async fn append_gonka_models(
     let Some(gonka) = state.gonka.as_ref() else {
         return;
     };
-    let models = match gonka.live_catalog(&state.client).await {
-        Ok(models) => models,
-        Err(_) => {
-            catalog_status(catalog, "gonka", false);
-            return;
-        }
+    let Ok(models) = gonka.live_catalog(&state.client).await else {
+        catalog_status(catalog, "gonka", false);
+        return;
     };
     crate::gonka::merge_catalog(catalog, models);
     catalog_status(catalog, "gonka", true);

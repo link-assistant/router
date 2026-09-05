@@ -104,12 +104,12 @@ impl GonkaConfig {
         &self,
         client: &reqwest::Client,
     ) -> Result<Vec<LiveProviderModel>, String> {
-        if let Some(cached) = self
+        let cached = self
             .catalog
             .read()
             .map_err(|_| "Gonka catalog cache is unavailable")?
-            .clone()
-        {
+            .clone();
+        if let Some(cached) = cached {
             if !cached.failed
                 && cached
                     .last_success
@@ -141,36 +141,32 @@ impl GonkaConfig {
             .await
             .map_err(|_| "catalog request exceeded its total timeout".to_string())
             .and_then(|result| result);
-        match fetched {
-            Ok(models) => {
-                let now = Instant::now();
-                *self
-                    .catalog
-                    .write()
-                    .map_err(|_| "Gonka catalog cache is unavailable")? = Some(CachedCatalog {
-                    models: models.clone(),
-                    last_success: Some(now),
-                    last_attempt: now,
-                    failed: false,
+        let models = fetched.map_err(|detail| {
+            tracing::warn!("Gonka catalog refresh failed: {detail}");
+            let previous = self.catalog.read().ok().and_then(|entry| entry.clone());
+            let last_success = previous.as_ref().and_then(|entry| entry.last_success);
+            let models = previous.map_or_else(Vec::new, |entry| entry.models);
+            if let Ok(mut cache) = self.catalog.write() {
+                *cache = Some(CachedCatalog {
+                    models,
+                    last_success,
+                    last_attempt: Instant::now(),
+                    failed: true,
                 });
-                Ok(models)
             }
-            Err(detail) => {
-                tracing::warn!("Gonka catalog refresh failed: {detail}");
-                let previous = self.catalog.read().ok().and_then(|entry| entry.clone());
-                let last_success = previous.as_ref().and_then(|entry| entry.last_success);
-                let models = previous.map_or_else(Vec::new, |entry| entry.models);
-                if let Ok(mut cache) = self.catalog.write() {
-                    *cache = Some(CachedCatalog {
-                        models,
-                        last_success,
-                        last_attempt: Instant::now(),
-                        failed: true,
-                    });
-                }
-                Err("Gonka live model catalog is unavailable".into())
-            }
-        }
+            "Gonka live model catalog is unavailable".to_string()
+        })?;
+        let now = Instant::now();
+        *self
+            .catalog
+            .write()
+            .map_err(|_| "Gonka catalog cache is unavailable")? = Some(CachedCatalog {
+            models: models.clone(),
+            last_success: Some(now),
+            last_attempt: now,
+            failed: false,
+        });
+        Ok(models)
     }
 
     async fn fetch_catalog(
@@ -816,7 +812,11 @@ mod tests {
         server.abort();
         let _ = server.await;
         if let Some(cached) = config.catalog.write().unwrap().as_mut() {
-            cached.last_success = Some(Instant::now() - CATALOG_TTL - Duration::from_secs(1));
+            cached.last_success = Some(
+                Instant::now()
+                    .checked_sub(CATALOG_TTL.saturating_add(Duration::from_secs(1)))
+                    .expect("test clock supports a five-minute stale catalog"),
+            );
         }
         assert!(
             config.live_catalog(&reqwest::Client::new()).await.is_err(),
