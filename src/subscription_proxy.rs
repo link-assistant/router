@@ -412,9 +412,14 @@ async fn forward_subscription_openai_inner(
         .clone()
         .unwrap_or_else(|| sub_token.base_url(provider));
     let upstream_url = join_subscription_url(provider, &base_url, path);
+    let upstream_client = crate::upstream_client::subscription_client(
+        &state.client,
+        provider,
+        state.subscription_base_url.is_some(),
+    );
 
     let build_request = |token: &crate::subscription::SubscriptionToken| {
-        let mut request = state.client.post(upstream_url.clone());
+        let mut request = upstream_client.post(upstream_url.clone());
         if native_protocol {
             let mut native_headers =
                 crate::proxy::native_request_headers(headers, &token.access_token);
@@ -442,7 +447,7 @@ async fn forward_subscription_openai_inner(
     let correlation_id = crate::request_log::correlation_id(headers);
     let mut upstream_resp = match state
         .request_log
-        .send_upstream(&correlation_id, &state.client, build_request(&sub_token))
+        .send_upstream(&correlation_id, upstream_client, build_request(&sub_token))
         .await
     {
         Ok(resp) => resp,
@@ -484,7 +489,7 @@ async fn forward_subscription_openai_inner(
         );
         match state
             .request_log
-            .send_upstream(&correlation_id, &state.client, build_request(&refreshed))
+            .send_upstream(&correlation_id, upstream_client, build_request(&refreshed))
             .await
         {
             // Only one retry: a second 401 is surfaced rather than looped.
@@ -632,12 +637,8 @@ async fn forward_subscription_openai_inner(
         return response;
     }
 
-    // The Codex backend always streams Server-Sent Events even when the client
-    // asked for a non-streaming (`stream:false`) response, and labels that SSE
-    // body `application/json`. A non-streaming client (e.g. OpenClaw's gateway)
-    // then parses the raw event stream as a single JSON object and fails with an
-    // incomplete result. Collapse the SSE into the final `response.completed`
-    // payload and return it as a normal JSON Responses object.
+    // Codex returns SSE even for `stream:false`, labelled as JSON. Collapse it
+    // to the final Responses object for non-streaming clients.
     let mut response_body = upstream_body;
     if codex && status.is_success() {
         if let Some(json) = codex_sse_to_response_json(&response_body) {
@@ -708,12 +709,8 @@ async fn forward_subscription_openai_inner(
             bytes::Bytes::from(serde_json::to_vec(&parsed).expect("JSON values always serialize"));
     }
 
-    // An upstream failure is re-shaped into the dialect of the surface the
-    // caller used, as the Anthropic and Gemini surfaces already do. Relaying the
-    // vendor body verbatim left an OpenAI client unable to classify the error,
-    // and forwarded fields describing the operator's own subscription
-    // (`plan_type`, `eligible_promo`) to a caller who is often a different party
-    // (issue #213). The raw body stays in the request log for diagnosis.
+    // Re-shape failures to the caller's dialect and remove operator subscription
+    // metadata. The raw body stays in the request log for diagnosis (#213).
     let (response_body, content_type) = if status.is_success() {
         (response_body, content_type)
     } else {

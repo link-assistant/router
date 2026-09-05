@@ -1,9 +1,4 @@
-//! Native `OpenAI` Responses WebSocket forwarding.
-//!
-//! Routing is resolved from the first `response.create` event and the resulting
-//! provider credential is pinned for the lifetime of the socket. Router never
-//! translates this stateful protocol: unsupported bridge destinations fail
-//! before an upstream WebSocket is opened.
+//! Native `OpenAI` Responses WebSocket forwarding with a pinned provider.
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::Duration;
@@ -47,6 +42,7 @@ struct UpstreamTarget {
     headers: HeaderMap,
     allowed_models: Vec<String>,
     provider: UpstreamProvider,
+    codex_cookie_scope: bool,
 }
 
 struct TurnTracking {
@@ -268,7 +264,7 @@ async fn session(
         tokio_tungstenite::connect_async_with_config(request, Some(config), false),
     )
     .await;
-    let (mut upstream, _) = match connected {
+    let (mut upstream, handshake) = match connected {
         Ok(Ok(connected)) => connected,
         Ok(Err(error)) => {
             fail_and_close(
@@ -303,6 +299,14 @@ async fn session(
             return;
         }
     };
+    if target.codex_cookie_scope
+        && let Some(url) = crate::codex_cloudflare_cookies::websocket_url_to_https(&target.url)
+    {
+        crate::codex_cloudflare_cookies::store_response_headers(
+            handshake.headers().get_all("set-cookie").iter(),
+            &url,
+        );
+    }
     if upstream
         .send(tungstenite::Message::Text(
             String::from_utf8(first_bytes)
@@ -501,6 +505,7 @@ async fn prepare_target(
         headers: crate::proxy::native_request_headers(headers, api_key),
         allowed_models,
         provider: UpstreamProvider::OpenAICompatible,
+        codex_cookie_scope: false,
     })
 }
 
@@ -600,6 +605,7 @@ async fn subscription_target(
         headers: upstream_headers,
         allowed_models,
         provider: UpstreamProvider::Codex,
+        codex_cookie_scope: state.subscription_base_url.is_none(),
     })
 }
 
@@ -728,6 +734,12 @@ fn websocket_request(target: &UpstreamTarget) -> Result<http::Request<()>, Strin
         .map_err(|error| format!("invalid upstream WebSocket URL: {error}"))?;
     for (name, value) in &target.headers {
         request.headers_mut().append(name, value.clone());
+    }
+    if target.codex_cookie_scope
+        && let Some(url) = crate::codex_cloudflare_cookies::websocket_url_to_https(&target.url)
+        && let Some(cookie) = crate::codex_cloudflare_cookies::cookie_header(&url)
+    {
+        request.headers_mut().insert("cookie", cookie);
     }
     Ok(request)
 }

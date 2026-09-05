@@ -36,7 +36,8 @@ path = "src/bin/with-router.rs"
 axum = { version = "0.8", features = ["macros", "ws"] }
 hyper = { version = "1.11", features = ["full"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
-reqwest = { version = "0.13", features = ["stream", "json", "form", "query"] }
+reqwest = { version = "0.13", features = ["stream", "json", "form", "query", "cookies"] }
+cookie_store = "0.22.1"
 url = "2.5"
 tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "process", "sync", "net"] }
 serde = { version = "1.0", features = ["derive"] }

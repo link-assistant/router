@@ -864,6 +864,8 @@ pub async fn fetch_provider_catalog_records(
     token: &SubscriptionToken,
     base_url_override: Option<&str>,
 ) -> Result<Vec<CatalogRecord>, String> {
+    let client =
+        crate::upstream_client::subscription_client(client, provider, base_url_override.is_some());
     let base = base_url_override.map_or_else(
         || catalog_base_url(provider, token),
         |value| value.trim_end_matches('/').to_string(),

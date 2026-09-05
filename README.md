@@ -506,7 +506,7 @@ in a browser *or* in a chat. See
 |---|---|---|
 | `/api/services/anthropic/v1/models` | GET | Native client catalogue filtered by the signed Claude client policy |
 | `/api/services/anthropic/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
-| `/api/services/anthropic/v1/messages/count_tokens` | POST | Token-count helper |
+| `/api/services/anthropic/v1/messages/count_tokens` | POST | Native token count, or explicit unavailable error on bridges without an exact counter |
 | `/api/services/bedrock/invoke` | POST | Bedrock-format invoke |
 | `/api/services/bedrock/invoke-with-response-stream` | POST | Bedrock streaming invoke |
 | `/api/services/vertex/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:rawPredict` | POST | Vertex rawPredict pass-through |
@@ -518,7 +518,10 @@ in a browser *or* in a chat. See
 | `/api/services/openai/v1/chat/completions` | POST | Generic OpenAI Chat Completions service |
 | `/api/services/openai/v1/responses` | POST | Generic OpenAI Responses service |
 | `/api/services/openai/v1/models` | GET | Authenticated client/principal-specific intersection of healthy allowed models |
-| `/api/services/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
+| `/api/services/{anthropic,openai,codex,qwen}/v1/models/{model}` | GET | Exact metadata for one currently visible model, without probing unknown IDs |
+| `/api/services/{openai,codex,qwen}/v1/conversations[/{id}[/items[/{item_id}]]]` | GET/POST/PATCH/DELETE | Native Conversations resources with exact provider/account affinity |
+| `/api/services/codex/v1/responses` | POST/WebSocket | Native Codex Responses, including stateful WebSocket sessions |
+| `/api/services/codex/v1/*` | GET/POST | Remaining registered Codex subscription routes |
 | `/api/services/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
 | `/api/services/gemini/v1beta/models` | GET | Native Gemini model list filtered by the signed Gemini client policy |
 | `/api/services/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
@@ -536,7 +539,7 @@ authority.
 |---|---|---|
 | `/api/models` | GET | Healthy model catalogue filtered by the signed client kind, principal, and provider entitlement |
 | `/api/usage` | GET | Normalized subscription limits for every configured provider the signed client token may use |
-| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, or `lefine` usage/status record without revealing disallowed providers |
+| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, `lefine`, `gemini`, or `qwen` usage/status record without revealing disallowed providers |
 
 `GET /api/models` is the additional provider-neutral catalogue. It accepts the
 same Router client token carrier as that token's native client, then returns
@@ -558,6 +561,10 @@ kept visible with an explicit `unavailable` or `unverified` state. Router reads
 only the vendors' non-inference usage/profile endpoints, refreshes OAuth
 credentials through the shared safe refresh path, briefly caches normalized
 results, and honors `429 Retry-After`; checking usage consumes no model tokens.
+Gemini and Qwen remain visible as `unverified` with
+`live_limits_unavailable` and empty windows when no proven non-inference quota
+endpoint exists; Router never substitutes an inference request or hard-coded
+limit.
 The response never includes credentials, account identifiers, email addresses,
 credential documents, or unrestricted vendor response bodies. This client
 surface is separate from the administrator-only `/api/management/usage`, which
@@ -700,7 +707,8 @@ rejected locally rather than forwarded. The proxy:
 - Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
 - Replaces it with the selected upstream credential
 - On a native route, preserves the signed official client's end-to-end headers, real `user-agent`, version/session metadata, request JSON semantics, response bytes, and SSE sequence
-- Removes authentication, hop-by-hop/framing, forwarding-IP, cookie, and Router-internal headers; it never identifies itself upstream or synthesizes a missing official-client identity
+- Removes authentication, hop-by-hop/framing, forwarding-IP, caller-cookie, and Router-internal headers; it never identifies itself upstream or synthesizes a missing official-client identity
+- For canonical Codex traffic only, privately retains the official allowlist of Cloudflare infrastructure cookies across requests; account/session/auth cookies, custom bases, other providers, logs, and downstream responses never receive that state
 - Restricts request/response transformations to an explicitly authorized cross-protocol bridge
 - Preserves safe upstream status, request IDs, rate-limit fields, and other end-to-end response metadata
 
@@ -932,10 +940,11 @@ reports `successor_retained`, sets `previous_credential_safe: false`, and
 includes its opaque recovery transaction ID. Conditional provisioning that
 finds a destination before candidate validation reports `already_present`.
 
-Gemini's installed-app refresh grant also requires
-`GEMINI_OAUTH_CLIENT_SECRET`, set to the OAuth client secret shipped with the
-Gemini CLI. Router checks this before creating a staging transaction or making
-a network request and names the missing variable directly.
+Router includes Gemini CLI's public installed-app OAuth client configuration,
+so an imported standard login needs no copied secret. A custom client remains
+available by setting both `GEMINI_OAUTH_CLIENT_ID` and
+`GEMINI_OAUTH_CLIENT_SECRET`; a partial override fails before a rotating refresh
+token is spent.
 
 Subscription imports use the same durable provider/account lock as refresh and
 native login. Ordinary import is an explicit replacement operation.
@@ -1357,6 +1366,8 @@ LINK_ASSISTANT_TOKEN=<client-token> router usage anthropic
 LINK_ASSISTANT_TOKEN=<client-token> router usage openai --json
 LINK_ASSISTANT_TOKEN=<client-token> router usage z-ai
 LINK_ASSISTANT_TOKEN=<client-token> router usage lefine --json
+LINK_ASSISTANT_TOKEN=<client-token> router usage gemini --json
+LINK_ASSISTANT_TOKEN=<client-token> router usage qwen --json
 
 # Print resolved configuration + credential / store probes. Reports on the
 # machine it runs on, so with another router selected it says so and names it.

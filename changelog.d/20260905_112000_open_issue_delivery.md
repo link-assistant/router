@@ -22,3 +22,15 @@ bump: minor
 - Persist the management origin that issued a managed client credential and revoke through it before `clients remove` deletes local files.
 - Stream Gemini subscription Chat Completions and native `streamGenerateContent` incrementally from Code Assist, preserving ordered text, tools, finish reasons, usage, errors, and cancellation.
 - Refresh the complete compatible Cargo lockfile and the pinned Bun runtime image; verify every direct Rust/UI package, workflow action, hook, and other container base against its latest release.
+- Accept every Router-generated `clients doctor` probe through one stripped internal marker without forging or forwarding client fingerprints.
+- Preserve valid non-ASCII text and tool arguments when arbitrary network chunks split a UTF-8 scalar in any incremental SSE translator.
+- Stream Gonka broker responses incrementally with safe response metadata, usage accounting, and terminal settlement on completion, errors, or client disconnects.
+- Reject unsupported Gonka direct-wallet credentials before startup and keep supported broker authentication in the separate `GONKA_API_KEY` mode.
+- Discover Gonka models through authenticated live catalogs with bounded freshness, exact optional narrowing, fail-closed refreshes, and automatic-routing de-duplication.
+- Translate streamed and buffered Responses failures into truthful, caller-safe OpenAI and Anthropic errors without successful terminal frames.
+- Collapse incomplete Codex SSE terminals into indexed JSON output and preserve refusal content across buffered and streamed Chat and Anthropic surfaces.
+- Proxy native Conversations CRUD and item resources with exact provider/account affinity, bounded bodies, and transparent safe metadata.
+- Resolve one visible model through exact native model resources while rejecting unknown or unauthorized IDs before upstream contact.
+- Preserve supported multi-turn Chat history, images, files, refusals, tool calls, and tool results when translating to Codex Responses, and reject lossy legacy variants locally.
+- Match the current Claude, Codex, Gemini, and Qwen OAuth refresh wire contracts, including versioned client identity and Gemini's public installed-app configuration.
+- Preserve only allowlisted Cloudflare infrastructure-cookie continuity on canonical Codex ChatGPT HTTP and WebSocket traffic, with RFC scoping and strict size/count bounds.

@@ -394,6 +394,11 @@ async fn probe_openai(
     token: &SubscriptionToken,
     metadata: &SafeCredentialMetadata,
 ) -> SubscriptionUsage {
+    let client = crate::upstream_client::subscription_client(
+        &state.client,
+        SubscriptionProvider::Codex,
+        state.subscription_base_url.is_some(),
+    );
     let base = state
         .subscription_base_url
         .as_deref()
@@ -401,8 +406,7 @@ async fn probe_openai(
         .trim_end_matches('/')
         .trim_end_matches("/codex");
     let response = send_json(
-        state
-            .client
+        client
             .get(format!("{base}/wham/usage"))
             .bearer_auth(&token.access_token)
             .headers(crate::codex_identity::headers(token.account_id.as_deref())),

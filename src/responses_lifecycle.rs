@@ -288,6 +288,11 @@ pub(crate) async fn forward_subscription(
         expected_base_url,
         upstream_path,
     );
+    let upstream_client = crate::upstream_client::subscription_client(
+        &state.client,
+        provider,
+        state.subscription_base_url.is_some(),
+    );
     let build = |token: &SubscriptionToken| {
         let mut native = crate::proxy::native_request_headers(headers, &token.access_token);
         if provider == SubscriptionProvider::Codex
@@ -296,8 +301,7 @@ pub(crate) async fn forward_subscription(
         {
             native.insert("chatgpt-account-id", value);
         }
-        state
-            .client
+        upstream_client
             .request(
                 reqwest::Method::from_bytes(method.as_str().as_bytes())
                     .expect("HTTP methods accepted by axum are valid for reqwest"),
@@ -308,7 +312,7 @@ pub(crate) async fn forward_subscription(
     };
     let mut response = state
         .request_log
-        .send_upstream(correlation_id, &state.client, build(&token))
+        .send_upstream(correlation_id, upstream_client, build(&token))
         .await
         .map_err(|error| upstream_error(&format!("subscription request failed: {error}")))?;
     if response.status() == reqwest::StatusCode::UNAUTHORIZED
@@ -332,7 +336,7 @@ pub(crate) async fn forward_subscription(
         )?;
         response = state
             .request_log
-            .send_upstream(correlation_id, &state.client, build(&refreshed))
+            .send_upstream(correlation_id, upstream_client, build(&refreshed))
             .await
             .map_err(|error| upstream_error(&format!("subscription retry failed: {error}")))?;
     }
