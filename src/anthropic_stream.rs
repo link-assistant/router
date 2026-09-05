@@ -60,8 +60,12 @@ pub struct AnthropicStreamTranslator {
     stop_sequence: Option<String>,
     stop_filter: crate::stop_sequences::StopSequenceFilter,
     input_tokens: u64,
+    cached_input_tokens: u64,
     output_tokens: u64,
+    service_tier: Option<String>,
     web_search_requests: u64,
+    chat_text: String,
+    response_text: BTreeMap<(u64, u64), String>,
 }
 
 impl AnthropicStreamTranslator {
@@ -84,8 +88,12 @@ impl AnthropicStreamTranslator {
             stop_sequence: None,
             stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
             input_tokens: 0,
+            cached_input_tokens: 0,
             output_tokens: 0,
+            service_tier: None,
             web_search_requests: 0,
+            chat_text: String::new(),
+            response_text: BTreeMap::new(),
         }
     }
 
@@ -145,8 +153,9 @@ impl AnthropicStreamTranslator {
         if self.finished {
             return Vec::new();
         }
-        let mut frames = self.ensure_started();
         self.absorb_usage(event.get("usage"));
+        self.absorb_service_tier(event.get("service_tier"));
+        let mut frames = self.ensure_started();
 
         let Some(choice) = event
             .get("choices")
@@ -159,7 +168,18 @@ impl AnthropicStreamTranslator {
             if let Some(text) = delta.get("content").and_then(Value::as_str)
                 && !text.is_empty()
             {
+                self.chat_text.push_str(text);
                 frames.extend(self.text_delta(text));
+            }
+            if let Some(annotations) = delta.get("annotations") {
+                match crate::bridge_response::openai_annotations_to_anthropic(
+                    &self.chat_text,
+                    Some(annotations),
+                    true,
+                ) {
+                    Ok(citations) => frames.extend(self.citation_deltas(citations)),
+                    Err(error) => return self.fail_citation(&error),
+                }
             }
             if let Some(calls) = delta.get("tool_calls").and_then(Value::as_array) {
                 for call in calls {
@@ -229,13 +249,40 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         let kind = event.get("type").and_then(Value::as_str).unwrap_or("");
+        self.absorb_usage(
+            event
+                .get("usage")
+                .or_else(|| event.pointer("/response/usage")),
+        );
+        self.absorb_service_tier(
+            event
+                .get("service_tier")
+                .or_else(|| event.pointer("/response/service_tier")),
+        );
         let mut frames = self.ensure_started();
         match kind {
             "response.output_text.delta" => {
                 if let Some(text) = event.get("delta").and_then(Value::as_str)
                     && !text.is_empty()
                 {
+                    self.response_text
+                        .entry(response_content_key(event))
+                        .or_default()
+                        .push_str(text);
                     frames.extend(self.text_delta(text));
+                }
+            }
+            "response.output_text.annotation.added" => {
+                let key = response_content_key(event);
+                let text = self.response_text.get(&key).cloned().unwrap_or_default();
+                let annotation = event.get("annotation").cloned().unwrap_or(Value::Null);
+                match crate::bridge_response::openai_annotations_to_anthropic(
+                    &text,
+                    Some(&Value::Array(vec![annotation])),
+                    false,
+                ) {
+                    Ok(citations) => frames.extend(self.citation_deltas(citations)),
+                    Err(error) => return self.fail_citation(&error),
                 }
             }
             "response.refusal.delta" => {
@@ -399,6 +446,18 @@ impl AnthropicStreamTranslator {
                 self.output_tokens = v;
             }
         }
+        self.cached_input_tokens = usage
+            .pointer("/input_tokens_details/cached_tokens")
+            .or_else(|| usage.pointer("/prompt_tokens_details/cached_tokens"))
+            .and_then(Value::as_u64)
+            .unwrap_or(self.cached_input_tokens)
+            .min(self.input_tokens);
+    }
+
+    fn absorb_service_tier(&mut self, tier: Option<&Value>) {
+        if let Some(tier) = crate::bridge_response::anthropic_service_tier_from_openai(tier) {
+            self.service_tier = Some(tier.into());
+        }
     }
 
     fn ensure_started(&mut self) -> Vec<String> {
@@ -414,7 +473,12 @@ impl AnthropicStreamTranslator {
             "content": [],
             "stop_reason": Value::Null,
             "stop_sequence": Value::Null,
-            "usage": {"input_tokens": self.input_tokens, "output_tokens": 0},
+            "usage": {
+                "input_tokens": self.input_tokens.saturating_sub(self.cached_input_tokens),
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": self.cached_input_tokens,
+                "output_tokens": 0
+            },
         });
         vec![anthropic_frame(
             "message_start",
@@ -495,9 +559,14 @@ impl AnthropicStreamTranslator {
             .clone()
             .unwrap_or_else(|| "end_turn".to_string());
         let mut usage = json!({
-            "input_tokens": self.input_tokens,
+            "input_tokens": self.input_tokens.saturating_sub(self.cached_input_tokens),
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": self.cached_input_tokens,
             "output_tokens": self.output_tokens,
         });
+        if let Some(tier) = &self.service_tier {
+            usage["service_tier"] = Value::String(tier.clone());
+        }
         if self.web_search_requests > 0 {
             usage["server_tool_use"] = json!({
                 "web_search_requests": self.web_search_requests,
@@ -517,6 +586,39 @@ impl AnthropicStreamTranslator {
             &json!({"type": "message_stop"}),
         ));
         frames
+    }
+
+    fn citation_deltas(&self, citations: Vec<Value>) -> Vec<String> {
+        let Some(index) = self.open_block else {
+            return Vec::new();
+        };
+        citations
+            .into_iter()
+            .map(|citation| {
+                anthropic_frame(
+                    "content_block_delta",
+                    &json!({
+                        "type": "content_block_delta",
+                        "index": index,
+                        "delta": {"type": "citations_delta", "citation": citation},
+                    }),
+                )
+            })
+            .collect()
+    }
+
+    fn fail_citation(&mut self, error: &str) -> Vec<String> {
+        self.finished = true;
+        vec![anthropic_frame(
+            "error",
+            &json!({
+                "type": "error",
+                "error": {
+                    "type": "api_error",
+                    "message": format!("upstream returned an unrepresentable citation: {error}")
+                }
+            }),
+        )]
     }
 }
 

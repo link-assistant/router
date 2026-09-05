@@ -384,66 +384,50 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> 
         String::from,
     );
 
-    let mut content = String::new();
+    let (content, annotations) =
+        crate::bridge_response::anthropic_text_and_annotations(anthropic.get("content"));
     let mut tool_calls: Vec<Value> = Vec::new();
     if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
         for block in blocks {
-            match block.get("type").and_then(Value::as_str) {
-                Some("text") => {
-                    if let Some(t) = block.get("text").and_then(Value::as_str) {
-                        content.push_str(t);
+            if block.get("type").and_then(Value::as_str) == Some("tool_use") {
+                let name = block.get("name").and_then(Value::as_str).unwrap_or("");
+                let input = block.get("input").cloned().unwrap_or(Value::Null);
+                let id = block.get("id").and_then(Value::as_str).unwrap_or("");
+                tool_calls.push(json!({
+                    "id": id,
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": serde_json::to_string(&input).unwrap_or_default(),
                     }
-                }
-                Some("tool_use") => {
-                    let name = block.get("name").and_then(Value::as_str).unwrap_or("");
-                    let input = block.get("input").cloned().unwrap_or(Value::Null);
-                    let id = block.get("id").and_then(Value::as_str).unwrap_or("");
-                    tool_calls.push(json!({
-                        "id": id,
-                        "type": "function",
-                        "function": {
-                            "name": name,
-                            "arguments": serde_json::to_string(&input).unwrap_or_default(),
-                        }
-                    }));
-                }
-                _ => {}
+                }));
             }
         }
     }
 
-    let mut message = json!({"role": "assistant", "content": content});
+    let stop = crate::bridge_response::stop_semantics(
+        anthropic.get("stop_reason").and_then(Value::as_str),
+    );
+    let mut message = if stop.refusal {
+        json!({"role": "assistant", "content": Value::Null, "refusal": content})
+    } else {
+        json!({"role": "assistant", "content": content})
+    };
+    if !stop.refusal && !annotations.is_empty() {
+        message["annotations"] =
+            Value::Array(crate::bridge_response::chat_annotations(&annotations));
+    }
     if !tool_calls.is_empty() {
         message["tool_calls"] = Value::Array(tool_calls);
     }
-
-    let finish_reason = match anthropic
-        .get("stop_reason")
-        .and_then(Value::as_str)
-        .unwrap_or("end_turn")
-    {
-        "max_tokens" => "length",
-        "end_turn" | "stop_sequence" => "stop",
-        "tool_use" => "tool_calls",
-        other => other,
-    };
-
-    let usage = anthropic.get("usage").cloned().unwrap_or(Value::Null);
-    let prompt_tokens = usage
-        .get("input_tokens")
-        .and_then(Value::as_i64)
-        .unwrap_or(0);
-    let completion_tokens = usage
-        .get("output_tokens")
-        .and_then(Value::as_i64)
-        .unwrap_or(0);
+    let usage = crate::bridge_response::AnthropicUsage::from_value(anthropic.get("usage"));
 
     let served_model = anthropic
         .get("model")
         .and_then(Value::as_str)
         .unwrap_or(resolved_model);
 
-    json!({
+    let mut response = json!({
         "id": id,
         "object": "chat.completion",
         "created": chrono::Utc::now().timestamp(),
@@ -452,15 +436,15 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> 
             {
                 "index": 0,
                 "message": message,
-                "finish_reason": finish_reason,
+                "finish_reason": stop.chat_finish_reason,
             }
         ],
-        "usage": {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": prompt_tokens + completion_tokens,
-        }
-    })
+        "usage": usage.chat()
+    });
+    if let Some(tier) = usage.openai_service_tier() {
+        response["service_tier"] = Value::String(tier.into());
+    }
+    response
 }
 
 pub(crate) fn extract_sse_data(block: &str) -> String {
@@ -492,11 +476,7 @@ fn done_frame() -> String {
 }
 
 fn map_finish_reason(reason: &str) -> &'static str {
-    match reason {
-        "max_tokens" => "length",
-        "tool_use" => "tool_calls",
-        _ => "stop",
-    }
+    crate::bridge_response::stop_semantics(Some(reason)).chat_finish_reason
 }
 
 /// Resolve a model that the Anthropic-backed `OpenAI` surface can serve.

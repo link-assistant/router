@@ -12,7 +12,7 @@
 //!
 //! The budget is an estimate. The router has no upstream tokenizer, so it uses
 //! the same ~4 characters per token heuristic as
-//! [`crate::anthropic_bridge::count_tokens_estimate`], and hidden reasoning
+//! the bridge request-shape estimator, and hidden reasoning
 //! tokens are not observable at all. The cap is therefore a best-effort output
 //! bound, not an exact accounting of billed tokens.
 

@@ -432,18 +432,6 @@ fn max_tokens_finish_reason_maps_to_anthropic() {
 }
 
 #[test]
-fn count_tokens_estimate_scales_with_input() {
-    let small = count_tokens_estimate(&json!({"messages": [{"role": "user", "content": "hi"}]}));
-    let large = count_tokens_estimate(&json!({
-        "system": "s".repeat(400),
-        "messages": [{"role": "user", "content": "x".repeat(400)}]
-    }));
-    assert!(small >= 4, "per-message overhead is counted: {small}");
-    assert!(large > small);
-    assert!(large >= 200, "roughly 800 chars / 4: {large}");
-}
-
-#[test]
 fn bridged_providers_are_the_non_anthropic_openai_dialect_ones() {
     assert!(is_bridged(UpstreamProvider::Codex));
     assert!(is_bridged(UpstreamProvider::Qwen));

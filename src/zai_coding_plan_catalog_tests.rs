@@ -332,8 +332,12 @@ async fn streaming_tool_cycle_and_count_tokens_keep_the_exact_model_boundary() {
             "messages":[{"role":"user","content":"hello"}]
         }),
     );
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(requests.lock().unwrap().len(), before, "counting is local");
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    assert_eq!(
+        requests.lock().unwrap().len(),
+        before,
+        "unavailable counting never starts inference"
+    );
     let ghost_response = crate::zai_coding_plan::count_tokens(
         &state,
         &claude_headers,

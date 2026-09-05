@@ -267,7 +267,7 @@ impl TestRouter {
     }
 
     fn token_for(&self, path: &str) -> &str {
-        if path.ends_with("/v1/messages") {
+        if path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens") {
             &self.claude_token
         } else if path.ends_with("/v1/responses") {
             &self.codex_token
@@ -278,7 +278,7 @@ impl TestRouter {
 
     fn authenticated_post(&self, path: &str, token: &str) -> reqwest::RequestBuilder {
         let request = self.client.post(format!("{}{path}", self.url));
-        if path.ends_with("/v1/messages") {
+        if path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens") {
             request
                 .header("x-api-key", token)
                 .header("anthropic-version", "2023-06-01")
@@ -319,6 +319,10 @@ fn test_app(state: AppState) -> Router {
     Router::new()
         .route(
             "/api/services/anthropic/v1/messages",
+            post(proxy::proxy_handler),
+        )
+        .route(
+            "/api/services/anthropic/v1/messages/count_tokens",
             post(proxy::proxy_handler),
         )
         .route(
@@ -404,6 +408,7 @@ async fn response_payload(response: reqwest::Response) -> Value {
 }
 
 async fn stub_vendor(State(state): State<StubState>, request: Request) -> Response {
+    let count_tokens = request.uri().path().ends_with("/messages/count_tokens");
     state
         .headers
         .lock()
@@ -433,6 +438,13 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         return Response::new(Body::from(
             "internal safety_identifier and prompt_cache_key must stay private",
         ));
+    }
+    if count_tokens {
+        let mut response = Response::new(Body::from(r#"{"input_tokens":37}"#));
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+        return response;
     }
 
     let stream = body.get("stream").and_then(Value::as_bool) == Some(true);
@@ -715,3 +727,6 @@ mod chat_validation;
 
 #[path = "router_e2e/bridge_history.rs"]
 mod bridge_history;
+
+#[path = "router_e2e/bridge_semantics.rs"]
+mod bridge_semantics;

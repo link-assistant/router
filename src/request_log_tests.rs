@@ -195,6 +195,20 @@ fn provider_safety_identifiers_are_redacted_from_request_bodies() {
 }
 
 #[test]
+fn provider_cache_and_mcp_credentials_are_redacted_from_request_bodies() {
+    let logged = redacted_body(
+        br#"{
+            "prompt_cache_key":"synthetic-cache-identity",
+            "mcp_servers":[{"authorization_token":"synthetic-mcp-token"}]
+        }"#,
+    );
+    let rendered = logged.to_string();
+    assert!(!rendered.contains("synthetic-cache-identity"));
+    assert!(!rendered.contains("synthetic-mcp-token"));
+    assert!(rendered.contains(REDACTED));
+}
+
+#[test]
 fn credentials_are_redacted_from_uri_queries() {
     let dir = tempfile::tempdir().expect("temporary directory");
     let root = dir.path().join("requests");

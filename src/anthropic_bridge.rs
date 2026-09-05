@@ -26,7 +26,6 @@ use serde_json::{Value, json};
 
 use crate::anthropic_stream::map_stop_reason;
 use crate::app_state::AppState;
-use crate::bridge_request::system_text;
 use crate::bridge_selection::{ModelSelectionRequired, SelectionFailure};
 use crate::config::UpstreamProvider;
 use crate::metrics::Surface;
@@ -179,7 +178,17 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
     if let Some(text) = message.get("content").and_then(Value::as_str)
         && !text.is_empty()
     {
-        content.push(json!({"type": "text", "text": text}));
+        let citations = crate::bridge_response::openai_annotations_to_anthropic(
+            text,
+            message.get("annotations"),
+            true,
+        )
+        .unwrap_or_default();
+        let mut block = json!({"type": "text", "text": text});
+        if !citations.is_empty() {
+            block["citations"] = Value::Array(citations);
+        }
+        content.push(block);
     }
     for call in message
         .get("tool_calls")
@@ -205,14 +214,21 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
         .and_then(Value::as_str)
         .map_or("end_turn", map_stop_reason);
     let usage = payload.get("usage");
-    message_envelope(
+    let mut translated = message_envelope(
         payload.get("id").and_then(Value::as_str),
         requested_model,
         &content,
         stop_reason,
         usage_field(usage, &["prompt_tokens", "input_tokens"]),
         usage_field(usage, &["completion_tokens", "output_tokens"]),
-    )
+    );
+    translated["usage"] = crate::bridge_response::openai_usage_to_anthropic(usage);
+    if let Some(tier) =
+        crate::bridge_response::anthropic_service_tier_from_openai(payload.get("service_tier"))
+    {
+        translated["usage"]["service_tier"] = Value::String(tier.into());
+    }
+    translated
 }
 
 fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
@@ -227,25 +243,37 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
     {
         match item.get("type").and_then(Value::as_str).unwrap_or("") {
             "message" => {
-                let text: String = item
+                let mut combined_text = String::new();
+                let mut combined_citations = Vec::new();
+                for part in item
                     .get("content")
                     .and_then(Value::as_array)
-                    .map(|parts| {
-                        parts
-                            .iter()
-                            .filter_map(|part| match part.get("type").and_then(Value::as_str) {
-                                Some("output_text" | "text") => {
-                                    part.get("text").and_then(Value::as_str)
-                                }
-                                Some("refusal") => part.get("refusal").and_then(Value::as_str),
-                                _ => None,
-                            })
-                            .collect::<Vec<_>>()
-                            .join("")
-                    })
+                    .into_iter()
+                    .flatten()
+                {
+                    let text = match part.get("type").and_then(Value::as_str) {
+                        Some("output_text" | "text") => part.get("text").and_then(Value::as_str),
+                        Some("refusal") => part.get("refusal").and_then(Value::as_str),
+                        _ => None,
+                    };
+                    let Some(text) = text.filter(|text| !text.is_empty()) else {
+                        continue;
+                    };
+                    let citations = crate::bridge_response::openai_annotations_to_anthropic(
+                        text,
+                        part.get("annotations"),
+                        false,
+                    )
                     .unwrap_or_default();
-                if !text.is_empty() {
-                    content.push(json!({"type": "text", "text": text}));
+                    combined_text.push_str(text);
+                    combined_citations.extend(citations);
+                }
+                if !combined_text.is_empty() {
+                    let mut block = json!({"type": "text", "text": combined_text});
+                    if !combined_citations.is_empty() {
+                        block["citations"] = Value::Array(combined_citations);
+                    }
+                    content.push(block);
                 }
             }
             "function_call" => {
@@ -298,6 +326,12 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
         usage_field(usage, &["input_tokens", "prompt_tokens"]),
         usage_field(usage, &["output_tokens", "completion_tokens"]),
     );
+    message["usage"] = crate::bridge_response::openai_usage_to_anthropic(usage);
+    if let Some(tier) =
+        crate::bridge_response::anthropic_service_tier_from_openai(payload.get("service_tier"))
+    {
+        message["usage"]["service_tier"] = Value::String(tier.into());
+    }
     if web_search_requests > 0 {
         message["usage"]["server_tool_use"] = json!({
             "web_search_requests": web_search_requests,
@@ -424,51 +458,10 @@ pub(crate) fn untranslatable_anthropic_tool(body: &Value) -> Option<String> {
     None
 }
 
-/// Estimate the input token count of an Anthropic Messages request.
-///
-/// `POST /v1/messages/count_tokens` has no equivalent on the bridged
-/// upstreams, so the router answers locally. The estimate uses the widely
-/// quoted ~4 characters per token heuristic plus a small per-message overhead;
-/// it is documented as an estimate rather than an exact count.
-#[must_use]
-pub fn count_tokens_estimate(body: &Value) -> u64 {
-    let mut chars = 0usize;
-    let mut messages = 0usize;
-    if let Some(system) = body.get("system").and_then(system_text) {
-        chars += system.len();
-    }
-    for message in body
-        .get("messages")
-        .and_then(Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default()
-    {
-        messages += 1;
-        chars += json_text_len(message.get("content").unwrap_or(&Value::Null));
-    }
-    if let Some(tools) = body.get("tools") {
-        chars += tools.to_string().len();
-    }
-    // 4 chars/token, plus ~4 tokens of role and delimiter overhead per message.
-    (chars as u64).div_ceil(4) + (messages as u64) * 4
-}
-
-fn json_text_len(content: &Value) -> usize {
-    match content {
-        Value::String(s) => s.len(),
-        Value::Array(blocks) => blocks.iter().map(json_text_len).sum(),
-        Value::Object(_) => content
-            .get("text")
-            .and_then(Value::as_str)
-            .map_or_else(|| content.to_string().len(), str::len),
-        _ => 0,
-    }
-}
-
 /// Entry point for the Anthropic surface when the upstream is not Anthropic.
 ///
-/// `/v1/messages/count_tokens` is answered locally because the bridged
-/// upstreams expose no equivalent endpoint; everything else is forwarded.
+/// Bridged routes fail closed for token counting unless an exact compatible,
+/// non-inference counter is available; everything else is forwarded.
 pub async fn handle_anthropic_surface(
     state: &AppState,
     headers: &HeaderMap,
@@ -515,11 +508,10 @@ pub(crate) async fn handle_anthropic_surface_routed(
             path,
             Some(&body),
         );
-        return (
-            StatusCode::OK,
-            axum::Json(json!({"input_tokens": count_tokens_estimate(&body)})),
-        )
-            .into_response();
+        return anthropic_error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            b"exact token counting is unavailable for the selected route",
+        );
     }
     forward_anthropic_messages_routed(state, headers, path, body, subscription).await
 }

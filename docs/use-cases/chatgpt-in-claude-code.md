@@ -162,9 +162,9 @@ Expect the Anthropic SSE vocabulary, in order: `message_start`,
 | `stop_reason` | mapped from the OpenAI `finish_reason` |
 | `usage.input_tokens` / `output_tokens` | mapped from upstream usage when reported |
 
-`POST /api/services/anthropic/v1/messages/count_tokens` is answered **locally** with an estimate, since
-the OpenAI-dialect upstreams expose no equivalent endpoint. Treat the number as
-an approximation for budgeting, not as a billing figure.
+`POST /api/services/anthropic/v1/messages/count_tokens` fails explicitly when
+the selected bridge has no exact, authenticated, non-inference counter. Router
+never presents a character heuristic as a native token count.
 
 ## Limits and caveats
 
@@ -175,8 +175,9 @@ an approximation for budgeting, not as a billing figure.
   Chat tool results, and other history that cannot cross the selected protocol
   losslessly are rejected before inference. Use a self-contained continuation
   with URL/base64 content, or continue on the history's native provider.
-- **Prompt caching** (`cache_control`) has no counterpart upstream and is
-  ignored.
+- Compatible explicit prompt-cache breakpoints map to Anthropic
+  `cache_control`. Provider-owned cache keys, retention policies, TTLs, and
+  incompatible combinations are rejected before inference instead of ignored.
 - **The Claude-to-Codex bridge emulates `max_tokens`.** The field remains
   required by Anthropic Messages, while the ChatGPT backend rejects its
   Responses equivalent. Router strips only the translated bridge field and
@@ -185,7 +186,8 @@ an approximation for budgeting, not as a billing figure.
 - **`stop_sequences` is enforced locally for Codex**, including a sequence
   split across SSE chunks. The matched sequence is withheld from the client.
 - Anthropic-only beta features and vendor-specific fields are not emulated.
-- Token *estimates* replace exact `count_tokens` results (see above).
+- Bridged token counting remains unavailable unless the selected provider gains
+  a proven exact non-inference counter (see above).
 - Cost and quota accounting are the upstream vendor's; the router only counts
   requests. Cross-client use may violate provider account policy, is audited as
   the exact override cell, and must never be exposed as shared capacity.

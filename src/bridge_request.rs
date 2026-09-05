@@ -91,6 +91,7 @@ pub fn anthropic_to_responses_request(body: &Value, upstream_model: &str) -> Res
 pub fn validate_anthropic_request(body: &Value, target: BridgeTarget) -> Result<(), String> {
     anthropic_effort(body)?;
     crate::safety_identifier::anthropic_user_id(body)?;
+    crate::bridge_controls::reject_anthropic_provider_controls(body)?;
     if let Some(system) = body.get("system") {
         match system {
             Value::String(_) => {}
@@ -271,10 +272,16 @@ pub fn responses_message_content_to_anthropic(
             .map(|(index, part)| {
                 let part_path = format!("{path}.content[{index}]");
                 match part.get("type").and_then(Value::as_str) {
-                    Some("text" | "input_text" | "output_text") => Ok(json!({
-                        "type": "text",
-                        "text": require_string(part, "text", &part_path)?,
-                    })),
+                    Some("text" | "input_text" | "output_text") => {
+                        let mut block = json!({
+                            "type": "text",
+                            "text": require_string(part, "text", &part_path)?,
+                        });
+                        if part.get("prompt_cache_breakpoint").is_some() {
+                            block["cache_control"] = json!({"type": "ephemeral"});
+                        }
+                        Ok(block)
+                    }
                     Some("input_image") if role == "user" => {
                         responses_image_to_anthropic(part, &part_path)
                     }

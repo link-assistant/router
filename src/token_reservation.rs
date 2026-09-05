@@ -30,7 +30,7 @@ use serde_json::Value;
 /// Characters per token used by the router's local estimator.
 ///
 /// Matches [`crate::output_limit`] and
-/// [`crate::anthropic_bridge::count_tokens_estimate`] so one request is not
+/// the bridge request-shape estimator so one request is not
 /// measured two different ways.
 const CHARS_PER_TOKEN: u64 = 4;
 

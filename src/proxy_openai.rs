@@ -309,7 +309,51 @@ async fn openai_chat_completions_with_subscription(
         )
         .await;
     }
+    if let Some(reason) = crate::bridge_controls::unknown_chat_field(&body) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Some(reason) = crate::bridge_controls::untranslatable_chat_participant_name(&body) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     if state.upstream_provider == UpstreamProvider::Gemini {
+        if let Some(reason) =
+            crate::bridge_controls::untranslatable_openai_service_tier(body.get("service_tier"))
+        {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
+        if let Some(reason) =
+            crate::bridge_controls::untranslatable_moderation(body.get("moderation"))
+        {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
+        if let Err(reason) = crate::bridge_controls::validate_openai_prompt_cache(&body, false) {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
         return crate::gemini::forward_chat_completions_routed(
             &state,
             &headers,
@@ -346,6 +390,33 @@ async fn openai_chat_completions_with_subscription(
             },
         )
         .await;
+    }
+    if let Some(reason) =
+        crate::bridge_controls::untranslatable_openai_service_tier(body.get("service_tier"))
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Some(reason) = crate::bridge_controls::untranslatable_moderation(body.get("moderation"))
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Err(reason) = crate::bridge_controls::validate_openai_prompt_cache(&body, true) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
     }
     let req = match serde_json::from_value::<openai::OpenAIChatCompletionRequest>(body) {
         Ok(req) => req,
@@ -593,6 +664,44 @@ async fn openai_responses_with_route(
             },
         )
         .await;
+    }
+    if let Some(reason) = crate::bridge_controls::unknown_responses_field(&body) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Some(reason) =
+        crate::bridge_controls::untranslatable_openai_service_tier(body.get("service_tier"))
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Some(reason) = crate::bridge_controls::untranslatable_moderation(body.get("moderation"))
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Err(reason) = crate::bridge_controls::validate_openai_prompt_cache(
+        &body,
+        state.upstream_provider != UpstreamProvider::Gemini,
+    ) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
     }
     if state.upstream_provider == UpstreamProvider::Gemini {
         return crate::gemini::forward_responses_routed(

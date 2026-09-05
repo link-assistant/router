@@ -58,6 +58,12 @@ pub async fn translate_upstream_response(
             b"Upstream returned a malformed response",
         );
     };
+    if let Err(error) = crate::bridge_response::validate_openai_response_citations(&payload) {
+        return anthropic_error(
+            StatusCode::BAD_GATEWAY,
+            format!("upstream returned an unrepresentable citation: {error}").as_bytes(),
+        );
+    }
     let mut translated = openai_json_to_anthropic_message(&payload, requested_model);
     enforce_anthropic_stop(&mut translated, stop_sequences);
     let mut response = (StatusCode::OK, axum::Json(translated)).into_response();

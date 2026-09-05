@@ -33,6 +33,104 @@ fn anthropic_user_id_maps_to_both_openai_request_shapes() {
 }
 
 #[test]
+fn translated_targets_reject_every_nonempty_context_management_contract() {
+    let contracts = [
+        json!({"edits": [{
+            "type": "clear_tool_uses_20250919",
+            "trigger": {"type": "input_tokens", "value": 1000},
+            "keep": {"type": "tool_uses", "value": 2},
+            "exclude_tools": ["retain"]
+        }]}),
+        json!({"edits": [{
+            "type": "clear_thinking_20251015",
+            "keep": {"type": "thinking_turns", "value": 1}
+        }]}),
+        json!({"edits": [
+            {"type": "clear_tool_uses_20250919"},
+            {"type": "clear_thinking_20251015"}
+        ]}),
+        json!({"edits": "malformed"}),
+        json!([]),
+        json!("malformed"),
+    ];
+    for target in [
+        BridgeTarget::Chat,
+        BridgeTarget::Responses,
+        BridgeTarget::Gemini,
+    ] {
+        for context_management in &contracts {
+            let body = json!({
+                "messages": [{"role": "user", "content": "answer"}],
+                "context_management": context_management
+            });
+            let error = validate_anthropic_request(&body, target).unwrap_err();
+            assert!(error.contains("context_management"), "{target:?}: {error}");
+        }
+        for context_management in [Value::Null, json!({})] {
+            let body = json!({
+                "messages": [{"role": "user", "content": "answer"}],
+                "context_management": context_management
+            });
+            assert!(validate_anthropic_request(&body, target).is_ok());
+        }
+    }
+}
+
+#[test]
+fn translated_targets_reject_anthropic_tier_container_and_mcp_contracts() {
+    let contracts = [
+        ("service_tier", json!("auto")),
+        ("service_tier", json!("standard_only")),
+        ("speed", json!("fast")),
+        ("inference_geo", json!("us")),
+        (
+            "container",
+            json!({"id": "container_1", "skills": ["example"]}),
+        ),
+        (
+            "mcp_servers",
+            json!([{
+                "type": "url", "url": "https://mcp.example.test",
+                "name": "example", "authorization_token": "secret"
+            }]),
+        ),
+    ];
+    for target in [
+        BridgeTarget::Chat,
+        BridgeTarget::Responses,
+        BridgeTarget::Gemini,
+    ] {
+        for (field, value) in &contracts {
+            let mut body = json!({"messages": [{"role": "user", "content": "answer"}]});
+            body[*field] = value.clone();
+            let error = validate_anthropic_request(&body, target).unwrap_err();
+            assert!(error.contains(field), "{target:?}: {error}");
+        }
+        for (field, value) in [("container", json!({})), ("mcp_servers", json!([]))] {
+            let mut body = json!({"messages": [{"role": "user", "content": "answer"}]});
+            body[field] = value;
+            assert!(validate_anthropic_request(&body, target).is_ok());
+        }
+    }
+}
+
+#[test]
+fn translated_targets_reject_hosted_mcp_history_blocks() {
+    for kind in [
+        "mcp_tool_use",
+        "mcp_tool_result",
+        "mcp_tool_error",
+        "future_hosted_block",
+    ] {
+        let body = json!({
+            "messages": [{"role": "assistant", "content": [{"type": kind}]}]
+        });
+        let error = validate_anthropic_request(&body, BridgeTarget::Responses).unwrap_err();
+        assert!(error.contains(kind), "{error}");
+    }
+}
+
+#[test]
 fn bridged_responses_state_accepts_only_omitted_or_null_fields() {
     for body in [
         json!({}),

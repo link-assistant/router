@@ -29,6 +29,129 @@ fn chat_safety_identifier_maps_to_anthropic_metadata_and_rejects_bad_values() {
 }
 
 #[test]
+fn translated_chat_targets_reject_named_participants_without_erasing_identity() {
+    for (role, name) in [
+        ("system", "policy-author"),
+        ("developer", "application"),
+        ("user", "alice"),
+    ] {
+        let body = json!({
+            "model": "target-test",
+            "messages": [{"role": role, "name": name, "content": "hello"}]
+        });
+        let error = crate::bridge_controls::untranslatable_chat_participant_name(&body)
+            .expect("named participant must fail closed");
+        assert!(error.contains("message.name"), "{error}");
+        assert!(!error.contains(name), "identity must not enter diagnostics");
+    }
+    for body in [
+        json!({"messages": [{"role": "user", "content": "hello"}]}),
+        json!({"messages": [{"role": "user", "name": "", "content": "hello"}]}),
+        json!({"messages": [{"role": "user", "name": null, "content": "hello"}]}),
+    ] {
+        assert_eq!(
+            crate::bridge_controls::untranslatable_chat_participant_name(&body),
+            None
+        );
+    }
+}
+
+#[test]
+fn openai_service_tiers_are_preserved_or_rejected_by_target_contract() {
+    for tier in [json!("priority"), json!("flex"), json!("scale"), json!(42)] {
+        assert!(crate::bridge_controls::untranslatable_openai_service_tier(Some(&tier)).is_some());
+    }
+    for tier in [
+        None,
+        Some(&Value::Null),
+        Some(&json!("auto")),
+        Some(&json!("default")),
+    ] {
+        assert_eq!(
+            crate::bridge_controls::untranslatable_openai_service_tier(tier),
+            None
+        );
+    }
+    let body = json!({
+        "model": "gpt-test", "messages": [{"role": "user", "content": "answer"}],
+        "service_tier": "priority"
+    });
+    assert_eq!(
+        crate::responses::chat_completion_to_responses(&body)["service_tier"],
+        "priority"
+    );
+}
+
+#[test]
+fn translated_requests_fail_closed_for_future_moderation_and_cache_contracts() {
+    assert!(
+        crate::bridge_controls::unknown_chat_field(&json!({
+            "model": "x", "messages": [], "future_contract": true
+        }))
+        .is_some()
+    );
+    assert!(
+        crate::bridge_controls::unknown_responses_field(&json!({
+            "model": "x", "input": [], "future_contract": true
+        }))
+        .is_some()
+    );
+    assert!(
+        crate::bridge_controls::untranslatable_moderation(Some(
+            &json!({"model": "moderation", "policy": "strict"})
+        ))
+        .is_some()
+    );
+
+    let supported = json!({
+        "prompt_cache_options": {"mode": "explicit"},
+        "messages": [{"role": "user", "content": [
+            {"type": "text", "text": "one", "prompt_cache_breakpoint": {"type": "default"}},
+            {"type": "text", "text": "two", "prompt_cache_breakpoint": {"type": "default"}}
+        ]}]
+    });
+    assert!(crate::bridge_controls::validate_openai_prompt_cache(&supported, true).is_ok());
+    assert!(crate::bridge_controls::validate_openai_prompt_cache(&supported, false).is_err());
+    for unsupported in [
+        json!({"prompt_cache_key": "opaque"}),
+        json!({"prompt_cache_retention": "24h"}),
+        json!({"prompt_cache_options": {"mode": "explicit", "ttl": "30m"}}),
+        json!({"messages": [{"content": [{"prompt_cache_breakpoint": {"type": "future"}}]}]}),
+        json!({"messages": [{"content": [
+            {"prompt_cache_breakpoint": {"type": "default"}},
+            {"prompt_cache_breakpoint": {"type": "default"}},
+            {"prompt_cache_breakpoint": {"type": "default"}},
+            {"prompt_cache_breakpoint": {"type": "default"}},
+            {"prompt_cache_breakpoint": {"type": "default"}}
+        ]}]}),
+    ] {
+        assert!(crate::bridge_controls::validate_openai_prompt_cache(&unsupported, true).is_err());
+    }
+
+    let chat = json!({
+        "model": "gpt", "messages": [{"role": "user", "content": [{
+            "type": "text", "text": "hello",
+            "prompt_cache_breakpoint": {"type": "default"}
+        }]}],
+        "prompt_cache_key": "opaque", "prompt_cache_options": {"mode": "explicit"},
+        "prompt_cache_retention": "24h", "moderation": {"policy": "strict"}
+    });
+    let responses = crate::responses::chat_completion_to_responses(&chat);
+    for field in [
+        "prompt_cache_key",
+        "prompt_cache_options",
+        "prompt_cache_retention",
+        "moderation",
+    ] {
+        assert_eq!(responses[field], chat[field]);
+    }
+    assert_eq!(
+        responses.pointer("/input/0/content/0/prompt_cache_breakpoint"),
+        chat.pointer("/messages/0/content/0/prompt_cache_breakpoint")
+    );
+}
+
+#[test]
 fn chat_structured_output_and_parallel_tool_policy_reach_anthropic() {
     for (response_format, expected_schema) in [
         (

@@ -21,6 +21,9 @@ pub mod auth;
 pub mod auth_remote;
 mod bridge_controls;
 mod bridge_request;
+mod bridge_response;
+#[cfg(test)]
+mod bridge_response_tests;
 pub mod bridge_selection;
 pub mod capabilities;
 pub mod chat_admin;

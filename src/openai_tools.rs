@@ -28,7 +28,11 @@ pub fn translate_parts(parts: &[Value]) -> Vec<Value> {
             match kind {
                 "text" | "input_text" | "output_text" => {
                     let text = p.get("text").and_then(Value::as_str).unwrap_or("");
-                    Some(json!({"type": "text", "text": text}))
+                    let mut block = json!({"type": "text", "text": text});
+                    if p.get("prompt_cache_breakpoint").is_some() {
+                        block["cache_control"] = json!({"type": "ephemeral"});
+                    }
+                    Some(block)
                 }
                 "image_url" => {
                     let url = p
@@ -36,10 +40,14 @@ pub fn translate_parts(parts: &[Value]) -> Vec<Value> {
                         .and_then(|v| v.get("url"))
                         .and_then(Value::as_str)
                         .unwrap_or("");
-                    Some(json!({
+                    let mut block = json!({
                         "type": "image",
                         "source": {"type": "url", "url": url}
-                    }))
+                    });
+                    if p.get("prompt_cache_breakpoint").is_some() {
+                        block["cache_control"] = json!({"type": "ephemeral"});
+                    }
+                    Some(block)
                 }
                 "input_image" => {
                     let url = p.get("image_url").and_then(Value::as_str).unwrap_or("");

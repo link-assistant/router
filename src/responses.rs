@@ -14,6 +14,9 @@ use crate::openai::{
     extract_text, map_model, reconcile_subscription_parameters_with_limit_origin, translate_tools,
 };
 
+#[path = "responses_anthropic.rs"]
+mod anthropic_response;
+pub use anthropic_response::anthropic_to_response;
 #[path = "responses_input.rs"]
 mod request_input;
 pub use request_input::{normalize_input_items, untranslatable_tool_history};
@@ -236,10 +239,25 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
                         } else {
                             "input_text"
                         };
-                        input.push(json!({
-                            "role": role,
-                            "content": [{ "type": part_type, "text": text }],
-                        }));
+                        let mapped_content = content.as_array().map_or_else(
+                            || vec![json!({"type": part_type, "text": text})],
+                            |parts| {
+                                parts
+                                    .iter()
+                                    .map(|part| {
+                                        let mut mapped = part.clone();
+                                        if matches!(
+                                            part.get("type").and_then(Value::as_str),
+                                            Some("text" | "input_text" | "output_text")
+                                        ) {
+                                            mapped["type"] = Value::String(part_type.into());
+                                        }
+                                        mapped
+                                    })
+                                    .collect()
+                            },
+                        );
+                        input.push(json!({"role": role, "content": mapped_content}));
                     }
                     if let Some(tool_calls) = tool_calls {
                         input.extend(tool_calls.iter().filter_map(chat_tool_call_to_responses));
@@ -280,6 +298,19 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
     }
     if let Some(identifier) = body.get("safety_identifier") {
         out["safety_identifier"] = identifier.clone();
+    }
+    if let Some(service_tier) = body.get("service_tier") {
+        out["service_tier"] = service_tier.clone();
+    }
+    for field in [
+        "prompt_cache_key",
+        "prompt_cache_options",
+        "prompt_cache_retention",
+        "moderation",
+    ] {
+        if let Some(value) = body.get(field) {
+            out[field] = value.clone();
+        }
     }
     if let Some(tools) = body.get("tools") {
         out["tools"] = chat_tools_to_responses(tools);
@@ -888,84 +919,6 @@ fn extract_sse_data(block: &str) -> String {
 
 fn done_frame() -> String {
     "data: [DONE]\n\n".to_string()
-}
-
-/// Translate an Anthropic JSON response to an `OpenAI` Responses-API response.
-#[must_use]
-pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
-    let id = anthropic
-        .get("id")
-        .and_then(Value::as_str)
-        .map_or_else(|| format!("resp-{}", uuid::Uuid::new_v4()), String::from);
-    let mut text = String::new();
-    let mut output = Vec::new();
-    if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
-        for block in blocks {
-            match block.get("type").and_then(Value::as_str) {
-                Some("text") => {
-                    if let Some(t) = block.get("text").and_then(Value::as_str) {
-                        text.push_str(t);
-                    }
-                }
-                Some("tool_use") => output.push(json!({
-                    "type": "function_call",
-                    "call_id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
-                    "name": block.get("name").and_then(Value::as_str).unwrap_or_default(),
-                    "arguments": serde_json::to_string(
-                        block.get("input").unwrap_or(&Value::Null)
-                    ).unwrap_or_else(|_| "{}".into()),
-                    "status": "completed",
-                })),
-                Some("server_tool_use") => {
-                    let call_type = match block.get("name").and_then(Value::as_str) {
-                        Some("web_fetch") => "web_fetch_call",
-                        _ => "web_search_call",
-                    };
-                    output.push(json!({
-                        "type": call_type,
-                        "id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
-                        "status": "in_progress",
-                        "action": block.get("input").cloned().unwrap_or_else(|| json!({})),
-                    }));
-                }
-                Some(result_type @ ("web_search_tool_result" | "web_fetch_tool_result")) => {
-                    let call_type = if result_type == "web_fetch_tool_result" {
-                        "web_fetch_call"
-                    } else {
-                        "web_search_call"
-                    };
-                    if let Some(item) = output.iter_mut().rev().find(|item| {
-                        item.get("type").and_then(Value::as_str) == Some(call_type)
-                            && item.get("id") == block.get("tool_use_id")
-                    }) {
-                        item["status"] = Value::String("completed".into());
-                        item["result"] = block.get("content").cloned().unwrap_or(Value::Null);
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-    if !text.is_empty() || output.is_empty() {
-        output.push(json!({
-            "type": "message",
-            "role": "assistant",
-            "content": [{ "type": "output_text", "text": text }]
-        }));
-    }
-    let served_model = anthropic
-        .get("model")
-        .and_then(Value::as_str)
-        .unwrap_or(resolved_model);
-    json!({
-        "id": id,
-        "object": "response",
-        "created_at": chrono::Utc::now().timestamp(),
-        "model": served_model,
-        "status": "completed",
-        "output": output,
-        "usage": anthropic.get("usage").cloned().unwrap_or(Value::Null),
-    })
 }
 
 #[cfg(test)]

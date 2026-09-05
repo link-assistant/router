@@ -142,7 +142,7 @@ pub(super) fn redact_value(mut value: Value) -> Value {
 fn is_safety_identifier_name(name: &str) -> bool {
     matches!(
         normalize_name(name).as_str(),
-        "safety_identifier" | "user_id"
+        "safety_identifier" | "user_id" | "prompt_cache_key"
     )
 }
 
