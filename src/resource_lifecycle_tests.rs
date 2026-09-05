@@ -466,7 +466,7 @@ async fn native_subscription_response_lifecycle_reuses_the_exact_account() {
     assert_eq!(created.status(), StatusCode::OK);
 
     let retrieved = crate::responses_lifecycle::retrieve(
-        State(state),
+        State(state.clone()),
         Path("resp.?opaque".into()),
         OriginalUri(Uri::from_static(
             "/api/services/codex/v1/responses/resp.%3Fopaque",
@@ -480,15 +480,56 @@ async fn native_subscription_response_lifecycle_reuses_the_exact_account() {
     )
     .await;
     assert_eq!(retrieved.status(), StatusCode::OK);
-    let seen = seen.lock().unwrap();
     let lifecycle = seen
+        .lock()
+        .unwrap()
         .iter()
         .find(|request| request.method == Method::GET)
+        .cloned()
         .expect("subscription lifecycle request");
     assert_eq!(lifecycle.uri, "/v1/responses/resp.%3Fopaque");
     assert_eq!(lifecycle.headers["authorization"], "Bearer codex-upstream");
     assert_eq!(lifecycle.headers["chatgpt-account-id"], "account-42");
-    drop(seen);
+
+    let conversation = crate::conversations::create(
+        State(state.clone()),
+        OriginalUri(Uri::from_static("/api/services/codex/v1/conversations")),
+        request(
+            Method::POST,
+            "/api/services/codex/v1/conversations",
+            &client_headers,
+            r#"{"metadata":{"case":"subscription"}}"#,
+        ),
+    )
+    .await;
+    assert_eq!(conversation.status(), StatusCode::OK);
+    let retrieved = crate::conversations::conversation(
+        State(state),
+        Path("conv.?opaque".into()),
+        OriginalUri(Uri::from_static(
+            "/api/services/codex/v1/conversations/conv.%3Fopaque",
+        )),
+        request(
+            Method::GET,
+            "/api/services/codex/v1/conversations/conv.%3Fopaque",
+            &client_headers,
+            "",
+        ),
+    )
+    .await;
+    assert_eq!(retrieved.status(), StatusCode::OK);
+    let conversation = seen
+        .lock()
+        .unwrap()
+        .iter()
+        .find(|request| request.uri == "/v1/conversations/conv.%3Fopaque")
+        .cloned()
+        .expect("subscription conversation request");
+    assert_eq!(
+        conversation.headers["authorization"],
+        "Bearer codex-upstream"
+    );
+    assert_eq!(conversation.headers["chatgpt-account-id"], "account-42");
     task.abort();
 }
 
