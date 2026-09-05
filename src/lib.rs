@@ -51,6 +51,7 @@ pub mod credential_status;
 pub mod credential_store;
 pub mod doctor;
 pub mod durable_file;
+mod encoded_request_body;
 pub mod entrypoint;
 pub mod env_paths;
 pub mod gemini;

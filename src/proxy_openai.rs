@@ -7,7 +7,8 @@ use super::{
 
 #[path = "proxy_openai_resource.rs"]
 mod resource;
-use resource::{canonical_openai_model, capture_created_resource, state_for_previous_response};
+use resource::{capture_created_resource, state_for_previous_response};
+pub(crate) use resource::{rewrite_routed_model, route_openai_request};
 
 /// Provider-independent fields owned by the Chat Completions surface.
 ///
@@ -19,63 +20,6 @@ use resource::{canonical_openai_model, capture_created_resource, state_for_previ
 struct RequiredChatFields {
     #[allow(dead_code)]
     messages: Vec<openai::ChatMessage>,
-}
-
-pub(crate) async fn route_openai_request(
-    state: &AppState,
-    headers: &HeaderMap,
-    body: &serde_json::Value,
-    protocol: crate::client_policy::ClientProtocol,
-    path: &str,
-) -> Result<crate::model_routing::RoutedState, Response> {
-    if state.upstream_provider != UpstreamProvider::Auto {
-        return crate::model_routing::route_state_with_subscription(state, body)
-            .await
-            .map_err(|error| crate::model_routing::model_route_error_response(&error));
-    }
-    let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
-    let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
-        state, &claims, headers, protocol, path,
-    )?;
-    let client = crate::client_policy::bound_client(&claims)
-        .map(|(client, _)| client)
-        .map_err(|error| {
-            crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
-        })?;
-    crate::model_routing::route_state_with_subscription_for_client(
-        state,
-        body,
-        &entitled,
-        Some(client),
-        crate::zai_coding_plan::authorize_automatic_discovery(
-            state, &claims, headers, protocol, path,
-        ),
-    )
-    .await
-    .map_err(|error| crate::model_routing::model_route_error_response(&error))
-}
-
-pub(crate) fn rewrite_routed_model(
-    body: &mut serde_json::Value,
-    state: &AppState,
-    subscription: Option<&crate::model_routing::ValidatedSubscription>,
-) {
-    let Some(requested) = body
-        .get("model")
-        .and_then(serde_json::Value::as_str)
-        .map(str::to_string)
-    else {
-        return;
-    };
-    let canonical = canonical_openai_model(
-        state.upstream_provider,
-        subscription.is_some(),
-        state.bridge_model.as_deref(),
-        &requested,
-    );
-    if !canonical.is_empty() && canonical != requested {
-        body["model"] = serde_json::Value::String(canonical.to_string());
-    }
 }
 
 /// Record dropped tools locally without extending a public vendor protocol.
@@ -609,7 +553,7 @@ pub async fn openai_responses(
     openai_responses_with_route(
         state,
         headers,
-        body,
+        extracted_responses_body(body),
         false,
         crate::response_affinity::ResponseNamespace::OpenAiResponses,
     )
@@ -626,7 +570,7 @@ pub async fn openai_responses_native(
     openai_responses_with_route(
         state,
         headers,
-        body,
+        extracted_responses_body(body),
         true,
         crate::response_affinity::ResponseNamespace::CodexResponses,
     )
@@ -636,31 +580,71 @@ pub async fn openai_responses_native(
 pub async fn openai_responses_route(
     State(state): State<AppState>,
     axum::extract::OriginalUri(uri): axum::extract::OriginalUri,
-    headers: HeaderMap,
-    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+    request: axum::extract::Request,
 ) -> Response {
     let Some(namespace) = crate::response_affinity::ResponseNamespace::from_path(uri.path()) else {
         return crate::responses_lifecycle::response_not_found();
     };
     let native_route = namespace == crate::response_affinity::ResponseNamespace::CodexResponses;
-    openai_responses_with_route(state, headers, body, native_route, namespace).await
+    let headers = request.headers().clone();
+    if let Err(response) = crate::proxy::authenticate_client(&state, &headers) {
+        return *response;
+    }
+    let parsed = match crate::encoded_request_body::read_native_json(
+        &headers,
+        request.into_body(),
+        state.max_proxy_request_bytes,
+        native_route,
+    )
+    .await
+    {
+        Ok(parsed) => parsed,
+        Err(response) => return response,
+    };
+    openai_responses_with_route(
+        state,
+        headers,
+        Ok((parsed.value, native_route.then_some(parsed.native))),
+        native_route,
+        namespace,
+    )
+    .await
+}
+
+fn extracted_responses_body(
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Result<
+    (
+        serde_json::Value,
+        Option<crate::encoded_request_body::NativeBody>,
+    ),
+    Response,
+> {
+    body.map(|axum::Json(value)| (value, None))
+        .map_err(|error| {
+            crate::api_error::malformed_json_response_for_surface(
+                crate::metrics::Surface::OpenAIResponses,
+                &error.body_text(),
+            )
+        })
 }
 
 async fn openai_responses_with_route(
     state: AppState,
     headers: HeaderMap,
-    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+    body: Result<
+        (
+            serde_json::Value,
+            Option<crate::encoded_request_body::NativeBody>,
+        ),
+        Response,
+    >,
     native_route: bool,
     namespace: crate::response_affinity::ResponseNamespace,
 ) -> Response {
-    let mut body = match body {
-        Ok(axum::Json(body)) => body,
-        Err(error) => {
-            return crate::api_error::malformed_json_response_for_surface(
-                crate::metrics::Surface::OpenAIResponses,
-                &error.body_text(),
-            );
-        }
+    let (mut body, native_body) = match body {
+        Ok(body) => body,
+        Err(response) => return response,
     };
     let state = match state_for_previous_response(&state, &headers, namespace, &body) {
         Ok(state) => state,
@@ -778,7 +762,7 @@ async fn openai_responses_with_route(
         state.upstream_provider,
         UpstreamProvider::Codex | UpstreamProvider::Qwen
     ) {
-        let response = crate::subscription_proxy::forward_subscription_openai_routed(
+        let response = crate::subscription_proxy::forward_subscription_openai_routed_native(
             &state,
             &headers,
             body,
@@ -790,6 +774,7 @@ async fn openai_responses_with_route(
                 entitlement: None,
                 native_route,
             },
+            native_body,
         )
         .await;
         return capture_created_resource(&state, capture, response).await;
@@ -961,7 +946,7 @@ mod routed_model_tests {
     #[test]
     fn native_claude_routes_ignore_the_anthropic_bridge_override() {
         assert_eq!(
-            canonical_openai_model(
+            resource::canonical_openai_model(
                 UpstreamProvider::Anthropic,
                 true,
                 Some("unrelated-codex-bridge-model"),

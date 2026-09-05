@@ -16,6 +16,63 @@ pub(super) fn canonical_openai_model<'a>(
     requested
 }
 
+pub(crate) async fn route_openai_request(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: &serde_json::Value,
+    protocol: crate::client_policy::ClientProtocol,
+    path: &str,
+) -> Result<crate::model_routing::RoutedState, Response> {
+    if state.upstream_provider != UpstreamProvider::Auto {
+        return crate::model_routing::route_state_with_subscription(state, body)
+            .await
+            .map_err(|error| crate::model_routing::model_route_error_response(&error));
+    }
+    let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+    let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
+        state, &claims, headers, protocol, path,
+    )?;
+    let client = crate::client_policy::bound_client(&claims)
+        .map(|(client, _)| client)
+        .map_err(|error| {
+            crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
+        })?;
+    crate::model_routing::route_state_with_subscription_for_client(
+        state,
+        body,
+        &entitled,
+        Some(client),
+        crate::zai_coding_plan::authorize_automatic_discovery(
+            state, &claims, headers, protocol, path,
+        ),
+    )
+    .await
+    .map_err(|error| crate::model_routing::model_route_error_response(&error))
+}
+
+pub(crate) fn rewrite_routed_model(
+    body: &mut serde_json::Value,
+    state: &AppState,
+    subscription: Option<&crate::model_routing::ValidatedSubscription>,
+) {
+    let Some(requested) = body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string)
+    else {
+        return;
+    };
+    let canonical = canonical_openai_model(
+        state.upstream_provider,
+        subscription.is_some(),
+        state.bridge_model.as_deref(),
+        &requested,
+    );
+    if !canonical.is_empty() && canonical != requested {
+        body["model"] = serde_json::Value::String(canonical.to_string());
+    }
+}
+
 pub(super) fn state_for_previous_response(
     state: &AppState,
     headers: &HeaderMap,

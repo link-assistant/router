@@ -550,6 +550,7 @@ async fn claude_to_codex_translation_preserves_the_client_request_id() {
             entitlement: Some(crate::client_policy::EntitlementDecision::Override),
             native_route: false,
         },
+        None,
     )
     .await;
     assert_eq!(response.status(), StatusCode::OK);
