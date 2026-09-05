@@ -19,3 +19,4 @@ bump: minor
 - Make `--home` an isolation boundary for every vendor credential reader and local client command.
 - Use one non-inference provider-acceptance check for local and remote auth status, distinguishing usable, rejected, unverified, absent, and refresh-failed states.
 - Validate imported rotating refresh chains in an isolated durable store and promote Router-owned successors, including newer Claude Keychain credentials.
+- Persist the management origin that issued a managed client credential and revoke through it before `clients remove` deletes local files.

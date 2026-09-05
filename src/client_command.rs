@@ -56,7 +56,7 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             client,
             revoke_supplied,
             force,
-        } => remove(config, &manager, *client, *revoke_supplied, *force),
+        } => remove(config, &manager, *client, *revoke_supplied, *force).await,
         ClientOp::Repair {
             client,
             all,
@@ -283,6 +283,7 @@ async fn repair_one(
             .was_minted()
             .then(|| chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
+        management_server: Some(server.management_url.clone()),
         principal_id: candidate
             .was_minted()
             .then(|| candidate.principal_id().to_string()),
@@ -557,6 +558,7 @@ async fn setup(
                     label: None,
                     issued_at: None,
                     router: Some(base_url.clone()),
+                    management_server: None,
                     principal_id: Some(binding.principal_id),
                     config_sha256: None,
                 },
@@ -573,6 +575,7 @@ async fn setup(
                     label: Some(format!("client-{client}")),
                     issued_at: Some(chrono::Utc::now().timestamp()),
                     router: Some(base_url.clone()),
+                    management_server: None,
                     principal_id: Some(
                         crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
                     ),
@@ -723,6 +726,7 @@ async fn setup_remote(
         label: Some(format!("client-{client}")),
         issued_at: Some(chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
+        management_server: Some(server.management_url.clone()),
         principal_id: Some(candidate.principal_id().to_string()),
         config_sha256: None,
     };
@@ -814,7 +818,7 @@ fn show(manager: &ClientManager, client: ClientKind) -> ExitCode {
 /// Order matters: the token is revoked before the environment file that holds
 /// it is deleted. Deleting first would leave a live credential that nobody can
 /// name any more, which is exactly the regression from issue #190.
-fn remove(
+async fn remove(
     config: &Config,
     manager: &ClientManager,
     client: ClientKind,
@@ -834,7 +838,9 @@ fn remove(
         }
         Err(error) => return failed(error),
     };
-    let revoked = match revoke_managed_credential(config, credential.as_ref(), revoke_supplied) {
+    let revoked = match revoke_managed_credential(config, credential.as_ref(), revoke_supplied)
+        .await
+    {
         Ok(revoked) => revoked,
         Err(error) => {
             if !force {
@@ -871,11 +877,11 @@ fn remove(
 }
 
 /// Revoke the recorded token when removal owns it. Returns the revoked id.
-fn revoke_managed_credential(
+async fn revoke_managed_credential(
     config: &Config,
     credential: Option<&ManagedCredential>,
     revoke_supplied: bool,
-) -> Result<Option<String>, Box<dyn std::error::Error>> {
+) -> Result<Option<String>, String> {
     let Some(credential) = credential else {
         return Ok(None);
     };
@@ -889,13 +895,45 @@ fn revoke_managed_credential(
             return Err(format!(
                 "the token configured for {} was supplied by the operator and this router does not recognise it, so it cannot be revoked here",
                 credential.client
-            )
-            .into());
+            ));
         }
         return Ok(None);
     };
-    token_manager(config)?.revoke_token(id)?;
+    if let Some(management_server) = credential.management_server.as_deref() {
+        let router = credential.router.as_deref().unwrap_or(management_server);
+        let admin_token = remote_revocation_token(router).ok_or_else(|| {
+            format!(
+                "token {id} was issued through {management_server}, but no administrative credential for {router} is available; set LINK_ASSISTANT_ROUTER_TOKEN or select that router with `link-assistant-router server use {router} --token-stdin`"
+            )
+        })?;
+        crate::managed_server::revoke(management_server, &admin_token, id)
+            .await
+            .map_err(|error| error.to_string())?;
+    } else {
+        token_manager(config)
+            .map_err(|error| error.to_string())?
+            .revoke_token(id)
+            .map_err(|error| error.to_string())?;
+    }
     Ok(Some(id.to_string()))
+}
+
+/// Find authority for a previously selected remote Router without persisting
+/// it in per-client metadata. Environment credentials deliberately win.
+fn remote_revocation_token(router: &str) -> Option<String> {
+    std::env::var(CLIENT_TOKEN_ENV)
+        .or_else(|_| std::env::var(CLIENT_TOKEN_ENV_ALIAS))
+        .ok()
+        .or_else(|| {
+            crate::managed_server::load_persisted()
+                .ok()
+                .flatten()
+                .filter(|persisted| {
+                    crate::managed_server::canonical_server_origin(&persisted.server).ok()
+                        == crate::managed_server::canonical_server_origin(router).ok()
+                })
+                .and_then(|persisted| persisted.token)
+        })
 }
 
 #[path = "client_command_token.rs"]

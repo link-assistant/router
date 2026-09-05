@@ -207,6 +207,7 @@ async fn configure_one(
         label: Some(format!("configure-{client}")),
         issued_at: Some(chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
+        management_server: Some(server.management_url.clone()),
         principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
         config_sha256: None,
     };
@@ -365,7 +366,10 @@ async fn report_revocation(args: &ConfigureArgs, record: &ManagedCredential) {
         );
         return;
     };
-    let management = management_origin_for(args, router);
+    let management = record
+        .management_server
+        .clone()
+        .unwrap_or_else(|| management_origin_for(args, router));
     match crate::managed_server::revoke(&management, &admin, id).await {
         Ok(()) => println!("revoked token {id} on {router}"),
         Err(error) => {
