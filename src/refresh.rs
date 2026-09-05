@@ -507,16 +507,36 @@ fn merge_refresh_response(
     prev: &SubscriptionToken,
     resp: &RefreshResponse,
     now_ms: i64,
-) -> Option<SubscriptionToken> {
-    let access_token = resp.access_token.clone().filter(|s| !s.is_empty())?;
-    Some(SubscriptionToken {
+) -> Result<SubscriptionToken, RefreshError> {
+    let access_token = resp
+        .access_token
+        .clone()
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))?;
+    let expires_at_ms = match resp.expires_in {
+        None => None,
+        Some(seconds) if seconds < 0 => {
+            return Err(RefreshError::Parse(
+                "response contained a negative expires_in".to_string(),
+            ));
+        }
+        Some(seconds) => Some(
+            seconds
+                .checked_mul(1_000)
+                .and_then(|lifetime_ms| now_ms.checked_add(lifetime_ms))
+                .ok_or_else(|| {
+                    RefreshError::Parse("response expires_in is not representable".to_string())
+                })?,
+        ),
+    };
+    Ok(SubscriptionToken {
         access_token,
         refresh_token: resp
             .refresh_token
             .clone()
             .filter(|s| !s.is_empty())
             .or_else(|| prev.refresh_token.clone()),
-        expires_at_ms: resp.expires_in.map(|secs| now_ms + secs * 1000),
+        expires_at_ms,
         account_id: prev.account_id.clone(),
         resource_url: prev.resource_url.clone(),
     })
@@ -650,7 +670,6 @@ async fn refresh_at(
     let parsed: RefreshResponse =
         serde_json::from_value(document).map_err(|e| RefreshError::Parse(e.to_string()))?;
     merge_refresh_response(prev, &parsed, now_ms)
-        .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))
 }
 
 /// Process-wide cache of refreshed subscription tokens, keyed by provider and

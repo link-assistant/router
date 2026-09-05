@@ -579,7 +579,38 @@ fn merge_rotates_refresh_token_when_present() {
 fn merge_requires_access_token() {
     let prev = token(Some("r1"), Some(0));
     let resp = RefreshResponse::default();
-    assert!(merge_refresh_response(&prev, &resp, 1_000).is_none());
+    assert!(matches!(
+        merge_refresh_response(&prev, &resp, 1_000),
+        Err(RefreshError::Parse(_))
+    ));
+}
+
+#[test]
+fn merge_accepts_zero_expiry_without_treating_it_as_missing() {
+    let prev = token(Some("r1"), Some(0));
+    let resp = RefreshResponse {
+        access_token: Some("new-access".into()),
+        refresh_token: None,
+        expires_in: Some(0),
+    };
+    let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
+    assert_eq!(merged.expires_at_ms, Some(1_000));
+}
+
+#[test]
+fn merge_rejects_negative_or_unrepresentable_expiry() {
+    let prev = token(Some("r1"), Some(0));
+    for expires_in in [-1, i64::MAX] {
+        let resp = RefreshResponse {
+            access_token: Some("must-not-escape".into()),
+            refresh_token: Some("must-not-rotate".into()),
+            expires_in: Some(expires_in),
+        };
+        assert!(matches!(
+            merge_refresh_response(&prev, &resp, 1_000),
+            Err(RefreshError::Parse(_))
+        ));
+    }
 }
 
 #[tokio::test]
