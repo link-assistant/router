@@ -208,6 +208,7 @@ fn is_secret_value(value: &str) -> bool {
         || [
             "sk-ant-",
             crate::token::TOKEN_PREFIX,
+            crate::token::CODEX_TOKEN_PREFIX,
             crate::admin::ADMIN_TOKEN_PREFIX,
         ]
         .iter()
@@ -215,6 +216,7 @@ fn is_secret_value(value: &str) -> bool {
         || is_jwt(
             value
                 .strip_prefix(crate::token::TOKEN_PREFIX)
+                .or_else(|| value.strip_prefix(crate::token::CODEX_TOKEN_PREFIX))
                 .unwrap_or(value),
         )
 }

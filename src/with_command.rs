@@ -39,6 +39,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if args.global || args.undo {
         return Ok(crate::configure::run(&args.as_configure()).await);
     }
+    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
+        return Err(error.into());
+    }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
             .client
@@ -400,6 +403,14 @@ impl TemporaryClient {
         if let Some(token_env) = integration.token_env {
             command.env(token_env, token);
         }
+        if client == ClientKind::Codex
+            && let Some(alias) = crate::token::codex_token_alias(token)
+        {
+            command.env("CODEX_ACCESS_TOKEN", alias).env(
+                "CODEX_AUTHAPI_BASE_URL",
+                endpoint(base_url, "/api/services/codex"),
+            );
+        }
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
         }
@@ -514,10 +525,7 @@ fn append_codex_router_overrides(
     for (key, value) in [
         ("model_provider", "link-assistant".to_string()),
         ("model_catalog_json", catalog.to_string_lossy().into_owned()),
-        (
-            "model_providers.link-assistant.name",
-            "Link.Assistant.Router".to_string(),
-        ),
+        ("model_providers.link-assistant.name", "OpenAI".to_string()),
         (
             "model_providers.link-assistant.base_url",
             endpoint(
@@ -533,10 +541,34 @@ fn append_codex_router_overrides(
             "model_providers.link-assistant.wire_api",
             "responses".to_string(),
         ),
+        (
+            "model_providers.link-assistant.requires_openai_auth",
+            "true".to_string(),
+        ),
+        (
+            "model_providers.link-assistant.supports_websockets",
+            "true".to_string(),
+        ),
+        (
+            "model_providers.link-assistant.supports_standalone_web_search",
+            "true".to_string(),
+        ),
+        (
+            "chatgpt_base_url",
+            endpoint(base_url, "/api/services/codex/backend-api"),
+        ),
     ] {
-        command
-            .arg("-c")
-            .arg(format!("{key}={}", serde_json::to_string(&value)?));
+        let rendered = if matches!(
+            key,
+            "model_providers.link-assistant.requires_openai_auth"
+                | "model_providers.link-assistant.supports_websockets"
+                | "model_providers.link-assistant.supports_standalone_web_search"
+        ) {
+            value
+        } else {
+            serde_json::to_string(&value)?
+        };
+        command.arg("-c").arg(format!("{key}={rendered}"));
     }
     Ok(())
 }

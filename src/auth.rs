@@ -491,7 +491,7 @@ fn authorize_url(
         ("id_token_add_organizations", "true"),
         ("codex_cli_simplified_flow", "true"),
         ("state", state),
-        ("originator", "link_assistant_router"),
+        ("originator", crate::codex_identity::ORIGINATOR),
     ];
     format!(
         "{}/oauth/authorize?{}",

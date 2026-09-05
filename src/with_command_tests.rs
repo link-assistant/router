@@ -265,7 +265,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     let prepared = TemporaryClient::prepare(&Preparation {
         client: ClientKind::Codex,
         base_url: "http://router.test/path?tenant=one",
-        token: "task-token",
+        token: "la_sk_header.payload.sig",
         model_override: None,
         models: &models,
         isolated_config: false,
@@ -287,7 +287,23 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             .get("LINK_ASSISTANT_TOKEN")
             .and_then(|value| *value)
             .map(|value| value.to_string_lossy()),
-        Some(std::borrow::Cow::Borrowed("task-token"))
+        Some(std::borrow::Cow::Borrowed("la_sk_header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_ACCESS_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("at-header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_AUTHAPI_BASE_URL")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed(
+            "http://router.test/path?tenant=one/api/services/codex"
+        ))
     );
 
     let arguments = prepared
@@ -319,13 +335,21 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         arguments[4..],
         [
             "-c",
-            "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
+            "model_providers.link-assistant.name=\"OpenAI\"",
             "-c",
             "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
             "-c",
             "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
             "-c",
             "model_providers.link-assistant.wire_api=\"responses\"",
+            "-c",
+            "model_providers.link-assistant.requires_openai_auth=true",
+            "-c",
+            "model_providers.link-assistant.supports_websockets=true",
+            "-c",
+            "model_providers.link-assistant.supports_standalone_web_search=true",
+            "-c",
+            "chatgpt_base_url=\"http://router.test/path?tenant=one/api/services/codex/backend-api\"",
         ]
     );
 

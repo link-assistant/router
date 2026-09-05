@@ -5,6 +5,26 @@ use axum::response::IntoResponse as _;
 use axum::routing::any;
 
 #[test]
+fn loopback_authorization_uses_the_official_codex_originator() {
+    let url = authorize_url(
+        "https://auth.test",
+        "client",
+        "http://127.0.0.1:1455/auth/callback",
+        "state",
+        "challenge",
+    );
+    let parsed = reqwest::Url::parse(&url).expect("authorization URL");
+    let originator = parsed
+        .query_pairs()
+        .find_map(|(key, value)| (key == "originator").then(|| value.into_owned()));
+    assert_eq!(
+        originator.as_deref(),
+        Some(crate::codex_identity::ORIGINATOR)
+    );
+    assert!(!url.contains("link_assistant_router"));
+}
+
+#[test]
 fn device_polling_exposes_only_stable_secret_free_outcomes() {
     assert!(matches!(
         classify_device_error(StatusCode::FORBIDDEN, ""),

@@ -2,13 +2,92 @@
 //! writes with timestamped backups, and the ownership markers that let
 //! `remove` stay surgical.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::{Value, json};
 
-use super::{ClientError, SetupResult};
+use super::{ClientError, ClientKind, ClientManager, SetupResult};
+
+impl ClientManager {
+    /// Store the client's shell exports without exposing the token on stdout.
+    pub(crate) fn write_environment(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+    ) -> Result<PathBuf, ClientError> {
+        let token_env = client
+            .token_env()
+            .ok_or_else(|| ClientError::message("client has no router token environment"))?;
+        let directory = self.config_home.join("link-assistant-router/clients");
+        fs::create_dir_all(&directory)?;
+        let path = self.environment_path(client);
+        let mut contents = String::new();
+        if let Some(base_url_env) = client.base_url_env() {
+            let endpoint = format!(
+                "{}{}",
+                base_url.trim_end_matches('/'),
+                client.integration().endpoint_suffix
+            );
+            writeln!(
+                &mut contents,
+                "export {base_url_env}={}",
+                super::util::shell_quote(&endpoint)
+            )
+            .expect("writing to a String cannot fail");
+        }
+        writeln!(
+            &mut contents,
+            "export {token_env}={}",
+            super::util::shell_quote(token)
+        )
+        .expect("writing to a String cannot fail");
+        if client == ClientKind::Codex {
+            let alias = crate::token::codex_token_alias(token).ok_or_else(|| {
+                ClientError::message(
+                    "Codex control-plane setup requires a Router-issued la_sk_ token",
+                )
+            })?;
+            writeln!(
+                &mut contents,
+                "export CODEX_ACCESS_TOKEN={}",
+                super::util::shell_quote(&alias)
+            )
+            .expect("writing to a String cannot fail");
+            writeln!(
+                &mut contents,
+                "export CODEX_AUTHAPI_BASE_URL={}",
+                super::util::shell_quote(&format!(
+                    "{}/api/services/codex",
+                    base_url.trim_end_matches('/')
+                ))
+            )
+            .expect("writing to a String cannot fail");
+        }
+        if client == ClientKind::ClaudeCode {
+            writeln!(
+                &mut contents,
+                "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
+            )
+            .expect("writing to a String cannot fail");
+            writeln!(
+                &mut contents,
+                "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"
+            )
+            .expect("writing to a String cannot fail");
+        }
+        atomic_write(&path, contents.as_bytes())?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
+        }
+        Ok(path)
+    }
+}
 
 pub(super) type ClaudeEnvOwnership = Vec<(String, Option<String>, Option<String>)>;
 
@@ -182,11 +261,15 @@ pub(super) fn claude_marker(
 pub(super) fn write_codex_marker(
     path: &Path,
     previous_provider: Option<&str>,
+    managed_chatgpt_base_url: &str,
+    previous_chatgpt_base_url: Option<&str>,
 ) -> Result<(), ClientError> {
     let rendered = format!(
         "{}\n",
         serde_json::to_string_pretty(&json!({
-            "previous_model_provider": previous_provider
+            "previous_model_provider": previous_provider,
+            "managed_chatgpt_base_url": managed_chatgpt_base_url,
+            "previous_chatgpt_base_url": previous_chatgpt_base_url
         }))?
     );
     let parent = path
@@ -196,14 +279,26 @@ pub(super) fn write_codex_marker(
     atomic_write(path, rendered.as_bytes())
 }
 
-pub(super) fn read_codex_marker(path: &Path) -> Result<Option<String>, ClientError> {
+pub(super) fn read_codex_marker(
+    path: &Path,
+) -> Result<(Option<String>, Option<String>, Option<String>), ClientError> {
     let source = read_or_empty(path)?;
     if source.trim().is_empty() {
-        return Ok(None);
+        return Ok((None, None, None));
     }
     let marker: Value = serde_json::from_str(&source)?;
-    Ok(marker
-        .get("previous_model_provider")
-        .and_then(Value::as_str)
-        .map(str::to_string))
+    Ok((
+        marker
+            .get("previous_model_provider")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        marker
+            .get("managed_chatgpt_base_url")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        marker
+            .get("previous_chatgpt_base_url")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+    ))
 }

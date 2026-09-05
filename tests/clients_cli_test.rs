@@ -189,7 +189,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     fs::create_dir_all(&codex_dir).expect("create codex dir");
     fs::write(
         codex_dir.join("config.toml"),
-        "model = \"user-model\"\nmodel_provider = \"user-provider\"\napproval_policy = \"never\"\n\n[model_providers.user-provider]\nname = \"Mine\"\nbase_url = \"http://mine.test/v1\"\n\n[custom]\nkeep = true\n",
+        "model = \"user-model\"\nmodel_provider = \"user-provider\"\nchatgpt_base_url = \"https://chatgpt.example/backend-api\"\napproval_policy = \"never\"\n\n[model_providers.user-provider]\nname = \"Mine\"\nbase_url = \"http://mine.test/v1\"\n\n[custom]\nkeep = true\n",
     )
     .expect("seed config");
     let token = test_token("codex");
@@ -215,7 +215,22 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     assert!(configured.contains("[model_providers.link-assistant]"));
     assert!(configured.contains("wire_api = \"responses\""));
     assert!(configured.contains("env_key = \"LINK_ASSISTANT_TOKEN\""));
+    assert!(configured.contains("name = \"OpenAI\""));
+    assert!(configured.contains("requires_openai_auth = true"));
+    assert!(configured.contains("supports_websockets = true"));
+    assert!(configured.contains("supports_standalone_web_search = true"));
+    assert!(configured.contains(&format!(
+        "chatgpt_base_url = \"{}/api/services/codex/backend-api\"",
+        base_url.trim_end_matches('/')
+    )));
     assert!(!configured.contains(&token), "secret leaked into config");
+    let environment = fs::read_to_string(
+        home.path()
+            .join(".config/link-assistant-router/clients/codex.env"),
+    )
+    .expect("read Codex environment");
+    assert!(environment.contains("CODEX_ACCESS_TOKEN='at-"));
+    assert!(environment.contains("CODEX_AUTHAPI_BASE_URL="));
     assert!(String::from_utf8_lossy(&first.stdout).contains("credentials:"));
     assert!(!String::from_utf8_lossy(&first.stdout).contains(&token));
     assert!(
@@ -240,6 +255,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     assert!(after_remove.contains("[model_providers.user-provider]"));
     assert!(after_remove.contains("approval_policy = \"never\""));
     assert!(after_remove.contains("[custom]"));
+    assert!(after_remove.contains("chatgpt_base_url = \"https://chatgpt.example/backend-api\""));
     assert!(!after_remove.contains("model_providers.link-assistant"));
 }
 

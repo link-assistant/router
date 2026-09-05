@@ -4,7 +4,7 @@
 //! set of Claude Code gateway environment keys. Unknown settings are parsed and merged, never
 //! replaced wholesale, and every changed existing file is backed up first.
 
-use std::fmt::{self, Write as _};
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -730,56 +730,6 @@ impl ClientManager {
         Ok(result)
     }
 
-    /// Store the client's shell exports without exposing the token on stdout.
-    pub(crate) fn write_environment(
-        &self,
-        client: ClientKind,
-        base_url: &str,
-        token: &str,
-    ) -> Result<PathBuf, ClientError> {
-        let token_env = client
-            .token_env()
-            .ok_or_else(|| ClientError::message("client has no router token environment"))?;
-        let directory = self.config_home.join("link-assistant-router/clients");
-        fs::create_dir_all(&directory)?;
-        let path = self.environment_path(client);
-        let mut contents = String::new();
-        if let Some(base_url_env) = client.base_url_env() {
-            let endpoint = format!(
-                "{}{}",
-                base_url.trim_end_matches('/'),
-                client.integration().endpoint_suffix
-            );
-            writeln!(
-                &mut contents,
-                "export {base_url_env}={}",
-                shell_quote(&endpoint)
-            )
-            .expect("writing to a String cannot fail");
-        }
-        writeln!(&mut contents, "export {token_env}={}", shell_quote(token))
-            .expect("writing to a String cannot fail");
-        if client == ClientKind::ClaudeCode {
-            writeln!(
-                &mut contents,
-                "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
-            )
-            .expect("writing to a String cannot fail");
-            writeln!(
-                &mut contents,
-                "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"
-            )
-            .expect("writing to a String cannot fail");
-        }
-        atomic_write(&path, contents.as_bytes())?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
-        }
-        Ok(path)
-    }
-
     fn setup_codex(&self, base_url: &str) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::Codex);
         let source = read_or_empty(&path)?;
@@ -792,6 +742,10 @@ impl ClientManager {
         };
         let previous_provider = document
             .get("model_provider")
+            .and_then(Item::as_str)
+            .map(str::to_string);
+        let previous_chatgpt_base_url = document
+            .get("chatgpt_base_url")
             .and_then(Item::as_str)
             .map(str::to_string);
         document["model_provider"] = value(CODEX_PROVIDER);
@@ -810,15 +764,26 @@ impl ClientManager {
             .ok_or_else(|| {
                 ClientError::message("model_providers.link-assistant must be a TOML table")
             })?;
-        provider.insert("name", value("Link.Assistant.Router"));
+        provider.insert("name", value("OpenAI"));
         provider.insert("base_url", value(base_url));
         provider.insert("env_key", value(CODEX_TOKEN_ENV));
         provider.insert("wire_api", value("responses"));
+        provider.insert("requires_openai_auth", value(true));
+        provider.insert("supports_websockets", value(true));
+        provider.insert("supports_standalone_web_search", value(true));
+        let backend_base =
+            base_url.strip_suffix("/v1").unwrap_or(base_url).to_string() + "/backend-api";
+        document["chatgpt_base_url"] = value(&backend_base);
         let result = write_if_changed(&path, &source, &document.to_string())?;
         let marker = self.codex_home.join(OWNERSHIP_MARKER);
         if !marker.exists() {
             let previous_provider = previous_provider.filter(|value| value != CODEX_PROVIDER);
-            write_codex_marker(&marker, previous_provider.as_deref())?;
+            write_codex_marker(
+                &marker,
+                previous_provider.as_deref(),
+                &backend_base,
+                previous_chatgpt_base_url.as_deref(),
+            )?;
         }
         Ok(result)
     }
@@ -914,7 +879,8 @@ impl ClientManager {
         let mut document = source.parse::<DocumentMut>().map_err(|error| {
             ClientError::message(format!("invalid TOML in {}: {error}", path.display()))
         })?;
-        let previous_provider = read_codex_marker(&marker_path)?;
+        let (previous_provider, managed_chatgpt_base_url, previous_chatgpt_base_url) =
+            read_codex_marker(&marker_path)?;
         if document.get("model_provider").and_then(Item::as_str) == Some(CODEX_PROVIDER) {
             if let Some(previous_provider) = previous_provider {
                 document["model_provider"] = value(previous_provider);
@@ -927,6 +893,15 @@ impl ClientManager {
             .and_then(Item::as_table_like_mut)
         {
             providers.remove(CODEX_PROVIDER);
+        }
+        if document.get("chatgpt_base_url").and_then(Item::as_str)
+            == managed_chatgpt_base_url.as_deref()
+        {
+            if let Some(previous) = previous_chatgpt_base_url {
+                document["chatgpt_base_url"] = value(previous);
+            } else {
+                document.as_table_mut().remove("chatgpt_base_url");
+            }
         }
         let result = write_if_changed(&path, &source, &document.to_string())?;
         if marker_path.exists() {
@@ -993,7 +968,6 @@ impl ClientManager {
 mod util;
 use util::{
     command_exists, compact_body, normalize_base_url, read_claude_base_url, read_codex_base_url,
-    shell_quote,
 };
 #[cfg(test)]
 #[path = "clients_tests.rs"]
