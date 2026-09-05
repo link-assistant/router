@@ -768,7 +768,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 The opt-in GitHub proxy lets an agent authenticate with its router-issued task
 token while the real GitHub credential remains inside the router. The ordinary
 HTTP/TLS listener serves REST, GraphQL, and git under the canonical
-`/api/services/github/api/*`, `/api/services/github/graphql`, and
+`/api/services/github/api/*`, `/api/services/github/api/graphql`, and
 `/api/services/github/git/*` routes. GitHub CLI's fixed `/api/v3/*` and
 `/api/graphql` paths, plus root `/git/*`, are aliases on the dedicated Unix
 adapter only — see **GitHub CLI** below.
