@@ -79,6 +79,7 @@ mod model_resource_tests;
 pub mod model_routing;
 pub mod monitoring_api;
 pub mod mpp;
+mod native_service;
 pub mod oauth;
 pub mod on_demand_cli;
 pub mod openai;

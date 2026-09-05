@@ -42,6 +42,7 @@ pub enum RouteAuth {
 pub enum RouteMethod {
     Get,
     Post,
+    Put,
     Patch,
     Delete,
     Any,
@@ -53,6 +54,7 @@ impl RouteMethod {
         match self {
             Self::Get => "GET",
             Self::Post => "POST",
+            Self::Put => "PUT",
             Self::Patch => "PATCH",
             Self::Delete => "DELETE",
             Self::Any => "ANY",
@@ -65,6 +67,7 @@ impl RouteMethod {
                 (self, method),
                 (Self::Get, &Method::GET)
                     | (Self::Post, &Method::POST)
+                    | (Self::Put, &Method::PUT)
                     | (Self::Patch, &Method::PATCH)
                     | (Self::Delete, &Method::DELETE)
             )
@@ -157,6 +160,10 @@ pub enum RouteId {
     ActivityPubOutbox,
     ActivityPubFollowers,
     ActivityPubFollowProblemsets,
+    NativeOpenAi,
+    NativeAnthropic,
+    NativeCodex,
+    NativeCodexBackend,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

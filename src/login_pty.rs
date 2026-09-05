@@ -381,6 +381,18 @@ pub fn strip_ansi(input: &str) -> String {
                         }
                     }
                 }
+                // DCS, SOS, PM and APC: ESC P/X/^/_ … terminated by ESC \
+                // Modern TUIs use these for terminal capabilities and image
+                // payloads; retaining the payload turns the readable
+                // transcript into apparent binary noise.
+                Some('P' | 'X' | '^' | '_') => {
+                    while let Some(next) = chars.next() {
+                        if next == '\x1b' && chars.peek() == Some(&'\\') {
+                            chars.next();
+                            break;
+                        }
+                    }
+                }
                 // Two-character sequences (ESC =, ESC >, charset selects, …).
                 Some(_) | None => {}
             },
@@ -407,6 +419,14 @@ mod tests {
     fn strips_osc_title_sequences() {
         assert_eq!(strip_ansi("\x1b]0;window title\x07text"), "text");
         assert_eq!(strip_ansi("\x1b]0;window title\x1b\\text"), "text");
+    }
+
+    #[test]
+    fn strips_terminal_control_string_payloads() {
+        for introducer in ['P', 'X', '^', '_'] {
+            let input = format!("before\x1b{introducer}opaque-binary\x1b\\after");
+            assert_eq!(strip_ansi(&input), "beforeafter");
+        }
     }
 
     #[test]

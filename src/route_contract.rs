@@ -5,12 +5,17 @@
 //! separate string tables.
 
 use http::Method;
+use std::sync::OnceLock;
 
 #[path = "route_contract_types.rs"]
 mod types;
 pub use types::{
     ApiDialect, ListenerKind, RouteAuth, RouteClass, RouteId, RouteMethod, RouteSpec, ServiceKind,
 };
+
+#[path = "route_contract_native.rs"]
+mod native;
+use native::NATIVE_ROUTES;
 
 const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
@@ -851,8 +856,9 @@ const ROUTES: &[RouteSpec] = &[
 ];
 
 #[must_use]
-pub const fn route_specs() -> &'static [RouteSpec] {
-    ROUTES
+pub fn route_specs() -> &'static [RouteSpec] {
+    static ALL: OnceLock<Vec<RouteSpec>> = OnceLock::new();
+    ALL.get_or_init(|| ROUTES.iter().chain(NATIVE_ROUTES.iter()).copied().collect())
 }
 
 /// The canonical path template for a route id.
@@ -860,7 +866,7 @@ pub const fn route_specs() -> &'static [RouteSpec] {
 /// Multiple methods may share an id, but they must share this template.
 #[must_use]
 pub fn route_template(id: RouteId) -> &'static str {
-    ROUTES
+    route_specs()
         .iter()
         .find(|spec| spec.id == id)
         .map(|spec| spec.template)
@@ -869,14 +875,14 @@ pub fn route_template(id: RouteId) -> &'static str {
 
 #[must_use]
 pub fn route_for_path(method: &Method, path: &str) -> Option<&'static RouteSpec> {
-    ROUTES
+    route_specs()
         .iter()
         .find(|spec| spec.method.matches(method) && template_matches(spec.template, path))
 }
 
 #[must_use]
 pub fn dialect_for_path(path: &str) -> Option<ApiDialect> {
-    ROUTES
+    route_specs()
         .iter()
         .find(|spec| template_matches(spec.template, path))
         .map(|spec| spec.dialect)
@@ -909,7 +915,7 @@ pub const fn service_base_path(service: ServiceKind) -> &'static str {
 
 #[must_use]
 pub fn management_endpoint(origin: &str, id: RouteId) -> String {
-    let template = ROUTES
+    let template = route_specs()
         .iter()
         .find(|spec| spec.id == id && spec.class == RouteClass::Management)
         .map(|spec| spec.template)

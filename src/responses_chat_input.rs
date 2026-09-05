@@ -45,6 +45,7 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
             "assistant" => {
                 let mut content = match message.get("content") {
                     None | Some(Value::Null) => Vec::new(),
+                    Some(Value::String(text)) if text.is_empty() => Vec::new(),
                     value => message_content(value, role, &path)?,
                 };
                 if let Some(refusal) = message.get("refusal") {

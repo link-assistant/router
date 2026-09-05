@@ -102,6 +102,22 @@ impl CapturedRequest {
             .find(|(candidate, _)| candidate.eq_ignore_ascii_case(name))
             .map(|(_, value)| value.as_str())
     }
+
+    fn decoded_body(&self) -> Vec<u8> {
+        if self.header("content-encoding").is_some_and(|value| {
+            value
+                .split(',')
+                .any(|encoding| encoding.trim().eq_ignore_ascii_case("zstd"))
+        }) {
+            zstd::decode_all(self.body.as_slice()).expect("decode captured zstd request")
+        } else {
+            self.body.clone()
+        }
+    }
+
+    fn json_body(&self) -> Value {
+        serde_json::from_slice(&self.decoded_body()).expect("captured request JSON")
+    }
 }
 
 struct MockRouter {
@@ -158,7 +174,7 @@ impl MockRouter {
             .lock()
             .expect("read captured requests")
             .iter()
-            .find(|request| request.path == path)
+            .find(|request| request.method == "POST" && request.path == path)
             .cloned()
     }
 
@@ -167,8 +183,17 @@ impl MockRouter {
             .lock()
             .expect("read captured requests")
             .iter()
-            .filter(|request| request.path == path)
+            .filter(|request| request.method == "POST" && request.path == path)
             .cloned()
+            .collect()
+    }
+
+    fn routes(&self) -> Vec<(String, String)> {
+        self.requests
+            .lock()
+            .expect("read captured request routes")
+            .iter()
+            .map(|request| (request.method.clone(), request.path.clone()))
             .collect()
     }
 }
@@ -215,6 +240,13 @@ fn request_is_complete(bytes: &[u8]) -> bool {
         return false;
     };
     let headers = String::from_utf8_lossy(&bytes[..header_end]);
+    if headers
+        .lines()
+        .next()
+        .is_some_and(|line| line.starts_with("GET ") || line.starts_with("DELETE "))
+    {
+        return true;
+    }
     if let Some(length) = headers.lines().find_map(|line| {
         let (name, value) = line.split_once(':')?;
         name.eq_ignore_ascii_case("content-length")
@@ -281,7 +313,7 @@ fn run_token(case: ClientCase) -> String {
         "principal_id": "offline-acceptance"
     });
     let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload.to_string());
-    format!("e30.{encoded}.offline-signature")
+    format!("la_sk_e30.{encoded}.offline-signature")
 }
 
 fn default_models(case: ClientCase) -> Vec<Value> {
@@ -338,6 +370,14 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
         ("POST", "/api/management/tokens/revoke") => {
             http_response("200 OK", "application/json", r#"{"revoked":"offline-run"}"#)
         }
+        ("GET", "/api/services/codex/v1/user-auth-credential/whoami") => http_response(
+            "200 OK",
+            "application/json",
+            r#"{"email":null,"chatgpt_user_id":"usr_offline","chatgpt_account_id":"acct_offline","chatgpt_plan_type":"pro","chatgpt_account_is_fedramp":false}"#,
+        ),
+        ("GET", "/api/services/codex/backend-api/plugins/featured") => {
+            http_response("200 OK", "application/json", r#"{"plugins":[]}"#)
+        }
         ("GET", path) if path == case.catalog_path => {
             let body = json!({
                 "object": "list",
@@ -353,15 +393,13 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
         }
         ("POST", path) if path == case.inference_path => match case.client {
             "claude" => {
-                let model = serde_json::from_slice::<Value>(&request.body)
-                    .ok()
+                let model = Some(request.json_body())
                     .and_then(|body| body["model"].as_str().map(str::to_string))
                     .unwrap_or_else(|| case.model.to_string());
                 anthropic_answer(&model, &request.body)
             }
             "codex" => {
-                let model = serde_json::from_slice::<Value>(&request.body)
-                    .ok()
+                let model = Some(request.json_body())
                     .and_then(|body| {
                         body.get("model")
                             .and_then(Value::as_str)
@@ -678,16 +716,12 @@ fn assert_real_client_capture(case: ClientCase) {
             .all(|(name, _)| !name.to_ascii_lowercase().starts_with("x-router")),
         "the real client unexpectedly emitted an internal Router header"
     );
-    let body: Value = serde_json::from_slice(&request.body).unwrap_or_else(|error| {
-        panic!(
-            "{} sent invalid JSON ({error}): {}",
-            case.client,
-            String::from_utf8_lossy(&request.body)
-        )
-    });
+    let decoded = request.decoded_body();
+    let body: Value = serde_json::from_slice(&decoded)
+        .unwrap_or_else(|error| panic!("{} sent invalid JSON ({error})", case.client));
     assert_eq!(body["model"], case.model);
     assert!(
-        String::from_utf8_lossy(&request.body).contains(PROMPT),
+        String::from_utf8_lossy(&decoded).contains(PROMPT),
         "{} request omitted the prompt",
         case.client
     );
@@ -704,7 +738,7 @@ fn assert_real_client_capture(case: ClientCase) {
             );
             let bodies = requests
                 .iter()
-                .map(|request| serde_json::from_slice::<Value>(&request.body).unwrap())
+                .map(CapturedRequest::json_body)
                 .collect::<Vec<_>>();
             assert_eq!(bodies[0]["model"], case.model);
             assert_eq!(bodies[1]["model"], CODEX_ALTERNATE_MODEL);
@@ -788,7 +822,8 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
         )
         .unwrap_or_else(|error| {
             panic!(
-                "Codex TUI did not become ready: {error}; transcript: {}",
+                "Codex TUI did not become ready: {error}; routes: {:?}; transcript: {}",
+                router.routes(),
                 session.transcript_tail(2_000)
             )
         });
@@ -872,7 +907,7 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
         );
         thread::sleep(Duration::from_millis(50));
     };
-    let body: Value = serde_json::from_slice(&request.body).expect("Codex request JSON");
+    let body = request.json_body();
     assert_eq!(body["model"], CODEX_ALTERNATE_MODEL);
     assert_eq!(
         body["reasoning"]["effort"], "xhigh",

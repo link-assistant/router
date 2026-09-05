@@ -165,6 +165,10 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
     if config.enable_anthropic_api {
         routes = routes
             .route(
+                "/api/services/anthropic/v1/{*native_path}",
+                any(crate::native_service::anthropic),
+            )
+            .route(
                 route_template(RouteId::AnthropicMessages),
                 post(proxy::proxy_handler),
             )
@@ -195,6 +199,18 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
     }
     if config.enable_openai_api {
         routes = routes
+            .route(
+                "/api/services/openai/v1/{*native_path}",
+                any(crate::native_service::openai),
+            )
+            .route(
+                "/api/services/codex/v1/{*native_path}",
+                any(crate::native_service::codex),
+            )
+            .route(
+                "/api/services/codex/backend-api/{*native_path}",
+                any(crate::native_service::codex_backend),
+            )
             .route(
                 route_template(RouteId::OpenAiChatCompletions),
                 post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),

@@ -11,6 +11,8 @@ use serde_json::{Value, json};
 
 use super::{ClientError, ClientKind, ClientManager, SetupResult};
 
+pub(super) type CodexMarker = (Option<String>, Option<String>, Option<String>);
+
 impl ClientManager {
     /// Store the client's shell exports without exposing the token on stdout.
     pub(crate) fn write_environment(
@@ -279,9 +281,7 @@ pub(super) fn write_codex_marker(
     atomic_write(path, rendered.as_bytes())
 }
 
-pub(super) fn read_codex_marker(
-    path: &Path,
-) -> Result<(Option<String>, Option<String>, Option<String>), ClientError> {
+pub(super) fn read_codex_marker(path: &Path) -> Result<CodexMarker, ClientError> {
     let source = read_or_empty(path)?;
     if source.trim().is_empty() {
         return Ok((None, None, None));
