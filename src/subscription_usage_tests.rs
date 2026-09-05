@@ -9,6 +9,41 @@ use std::sync::{Arc, Mutex};
 use tower::ServiceExt as _;
 
 #[test]
+fn provider_names_mappings_and_openai_claims_are_exact_and_fail_closed() {
+    let providers = UsageProvider::ALL.map(UsageProvider::as_str);
+    assert_eq!(providers, ["anthropic", "openai", "z-ai", "lefine"]);
+    assert_eq!(
+        UsageProvider::Anthropic.subscription(),
+        Some(SubscriptionProvider::Claude)
+    );
+    assert_eq!(
+        UsageProvider::OpenAi.subscription(),
+        Some(SubscriptionProvider::Codex)
+    );
+    assert_eq!(UsageProvider::ZAi.subscription(), None);
+    assert_eq!(UsageProvider::Lefine.subscription(), None);
+
+    assert!(openai_claims("not-a-jwt").is_none());
+    assert!(openai_claims("header.!.signature").is_none());
+    let no_auth = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(b"{}");
+    assert!(openai_claims(&format!("header.{no_auth}.signature")).is_none());
+    let claims = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .encode(br#"{"https://api.openai.com/auth":{"chatgpt_account_id":"account-live"}}"#);
+    let token = SubscriptionToken {
+        access_token: format!("header.{claims}.signature"),
+        refresh_token: None,
+        expires_at_ms: None,
+        account_id: None,
+        resource_url: None,
+    };
+    assert_eq!(
+        openai_claim(&token, "chatgpt_account_id").as_deref(),
+        Some("account-live")
+    );
+    assert_eq!(openai_claim(&token, "missing"), None);
+}
+
+#[test]
 fn anthropic_fields_are_normalized_and_missing_values_stay_absent() {
     let windows = anthropic_windows(&json!({
         "five_hour": {"utilization": 25.5, "resets_at": "2030-01-01T00:00:00Z"},
