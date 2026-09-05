@@ -11,7 +11,10 @@ use tower::ServiceExt as _;
 #[test]
 fn provider_names_mappings_and_openai_claims_are_exact_and_fail_closed() {
     let providers = UsageProvider::ALL.map(UsageProvider::as_str);
-    assert_eq!(providers, ["anthropic", "openai", "z-ai", "lefine"]);
+    assert_eq!(
+        providers,
+        ["anthropic", "openai", "z-ai", "lefine", "gemini", "qwen"]
+    );
     assert_eq!(
         UsageProvider::Anthropic.subscription(),
         Some(SubscriptionProvider::Claude)
@@ -22,6 +25,14 @@ fn provider_names_mappings_and_openai_claims_are_exact_and_fail_closed() {
     );
     assert_eq!(UsageProvider::ZAi.subscription(), None);
     assert_eq!(UsageProvider::Lefine.subscription(), None);
+    assert_eq!(
+        UsageProvider::Gemini.subscription(),
+        Some(SubscriptionProvider::Gemini)
+    );
+    assert_eq!(
+        UsageProvider::Qwen.subscription(),
+        Some(SubscriptionProvider::Qwen)
+    );
 
     assert!(openai_claims("not-a-jwt").is_none());
     assert!(openai_claims("header.!.signature").is_none());

@@ -237,7 +237,13 @@ impl SubscriptionEntitlementPolicy {
             (client, provider),
             (ClientKind::ClaudeCode, SubscriptionProvider::Claude)
                 | (ClientKind::Codex, SubscriptionProvider::Codex)
-        ) {
+        ) || (protocol == ClientProtocol::Catalog
+            && matches!(
+                (client, provider),
+                (ClientKind::GeminiCli, SubscriptionProvider::Gemini)
+                    | (ClientKind::QwenCode, SubscriptionProvider::Qwen)
+            ))
+        {
             return EntitlementDecision::Native;
         }
         if self

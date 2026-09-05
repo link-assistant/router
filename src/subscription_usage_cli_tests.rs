@@ -116,19 +116,21 @@ fn unfiltered_output_keeps_every_provider_and_renders_unavailable_state() {
     );
     let json: serde_json::Value =
         serde_json::from_str(&format_envelope(&envelope, true).unwrap()).unwrap();
-    assert_eq!(json["subscriptions"].as_array().unwrap().len(), 4);
+    assert_eq!(json["subscriptions"].as_array().unwrap().len(), 6);
     assert_eq!(json["subscriptions"][3]["state"], "unavailable");
 }
 
 #[tokio::test]
 async fn selected_provider_request_carries_the_router_token_in_all_supported_carriers() {
-    let captured = Arc::new(Mutex::new(None));
+    let captured = Arc::new(Mutex::new(Vec::new()));
     let captured_for_server = Arc::clone(&captured);
     let app = axum::Router::new().fallback(move |request: Request| {
         let captured = Arc::clone(&captured_for_server);
         async move {
-            *captured.lock().unwrap() =
-                Some((request.uri().path().to_string(), request.headers().clone()));
+            captured
+                .lock()
+                .unwrap()
+                .push((request.uri().path().to_string(), request.headers().clone()));
             axum::Json(serde_json::json!({
                 "schema_version": 1,
                 "subscriptions": []
@@ -140,20 +142,32 @@ async fn selected_provider_request_carries_the_router_token_in_all_supported_car
     let address = listener.local_addr().unwrap();
     let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
 
-    let exit = run(
-        &format!("http://{address}"),
-        Some("router-client-token"),
-        Some(UsageProvider::OpenAi),
-        true,
-    )
-    .await;
+    for provider in [
+        UsageProvider::OpenAi,
+        UsageProvider::Gemini,
+        UsageProvider::Qwen,
+    ] {
+        let exit = run(
+            &format!("http://{address}"),
+            Some("router-client-token"),
+            Some(provider),
+            true,
+        )
+        .await;
+        assert_eq!(exit, ExitCode::SUCCESS);
+    }
 
-    assert_eq!(exit, ExitCode::SUCCESS);
-    let (path, headers) = captured.lock().unwrap().clone().unwrap();
-    assert_eq!(path, "/api/usage/openai");
-    assert_eq!(headers["authorization"], "Bearer router-client-token");
-    assert_eq!(headers["x-api-key"], "router-client-token");
-    assert_eq!(headers["x-goog-api-key"], "router-client-token");
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), 3);
+    assert_eq!(captured[0].0, "/api/usage/openai");
+    assert_eq!(captured[1].0, "/api/usage/gemini");
+    assert_eq!(captured[2].0, "/api/usage/qwen");
+    for (_, headers) in captured.iter() {
+        assert_eq!(headers["authorization"], "Bearer router-client-token");
+        assert_eq!(headers["x-api-key"], "router-client-token");
+        assert_eq!(headers["x-goog-api-key"], "router-client-token");
+    }
+    drop(captured);
     server.abort();
 }
 

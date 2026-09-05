@@ -196,9 +196,11 @@ async fn cache_result(
         let ttl = value.retry_after_seconds.map_or_else(
             || match provider {
                 UsageProvider::Anthropic => ANTHROPIC_CACHE_TTL,
-                UsageProvider::OpenAi | UsageProvider::ZAi | UsageProvider::Lefine => {
-                    STANDARD_CACHE_TTL
-                }
+                UsageProvider::OpenAi
+                | UsageProvider::ZAi
+                | UsageProvider::Lefine
+                | UsageProvider::Gemini
+                | UsageProvider::Qwen => STANDARD_CACHE_TTL,
             },
             Duration::from_secs,
         );
@@ -259,7 +261,10 @@ async fn prepare_probe(
         UsageProvider::Lefine => selected_lefine(state)
             .map(PreparedProbe::Lefine)
             .ok_or(ProbeResult::NotConfigured),
-        UsageProvider::Anthropic | UsageProvider::OpenAi => unreachable!(),
+        UsageProvider::Anthropic
+        | UsageProvider::OpenAi
+        | UsageProvider::Gemini
+        | UsageProvider::Qwen => unreachable!(),
     }
 }
 
