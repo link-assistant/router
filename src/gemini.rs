@@ -642,10 +642,10 @@ async fn forward(
         }
     };
     let mut chat = gemini_response_to_chat(&gemini_json, &model);
-    let upstream_model = crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
+    crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
 
     if stream_requested {
-        return sse_from_chat_completion(&chat, &requested_model, upstream_model.as_deref());
+        return sse_from_chat_completion(&chat, &requested_model);
     }
     let mut response = Response::new(Body::from(chat.to_string()));
     *response.status_mut() = StatusCode::OK;
@@ -653,23 +653,12 @@ async fn forward(
         "content-type",
         axum::http::HeaderValue::from_static("application/json"),
     );
-    if let Some(upstream_model) = upstream_model.as_deref()
-        && let Ok(value) = axum::http::HeaderValue::from_str(upstream_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }
 
 /// Re-emit a non-streamed chat completion as an `OpenAI` SSE stream
 /// (`chat.completion.chunk` deltas followed by `[DONE]`).
-fn sse_from_chat_completion(
-    chat: &Value,
-    requested_model: &str,
-    upstream_model: Option<&str>,
-) -> Response {
+fn sse_from_chat_completion(chat: &Value, requested_model: &str) -> Response {
     let id = chat
         .get("id")
         .and_then(Value::as_str)
@@ -686,24 +675,18 @@ fn sse_from_chat_completion(
         .and_then(Value::as_i64)
         .unwrap_or_default();
 
-    let mut role_chunk = json!({
+    let role_chunk = json!({
         "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
         "choices": [{ "index": 0, "delta": { "role": "assistant" }, "finish_reason": null }],
     });
-    let mut content_chunk = json!({
+    let content_chunk = json!({
         "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
         "choices": [{ "index": 0, "delta": { "content": content }, "finish_reason": null }],
     });
-    let mut stop_chunk = json!({
+    let stop_chunk = json!({
         "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
         "choices": [{ "index": 0, "delta": {}, "finish_reason": "stop" }],
     });
-    if let Some(upstream_model) = upstream_model {
-        for chunk in [&mut role_chunk, &mut content_chunk, &mut stop_chunk] {
-            chunk[crate::output_limit::UPSTREAM_MODEL_FIELD] =
-                Value::String(upstream_model.to_string());
-        }
-    }
     let payload = format!(
         "data: {role_chunk}\n\ndata: {content_chunk}\n\ndata: {stop_chunk}\n\ndata: [DONE]\n\n"
     );
@@ -713,13 +696,6 @@ fn sse_from_chat_completion(
         "content-type",
         axum::http::HeaderValue::from_static("text/event-stream"),
     );
-    if let Some(upstream_model) = upstream_model
-        && let Ok(value) = axum::http::HeaderValue::from_str(upstream_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }
 

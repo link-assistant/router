@@ -477,21 +477,12 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         )
         .await;
         assert_eq!(response.status(), StatusCode::OK, "{client}");
-        assert!(
-            response
-                .headers()
-                .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-                .is_none()
-        );
+        assert!(response.headers().get("x-router-upstream-model").is_none());
         let response_body = response.into_body().collect().await.unwrap().to_bytes();
         assert_eq!(response_body.as_ref(), br#"{"id":"ok","model":"glm-5"}"#);
         let response_body: serde_json::Value = serde_json::from_slice(&response_body).unwrap();
         assert_eq!(response_body["model"], model);
-        assert!(
-            response_body
-                .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
-                .is_none()
-        );
+        assert!(response_body.get("x_router_upstream_model").is_none());
         let requests = requests.lock().unwrap();
         assert_eq!(requests.len(), 2, "catalog then inference for {client}");
         assert_eq!(requests[0].0, crate::zai_coding_plan::CATALOG_PATH);

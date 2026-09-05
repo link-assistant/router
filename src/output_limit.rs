@@ -21,16 +21,6 @@ use serde_json::{Value, json};
 /// Characters per token used by the router's local estimator.
 const CHARS_PER_TOKEN: u64 = 4;
 
-/// Response field and header carrying the concrete upstream model.
-///
-/// The requested model id (which may be a catalog alias such as
-/// `codex-auto-review`) stays in `model` so a client can reconcile the answer
-/// with the model it selected; the model the provider actually served is
-/// exposed separately instead of replacing that identity.
-pub const UPSTREAM_MODEL_FIELD: &str = "x_router_upstream_model";
-/// Response header spelling of [`UPSTREAM_MODEL_FIELD`].
-pub const UPSTREAM_MODEL_HEADER: &str = "x-router-upstream-model";
-
 /// Incremental budget over visible output text.
 #[derive(Clone, Debug, Default)]
 pub struct OutputTokenLimiter {
@@ -116,10 +106,6 @@ pub fn preserve_model_identity(payload: &mut Value, requested_model: &str) -> Op
     if served == requested_model {
         return None;
     }
-    object.insert(
-        UPSTREAM_MODEL_FIELD.to_string(),
-        Value::String(served.clone()),
-    );
     Some(served)
 }
 

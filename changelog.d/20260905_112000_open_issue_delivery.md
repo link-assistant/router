@@ -13,3 +13,5 @@ bump: minor
 - Coalesce concurrent usage requests by token, provider, principal, and credential generation.
 - Keep the normal Lefine live credential gate catalog-only, with explicit run/skip output and a separate inference opt-in.
 - Stream GitHub REST, GraphQL, and Git smart-HTTP response bodies without whole-response buffering, preserving mid-stream failures.
+- Keep translated model and dropped-tool diagnostics in local logs instead of emitting Router-private response fields or headers.
+- Preserve safe end-to-end client metadata on ordinary OpenAI-compatible Chat Completions and Responses requests while replacing credentials.

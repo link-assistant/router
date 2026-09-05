@@ -776,22 +776,10 @@ pub async fn log_http_exchange(
     // URI for every Claude model, so without this the log cannot answer the
     // first question anyone asks of it (issue #320).
     //
-    // The model the caller asked for is what identifies the request, and it is
-    // the only one that exists when the request is refused before an upstream
-    // is ever reached. The served-model header is the fallback for the case it
-    // was built for -- the upstream substituting a different model -- but it
-    // exists only in that case, so relying on it alone left `model=-` on every
-    // ordinary line, success and failure alike.
-    let served_model = requested_model
-        .clone()
-        .or_else(|| {
-            response
-                .headers()
-                .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-                .and_then(|value| value.to_str().ok())
-                .map(str::to_string)
-        })
-        .unwrap_or_else(|| "-".to_string());
+    // The model the caller asked for identifies the public request, including
+    // requests refused before an upstream is reached. Concrete upstream
+    // responses remain available in the local structured request log.
+    let served_model = requested_model.clone().unwrap_or_else(|| "-".to_string());
     // A rate limit is one of the few conditions an operator must act on
     // quickly, and it was logged as three digits.
     let retry_after = response

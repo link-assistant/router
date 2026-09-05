@@ -81,10 +81,9 @@ fn message_text_is_extracted_from_both_content_shapes() {
 }
 
 /// The synthetic stream is part of the public OpenAI-compatible contract: it
-/// must retain the alias the caller selected while exposing the model the
-/// upstream actually served in metadata on every emitted chunk.
+/// must retain the alias the caller selected without Router-private metadata.
 #[tokio::test]
-async fn synthetic_chat_stream_preserves_both_model_identities() {
+async fn synthetic_chat_stream_preserves_requested_model_only() {
     use http_body_util::BodyExt as _;
 
     let response = sse_from_chat_completion(
@@ -95,14 +94,10 @@ async fn synthetic_chat_stream_preserves_both_model_identities() {
             "choices": [{"message": {"role": "assistant", "content": "hello"}}]
         }),
         "catalog-alias",
-        Some("future-upstream-model"),
     );
 
     assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response.headers()[crate::output_limit::UPSTREAM_MODEL_HEADER],
-        "future-upstream-model"
-    );
+    assert!(response.headers().get("x-router-upstream-model").is_none());
     assert_eq!(response.headers()["content-type"], "text/event-stream");
     let payload = String::from_utf8(
         response
@@ -123,10 +118,7 @@ async fn synthetic_chat_stream_preserves_both_model_identities() {
     assert_eq!(chunks.len(), 3);
     for chunk in chunks {
         assert_eq!(chunk["model"], "catalog-alias");
-        assert_eq!(
-            chunk[crate::output_limit::UPSTREAM_MODEL_FIELD],
-            "future-upstream-model"
-        );
+        assert!(chunk.get("x_router_upstream_model").is_none());
     }
     assert!(payload.ends_with("data: [DONE]\n\n"));
 }

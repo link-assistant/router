@@ -419,9 +419,9 @@ async fn codex_can_drive_a_claude_model_despite_an_untranslatable_tool() {
     assert!(rendered.contains("exec_command"), "{rendered}");
 }
 
-/// Issue #215 item 2: the drop must be discoverable rather than silent.
+/// Dropped-tool diagnostics stay local and never extend the public protocol.
 #[tokio::test]
-async fn a_dropped_tool_is_reported_to_the_caller() {
+async fn a_dropped_tool_is_not_reported_on_the_wire() {
     let router = TestRouter::start(ClientKind::Codex).await;
     let response = router
         .request("/api/services/openai/v1/responses")
@@ -433,16 +433,7 @@ async fn a_dropped_tool_is_reported_to_the_caller() {
         .send()
         .await
         .expect("router POST");
-    let reported = response
-        .headers()
-        .get("x-router-dropped-tools")
-        .and_then(|value| value.to_str().ok())
-        .unwrap_or_default()
-        .to_string();
-    assert!(
-        reported.contains("multi_agent_v1"),
-        "header was {reported:?}"
-    );
+    assert!(response.headers().get("x-router-dropped-tools").is_none());
 }
 
 /// A request with only translatable tools must carry no drop report, so the

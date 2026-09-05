@@ -639,7 +639,6 @@ async fn forward_subscription_openai_inner(
     // incomplete result. Collapse the SSE into the final `response.completed`
     // payload and return it as a normal JSON Responses object.
     let mut response_body = upstream_body;
-    let mut upstream_model: Option<String> = None;
     if codex && status.is_success() {
         if let Some(json) = codex_sse_to_response_json(&response_body) {
             response_body = bytes::Bytes::from(json);
@@ -670,10 +669,6 @@ async fn forward_subscription_openai_inner(
             if let Some(limit) = emulated_output_limit {
                 crate::output_limit::enforce_chat_limit(&mut translated, limit);
             }
-            upstream_model = translated
-                .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
-                .and_then(serde_json::Value::as_str)
-                .map(str::to_string);
             response_body = bytes::Bytes::from(
                 serde_json::to_vec(&translated).expect("JSON values always serialize"),
             );
@@ -682,8 +677,7 @@ async fn forward_subscription_openai_inner(
                 .get("model")
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or_default();
-            upstream_model =
-                crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+            crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
             if let Some(limit) = emulated_output_limit {
                 crate::output_limit::enforce_response_limit(&mut parsed, limit);
             }
@@ -698,13 +692,6 @@ async fn forward_subscription_openai_inner(
         response
             .headers_mut()
             .insert("content-type", HeaderValue::from_static("application/json"));
-        if let Some(served) = upstream_model.as_deref()
-            && let Ok(value) = HeaderValue::from_str(served)
-        {
-            response
-                .headers_mut()
-                .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-        }
         return response;
     }
 
@@ -716,7 +703,7 @@ async fn forward_subscription_openai_inner(
             .get("model")
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
-        upstream_model = crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+        crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
         response_body =
             bytes::Bytes::from(serde_json::to_vec(&parsed).expect("JSON values always serialize"));
     }
@@ -743,13 +730,6 @@ async fn forward_subscription_openai_inner(
     *response.status_mut() = status;
     *response.headers_mut() = response_headers;
     response.headers_mut().insert("content-type", content_type);
-    if let Some(served) = upstream_model.as_deref()
-        && let Ok(value) = HeaderValue::from_str(served)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }
 

@@ -88,9 +88,9 @@ ordinary use. Anthropic has no equivalent for these.
 Rather than refuse the whole turn, the router **drops the untranslatable
 entries and forwards the rest**: a model is never obliged to call a tool, so a
 request carrying its remaining usable tools is far more useful than an error
-naming the one that did not fit. Anything dropped is named in the
-`x-router-dropped-tools` response header and in the request log, so an agent
-that quietly never uses sub-agents is diagnosable rather than mysterious.
+naming the one that did not fit. Anything dropped is named in the local request
+log, so an agent that quietly never uses sub-agents is diagnosable without
+adding Router-private metadata to the public vendor protocol.
 
 ## Smoke test
 

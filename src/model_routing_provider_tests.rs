@@ -127,7 +127,7 @@ async fn live_catalog_upstream(models: &[&str]) -> (String, tokio::task::JoinHan
 
 async fn captured_model_upstream() -> (
     String,
-    Arc<Mutex<Vec<(String, serde_json::Value)>>>,
+    Arc<Mutex<Vec<(String, serde_json::Value, HeaderMap)>>>,
     tokio::task::JoinHandle<()>,
 ) {
     let requests = Arc::new(Mutex::new(Vec::new()));
@@ -142,9 +142,13 @@ async fn captured_model_upstream() -> (
                     "data": [{"id": "shared-future", "object": "model"}]
                 }));
             }
+            let headers = request.headers().clone();
             let bytes = request.into_body().collect().await.unwrap().to_bytes();
             let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-            captured.lock().unwrap().push((path.clone(), payload));
+            captured
+                .lock()
+                .unwrap()
+                .push((path.clone(), payload, headers));
             if path.ends_with("/responses") {
                 axum::Json(serde_json::json!({
                     "id": "resp_1",
@@ -277,6 +281,25 @@ pub(super) fn bearer_for(state: &AppState, client: crate::clients::ClientKind) -
     headers
 }
 
+fn provider_forwarding_headers(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
+    let mut headers = bearer_for(state, client);
+    if client == crate::clients::ClientKind::Codex {
+        headers.insert("user-agent", HeaderValue::from_static("codex/test-fixture"));
+        headers.insert(
+            "x-codex-turn-metadata",
+            HeaderValue::from_static("turn-fixture"),
+        );
+    }
+    headers.insert("x-session-id", HeaderValue::from_static("provider-test"));
+    headers.insert("x-client-feature", HeaderValue::from_static("preserved"));
+    headers.insert("cookie", HeaderValue::from_static("private=1"));
+    headers.insert("x-forwarded-for", HeaderValue::from_static("203.0.113.1"));
+    headers.insert("x-router-internal", HeaderValue::from_static("private"));
+    headers.insert("connection", HeaderValue::from_static("x-hop-secret"));
+    headers.insert("x-hop-secret", HeaderValue::from_static("private-hop"));
+    headers
+}
+
 /// The bug in issue #260: a stored provider was reachable only by pinning
 /// `UPSTREAM_PROVIDER`, which pins the whole deployment — so one router could
 /// serve vendor subscriptions or a local endpoint, never both.
@@ -307,16 +330,18 @@ async fn a_stored_providers_declared_model_routes_in_automatic_mode() {
 }
 
 #[tokio::test]
-async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
+async fn ordinary_openai_compatible_routes_preserve_safe_metadata_and_replace_credentials() {
     let (base_url, requests, task) = captured_model_upstream().await;
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
     store_provider_at(&state, "formal-ai", &base_url, &["shared-future"]);
 
+    let headers = provider_forwarding_headers(&state, crate::clients::ClientKind::Opencode);
+
     let response = crate::proxy::openai_chat_completions(
         State(state.clone()),
         Query(BTreeMap::new()),
-        bearer(&state),
+        headers.clone(),
         Ok(axum::Json(serde_json::json!({
             "model": "shared-future",
             "messages": [{"role": "user", "content": "hello"}]
@@ -330,10 +355,51 @@ async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
     assert_eq!(payload["model"], "shared-future");
     assert_eq!(payload["choices"][0]["message"]["content"], "ok");
 
+    let response = crate::proxy::openai_responses(
+        State(state.clone()),
+        provider_forwarding_headers(&state, crate::clients::ClientKind::Codex),
+        Ok(axum::Json(serde_json::json!({
+            "model": "shared-future",
+            "input": "hello"
+        }))),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(payload["model"], "shared-future");
+    assert_eq!(payload["object"], "response");
+
     let requests = requests.lock().unwrap();
-    assert_eq!(requests.len(), 1);
+    assert_eq!(requests.len(), 2);
     assert_eq!(requests[0].0, "/v1/chat/completions");
     assert_eq!(requests[0].1["model"], "shared-future");
+    assert_eq!(requests[1].0, "/v1/responses");
+    assert_eq!(requests[1].1["model"], "shared-future");
+    for ((_, _, headers), expected_user_agent) in requests
+        .iter()
+        .zip(["opencode/test-fixture", "codex/test-fixture"])
+    {
+        assert_eq!(headers["authorization"], "Bearer provider-key");
+        assert_eq!(headers["user-agent"], expected_user_agent);
+        assert_eq!(headers["x-session-id"], "provider-test");
+        assert_eq!(headers["x-client-feature"], "preserved");
+        if expected_user_agent.starts_with("codex") {
+            assert_eq!(headers["x-codex-turn-metadata"], "turn-fixture");
+        }
+        for filtered in [
+            "cookie",
+            "x-forwarded-for",
+            "x-router-internal",
+            "connection",
+            "x-hop-secret",
+        ] {
+            assert!(
+                !headers.contains_key(filtered),
+                "{filtered} leaked upstream"
+            );
+        }
+    }
     drop(requests);
     task.abort();
 }

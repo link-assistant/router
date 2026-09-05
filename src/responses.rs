@@ -379,8 +379,7 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
         |_| response_id.to_string(),
     );
     // The caller's model id is authoritative: a catalog alias must not be
-    // replaced by the concrete model the provider resolved it to. The served
-    // model is reported alongside it instead (see `crate::output_limit`).
+    // replaced by the concrete model the provider resolved it to.
     let served_model = response.get("model").and_then(Value::as_str);
     let model = if requested_model.is_empty() {
         served_model.unwrap_or_default()
@@ -469,7 +468,7 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
         usage["completion_tokens_details"] = details.clone();
     }
 
-    let mut completion = json!({
+    json!({
         "id": id,
         "object": "chat.completion",
         "created": created,
@@ -480,11 +479,7 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
             "finish_reason": finish_reason,
         }],
         "usage": usage,
-    });
-    if let Some(served) = served_model.filter(|served| *served != model) {
-        completion[crate::output_limit::UPSTREAM_MODEL_FIELD] = Value::String(served.to_string());
-    }
-    completion
+    })
 }
 
 /// Enforce Chat stop sequences on a buffered translated response.
@@ -525,7 +520,6 @@ pub struct ResponsesChatStreamTranslator {
     tool_indices: std::collections::BTreeSet<u64>,
     stop_filter: crate::stop_sequences::StopSequenceFilter,
     output_limiter: crate::output_limit::OutputTokenLimiter,
-    served_model: Option<String>,
 }
 
 impl ResponsesChatStreamTranslator {
@@ -546,7 +540,6 @@ impl ResponsesChatStreamTranslator {
             tool_indices: std::collections::BTreeSet::new(),
             stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
             output_limiter: crate::output_limit::OutputTokenLimiter::default(),
-            served_model: None,
         }
     }
 
@@ -722,13 +715,10 @@ impl ResponsesChatStreamTranslator {
         if let Some(id) = response.get("id").and_then(Value::as_str) {
             self.id = format!("chatcmpl-{id}");
         }
-        // The requested model id stays the response identity; the concrete
-        // model the provider served is reported as a separate field.
+        // The requested model id stays the response identity.
         if let Some(model) = response.get("model").and_then(Value::as_str) {
             if self.model.is_empty() {
                 self.model = model.to_string();
-            } else if self.model != model {
-                self.served_model = Some(model.to_string());
             }
         }
         if let Some(created) = response.get("created_at").and_then(Value::as_i64) {
@@ -764,7 +754,7 @@ impl ResponsesChatStreamTranslator {
     }
 
     fn chat_frame(&self, delta: &Value, finish_reason: Option<&str>) -> String {
-        let mut frame = json!({
+        let frame = json!({
             "id": self.id,
             "object": "chat.completion.chunk",
             "created": self.created,
@@ -775,9 +765,6 @@ impl ResponsesChatStreamTranslator {
                 "finish_reason": finish_reason,
             }]
         });
-        if let Some(served) = &self.served_model {
-            frame[crate::output_limit::UPSTREAM_MODEL_FIELD] = Value::String(served.clone());
-        }
         format!("data: {frame}\n\n")
     }
 

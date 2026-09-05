@@ -570,6 +570,11 @@ fn safe_upstream_response_headers_are_selected() {
     );
     headers.insert("x-api-key", HeaderValue::from_static("upstream-secret"));
     headers.insert("set-cookie", HeaderValue::from_static("session=secret"));
+    headers.insert("x-router-debug", HeaderValue::from_static("private"));
+    headers.insert(
+        "x-link-assistant-debug",
+        HeaderValue::from_static("private"),
+    );
     headers.insert("connection", HeaderValue::from_static("x-remove-me"));
     headers.insert("x-remove-me", HeaderValue::from_static("hop-by-hop"));
     headers.insert("content-length", HeaderValue::from_static("999"));
@@ -591,6 +596,8 @@ fn safe_upstream_response_headers_are_selected() {
         "x-remove-me",
         "content-length",
         "x-codex-active-limit",
+        "x-router-debug",
+        "x-link-assistant-debug",
     ] {
         assert!(!selected.contains_key(excluded), "relayed {excluded}");
     }

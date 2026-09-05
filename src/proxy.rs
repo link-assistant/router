@@ -105,6 +105,8 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
             || is_operator_subscription_header(name_lower)
+            || name_lower.starts_with("x-router-")
+            || name_lower.starts_with("x-link-assistant-")
             || name_lower == "content-length"
             || connection_headers.contains(name_lower)
         {

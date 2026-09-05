@@ -42,8 +42,6 @@ pub fn map_stop_reason(finish_reason: &str) -> &'static str {
 pub struct AnthropicStreamTranslator {
     /// Client-requested model identity preserved in every response shape.
     model: String,
-    /// Concrete upstream model, exposed separately when it differs.
-    upstream_model: Option<String>,
     id: String,
     buffer: String,
     started: bool,
@@ -71,7 +69,6 @@ impl AnthropicStreamTranslator {
     pub fn new(requested_model: &str) -> Self {
         Self {
             model: requested_model.to_string(),
-            upstream_model: None,
             id: format!("msg_{}", uuid::Uuid::new_v4().simple()),
             buffer: String::new(),
             started: false,
@@ -88,15 +85,6 @@ impl AnthropicStreamTranslator {
             output_tokens: 0,
             web_search_requests: 0,
         }
-    }
-
-    /// Attach the concrete model selected for the upstream request.
-    #[must_use]
-    pub fn with_upstream_model(mut self, upstream_model: &str) -> Self {
-        if !upstream_model.is_empty() && upstream_model != self.model {
-            self.upstream_model = Some(upstream_model.to_string());
-        }
-        self
     }
 
     /// Enforce Anthropic `stop_sequences` locally for translated backends.
@@ -395,7 +383,7 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         self.started = true;
-        let mut message = json!({
+        let message = json!({
             "id": self.id,
             "type": "message",
             "role": "assistant",
@@ -405,10 +393,6 @@ impl AnthropicStreamTranslator {
             "stop_sequence": Value::Null,
             "usage": {"input_tokens": self.input_tokens, "output_tokens": 0},
         });
-        if let Some(upstream_model) = self.upstream_model.as_deref() {
-            message[crate::output_limit::UPSTREAM_MODEL_FIELD] =
-                Value::String(upstream_model.to_string());
-        }
         vec![anthropic_frame(
             "message_start",
             &json!({
@@ -548,15 +532,14 @@ mod tests {
     }
 
     #[test]
-    fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
-        let mut translator = AnthropicStreamTranslator::new("claude/catalog-alias")
-            .with_upstream_model("future-upstream-model");
+    fn streaming_bridge_preserves_requested_model_without_private_metadata() {
+        let mut translator = AnthropicStreamTranslator::new("claude/catalog-alias");
         let output = joined(&translator.push(
             b"data: {\"object\":\"chat.completion.chunk\",\"model\":\"future-upstream-model\",\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
         ));
 
         assert!(output.contains("\"model\":\"claude/catalog-alias\""));
-        assert!(output.contains("\"x_router_upstream_model\":\"future-upstream-model\""));
+        assert!(!output.contains("x_router_"));
     }
 
     #[test]

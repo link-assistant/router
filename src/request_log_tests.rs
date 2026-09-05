@@ -891,27 +891,10 @@ fn an_unbuffered_body_names_no_model() {
     assert_eq!(capture.extract_model(), None);
 }
 
-/// The request line names the token label, and the response line names the
-/// model actually served — both already in hand, neither previously logged
-/// (issue #320). The token value itself must never appear in either.
+/// Request-log redaction must never expose the presented token.
 #[tokio::test]
-async fn log_lines_carry_the_label_and_the_served_model_but_never_the_token() {
+async fn log_redaction_never_exposes_the_token() {
     use axum::http::HeaderValue;
-
-    // The label reaches the line through the identity the middleware resolves;
-    // the model reaches it through the header the router already sets.
-    let mut headers = axum::http::HeaderMap::new();
-    headers.insert(
-        crate::output_limit::UPSTREAM_MODEL_HEADER,
-        HeaderValue::from_static("claude-opus-5"),
-    );
-    assert_eq!(
-        headers
-            .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-            .and_then(|value| value.to_str().ok()),
-        Some("claude-opus-5"),
-        "the served model is readable where the response line reads it"
-    );
 
     // The secret is redacted wherever it appears, which is what keeps it off
     // the line: the label is logged, the credential is not.

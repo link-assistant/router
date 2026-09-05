@@ -15,13 +15,6 @@ struct RequiredChatFields {
     messages: Vec<openai::ChatMessage>,
 }
 
-/// Names the tools that were dropped on the way to Anthropic.
-///
-/// A silent drop is the failure mode issue #215 warns about: an agent that
-/// "just doesn't use sub-agents" gives the user nothing to search for. The
-/// header is additive, so a client that ignores it is unaffected.
-pub const DROPPED_TOOLS_HEADER: &str = "x-router-dropped-tools";
-
 async fn route_openai_request(
     state: &AppState,
     headers: &HeaderMap,
@@ -100,8 +93,13 @@ fn canonical_openai_model<'a>(
     requested
 }
 
-/// Attach the dropped-tool report to a response, and log it.
-fn report_dropped_tools(state: &AppState, mut response: Response, dropped: &[String]) -> Response {
+/// Record dropped tools locally without extending a public vendor protocol.
+fn report_dropped_tools(
+    state: &AppState,
+    headers: &HeaderMap,
+    response: Response,
+    dropped: &[String],
+) -> Response {
     if dropped.is_empty() {
         return response;
     }
@@ -112,9 +110,11 @@ fn report_dropped_tools(state: &AppState, mut response: Response, dropped: &[Str
             dropped.len()
         )
     });
-    if let Ok(value) = axum::http::HeaderValue::from_str(&summary) {
-        response.headers_mut().insert(DROPPED_TOOLS_HEADER, value);
-    }
+    state.request_log.record(
+        &crate::request_log::correlation_id(headers),
+        "translation_diagnostic",
+        serde_json::json!({"dropped_tools": dropped}),
+    );
     response
 }
 
@@ -402,7 +402,7 @@ async fn openai_chat_completions_with_subscription(
         },
     )
     .await;
-    report_dropped_tools(&state, response, &dropped_tools)
+    report_dropped_tools(&state, &headers, response, &dropped_tools)
 }
 
 /// `POST /v1/responses` — `OpenAI` Responses API.
@@ -614,7 +614,7 @@ async fn openai_responses_with_route(
         },
     )
     .await;
-    report_dropped_tools(&state, response, &dropped_tools)
+    report_dropped_tools(&state, &headers, response, &dropped_tools)
 }
 
 #[cfg(test)]
@@ -632,5 +632,28 @@ mod routed_model_tests {
             ),
             "claude-future-native"
         );
+    }
+
+    #[test]
+    fn dropped_tools_are_logged_locally_without_a_wire_header() {
+        let data = tempfile::tempdir().expect("data dir");
+        let state = AppState::for_tests(data.path());
+        let response = report_dropped_tools(
+            &state,
+            &HeaderMap::new(),
+            Response::new(axum::body::Body::empty()),
+            &["multi_agent_v1".to_string()],
+        );
+
+        assert!(response.headers().get("x-router-dropped-tools").is_none());
+        let written = std::fs::read_to_string(
+            state
+                .request_log
+                .path()
+                .join("unauthenticated/requests.lino"),
+        )
+        .expect("translation diagnostic");
+        assert!(written.contains("translation_diagnostic"));
+        assert!(written.contains("multi_agent_v1"));
     }
 }

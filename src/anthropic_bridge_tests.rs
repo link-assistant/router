@@ -294,7 +294,7 @@ fn responses_object_becomes_anthropic_message() {
 }
 
 #[tokio::test]
-async fn buffered_bridge_preserves_requested_and_reports_upstream_model() {
+async fn buffered_bridge_preserves_requested_without_private_metadata() {
     use axum::response::IntoResponse as _;
     use http_body_util::BodyExt as _;
 
@@ -320,27 +320,16 @@ async fn buffered_bridge_preserves_requested_and_reports_upstream_model() {
     )
     .await;
     assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response
-            .headers()
-            .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-            .unwrap(),
-        "future-upstream-model"
-    );
+    assert!(response.headers().get("x-router-upstream-model").is_none());
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(payload["model"], "claude/catalog-alias");
-    assert_eq!(
-        payload[crate::output_limit::UPSTREAM_MODEL_FIELD],
-        "future-upstream-model"
-    );
+    assert!(payload.get("x_router_upstream_model").is_none());
 }
 
-/// Streaming translation carries the same two model identities as buffered
-/// translation, including the response header used by logs and clients that
-/// do not inspect vendor-specific SSE fields.
+/// Streaming translation carries only the requested vendor-standard model.
 #[tokio::test]
-async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
+async fn streaming_bridge_preserves_requested_without_private_metadata() {
     use http_body_util::BodyExt as _;
 
     let mut upstream = Response::new(Body::from(concat!(
@@ -366,10 +355,7 @@ async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
     .await;
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()["content-type"], "text/event-stream");
-    assert_eq!(
-        response.headers()[crate::output_limit::UPSTREAM_MODEL_HEADER],
-        "future-upstream-model"
-    );
+    assert!(response.headers().get("x-router-upstream-model").is_none());
     let payload = String::from_utf8(
         response
             .into_body()
@@ -384,7 +370,8 @@ async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
     assert!(payload.contains("content_block_delta"));
     assert!(payload.contains("message_stop"));
     assert!(payload.contains("claude/catalog-alias"));
-    assert!(payload.contains("future-upstream-model"));
+    assert!(!payload.contains("future-upstream-model"));
+    assert!(!payload.contains("x_router_"));
 }
 
 #[test]

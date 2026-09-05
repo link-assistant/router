@@ -581,17 +581,16 @@ same-ID collision between healthy owners fails explicitly with HTTP 409; Router
 does not resolve it by provider order, model-name prefix, or a manufactured
 `<provider>/<model>` alias. A model nothing
 advertises returns `404 not_found_error` instead of silently selecting a
-default. Buffered and streaming responses retain both requested and resolved
-identity consistently.
+default. Buffered and streaming responses retain the requested identity
+consistently; the concrete upstream response remains in the local request log.
 
 #### Model identity and output limits
 
 Responses always report the model id the client requested, including catalog
 aliases such as `codex-auto-review`, in `model` — for buffered replies and for
 every streamed chunk on each OpenAI surface. When the provider serves a
-different concrete model, the router reports it separately in the
-`x_router_upstream_model` response field and the `x-router-upstream-model`
-response header, instead of replacing the requested identity.
+different concrete model, Router keeps that diagnostic in its local request
+log instead of extending a vendor protocol with private fields or headers.
 
 Codex subscriptions accept `max_output_tokens`, `max_tokens`, and
 `max_completion_tokens`. The ChatGPT backend rejects an explicit cap, so the
