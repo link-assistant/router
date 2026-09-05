@@ -291,6 +291,13 @@ pub async fn forward_native_vertex(
     headers: HeaderMap,
     body: Result<axum::Json<Value>, axum::extract::rejection::JsonRejection>,
 ) -> Response {
+    if path
+        .split('/')
+        .zip(path.split('/').skip(1))
+        .any(|segments| segments == ("publishers", "anthropic"))
+    {
+        return native_error(StatusCode::NOT_FOUND, "route not found");
+    }
     let body = match body {
         Ok(axum::Json(body)) => body,
         Err(error) => {

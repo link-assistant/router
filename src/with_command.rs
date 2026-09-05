@@ -418,14 +418,20 @@ impl TemporaryClient {
                     .env("ANTHROPIC_API_KEY", "")
                     .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
                     .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
-                // Claude Code's built-in Default/family aliases describe
-                // Anthropic models. A z.ai-only catalog therefore needs an
-                // exact live alias for the main turn, every family, subagents,
-                // and resumed sessions. Native Anthropic discovery remains
-                // unpinned, and a user-selected z.ai model wins here too.
+                // Claude Code's built-in family aliases describe Anthropic
+                // models. A z.ai-only catalog needs only the same exact pair
+                // of main/subagent pins as persistent setup. Assigning one GLM
+                // id to every family creates fake Opus/Sonnet/Haiku rows.
                 let gateway_model = crate::clients::claude_gateway_model(models, model_override);
-                for key in crate::clients::CLAUDE_MODEL_ENV {
-                    command.env(key, gateway_model.as_deref().unwrap_or_default());
+                if let Some(gateway_model) = gateway_model {
+                    for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
+                        command.env(key, &gateway_model);
+                    }
+                    for key in crate::clients::CLAUDE_MODEL_ENV {
+                        if !crate::clients::CLAUDE_GATEWAY_TARGET_ENV.contains(&key) {
+                            command.env_remove(key);
+                        }
+                    }
                 }
             }
             ClientKind::GeminiCli => {

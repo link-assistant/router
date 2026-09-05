@@ -236,7 +236,10 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 post(gemini::forward_native_vertex),
             );
     }
-    routes.route_layer(from_fn_with_state(state, authenticate_client_route))
+    routes.route_layer(from_fn_with_state(
+        (state, config.enable_anthropic_api),
+        authenticate_inference_route,
+    ))
 }
 
 fn private_service_routes(state: AppState) -> Router<AppState> {
@@ -323,6 +326,21 @@ async fn authenticate_client_route(
         return error.render(crate::api_error::dialect_for_path(path));
     }
     next.run(request).await
+}
+
+async fn authenticate_inference_route(
+    State((state, anthropic_enabled)): State<(AppState, bool)>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let path = request.uri().path();
+    if !anthropic_enabled
+        && route_for_path(request.method(), path)
+            .is_some_and(|route| route.id == RouteId::AnthropicVertex)
+    {
+        return not_found().await;
+    }
+    authenticate_client_route(State(state), request, next).await
 }
 
 async fn authenticate_admin_route(

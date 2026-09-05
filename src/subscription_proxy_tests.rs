@@ -414,6 +414,92 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     upstream_task.abort();
 }
 
+#[tokio::test]
+async fn claude_to_codex_translation_preserves_the_client_request_id() {
+    use axum::body::Body;
+    use axum::http::Request;
+    use http_body_util::BodyExt as _;
+    use std::sync::{Arc, Mutex};
+
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let captured_for_server = Arc::clone(&captured);
+    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+        let captured = Arc::clone(&captured_for_server);
+        async move {
+            captured.lock().unwrap().push(request.headers().clone());
+            (
+                StatusCode::OK,
+                [("content-type", "application/json")],
+                r#"{"id":"resp_1","status":"completed","output":[]}"#,
+            )
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let upstream_task = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+    let data = tempfile::tempdir().unwrap();
+    let codex_home = tempfile::tempdir().unwrap();
+    std::fs::write(
+        codex_home.path().join("auth.json"),
+        r#"{"tokens":{"access_token":"codex-upstream","account_id":"account-42"}}"#,
+    )
+    .unwrap();
+    let reader = crate::subscription::SubscriptionReader::new(
+        SubscriptionProvider::Codex,
+        codex_home.path(),
+    );
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Codex;
+    state.subscription_base_url = Some(origin);
+    state.subscription_reader = Some(reader.clone());
+    state.subscription_readers = vec![reader];
+    let token = crate::model_routing::tests::bound_client_token(
+        &state,
+        crate::clients::ClientKind::ClaudeCode,
+        None,
+    );
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+    );
+    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.261"));
+    headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+    headers.insert(
+        "x-request-id",
+        HeaderValue::from_static("client-translation-request"),
+    );
+    let body = serde_json::json!({"model":"gpt-live","input":"hi"});
+    let response = forward_subscription_openai_inner(
+        &state,
+        &headers,
+        body.clone(),
+        &body,
+        ForwardOptions {
+            path: "/v1/responses",
+            surface: Surface::Anthropic,
+            response_shape: SubscriptionResponseShape::Passthrough,
+            validated: None,
+            entitlement: Some(crate::client_policy::EntitlementDecision::Override),
+            native_route: false,
+        },
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let _ = response.into_body().collect().await.unwrap();
+
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), 1);
+    assert_eq!(
+        captured[0]["x-request-id"], "client-translation-request",
+        "protocol translation must not replace or drop caller correlation"
+    );
+    assert_eq!(captured[0].get_all("x-request-id").iter().count(), 1);
+    drop(captured);
+    upstream_task.abort();
+}
+
 #[test]
 fn codex_headers_include_version() {
     let token = SubscriptionToken {

@@ -31,6 +31,8 @@ pub enum AcceptancePhase {
 pub enum AcceptanceFailureKind {
     NotAttempted,
     ExchangeRejected,
+    ExchangeUncertain,
+    PersistenceUncertain,
     SuccessorRetained,
 }
 
@@ -79,16 +81,18 @@ impl AcceptanceFailure {
                 transaction_id: None,
                 message: failure.to_string(),
             },
-            ImportRefreshFailureKind::ExchangeUncertain => Self::retained(
-                AcceptancePhase::Exchange,
-                transaction_id.to_string(),
-                failure.to_string(),
-            ),
-            ImportRefreshFailureKind::PersistenceUncertain => Self::retained(
-                AcceptancePhase::Persistence,
-                transaction_id.to_string(),
-                failure.to_string(),
-            ),
+            ImportRefreshFailureKind::ExchangeUncertain => Self {
+                kind: AcceptanceFailureKind::ExchangeUncertain,
+                phase: AcceptancePhase::Exchange,
+                transaction_id: Some(transaction_id.to_string()),
+                message: failure.to_string(),
+            },
+            ImportRefreshFailureKind::PersistenceUncertain => Self {
+                kind: AcceptanceFailureKind::PersistenceUncertain,
+                phase: AcceptancePhase::Persistence,
+                transaction_id: Some(transaction_id.to_string()),
+                message: failure.to_string(),
+            },
         }
     }
 
@@ -354,10 +358,15 @@ async fn accept_candidate_with_timeout_mode(
             Ok(refreshed) => refreshed,
             Err(error) => {
                 let mut failure = AcceptanceFailure::from_refresh(&error, &transaction_id);
-                if failure.kind == AcceptanceFailureKind::SuccessorRetained {
+                if matches!(
+                    failure.kind,
+                    AcceptanceFailureKind::ExchangeUncertain
+                        | AcceptanceFailureKind::PersistenceUncertain
+                        | AcceptanceFailureKind::SuccessorRetained
+                ) {
                     let _retained_path = stage.keep();
                     failure.message = format!(
-                        "{}; isolated candidate retained as transaction {transaction_id}",
+                        "{}; isolated candidate state retained as transaction {transaction_id}",
                         failure.message
                     );
                 }

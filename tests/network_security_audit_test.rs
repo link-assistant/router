@@ -160,6 +160,47 @@ fn test_app_for_listener_with_switches(
 
 #[tokio::test]
 async fn service_switches_own_their_complete_namespaces() {
+    let anthropic_routes = [
+        (Method::GET, "/api/services/anthropic/v1/models"),
+        (Method::POST, "/api/services/anthropic/v1/messages"),
+        (
+            Method::POST,
+            "/api/services/anthropic/v1/messages/count_tokens",
+        ),
+        (Method::POST, "/api/services/bedrock/invoke"),
+        (
+            Method::POST,
+            "/api/services/bedrock/invoke-with-response-stream",
+        ),
+        (
+            Method::POST,
+            "/api/services/vertex/v1/projects/p/locations/l/publishers/anthropic/models/claude-live:rawPredict",
+        ),
+    ];
+    let openai_routes = [
+        (Method::GET, "/api/services/openai/v1/models"),
+        (Method::POST, "/api/services/openai/v1/chat/completions"),
+        (Method::POST, "/api/services/openai/v1/responses"),
+        (Method::GET, "/api/services/codex/v1/models"),
+        (Method::POST, "/api/services/codex/v1/chat/completions"),
+        (Method::POST, "/api/services/codex/v1/responses"),
+        (Method::GET, "/api/services/qwen/v1/models"),
+        (Method::POST, "/api/services/qwen/v1/chat/completions"),
+        (Method::POST, "/api/services/qwen/v1/responses"),
+        (Method::GET, "/api/services/gemini/v1beta/models"),
+        (
+            Method::GET,
+            "/api/services/gemini/v1beta/models/gemini-live",
+        ),
+        (
+            Method::POST,
+            "/api/services/gemini/v1beta/models/gemini-live:generateContent",
+        ),
+        (
+            Method::POST,
+            "/api/services/vertex/v1/projects/p/locations/l/models/gemini-live:generateContent",
+        ),
+    ];
     let directory = tempfile::tempdir().expect("tempdir");
     let (anthropic_only, _) = test_app_for_listener_with_switches(
         directory.path(),
@@ -175,18 +216,12 @@ async fn service_switches_own_their_complete_namespaces() {
             },
         },
     );
-    for (method, path) in [
-        (Method::GET, "/api/services/anthropic/v1/models"),
-        (Method::POST, "/api/services/anthropic/v1/messages"),
-    ] {
-        let mounted = response(anthropic_only.clone(), method, path, None, "{}").await;
+    for (method, path) in &anthropic_routes {
+        let mounted = response(anthropic_only.clone(), method.clone(), path, None, "{}").await;
         assert_eq!(mounted.status(), StatusCode::UNAUTHORIZED, "{path}");
     }
-    for path in [
-        "/api/services/openai/v1/models",
-        "/api/services/openai/v1/chat/completions",
-    ] {
-        let absent = response(anthropic_only.clone(), Method::GET, path, None, "").await;
+    for (method, path) in &openai_routes {
+        let absent = response(anthropic_only.clone(), method.clone(), path, None, "{}").await;
         assert_eq!(absent.status(), StatusCode::NOT_FOUND, "{path}");
     }
 
@@ -204,18 +239,12 @@ async fn service_switches_own_their_complete_namespaces() {
             },
         },
     );
-    for (method, path) in [
-        (Method::GET, "/api/services/anthropic/v1/models"),
-        (Method::POST, "/api/services/anthropic/v1/messages"),
-    ] {
-        let absent = response(openai_only.clone(), method, path, None, "{}").await;
+    for (method, path) in &anthropic_routes {
+        let absent = response(openai_only.clone(), method.clone(), path, None, "{}").await;
         assert_eq!(absent.status(), StatusCode::NOT_FOUND, "{path}");
     }
-    for (method, path) in [
-        (Method::GET, "/api/services/openai/v1/models"),
-        (Method::POST, "/api/services/openai/v1/chat/completions"),
-    ] {
-        let mounted = response(openai_only.clone(), method, path, None, "{}").await;
+    for (method, path) in &openai_routes {
+        let mounted = response(openai_only.clone(), method.clone(), path, None, "{}").await;
         assert_eq!(mounted.status(), StatusCode::UNAUTHORIZED, "{path}");
     }
 }

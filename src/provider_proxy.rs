@@ -362,6 +362,9 @@ pub(crate) async fn forward_provider_at_routed(
         upstream_req = upstream_req.headers(crate::proxy::native_request_headers(headers, api_key));
     } else {
         upstream_req = upstream_req.header("content-type", "application/json");
+        if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+            upstream_req = upstream_req.header("x-request-id", request_id);
+        }
         if let Some(api_key) = provider.api_key.as_deref() {
             upstream_req = upstream_req.header("authorization", format!("Bearer {api_key}"));
         }

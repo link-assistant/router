@@ -470,6 +470,60 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
 }
 
 #[test]
+fn claude_doctor_uses_bearer_for_catalog_and_successful_inference() {
+    let home = tempfile::tempdir().expect("temp home");
+    let (base_url, server) = mock_router(&[("claude-live", "anthropic")], 3);
+    let token = test_token("claude");
+    let setup = router(
+        home.path(),
+        &[
+            "clients", "setup", "claude", "--token", &token, "--server", &base_url,
+        ],
+    );
+    assert!(
+        setup.status.success(),
+        "{}",
+        String::from_utf8_lossy(&setup.stderr)
+    );
+
+    let doctor = router_with_env(
+        home.path(),
+        &["clients", "doctor", "claude"],
+        &[("ANTHROPIC_AUTH_TOKEN", &token)],
+    );
+    assert!(
+        doctor.status.success(),
+        "{}",
+        String::from_utf8_lossy(&doctor.stderr)
+    );
+    assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
+    let requests = server.join().expect("mock server thread");
+    assert_eq!(requests.len(), 3, "{requests:?}");
+    for request in &requests {
+        assert!(
+            request.to_ascii_lowercase().contains(&format!(
+                "authorization: bearer {}",
+                token.to_ascii_lowercase()
+            )),
+            "{request}"
+        );
+        assert!(
+            !request.to_ascii_lowercase().contains("x-api-key:"),
+            "Claude's recorded bearer carrier must remain bearer: {request}"
+        );
+    }
+    assert!(requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
+    assert!(requests[2].starts_with("POST /api/services/anthropic/v1/messages HTTP/1.1"));
+    assert!(requests[2].contains("claude-live"));
+    assert!(
+        requests[2]
+            .to_ascii_lowercase()
+            .contains("anthropic-version: 2023-06-01")
+    );
+}
+
+#[test]
 fn codex_doctor_requires_an_openai_owned_catalog_model() {
     let home = tempfile::tempdir().expect("temp home");
     let (base_url, server) = mock_router(&[("claude-live", "anthropic")], 2);

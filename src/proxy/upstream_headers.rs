@@ -107,6 +107,15 @@ pub fn native_request_headers(incoming: &HeaderMap, bearer_token: &str) -> Heade
     headers
 }
 
+/// Preserve the caller's end-to-end request identifier across a protocol
+/// translation. Translated requests intentionally rebuild protocol headers,
+/// but correlation remains the caller's application-level metadata; Router's
+/// own correlation id stays exclusively in request-log state.
+#[must_use]
+pub fn translated_request_id(incoming: &HeaderMap) -> Option<HeaderValue> {
+    incoming.get("x-request-id").cloned()
+}
+
 /// Preserve native end-to-end headers and replace only the Router credential.
 pub fn build_upstream_headers(
     incoming: &HeaderMap,

@@ -270,7 +270,7 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
     let request = Request::builder()
         .method("POST")
         .uri("/v1/messages")
-        .header("x-api-key", token)
+        .header("authorization", format!("Bearer {token}"))
         .header("user-agent", "claude-cli/2.1.261")
         .header("anthropic-version", "2023-06-01")
         .header("connection", "x-hop-secret")
@@ -299,6 +299,7 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
         "x-hop-secret",
         "x-forwarded-client-cert",
         "x-api-key",
+        "anthropic-auth-token",
     ] {
         assert!(!headers.contains_key(removed), "{removed} leaked upstream");
     }

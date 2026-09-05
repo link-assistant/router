@@ -9,7 +9,7 @@ use crate::model_routing::ModelRouteError;
 
 pub(super) fn project_catalog(
     catalog: &Value,
-    client: ClientKind,
+    _client: ClientKind,
 ) -> Result<Value, ModelRouteError> {
     let entries = catalog
         .get("data")
@@ -29,7 +29,7 @@ pub(super) fn project_catalog(
                 "exact model id collision across healthy providers: {id}"
             )));
         }
-        data.push(Value::Object(project_model(raw, id, client)));
+        data.push(Value::Object(project_model(raw, id)));
     }
     data.sort_by(|left, right| {
         left.get("id")
@@ -39,8 +39,8 @@ pub(super) fn project_catalog(
     Ok(json!({"object": "list", "data": data}))
 }
 
-fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<String, Value> {
-    let service = service(raw, client);
+fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
+    let service = service(raw);
     let owner = raw
         .get("owned_by")
         .and_then(Value::as_str)
@@ -106,26 +106,17 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
     projected
 }
 
-fn service(raw: &Map<String, Value>, client: ClientKind) -> &'static str {
+fn service(raw: &Map<String, Value>) -> &str {
     match raw.get("provider").and_then(Value::as_str) {
         Some("claude") => "anthropic",
         Some("codex") => "codex",
         Some("gemini") => "gemini",
         Some("qwen") => "qwen",
-        _ if raw.get("owned_by").and_then(Value::as_str) == Some("z.ai") => client_service(client),
-        _ => "openai",
-    }
-}
-
-const fn client_service(client: ClientKind) -> &'static str {
-    match client {
-        ClientKind::ClaudeCode => "anthropic",
-        ClientKind::Codex => "codex",
-        ClientKind::GeminiCli => "gemini",
-        ClientKind::QwenCode => "qwen",
-        ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Cursor | ClientKind::Agent => {
-            "openai"
-        }
+        _ => raw
+            .get("owned_by")
+            .and_then(Value::as_str)
+            .filter(|owner| !owner.is_empty())
+            .unwrap_or("openai"),
     }
 }
 
@@ -259,9 +250,34 @@ mod tests {
             .find(|entry| entry["id"] == "lefine-live")
             .unwrap();
         assert_eq!(z_ai["owned_by"], "z.ai");
+        assert_eq!(z_ai["service"], "z.ai");
         assert_eq!(z_ai["metadata_source"], "provider:z.ai");
         assert_eq!(lefine["owned_by"], "lefine");
+        assert_eq!(lefine["service"], "lefine");
         assert_eq!(lefine["metadata_source"], "provider:lefine");
+    }
+
+    #[test]
+    fn provider_ownership_never_changes_with_the_requesting_client() {
+        let catalog = json!({"data": [
+            {"id": "z-ai-live", "owned_by": "z.ai"},
+            {"id": "lefine-live", "owned_by": "lefine"}
+        ]});
+        for client in [
+            ClientKind::ClaudeCode,
+            ClientKind::Codex,
+            ClientKind::GeminiCli,
+            ClientKind::QwenCode,
+            ClientKind::GrokCli,
+            ClientKind::Opencode,
+            ClientKind::Cursor,
+            ClientKind::Agent,
+        ] {
+            let projected = project_catalog(&catalog, client).unwrap();
+            let entries = projected["data"].as_array().unwrap();
+            assert_eq!(entries[0]["service"], "lefine", "{client:?}");
+            assert_eq!(entries[1]["service"], "z.ai", "{client:?}");
+        }
     }
 
     #[test]

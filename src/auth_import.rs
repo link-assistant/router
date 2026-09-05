@@ -42,6 +42,10 @@ struct ImportPolicy {
     /// Whether the caller explicitly asserted the safe-flow capability. This
     /// is diagnostic only and never bypasses candidate validation.
     capability_asserted: bool,
+    /// Fresh imports copy an externally owned rotation chain. A resumed
+    /// acceptance transaction contains a Router-owned successor and must keep
+    /// that provenance when promoted.
+    external_refresh_owner: bool,
 }
 
 /// Adopt an existing vendor login, when this invocation asked to.
@@ -65,6 +69,7 @@ pub async fn run_import(
         } => ImportPolicy {
             if_absent: *if_absent,
             capability_asserted: *force,
+            external_refresh_owner: true,
         },
         _ => ImportPolicy::default(),
     };
@@ -84,7 +89,7 @@ pub async fn run_import(
         AuthOp::Import {
             resume: Some(transaction_id),
             ..
-        } => match import_resume::resolve(&config.data_dir, transaction_id) {
+        } => match import_resume::resolve_claimed(&config.data_dir, transaction_id).await {
             Ok(candidate) => vec![(
                 candidate.provider,
                 candidate.source.clone(),
@@ -128,7 +133,9 @@ pub async fn run_import(
                 let Some(subscription) = subscription_of(other) else {
                     continue;
                 };
-                import_provider(config, subscription, &source, policy).await
+                let mut provider_policy = policy;
+                provider_policy.external_refresh_owner = resumed.is_none();
+                import_provider(config, subscription, &source, provider_policy).await
             }
         };
         let outcome = if let Some(candidate) = resumed.as_ref() {
@@ -170,7 +177,10 @@ fn reconcile_resumed_import(
     match outcome {
         Ok(mut execution) if execution.is_promoted() => {
             if let Err(warning) = import_resume::retire(candidate) {
-                execution.add_message(format!("note: {warning}"));
+                execution.mark_cleanup_pending(
+                    candidate.transaction_id.clone(),
+                    format!("{warning}; retry this transaction ID to complete cleanup"),
+                );
             }
             Ok(execution)
         }
@@ -182,7 +192,14 @@ fn reconcile_resumed_import(
                 candidate.transaction_id
             ),
         )),
-        Err(failure) if failure.outcome == ImportOutcome::SuccessorRetained => {
+        Err(failure)
+            if matches!(
+                failure.outcome,
+                ImportOutcome::ExchangeUncertain
+                    | ImportOutcome::PersistenceUncertain
+                    | ImportOutcome::SuccessorRetained
+            ) =>
+        {
             let _retired_predecessor = import_resume::retire(candidate);
             Err(failure)
         }
@@ -580,12 +597,18 @@ async fn install_candidate(
     } else {
         InstallMode::Replace
     };
-    let document = link_assistant_router::subscription::mark_external_refresh_owner(document)?;
+    let marked;
+    let document = if policy.external_refresh_owner {
+        marked = link_assistant_router::subscription::mark_external_refresh_owner(document)?;
+        &marked
+    } else {
+        document
+    };
     destination
         .install_document_locked_with_refusal(
             data_dir,
             link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-            &document,
+            document,
             mode,
             refusal,
         )

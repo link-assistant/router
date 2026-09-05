@@ -343,7 +343,7 @@ async fn a_rejected_refresh_chain_never_reaches_catalog_or_destination() {
 /// A transport failure cannot prove whether the provider advanced a rotating
 /// chain before the connection disappeared, so the candidate stays recoverable.
 #[tokio::test]
-async fn an_inconclusive_exchange_reports_a_retained_successor() {
+async fn an_inconclusive_exchange_reports_uncertain_retained_state() {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve dead endpoint");
     let token_url = format!("http://{}/token", listener.local_addr().unwrap());
     drop(listener);
@@ -359,7 +359,7 @@ async fn an_inconclusive_exchange_reports_a_retained_successor() {
     .await
     .expect_err("connection loss must remain uncertain");
 
-    assert_eq!(error.outcome, ImportOutcome::SuccessorRetained);
+    assert_eq!(error.outcome, ImportOutcome::ExchangeUncertain);
     assert_eq!(error.phase, ImportPhase::Exchange);
     assert!(!error.previous_credential_safe);
     assert!(error.transaction_id.is_some());
@@ -500,8 +500,29 @@ fn machine_results_are_stable_and_credential_free() {
             "unused-transaction",
         ),
     );
+    let exchange_uncertain = ImportExecution::failed(
+        Some("claude"),
+        ImportFailure::from_refresh_kind_for_test(
+            link_assistant_router::refresh::ImportRefreshFailureKind::ExchangeUncertain,
+            "exchange-transaction",
+        ),
+    );
+    let persistence_uncertain = ImportExecution::failed(
+        Some("codex"),
+        ImportFailure::from_refresh_kind_for_test(
+            link_assistant_router::refresh::ImportRefreshFailureKind::PersistenceUncertain,
+            "persistence-transaction",
+        ),
+    );
     let already_present = ImportExecution::already_present("gemini", Vec::new());
-    let value = import_result::json_value(&[retained, promoted, rejected, already_present]);
+    let value = import_result::json_value(&[
+        retained,
+        promoted,
+        rejected,
+        exchange_uncertain,
+        persistence_uncertain,
+        already_present,
+    ]);
     let serialized = value.to_string();
 
     assert_eq!(value["schema_version"], 1);
@@ -514,7 +535,15 @@ fn machine_results_are_stable_and_credential_free() {
     assert_eq!(value["results"][2]["outcome"], "exchange_rejected");
     assert_eq!(value["results"][2]["previous_credential_safe"], true);
     assert!(value["results"][2]["transaction_id"].is_null());
-    assert_eq!(value["results"][3]["outcome"], "already_present");
+    assert_eq!(value["results"][3]["outcome"], "exchange_uncertain");
+    assert_eq!(value["results"][3]["phase"], "exchange");
+    assert_eq!(
+        value["results"][3]["transaction_id"],
+        "exchange-transaction"
+    );
+    assert_eq!(value["results"][4]["outcome"], "persistence_uncertain");
+    assert_eq!(value["results"][4]["phase"], "persistence");
+    assert_eq!(value["results"][5]["outcome"], "already_present");
     assert!(!serialized.contains("must-not-leak"), "{serialized}");
     assert!(!serialized.contains("access-token"), "{serialized}");
     assert!(!serialized.contains("refresh-token"), "{serialized}");
@@ -523,12 +552,12 @@ fn machine_results_are_stable_and_credential_free() {
 /// Persistence and authoritative reread failures happen after a provider may
 /// have rotated the chain, and therefore always require retained recovery.
 #[test]
-fn persistence_uncertainty_maps_to_a_retained_successor() {
+fn persistence_uncertainty_does_not_claim_an_unproven_successor() {
     let failure = ImportFailure::from_refresh_kind_for_test(
         link_assistant_router::refresh::ImportRefreshFailureKind::PersistenceUncertain,
         "persistence-transaction",
     );
-    assert_eq!(failure.outcome, ImportOutcome::SuccessorRetained);
+    assert_eq!(failure.outcome, ImportOutcome::PersistenceUncertain);
     assert_eq!(failure.phase, ImportPhase::Persistence);
     assert!(!failure.previous_credential_safe);
     assert_eq!(
@@ -558,6 +587,90 @@ fn retained_transactions_resolve_by_opaque_id_only() {
     let error = import_resume::resolve(root.path(), "../opaque-transaction")
         .expect_err("path syntax must not be accepted as an opaque ID");
     assert_eq!(error.outcome, ImportOutcome::NotAttempted);
+}
+
+#[tokio::test]
+async fn retained_transaction_has_one_exclusive_resume_claim() {
+    let root = tempfile::tempdir().expect("router data");
+    let transaction_id = "exclusive-transaction";
+    let provider = root
+        .path()
+        .join("auth-import-candidates")
+        .join(format!("{transaction_id}-random"))
+        .join("qwen");
+    std::fs::create_dir_all(&provider).expect("retained provider");
+
+    let first = import_resume::resolve_claimed(root.path(), transaction_id)
+        .await
+        .expect("first resume claim");
+    let second = import_resume::resolve_claimed(root.path(), transaction_id)
+        .await
+        .expect_err("a transaction must have only one active resume");
+    assert_eq!(second.outcome, ImportOutcome::NotAttempted);
+    assert!(second.contains("already being resumed"), "{second}");
+
+    drop(first);
+    assert!(
+        import_resume::resolve_claimed(root.path(), transaction_id)
+            .await
+            .is_ok(),
+        "a failed attempt must release the durable claim for recovery"
+    );
+}
+
+#[tokio::test]
+async fn ordinary_import_marks_external_ownership_but_router_successor_does_not() {
+    let external_home = tempfile::tempdir().expect("external destination");
+    let router_home = tempfile::tempdir().expect("Router destination");
+    let data = tempfile::tempdir().expect("router data");
+    let document = r#"{"access_token":"accepted","refresh_token":"rotating"}"#;
+
+    for (home, external_refresh_owner, expected_origin) in [
+        (
+            external_home.path(),
+            true,
+            link_assistant_router::platform_keychain::Origin::ExternalFile,
+        ),
+        (
+            router_home.path(),
+            false,
+            link_assistant_router::platform_keychain::Origin::File,
+        ),
+    ] {
+        let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, home);
+        install_candidate(
+            &reader,
+            data.path(),
+            document,
+            CredentialProbe::Accepted,
+            ImportPolicy {
+                external_refresh_owner,
+                ..ImportPolicy::default()
+            },
+        )
+        .await
+        .expect("accepted candidate install");
+        assert_eq!(
+            reader
+                .read_document_for_import()
+                .expect("installed document")
+                .origin,
+            expected_origin
+        );
+    }
+}
+
+#[test]
+fn cleanup_failure_is_machine_readable_and_keeps_the_transaction_id() {
+    let mut execution = ImportExecution::promoted("qwen", Vec::new());
+    execution.mark_cleanup_pending(
+        "cleanup-transaction".into(),
+        "redacted cleanup failure".into(),
+    );
+    let value = import_result::json_value(&[execution]);
+    assert_eq!(value["results"][0]["outcome"], "promotion_cleanup_pending");
+    assert_eq!(value["results"][0]["phase"], "promotion");
+    assert_eq!(value["results"][0]["transaction_id"], "cleanup-transaction");
 }
 
 /// The CLI spelling, report label, and subscription implementation must remain
@@ -750,6 +863,7 @@ async fn rejected_conditional_candidate_has_no_bypass() {
         ImportPolicy {
             if_absent: true,
             capability_asserted: false,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -781,6 +895,7 @@ async fn rejected_candidate_without_force_reports_existing_destination_as_presen
         ImportPolicy {
             if_absent: true,
             capability_asserted: false,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -809,6 +924,7 @@ async fn conditional_import_refuses_an_unverified_candidate() {
         ImportPolicy {
             if_absent: true,
             capability_asserted: false,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -834,6 +950,7 @@ async fn capability_assertion_cannot_install_a_rejected_candidate() {
         ImportPolicy {
             if_absent: true,
             capability_asserted: true,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -868,6 +985,7 @@ async fn ordinary_import_preserves_the_destination_when_candidate_is_rejected() 
         ImportPolicy {
             if_absent: false,
             capability_asserted: false,
+            external_refresh_owner: false,
         },
     )
     .await
@@ -906,6 +1024,7 @@ async fn rejected_and_unverified_candidates_never_change_any_provider_destinatio
                     ImportPolicy {
                         if_absent,
                         capability_asserted: false,
+                        external_refresh_owner: false,
                     },
                 )
                 .await;

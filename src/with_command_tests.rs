@@ -118,19 +118,18 @@ fn the_users_configuration_is_kept_by_default() {
             .map(String::as_str),
         Some("0")
     );
-    for cleared in [
-        "ANTHROPIC_API_KEY",
+    assert_eq!(
+        environment.get("ANTHROPIC_API_KEY").map(String::as_str),
+        Some("")
+    );
+    for untouched in [
         "ANTHROPIC_MODEL",
         "ANTHROPIC_DEFAULT_OPUS_MODEL",
         "ANTHROPIC_DEFAULT_SONNET_MODEL",
         "ANTHROPIC_DEFAULT_HAIKU_MODEL",
         "CLAUDE_CODE_SUBAGENT_MODEL",
     ] {
-        assert_eq!(
-            environment.get(cleared).map(String::as_str),
-            Some(""),
-            "{cleared}"
-        );
+        assert!(!environment.contains_key(untouched), "{untouched}");
     }
 
     // Asking for isolation still repoints the directory.
@@ -156,7 +155,7 @@ fn the_users_configuration_is_kept_by_default() {
 }
 
 #[test]
-fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
+fn zai_only_claude_launch_pins_only_main_and_subagent() {
     let models = [
         RouterModel {
             id: "future-first-2099".to_string(),
@@ -191,12 +190,17 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
             ))
         })
         .collect::<std::collections::HashMap<_, _>>();
-    for key in crate::clients::CLAUDE_MODEL_ENV {
+    for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(
             resumed_env.get(key).map(String::as_str),
             Some("future-first-2099"),
             "{key}"
         );
+    }
+    for key in crate::clients::CLAUDE_MODEL_ENV {
+        if !crate::clients::CLAUDE_GATEWAY_TARGET_ENV.contains(&key) {
+            assert!(!resumed_env.contains_key(key), "{key}");
+        }
     }
 
     let explicit = TemporaryClient::prepare(&Preparation {
@@ -221,12 +225,17 @@ fn zai_only_claude_launch_maps_default_families_subagents_and_resume() {
             ))
         })
         .collect::<std::collections::HashMap<_, _>>();
-    for key in crate::clients::CLAUDE_MODEL_ENV {
+    for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(
             explicit_env.get(key).map(String::as_str),
             Some("future-explicit-2099"),
             "explicit model must win for {key}"
         );
+    }
+    for key in crate::clients::CLAUDE_MODEL_ENV {
+        if !crate::clients::CLAUDE_GATEWAY_TARGET_ENV.contains(&key) {
+            assert!(!explicit_env.contains_key(key), "{key}");
+        }
     }
 }
 

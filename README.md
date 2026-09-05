@@ -847,15 +847,27 @@ further is an opt-in. Rotation preserves the scope.
 #### GitHub CLI
 
 `gh` builds a custom host's REST base as `https://<host>/api/v3/` and will not
-talk plaintext, so the router must serve HTTPS — either behind a terminator or
-with its own listener (see **TLS**). Then:
+use Router's canonical `/api/services/github/...` prefix. Its compatibility
+routes therefore live on the dedicated GitHub adapter socket, not on the
+ordinary HTTP/TLS listener. Configure the socket and point `gh` at it:
+
+```env
+LISTEN_UNIX_SOCKET=/run/router/router.sock
+```
 
 ```bash
+gh config set http_unix_socket /run/router/router.sock
 export GH_HOST=router.example.internal
 export GH_ENTERPRISE_TOKEN="$LINK_ASSISTANT_TOKEN"
 gh api rate_limit
 gh issue list -R acme/demo
 ```
+
+The host is only a routing label when `http_unix_socket` is set; traffic is
+plain HTTP over the owner-only local socket. An ordinary Router TLS port does
+not expose root `/api/v3`, `/api/graphql`, or `/git/*` aliases. Remote clients
+should reach the adapter socket through a local sidecar or an explicitly
+configured reverse proxy that maps those exact adapter routes.
 
 The credential the proxy presents upstream can be taken from an existing `gh`
 login instead of a separately minted token:

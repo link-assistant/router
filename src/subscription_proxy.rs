@@ -429,6 +429,9 @@ async fn forward_subscription_openai_inner(
             request = request
                 .header("content-type", "application/json")
                 .header("authorization", format!("Bearer {}", token.access_token));
+            if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+                request = request.header("x-request-id", request_id);
+            }
             for (name, value) in subscription_headers(provider, token, responses_mode) {
                 request = request.header(name, value);
             }

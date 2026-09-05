@@ -13,8 +13,11 @@ use serde::Serialize;
 pub(super) enum ImportOutcome {
     NotAttempted,
     ExchangeRejected,
+    ExchangeUncertain,
+    PersistenceUncertain,
     SuccessorRetained,
     Promoted,
+    PromotionCleanupPending,
     AlreadyPresent,
 }
 
@@ -102,12 +105,26 @@ impl ImportFailure {
         };
         let error = failure.to_string();
         match failure.kind() {
-            AcceptanceFailureKind::NotAttempted => Self::not_attempted(error),
+            AcceptanceFailureKind::NotAttempted => Self::safe_failure(phase, error),
             AcceptanceFailureKind::ExchangeRejected => Self {
                 outcome: ImportOutcome::ExchangeRejected,
                 phase,
                 previous_credential_safe: true,
                 transaction_id: None,
+                error,
+            },
+            AcceptanceFailureKind::ExchangeUncertain => Self {
+                outcome: ImportOutcome::ExchangeUncertain,
+                phase,
+                previous_credential_safe: false,
+                transaction_id: failure.transaction_id().map(str::to_string),
+                error,
+            },
+            AcceptanceFailureKind::PersistenceUncertain => Self {
+                outcome: ImportOutcome::PersistenceUncertain,
+                phase,
+                previous_credential_safe: false,
+                transaction_id: failure.transaction_id().map(str::to_string),
                 error,
             },
             AcceptanceFailureKind::SuccessorRetained => Self {
@@ -135,12 +152,20 @@ impl ImportFailure {
                 transaction_id: None,
                 error,
             },
-            ImportRefreshFailureKind::ExchangeUncertain => {
-                Self::retained(ImportPhase::Exchange, transaction_id.to_string(), error)
-            }
-            ImportRefreshFailureKind::PersistenceUncertain => {
-                Self::retained(ImportPhase::Persistence, transaction_id.to_string(), error)
-            }
+            ImportRefreshFailureKind::ExchangeUncertain => Self {
+                outcome: ImportOutcome::ExchangeUncertain,
+                phase: ImportPhase::Exchange,
+                previous_credential_safe: false,
+                transaction_id: Some(transaction_id.to_string()),
+                error,
+            },
+            ImportRefreshFailureKind::PersistenceUncertain => Self {
+                outcome: ImportOutcome::PersistenceUncertain,
+                phase: ImportPhase::Persistence,
+                previous_credential_safe: false,
+                transaction_id: Some(transaction_id.to_string()),
+                error,
+            },
         }
     }
 
@@ -240,8 +265,12 @@ impl ImportExecution {
         matches!(self.report.outcome, ImportOutcome::Promoted)
     }
 
-    pub(super) fn add_message(&mut self, message: String) {
-        self.messages.push(message);
+    pub(super) fn mark_cleanup_pending(&mut self, transaction_id: String, error: String) {
+        self.report.outcome = ImportOutcome::PromotionCleanupPending;
+        self.report.phase = ImportPhase::Promotion;
+        self.report.transaction_id = Some(transaction_id);
+        self.error = Some(error);
+        self.failed = true;
     }
 }
 

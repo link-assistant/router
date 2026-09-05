@@ -540,7 +540,7 @@ async fn forward(
     // synthesize `OpenAI` SSE below when the client asked to stream.
     let upstream_url = format!("{base}/v1internal:generateContent");
 
-    let upstream_request = state
+    let mut upstream_request = state
         .client
         .post(upstream_url)
         .header("content-type", "application/json")
@@ -549,6 +549,9 @@ async fn forward(
             format!("Bearer {}", sub_token.access_token),
         )
         .body(serialized);
+    if let Some(request_id) = crate::proxy::translated_request_id(headers) {
+        upstream_request = upstream_request.header("x-request-id", request_id);
+    }
     let correlation_id = crate::request_log::correlation_id(headers);
     let upstream_resp = match state
         .request_log

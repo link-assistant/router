@@ -13,6 +13,7 @@ pub(super) struct ResumeCandidate {
     pub(super) source: String,
     pub(super) transaction_root: PathBuf,
     pub(super) transaction_id: String,
+    _claim: Option<link_assistant_router::durable_file::FileLockGuard>,
 }
 
 /// Find exactly one owner-only candidate transaction by its reported opaque ID.
@@ -80,6 +81,35 @@ pub(super) fn resolve(
         source,
         transaction_root,
         transaction_id: transaction_id.to_string(),
+        _claim: None,
+    })
+}
+
+/// Resolve and exclusively claim one retained transaction for the complete
+/// validation/promotion/retirement attempt. The lock lives outside the
+/// transaction directory so successful retirement works on Windows too.
+pub(super) async fn resolve_claimed(
+    data_dir: &Path,
+    transaction_id: &str,
+) -> Result<ResumeCandidate, ImportFailure> {
+    let lock_path = data_dir
+        .join("auth-import-candidates")
+        .join(format!(".resume-{transaction_id}.lock"));
+    let claim = link_assistant_router::durable_file::lock_exclusive_async(
+        &lock_path,
+        std::time::Duration::from_secs(1),
+    )
+    .await
+    .map_err(|_| {
+        ImportFailure::not_attempted("the retained import transaction is already being resumed")
+    })?;
+    let candidate = resolve(data_dir, transaction_id)?;
+    Ok(ResumeCandidate {
+        provider: candidate.provider,
+        source: candidate.source,
+        transaction_root: candidate.transaction_root,
+        transaction_id: candidate.transaction_id,
+        _claim: Some(claim),
     })
 }
 
