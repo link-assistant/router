@@ -321,6 +321,12 @@ pub fn chat_completion_to_responses(body: &Value) -> Value {
     if body.get("stream").and_then(Value::as_bool) == Some(true) {
         out["stream"] = Value::Bool(true);
     }
+    if let Some(store) = body.get("store") {
+        out["store"] = store.clone();
+    }
+    if let Some(metadata) = body.get("metadata") {
+        out["metadata"] = metadata.clone();
+    }
     out
 }
 

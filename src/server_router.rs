@@ -193,11 +193,34 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
         routes = routes
             .route(
                 route_template(RouteId::OpenAiChatCompletions),
-                post(proxy::openai_chat_completions),
+                post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),
+            )
+            .route(
+                route_template(RouteId::OpenAiChatCompletion),
+                get(crate::chat_lifecycle::retrieve)
+                    .post(crate::chat_lifecycle::update)
+                    .delete(crate::chat_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::OpenAiChatCompletionMessages),
+                get(crate::chat_lifecycle::messages),
             )
             .route(
                 route_template(RouteId::OpenAiResponses),
-                post(proxy::openai_responses).get(crate::responses_websocket::openai),
+                post(proxy::openai_responses_route).get(crate::responses_websocket::openai),
+            )
+            .route(
+                route_template(RouteId::OpenAiResponse),
+                get(crate::responses_lifecycle::retrieve)
+                    .delete(crate::responses_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::OpenAiResponseCancel),
+                post(crate::responses_lifecycle::cancel),
+            )
+            .route(
+                route_template(RouteId::OpenAiResponseInputItems),
+                get(crate::responses_lifecycle::input_items),
             )
             .route(
                 route_template(RouteId::OpenAiModels),
@@ -205,11 +228,34 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::CodexChatCompletions),
-                post(proxy::openai_chat_completions),
+                post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),
+            )
+            .route(
+                route_template(RouteId::CodexChatCompletion),
+                get(crate::chat_lifecycle::retrieve)
+                    .post(crate::chat_lifecycle::update)
+                    .delete(crate::chat_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::CodexChatCompletionMessages),
+                get(crate::chat_lifecycle::messages),
             )
             .route(
                 route_template(RouteId::CodexResponses),
-                post(proxy::openai_responses_native).get(crate::responses_websocket::codex),
+                post(proxy::openai_responses_route).get(crate::responses_websocket::codex),
+            )
+            .route(
+                route_template(RouteId::CodexResponse),
+                get(crate::responses_lifecycle::retrieve)
+                    .delete(crate::responses_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::CodexResponseCancel),
+                post(crate::responses_lifecycle::cancel),
+            )
+            .route(
+                route_template(RouteId::CodexResponseInputItems),
+                get(crate::responses_lifecycle::input_items),
             )
             .route(
                 route_template(RouteId::CodexModels),
@@ -217,11 +263,35 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             )
             .route(
                 route_template(RouteId::QwenChatCompletions),
-                post(proxy::openai_chat_completions_native),
+                post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),
+            )
+            .route(
+                route_template(RouteId::QwenChatCompletion),
+                get(crate::chat_lifecycle::retrieve)
+                    .post(crate::chat_lifecycle::update)
+                    .delete(crate::chat_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::QwenChatCompletionMessages),
+                get(crate::chat_lifecycle::messages),
             )
             .route(
                 route_template(RouteId::QwenResponses),
-                post(proxy::openai_responses).get(crate::responses_websocket::unsupported_qwen),
+                post(proxy::openai_responses_route)
+                    .get(crate::responses_websocket::unsupported_qwen),
+            )
+            .route(
+                route_template(RouteId::QwenResponse),
+                get(crate::responses_lifecycle::retrieve)
+                    .delete(crate::responses_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::QwenResponseCancel),
+                post(crate::responses_lifecycle::cancel),
+            )
+            .route(
+                route_template(RouteId::QwenResponseInputItems),
+                get(crate::responses_lifecycle::input_items),
             )
             .route(
                 route_template(RouteId::QwenModels),

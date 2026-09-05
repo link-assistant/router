@@ -5,6 +5,10 @@ use super::{
     Response, State, StatusCode, UpstreamProvider, forward_openai, openai, responses,
 };
 
+#[path = "proxy_openai_resource.rs"]
+mod resource;
+use resource::{canonical_openai_model, capture_created_resource, state_for_previous_response};
+
 /// Provider-independent fields owned by the Chat Completions surface.
 ///
 /// Passthrough providers may accept extensions and some provide a default
@@ -74,27 +78,6 @@ pub(crate) fn rewrite_routed_model(
     }
 }
 
-/// Resolve only the model alias owned by this `OpenAI` request route.
-///
-/// `bridge_model` configures Anthropic-dialect translation to a non-Anthropic
-/// provider. It is not a native OpenAI-request default. Stored providers use
-/// the same field request-locally for their reversible qualified alias, while
-/// subscription aliases are canonicalized from the selected catalog identity.
-fn canonical_openai_model<'a>(
-    provider: UpstreamProvider,
-    has_subscription: bool,
-    routed_stored_model: Option<&'a str>,
-    requested: &'a str,
-) -> &'a str {
-    if has_subscription {
-        return crate::model_routing::subscription_model_identity(requested).1;
-    }
-    if provider == UpstreamProvider::OpenAICompatible {
-        return routed_stored_model.unwrap_or(requested);
-    }
-    requested
-}
-
 /// Record dropped tools locally without extending a public vendor protocol.
 fn report_dropped_tools(
     state: &AppState,
@@ -126,7 +109,17 @@ pub async fn openai_chat_completions(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None, None, false).await
+    openai_chat_completions_with_subscription(
+        state,
+        query,
+        headers,
+        body,
+        None,
+        None,
+        false,
+        crate::response_affinity::ResponseNamespace::OpenAiChat,
+    )
+    .await
 }
 
 /// Native Qwen Chat Completions route. A matching signed Qwen client keeps
@@ -137,7 +130,40 @@ pub async fn openai_chat_completions_native(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_chat_completions_with_subscription(state, query, headers, body, None, None, true).await
+    openai_chat_completions_with_subscription(
+        state,
+        query,
+        headers,
+        body,
+        None,
+        None,
+        true,
+        crate::response_affinity::ResponseNamespace::QwenChat,
+    )
+    .await
+}
+
+pub async fn openai_chat_completions_route(
+    State(state): State<AppState>,
+    axum::extract::OriginalUri(uri): axum::extract::OriginalUri,
+    Query(query): Query<BTreeMap<String, String>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    let Some(namespace) = crate::response_affinity::ResponseNamespace::from_path(uri.path()) else {
+        return crate::responses_lifecycle::response_not_found();
+    };
+    openai_chat_completions_with_subscription(
+        state,
+        query,
+        headers,
+        body,
+        None,
+        None,
+        namespace == crate::response_affinity::ResponseNamespace::QwenChat,
+        namespace,
+    )
+    .await
 }
 
 pub async fn openai_chat_completions_routed(
@@ -155,10 +181,12 @@ pub async fn openai_chat_completions_routed(
         subscription,
         Some(entitlement),
         false,
+        crate::response_affinity::ResponseNamespace::OpenAiChat,
     )
     .await
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn openai_chat_completions_with_subscription(
     state: AppState,
     query: BTreeMap<String, String>,
@@ -167,6 +195,7 @@ async fn openai_chat_completions_with_subscription(
     initial_subscription: Option<crate::model_routing::ValidatedSubscription>,
     initial_entitlement: Option<crate::client_policy::EntitlementDecision>,
     native_route: bool,
+    namespace: crate::response_affinity::ResponseNamespace,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -216,6 +245,23 @@ async fn openai_chat_completions_with_subscription(
     let state = routed.state;
     let subscription = routed.subscription;
     rewrite_routed_model(&mut body, &state, subscription.as_ref());
+    let store_requested = body.get("store").and_then(serde_json::Value::as_bool) == Some(true);
+    if store_requested && state.upstream_provider != UpstreamProvider::OpenAICompatible {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "the selected provider cannot preserve the stored Chat Completions lifecycle",
+        );
+    }
+    let capture = if store_requested {
+        match crate::resource_capture::prepare(&state, &headers, namespace).await {
+            Ok(capture) => Some(capture),
+            Err(response) => return response,
+        }
+    } else {
+        None
+    };
     let entitlement = if let Some(provider) = state.upstream_provider.subscription_provider() {
         match initial_entitlement {
             Some(entitlement) => Some(entitlement),
@@ -285,7 +331,7 @@ async fn openai_chat_completions_with_subscription(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
-        return crate::provider_proxy::forward_openai_compatible_routed(
+        let response = crate::provider_proxy::forward_openai_compatible_routed(
             &state,
             &headers,
             body,
@@ -294,6 +340,7 @@ async fn openai_chat_completions_with_subscription(
             crate::metrics::Surface::OpenAIChat,
         )
         .await;
+        return capture_created_resource(&state, capture, response).await;
     }
     if state.upstream_provider == UpstreamProvider::Qwen {
         return crate::subscription_proxy::forward_subscription_openai_routed(
@@ -549,7 +596,14 @@ pub async fn openai_responses(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_responses_with_route(state, headers, body, false).await
+    openai_responses_with_route(
+        state,
+        headers,
+        body,
+        false,
+        crate::response_affinity::ResponseNamespace::OpenAiResponses,
+    )
+    .await
 }
 
 /// Native Codex Responses route. A matching signed Codex client keeps the
@@ -559,7 +613,27 @@ pub async fn openai_responses_native(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
 ) -> Response {
-    openai_responses_with_route(state, headers, body, true).await
+    openai_responses_with_route(
+        state,
+        headers,
+        body,
+        true,
+        crate::response_affinity::ResponseNamespace::CodexResponses,
+    )
+    .await
+}
+
+pub async fn openai_responses_route(
+    State(state): State<AppState>,
+    axum::extract::OriginalUri(uri): axum::extract::OriginalUri,
+    headers: HeaderMap,
+    body: Result<axum::Json<serde_json::Value>, JsonRejection>,
+) -> Response {
+    let Some(namespace) = crate::response_affinity::ResponseNamespace::from_path(uri.path()) else {
+        return crate::responses_lifecycle::response_not_found();
+    };
+    let native_route = namespace == crate::response_affinity::ResponseNamespace::CodexResponses;
+    openai_responses_with_route(state, headers, body, native_route, namespace).await
 }
 
 async fn openai_responses_with_route(
@@ -567,6 +641,7 @@ async fn openai_responses_with_route(
     headers: HeaderMap,
     body: Result<axum::Json<serde_json::Value>, JsonRejection>,
     native_route: bool,
+    namespace: crate::response_affinity::ResponseNamespace,
 ) -> Response {
     let mut body = match body {
         Ok(axum::Json(body)) => body,
@@ -576,6 +651,10 @@ async fn openai_responses_with_route(
                 &error.body_text(),
             );
         }
+    };
+    let state = match state_for_previous_response(&state, &headers, namespace, &body) {
+        Ok(state) => state,
+        Err(response) => return response,
     };
     let routing_body = body.clone();
     let routed = match route_openai_request(
@@ -593,6 +672,32 @@ async fn openai_responses_with_route(
     let state = routed.state;
     let subscription = routed.subscription;
     rewrite_routed_model(&mut body, &state, subscription.as_ref());
+    let store_requested = body.get("store").and_then(serde_json::Value::as_bool) == Some(true);
+    let persistent_response_capable = matches!(
+        state.upstream_provider,
+        UpstreamProvider::OpenAICompatible | UpstreamProvider::Codex | UpstreamProvider::Qwen
+    );
+    if store_requested && !persistent_response_capable {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "the selected provider cannot preserve the stored Responses lifecycle",
+        );
+    }
+    // The native Responses protocol stores by default; `store: false` is the
+    // only opt-out. Translated providers retain their historical stateless
+    // default and reject an explicit storage request above.
+    let should_capture = persistent_response_capable
+        && body.get("store").and_then(serde_json::Value::as_bool) != Some(false);
+    let capture = if should_capture {
+        match crate::resource_capture::prepare(&state, &headers, namespace).await {
+            Ok(capture) => Some(capture),
+            Err(response) => return response,
+        }
+    } else {
+        None
+    };
     if let Some(provider) = state.upstream_provider.subscription_provider()
         && let Err(response) = crate::client_policy::enforce_subscription(
             &state,
@@ -648,7 +753,7 @@ async fn openai_responses_with_route(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::OpenAICompatible {
-        return crate::provider_proxy::forward_openai_compatible_routed(
+        let response = crate::provider_proxy::forward_openai_compatible_routed(
             &state,
             &headers,
             body,
@@ -657,12 +762,13 @@ async fn openai_responses_with_route(
             crate::metrics::Surface::OpenAIResponses,
         )
         .await;
+        return capture_created_resource(&state, capture, response).await;
     }
     if matches!(
         state.upstream_provider,
         UpstreamProvider::Codex | UpstreamProvider::Qwen
     ) {
-        return crate::subscription_proxy::forward_subscription_openai_routed(
+        let response = crate::subscription_proxy::forward_subscription_openai_routed(
             &state,
             &headers,
             body,
@@ -676,6 +782,7 @@ async fn openai_responses_with_route(
             },
         )
         .await;
+        return capture_created_resource(&state, capture, response).await;
     }
     if let Some(reason) = crate::bridge_controls::unknown_responses_field(&body) {
         return crate::api_error::error_response_for_surface(

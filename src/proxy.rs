@@ -758,8 +758,8 @@ pub(crate) mod openai_handlers;
 
 pub(crate) use openai_handlers::openai_chat_completions_routed;
 pub use openai_handlers::{
-    openai_chat_completions, openai_chat_completions_native, openai_responses,
-    openai_responses_native,
+    openai_chat_completions, openai_chat_completions_native, openai_chat_completions_route,
+    openai_responses, openai_responses_native, openai_responses_route,
 };
 pub(crate) use openai_handlers::{rewrite_routed_model, route_openai_request};
 

@@ -624,3 +624,16 @@ data: {"type":"response.completed","response":{"status":"completed","service_tie
     assert!(output.contains("\"service_tier\":\"priority\""), "{output}");
     assert!(output.contains("\"moderation\":{"), "{output}");
 }
+
+#[test]
+fn chat_storage_and_metadata_survive_the_chat_to_responses_projection() {
+    let body = json!({
+        "model": "gpt-next",
+        "messages": [{"role": "user", "content": "hello"}],
+        "store": true,
+        "metadata": {"case": "synthetic"}
+    });
+    let responses = chat_completion_to_responses(&body);
+    assert_eq!(responses["store"], true);
+    assert_eq!(responses["metadata"], json!({"case": "synthetic"}));
+}

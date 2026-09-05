@@ -29,6 +29,7 @@ pub mod capabilities;
 pub mod chat_admin;
 pub mod chat_commands;
 pub mod chat_config;
+mod chat_lifecycle;
 pub mod claude_auth;
 pub mod claude_identity;
 pub mod cli;
@@ -89,7 +90,10 @@ pub mod refresh_rejections;
 pub mod remote_command;
 pub mod request_log;
 mod request_routing;
+mod resource_capture;
+pub(crate) mod response_affinity;
 pub mod responses;
+pub mod responses_lifecycle;
 pub mod responses_websocket;
 pub mod route_contract;
 mod safety_identifier;
@@ -134,6 +138,10 @@ mod bridge_request_tests;
 mod client_policy_tests;
 #[cfg(test)]
 mod proxy_tests;
+#[cfg(test)]
+mod resource_lifecycle_tests;
+#[cfg(test)]
+mod response_affinity_tests;
 #[cfg(test)]
 mod route_contract_tests;
 #[cfg(test)]
