@@ -152,6 +152,42 @@ fn translated_requests_fail_closed_for_future_moderation_and_cache_contracts() {
 }
 
 #[test]
+fn translated_resource_selectors_and_prediction_fail_closed() {
+    assert!(
+        crate::bridge_controls::untranslatable_chat_prediction(Some(&json!({
+            "type": "content",
+            "content": "expected replacement"
+        })))
+        .is_some()
+    );
+    assert_eq!(
+        crate::bridge_controls::untranslatable_chat_prediction(Some(&Value::Null)),
+        None
+    );
+
+    for body in [
+        json!({"prompt": {"id": "pmpt_test", "version": "7"}}),
+        json!({"include": ["message.output_text.logprobs"]}),
+        json!({"include": "message.output_text.logprobs"}),
+    ] {
+        assert!(
+            crate::bridge_controls::validate_responses_resource_selectors(&body).is_err(),
+            "{body}"
+        );
+    }
+    for body in [
+        json!({}),
+        json!({"prompt": null, "include": null}),
+        json!({"include": []}),
+    ] {
+        assert!(
+            crate::bridge_controls::validate_responses_resource_selectors(&body).is_ok(),
+            "{body}"
+        );
+    }
+}
+
+#[test]
 fn chat_structured_output_and_parallel_tool_policy_reach_anthropic() {
     for (response_format, expected_schema) in [
         (

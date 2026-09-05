@@ -246,6 +246,12 @@ fn unsupported_tools_images_and_interleaving_fail_closed() {
 
     for body in [
         json!({"contents": [], "futureField": true}),
+        json!({"contents": [], "safetySettings": [{
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_LOW_AND_ABOVE"
+        }]}),
+        json!({"contents": [], "store": true}),
+        json!({"contents": [], "store": false}),
         json!({"contents": [], "tools": [{"googleSearch": {}}]}),
         json!({"contents": [{"role": "user", "parts": [{
             "fileData": {"fileUri": "gs://private/image.png"}

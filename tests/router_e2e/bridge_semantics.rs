@@ -68,6 +68,7 @@ async fn translated_future_private_and_policy_contracts_fail_before_inference() 
             json!({"messages":[{"role":"user","name":"alice","content":"answer"}]}),
             json!({"moderation":{"model":"synthetic","policy":"strict"}}),
             json!({"prompt_cache_key":"opaque"}),
+            json!({"prediction":{"type":"content","content":"expected"}}),
             json!({"future_contract":true}),
         ] {
             let mut body = json!({"model":"claude-test","messages":[{"role":"user","content":"answer"}],"stream":stream});
@@ -79,6 +80,27 @@ async fn translated_future_private_and_policy_contracts_fail_before_inference() 
                 .send()
                 .await
                 .expect("rejected OpenAI bridge");
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+            assert_eq!(
+                response.json::<Value>().await.unwrap()["error"]["type"],
+                "invalid_request_error"
+            );
+        }
+    }
+    for stream in [false, true] {
+        for extra in [
+            json!({"prompt":{"id":"pmpt_test","version":"7","variables":{"topic":"routing"}}}),
+            json!({"include":["message.output_text.logprobs"]}),
+        ] {
+            let mut body = json!({"model":"claude-test","input":"answer","stream":stream});
+            body.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let response = claude
+                .post("/api/services/openai/v1/responses", &body)
+                .send()
+                .await
+                .expect("rejected Responses bridge");
             assert_eq!(response.status(), StatusCode::BAD_REQUEST);
             assert_eq!(
                 response.json::<Value>().await.unwrap()["error"]["type"],

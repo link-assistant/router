@@ -165,6 +165,53 @@ async fn gemini_translated_surfaces_reject_lossy_fields_without_inference() {
     task.abort();
 }
 
+#[tokio::test]
+async fn native_gemini_client_rejects_safety_and_storage_policy_on_other_providers() {
+    let (base_url, requests, task) = counting_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Codex, &data, &home, &base_url);
+    state
+        .provider_store
+        .set_subscription_entitlement_policy(
+            crate::client_policy::SubscriptionEntitlementPolicy::parse(["gemini:codex"]).unwrap(),
+        )
+        .unwrap();
+    let mut headers = managed_headers(&state, crate::clients::ClientKind::GeminiCli);
+    headers.insert(
+        "x-gemini-api-privileged-user-id",
+        HeaderValue::from_static("fixture"),
+    );
+
+    for policy in [
+        json!({"safetySettings": [{
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_LOW_AND_ABOVE"
+        }]}),
+        json!({"store": true}),
+        json!({"store": false}),
+    ] {
+        let mut body = json!({"contents": [{"role": "user", "parts": [{"text": "hello"}]}]});
+        body.as_object_mut()
+            .unwrap()
+            .extend(policy.as_object().unwrap().clone());
+        let response = crate::gemini::forward_native_gemini(
+            State(state.clone()),
+            axum::extract::Path(format!("models/{MODEL}:generateContent")),
+            headers.clone(),
+            Ok(axum::Json(body)),
+        )
+        .await;
+        let status = response.status();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(status, StatusCode::BAD_REQUEST, "{body}");
+        assert_eq!(body["error"]["status"], "INVALID_ARGUMENT");
+    }
+    assert_eq!(requests.load(Ordering::SeqCst), 0);
+    task.abort();
+}
+
 /// A Code Assist SSE upstream whose final event is held behind a channel.
 /// Returning the Router response and its first body frame before `release` is
 /// sent proves that the production path is truly incremental.

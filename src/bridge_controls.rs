@@ -33,6 +33,7 @@ const CHAT_FIELDS: &[&str] = &[
     "prompt_cache_options",
     "prompt_cache_retention",
     "moderation",
+    "prediction",
     "user",
 ];
 
@@ -64,6 +65,7 @@ const RESPONSE_FIELDS: &[&str] = &[
     "moderation",
     "metadata",
     "include",
+    "prompt",
 ];
 
 #[must_use]
@@ -187,6 +189,27 @@ pub fn untranslatable_moderation(value: Option<&Value>) -> Option<String> {
     value
         .filter(|value| !value.is_null())
         .map(|_| "moderation cannot be represented by the selected provider".into())
+}
+
+#[must_use]
+pub fn untranslatable_chat_prediction(value: Option<&Value>) -> Option<String> {
+    value
+        .filter(|value| !value.is_null())
+        .map(|_| "prediction cannot be represented by the selected provider".into())
+}
+
+pub fn validate_responses_resource_selectors(body: &Value) -> Result<(), String> {
+    if body.get("prompt").is_some_and(|value| !value.is_null()) {
+        return Err("prompt templates cannot be resolved by the selected provider bridge".into());
+    }
+    match body.get("include") {
+        None | Some(Value::Null) => Ok(()),
+        Some(Value::Array(values)) if values.is_empty() => Ok(()),
+        Some(Value::Array(_)) => {
+            Err("include selectors cannot be represented by the selected provider".into())
+        }
+        Some(_) => Err("include must be an array".into()),
+    }
 }
 
 pub fn validate_openai_prompt_cache(body: &Value, anthropic_target: bool) -> Result<(), String> {

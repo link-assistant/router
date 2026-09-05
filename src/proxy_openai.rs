@@ -317,6 +317,16 @@ async fn openai_chat_completions_with_subscription(
             &reason,
         );
     }
+    if let Some(reason) =
+        crate::bridge_controls::untranslatable_chat_prediction(body.get("prediction"))
+    {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
     if let Some(reason) = crate::bridge_controls::untranslatable_chat_participant_name(&body) {
         return crate::api_error::error_response_for_surface(
             crate::metrics::Surface::OpenAIChat,
@@ -666,6 +676,14 @@ async fn openai_responses_with_route(
         .await;
     }
     if let Some(reason) = crate::bridge_controls::unknown_responses_field(&body) {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIResponses,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Err(reason) = crate::bridge_controls::validate_responses_resource_selectors(&body) {
         return crate::api_error::error_response_for_surface(
             crate::metrics::Surface::OpenAIResponses,
             StatusCode::BAD_REQUEST,
