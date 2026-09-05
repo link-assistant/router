@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
+- Enable current Codex history/notes through Router's schema-valid process-local identity, expose only the ten native POST routes, pin every request to its principal-scoped ChatGPT account handle and session, relay native bodies and special headers byte-for-byte, and audit only fixed control-plane operation names ([#534](https://github.com/link-assistant/router/issues/534)).
+
 - Keep native model-list routes protocol-pure: preserve exact live IDs, remove Router-only diagnostics, implement Anthropic cursor pagination after catalogue merging, and retain ownership and trusted capabilities on the neutral `/api/models` surface ([#535](https://github.com/link-assistant/router/issues/535)).
 
 - Add a dedicated encrypted Lefine provider kind at `https://lefine.pro/v1`: Bearer-key acceptance through the live non-inference model catalog, exact-ID discovery with configured outage fallback, native Chat Completions and SSE forwarding for compatible signed clients, and an explicit unavailable usage state when no quota source exists ([#422](https://github.com/link-assistant/router/issues/422)).

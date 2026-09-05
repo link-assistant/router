@@ -43,6 +43,7 @@ pub fn request_routing_context(
             .map(ToString::to_string)
     });
     let body_session = [
+        "/context/session_id",
         "/metadata/session_id",
         "/metadata/conversation_id",
         "/session_id",

@@ -521,6 +521,7 @@ in a browser *or* in a chat. See
 | `/api/services/{anthropic,openai,codex,qwen}/v1/models/{model}` | GET | Exact metadata for one currently visible model, without probing unknown IDs |
 | `/api/services/{openai,codex,qwen}/v1/conversations[/{id}[/items[/{item_id}]]]` | GET/POST/PATCH/DELETE | Native Conversations resources with exact provider/account affinity |
 | `/api/services/codex/v1/responses` | POST/WebSocket | Native Codex Responses, including stateful WebSocket sessions |
+| `/api/services/codex/v1/alpha/{history,notes}/v2/*` | POST | Ten native Codex history/notes operations with exact account affinity and opaque byte-preserving responses |
 | `/api/services/codex/v1/*` | GET/POST | Remaining registered Codex subscription routes |
 | `/api/services/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
 | `/api/services/gemini/v1beta/models` | GET | Native Gemini model list filtered by the signed Gemini client policy |
@@ -532,6 +533,14 @@ in a browser *or* in a chat. See
 Provider-specific namespaces still enforce the matching signed client,
 principal, protocol evidence, and healthy credential; pinning never grants
 authority.
+
+Codex's optional history/notes extension is activated through Router's
+process-local `at-` identity; Router never creates or modifies Codex
+`auth.json`. Its account handle is scoped to the signed Router principal and
+resolved back to exactly one live ChatGPT account. History text, note paths,
+searches, session/agent identifiers, encrypted output, and attachments remain
+opaque and never enter request or audit logs; only a fixed operation name may
+be audited as control-plane activity.
 
 ### Provider-neutral client surface
 

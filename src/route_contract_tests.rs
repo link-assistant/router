@@ -254,6 +254,51 @@ fn single_model_routes_use_the_native_service_dialect() {
 }
 
 #[test]
+fn codex_history_and_notes_have_only_the_ten_native_post_routes() {
+    let operations = [
+        "alpha/history/v2/list_windows",
+        "alpha/history/v2/list_items",
+        "alpha/history/v2/read_item",
+        "alpha/history/v2/search_contents",
+        "alpha/notes/v2/thread_hint",
+        "alpha/notes/v2/list_files_by_prefix",
+        "alpha/notes/v2/read_file",
+        "alpha/notes/v2/search_contents",
+        "alpha/notes/v2/append_to_file",
+        "alpha/notes/v2/write_file",
+    ];
+    for operation in operations {
+        let path = format!("/api/services/codex/v1/{operation}");
+        let route = route_for_path(&http::Method::POST, &path)
+            .unwrap_or_else(|| panic!("missing POST {path}"));
+        assert_eq!(route.id, RouteId::NativeCodex);
+        assert_eq!(route.class, RouteClass::Service(ServiceKind::Codex));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, ApiDialect::OpenAi);
+        assert!(route.listeners.contains(&ListenerKind::Combined));
+        assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+        assert!(!route.listeners.contains(&ListenerKind::Admin));
+        assert!(route_for_path(&http::Method::GET, &path).is_none());
+        assert!(route_for_path(&http::Method::PUT, &path).is_none());
+        assert!(route_for_path(&http::Method::DELETE, &path).is_none());
+
+        for alias in [
+            format!("/{operation}"),
+            format!("/api/services/openai/v1/{operation}"),
+            format!("/api/services/anthropic/v1/{operation}"),
+            format!("/api/services/qwen/v1/{operation}"),
+            format!("/api/management/{operation}"),
+            path.replace("/alpha/", "/alpha%2F"),
+        ] {
+            assert!(
+                route_for_path(&http::Method::POST, &alias).is_none(),
+                "unexpected history/notes alias: {alias}"
+            );
+        }
+    }
+}
+
+#[test]
 fn stored_chat_lifecycle_is_an_authenticated_openai_service_surface() {
     for (service, kind) in [
         ("openai", ServiceKind::OpenAi),

@@ -411,6 +411,11 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
             };
             http_response("200 OK", "application/json", &body.to_string())
         }
+        ("POST", "/api/services/codex/v1/alpha/notes/v2/thread_hint") => http_response(
+            "200 OK",
+            "application/json",
+            r#"{"text":"Synthetic offline history/notes hint."}"#,
+        ),
         ("POST", path) if path.ends_with("/messages/count_tokens") => {
             http_response("200 OK", "application/json", r#"{"input_tokens":1}"#)
         }
@@ -794,6 +799,9 @@ mod claude_selector;
 fn current_codex_reaches_the_native_responses_surface_offline() {
     assert_real_client_capture(CODEX);
 }
+
+#[path = "real_clients/history_notes.rs"]
+mod history_notes;
 
 #[test]
 fn current_codex_tui_model_selector_preserves_reasoning_effort() {
