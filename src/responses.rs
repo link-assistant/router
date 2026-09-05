@@ -412,6 +412,7 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
     let mut content = String::new();
     let mut refusal = String::new();
     let mut tool_calls = Vec::new();
+    let mut annotations = Vec::new();
     if let Some(output) = response.get("output").and_then(Value::as_array) {
         for item in output {
             match item.get("type").and_then(Value::as_str) {
@@ -421,6 +422,23 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
                             match part.get("type").and_then(Value::as_str) {
                                 Some("output_text" | "text") => {
                                     if let Some(text) = part.get("text").and_then(Value::as_str) {
+                                        let base = content.chars().count() as u64;
+                                        for annotation in part
+                                            .get("annotations")
+                                            .and_then(Value::as_array)
+                                            .into_iter()
+                                            .flatten()
+                                        {
+                                            let mut annotation = annotation.clone();
+                                            for key in ["start_index", "end_index"] {
+                                                if let Some(offset) =
+                                                    annotation.get(key).and_then(Value::as_u64)
+                                                {
+                                                    annotation[key] = Value::from(base + offset);
+                                                }
+                                            }
+                                            annotations.push(annotation);
+                                        }
                                         content.push_str(text);
                                     }
                                 }
@@ -467,6 +485,10 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
     if !refusal.is_empty() {
         message["refusal"] = Value::String(refusal);
     }
+    if !annotations.is_empty() {
+        message["annotations"] =
+            Value::Array(crate::bridge_response::chat_annotations(&annotations));
+    }
     if !tool_calls.is_empty() {
         message["tool_calls"] = Value::Array(tool_calls);
     }
@@ -498,7 +520,7 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
         usage["completion_tokens_details"] = details.clone();
     }
 
-    json!({
+    let mut completion = json!({
         "id": id,
         "object": "chat.completion",
         "created": created,
@@ -509,7 +531,13 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
             "finish_reason": finish_reason,
         }],
         "usage": usage,
-    })
+    });
+    for field in ["service_tier", "moderation"] {
+        if let Some(value) = response.get(field) {
+            completion[field] = value.clone();
+        }
+    }
+    completion
 }
 
 /// Enforce Chat stop sequences on a buffered translated response.
@@ -547,6 +575,8 @@ pub struct ResponsesChatStreamTranslator {
     input_tokens: u64,
     output_tokens: u64,
     total_tokens: u64,
+    service_tier: Option<Value>,
+    moderation: Option<Value>,
     tool_indices: std::collections::BTreeSet<u64>,
     refusal_indices: std::collections::BTreeSet<(u64, u64)>,
     stop_filter: crate::stop_sequences::StopSequenceFilter,
@@ -568,6 +598,8 @@ impl ResponsesChatStreamTranslator {
             input_tokens: 0,
             output_tokens: 0,
             total_tokens: 0,
+            service_tier: None,
+            moderation: None,
             tool_indices: std::collections::BTreeSet::new(),
             refusal_indices: std::collections::BTreeSet::new(),
             stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
@@ -684,6 +716,19 @@ impl ResponsesChatStreamTranslator {
                 }
                 frames
             }
+            Some("response.output_text.annotation.added") => {
+                let Some(annotation) = event.get("annotation") else {
+                    return Vec::new();
+                };
+                vec![self.chat_frame(
+                    &json!({
+                        "annotations": crate::bridge_response::chat_annotations(
+                            std::slice::from_ref(annotation)
+                        )
+                    }),
+                    None,
+                )]
+            }
             Some("response.output_item.added" | "response.output_item.done") => {
                 self.translate_function_call(event)
             }
@@ -787,6 +832,12 @@ impl ResponsesChatStreamTranslator {
         if let Some(created) = response.get("created_at").and_then(Value::as_i64) {
             self.created = created;
         }
+        if let Some(value) = response.get("service_tier") {
+            self.service_tier = Some(value.clone());
+        }
+        if let Some(value) = response.get("moderation") {
+            self.moderation = Some(value.clone());
+        }
     }
 
     fn capture_usage(&mut self, response: &Value) {
@@ -817,7 +868,7 @@ impl ResponsesChatStreamTranslator {
     }
 
     fn chat_frame(&self, delta: &Value, finish_reason: Option<&str>) -> String {
-        let frame = json!({
+        let mut frame = json!({
             "id": self.id,
             "object": "chat.completion.chunk",
             "created": self.created,
@@ -828,25 +879,35 @@ impl ResponsesChatStreamTranslator {
                 "finish_reason": finish_reason,
             }]
         });
+        if let Some(value) = &self.service_tier {
+            frame["service_tier"] = value.clone();
+        }
+        if let Some(value) = &self.moderation {
+            frame["moderation"] = value.clone();
+        }
         format!("data: {frame}\n\n")
     }
 
     fn usage_frame(&self) -> String {
-        format!(
-            "data: {}\n\n",
-            json!({
-                "id": self.id,
-                "object": "chat.completion.chunk",
-                "created": self.created,
-                "model": self.model,
-                "choices": [],
-                "usage": {
-                    "prompt_tokens": self.input_tokens,
-                    "completion_tokens": self.output_tokens,
-                    "total_tokens": self.total_tokens,
-                }
-            })
-        )
+        let mut frame = json!({
+            "id": self.id,
+            "object": "chat.completion.chunk",
+            "created": self.created,
+            "model": self.model,
+            "choices": [],
+            "usage": {
+                "prompt_tokens": self.input_tokens,
+                "completion_tokens": self.output_tokens,
+                "total_tokens": self.total_tokens,
+            }
+        });
+        if let Some(value) = &self.service_tier {
+            frame["service_tier"] = value.clone();
+        }
+        if let Some(value) = &self.moderation {
+            frame["moderation"] = value.clone();
+        }
+        format!("data: {frame}\n\n")
     }
 }
 

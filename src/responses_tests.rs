@@ -586,3 +586,41 @@ fn prior_function_items_survive_responses_to_anthropic_translation() {
     assert_eq!(body["messages"][1]["content"][0]["type"], "tool_result");
     assert_eq!(body["messages"][1]["content"][0]["tool_use_id"], "call_1");
 }
+
+#[test]
+fn chat_projection_keeps_service_tier_moderation_and_citation_results() {
+    let response = json!({
+        "id": "resp_contract", "status": "completed", "service_tier": "priority",
+        "moderation": {"status": "completed", "results": [{"flagged": false}]},
+        "output": [{"type": "message", "content": [{
+            "type": "output_text", "text": "Rust",
+            "annotations": [{"type": "url_citation", "url": "https://example.test",
+                "title": "Rust", "start_index": 0, "end_index": 4}]
+        }]}],
+        "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2}
+    });
+    let chat = response_to_chat_completion(&response, "gpt-test");
+    assert_eq!(chat["service_tier"], "priority");
+    assert_eq!(chat["moderation"], response["moderation"]);
+    assert_eq!(
+        chat.pointer("/choices/0/message/annotations/0/url_citation/url"),
+        Some(&json!("https://example.test"))
+    );
+
+    let mut stream = ResponsesChatStreamTranslator::new("gpt-test");
+    let output = stream
+        .push(br#"data: {"type":"response.output_text.delta","delta":"Rust"}
+
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","url":"https://example.test","title":"Rust","start_index":0,"end_index":4}}
+
+data: {"type":"response.completed","response":{"status":"completed","service_tier":"priority","moderation":{"status":"completed","results":[{"flagged":false}]},"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}
+
+"#)
+        .join("");
+    assert!(
+        output.contains("\"url\":\"https://example.test\""),
+        "{output}"
+    );
+    assert!(output.contains("\"service_tier\":\"priority\""), "{output}");
+    assert!(output.contains("\"moderation\":{"), "{output}");
+}
