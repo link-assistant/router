@@ -586,3 +586,16 @@ fn prior_function_items_survive_responses_to_anthropic_translation() {
     assert_eq!(body["messages"][1]["content"][0]["type"], "tool_result");
     assert_eq!(body["messages"][1]["content"][0]["tool_use_id"], "call_1");
 }
+
+#[test]
+fn chat_storage_and_metadata_survive_the_chat_to_responses_projection() {
+    let body = json!({
+        "model": "gpt-next",
+        "messages": [{"role": "user", "content": "hello"}],
+        "store": true,
+        "metadata": {"case": "synthetic"}
+    });
+    let responses = chat_completion_to_responses(&body);
+    assert_eq!(responses["store"], true);
+    assert_eq!(responses["metadata"], json!({"case": "synthetic"}));
+}

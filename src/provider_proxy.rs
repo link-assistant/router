@@ -713,7 +713,9 @@ pub fn openai_compatible_models(state: &AppState) -> serde_json::Value {
     serde_json::json!({"object": "list", "data": data})
 }
 
-fn resolve_openai_compatible_provider(state: &AppState) -> Result<ResolvedProvider, ProviderError> {
+pub(crate) fn resolve_openai_compatible_provider(
+    state: &AppState,
+) -> Result<ResolvedProvider, ProviderError> {
     if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
         return crate::zai_coding_plan::resolve(state)
             .map_err(ProviderError::Invalid)?
@@ -725,7 +727,7 @@ fn resolve_openai_compatible_provider(state: &AppState) -> Result<ResolvedProvid
         .map(|provider| provider.unwrap_or_else(|| state.openai_compatible.resolve()))
 }
 
-fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
+pub(crate) fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
     let base = base_url.trim_end_matches('/');
     if base.ends_with("/v1") {
         let suffix = path.strip_prefix("/v1").unwrap_or(path);

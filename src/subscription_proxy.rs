@@ -951,13 +951,13 @@ fn subscription_headers(
     out
 }
 
-/// Map a router route to the provider's upstream path.
-///
-/// Qwen mirrors the `OpenAI`-compatible scheme (base already ends in `/v1`), so
-/// the router's `/v1/...` prefix is stripped. Codex exposes a flat
-/// `.../codex/responses` endpoint, so `/v1/responses` collapses to
-/// `/responses`.
-fn join_subscription_url(provider: SubscriptionProvider, base_url: &str, path: &str) -> String {
+/// Map a router route to Qwen's `/v1` base or Codex's flat endpoint.
+/// The router's duplicate `/v1` prefix is removed when necessary.
+pub(crate) fn join_subscription_url(
+    provider: SubscriptionProvider,
+    base_url: &str,
+    path: &str,
+) -> String {
     let base = base_url.trim_end_matches('/');
     match provider {
         SubscriptionProvider::Codex => {

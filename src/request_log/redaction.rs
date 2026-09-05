@@ -110,7 +110,7 @@ pub(super) fn redact_value(mut value: Value) -> Value {
     match &mut value {
         Value::Object(object) => {
             for (key, child) in object {
-                if is_safety_identifier_name(key) {
+                if key.eq_ignore_ascii_case("metadata") || is_safety_identifier_name(key) {
                     *child = Value::String(REDACTED.to_string());
                 } else if is_secret_name(key) {
                     *child = child.as_str().map_or_else(
@@ -291,5 +291,21 @@ const fn hex_digit(byte: u8) -> Option<u8> {
         b'a'..=b'f' => Some(byte - b'a' + 10),
         b'A'..=b'F' => Some(byte - b'A' + 10),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resource_metadata_is_never_written_to_request_logs() {
+        let redacted = redacted_body(
+            br#"{"store":true,"metadata":{"tenant":"sensitive-customer","case":"secret"}}"#,
+        );
+        assert_eq!(redacted["store"], true);
+        assert_eq!(redacted["metadata"], REDACTED);
+        assert!(!redacted.to_string().contains("sensitive-customer"));
+        assert!(!redacted.to_string().contains("secret"));
     }
 }

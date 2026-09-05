@@ -261,6 +261,7 @@ pub struct ProviderStore {
     inner: Arc<RwLock<HashMap<String, ProviderRecord>>>,
     entitlement_policy: Arc<RwLock<crate::client_policy::SubscriptionEntitlementPolicy>>,
     provider_catalogs: Arc<RwLock<HashMap<String, CachedProviderCatalog>>>,
+    response_affinities: crate::response_affinity::ResponseAffinityStore,
 }
 
 impl ProviderStore {
@@ -283,6 +284,8 @@ impl ProviderStore {
             .into_iter()
             .map(|record| (record.name.clone(), record))
             .collect();
+        let response_affinities = crate::response_affinity::ResponseAffinityStore::open(data_dir)
+            .map_err(|error| ProviderError::Invalid(error.to_string()))?;
         Ok(Self {
             lock_path,
             path,
@@ -292,7 +295,14 @@ impl ProviderStore {
                 crate::client_policy::SubscriptionEntitlementPolicy::default(),
             )),
             provider_catalogs: Arc::new(RwLock::new(HashMap::new())),
+            response_affinities,
         })
+    }
+
+    pub(crate) const fn response_affinities(
+        &self,
+    ) -> &crate::response_affinity::ResponseAffinityStore {
+        &self.response_affinities
     }
 
     /// Install the boot-validated consumer-subscription bridge policy.

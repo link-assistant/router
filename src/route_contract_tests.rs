@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
 use crate::route_contract::{
-    ListenerKind, RouteAuth, RouteClass, RouteId, ServiceKind, endpoint_base, management_endpoint,
-    route_for_path, route_specs,
+    ApiDialect, ListenerKind, RouteAuth, RouteClass, RouteId, ServiceKind, endpoint_base,
+    management_endpoint, route_for_path, route_specs,
 };
 
 #[test]
@@ -180,5 +180,58 @@ fn removed_paths_have_no_route_contract() {
             route_for_path(&method, path).is_none(),
             "removed route still classified: {method} {path}"
         );
+    }
+}
+
+#[test]
+fn responses_lifecycle_is_an_authenticated_openai_service_surface() {
+    for (service, kind) in [
+        ("openai", ServiceKind::OpenAi),
+        ("codex", ServiceKind::Codex),
+        ("qwen", ServiceKind::Qwen),
+    ] {
+        for (method, suffix) in [
+            (http::Method::GET, "resp_123"),
+            (http::Method::DELETE, "resp_123"),
+            (http::Method::POST, "resp_123/cancel"),
+            (http::Method::GET, "resp_123/input_items"),
+        ] {
+            let path = format!("/api/services/{service}/v1/responses/{suffix}");
+            let route = route_for_path(&method, &path)
+                .unwrap_or_else(|| panic!("missing route contract for {method} {path}"));
+            assert_eq!(route.class, RouteClass::Service(kind), "{method} {path}");
+            assert_eq!(route.auth, RouteAuth::Client, "{method} {path}");
+            assert_eq!(route.dialect, ApiDialect::OpenAi, "{method} {path}");
+            assert!(route.listeners.contains(&ListenerKind::Combined));
+            assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+            assert!(!route.listeners.contains(&ListenerKind::Admin));
+        }
+    }
+}
+
+#[test]
+fn stored_chat_lifecycle_is_an_authenticated_openai_service_surface() {
+    for (service, kind) in [
+        ("openai", ServiceKind::OpenAi),
+        ("codex", ServiceKind::Codex),
+        ("qwen", ServiceKind::Qwen),
+    ] {
+        for (method, suffix) in [
+            (http::Method::GET, ""),
+            (http::Method::GET, "/chatcmpl_123"),
+            (http::Method::POST, "/chatcmpl_123"),
+            (http::Method::DELETE, "/chatcmpl_123"),
+            (http::Method::GET, "/chatcmpl_123/messages"),
+        ] {
+            let path = format!("/api/services/{service}/v1/chat/completions{suffix}");
+            let route = route_for_path(&method, &path)
+                .unwrap_or_else(|| panic!("missing route contract for {method} {path}"));
+            assert_eq!(route.class, RouteClass::Service(kind), "{method} {path}");
+            assert_eq!(route.auth, RouteAuth::Client, "{method} {path}");
+            assert_eq!(route.dialect, ApiDialect::OpenAi, "{method} {path}");
+            assert!(route.listeners.contains(&ListenerKind::Combined));
+            assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+            assert!(!route.listeners.contains(&ListenerKind::Admin));
+        }
     }
 }
