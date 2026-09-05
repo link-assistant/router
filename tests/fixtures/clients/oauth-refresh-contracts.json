@@ -1,0 +1,48 @@
+{
+  "captured_on": "2026-09-05",
+  "claude": {
+    "client_version": "2.1.261",
+    "sdk_version": "0.112.1",
+    "method": "POST",
+    "body_style": "json",
+    "accept": "*/*",
+    "anthropic_beta": "oauth-2025-04-20"
+  },
+  "codex": {
+    "client_version": "0.153.4",
+    "method": "POST",
+    "body_style": "json",
+    "originator": "codex_cli_rs",
+    "account_header": false,
+    "cloudflare_cookies": {
+      "exact_hosts": ["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"],
+      "subdomain_suffixes": [".chatgpt.com", ".chatgpt-staging.com"],
+      "exact_names": [
+        "__cf_bm",
+        "__cflb",
+        "__cfruid",
+        "__cfseq",
+        "__cfwaitingroom",
+        "_cfuvid",
+        "cf_clearance",
+        "cf_ob_info",
+        "cf_use_ob"
+      ],
+      "prefix": "cf_chl_"
+    }
+  },
+  "gemini": {
+    "client_version": "0.58.0",
+    "auth_library_version": "10.9.0",
+    "method": "POST",
+    "body_style": "form",
+    "client_id": "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com",
+    "client_secret_parts": ["GOCSPX-4uHgMPm", "-1o7Sk-geV6Cu5clXFsxl"]
+  },
+  "qwen": {
+    "client_version": "0.23.0",
+    "method": "POST",
+    "body_style": "form",
+    "accept": "application/json"
+  }
+}

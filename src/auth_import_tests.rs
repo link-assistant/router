@@ -743,32 +743,6 @@ fn github_import_refuses_a_named_home_without_a_login() {
     assert!(link_assistant_router::github_proxy::stored_credential(data.path()).is_none());
 }
 
-/// Gemini's installed-app refresh grant requires the client secret shipped by
-/// Gemini CLI. Import must name that prerequisite before staging or contacting
-/// an OAuth endpoint.
-#[test]
-fn gemini_import_refresh_prerequisite_is_explicit() {
-    let absent = import_refresh_prerequisite(SubscriptionProvider::Gemini, |_| None)
-        .expect_err("missing Gemini secret must fail closed");
-    assert!(
-        absent.contains(link_assistant_router::refresh::GEMINI_CLIENT_SECRET_ENV),
-        "{absent}"
-    );
-    assert!(
-        import_refresh_prerequisite(SubscriptionProvider::Gemini, |_| {
-            Some("configured".to_string())
-        })
-        .is_ok()
-    );
-    for provider in [
-        SubscriptionProvider::Claude,
-        SubscriptionProvider::Codex,
-        SubscriptionProvider::Qwen,
-    ] {
-        assert!(import_refresh_prerequisite(provider, |_| None).is_ok());
-    }
-}
-
 /// Lexically different paths can still name the same credential home. That
 /// must be detected before a rotating refresh link is spent.
 #[cfg(unix)]

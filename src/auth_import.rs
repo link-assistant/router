@@ -606,23 +606,6 @@ fn retain_validated_candidate(
     ImportFailure::retained(phase, transaction_id, error)
 }
 
-#[cfg(test)]
-fn import_refresh_prerequisite(
-    provider: SubscriptionProvider,
-    lookup: impl FnOnce(&str) -> Option<String>,
-) -> Result<(), String> {
-    if provider != SubscriptionProvider::Gemini {
-        return Ok(());
-    }
-    let variable = link_assistant_router::refresh::GEMINI_CLIENT_SECRET_ENV;
-    if lookup(variable).is_some_and(|value| !value.trim().is_empty()) {
-        return Ok(());
-    }
-    Err(format!(
-        "Gemini refresh-chain import requires {variable}; set it to the OAuth client secret shipped with Gemini CLI"
-    ))
-}
-
 fn same_credential_home(source: &std::path::Path, destination: &std::path::Path) -> bool {
     if source == destination {
         return true;

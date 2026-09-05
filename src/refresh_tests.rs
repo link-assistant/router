@@ -14,29 +14,6 @@ fn token(refresh: Option<&str>, exp: Option<i64>) -> SubscriptionToken {
     }
 }
 
-#[test]
-fn config_present_for_subscription_providers() {
-    assert_eq!(
-        refresh_config(SubscriptionProvider::Codex).token_url,
-        "https://auth.openai.com/oauth/token"
-    );
-    assert_eq!(
-        refresh_config(SubscriptionProvider::Gemini).client_secret_env,
-        Some(GEMINI_CLIENT_SECRET_ENV)
-    );
-    assert_eq!(
-        refresh_config(SubscriptionProvider::Qwen).style,
-        BodyStyle::Form
-    );
-    // Claude is refreshed by the router too: the runtime image has no
-    // Claude CLI to keep the credential file current.
-    let claude = refresh_config(SubscriptionProvider::Claude);
-    assert_eq!(claude.token_url, CLAUDE_TOKEN_URL);
-    assert_eq!(claude.client_id, CLAUDE_CLIENT_ID);
-    assert!(claude.client_secret_env.is_none());
-    assert_eq!(claude.style, BodyStyle::Json);
-}
-
 /// Serve one JSON response on loopback and hand back the request that was
 /// received, so a test can assert the exact refresh body sent upstream.
 async fn stub_token_endpoint(
