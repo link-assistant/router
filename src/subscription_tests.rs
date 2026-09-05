@@ -126,6 +126,76 @@ fn reads_gemini_oauth_creds() {
 }
 
 #[test]
+fn external_owner_marker_survives_read_and_blocks_rotation() {
+    let dir = tempfile::tempdir().unwrap();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
+    let document = mark_external_refresh_owner(
+        r#"{"claudeAiOauth":{"accessToken":"external-access","refreshToken":"external-refresh","expiresAt":9999999999999}}"#,
+    )
+    .unwrap();
+    reader.install_document(&document).unwrap();
+
+    let (token, origin) = reader.read_token_from().unwrap();
+    assert_eq!(origin, crate::platform_keychain::Origin::ExternalFile);
+    assert_eq!(token.refresh_token.as_deref(), Some("external-refresh"));
+    let error =
+        crate::credential_store::CredentialStore::prepare_refresh(&reader, &token).unwrap_err();
+    assert!(error.contains("externally owned"), "{error}");
+    let mut successor = token;
+    successor.access_token = "router-successor".into();
+    successor.refresh_token = Some("router-spent-external-link".into());
+    let error = reader.write_token(&successor).unwrap_err().to_string();
+    assert!(error.contains("externally owned"), "{error}");
+    let unchanged = reader.read_token().unwrap();
+    assert_eq!(unchanged.access_token, "external-access");
+    assert_eq!(unchanged.refresh_token.as_deref(), Some("external-refresh"));
+}
+
+#[test]
+fn direct_reader_waits_for_the_file_transaction_commit_boundary() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join(".credentials.json");
+    let old = br#"{"claudeAiOauth":{"accessToken":"old"}}"#;
+    let new = br#"{"claudeAiOauth":{"accessToken":"new"}}"#;
+    std::fs::write(&path, old).unwrap();
+    let lock_path = credential_file_lock_path(&path);
+    let lock = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&lock_path)
+        .unwrap();
+    lock.lock().unwrap();
+    let rollback_path = dir.path().join("..credentials.json.router-rollback");
+    let commit_path = dir.path().join("..credentials.json.router-commit");
+    let mut rollback = vec![1];
+    rollback.extend_from_slice(old);
+    crate::durable_file::atomic_write_owner_only(&rollback_path, &rollback).unwrap();
+    crate::durable_file::atomic_write_owner_only(&path, new).unwrap();
+
+    let reader = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path());
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let handle = std::thread::spawn(move || sender.send(reader.read_token()).unwrap());
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    assert!(matches!(
+        receiver.try_recv(),
+        Err(std::sync::mpsc::TryRecvError::Empty)
+    ));
+
+    crate::durable_file::atomic_write_owner_only(&commit_path, b"committed\n").unwrap();
+    lock.unlock().unwrap();
+    let token = receiver
+        .recv_timeout(std::time::Duration::from_secs(2))
+        .unwrap()
+        .unwrap();
+    handle.join().unwrap();
+    assert_eq!(token.access_token, "new");
+    assert!(!rollback_path.exists());
+    assert!(!commit_path.exists());
+}
+
+#[test]
 fn reads_qwen_oauth_creds_with_resource_url() {
     let dir = tempdir();
     fs::write(

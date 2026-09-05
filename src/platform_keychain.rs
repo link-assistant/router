@@ -30,6 +30,8 @@ use crate::subscription::SubscriptionProvider;
 pub enum Origin {
     /// A credential file under the provider's home directory.
     File,
+    /// A credential file copied from a vendor-owned rotating refresh chain.
+    ExternalFile,
     /// The platform secret store the vendor CLI uses.
     Keychain,
 }
@@ -40,6 +42,7 @@ impl Origin {
     pub const fn label(self) -> &'static str {
         match self {
             Self::File => "file",
+            Self::ExternalFile => "external file",
             Self::Keychain => "keychain",
         }
     }

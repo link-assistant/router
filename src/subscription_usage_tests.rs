@@ -837,20 +837,14 @@ async fn rejected_usage_token_is_refreshed_and_retried_once() {
         directory.path(),
         &crate::app_state::VendorClis::default(),
     );
-    let loaded = state
-        .subscription_cache
-        .load_authoritative(SubscriptionProvider::Claude, "primary")
-        .await
-        .unwrap()
-        .unwrap();
     let token_url = format!("http://{address}/oauth/token");
+    let subject = format!("refresh-cache-test-{}", uuid::Uuid::new_v4());
 
-    let ProbeResult::Usage(usage) = probe_oauth_loaded_at(
+    let ProbeResult::Usage(usage) = cache::cached_or_probe_at(
         &state,
+        &subject,
         "primary",
         UsageProvider::Anthropic,
-        SubscriptionProvider::Claude,
-        loaded,
         Some(&token_url),
     )
     .await
@@ -862,6 +856,18 @@ async fn rejected_usage_token_is_refreshed_and_retried_once() {
         reader.read_token().unwrap().access_token,
         "refreshed-access"
     );
+    let ProbeResult::Usage(cached) = cache::cached_or_probe_at(
+        &state,
+        &subject,
+        "primary",
+        UsageProvider::Anthropic,
+        Some(&token_url),
+    )
+    .await
+    else {
+        panic!("refreshed credential must remain cached");
+    };
+    assert_eq!(cached.status, "active");
     let paths = hits
         .lock()
         .unwrap()

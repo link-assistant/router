@@ -24,12 +24,15 @@ pub(crate) fn ensure_refreshable_origin(
     provider: crate::subscription::SubscriptionProvider,
     origin: crate::platform_keychain::Origin,
 ) -> Result<(), String> {
-    if origin == crate::platform_keychain::Origin::Keychain {
-        return Err(format!(
+    match origin {
+        crate::platform_keychain::Origin::File => Ok(()),
+        crate::platform_keychain::Origin::ExternalFile => Err(format!(
+            "refusing to spend the externally owned {provider} refresh token because Router cannot durably advance the owning vendor store"
+        )),
+        crate::platform_keychain::Origin::Keychain => Err(format!(
             "refusing to spend the authoritative {provider} platform-keychain refresh token because Router cannot durably advance that external store"
-        ));
+        )),
     }
-    Ok(())
 }
 
 /// Suffix of the sidecar lock file guarding a credential's read → refresh →

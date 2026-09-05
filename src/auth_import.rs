@@ -379,7 +379,8 @@ async fn import_provider(
                 |service| format!("keychain {service:?}"),
             )
         }
-        link_assistant_router::platform_keychain::Origin::File => {
+        link_assistant_router::platform_keychain::Origin::File
+        | link_assistant_router::platform_keychain::Origin::ExternalFile => {
             from.discover_credential_path().map_or_else(
                 || source_home.display().to_string(),
                 |path| path.display().to_string(),
@@ -579,11 +580,12 @@ async fn install_candidate(
     } else {
         InstallMode::Replace
     };
+    let document = link_assistant_router::subscription::mark_external_refresh_owner(document)?;
     destination
         .install_document_locked_with_refusal(
             data_dir,
             link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-            document,
+            &document,
             mode,
             refusal,
         )

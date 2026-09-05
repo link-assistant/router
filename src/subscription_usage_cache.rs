@@ -46,6 +46,16 @@ pub(super) async fn cached_or_probe(
     principal: &str,
     provider: UsageProvider,
 ) -> ProbeResult {
+    cached_or_probe_at(state, subject, principal, provider, None).await
+}
+
+pub(super) async fn cached_or_probe_at(
+    state: &AppState,
+    subject: &str,
+    principal: &str,
+    provider: UsageProvider,
+    refresh_url_override: Option<&str>,
+) -> ProbeResult {
     let prepared = match prepare_probe(state, principal, provider).await {
         Ok(prepared) => prepared,
         Err(result) => return result,
@@ -70,11 +80,35 @@ pub(super) async fn cached_or_probe(
         PreparedProbe::OAuth {
             subscription,
             token,
-        } => probe_oauth_loaded_at(state, principal, provider, subscription, token, None).await,
+        } => {
+            probe_oauth_loaded_at(
+                state,
+                principal,
+                provider,
+                subscription,
+                token,
+                refresh_url_override,
+            )
+            .await
+        }
         PreparedProbe::ZAi(provider) => probe_zai_provider(state, &provider).await,
         PreparedProbe::Lefine(_) => ProbeResult::Usage(Box::new(unavailable_lefine_usage())),
     };
     if let ProbeResult::Usage(value) = &result {
+        // A rejected access token may have been refreshed and durably replaced
+        // during the probe. Bind the cached result to the successor now stored
+        // authoritatively, not to the predecessor prepared above.
+        let insert_key = prepare_probe(state, principal, provider)
+            .await
+            .ok()
+            .map_or_else(
+                || key.clone(),
+                |current| CacheKey {
+                    subject: subject.to_string(),
+                    provider,
+                    generation: probe_generation(state, &current),
+                },
+            );
         let ttl = value.retry_after_seconds.map_or_else(
             || match provider {
                 UsageProvider::Anthropic => ANTHROPIC_CACHE_TTL,
@@ -86,7 +120,7 @@ pub(super) async fn cached_or_probe(
         );
         if let Ok(mut cache) = CACHE.get_or_init(Default::default).lock() {
             cache.insert(
-                key,
+                insert_key,
                 CacheEntry {
                     value: value.as_ref().clone(),
                     expires: Instant::now() + ttl.max(Duration::from_secs(30)),

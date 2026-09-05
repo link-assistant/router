@@ -9,6 +9,10 @@
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 
+const ROUTER_METADATA_KEY: &str = "_link_assistant_router";
+const REFRESH_OWNER_KEY: &str = "refresh_owner";
+const EXTERNAL_REFRESH_OWNER: &str = "external";
+
 mod types;
 pub use types::{SubscriptionProvider, SubscriptionToken};
 
@@ -37,6 +41,47 @@ impl std::fmt::Display for SubscriptionError {
 }
 
 impl std::error::Error for SubscriptionError {}
+
+impl From<std::io::Error> for SubscriptionError {
+    fn from(_error: std::io::Error) -> Self {
+        Self::ReadError("credential transaction lock failed".into())
+    }
+}
+
+/// Mark a copied credential as belonging to an external rotating refresh
+/// chain.
+///
+/// The marker lives in the same atomically replaced JSON document, so it
+/// cannot be committed independently of the credential it protects.
+pub fn mark_external_refresh_owner(document: &str) -> Result<String, String> {
+    let mut value: serde_json::Value = serde_json::from_str(document)
+        .map_err(|_| "external credential document is not valid JSON".to_string())?;
+    let object = value
+        .as_object_mut()
+        .ok_or_else(|| "external credential document must be a JSON object".to_string())?;
+    let metadata = object
+        .entry(ROUTER_METADATA_KEY)
+        .or_insert_with(|| serde_json::json!({}));
+    let metadata = metadata
+        .as_object_mut()
+        .ok_or_else(|| "Router credential metadata must be a JSON object".to_string())?;
+    metadata.insert(REFRESH_OWNER_KEY.into(), EXTERNAL_REFRESH_OWNER.into());
+    serde_json::to_string_pretty(&value)
+        .map_err(|_| "external credential ownership could not be encoded".to_string())
+}
+
+fn has_external_refresh_owner(document: &serde_json::Value) -> bool {
+    document
+        .pointer(&format!("/{ROUTER_METADATA_KEY}/{REFRESH_OWNER_KEY}"))
+        .and_then(serde_json::Value::as_str)
+        == Some(EXTERNAL_REFRESH_OWNER)
+}
+
+fn credential_file_lock_path(path: &Path) -> PathBuf {
+    let mut lock = path.as_os_str().to_os_string();
+    lock.push(".router-transaction.lock");
+    PathBuf::from(lock)
+}
 
 /// One credential selected for adoption: the bytes, and what they say.
 ///
@@ -187,7 +232,8 @@ impl SubscriptionReader {
                     ))
                 })
             }
-            crate::platform_keychain::Origin::File => {
+            crate::platform_keychain::Origin::File
+            | crate::platform_keychain::Origin::ExternalFile => {
                 let path = self.discover_credential_path().ok_or_else(|| {
                     SubscriptionError::NoCredentials(format!(
                         "No {} credential file in {}",
@@ -260,8 +306,11 @@ impl SubscriptionReader {
     }
 
     fn install_document_at(path: &Path, document: &str) -> Result<PathBuf, String> {
-        crate::durable_file::transactional_write_owner_only(path, document.as_bytes())
-            .map_err(|error| crate::durable_file::describe_write_failure(path, &error))?;
+        let lock_path = credential_file_lock_path(path);
+        crate::durable_file::with_exclusive_lock::<_, std::io::Error>(&lock_path, || {
+            crate::durable_file::transactional_write_owner_only(path, document.as_bytes())
+        })
+        .map_err(|error| crate::durable_file::describe_write_failure(path, &error))?;
         Ok(path.to_path_buf())
     }
 
@@ -469,17 +518,17 @@ impl SubscriptionReader {
     ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
         let from_file = self.read_token_from_file();
         match (from_file, from_keychain) {
-            (Ok(file), Some(keychain)) => {
+            (Ok((file, file_origin)), Some(keychain)) => {
                 // Only a strictly later expiry displaces the file, so a store
                 // that merely mirrors it changes nothing an operator sees.
                 if keychain.expires_at_ms > file.expires_at_ms {
                     Ok((keychain, crate::platform_keychain::Origin::Keychain))
                 } else {
-                    Ok((file, crate::platform_keychain::Origin::File))
+                    Ok((file, file_origin))
                 }
             }
             (Err(_), Some(keychain)) => Ok((keychain, crate::platform_keychain::Origin::Keychain)),
-            (file, None) => file.map(|token| (token, crate::platform_keychain::Origin::File)),
+            (file, None) => file,
         }
     }
 
@@ -559,32 +608,61 @@ impl SubscriptionReader {
     }
 
     /// Read and normalize the subscription token from the credential file.
-    fn read_token_from_file(&self) -> Result<SubscriptionToken, SubscriptionError> {
+    fn read_token_from_file(
+        &self,
+    ) -> Result<(SubscriptionToken, crate::platform_keychain::Origin), SubscriptionError> {
         let mut last_err: Option<SubscriptionError> = None;
         for path in self.credential_paths() {
-            crate::durable_file::recover_transactional_write(&path).map_err(|error| {
-                SubscriptionError::ReadError(format!(
-                    "Failed to recover {}: {error}",
-                    path.display()
-                ))
-            })?;
-            if !path.exists() {
-                continue;
-            }
-            let content = std::fs::read_to_string(&path).map_err(|e| {
-                SubscriptionError::ReadError(format!("Failed to read {}: {e}", path.display()))
-            })?;
-            let raw: RawCredentials = serde_json::from_str(&content).map_err(|e| {
-                SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
-            })?;
-            match raw.into_token(self.provider) {
+            let lock_path = credential_file_lock_path(&path);
+            let parsed = crate::durable_file::with_exclusive_lock::<_, SubscriptionError>(
+                &lock_path,
+                || {
+                    crate::durable_file::recover_transactional_write(&path).map_err(|error| {
+                        SubscriptionError::ReadError(format!(
+                            "Failed to recover {}: {error}",
+                            path.display()
+                        ))
+                    })?;
+                    if !path.exists() {
+                        return Ok(None);
+                    }
+                    let content = std::fs::read_to_string(&path).map_err(|e| {
+                        SubscriptionError::ReadError(format!(
+                            "Failed to read {}: {e}",
+                            path.display()
+                        ))
+                    })?;
+                    let document: serde_json::Value =
+                        serde_json::from_str(&content).map_err(|e| {
+                            SubscriptionError::ParseError(format!(
+                                "Failed to parse {}: {e}",
+                                path.display()
+                            ))
+                        })?;
+                    let origin = if has_external_refresh_owner(&document) {
+                        crate::platform_keychain::Origin::ExternalFile
+                    } else {
+                        crate::platform_keychain::Origin::File
+                    };
+                    let raw: RawCredentials = serde_json::from_value(document).map_err(|e| {
+                        SubscriptionError::ParseError(format!(
+                            "Failed to parse {}: {e}",
+                            path.display()
+                        ))
+                    })?;
+                    Ok(raw.into_token(self.provider).map(|token| (token, origin)))
+                },
+            )?;
+            match parsed {
                 Some(token) => return Ok(token),
                 None => {
-                    last_err = Some(SubscriptionError::NoToken(format!(
-                        "No {} access token in {}",
-                        self.provider,
-                        path.display()
-                    )));
+                    if path.exists() {
+                        last_err = Some(SubscriptionError::NoToken(format!(
+                            "No {} access token in {}",
+                            self.provider,
+                            path.display()
+                        )));
+                    }
                 }
             }
         }
@@ -623,20 +701,32 @@ impl SubscriptionReader {
                 self.home.display()
             ))
         })?;
-        let content = std::fs::read_to_string(&path).map_err(|e| {
-            SubscriptionError::ReadError(format!("Failed to read {}: {e}", path.display()))
-        })?;
-        let mut document: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
-            SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
-        })?;
+        let lock_path = credential_file_lock_path(&path);
+        crate::durable_file::with_exclusive_lock(&lock_path, || {
+            let content = std::fs::read_to_string(&path).map_err(|e| {
+                SubscriptionError::ReadError(format!("Failed to read {}: {e}", path.display()))
+            })?;
+            let mut document: serde_json::Value = serde_json::from_str(&content).map_err(|e| {
+                SubscriptionError::ParseError(format!("Failed to parse {}: {e}", path.display()))
+            })?;
+            if has_external_refresh_owner(&document) {
+                return Err(SubscriptionError::ReadError(format!(
+                    "refusing to rotate the externally owned {} credential",
+                    self.provider
+                )));
+            }
 
-        merge_refreshed_token(&mut document, self.provider, token);
+            merge_refreshed_token(&mut document, self.provider, token);
 
-        let serialized = serde_json::to_vec_pretty(&document).map_err(|e| {
-            SubscriptionError::ParseError(format!("Failed to serialize {}: {e}", path.display()))
-        })?;
-        crate::durable_file::transactional_write_owner_only(&path, &serialized).map_err(|e| {
-            SubscriptionError::ReadError(crate::durable_file::describe_write_failure(&path, &e))
+            let serialized = serde_json::to_vec_pretty(&document).map_err(|e| {
+                SubscriptionError::ParseError(format!(
+                    "Failed to serialize {}: {e}",
+                    path.display()
+                ))
+            })?;
+            crate::durable_file::transactional_write_owner_only(&path, &serialized).map_err(|e| {
+                SubscriptionError::ReadError(crate::durable_file::describe_write_failure(&path, &e))
+            })
         })
     }
 }

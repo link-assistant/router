@@ -621,6 +621,7 @@ impl ProviderStore {
         operation: impl FnOnce(&mut HashMap<String, ProviderRecord>) -> (T, bool),
     ) -> Result<T, ProviderError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            crate::durable_file::recover_transactional_write(&self.path)?;
             let mut guard = self
                 .inner
                 .write()

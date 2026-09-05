@@ -651,9 +651,7 @@ fn model_catalog_with(
             projected
                 .entry("object")
                 .or_insert_with(|| Value::String("model".into()));
-            projected
-                .entry("created")
-                .or_insert_with(|| Value::from(record.fetched_at));
+            projected.insert("router_fetched_at".into(), Value::from(record.fetched_at));
             projected
                 .entry("owned_by")
                 .or_insert_with(|| Value::String(provider_owner(record.provider).to_string()));

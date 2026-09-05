@@ -18,9 +18,11 @@ fn max_completion_tokens_is_accepted_as_the_output_cap() {
 
 #[test]
 fn the_code_assist_envelope_carries_the_model() {
-    let envelope = code_assist_envelope("nimbus-3-flash", &json!({"contents": []}));
+    let envelope = code_assist_envelope("models/nimbus-3-flash", &json!({"contents": []}));
     assert_eq!(envelope["model"], "nimbus-3-flash");
     assert_eq!(envelope["request"]["contents"], json!([]));
+    let only_one = code_assist_envelope("models/models/exact", &json!({"contents": []}));
+    assert_eq!(only_one["model"], "models/exact");
 }
 
 /// Responses are translated back into the `OpenAI` completion shape, with

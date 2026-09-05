@@ -507,7 +507,7 @@ impl LoginManager {
         };
 
         let code = code.trim().to_string();
-        let mut outcome = if let Some(login) = claude_login {
+        let outcome = if let Some(login) = claude_login {
             match login
                 .complete_with_data_dir(
                     &code,
@@ -539,19 +539,6 @@ impl LoginManager {
         } else {
             return Err(LoginError::NotFound);
         };
-
-        if matches!(outcome, Outcome::Authorized { .. })
-            && let Some(data_dir) = self.data_dir.as_deref()
-            && let Err(error) = crate::model_catalog::ModelCatalogCache::invalidate_persisted(
-                data_dir,
-                session.provider,
-                crate::credential_recovery_store::PRIMARY_ACCOUNT,
-            )
-        {
-            outcome = Outcome::Failed(format!(
-                "authorization completed but the live model catalog could not be invalidated: {error}"
-            ));
-        }
 
         Self::finish(&session, outcome);
         Ok(session.view())

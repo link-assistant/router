@@ -41,9 +41,15 @@ pub(super) fn project_catalog(
 
 fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<String, Value> {
     let service = service(raw, client);
+    let owner = raw
+        .get("owned_by")
+        .and_then(Value::as_str)
+        .filter(|owner| !owner.is_empty())
+        .unwrap_or(service);
     let mut projected = Map::from_iter([
         ("id".into(), Value::String(id.to_string())),
         ("service".into(), Value::String(service.to_string())),
+        ("owned_by".into(), Value::String(owner.to_string())),
     ]);
 
     copy_first_number(
@@ -82,13 +88,19 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
     {
         projected.insert("deprecation_date".into(), value.clone());
     }
-    if projected.len() > 2 {
+    if projected.len() > 3 {
         projected.insert(
             "metadata_source".into(),
-            Value::String(format!("provider:{service}")),
+            Value::String(format!("provider:{owner}")),
         );
-        if let Some(fetched) = raw.get("created").filter(|value| value.is_number()) {
+        if let Some(fetched) = raw
+            .get("router_fetched_at")
+            .filter(|value| value.is_number())
+        {
             projected.insert("metadata_fetched_at".into(), fetched.clone());
+        }
+        if let Some(created) = raw.get("created").filter(|value| value.is_number()) {
+            projected.insert("provider_created_at".into(), created.clone());
         }
     }
     projected
@@ -203,10 +215,15 @@ mod tests {
                 "id": "models/gemini-live",
                 "name": "models/gemini-live",
                 "provider": "gemini",
+                "owned_by": "google",
+                "created": 1,
+                "router_fetched_at": 2_000_000_000,
                 "inputTokenLimit": 1_000_000,
                 "outputTokenLimit": 65536
             },
-            {"id": "metadata-absent", "owned_by": "configured-provider"}
+            {"id": "metadata-absent", "owned_by": "configured-provider"},
+            {"id": "z-ai-live", "owned_by": "z.ai", "max_tokens": 4096},
+            {"id": "lefine-live", "owned_by": "lefine", "max_tokens": 8192}
         ]});
         let projected = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
         let entries = projected["data"].as_array().unwrap();
@@ -223,11 +240,28 @@ mod tests {
             .find(|entry| entry["id"] == "metadata-absent")
             .unwrap();
         assert_eq!(claude["service"], "anthropic");
+        assert_eq!(claude["owned_by"], "anthropic");
         assert_eq!(claude["context_window"], 200_000);
         assert!(gemini.get("native_id").is_none());
+        assert_eq!(gemini["owned_by"], "google");
         assert_eq!(gemini["max_output_tokens"], 65536);
+        assert_eq!(gemini["provider_created_at"], 1);
+        assert_eq!(gemini["metadata_fetched_at"], 2_000_000_000_i64);
+        assert_ne!(gemini["metadata_fetched_at"], gemini["provider_created_at"]);
         assert!(absent.get("context_window").is_none());
         assert!(absent.get("pricing").is_none());
+        let z_ai = entries
+            .iter()
+            .find(|entry| entry["id"] == "z-ai-live")
+            .unwrap();
+        let lefine = entries
+            .iter()
+            .find(|entry| entry["id"] == "lefine-live")
+            .unwrap();
+        assert_eq!(z_ai["owned_by"], "z.ai");
+        assert_eq!(z_ai["metadata_source"], "provider:z.ai");
+        assert_eq!(lefine["owned_by"], "lefine");
+        assert_eq!(lefine["metadata_source"], "provider:lefine");
     }
 
     #[test]
@@ -240,5 +274,25 @@ mod tests {
             project_catalog(&catalog, ClientKind::ClaudeCode),
             Err(ModelRouteError::Conflict(_))
         ));
+    }
+
+    #[test]
+    fn exact_gemini_id_survives_discovery_projection_and_code_assist_envelope() {
+        let catalogs = crate::model_catalog::ModelCatalogCache::new();
+        catalogs.record_success(
+            crate::subscription::SubscriptionProvider::Gemini,
+            vec!["models/gemini-live-exact".into()],
+        );
+
+        let discovered = crate::model_routing::model_catalog(
+            &[crate::subscription::SubscriptionProvider::Gemini],
+            &catalogs,
+        );
+        let projected = project_catalog(&discovered, ClientKind::GeminiCli).unwrap();
+        let id = projected["data"][0]["id"].as_str().unwrap();
+        assert_eq!(id, "models/gemini-live-exact");
+
+        let envelope = crate::gemini::code_assist_envelope(id, &json!({"contents": []}));
+        assert_eq!(envelope["model"], "gemini-live-exact");
     }
 }

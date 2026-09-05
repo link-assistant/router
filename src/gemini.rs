@@ -91,6 +91,7 @@ pub fn chat_to_gemini_request(body: &Value) -> Value {
 /// Wrap a `GenerateContentRequest` in the Code Assist envelope.
 #[must_use]
 pub fn code_assist_envelope(model: &str, request: &Value) -> Value {
+    let model = model.strip_prefix("models/").unwrap_or(model);
     let mut envelope = json!({
         "model": model,
         "request": request,

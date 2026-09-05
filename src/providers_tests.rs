@@ -238,6 +238,39 @@ fn import_json_provider_config() {
 }
 
 #[test]
+fn a_mutation_recovers_an_uncommitted_predecessor_before_loading_it() {
+    let dir = tempdir().unwrap();
+    let store = ProviderStore::open(dir.path(), "secret").unwrap();
+    let mut original = upsert();
+    original.name = "original".into();
+    store.upsert(original).unwrap();
+    let path = dir.path().join("providers.lenv");
+    let prior = std::fs::read(&path).unwrap();
+
+    let mut interrupted = upsert();
+    interrupted.name = "uncommitted".into();
+    store.upsert(interrupted).unwrap();
+    let rollback = dir.path().join(".providers.lenv.router-rollback");
+    let mut rollback_document = vec![1];
+    rollback_document.extend_from_slice(&prior);
+    crate::durable_file::atomic_write_owner_only(&rollback, &rollback_document).unwrap();
+
+    let mut later = upsert();
+    later.name = "later".into();
+    store.upsert(later).unwrap();
+
+    let names = ProviderStore::open(dir.path(), "secret")
+        .unwrap()
+        .list()
+        .unwrap()
+        .into_iter()
+        .map(|record| record.name)
+        .collect::<Vec<_>>();
+    assert_eq!(names, ["later", "original"]);
+    assert!(!rollback.exists());
+}
+
+#[test]
 fn import_provider_store_lenv_preserves_encrypted_key() {
     let source_dir = tempdir().unwrap();
     let source = ProviderStore::open(source_dir.path(), "secret").unwrap();
