@@ -8,6 +8,7 @@ use axum::body::Body;
 use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
+use futures_util::StreamExt as _;
 use serde_json::{Value, json};
 
 use super::{AppState, code_assist_envelope, route_gemini_token};
@@ -513,7 +514,7 @@ async fn forward_native_authorized_after_route(
         .await;
     }
     let state = &routed.state;
-    let routed = match route_gemini_token(
+    let mut routed = match route_gemini_token(
         state,
         headers,
         &body,
@@ -541,10 +542,14 @@ async fn forward_native_authorized_after_route(
     let base = routed
         .token
         .base_url(crate::subscription::SubscriptionProvider::Gemini);
-    // Code Assist accepts the same envelope for both client modes. A
-    // non-streaming upstream call lets us unwrap the native response reliably;
-    // stream callers receive that response as a valid Gemini SSE data event.
-    let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
+    let upstream_url = if streaming {
+        format!(
+            "{}/v1internal:streamGenerateContent?alt=sse",
+            base.trim_end_matches('/')
+        )
+    } else {
+        format!("{}/v1internal:generateContent", base.trim_end_matches('/'))
+    };
     let mut upstream_request = state
         .client
         .post(upstream_url)
@@ -554,6 +559,9 @@ async fn forward_native_authorized_after_route(
             format!("Bearer {}", routed.token.access_token),
         )
         .body(serialized.clone());
+    if streaming {
+        upstream_request = upstream_request.header("accept", "text/event-stream");
+    }
     if let Some(request_id) = crate::proxy::translated_request_id(headers) {
         upstream_request = upstream_request.header("x-request-id", request_id);
     }
@@ -591,6 +599,46 @@ async fn forward_native_authorized_after_route(
             status.as_u16(),
         )
         .await;
+    state
+        .metrics
+        .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
+    if status == StatusCode::TOO_MANY_REQUESTS
+        && let Some(router) = state.account_router.as_ref()
+    {
+        router.report_failure_with_retry_after(
+            &routed.account,
+            "Gemini subscription upstream returned 429",
+            retry_after,
+        );
+    }
+
+    if status.is_success() && streaming {
+        state.metrics.record_bytes(serialized.len() as u64, 0);
+        let response_log = std::sync::Arc::clone(&state.request_log);
+        let metrics = std::sync::Arc::clone(&state.metrics);
+        let mut usage = routed.reservation.take().into_tracker();
+        let mut translator = super::stream::NativeStreamTranslator::default();
+        let stream = upstream.bytes_stream().map(move |chunk| {
+            chunk.map_or_else(
+                |error| Err(std::io::Error::other(error)),
+                |bytes| {
+                    response_log.record_upstream_body(&correlation_id, &bytes);
+                    metrics.record_bytes(0, bytes.len() as u64);
+                    usage.feed(&bytes);
+                    translator.push(&bytes)
+                },
+            )
+        });
+        let mut response = Response::new(Body::from_stream(stream));
+        *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("text/event-stream"),
+        );
+        return response;
+    }
+
     let response_body = match upstream.bytes().await {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -607,18 +655,6 @@ async fn forward_native_authorized_after_route(
     state
         .metrics
         .record_bytes(serialized.len() as u64, response_body.len() as u64);
-    state
-        .metrics
-        .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
-    if status == StatusCode::TOO_MANY_REQUESTS
-        && let Some(router) = state.account_router.as_ref()
-    {
-        router.report_failure_with_retry_after(
-            &routed.account,
-            "Gemini subscription upstream returned 429",
-            retry_after,
-        );
-    }
     if !status.is_success() {
         let mut response = Response::new(Body::from(response_body));
         *response.status_mut() = status;
@@ -629,6 +665,8 @@ async fn forward_native_authorized_after_route(
         );
         return response;
     }
+    let mut usage = routed.reservation.take().into_tracker();
+    usage.feed(&response_body);
     let parsed: Value = match serde_json::from_slice(&response_body) {
         Ok(parsed) => parsed,
         Err(error) => {
@@ -640,16 +678,6 @@ async fn forward_native_authorized_after_route(
         }
     };
     let native = parsed.get("response").cloned().unwrap_or(parsed);
-    if streaming {
-        let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
-        *response.status_mut() = StatusCode::OK;
-        *response.headers_mut() = response_headers;
-        response.headers_mut().insert(
-            "content-type",
-            axum::http::HeaderValue::from_static("text/event-stream"),
-        );
-        return response;
-    }
     let mut response = (StatusCode::OK, axum::Json(native)).into_response();
     *response.headers_mut() = response_headers;
     response.headers_mut().insert(

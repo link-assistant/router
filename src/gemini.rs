@@ -7,19 +7,19 @@
 //!
 //! The Code Assist API wraps a standard `GenerateContentRequest` in an envelope
 //! that also carries the `model` and (optionally) a Cloud project id. We build
-//! that envelope here. Streaming clients receive a synthesized single-delta SSE
-//! sequence: the upstream is called non-streaming and the result re-emitted in
-//! `OpenAI`'s `chat.completion.chunk` shape, which keeps the translation simple
-//! and fully deterministic without a Gemini SSE parser.
+//! that envelope here. Streaming calls use Code Assist's SSE endpoint and are
+//! translated event by event without buffering the completed generation.
 
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
+use futures_util::StreamExt as _;
 use serde_json::{Value, json};
 
 mod native;
+mod stream;
 #[cfg(test)]
 pub(crate) use native::forward_native_gemini_authorized;
 pub use native::{forward_native_gemini, forward_native_vertex, native_model, native_models};
@@ -536,9 +536,11 @@ async fn forward(
         .base_url(crate::subscription::SubscriptionProvider::Gemini)
         .trim_end_matches('/')
         .to_string();
-    // Non-streaming upstream call keeps the translation deterministic; we
-    // synthesize `OpenAI` SSE below when the client asked to stream.
-    let upstream_url = format!("{base}/v1internal:generateContent");
+    let upstream_url = if stream_requested {
+        format!("{base}/v1internal:streamGenerateContent?alt=sse")
+    } else {
+        format!("{base}/v1internal:generateContent")
+    };
 
     let mut upstream_request = state
         .client
@@ -549,6 +551,9 @@ async fn forward(
             format!("Bearer {}", sub_token.access_token),
         )
         .body(serialized);
+    if stream_requested {
+        upstream_request = upstream_request.header("accept", "text/event-stream");
+    }
     if let Some(request_id) = crate::proxy::translated_request_id(headers) {
         upstream_request = upstream_request.header("x-request-id", request_id);
     }
@@ -587,6 +592,7 @@ async fn forward(
         )
         .await;
     let retry_after = retry_after_duration(upstream_resp.headers());
+    let response_headers = crate::proxy::relay_response_headers(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =
             (state.account_router.as_ref(), selected_account.as_deref())
@@ -596,6 +602,38 @@ async fn forward(
             "Gemini subscription upstream returned 429",
             retry_after,
         );
+    }
+
+    if status.is_success() && stream_requested {
+        state.metrics.record_bytes(bytes_sent, 0);
+        let response_log = std::sync::Arc::clone(&state.request_log);
+        let metrics = std::sync::Arc::clone(&state.metrics);
+        let mut usage = reservation.take().into_tracker();
+        let response_model = if requested_model.is_empty() {
+            model.clone()
+        } else {
+            requested_model.clone()
+        };
+        let mut translator = stream::OpenAiStreamTranslator::new(response_model);
+        let stream = upstream_resp.bytes_stream().map(move |chunk| {
+            chunk.map_or_else(
+                |error| Err(std::io::Error::other(error)),
+                |bytes| {
+                    response_log.record_upstream_body(&correlation_id, &bytes);
+                    metrics.record_bytes(0, bytes.len() as u64);
+                    usage.feed(&bytes);
+                    translator.push(&bytes)
+                },
+            )
+        });
+        let mut response = Response::new(Body::from_stream(stream));
+        *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("text/event-stream"),
+        );
+        return response;
     }
 
     let upstream_body = match upstream_resp.bytes().await {
@@ -644,57 +682,11 @@ async fn forward(
     let mut chat = gemini_response_to_chat(&gemini_json, &model);
     crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
 
-    if stream_requested {
-        return sse_from_chat_completion(&chat, &requested_model);
-    }
     let mut response = Response::new(Body::from(chat.to_string()));
     *response.status_mut() = StatusCode::OK;
     response.headers_mut().insert(
         "content-type",
         axum::http::HeaderValue::from_static("application/json"),
-    );
-    response
-}
-
-/// Re-emit a non-streamed chat completion as an `OpenAI` SSE stream
-/// (`chat.completion.chunk` deltas followed by `[DONE]`).
-fn sse_from_chat_completion(chat: &Value, requested_model: &str) -> Response {
-    let id = chat
-        .get("id")
-        .and_then(Value::as_str)
-        .unwrap_or("chatcmpl-gemini");
-    let content = chat
-        .get("choices")
-        .and_then(|c| c.get(0))
-        .and_then(|c| c.get("message"))
-        .and_then(|m| m.get("content"))
-        .and_then(Value::as_str)
-        .unwrap_or("");
-    let created = chat
-        .get("created")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-
-    let role_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
-        "choices": [{ "index": 0, "delta": { "role": "assistant" }, "finish_reason": null }],
-    });
-    let content_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
-        "choices": [{ "index": 0, "delta": { "content": content }, "finish_reason": null }],
-    });
-    let stop_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
-        "choices": [{ "index": 0, "delta": {}, "finish_reason": "stop" }],
-    });
-    let payload = format!(
-        "data: {role_chunk}\n\ndata: {content_chunk}\n\ndata: {stop_chunk}\n\ndata: [DONE]\n\n"
-    );
-    let mut response = Response::new(Body::from(payload));
-    *response.status_mut() = StatusCode::OK;
-    response.headers_mut().insert(
-        "content-type",
-        axum::http::HeaderValue::from_static("text/event-stream"),
     );
     response
 }

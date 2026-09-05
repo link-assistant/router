@@ -80,35 +80,19 @@ fn message_text_is_extracted_from_both_content_shapes() {
     assert_eq!(extract_message_text(Some(&json!(42))), "");
 }
 
-/// The synthetic stream is part of the public OpenAI-compatible contract: it
-/// must retain the alias the caller selected without Router-private metadata.
-#[tokio::test]
-async fn synthetic_chat_stream_preserves_requested_model_only() {
-    use http_body_util::BodyExt as _;
+/// Incremental output retains the alias the caller selected without
+/// Router-private metadata.
+#[test]
+fn incremental_chat_stream_preserves_requested_model_only() {
+    let mut translator = stream::OpenAiStreamTranslator::new("catalog-alias");
+    let payload = translator
+        .push(
+            br#"data: {"response":{"modelVersion":"future-upstream-model","candidates":[{"content":{"parts":[{"text":"hello"}]},"finishReason":"STOP"}]}}
 
-    let response = sse_from_chat_completion(
-        &json!({
-            "id": "chatcmpl-live",
-            "created": 42,
-            "model": "future-upstream-model",
-            "choices": [{"message": {"role": "assistant", "content": "hello"}}]
-        }),
-        "catalog-alias",
-    );
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert!(response.headers().get("x-router-upstream-model").is_none());
-    assert_eq!(response.headers()["content-type"], "text/event-stream");
-    let payload = String::from_utf8(
-        response
-            .into_body()
-            .collect()
-            .await
-            .expect("synthetic stream body")
-            .to_bytes()
-            .to_vec(),
-    )
-    .expect("UTF-8 SSE");
+"#,
+        )
+        .expect("translate Gemini SSE");
+    let payload = String::from_utf8(payload.to_vec()).expect("UTF-8 SSE");
     let chunks: Vec<Value> = payload
         .lines()
         .filter_map(|line| line.strip_prefix("data: "))

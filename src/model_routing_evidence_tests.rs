@@ -3,7 +3,7 @@
 use super::tests::auto_state;
 use super::*;
 use axum::body::Body;
-use axum::extract::{Query, State};
+use axum::extract::{OriginalUri, Query, State};
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use http_body_util::BodyExt as _;
 use std::collections::BTreeMap;
@@ -13,6 +13,16 @@ use tempfile::{TempDir, tempdir};
 use tokio::sync::Barrier;
 
 const MODEL: &str = "generation-evidence-model";
+
+struct StreamDropSignal(Option<tokio::sync::oneshot::Sender<()>>);
+
+impl Drop for StreamDropSignal {
+    fn drop(&mut self) {
+        if let Some(signal) = self.0.take() {
+            let _ = signal.send(());
+        }
+    }
+}
 
 async fn rejecting_upstream() -> (String, tokio::task::JoinHandle<()>) {
     let app = axum::Router::new().fallback(|| async {
@@ -98,6 +108,222 @@ fn state_for(
         vec![MODEL.to_string()],
     );
     state
+}
+
+/// A Code Assist SSE upstream whose final event is held behind a channel.
+/// Returning the Router response and its first body frame before `release` is
+/// sent proves that the production path is truly incremental.
+async fn gated_gemini_streaming_upstream() -> (
+    String,
+    tokio::sync::oneshot::Sender<()>,
+    Arc<Mutex<Vec<String>>>,
+    tokio::sync::oneshot::Receiver<()>,
+    tokio::task::JoinHandle<()>,
+) {
+    let (release, wait_for_release) = tokio::sync::oneshot::channel();
+    let (stream_dropped, observe_stream_drop) = tokio::sync::oneshot::channel();
+    let wait_for_release = Arc::new(Mutex::new(Some(wait_for_release)));
+    let stream_dropped = Arc::new(Mutex::new(Some(stream_dropped)));
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let wait_for_stub = Arc::clone(&wait_for_release);
+    let stream_dropped_for_stub = Arc::clone(&stream_dropped);
+    let requests_for_stub = Arc::clone(&requests);
+    let app = axum::Router::new().fallback(
+        move |OriginalUri(uri): OriginalUri, body: bytes::Bytes| {
+            let wait_for_release = wait_for_stub
+                .lock()
+                .expect("release channel lock")
+                .take()
+                .expect("one streaming request");
+            let stream_drop_signal = StreamDropSignal(
+                stream_dropped_for_stub
+                    .lock()
+                    .expect("stream drop channel lock")
+                    .take(),
+            );
+            requests_for_stub
+                .lock()
+                .expect("request capture lock")
+                .push(format!("{}\n{}", uri, String::from_utf8_lossy(&body)));
+            async move {
+                use futures_util::StreamExt as _;
+
+                let first = bytes::Bytes::from_static(
+                    b"data: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hello\"}]}}]}}\n\n",
+                );
+                let final_event = bytes::Bytes::from_static(
+                    b"data: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" world\"},{\"functionCall\":{\"id\":\"call-live\",\"name\":\"lookup\",\"args\":{\"q\":\"router\"}}}]},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":2,\"candidatesTokenCount\":3,\"totalTokenCount\":5}}}\n\n",
+                );
+                let stream = futures_util::stream::once(async move {
+                    Ok::<_, std::io::Error>(first)
+                })
+                .chain(futures_util::stream::once(async move {
+                    let _ = wait_for_release.await;
+                    Ok::<_, std::io::Error>(final_event)
+                }))
+                .map(move |event| {
+                    let _keep_signal_until_stream_drop = &stream_drop_signal;
+                    event
+                });
+                let mut response = axum::response::Response::new(Body::from_stream(stream));
+                response.headers_mut().insert(
+                    "content-type",
+                    HeaderValue::from_static("text/event-stream"),
+                );
+                response
+            }
+        },
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let task = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+    (base_url, release, requests, observe_stream_drop, task)
+}
+
+#[tokio::test]
+async fn gemini_openai_stream_returns_the_first_event_before_upstream_completion() {
+    let (base_url, release, requests, _stream_dropped, task) =
+        gated_gemini_streaming_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        crate::gemini::forward_chat_completions_as(
+            &state,
+            &managed_headers(&state, crate::clients::ClientKind::Opencode),
+            json!({
+                "model": MODEL,
+                "stream": true,
+                "messages": [{"role": "user", "content": "hello"}]
+            }),
+            crate::metrics::Surface::OpenAIChat,
+        ),
+    )
+    .await
+    .expect("response headers must precede the final upstream event");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+
+    let mut body = response.into_body();
+    let first = tokio::time::timeout(std::time::Duration::from_secs(1), body.frame())
+        .await
+        .expect("first translated event must be immediately available")
+        .expect("stream must have a first frame")
+        .expect("first frame must be valid")
+        .into_data()
+        .expect("first frame is data");
+    let first = String::from_utf8(first.to_vec()).unwrap();
+    assert!(first.contains("hello"), "{first}");
+    assert!(first.contains(MODEL), "{first}");
+
+    release.send(()).expect("release final upstream event");
+    let rest = body.collect().await.unwrap().to_bytes();
+    let rest = String::from_utf8(rest.to_vec()).unwrap();
+    assert!(rest.contains(" world"), "{rest}");
+    assert!(rest.contains("call-live"), "{rest}");
+    assert!(rest.contains("tool_calls"), "{rest}");
+    assert!(rest.contains(r#""total_tokens":5"#), "{rest}");
+    assert!(rest.ends_with("data: [DONE]\n\n"), "{rest}");
+
+    let requests = requests.lock().unwrap();
+    assert!(
+        requests[0].starts_with("/v1internal:streamGenerateContent?alt=sse\n"),
+        "{:?}",
+        *requests
+    );
+    assert!(requests[0].contains(&format!(r#""model":"{MODEL}""#)));
+    drop(requests);
+    task.abort();
+}
+
+#[tokio::test]
+async fn native_gemini_stream_returns_the_first_event_before_upstream_completion() {
+    let (base_url, release, requests, _stream_dropped, task) =
+        gated_gemini_streaming_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = tokio::time::timeout(
+        std::time::Duration::from_secs(1),
+        crate::gemini::forward_native_gemini_authorized(
+            &state,
+            &format!("models/{MODEL}:streamGenerateContent"),
+            &managed_headers(&state, crate::clients::ClientKind::GeminiCli),
+            json!({
+                "contents": [{"role": "user", "parts": [{"text": "hello"}]}]
+            }),
+        ),
+    )
+    .await
+    .expect("response headers must precede the final upstream event");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "text/event-stream");
+
+    let mut body = response.into_body();
+    let first = tokio::time::timeout(std::time::Duration::from_secs(1), body.frame())
+        .await
+        .expect("first native event must be immediately available")
+        .expect("stream must have a first frame")
+        .expect("first frame must be valid")
+        .into_data()
+        .expect("first frame is data");
+    let first = String::from_utf8(first.to_vec()).unwrap();
+    assert!(first.contains("hello"), "{first}");
+    assert!(!first.contains(r#""response""#), "{first}");
+
+    release.send(()).expect("release final upstream event");
+    let rest = body.collect().await.unwrap().to_bytes();
+    let rest = String::from_utf8(rest.to_vec()).unwrap();
+    assert!(rest.contains(" world"), "{rest}");
+    assert!(rest.contains("functionCall"), "{rest}");
+    assert!(rest.contains("finishReason"), "{rest}");
+    assert!(rest.contains("usageMetadata"), "{rest}");
+
+    let requests = requests.lock().unwrap();
+    assert!(
+        requests[0].starts_with("/v1internal:streamGenerateContent?alt=sse\n"),
+        "{:?}",
+        *requests
+    );
+    assert!(requests[0].contains(&format!(r#""model":"{MODEL}""#)));
+    drop(requests);
+    task.abort();
+}
+
+#[tokio::test]
+async fn cancelling_the_downstream_gemini_body_drops_the_upstream_stream() {
+    let (base_url, _release, _requests, stream_dropped, task) =
+        gated_gemini_streaming_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let state = state_for(SubscriptionProvider::Gemini, &data, &home, &base_url);
+    let response = crate::gemini::forward_chat_completions_as(
+        &state,
+        &managed_headers(&state, crate::clients::ClientKind::Opencode),
+        json!({
+            "model": MODEL,
+            "stream": true,
+            "messages": [{"role": "user", "content": "cancel after first event"}]
+        }),
+        crate::metrics::Surface::OpenAIChat,
+    )
+    .await;
+    let mut body = response.into_body();
+    tokio::time::timeout(std::time::Duration::from_secs(1), body.frame())
+        .await
+        .expect("first event must arrive")
+        .expect("stream must have a first frame")
+        .expect("first frame must be valid");
+    drop(body);
+
+    tokio::time::timeout(std::time::Duration::from_secs(1), stream_dropped)
+        .await
+        .expect("downstream cancellation must drop the upstream stream")
+        .expect("upstream drop signal");
+    task.abort();
 }
 
 fn managed_headers(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
