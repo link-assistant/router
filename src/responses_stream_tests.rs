@@ -68,3 +68,32 @@ fn codex_chat_stream_holds_a_cross_chunk_stop_sequence() {
     assert!(joined.contains("\"finish_reason\":\"stop\""));
     assert!(joined.ends_with("data: [DONE]\n\n"));
 }
+
+#[test]
+fn codex_chat_stream_translates_incomplete_as_length() {
+    let mut translator = ResponsesChatStreamTranslator::new("gpt-5.6-sol");
+    let output = translator
+        .push(b"data: {\"type\":\"response.incomplete\",\"response\":{}}\n\n")
+        .join("");
+
+    assert!(output.contains("\"finish_reason\":\"length\""), "{output}");
+    assert!(output.ends_with("data: [DONE]\n\n"), "{output}");
+}
+
+#[test]
+fn codex_chat_stream_failed_after_deltas_emits_only_an_error_terminal() {
+    let mut translator = ResponsesChatStreamTranslator::new("gpt-5.6-sol");
+    let mut output = translator
+        .push(b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n")
+        .join("");
+    output.push_str(&translator.push(b"data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_1\",\"error\":{\"message\":\"boom\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"parameter\":\"input\",\"private_account\":\"secret\"}}}\n\ndata: [DONE]\n\n").join(""));
+
+    assert!(output.contains("partial"), "{output}");
+    assert!(output.contains("\"message\":\"boom\""), "{output}");
+    assert!(output.contains("\"type\":\"server_error\""), "{output}");
+    assert!(output.contains("\"code\":\"upstream_failed\""), "{output}");
+    assert!(output.contains("\"param\":\"input\""), "{output}");
+    assert!(!output.contains("private_account"), "{output}");
+    assert!(!output.contains("\"finish_reason\":\""), "{output}");
+    assert!(!output.contains("data: [DONE]"), "{output}");
+}

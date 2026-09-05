@@ -646,7 +646,15 @@ impl ResponsesChatStreamTranslator {
                     None,
                 )]
             }
-            Some("response.completed" | "response.incomplete" | "response.failed") => {
+            Some("response.failed") => {
+                if let Some(response) = event.get("response") {
+                    self.capture_identity(response);
+                    self.capture_usage(response);
+                }
+                self.sent_final = true;
+                vec![format!("data: {}\n\n", response_failed_error(event))]
+            }
+            Some("response.completed" | "response.incomplete") => {
                 if let Some(response) = event.get("response") {
                     self.capture_identity(response);
                     self.capture_usage(response);
@@ -782,6 +790,43 @@ impl ResponsesChatStreamTranslator {
             })
         )
     }
+}
+
+/// Return the caller-safe subset of a failed Responses event in `OpenAI`'s
+/// error envelope. Upstream response objects may contain operator metadata, so
+/// only the fields an API client can act on cross the routing boundary.
+#[must_use]
+pub(crate) fn response_failed_error(event: &Value) -> Value {
+    let upstream = event
+        .pointer("/response/error")
+        .or_else(|| event.get("error"))
+        .unwrap_or(&Value::Null);
+    let message = upstream
+        .get("message")
+        .and_then(Value::as_str)
+        .unwrap_or("upstream response failed");
+    let error_type = upstream
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("api_error");
+    let mut error = serde_json::Map::from_iter([
+        ("message".to_string(), Value::String(message.to_string())),
+        ("type".to_string(), Value::String(error_type.to_string())),
+    ]);
+    if let Some(value) = upstream
+        .get("code")
+        .filter(|value| value.is_string() || value.is_number() || value.is_null())
+    {
+        error.insert("code".to_string(), value.clone());
+    }
+    if let Some(value) = upstream
+        .get("param")
+        .or_else(|| upstream.get("parameter"))
+        .filter(|value| value.is_string() || value.is_number() || value.is_null())
+    {
+        error.insert("param".to_string(), value.clone());
+    }
+    json!({"error": error})
 }
 
 fn extract_sse_data(block: &str) -> String {

@@ -272,7 +272,15 @@ impl AnthropicStreamTranslator {
                     })));
                 }
             }
-            "response.completed" | "response.incomplete" | "response.failed" => {
+            "response.failed" => {
+                let error = crate::responses::response_failed_error(event)["error"].clone();
+                self.finished = true;
+                frames.push(anthropic_frame(
+                    "error",
+                    &json!({"type": "error", "error": error}),
+                ));
+            }
+            "response.completed" | "response.incomplete" => {
                 let response = event.get("response").unwrap_or(&Value::Null);
                 self.absorb_usage(response.get("usage"));
                 if self.stop_reason.is_none() {
@@ -579,6 +587,31 @@ mod tests {
         assert!(out.contains("\"text\":\"hi\""));
         assert!(out.contains("\"output_tokens\":3"));
         assert!(out.contains("event: message_stop"));
+    }
+
+    #[test]
+    fn incomplete_responses_stream_uses_max_tokens() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let out = joined(&t.push(b"data: {\"type\":\"response.incomplete\",\"response\":{}}\n\n"));
+
+        assert!(out.contains("\"stop_reason\":\"max_tokens\""), "{out}");
+        assert!(out.contains("event: message_stop"), "{out}");
+    }
+
+    #[test]
+    fn failed_responses_stream_after_deltas_emits_anthropic_error() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let mut out = joined(&t.push(
+            b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
+        ));
+        out.push_str(&joined(&t.push(b"data: {\"type\":\"response.failed\",\"response\":{\"error\":{\"message\":\"boom\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\"}}}\n\ndata: [DONE]\n\n")));
+
+        assert!(out.contains("partial"), "{out}");
+        assert!(out.contains("event: error"), "{out}");
+        assert!(out.contains("\"message\":\"boom\""), "{out}");
+        assert!(out.contains("\"code\":\"upstream_failed\""), "{out}");
+        assert!(!out.contains("\"stop_reason\":\""), "{out}");
+        assert!(!out.contains("event: message_stop"), "{out}");
     }
 
     #[test]

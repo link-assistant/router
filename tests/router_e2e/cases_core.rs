@@ -602,3 +602,41 @@ async fn responses_stream_has_complete_named_lifecycle() {
         assert!(stream.trim_end().ends_with("data: [DONE]"));
     }
 }
+
+#[tokio::test]
+async fn codex_http_200_response_failure_stays_failed_on_client_streams() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    for (path, body) in [
+        (
+            "/api/services/openai/v1/chat/completions",
+            json!({"model":"gpt-5","messages":[{"role":"user","content":"response-failure-e2e"}],"stream":true}),
+        ),
+        (
+            "/api/services/anthropic/v1/messages",
+            json!({"model":"gpt-5","max_tokens":64,"messages":[{"role":"user","content":"response-failure-e2e"}],"stream":true}),
+        ),
+    ] {
+        let response = router
+            .post(path, &body)
+            .send()
+            .await
+            .expect("failed stream");
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        let stream = response.text().await.expect("failed stream body");
+        assert!(
+            stream.contains("synthetic stream failure"),
+            "{path}: {stream}"
+        );
+        assert!(stream.contains("upstream_failed"), "{path}: {stream}");
+        assert!(!stream.contains("private_account"), "{path}: {stream}");
+        assert!(!stream.contains("data: [DONE]"), "{path}: {stream}");
+        if path.ends_with("/v1/messages") {
+            assert!(stream.contains("event: error"), "{stream}");
+            assert!(!stream.contains("event: message_stop"), "{stream}");
+            assert!(!stream.contains("\"stop_reason\":\""), "{stream}");
+        } else {
+            assert!(stream.contains("\"error\":"), "{stream}");
+            assert!(!stream.contains("\"finish_reason\":\""), "{stream}");
+        }
+    }
+}

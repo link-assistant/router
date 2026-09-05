@@ -550,6 +550,16 @@ fn anthropic_stream() -> String {
 }
 
 fn codex_stream_for_request(request: &Value) -> String {
+    if request.to_string().contains("response-failure-e2e") {
+        return [
+            "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
+            "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"error\":{\"message\":\"synthetic stream failure\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}}}\n\n",
+            "data: [DONE]\n\n",
+        ]
+        .concat();
+    }
     let has_server_search = request["tools"]
         .as_array()
         .is_some_and(|tools| tools.iter().any(|tool| tool["type"] == "web_search"));
