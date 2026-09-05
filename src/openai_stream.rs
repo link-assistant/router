@@ -8,10 +8,7 @@ use std::collections::BTreeMap;
 
 use serde_json::{Value, json};
 
-use super::{
-    done_frame, extract_sse_data, find_sse_separator, map_finish_reason, response_sse_frame,
-    sse_frame,
-};
+use super::{done_frame, extract_sse_data, map_finish_reason, response_sse_frame, sse_frame};
 
 /// OpenAI-compatible stream response shape to emit while translating
 /// Anthropic SSE events.
@@ -28,7 +25,7 @@ pub struct OpenAIStreamTranslator {
     served_model: String,
     id: String,
     created: i64,
-    buffer: String,
+    buffer: Vec<u8>,
     sent_chat_role: bool,
     sent_response_created: bool,
     sent_final: bool,
@@ -90,7 +87,7 @@ impl OpenAIStreamTranslator {
             served_model: resolved_model.to_string(),
             id: format!("{prefix}-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
-            buffer: String::new(),
+            buffer: Vec::new(),
             sent_chat_role: false,
             sent_response_created: false,
             sent_final: false,
@@ -113,11 +110,8 @@ impl OpenAIStreamTranslator {
 
     /// Push raw upstream bytes and return zero or more `OpenAI` SSE frames.
     pub fn push(&mut self, chunk: &[u8]) -> Vec<String> {
-        self.buffer.push_str(&String::from_utf8_lossy(chunk));
         let mut frames = Vec::new();
-        while let Some((idx, separator_len)) = find_sse_separator(&self.buffer) {
-            let block = self.buffer[..idx].to_string();
-            self.buffer.drain(..idx + separator_len);
+        for block in crate::sse::push_blocks(&mut self.buffer, chunk) {
             frames.extend(self.translate_block(&block));
         }
         frames

@@ -510,7 +510,7 @@ pub struct ResponsesChatStreamTranslator {
     model: String,
     id: String,
     created: i64,
-    buffer: String,
+    buffer: Vec<u8>,
     sent_role: bool,
     sent_final: bool,
     include_usage: bool,
@@ -530,7 +530,7 @@ impl ResponsesChatStreamTranslator {
             model: requested_model.to_string(),
             id: format!("chatcmpl-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
-            buffer: String::new(),
+            buffer: Vec::new(),
             sent_role: false,
             sent_final: false,
             include_usage: false,
@@ -566,11 +566,8 @@ impl ResponsesChatStreamTranslator {
 
     /// Push raw upstream bytes and return complete Chat Completions SSE frames.
     pub fn push(&mut self, chunk: &[u8]) -> Vec<String> {
-        self.buffer.push_str(&String::from_utf8_lossy(chunk));
         let mut frames = Vec::new();
-        while let Some((index, separator_len)) = find_sse_separator(&self.buffer) {
-            let block = self.buffer[..index].to_string();
-            self.buffer.drain(..index + separator_len);
+        for block in crate::sse::push_blocks(&mut self.buffer, chunk) {
             frames.extend(self.translate_block(&block));
         }
         frames
@@ -785,13 +782,6 @@ impl ResponsesChatStreamTranslator {
             })
         )
     }
-}
-
-fn find_sse_separator(buffer: &str) -> Option<(usize, usize)> {
-    buffer
-        .find("\r\n\r\n")
-        .map(|index| (index, 4))
-        .or_else(|| buffer.find("\n\n").map(|index| (index, 2)))
 }
 
 fn extract_sse_data(block: &str) -> String {

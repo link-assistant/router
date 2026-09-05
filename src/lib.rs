@@ -87,6 +87,7 @@ pub mod route_contract;
 pub mod security_headers;
 pub mod server_command;
 pub mod server_router;
+mod sse;
 pub mod stop_sequences;
 pub mod storage;
 pub mod subscription;
@@ -123,6 +124,8 @@ mod client_policy_tests;
 mod proxy_tests;
 #[cfg(test)]
 mod route_contract_tests;
+#[cfg(test)]
+mod sse_regression_tests;
 #[cfg(test)]
 mod token_admin_tests;
 #[cfg(test)]

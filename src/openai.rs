@@ -419,13 +419,6 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> 
     })
 }
 
-pub(crate) fn find_sse_separator(buffer: &str) -> Option<(usize, usize)> {
-    buffer
-        .find("\r\n\r\n")
-        .map(|idx| (idx, 4))
-        .or_else(|| buffer.find("\n\n").map(|idx| (idx, 2)))
-}
-
 pub(crate) fn extract_sse_data(block: &str) -> String {
     block
         .lines()

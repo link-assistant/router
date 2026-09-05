@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 
 use serde_json::{Value, json};
 
-use crate::openai::{extract_sse_data, find_sse_separator};
+use crate::openai::extract_sse_data;
 
 /// Render one Anthropic SSE frame (named event plus JSON payload).
 #[must_use]
@@ -43,7 +43,7 @@ pub struct AnthropicStreamTranslator {
     /// Client-requested model identity preserved in every response shape.
     model: String,
     id: String,
-    buffer: String,
+    buffer: Vec<u8>,
     started: bool,
     finished: bool,
     /// Index of the content block currently open, if any.
@@ -70,7 +70,7 @@ impl AnthropicStreamTranslator {
         Self {
             model: requested_model.to_string(),
             id: format!("msg_{}", uuid::Uuid::new_v4().simple()),
-            buffer: String::new(),
+            buffer: Vec::new(),
             started: false,
             finished: false,
             open_block: None,
@@ -96,11 +96,8 @@ impl AnthropicStreamTranslator {
 
     /// Push raw upstream bytes and return zero or more Anthropic SSE frames.
     pub fn push(&mut self, chunk: &[u8]) -> Vec<String> {
-        self.buffer.push_str(&String::from_utf8_lossy(chunk));
         let mut frames = Vec::new();
-        while let Some((idx, separator_len)) = find_sse_separator(&self.buffer) {
-            let block = self.buffer[..idx].to_string();
-            self.buffer.drain(..idx + separator_len);
+        for block in crate::sse::push_blocks(&mut self.buffer, chunk) {
             frames.extend(self.translate_block(&block));
         }
         frames
