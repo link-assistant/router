@@ -167,6 +167,82 @@ async fn filtered_http_contract_preserves_schema_types_timestamps_and_no_secrets
 }
 
 #[tokio::test]
+async fn empty_and_error_shaped_successes_are_unverified_over_http() {
+    for body in [json!({}), json!({"error": {"message": "denied"}})] {
+        for (provider, subscription, client) in [
+            (
+                "anthropic",
+                SubscriptionProvider::Claude,
+                crate::clients::ClientKind::ClaudeCode,
+            ),
+            (
+                "openai",
+                SubscriptionProvider::Codex,
+                crate::clients::ClientKind::Codex,
+            ),
+        ] {
+            let response_body = body.clone();
+            let vendor = axum::Router::new().fallback(move || {
+                let response_body = response_body.clone();
+                async move { axum::Json(response_body) }
+            });
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let address = listener.local_addr().unwrap();
+            let server = tokio::spawn(async move { axum::serve(listener, vendor).await.unwrap() });
+            let directory = tempfile::tempdir().unwrap();
+            let credential_home = directory.path().join(provider);
+            std::fs::create_dir_all(&credential_home).unwrap();
+            match subscription {
+                SubscriptionProvider::Claude => std::fs::write(
+                    credential_home.join(".credentials.json"),
+                    json!({"claudeAiOauth": {
+                        "accessToken": format!("{provider}-access"),
+                        "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+                    }})
+                    .to_string(),
+                )
+                .unwrap(),
+                SubscriptionProvider::Codex => std::fs::write(
+                    credential_home.join("auth.json"),
+                    json!({"tokens": {
+                        "access_token": format!("{provider}-access"),
+                        "account_id": "account"
+                    }})
+                    .to_string(),
+                )
+                .unwrap(),
+                _ => unreachable!(),
+            }
+            let mut state = AppState::for_tests(directory.path());
+            state.subscription_base_url = Some(format!("http://{address}"));
+            state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+                subscription,
+                &credential_home,
+            )];
+            state.register_credential_recovery_in(
+                directory.path(),
+                &crate::app_state::VendorClis::default(),
+            );
+            let token = issue_client(&state, client);
+
+            let (status, response) = request(
+                usage_app(state),
+                &format!("/api/usage/{provider}"),
+                Some(("authorization", format!("Bearer {token}"))),
+            )
+            .await;
+            assert_eq!(status, StatusCode::OK);
+            assert_eq!(response["subscriptions"][0]["state"], "unverified");
+            assert_eq!(
+                response["subscriptions"][0]["status"],
+                "usage_response_unverified"
+            );
+            server.abort();
+        }
+    }
+}
+
+#[tokio::test]
 async fn all_managed_client_credential_carriers_reach_the_unfiltered_route() {
     let directory = tempfile::tempdir().unwrap();
     let state = AppState::for_tests(directory.path());
@@ -216,6 +292,8 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     let app = usage_app(state);
 
     let (absent_status, absent) = request(app.clone(), "/api/usage/anthropic", None).await;
+    let (unknown_absent_status, unknown_absent) =
+        request(app.clone(), "/api/usage/not-a-provider", None).await;
     let (invalid_status, invalid) = request(
         app.clone(),
         "/api/usage/anthropic",
@@ -242,11 +320,19 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     .await;
 
     assert_eq!(absent_status, StatusCode::UNAUTHORIZED);
+    assert_eq!(unknown_absent_status, StatusCode::UNAUTHORIZED);
     assert_eq!(invalid_status, StatusCode::UNAUTHORIZED);
     assert_eq!(admin_status, StatusCode::FORBIDDEN);
     assert_eq!(wrong_provider_status, StatusCode::FORBIDDEN);
     assert_eq!(unknown_status, StatusCode::NOT_FOUND);
-    for body in [absent, invalid, admin_body, wrong_provider, unknown] {
+    for body in [
+        absent,
+        unknown_absent,
+        invalid,
+        admin_body,
+        wrong_provider,
+        unknown,
+    ] {
         let rendered = body.to_string();
         for forbidden in ["primary", "subscriptionType", "vendor-secret"] {
             assert!(
@@ -382,6 +468,93 @@ async fn rate_limited_usage_is_cached_with_the_vendor_retry_hint() {
         *hits.lock().unwrap(),
         1,
         "second request must use the cache"
+    );
+    server.abort();
+}
+
+#[tokio::test]
+async fn concurrent_identical_usage_requests_share_one_provider_probe() {
+    let hits = Arc::new(Mutex::new(0usize));
+    let entered = Arc::new(tokio::sync::Notify::new());
+    let release = Arc::new(tokio::sync::Notify::new());
+    let hits_for_server = Arc::clone(&hits);
+    let entered_for_server = Arc::clone(&entered);
+    let release_for_server = Arc::clone(&release);
+    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+        let hits = Arc::clone(&hits_for_server);
+        let entered = Arc::clone(&entered_for_server);
+        let release = Arc::clone(&release_for_server);
+        async move {
+            *hits.lock().unwrap() += 1;
+            if request.uri().path().ends_with("/usage") {
+                entered.notify_one();
+                release.notified().await;
+                axum::Json(json!({
+                    "five_hour": {"utilization": 10.0, "resets_at": "2030-01-01T00:00:00Z"}
+                }))
+            } else {
+                axum::Json(json!({"organization": {"subscription_status": "active"}}))
+            }
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, vendor).await.unwrap() });
+    let directory = tempfile::tempdir().unwrap();
+    let claude_home = directory.path().join("claude");
+    std::fs::create_dir_all(&claude_home).unwrap();
+    std::fs::write(
+        claude_home.join(".credentials.json"),
+        json!({"claudeAiOauth": {
+            "accessToken": "coalesced-access",
+            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+        }})
+        .to_string(),
+    )
+    .unwrap();
+    let mut state = AppState::for_tests(directory.path());
+    state.subscription_base_url = Some(format!("http://{address}"));
+    state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+        SubscriptionProvider::Claude,
+        &claude_home,
+    )];
+    state.register_credential_recovery_in(
+        directory.path(),
+        &crate::app_state::VendorClis::default(),
+    );
+    let token = issue_client(&state, crate::clients::ClientKind::ClaudeCode);
+    let app = usage_app(state);
+    let first_app = app.clone();
+    let first_token = token.clone();
+    let first = tokio::spawn(async move {
+        request(
+            first_app,
+            "/api/usage/anthropic",
+            Some(("authorization", format!("Bearer {first_token}"))),
+        )
+        .await
+    });
+    let second = tokio::spawn(async move {
+        request(
+            app,
+            "/api/usage/anthropic",
+            Some(("authorization", format!("Bearer {token}"))),
+        )
+        .await
+    });
+
+    entered.notified().await;
+    tokio::task::yield_now().await;
+    assert_eq!(*hits.lock().unwrap(), 1, "duplicate provider probe started");
+    release.notify_waiters();
+    for result in [first.await.unwrap(), second.await.unwrap()] {
+        assert_eq!(result.0, StatusCode::OK);
+        assert_eq!(result.1["subscriptions"][0]["state"], "available");
+    }
+    assert_eq!(
+        *hits.lock().unwrap(),
+        2,
+        "usage and profile must run once each"
     );
     server.abort();
 }

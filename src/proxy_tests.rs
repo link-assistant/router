@@ -480,6 +480,29 @@ fn retry_after_http_date_is_used_for_account_cooldown() {
     assert!(parsed <= std::time::Duration::from_secs(120));
 }
 
+#[test]
+fn retry_after_is_bounded_for_maximum_delta_and_far_future_date() {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "retry-after",
+        HeaderValue::from_static("18446744073709551615"),
+    );
+    assert_eq!(
+        retry_after_duration(&headers),
+        Some(crate::request_routing::MAX_RETRY_AFTER)
+    );
+
+    let retry_at = chrono::Utc::now() + chrono::Duration::days(3650);
+    headers.insert(
+        "retry-after",
+        HeaderValue::from_str(&retry_at.to_rfc2822()).unwrap(),
+    );
+    assert_eq!(
+        retry_after_duration(&headers),
+        Some(crate::request_routing::MAX_RETRY_AFTER)
+    );
+}
+
 #[tokio::test]
 async fn budget_errors_distinguish_limits_from_storage_failures() {
     let limited =

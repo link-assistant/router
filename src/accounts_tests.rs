@@ -153,6 +153,29 @@ fn cooldown_skips_unhealthy_account() {
 }
 
 #[test]
+fn unbounded_vendor_cooldown_is_clamped_without_panicking() {
+    let directory = tempdir("bounded-cooldown");
+    write_creds(&directory, "token");
+    let router = AccountRouter::new(
+        directory,
+        &[],
+        SelectionStrategy::RoundRobin,
+        Duration::from_secs(60),
+    );
+
+    router.report_failure_with_retry_after(
+        "primary",
+        "rate limited",
+        Some(Duration::from_secs(u64::MAX)),
+    );
+    let remaining = router.health_snapshot()[0]
+        .cooldown_remaining
+        .expect("bounded cooldown");
+    assert!(remaining <= crate::request_routing::MAX_RETRY_AFTER);
+    assert!(remaining > Duration::from_secs(23 * 60 * 60));
+}
+
+#[test]
 fn no_healthy_returns_error() {
     let a = tempdir("a2");
     write_creds(&a, "tok-a");

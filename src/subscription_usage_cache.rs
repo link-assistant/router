@@ -1,7 +1,7 @@
 //! Credential-generation-bound caching for subscription usage probes.
 
 use std::collections::HashMap;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use sha2::{Digest as _, Sha256};
@@ -30,6 +30,7 @@ struct CacheKey {
 }
 
 static CACHE: OnceLock<Mutex<HashMap<CacheKey, CacheEntry>>> = OnceLock::new();
+static IN_FLIGHT: OnceLock<Mutex<HashMap<CacheKey, Arc<tokio::sync::Mutex<()>>>>> = OnceLock::new();
 
 enum PreparedProbe {
     OAuth {
@@ -56,16 +57,70 @@ pub(super) async fn cached_or_probe_at(
     provider: UsageProvider,
     refresh_url_override: Option<&str>,
 ) -> ProbeResult {
-    let prepared = match prepare_probe(state, principal, provider).await {
-        Ok(prepared) => prepared,
-        Err(result) => return result,
-    };
-    let key = CacheKey {
+    loop {
+        let prepared = match prepare_probe(state, principal, provider).await {
+            Ok(prepared) => prepared,
+            Err(result) => return result,
+        };
+        let key = cache_key(state, subject, provider, &prepared);
+        if let Some(value) = cached_value(&key) {
+            return ProbeResult::Usage(Box::new(value));
+        }
+        let gate = IN_FLIGHT
+            .get_or_init(Default::default)
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .entry(key.clone())
+            .or_insert_with(|| Arc::new(tokio::sync::Mutex::new(())))
+            .clone();
+        let guard = gate.lock().await;
+
+        // A preceding caller can refresh the credential while this caller is
+        // waiting. Rebind to the current generation instead of probing the
+        // predecessor after the first result was already published.
+        let prepared = match prepare_probe(state, principal, provider).await {
+            Ok(prepared) => prepared,
+            Err(result) => {
+                drop(guard);
+                release_gate(&key, &gate);
+                return result;
+            }
+        };
+        let current_key = cache_key(state, subject, provider, &prepared);
+        if current_key != key {
+            drop(guard);
+            release_gate(&key, &gate);
+            continue;
+        }
+        if let Some(value) = cached_value(&key) {
+            drop(guard);
+            release_gate(&key, &gate);
+            return ProbeResult::Usage(Box::new(value));
+        }
+
+        let result = run_probe(state, principal, provider, prepared, refresh_url_override).await;
+        cache_result(state, subject, principal, provider, &key, &result).await;
+        drop(guard);
+        release_gate(&key, &gate);
+        return result;
+    }
+}
+
+fn cache_key(
+    state: &AppState,
+    subject: &str,
+    provider: UsageProvider,
+    prepared: &PreparedProbe,
+) -> CacheKey {
+    CacheKey {
         subject: subject.to_string(),
         provider,
-        generation: probe_generation(state, &prepared),
-    };
-    if let Some(value) = CACHE
+        generation: probe_generation(state, prepared),
+    }
+}
+
+fn cached_value(key: &CacheKey) -> Option<SubscriptionUsage> {
+    CACHE
         .get_or_init(Default::default)
         .lock()
         .ok()
@@ -73,10 +128,29 @@ pub(super) async fn cached_or_probe_at(
             cache.retain(|_, entry| entry.expires > Instant::now());
             cache.get(&key).map(|entry| entry.value.clone())
         })
+}
+
+fn release_gate(key: &CacheKey, gate: &Arc<tokio::sync::Mutex<()>>) {
+    let mut in_flight = IN_FLIGHT
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if in_flight
+        .get(key)
+        .is_some_and(|current| Arc::ptr_eq(current, gate))
     {
-        return ProbeResult::Usage(Box::new(value));
+        in_flight.remove(key);
     }
-    let result = match prepared {
+}
+
+async fn run_probe(
+    state: &AppState,
+    principal: &str,
+    provider: UsageProvider,
+    prepared: PreparedProbe,
+    refresh_url_override: Option<&str>,
+) -> ProbeResult {
+    match prepared {
         PreparedProbe::OAuth {
             subscription,
             token,
@@ -93,7 +167,17 @@ pub(super) async fn cached_or_probe_at(
         }
         PreparedProbe::ZAi(provider) => probe_zai_provider(state, &provider).await,
         PreparedProbe::Lefine(_) => ProbeResult::Usage(Box::new(unavailable_lefine_usage())),
-    };
+    }
+}
+
+async fn cache_result(
+    state: &AppState,
+    subject: &str,
+    principal: &str,
+    provider: UsageProvider,
+    key: &CacheKey,
+    result: &ProbeResult,
+) {
     if let ProbeResult::Usage(value) = &result {
         // A rejected access token may have been refreshed and durably replaced
         // during the probe. Bind the cached result to the successor now stored
@@ -119,16 +203,17 @@ pub(super) async fn cached_or_probe_at(
             Duration::from_secs,
         );
         if let Ok(mut cache) = CACHE.get_or_init(Default::default).lock() {
+            let now = Instant::now();
+            let ttl = crate::request_routing::bounded_retry_after(ttl.max(Duration::from_secs(30)));
             cache.insert(
                 insert_key,
                 CacheEntry {
                     value: value.as_ref().clone(),
-                    expires: Instant::now() + ttl.max(Duration::from_secs(30)),
+                    expires: now.checked_add(ttl).unwrap_or(now),
                 },
             );
         }
     }
-    result
 }
 
 async fn prepare_probe(

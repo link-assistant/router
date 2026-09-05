@@ -4,6 +4,8 @@ use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use base64::Engine as _;
+use bytes::{Bytes, BytesMut};
+use futures_util::StreamExt as _;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -12,7 +14,7 @@ use crate::client_policy::ClientProtocol;
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 const SCHEMA_VERSION: u8 = 1;
-const MAX_VENDOR_BODY: usize = 2 * 1024 * 1024;
+pub(crate) const MAX_USAGE_BODY: usize = 2 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, clap::ValueEnum)]
 pub enum UsageProvider {
@@ -143,6 +145,34 @@ enum VendorResponse {
     Unavailable,
 }
 
+#[derive(Debug)]
+pub(crate) enum BoundedBodyError {
+    TooLarge,
+    Read,
+}
+
+pub(crate) async fn bounded_response_bytes(
+    response: reqwest::Response,
+    maximum: usize,
+) -> Result<Bytes, BoundedBodyError> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > maximum as u64)
+    {
+        return Err(BoundedBodyError::TooLarge);
+    }
+    let mut bytes = BytesMut::new();
+    let mut stream = response.bytes_stream();
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|_| BoundedBodyError::Read)?;
+        if bytes.len().saturating_add(chunk.len()) > maximum {
+            return Err(BoundedBodyError::TooLarge);
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    Ok(bytes.freeze())
+}
+
 /// `GET /api/usage` — every configured subscription visible to this token.
 pub async fn usage(
     State(state): State<AppState>,
@@ -159,10 +189,7 @@ pub async fn usage_provider(
     Path(provider): Path<String>,
     headers: HeaderMap,
 ) -> Response {
-    let Some(provider) = parse_provider(&provider) else {
-        return error(StatusCode::NOT_FOUND, "unknown usage provider");
-    };
-    usage_impl(state, uri.path(), headers, Some(provider)).await
+    usage_impl(state, uri.path(), headers, Some(&provider)).await
 }
 
 fn parse_provider(provider: &str) -> Option<UsageProvider> {
@@ -179,7 +206,7 @@ async fn usage_impl(
     state: AppState,
     path: &str,
     headers: HeaderMap,
-    selected: Option<UsageProvider>,
+    selected: Option<&str>,
 ) -> Response {
     let claims = match crate::proxy::authenticate_client(&state, &headers) {
         Ok(claims) => claims,
@@ -197,6 +224,14 @@ async fn usage_impl(
             "request evidence does not match the token's managed-client binding",
         );
     }
+
+    let selected = match selected {
+        Some(name) => match parse_provider(name) {
+            Some(provider) => Some(provider),
+            None => return error(StatusCode::NOT_FOUND, "unknown usage provider"),
+        },
+        None => None,
+    };
 
     let providers = selected.map_or_else(|| UsageProvider::ALL.to_vec(), |one| vec![one]);
     let mut subscriptions = Vec::new();
@@ -416,6 +451,9 @@ async fn probe_anthropic(
     let mut result = empty_usage(UsageProvider::Anthropic);
     match usage {
         VendorResponse::Json(value) => {
+            if !recognizable_anthropic_usage(&value) {
+                return unverified_usage(UsageProvider::Anthropic);
+            }
             result.state = UsageState::Available;
             result.status = "available".into();
             result.windows = anthropic_windows(&value);
@@ -472,6 +510,9 @@ async fn probe_openai(
     .await;
     match response {
         VendorResponse::Json(value) => {
+            if !recognizable_openai_usage(&value) {
+                return unverified_usage(UsageProvider::OpenAi);
+            }
             let mut usage = normalize_openai(&value, token);
             if usage.plan.is_none() {
                 usage.plan.clone_from(&metadata.plan);
@@ -635,11 +676,38 @@ async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {
     if !status.is_success() {
         return VendorResponse::Unavailable;
     }
-    let bytes = match response.bytes().await {
-        Ok(bytes) if bytes.len() <= MAX_VENDOR_BODY => bytes,
+    let bytes = match bounded_response_bytes(response, MAX_USAGE_BODY).await {
+        Ok(bytes) => bytes,
         _ => return VendorResponse::Malformed,
     };
     serde_json::from_slice(&bytes).map_or(VendorResponse::Malformed, VendorResponse::Json)
+}
+
+fn recognizable_anthropic_usage(value: &Value) -> bool {
+    [
+        "five_hour",
+        "seven_day",
+        "seven_day_sonnet",
+        "seven_day_oauth_apps",
+    ]
+    .into_iter()
+    .filter_map(|name| value.get(name).and_then(Value::as_object))
+    .any(|window| window.contains_key("utilization") || window.contains_key("resets_at"))
+}
+
+fn recognizable_openai_usage(value: &Value) -> bool {
+    value
+        .get("rate_limit")
+        .and_then(Value::as_object)
+        .is_some_and(|value| !value.is_empty())
+        || value
+            .get("additional_rate_limits")
+            .and_then(Value::as_array)
+            .is_some_and(|value| !value.is_empty())
+        || value
+            .get("credits")
+            .and_then(Value::as_object)
+            .is_some_and(|value| !value.is_empty())
 }
 
 fn anthropic_windows(value: &Value) -> Vec<UsageWindow> {
@@ -869,6 +937,12 @@ fn empty_usage(provider: UsageProvider) -> SubscriptionUsage {
         subscription_created: None,
         retry_after_seconds: None,
     }
+}
+
+fn unverified_usage(provider: UsageProvider) -> SubscriptionUsage {
+    let mut result = empty_usage(provider);
+    result.status = "usage_response_unverified".into();
+    result
 }
 
 fn vendor_failure(provider: UsageProvider, failure: &VendorResponse) -> SubscriptionUsage {

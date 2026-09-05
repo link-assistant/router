@@ -641,7 +641,10 @@ impl AccountRouter {
             .cooldown_until
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let proposed = Instant::now() + duration;
+        let now = Instant::now();
+        let proposed = now
+            .checked_add(crate::request_routing::bounded_retry_after(duration))
+            .unwrap_or(now);
         if guard.is_none_or(|current| current < proposed) {
             *guard = Some(proposed);
         }

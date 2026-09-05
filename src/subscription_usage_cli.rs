@@ -11,6 +11,23 @@ pub async fn run(
     provider: Option<UsageProvider>,
     json: bool,
 ) -> ExitCode {
+    run_with_limit(
+        base_url,
+        token,
+        provider,
+        json,
+        crate::subscription_usage::MAX_USAGE_BODY,
+    )
+    .await
+}
+
+async fn run_with_limit(
+    base_url: &str,
+    token: Option<&str>,
+    provider: Option<UsageProvider>,
+    json: bool,
+    response_limit: usize,
+) -> ExitCode {
     let Some(token) = token.filter(|token| !token.is_empty()) else {
         eprintln!(
             "error: subscription usage requires a Router client token; set LINK_ASSISTANT_TOKEN or select a server with a client token"
@@ -41,13 +58,18 @@ pub async fn run(
         }
     };
     let status = response.status();
-    let bytes = match response.bytes().await {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            eprintln!("error: could not read Router usage response: {error}");
-            return ExitCode::from(1);
-        }
-    };
+    let bytes =
+        match crate::subscription_usage::bounded_response_bytes(response, response_limit).await {
+            Ok(bytes) => bytes,
+            Err(crate::subscription_usage::BoundedBodyError::TooLarge) => {
+                eprintln!("error: Router usage response exceeded the 2 MiB limit");
+                return ExitCode::from(1);
+            }
+            Err(crate::subscription_usage::BoundedBodyError::Read) => {
+                eprintln!("error: could not read Router usage response");
+                return ExitCode::from(1);
+            }
+        };
     if !status.is_success() {
         let message = serde_json::from_slice::<serde_json::Value>(&bytes)
             .ok()
@@ -120,7 +142,15 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
             .as_deref()
             .map(|value| format!(", resets {value}"))
             .unwrap_or_default();
-        let _ = writeln!(output, "  {}: {used}{remaining}{reset}", window.name);
+        let duration = window
+            .window_seconds
+            .map(|seconds| format!(", window {}", readable_duration(seconds)))
+            .unwrap_or_default();
+        let _ = writeln!(
+            output,
+            "  {}: {used}{remaining}{duration}{reset}",
+            window.name
+        );
     }
     for limit in &usage.additional_limits {
         let _ = writeln!(output, "  limit {}:", limit.name);
@@ -137,7 +167,15 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
                 .as_deref()
                 .map(|value| format!(", resets {value}"))
                 .unwrap_or_default();
-            let _ = writeln!(output, "    {}: {used}{remaining}{reset}", window.name);
+            let duration = window
+                .window_seconds
+                .map(|seconds| format!(", window {}", readable_duration(seconds)))
+                .unwrap_or_default();
+            let _ = writeln!(
+                output,
+                "    {}: {used}{remaining}{duration}{reset}",
+                window.name
+            );
         }
         if limit.used.is_some() || limit.limit.is_some() {
             let _ = writeln!(
@@ -169,6 +207,18 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
     }
     if let Some(retry) = usage.retry_after_seconds {
         let _ = writeln!(output, "  retry after: {retry}s");
+    }
+}
+
+fn readable_duration(seconds: u64) -> String {
+    if seconds > 0 && seconds % 86_400 == 0 {
+        format!("{}d", seconds / 86_400)
+    } else if seconds > 0 && seconds % 3_600 == 0 {
+        format!("{}h", seconds / 3_600)
+    } else if seconds > 0 && seconds % 60 == 0 {
+        format!("{}m", seconds / 60)
+    } else {
+        format!("{seconds}s")
     }
 }
 

@@ -67,6 +67,52 @@ fn anthropic_fields_are_normalized_and_missing_values_stay_absent() {
 }
 
 #[test]
+fn empty_and_error_usage_envelopes_are_not_recognized_as_available() {
+    for value in [json!({}), json!({"error": {"message": "denied"}})] {
+        assert!(!recognizable_anthropic_usage(&value));
+        assert!(!recognizable_openai_usage(&value));
+    }
+    assert!(recognizable_anthropic_usage(&json!({
+        "five_hour": {"utilization": 10.0}
+    })));
+    assert!(recognizable_openai_usage(&json!({
+        "rate_limit": {"primary_window": {"used_percent": 10.0}}
+    })));
+}
+
+#[tokio::test]
+async fn bounded_body_reader_rejects_declared_and_streamed_overflow() {
+    async fn fixed() -> impl IntoResponse {
+        ([("content-length", "5")], "abcde")
+    }
+    async fn chunked() -> impl IntoResponse {
+        Body::from_stream(futures_util::stream::iter([
+            Ok::<_, std::io::Error>(bytes::Bytes::from_static(b"abc")),
+            Ok(bytes::Bytes::from_static(b"de")),
+        ]))
+    }
+    let app = axum::Router::new()
+        .route("/fixed", get(fixed))
+        .route("/chunked", get(chunked));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let client = reqwest::Client::new();
+    for path in ["fixed", "chunked"] {
+        let response = client
+            .get(format!("http://{address}/{path}"))
+            .send()
+            .await
+            .unwrap();
+        assert!(matches!(
+            bounded_response_bytes(response, 4).await,
+            Err(BoundedBodyError::TooLarge)
+        ));
+    }
+    server.abort();
+}
+
+#[test]
 fn invalid_vendor_percentages_are_omitted_instead_of_published() {
     for invalid in [f64::NAN, f64::INFINITY, -1.0, 100.1] {
         let window = window_from("invalid", Some(invalid), None, None);

@@ -51,8 +51,8 @@ fn human_output_preserves_every_present_limit_and_warning() {
         "openai",
         "status: available",
         "plan: pro",
-        "20.0% used, 80.0% remaining, resets 2030-01-01T00:00:00Z",
-        "40.0% used, 60.0% remaining, resets 2030-01-02T00:00:00Z",
+        "20.0% used, 80.0% remaining, window 5m, resets 2030-01-01T00:00:00Z",
+        "40.0% used, 60.0% remaining, window 10m, resets 2030-01-02T00:00:00Z",
         "amount: 2 / 10",
         "credits: overage limit reached",
         "subscription ends: 2031-01-01T00:00:00Z",
@@ -155,4 +155,41 @@ async fn selected_provider_request_carries_the_router_token_in_all_supported_car
     assert_eq!(headers["x-api-key"], "router-client-token");
     assert_eq!(headers["x-goog-api-key"], "router-client-token");
     server.abort();
+}
+
+#[tokio::test]
+async fn cli_rejects_declared_and_streamed_usage_bodies_while_reading() {
+    for chunked in [false, true] {
+        let app = axum::Router::new().fallback(move || async move {
+            let body = if chunked {
+                axum::body::Body::from_stream(futures_util::stream::iter([
+                    Ok::<_, std::io::Error>(bytes::Bytes::from_static(b"abc")),
+                    Ok(bytes::Bytes::from_static(b"de")),
+                ]))
+            } else {
+                axum::body::Body::from("abcde")
+            };
+            let mut response = axum::response::Response::new(body);
+            if !chunked {
+                response
+                    .headers_mut()
+                    .insert("content-length", "5".parse().unwrap());
+            }
+            response
+        });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let exit = run_with_limit(
+            &format!("http://{address}"),
+            Some("router-client-token"),
+            Some(UsageProvider::OpenAi),
+            true,
+            4,
+        )
+        .await;
+        assert_eq!(exit, ExitCode::from(1), "chunked={chunked}");
+        server.abort();
+    }
 }
