@@ -151,6 +151,77 @@ fn listener_eligibility_is_a_security_boundary() {
 }
 
 #[test]
+fn codex_remote_control_has_only_its_seven_canonical_service_routes() {
+    use http::Method;
+
+    let canonical = [
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/server",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/enroll",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/refresh",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/pair",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/pair/status",
+        ),
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/environments/env%2Fone/clients",
+        ),
+        (
+            Method::DELETE,
+            "/api/services/codex/backend-api/wham/remote/control/environments/env%2Fone/clients/client%3Fone",
+        ),
+    ];
+    for (method, path) in canonical {
+        let route = route_for_path(&method, path)
+            .unwrap_or_else(|| panic!("missing remote-control route: {method} {path}"));
+        assert_eq!(route.id, RouteId::NativeCodexBackend);
+        assert_eq!(route.class, RouteClass::Service(ServiceKind::Codex));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, ApiDialect::OpenAi);
+        assert_eq!(
+            route.listeners,
+            &[ListenerKind::Combined, ListenerKind::InferenceOnly]
+        );
+    }
+
+    for (method, path) in [
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server",
+        ),
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/server/enroll",
+        ),
+        (Method::GET, "/wham/remote/control/server"),
+        (Method::GET, "/api/codex/wham/remote/control/server"),
+        (
+            Method::GET,
+            "/api/services/openai/v1/wham/remote/control/server",
+        ),
+        (Method::GET, "/api/management/wham/remote/control/server"),
+    ] {
+        assert!(
+            route_for_path(&method, path).is_none(),
+            "noncanonical remote-control alias exists: {method} {path}"
+        );
+    }
+}
+
+#[test]
 fn removed_paths_have_no_route_contract() {
     for (method, path) in [
         (http::Method::GET, "/health"),

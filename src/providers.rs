@@ -262,6 +262,7 @@ pub struct ProviderStore {
     entitlement_policy: Arc<RwLock<crate::client_policy::SubscriptionEntitlementPolicy>>,
     provider_catalogs: Arc<RwLock<HashMap<String, CachedProviderCatalog>>>,
     response_affinities: crate::response_affinity::ResponseAffinityStore,
+    codex_remote_control: crate::codex_remote_control::CodexRemoteControlStore,
 }
 
 impl ProviderStore {
@@ -286,6 +287,9 @@ impl ProviderStore {
             .collect();
         let response_affinities = crate::response_affinity::ResponseAffinityStore::open(data_dir)
             .map_err(|error| ProviderError::Invalid(error.to_string()))?;
+        let codex_remote_control =
+            crate::codex_remote_control::CodexRemoteControlStore::open(data_dir, token_secret)
+                .map_err(|error| ProviderError::Invalid(error.to_string()))?;
         Ok(Self {
             lock_path,
             path,
@@ -296,6 +300,7 @@ impl ProviderStore {
             )),
             provider_catalogs: Arc::new(RwLock::new(HashMap::new())),
             response_affinities,
+            codex_remote_control,
         })
     }
 
@@ -303,6 +308,12 @@ impl ProviderStore {
         &self,
     ) -> &crate::response_affinity::ResponseAffinityStore {
         &self.response_affinities
+    }
+
+    pub(crate) const fn codex_remote_control(
+        &self,
+    ) -> &crate::codex_remote_control::CodexRemoteControlStore {
+        &self.codex_remote_control
     }
 
     /// Install the boot-validated consumer-subscription bridge policy.
@@ -775,6 +786,12 @@ fn encrypt_api_key(api_key: &str, token_secret: &str) -> Result<String, Provider
     Ok(format!("aes256gcm:{}", STANDARD.encode(packed)))
 }
 
+/// Encrypt another Router-owned secret with the same deployment key used for
+/// provider credentials. The format stays private to durable Router stores.
+pub(crate) fn seal_secret(secret: &str, token_secret: &str) -> Result<String, ProviderError> {
+    encrypt_api_key(secret, token_secret)
+}
+
 /// The key a published stand-in would have produced, for recognition only.
 ///
 /// Never used to encrypt: `cipher` refuses every placeholder, which is the
@@ -826,6 +843,11 @@ fn decrypt_api_key(encrypted: &str, token_secret: &str) -> Result<String, Provid
     };
     String::from_utf8(plaintext)
         .map_err(|e| ProviderError::Crypto(format!("secret is not UTF-8: {e}")))
+}
+
+/// Decrypt a value produced by [`seal_secret`].
+pub(crate) fn open_secret(encrypted: &str, token_secret: &str) -> Result<String, ProviderError> {
+    decrypt_api_key(encrypted, token_secret)
 }
 
 fn encode_provider_lenv<'a>(

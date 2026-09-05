@@ -40,6 +40,7 @@ pub mod client_policy;
 pub mod clients;
 mod codex_cloudflare_cookies;
 pub mod codex_identity;
+mod codex_remote_control;
 pub mod config;
 pub mod config_defaults;
 pub mod configure;
@@ -143,6 +144,8 @@ mod anthropic_bridge_tests;
 mod bridge_request_tests;
 #[cfg(test)]
 mod client_policy_tests;
+#[cfg(test)]
+mod codex_remote_control_tests;
 #[cfg(test)]
 mod proxy_tests;
 #[cfg(test)]

@@ -29,10 +29,10 @@ enum Service {
     CodexBackend,
 }
 
-struct Target {
-    client: reqwest::Client,
-    url: String,
-    headers: HeaderMap,
+pub struct Target {
+    pub client: reqwest::Client,
+    pub url: String,
+    pub headers: HeaderMap,
 }
 
 pub async fn openai(State(state): State<AppState>, request: Request) -> Response {
@@ -59,6 +59,10 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     else {
         return not_found();
     };
+    if service == Service::CodexBackend && crate::codex_remote_control::is_remote_control_path(path)
+    {
+        return crate::codex_remote_control::forward(state, request).await;
+    }
     let headers = request.headers().clone();
     let claims = match crate::proxy::authenticate_client_error(&state, &headers) {
         Ok(claims) => claims,
@@ -425,7 +429,7 @@ fn codex_history_notes_operation(path: &str) -> Option<&'static str> {
     }
 }
 
-async fn selected_subscription(
+pub async fn selected_subscription(
     state: &AppState,
     headers: &HeaderMap,
     claims: &crate::token::TokenClaims,
@@ -531,7 +535,12 @@ async fn selected_subscription(
     Ok(selected)
 }
 
-async fn relay_http(state: &AppState, method: &Method, body: Bytes, target: Target) -> Response {
+pub async fn relay_http(
+    state: &AppState,
+    method: &Method,
+    body: Bytes,
+    target: Target,
+) -> Response {
     let request = target
         .client
         .request(
@@ -567,7 +576,7 @@ fn is_websocket(headers: &HeaderMap) -> bool {
         .is_some_and(|value| value.eq_ignore_ascii_case("websocket"))
 }
 
-async fn upgrade_websocket(state: AppState, request: Request, target: Target) -> Response {
+pub async fn upgrade_websocket(state: AppState, request: Request, target: Target) -> Response {
     let (mut parts, _) = request.into_parts();
     let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {
         Ok(upgrade) => upgrade,
