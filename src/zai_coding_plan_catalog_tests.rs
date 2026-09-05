@@ -62,6 +62,26 @@ async fn live_provider_add_merges_without_clearing_the_subscription_catalog() {
         .collect::<Vec<_>>();
     assert!(ids.contains(&"future-claude"), "{after}");
     assert!(ids.contains(&"future-saffron-91"), "{after}");
+    assert_eq!(ids.iter().filter(|id| **id == "future-claude").count(), 1);
+    assert_eq!(
+        ids.iter().filter(|id| **id == "future-saffron-91").count(),
+        1
+    );
+    for router_only in [
+        "canonical_id",
+        "native_id",
+        "provider",
+        "router_fetched_at",
+        "using_fallback",
+        "healthy_providers",
+        "degraded_providers",
+        "degraded_reasons",
+        "catalog_conflicts",
+        "owned_by",
+    ] {
+        assert!(after.get(router_only).is_none(), "{after}");
+        assert!(!after.to_string().contains(router_only), "{after}");
+    }
     assert_eq!(requests.lock().unwrap().len(), 1);
     handle.abort();
 }
@@ -105,13 +125,8 @@ async fn failed_zai_refresh_keeps_the_live_claude_catalog() {
     let (status, body) = claude_catalog_response(state).await;
     assert_eq!(status, StatusCode::OK);
     assert!(body.to_string().contains("future-claude"), "{body}");
-    assert!(
-        body["degraded_providers"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|v| v == "z.ai")
-    );
+    assert!(body.get("degraded_providers").is_none(), "{body}");
+    assert!(!body.to_string().contains("z.ai"), "{body}");
     assert!(!body.to_string().contains("private body"), "{body}");
     handle.abort();
 }
@@ -175,8 +190,8 @@ async fn rejected_health_returns_a_successful_empty_catalog_without_hiding_other
     assert!(body.contains("ordinary-model"), "{body}");
     assert!(!body.contains("\"id\":\"glm-5\""), "{body}");
     assert!(
-        body.contains("z.ai"),
-        "degraded provider remains diagnosable: {body}"
+        !body.contains("z.ai"),
+        "native catalog leaked provider health: {body}"
     );
     assert_eq!(requests.lock().unwrap().len(), 2);
     handle.abort();

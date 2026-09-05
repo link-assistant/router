@@ -423,7 +423,7 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
     let names = model_names(&gemini_catalog);
     for model in CODEX_MODELS.iter().chain(CLAUDE_MODELS.iter()) {
         assert!(
-            names.contains(&format!("models/{model}")),
+            names.contains(&(*model).to_string()),
             "{model} missing from the Gemini namespace: {names:?}"
         );
     }
@@ -432,7 +432,7 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
     let mut expected = CODEX_MODELS
         .iter()
         .chain(CLAUDE_MODELS.iter())
-        .map(|model| format!("models/{model}"))
+        .map(|model| (*model).to_string())
         .collect::<Vec<_>>();
     sorted_gemini.sort();
     expected.sort();
@@ -440,6 +440,27 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
         sorted_gemini, expected,
         "the signed Gemini catalog must advertise exactly its permitted providers"
     );
+    for model in gemini_catalog["models"].as_array().unwrap() {
+        assert_eq!(model.as_object().unwrap().len(), 1, "{model}");
+    }
+    let rendered = gemini_catalog.to_string();
+    for router_only in [
+        "canonical_id",
+        "native_id",
+        "provider",
+        "router_fetched_at",
+        "using_fallback",
+        "healthy_providers",
+        "degraded_providers",
+        "degraded_reasons",
+        "catalog_conflicts",
+        "Link.Assistant.Router",
+    ] {
+        assert!(
+            !rendered.contains(router_only),
+            "leaked {router_only}: {rendered}"
+        );
+    }
 }
 
 /// A catalog discovered for an old account must disappear from every model
@@ -459,9 +480,9 @@ async fn gemini_omits_a_catalog_owned_by_another_account() {
     let gemini_names = model_names(&gemini_catalog);
 
     assert!(
-        !gemini_names.iter().any(|model| CODEX_MODELS
+        !gemini_names
             .iter()
-            .any(|codex| model == &format!("models/{codex}"))),
+            .any(|model| CODEX_MODELS.contains(&model.as_str())),
         "a prior account's Codex catalog must not be advertised: {gemini_names:?}"
     );
 
@@ -581,9 +602,9 @@ async fn gemini_list_models_omits_disconnected_subscriptions() {
     let (status, catalog) = router.get_json("/api/services/gemini/v1beta/models").await;
     assert_eq!(status, StatusCode::OK);
     let names = model_names(&catalog);
-    assert!(names.contains(&"models/gpt-5.4-mini".to_string()));
+    assert!(names.contains(&"gpt-5.4-mini".to_string()));
     assert!(
-        !names.contains(&"models/claude-opus-4-7".to_string()),
+        !names.contains(&"claude-opus-4-7".to_string()),
         "a disconnected Claude subscription must not be advertised: {names:?}"
     );
 }
@@ -596,13 +617,8 @@ async fn gemini_get_model_resolves_a_codex_model_and_rejects_unknown_ones() {
         .get_json("/api/services/gemini/v1beta/models/gpt-5.4-mini")
         .await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(model["name"], "models/gpt-5.4-mini");
-    assert!(
-        model["supportedGenerationMethods"]
-            .as_array()
-            .expect("generation methods")
-            .contains(&json!("generateContent"))
-    );
+    assert_eq!(model["name"], "gpt-5.4-mini");
+    assert!(model.get("supportedGenerationMethods").is_none());
 
     let (status, error) = router
         .get_json("/api/services/gemini/v1beta/models/totally-made-up-xyz")

@@ -148,7 +148,16 @@ pub async fn models(
             catalog
         }
     };
-    (StatusCode::OK, axum::Json(models)).into_response()
+    match super::native_catalog::project(path, uri.query(), &models) {
+        Ok(Some(native)) => (StatusCode::OK, axum::Json(native)).into_response(),
+        Ok(None) => (StatusCode::OK, axum::Json(models)).into_response(),
+        Err(error) => crate::api_error::PresentedError {
+            status: error.status,
+            error_type: error.error_type,
+            message: &error.message,
+        }
+        .render(crate::api_error::dialect_for_path(path)),
+    }
 }
 
 async fn append_gonka_models(

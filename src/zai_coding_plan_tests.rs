@@ -728,8 +728,23 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
         assert!(body.contains("future-saffron-91"), "{client}: {body}");
         assert!(!body.contains("claude-zai-"), "{client}: {body}");
         assert!(!body.contains("z.ai/future"), "{client}: {body}");
-        assert!(body.contains(r#""owned_by":"z.ai""#));
-        assert!(body.contains("display_name"));
+        for router_only in [
+            "canonical_id",
+            "native_id",
+            "provider",
+            "router_fetched_at",
+            "using_fallback",
+            "healthy_providers",
+            "degraded_providers",
+            "degraded_reasons",
+            "catalog_conflicts",
+            "owned_by",
+        ] {
+            assert!(
+                !body.contains(router_only),
+                "{client}: leaked {router_only}: {body}"
+            );
+        }
     }
     assert_eq!(
         requests.lock().unwrap().len(),

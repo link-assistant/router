@@ -545,12 +545,16 @@ authority.
 same Router client token carrier as that token's native client, then returns
 only healthy models compatible with its signed client kind and principal. Each
 entry carries the one lossless vendor `id` (including Gemini's `models/`
-prefix) and the canonical Router `service` path segment. Repeated
+prefix when the live provider supplies it) and the canonical Router `service`
+path segment. Repeated
 entries from one provider are deduplicated; the same exact id claimed by two
 providers returns HTTP 409 rather than choosing or inventing a qualified id.
 Provider-reported context window, output cap, modalities, pricing, and
 deprecation date are normalized when present and omitted when absent. Native
-service catalogues remain in their original protocol shapes.
+service catalogues remain in their original protocol shapes and contain no
+Router ownership, health, degradation, conflict, fetch-time, or fallback
+diagnostics. Anthropic model lists implement `after_id`, `before_id`, and
+`limit` pagination over the final visible exact-ID catalogue.
 
 `GET /api/usage` uses the same signed client binding and provider-entitlement
 matrix. It returns schema version `1` with normalized plan/status, usage

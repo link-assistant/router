@@ -42,7 +42,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
     );
     let requests = server.join().expect("mock catalog server");
     let request = &requests[0];
-    assert!(request.starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
+    assert!(request.starts_with("GET /api/models HTTP/1.1"));
     assert!(request.to_ascii_lowercase().contains(&format!(
         "authorization: bearer {}",
         token.to_ascii_lowercase()
@@ -83,7 +83,7 @@ fn claude_setup_pins_only_dynamic_boundaries_to_a_live_zai_only_catalog_model() 
         "Claude setup must fetch its live catalog"
     );
     assert!(
-        requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"),
+        requests[0].starts_with("GET /api/models HTTP/1.1"),
         "{}",
         requests[0]
     );
@@ -472,10 +472,10 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
     assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
     let requests = server.join().expect("mock server thread");
     assert!(
-        requests[0].starts_with("GET /api/services/codex/v1/models HTTP/1.1"),
+        requests[0].starts_with("GET /api/models HTTP/1.1"),
         "unexpected requests: {requests:?}"
     );
-    assert!(requests[1].starts_with("GET /api/services/codex/v1/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/models HTTP/1.1"));
     let request = &requests[2];
     assert!(request.starts_with("POST /api/services/codex/v1/responses HTTP/1.1"));
     assert!(request.contains("gpt-codex-live"));
@@ -528,8 +528,8 @@ fn claude_doctor_uses_bearer_for_catalog_and_successful_inference() {
             "Claude's recorded bearer carrier must remain bearer: {request}"
         );
     }
-    assert!(requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
-    assert!(requests[1].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
+    assert!(requests[0].starts_with("GET /api/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/models HTTP/1.1"));
     assert!(requests[2].starts_with("POST /api/services/anthropic/v1/messages HTTP/1.1"));
     assert!(requests[2].contains("claude-live"));
     assert!(
@@ -607,8 +607,8 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
         String::from_utf8_lossy(&doctor.stderr)
     );
     let requests = server.join().expect("mock server thread");
-    assert!(requests[0].starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
-    assert!(requests[1].starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
+    assert!(requests[0].starts_with("GET /api/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/models HTTP/1.1"));
     let request = &requests[2];
     assert!(request.starts_with("POST /api/services/openai/v1/chat/completions HTTP/1.1"));
     assert!(request.contains("gpt-chat-live"));

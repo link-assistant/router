@@ -378,14 +378,37 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
         ("GET", "/api/services/codex/backend-api/plugins/featured") => {
             http_response("200 OK", "application/json", r#"{"plugins":[]}"#)
         }
+        ("GET", "/api/models") => http_response(
+            "200 OK",
+            "application/json",
+            &json!({"data": models}).to_string(),
+        ),
         ("GET", path) if path == case.catalog_path => {
-            let body = json!({
-                "object": "list",
-                "data": models,
-                "has_more": false,
-                "first_id": models.first().and_then(|model| model["id"].as_str()),
-                "last_id": models.last().and_then(|model| model["id"].as_str())
-            });
+            let data = models
+                .iter()
+                .map(|model| match case.client {
+                    "claude" => json!({
+                        "id": model["id"],
+                        "type": "model",
+                        "display_name": model["display_name"],
+                        "created_at": model["created_at"],
+                    }),
+                    _ => json!({
+                        "id": model["id"],
+                        "object": "model",
+                    }),
+                })
+                .collect::<Vec<_>>();
+            let body = if case.client == "claude" {
+                json!({
+                    "data": data,
+                    "has_more": false,
+                    "first_id": data.first().and_then(|model| model["id"].as_str()),
+                    "last_id": data.last().and_then(|model| model["id"].as_str())
+                })
+            } else {
+                json!({"object": "list", "data": data})
+            };
             http_response("200 OK", "application/json", &body.to_string())
         }
         ("POST", path) if path.ends_with("/messages/count_tokens") => {
@@ -648,7 +671,9 @@ fn assert_real_client_capture(case: ClientCase) {
         case.client
     );
     assert!(
-        catalogs.iter().all(|path| path == case.catalog_path),
+        catalogs
+            .iter()
+            .all(|path| path == "/api/models" || path == case.catalog_path),
         "{} crossed into a different protocol catalog: {catalogs:?}",
         case.client
     );

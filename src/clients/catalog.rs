@@ -93,7 +93,7 @@ impl ClientManager {
     }
 }
 
-fn models_url(client: ClientKind, base_url: &str) -> String {
+fn models_url(_client: ClientKind, base_url: &str) -> String {
     let base_url = base_url.trim_end_matches('/');
     let origin = [
         "/api/services/anthropic",
@@ -111,16 +111,10 @@ fn models_url(client: ClientKind, base_url: &str) -> String {
     .into_iter()
     .find_map(|suffix| base_url.strip_suffix(suffix))
     .unwrap_or(base_url);
-    let id = match client {
-        ClientKind::Codex => crate::route_contract::RouteId::CodexModels,
-        ClientKind::GeminiCli => crate::route_contract::RouteId::GeminiModels,
-        ClientKind::QwenCode => crate::route_contract::RouteId::QwenModels,
-        ClientKind::ClaudeCode => crate::route_contract::RouteId::AnthropicModels,
-        ClientKind::Cursor | ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent => {
-            crate::route_contract::RouteId::OpenAiModels
-        }
-    };
-    format!("{origin}{}", crate::route_contract::route_template(id))
+    format!(
+        "{origin}{}",
+        crate::route_contract::route_template(crate::route_contract::RouteId::AggregateModels)
+    )
 }
 
 pub(super) fn doctor_model(

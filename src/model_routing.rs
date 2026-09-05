@@ -35,6 +35,9 @@ pub(crate) use snapshot::{
 mod catalog_snapshot;
 pub(crate) use catalog_snapshot::ConfiguredCatalogSnapshot;
 
+#[path = "model_routing_native_catalog.rs"]
+mod native_catalog;
+
 impl std::fmt::Display for ModelRouteError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -560,17 +563,6 @@ pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredC
             (provider, healthy_accounts)
         })
         .collect::<Vec<_>>();
-    let models = model_accounts
-        .iter()
-        .map(|(provider, accounts)| {
-            (
-                *provider,
-                state
-                    .model_catalogs
-                    .models_for_accounts(*provider, accounts),
-            )
-        })
-        .collect();
     let records = model_accounts
         .iter()
         .map(|(provider, accounts)| {
@@ -584,7 +576,6 @@ pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredC
         .collect();
     ConfiguredCatalogSnapshot {
         health: aggregate_provider_health(&accounts),
-        models,
         records,
     }
 }
@@ -931,3 +922,7 @@ mod provider_tests;
 #[cfg(test)]
 #[path = "model_routing_lefine_client_tests.rs"]
 mod lefine_client_tests;
+
+#[cfg(test)]
+#[path = "model_routing_native_http_tests.rs"]
+mod native_http_tests;

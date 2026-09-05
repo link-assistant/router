@@ -780,7 +780,8 @@ mod tests {
             .filter_map(|entry| entry["id"].as_str())
             .collect::<Vec<_>>();
         assert_eq!(ids, ["Exact-B", "Exact-C"]);
-        assert_eq!(catalog["healthy_providers"], json!(["gonka"]));
+        assert!(catalog.get("healthy_providers").is_none());
+        assert!(catalog.get("provider").is_none());
         let routed = crate::model_routing::route_state_with_subscription_for_client(
             &state,
             &json!({"model":"Exact-C"}),

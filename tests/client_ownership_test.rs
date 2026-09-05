@@ -59,7 +59,7 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
         String::from_utf8_lossy(&setup.stderr)
     );
     let requests = catalog.join().expect("catalog server");
-    assert!(requests[0].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(requests[0].starts_with("GET /api/models "));
     assert_eq!(
         manager
             .analyze(ClientKind::ClaudeCode)
@@ -161,7 +161,7 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
     assert!(requests[1].starts_with("GET /api/management/tokens "));
     assert!(requests[2].starts_with("POST /api/management/tokens/client "));
     assert!(requests[3].starts_with("GET /api/services/anthropic/v1/models "));
-    assert!(requests[4].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(requests[4].starts_with("GET /api/models "), "{requests:?}");
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(!stdout.contains("la_sk_selected"));
     assert!(!stdout.contains("z.ai-secret"));
@@ -231,9 +231,12 @@ fn repair_uses_disjoint_management_and_inference_origins() {
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(inference[0].starts_with("GET /api/health "));
     assert!(
-        inference[1..]
-            .iter()
-            .all(|request| request.starts_with("GET /api/services/openai/v1/models "))
+        inference[1].starts_with("GET /api/services/openai/v1/models "),
+        "{inference:?}"
+    );
+    assert!(
+        inference[2].starts_with("GET /api/models "),
+        "{inference:?}"
     );
     let rendered = fs::read_to_string(settings).expect("repaired config");
     assert!(rendered.contains(&base_url));
