@@ -90,6 +90,32 @@ pub async fn accounts_endpoint(
         .into_response()
 }
 
+/// `GET /api/management/auth/status` — provider-verified credential status.
+pub async fn credential_status_endpoint(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return admin_required();
+    }
+    let catalog_override = state
+        .upstream_provider
+        .subscription_provider()
+        .zip(state.subscription_base_url.as_deref());
+    let reports = crate::credential_status::evaluate(
+        &state.client,
+        &state.subscription_cache,
+        &state.subscription_readers,
+        catalog_override,
+    )
+    .await;
+    (
+        StatusCode::OK,
+        axum::Json(serde_json::json!({"credentials": reports})),
+    )
+        .into_response()
+}
+
 /// The credential this deployment holds when there is no account pool.
 ///
 /// An empty `accounts` array used to be the whole answer here, which the CLI

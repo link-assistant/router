@@ -41,7 +41,9 @@ use crate::api_error::malformed_json_response;
 pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 pub use crate::model_routing::models as openai_models;
-pub use crate::monitoring_api::{accounts_endpoint, metrics_endpoint, usage_endpoint};
+pub use crate::monitoring_api::{
+    accounts_endpoint, credential_status_endpoint, metrics_endpoint, usage_endpoint,
+};
 use crate::openai;
 use crate::request_routing::ResolvedUpstreamCredential;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};

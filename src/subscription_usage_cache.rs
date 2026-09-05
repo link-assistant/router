@@ -126,7 +126,7 @@ fn cached_value(key: &CacheKey) -> Option<SubscriptionUsage> {
         .ok()
         .and_then(|mut cache| {
             cache.retain(|_, entry| entry.expires > Instant::now());
-            cache.get(&key).map(|entry| entry.value.clone())
+            cache.get(key).map(|entry| entry.value.clone())
         })
 }
 

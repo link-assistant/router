@@ -34,7 +34,7 @@ containment controls local to the operator.
 - **Multi-account routing** — manage multiple account-bound credentials with session affinity, strict token pins, selection strategies, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration/revocation plus immutable managed-client and subscriber bindings
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
-- **Live observability** — Prometheus `/api/management/metrics`, JSON `/api/management/usage`, per-account state at `/api/management/accounts`, subscription health at `/api/management/health/subscriptions`
+- **Live observability** — Prometheus `/api/management/metrics`, JSON `/api/management/usage`, per-account state at `/api/management/accounts`, provider-verified credential state at `/api/management/auth/status`, subscription health at `/api/management/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
 - **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor|repair`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
@@ -647,6 +647,7 @@ method-specific verifier is configured.
 | `/api/management/metrics` | GET | Admin Prometheus text-exposition aggregate counters, plus a subscription-health gauge |
 | `/api/management/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
 | `/api/management/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
+| `/api/management/auth/status` | GET | Admin-only provider acceptance for every configured subscription credential; uses non-inference catalog probes |
 
 `/api/management/metrics` deliberately contains no token ids, labels, or account names. The `link_assistant_subscription_healthy`
 gauge is labelled by vendor name only, never by account, and answers `0` for a

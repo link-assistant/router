@@ -15,3 +15,7 @@ bump: minor
 - Stream GitHub REST, GraphQL, and Git smart-HTTP response bodies without whole-response buffering, preserving mid-stream failures.
 - Keep translated model and dropped-tool diagnostics in local logs instead of emitting Router-private response fields or headers.
 - Preserve safe end-to-end client metadata on ordinary OpenAI-compatible Chat Completions and Responses requests while replacing credentials.
+- Honor `GEMINI_CLI_HOME`, prefer Claude Code's canonical credential file over legacy fallbacks, and select `gh` credentials only for the configured GitHub host.
+- Make `--home` an isolation boundary for every vendor credential reader and local client command.
+- Use one non-inference provider-acceptance check for local and remote auth status, distinguishing usable, rejected, unverified, absent, and refresh-failed states.
+- Validate imported rotating refresh chains in an isolated durable store and promote Router-owned successors, including newer Claude Keychain credentials.

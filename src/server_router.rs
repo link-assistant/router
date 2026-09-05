@@ -115,6 +115,10 @@ pub(crate) fn management_routes(
         .route(
             route_template(RouteId::AdminSummary),
             get(crate::admin_api::admin_summary),
+        )
+        .route(
+            route_template(RouteId::CredentialStatus),
+            get(proxy::credential_status_endpoint),
         );
 
     if login_enabled {

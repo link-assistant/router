@@ -39,6 +39,7 @@ pub mod configure;
 pub mod crater;
 pub mod credential_acceptance;
 pub mod credential_recovery_store;
+pub mod credential_status;
 pub mod credential_store;
 pub mod doctor;
 pub mod durable_file;

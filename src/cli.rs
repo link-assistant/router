@@ -31,6 +31,7 @@ use crate::config::{
     ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
     default_activitypub_public_key_pem, default_data_dir,
 };
+use crate::subscription::SubscriptionProvider;
 
 mod auth_ops;
 mod client_ops;
@@ -844,12 +845,21 @@ impl Cli {
     pub fn into_config(&self) -> Result<Config, ConfigError> {
         let port = self.port.to_string();
         let token_secret = self.token_secret.clone();
+        let process_home = std::env::var_os("HOME")
+            .filter(|home| !home.is_empty())
+            .map_or_else(|| PathBuf::from("/root"), PathBuf::from);
+        let client_home = self.home.clone().unwrap_or_else(|| process_home.clone());
         let claude_home = self.claude_code_home.clone().unwrap_or_else(|| {
-            std::env::var("HOME")
-                .map_or_else(|_| "/root/.claude".to_string(), |h| format!("{h}/.claude"))
+            client_home
+                .join(SubscriptionProvider::Claude.home_subdir())
+                .to_string_lossy()
+                .into_owned()
         });
-        let codex_home = crate::subscription::SubscriptionProvider::Codex
-            .resolve_home(&std::env::var("HOME").unwrap_or_else(|_| "/root".to_string()));
+        let codex_home = if self.home.is_some() {
+            client_home.join(SubscriptionProvider::Codex.home_subdir())
+        } else {
+            SubscriptionProvider::Codex.resolve_home(&process_home.to_string_lossy())
+        };
         let api_format = self
             .api_format
             .as_deref()
@@ -912,7 +922,7 @@ impl Cli {
             models: self.openai_compatible_models.clone(),
             supported_clients: self.openai_compatible_supported_clients.clone(),
         };
-        Config::build(BuildArgs {
+        let mut config = Config::build(BuildArgs {
             host: &self.host,
             port: &port,
             token_secret: token_secret.as_deref(),
@@ -982,7 +992,10 @@ impl Cli {
                 recipient: self.mpp_recipient.clone().unwrap_or_default(),
                 method: self.mpp_method.clone().filter(|s| !s.is_empty()),
             },
-        })
+        })?;
+        config.client_home = client_home;
+        config.isolated_client_home = self.home.is_some();
+        Ok(config)
     }
 }
 

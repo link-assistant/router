@@ -65,7 +65,8 @@ async fn run() -> ExitCode {
         // a token here, so the local signing secret is not its to hold — the
         // same reasoning as the remote commands in issue #294.
         Some(Command::Configure(args)) => {
-            return link_assistant_router::configure::run(args).await;
+            return link_assistant_router::configure::run_with_home(args, cli.home.as_deref())
+                .await;
         }
         _ => {}
     }
@@ -321,12 +322,8 @@ async fn run_server(
         };
 
     // Keep readers for every vendor so automatic routing can discover all
-    // mounted subscriptions. Claude's configured home may differ from HOME.
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let subscription_readers = link_assistant_router::subscription::all_subscription_readers(
-        &config.claude_code_home,
-        &user_home,
-    );
+    // mounted subscriptions, using the exact roots selected during parsing.
+    let subscription_readers = config.subscription_readers();
     for reader in &subscription_readers {
         tracing::info!(
             "Subscription provider {}: reading credentials from {}",

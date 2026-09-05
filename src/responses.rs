@@ -716,10 +716,10 @@ impl ResponsesChatStreamTranslator {
             self.id = format!("chatcmpl-{id}");
         }
         // The requested model id stays the response identity.
-        if let Some(model) = response.get("model").and_then(Value::as_str) {
-            if self.model.is_empty() {
-                self.model = model.to_string();
-            }
+        if let Some(model) = response.get("model").and_then(Value::as_str)
+            && self.model.is_empty()
+        {
+            self.model = model.to_string();
         }
         if let Some(created) = response.get("created_at").and_then(Value::as_i64) {
             self.created = created;

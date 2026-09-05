@@ -92,6 +92,7 @@ pub enum RouteId {
     LoginCode,
     Usage,
     Accounts,
+    CredentialStatus,
     SubscriptionHealth,
     Metrics,
     AdminStatus,
@@ -323,6 +324,11 @@ const ROUTES: &[RouteSpec] = &[
         RouteId::Accounts,
         RouteMethod::Get,
         "/api/management/accounts",
+    ),
+    management(
+        RouteId::CredentialStatus,
+        RouteMethod::Get,
+        "/api/management/auth/status",
     ),
     management(
         RouteId::SubscriptionHealth,

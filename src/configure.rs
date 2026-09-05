@@ -8,6 +8,7 @@
 //! is reversed by its own name, through the hash-verified restore that was the
 //! better of the two mechanisms already present (issue #296).
 
+use std::path::Path;
 use std::process::ExitCode;
 
 use crate::cli::ConfigureArgs;
@@ -44,7 +45,12 @@ const fn environment_only(client: ClientKind) -> bool {
 
 /// Run one `router configure` invocation.
 pub async fn run(args: &ConfigureArgs) -> ExitCode {
-    match run_inner(args).await {
+    run_with_home(args, None).await
+}
+
+/// Run with an optional explicit client-home isolation boundary.
+pub async fn run_with_home(args: &ConfigureArgs, home: Option<&Path>) -> ExitCode {
+    match run_inner(args, home).await {
         Ok(code) => code,
         Err(error) => {
             eprintln!(
@@ -56,8 +62,11 @@ pub async fn run(args: &ConfigureArgs) -> ExitCode {
     }
 }
 
-async fn run_inner(args: &ConfigureArgs) -> Result<ExitCode, AnyError> {
-    let manager = ClientManager::from_env()?;
+async fn run_inner(args: &ConfigureArgs, home: Option<&Path>) -> Result<ExitCode, AnyError> {
+    let manager = match home {
+        Some(home) => ClientManager::isolated(home),
+        None => ClientManager::from_env()?,
+    };
     if args.undo {
         return undo(args, &manager).await;
     }

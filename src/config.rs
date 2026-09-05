@@ -210,6 +210,10 @@ pub struct Config {
     pub storage_policy: StoragePolicy,
     /// Directory where token state files live.
     pub data_dir: PathBuf,
+    /// User home from which vendor credential roots are derived.
+    pub client_home: PathBuf,
+    /// Whether `client_home` came from the explicit isolation boundary.
+    pub isolated_client_home: bool,
     /// Optional path to the local `claude` CLI binary used by the CLI backend.
     pub claude_cli_bin: Option<PathBuf>,
     /// Optional path to the local `codex` CLI binary used by credential
@@ -294,13 +298,38 @@ impl Config {
             .upstream_provider
             .subscription_provider()
             .unwrap_or(SubscriptionProvider::Claude);
-        let primary = if provider == SubscriptionProvider::Claude {
-            PathBuf::from(&self.claude_code_home)
-        } else {
-            let user_home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-            provider.resolve_home(&user_home)
-        };
+        let primary = self.credential_home(provider);
         (provider, primary)
+    }
+
+    /// Exact credential home used for one vendor by every local command.
+    #[must_use]
+    pub fn credential_home(&self, provider: SubscriptionProvider) -> PathBuf {
+        match provider {
+            SubscriptionProvider::Claude => PathBuf::from(&self.claude_code_home),
+            SubscriptionProvider::Codex => self.login.codex_home.clone(),
+            SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
+                if self.isolated_client_home {
+                    self.client_home.join(provider.home_subdir())
+                } else {
+                    provider.resolve_home(&self.client_home.to_string_lossy())
+                }
+            }
+        }
+    }
+
+    /// Readers rooted at the exact homes selected during CLI parsing.
+    #[must_use]
+    pub fn subscription_readers(&self) -> Vec<crate::subscription::SubscriptionReader> {
+        SubscriptionProvider::ALL
+            .into_iter()
+            .map(|provider| {
+                crate::subscription::SubscriptionReader::new(
+                    provider,
+                    self.credential_home(provider),
+                )
+            })
+            .collect()
     }
 
     /// Load configuration from environment variables only (legacy compatibility).
@@ -552,6 +581,10 @@ impl Config {
             routing_mode: args.routing_mode,
             storage_policy: args.storage_policy,
             data_dir: args.data_dir,
+            client_home: env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .map_or_else(|| PathBuf::from("."), PathBuf::from),
+            isolated_client_home: false,
             claude_cli_bin: args.claude_cli_bin,
             codex_cli_bin: args.codex_cli_bin,
             upstream_provider: args.upstream_provider,

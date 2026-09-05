@@ -178,6 +178,42 @@ fn cli_defaults_round_trip_to_config() {
 }
 
 #[test]
+fn explicit_home_is_the_credential_boundary_for_every_provider() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--home",
+        "/tmp/router-isolated-home",
+        "--claude-code-home",
+        "/tmp/router-explicit-claude",
+        "auth",
+        "status",
+        "--local",
+    ])
+    .expect("CLI");
+    let config = cli.into_config().expect("config");
+
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Claude),
+        PathBuf::from("/tmp/router-explicit-claude")
+    );
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Codex),
+        PathBuf::from("/tmp/router-isolated-home/.codex")
+    );
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Gemini),
+        PathBuf::from("/tmp/router-isolated-home/.gemini")
+    );
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Qwen),
+        PathBuf::from("/tmp/router-isolated-home/.qwen")
+    );
+    assert!(config.isolated_client_home);
+}
+
+#[test]
 fn cli_invalid_routing_mode_rejected() {
     let cli = Cli {
         command: None,

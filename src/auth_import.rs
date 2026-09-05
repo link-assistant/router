@@ -335,10 +335,12 @@ fn import_github(data_dir: &std::path::Path, source: &str) -> Result<Vec<String>
         .ok_or_else(|| {
             String::from("no gh configuration directory; name one, or set GH_CONFIG_DIR")
         })?;
-    let token = github_proxy::token_from_gh_config(&directory).ok_or_else(|| {
+    let host = github_proxy::configured_credential_host()
+        .ok_or_else(|| String::from("GITHUB_PROXY_BASE_URL does not name a valid GitHub host"))?;
+    let token = github_proxy::token_from_gh_config(&directory, &host).ok_or_else(|| {
         format!(
-            "no GitHub credential in {}; run `gh auth login` there first",
-            directory.display()
+            "no GitHub credential for {host} in {}; run `gh auth login --hostname {host}` there first",
+            directory.display(),
         )
     })?;
     let path = github_proxy::store_credential(data_dir, &token)?;
@@ -369,7 +371,7 @@ async fn import_provider(
     policy: ImportPolicy,
     resumed_transaction_id: Option<&str>,
 ) -> Result<ImportExecution, ImportFailure> {
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let user_home = config.client_home.to_string_lossy().into_owned();
     // An empty value asks for the vendor's own default location.
     //
     // Deliberately not `resolve_home`, which honours `CLAUDE_CODE_HOME` and
@@ -409,7 +411,7 @@ async fn import_provider(
         document,
         token: _,
         origin,
-        path: source_path,
+        path: _,
     } = &source_credential;
     let where_from = match origin {
         link_assistant_router::platform_keychain::Origin::Keychain => {
@@ -429,16 +431,6 @@ async fn import_provider(
     };
 
     let destination = SubscriptionReader::new(provider, &destination_home);
-    if policy.external_refresh_owner
-        && !matches!(
-            origin,
-            link_assistant_router::platform_keychain::Origin::File
-        )
-    {
-        return Err(ImportFailure::not_attempted(format!(
-            "the {provider} credential is owned by {where_from}, which Router cannot durably advance; its refresh token was not spent"
-        )));
-    }
     // Do not spend a rotating candidate chain when conditional provisioning
     // already has a winner. Installation repeats this check after validation,
     // under the same lock, so a concurrent login/refresh still wins the race.
@@ -472,35 +464,41 @@ async fn import_provider(
     // link. Prove the chain by forcing one direct OAuth exchange in an isolated
     // durable store, then ask the non-inference catalog with the persisted
     // result. The destination remains untouched throughout both network calls.
-    let validated = validate_candidate(&config.data_dir, provider, document).await?;
+    let validated = validate_candidate(
+        &config.data_dir,
+        provider,
+        document,
+        policy.external_refresh_owner,
+    )
+    .await?;
     let report = describe_credential(validated.token());
     if (policy.if_absent && destination.has_platform_store_credential())
         || (!policy.if_absent
             && destination.candidate_is_shadowed_by_platform_store(validated.token()))
     {
-        drop(validated);
-        return Err(ImportFailure::safe_failure(
+        return Err(retain_validated_candidate(
+            validated,
             ImportPhase::Promotion,
             format!(
-                "the {provider} platform credential remains authoritative; the external refresh token was not spent"
+                "the {provider} platform credential remains authoritative; the validated successor was retained for recovery"
             ),
         ));
     }
-    let receipt_id = resumed_transaction_id.unwrap_or_else(|| validated.transaction_id());
-    let promotion_document = if policy.external_refresh_owner {
-        let source_path = source_path.as_deref().ok_or_else(|| {
-            ImportFailure::not_attempted(format!(
-                "the {provider} external credential has no writable source; its refresh token was not spent"
-            ))
-        })?;
-        link_assistant_router::subscription::reference_external_credential(source_path, receipt_id)
-            .map_err(ImportFailure::not_attempted)?
-    } else {
-        link_assistant_router::subscription::mark_promotion_receipt(
-            validated.document(),
-            receipt_id,
-        )
-        .map_err(ImportFailure::not_attempted)?
+    let receipt_id = resumed_transaction_id
+        .unwrap_or_else(|| validated.transaction_id())
+        .to_string();
+    let promotion_document = match link_assistant_router::subscription::mark_promotion_receipt(
+        validated.document(),
+        &receipt_id,
+    ) {
+        Ok(document) => document,
+        Err(error) => {
+            return Err(retain_validated_candidate(
+                validated,
+                ImportPhase::Promotion,
+                error,
+            ));
+        }
     };
     let promotion = install_candidate(
         &destination,
@@ -515,7 +513,7 @@ async fn import_provider(
     .await;
     let installed = match promotion {
         Ok(installed) => installed,
-        Err(_error) if destination_has_receipt(config, provider, receipt_id) => {
+        Err(_error) if destination_has_receipt(config, provider, &receipt_id) => {
             let path = destination.discover_credential_path().ok_or_else(|| {
                 ImportFailure::safe_failure(
                     ImportPhase::Promotion,
@@ -525,8 +523,11 @@ async fn import_provider(
             InstallDocumentResult::Installed(path)
         }
         Err(error) => {
-            drop(validated);
-            return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
+            return Err(retain_validated_candidate(
+                validated,
+                ImportPhase::Promotion,
+                error,
+            ));
         }
     };
     let execution = match installed {
@@ -537,7 +538,7 @@ async fn import_provider(
                     path.display()
                 ),
                 format!(
-                    "{provider:<8} candidate {report}, accepted by the vendor without spending the source refresh token"
+                    "{provider:<8} candidate {report}, refresh chain validated and promoted from an isolated Router store"
                 ),
             ];
             // Dropping a successfully promoted candidate removes its isolated
@@ -546,17 +547,14 @@ async fn import_provider(
             ImportExecution::promoted(provider.to_string(), messages)
         }
         InstallDocumentResult::AlreadyPresent(path) => {
-            // A login or refresh won the race after the preflight. The source
-            // refresh token was never spent, so no recovery transaction is
-            // needed for the discarded duplicate.
-            drop(validated);
-            ImportExecution::already_present(
-                provider.to_string(),
-                vec![format!(
-                    "{provider:<8} already present at {}; candidate from {where_from} was not installed",
+            return Err(retain_validated_candidate(
+                validated,
+                ImportPhase::Promotion,
+                format!(
+                    "a credential appeared at {}; the validated {provider} successor from {where_from} was retained for recovery",
                     path.display()
-                )],
-            )
+                ),
+            ));
         }
     };
     Ok(execution)
@@ -567,7 +565,7 @@ fn destination_has_receipt(
     provider: SubscriptionProvider,
     transaction_id: &str,
 ) -> bool {
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let user_home = config.client_home.to_string_lossy().into_owned();
     let destination =
         SubscriptionReader::new(provider, provider_home(config, provider, &user_home));
     destination
@@ -582,12 +580,30 @@ async fn validate_candidate(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,
     document: &str,
+    rotate_candidate: bool,
 ) -> Result<ValidatedCandidate, ImportFailure> {
-    link_assistant_router::credential_acceptance::accept_external_candidate(
-        data_dir, provider, document, None,
-    )
-    .await
-    .map_err(|failure| ImportFailure::from_acceptance(&failure))
+    let accepted = if rotate_candidate {
+        link_assistant_router::credential_acceptance::accept_candidate(
+            data_dir, provider, document, None, None,
+        )
+        .await
+    } else {
+        link_assistant_router::credential_acceptance::accept_external_candidate(
+            data_dir, provider, document, None,
+        )
+        .await
+    };
+    accepted.map_err(|failure| ImportFailure::from_acceptance(&failure))
+}
+
+fn retain_validated_candidate(
+    validated: ValidatedCandidate,
+    phase: ImportPhase,
+    error: String,
+) -> ImportFailure {
+    let transaction_id = validated.transaction_id().to_string();
+    std::mem::forget(validated);
+    ImportFailure::retained(phase, transaction_id, error)
 }
 
 #[cfg(test)]
@@ -731,15 +747,9 @@ pub fn humanize_minutes(minutes: i64) -> String {
 pub fn provider_home(
     config: &link_assistant_router::config::Config,
     provider: SubscriptionProvider,
-    user_home: &str,
+    _user_home: &str,
 ) -> std::path::PathBuf {
-    match provider {
-        SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
-        SubscriptionProvider::Codex => config.login.codex_home.clone(),
-        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
-            provider.resolve_home(user_home)
-        }
-    }
+    config.credential_home(provider)
 }
 
 #[cfg(test)]

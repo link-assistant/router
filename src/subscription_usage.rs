@@ -676,9 +676,8 @@ async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {
     if !status.is_success() {
         return VendorResponse::Unavailable;
     }
-    let bytes = match bounded_response_bytes(response, MAX_USAGE_BODY).await {
-        Ok(bytes) => bytes,
-        _ => return VendorResponse::Malformed,
+    let Ok(bytes) = bounded_response_bytes(response, MAX_USAGE_BODY).await else {
+        return VendorResponse::Malformed;
     };
     serde_json::from_slice(&bytes).map_or(VendorResponse::Malformed, VendorResponse::Json)
 }

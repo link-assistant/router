@@ -556,7 +556,7 @@ fn a_gh_configuration_yields_its_credential() {
     .expect("write hosts.yml");
 
     assert_eq!(
-        token_from_gh_config(directory.path()),
+        token_from_gh_config(directory.path(), "github.com"),
         Some("gho_example".to_string())
     );
 }
@@ -566,7 +566,11 @@ fn a_gh_configuration_yields_its_credential() {
 #[test]
 fn a_quoted_or_absent_credential_is_handled() {
     let directory = tempfile::tempdir().expect("gh config dir");
-    assert_eq!(token_from_gh_config(directory.path()), None, "absent file");
+    assert_eq!(
+        token_from_gh_config(directory.path(), "github.com"),
+        None,
+        "absent file"
+    );
 
     std::fs::write(
         directory.path().join("hosts.yml"),
@@ -574,7 +578,7 @@ fn a_quoted_or_absent_credential_is_handled() {
     )
     .expect("write hosts.yml");
     assert_eq!(
-        token_from_gh_config(directory.path()),
+        token_from_gh_config(directory.path(), "github.com"),
         Some("gho_quoted".to_string())
     );
 
@@ -583,7 +587,47 @@ fn a_quoted_or_absent_credential_is_handled() {
         "github.com:\n    user: someone\n",
     )
     .expect("rewrite");
-    assert_eq!(token_from_gh_config(directory.path()), None, "no token key");
+    assert_eq!(
+        token_from_gh_config(directory.path(), "github.com"),
+        None,
+        "no token key"
+    );
+}
+
+#[test]
+fn a_multi_host_gh_configuration_selects_only_the_upstream_host() {
+    let directory = tempfile::tempdir().expect("gh config dir");
+    std::fs::write(
+        directory.path().join("hosts.yml"),
+        concat!(
+            "enterprise.example:\n",
+            "    oauth_token: enterprise-token\n",
+            "github.com:\n",
+            "    oauth_token: github-token\n",
+        ),
+    )
+    .expect("write hosts.yml");
+
+    assert_eq!(
+        token_from_gh_config(directory.path(), "github.com").as_deref(),
+        Some("github-token")
+    );
+    assert_eq!(
+        token_from_gh_config(directory.path(), "enterprise.example").as_deref(),
+        Some("enterprise-token")
+    );
+    assert_eq!(
+        token_from_gh_config(directory.path(), "missing.example"),
+        None
+    );
+    assert_eq!(
+        github_credential_host("https://api.github.com").as_deref(),
+        Some("github.com")
+    );
+    assert_eq!(
+        github_credential_host("https://enterprise.example/api/v3").as_deref(),
+        Some("enterprise.example")
+    );
 }
 
 /// A stored credential round-trips and is written owner-only, like every
@@ -643,14 +687,22 @@ fn a_reusable_credential_prefers_what_the_operator_stored() {
 
     // Only the gh login exists.
     assert_eq!(
-        reusable_credential(Some(data_dir.path()), Some(gh_config.path())),
+        reusable_credential(
+            Some(data_dir.path()),
+            Some(gh_config.path()),
+            Some("github.com"),
+        ),
         Some("gho_from_gh".to_string())
     );
 
     // Once stored, the operator's own choice wins.
     store_credential(data_dir.path(), "gho_stored").expect("store one");
     assert_eq!(
-        reusable_credential(Some(data_dir.path()), Some(gh_config.path())),
+        reusable_credential(
+            Some(data_dir.path()),
+            Some(gh_config.path()),
+            Some("github.com"),
+        ),
         Some("gho_stored".to_string())
     );
 }
@@ -685,10 +737,13 @@ fn a_credential_stored_under_a_flag_data_dir_is_found() {
 fn without_either_source_there_is_nothing_to_reuse() {
     let empty = tempfile::tempdir().expect("empty dir");
 
-    assert_eq!(reusable_credential(None, None), None);
-    assert_eq!(reusable_credential(Some(Path::new("")), None), None);
+    assert_eq!(reusable_credential(None, None, Some("github.com")), None);
     assert_eq!(
-        reusable_credential(Some(empty.path()), Some(empty.path())),
+        reusable_credential(Some(Path::new("")), None, Some("github.com")),
+        None
+    );
+    assert_eq!(
+        reusable_credential(Some(empty.path()), Some(empty.path()), Some("github.com"),),
         None
     );
 }
@@ -704,7 +759,7 @@ fn from_env_still_reads_the_environment_spelling() {
     store_credential(data_dir.path(), "gho_from_environment").expect("store one");
 
     assert_eq!(
-        reusable_credential(Some(data_dir.path()), None),
+        reusable_credential(Some(data_dir.path()), None, None),
         Some("gho_from_environment".to_string()),
         "the same lookup from_env delegates to must still find it"
     );
