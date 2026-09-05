@@ -19,6 +19,10 @@ fn sibling_with_suffix(path: &Path, suffix: &str) -> io::Result<std::path::PathB
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum FaultPoint {
     AfterRename,
+    RemoveRollback,
+    SyncAfterRollbackRemoval,
+    RemoveCommit,
+    SyncAfterCommitRemoval,
     Unlock,
 }
 
@@ -162,9 +166,7 @@ pub fn recover_transactional_write(path: &Path) -> io::Result<()> {
     let rollback = sibling_with_suffix(path, ROLLBACK_SUFFIX)?;
     let commit = sibling_with_suffix(path, COMMIT_SUFFIX)?;
     if commit.exists() {
-        let _ = fs::remove_file(&rollback);
-        let _ = fs::remove_file(&commit);
-        return Ok(());
+        return cleanup_committed_transaction(path, &rollback, &commit);
     }
     let rollback_document = match fs::read(&rollback) {
         Ok(prior) => prior,
@@ -182,6 +184,44 @@ pub fn recover_transactional_write(path: &Path) -> io::Result<()> {
     }
     fs::remove_file(&rollback)?;
     if let Some(parent) = path.parent() {
+        sync_directory(parent)?;
+    }
+    Ok(())
+}
+
+fn remove_file_if_present(path: &Path) -> io::Result<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error),
+    }
+}
+
+/// Remove committed transaction sidecars without ever making the rollback
+/// document authoritative again.
+///
+/// The rollback is removed and that removal is made durable before the commit
+/// marker can be removed. Every failure before that point therefore leaves the
+/// commit marker in place, so another recovery pass still keeps the new
+/// primary. A failure syncing the final marker removal is safe too: either the
+/// marker reappears after a crash and cleanup repeats, or both sidecars stay
+/// absent and the primary remains authoritative.
+fn cleanup_committed_transaction(path: &Path, rollback: &Path, commit: &Path) -> io::Result<()> {
+    #[cfg(test)]
+    fail_if_injected(path, FaultPoint::RemoveRollback)?;
+    remove_file_if_present(rollback)?;
+    if let Some(parent) = path.parent() {
+        #[cfg(test)]
+        fail_if_injected(path, FaultPoint::SyncAfterRollbackRemoval)?;
+        sync_directory(parent)?;
+    }
+
+    #[cfg(test)]
+    fail_if_injected(path, FaultPoint::RemoveCommit)?;
+    remove_file_if_present(commit)?;
+    if let Some(parent) = path.parent() {
+        #[cfg(test)]
+        fail_if_injected(path, FaultPoint::SyncAfterCommitRemoval)?;
         sync_directory(parent)?;
     }
     Ok(())
@@ -234,14 +274,7 @@ pub fn transactional_write_owner_only(path: &Path, contents: &[u8]) -> io::Resul
 
     // Once the marker is durable, cleanup is not part of the commit result.
     // A restart seeing it keeps the new primary and finishes the same cleanup.
-    let _ = fs::remove_file(&rollback);
-    if let Some(parent) = path.parent() {
-        let _ = sync_directory(parent);
-    }
-    let _ = fs::remove_file(&commit);
-    if let Some(parent) = path.parent() {
-        let _ = sync_directory(parent);
-    }
+    let _ = cleanup_committed_transaction(path, &rollback, &commit);
     Ok(())
 }
 
@@ -503,6 +536,43 @@ mod tests {
             );
             assert!(!rollback.exists());
             assert!(!commit.exists());
+        }
+    }
+
+    #[test]
+    fn committed_cleanup_failures_never_make_rollback_authoritative() {
+        for point in [
+            FaultPoint::RemoveRollback,
+            FaultPoint::SyncAfterRollbackRemoval,
+            FaultPoint::RemoveCommit,
+            FaultPoint::SyncAfterCommitRemoval,
+        ] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("state.json");
+            let rollback = sibling_with_suffix(&path, ROLLBACK_SUFFIX).unwrap();
+            let commit = sibling_with_suffix(&path, COMMIT_SUFFIX).unwrap();
+            atomic_write_owner_only(&path, b"new").unwrap();
+            atomic_write_owner_only(&rollback, b"\x01old").unwrap();
+            atomic_write_owner_only(&commit, b"committed\n").unwrap();
+            let fault = inject_fault(&path, point);
+
+            recover_transactional_write(&path).expect_err("cleanup fault must be reported");
+            assert_eq!(fs::read(&path).unwrap(), b"new", "fault at {point:?}");
+            if matches!(
+                point,
+                FaultPoint::RemoveRollback
+                    | FaultPoint::SyncAfterRollbackRemoval
+                    | FaultPoint::RemoveCommit
+            ) {
+                assert!(commit.exists(), "fault at {point:?}");
+            }
+            drop(fault);
+
+            recover_transactional_write(&path).unwrap();
+            recover_transactional_write(&path).unwrap();
+            assert_eq!(fs::read(&path).unwrap(), b"new", "fault at {point:?}");
+            assert!(!rollback.exists(), "fault at {point:?}");
+            assert!(!commit.exists(), "fault at {point:?}");
         }
     }
 

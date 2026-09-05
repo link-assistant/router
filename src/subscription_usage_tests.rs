@@ -624,9 +624,43 @@ async fn openai_usage_uses_the_official_codex_headers_and_account() {
     assert_eq!(path, "/backend-api/wham/usage");
     assert_eq!(headers["authorization"], "Bearer openai-vendor-secret");
     assert_eq!(headers["chatgpt-account-id"], "workspace-42");
-    assert_eq!(headers["user-agent"], CODEX_USAGE_USER_AGENT);
+    assert_eq!(
+        headers["user-agent"],
+        format!(
+            "{}/{}",
+            crate::codex_identity::ORIGINATOR,
+            crate::codex_identity::DEFAULT_CLIENT_VERSION
+        )
+    );
+    assert_eq!(headers["originator"], crate::codex_identity::ORIGINATOR);
     assert!(!headers["user-agent"].to_str().unwrap().contains("router"));
     drop(captured);
+    server.abort();
+}
+
+#[tokio::test]
+async fn usage_retry_after_accepts_an_http_date() {
+    let retry_at = chrono::Utc::now() + chrono::Duration::seconds(90);
+    let retry_after = retry_at.to_rfc2822();
+    let app = axum::Router::new().fallback(move || {
+        let retry_after = retry_after.clone();
+        async move {
+            (
+                StatusCode::TOO_MANY_REQUESTS,
+                [("retry-after", retry_after)],
+                "private-body",
+            )
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+    let response = send_json(reqwest::Client::new().get(format!("http://{address}"))).await;
+    let VendorResponse::RateLimited(Some(seconds)) = response else {
+        panic!("HTTP-date Retry-After must classify the rate limit");
+    };
+    assert!((88..=90).contains(&seconds), "parsed delay was {seconds}s");
     server.abort();
 }
 

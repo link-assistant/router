@@ -14,7 +14,6 @@ use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 const SCHEMA_VERSION: u8 = 1;
 const MAX_VENDOR_BODY: usize = 2 * 1024 * 1024;
 const CLAUDE_CODE_VERSION: &str = "2.1.261";
-const CODEX_USAGE_USER_AGENT: &str = "codex-cli";
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, clap::ValueEnum)]
 pub enum UsageProvider {
@@ -472,17 +471,7 @@ async fn probe_openai(
             .client
             .get(format!("{base}/wham/usage"))
             .bearer_auth(&token.access_token)
-            .header("user-agent", CODEX_USAGE_USER_AGENT)
-            .headers(token.account_id.as_deref().map_or_else(
-                reqwest::header::HeaderMap::new,
-                |account_id| {
-                    let mut headers = reqwest::header::HeaderMap::new();
-                    if let Ok(value) = reqwest::header::HeaderValue::from_str(account_id) {
-                        headers.insert("chatgpt-account-id", value);
-                    }
-                    headers
-                },
-            )),
+            .headers(crate::codex_identity::headers(token.account_id.as_deref())),
     )
     .await;
     match response {
@@ -639,11 +628,8 @@ async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {
         return VendorResponse::Unavailable;
     };
     let status = response.status();
-    let retry = response
-        .headers()
-        .get(reqwest::header::RETRY_AFTER)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.parse::<u64>().ok());
+    let retry = crate::request_routing::retry_after_duration(response.headers())
+        .map(|duration| duration.as_secs());
     if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
         return VendorResponse::AuthenticationRejected;
     }

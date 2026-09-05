@@ -176,6 +176,117 @@ async fn importing_a_missing_file_fails() {
     );
 }
 
+#[tokio::test]
+async fn batch_import_reports_created_replaced_present_and_later_failure_with_remote_parity() {
+    fn input(name: &str, base_url: &str, secret: &str, if_absent: bool) -> ProviderUpsert {
+        ProviderUpsert {
+            name: name.to_string(),
+            kind: Some("openai-compatible".into()),
+            base_url: base_url.to_string(),
+            default_model: Some("exact-model".into()),
+            models: Some(vec!["exact-model".into()]),
+            supported_clients: Some(vec!["opencode".into()]),
+            api_key: Some(secret.into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: Some(false),
+            acknowledge_unsupported_clients: Some(Vec::new()),
+            if_absent,
+        }
+    }
+
+    let directory = tempfile::tempdir().unwrap();
+    let store = store(directory.path());
+    store
+        .upsert(input(
+            "existing",
+            "https://old.example/v1",
+            "old-secret",
+            false,
+        ))
+        .unwrap();
+    let mut invalid = input("invalid", "https://invalid.example/v1", "bad-secret", false);
+    invalid.kind = Some("not-a-provider-kind".into());
+    let inputs = vec![
+        input(
+            "created",
+            "https://created.example/v1",
+            "created-secret",
+            false,
+        ),
+        input(
+            "existing",
+            "https://new.example/v1",
+            "replacement-secret",
+            false,
+        ),
+        input(
+            "existing",
+            "https://ignored.example/v1",
+            "ignored-secret",
+            true,
+        ),
+        invalid,
+    ];
+
+    let local = local_import_report(&reqwest::Client::new(), &store, inputs.clone()).await;
+    assert!(!local.complete);
+    assert_eq!(local.results.len(), 4);
+    assert_eq!(local.results[0]["outcome"], "created");
+    assert_eq!(local.results[1]["outcome"], "replaced");
+    assert_eq!(local.results[2]["outcome"], "already_present");
+    assert_eq!(local.results[3]["outcome"], "invalid_candidate");
+    let rendered = serde_json::to_string(&local).unwrap();
+    for secret in [
+        "old-secret",
+        "created-secret",
+        "replacement-secret",
+        "ignored-secret",
+        "bad-secret",
+    ] {
+        assert!(!rendered.contains(secret), "{rendered}");
+    }
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let bodies = vec![
+        local.results[0].to_string(),
+        local.results[1].to_string(),
+        local.results[2].to_string(),
+        serde_json::json!({"error": {"outcome": "invalid_candidate"}}).to_string(),
+    ];
+    let server_task = tokio::spawn(async move {
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+        for (index, body) in bodies.into_iter().enumerate() {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0; 8192];
+            let _ = socket.read(&mut request).await.unwrap();
+            let status = if index == 3 {
+                "400 Bad Request"
+            } else {
+                "200 OK"
+            };
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        }
+    });
+    let server = crate::managed_server::ResolvedServer::at(origin, Some("admin".into()), "test");
+    let remote = remote_import_report(&server, &inputs).await.unwrap();
+    server_task.await.unwrap();
+
+    assert_eq!(remote, local);
+}
+
 /// The remote calls hit the routes the deployment actually serves (#294).
 ///
 /// Asserted without a server: a wrong path or a body missing a declared model
@@ -464,14 +575,26 @@ async fn a_remote_import_declares_each_provider_on_the_deployment() {
     let handle = tokio::spawn(async move {
         use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
         let mut seen = Vec::new();
-        for _ in 0..2 {
+        for name in ["one", "two"] {
             let Ok((mut socket, _)) = listener.accept().await else {
                 break;
             };
             let mut buffer = [0; 4096];
             let read = socket.read(&mut buffer).await.unwrap_or(0);
             seen.push(String::from_utf8_lossy(&buffer[..read]).to_string());
-            let body = r#"{"ok":true}"#;
+            let body = serde_json::json!({
+                "outcome": "created",
+                "name": name,
+                "kind": "openai-compatible",
+                "base_url": format!("https://{name}.example/v1"),
+                "models": [],
+                "supported_clients": [],
+                "has_encrypted_api_key": false,
+                "enabled": true,
+                "intermediary_risk_acknowledged": false,
+                "unsupported_clients": []
+            })
+            .to_string();
             let _ = socket
                 .write_all(
                     format!(

@@ -868,8 +868,7 @@ pub async fn fetch_provider_catalog_records(
         || catalog_base_url(provider, token),
         |value| value.trim_end_matches('/').to_string(),
     );
-    let client_version =
-        std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| "0.153.3".to_string());
+    let client_version = crate::codex_identity::client_version();
     let url = match provider {
         SubscriptionProvider::Claude => format!("{base}/v1/models"),
         SubscriptionProvider::Codex | SubscriptionProvider::Qwen => format!("{base}/models"),
@@ -920,9 +919,8 @@ pub async fn fetch_provider_catalog_records(
                     .header("anthropic-beta", "oauth-2025-04-20");
             }
             SubscriptionProvider::Codex => {
-                if let Some(account_id) = token.account_id.as_deref() {
-                    request = request.header("chatgpt-account-id", account_id);
-                }
+                request =
+                    request.headers(crate::codex_identity::headers(token.account_id.as_deref()));
             }
             SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {}
         }

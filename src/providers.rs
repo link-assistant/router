@@ -27,6 +27,7 @@ pub use crate::provider_config::OpenAICompatibleConfig;
 pub enum ProviderKind {
     /// Generic OpenAI-compatible upstream such as `LiteLLM`.
     #[default]
+    #[serde(rename = "openai-compatible", alias = "open-a-i-compatible")]
     OpenAICompatible,
     /// Lefine `OpenAI` Chat Completions API with live catalog validation.
     Lefine,
@@ -365,7 +366,8 @@ impl ProviderStore {
     pub fn upsert(&self, input: ProviderUpsert) -> Result<ProviderRecord, ProviderError> {
         let record = self.stage(input)?;
         match self.promote(record, ProviderInstallMode::Replace)? {
-            ProviderInstallResult::Promoted(record)
+            ProviderInstallResult::Created(record)
+            | ProviderInstallResult::Replaced(record)
             | ProviderInstallResult::AlreadyPresent(record) => Ok(record),
         }
     }
@@ -406,8 +408,14 @@ impl ProviderStore {
                         false,
                     );
                 }
+                let replaced = records.contains_key(&record.name);
                 records.insert(record.name.clone(), record.clone());
-                (Ok(ProviderInstallResult::Promoted(record)), true)
+                let result = if replaced {
+                    ProviderInstallResult::Replaced(record)
+                } else {
+                    ProviderInstallResult::Created(record)
+                };
+                (Ok(result), true)
             },
         )?
     }

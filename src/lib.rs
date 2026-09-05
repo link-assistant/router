@@ -32,6 +32,7 @@ pub mod client_global;
 mod client_launch;
 pub mod client_policy;
 pub mod clients;
+pub mod codex_identity;
 pub mod config;
 pub mod config_defaults;
 pub mod configure;

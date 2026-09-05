@@ -1,6 +1,6 @@
 //! Transactional acceptance for persisted upstream providers.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::providers::{
     ProviderError, ProviderKind, ProviderRecord, ProviderStore, ProviderUpsert,
@@ -16,15 +16,17 @@ pub enum ProviderInstallMode {
 /// Result of atomically installing a staged provider record.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProviderInstallResult {
-    Promoted(ProviderRecord),
+    Created(ProviderRecord),
+    Replaced(ProviderRecord),
     AlreadyPresent(ProviderRecord),
 }
 
 /// Stable machine-readable provider provisioning outcome.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProviderProvisionOutcome {
-    Promoted,
+    Created,
+    Replaced,
     AlreadyPresent,
 }
 
@@ -36,7 +38,7 @@ pub struct ProviderProvision {
 }
 
 /// Public response with provider configuration but no credential or subscriber identity.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ProviderProvisionResponse {
     pub outcome: ProviderProvisionOutcome,
     pub name: String,
@@ -76,7 +78,7 @@ impl ProviderProvision {
 }
 
 /// Stable machine-readable reason a candidate was not promoted.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProviderProvisionFailureKind {
     InvalidCandidate,
@@ -162,7 +164,8 @@ pub async fn provision(
     }
     let installed = store.promote(candidate, mode).map_err(promotion_failure)?;
     let (outcome, record) = match installed {
-        ProviderInstallResult::Promoted(record) => (ProviderProvisionOutcome::Promoted, record),
+        ProviderInstallResult::Created(record) => (ProviderProvisionOutcome::Created, record),
+        ProviderInstallResult::Replaced(record) => (ProviderProvisionOutcome::Replaced, record),
         ProviderInstallResult::AlreadyPresent(record) => {
             (ProviderProvisionOutcome::AlreadyPresent, record)
         }

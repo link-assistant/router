@@ -262,7 +262,7 @@ async fn accepted_lefine_candidate_is_encrypted_promoted_and_live() {
     .await
     .unwrap();
 
-    assert_eq!(result.outcome, ProviderProvisionOutcome::Promoted);
+    assert_eq!(result.outcome, ProviderProvisionOutcome::Created);
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     let persisted = std::fs::read_to_string(data.path().join("providers.lenv")).unwrap();
     assert!(!persisted.contains("accepted-secret"));
@@ -321,7 +321,7 @@ async fn accepted_live_catalog_promotes_without_an_inference_request() {
     .await
     .unwrap();
 
-    assert_eq!(result.outcome, ProviderProvisionOutcome::Promoted);
+    assert_eq!(result.outcome, ProviderProvisionOutcome::Created);
     let resolved = store.resolve("z-ai-personal").unwrap().unwrap();
     assert_eq!(resolved.api_key.as_deref(), Some("accepted-secret"));
     let live = crate::zai_coding_plan::fetch_catalog(&reqwest::Client::new(), &resolved)
@@ -330,7 +330,7 @@ async fn accepted_live_catalog_promotes_without_an_inference_request() {
     assert_eq!(live[0].id, "glm-live");
     assert_eq!(calls.load(Ordering::SeqCst), 2);
     let public = serde_json::to_string(&result.response()).unwrap();
-    assert!(public.contains(r#""outcome":"promoted""#), "{public}");
+    assert!(public.contains(r#""outcome":"created""#), "{public}");
     assert!(!public.contains("owner"), "{public}");
     assert!(!public.contains("accepted-secret"), "{public}");
     assert!(!public.contains("subscriber_id"), "{public}");
@@ -420,7 +420,7 @@ async fn concurrent_if_absent_has_exactly_one_winner() {
     assert_eq!(
         results
             .iter()
-            .filter(|result| result.outcome == ProviderProvisionOutcome::Promoted)
+            .filter(|result| result.outcome == ProviderProvisionOutcome::Created)
             .count(),
         1
     );
@@ -469,7 +469,7 @@ async fn concurrent_lefine_if_absent_has_exactly_one_winner() {
     assert_eq!(
         results
             .iter()
-            .filter(|result| result.outcome == ProviderProvisionOutcome::Promoted)
+            .filter(|result| result.outcome == ProviderProvisionOutcome::Created)
             .count(),
         1
     );
@@ -626,7 +626,7 @@ async fn late_provider_unlock_failure_reports_the_committed_candidate() {
     .await
     .unwrap();
 
-    assert_eq!(result.outcome, ProviderProvisionOutcome::Promoted);
+    assert_eq!(result.outcome, ProviderProvisionOutcome::Replaced);
     assert_eq!(
         ProviderStore::open(data.path(), "test-secret")
             .unwrap()
