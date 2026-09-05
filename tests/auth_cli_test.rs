@@ -10,6 +10,15 @@ fn router(args: &[&str]) -> Output {
         .expect("router CLI should run")
 }
 
+fn assert_refresh_chain_was_not_imported(output: &Output) {
+    let seen = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        seen.contains("candidate refresh chain")
+            && (seen.contains("was not verified") || seen.contains("was rejected")),
+        "{output:?}"
+    );
+}
+
 #[test]
 fn claude_code_without_a_pending_login_does_not_start_a_new_login() {
     let home = tempfile::tempdir().expect("temp home");
@@ -419,8 +428,8 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
 }
 
 /// A synthetic credential cannot be adopted merely because it parses and says
-/// it has not expired. Import now proves the live access token at the vendor
-/// without spending the source refresh link.
+/// it has not expired. Import now validates the refresh chain in isolated
+/// Router-owned storage before promotion.
 #[test]
 fn an_unverified_claude_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
@@ -454,12 +463,7 @@ fn an_unverified_claude_login_is_not_adopted() {
         !destination.join(".credentials.json").exists(),
         "an unverified credential reached the destination"
     );
-    let seen = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        seen.contains("candidate was rejected by the vendor catalog")
-            && seen.contains("refresh token was not spent"),
-        "{seen}"
-    );
+    assert_refresh_chain_was_not_imported(&output);
 }
 
 /// Codex follows the same fail-closed public path; preservation of its complete
@@ -491,11 +495,7 @@ fn an_unverified_codex_login_is_not_adopted() {
         .expect("router CLI should run");
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join("auth.json").exists());
-    assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
-        "{output:?}"
-    );
+    assert_refresh_chain_was_not_imported(&output);
 }
 
 /// Importing a home onto itself is refused rather than silently rewriting the
@@ -813,11 +813,7 @@ fn the_import_subcommand_cannot_bypass_validation() {
 
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join(".credentials.json").exists());
-    assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
-        "{output:?}"
-    );
+    assert_refresh_chain_was_not_imported(&output);
 }
 
 /// An unqualified import reads the *vendor's* home, not the router's.
@@ -850,11 +846,8 @@ fn an_unqualified_import_reads_the_vendors_own_home() {
         !destination.join(".credentials.json").exists(),
         "an unverified credential must not reach the router's home"
     );
+    assert_refresh_chain_was_not_imported(&output);
     let error = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        error.contains("candidate was rejected by the vendor catalog"),
-        "{error}"
-    );
     assert!(
         !error.contains("no claude credential"),
         "the vendor home was not read: {error}"
@@ -898,11 +891,7 @@ fn importing_everything_adopts_what_exists_and_reports_what_does_not() {
     );
     let seen = String::from_utf8_lossy(&output.stdout);
     assert!(seen.contains("nothing to adopt"), "{seen}");
-    assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
-        "{output:?}"
-    );
+    assert_refresh_chain_was_not_imported(&output);
 }
 
 /// Naming a provider and asking for everything are contradictory.

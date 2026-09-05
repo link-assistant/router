@@ -21,3 +21,4 @@ bump: minor
 - Validate imported rotating refresh chains in an isolated durable store and promote Router-owned successors, including newer Claude Keychain credentials.
 - Persist the management origin that issued a managed client credential and revoke through it before `clients remove` deletes local files.
 - Stream Gemini subscription Chat Completions and native `streamGenerateContent` incrementally from Code Assist, preserving ordered text, tools, finish reasons, usage, errors, and cancellation.
+- Refresh the complete compatible Cargo lockfile and the pinned Bun runtime image; verify every direct Rust/UI package, workflow action, hook, and other container base against its latest release.

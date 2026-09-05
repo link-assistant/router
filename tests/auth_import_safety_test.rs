@@ -3,7 +3,7 @@
 use std::process::Command;
 
 #[test]
-fn gemini_external_import_neither_requires_a_refresh_secret_nor_stages_the_source() {
+fn gemini_external_import_rejects_an_unverified_chain_without_staging_the_source() {
     let root = tempfile::tempdir().expect("root");
     let source = root.path().join("source");
     let destination = root.path().join("destination");
@@ -33,7 +33,10 @@ fn gemini_external_import_neither_requires_a_refresh_secret_nor_stages_the_sourc
 
     assert!(!output.status.success(), "{output:?}");
     let error = String::from_utf8_lossy(&output.stderr);
-    assert!(error.contains("refresh token was not spent"), "{error}");
+    assert!(
+        error.contains("gemini candidate refresh chain was not verified"),
+        "{error}"
+    );
     assert!(!error.contains("GEMINI_OAUTH_CLIENT_SECRET"), "{error}");
     let candidates = data.join("auth-import-candidates");
     assert!(

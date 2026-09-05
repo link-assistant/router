@@ -5,15 +5,8 @@
 //! parsed by [`lino_arguments::Parser`] (which is a clap-compatible drop-in
 //! that additionally reads `.lenv` files at startup).
 //!
-//! Subcommands:
-//!
-//! - `serve` (default) — start the HTTP server.
-//! - `tokens issue|list|revoke|expire|show` — manage persistent tokens
-//!   without going through the HTTP layer (useful for ops scripts).
-//! - `accounts list` — show configured accounts and their health.
-//! - `clients list|setup|show|remove|doctor` — configure local agentic CLIs.
-//! - `doctor` — report on environment, OAuth credential discoverability,
-//!   storage paths, and other config.
+//! The main subcommands serve HTTP, manage tokens and accounts, configure
+//! local agentic clients, and diagnose environment, OAuth, and storage state.
 
 // The CLI struct intentionally has many independent boolean toggles
 // (`--disable-openai-api`, `--disable-anthropic-api`, etc.). Refactoring
