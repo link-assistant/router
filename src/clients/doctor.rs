@@ -13,6 +13,9 @@ use super::{
     doctor_model,
 };
 
+pub(crate) const DOCTOR_EVIDENCE_HEADER: &str = "x-link-assistant-client-check";
+pub(crate) const DOCTOR_EVIDENCE_VALUE: &str = "reachability";
+
 impl ClientManager {
     /// Exercise the same URL and token variable configured for the client.
     pub async fn doctor(&self, client: ClientKind) -> Result<String, ClientError> {
@@ -65,34 +68,10 @@ impl ClientManager {
             client.integration().endpoint_suffix
         );
         let (url, body) = probe_request(client, &endpoint, model);
-        let request = reqwest::Client::new().post(&url).json(&body);
-        let request = match client {
-            ClientKind::ClaudeCode => request
-                .bearer_auth(&token)
-                .header("anthropic-version", "2023-06-01")
-                // A Router-owned reachability check is not a native Claude
-                // process and must not forge Claude's User-Agent. The signed
-                // client binding remains authoritative; this marker only
-                // selects the deliberately narrow doctor evidence path.
-                .header("x-link-assistant-client-check", "reachability"),
-            ClientKind::GeminiCli => request
-                .header("x-goog-api-key", &token)
-                .header("x-goog-api-client", "link-assistant-router-doctor"),
-            ClientKind::Codex => request
-                .bearer_auth(&token)
-                .header("x-openai-internal-codex-responses-lite", "true"),
-            ClientKind::QwenCode => request
-                .bearer_auth(&token)
-                .header("x-stainless-package-version", "router-doctor"),
-            ClientKind::Opencode => request
-                .bearer_auth(&token)
-                .header("user-agent", "opencode/router-doctor")
-                .header("x-session-id", "router-doctor"),
-            ClientKind::GrokCli => request
-                .bearer_auth(&token)
-                .header("user-agent", "grok/router-doctor"),
-            ClientKind::Cursor | ClientKind::Agent => request.bearer_auth(&token),
-        };
+        let request = reqwest::Client::new()
+            .post(&url)
+            .headers(probe_headers(client, &token)?)
+            .json(&body);
         let response = request
             .timeout(Duration::from_secs(30))
             .send()
@@ -130,6 +109,37 @@ impl ClientManager {
             compact_body(&response_body)
         )))
     }
+}
+
+/// Minimal Router-owned probe headers. Client fingerprints are deliberately
+/// absent: the exact internal marker is accepted only with the signed client
+/// binding and is stripped before any native provider request.
+pub(crate) fn probe_headers(
+    client: ClientKind,
+    token: &str,
+) -> Result<reqwest::header::HeaderMap, ClientError> {
+    use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
+
+    let mut headers = HeaderMap::new();
+    let credential = if client == ClientKind::GeminiCli {
+        HeaderValue::from_str(token)
+    } else {
+        HeaderValue::from_str(&format!("Bearer {token}"))
+    }
+    .map_err(|_| ClientError::message("managed client credential is not a valid HTTP header"))?;
+    if client == ClientKind::GeminiCli {
+        headers.insert("x-goog-api-key", credential);
+    } else {
+        headers.insert(AUTHORIZATION, credential);
+    }
+    if client == ClientKind::ClaudeCode {
+        headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+    }
+    headers.insert(
+        DOCTOR_EVIDENCE_HEADER,
+        HeaderValue::from_static(DOCTOR_EVIDENCE_VALUE),
+    );
+    Ok(headers)
 }
 
 const MINIMUM_CLAUDE_GATEWAY_VERSION: (u64, u64, u64) = (2, 1, 255);
@@ -183,7 +193,11 @@ pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
 /// the price; this is the price.
 ///
 /// Pure, so the price is assertable without spending it.
-fn probe_request(client: ClientKind, base_url: &str, model: &str) -> (String, serde_json::Value) {
+pub(crate) fn probe_request(
+    client: ClientKind,
+    base_url: &str,
+    model: &str,
+) -> (String, serde_json::Value) {
     let base = base_url.trim_end_matches('/');
     match client {
         ClientKind::Codex => (

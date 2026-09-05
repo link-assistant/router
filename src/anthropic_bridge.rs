@@ -730,7 +730,7 @@ pub(crate) async fn handle_anthropic_surface_routed(
         )
             .into_response();
     }
-    forward_anthropic_messages_routed(state, headers, body, subscription).await
+    forward_anthropic_messages_routed(state, headers, path, body, subscription).await
 }
 
 /// Validate the client token for a locally answered `count_tokens` request.
@@ -764,12 +764,13 @@ pub async fn forward_anthropic_messages(
     headers: &HeaderMap,
     anthropic_body: Value,
 ) -> Response {
-    forward_anthropic_messages_routed(state, headers, anthropic_body, None).await
+    forward_anthropic_messages_routed(state, headers, "/v1/messages", anthropic_body, None).await
 }
 
 async fn forward_anthropic_messages_routed(
     state: &AppState,
     headers: &HeaderMap,
+    path: &str,
     anthropic_body: Value,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
@@ -933,12 +934,19 @@ async fn forward_anthropic_messages_routed(
             .await
         }
         _ => {
-            crate::provider_proxy::forward_openai_compatible(
+            crate::provider_proxy::forward_provider_at_routed(
                 state,
                 headers,
-                chat_body,
-                "/v1/chat/completions",
-                Surface::Anthropic,
+                chat_body.clone(),
+                &chat_body,
+                crate::provider_proxy::ProviderForwardOptions {
+                    path,
+                    upstream_path: "/v1/chat/completions",
+                    surface: Surface::Anthropic,
+                    copy_anthropic_headers: false,
+                    protocol: crate::client_policy::ClientProtocol::AnthropicMessages,
+                    native_protocol: false,
+                },
             )
             .await
         }

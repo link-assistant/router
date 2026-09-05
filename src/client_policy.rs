@@ -288,6 +288,46 @@ fn header_starts_with(headers: &HeaderMap, name: &str, prefix: &str) -> bool {
         .is_some_and(|value| value.to_ascii_lowercase().starts_with(prefix))
 }
 
+fn header_equals(headers: &HeaderMap, name: &str, expected: &str) -> bool {
+    headers
+        .get(name)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value == expected)
+}
+
+/// Router-generated doctor requests use one exact internal marker instead of
+/// forging any supported client's public fingerprint. The signed token still
+/// supplies the client identity; this only proves that Router itself created
+/// the deliberately narrow reachability probe. The marker is removed by
+/// `native_request_headers` before provider dispatch.
+fn doctor_request_evidence(
+    client: ClientKind,
+    protocol: ClientProtocol,
+    path: &str,
+    headers: &HeaderMap,
+) -> bool {
+    if !header_equals(
+        headers,
+        crate::clients::doctor::DOCTOR_EVIDENCE_HEADER,
+        crate::clients::doctor::DOCTOR_EVIDENCE_VALUE,
+    ) || !credential_carrier_matches(client, headers)
+    {
+        return false;
+    }
+    match client {
+        ClientKind::ClaudeCode => {
+            protocol == ClientProtocol::AnthropicMessages && path.ends_with("/v1/messages")
+        }
+        ClientKind::Codex => {
+            protocol == ClientProtocol::OpenAIResponses && path.ends_with("/v1/responses")
+        }
+        ClientKind::QwenCode | ClientKind::Opencode | ClientKind::GrokCli | ClientKind::Agent => {
+            protocol == ClientProtocol::OpenAIChat && path.ends_with("/v1/chat/completions")
+        }
+        ClientKind::Cursor | ClientKind::GeminiCli => false,
+    }
+}
+
 /// Match the stable request evidence recorded in `tests/fixtures/clients`.
 ///
 /// This is defense against accidental/unsupported routing, not cryptographic
@@ -300,6 +340,9 @@ pub fn request_evidence(
     path: &str,
     headers: &HeaderMap,
 ) -> bool {
+    if header_present(headers, crate::clients::doctor::DOCTOR_EVIDENCE_HEADER) {
+        return doctor_request_evidence(client, protocol, path, headers);
+    }
     if !protocol_matches_client(client, protocol) {
         return false;
     }
@@ -317,8 +360,7 @@ pub fn request_evidence(
             (path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens"))
                 && credential_carrier_matches(client, headers)
                 && header_present(headers, "anthropic-version")
-                && (header_starts_with(headers, "user-agent", "claude")
-                    || header_starts_with(headers, "x-link-assistant-client-check", "reachability"))
+                && header_starts_with(headers, "user-agent", "claude")
         }
         ClientKind::Codex => {
             path.contains("/v1/responses")

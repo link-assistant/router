@@ -1,4 +1,138 @@
 use super::*;
+use crate::clients::ClientKind;
+use tower::ServiceExt as _;
+
+/// The exact request emitted by `clients doctor` must cross a real Router
+/// forwarding handler for every supported client, while its internal evidence
+/// marker and all former synthetic fingerprints stop at the provider boundary.
+#[tokio::test]
+async fn every_doctor_probe_reaches_a_local_provider_without_diagnostic_metadata() {
+    let (base_url, requests, task) = captured_model_upstream().await;
+    let data_dir = tempfile::tempdir().expect("data dir");
+    let state = auto_state(Vec::new(), data_dir.path());
+    let cases = ClientKind::ALL
+        .into_iter()
+        .filter(|client| client.setup_limitation().is_none())
+        .collect::<Vec<_>>();
+    state
+        .provider_store
+        .upsert(crate::providers::ProviderUpsert {
+            name: "doctor-fixture".into(),
+            kind: None,
+            base_url,
+            default_model: Some("shared-future".into()),
+            models: Some(vec!["shared-future".into()]),
+            supported_clients: Some(
+                cases
+                    .iter()
+                    .map(|client| client.canonical_name().to_string())
+                    .collect(),
+            ),
+            api_key: Some("provider-key".into()),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: None,
+            acknowledge_intermediary_risk: None,
+            acknowledge_unsupported_clients: None,
+            if_absent: false,
+        })
+        .unwrap();
+
+    let app = axum::Router::new()
+        .route(
+            crate::route_contract::route_template(
+                crate::route_contract::RouteId::AnthropicMessages,
+            ),
+            axum::routing::post(crate::proxy::proxy_handler),
+        )
+        .route(
+            crate::route_contract::route_template(crate::route_contract::RouteId::CodexResponses),
+            axum::routing::post(crate::proxy::openai_responses_native),
+        )
+        .route(
+            crate::route_contract::route_template(
+                crate::route_contract::RouteId::QwenChatCompletions,
+            ),
+            axum::routing::post(crate::proxy::openai_chat_completions_native),
+        )
+        .route(
+            crate::route_contract::route_template(
+                crate::route_contract::RouteId::OpenAiChatCompletions,
+            ),
+            axum::routing::post(crate::proxy::openai_chat_completions),
+        )
+        .with_state(state.clone());
+
+    for &client in &cases {
+        let token = crate::model_routing::tests::bound_client_token(&state, client, None);
+        let headers = crate::clients::doctor::probe_headers(client, &token).unwrap();
+        let (path, body) = crate::clients::doctor::probe_request(
+            client,
+            client.integration().endpoint_suffix,
+            "shared-future",
+        );
+        let mut request = Request::builder()
+            .method(axum::http::Method::POST)
+            .uri(&path)
+            .body(Body::from(serde_json::to_vec(&body).unwrap()))
+            .unwrap();
+        *request.headers_mut() = headers;
+        request.headers_mut().insert(
+            axum::http::header::CONTENT_TYPE,
+            HeaderValue::from_static("application/json"),
+        );
+        let response = app.clone().oneshot(request).await.unwrap();
+        let status = response.status();
+        let response_body = response.into_body().collect().await.unwrap().to_bytes();
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "{client}: {}",
+            String::from_utf8_lossy(&response_body)
+        );
+
+        let mut rejected_headers = crate::clients::doctor::probe_headers(client, &token).unwrap();
+        rejected_headers.insert(
+            crate::clients::doctor::DOCTOR_EVIDENCE_HEADER,
+            HeaderValue::from_static("reachability-other"),
+        );
+        let mut rejected = Request::builder()
+            .method(axum::http::Method::POST)
+            .uri(path)
+            .body(Body::from(serde_json::to_vec(&body).unwrap()))
+            .unwrap();
+        *rejected.headers_mut() = rejected_headers;
+        rejected.headers_mut().insert(
+            axum::http::header::CONTENT_TYPE,
+            HeaderValue::from_static("application/json"),
+        );
+        let rejected = app.clone().oneshot(rejected).await.unwrap();
+        assert_eq!(rejected.status(), StatusCode::FORBIDDEN, "{client}");
+    }
+
+    let requests = requests.lock().unwrap();
+    assert_eq!(requests.len(), cases.len());
+    for (_, _, headers) in requests.iter() {
+        assert_eq!(headers["authorization"], "Bearer provider-key");
+        assert!(headers.keys().all(|name| {
+            let name = name.as_str();
+            !name.starts_with("x-link-assistant-")
+                && !name.starts_with("x-router-")
+                && name != "user-agent"
+                && !name.starts_with("x-stainless-")
+                && !name.contains("session")
+                && name != "x-openai-internal-codex-responses-lite"
+        }));
+        assert!(!headers.values().any(|value| {
+            value
+                .to_str()
+                .is_ok_and(|value| value.contains("router-doctor"))
+        }));
+    }
+    drop(requests);
+    task.abort();
+}
 
 /// A disabled provider advertises nothing, so disabling one takes its models
 /// out of both the catalog and the routing table.
