@@ -297,6 +297,10 @@ async fn stub_vendor(
     response
         .headers_mut()
         .insert("content-type", HeaderValue::from_str(content_type).unwrap());
+    response.headers_mut().insert(
+        "x-request-id",
+        HeaderValue::from_static("provider-gemini-bridge-request"),
+    );
     response
 }
 
@@ -743,6 +747,31 @@ async fn stream_generate_content_emits_gemini_sse_for_a_cross_provider_model() {
         native["candidates"][0]["content"]["parts"][0]["text"],
         "stub answer"
     );
+}
+
+#[tokio::test]
+async fn translated_gemini_responses_preserve_the_provider_request_id() {
+    let router = TestRouter::start().await;
+    for action in ["generateContent", "streamGenerateContent"] {
+        let response = router
+            .client
+            .post(format!(
+                "{}/api/services/gemini/v1beta/models/gpt-5.4-mini:{action}",
+                router.url
+            ))
+            .header("x-goog-api-key", &router.token)
+            .header("x-goog-api-client", "gl-node/test gccl/test")
+            .json(&json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}))
+            .send()
+            .await
+            .expect("translated Gemini request");
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers()["x-request-id"],
+            "provider-gemini-bridge-request"
+        );
+        let _ = response.bytes().await.expect("translated Gemini body");
+    }
 }
 
 /// Gemini CLI drives every edit through client tools, so the function-call

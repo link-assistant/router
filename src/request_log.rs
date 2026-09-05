@@ -474,24 +474,24 @@ impl RequestLog {
     }
 }
 
-/// Private request-header carrier used only between Router middleware and its
-/// handlers. Every upstream header policy rejects the `x-link-assistant-*`
-/// namespace, so this value cannot replace or escape as a vendor request ID.
-const INTERNAL_CORRELATION_HEADER: &str = "x-link-assistant-correlation-id";
+#[derive(Clone)]
+struct RequestCorrelationId(String);
 
-/// Correlation id injected privately by [`log_http_exchange`]. Direct handler
-/// tests that bypass middleware receive a fresh id instead of sharing an
-/// ambiguous value.
+tokio::task_local! {
+    static ACTIVE_CORRELATION_ID: String;
+}
+
+/// Correlation id carried by [`log_http_exchange`] in request extensions and
+/// the request task. Direct handler tests that bypass middleware receive a
+/// fresh id instead of sharing an ambiguous value.
 ///
 /// A caller's `x-request-id` remains ordinary end-to-end protocol data and is
 /// never repurposed as Router's internal log identity.
 #[must_use]
-pub fn correlation_id(headers: &HeaderMap) -> String {
-    headers
-        .get(INTERNAL_CORRELATION_HEADER)
-        .and_then(|value| value.to_str().ok())
-        .filter(|value| !value.is_empty())
-        .map_or_else(|| uuid::Uuid::new_v4().to_string(), str::to_string)
+pub fn correlation_id(_headers: &HeaderMap) -> String {
+    ACTIVE_CORRELATION_ID
+        .try_with(Clone::clone)
+        .unwrap_or_else(|_| uuid::Uuid::new_v4().to_string())
 }
 
 /// Stable, non-reversible directory key for one router token.
@@ -690,10 +690,9 @@ pub async fn log_http_exchange(
         recorded: false,
         model: Arc::clone(&requested_model),
     };
-    parts.headers.insert(
-        INTERNAL_CORRELATION_HEADER,
-        axum::http::HeaderValue::from_str(&correlation_id).expect("UUID is a valid header value"),
-    );
+    parts
+        .extensions
+        .insert(RequestCorrelationId(correlation_id.clone()));
     let (request_body, early_response) = if eagerly_capture_json(&parts.headers) {
         if let Ok(bytes) = axum::body::to_bytes(body, MAX_EAGER_REQUEST_BYTES).await {
             let mut capture = capture;
@@ -737,10 +736,18 @@ pub async fn log_http_exchange(
     };
     let method = parts.method.clone();
     let started = Instant::now();
-    let response = match early_response {
-        Some(response) => response,
-        None => next.run(Request::from_parts(parts, request_body)).await,
-    };
+    let routed_correlation_id = parts
+        .extensions
+        .get::<RequestCorrelationId>()
+        .map_or_else(|| correlation_id.clone(), |value| value.0.clone());
+    let response = ACTIVE_CORRELATION_ID
+        .scope(routed_correlation_id, async move {
+            match early_response {
+                Some(response) => response,
+                None => next.run(Request::from_parts(parts, request_body)).await,
+            }
+        })
+        .await;
     // Written after the handler has run, because that is when the body has
     // streamed through the capture above and the model is known. Emitting it
     // on arrival is what left the field unfillable: the middleware sits

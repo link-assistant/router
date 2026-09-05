@@ -137,6 +137,68 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], hidden: &[&str]) {
         .expect("selected exact model reaches inference");
     let body: Value = serde_json::from_slice(&request.body).expect("Claude inference JSON");
     assert_eq!(body["model"], selected);
+
+    if models.iter().all(|(_, owner)| *owner == "z.ai") {
+        let before = router.inference_requests(CLAUDE.inference_path).len();
+        let fallback = run_wrapper_with_options(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            home.path(),
+            &router.origin,
+            None,
+            &[PROMPT],
+        );
+        assert!(
+            fallback.status.success(),
+            "Claude default/fallback run failed"
+        );
+
+        let session = "11111111-2222-4333-8444-555555555555";
+        let initial = run_wrapper_with_options(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            home.path(),
+            &router.origin,
+            Some(selected),
+            &["--session-id", session, PROMPT],
+        );
+        assert!(initial.status.success(), "Claude resumable run failed");
+        let resumed = run_wrapper_with_options(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            home.path(),
+            &router.origin,
+            None,
+            &["--resume", session, PROMPT],
+        );
+        assert!(resumed.status.success(), "Claude resumed run failed");
+
+        let before_subagent = router.inference_requests(CLAUDE.inference_path).len();
+        let subagent = run_wrapper_with_options(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            home.path(),
+            &router.origin,
+            Some(selected),
+            &[SUBAGENT_PROMPT],
+        );
+        assert!(subagent.status.success(), "Claude subagent run failed");
+
+        let requests = router.inference_requests(CLAUDE.inference_path);
+        assert!(
+            requests.len() >= before_subagent + 2,
+            "the Agent tool did not produce a subagent request"
+        );
+        for request in &requests[before..] {
+            let body: Value =
+                serde_json::from_slice(&request.body).expect("Claude routed request JSON");
+            let model = body["model"].as_str().expect("exact routed model");
+            assert!(
+                models.iter().any(|(advertised, _)| *advertised == model),
+                "main, resumed, fallback, or subagent request used unadvertised model {model}"
+            );
+        }
+    }
 }
 
 #[test]

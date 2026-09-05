@@ -578,7 +578,7 @@ async fn forward_native_authorized_after_route(
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream.headers());
-    let retry_header = upstream.headers().get("retry-after").cloned();
+    let response_headers = crate::proxy::relay_response_headers(upstream.headers());
     // The response status is already authoritative even if the peer closes
     // before its declared body is complete. Record it while the response still
     // carries the exact credential generation that produced it.
@@ -622,13 +622,11 @@ async fn forward_native_authorized_after_route(
     if !status.is_success() {
         let mut response = Response::new(Body::from(response_body));
         *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             axum::http::HeaderValue::from_static("application/json"),
         );
-        if let Some(value) = retry_header {
-            response.headers_mut().insert("retry-after", value);
-        }
         return response;
     }
     let parsed: Value = match serde_json::from_slice(&response_body) {
@@ -645,13 +643,20 @@ async fn forward_native_authorized_after_route(
     if streaming {
         let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
         *response.status_mut() = StatusCode::OK;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             axum::http::HeaderValue::from_static("text/event-stream"),
         );
         return response;
     }
-    (StatusCode::OK, axum::Json(native)).into_response()
+    let mut response = (StatusCode::OK, axum::Json(native)).into_response();
+    *response.headers_mut() = response_headers;
+    response.headers_mut().insert(
+        "content-type",
+        axum::http::HeaderValue::from_static("application/json"),
+    );
+    response
 }
 
 async fn forward_native_via_zai(
@@ -711,22 +716,23 @@ async fn translated_chat_response(
     model: &str,
     streaming: bool,
 ) -> Response {
-    let status = response.status();
-    let bytes =
-        match axum::body::to_bytes(response.into_body(), state.max_proxy_request_bytes).await {
-            Ok(bytes) => bytes,
-            Err(error) => {
-                return native_error(
-                    StatusCode::BAD_GATEWAY,
-                    &format!("failed to read the translated upstream response: {error}"),
-                );
-            }
-        };
+    let (parts, body) = response.into_parts();
+    let status = parts.status;
+    let response_headers = crate::proxy::relay_response_headers(&parts.headers);
+    let bytes = match axum::body::to_bytes(body, state.max_proxy_request_bytes).await {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            return native_error(
+                StatusCode::BAD_GATEWAY,
+                &format!("failed to read the translated upstream response: {error}"),
+            );
+        }
+    };
     let parsed = serde_json::from_slice::<Value>(&bytes).unwrap_or_else(|error| {
         json!({"error": {"message": format!("failed to parse the translated response: {error}")}})
     });
     if !status.is_success() {
-        return (
+        let mut response = (
             status,
             axum::Json(crate::gemini_bridge::openai_error_to_gemini(
                 status.as_u16(),
@@ -734,16 +740,29 @@ async fn translated_chat_response(
             )),
         )
             .into_response();
+        *response.headers_mut() = response_headers;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("application/json"),
+        );
+        return response;
     }
     let native = crate::gemini_bridge::chat_to_gemini_response(&parsed, model);
     if streaming {
         let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
         *response.status_mut() = StatusCode::OK;
+        *response.headers_mut() = response_headers;
         response.headers_mut().insert(
             "content-type",
             axum::http::HeaderValue::from_static("text/event-stream"),
         );
         return response;
     }
-    (StatusCode::OK, axum::Json(native)).into_response()
+    let mut response = (StatusCode::OK, axum::Json(native)).into_response();
+    *response.headers_mut() = response_headers;
+    response.headers_mut().insert(
+        "content-type",
+        axum::http::HeaderValue::from_static("application/json"),
+    );
+    response
 }

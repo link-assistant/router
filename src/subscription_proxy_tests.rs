@@ -341,7 +341,10 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
             captured.lock().unwrap().push(request.headers().clone());
             (
                 StatusCode::OK,
-                [("content-type", "application/json")],
+                [
+                    ("content-type", "application/json"),
+                    ("x-request-id", "provider-codex-request"),
+                ],
                 r#"{"id":"resp_1","status":"completed","output":[]}"#,
             )
         }
@@ -389,6 +392,16 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
         HeaderValue::from_static("By=spiffe://private;Subject=client"),
     );
     headers.insert("x-native-end-to-end", HeaderValue::from_static("preserved"));
+    for &name in crate::proxy::INGRESS_NETWORK_HEADERS {
+        headers.append(
+            axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
+            HeaderValue::from_static("192.0.2.10"),
+        );
+        headers.append(
+            axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap(),
+            HeaderValue::from_static("198.51.100.20"),
+        );
+    }
     let response = crate::proxy::openai_responses_native(
         State(state),
         headers,
@@ -399,6 +412,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     )
     .await;
     assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["x-request-id"], "provider-codex-request");
     let _ = response.into_body().collect().await.unwrap();
 
     let captured = captured.lock().unwrap();
@@ -407,8 +421,12 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     assert_eq!(headers["authorization"], "Bearer codex-upstream");
     assert_eq!(headers["x-native-end-to-end"], "preserved");
     assert_eq!(headers.get_all("originator").iter().count(), 1);
-    for removed in ["connection", "x-hop-secret", "x-forwarded-client-cert"] {
+    assert!(!headers.contains_key("x-request-id"));
+    for removed in ["connection", "x-hop-secret"] {
         assert!(!headers.contains_key(removed), "{removed} leaked upstream");
+    }
+    for name in crate::proxy::INGRESS_NETWORK_HEADERS {
+        assert!(!headers.contains_key(*name), "{name} leaked upstream");
     }
     drop(captured);
     upstream_task.abort();

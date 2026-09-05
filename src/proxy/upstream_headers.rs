@@ -34,6 +34,31 @@ pub const OAUTH_BETA_FLAG: &str = "oauth-2025-04-20";
 /// Deliberate proxy request-body ceiling.
 pub const MAX_PROXY_REQUEST_BYTES: usize = crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES;
 
+/// Reviewed ingress/network-origin metadata that never belongs on a native
+/// provider request. Header names are case-insensitive after `HeaderMap`
+/// parsing, and every repeated value is removed by the shared classifier.
+pub const INGRESS_NETWORK_HEADERS: &[&str] = &[
+    "forwarded",
+    "x-forwarded-for",
+    "x-forwarded-host",
+    "x-forwarded-proto",
+    "x-forwarded-port",
+    "x-forwarded-server",
+    "x-original-forwarded-for",
+    "x-real-ip",
+    "x-client-ip",
+    "x-cluster-client-ip",
+    "cf-connecting-ip",
+    "true-client-ip",
+    "fastly-client-ip",
+    "fly-client-ip",
+    "x-envoy-external-address",
+    "x-forwarded-client-cert",
+    "x-azure-clientip",
+    "x-appengine-user-ip",
+    "cloudfront-viewer-address",
+];
+
 /// Merge the OAuth bridge beta flag for explicit protocol conversion paths.
 #[must_use]
 pub fn merge_oauth_beta(existing: Option<&str>) -> String {
@@ -45,45 +70,28 @@ pub fn merge_oauth_beta(existing: Option<&str>) -> String {
 }
 
 fn replaced_or_transport_header(name: &str) -> bool {
-    matches!(
-        name,
-        "authorization"
-            | "x-api-key"
-            | "x-goog-api-key"
-            | "proxy-authorization"
-            | "proxy-authenticate"
-            | "host"
-            | "connection"
-            | "proxy-connection"
-            | "keep-alive"
-            | "transfer-encoding"
-            | "upgrade"
-            | "te"
-            | "trailer"
-            | "content-length"
-            | "accept-encoding"
-            | "cookie"
-            | "chatgpt-account-id"
-            | "forwarded"
-            | "x-forwarded-for"
-            | "x-forwarded-host"
-            | "x-forwarded-proto"
-            | "x-forwarded-port"
-            | "x-forwarded-server"
-            | "x-original-forwarded-for"
-            | "x-real-ip"
-            | "x-client-ip"
-            | "x-cluster-client-ip"
-            | "cf-connecting-ip"
-            | "true-client-ip"
-            | "fastly-client-ip"
-            | "fly-client-ip"
-            | "x-envoy-external-address"
-            | "x-forwarded-client-cert"
-            | "x-azure-clientip"
-            | "x-appengine-user-ip"
-            | "cloudfront-viewer-address"
-    ) || name.starts_with("x-link-assistant-")
+    INGRESS_NETWORK_HEADERS.contains(&name)
+        || matches!(
+            name,
+            "authorization"
+                | "x-api-key"
+                | "x-goog-api-key"
+                | "proxy-authorization"
+                | "proxy-authenticate"
+                | "host"
+                | "connection"
+                | "proxy-connection"
+                | "keep-alive"
+                | "transfer-encoding"
+                | "upgrade"
+                | "te"
+                | "trailer"
+                | "content-length"
+                | "accept-encoding"
+                | "cookie"
+                | "chatgpt-account-id"
+        )
+        || name.starts_with("x-link-assistant-")
         || name.starts_with("x-router-")
 }
 

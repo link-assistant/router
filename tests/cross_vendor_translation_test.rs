@@ -19,7 +19,7 @@ use std::time::Duration;
 use axum::Router;
 use axum::body::{Body, to_bytes};
 use axum::extract::Request;
-use axum::http::{HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::Response;
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::clients::ClientKind;
@@ -45,6 +45,7 @@ struct TestRouter {
     token: String,
     client_kind: ClientKind,
     upstream: Captured,
+    upstream_headers: Arc<Mutex<Vec<HeaderMap>>>,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -58,9 +59,12 @@ impl TestRouter {
         let data = tempfile::tempdir().expect("temporary test data");
         let upstream: Captured = Arc::new(Mutex::new(Vec::new()));
         let captured = Arc::clone(&upstream);
+        let upstream_headers = Arc::new(Mutex::new(Vec::new()));
+        let captured_headers = Arc::clone(&upstream_headers);
         let stub = Router::new().fallback(move |request: Request| {
             let captured = Arc::clone(&captured);
-            async move { capture_upstream(captured, request).await }
+            let captured_headers = Arc::clone(&captured_headers);
+            async move { capture_upstream(captured, captured_headers, request).await }
         });
         let (stub_url, stub_task) = spawn(stub).await;
 
@@ -162,6 +166,7 @@ impl TestRouter {
             token,
             client_kind,
             upstream,
+            upstream_headers,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
@@ -253,7 +258,15 @@ impl Drop for TestRouter {
     }
 }
 
-async fn capture_upstream(captured: Captured, request: Request) -> Response {
+async fn capture_upstream(
+    captured: Captured,
+    captured_headers: Arc<Mutex<Vec<HeaderMap>>>,
+    request: Request,
+) -> Response {
+    captured_headers
+        .lock()
+        .expect("capture header lock")
+        .push(request.headers().clone());
     let body = to_bytes(request.into_body(), 4 * 1024 * 1024)
         .await
         .expect("read upstream body");
@@ -286,6 +299,10 @@ async fn capture_upstream(captured: Captured, request: Request) -> Response {
             "content-type",
             HeaderValue::from_static("text/event-stream"),
         );
+        response.headers_mut().insert(
+            "x-request-id",
+            HeaderValue::from_static("provider-cross-vendor-request"),
+        );
         return response;
     }
     let mut response = Response::new(Body::from(
@@ -303,6 +320,10 @@ async fn capture_upstream(captured: Captured, request: Request) -> Response {
     response
         .headers_mut()
         .insert("content-type", HeaderValue::from_static("application/json"));
+    response.headers_mut().insert(
+        "x-request-id",
+        HeaderValue::from_static("provider-cross-vendor-request"),
+    );
     response
 }
 
@@ -332,6 +353,45 @@ fn codex_tools() -> Value {
         {"type": "function", "name": "update_goal", "parameters": {"type": "object"}},
         {"type": "web_search"}
     ])
+}
+
+#[tokio::test]
+async fn translated_codex_requests_keep_only_end_to_end_request_ids() {
+    let router = TestRouter::start(ClientKind::Codex).await;
+    let body = json!({"model": CLAUDE_MODEL, "input": "test", "stream": true});
+    let supplied = router
+        .request("/api/services/openai/v1/responses")
+        .header("x-request-id", "client-cross-vendor-request")
+        .json(&body)
+        .send()
+        .await
+        .expect("translated request");
+    assert_eq!(
+        supplied.headers()["x-request-id"],
+        "provider-cross-vendor-request"
+    );
+    let _ = supplied.bytes().await.expect("translated stream");
+
+    let absent = router
+        .request("/api/services/openai/v1/responses")
+        .json(&body)
+        .send()
+        .await
+        .expect("translated request without an id");
+    assert_eq!(
+        absent.headers()["x-request-id"],
+        "provider-cross-vendor-request"
+    );
+    let _ = absent.bytes().await.expect("translated stream");
+
+    let headers = router
+        .upstream_headers
+        .lock()
+        .expect("captured upstream headers");
+    assert_eq!(headers.len(), 2);
+    assert_eq!(headers[0]["x-request-id"], "client-cross-vendor-request");
+    assert!(!headers[1].contains_key("x-request-id"));
+    drop(headers);
 }
 
 /// Issue #215: the request must be served, not refused, and the usable tools

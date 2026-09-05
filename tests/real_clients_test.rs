@@ -26,10 +26,15 @@ use portable_pty::CommandBuilder;
 use serde_json::{Value, json};
 use wait_timeout::ChildExt as _;
 
+#[path = "real_clients/anthropic_mock.rs"]
+mod anthropic_mock;
+use anthropic_mock::anthropic_answer;
+
 const CLAUDE_VERSION: &str = "2.1.261";
 const CODEX_VERSION: &str = "0.153.4";
 const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
+const SUBAGENT_PROMPT: &str = "Use the Agent tool once, then reply ROUTER_CAPTURE_OK.";
 const ANSWER: &str = "ROUTER_CAPTURE_OK";
 const CODEX_ALTERNATE_MODEL: &str = "future-codex-switch-model";
 
@@ -352,7 +357,7 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
                     .ok()
                     .and_then(|body| body["model"].as_str().map(str::to_string))
                     .unwrap_or_else(|| case.model.to_string());
-                anthropic_answer(&model)
+                anthropic_answer(&model, &request.body)
             }
             "codex" => {
                 let model = serde_json::from_slice::<Value>(&request.body)
@@ -375,47 +380,6 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
                 .to_string(),
         ),
     }
-}
-
-fn anthropic_answer(model: &str) -> Vec<u8> {
-    let message = json!({
-        "id": "msg_offline",
-        "type": "message",
-        "role": "assistant",
-        "model": model,
-        "content": [],
-        "stop_reason": null,
-        "stop_sequence": null,
-        "usage": {"input_tokens": 1, "output_tokens": 0}
-    });
-    let events = [
-        (
-            "message_start",
-            json!({"type":"message_start", "message":message}),
-        ),
-        (
-            "content_block_start",
-            json!({"type":"content_block_start", "index":0, "content_block":{"type":"text", "text":""}}),
-        ),
-        (
-            "content_block_delta",
-            json!({"type":"content_block_delta", "index":0, "delta":{"type":"text_delta", "text":ANSWER}}),
-        ),
-        (
-            "content_block_stop",
-            json!({"type":"content_block_stop", "index":0}),
-        ),
-        (
-            "message_delta",
-            json!({"type":"message_delta", "delta":{"stop_reason":"end_turn", "stop_sequence":null}, "usage":{"output_tokens":1}}),
-        ),
-        ("message_stop", json!({"type":"message_stop"})),
-    ];
-    let mut body = String::new();
-    for (event, value) in events {
-        write!(&mut body, "event: {event}\ndata: {value}\n\n").expect("write event stream");
-    }
-    http_response("200 OK", "text/event-stream", &body)
 }
 
 fn responses_answer(model: &str) -> Vec<u8> {
@@ -503,18 +467,32 @@ fn run_wrapper_with_model(
     server: &str,
     model: &str,
 ) -> Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args([
-            "--server",
-            server,
-            "--token",
-            "offline-admin",
-            "--model",
-            model,
-            "--non-interactive",
-            case.client,
-            PROMPT,
-        ])
+    run_wrapper_with_options(
+        case,
+        working_directory,
+        home,
+        server,
+        Some(model),
+        &[PROMPT],
+    )
+}
+
+fn run_wrapper_with_options(
+    case: ClientCase,
+    working_directory: &Path,
+    home: &Path,
+    server: &str,
+    model: Option<&str>,
+    forwarded: &[&str],
+) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    command.args(["--server", server, "--token", "offline-admin"]);
+    if let Some(model) = model {
+        command.args(["--model", model]);
+    }
+    command.args(["--non-interactive", case.client]);
+    command.args(forwarded);
+    let mut child = command
         .current_dir(working_directory)
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))

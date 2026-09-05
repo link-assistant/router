@@ -359,6 +359,16 @@ async fn lefine_chat_completions_preserve_native_body_headers_tools_usage_and_er
         "x-link-assistant-internal",
         HeaderValue::from_static("private"),
     );
+    for &name in crate::proxy::INGRESS_NETWORK_HEADERS {
+        headers.append(
+            axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
+            HeaderValue::from_static("192.0.2.10"),
+        );
+        headers.append(
+            axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap(),
+            HeaderValue::from_static("198.51.100.20"),
+        );
+    }
     let request_body = serde_json::json!({
         "model": "vendor/live-exact",
         "messages": [
@@ -394,7 +404,12 @@ async fn lefine_chat_completions_preserve_native_body_headers_tools_usage_and_er
         assert_eq!(captured[0].headers["x-session-id"], "provider-test");
         assert_eq!(captured[0].headers["x-native-required"], "preserved");
         assert_eq!(captured[0].headers["x-request-id"], "client-request-id");
-        assert!(!captured[0].headers.contains_key("x-forwarded-for"));
+        for name in crate::proxy::INGRESS_NETWORK_HEADERS {
+            assert!(
+                !captured[0].headers.contains_key(*name),
+                "{name} leaked to the persisted provider"
+            );
+        }
         assert!(
             !captured[0]
                 .headers
@@ -420,6 +435,7 @@ async fn lefine_chat_completions_preserve_native_body_headers_tools_usage_and_er
     )
     .await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.headers()["x-request-id"], "lefine-response-id");
     assert_eq!(
         response
             .into_body()
@@ -456,10 +472,12 @@ async fn lefine_streaming_chat_completion_is_relayed_byte_for_byte() {
 
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()["content-type"], "text/event-stream");
+    assert_eq!(response.headers()["x-request-id"], "lefine-response-id");
     let body = response.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(body.as_ref(), STREAM.as_bytes());
     let captured = requests.lock().unwrap();
     assert_eq!(captured.len(), 1);
+    assert!(!captured[0].headers.contains_key("x-request-id"));
     assert_eq!(
         serde_json::from_slice::<serde_json::Value>(&captured[0].body).unwrap()["stream"],
         true
