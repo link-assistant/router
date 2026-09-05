@@ -6,156 +6,11 @@
 
 use http::Method;
 
-pub use crate::api_error::ApiDialect;
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum RouteClass {
-    Neutral,
-    Management,
-    Service(ServiceKind),
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum ServiceKind {
-    Anthropic,
-    OpenAi,
-    Codex,
-    Qwen,
-    Gemini,
-    Vertex,
-    Bedrock,
-    GitHub,
-    Git,
-    ActivityPub,
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum ListenerKind {
-    Combined,
-    InferenceOnly,
-    Admin,
-    GitHubAdapter,
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum RouteAuth {
-    None,
-    Client,
-    Admin,
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum RouteMethod {
-    Get,
-    Post,
-    Delete,
-    Any,
-}
-
-impl RouteMethod {
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Get => "GET",
-            Self::Post => "POST",
-            Self::Delete => "DELETE",
-            Self::Any => "ANY",
-        }
-    }
-
-    fn matches(self, method: &Method) -> bool {
-        self == Self::Any
-            || matches!(
-                (self, method),
-                (Self::Get, &Method::GET)
-                    | (Self::Post, &Method::POST)
-                    | (Self::Delete, &Method::DELETE)
-            )
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum RouteId {
-    Health,
-    AggregateModels,
-    SubscriptionUsage,
-    SubscriptionUsageProvider,
-    Tokens,
-    ClientTokens,
-    RevokeToken,
-    RotateToken,
-    RotateClientToken,
-    Providers,
-    Provider,
-    Login,
-    LoginSession,
-    LoginCode,
-    Usage,
-    Accounts,
-    CredentialStatus,
-    SubscriptionHealth,
-    Metrics,
-    AdminStatus,
-    AdminBootstrap,
-    AdminBootstrapConfirm,
-    AdminRotate,
-    AdminSummary,
-    AnthropicMessages,
-    AnthropicCountTokens,
-    AnthropicModels,
-    OpenAiChatCompletions,
-    OpenAiChatCompletion,
-    OpenAiChatCompletionMessages,
-    OpenAiResponses,
-    OpenAiResponse,
-    OpenAiResponseCancel,
-    OpenAiResponseInputItems,
-    OpenAiModels,
-    CodexChatCompletions,
-    CodexChatCompletion,
-    CodexChatCompletionMessages,
-    CodexResponses,
-    CodexResponse,
-    CodexResponseCancel,
-    CodexResponseInputItems,
-    CodexModels,
-    QwenChatCompletions,
-    QwenChatCompletion,
-    QwenChatCompletionMessages,
-    QwenResponses,
-    QwenResponse,
-    QwenResponseCancel,
-    QwenResponseInputItems,
-    QwenModels,
-    GeminiModels,
-    GeminiModel,
-    Vertex,
-    AnthropicVertex,
-    BedrockInvoke,
-    BedrockInvokeStream,
-    GitHubRest,
-    GitHubGraphql,
-    Git,
-    GitHubAdapterRest,
-    GitHubAdapterGraphql,
-    GitHubAdapterGit,
-    ActivityPubActor,
-    ActivityPubInbox,
-    ActivityPubOutbox,
-    ActivityPubFollowers,
-    ActivityPubFollowProblemsets,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct RouteSpec {
-    pub id: RouteId,
-    pub method: RouteMethod,
-    pub template: &'static str,
-    pub class: RouteClass,
-    pub auth: RouteAuth,
-    pub dialect: ApiDialect,
-    pub listeners: &'static [ListenerKind],
-}
+#[path = "route_contract_types.rs"]
+mod types;
+pub use types::{
+    ApiDialect, ListenerKind, RouteAuth, RouteClass, RouteId, RouteMethod, RouteSpec, ServiceKind,
+};
 
 const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
@@ -402,6 +257,13 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::Anthropic,
     ),
     ai_service(
+        RouteId::AnthropicModel,
+        RouteMethod::Get,
+        "/api/services/anthropic/v1/models/{model_id}",
+        ServiceKind::Anthropic,
+        ApiDialect::Anthropic,
+    ),
+    ai_service(
         RouteId::OpenAiChatCompletions,
         RouteMethod::Post,
         "/api/services/openai/v1/chat/completions",
@@ -486,9 +348,72 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::OpenAi,
     ),
     ai_service(
+        RouteId::OpenAiConversations,
+        RouteMethod::Post,
+        "/api/services/openai/v1/conversations",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversation,
+        RouteMethod::Get,
+        "/api/services/openai/v1/conversations/{conversation_id}",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversation,
+        RouteMethod::Patch,
+        "/api/services/openai/v1/conversations/{conversation_id}",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversation,
+        RouteMethod::Delete,
+        "/api/services/openai/v1/conversations/{conversation_id}",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversationItems,
+        RouteMethod::Post,
+        "/api/services/openai/v1/conversations/{conversation_id}/items",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversationItems,
+        RouteMethod::Get,
+        "/api/services/openai/v1/conversations/{conversation_id}/items",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversationItem,
+        RouteMethod::Get,
+        "/api/services/openai/v1/conversations/{conversation_id}/items/{item_id}",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiConversationItem,
+        RouteMethod::Delete,
+        "/api/services/openai/v1/conversations/{conversation_id}/items/{item_id}",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
         RouteId::OpenAiModels,
         RouteMethod::Get,
         "/api/services/openai/v1/models",
+        ServiceKind::OpenAi,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::OpenAiModel,
+        RouteMethod::Get,
+        "/api/services/openai/v1/models/{model_id}",
         ServiceKind::OpenAi,
         ApiDialect::OpenAi,
     ),
@@ -577,9 +502,72 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::OpenAi,
     ),
     ai_service(
+        RouteId::CodexConversations,
+        RouteMethod::Post,
+        "/api/services/codex/v1/conversations",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversation,
+        RouteMethod::Get,
+        "/api/services/codex/v1/conversations/{conversation_id}",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversation,
+        RouteMethod::Patch,
+        "/api/services/codex/v1/conversations/{conversation_id}",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversation,
+        RouteMethod::Delete,
+        "/api/services/codex/v1/conversations/{conversation_id}",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversationItems,
+        RouteMethod::Post,
+        "/api/services/codex/v1/conversations/{conversation_id}/items",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversationItems,
+        RouteMethod::Get,
+        "/api/services/codex/v1/conversations/{conversation_id}/items",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversationItem,
+        RouteMethod::Get,
+        "/api/services/codex/v1/conversations/{conversation_id}/items/{item_id}",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexConversationItem,
+        RouteMethod::Delete,
+        "/api/services/codex/v1/conversations/{conversation_id}/items/{item_id}",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
         RouteId::CodexModels,
         RouteMethod::Get,
         "/api/services/codex/v1/models",
+        ServiceKind::Codex,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::CodexModel,
+        RouteMethod::Get,
+        "/api/services/codex/v1/models/{model_id}",
         ServiceKind::Codex,
         ApiDialect::OpenAi,
     ),
@@ -668,9 +656,72 @@ const ROUTES: &[RouteSpec] = &[
         ApiDialect::OpenAi,
     ),
     ai_service(
+        RouteId::QwenConversations,
+        RouteMethod::Post,
+        "/api/services/qwen/v1/conversations",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversation,
+        RouteMethod::Get,
+        "/api/services/qwen/v1/conversations/{conversation_id}",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversation,
+        RouteMethod::Patch,
+        "/api/services/qwen/v1/conversations/{conversation_id}",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversation,
+        RouteMethod::Delete,
+        "/api/services/qwen/v1/conversations/{conversation_id}",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversationItems,
+        RouteMethod::Post,
+        "/api/services/qwen/v1/conversations/{conversation_id}/items",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversationItems,
+        RouteMethod::Get,
+        "/api/services/qwen/v1/conversations/{conversation_id}/items",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversationItem,
+        RouteMethod::Get,
+        "/api/services/qwen/v1/conversations/{conversation_id}/items/{item_id}",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenConversationItem,
+        RouteMethod::Delete,
+        "/api/services/qwen/v1/conversations/{conversation_id}/items/{item_id}",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
         RouteId::QwenModels,
         RouteMethod::Get,
         "/api/services/qwen/v1/models",
+        ServiceKind::Qwen,
+        ApiDialect::OpenAi,
+    ),
+    ai_service(
+        RouteId::QwenModel,
+        RouteMethod::Get,
+        "/api/services/qwen/v1/models/{model_id}",
         ServiceKind::Qwen,
         ApiDialect::OpenAi,
     ),

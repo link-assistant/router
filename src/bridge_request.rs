@@ -82,7 +82,7 @@ pub fn anthropic_to_responses_request(body: &Value, upstream_model: &str) -> Res
     let mut skeleton = body.clone();
     skeleton["messages"] = Value::Array(Vec::new());
     let chat = anthropic_to_chat_request(&skeleton, upstream_model);
-    let mut out = crate::responses::chat_completion_to_responses(&chat);
+    let mut out = crate::responses::try_chat_completion_to_responses(&chat)?;
     out["input"] = Value::Array(anthropic_messages_to_responses(body)?);
     Ok(out)
 }

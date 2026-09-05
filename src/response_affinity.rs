@@ -1,4 +1,4 @@
-//! Durable ownership and upstream affinity for stored `OpenAI Responses`.
+//! Durable ownership and upstream affinity for provider-owned `OpenAI` resources.
 
 #![allow(clippy::redundant_pub_crate)]
 
@@ -24,6 +24,12 @@ pub(crate) enum ResponseNamespace {
     OpenAiChat,
     CodexChat,
     QwenChat,
+    OpenAiConversations,
+    CodexConversations,
+    QwenConversations,
+    OpenAiConversationItems,
+    CodexConversationItems,
+    QwenConversationItems,
 }
 
 impl ResponseNamespace {
@@ -40,6 +46,18 @@ impl ResponseNamespace {
             Some(Self::CodexChat)
         } else if path.starts_with("/api/services/qwen/v1/chat/completions") {
             Some(Self::QwenChat)
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn conversations_from_path(path: &str) -> Option<(Self, Self)> {
+        if path.starts_with("/api/services/openai/v1/conversations") {
+            Some((Self::OpenAiConversations, Self::OpenAiConversationItems))
+        } else if path.starts_with("/api/services/codex/v1/conversations") {
+            Some((Self::CodexConversations, Self::CodexConversationItems))
+        } else if path.starts_with("/api/services/qwen/v1/conversations") {
+            Some((Self::QwenConversations, Self::QwenConversationItems))
         } else {
             None
         }
@@ -89,6 +107,8 @@ pub(crate) struct ResponseAffinity {
     pub(crate) response_id: String,
     pub(crate) owner: ResponseOwner,
     pub(crate) destination: AffinityDestination,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) parent_id: Option<String>,
     pub(crate) created_at: i64,
     pub(crate) expires_at: i64,
 }
@@ -190,21 +210,54 @@ impl ResponseAffinityStore {
         owner: ResponseOwner,
         destination: AffinityDestination,
     ) -> Result<RecordOutcome, StoreError> {
-        self.record_at(
+        self.record_at_with_parent(
             namespace,
             response_id,
             owner,
             destination,
+            None,
             chrono::Utc::now().timestamp(),
         )
     }
 
+    pub(crate) fn record_child(
+        &self,
+        namespace: ResponseNamespace,
+        response_id: &str,
+        parent_id: &str,
+        owner: ResponseOwner,
+        destination: AffinityDestination,
+    ) -> Result<RecordOutcome, StoreError> {
+        validate_response_id(parent_id)?;
+        self.record_at_with_parent(
+            namespace,
+            response_id,
+            owner,
+            destination,
+            Some(parent_id.to_string()),
+            chrono::Utc::now().timestamp(),
+        )
+    }
+
+    #[cfg(test)]
     pub(crate) fn record_at(
         &self,
         namespace: ResponseNamespace,
         response_id: &str,
         owner: ResponseOwner,
         destination: AffinityDestination,
+        now: i64,
+    ) -> Result<RecordOutcome, StoreError> {
+        self.record_at_with_parent(namespace, response_id, owner, destination, None, now)
+    }
+
+    fn record_at_with_parent(
+        &self,
+        namespace: ResponseNamespace,
+        response_id: &str,
+        owner: ResponseOwner,
+        destination: AffinityDestination,
+        parent_id: Option<String>,
         now: i64,
     ) -> Result<RecordOutcome, StoreError> {
         validate_response_id(response_id)?;
@@ -218,7 +271,7 @@ impl ResponseAffinityStore {
                     && record.response_id == response_id
                     && record.owner == owner
             }) {
-                return if existing.destination == destination {
+                return if existing.destination == destination && existing.parent_id == parent_id {
                     Ok(RecordOutcome::Existing)
                 } else {
                     Err(StoreError::Collision)
@@ -230,6 +283,7 @@ impl ResponseAffinityStore {
                 response_id: response_id.to_string(),
                 owner,
                 destination,
+                parent_id,
                 created_at: now,
                 expires_at: now.saturating_add(ttl),
             });
@@ -299,6 +353,31 @@ impl ResponseAffinityStore {
             file.records.retain(|record| record != affinity);
             let removed = file.records.len() != before;
             if removed {
+                self.flush(&file)?;
+            }
+            Ok(removed)
+        })
+    }
+
+    pub(crate) fn remove_children(
+        &self,
+        namespace: ResponseNamespace,
+        parent_id: &str,
+        owner: &ResponseOwner,
+        destination: &AffinityDestination,
+    ) -> Result<usize, StoreError> {
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            crate::durable_file::recover_transactional_write(&self.path)?;
+            let mut file = self.load()?;
+            let before = file.records.len();
+            file.records.retain(|record| {
+                record.namespace != namespace
+                    || record.parent_id.as_deref() != Some(parent_id)
+                    || &record.owner != owner
+                    || &record.destination != destination
+            });
+            let removed = before - file.records.len();
+            if removed != 0 {
                 self.flush(&file)?;
             }
             Ok(removed)

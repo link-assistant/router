@@ -210,6 +210,50 @@ fn responses_lifecycle_is_an_authenticated_openai_service_surface() {
 }
 
 #[test]
+fn conversations_lifecycle_is_an_authenticated_openai_service_surface() {
+    for (service, kind) in [
+        ("openai", ServiceKind::OpenAi),
+        ("codex", ServiceKind::Codex),
+        ("qwen", ServiceKind::Qwen),
+    ] {
+        for (method, suffix) in [
+            (http::Method::POST, ""),
+            (http::Method::GET, "/conv_123"),
+            (http::Method::PATCH, "/conv_123"),
+            (http::Method::DELETE, "/conv_123"),
+            (http::Method::POST, "/conv_123/items"),
+            (http::Method::GET, "/conv_123/items"),
+            (http::Method::GET, "/conv_123/items/item_123"),
+            (http::Method::DELETE, "/conv_123/items/item_123"),
+        ] {
+            let path = format!("/api/services/{service}/v1/conversations{suffix}");
+            let route = route_for_path(&method, &path)
+                .unwrap_or_else(|| panic!("missing route contract for {method} {path}"));
+            assert_eq!(route.class, RouteClass::Service(kind), "{method} {path}");
+            assert_eq!(route.auth, RouteAuth::Client, "{method} {path}");
+            assert_eq!(route.dialect, ApiDialect::OpenAi, "{method} {path}");
+        }
+    }
+}
+
+#[test]
+fn single_model_routes_use_the_native_service_dialect() {
+    for (service, kind, dialect) in [
+        ("anthropic", ServiceKind::Anthropic, ApiDialect::Anthropic),
+        ("openai", ServiceKind::OpenAi, ApiDialect::OpenAi),
+        ("codex", ServiceKind::Codex, ApiDialect::OpenAi),
+        ("qwen", ServiceKind::Qwen, ApiDialect::OpenAi),
+    ] {
+        let path = format!("/api/services/{service}/v1/models/future-model");
+        let route = route_for_path(&http::Method::GET, &path)
+            .unwrap_or_else(|| panic!("missing route contract for GET {path}"));
+        assert_eq!(route.class, RouteClass::Service(kind));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, dialect);
+    }
+}
+
+#[test]
 fn stored_chat_lifecycle_is_an_authenticated_openai_service_surface() {
     for (service, kind) in [
         ("openai", ServiceKind::OpenAi),

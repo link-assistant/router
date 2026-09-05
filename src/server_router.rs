@@ -187,6 +187,10 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             .route(
                 route_template(RouteId::AnthropicModels),
                 get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::AnthropicModel),
+                get(crate::model_resource::retrieve),
             );
     }
     if config.enable_openai_api {
@@ -223,8 +227,30 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 get(crate::responses_lifecycle::input_items),
             )
             .route(
+                route_template(RouteId::OpenAiConversations),
+                post(crate::conversations::create),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversation),
+                get(crate::conversations::conversation)
+                    .patch(crate::conversations::conversation)
+                    .delete(crate::conversations::conversation),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversationItems),
+                post(crate::conversations::items).get(crate::conversations::items),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversationItem),
+                get(crate::conversations::item).delete(crate::conversations::item),
+            )
+            .route(
                 route_template(RouteId::OpenAiModels),
                 get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::OpenAiModel),
+                get(crate::model_resource::retrieve),
             )
             .route(
                 route_template(RouteId::CodexChatCompletions),
@@ -258,8 +284,30 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 get(crate::responses_lifecycle::input_items),
             )
             .route(
+                route_template(RouteId::CodexConversations),
+                post(crate::conversations::create),
+            )
+            .route(
+                route_template(RouteId::CodexConversation),
+                get(crate::conversations::conversation)
+                    .patch(crate::conversations::conversation)
+                    .delete(crate::conversations::conversation),
+            )
+            .route(
+                route_template(RouteId::CodexConversationItems),
+                post(crate::conversations::items).get(crate::conversations::items),
+            )
+            .route(
+                route_template(RouteId::CodexConversationItem),
+                get(crate::conversations::item).delete(crate::conversations::item),
+            )
+            .route(
                 route_template(RouteId::CodexModels),
                 get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::CodexModel),
+                get(crate::model_resource::retrieve),
             )
             .route(
                 route_template(RouteId::QwenChatCompletions),
@@ -294,8 +342,30 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 get(crate::responses_lifecycle::input_items),
             )
             .route(
+                route_template(RouteId::QwenConversations),
+                post(crate::conversations::create),
+            )
+            .route(
+                route_template(RouteId::QwenConversation),
+                get(crate::conversations::conversation)
+                    .patch(crate::conversations::conversation)
+                    .delete(crate::conversations::conversation),
+            )
+            .route(
+                route_template(RouteId::QwenConversationItems),
+                post(crate::conversations::items).get(crate::conversations::items),
+            )
+            .route(
+                route_template(RouteId::QwenConversationItem),
+                get(crate::conversations::item).delete(crate::conversations::item),
+            )
+            .route(
                 route_template(RouteId::QwenModels),
                 get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::QwenModel),
+                get(crate::model_resource::retrieve),
             )
             .route(
                 route_template(RouteId::GeminiModels),

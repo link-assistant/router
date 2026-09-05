@@ -435,7 +435,17 @@ async fn openai_chat_completions_with_subscription(
         }
         // The ChatGPT backend speaks only the Responses API; translate the
         // Chat Completions request before forwarding.
-        let responses_body = responses::chat_completion_to_responses(&body);
+        let responses_body = match responses::try_chat_completion_to_responses(&body) {
+            Ok(body) => body,
+            Err(reason) => {
+                return crate::api_error::error_response_for_surface(
+                    crate::metrics::Surface::OpenAIChat,
+                    StatusCode::BAD_REQUEST,
+                    "invalid_request_error",
+                    &reason,
+                );
+            }
+        };
         return crate::subscription_proxy::forward_codex_chat_completions_routed(
             &state,
             &headers,

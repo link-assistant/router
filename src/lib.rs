@@ -42,6 +42,7 @@ pub mod codex_identity;
 pub mod config;
 pub mod config_defaults;
 pub mod configure;
+pub mod conversations;
 pub mod crater;
 pub mod credential_acceptance;
 pub mod credential_recovery_store;
@@ -71,6 +72,9 @@ pub mod login_url;
 pub mod managed_server;
 pub mod metrics;
 pub mod model_catalog;
+pub mod model_resource;
+#[cfg(test)]
+mod model_resource_tests;
 pub mod model_routing;
 pub mod monitoring_api;
 pub mod mpp;

@@ -165,7 +165,7 @@ async fn forward(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn forward_stored_provider(
+pub(crate) async fn forward_stored_provider(
     state: &AppState,
     claims: &crate::token::TokenClaims,
     method: &Method,
@@ -225,7 +225,7 @@ async fn forward_stored_provider(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn forward_subscription(
+pub(crate) async fn forward_subscription(
     state: &AppState,
     claims: &crate::token::TokenClaims,
     method: &Method,

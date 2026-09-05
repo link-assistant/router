@@ -50,6 +50,49 @@ async fn lifecycle_upstream() -> (String, Arc<Mutex<Vec<Seen>>>, tokio::task::Jo
                     .unwrap();
             }
             match (method, uri.split('?').next().unwrap_or_default()) {
+                (Method::POST, "/v1/conversations") => json(
+                    StatusCode::OK,
+                    serde_json::json!({
+                        "id":"conv.?opaque",
+                        "object":"conversation",
+                        "created_at":1,
+                        "metadata":{"case":"native"}
+                    }),
+                ),
+                (Method::GET | Method::PATCH, "/v1/conversations/conv.%3Fopaque") => json(
+                    StatusCode::OK,
+                    serde_json::json!({
+                        "id":"conv.?opaque",
+                        "object":"conversation",
+                        "metadata":{"updated":"yes"}
+                    }),
+                ),
+                (Method::DELETE, "/v1/conversations/conv.%3Fopaque") => json(
+                    StatusCode::OK,
+                    serde_json::json!({
+                        "id":"conv.?opaque",
+                        "object":"conversation.deleted",
+                        "deleted":true
+                    }),
+                ),
+                (Method::GET | Method::POST, "/v1/conversations/conv.%3Fopaque/items") => json(
+                    StatusCode::OK,
+                    serde_json::json!({
+                        "object":"list",
+                        "data":[{"id":"item.?opaque","type":"message","role":"user"}],
+                        "first_id":"item.?opaque",
+                        "last_id":"item.?opaque",
+                        "has_more":false
+                    }),
+                ),
+                (Method::GET, "/v1/conversations/conv.%3Fopaque/items/item.%3Fopaque") => json(
+                    StatusCode::OK,
+                    serde_json::json!({"id":"item.?opaque","type":"message","role":"user"}),
+                ),
+                (Method::DELETE, "/v1/conversations/conv.%3Fopaque/items/item.%3Fopaque") => json(
+                    StatusCode::OK,
+                    serde_json::json!({"id":"conv.?opaque","object":"conversation"}),
+                ),
                 (Method::POST, "/v1/responses") => json(
                     StatusCode::OK,
                     serde_json::json!({
@@ -650,6 +693,190 @@ async fn stored_chat_full_lifecycle_filters_list_and_preserves_metadata() {
     assert!(seen.iter().any(|request| {
         request.uri
             == "/v1/chat/completions/chatcmpl.%3Fopaque/messages?after=msg_1&limit=20&order=asc"
+    }));
+    drop(seen);
+    task.abort();
+}
+
+#[tokio::test]
+async fn conversations_are_native_owner_scoped_and_parent_bound() {
+    let data_dir = tempfile::tempdir().unwrap();
+    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data_dir.path());
+    let (base_url, seen, task) = lifecycle_upstream().await;
+    install_provider(&state, &base_url);
+    state.upstream_provider = UpstreamProvider::OpenAICompatible;
+    state.openai_compatible.provider_name = "lifecycle".into();
+    let mut client_headers = headers(&state, crate::clients::ClientKind::Codex, "owner-a");
+    client_headers.insert(
+        "openai-organization",
+        HeaderValue::from_static("org-native-fixture"),
+    );
+
+    let created = crate::conversations::create(
+        State(state.clone()),
+        OriginalUri(Uri::from_static("/api/services/openai/v1/conversations")),
+        request(
+            Method::POST,
+            "/api/services/openai/v1/conversations",
+            &client_headers,
+            r#"{"metadata":{"case":"native"}}"#,
+        ),
+    )
+    .await;
+    assert_eq!(created.status(), StatusCode::OK);
+
+    let wrong_headers = headers(&state, crate::clients::ClientKind::Codex, "owner-b");
+    let before = seen.lock().unwrap().len();
+    let wrong_owner = crate::conversations::conversation(
+        State(state.clone()),
+        Path("conv.?opaque".into()),
+        OriginalUri(Uri::from_static(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque",
+        )),
+        request(
+            Method::GET,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque",
+            &wrong_headers,
+            "",
+        ),
+    )
+    .await;
+    assert_eq!(wrong_owner.status(), StatusCode::NOT_FOUND);
+    assert_eq!(seen.lock().unwrap().len(), before);
+
+    let updated = crate::conversations::conversation(
+        State(state.clone()),
+        Path("conv.?opaque".into()),
+        OriginalUri(Uri::from_static(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque",
+        )),
+        request(
+            Method::PATCH,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque",
+            &client_headers,
+            r#"{"metadata":{"updated":"yes"}}"#,
+        ),
+    )
+    .await;
+    assert_eq!(updated.status(), StatusCode::OK);
+
+    let added = crate::conversations::items(
+        State(state.clone()),
+        Path("conv.?opaque".into()),
+        OriginalUri(Uri::from_static(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items",
+        )),
+        request(
+            Method::POST,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items",
+            &client_headers,
+            r#"{"items":[{"type":"message","role":"user","content":"hello"}]}"#,
+        ),
+    )
+    .await;
+    assert_eq!(added.status(), StatusCode::OK);
+
+    let listed = crate::conversations::items(
+        State(state.clone()),
+        Path("conv.?opaque".into()),
+        OriginalUri(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items?after=item_0&limit=20&order=desc"
+                .parse()
+                .unwrap(),
+        ),
+        request(
+            Method::GET,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items",
+            &client_headers,
+            "",
+        ),
+    )
+    .await;
+    assert_eq!(listed.status(), StatusCode::OK);
+
+    let item = crate::conversations::item(
+        State(state.clone()),
+        Path(("conv.?opaque".into(), "item.?opaque".into())),
+        OriginalUri(Uri::from_static(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items/item.%3Fopaque",
+        )),
+        request(
+            Method::GET,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items/item.%3Fopaque",
+            &client_headers,
+            "",
+        ),
+    )
+    .await;
+    assert_eq!(item.status(), StatusCode::OK);
+
+    let unknown_before = seen.lock().unwrap().len();
+    let unknown = crate::conversations::item(
+        State(state.clone()),
+        Path(("conv.?opaque".into(), "item_unknown".into())),
+        OriginalUri(Uri::from_static(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items/item_unknown",
+        )),
+        request(
+            Method::GET,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque/items/item_unknown",
+            &client_headers,
+            "",
+        ),
+    )
+    .await;
+    assert_eq!(unknown.status(), StatusCode::NOT_FOUND);
+    assert_eq!(seen.lock().unwrap().len(), unknown_before);
+
+    let deleted = crate::conversations::conversation(
+        State(state.clone()),
+        Path("conv.?opaque".into()),
+        OriginalUri(Uri::from_static(
+            "/api/services/openai/v1/conversations/conv.%3Fopaque",
+        )),
+        request(
+            Method::DELETE,
+            "/api/services/openai/v1/conversations/conv.%3Fopaque",
+            &client_headers,
+            "",
+        ),
+    )
+    .await;
+    assert_eq!(deleted.status(), StatusCode::OK);
+    let owner = crate::response_affinity::ResponseOwner::new("codex", "owner-a");
+    assert!(
+        state
+            .provider_store
+            .response_affinities()
+            .lookup(
+                crate::response_affinity::ResponseNamespace::OpenAiConversationItems,
+                "item.?opaque",
+                &owner,
+            )
+            .unwrap()
+            .is_none()
+    );
+
+    let seen = seen.lock().unwrap();
+    assert!(seen.iter().all(|request| {
+        request
+            .headers
+            .get("authorization")
+            .map(HeaderValue::as_bytes)
+            == Some(b"Bearer upstream-secret")
+    }));
+    assert!(seen.iter().all(|request| {
+        request
+            .headers
+            .get("openai-organization")
+            .map(HeaderValue::as_bytes)
+            == Some(b"org-native-fixture")
+    }));
+    assert!(seen.iter().any(|request| {
+        request.uri == "/v1/conversations/conv.%3Fopaque/items?after=item_0&limit=20&order=desc"
+    }));
+    assert!(seen.iter().any(|request| {
+        request.method == Method::PATCH && request.body == br#"{"metadata":{"updated":"yes"}}"#
     }));
     drop(seen);
     task.abort();

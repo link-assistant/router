@@ -369,7 +369,7 @@ pub fn request_evidence(
                 && header_starts_with(headers, "user-agent", "claude")
         }
         ClientKind::Codex => {
-            path.contains("/v1/responses")
+            (path.contains("/v1/responses") || path.contains("/v1/conversations"))
                 && header_present(headers, "authorization")
                 && header_starts_with(headers, "user-agent", "codex")
                 && (header_present(headers, "x-openai-internal-codex-responses-lite")
@@ -417,14 +417,16 @@ fn path_belongs_to_client(client: ClientKind, path: &str) -> bool {
         return !matches!(client, ClientKind::Cursor | ClientKind::Agent);
     }
     match client {
-        ClientKind::Codex => path == "/api/services/codex/v1/models",
+        ClientKind::Codex => path.starts_with("/api/services/codex/v1/models"),
         ClientKind::GeminiCli => {
             path == "/api/services/gemini/v1beta/models"
                 || path.starts_with("/api/services/gemini/v1beta/models/")
         }
-        ClientKind::QwenCode => path == "/api/services/qwen/v1/models",
-        ClientKind::ClaudeCode => path == "/api/services/anthropic/v1/models",
-        ClientKind::Opencode | ClientKind::GrokCli => path == "/api/services/openai/v1/models",
+        ClientKind::QwenCode => path.starts_with("/api/services/qwen/v1/models"),
+        ClientKind::ClaudeCode => path.starts_with("/api/services/anthropic/v1/models"),
+        ClientKind::Opencode | ClientKind::GrokCli => {
+            path.starts_with("/api/services/openai/v1/models")
+        }
         ClientKind::Cursor | ClientKind::Agent => false,
     }
 }

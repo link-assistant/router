@@ -1,6 +1,92 @@
 use super::*;
 
 #[tokio::test]
+async fn chat_to_codex_preserves_supported_history_and_rejects_the_rest_before_upstream() {
+    let router = TestRouter::start(UpstreamProvider::Codex).await;
+    for stream in [false, true] {
+        let response = router
+            .post(
+                "/api/services/openai/v1/chat/completions",
+                &json!({
+                    "model":"gpt-5","stream":stream,
+                    "messages":[
+                        {"role":"user","content":[
+                            {"type":"text","text":"inspect"},
+                            {"type":"image_url","image_url":{"url":"https://example.test/image.png","detail":"high"}},
+                            {"type":"file","file":{"file_data":"data:text/plain;base64,SGk=","filename":"fixture.txt"}}
+                        ]},
+                        {"role":"assistant","content":[
+                            {"type":"text","text":"checking"},
+                            {"type":"refusal","refusal":"cannot inspect"}
+                        ],"tool_calls":[{
+                            "id":"call_1","type":"function",
+                            "function":{"name":"inspect","arguments":"{\"id\":1}"}
+                        }]},
+                        {"role":"tool","tool_call_id":"call_1","content":"done"}
+                    ]
+                }),
+            )
+            .send()
+            .await
+            .expect("Chat-to-Codex request");
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+    {
+        let requests = router.requests.lock().expect("stub requests");
+        assert_eq!(requests.len(), 2);
+        for request in requests.iter() {
+            // Codex speaks Responses SSE natively; Router buffers it only for
+            // the non-streaming Chat caller.
+            assert_eq!(request["stream"], true);
+            assert_eq!(
+                request["input"][0]["content"][1],
+                json!({
+                    "type":"input_image","image_url":"https://example.test/image.png","detail":"high"
+                })
+            );
+            assert_eq!(
+                request["input"][0]["content"][2],
+                json!({
+                    "type":"input_file","file_data":"data:text/plain;base64,SGk=","filename":"fixture.txt"
+                })
+            );
+            assert_eq!(
+                request["input"][1]["content"][1],
+                json!({
+                    "type":"refusal","refusal":"cannot inspect"
+                })
+            );
+            assert_eq!(request["input"][2]["type"], "function_call");
+            assert_eq!(request["input"][3]["type"], "function_call_output");
+        }
+    }
+
+    let before = router.requests.lock().expect("stub requests").len();
+    for messages in [
+        json!([{"role":"user","content":[{"type":"input_audio","input_audio":{"data":"AAA","format":"wav"}}]}]),
+        json!([{"role":"assistant","content":"prior","audio":{"id":"audio_1"}}]),
+        json!([{"role":"assistant","content":null,"function_call":{"name":"legacy","arguments":"{}"}}]),
+        json!([{"role":"function","name":"legacy","content":"result"}]),
+        json!([{"role":"user","content":[{"type":"image_url","image_url":{}}]}]),
+        json!([{"role":"user","content":[{"type":"file","file":{"filename":"only.txt"}}]}]),
+        json!([{"role":"user","content":[{"type":"unknown","value":"x"}]}]),
+    ] {
+        let response = router
+            .post(
+                "/api/services/openai/v1/chat/completions",
+                &json!({"model":"gpt-5","messages":messages}),
+            )
+            .send()
+            .await
+            .expect("rejected Chat-to-Codex history");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let error: Value = response.json().await.expect("Chat error body");
+        assert_eq!(error["error"]["type"], "invalid_request_error");
+    }
+    assert_eq!(router.requests.lock().expect("stub requests").len(), before);
+}
+
+#[tokio::test]
 async fn chat_generation_controls_are_native_or_rejected_before_anthropic() {
     let native = TestRouter::start(UpstreamProvider::OpenAICompatible).await;
     let native_body = json!({
