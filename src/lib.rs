@@ -50,6 +50,8 @@ pub mod gemini_bridge;
 pub mod git_proxy;
 pub mod github_proxy;
 pub mod gonka;
+#[cfg(test)]
+mod gonka_timeout_tests;
 pub mod lefine;
 pub mod lino_json;
 pub mod log_analysis;

@@ -173,7 +173,7 @@ fn parse_truthy(value: &str) -> Result<bool, String> {
 }
 
 /// Top-level CLI parser.
-#[derive(Debug, LinoParser)]
+#[derive(LinoParser)]
 // `router` is the canonical name — what the project, its repository and its
 // documentation call this tool (issue #222). It is pinned here rather than
 // taken from `argv[0]` so `--version` reads the same whichever of the two
@@ -255,18 +255,15 @@ pub struct Cli {
     #[arg(long, env = "UPSTREAM_PROVIDER", default_value = "auto", global = true)]
     pub upstream_provider: String,
 
-    /// Gonka private key used for request signing.
+    /// Gonka direct-wallet key (unsupported; rejected before startup).
     #[arg(long, env = "GONKA_PRIVATE_KEY", global = true, hide_env_values = true)]
     pub gonka_private_key: Option<String>,
-
-    /// Gonka source node URL.
-    #[arg(
-        long,
-        env = "GONKA_SOURCE_URL",
-        default_value = "https://node4.gonka.ai",
-        global = true
-    )]
-    pub gonka_source_url: String,
+    /// API key for a Gonka-compatible broker.
+    #[arg(long, env = "GONKA_API_KEY", global = true, hide_env_values = true)]
+    pub gonka_api_key: Option<String>,
+    /// Explicit Gonka-compatible broker URL.
+    #[arg(long, env = "GONKA_SOURCE_URL", global = true)]
+    pub gonka_source_url: Option<String>,
 
     /// Optional Gonka model declared by the operator and used when omitted.
     #[arg(long, env = "GONKA_MODEL", default_value = "", global = true)]
@@ -931,7 +928,8 @@ impl Cli {
             codex_cli_bin: self.codex_cli_bin.clone(),
             upstream_provider,
             gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
-            gonka_source_url: self.gonka_source_url.clone(),
+            gonka_api_key: self.gonka_api_key.clone().filter(|s| !s.is_empty()),
+            gonka_source_url: self.gonka_source_url.clone().filter(|s| !s.is_empty()),
             gonka_model: self.gonka_model.clone(),
             bridge_model: self.bridge_model.clone().filter(|s| !s.is_empty()),
             bridge_model_policy: self.bridge_model_policy.clone(),

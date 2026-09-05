@@ -188,7 +188,7 @@ impl StoragePolicy {
 }
 
 /// Router configuration — assembled from CLI args, env vars, and `.lenv`.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Config {
     /// Address and port to bind the server to.
     pub listen_addr: SocketAddr,
@@ -221,10 +221,10 @@ pub struct Config {
     pub codex_cli_bin: Option<PathBuf>,
     /// Selected upstream inference provider.
     pub upstream_provider: UpstreamProvider,
-    /// Gonka private key used for upstream request signing. Never log this.
-    pub gonka_private_key: Option<String>,
-    /// Gonka source node URL.
-    pub gonka_source_url: String,
+    /// Gonka broker/API-key credential. Never log this.
+    pub gonka_api_key: Option<String>,
+    /// Explicit Gonka broker URL. Direct-wallet node endpoints are not defaults.
+    pub gonka_source_url: Option<String>,
     /// Default Gonka model used when requests omit `model`.
     pub gonka_model: String,
     /// Upstream model used when an Anthropic-dialect request is bridged to a
@@ -284,6 +284,23 @@ pub struct Config {
     pub admin_ui: crate::admin::AdminUiConfig,
     /// Opt-in Telegram/VK admin channels (disabled unless a bot token is set).
     pub chat_admin: crate::chat_admin::ChatAdminConfig,
+}
+
+impl std::fmt::Debug for Config {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Config")
+            .field("listen_addr", &self.listen_addr)
+            .field("upstream_provider", &self.upstream_provider)
+            .field(
+                "gonka_api_key",
+                &self.gonka_api_key.as_ref().map(|_| "[REDACTED]"),
+            )
+            .field("gonka_source_url", &self.gonka_source_url)
+            .field("gonka_model", &self.gonka_model)
+            .field("data_dir", &self.data_dir)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Config {
@@ -372,8 +389,8 @@ impl Config {
             .and_then(|s| UpstreamProvider::from_str_opt(&s))
             .unwrap_or_default();
         let gonka_private_key = env::var("GONKA_PRIVATE_KEY").ok().filter(|s| !s.is_empty());
-        let gonka_source_url =
-            env::var("GONKA_SOURCE_URL").unwrap_or_else(|_| default_gonka_source_url());
+        let gonka_api_key = env::var("GONKA_API_KEY").ok().filter(|s| !s.is_empty());
+        let gonka_source_url = env::var("GONKA_SOURCE_URL").ok().filter(|s| !s.is_empty());
         let gonka_model = env::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
         let bridge_model = env::var("ANTHROPIC_BRIDGE_MODEL")
             .ok()
@@ -513,6 +530,7 @@ impl Config {
             codex_cli_bin,
             upstream_provider,
             gonka_private_key,
+            gonka_api_key,
             gonka_source_url,
             gonka_model,
             bridge_model,
@@ -556,10 +574,22 @@ impl Config {
             .ok_or(ConfigError::MissingTokenSecret)?
             .to_string();
 
-        if args.upstream_provider == UpstreamProvider::Gonka
-            && !matches!(args.gonka_private_key.as_deref(), Some(s) if !s.is_empty())
+        if matches!(
+            args.upstream_provider,
+            UpstreamProvider::Auto | UpstreamProvider::Gonka
+        ) && matches!(args.gonka_private_key.as_deref(), Some(s) if !s.is_empty())
         {
-            return Err(ConfigError::MissingGonkaPrivateKey);
+            return Err(ConfigError::UnsupportedGonkaDirectWallet);
+        }
+        if args.upstream_provider == UpstreamProvider::Gonka
+            && !matches!(args.gonka_api_key.as_deref(), Some(s) if !s.is_empty())
+        {
+            return Err(ConfigError::MissingGonkaApiKey);
+        }
+        if matches!(args.gonka_api_key.as_deref(), Some(s) if !s.is_empty())
+            && !matches!(args.gonka_source_url.as_deref(), Some(s) if !s.is_empty())
+        {
+            return Err(ConfigError::MissingGonkaSourceUrl);
         }
         if args.upstream_provider == UpstreamProvider::Crater && args.crater.inbox.is_none() {
             return Err(ConfigError::MissingCraterForgeFedInbox);
@@ -588,8 +618,11 @@ impl Config {
             claude_cli_bin: args.claude_cli_bin,
             codex_cli_bin: args.codex_cli_bin,
             upstream_provider: args.upstream_provider,
-            gonka_private_key: args.gonka_private_key.filter(|s| !s.is_empty()),
-            gonka_source_url: args.gonka_source_url.trim_end_matches('/').to_string(),
+            gonka_api_key: args.gonka_api_key.filter(|s| !s.is_empty()),
+            gonka_source_url: args
+                .gonka_source_url
+                .filter(|source| !source.is_empty())
+                .map(|source| source.trim_end_matches('/').to_string()),
             gonka_model: args.gonka_model,
             bridge_model: args.bridge_model.filter(|s| !s.is_empty()),
             bridge_model_policy: args
@@ -653,8 +686,11 @@ pub struct BuildArgs<'a> {
     pub claude_cli_bin: Option<PathBuf>,
     pub codex_cli_bin: Option<PathBuf>,
     pub upstream_provider: UpstreamProvider,
+    /// Legacy direct-wallet input, retained only so unsupported signing is
+    /// rejected explicitly before any request can be sent.
     pub gonka_private_key: Option<String>,
-    pub gonka_source_url: String,
+    pub gonka_api_key: Option<String>,
+    pub gonka_source_url: Option<String>,
     pub gonka_model: String,
     pub bridge_model: Option<String>,
     /// How to pick a bridge model from the live catalog; `None` uses the default.
@@ -720,8 +756,8 @@ pub fn default_activitypub_public_key_pem() -> String {
 }
 
 pub use crate::config_defaults::{
-    default_crater_config, default_gonka_model, default_gonka_source_url,
-    default_openai_compatible_base_url, default_openai_compatible_config,
+    default_crater_config, default_gonka_model, default_openai_compatible_base_url,
+    default_openai_compatible_config,
 };
 
 fn parse_csv(raw: &str) -> Vec<String> {
@@ -778,8 +814,12 @@ pub enum ConfigError {
     InvalidAccountRequestLimits,
     /// Request caps did not align with primary plus additional accounts.
     MismatchedAccountRequestLimits,
-    /// Gonka was selected without `GONKA_PRIVATE_KEY`.
-    MissingGonkaPrivateKey,
+    /// Gonka was selected without a broker/API key.
+    MissingGonkaApiKey,
+    /// Broker/API-key mode was enabled without an explicit broker URL.
+    MissingGonkaSourceUrl,
+    /// Direct-wallet signing is not implemented according to the official protocol.
+    UnsupportedGonkaDirectWallet,
     /// Crater was selected without `CRATER_FORGEFED_INBOX`.
     MissingCraterForgeFedInbox,
 }
@@ -821,9 +861,14 @@ impl std::fmt::Display for ConfigError {
                 f,
                 "ACCOUNT_REQUEST_LIMITS must contain one entry for primary and each additional account"
             ),
-            Self::MissingGonkaPrivateKey => write!(
+            Self::MissingGonkaApiKey => write!(f, "Gonka broker mode requires GONKA_API_KEY"),
+            Self::MissingGonkaSourceUrl => write!(
                 f,
-                "Gonka provider requires GONKA_PRIVATE_KEY. Make sure your Gonka account is activated for inference, funded, and has a published on-chain public key."
+                "Gonka broker mode requires an explicit GONKA_SOURCE_URL; official direct-wallet node endpoints are not API-key broker defaults"
+            ),
+            Self::UnsupportedGonkaDirectWallet => write!(
+                f,
+                "GONKA_PRIVATE_KEY direct-wallet mode is unsupported because Router does not implement Gonka's official endpoint-resolution and secp256k1 signing protocol; configure a broker with GONKA_API_KEY instead"
             ),
             Self::MissingCraterForgeFedInbox => {
                 write!(f, "Crater provider requires CRATER_FORGEFED_INBOX")

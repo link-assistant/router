@@ -366,8 +366,8 @@ async fn run_server(
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
         gonka: link_assistant_router::gonka::GonkaConfig::new(
-            config.gonka_private_key.clone(),
-            &config.gonka_source_url,
+            config.gonka_api_key.clone(),
+            config.gonka_source_url.as_deref(),
             config.gonka_model.clone(),
         ),
         bridge_model: config.bridge_model.clone(),

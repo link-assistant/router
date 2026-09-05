@@ -1,7 +1,5 @@
 use super::*;
-use crate::config::{
-    default_gonka_model, default_gonka_source_url, default_openai_compatible_base_url,
-};
+use crate::config::{default_gonka_model, default_openai_compatible_base_url};
 use clap::CommandFactory as _;
 
 #[test]
@@ -109,7 +107,8 @@ fn cli_defaults_round_trip_to_config() {
         codex_cli_bin: None,
         upstream_provider: "anthropic".into(),
         gonka_private_key: None,
-        gonka_source_url: default_gonka_source_url(),
+        gonka_api_key: None,
+        gonka_source_url: None,
         gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
@@ -232,7 +231,8 @@ fn cli_invalid_routing_mode_rejected() {
         codex_cli_bin: None,
         upstream_provider: "anthropic".into(),
         gonka_private_key: None,
-        gonka_source_url: default_gonka_source_url(),
+        gonka_api_key: None,
+        gonka_source_url: None,
         gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,

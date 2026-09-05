@@ -58,8 +58,9 @@ Anthropic API (api.anthropic.com)
 
 When `UPSTREAM_PROVIDER=gonka`, clients still authenticate to the router with
 `Authorization: Bearer la_sk_...`, but upstream OpenAI-compatible requests are
-sent to Gonka with Gonka signing headers instead of the client token. This
-project remains Link.Assistant.Router; Gonka is an optional backend.
+sent to the configured Gonka broker with its separate API key instead of the
+client token. This project remains Link.Assistant.Router; Gonka is an optional
+backend.
 
 When `UPSTREAM_PROVIDER=openai-compatible`, clients still authenticate to the
 router with `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...`. The
@@ -603,9 +604,13 @@ not observable, so the cap bounds visible output rather than billed tokens.
 
 With `UPSTREAM_PROVIDER=gonka`, `/api/services/openai/v1/chat/completions` and
 `/api/services/openai/v1/responses` forward OpenAI-compatible JSON to Gonka
-without Anthropic translation. Gonka advertises a model only when the operator
-declares it with `GONKA_MODEL`. Without that declaration, each request must name
-its model explicitly.
+without Anthropic translation and relay SSE frames as they arrive. Availability
+comes only from the broker's authenticated `GET /v1/models` response.
+`GONKA_MODEL` is an optional request default and exact catalog narrowing rule;
+it never invents a model absent from that live catalog. In automatic mode,
+subscription, stored, and z.ai catalogs take precedence for an already-listed
+canonical ID; a duplicate Gonka entry is omitted and dispatch follows the same
+precedence.
 
 With `UPSTREAM_PROVIDER=openai-compatible`, the same routes forward JSON to the
 configured provider. This supports LiteLLM proxy deployments by setting the
@@ -1073,27 +1078,32 @@ shared host — so it is a last resort rather than the documented path.
 
 ### Gonka provider
 
-Gonka support is optional. Set `UPSTREAM_PROVIDER=gonka` to pin the deployment
-to it instead of using automatic subscription routing.
+Gonka support is optional. Configure an OpenAI-compatible Gonka broker with an
+API key, then set `UPSTREAM_PROVIDER=gonka` to pin the deployment to it. With
+`UPSTREAM_PROVIDER=auto`, compatible clients can also route exact IDs from its
+live catalog alongside other healthy providers.
 
 ```env
 TOKEN_SECRET=your-router-token-secret
 
 UPSTREAM_PROVIDER=gonka
-GONKA_PRIVATE_KEY=your_gonka_private_key
-GONKA_SOURCE_URL=https://node4.gonka.ai
+GONKA_API_KEY=your_gonka_broker_api_key
+GONKA_SOURCE_URL=https://your-gonka-broker.example
+# Optional exact default/narrowing rule:
 GONKA_MODEL=your-current-gonka-model
 ```
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
-| `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Yes, for Gonka | Private key used to sign Gonka upstream requests |
-| `--gonka-source-url` / `GONKA_SOURCE_URL` | `https://node4.gonka.ai` | No | Gonka source node URL |
-| `--gonka-model` / `GONKA_MODEL` | — | No | Operator-declared model to advertise and use when a request omits `model` |
+| `--gonka-api-key` / `GONKA_API_KEY` | — | Yes, for Gonka | Bearer key for the configured Gonka-compatible broker |
+| `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Unsupported | Direct-wallet mode is rejected before startup; Router does not implement the official endpoint-resolution and secp256k1 signing protocol |
+| `--gonka-source-url` / `GONKA_SOURCE_URL` | — | Yes, with `GONKA_API_KEY` | Explicit Gonka-compatible broker URL; official direct-wallet nodes are not assumed to accept broker API keys |
+| `--gonka-model` / `GONKA_MODEL` | — | No | Default model when omitted and exact narrowing of the live catalog; never a synthetic catalog entry |
 
-Your Gonka account must be activated for inference, funded, and have a
-published on-chain public key. Participant registration is only needed for
-hosting.
+Direct-wallet credentials must be used through an implementation of Gonka's
+official protocol, such as a compatible broker. Router will not substitute its
+own signature format, and deliberately has no official-node URL default in
+broker mode.
 
 ### Crater ForgeFed provider
 

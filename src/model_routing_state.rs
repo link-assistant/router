@@ -56,9 +56,26 @@ pub async fn route_state_with_subscription_for_client(
     let stored = stored_provider_for_model(state, model, client).await?;
     let zai = crate::zai_coding_plan::live_provider_for_model(state, model, client, zai_authorized)
         .await?;
+    // Gonka is merged after existing compatible catalogs and therefore owns
+    // only an otherwise-unclaimed canonical id. The same precedence keeps the
+    // de-duplicated catalog and dispatch decisions consistent.
+    let gonka = if visible_subscription || stored.is_some() || zai.is_some() {
+        false
+    } else if client.is_some_and(crate::gonka::supports_client) {
+        match state.gonka.as_ref() {
+            Some(gonka) => gonka
+                .live_catalog(&state.client)
+                .await
+                .is_ok_and(|models| models.iter().any(|candidate| candidate.id == model)),
+            None => false,
+        }
+    } else {
+        false
+    };
     let owner_count = usize::from(visible_subscription)
         + usize::from(stored.is_some())
-        + usize::from(zai.is_some());
+        + usize::from(zai.is_some())
+        + usize::from(gonka);
     if owner_count > 1 {
         return Err(ModelRouteError::Conflict(format!(
             "exact model id '{model}' is advertised by more than one healthy provider"
@@ -70,6 +87,14 @@ pub async fn route_state_with_subscription_for_client(
     if let Some(stored) = stored.or(zai) {
         return Ok(RoutedState {
             state: route_stored_provider(state, &stored, model),
+            subscription: None,
+        });
+    }
+    if gonka {
+        let mut routed = state.clone();
+        routed.upstream_provider = UpstreamProvider::Gonka;
+        return Ok(RoutedState {
+            state: routed,
             subscription: None,
         });
     }
