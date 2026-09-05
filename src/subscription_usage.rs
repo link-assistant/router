@@ -1,6 +1,7 @@
 use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
+#[cfg(test)]
 use base64::Engine as _;
 use bytes::{Bytes, BytesMut};
 use futures_util::StreamExt as _;
@@ -16,7 +17,17 @@ pub(crate) const MAX_USAGE_BODY: usize = 2 * 1024 * 1024;
 #[path = "subscription_usage_types.rs"]
 mod types;
 pub use types::{
-    Credits, NamedLimit, SubscriptionUsage, UsageEnvelope, UsageProvider, UsageState, UsageWindow,
+    Credits, ExtraUsage, NamedLimit, SpendControl, SpendLimit, SubscriptionUsage, UsageEnvelope,
+    UsageProvider, UsageState, UsageWindow,
+};
+
+#[path = "subscription_usage_normalize.rs"]
+mod normalize;
+#[cfg(test)]
+use normalize::{anthropic_windows, openai_claim, window_from};
+use normalize::{
+    apply_anthropic_profile, empty_usage, normalize_anthropic, normalize_openai, normalize_zai,
+    openai_claims, recognizable_anthropic_usage, recognizable_openai_usage,
 };
 
 #[derive(Default)]
@@ -348,18 +359,15 @@ async fn probe_anthropic(
         &token.access_token,
     )
     .await;
-    let mut result = empty_usage(UsageProvider::Anthropic);
-    match usage {
+    let mut result = match usage {
         VendorResponse::Json(value) => {
             if !recognizable_anthropic_usage(&value) {
                 return unverified_usage(UsageProvider::Anthropic);
             }
-            result.state = UsageState::Available;
-            result.status = "available".into();
-            result.windows = anthropic_windows(&value);
+            normalize_anthropic(&value)
         }
         other => return vendor_failure(UsageProvider::Anthropic, &other),
-    }
+    };
     match send_anthropic(
         state,
         &format!("{base}/api/oauth/profile"),
@@ -592,262 +600,6 @@ async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {
     serde_json::from_slice(&bytes).map_or(VendorResponse::Malformed, VendorResponse::Json)
 }
 
-fn recognizable_anthropic_usage(value: &Value) -> bool {
-    [
-        "five_hour",
-        "seven_day",
-        "seven_day_sonnet",
-        "seven_day_oauth_apps",
-    ]
-    .into_iter()
-    .filter_map(|name| value.get(name).and_then(Value::as_object))
-    .any(|window| window.contains_key("utilization") || window.contains_key("resets_at"))
-}
-
-fn recognizable_openai_usage(value: &Value) -> bool {
-    value
-        .get("rate_limit")
-        .and_then(Value::as_object)
-        .is_some_and(|value| !value.is_empty())
-        || value
-            .get("additional_rate_limits")
-            .and_then(Value::as_array)
-            .is_some_and(|value| !value.is_empty())
-        || value
-            .get("credits")
-            .and_then(Value::as_object)
-            .is_some_and(|value| !value.is_empty())
-}
-
-fn anthropic_windows(value: &Value) -> Vec<UsageWindow> {
-    [
-        ("five_hour", "five_hour"),
-        ("seven_day", "seven_day"),
-        ("seven_day_sonnet", "seven_day_sonnet"),
-        ("seven_day_oauth_apps", "seven_day_oauth_apps"),
-    ]
-    .into_iter()
-    .filter_map(|(name, key)| {
-        let window = value.get(key)?.as_object()?;
-        Some(window_from(
-            name,
-            window.get("utilization").and_then(Value::as_f64),
-            window
-                .get("resets_at")
-                .and_then(Value::as_str)
-                .map(str::to_string),
-            None,
-        ))
-    })
-    .collect()
-}
-
-fn apply_anthropic_profile(usage: &mut SubscriptionUsage, profile: &Value) {
-    let organization = profile.get("organization").unwrap_or(profile);
-    usage.status = organization
-        .get("subscription_status")
-        .and_then(Value::as_str)
-        .unwrap_or("available")
-        .to_string();
-    usage.plan = organization
-        .get("subscription_type")
-        .or_else(|| profile.get("subscription_type"))
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    usage.subscription_created = organization
-        .get("subscription_created_at")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    usage.trial_end = organization
-        .get("claude_code_trial_ends_at")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    usage.subscription_end = organization
-        .get("subscription_ends_at")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-}
-
-fn normalize_openai(value: &Value, token: &SubscriptionToken) -> SubscriptionUsage {
-    let rate_limit = value.get("rate_limit").unwrap_or(&Value::Null);
-    let mut result = empty_usage(UsageProvider::OpenAi);
-    result.state = UsageState::Available;
-    result.status = if rate_limit.get("limit_reached").and_then(Value::as_bool) == Some(true) {
-        "limit_reached".into()
-    } else {
-        "available".into()
-    };
-    result.plan = value
-        .get("plan_type")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .or_else(|| openai_claim(token, "chatgpt_plan_type"));
-    result.subscription_end = openai_claim(token, "chatgpt_subscription_active_until");
-    result.windows = codex_windows(rate_limit);
-    result.additional_limits = value
-        .get("additional_rate_limits")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(|limit| {
-            let name = limit
-                .get("limit_name")
-                .or_else(|| limit.get("metered_feature"))
-                .and_then(Value::as_str)?;
-            Some(NamedLimit {
-                name: name.to_string(),
-                windows: codex_windows(limit.get("rate_limit").unwrap_or(&Value::Null)),
-                used: None,
-                limit: None,
-            })
-        })
-        .collect();
-    result.credits = value.get("credits").and_then(|credits| {
-        let balance = credits.get("balance").and_then(|value| {
-            value
-                .as_str()
-                .map(str::to_string)
-                .or_else(|| value.as_f64().map(|n| n.to_string()))
-        });
-        let unlimited = credits.get("unlimited").and_then(Value::as_bool);
-        let overage_limit_reached = credits
-            .get("overage_limit_reached")
-            .and_then(Value::as_bool);
-        (balance.is_some() || unlimited.is_some() || overage_limit_reached.is_some()).then_some(
-            Credits {
-                balance,
-                unlimited,
-                overage_limit_reached,
-            },
-        )
-    });
-    result
-}
-
-fn codex_windows(value: &Value) -> Vec<UsageWindow> {
-    [
-        ("primary", "primary_window"),
-        ("secondary", "secondary_window"),
-    ]
-    .into_iter()
-    .filter_map(|(name, key)| {
-        let window = value.get(key)?;
-        let resets_at = window
-            .get("reset_at")
-            .and_then(Value::as_i64)
-            .and_then(|seconds| chrono::DateTime::from_timestamp(seconds, 0))
-            .map(|time| time.to_rfc3339());
-        Some(window_from(
-            name,
-            window.get("used_percent").and_then(Value::as_f64),
-            resets_at,
-            window.get("limit_window_seconds").and_then(Value::as_u64),
-        ))
-    })
-    .collect()
-}
-
-fn openai_claim(token: &SubscriptionToken, key: &str) -> Option<String> {
-    openai_claims(&token.access_token)?
-        .get(key)
-        .and_then(Value::as_str)
-        .map(str::to_string)
-}
-
-fn openai_claims(token: &str) -> Option<Value> {
-    let payload = token.split('.').nth(1)?;
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload)
-        .ok()?;
-    let claims: Value = serde_json::from_slice(&bytes).ok()?;
-    claims
-        .get("https://api.openai.com/auth")?
-        .as_object()
-        .cloned()
-        .map(Value::Object)
-}
-
-fn normalize_zai(value: &Value, partial: bool) -> SubscriptionUsage {
-    let mut result = empty_usage(UsageProvider::ZAi);
-    result.state = UsageState::Available;
-    result.status = if partial {
-        "quota_available_details_unverified".into()
-    } else {
-        "available".into()
-    };
-    let limits = value
-        .get("limits")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten();
-    for limit in limits {
-        let kind = limit
-            .get("type")
-            .and_then(Value::as_str)
-            .unwrap_or("additional");
-        let percentage = limit.get("percentage").and_then(Value::as_f64);
-        if kind == "TOKENS_LIMIT" {
-            result.windows.push(window_from(
-                "five_hour_tokens",
-                percentage,
-                limit
-                    .get("resetsAt")
-                    .or_else(|| limit.get("resets_at"))
-                    .and_then(Value::as_str)
-                    .map(str::to_string),
-                None,
-            ));
-        } else {
-            result.additional_limits.push(NamedLimit {
-                name: if kind == "TIME_LIMIT" {
-                    "monthly_mcp".into()
-                } else {
-                    kind.to_ascii_lowercase()
-                },
-                windows: percentage
-                    .map(|used| window_from("limit", Some(used), None, None))
-                    .into_iter()
-                    .collect(),
-                used: limit.get("currentValue").and_then(Value::as_f64),
-                limit: limit.get("usage").and_then(Value::as_f64),
-            });
-        }
-    }
-    result
-}
-
-fn window_from(
-    name: &str,
-    used: Option<f64>,
-    resets_at: Option<String>,
-    window_seconds: Option<u64>,
-) -> UsageWindow {
-    let used = used.filter(|value| value.is_finite() && (0.0..=100.0).contains(value));
-    UsageWindow {
-        name: name.to_string(),
-        used_percentage: used,
-        remaining_percentage: used.map(|value| (100.0 - value).clamp(0.0, 100.0)),
-        resets_at,
-        window_seconds,
-    }
-}
-
-fn empty_usage(provider: UsageProvider) -> SubscriptionUsage {
-    SubscriptionUsage {
-        provider,
-        state: UsageState::Unverified,
-        status: "unverified".into(),
-        plan: None,
-        windows: Vec::new(),
-        additional_limits: Vec::new(),
-        credits: None,
-        subscription_end: None,
-        trial_end: None,
-        subscription_created: None,
-        retry_after_seconds: None,
-    }
-}
-
 fn unverified_usage(provider: UsageProvider) -> SubscriptionUsage {
     let mut result = empty_usage(provider);
     result.status = "usage_response_unverified".into();
@@ -890,3 +642,7 @@ mod tests;
 #[cfg(test)]
 #[path = "subscription_usage_http_tests.rs"]
 mod http_tests;
+
+#[cfg(test)]
+#[path = "subscription_usage_current_tests.rs"]
+mod current_tests;

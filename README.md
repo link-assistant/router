@@ -556,7 +556,11 @@ service catalogues remain in their original protocol shapes.
 matrix. It returns schema version `1` with normalized plan/status, usage
 windows, used and remaining percentages, reset timestamps, named limits,
 credits, and subscription or trial dates only when the vendor actually reports
-them. An authorized configured credential that cannot currently be checked is
+them. Claude output includes current named windows, dynamic model-scoped limits,
+and enabled monthly extra usage. Codex output retains main and additional
+allow/reached state, both the stable metered feature and display name, safe
+numeric message estimates, spend-control amounts and resets, the reached-limit
+reason, and the read-only reset-credit count. An authorized configured credential that cannot currently be checked is
 kept visible with an explicit `unavailable` or `unverified` state. Router reads
 only the vendors' non-inference usage/profile endpoints, refreshes OAuth
 credentials through the shared safe refresh path, briefly caches normalized

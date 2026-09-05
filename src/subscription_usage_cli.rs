@@ -126,6 +126,12 @@ fn format_envelope(envelope: &UsageEnvelope, json: bool) -> Result<String, Strin
 fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
     let _ = writeln!(output, "{}", usage.provider.as_str());
     let _ = writeln!(output, "  status: {}", usage.status);
+    if let Some(allowed) = usage.allowed {
+        let _ = writeln!(output, "  allowed: {allowed}");
+    }
+    if let Some(reached) = usage.limit_reached {
+        let _ = writeln!(output, "  limit reached: {reached}");
+    }
     if let Some(plan) = &usage.plan {
         let _ = writeln!(output, "  plan: {plan}");
     }
@@ -154,6 +160,31 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
     }
     for limit in &usage.additional_limits {
         let _ = writeln!(output, "  limit {}:", limit.name);
+        if let Some(display) = limit
+            .limit_name
+            .as_deref()
+            .filter(|display| *display != limit.name)
+        {
+            let _ = writeln!(output, "    display name: {display}");
+        }
+        if let Some(feature) = &limit.metered_feature {
+            let _ = writeln!(output, "    metered feature: {feature}");
+        }
+        if let Some(kind) = &limit.kind {
+            let _ = writeln!(output, "    kind: {kind}");
+        }
+        if let Some(group) = &limit.group {
+            let _ = writeln!(output, "    group: {group}");
+        }
+        if let Some(model) = &limit.model_display_name {
+            let _ = writeln!(output, "    model: {model}");
+        }
+        if let Some(allowed) = limit.allowed {
+            let _ = writeln!(output, "    allowed: {allowed}");
+        }
+        if let Some(reached) = limit.limit_reached {
+            let _ = writeln!(output, "    reached: {reached}");
+        }
         for window in &limit.windows {
             let used = window
                 .used_percentage
@@ -198,6 +229,87 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
         } else if credits.overage_limit_reached == Some(true) {
             let _ = writeln!(output, "  credits: overage limit reached");
         }
+        if let Some(has_credits) = credits.has_credits {
+            let _ = writeln!(output, "  credits available: {has_credits}");
+        }
+        if let Some(messages) = credits.approximate_local_messages {
+            let _ = writeln!(output, "  approximate local messages: {messages}");
+        }
+        if let Some(messages) = credits.approximate_cloud_messages {
+            let _ = writeln!(output, "  approximate cloud messages: {messages}");
+        }
+    }
+    if let Some(extra) = &usage.extra_usage {
+        let _ = writeln!(output, "  extra usage:");
+        if let Some(enabled) = extra.is_enabled {
+            let _ = writeln!(output, "    enabled: {enabled}");
+        }
+        if extra.used_credits.is_some() || extra.monthly_limit.is_some() {
+            let used = extra
+                .used_credits
+                .map_or_else(|| "?".into(), |value| value.to_string());
+            let limit = extra
+                .monthly_limit
+                .map_or_else(|| "?".into(), |value| value.to_string());
+            let currency = extra
+                .currency
+                .as_deref()
+                .map(|currency| format!(" {currency}"))
+                .unwrap_or_default();
+            let _ = writeln!(output, "    amount: {used} / {limit}{currency}");
+        }
+        if let Some(remaining) = extra.remaining_credits {
+            let _ = writeln!(output, "    remaining: {remaining}");
+        }
+        if let Some(utilization) = extra.utilization {
+            let _ = writeln!(output, "    utilization: {utilization:.1}%");
+        }
+        if let Some(reset) = &extra.resets_at {
+            let _ = writeln!(output, "    resets: {reset}");
+        }
+    }
+    if let Some(control) = &usage.spend_control {
+        let _ = writeln!(output, "  spend control:");
+        if let Some(reached) = control.reached {
+            let _ = writeln!(output, "    reached: {reached}");
+        }
+        if let Some(limit) = &control.individual_limit {
+            if let Some(source) = &limit.source {
+                let _ = writeln!(output, "    source: {source}");
+            }
+            if limit.used.is_some() || limit.limit.is_some() || limit.remaining.is_some() {
+                let _ = writeln!(
+                    output,
+                    "    amount: {} / {}, {} remaining",
+                    limit.used.as_deref().unwrap_or("?"),
+                    limit.limit.as_deref().unwrap_or("?"),
+                    limit.remaining.as_deref().unwrap_or("?")
+                );
+            }
+            if let Some(used) = limit.used_percentage {
+                let remaining = limit
+                    .remaining_percentage
+                    .map(|value| format!(", {value:.1}% remaining"))
+                    .unwrap_or_default();
+                let _ = writeln!(output, "    utilization: {used:.1}% used{remaining}");
+            }
+            if let Some(reset) = &limit.resets_at {
+                let _ = writeln!(output, "    resets: {reset}");
+            }
+            if let Some(reset_after) = limit.reset_after_seconds {
+                let _ = writeln!(
+                    output,
+                    "    resets after: {}",
+                    readable_duration(reset_after)
+                );
+            }
+        }
+    }
+    if let Some(reached_type) = &usage.rate_limit_reached_type {
+        let _ = writeln!(output, "  limit reason: {reached_type}");
+    }
+    if let Some(available) = usage.rate_limit_reset_credits_available {
+        let _ = writeln!(output, "  reset credits available: {available}");
     }
     if let Some(end) = &usage.subscription_end {
         let _ = writeln!(output, "  subscription ends: {end}");

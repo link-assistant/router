@@ -69,12 +69,24 @@ pub struct SubscriptionUsage {
     pub state: UsageState,
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit_reached: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub plan: Option<String>,
     pub windows: Vec<UsageWindow>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub additional_limits: Vec<NamedLimit>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credits: Option<Credits>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extra_usage: Option<ExtraUsage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spend_control: Option<SpendControl>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rate_limit_reached_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rate_limit_reset_credits_available: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_end: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -109,6 +121,20 @@ pub struct UsageWindow {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NamedLimit {
     pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metered_feature: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model_display_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit_reached: Option<bool>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub windows: Vec<UsageWindow>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -122,7 +148,59 @@ pub struct Credits {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub balance: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub has_credits: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unlimited: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overage_limit_reached: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approximate_local_messages: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approximate_cloud_messages: Option<u64>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ExtraUsage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_enabled: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub monthly_limit: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used_credits: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remaining_credits: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub utilization: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub currency: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resets_at: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SpendControl {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reached: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub individual_limit: Option<SpendLimit>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SpendLimit {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remaining: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub used_percentage: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remaining_percentage: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reset_after_seconds: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resets_at: Option<String>,
 }
