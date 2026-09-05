@@ -13,7 +13,6 @@ use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 const SCHEMA_VERSION: u8 = 1;
 const MAX_VENDOR_BODY: usize = 2 * 1024 * 1024;
-const CLAUDE_CODE_VERSION: &str = "2.1.261";
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, clap::ValueEnum)]
 pub enum UsageProvider {
@@ -447,10 +446,7 @@ async fn send_anthropic(state: &AppState, url: &str, token: &str) -> VendorRespo
             .bearer_auth(token)
             .header("anthropic-beta", "oauth-2025-04-20")
             .header("content-type", "application/json")
-            .header(
-                "user-agent",
-                format!("claude-cli/{CLAUDE_CODE_VERSION} (external, cli)"),
-            ),
+            .header("user-agent", crate::claude_identity::oauth_user_agent()),
     )
     .await
 }

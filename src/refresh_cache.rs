@@ -1,7 +1,7 @@
 use super::{
     CredentialEvidence, Exchange, REFRESH_SKEW_MS, ROTATION_ATTRIBUTION_MS, RecoveryMode, Rejected,
     SubscriptionKey, SubscriptionProvider, SubscriptionToken, TokenCache, exchange_with_recovery,
-    refresh_config, refresh_recovery, refresh_state,
+    refresh_recovery, refresh_state,
 };
 
 /// Import errors must classify the failure without echoing token-endpoint
@@ -92,15 +92,9 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> SubscriptionToken {
-        self.get_fresh_for_at(
-            client,
-            refresh_config(provider).token_url,
-            provider,
-            account,
-            disk_token,
-            now_ms,
-        )
-        .await
+        let token_url = super::refresh_token_url(provider);
+        self.get_fresh_for_at(client, &token_url, provider, account, disk_token, now_ms)
+            .await
     }
 
     /// Load one registered credential authoritatively, then refresh it if
@@ -115,14 +109,9 @@ impl TokenCache {
         account: &str,
         now_ms: i64,
     ) -> Result<SubscriptionToken, String> {
-        self.get_fresh_registered_at(
-            client,
-            refresh_config(provider).token_url,
-            provider,
-            account,
-            now_ms,
-        )
-        .await
+        let token_url = super::refresh_token_url(provider);
+        self.get_fresh_registered_at(client, &token_url, provider, account, now_ms)
+            .await
     }
 
     /// Prove that a registered credential's refresh chain can advance.
@@ -154,12 +143,9 @@ impl TokenCache {
         account: &str,
         now_ms: i64,
     ) -> Result<SubscriptionToken, super::ImportRefreshFailure> {
+        let token_url = super::refresh_token_url(provider);
         self.validate_refresh_chain_registered_at_classified(
-            client,
-            refresh_config(provider).token_url,
-            provider,
-            account,
-            now_ms,
+            client, &token_url, provider, account, now_ms,
         )
         .await
     }
@@ -295,15 +281,9 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> Result<SubscriptionToken, String> {
-        self.get_fresh_for_at_checked(
-            client,
-            refresh_config(provider).token_url,
-            provider,
-            account,
-            disk_token,
-            now_ms,
-        )
-        .await
+        let token_url = super::refresh_token_url(provider);
+        self.get_fresh_for_at_checked(client, &token_url, provider, account, disk_token, now_ms)
+            .await
     }
 
     /// Refresh regardless of what the token's own `exp` claim says.
@@ -325,15 +305,9 @@ impl TokenCache {
         disk_token: SubscriptionToken,
         now_ms: i64,
     ) -> Option<SubscriptionToken> {
-        self.refresh_rejected_at(
-            client,
-            refresh_config(provider).token_url,
-            provider,
-            account,
-            disk_token,
-            now_ms,
-        )
-        .await
+        let token_url = super::refresh_token_url(provider);
+        self.refresh_rejected_at(client, &token_url, provider, account, disk_token, now_ms)
+            .await
     }
 
     pub(crate) async fn refresh_rejected_at(

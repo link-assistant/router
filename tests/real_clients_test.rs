@@ -21,12 +21,14 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
+use link_assistant_router::login_pty::{Key, PtySession};
+use portable_pty::CommandBuilder;
 use serde_json::{Value, json};
 use wait_timeout::ChildExt as _;
 
 const CLAUDE_VERSION: &str = "2.1.261";
-const CODEX_VERSION: &str = "0.153.3";
-const OPENCODE_VERSION: &str = "1.18.28";
+const CODEX_VERSION: &str = "0.153.4";
+const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const ANSWER: &str = "ROUTER_CAPTURE_OK";
 const CODEX_ALTERNATE_MODEL: &str = "future-codex-switch-model";
@@ -61,7 +63,7 @@ const CODEX: ClientCase = ClientCase {
     model: "gpt-5.6-codex",
     owner: "openai",
     inference_path: "/api/services/codex/v1/responses",
-    user_agent_prefix: "codex_exec/0.153.3",
+    user_agent_prefix: "codex_exec/0.153.4",
     credential_header: "authorization",
 };
 
@@ -72,7 +74,7 @@ const OPENCODE: ClientCase = ClientCase {
     model: "future-chat-model",
     owner: "openai-compatible",
     inference_path: "/api/services/openai/v1/chat/completions",
-    user_agent_prefix: "opencode/1.18.28",
+    user_agent_prefix: "opencode/1.18.29",
     credential_header: "authorization",
 };
 
@@ -715,6 +717,151 @@ fn current_claude_code_reaches_the_native_anthropic_surface_offline() {
 #[test]
 fn current_codex_reaches_the_native_responses_surface_offline() {
     assert_real_client_capture(CODEX);
+}
+
+#[test]
+fn current_codex_tui_model_selector_preserves_reasoning_effort() {
+    if !enabled() {
+        return;
+    }
+    assert!(
+        command_exists("codex"),
+        "codex is required for the real-client gate"
+    );
+    let home = tempfile::tempdir().expect("temporary Codex home");
+    let codex_home = home.path().join(".codex");
+    std::fs::create_dir_all(&codex_home).expect("create Codex home");
+    let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
+    std::fs::write(
+        codex_home.join("config.toml"),
+        format!(
+            "model = {:?}\nmodel_reasoning_effort = \"xhigh\"\n\n[projects.{:?}]\ntrust_level = \"trusted\"\n",
+            CODEX.model,
+            working_directory.to_string_lossy()
+        ),
+    )
+    .expect("seed Codex settings");
+
+    let router = MockRouter::start(CODEX);
+    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    command.args([
+        "--server",
+        &router.origin,
+        "--token",
+        "offline-admin",
+        "codex",
+    ]);
+    command.cwd(working_directory);
+    command.env("HOME", home.path());
+    command.env("XDG_CONFIG_HOME", home.path().join(".config"));
+    command.env("CODEX_HOME", &codex_home);
+    command.env("TERM", "xterm-256color");
+    command.env("NO_COLOR", "1");
+    command.env("NO_PROXY", "127.0.0.1,localhost");
+    command.env("no_proxy", "127.0.0.1,localhost");
+    command.env("HTTP_PROXY", "http://127.0.0.1:9");
+    command.env("HTTPS_PROXY", "http://127.0.0.1:9");
+    command.env("ALL_PROXY", "http://127.0.0.1:9");
+    let session = PtySession::spawn(command).expect("start Codex TUI through Router");
+    session
+        .wait_for(
+            |text| text.contains(CODEX.model),
+            Duration::from_millis(250),
+            Duration::from_secs(30),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex TUI did not become ready: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+
+    session.send_text("/model").expect("type /model");
+    session
+        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .expect("settle /model input");
+    session.send_key(Key::Enter).expect("open model selector");
+    session
+        .wait_for(
+            |text| text.contains(CODEX_ALTERNATE_MODEL),
+            Duration::from_millis(250),
+            Duration::from_secs(15),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex /model did not show the live alternate: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+    session
+        .send_text("\x1b[B")
+        .expect("select the next live model");
+    session.send_key(Key::Enter).expect("choose selected model");
+    session
+        .wait_for(
+            |text| {
+                text.contains(&format!(
+                    "Select Reasoning Level for {CODEX_ALTERNATE_MODEL}"
+                )) && text.contains("Extra high")
+            },
+            Duration::from_millis(250),
+            Duration::from_secs(10),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex did not expose the alternate model's live effort metadata: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+    session
+        .send_text("\x1b[B")
+        .expect("retain the configured extra-high effort");
+    session
+        .send_key(Key::Enter)
+        .expect("confirm model and effort");
+    session
+        .wait_for(
+            |text| text.contains(&format!("Model changed to {CODEX_ALTERNATE_MODEL} xhigh")),
+            Duration::from_millis(250),
+            Duration::from_secs(10),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "Codex did not retain xhigh for the selected model: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
+    session.send_text(PROMPT).expect("type inference prompt");
+    session
+        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .expect("settle inference prompt");
+    session
+        .send_key(Key::Enter)
+        .expect("submit inference prompt");
+
+    let deadline = Instant::now() + Duration::from_secs(30);
+    let request = loop {
+        if let Some(request) = router
+            .inference_requests(CODEX.inference_path)
+            .into_iter()
+            .last()
+        {
+            break request;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "Codex TUI never sent the selected-model request; transcript: {}",
+            session.transcript_tail(2_000)
+        );
+        thread::sleep(Duration::from_millis(50));
+    };
+    let body: Value = serde_json::from_slice(&request.body).expect("Codex request JSON");
+    assert_eq!(body["model"], CODEX_ALTERNATE_MODEL);
+    assert_eq!(
+        body["reasoning"]["effort"], "xhigh",
+        "the /model selector must not reset the configured reasoning effort"
+    );
+    session.kill();
 }
 
 #[test]

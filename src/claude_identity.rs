@@ -1,20 +1,4 @@
-//! Claude Code identity system prompt required by Claude MAX OAuth inference.
-//!
-//! `api.anthropic.com` only serves `user:inference` OAuth credentials (the ones
-//! a Claude MAX subscription issues to Claude Code) when the request's **first**
-//! system block is Claude Code's own identity line. A request without it is
-//! rejected with a misleading `429 rate_limit_error` whose message is literally
-//! `"Error"` — verified live in `docs/case-studies/issue-45/evidence/`.
-//!
-//! Claude Code always sends that line, so pass-through traffic from Claude Code
-//! works by accident. Every other documented client — Codex over
-//! `/v1/responses`, an SDK, a `curl` smoke test — does not, which broke the
-//! "Claude MAX subscription inside Codex" use case of issue #45.
-//!
-//! The router prepends the line only after client-bound authorization: for
-//! native Claude Code or one exact risk-accepted cross-client Claude route.
-//! Generic/manual/admin tokens and mere protocol compatibility never reach
-//! this function. The operation remains idempotent.
+//! Claude Code request identity used for OAuth inference and account probes.
 
 use axum::body::Bytes;
 use serde_json::{Value, json};
@@ -23,19 +7,29 @@ use serde_json::{Value, json};
 pub const CLAUDE_CODE_SYSTEM_PROMPT: &str =
     "You are Claude Code, Anthropic's official CLI for Claude.";
 
+/// Claude Code version installed by the real-client release gate.
+pub const DEFAULT_CLIENT_VERSION: &str = "2.1.261";
+
+/// The supported Claude Code version, with an operator override for staged
+/// client upgrades.
+#[must_use]
+pub fn client_version() -> String {
+    std::env::var("CLAUDE_CLIENT_VERSION").unwrap_or_else(|_| DEFAULT_CLIENT_VERSION.to_string())
+}
+
+/// User-Agent emitted by Claude Code's OAuth account endpoints.
+#[must_use]
+pub fn oauth_user_agent() -> String {
+    format!("claude-cli/{} (external, cli)", client_version())
+}
+
 /// Whether an upstream credential is a Claude subscription OAuth access token.
-///
-/// Plain API keys (`sk-ant-api…`) are not subject to the requirement, so their
-/// bodies are forwarded untouched.
 #[must_use]
 pub fn is_oauth_credential(token: &str) -> bool {
     token.starts_with("sk-ant-oat")
 }
 
 /// Ensure an Anthropic Messages body starts with the Claude Code identity.
-///
-/// The body's own system prompt is preserved: it simply follows the identity
-/// block, which is how Claude Code itself layers its instructions.
 pub fn ensure_claude_code_system(body: &mut Value) {
     let Some(object) = body.as_object_mut() else {
         return;
@@ -43,7 +37,6 @@ pub fn ensure_claude_code_system(body: &mut Value) {
     let identity = json!({"type": "text", "text": CLAUDE_CODE_SYSTEM_PROMPT});
 
     match object.get("system") {
-        // Already the identity, verbatim — nothing to do.
         Some(Value::String(text)) if text == CLAUDE_CODE_SYSTEM_PROMPT => {}
         Some(Value::String(text)) => {
             let existing = json!({"type": "text", "text": text});
@@ -63,20 +56,15 @@ pub fn ensure_claude_code_system(body: &mut Value) {
     }
 }
 
-/// Whether the first system block already carries the identity line.
 fn first_block_is_identity(blocks: &[Value]) -> bool {
     blocks
         .first()
-        .and_then(|b| b.get("text"))
+        .and_then(|block| block.get("text"))
         .and_then(Value::as_str)
         .is_some_and(|text| text.starts_with(CLAUDE_CODE_SYSTEM_PROMPT))
 }
 
-/// Apply [`ensure_claude_code_system`] to a body that is forwarded as raw bytes.
-///
-/// `parsed` is the already-decoded view of `raw`. Bodies that are not JSON
-/// objects (or that need no change) are returned unmodified, so a malformed
-/// request still reaches the upstream and gets the upstream's own error.
+/// Apply [`ensure_claude_code_system`] to a body forwarded as raw bytes.
 #[must_use]
 pub fn ensure_claude_code_system_bytes(parsed: &Value, raw: Bytes) -> Bytes {
     if !parsed.is_object() {
@@ -93,6 +81,14 @@ pub fn ensure_claude_code_system_bytes(parsed: &Value, raw: Bytes) -> Bytes {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn oauth_identity_tracks_the_supported_client() {
+        assert_eq!(
+            oauth_user_agent(),
+            format!("claude-cli/{DEFAULT_CLIENT_VERSION} (external, cli)")
+        );
+    }
 
     #[test]
     fn adds_the_identity_when_no_system_prompt_is_present() {

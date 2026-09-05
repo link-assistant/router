@@ -287,6 +287,85 @@ async fn batch_import_reports_created_replaced_present_and_later_failure_with_re
     assert_eq!(remote, local);
 }
 
+#[tokio::test]
+async fn remote_batch_retains_prior_outcomes_when_a_success_schema_is_malformed() {
+    let input = |name: &str| ProviderUpsert {
+        name: name.to_string(),
+        kind: Some("openai-compatible".into()),
+        base_url: "https://provider.example/v1".into(),
+        default_model: Some("exact-model".into()),
+        models: Some(vec!["exact-model".into()]),
+        supported_clients: Some(vec!["opencode".into()]),
+        api_key: Some("never-render-this-secret".into()),
+        api_key_env: None,
+        encrypted_api_key: None,
+        enabled: Some(true),
+        subscriber_id: None,
+        acknowledge_intermediary_risk: Some(false),
+        acknowledge_unsupported_clients: Some(Vec::new()),
+        if_absent: false,
+    };
+    let inputs = vec![
+        input("accepted"),
+        input("malformed"),
+        input("must-not-send"),
+    ];
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let requests = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let requests_for_server = std::sync::Arc::clone(&requests);
+    let server_task = tokio::spawn(async move {
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+        for body in [
+            serde_json::json!({
+                "outcome": "created",
+                "name": "accepted",
+                "kind": "openai-compatible",
+                "base_url": "https://provider.example/v1",
+                "default_model": "exact-model",
+                "models": ["exact-model"],
+                "supported_clients": ["opencode"],
+                "has_encrypted_api_key": true,
+                "enabled": true,
+                "intermediary_risk_acknowledged": false,
+                "unsupported_clients": []
+            })
+            .to_string(),
+            serde_json::json!({"unexpected": "success"}).to_string(),
+        ] {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            requests_for_server.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            let mut request = [0; 8192];
+            let _ = socket.read(&mut request).await.unwrap();
+            socket
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .await
+                .unwrap();
+        }
+    });
+    let server = crate::managed_server::ResolvedServer::at(origin, Some("admin".into()), "test");
+    let report = remote_import_report(&server, &inputs).await.unwrap();
+    server_task.await.unwrap();
+
+    assert!(!report.complete);
+    assert_eq!(report.results.len(), 2);
+    assert_eq!(report.results[0]["outcome"], "created");
+    assert_eq!(report.results[1]["name"], "malformed");
+    assert_eq!(report.results[1]["outcome"], "unverified");
+    assert_eq!(requests.load(std::sync::atomic::Ordering::SeqCst), 2);
+    assert!(
+        !serde_json::to_string(&report)
+            .unwrap()
+            .contains("never-render-this-secret")
+    );
+}
+
 /// The remote calls hit the routes the deployment actually serves (#294).
 ///
 /// Asserted without a server: a wrong path or a body missing a declared model

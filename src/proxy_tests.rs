@@ -233,6 +233,79 @@ fn connection_nominated_request_headers_never_reach_the_upstream() {
     assert_eq!(upstream["x-native-end-to-end"], "preserved");
 }
 
+#[tokio::test]
+async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream() {
+    use axum::body::Body;
+    use axum::extract::State;
+    use axum::http::Request;
+    use std::sync::{Arc, Mutex};
+
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let captured_for_server = Arc::clone(&captured);
+    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+        let captured = Arc::clone(&captured_for_server);
+        async move {
+            captured.lock().unwrap().push(request.headers().clone());
+            (StatusCode::OK, [("content-type", "application/json")], "{}")
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let upstream_task = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+    let data = tempfile::tempdir().unwrap();
+    std::fs::write(
+        data.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-upstream"}}"#,
+    )
+    .unwrap();
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+    state.upstream_base_url = base_url;
+    let token = crate::model_routing::tests::bound_client_token(
+        &state,
+        crate::clients::ClientKind::ClaudeCode,
+        None,
+    );
+    let request = Request::builder()
+        .method("POST")
+        .uri("/v1/messages")
+        .header("x-api-key", token)
+        .header("user-agent", "claude-cli/2.1.261")
+        .header("anthropic-version", "2023-06-01")
+        .header("connection", "x-hop-secret")
+        .header("x-hop-secret", "private-hop")
+        .header(
+            "x-forwarded-client-cert",
+            "By=spiffe://private;Subject=client",
+        )
+        .header("x-native-end-to-end", "preserved")
+        .header("content-type", "application/json")
+        .body(Body::from(
+            r#"{"model":"claude-live","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+        ))
+        .unwrap();
+    let response = crate::proxy::proxy_handler(State(state), request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let _ = response.into_body().collect().await.unwrap();
+
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), 1);
+    let headers = &captured[0];
+    assert_eq!(headers["authorization"], "Bearer sk-ant-oat-upstream");
+    assert_eq!(headers["x-native-end-to-end"], "preserved");
+    for removed in [
+        "connection",
+        "x-hop-secret",
+        "x-forwarded-client-cert",
+        "x-api-key",
+    ] {
+        assert!(!headers.contains_key(removed), "{removed} leaked upstream");
+    }
+    drop(captured);
+    upstream_task.abort();
+}
+
 /// The router negotiates its own hop, so the log can read its own traffic.
 ///
 /// The client's `accept-encoding` was relayed untouched, so the caller's

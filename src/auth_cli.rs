@@ -739,8 +739,11 @@ async fn status(config: &Config) -> ExitCode {
                         }
                     }
                 } else {
+                    let detail = token_cache.last_refresh_error(provider).unwrap_or_else(|| {
+                        "refresh failed before the credential could be checked".into()
+                    });
                     eprintln!(
-                        "error: {provider} refresh failed; credential state was not reported usable"
+                        "error: {provider} refresh failed: {detail}; credential state was not reported usable"
                     );
                     refresh_failed = true;
                     "refresh-failed"

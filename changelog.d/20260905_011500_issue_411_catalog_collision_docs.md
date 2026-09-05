@@ -25,5 +25,5 @@ bump: patch
 - Refused refresh-token exchange when the authoritative credential is owned by a platform store Router cannot update, and validated imported external credentials without spending their source refresh links.
 
 ### Changed
-- Updated the pinned Claude Code, Codex, and OpenCode real-client validation dependencies to 2.1.261, 0.153.3, and 1.18.28, respectively.
+- Updated the pinned Claude Code, Codex, and OpenCode real-client validation dependencies to 2.1.261, 0.153.4, and 1.18.29, respectively.
 - Updated every active Cargo dependency and tracked lockfile to the newest resolvable release, including zstd 0.14.0.

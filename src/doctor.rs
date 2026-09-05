@@ -232,14 +232,14 @@ async fn subscription_catalog_diagnostics_with_token_url(
         };
         let Ok(token) = refreshed else {
             let location = credential_location(provider, origin, &path);
+            let detail = token_cache
+                .last_refresh_error_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+                .unwrap_or_else(|| "refresh failed before the credential could be checked".into());
             println!(
                 "{label:<23}: {location} (found, refresh FAILED, store: {})",
                 origin.label()
             );
-            println!(
-                "{:<23}: ERROR (credential refresh failed)",
-                format!("{provider} refresh")
-            );
+            println!("{:<23}: ERROR ({detail})", format!("{provider} refresh"));
             println!(
                 "{:<23}: ERROR (credential refresh failed before catalog probe)",
                 format!("{provider} catalog")
@@ -247,19 +247,15 @@ async fn subscription_catalog_diagnostics_with_token_url(
             catalog_error = true;
             continue;
         };
-        if token_cache
+        if let Some(detail) = token_cache
             .last_refresh_error_for(provider, crate::credential_recovery_store::PRIMARY_ACCOUNT)
-            .is_some()
         {
             let location = credential_location(provider, origin, &path);
             println!(
                 "{label:<23}: {location} (found, refresh FAILED, store: {})",
                 origin.label()
             );
-            println!(
-                "{:<23}: ERROR (credential refresh transaction failed)",
-                format!("{provider} refresh")
-            );
+            println!("{:<23}: ERROR ({detail})", format!("{provider} refresh"));
             println!(
                 "{:<23}: ERROR (credential refresh failed before catalog probe)",
                 format!("{provider} catalog")

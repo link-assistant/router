@@ -82,12 +82,20 @@ async fn remote_import_report(
         .await;
         match response {
             Ok((status, body)) if status.is_success() => {
-                let safe: ProviderProvisionResponse = serde_json::from_value(body)
-                    .map_err(|_| "the router returned an invalid provider outcome".to_string())?;
-                report.results.push(
-                    serde_json::to_value(safe)
-                        .map_err(|_| "could not encode a provider outcome".to_string())?,
-                );
+                if let Ok(safe) = serde_json::from_value::<ProviderProvisionResponse>(body) {
+                    report
+                        .results
+                        .push(serde_json::to_value(safe).unwrap_or_else(|_| {
+                            import_failure(&name, ProviderProvisionFailureKind::Unverified)
+                        }));
+                } else {
+                    report.complete = false;
+                    report.results.push(import_failure(
+                        &name,
+                        ProviderProvisionFailureKind::Unverified,
+                    ));
+                    break;
+                }
             }
             Ok((_, body)) => {
                 report.complete = false;

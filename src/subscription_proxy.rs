@@ -878,7 +878,6 @@ fn subscription_headers(
         // The Codex backend gates the Responses API behind a beta opt-in and
         // identifies the originating client.
         out.push(("openai-beta", "responses=experimental".to_string()));
-        out.push(("originator", "codex_cli_rs".to_string()));
         if responses_mode == CodexResponsesMode::Lite {
             out.push((CODEX_RESPONSES_LITE_HEADER, "true".to_string()));
         }

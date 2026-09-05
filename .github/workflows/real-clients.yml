@@ -48,11 +48,11 @@ jobs:
         run: |
           npm install --global \
             @anthropic-ai/claude-code@2.1.261 \
-            @openai/codex@0.153.3 \
-            opencode-ai@1.18.28
+            @openai/codex@0.153.4 \
+            opencode-ai@1.18.29
           claude --version | grep -F '2.1.261'
-          codex --version | grep -F '0.153.3'
-          opencode --version | grep -Fx '1.18.28'
+          codex --version | grep -F '0.153.4'
+          opencode --version | grep -Fx '1.18.29'
 
       - name: Capture native requests against the offline mock
         env:

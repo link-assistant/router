@@ -824,11 +824,7 @@ fn every_refresh_error_variant_renders_a_message() {
     }
     assert!(rendered[0].contains("does not support"), "{}", rendered[0]);
     assert!(rendered[1].contains("no refresh token"), "{}", rendered[1]);
-    assert!(
-        rendered[2].contains("connection refused"),
-        "{}",
-        rendered[2]
-    );
+    assert!(rendered[2].contains("transport"), "{}", rendered[2]);
     assert!(rendered[3].contains("parse error"), "{}", rendered[3]);
     assert!(rendered[4].contains("storage"), "{}", rendered[4]);
     assert!(rendered[5].contains("500"), "{}", rendered[5]);

@@ -575,7 +575,7 @@ async fn usage_api_filters_by_signed_client_and_never_calls_inference() {
         assert_eq!(headers["content-type"], "application/json");
         assert_eq!(
             headers["user-agent"],
-            format!("claude-cli/{CLAUDE_CODE_VERSION} (external, cli)")
+            crate::claude_identity::oauth_user_agent()
         );
         assert!(!headers["user-agent"].to_str().unwrap().contains("router"));
     }
@@ -624,15 +624,9 @@ async fn openai_usage_uses_the_official_codex_headers_and_account() {
     assert_eq!(path, "/backend-api/wham/usage");
     assert_eq!(headers["authorization"], "Bearer openai-vendor-secret");
     assert_eq!(headers["chatgpt-account-id"], "workspace-42");
-    assert_eq!(
-        headers["user-agent"],
-        format!(
-            "{}/{}",
-            crate::codex_identity::ORIGINATOR,
-            crate::codex_identity::DEFAULT_CLIENT_VERSION
-        )
-    );
+    assert_eq!(headers["user-agent"], crate::codex_identity::user_agent());
     assert_eq!(headers["originator"], crate::codex_identity::ORIGINATOR);
+    assert_eq!(headers.get_all("originator").iter().count(), 1);
     assert!(!headers["user-agent"].to_str().unwrap().contains("router"));
     drop(captured);
     server.abort();

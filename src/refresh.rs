@@ -161,6 +161,14 @@ const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
     }
 }
 
+fn refresh_token_url(provider: SubscriptionProvider) -> String {
+    #[cfg(debug_assertions)]
+    if let Ok(url) = std::env::var("LINK_ASSISTANT_ROUTER_TEST_TOKEN_URL") {
+        return url;
+    }
+    refresh_config(provider).token_url.to_string()
+}
+
 /// Encode key/value pairs as an `application/x-www-form-urlencoded` body.
 ///
 /// Percent-encodes every byte that is not an unreserved character so OAuth
@@ -203,7 +211,6 @@ struct RefreshResponse {
 }
 
 /// Errors that can occur while refreshing a subscription token.
-#[derive(Debug)]
 pub enum RefreshError {
     /// The provider does not support router-driven refresh.
     ///
@@ -226,6 +233,24 @@ pub enum RefreshError {
     /// The refresh transaction could not acquire or durably update its
     /// credential store.
     Storage(String),
+}
+
+impl std::fmt::Debug for RefreshError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unsupported => formatter.write_str("Unsupported"),
+            Self::NoRefreshToken => formatter.write_str("NoRefreshToken"),
+            Self::Request(_) => formatter.write_str("Request(transport_failure)"),
+            Self::Status(code, class, retry_after) => formatter
+                .debug_tuple("Status")
+                .field(code)
+                .field(class)
+                .field(retry_after)
+                .finish(),
+            Self::Parse(_) => formatter.write_str("Parse(invalid_token_response)"),
+            Self::Storage(_) => formatter.write_str("Storage(persistence_failure)"),
+        }
+    }
 }
 
 /// Secret-free classification of an OAuth refresh endpoint failure.
@@ -419,7 +444,10 @@ impl std::fmt::Display for RefreshError {
         match self {
             Self::Unsupported => write!(f, "provider does not support router-driven refresh"),
             Self::NoRefreshToken => write!(f, "no refresh token available"),
-            Self::Request(m) => write!(f, "refresh request failed: {m}"),
+            Self::Request(_) => write!(
+                f,
+                "refresh token endpoint transport failed; it will be retried automatically"
+            ),
             Self::Status(code, class, _) if class.is_terminal() => write!(
                 f,
                 "refresh credential was rejected (HTTP {code}, class {}) — re-authenticate this \
@@ -448,8 +476,14 @@ impl std::fmt::Display for RefreshError {
                 class.label(),
                 retry_after.map_or_else(String::new, |seconds| format!(", retry after {seconds}s"))
             ),
-            Self::Parse(m) => write!(f, "refresh response parse error: {m}"),
-            Self::Storage(m) => write!(f, "refresh credential storage failed: {m}"),
+            Self::Parse(_) => write!(
+                f,
+                "refresh response parse error (class invalid_token_response); verify the provider configuration"
+            ),
+            Self::Storage(_) => write!(
+                f,
+                "refresh credential storage failed (class persistence_failure); verify writable credential storage"
+            ),
         }
     }
 }
@@ -502,14 +536,8 @@ pub async fn refresh(
     prev: &SubscriptionToken,
     now_ms: i64,
 ) -> Result<SubscriptionToken, RefreshError> {
-    refresh_at(
-        client,
-        refresh_config(provider).token_url,
-        provider,
-        prev,
-        now_ms,
-    )
-    .await
+    let token_url = refresh_token_url(provider);
+    refresh_at(client, &token_url, provider, prev, now_ms).await
 }
 
 /// [`refresh`] against an explicit token endpoint.

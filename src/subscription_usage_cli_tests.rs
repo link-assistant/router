@@ -72,6 +72,54 @@ fn json_output_is_the_api_envelope_without_a_cli_projection() {
     assert_eq!(cli, api);
 }
 
+#[test]
+fn unfiltered_output_keeps_every_provider_and_renders_unavailable_state() {
+    let subscriptions = UsageProvider::ALL
+        .into_iter()
+        .map(|provider| SubscriptionUsage {
+            provider,
+            state: if provider == UsageProvider::Lefine {
+                UsageState::Unavailable
+            } else {
+                UsageState::Available
+            },
+            status: if provider == UsageProvider::Lefine {
+                "usage_source_unavailable".into()
+            } else {
+                "available".into()
+            },
+            plan: None,
+            windows: Vec::new(),
+            additional_limits: Vec::new(),
+            credits: None,
+            subscription_end: None,
+            trial_end: None,
+            subscription_created: None,
+            retry_after_seconds: None,
+        })
+        .collect();
+    let envelope = UsageEnvelope {
+        schema_version: 1,
+        subscriptions,
+    };
+
+    let human = format_envelope(&envelope, false).unwrap();
+    for provider in UsageProvider::ALL {
+        assert_eq!(
+            human.matches(&format!("{}\n", provider.as_str())).count(),
+            1
+        );
+    }
+    assert!(
+        human.contains("status: usage_source_unavailable"),
+        "{human}"
+    );
+    let json: serde_json::Value =
+        serde_json::from_str(&format_envelope(&envelope, true).unwrap()).unwrap();
+    assert_eq!(json["subscriptions"].as_array().unwrap().len(), 4);
+    assert_eq!(json["subscriptions"][3]["state"], "unavailable");
+}
+
 #[tokio::test]
 async fn selected_provider_request_carries_the_router_token_in_all_supported_carriers() {
     let captured = Arc::new(Mutex::new(None));
