@@ -59,7 +59,7 @@ http = "1.5"
 http-body-util = "0.1"
 lino-arguments = "0.3"
 lino-objects-codec = "0.7.0"
-links-notation = "0.16.1"
+links-notation = "0.19.0"
 doublets = "0.5.0"
 link-cli = "0.2.10"
 clap = { version = "4", features = ["derive", "env"] }
