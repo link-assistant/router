@@ -7,7 +7,6 @@ use axum::routing::get;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::{Value, json};
 use tokio_tungstenite::tungstenite;
-use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
 
 use super::*;
 use crate::clients::ClientKind;
