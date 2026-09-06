@@ -18,6 +18,23 @@ pub(crate) struct CaptureContext {
     namespace: ResponseNamespace,
     owner: ResponseOwner,
     destination: AffinityDestination,
+    parent_id: Option<String>,
+}
+
+impl CaptureContext {
+    pub(crate) const fn native(
+        namespace: ResponseNamespace,
+        owner: ResponseOwner,
+        destination: AffinityDestination,
+        parent_id: Option<String>,
+    ) -> Self {
+        Self {
+            namespace,
+            owner,
+            destination,
+            parent_id,
+        }
+    }
 }
 
 pub(crate) async fn prepare(
@@ -34,6 +51,7 @@ pub(crate) async fn prepare(
         namespace,
         owner,
         destination,
+        parent_id: None,
     })
 }
 
@@ -163,6 +181,15 @@ pub(crate) async fn capture(
     context: CaptureContext,
     response: Response,
 ) -> Response {
+    capture_with_json_fields(state, context, response, &["id"]).await
+}
+
+pub(crate) async fn capture_with_json_fields(
+    state: &AppState,
+    context: CaptureContext,
+    response: Response,
+    id_fields: &[&str],
+) -> Response {
     if !response.status().is_success() {
         return response;
     }
@@ -179,15 +206,12 @@ pub(crate) async fn capture(
         Ok(bytes) => bytes,
         Err(error) => return upstream_error(&format!("stored response is too large: {error}")),
     };
-    let Some(response_id) = json_id(&bytes) else {
+    let Some(response_id) =
+        json_id_from_fields(&bytes, id_fields).or_else(|| location_id(&parts.headers))
+    else {
         return upstream_error("stored response did not include a resource id");
     };
-    if let Err(error) = state.provider_store.response_affinities().record(
-        context.namespace,
-        &response_id,
-        context.owner,
-        context.destination,
-    ) {
+    if let Err(error) = record_context(state, context, &response_id) {
         return affinity_error(&error);
     }
     Response::from_parts(parts, Body::from(bytes))
@@ -215,12 +239,7 @@ async fn capture_stream(state: &AppState, context: CaptureContext, response: Res
             return upstream_error("stored stream did not expose a bounded resource id");
         }
     };
-    if let Err(error) = state.provider_store.response_affinities().record(
-        context.namespace,
-        &response_id,
-        context.owner,
-        context.destination,
-    ) {
+    if let Err(error) = record_context(state, context, &response_id) {
         return affinity_error(&error);
     }
     let prefix = futures_util::stream::once(async move { Ok::<_, axum::Error>(Bytes::from(held)) });
@@ -228,13 +247,53 @@ async fn capture_stream(state: &AppState, context: CaptureContext, response: Res
     Response::from_parts(parts, Body::from_stream(stream))
 }
 
+#[cfg(test)]
 fn json_id(bytes: &[u8]) -> Option<String> {
-    serde_json::from_slice::<serde_json::Value>(bytes)
-        .ok()?
-        .get("id")?
-        .as_str()
+    json_id_from_fields(bytes, &["id"])
+}
+
+fn json_id_from_fields(bytes: &[u8], fields: &[&str]) -> Option<String> {
+    let value = serde_json::from_slice::<serde_json::Value>(bytes).ok()?;
+    fields.iter().find_map(|field| {
+        value
+            .get(*field)?
+            .as_str()
+            .filter(|id| !id.is_empty())
+            .map(str::to_string)
+    })
+}
+
+fn location_id(headers: &HeaderMap) -> Option<String> {
+    let location = headers.get("location")?.to_str().ok()?;
+    let path = location.split('?').next()?.trim_end_matches('/');
+    path.rsplit('/')
+        .next()
         .filter(|id| !id.is_empty())
         .map(str::to_string)
+}
+
+fn record_context(
+    state: &AppState,
+    context: CaptureContext,
+    response_id: &str,
+) -> Result<crate::response_affinity::RecordOutcome, crate::response_affinity::StoreError> {
+    let store = state.provider_store.response_affinities();
+    if let Some(parent_id) = context.parent_id {
+        store.record_child(
+            context.namespace,
+            response_id,
+            &parent_id,
+            context.owner,
+            context.destination,
+        )
+    } else {
+        store.record(
+            context.namespace,
+            response_id,
+            context.owner,
+            context.destination,
+        )
+    }
 }
 
 fn sse_id(block: &str) -> Option<String> {

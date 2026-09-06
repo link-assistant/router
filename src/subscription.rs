@@ -189,6 +189,34 @@ impl SubscriptionReader {
         self.import_from_store(self.import_source_keychain().as_deref())
     }
 
+    /// Whether the authoritative Claude credential carries an exact OAuth scope.
+    ///
+    /// Scopes deliberately remain outside [`SubscriptionToken`]: they are
+    /// authorization metadata owned by the source credential, not routing
+    /// metadata that should be copied into requests or rewritten on refresh.
+    pub(crate) fn has_claude_scope(&self, required: &str) -> Result<bool, SubscriptionError> {
+        if self.provider != SubscriptionProvider::Claude {
+            return Ok(false);
+        }
+        let source = self.read_document_for_import()?;
+        let document =
+            serde_json::from_str::<serde_json::Value>(&source.document).map_err(|_| {
+                SubscriptionError::ParseError(
+                    "Claude credential authorization metadata is invalid".into(),
+                )
+            })?;
+        let block = document.get("claudeAiOauth").unwrap_or(&document);
+        let in_array = block
+            .get("scopes")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|scopes| scopes.iter().any(|scope| scope.as_str() == Some(required)));
+        let in_string = block
+            .get("scope")
+            .and_then(serde_json::Value::as_str)
+            .is_some_and(|scopes| scopes.split_whitespace().any(|scope| scope == required));
+        Ok(in_array || in_string)
+    }
+
     /// [`read_document_for_import`](Self::read_document_for_import) against an
     /// already-read store entry.
     ///

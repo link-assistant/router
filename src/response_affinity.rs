@@ -30,6 +30,13 @@ pub(crate) enum ResponseNamespace {
     OpenAiConversationItems,
     CodexConversationItems,
     QwenConversationItems,
+    OpenAiRealtimeCalls,
+    CodexRealtimeCalls,
+    AnthropicFiles,
+    AnthropicBatches,
+    AnthropicSkills,
+    AnthropicSkillVersions,
+    CodexFiles,
 }
 
 impl ResponseNamespace {
