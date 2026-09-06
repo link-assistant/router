@@ -91,6 +91,10 @@ fn replaced_or_transport_header(name: &str) -> bool {
                 | "accept-encoding"
                 | "cookie"
                 | "chatgpt-account-id"
+                | "sec-websocket-key"
+                | "sec-websocket-version"
+                | "sec-websocket-extensions"
+                | "sec-websocket-accept"
         )
         || name.starts_with("x-link-assistant-")
         || name.starts_with("x-router-")

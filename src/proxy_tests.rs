@@ -4,7 +4,7 @@ use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
     INGRESS_NETWORK_HEADERS, OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token,
-    merge_oauth_beta, request_routing_context, retry_after_duration,
+    merge_oauth_beta, native_request_headers, request_routing_context, retry_after_duration,
 };
 
 #[test]
@@ -210,6 +210,56 @@ fn connection_nominated_request_headers_never_reach_the_upstream() {
         assert!(upstream.get(removed).is_none(), "{removed} leaked upstream");
     }
     assert_eq!(upstream["x-native-end-to-end"], "preserved");
+}
+
+#[test]
+fn native_websocket_handshake_headers_are_regenerated_per_connection() {
+    let mut incoming = HeaderMap::new();
+    incoming.insert("upgrade", HeaderValue::from_static("websocket"));
+    incoming.insert("connection", HeaderValue::from_static("upgrade"));
+    incoming.insert(
+        "sec-websocket-key",
+        HeaderValue::from_static("downstream-connection-key"),
+    );
+    incoming.insert("sec-websocket-version", HeaderValue::from_static("13"));
+    incoming.insert(
+        "sec-websocket-extensions",
+        HeaderValue::from_static("permessage-deflate"),
+    );
+    incoming.insert(
+        "sec-websocket-accept",
+        HeaderValue::from_static("downstream-response-only"),
+    );
+    incoming.append(
+        "sec-websocket-protocol",
+        HeaderValue::from_static("realtime"),
+    );
+    incoming.append(
+        "sec-websocket-protocol",
+        HeaderValue::from_static("openai-insecure-api-key.downstream"),
+    );
+
+    let upstream = native_request_headers(&incoming, "upstream-secret");
+
+    for regenerated in [
+        "upgrade",
+        "connection",
+        "sec-websocket-key",
+        "sec-websocket-version",
+        "sec-websocket-extensions",
+        "sec-websocket-accept",
+    ] {
+        assert!(
+            upstream.get(regenerated).is_none(),
+            "{regenerated} must be generated for the upstream connection"
+        );
+    }
+    assert_eq!(
+        upstream.get_all("sec-websocket-protocol").iter().count(),
+        2,
+        "application-level subprotocol offers remain end-to-end"
+    );
+    assert_eq!(upstream["authorization"], "Bearer upstream-secret");
 }
 
 #[tokio::test]

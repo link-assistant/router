@@ -12,6 +12,7 @@ use axum::response::{IntoResponse, Response};
 use futures_util::{SinkExt, StreamExt};
 use sha2::{Digest as _, Sha256};
 use std::io::Write as _;
+use std::sync::Arc;
 use tokio_tungstenite::tungstenite;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
 
@@ -24,6 +25,8 @@ use crate::route_contract::{RouteId, route_for_path};
 use crate::subscription::SubscriptionProvider;
 
 const CONNECT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(15);
+type UpstreamWebSocket =
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Service {
@@ -85,19 +88,19 @@ impl NativeRequestBody {
 }
 
 pub async fn openai(State(state): State<AppState>, request: Request) -> Response {
-    forward(state, request, Service::OpenAi).await
+    Box::pin(forward(state, request, Service::OpenAi)).await
 }
 
 pub async fn anthropic(State(state): State<AppState>, request: Request) -> Response {
-    forward(state, request, Service::Anthropic).await
+    Box::pin(forward(state, request, Service::Anthropic)).await
 }
 
 pub async fn codex(State(state): State<AppState>, request: Request) -> Response {
-    forward(state, request, Service::Codex).await
+    Box::pin(forward(state, request, Service::Codex)).await
 }
 
 pub async fn codex_backend(State(state): State<AppState>, request: Request) -> Response {
-    forward(state, request, Service::CodexBackend).await
+    Box::pin(forward(state, request, Service::CodexBackend)).await
 }
 
 async fn forward(state: AppState, request: Request, service: Service) -> Response {
@@ -110,7 +113,7 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     };
     if service == Service::CodexBackend && crate::codex_remote_control::is_remote_control_path(path)
     {
-        return crate::codex_remote_control::forward(state, request).await;
+        return Box::pin(crate::codex_remote_control::forward(state, request)).await;
     }
     let mut headers = request.headers().clone();
     let claims = match crate::proxy::authenticate_client_error(&state, &headers) {
@@ -190,7 +193,7 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             Ok((target, _)) => target,
             Err(response) => return response,
         };
-        return upgrade_websocket(state, request, target).await;
+        return upgrade_websocket(state, request, target, Some(claims.sub)).await;
     }
     let spool = headers
         .get("content-type")
@@ -1753,25 +1756,50 @@ fn is_websocket(headers: &HeaderMap) -> bool {
         .is_some_and(|value| value.eq_ignore_ascii_case("websocket"))
 }
 
-pub async fn upgrade_websocket(state: AppState, request: Request, target: Target) -> Response {
+pub async fn upgrade_websocket(
+    state: AppState,
+    request: Request,
+    target: Target,
+    usage_token_id: Option<String>,
+) -> Response {
     let (mut parts, _) = request.into_parts();
     let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {
         Ok(upgrade) => upgrade,
         Err(rejection) => return rejection.into_response(),
     };
     let limit = state.max_proxy_request_bytes;
-    upgrade
+    let (upstream, upstream_headers) = match connect_upstream_websocket(target, limit).await {
+        Ok(connected) => connected,
+        Err(response) => return response,
+    };
+    let token_manager = state.token_manager.clone();
+    let metrics = Arc::clone(&state.metrics);
+    let mut response = upgrade
         .max_message_size(limit)
         .max_frame_size(limit)
-        .on_upgrade(move |downstream| websocket_session(downstream, target, limit))
+        .on_upgrade(move |downstream| {
+            websocket_session(downstream, upstream, token_manager, usage_token_id, metrics)
+        });
+    for (name, value) in upstream_headers {
+        if let Some(name) = name {
+            response.headers_mut().append(name, value);
+        }
+    }
+    response
 }
 
-async fn websocket_session(mut downstream: WebSocket, target: Target, limit: usize) {
+async fn connect_upstream_websocket(
+    target: Target,
+    limit: usize,
+) -> Result<(UpstreamWebSocket, HeaderMap), Response> {
     let Ok(mut request) = websocket_url(&target.url)
         .and_then(|url| url.into_client_request().map_err(|error| error.to_string()))
     else {
-        close(&mut downstream, 1011, "invalid upstream WebSocket URL").await;
-        return;
+        return Err(error(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "invalid upstream WebSocket URL",
+        ));
     };
     for (name, value) in target.headers {
         if let Some(name) = name {
@@ -1787,15 +1815,46 @@ async fn websocket_session(mut downstream: WebSocket, target: Target, limit: usi
         tokio_tungstenite::connect_async_with_config(request, Some(config), false),
     )
     .await;
-    let Ok(Ok((mut upstream, _))) = connected else {
-        close(
-            &mut downstream,
-            1011,
-            "upstream WebSocket connection failed",
-        )
-        .await;
-        return;
-    };
+    match connected {
+        Err(_) => Err(error(
+            StatusCode::GATEWAY_TIMEOUT,
+            "api_error",
+            "upstream WebSocket connection timed out",
+        )),
+        Ok(Err(tungstenite::Error::Http(upstream))) => Err(websocket_http_failure(*upstream)),
+        Ok(Err(_)) => Err(unavailable("upstream WebSocket connection failed")),
+        Ok(Ok((upstream, response))) => {
+            let mut headers = crate::proxy::relay_response_headers(response.headers());
+            for generated in [
+                "sec-websocket-accept",
+                "sec-websocket-key",
+                "sec-websocket-version",
+                "sec-websocket-extensions",
+            ] {
+                headers.remove(generated);
+            }
+            Ok((upstream, headers))
+        }
+    }
+}
+
+fn websocket_http_failure(upstream: http::Response<Option<Vec<u8>>>) -> Response {
+    let (parts, body) = upstream.into_parts();
+    let status = StatusCode::from_u16(parts.status.as_u16()).unwrap_or(StatusCode::BAD_GATEWAY);
+    let mut response = Response::new(Body::from(body.unwrap_or_default()));
+    *response.status_mut() = status;
+    *response.headers_mut() = crate::proxy::relay_response_headers(&parts.headers);
+    response
+}
+
+async fn websocket_session(
+    mut downstream: WebSocket,
+    mut upstream: UpstreamWebSocket,
+    token_manager: crate::token::TokenManager,
+    usage_token_id: Option<String>,
+    metrics: Arc<crate::metrics::Metrics>,
+) {
+    let mut completed_responses = std::collections::HashSet::new();
     loop {
         tokio::select! {
             message = downstream.next() => {
@@ -1803,22 +1862,101 @@ async fn websocket_session(mut downstream: WebSocket, target: Target, limit: usi
                     let _ = upstream.close(None).await;
                     break;
                 };
+                let message_bytes = websocket_message_len(&message);
+                if let (Some(token_id), Message::Text(text)) = (&usage_token_id, &message)
+                    && serde_json::from_slice::<serde_json::Value>(text.as_bytes())
+                        .ok()
+                        .and_then(|event| event.get("type").and_then(serde_json::Value::as_str).map(str::to_string))
+                        .as_deref()
+                        == Some("response.create")
+                    && token_manager.enforce_request_budget(token_id).is_err()
+                {
+                    close(&mut downstream, 1008, "Router token budget is exhausted").await;
+                    let _ = upstream.close(None).await;
+                    break;
+                }
                 let closes = matches!(message, Message::Close(_));
                 if upstream.send(downstream_message(message)).await.is_err() || closes {
                     break;
                 }
+                metrics.record_bytes(message_bytes, 0);
             }
             message = upstream.next() => {
                 let Some(Ok(message)) = message else {
                     close(&mut downstream, 1011, "upstream WebSocket disconnected").await;
                     break;
                 };
+                let message_bytes = tungstenite_message_len(&message);
+                let budget_exhausted = if let (Some(token_id), tungstenite::Message::Text(text)) =
+                    (&usage_token_id, &message)
+                {
+                    record_realtime_usage(
+                        &token_manager,
+                        token_id,
+                        &mut completed_responses,
+                        text.as_bytes(),
+                    )
+                } else {
+                    false
+                };
                 let closes = matches!(message, tungstenite::Message::Close(_));
                 if downstream.send(upstream_message(message)).await.is_err() || closes {
                     break;
                 }
+                metrics.record_bytes(0, message_bytes);
+                if budget_exhausted {
+                    close(&mut downstream, 1008, "Router token budget is exhausted").await;
+                    let _ = upstream.close(None).await;
+                    break;
+                }
             }
         }
+    }
+}
+
+fn record_realtime_usage(
+    token_manager: &crate::token::TokenManager,
+    token_id: &str,
+    completed_responses: &mut std::collections::HashSet<String>,
+    bytes: &[u8],
+) -> bool {
+    let Ok(event) = serde_json::from_slice::<serde_json::Value>(bytes) else {
+        return false;
+    };
+    if event.get("type").and_then(serde_json::Value::as_str) != Some("response.done") {
+        return false;
+    }
+    let key = event
+        .pointer("/response/id")
+        .and_then(serde_json::Value::as_str)
+        .filter(|id| !id.is_empty())
+        .map_or_else(|| hex::encode(Sha256::digest(bytes)), str::to_string);
+    if !completed_responses.insert(key) {
+        return false;
+    }
+    if let Some(tokens) = crate::usage::token_count(&event)
+        && let Err(error) = token_manager.settle_token_usage(token_id, 0, tokens)
+    {
+        tracing::warn!(token_id, "failed to persist Realtime token usage: {error}");
+    }
+    token_manager.enforce_request_budget(token_id).is_err()
+}
+
+fn websocket_message_len(message: &Message) -> u64 {
+    match message {
+        Message::Text(text) => text.len() as u64,
+        Message::Binary(bytes) | Message::Ping(bytes) | Message::Pong(bytes) => bytes.len() as u64,
+        Message::Close(_) => 0,
+    }
+}
+
+fn tungstenite_message_len(message: &tungstenite::Message) -> u64 {
+    match message {
+        tungstenite::Message::Text(text) => text.len() as u64,
+        tungstenite::Message::Binary(bytes)
+        | tungstenite::Message::Ping(bytes)
+        | tungstenite::Message::Pong(bytes) => bytes.len() as u64,
+        tungstenite::Message::Close(_) | tungstenite::Message::Frame(_) => 0,
     }
 }
 
@@ -2804,5 +2942,227 @@ mod tests {
         );
         assert_eq!(calls.load(Ordering::Relaxed), 1);
         server.abort();
+    }
+
+    #[tokio::test]
+    async fn websocket_upstream_handshake_failure_is_returned_before_downstream_upgrade() {
+        use axum::routing::get;
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
+
+        let upstream = axum::Router::new().route(
+            "/realtime",
+            get(|| async {
+                (
+                    StatusCode::TOO_MANY_REQUESTS,
+                    [
+                        ("content-type", "application/problem+json"),
+                        ("retry-after", "17"),
+                        ("x-request-id", "realtime-handshake-request"),
+                    ],
+                    r#"{"error":"native handshake rejected"}"#,
+                )
+            }),
+        );
+        let upstream_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let upstream_url = format!(
+            "http://{}/realtime",
+            upstream_listener.local_addr().unwrap()
+        );
+        let upstream_server =
+            tokio::spawn(async move { axum::serve(upstream_listener, upstream).await.unwrap() });
+
+        let data = tempfile::tempdir().unwrap();
+        let state = AppState::for_tests(data.path());
+        let router_state = state.clone();
+        let router = axum::Router::new().route(
+            "/realtime",
+            get(move |request: Request| {
+                let state = router_state.clone();
+                let url = upstream_url.clone();
+                async move {
+                    upgrade_websocket(
+                        state.clone(),
+                        request,
+                        Target {
+                            client: state.client.clone(),
+                            url,
+                            headers: HeaderMap::new(),
+                        },
+                        None,
+                    )
+                    .await
+                }
+            }),
+        );
+        let router_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let router_address = router_listener.local_addr().unwrap();
+        let router_server =
+            tokio::spawn(async move { axum::serve(router_listener, router).await.unwrap() });
+
+        let request = format!("ws://{router_address}/realtime")
+            .into_client_request()
+            .unwrap();
+        let failure = tokio_tungstenite::connect_async(request)
+            .await
+            .expect_err("the upstream HTTP rejection must precede the downstream upgrade");
+        let tungstenite::Error::Http(response) = failure else {
+            panic!("expected the native upstream HTTP response, got {failure}");
+        };
+        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(response.headers()["retry-after"], "17");
+        assert_eq!(
+            response.headers()["x-request-id"],
+            "realtime-handshake-request"
+        );
+        assert_eq!(
+            response.body().as_deref(),
+            Some(br#"{"error":"native handshake rejected"}"#.as_slice())
+        );
+        router_server.abort();
+        upstream_server.abort();
+    }
+
+    #[tokio::test]
+    async fn native_websocket_relay_preserves_subprotocol_frames_and_fresh_handshake() {
+        use axum::extract::WebSocketUpgrade;
+        use axum::routing::get;
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
+
+        let captured = Arc::new(Mutex::new(None::<HeaderMap>));
+        let upstream_capture = Arc::clone(&captured);
+        let upstream = axum::Router::new().route(
+            "/realtime",
+            get(move |headers: HeaderMap, upgrade: WebSocketUpgrade| {
+                *upstream_capture.lock().unwrap() = Some(headers);
+                async move {
+                    upgrade
+                        .protocols(["realtime"])
+                        .on_upgrade(|mut socket| async move {
+                            while let Some(Ok(message)) = socket.recv().await {
+                                let closes = matches!(message, Message::Close(_));
+                                if socket.send(message).await.is_err() || closes {
+                                    break;
+                                }
+                            }
+                        })
+                }
+            }),
+        );
+        let upstream_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let upstream_url = format!(
+            "http://{}/realtime",
+            upstream_listener.local_addr().unwrap()
+        );
+        let upstream_server =
+            tokio::spawn(async move { axum::serve(upstream_listener, upstream).await.unwrap() });
+
+        let data = tempfile::tempdir().unwrap();
+        let state = AppState::for_tests(data.path());
+        let router_state = state.clone();
+        let router = axum::Router::new().route(
+            "/realtime",
+            get(move |request: Request| {
+                let state = router_state.clone();
+                let url = upstream_url.clone();
+                async move {
+                    let headers = crate::proxy::native_request_headers(
+                        request.headers(),
+                        "upstream-websocket-secret",
+                    );
+                    upgrade_websocket(
+                        state.clone(),
+                        request,
+                        Target {
+                            client: state.client.clone(),
+                            url,
+                            headers,
+                        },
+                        None,
+                    )
+                    .await
+                }
+            }),
+        );
+        let router_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let router_address = router_listener.local_addr().unwrap();
+        let router_server =
+            tokio::spawn(async move { axum::serve(router_listener, router).await.unwrap() });
+
+        let mut request = format!("ws://{router_address}/realtime")
+            .into_client_request()
+            .unwrap();
+        request
+            .headers_mut()
+            .insert("sec-websocket-protocol", "realtime".parse().unwrap());
+        let (mut socket, response) = tokio_tungstenite::connect_async(request).await.unwrap();
+        assert_eq!(response.headers()["sec-websocket-protocol"], "realtime");
+        for message in [
+            tungstenite::Message::Text("realtime text".into()),
+            tungstenite::Message::Binary(vec![0, 1, 2, 255].into()),
+        ] {
+            socket.send(message.clone()).await.unwrap();
+            assert_eq!(socket.next().await.unwrap().unwrap(), message);
+        }
+        socket
+            .send(tungstenite::Message::Ping(vec![7, 8].into()))
+            .await
+            .unwrap();
+        assert_eq!(
+            socket.next().await.unwrap().unwrap(),
+            tungstenite::Message::Pong(vec![7, 8].into())
+        );
+        socket.close(None).await.unwrap();
+
+        let headers = captured.lock().unwrap().take().unwrap();
+        assert_eq!(headers["authorization"], "Bearer upstream-websocket-secret");
+        assert_eq!(headers["sec-websocket-protocol"], "realtime");
+        assert_eq!(headers.get_all("sec-websocket-key").iter().count(), 1);
+        assert_eq!(headers.get_all("sec-websocket-version").iter().count(), 1);
+        router_server.abort();
+        upstream_server.abort();
+    }
+
+    #[test]
+    fn realtime_usage_counts_each_completed_response_once() {
+        let data = tempfile::tempdir().unwrap();
+        let state = AppState::for_tests(data.path());
+        let token = state
+            .token_manager
+            .issue_token(1, "realtime usage")
+            .unwrap();
+        let token_id = state.token_manager.validate_token(&token).unwrap().sub;
+        let mut completed = std::collections::HashSet::new();
+        let first = br#"{"type":"response.done","response":{"id":"resp_1","usage":{"input_tokens":4,"output_tokens":3,"input_token_details":{"audio_tokens":2},"output_token_details":{"audio_tokens":1}}}}"#;
+        let second = br#"{"type":"response.done","response":{"id":"resp_2","usage":{"total_tokens":5,"input_tokens":3,"output_tokens":2}}}"#;
+
+        assert!(!record_realtime_usage(
+            &state.token_manager,
+            &token_id,
+            &mut completed,
+            first
+        ));
+        assert!(!record_realtime_usage(
+            &state.token_manager,
+            &token_id,
+            &mut completed,
+            first
+        ));
+        assert!(!record_realtime_usage(
+            &state.token_manager,
+            &token_id,
+            &mut completed,
+            second
+        ));
+
+        assert_eq!(
+            state
+                .token_manager
+                .store()
+                .get(&token_id)
+                .unwrap()
+                .unwrap()
+                .used_tokens,
+            12
+        );
     }
 }

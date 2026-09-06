@@ -392,7 +392,7 @@ pub async fn forward(state: AppState, request: Request) -> Response {
     };
     match operation {
         Operation::Pair | Operation::PairStatus | Operation::WebSocket => {
-            continuation_request(state, request, operation).await
+            Box::pin(continuation_request(state, request, operation)).await
         }
         Operation::Enroll
         | Operation::Refresh
@@ -670,7 +670,7 @@ async fn continuation_request(state: AppState, request: Request, operation: Oper
                 "the remote-control server endpoint requires a WebSocket upgrade",
             );
         }
-        return crate::native_service::upgrade_websocket(state, request, target).await;
+        return crate::native_service::upgrade_websocket(state, request, target, None).await;
     }
     let Ok(body) = axum::body::to_bytes(request.into_body(), state.max_proxy_request_bytes).await
     else {
