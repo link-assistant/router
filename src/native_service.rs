@@ -219,6 +219,17 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         body
     };
     let routing_body = body.routing_bytes();
+    if requires_json_object(service, &method, path)
+        && !routing_body.is_some_and(|bytes| {
+            serde_json::from_slice::<serde_json::Value>(bytes).is_ok_and(|value| value.is_object())
+        })
+    {
+        return error(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "the native service request body must be a JSON object",
+        );
+    }
     let resource = native_resource_request(&method, path);
     let list = native_list_request(&method, path);
     let list_destination = match list.as_ref() {
@@ -233,29 +244,15 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             Ok(affinity) => affinity,
             Err(response) => return response,
         },
-        None => match previous_response_namespace(
+        None => match referenced_response_affinity(
+            &state,
+            &owner,
             service,
             path,
             routing_body.map_or(&[][..], Bytes::as_ref),
         ) {
-            Some((namespace, response_id)) => {
-                match state.provider_store.response_affinities().lookup(
-                    namespace,
-                    &response_id,
-                    &owner,
-                ) {
-                    Ok(Some(affinity)) => Some(affinity),
-                    Ok(None) => {
-                        return error(
-                            StatusCode::NOT_FOUND,
-                            "not_found_error",
-                            "the referenced response is unavailable",
-                        );
-                    }
-                    Err(_) => return unavailable("resource affinity is unavailable"),
-                }
-            }
-            None => None,
+            Ok(affinity) => affinity,
+            Err(response) => return response,
         },
     };
     let (target, destination) = match target(
@@ -294,7 +291,17 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     {
         return response;
     }
-    let mut response = relay_native_http(&state, &method, body, target).await;
+    let usage_token_id = tracks_native_usage(service, path).then_some(claims.sub.as_str());
+    let mut response = relay_native_http(&state, &method, body, target, usage_token_id).await;
+    if let Some(namespace) = created_response_namespace(service, path) {
+        let context = crate::resource_capture::CaptureContext::native(
+            namespace,
+            owner.clone(),
+            destination.clone(),
+            None,
+        );
+        response = crate::resource_capture::capture(&state, context, response).await;
+    }
     if let Some(list) = list {
         response = filter_native_list_response(&state, &owner, &list, response).await;
     }
@@ -1144,28 +1151,142 @@ fn list_item_id(item: &serde_json::Value, namespace: ResponseNamespace) -> Optio
         .filter(|id| !id.is_empty())
 }
 
-fn previous_response_namespace(
+fn response_references(
     service: Service,
     path: &str,
     body: &[u8],
-) -> Option<(ResponseNamespace, String)> {
-    let namespace = match (service, path) {
+) -> Vec<(ResponseNamespace, String)> {
+    let response_namespace = match (service, path) {
         (
             Service::OpenAi,
             "/api/services/openai/v1/responses/compact"
             | "/api/services/openai/v1/responses/input_tokens",
-        ) => ResponseNamespace::OpenAiResponses,
+        ) => Some(ResponseNamespace::OpenAiResponses),
         (Service::Codex, "/api/services/codex/v1/responses/compact") => {
-            ResponseNamespace::CodexResponses
+            Some(ResponseNamespace::CodexResponses)
         }
-        _ => return None,
+        _ => None,
     };
-    let id = serde_json::from_slice::<serde_json::Value>(body)
-        .ok()?
-        .get("previous_response_id")?
-        .as_str()?
-        .to_string();
-    (!id.is_empty()).then_some((namespace, id))
+    let Ok(document) = serde_json::from_slice::<serde_json::Value>(body) else {
+        return Vec::new();
+    };
+    let mut references = Vec::new();
+    if let Some(namespace) = response_namespace
+        && let Some(id) = document
+            .get("previous_response_id")
+            .and_then(serde_json::Value::as_str)
+            .filter(|id| !id.is_empty())
+    {
+        references.push((namespace, id.to_string()));
+    }
+    if service == Service::OpenAi
+        && path == "/api/services/openai/v1/responses/input_tokens"
+        && let Some(id) = document.get("conversation").and_then(|conversation| {
+            conversation
+                .as_str()
+                .or_else(|| conversation.get("id").and_then(serde_json::Value::as_str))
+        })
+        && !id.is_empty()
+    {
+        let reference = (ResponseNamespace::OpenAiConversations, id.to_string());
+        if !references.contains(&reference) {
+            references.push(reference);
+        }
+    }
+    references
+}
+
+fn requires_json_object(service: Service, method: &Method, path: &str) -> bool {
+    if method != Method::POST {
+        return false;
+    }
+    match service {
+        Service::OpenAi => matches!(
+            path,
+            "/api/services/openai/v1/responses/compact"
+                | "/api/services/openai/v1/responses/input_tokens"
+                | "/api/services/openai/v1/images/generations"
+                | "/api/services/openai/v1/audio/speech"
+        ),
+        Service::Codex => matches!(
+            path,
+            "/api/services/codex/v1/responses/compact"
+                | "/api/services/codex/v1/images/generations"
+                | "/api/services/codex/v1/images/edits"
+                | "/api/services/codex/v1/alpha/search"
+        ),
+        Service::Anthropic | Service::CodexBackend => false,
+    }
+}
+
+fn tracks_native_usage(service: Service, path: &str) -> bool {
+    match service {
+        Service::OpenAi => matches!(
+            path,
+            "/api/services/openai/v1/responses/compact"
+                | "/api/services/openai/v1/images/generations"
+                | "/api/services/openai/v1/images/edits"
+                | "/api/services/openai/v1/images/variations"
+                | "/api/services/openai/v1/audio/speech"
+                | "/api/services/openai/v1/audio/transcriptions"
+                | "/api/services/openai/v1/audio/translations"
+        ),
+        Service::Codex => matches!(
+            path,
+            "/api/services/codex/v1/responses/compact"
+                | "/api/services/codex/v1/images/generations"
+                | "/api/services/codex/v1/images/edits"
+                | "/api/services/codex/v1/alpha/search"
+        ),
+        Service::Anthropic | Service::CodexBackend => false,
+    }
+}
+
+fn created_response_namespace(service: Service, path: &str) -> Option<ResponseNamespace> {
+    match (service, path) {
+        (Service::OpenAi, "/api/services/openai/v1/responses/compact") => {
+            Some(ResponseNamespace::OpenAiResponses)
+        }
+        (Service::Codex, "/api/services/codex/v1/responses/compact") => {
+            Some(ResponseNamespace::CodexResponses)
+        }
+        _ => None,
+    }
+}
+
+fn referenced_response_affinity(
+    state: &AppState,
+    owner: &ResponseOwner,
+    service: Service,
+    path: &str,
+    body: &[u8],
+) -> Result<Option<ResponseAffinity>, Response> {
+    let store = state.provider_store.response_affinities();
+    let mut selected: Option<ResponseAffinity> = None;
+    for (namespace, id) in response_references(service, path, body) {
+        let affinity = store
+            .lookup(namespace, &id, owner)
+            .map_err(|_| unavailable("resource affinity is unavailable"))?
+            .ok_or_else(|| {
+                error(
+                    StatusCode::NOT_FOUND,
+                    "not_found_error",
+                    "the referenced response resource is unavailable",
+                )
+            })?;
+        if selected
+            .as_ref()
+            .is_some_and(|existing| existing.destination != affinity.destination)
+        {
+            return Err(error(
+                StatusCode::CONFLICT,
+                "invalid_request_error",
+                "the referenced response resources do not share one provider account",
+            ));
+        }
+        selected = Some(affinity);
+    }
+    Ok(selected)
 }
 
 const fn route_belongs(route: crate::route_contract::RouteSpec, service: Service) -> bool {
@@ -1244,16 +1365,18 @@ async fn whoami(
     };
     let (_, principal) = crate::client_policy::bound_client(claims).expect("authorized above");
     let user = opaque_handle("usr", principal);
-    let account = opaque_handle("acct", &format!("{principal}:{}", selected.name));
+    let account = codex_account_handle(
+        principal,
+        &selected.name,
+        selected.token.account_id.as_deref(),
+    );
+    let (plan, fedramp) = codex_identity_metadata(state, &selected.name, &selected.token);
     axum::Json(serde_json::json!({
         "email": serde_json::Value::Null,
         "chatgpt_user_id": user,
         "chatgpt_account_id": account,
-        // These fields are required by Codex's public PAT metadata schema.
-        // Router has no need to reveal the subscriber's real plan or workspace
-        // classification, so it supplies schema-valid conservative values.
-        "chatgpt_plan_type": "unknown",
-        "chatgpt_account_is_fedramp": false,
+        "chatgpt_plan_type": plan,
+        "chatgpt_account_is_fedramp": fedramp,
     }))
     .into_response()
 }
@@ -1261,6 +1384,98 @@ async fn whoami(
 fn opaque_handle(prefix: &str, value: &str) -> String {
     let digest = hex::encode(Sha256::digest(value.as_bytes()));
     format!("{prefix}_{}", &digest[..24])
+}
+
+fn codex_account_handle(
+    principal: &str,
+    account: &str,
+    upstream_account_id: Option<&str>,
+) -> String {
+    opaque_handle(
+        "acct",
+        &format!(
+            "{principal}:{account}:{}",
+            upstream_account_id.unwrap_or_default()
+        ),
+    )
+}
+
+fn codex_identity_metadata(
+    state: &AppState,
+    account: &str,
+    token: &crate::subscription::SubscriptionToken,
+) -> (String, bool) {
+    let claims = codex_identity_claims(&token.access_token).or_else(|| {
+        let reader = codex_reader_for_account(state, account)?;
+        let source = reader.read_document_for_import().ok()?;
+        if source.token.access_token != token.access_token {
+            return None;
+        }
+        let document = serde_json::from_str::<serde_json::Value>(&source.document).ok()?;
+        let id_token = document.pointer("/tokens/id_token")?.as_str()?;
+        codex_identity_claims(id_token)
+    });
+    let plan = claims
+        .as_ref()
+        .and_then(|claims| claims.get("chatgpt_plan_type"))
+        .and_then(serde_json::Value::as_str)
+        .map(str::trim)
+        .filter(|plan| !plan.is_empty() && plan.len() <= 128)
+        .unwrap_or("unknown")
+        .to_string();
+    let fedramp = claims
+        .as_ref()
+        .and_then(|claims| claims.get("chatgpt_account_is_fedramp"))
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false);
+    (plan, fedramp)
+}
+
+fn codex_identity_claims(token: &str) -> Option<serde_json::Map<String, serde_json::Value>> {
+    use base64::Engine as _;
+
+    let payload = token.split('.').nth(1)?;
+    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload)
+        .ok()?;
+    let document = serde_json::from_slice::<serde_json::Value>(&bytes).ok()?;
+    document
+        .get("https://api.openai.com/auth")?
+        .as_object()
+        .cloned()
+}
+
+fn codex_reader_for_account(
+    state: &AppState,
+    account: &str,
+) -> Option<crate::subscription::SubscriptionReader> {
+    state
+        .account_router
+        .as_ref()
+        .filter(|router| router.provider() == SubscriptionProvider::Codex)
+        .and_then(|router| {
+            router
+                .subscription_readers()
+                .into_iter()
+                .find_map(|(name, reader)| (name == account).then_some(reader))
+        })
+        .or_else(|| {
+            (account == crate::credential_recovery_store::PRIMARY_ACCOUNT)
+                .then(|| {
+                    state
+                        .subscription_readers
+                        .iter()
+                        .find(|reader| reader.provider() == SubscriptionProvider::Codex)
+                        .or_else(|| {
+                            state
+                                .subscription_reader
+                                .as_ref()
+                                .filter(|reader| reader.provider() == SubscriptionProvider::Codex)
+                        })
+                        .cloned()
+                })
+                .flatten()
+        })
 }
 
 async fn target(
@@ -1515,20 +1730,26 @@ fn codex_account_pin(
         .account_router
         .as_ref()
         .filter(|router| router.provider() == SubscriptionProvider::Codex)
-        .map(crate::accounts::AccountRouter::subscription_readers)
         .map_or_else(
-            || vec![crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()],
-            |accounts| {
-                accounts
-                    .into_iter()
-                    .map(|(name, _)| name)
-                    .collect::<Vec<_>>()
+            || {
+                codex_reader_for_account(state, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+                    .map(|reader| {
+                        vec![(
+                            crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                            reader,
+                        )]
+                    })
+                    .unwrap_or_default()
             },
+            crate::accounts::AccountRouter::subscription_readers,
         );
     accounts
         .into_iter()
-        .find(|account| opaque_handle("acct", &format!("{principal}:{account}")) == handle)
-        .map(Some)
+        .find(|(account, reader)| {
+            let account_id = reader.read_token().ok().and_then(|token| token.account_id);
+            codex_account_handle(principal, account, account_id.as_deref()) == handle
+        })
+        .map(|(account, _)| Some(account))
         .ok_or_else(|| {
             error(
                 StatusCode::FORBIDDEN,
@@ -1700,7 +1921,7 @@ pub async fn relay_http(
     body: Bytes,
     target: Target,
 ) -> Response {
-    relay_native_http(state, method, NativeRequestBody::Memory(body), target).await
+    relay_native_http(state, method, NativeRequestBody::Memory(body), target, None).await
 }
 
 async fn relay_native_http(
@@ -1708,6 +1929,7 @@ async fn relay_native_http(
     method: &Method,
     body: NativeRequestBody,
     target: Target,
+    usage_token_id: Option<&str>,
 ) -> Response {
     let body_len = body.len();
     let request = target
@@ -1736,9 +1958,14 @@ async fn relay_native_http(
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let headers = crate::proxy::relay_response_headers(upstream.headers());
     let metrics = std::sync::Arc::clone(&state.metrics);
+    let mut usage = usage_token_id
+        .map(|token_id| crate::usage::UsageTracker::new(state.token_manager.clone(), token_id));
     let stream = upstream.bytes_stream().map(move |chunk| {
         if let Ok(bytes) = &chunk {
             metrics.record_bytes(0, bytes.len() as u64);
+            if let Some(usage) = usage.as_mut() {
+                usage.feed(bytes);
+            }
         }
         chunk
     });
@@ -2256,29 +2483,97 @@ mod tests {
     #[test]
     fn responses_helpers_pin_native_compaction_to_existing_state() {
         assert_eq!(
-            previous_response_namespace(
+            created_response_namespace(
+                Service::OpenAi,
+                "/api/services/openai/v1/responses/compact"
+            ),
+            Some(ResponseNamespace::OpenAiResponses)
+        );
+        assert_eq!(
+            created_response_namespace(Service::Codex, "/api/services/codex/v1/responses/compact"),
+            Some(ResponseNamespace::CodexResponses)
+        );
+        assert_eq!(
+            response_references(
                 Service::OpenAi,
                 "/api/services/openai/v1/responses/compact",
                 br#"{"previous_response_id":"resp_1"}"#,
             ),
-            Some((ResponseNamespace::OpenAiResponses, "resp_1".to_string()))
+            vec![(ResponseNamespace::OpenAiResponses, "resp_1".to_string())]
         );
         assert_eq!(
-            previous_response_namespace(
+            response_references(
                 Service::Codex,
                 "/api/services/codex/v1/responses/compact",
                 br#"{"previous_response_id":"resp_2"}"#,
             ),
-            Some((ResponseNamespace::CodexResponses, "resp_2".to_string()))
+            vec![(ResponseNamespace::CodexResponses, "resp_2".to_string())]
         );
         assert_eq!(
-            previous_response_namespace(
+            response_references(
                 Service::OpenAi,
                 "/api/services/openai/v1/images/generations",
                 br#"{"previous_response_id":"resp_3"}"#,
             ),
-            None
+            vec![]
         );
+        assert_eq!(
+            response_references(
+                Service::OpenAi,
+                "/api/services/openai/v1/responses/input_tokens",
+                br#"{"previous_response_id":"resp_4","conversation":{"id":"conv_1"}}"#,
+            ),
+            vec![
+                (ResponseNamespace::OpenAiResponses, "resp_4".to_string()),
+                (ResponseNamespace::OpenAiConversations, "conv_1".to_string()),
+            ]
+        );
+        assert_eq!(
+            response_references(
+                Service::OpenAi,
+                "/api/services/openai/v1/responses/input_tokens",
+                br#"{"conversation":"conv_2"}"#,
+            ),
+            vec![(ResponseNamespace::OpenAiConversations, "conv_2".to_string())]
+        );
+    }
+
+    #[test]
+    fn native_json_operations_reject_malformed_or_non_object_bodies_locally() {
+        for (service, path) in [
+            (Service::OpenAi, "/api/services/openai/v1/responses/compact"),
+            (
+                Service::OpenAi,
+                "/api/services/openai/v1/responses/input_tokens",
+            ),
+            (
+                Service::OpenAi,
+                "/api/services/openai/v1/images/generations",
+            ),
+            (Service::OpenAi, "/api/services/openai/v1/audio/speech"),
+            (Service::Codex, "/api/services/codex/v1/responses/compact"),
+            (Service::Codex, "/api/services/codex/v1/images/generations"),
+            (Service::Codex, "/api/services/codex/v1/images/edits"),
+            (Service::Codex, "/api/services/codex/v1/alpha/search"),
+        ] {
+            assert!(requires_json_object(service, &Method::POST, path), "{path}");
+        }
+        assert!(!requires_json_object(
+            Service::OpenAi,
+            &Method::POST,
+            "/api/services/openai/v1/images/edits"
+        ));
+        assert!(!requires_json_object(
+            Service::OpenAi,
+            &Method::POST,
+            "/api/services/openai/v1/realtime/calls"
+        ));
+        for body in [br"[]".as_slice(), br"null", br"not-json"] {
+            assert!(
+                !serde_json::from_slice::<serde_json::Value>(body)
+                    .is_ok_and(|value| value.is_object())
+            );
+        }
     }
 
     #[test]
@@ -3163,6 +3458,108 @@ mod tests {
                 .unwrap()
                 .used_tokens,
             12
+        );
+    }
+
+    #[tokio::test]
+    async fn native_http_usage_is_settled_without_rewriting_the_response() {
+        let upstream_body =
+            br#"{"id":"image_1","usage":{"input_tokens":6,"output_tokens":3,"total_tokens":9}}"#;
+        let upstream = axum::Router::new().fallback(|| async {
+            (
+                StatusCode::OK,
+                [
+                    ("content-type", "application/json; charset=utf-8"),
+                    ("x-request-id", "native-usage-request"),
+                ],
+                Body::from(upstream_body.as_slice()),
+            )
+        });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!(
+            "http://{}/images/generations",
+            listener.local_addr().unwrap()
+        );
+        let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+        let data = tempfile::tempdir().unwrap();
+        let state = AppState::for_tests(data.path());
+        let token = state.token_manager.issue_token(1, "native usage").unwrap();
+        let token_id = state.token_manager.validate_token(&token).unwrap().sub;
+        let response = relay_native_http(
+            &state,
+            &Method::POST,
+            NativeRequestBody::Memory(Bytes::from_static(br#"{"prompt":"image"}"#)),
+            Target {
+                client: state.client.clone(),
+                url,
+                headers: HeaderMap::new(),
+            },
+            Some(&token_id),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()["x-request-id"], "native-usage-request");
+        assert_eq!(
+            response.into_body().collect().await.unwrap().to_bytes(),
+            upstream_body.as_slice()
+        );
+        assert_eq!(
+            state
+                .token_manager
+                .store()
+                .get(&token_id)
+                .unwrap()
+                .unwrap()
+                .used_tokens,
+            9
+        );
+        assert!(!tracks_native_usage(
+            Service::OpenAi,
+            "/api/services/openai/v1/responses/input_tokens"
+        ));
+        assert!(tracks_native_usage(
+            Service::OpenAi,
+            "/api/services/openai/v1/images/generations"
+        ));
+        server.abort();
+    }
+
+    #[test]
+    fn codex_whoami_metadata_and_account_handle_follow_the_selected_workspace() {
+        use base64::Engine as _;
+
+        let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
+            br#"{"https://api.openai.com/auth":{"chatgpt_plan_type":"business","chatgpt_account_is_fedramp":true}}"#,
+        );
+        let id_token = format!("header.{payload}.signature");
+        let home = tempfile::tempdir().unwrap();
+        std::fs::write(
+            home.path().join("auth.json"),
+            format!(
+                r#"{{"tokens":{{"id_token":"{id_token}","access_token":"opaque-access","account_id":"workspace-a"}}}}"#
+            ),
+        )
+        .unwrap();
+        let reader =
+            crate::subscription::SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
+        let data = tempfile::tempdir().unwrap();
+        let mut state = AppState::for_tests(data.path());
+        state.subscription_reader = Some(reader.clone());
+        state.subscription_readers = vec![reader.clone()];
+        let token = reader.read_token().unwrap();
+
+        assert_eq!(
+            codex_identity_metadata(
+                &state,
+                crate::credential_recovery_store::PRIMARY_ACCOUNT,
+                &token
+            ),
+            ("business".to_string(), true)
+        );
+        assert_ne!(
+            codex_account_handle("principal", "primary", Some("workspace-a")),
+            codex_account_handle("principal", "primary", Some("workspace-b"))
         );
     }
 }
