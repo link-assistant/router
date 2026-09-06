@@ -156,6 +156,19 @@ pub use crate::bridge_request::anthropic_to_chat_request;
 /// the others reply with a chat completion.
 #[must_use]
 pub fn openai_json_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
+    try_openai_json_to_anthropic_message(payload, requested_model).unwrap_or_else(|message| {
+        json!({
+            "type": "error",
+            "error": {"type": "api_error", "message": message},
+        })
+    })
+}
+
+/// Translate an upstream object without silently discarding response items.
+pub fn try_openai_json_to_anthropic_message(
+    payload: &Value,
+    requested_model: &str,
+) -> Result<Value, String> {
     if payload.get("object").and_then(Value::as_str) == Some("response")
         || payload.get("output").is_some()
     {
@@ -165,7 +178,10 @@ pub fn openai_json_to_anthropic_message(payload: &Value, requested_model: &str) 
     }
 }
 
-fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
+fn chat_completion_to_anthropic_message(
+    payload: &Value,
+    requested_model: &str,
+) -> Result<Value, String> {
     let choice = payload
         .get("choices")
         .and_then(Value::as_array)
@@ -182,8 +198,7 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
             text,
             message.get("annotations"),
             true,
-        )
-        .unwrap_or_default();
+        )?;
         let mut block = json!({"type": "text", "text": text});
         if !citations.is_empty() {
             block["citations"] = Value::Array(citations);
@@ -206,7 +221,7 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
                 .and_then(|f| f.get("arguments"))
                 .and_then(Value::as_str)
                 .unwrap_or("{}"),
-        ));
+        )?);
     }
 
     let stop_reason = choice
@@ -228,33 +243,47 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
     {
         translated["usage"]["service_tier"] = Value::String(tier.into());
     }
-    translated
+    Ok(translated)
 }
 
-fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
+fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Result<Value, String> {
     let mut content: Vec<Value> = Vec::new();
     let mut saw_tool_call = false;
     let mut web_search_requests = 0_u64;
-    for item in payload
+    let output = payload
         .get("output")
         .and_then(Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default()
-    {
-        match item.get("type").and_then(Value::as_str).unwrap_or("") {
+        .ok_or_else(|| "Responses output must be an array".to_string())?;
+    for item in output {
+        let kind = item
+            .get("type")
+            .and_then(Value::as_str)
+            .filter(|kind| !kind.is_empty())
+            .ok_or_else(|| "Responses output item type must be a non-empty string".to_string())?;
+        match kind {
             "message" => {
                 let mut combined_text = String::new();
                 let mut combined_citations = Vec::new();
-                for part in item
+                let parts = item
                     .get("content")
                     .and_then(Value::as_array)
-                    .into_iter()
-                    .flatten()
-                {
-                    let text = match part.get("type").and_then(Value::as_str) {
-                        Some("output_text" | "text") => part.get("text").and_then(Value::as_str),
-                        Some("refusal") => part.get("refusal").and_then(Value::as_str),
-                        _ => None,
+                    .ok_or_else(|| "Responses message content must be an array".to_string())?;
+                for part in parts {
+                    let part_kind = part
+                        .get("type")
+                        .and_then(Value::as_str)
+                        .filter(|kind| !kind.is_empty())
+                        .ok_or_else(|| {
+                            "Responses message content type must be a non-empty string".to_string()
+                        })?;
+                    let text = match part_kind {
+                        "output_text" | "text" => part.get("text").and_then(Value::as_str),
+                        "refusal" => part.get("refusal").and_then(Value::as_str),
+                        other => {
+                            return Err(format!(
+                                "Responses message content type {other} cannot be represented by Anthropic"
+                            ));
+                        }
                     };
                     let Some(text) = text.filter(|text| !text.is_empty()) else {
                         continue;
@@ -263,8 +292,7 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                         text,
                         part.get("annotations"),
                         false,
-                    )
-                    .unwrap_or_default();
+                    )?;
                     combined_text.push_str(text);
                     combined_citations.extend(citations);
                 }
@@ -287,7 +315,7 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                     item.get("arguments")
                         .and_then(Value::as_str)
                         .unwrap_or("{}"),
-                ));
+                )?);
             }
             "web_search_call" => {
                 let id = item.get("id").and_then(Value::as_str).unwrap_or_default();
@@ -306,7 +334,7 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                     }));
                 }
             }
-            _ => {}
+            other => return Err(unrepresentable_responses_output(other)),
         }
     }
 
@@ -338,17 +366,22 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
             "web_fetch_requests": 0,
         });
     }
-    message
+    Ok(message)
 }
 
-fn tool_use_block(id: &str, name: &str, arguments: &str) -> Value {
-    let input = serde_json::from_str::<Value>(arguments).unwrap_or_else(|_| json!({}));
-    json!({
+pub(crate) fn unrepresentable_responses_output(kind: &str) -> String {
+    format!("Responses output item type {kind} cannot be represented by Anthropic")
+}
+
+fn tool_use_block(id: &str, name: &str, arguments: &str) -> Result<Value, String> {
+    let input = serde_json::from_str::<Value>(arguments)
+        .map_err(|_| "upstream function-call arguments must be valid JSON".to_string())?;
+    Ok(json!({
         "type": "tool_use",
         "id": if id.is_empty() { format!("toolu_{}", uuid::Uuid::new_v4().simple()) } else { id.to_string() },
         "name": name,
         "input": input,
-    })
+    }))
 }
 
 fn usage_field(usage: Option<&Value>, keys: &[&str]) -> u64 {

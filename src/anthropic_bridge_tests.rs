@@ -342,6 +342,55 @@ fn mixed_response_keeps_text_and_refusal_in_display_order() {
 }
 
 #[tokio::test]
+async fn buffered_responses_reject_provider_specific_output_instead_of_dropping_it() {
+    use axum::response::IntoResponse as _;
+    use http_body_util::BodyExt as _;
+
+    for (item, marker, private_value) in [
+        (
+            json!({
+                "id": "rs_1",
+                "type": "reasoning",
+                "summary": [{"type": "summary_text", "text": "checked the constraints"}],
+                "encrypted_content": "private-reasoning-state"
+            }),
+            "reasoning",
+            "private-reasoning-state",
+        ),
+        (
+            json!({
+                "id": "ct_1",
+                "type": "custom_tool_call",
+                "call_id": "call_1",
+                "name": "apply_patch",
+                "input": "private-tool-input"
+            }),
+            "custom_tool_call",
+            "private-tool-input",
+        ),
+    ] {
+        let upstream = (
+            StatusCode::OK,
+            axum::Json(json!({
+                "id": "resp_unsupported",
+                "object": "response",
+                "status": "completed",
+                "output": [item]
+            })),
+        )
+            .into_response();
+
+        let response =
+            translate_upstream_response(upstream, "claude-test", "upstream-test", false, &[]).await;
+        assert_eq!(response.status(), StatusCode::BAD_GATEWAY, "{marker}");
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body = String::from_utf8_lossy(&bytes);
+        assert!(body.contains(marker), "{marker}: {body}");
+        assert!(!body.contains(private_value), "{marker}: {body}");
+    }
+}
+
+#[tokio::test]
 async fn buffered_bridge_preserves_requested_without_private_metadata() {
     use axum::response::IntoResponse as _;
     use http_body_util::BodyExt as _;

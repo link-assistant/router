@@ -303,7 +303,8 @@ impl AnthropicStreamTranslator {
             }
             "response.output_item.added" | "response.output_item.done" => {
                 let item = event.get("item").unwrap_or(&Value::Null);
-                if item.get("type").and_then(Value::as_str) == Some("function_call") {
+                let item_kind = item.get("type").and_then(Value::as_str).unwrap_or("");
+                if item_kind == "function_call" {
                     let key = event
                         .get("output_index")
                         .and_then(Value::as_i64)
@@ -313,7 +314,7 @@ impl AnthropicStreamTranslator {
                         "id": item.get("call_id").or_else(|| item.get("id")).cloned().unwrap_or(Value::Null),
                         "function": {"name": item.get("name").cloned().unwrap_or(Value::Null)},
                     })));
-                } else if item.get("type").and_then(Value::as_str) == Some("web_search_call") {
+                } else if item_kind == "web_search_call" {
                     let key = event
                         .get("output_index")
                         .and_then(Value::as_i64)
@@ -323,6 +324,8 @@ impl AnthropicStreamTranslator {
                     } else if item.get("status").and_then(Value::as_str) == Some("completed") {
                         frames.extend(self.server_tool_result(key, item));
                     }
+                } else if item_kind != "message" {
+                    return self.fail_output_item(item_kind);
                 }
             }
             "response.function_call_arguments.delta" => {
@@ -620,6 +623,22 @@ impl AnthropicStreamTranslator {
             }),
         )]
     }
+
+    fn fail_output_item(&mut self, kind: &str) -> Vec<String> {
+        self.finished = true;
+        let reason = if kind.is_empty() {
+            "Responses output item type must be a non-empty string".to_string()
+        } else {
+            crate::anthropic_bridge::unrepresentable_responses_output(kind)
+        };
+        vec![anthropic_frame(
+            "error",
+            &json!({
+                "type": "error",
+                "error": {"type": "api_error", "message": reason},
+            }),
+        )]
+    }
 }
 
 fn response_content_key(event: &Value) -> (u64, u64) {
@@ -815,6 +834,44 @@ mod tests {
         assert!(out.contains("\"type\":\"web_search_tool_result\""));
         assert!(out.contains("\"web_search_requests\":1"));
         assert!(!out.contains("\"type\":\"tool_use\""));
+    }
+
+    #[test]
+    fn provider_specific_responses_output_fails_the_stream_without_exposing_content() {
+        for (item, marker, private_value) in [
+            (
+                json!({
+                    "type": "reasoning",
+                    "summary": [{"type": "summary_text", "text": "checked the constraints"}],
+                    "encrypted_content": "private-reasoning-state"
+                }),
+                "reasoning",
+                "private-reasoning-state",
+            ),
+            (
+                json!({
+                    "type": "custom_tool_call",
+                    "call_id": "call_1",
+                    "name": "apply_patch",
+                    "input": "private-tool-input"
+                }),
+                "custom_tool_call",
+                "private-tool-input",
+            ),
+        ] {
+            let mut translator = AnthropicStreamTranslator::new("claude-test");
+            let event = json!({
+                "type": "response.output_item.added",
+                "output_index": 0,
+                "item": item,
+            });
+            let out = joined(&translator.push(format!("data: {event}\n\n").as_bytes()));
+
+            assert!(out.contains("event: error"), "{marker}: {out}");
+            assert!(out.contains(marker), "{marker}: {out}");
+            assert!(!out.contains(private_value), "{marker}: {out}");
+            assert!(translator.finish().is_empty(), "{marker}");
+        }
     }
 
     #[test]

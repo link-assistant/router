@@ -33,5 +33,6 @@ bump: minor
 - Proxy native Conversations CRUD and item resources with exact provider/account affinity, bounded bodies, and transparent safe metadata.
 - Resolve one visible model through exact native model resources while rejecting unknown or unauthorized IDs before upstream contact.
 - Preserve supported multi-turn Chat history, images, files, refusals, tool calls, and tool results when translating to Codex Responses, and reject lossy legacy variants locally.
+- Reject provider-specific Responses reasoning and custom-tool output on Anthropic bridges instead of silently returning an empty successful message, without exposing private output state.
 - Match the current Claude, Codex, Gemini, and Qwen OAuth refresh wire contracts, including versioned client identity and Gemini's public installed-app configuration.
 - Preserve only allowlisted Cloudflare infrastructure-cookie continuity on canonical Codex ChatGPT HTTP and WebSocket traffic, with RFC scoping and strict size/count bounds.
