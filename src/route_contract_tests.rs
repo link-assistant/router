@@ -370,6 +370,66 @@ fn codex_history_and_notes_have_only_the_ten_native_post_routes() {
 }
 
 #[test]
+fn codex_apps_mcp_and_plugins_have_only_the_native_backend_routes() {
+    let routes = [
+        (http::Method::GET, "/connectors/directory/list"),
+        (http::Method::GET, "/connectors/directory/list_workspace"),
+        (http::Method::POST, "/ps/apps/batch"),
+        (http::Method::GET, "/ps/mcp"),
+        (http::Method::POST, "/ps/mcp"),
+        (http::Method::DELETE, "/ps/mcp"),
+        (http::Method::GET, "/plugins/featured"),
+        (http::Method::POST, "/plugins/plugin%2Done/enable"),
+        (http::Method::POST, "/plugins/plugin%2Done/uninstall"),
+        (http::Method::GET, "/ps/plugins/suggested/codex"),
+        (http::Method::GET, "/ps/plugins/list"),
+        (http::Method::GET, "/ps/plugins/workspace/shared"),
+        (http::Method::GET, "/ps/plugins/installed"),
+        (http::Method::GET, "/ps/plugins/search"),
+        (http::Method::GET, "/ps/plugins/plugin%2Done"),
+        (
+            http::Method::GET,
+            "/ps/plugins/plugin%2Done/skills/skill%2Done",
+        ),
+        (http::Method::POST, "/ps/plugins/plugin%2Done/install"),
+        (http::Method::POST, "/ps/plugins/plugin%2Done/uninstall"),
+        (http::Method::GET, "/ps/plugins/workspace/created"),
+        (http::Method::POST, "/public/plugins/workspace/upload-url"),
+        (http::Method::POST, "/public/plugins/workspace"),
+        (http::Method::POST, "/public/plugins/workspace/plugin%2Done"),
+        (
+            http::Method::DELETE,
+            "/public/plugins/workspace/plugin%2Done",
+        ),
+        (http::Method::PUT, "/ps/plugins/plugin%2Done/shares"),
+    ];
+    for (method, suffix) in routes {
+        let path = format!("/api/services/codex/backend-api{suffix}");
+        let route = route_for_path(&method, &path)
+            .unwrap_or_else(|| panic!("missing Codex backend route for {method} {path}"));
+        assert_eq!(route.id, RouteId::NativeCodexBackend, "{method} {path}");
+        assert_eq!(route.class, RouteClass::Service(ServiceKind::Codex));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, ApiDialect::OpenAi);
+        assert!(route.listeners.contains(&ListenerKind::Combined));
+        assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+        assert!(!route.listeners.contains(&ListenerKind::Admin));
+
+        for alias in [
+            suffix.to_string(),
+            format!("/api/codex/backend-api{suffix}"),
+            format!("/api/services/openai/backend-api{suffix}"),
+            format!("/api/management/codex/backend-api{suffix}"),
+        ] {
+            assert!(
+                route_for_path(&method, &alias).is_none(),
+                "unexpected Codex control-plane alias: {method} {alias}"
+            );
+        }
+    }
+}
+
+#[test]
 fn stored_chat_lifecycle_is_an_authenticated_openai_service_surface() {
     for (service, kind) in [
         ("openai", ServiceKind::OpenAi),

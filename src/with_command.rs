@@ -426,10 +426,13 @@ impl TemporaryClient {
         if client == ClientKind::Codex
             && let Some(alias) = crate::token::codex_token_alias(token)
         {
-            command.env("CODEX_ACCESS_TOKEN", alias).env(
-                "CODEX_AUTHAPI_BASE_URL",
-                endpoint(base_url, "/api/services/codex"),
-            );
+            command
+                .env("CODEX_ACCESS_TOKEN", &alias)
+                .env("CODEX_CONNECTORS_TOKEN", alias)
+                .env(
+                    "CODEX_AUTHAPI_BASE_URL",
+                    endpoint(base_url, "/api/services/codex"),
+                );
         }
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));

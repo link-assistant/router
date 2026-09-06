@@ -230,7 +230,10 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             "the native service request body must be a JSON object",
         );
     }
-    let resource = native_resource_request(&method, path);
+    let resource = match mcp_session_resource_request(&method, path, &headers) {
+        Ok(resource) => resource.or_else(|| native_resource_request(&method, path)),
+        Err(response) => return response,
+    };
     let list = native_list_request(&method, path);
     let list_destination = match list.as_ref() {
         Some(list) => match native_list_destination(&state, &owner, list) {
@@ -239,21 +242,31 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         },
         None => None,
     };
-    let existing = match resource.as_ref() {
-        Some(resource) => match existing_resource(&state, &owner, resource) {
-            Ok(affinity) => affinity,
-            Err(response) => return response,
-        },
-        None => match referenced_response_affinity(
-            &state,
-            &owner,
-            service,
-            path,
-            routing_body.map_or(&[][..], Bytes::as_ref),
-        ) {
-            Ok(affinity) => affinity,
-            Err(response) => return response,
-        },
+    let existing = match resource
+        .as_ref()
+        .map(|resource| existing_resource(&state, &owner, resource))
+        .transpose()
+    {
+        Ok(affinity) => affinity.flatten(),
+        Err(response) => return response,
+    };
+    let referenced = match referenced_response_affinity(
+        &state,
+        &owner,
+        service,
+        path,
+        routing_body.map_or(&[][..], Bytes::as_ref),
+    ) {
+        Ok(affinity) => affinity,
+        Err(response) => return response,
+    };
+    let exact_destination = match one_native_destination(
+        existing.as_ref().map(|affinity| &affinity.destination),
+        referenced.as_ref().map(|affinity| &affinity.destination),
+        list_destination.as_ref(),
+    ) {
+        Ok(destination) => destination,
+        Err(response) => return response,
     };
     let (target, destination) = match target(
         &state,
@@ -262,10 +275,7 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         service,
         &uri,
         routing_body,
-        existing
-            .as_ref()
-            .map(|affinity| &affinity.destination)
-            .or(list_destination.as_ref()),
+        exact_destination.as_ref(),
     )
     .await
     {
@@ -756,4 +766,5 @@ mod tests {
 
     include!("native_service_tests_resources.rs");
     include!("native_service_tests_relay.rs");
+    include!("native_service_tests_codex_apps.rs");
 }

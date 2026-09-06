@@ -230,6 +230,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     )
     .expect("read Codex environment");
     assert!(environment.contains("CODEX_ACCESS_TOKEN='at-"));
+    assert!(environment.contains("CODEX_CONNECTORS_TOKEN='at-"));
     assert!(environment.contains("CODEX_AUTHAPI_BASE_URL="));
     assert!(String::from_utf8_lossy(&first.stdout).contains("credentials:"));
     assert!(!String::from_utf8_lossy(&first.stdout).contains(&token));

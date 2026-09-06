@@ -37,6 +37,10 @@ pub(crate) enum ResponseNamespace {
     AnthropicSkills,
     AnthropicSkillVersions,
     CodexFiles,
+    CodexMcpSessions,
+    CodexPluginInstalls,
+    CodexPluginUploads,
+    CodexWorkspacePlugins,
 }
 
 impl ResponseNamespace {

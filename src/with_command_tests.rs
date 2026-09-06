@@ -303,6 +303,13 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     );
     assert_eq!(
         environment
+            .get("CODEX_CONNECTORS_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("at-header.payload.sig"))
+    );
+    assert_eq!(
+        environment
             .get("CODEX_AUTHAPI_BASE_URL")
             .and_then(|value| *value)
             .map(|value| value.to_string_lossy()),

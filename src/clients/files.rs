@@ -68,6 +68,12 @@ impl ClientManager {
             .expect("writing to a String cannot fail");
             writeln!(
                 &mut contents,
+                "export CODEX_CONNECTORS_TOKEN={}",
+                super::util::shell_quote(&alias)
+            )
+            .expect("writing to a String cannot fail");
+            writeln!(
+                &mut contents,
                 "export CODEX_AUTHAPI_BASE_URL={}",
                 super::util::shell_quote(&format!(
                     "{}/api/services/codex",

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
+- Keep Codex Apps, hosted MCP sessions, remote-plugin installations, upload records, and workspace-plugin mutations on the initiating Router principal and ChatGPT account; the managed `CODEX_CONNECTORS_TOKEN` now uses the same principal-bound alias instead of an ambient credential ([#529](https://github.com/link-assistant/router/issues/529)).
+
 - Reject a signed managed-client/protocol mismatch before model discovery, so an unknown model cannot turn the required pre-upstream subscription-policy denial into a misleading `404` ([#389](https://github.com/link-assistant/router/issues/389)).
 
 - Preserve current request contracts across provider bridges: structured output, parallel-tool policy, stream options, legacy and current safety identifiers, sampling controls, metadata and context validation, and prompt-cache breakpoints on text, image, file, instruction, and tool-output parts now map exactly or fail before inference ([#479](https://github.com/link-assistant/router/issues/479), [#480](https://github.com/link-assistant/router/issues/480), [#481](https://github.com/link-assistant/router/issues/481), [#485](https://github.com/link-assistant/router/issues/485), [#486](https://github.com/link-assistant/router/issues/486), [#487](https://github.com/link-assistant/router/issues/487), [#491](https://github.com/link-assistant/router/issues/491), [#494](https://github.com/link-assistant/router/issues/494), [#499](https://github.com/link-assistant/router/issues/499)).

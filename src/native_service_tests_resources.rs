@@ -127,6 +127,41 @@ fn native_resource_routes_have_exact_create_and_lifecycle_contracts() {
             NativeResourceAction::Use,
             Some("file_1"),
         ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/public/plugins/workspace/upload-url",
+            ResponseNamespace::CodexPluginUploads,
+            NativeResourceAction::Create,
+            None,
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/public/plugins/workspace/plugin%2Done",
+            ResponseNamespace::CodexWorkspacePlugins,
+            NativeResourceAction::Use,
+            Some("plugin-one"),
+        ),
+        (
+            Method::PUT,
+            "/api/services/codex/backend-api/ps/plugins/plugin%2Done/shares",
+            ResponseNamespace::CodexWorkspacePlugins,
+            NativeResourceAction::Use,
+            Some("plugin-one"),
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/ps/plugins/catalog%2Done/install",
+            ResponseNamespace::CodexPluginInstalls,
+            NativeResourceAction::Create,
+            Some("catalog-one"),
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/ps/plugins/catalog%2Done/uninstall",
+            ResponseNamespace::CodexPluginInstalls,
+            NativeResourceAction::Delete,
+            Some("catalog-one"),
+        ),
     ];
     for (method, path, namespace, action, id) in cases {
         let request = native_resource_request(&method, path)
@@ -147,6 +182,27 @@ fn native_resource_routes_have_exact_create_and_lifecycle_contracts() {
             "{method} {path}"
         );
     }
+}
+
+#[test]
+fn hosted_mcp_tracks_one_bounded_session_identifier_after_initialize() {
+    let path = "/api/services/codex/backend-api/ps/mcp";
+    let created = mcp_session_resource_request(&Method::POST, path, &HeaderMap::new())
+        .unwrap()
+        .unwrap();
+    assert_eq!(created.namespace, ResponseNamespace::CodexMcpSessions);
+    assert_eq!(created.action, NativeResourceAction::Create);
+    assert!(created.id.is_none());
+    assert!(
+        mcp_session_resource_request(&Method::GET, path, &HeaderMap::new())
+            .unwrap()
+            .is_none()
+    );
+
+    let mut headers = HeaderMap::new();
+    headers.append("mcp-session-id", HeaderValue::from_static("first"));
+    headers.append("mcp-session-id", HeaderValue::from_static("second"));
+    assert!(mcp_session_resource_request(&Method::POST, path, &headers).is_err());
 }
 
 #[test]

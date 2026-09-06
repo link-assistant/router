@@ -29,7 +29,144 @@ fn native_resource_request(method: &Method, path: &str) -> Option<NativeResource
             _ => None,
         };
     }
+    if let Some(resource) = codex_plugin_resource(method, path) {
+        return Some(resource);
+    }
     None
+}
+
+fn codex_plugin_resource(method: &Method, path: &str) -> Option<NativeResourceRequest> {
+    const ROOT: &str = "/api/services/codex/backend-api";
+    let tail = path.strip_prefix(ROOT)?;
+    match (method, tail) {
+        (&Method::POST, "/public/plugins/workspace/upload-url") => {
+            return Some(resource_create(ResponseNamespace::CodexPluginUploads, None));
+        }
+        (&Method::POST, "/public/plugins/workspace") => {
+            return Some(resource_create(ResponseNamespace::CodexWorkspacePlugins, None));
+        }
+        _ => {}
+    }
+    for (prefix, create_action, delete_action, namespace) in [
+        (
+            "/plugins/",
+            "enable",
+            "uninstall",
+            ResponseNamespace::CodexPluginInstalls,
+        ),
+        (
+            "/ps/plugins/",
+            "install",
+            "uninstall",
+            ResponseNamespace::CodexPluginInstalls,
+        ),
+    ] {
+        let Some(segments) = tail.strip_prefix(prefix).map(split_tail) else {
+            continue;
+        };
+        let [plugin_id, action] = segments.as_slice() else {
+            continue;
+        };
+        let action = if method == Method::POST && *action == create_action {
+            NativeResourceAction::Create
+        } else if method == Method::POST && *action == delete_action {
+            NativeResourceAction::Delete
+        } else {
+            continue;
+        };
+        return percent_decode_segment(plugin_id)
+            .filter(|id| !id.is_empty())
+            .map(|id| NativeResourceRequest {
+                namespace,
+                action,
+                id: Some(id),
+                parent_id: None,
+            });
+    }
+    if let Some(segments) = tail
+        .strip_prefix("/public/plugins/workspace/")
+        .map(split_tail)
+    {
+        let [plugin_id] = segments.as_slice() else {
+            return None;
+        };
+        let action = match *method {
+            Method::POST => NativeResourceAction::Use,
+            Method::DELETE => NativeResourceAction::Delete,
+            _ => return None,
+        };
+        return percent_decode_segment(plugin_id)
+            .filter(|id| !id.is_empty())
+            .map(|id| resource_use(ResponseNamespace::CodexWorkspacePlugins, &id, action, None));
+    }
+    if let Some(segments) = tail.strip_prefix("/ps/plugins/").map(split_tail) {
+        let [plugin_id, "shares"] = segments.as_slice() else {
+            return None;
+        };
+        if method == Method::PUT {
+            return percent_decode_segment(plugin_id).filter(|id| !id.is_empty()).map(|id| {
+                resource_use(
+                    ResponseNamespace::CodexWorkspacePlugins,
+                    &id,
+                    NativeResourceAction::Use,
+                    None,
+                )
+            });
+        }
+    }
+    None
+}
+
+fn mcp_session_resource_request(
+    method: &Method,
+    path: &str,
+    headers: &HeaderMap,
+) -> Result<Option<NativeResourceRequest>, Response> {
+    if path != "/api/services/codex/backend-api/ps/mcp" {
+        return Ok(None);
+    }
+    let mut values = headers.get_all("mcp-session-id").iter();
+    let Some(value) = values.next() else {
+        return if method == Method::POST {
+            Ok(Some(resource_create(
+                ResponseNamespace::CodexMcpSessions,
+                None,
+            )))
+        } else {
+            // Stateless servers may intentionally return 405 for their
+            // optional GET/DELETE surfaces. Preserve that native decision.
+            Ok(None)
+        };
+    };
+    if values.next().is_some() {
+        return Err(error(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "exactly one Mcp-Session-Id is allowed",
+        ));
+    }
+    let id = value
+        .to_str()
+        .ok()
+        .filter(|id| !id.is_empty() && id.len() <= 256)
+        .ok_or_else(|| {
+            error(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                "Mcp-Session-Id is invalid",
+            )
+        })?;
+    let action = if method == Method::DELETE {
+        NativeResourceAction::Delete
+    } else {
+        NativeResourceAction::Use
+    };
+    Ok(Some(resource_use(
+        ResponseNamespace::CodexMcpSessions,
+        id,
+        action,
+        None,
+    )))
 }
 
 fn native_list_request(method: &Method, path: &str) -> Option<NativeListRequest> {
@@ -49,6 +186,12 @@ fn native_list_request(method: &Method, path: &str) -> Option<NativeListRequest>
             namespace: ResponseNamespace::AnthropicSkills,
             parent_id: None,
         }),
+        "/api/services/codex/backend-api/ps/plugins/workspace/created" => {
+            Some(NativeListRequest {
+                namespace: ResponseNamespace::CodexWorkspacePlugins,
+                parent_id: None,
+            })
+        }
         _ => path
             .strip_prefix("/api/services/anthropic/v1/skills/")
             .and_then(|tail| {
@@ -234,6 +377,12 @@ fn existing_resource(
             .parent_id
             .as_deref()
             .map(|parent_id| (ResponseNamespace::AnthropicSkills, parent_id))
+            .or_else(|| {
+                resource
+                    .id
+                    .as_deref()
+                    .map(|id| (resource.namespace, id))
+            })
     } else {
         resource.id.as_deref().map(|id| (resource.namespace, id))
     };
@@ -253,6 +402,7 @@ fn existing_resource(
         {
             Ok(Some(affinity))
         }
+        Ok(None) if resource.action == NativeResourceAction::Create => Ok(None),
         Ok(Some(_) | None) => Err(error(
             StatusCode::NOT_FOUND,
             "not_found_error",
@@ -270,10 +420,36 @@ async fn finish_resource_request(
     existing: Option<ResponseAffinity>,
     response: Response,
 ) -> Response {
+    if resource.namespace == ResponseNamespace::CodexMcpSessions {
+        return finish_mcp_session_request(
+            state,
+            owner,
+            destination,
+            &resource,
+            existing,
+            response,
+        );
+    }
     match resource.action {
         NativeResourceAction::Create => {
+            if let Some(id) = resource.id.as_deref() {
+                if !response.status().is_success() {
+                    return response;
+                }
+                return match state.provider_store.response_affinities().record(
+                    resource.namespace,
+                    id,
+                    owner,
+                    destination,
+                ) {
+                    Ok(_) => response,
+                    Err(_) => unavailable("native resource affinity could not be recorded"),
+                };
+            }
             let fields: &[&str] = match resource.namespace {
                 ResponseNamespace::CodexFiles => &["file_id", "id"],
+                ResponseNamespace::CodexPluginUploads => &["file_id"],
+                ResponseNamespace::CodexWorkspacePlugins => &["plugin_id", "id"],
                 ResponseNamespace::AnthropicSkillVersions => &["version", "id"],
                 ResponseNamespace::OpenAiRealtimeCalls | ResponseNamespace::CodexRealtimeCalls => {
                     &["call_id", "id"]
@@ -311,6 +487,54 @@ async fn finish_resource_request(
             response
         }
         NativeResourceAction::Use | NativeResourceAction::Delete => response,
+    }
+}
+
+fn finish_mcp_session_request(
+    state: &AppState,
+    owner: ResponseOwner,
+    destination: AffinityDestination,
+    resource: &NativeResourceRequest,
+    existing: Option<ResponseAffinity>,
+    response: Response,
+) -> Response {
+    if !response.status().is_success() {
+        return response;
+    }
+    if resource.action == NativeResourceAction::Delete {
+        if let Some(existing) = existing
+            && state
+                .provider_store
+                .response_affinities()
+                .remove_if_matches(&existing)
+                .is_err()
+        {
+            return unavailable("hosted MCP session affinity could not be removed");
+        }
+        return response;
+    }
+    let mut values = response.headers().get_all("mcp-session-id").iter();
+    let Some(value) = values.next() else {
+        return response;
+    };
+    if values.next().is_some() {
+        return unavailable("upstream returned multiple hosted MCP session identifiers");
+    }
+    let Some(id) = value
+        .to_str()
+        .ok()
+        .filter(|id| !id.is_empty() && id.len() <= 256)
+    else {
+        return unavailable("upstream returned an invalid hosted MCP session identifier");
+    };
+    match state.provider_store.response_affinities().record(
+        ResponseNamespace::CodexMcpSessions,
+        id,
+        owner,
+        destination,
+    ) {
+        Ok(_) => response,
+        Err(_) => unavailable("hosted MCP session affinity could not be recorded"),
     }
 }
 
@@ -356,8 +580,13 @@ async fn filter_native_list_response(
         })
         .map(|affinity| affinity.response_id)
         .collect::<std::collections::HashSet<_>>();
+    let items_field = if list.namespace == ResponseNamespace::CodexWorkspacePlugins {
+        "plugins"
+    } else {
+        "data"
+    };
     let Some(data) = document
-        .get_mut("data")
+        .get_mut(items_field)
         .and_then(serde_json::Value::as_array_mut)
     else {
         return anthropic_error(
@@ -395,13 +624,14 @@ async fn filter_native_list_response(
 }
 
 fn list_item_id(item: &serde_json::Value, namespace: ResponseNamespace) -> Option<&str> {
-    let field = if namespace == ResponseNamespace::AnthropicSkillVersions {
-        "version"
-    } else {
-        "id"
+    let fields: &[&str] = match namespace {
+        ResponseNamespace::AnthropicSkillVersions => &["version", "id"],
+        ResponseNamespace::CodexWorkspacePlugins => &["plugin_id", "id"],
+        _ => &["id"],
     };
-    item.get(field)
-        .or_else(|| item.get("id"))
+    fields
+        .iter()
+        .find_map(|field| item.get(*field))
         .and_then(serde_json::Value::as_str)
         .filter(|id| !id.is_empty())
 }
@@ -448,7 +678,41 @@ fn response_references(
             references.push(reference);
         }
     }
+    if service == Service::CodexBackend
+        && (path == "/api/services/codex/backend-api/public/plugins/workspace"
+            || path.starts_with(
+                "/api/services/codex/backend-api/public/plugins/workspace/",
+            ))
+        && let Some(id) = document
+            .get("file_id")
+            .and_then(serde_json::Value::as_str)
+            .filter(|id| !id.is_empty())
+    {
+        references.push((ResponseNamespace::CodexPluginUploads, id.to_string()));
+    }
     references
+}
+
+fn one_native_destination(
+    existing: Option<&AffinityDestination>,
+    referenced: Option<&AffinityDestination>,
+    listed: Option<&AffinityDestination>,
+) -> Result<Option<AffinityDestination>, Response> {
+    let mut selected: Option<AffinityDestination> = None;
+    for destination in [existing, referenced, listed].into_iter().flatten() {
+        if selected
+            .as_ref()
+            .is_some_and(|selected| selected != destination)
+        {
+            return Err(error(
+                StatusCode::CONFLICT,
+                "invalid_request_error",
+                "the native resources do not share one provider account",
+            ));
+        }
+        selected = Some(destination.clone());
+    }
+    Ok(selected)
 }
 
 fn requires_json_object(service: Service, method: &Method, path: &str) -> bool {
