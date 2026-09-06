@@ -204,22 +204,7 @@ async fn session(
                 return;
             }
         };
-    let Ok(first_bytes) = serde_json::to_vec(&first_event) else {
-        fail_and_close(
-            &mut downstream,
-            websocket_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "api_error",
-                "serialization_error",
-                "failed to serialize the Responses WebSocket event",
-                None,
-                first_lane.as_deref(),
-            ),
-            1011,
-        )
-        .await;
-        return;
-    };
+    let first_bytes = serde_json::to_vec(&first_event).expect("JSON values always serialize");
     let first_tracker = match reserve_turn(&state, &claims, &first_event) {
         Ok(tracker) => tracker,
         Err(error) => {
@@ -374,16 +359,7 @@ async fn prepare_target(
         .get("model")
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
-        .ok_or_else(|| {
-            websocket_error(
-                StatusCode::BAD_REQUEST,
-                "invalid_request_error",
-                "model_required",
-                "model is required for Responses WebSocket mode",
-                Some("model"),
-                stream_id(event).as_deref(),
-            )
-        })?;
+        .expect("model routing accepts only requests with a model");
 
     if let Some(provider) = routed.state.upstream_provider.subscription_provider() {
         if provider != SubscriptionProvider::Codex {
@@ -392,18 +368,16 @@ async fn prepare_target(
                 stream_id(event).as_deref(),
             ));
         }
-        if namespace == Namespace::Codex || namespace == Namespace::OpenAi {
-            return subscription_target(
-                &routed.state,
-                headers,
-                claims,
-                event,
-                routed.subscription.as_ref(),
-                provider,
-                path,
-            )
-            .await;
-        }
+        return subscription_target(
+            &routed.state,
+            headers,
+            claims,
+            event,
+            routed.subscription.as_ref(),
+            provider,
+            path,
+        )
+        .await;
     }
     if namespace == Namespace::Codex {
         return Err(unsupported_bridge(
@@ -851,16 +825,8 @@ fn websocket_url(http_url: &str) -> Result<String, Value> {
             ));
         }
     };
-    url.set_scheme(scheme).map_err(|()| {
-        websocket_error(
-            StatusCode::BAD_GATEWAY,
-            "api_error",
-            "invalid_upstream_url",
-            "the selected provider URL cannot be used for WebSocket transport",
-            None,
-            None,
-        )
-    })?;
+    url.set_scheme(scheme)
+        .expect("HTTP URLs always accept their WebSocket scheme");
     Ok(url.into())
 }
 
@@ -953,44 +919,5 @@ fn upstream_to_downstream(message: tungstenite::Message) -> Message {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn first_event_must_be_response_create() {
-        assert!(parse_create_event(br#"{"type":"response.create","model":"gpt-test"}"#).is_ok());
-        let error = parse_create_event(br#"{"type":"response.cancel"}"#).unwrap_err();
-        assert_eq!(error["error"]["code"], "invalid_websocket_event");
-        assert!(parse_create_event(b"not json").is_err());
-    }
-
-    #[test]
-    fn validates_official_stream_id_contract() {
-        let event = json!({"stream_id":"planner-1.alpha_beta"});
-        assert_eq!(
-            validate_stream_id(&event).unwrap().as_deref(),
-            Some("planner-1.alpha_beta")
-        );
-        assert!(validate_stream_id(&json!({})).unwrap().is_none());
-        for invalid in ["", "contains space", "slash/name"] {
-            assert_eq!(
-                validate_stream_id(&json!({"stream_id": invalid})).unwrap_err()["error"]["code"],
-                "invalid_stream_id"
-            );
-        }
-        assert!(validate_stream_id(&json!({"stream_id":"x".repeat(257)})).is_err());
-    }
-
-    #[test]
-    fn maps_only_http_websocket_schemes() {
-        assert_eq!(
-            websocket_url("https://api.openai.example/v1/responses").unwrap(),
-            "wss://api.openai.example/v1/responses"
-        );
-        assert_eq!(
-            websocket_url("http://127.0.0.1:8080/v1/responses").unwrap(),
-            "ws://127.0.0.1:8080/v1/responses"
-        );
-        assert!(websocket_url("file:///tmp/responses").is_err());
-    }
-}
+#[path = "responses_websocket_tests.rs"]
+mod tests;

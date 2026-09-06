@@ -15,15 +15,10 @@ async fn relay_native_http(
         .headers(target.headers);
     let upstream = match body {
         NativeRequestBody::Memory(bytes) => request.body(bytes).send().await,
-        NativeRequestBody::Spool { file, .. } => {
-            let Ok(reopened) = file.reopen() else {
-                return unavailable("the temporary upload spool could not be opened");
-            };
-            let async_file = tokio::fs::File::from_std(reopened);
-            let result = request.body(async_file).send().await;
-            drop(file);
-            result
-        }
+        NativeRequestBody::Spool { file, .. } => request
+            .body(tokio::fs::File::from_std(file.into_file()))
+            .send()
+            .await,
     };
     let Ok(upstream) = upstream else {
         return unavailable("native service upstream request failed");

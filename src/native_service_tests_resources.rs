@@ -571,22 +571,32 @@ async fn native_file_lifecycle_is_principal_scoped_and_account_pinned() {
     let seen = Arc::new(Mutex::new(Vec::<String>::new()));
     let upstream_seen = Arc::clone(&seen);
     let upstream = axum::Router::new().fallback(
-        move |method: Method, uri: axum::http::Uri, headers: HeaderMap| {
+        move |request: Request| {
             let seen = Arc::clone(&upstream_seen);
             async move {
+                let (parts, body) = request.into_parts();
                 seen.lock().unwrap().push(
-                    headers
+                    parts
+                        .headers
                         .get("authorization")
                         .and_then(|value| value.to_str().ok())
                         .unwrap_or_default()
                         .to_string(),
                 );
-                match (method, uri.path()) {
-                    (Method::POST, "/v1/files") => (
-                        StatusCode::OK,
-                        [("content-type", "application/json")],
-                        r#"{"id":"file_native_1","future":"opaque"}"#,
-                    ),
+                match (parts.method, parts.uri.path()) {
+                    (Method::POST, "/v1/files") => {
+                        assert_eq!(
+                            axum::body::to_bytes(body, 1024)
+                                .await
+                                .expect("read relayed multipart upload"),
+                            "--opaque--"
+                        );
+                        (
+                            StatusCode::OK,
+                            [("content-type", "application/json")],
+                            r#"{"id":"file_native_1","future":"opaque"}"#,
+                        )
+                    }
                     (Method::GET, "/v1/files/file_native_1") => (
                         StatusCode::OK,
                         [("content-type", "application/json")],
@@ -672,9 +682,16 @@ async fn native_file_lifecycle_is_principal_scoped_and_account_pinned() {
         .body(Body::from("--opaque--"))
         .unwrap();
     let create = anthropic(State(state.clone()), create).await;
-    assert_eq!(create.status(), StatusCode::OK);
+    let create_status = create.status();
+    let create_body = create.into_body().collect().await.unwrap().to_bytes();
     assert_eq!(
-        create.into_body().collect().await.unwrap().to_bytes(),
+        create_status,
+        StatusCode::OK,
+        "unexpected upload response: {}",
+        String::from_utf8_lossy(&create_body)
+    );
+    assert_eq!(
+        create_body,
         r#"{"id":"file_native_1","future":"opaque"}"#
     );
 

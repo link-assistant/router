@@ -11,7 +11,7 @@ use axum::http::{HeaderMap, HeaderValue, Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use futures_util::{SinkExt, StreamExt};
 use sha2::{Digest as _, Sha256};
-use std::io::Write as _;
+use std::io::{Seek as _, Write as _};
 use std::sync::Arc;
 use tokio_tungstenite::tungstenite;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
@@ -446,6 +446,9 @@ async fn collect_native_body(
     }
     file.flush()
         .map_err(|_| unavailable("the temporary upload spool could not be written"))?;
+    file.as_file_mut()
+        .rewind()
+        .map_err(|_| unavailable("the temporary upload spool could not be prepared"))?;
     Ok(NativeRequestBody::Spool { file, len })
 }
 
