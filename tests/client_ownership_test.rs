@@ -166,7 +166,7 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
     assert!(requests[0].starts_with("GET /api/health "));
     assert!(requests[1].starts_with("GET /api/management/tokens "));
     assert!(requests[2].starts_with("POST /api/management/tokens/client "));
-    assert!(requests[3].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(requests[3].starts_with("GET /api/models "));
     assert!(requests[4].starts_with("GET /api/models "), "{requests:?}");
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(!stdout.contains("la_sk_selected"));
@@ -237,7 +237,7 @@ fn repair_uses_disjoint_management_and_inference_origins() {
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(inference[0].starts_with("GET /api/health "));
     assert!(
-        inference[1].starts_with("GET /api/services/openai/v1/models "),
+        inference[1].starts_with("GET /api/models "),
         "{inference:?}"
     );
     assert!(

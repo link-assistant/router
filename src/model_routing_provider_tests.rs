@@ -844,7 +844,7 @@ async fn stored_provider_collisions_fail_before_any_upstream_request() {
 
     let responses = crate::proxy::openai_responses(
         State(state.clone()),
-        bearer(&state),
+        provider_forwarding_headers(&state, crate::clients::ClientKind::Codex),
         Ok(axum::Json(serde_json::json!({
             "model": exposed,
             "input": "hello"

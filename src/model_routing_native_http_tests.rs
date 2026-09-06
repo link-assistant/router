@@ -35,7 +35,6 @@ fn assert_native_only(body: &Value) {
         "degraded_providers",
         "degraded_reasons",
         "catalog_conflicts",
-        "owned_by",
     ] {
         assert!(!rendered.contains(forbidden), "leaked {forbidden}: {body}");
     }
@@ -78,6 +77,13 @@ async fn anthropic_handler_paginates_the_final_visible_catalog() {
     assert_eq!(page["last_id"], "c");
     assert_eq!(page["has_more"], true);
     assert_native_only(&page);
+    assert!(
+        page["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|model| model.get("owned_by").is_none())
+    );
 
     let (status, error) = response_json(
         state,
@@ -123,7 +129,7 @@ async fn pinned_and_automatic_codex_catalogs_use_the_same_openai_dialect() {
         automatic,
         json!({
             "object": "list",
-            "data": [{"id": "synthetic-live", "object": "model"}]
+            "data": [{"id": "synthetic-live", "object": "model", "owned_by": "openai"}]
         })
     );
     assert_native_only(&automatic);

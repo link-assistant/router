@@ -97,7 +97,7 @@ fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
             let (status, body) = match path.as_str() {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.115.0"}"#),
                 "/api/management/tokens" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
-                "/api/services/anthropic/v1/models" => (
+                "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol","owned_by":"openai"}]}"#,
                 ),
@@ -192,7 +192,7 @@ fn split_listener(
             } else {
                 match path {
                     "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
-                    "/api/services/codex/v1/models" => (
+                    "/api/models" => (
                         "200 OK",
                         r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
                     ),
@@ -343,7 +343,7 @@ fn configure_keeps_split_route_classes_on_their_own_listeners() {
     assert!(management[0].starts_with("GET /api/management/tokens "));
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(inference[0].starts_with("GET /api/health "));
-    assert!(inference[1].starts_with("GET /api/services/codex/v1/models "));
+    assert!(inference[1].starts_with("GET /api/models "));
     let config =
         fs::read_to_string(home.path().join(".codex/config.toml")).expect("configured Codex");
     assert!(config.contains(&base_url));
@@ -619,11 +619,7 @@ fn failed_external_codex_configure_removes_the_uncommitted_bridge() {
     );
     assert_eq!(
         requests.join().expect("external mock router"),
-        [
-            "/api/health",
-            "/api/management/tokens",
-            "/api/services/codex/v1/models"
-        ]
+        ["/api/health", "/api/management/tokens", "/api/models"]
     );
 }
 

@@ -724,7 +724,8 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
         .await;
         assert_eq!(response.status(), StatusCode::OK);
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        let body = String::from_utf8_lossy(&body);
+        let catalog: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let body = catalog.to_string();
         assert!(body.contains("future-saffron-91"), "{client}: {body}");
         assert!(!body.contains("claude-zai-"), "{client}: {body}");
         assert!(!body.contains("z.ai/future"), "{client}: {body}");
@@ -738,11 +739,22 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
             "degraded_providers",
             "degraded_reasons",
             "catalog_conflicts",
-            "owned_by",
         ] {
             assert!(
                 !body.contains(router_only),
                 "{client}: leaked {router_only}: {body}"
+            );
+        }
+        let models = catalog["data"].as_array().unwrap();
+        if client == ClientKind::ClaudeCode {
+            assert!(
+                models.iter().all(|model| model.get("owned_by").is_none()),
+                "{client}: Anthropic model rows leaked OpenAI metadata: {body}"
+            );
+        } else {
+            assert!(
+                models.iter().all(|model| model["owned_by"] == "z.ai"),
+                "{client}: OpenAI model rows lost their provider owner: {body}"
             );
         }
     }

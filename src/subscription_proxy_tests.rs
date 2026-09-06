@@ -47,16 +47,13 @@ fn codex_normalizes_responses_body_for_chatgpt_backend() {
     assert_eq!(body["instructions"], "You are a helpful assistant.");
     // ChatGPT subscription inference requires stateless requests.
     assert_eq!(body["store"], serde_json::Value::Bool(false));
-    assert!(
-        body.get("temperature").is_none(),
-        "temperature must be stripped for the ChatGPT subscription backend"
-    );
+    assert_eq!(body["temperature"], 0.7);
     // Untouched fields are preserved.
     assert_eq!(body["reasoning"]["effort"], "none");
 }
 
 #[test]
-fn codex_strips_unsupported_top_p_without_narrowing_claude() {
+fn native_subscription_controls_are_preserved_for_live_validation() {
     let mut codex = serde_json::json!({
         "model": "gpt-5.6-sol",
         "input": "hi",
@@ -67,7 +64,7 @@ fn codex_strips_unsupported_top_p_without_narrowing_claude() {
         &mut codex,
         CodexResponsesMode::Standard,
     );
-    assert!(codex.get("top_p").is_none(), "{codex:#}");
+    assert_eq!(codex["top_p"], 0.9, "{codex:#}");
 
     let mut claude = serde_json::json!({
         "model": "claude-opus-4-7",

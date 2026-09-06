@@ -35,7 +35,7 @@ fn setup_uses_disjoint_management_and_inference_origins() {
     assert!(management[0].starts_with("GET /api/management/tokens "));
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(inference[0].starts_with("GET /api/health "));
-    assert!(inference[1].starts_with("GET /api/services/openai/v1/models "));
+    assert!(inference[1].starts_with("GET /api/models "));
     let settings = fs::read_to_string(home.path().join(".config/opencode/opencode.json"))
         .expect("OpenCode settings");
     assert!(settings.contains(&base_url));
@@ -111,7 +111,7 @@ fn removal_revokes_on_the_recorded_management_origin_before_deleting_files() {
             .contains("authorization: bearer la_sk_admin")
     );
     assert!(inference[0].starts_with("GET /api/health "));
-    assert!(inference[1].starts_with("GET /api/services/openai/v1/models "));
+    assert!(inference[1].starts_with("GET /api/models "));
 }
 
 #[test]
@@ -158,5 +158,5 @@ fn failed_split_setup_revokes_on_management_and_preserves_local_files() {
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(management[2].starts_with("POST /api/management/tokens/revoke "));
     assert!(inference[0].starts_with("GET /api/health "));
-    assert!(inference[1].starts_with("GET /api/services/openai/v1/models "));
+    assert!(inference[1].starts_with("GET /api/models "));
 }

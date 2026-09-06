@@ -436,6 +436,12 @@ fn assert_codex_overlay_launch(standalone: bool) {
             ),
             "-c".to_string(),
             format!("chatgpt_base_url=\"{server}/api/services/codex/backend-api\""),
+            "-c".to_string(),
+            format!("experimental_realtime_ws_base_url=\"{server}/api/services/codex/v1\""),
+            "-c".to_string(),
+            format!(
+                "experimental_realtime_webrtc_call_base_url=\"{server}/api/services/codex/v1\""
+            ),
             "exec".to_string(),
             "--global".to_string(),
             "hi".to_string(),
