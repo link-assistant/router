@@ -257,8 +257,12 @@ async fn daemon_shutdown() {
             }
             return;
         }
+        let _ = tokio::signal::ctrl_c().await;
     }
-    let _ = tokio::signal::ctrl_c().await;
+    #[cfg(not(unix))]
+    // The owned Windows child can run without a console, where registering a
+    // Ctrl-C handler may fail immediately. Its owner stops it with `taskkill`.
+    std::future::pending::<()>().await;
 }
 
 /// Start or reuse the owner-marked bridge for persistent Codex configuration.
