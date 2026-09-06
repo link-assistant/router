@@ -106,7 +106,7 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     {
         return crate::codex_remote_control::forward(state, request).await;
     }
-    let headers = request.headers().clone();
+    let mut headers = request.headers().clone();
     let claims = match crate::proxy::authenticate_client_error(&state, &headers) {
         Ok(claims) => claims,
         Err(error) => return error.render(route.dialect),
@@ -196,6 +196,19 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         Ok(body) => body,
         Err(response) => return response,
     };
+    let body = if service == Service::Codex
+        && method == Method::POST
+        && matches!(
+            path,
+            "/api/services/codex/v1/realtime/calls" | "/api/services/codex/v1/live"
+        ) {
+        match translate_codex_realtime_call(&mut headers, body).await {
+            Ok(body) => body,
+            Err(response) => return response,
+        }
+    } else {
+        body
+    };
     let routing_body = body.routing_bytes();
     let resource = native_resource_request(&method, path);
     let existing = match resource.as_ref() {
@@ -261,8 +274,17 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     {
         return response;
     }
-    let response = relay_native_http(&state, &method, body, target).await;
+    let mut response = relay_native_http(&state, &method, body, target).await;
     if let Some(resource) = resource {
+        if matches!(
+            resource.namespace,
+            ResponseNamespace::OpenAiRealtimeCalls | ResponseNamespace::CodexRealtimeCalls
+        ) && resource.action == NativeResourceAction::Create
+            && response.status().is_success()
+            && let Err(rewrite_error) = rewrite_realtime_location(service, path, &mut response)
+        {
+            return rewrite_error;
+        }
         return finish_resource_request(&state, owner, destination, resource, existing, response)
             .await;
     }
@@ -385,6 +407,192 @@ async fn collect_native_body(
     file.flush()
         .map_err(|_| unavailable("the temporary upload spool could not be written"))?;
     Ok(NativeRequestBody::Spool { file, len })
+}
+
+async fn translate_codex_realtime_call(
+    headers: &mut HeaderMap,
+    body: NativeRequestBody,
+) -> Result<NativeRequestBody, Response> {
+    let content_type = headers
+        .get("content-type")
+        .and_then(|value| value.to_str().ok())
+        .ok_or_else(|| {
+            error(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                "Codex Realtime call creation requires a supported content type",
+            )
+        })?;
+    let media_type = content_type.split(';').next().unwrap_or_default().trim();
+    if media_type.eq_ignore_ascii_case("application/sdp")
+        || media_type.eq_ignore_ascii_case("application/json")
+    {
+        return Ok(body);
+    }
+    if !media_type.eq_ignore_ascii_case("multipart/form-data") {
+        return Err(error(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "Codex Realtime call creation supports SDP, multipart, or JSON bodies",
+        ));
+    }
+    let boundary = multipart_boundary(content_type).ok_or_else(|| {
+        error(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "Codex Realtime multipart body has an invalid boundary",
+        )
+    })?;
+    let bytes = native_body_bytes(body).await?;
+    let (sdp, session) = parse_codex_realtime_multipart(&bytes, &boundary)?;
+    let encoded = serde_json::to_vec(&serde_json::json!({
+        "sdp": sdp,
+        "session": session,
+    }))
+    .map_err(|_| unavailable("Codex Realtime backend JSON could not be encoded"))?;
+    headers.insert("content-type", HeaderValue::from_static("application/json"));
+    headers.remove("content-length");
+    Ok(NativeRequestBody::Memory(Bytes::from(encoded)))
+}
+
+async fn native_body_bytes(body: NativeRequestBody) -> Result<Bytes, Response> {
+    match body {
+        NativeRequestBody::Memory(bytes) => Ok(bytes),
+        NativeRequestBody::Spool { file, len } => {
+            let bytes = tokio::fs::read(file.path())
+                .await
+                .map_err(|_| unavailable("the temporary upload spool could not be read"))?;
+            if bytes.len() != len {
+                return Err(unavailable(
+                    "the temporary upload spool changed before forwarding",
+                ));
+            }
+            Ok(Bytes::from(bytes))
+        }
+    }
+}
+
+fn multipart_boundary(content_type: &str) -> Option<String> {
+    content_type.split(';').skip(1).find_map(|parameter| {
+        let (name, raw_value) = parameter.trim().split_once('=')?;
+        if !name.trim().eq_ignore_ascii_case("boundary") {
+            return None;
+        }
+        let raw_value = raw_value.trim();
+        let value = raw_value
+            .strip_prefix('"')
+            .and_then(|value| value.strip_suffix('"'))
+            .unwrap_or(raw_value);
+        (!value.is_empty()
+            && value.len() <= 70
+            && value
+                .bytes()
+                .all(|byte| byte.is_ascii_graphic() && byte != b'"'))
+        .then(|| value.to_string())
+    })
+}
+
+fn parse_codex_realtime_multipart(
+    body: &[u8],
+    boundary: &str,
+) -> Result<(String, serde_json::Value), Response> {
+    let delimiter = format!("--{boundary}").into_bytes();
+    let separator = format!("\r\n--{boundary}").into_bytes();
+    let mut cursor = 0usize;
+    let mut sdp = None;
+    let mut session = None;
+    loop {
+        if !body
+            .get(cursor..)
+            .is_some_and(|tail| tail.starts_with(&delimiter))
+        {
+            return Err(invalid_codex_multipart());
+        }
+        cursor += delimiter.len();
+        if body
+            .get(cursor..)
+            .is_some_and(|tail| tail.starts_with(b"--"))
+        {
+            cursor += 2;
+            if !matches!(body.get(cursor..), Some(b"" | b"\r\n")) {
+                return Err(invalid_codex_multipart());
+            }
+            break;
+        }
+        if !body
+            .get(cursor..)
+            .is_some_and(|tail| tail.starts_with(b"\r\n"))
+        {
+            return Err(invalid_codex_multipart());
+        }
+        cursor += 2;
+        let header_end = find_bytes(body.get(cursor..).unwrap_or_default(), b"\r\n\r\n")
+            .ok_or_else(invalid_codex_multipart)?;
+        let headers = std::str::from_utf8(&body[cursor..cursor + header_end])
+            .map_err(|_| invalid_codex_multipart())?;
+        cursor += header_end + 4;
+        let content_end = find_bytes(body.get(cursor..).unwrap_or_default(), &separator)
+            .ok_or_else(invalid_codex_multipart)?;
+        let content = &body[cursor..cursor + content_end];
+        cursor += content_end + 2;
+        match multipart_field_name(headers).as_deref() {
+            Some("sdp") if sdp.is_none() => {
+                sdp = Some(
+                    std::str::from_utf8(content)
+                        .map_err(|_| invalid_codex_multipart())?
+                        .to_string(),
+                );
+            }
+            Some("session") if session.is_none() => {
+                session =
+                    Some(serde_json::from_slice(content).map_err(|_| invalid_codex_multipart())?);
+            }
+            Some("sdp" | "session") => return Err(invalid_codex_multipart()),
+            _ => {}
+        }
+    }
+    match (sdp, session) {
+        (Some(sdp), Some(session)) if !sdp.is_empty() => Ok((sdp, session)),
+        _ => Err(invalid_codex_multipart()),
+    }
+}
+
+fn multipart_field_name(headers: &str) -> Option<String> {
+    let disposition = headers.lines().find_map(|line| {
+        let (name, value) = line.split_once(':')?;
+        name.trim()
+            .eq_ignore_ascii_case("content-disposition")
+            .then_some(value)
+    })?;
+    disposition.split(';').skip(1).find_map(|parameter| {
+        let (name, raw_value) = parameter.trim().split_once('=')?;
+        name.trim().eq_ignore_ascii_case("name").then(|| {
+            raw_value
+                .trim()
+                .strip_prefix('"')
+                .and_then(|value| value.strip_suffix('"'))
+                .unwrap_or_else(|| raw_value.trim())
+                .to_string()
+        })
+    })
+}
+
+fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    (!needle.is_empty())
+        .then(|| {
+            haystack
+                .windows(needle.len())
+                .position(|window| window == needle)
+        })
+        .flatten()
+}
+
+fn invalid_codex_multipart() -> Response {
+    error(
+        StatusCode::BAD_REQUEST,
+        "invalid_request_error",
+        "Codex Realtime multipart body must contain one SDP and one JSON session field",
+    )
 }
 
 fn require_claude_file_upload_scope(
@@ -966,13 +1174,25 @@ async fn subscription_target(
         .subscription_base_url
         .clone()
         .unwrap_or_else(|| selected.token.base_url(provider));
-    let path = strip_service_path(uri, service);
+    let path = if service == Service::Codex {
+        codex_subscription_path(uri)
+    } else {
+        strip_service_path(uri, service)
+    };
     let url = if service == Service::CodexBackend {
         let root = base
             .strip_suffix("/codex")
             .unwrap_or(&base)
             .trim_end_matches('/');
         format!("{root}{path}")
+    } else if service == Service::Codex
+        && exact.is_some()
+        && realtime_sideband(Service::Codex, uri.path(), uri.query())
+            .ok()
+            .flatten()
+            .is_some()
+    {
+        format!("{}{path}", codex_realtime_origin(state))
     } else {
         crate::subscription_proxy::join_subscription_url(provider, &base, &path)
     };
@@ -1016,6 +1236,33 @@ async fn subscription_target(
         },
         destination,
     ))
+}
+
+fn codex_realtime_origin(state: &AppState) -> String {
+    let Some(configured) = state.subscription_base_url.as_deref() else {
+        return "https://api.openai.com".to_string();
+    };
+    let Ok(mut url) = reqwest::Url::parse(configured) else {
+        return configured.trim_end_matches('/').to_string();
+    };
+    url.set_path("");
+    url.set_query(None);
+    url.set_fragment(None);
+    url.to_string().trim_end_matches('/').to_string()
+}
+
+fn codex_subscription_path(uri: &axum::http::Uri) -> String {
+    if uri.path() != "/api/services/codex/v1/live" {
+        return strip_service_path(uri, Service::Codex);
+    }
+    let mut path = "/v1/realtime/calls".to_string();
+    path.push('?');
+    if let Some(query) = uri.query() {
+        path.push_str(query);
+        path.push('&');
+    }
+    path.push_str("intent=quicksilver&architecture=avas");
+    path
 }
 
 fn strip_service_path(uri: &axum::http::Uri, service: Service) -> String {
@@ -1433,6 +1680,62 @@ fn websocket_url(url: &str) -> Result<String, String> {
     Ok(url.to_string())
 }
 
+fn rewrite_realtime_location(
+    service: Service,
+    request_path: &str,
+    response: &mut Response,
+) -> Result<(), Response> {
+    let Some(location) = response.headers().get("location") else {
+        return Ok(());
+    };
+    let location = location.to_str().map_err(|_| {
+        error(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "upstream Realtime call Location is invalid",
+        )
+    })?;
+    let (path, query) = location
+        .split_once('?')
+        .map_or((location, None), |(path, query)| (path, Some(query)));
+    let call_id = path
+        .trim_end_matches('/')
+        .rsplit('/')
+        .next()
+        .filter(|call_id| !call_id.is_empty())
+        .ok_or_else(|| {
+            error(
+                StatusCode::BAD_GATEWAY,
+                "api_error",
+                "upstream Realtime call Location has no call id",
+            )
+        })?;
+    let router_base = match (service, request_path) {
+        (Service::OpenAi, "/api/services/openai/v1/realtime/calls") => {
+            "/api/services/openai/v1/realtime/calls"
+        }
+        (Service::Codex, "/api/services/codex/v1/realtime/calls") => {
+            "/api/services/codex/v1/realtime/calls"
+        }
+        (Service::Codex, "/api/services/codex/v1/live") => "/api/services/codex/v1/live",
+        _ => return Ok(()),
+    };
+    let mut rewritten = format!("{router_base}/{call_id}");
+    if let Some(query) = query {
+        rewritten.push('?');
+        rewritten.push_str(query);
+    }
+    let value = HeaderValue::from_str(&rewritten).map_err(|_| {
+        error(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "upstream Realtime call Location cannot be relayed safely",
+        )
+    })?;
+    response.headers_mut().insert("location", value);
+    Ok(())
+}
+
 fn unavailable(message: &str) -> Response {
     error(StatusCode::SERVICE_UNAVAILABLE, "api_error", message)
 }
@@ -1666,6 +1969,239 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[tokio::test]
+    async fn codex_realtime_multipart_becomes_the_exact_backend_json_envelope() {
+        let multipart = concat!(
+            "--codex-boundary\r\n",
+            "Content-Disposition: form-data; name=\"sdp\"\r\n",
+            "Content-Type: application/sdp\r\n\r\n",
+            "v=0\r\na=opaque:future\r\n",
+            "\r\n--codex-boundary\r\n",
+            "Content-Disposition: form-data; name=\"session\"\r\n",
+            "Content-Type: application/json\r\n\r\n",
+            r#"{"type":"realtime","future":{"nested":[1,true,"kept"]}}"#,
+            "\r\n--codex-boundary--\r\n",
+        );
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "content-type",
+            HeaderValue::from_static("multipart/form-data; boundary=codex-boundary"),
+        );
+        let body = collect_native_body(Body::from(multipart), 4096, true)
+            .await
+            .unwrap();
+
+        let translated = translate_codex_realtime_call(&mut headers, body)
+            .await
+            .unwrap();
+
+        assert_eq!(headers.get("content-type").unwrap(), "application/json");
+        let NativeRequestBody::Memory(bytes) = translated else {
+            panic!("translated backend JSON must be held in memory");
+        };
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&bytes).unwrap(),
+            serde_json::json!({
+                "sdp": "v=0\r\na=opaque:future\r\n",
+                "session": {
+                    "type": "realtime",
+                    "future": {"nested": [1, true, "kept"]}
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn codex_live_call_maps_to_backend_create_without_reencoding_existing_query() {
+        let uri: axum::http::Uri = "/api/services/codex/v1/live?future=one&future=two%2Bthree"
+            .parse()
+            .unwrap();
+        assert_eq!(
+            codex_subscription_path(&uri),
+            "/v1/realtime/calls?future=one&future=two%2Bthree&intent=quicksilver&architecture=avas"
+        );
+
+        let legacy: axum::http::Uri =
+            "/api/services/codex/v1/realtime/calls?intent=quicksilver&architecture=avas"
+                .parse()
+                .unwrap();
+        assert_eq!(
+            codex_subscription_path(&legacy),
+            "/v1/realtime/calls?intent=quicksilver&architecture=avas"
+        );
+    }
+
+    #[test]
+    fn realtime_call_location_is_rewritten_to_the_corresponding_router_path() {
+        for (service, request_path, expected) in [
+            (
+                Service::OpenAi,
+                "/api/services/openai/v1/realtime/calls",
+                "/api/services/openai/v1/realtime/calls/rtc_openai?trace=one",
+            ),
+            (
+                Service::Codex,
+                "/api/services/codex/v1/realtime/calls",
+                "/api/services/codex/v1/realtime/calls/rtc_codex?trace=two",
+            ),
+            (
+                Service::Codex,
+                "/api/services/codex/v1/live",
+                "/api/services/codex/v1/live/rtc_live?trace=three",
+            ),
+        ] {
+            let id = expected
+                .split('?')
+                .next()
+                .unwrap()
+                .rsplit('/')
+                .next()
+                .unwrap();
+            let query = expected.split_once('?').unwrap().1;
+            let mut response = Response::new(Body::from("v=answer\r\n"));
+            response.headers_mut().insert(
+                "location",
+                HeaderValue::from_str(&format!(
+                    "https://upstream.example/v1/realtime/calls/calls/{id}?{query}"
+                ))
+                .unwrap(),
+            );
+
+            rewrite_realtime_location(service, request_path, &mut response).unwrap();
+
+            assert_eq!(
+                response.headers().get("location").unwrap(),
+                expected,
+                "{request_path}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn codex_live_call_is_translated_pinned_and_rewritten_end_to_end() {
+        let seen = Arc::new(Mutex::new(None));
+        let upstream_seen = Arc::clone(&seen);
+        let upstream = axum::Router::new().fallback(
+            move |method: Method,
+                  uri: axum::http::Uri,
+                  headers: HeaderMap,
+                  body: Bytes| {
+                let seen = Arc::clone(&upstream_seen);
+                async move {
+                    *seen.lock().unwrap() = Some((method, uri, headers, body));
+                    (
+                        StatusCode::CREATED,
+                        [
+                            ("content-type", "application/sdp"),
+                            (
+                                "location",
+                                "https://chatgpt.example/backend-api/codex/realtime/calls/calls/rtc_e2e?opaque=kept",
+                            ),
+                        ],
+                        "v=answer\r\n",
+                    )
+                }
+            },
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let origin = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+        let data = tempfile::tempdir().unwrap();
+        let codex_home = tempfile::tempdir().unwrap();
+        std::fs::write(
+            codex_home.path().join("auth.json"),
+            serde_json::json!({
+                "tokens": {
+                    "access_token": "codex-realtime-upstream",
+                    "account_id": "account-realtime"
+                }
+            })
+            .to_string(),
+        )
+        .unwrap();
+        let reader = crate::subscription::SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            codex_home.path(),
+        );
+        let mut state = AppState::for_tests(data.path());
+        state.upstream_provider = crate::config::UpstreamProvider::Codex;
+        state.subscription_base_url = Some(format!("{origin}/backend-api/codex"));
+        state.subscription_reader = Some(reader.clone());
+        state.subscription_readers = vec![reader];
+        let token =
+            crate::model_routing::tests::bound_client_token(&state, ClientKind::Codex, None);
+        let multipart = concat!(
+            "--codex-boundary\r\n",
+            "Content-Disposition: form-data; name=\"sdp\"\r\n",
+            "Content-Type: application/sdp\r\n\r\n",
+            "v=offer\r\n",
+            "\r\n--codex-boundary\r\n",
+            "Content-Disposition: form-data; name=\"session\"\r\n",
+            "Content-Type: application/json\r\n\r\n",
+            r#"{"type":"realtime","future":{"preserved":true}}"#,
+            "\r\n--codex-boundary--\r\n",
+        );
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/api/services/codex/v1/live?future=one&future=two%2Bthree")
+            .header("authorization", format!("Bearer {token}"))
+            .header("user-agent", "codex-cli/exact-fixture")
+            .header("originator", "codex_cli_rs")
+            .header("x-session-id", "session-opaque")
+            .header(
+                "content-type",
+                "multipart/form-data; boundary=codex-boundary",
+            )
+            .body(Body::from(multipart))
+            .unwrap();
+
+        let response = codex(State(state), request).await;
+
+        assert_eq!(response.status(), StatusCode::CREATED);
+        assert_eq!(
+            response.headers().get("content-type").unwrap(),
+            "application/sdp"
+        );
+        assert_eq!(
+            response.headers().get("location").unwrap(),
+            "/api/services/codex/v1/live/rtc_e2e?opaque=kept"
+        );
+        assert_eq!(
+            response.into_body().collect().await.unwrap().to_bytes(),
+            "v=answer\r\n"
+        );
+        let (method, uri, headers, body) = seen.lock().unwrap().take().unwrap();
+        assert_eq!(method, Method::POST);
+        assert_eq!(
+            uri.to_string(),
+            "/backend-api/codex/realtime/calls?future=one&future=two%2Bthree&intent=quicksilver&architecture=avas"
+        );
+        assert_eq!(
+            headers.get("authorization").unwrap(),
+            "Bearer codex-realtime-upstream"
+        );
+        assert_eq!(
+            headers.get("chatgpt-account-id").unwrap(),
+            "account-realtime"
+        );
+        assert_eq!(
+            headers.get("user-agent").unwrap(),
+            "codex-cli/exact-fixture"
+        );
+        assert_eq!(headers.get("originator").unwrap(), "codex_cli_rs");
+        assert_eq!(headers.get("x-session-id").unwrap(), "session-opaque");
+        assert!(headers.get("x-link-assistant-client").is_none());
+        assert_eq!(
+            serde_json::from_slice::<serde_json::Value>(&body).unwrap(),
+            serde_json::json!({
+                "sdp": "v=offer\r\n",
+                "session": {"type": "realtime", "future": {"preserved": true}}
+            })
+        );
+        server.abort();
     }
 
     #[tokio::test]
