@@ -685,6 +685,16 @@ impl ClientManager {
         base_url: &str,
         models: &[RouterModel],
     ) -> Result<SetupResult, ClientError> {
+        self.setup_with_codex_backend(client, base_url, models, None)
+    }
+
+    pub(crate) fn setup_with_codex_backend(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+    ) -> Result<SetupResult, ClientError> {
         if let Some(limitation) = client.setup_limitation() {
             return Err(ClientError::message(limitation));
         }
@@ -695,7 +705,7 @@ impl ClientManager {
             client.integration().endpoint_suffix
         );
         match client {
-            ClientKind::Codex => self.setup_codex(&endpoint),
+            ClientKind::Codex => self.setup_codex(&endpoint, codex_backend_base_url),
             ClientKind::ClaudeCode => self.setup_claude(&endpoint, models),
             ClientKind::Opencode | ClientKind::Agent => {
                 self.setup_json_provider(client, &endpoint, models)
@@ -730,7 +740,11 @@ impl ClientManager {
         Ok(result)
     }
 
-    fn setup_codex(&self, base_url: &str) -> Result<SetupResult, ClientError> {
+    fn setup_codex(
+        &self,
+        base_url: &str,
+        backend_base_url: Option<&str>,
+    ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::Codex);
         let source = read_or_empty(&path)?;
         let mut document = if source.trim().is_empty() {
@@ -771,8 +785,10 @@ impl ClientManager {
         provider.insert("requires_openai_auth", value(true));
         provider.insert("supports_websockets", value(true));
         provider.insert("supports_standalone_web_search", value(true));
-        let backend_base =
-            base_url.strip_suffix("/v1").unwrap_or(base_url).to_string() + "/backend-api";
+        let backend_base = backend_base_url.map_or_else(
+            || base_url.strip_suffix("/v1").unwrap_or(base_url).to_string() + "/backend-api",
+            str::to_string,
+        );
         document["chatgpt_base_url"] = value(&backend_base);
         let result = write_if_changed(&path, &source, &document.to_string())?;
         let marker = self.codex_home.join(OWNERSHIP_MARKER);

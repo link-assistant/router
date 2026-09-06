@@ -74,6 +74,7 @@ fn the_users_configuration_is_kept_by_default() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare with the default configuration handling");
     let names: Vec<String> = extended
@@ -143,6 +144,7 @@ fn the_users_configuration_is_kept_by_default() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare isolated");
     assert!(
@@ -178,6 +180,7 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         one_shot: false,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare a resumed z.ai-only Claude session");
     let resumed_env = resumed
@@ -213,6 +216,7 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare an explicit z.ai Claude model");
     let explicit_env = explicit
@@ -272,6 +276,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: Some("http://127.0.0.1:43123/api/services/codex/backend-api"),
     })
     .expect("prepare Codex overlay");
 
@@ -349,7 +354,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             "-c",
             "model_providers.link-assistant.supports_standalone_web_search=true",
             "-c",
-            "chatgpt_base_url=\"http://router.test/path?tenant=one/api/services/codex/backend-api\"",
+            "chatgpt_base_url=\"http://127.0.0.1:43123/api/services/codex/backend-api\"",
         ]
     );
 
@@ -363,6 +368,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare isolated Codex");
     let isolated_home = isolated
@@ -563,6 +569,7 @@ fn a_file_configured_client_is_isolated_even_by_default() {
         one_shot: true,
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("a file-configured client must still run");
 }
@@ -605,6 +612,7 @@ fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
         one_shot: true,
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare gemini");
     let root = temporary.directory.path();
@@ -697,6 +705,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
                     one_shot: true,
                     profile_root: Some(profiles.path()),
                     codex_reasoning_effort: None,
+                    codex_backend_base_url: None,
                 })
                 .is_err()
             );
@@ -712,6 +721,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             one_shot: true,
             profile_root: Some(profiles.path()),
             codex_reasoning_effort: None,
+            codex_backend_base_url: None,
         })
         .unwrap_or_else(|error| panic!("{client} failed setup: {error}"));
         let root = temporary.directory.path().to_path_buf();
