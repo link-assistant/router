@@ -1580,9 +1580,19 @@ async fn subscription_target(
         }
         None => None,
     };
-    let selected =
-        selected_subscription_with_account(state, incoming, claims, provider, body, exact_account)
-            .await?;
+    let require_account_binding = provider == SubscriptionProvider::Codex
+        && (service == Service::CodexBackend
+            || codex_history_notes_operation(uri.path()).is_some());
+    let selected = selected_subscription_with_account(
+        state,
+        incoming,
+        claims,
+        provider,
+        body,
+        exact_account,
+        require_account_binding,
+    )
+    .await?;
     let base = state
         .subscription_base_url
         .clone()
@@ -1792,7 +1802,7 @@ pub async fn selected_subscription(
     provider: SubscriptionProvider,
     body: Option<&Bytes>,
 ) -> Result<crate::accounts::SelectedSubscriptionAccount, Response> {
-    selected_subscription_with_account(state, headers, claims, provider, body, None).await
+    selected_subscription_with_account(state, headers, claims, provider, body, None, false).await
 }
 
 async fn selected_subscription_with_account(
@@ -1802,6 +1812,7 @@ async fn selected_subscription_with_account(
     provider: SubscriptionProvider,
     body: Option<&Bytes>,
     exact_account: Option<&str>,
+    require_account_binding: bool,
 ) -> Result<crate::accounts::SelectedSubscriptionAccount, Response> {
     let (client, principal) = crate::client_policy::bound_client(claims)
         .map_err(|message| error(StatusCode::FORBIDDEN, "permission_error", &message))?;
@@ -1856,6 +1867,20 @@ async fn selected_subscription_with_account(
             (None, handle) => handle,
         }
     };
+    if require_account_binding
+        && pinned.is_none()
+        && state
+            .account_router
+            .as_ref()
+            .filter(|router| router.provider() == provider)
+            .is_some_and(|router| router.subscription_readers().len() > 1)
+    {
+        return Err(error(
+            StatusCode::CONFLICT,
+            "invalid_request_error",
+            "one exact Codex account identity is required for this control-plane request",
+        ));
+    }
     let routing_body = body
         .and_then(|body| serde_json::from_slice::<serde_json::Value>(body).ok())
         .unwrap_or_else(|| serde_json::json!({}));
@@ -3180,6 +3205,108 @@ mod tests {
             .unwrap();
         let response = codex(State(state), request).await;
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn codex_control_plane_requires_one_account_in_a_multi_account_pool() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let upstream_calls = Arc::clone(&calls);
+        let upstream = axum::Router::new().fallback(move || {
+            let calls = Arc::clone(&upstream_calls);
+            async move {
+                calls.fetch_add(1, Ordering::Relaxed);
+                axum::Json(serde_json::json!({"accepted": true}))
+            }
+        });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let origin = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+        let data = tempfile::tempdir().unwrap();
+        let primary = tempfile::tempdir().unwrap();
+        let additional = tempfile::tempdir().unwrap();
+        for (home, access, account) in [
+            (&primary, "codex-primary", "workspace-primary"),
+            (&additional, "codex-additional", "workspace-additional"),
+        ] {
+            std::fs::write(
+                home.path().join("auth.json"),
+                serde_json::json!({
+                    "tokens": {"access_token": access, "account_id": account}
+                })
+                .to_string(),
+            )
+            .unwrap();
+        }
+        let primary_reader = crate::subscription::SubscriptionReader::new(
+            SubscriptionProvider::Codex,
+            primary.path(),
+        );
+        let mut state = AppState::for_tests(data.path());
+        state.upstream_provider = crate::config::UpstreamProvider::Codex;
+        state.subscription_base_url = Some(format!("{origin}/backend-api/codex"));
+        state.subscription_reader = Some(primary_reader.clone());
+        state.subscription_readers = vec![primary_reader];
+        let account_router = crate::accounts::AccountRouter::new_for_provider(
+            primary.path().to_path_buf(),
+            &[additional.path().to_path_buf()],
+            SubscriptionProvider::Codex,
+            crate::accounts::AccountRouterOptions::default(),
+        );
+        account_router.register_credential_stores_in(&state.subscription_cache, data.path());
+        state.account_router = Some(account_router);
+        let token = state
+            .token_manager
+            .issue_with_id(&crate::token::IssueRequest {
+                ttl_hours: 1,
+                label: "unbound codex control plane",
+                account: None,
+                max_requests: None,
+                max_tokens: None,
+                rate_limit_per_minute: None,
+                scope: "",
+                github_repos: Vec::new(),
+                sliding_window_seconds: None,
+                client_kind: Some(ClientKind::Codex.canonical_name()),
+                principal_id: Some("principal-a"),
+            })
+            .unwrap()
+            .0;
+        let alias = crate::token::codex_token_alias(&token).unwrap();
+        let request = || {
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/services/codex/backend-api/codex/analytics-events/events")
+                .header("authorization", format!("Bearer {alias}"))
+                .header("content-type", "application/json")
+                .body(Body::from(r#"{"events":[]}"#))
+                .unwrap()
+        };
+        let ambiguous = codex_backend(State(state.clone()), request()).await;
+        assert_eq!(ambiguous.status(), StatusCode::CONFLICT);
+        assert_eq!(calls.load(Ordering::Relaxed), 0);
+
+        let whoami = Request::builder()
+            .uri("/api/services/codex/v1/user-auth-credential/whoami")
+            .header("authorization", format!("Bearer {alias}"))
+            .body(Body::empty())
+            .unwrap();
+        let whoami = codex(State(state.clone()), whoami).await;
+        assert_eq!(whoami.status(), StatusCode::OK);
+        let whoami: serde_json::Value =
+            serde_json::from_slice(&whoami.into_body().collect().await.unwrap().to_bytes())
+                .unwrap();
+        let account = whoami["chatgpt_account_id"].as_str().unwrap();
+        let mut pinned = request();
+        pinned
+            .headers_mut()
+            .insert("chatgpt-account-id", account.parse().unwrap());
+        assert_eq!(
+            codex_backend(State(state), pinned).await.status(),
+            StatusCode::OK
+        );
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        server.abort();
     }
 
     #[tokio::test]

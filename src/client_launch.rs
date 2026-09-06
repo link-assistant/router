@@ -75,8 +75,8 @@ fn carries_a_prompt(client: ClientKind, forwarded: &[OsString]) -> bool {
 
 /// Current native command inventory. The explicit `--` boundary below is the
 /// future-proof escape hatch for commands added after this Router release.
-fn is_native_command(client: ClientKind, argument: &str) -> bool {
-    let commands: &[&str] = match client {
+const fn native_commands(client: ClientKind) -> &'static [&'static str] {
+    match client {
         ClientKind::Codex => &[
             "agents",
             "exec",
@@ -171,8 +171,87 @@ fn is_native_command(client: ClientKind, argument: &str) -> bool {
         ClientKind::GrokCli => &["git", "mcp"],
         ClientKind::Agent => &["auth"],
         ClientKind::Cursor => &[],
-    };
-    commands.contains(&argument)
+    }
+}
+
+fn is_native_command(client: ClientKind, argument: &str) -> bool {
+    native_commands(client).contains(&argument)
+}
+
+fn codex_root_option_takes_value(argument: &str) -> bool {
+    matches!(
+        argument,
+        "-c" | "--config"
+            | "--enable"
+            | "--disable"
+            | "-i"
+            | "--image"
+            | "-m"
+            | "--model"
+            | "--local-provider"
+            | "--profile"
+            | "-s"
+            | "--sandbox"
+            | "-a"
+            | "--ask-for-approval"
+            | "-C"
+            | "--cd"
+            | "--add-dir"
+    )
+}
+
+fn codex_root_boolean_option(argument: &str) -> bool {
+    matches!(
+        argument,
+        "--oss"
+            | "--search"
+            | "--full-auto"
+            | "--dangerously-bypass-approvals-and-sandbox"
+            | "--no-alt-screen"
+            | "-h"
+            | "--help"
+            | "-V"
+            | "--version"
+    )
+}
+
+fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
+    let mut index = 0;
+    while let Some(argument) = arguments.get(index).and_then(|value| value.to_str()) {
+        if argument == "--" {
+            return arguments.get(index + 1)?.to_str();
+        }
+        if !argument.starts_with('-') || argument == "-" {
+            return Some(argument);
+        }
+        if codex_root_boolean_option(argument) {
+            index += 1;
+            continue;
+        }
+        if codex_root_option_takes_value(argument) {
+            arguments.get(index + 1)?;
+            index += 2;
+            continue;
+        }
+        if argument.starts_with("--") && argument.contains('=') {
+            let name = argument.split_once('=').map(|(name, _)| name)?;
+            if codex_root_option_takes_value(name) {
+                index += 1;
+                continue;
+            }
+        }
+        if ["-c", "-i", "-m", "-s", "-a", "-C"]
+            .iter()
+            .any(|option| argument.starts_with(option) && argument.len() > option.len())
+        {
+            index += 1;
+            continue;
+        }
+        // An unknown option can take a value. Guessing past it could mistake
+        // that value for a command, so leave it to Codex to diagnose.
+        return None;
+    }
+    None
 }
 
 /// Commands whose vendor control plane cannot be routed through the supported
@@ -182,13 +261,11 @@ pub fn unsupported_native_command(args: &WithArgs) -> Option<&'static str> {
     if args.client != ClientKind::Codex {
         return None;
     }
-    let first = args
-        .client_args
-        .first()
-        .filter(|value| *value != "--")
-        .or_else(|| args.client_args.get(1))?
-        .to_string_lossy();
-    matches!(first.as_ref(), "cloud" | "cloud-tasks").then_some(
+    matches!(
+        codex_subcommand(&args.client_args),
+        Some("cloud" | "cloud-tasks")
+    )
+    .then_some(
         "Codex Cloud tasks cannot be routed: the official Codex client does not support a split credential or custom backend for Cloud; no Router token was minted and no client was launched",
     )
 }

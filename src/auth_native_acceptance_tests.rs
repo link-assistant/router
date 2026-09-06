@@ -25,6 +25,39 @@ fn loopback_authorization_uses_the_official_codex_originator() {
 }
 
 #[test]
+fn loopback_authorization_matches_the_versioned_codex_query_contract() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../tests/fixtures/clients/codex-authorize-contract.json"
+    ))
+    .unwrap();
+    assert_eq!(
+        fixture["client_version"],
+        crate::codex_identity::DEFAULT_CLIENT_VERSION
+    );
+    assert_eq!(fixture["client_id"], CODEX_CLIENT_ID);
+
+    let url = authorize_url(
+        "https://auth.openai.com",
+        CODEX_CLIENT_ID,
+        "http://localhost:1455/auth/callback",
+        "masked-state",
+        "masked-challenge",
+    );
+    let parsed = reqwest::Url::parse(&url).unwrap();
+    assert_eq!(parsed.path(), fixture["path"]);
+    let actual = parsed
+        .query_pairs()
+        .map(|(key, value)| {
+            (
+                key.into_owned(),
+                serde_json::Value::String(value.into_owned()),
+            )
+        })
+        .collect::<serde_json::Map<_, _>>();
+    assert_eq!(serde_json::Value::Object(actual), fixture["query"]);
+}
+
+#[test]
 fn device_polling_exposes_only_stable_secret_free_outcomes() {
     assert!(matches!(
         classify_device_error(StatusCode::FORBIDDEN, ""),
