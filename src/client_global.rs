@@ -70,11 +70,12 @@ pub(crate) fn update_post_configure_hash(
 /// knows whether a credential was stored alongside it, and reporting half the
 /// outcome from inside was how `with --global` came to announce success while
 /// telling the user to go set an environment variable themselves (issue #296).
-pub(crate) fn apply_with_manager(
+pub(crate) fn apply_with_manager_and_codex_backend(
     manager: &ClientManager,
     client: ClientKind,
     base_url: &str,
     models: &[RouterModel],
+    codex_backend_base_url: Option<&str>,
 ) -> Result<PathBuf, AnyError> {
     if matches!(client, ClientKind::Cursor | ClientKind::GeminiCli) {
         return Err(client
@@ -101,23 +102,24 @@ pub(crate) fn apply_with_manager(
     if let Some(marker) = marker_path.as_ref().filter(|_| marker_existed) {
         copy_private(marker, &paths.marker)?;
     }
-    let setup = match manager.setup(client, base_url, models) {
-        Ok(result) => result,
-        Err(error) => {
-            rollback(
-                &paths,
-                &config_path,
-                config_existed,
-                config_mode,
-                marker_path.as_deref(),
-                marker_existed,
-                marker_mode,
-            )?;
-            remove_if_present(&paths.config)?;
-            remove_if_present(&paths.marker)?;
-            return Err(error.into());
-        }
-    };
+    let setup =
+        match manager.setup_with_codex_backend(client, base_url, models, codex_backend_base_url) {
+            Ok(result) => result,
+            Err(error) => {
+                rollback(
+                    &paths,
+                    &config_path,
+                    config_existed,
+                    config_mode,
+                    marker_path.as_deref(),
+                    marker_existed,
+                    marker_mode,
+                )?;
+                remove_if_present(&paths.config)?;
+                remove_if_present(&paths.marker)?;
+                return Err(error.into());
+            }
+        };
     let configured_contents = fs::read(&config_path)?;
     let state = BackupState {
         config_existed,

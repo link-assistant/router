@@ -125,6 +125,7 @@ impl ClientManager {
     }
 
     /// Reconcile all managed files as one recoverable transaction.
+    #[allow(dead_code)]
     pub(crate) fn apply_repair(
         &self,
         client: ClientKind,
@@ -133,13 +134,33 @@ impl ClientManager {
         credential: &ManagedCredential,
         models: &[RouterModel],
     ) -> Result<RepairResult, ClientError> {
+        self.apply_repair_with_codex_backend(client, base_url, token, credential, models, None)
+    }
+
+    pub(crate) fn apply_repair_with_codex_backend(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+        credential: &ManagedCredential,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+    ) -> Result<RepairResult, ClientError> {
         crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
-            self.apply_repair_locked(client, base_url, token, credential, models)
+            self.apply_repair_locked(
+                client,
+                base_url,
+                token,
+                credential,
+                models,
+                codex_backend_base_url,
+            )
         })
     }
 
     /// Merge ordinary persistent setup as one transaction while preserving
     /// its permissive merge semantics and user-facing backup.
+    #[allow(dead_code)]
     pub(crate) fn apply_setup_transaction(
         &self,
         client: ClientKind,
@@ -148,13 +169,32 @@ impl ClientManager {
         credential: &ManagedCredential,
         models: &[RouterModel],
     ) -> Result<SetupResult, ClientError> {
+        self.apply_setup_transaction_with_codex_backend(
+            client, base_url, token, credential, models, None,
+        )
+    }
+
+    pub(crate) fn apply_setup_transaction_with_codex_backend(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+        credential: &ManagedCredential,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+    ) -> Result<SetupResult, ClientError> {
         crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
             let before = self.analyze(client)?;
             let snapshot = self.capture_snapshot(client, &before)?;
             let mut setup_backup = None;
             let result: Result<SetupResult, ClientError> = (|| {
                 snapshot.verify_before()?;
-                let setup = self.setup(client, base_url, models)?;
+                let setup = self.setup_with_codex_backend(
+                    client,
+                    base_url,
+                    models,
+                    codex_backend_base_url,
+                )?;
                 setup_backup.clone_from(&setup.backup);
                 transaction_checkpoint("config")?;
                 snapshot.verify_before_path(&self.environment_path(client))?;
@@ -212,6 +252,7 @@ impl ClientManager {
     /// files as one transaction. A failure after the public config write
     /// restores every prior byte and mode and removes the newly-created undo
     /// artifacts.
+    #[allow(dead_code)]
     pub(crate) fn apply_configure_transaction(
         &self,
         client: ClientKind,
@@ -220,14 +261,34 @@ impl ClientManager {
         credential: &ManagedCredential,
         models: &[RouterModel],
     ) -> Result<PathBuf, ClientError> {
+        self.apply_configure_transaction_with_codex_backend(
+            client, base_url, token, credential, models, None,
+        )
+    }
+
+    pub(crate) fn apply_configure_transaction_with_codex_backend(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+        credential: &ManagedCredential,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+    ) -> Result<PathBuf, ClientError> {
         crate::durable_file::with_exclusive_lock(&self.repair_lock_path(client), || {
             let before = self.analyze(client)?;
             let snapshot = self.capture_snapshot(client, &before)?;
             let mut global_applied = false;
             let result: Result<PathBuf, ClientError> = (|| {
                 snapshot.verify_before()?;
-                let path = crate::client_global::apply_with_manager(self, client, base_url, models)
-                    .map_err(|error| ClientError::message(error.to_string()))?;
+                let path = crate::client_global::apply_with_manager_and_codex_backend(
+                    self,
+                    client,
+                    base_url,
+                    models,
+                    codex_backend_base_url,
+                )
+                .map_err(|error| ClientError::message(error.to_string()))?;
                 global_applied = true;
                 transaction_checkpoint("config")?;
                 self.write_environment(client, base_url, token)?;
@@ -278,6 +339,7 @@ impl ClientManager {
         token: &str,
         credential: &ManagedCredential,
         models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
     ) -> Result<RepairResult, ClientError> {
         let before = self.analyze(client)?;
         let same_credential = client.token_env().is_some_and(|key| {
@@ -287,9 +349,13 @@ impl ClientManager {
                 .as_deref()
                 == Some(token)
         });
+        let same_codex_backend = codex_backend_base_url.is_none_or(|expected| {
+            client != ClientKind::Codex || self.codex_backend_matches(expected).unwrap_or(false)
+        });
         if before.state == OwnershipState::ManagedIntact
             && self.managed_target_matches(client, base_url)?
             && same_credential
+            && same_codex_backend
         {
             return Ok(RepairResult {
                 client,
@@ -335,7 +401,8 @@ impl ClientManager {
             {
                 snapshot.verify_before_path(&path)?;
             }
-            let setup = self.setup(client, base_url, models)?;
+            let setup =
+                self.setup_with_codex_backend(client, base_url, models, codex_backend_base_url)?;
             if let Some(path) = setup.backup.as_deref() {
                 remove_if_present(path)?;
             }

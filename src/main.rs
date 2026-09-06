@@ -46,6 +46,26 @@ fn main() -> ExitCode {
 }
 
 async fn run() -> ExitCode {
+    match link_assistant_router::codex_loopback_bridge::daemon_request_from_env() {
+        Ok(Some(request)) => {
+            return match link_assistant_router::codex_loopback_bridge::run_persistent_daemon(
+                request,
+            )
+            .await
+            {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    ExitCode::from(1)
+                }
+            };
+        }
+        Ok(None) => {}
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    }
     let arguments =
         link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
     let cli = link_assistant_router::cli::parse_arguments(arguments);

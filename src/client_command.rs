@@ -1,13 +1,11 @@
 //! Output and dispatch layer for the `clients` CLI command.
 
-use std::fmt::Write as _;
 use std::path::Path;
 use std::process::ExitCode;
 
 use crate::cli::ClientOp;
-use crate::clients::{
-    ClientKind, ClientManager, ManagedCredential, OwnershipState, RepairResult, TokenSource,
-};
+use crate::client_repair_command::repair;
+use crate::clients::{ClientKind, ClientManager, ManagedCredential, TokenSource};
 use crate::config::Config;
 use crate::storage::{build_token_store, build_token_store_read_only};
 use crate::token::{IssueRequest, TokenManager};
@@ -82,277 +80,6 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             Err(error) => failed(error),
         },
     }
-}
-
-async fn repair(
-    manager: &ClientManager,
-    client: Option<ClientKind>,
-    all: bool,
-    dry_run: bool,
-    json: bool,
-    rollback: Option<&str>,
-) -> ExitCode {
-    let clients = if all {
-        ClientKind::ALL.to_vec()
-    } else if let Some(client) = client {
-        vec![client]
-    } else {
-        return failed("choose one client or pass --all");
-    };
-
-    if let Some(id) = rollback {
-        let result = manager.rollback_repair(clients[0], id);
-        return print_repair_result(result, json, "rolled back");
-    }
-
-    if dry_run {
-        let mut plans = Vec::new();
-        let mut errors = Vec::new();
-        for client in clients {
-            match manager.repair_plan(client) {
-                Ok(plan) => plans.push(plan),
-                Err(error) => errors.push(serde_json::json!({
-                    "client": client.canonical_name(),
-                    "error": error.to_string(),
-                })),
-            }
-        }
-        if json {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({
-                    "dry_run": true,
-                    "plans": plans,
-                    "errors": errors,
-                }))
-                .unwrap_or_default()
-            );
-        } else {
-            for plan in &plans {
-                println!(
-                    "{}: {}; action={}{}",
-                    plan.client,
-                    plan.state,
-                    plan.action,
-                    if plan.conflicts.is_empty() {
-                        String::new()
-                    } else {
-                        format!("; conflicts={}", plan.conflicts.join(","))
-                    }
-                );
-            }
-            for error in &errors {
-                eprintln!("error: {error}");
-            }
-        }
-        return if errors.is_empty() {
-            ExitCode::SUCCESS
-        } else {
-            ExitCode::from(1)
-        };
-    }
-
-    let mut results = Vec::new();
-    let mut errors = Vec::new();
-    for client in clients {
-        match repair_one(manager, client).await {
-            Ok(result) => results.push(result),
-            Err(error) => errors.push(serde_json::json!({
-                "client": client.canonical_name(),
-                "error": crate::login_url::redact_secrets(&error.to_string()),
-            })),
-        }
-    }
-    if json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&serde_json::json!({
-                "results": results,
-                "errors": errors,
-            }))
-            .unwrap_or_default()
-        );
-    } else {
-        for result in &results {
-            if result.changed {
-                println!(
-                    "repaired {} (backup {})",
-                    result.client,
-                    result.backup_id.as_deref().unwrap_or("none")
-                );
-                if result.restart_required {
-                    println!(
-                        "restart Claude Code to refresh its gateway catalog; its cache was left intact"
-                    );
-                }
-            } else {
-                println!("{} is already managed and intact", result.client);
-            }
-        }
-        for error in &errors {
-            eprintln!("error: {error}");
-        }
-    }
-    if errors.is_empty() {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
-    }
-}
-
-fn print_repair_result(
-    result: Result<RepairResult, crate::clients::ClientError>,
-    json: bool,
-    verb: &str,
-) -> ExitCode {
-    match result {
-        Ok(result) => {
-            if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&result).unwrap_or_default()
-                );
-            } else {
-                println!("{verb} {} using repair snapshot", result.client);
-            }
-            ExitCode::SUCCESS
-        }
-        Err(error) => failed(error),
-    }
-}
-
-async fn repair_one(
-    manager: &ClientManager,
-    client: ClientKind,
-) -> Result<RepairResult, Box<dyn std::error::Error + Send + Sync>> {
-    let analysis = manager.analyze(client)?;
-    let old_metadata = manager.credential_metadata(client).ok().flatten();
-    if analysis.state == OwnershipState::ManagedIntact {
-        return Ok(RepairResult {
-            client,
-            before: analysis.state,
-            after: analysis.state,
-            changed: false,
-            restart_required: false,
-            backup_id: None,
-        });
-    }
-    if let Some(limitation) = client.setup_limitation() {
-        return Err(limitation.into());
-    }
-
-    // A drifted managed installation keeps its existing credential. Foreign,
-    // incomplete and unconfigured installations acquire and validate a
-    // candidate first; no client file is touched until that succeeds.
-    if analysis.state == OwnershipState::ManagedDrifted
-        && let (Some(token), Some(metadata)) = (
-            manager.managed_token(client)?,
-            manager.credential_metadata(client)?,
-        )
-        && let Some(base_url) = metadata.router.as_deref()
-    {
-        let models = manager.catalog(client, base_url, &token).await?;
-        let usable = crate::clients::usable_models(client, &models);
-        let result = manager.apply_repair(client, base_url, &token, &metadata, &usable)?;
-        if let Err(error) = manager.catalog(client, base_url, &token).await {
-            if let Some(id) = result.backup_id.as_deref() {
-                manager.rollback_repair(client, id)?;
-            }
-            return Err(format!("post-repair catalog validation failed: {error}").into());
-        }
-        return Ok(result);
-    }
-
-    let server = crate::managed_server::resolve(None, None, None, None, false).await?;
-    let candidate = crate::managed_server::prepare_repair_credential(
-        &server,
-        client,
-        &format!("client-repair-{client}"),
-        24,
-    )
-    .await?;
-    debug_assert!(candidate.was_minted());
-    let metadata = ManagedCredential {
-        client: client.to_string(),
-        source: TokenSource::Minted,
-        token_id: candidate.id(),
-        label: candidate
-            .was_minted()
-            .then(|| format!("client-repair-{client}")),
-        issued_at: candidate
-            .was_minted()
-            .then(|| chrono::Utc::now().timestamp()),
-        router: Some(server.base_url.clone()),
-        management_server: Some(server.management_url.clone()),
-        principal_id: candidate
-            .was_minted()
-            .then(|| candidate.principal_id().to_string()),
-        config_sha256: None,
-    };
-    let models = crate::clients::usable_models(client, candidate.models());
-    let applied = manager.apply_repair(
-        client,
-        &server.base_url,
-        &candidate.token,
-        &metadata,
-        &models,
-    );
-    let result = match applied {
-        Ok(result) => result,
-        Err(error) => {
-            return match crate::managed_server::cleanup_run_credential(candidate).await {
-                Ok(()) => Err(error.into()),
-                Err(cleanup) => Err(format!(
-                    "{error}; the unused minted repair credential could not be revoked: {cleanup}"
-                )
-                .into()),
-            };
-        }
-    };
-    if let Err(error) = manager
-        .catalog(client, &server.base_url, &candidate.token)
-        .await
-    {
-        let rollback = result
-            .backup_id
-            .as_deref()
-            .map_or(Ok(()), |id| manager.rollback_repair(client, id).map(|_| ()));
-        let cleanup = crate::managed_server::cleanup_run_credential(candidate).await;
-        let mut message = format!("post-repair catalog validation failed: {error}");
-        if let Err(rollback) = rollback {
-            let _ = write!(message, "; automatic rollback also failed: {rollback}");
-        }
-        if let Err(cleanup) = cleanup {
-            let _ = write!(
-                message,
-                "; the unused minted repair credential could not be revoked: {cleanup}"
-            );
-        }
-        return Err(message.into());
-    }
-    if candidate.was_minted()
-        && let (Some(old), Some(old_id), Some(new_id), Some(admin_token)) = (
-            old_metadata.as_ref(),
-            old_metadata
-                .as_ref()
-                .filter(|old| old.source == TokenSource::Minted)
-                .and_then(|old| old.token_id.as_deref()),
-            metadata.token_id.as_deref(),
-            server.token.as_deref(),
-        )
-        && old_id != new_id
-        && old.router.as_deref() == Some(server.base_url.as_str())
-        && let Err(error) =
-            crate::managed_server::revoke(&server.management_url, admin_token, old_id).await
-    {
-        eprintln!(
-            "warning: repaired {client}, but the replaced Router-owned token could not be revoked: {}",
-            crate::login_url::redact_secrets(&error.to_string())
-        );
-    }
-    // The candidate intentionally remains live: it is now the credential
-    // named by the private environment and secret-free metadata files.
-    Ok(result)
 }
 
 /// Resolve an existing router token from argv, standard input, or the
@@ -437,6 +164,22 @@ fn list(manager: &ClientManager, json: bool) -> ExitCode {
     }
 }
 
+pub(crate) async fn ensure_codex_bridge(
+    manager: &ClientManager,
+    client: ClientKind,
+    base_url: &str,
+) -> Result<Option<crate::codex_loopback_bridge::PersistentBridge>, String> {
+    if client != ClientKind::Codex || !crate::codex_loopback_bridge::required(base_url)? {
+        return Ok(None);
+    }
+    crate::codex_loopback_bridge::ensure_persistent(
+        &manager.codex_loopback_bridge_state_path(),
+        base_url,
+    )
+    .await
+    .map(Some)
+}
+
 async fn setup(
     config: &Config,
     manager: &ClientManager,
@@ -516,16 +259,39 @@ async fn setup(
                         .is_ok_and(|binding| binding.is_some())
                 }) =>
         {
-            println!(
-                "{} is already configured in {}",
-                client.display_name(),
-                manager.config_path(client).display()
-            );
-            println!(
-                "credentials: {} (mode 0600)",
-                manager.environment_path(client).display()
-            );
-            return ExitCode::SUCCESS;
+            let bridge = match ensure_codex_bridge(manager, client, &base_url).await {
+                Ok(bridge) => bridge,
+                Err(error) => return failed(error),
+            };
+            let bridge_matches = bridge.as_ref().is_none_or(|bridge| {
+                manager
+                    .codex_backend_matches(bridge.backend_base_url())
+                    .unwrap_or(false)
+            });
+            if bridge_matches {
+                if client == ClientKind::Codex && bridge.is_none() {
+                    let state = manager.codex_loopback_bridge_state_path();
+                    if let Err(error) = crate::codex_loopback_bridge::stop_persistent(&state).await
+                    {
+                        return failed(error);
+                    }
+                }
+                println!(
+                    "{} is already configured in {}",
+                    client.display_name(),
+                    manager.config_path(client).display()
+                );
+                println!(
+                    "credentials: {} (mode 0600)",
+                    manager.environment_path(client).display()
+                );
+                if let Some(bridge) = bridge {
+                    bridge.commit();
+                }
+                return ExitCode::SUCCESS;
+            } else if let Some(bridge) = bridge {
+                let _ = bridge.rollback().await;
+            }
         }
         Ok(_) => {}
         Err(error) => return failed(error),
@@ -607,13 +373,47 @@ async fn setup(
     } else {
         Vec::new()
     };
-    let result =
-        match manager.apply_setup_transaction(client, &base_url, &token, &credential, &models) {
-            Ok(result) => result,
-            Err(error) => {
-                return failed_after_local_candidate(config, minted_id.as_deref(), error);
-            }
-        };
+    let bridge = match ensure_codex_bridge(manager, client, &base_url).await {
+        Ok(bridge) => bridge,
+        Err(error) => {
+            return failed_after_local_candidate(config, minted_id.as_deref(), error);
+        }
+    };
+    let codex_backend_base_url = bridge
+        .as_ref()
+        .map(crate::codex_loopback_bridge::PersistentBridge::backend_base_url);
+    let result = match manager.apply_setup_transaction_with_codex_backend(
+        client,
+        &base_url,
+        &token,
+        &credential,
+        &models,
+        codex_backend_base_url,
+    ) {
+        Ok(result) => result,
+        Err(error) => {
+            let error = if let Some(bridge) = bridge {
+                bridge.rollback().await.map_or_else(
+                    |cleanup| {
+                        format!("{error}; the unused Codex bridge could not be removed: {cleanup}")
+                    },
+                    |()| error.to_string(),
+                )
+            } else {
+                error.to_string()
+            };
+            return failed_after_local_candidate(config, minted_id.as_deref(), error);
+        }
+    };
+    if client == ClientKind::Codex && bridge.is_none() {
+        let state = manager.codex_loopback_bridge_state_path();
+        if let Err(error) = crate::codex_loopback_bridge::stop_persistent(&state).await {
+            return failed(error);
+        }
+    }
+    if let Some(bridge) = bridge {
+        bridge.commit();
+    }
     let environment_path = manager.environment_path(client);
     if client == ClientKind::GrokCli {
         // A token was minted and two files written, so the operation did
@@ -677,16 +477,40 @@ async fn setup_remote(
             if let Some(token) = manager.managed_token(client).ok().flatten()
                 && manager.catalog(client, &base_url, &token).await.is_ok() =>
         {
-            println!(
-                "{} is already configured in {}",
-                client.display_name(),
-                manager.config_path(client).display()
-            );
-            println!(
-                "credentials: {} (mode 0600)",
-                manager.environment_path(client).display()
-            );
-            return ExitCode::SUCCESS;
+            let bridge = match ensure_codex_bridge(manager, client, &base_url).await {
+                Ok(bridge) => bridge,
+                Err(error) => return failed(error),
+            };
+            let bridge_matches = bridge.as_ref().is_none_or(|bridge| {
+                manager
+                    .codex_backend_matches(bridge.backend_base_url())
+                    .unwrap_or(false)
+            });
+            if bridge_matches {
+                if client == ClientKind::Codex && bridge.is_none() {
+                    let state = manager.codex_loopback_bridge_state_path();
+                    if let Err(error) = crate::codex_loopback_bridge::stop_persistent(&state).await
+                    {
+                        return failed(error);
+                    }
+                }
+                println!(
+                    "{} is already configured in {}",
+                    client.display_name(),
+                    manager.config_path(client).display()
+                );
+                println!(
+                    "credentials: {} (mode 0600)",
+                    manager.environment_path(client).display()
+                );
+                if let Some(bridge) = bridge {
+                    bridge.commit();
+                }
+                return ExitCode::SUCCESS;
+            }
+            if let Some(bridge) = bridge {
+                let _ = bridge.rollback().await;
+            }
         }
         Ok(_) => {}
         Err(error) => return failed(error),
@@ -731,15 +555,8 @@ async fn setup_remote(
         config_sha256: None,
     };
     let models = crate::clients::usable_models(client, candidate.models());
-    let result = manager.apply_setup_transaction(
-        client,
-        &server.base_url,
-        &candidate.token,
-        &record,
-        &models,
-    );
-    let result = match result {
-        Ok(result) => result,
+    let bridge = match ensure_codex_bridge(manager, client, &server.base_url).await {
+        Ok(bridge) => bridge,
         Err(error) => {
             return match crate::managed_server::cleanup_run_credential(candidate).await {
                 Ok(()) => failed(error),
@@ -749,6 +566,49 @@ async fn setup_remote(
             };
         }
     };
+    let codex_backend_base_url = bridge
+        .as_ref()
+        .map(crate::codex_loopback_bridge::PersistentBridge::backend_base_url);
+    let result = manager.apply_setup_transaction_with_codex_backend(
+        client,
+        &server.base_url,
+        &candidate.token,
+        &record,
+        &models,
+        codex_backend_base_url,
+    );
+    let result = match result {
+        Ok(result) => result,
+        Err(error) => {
+            let bridge_cleanup = if let Some(bridge) = bridge {
+                bridge.rollback().await.err()
+            } else {
+                None
+            };
+            return match crate::managed_server::cleanup_run_credential(candidate).await {
+                Ok(()) if bridge_cleanup.is_none() => failed(error),
+                Ok(()) => failed(format!(
+                    "{error}; the unused Codex bridge could not be removed: {}",
+                    bridge_cleanup.expect("checked above")
+                )),
+                Err(cleanup) => failed(format!(
+                    "{error}; the unused minted credential could not be revoked: {cleanup}{}",
+                    bridge_cleanup.map_or_else(String::new, |bridge| format!(
+                        "; the unused Codex bridge could not be removed: {bridge}"
+                    ))
+                )),
+            };
+        }
+    };
+    if client == ClientKind::Codex && bridge.is_none() {
+        let state = manager.codex_loopback_bridge_state_path();
+        if let Err(error) = crate::codex_loopback_bridge::stop_persistent(&state).await {
+            return failed(error);
+        }
+    }
+    if let Some(bridge) = bridge {
+        bridge.commit();
+    }
     let environment_path = manager.environment_path(client);
     if client == ClientKind::GrokCli {
         println!(
@@ -856,6 +716,12 @@ async fn remove(
     };
     match manager.remove(client) {
         Ok(result) => {
+            if client == ClientKind::Codex {
+                let state = manager.codex_loopback_bridge_state_path();
+                if let Err(error) = crate::codex_loopback_bridge::stop_persistent(&state).await {
+                    return failed(error);
+                }
+            }
             if result.changed {
                 println!("removed router settings from {}", result.path.display());
             } else {
@@ -938,7 +804,8 @@ fn remote_revocation_token(router: &str) -> Option<String> {
 
 #[path = "client_command_token.rs"]
 mod token_support;
+pub(crate) use token_support::failed;
 use token_support::{
-    decoded_token_binding, failed, issue_client_token, local_client_base_url, local_token_binding,
+    decoded_token_binding, issue_client_token, local_client_base_url, local_token_binding,
     shell_quote, token_manager,
 };
